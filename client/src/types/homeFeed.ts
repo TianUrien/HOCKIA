@@ -109,7 +109,7 @@ export interface BrandProductFeedItem extends BaseFeedItem {
   product_external_url: string | null
 }
 
-export type PostType = 'text' | 'transfer'
+export type PostType = 'text' | 'transfer' | 'signing'
 
 export interface TransferMetadata {
   club_name: string
@@ -120,6 +120,14 @@ export interface TransferMetadata {
   world_club_id: string | null
   club_profile_id: string | null
   is_known_club: boolean
+}
+
+export interface SigningMetadata {
+  person_name: string
+  person_role: 'player' | 'coach'
+  person_avatar_url: string | null
+  person_profile_id: string
+  person_position: string | null
 }
 
 export interface PostMediaItem {
@@ -145,7 +153,7 @@ export interface UserPostFeedItem extends BaseFeedItem {
   comment_count: number
   has_liked: boolean
   post_type?: PostType
-  metadata?: TransferMetadata | null
+  metadata?: TransferMetadata | SigningMetadata | null
 }
 
 // Post comment type

@@ -139,5 +139,34 @@ export function useUserPosts() {
     }
   }, [])
 
-  return { createPost, createTransferPost, updatePost, deletePost }
+  const createSigningPost = useCallback(async (
+    personProfileId: string,
+    content?: string | null,
+    images?: PostImage[] | null
+  ): Promise<PostResult> => {
+    try {
+      const { data, error } = await withTimeout(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        async () => await (supabase.rpc as any)('create_signing_post', {
+          p_person_profile_id: personProfileId,
+          p_content: content || null,
+          p_images: images && images.length > 0 ? images : null,
+        }),
+        15_000
+      )
+
+      if (error) throw error
+
+      const result = data as unknown as PostResult
+      return result
+    } catch (err) {
+      logger.error('[useUserPosts] createSigningPost error:', err)
+      return {
+        success: false,
+        error: err instanceof Error ? err.message : 'Failed to create signing post',
+      }
+    }
+  }, [])
+
+  return { createPost, createTransferPost, createSigningPost, updatePost, deletePost }
 }

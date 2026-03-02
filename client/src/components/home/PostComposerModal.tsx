@@ -7,9 +7,9 @@ import { useUserPosts, type PostImage } from '@/hooks/useUserPosts'
 import { validateImage, optimizeImage } from '@/lib/imageOptimization'
 import { useUploadManager } from '@/lib/uploadManager'
 import { logger } from '@/lib/logger'
-import { Avatar } from '@/components'
+import { Avatar, RoleBadge } from '@/components'
 import { PostMediaUploader, type UploadedMedia } from './PostMediaUploader'
-import type { HomeFeedItem, UserPostFeedItem, TransferMetadata } from '@/types/homeFeed'
+import type { HomeFeedItem, UserPostFeedItem, TransferMetadata, SigningMetadata } from '@/types/homeFeed'
 
 interface PostComposerModalProps {
   isOpen: boolean
@@ -30,6 +30,16 @@ interface ClubSearchResult {
   claimed_profile_id: string | null
 }
 
+interface PersonSearchResult {
+  id: string
+  full_name: string
+  avatar_url: string | null
+  role: 'player' | 'coach'
+  position: string | null
+  current_club: string | null
+  base_location: string | null
+}
+
 const MAX_CONTENT_LENGTH = 2000
 const BUCKET = 'user-posts'
 
@@ -47,7 +57,7 @@ export function PostComposerModal({
   editingPost,
 }: PostComposerModalProps) {
   const { user, profile } = useAuthStore()
-  const { createPost, createTransferPost, updatePost } = useUserPosts()
+  const { createPost, createTransferPost, createSigningPost, updatePost } = useUserPosts()
   const isEdit = Boolean(editingPost)
   const dialogRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -74,12 +84,18 @@ export function PostComposerModal({
   const [clubLogoUrl, setClubLogoUrl] = useState<string | null>(null)
   const [isUploadingLogo, setIsUploadingLogo] = useState(false)
 
-  // Cleanup search timeout on unmount (uploads survive modal close via global store)
+  // Signing mode state (club role)
+  const [personSearch, setPersonSearch] = useState('')
+  const [personResults, setPersonResults] = useState<PersonSearchResult[]>([])
+  const [isSearchingPeople, setIsSearchingPeople] = useState(false)
+  const [selectedPerson, setSelectedPerson] = useState<PersonSearchResult | null>(null)
+  const personSearchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Cleanup search timeouts on unmount (uploads survive modal close via global store)
   useEffect(() => {
     return () => {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current)
-      }
+      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current)
+      if (personSearchTimeoutRef.current) clearTimeout(personSearchTimeoutRef.current)
     }
   }, [])
 
@@ -114,6 +130,9 @@ export function PostComposerModal({
     setShowUnknownClub(false)
     setCustomClubName('')
     setClubLogoUrl(null)
+    setPersonSearch('')
+    setPersonResults([])
+    setSelectedPerson(null)
 
     // Consume any uploads that completed while modal was closed
     const { uploads, dismissUpload } = useUploadManager.getState()
@@ -169,6 +188,40 @@ export function PostComposerModal({
         setClubResults([])
       } finally {
         setIsSearching(false)
+      }
+    }, 300)
+  }, [])
+
+  // Debounced person search (for club signing flow)
+  const handlePersonSearch = useCallback((query: string) => {
+    setPersonSearch(query)
+    setError(null)
+
+    if (personSearchTimeoutRef.current) {
+      clearTimeout(personSearchTimeoutRef.current)
+    }
+
+    if (query.trim().length < 2) {
+      setPersonResults([])
+      setIsSearchingPeople(false)
+      return
+    }
+
+    setIsSearchingPeople(true)
+    personSearchTimeoutRef.current = setTimeout(async () => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data, error: rpcError } = await (supabase.rpc as any)(
+          'search_people_for_signing',
+          { p_query: query.trim(), p_limit: 8 }
+        )
+        if (rpcError) throw rpcError
+        setPersonResults(Array.isArray(data) ? data : [])
+      } catch (err) {
+        logger.error('[PostComposerModal] Person search error:', err)
+        setPersonResults([])
+      } finally {
+        setIsSearchingPeople(false)
       }
     }, 300)
   }, [])
@@ -343,8 +396,75 @@ export function PostComposerModal({
   const handleSubmit = useCallback(async () => {
     if (isSubmitting) return
 
-    // Transfer mode submit
+    // Transfer / Signing mode submit
     if (mode === 'transfer') {
+      const isClubRole = profile?.role === 'club'
+
+      // Club signing flow
+      if (isClubRole) {
+        if (!selectedPerson) {
+          setError('Please select a player or coach')
+          return
+        }
+
+        setIsSubmitting(true)
+        setError(null)
+
+        try {
+          const postMedia = media.length > 0 ? media : null
+          const result = await createSigningPost(
+            selectedPerson.id,
+            content.trim() || null,
+            postMedia
+          )
+
+          if (!result.success) {
+            throw new Error(result.error || 'Failed to create signing post')
+          }
+
+          // Build optimistic feed item
+          if (result.post_id && profile) {
+            const signingMetadata: SigningMetadata = {
+              person_name: selectedPerson.full_name,
+              person_role: selectedPerson.role,
+              person_avatar_url: selectedPerson.avatar_url,
+              person_profile_id: selectedPerson.id,
+              person_position: selectedPerson.position,
+            }
+
+            const newItem: UserPostFeedItem = {
+              feed_item_id: result.post_id,
+              item_type: 'user_post',
+              created_at: new Date().toISOString(),
+              post_id: result.post_id,
+              author_id: profile.id,
+              author_name: profile.full_name,
+              author_avatar: profile.avatar_url,
+              author_role: 'club',
+              content: content.trim() || `Welcome ${selectedPerson.full_name} to ${profile.full_name}!`,
+              images: postMedia,
+              like_count: 0,
+              comment_count: 0,
+              has_liked: false,
+              post_type: 'signing',
+              metadata: signingMetadata,
+            }
+            onPostCreated(newItem)
+          }
+
+          setContent('')
+          setMedia([])
+          onClose()
+        } catch (err) {
+          logger.error('[PostComposerModal] Signing submit error:', err)
+          setError(err instanceof Error ? err.message : 'Failed to create signing post')
+        } finally {
+          setIsSubmitting(false)
+        }
+        return
+      }
+
+      // Player/Coach transfer flow (existing)
       const clubName = selectedClub ? selectedClub.name : customClubName.trim()
       if (!clubName) {
         setError('Please select or enter a club name')
@@ -473,13 +593,16 @@ export function PostComposerModal({
     } finally {
       setIsSubmitting(false)
     }
-  }, [content, media, mode, selectedClub, customClubName, clubLogoUrl, isEdit, editingPost, createPost, createTransferPost, updatePost, profile, onPostCreated, onClose, isSubmitting])
+  }, [content, media, mode, selectedClub, selectedPerson, customClubName, clubLogoUrl, isEdit, editingPost, createPost, createTransferPost, createSigningPost, updatePost, profile, onPostCreated, onClose, isSubmitting])
 
   if (!isOpen) return null
 
   // Determine submit eligibility
+  const isClubRole = profile?.role === 'club'
   const hasClub = selectedClub || customClubName.trim()
-  const canSubmitTransfer = Boolean(hasClub) && !isUploadingLogo
+  const canSubmitTransfer = isClubRole
+    ? Boolean(selectedPerson)
+    : Boolean(hasClub) && !isUploadingLogo
   const canSubmitPost = content.trim().length > 0
   const canSubmit = mode === 'transfer' ? canSubmitTransfer : canSubmitPost
 
@@ -498,7 +621,7 @@ export function PostComposerModal({
           {/* Header */}
           <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10">
             <h2 id="post-composer-title" className="text-xl font-semibold text-gray-900">
-              {isEdit ? 'Edit Post' : mode === 'transfer' ? 'Announce Transfer' : 'Create Post'}
+              {isEdit ? 'Edit Post' : mode === 'transfer' ? (isClubRole ? 'Announce New Signing' : 'Announce Transfer') : 'Create Post'}
             </h2>
             <button
               type="button"
@@ -552,7 +675,7 @@ export function PostComposerModal({
                       : 'text-gray-500 hover:text-gray-700'
                   }`}
                 >
-                  Transfer
+                  {isClubRole ? 'New Signing' : 'Transfer'}
                 </button>
               </div>
             )}
@@ -564,8 +687,107 @@ export function PostComposerModal({
               </div>
             )}
 
-            {/* Transfer: Club selection */}
-            {mode === 'transfer' && !isEdit && (
+            {/* Signing: Person selection (club role) */}
+            {mode === 'transfer' && !isEdit && isClubRole && (
+              <div className="space-y-3">
+                {!selectedPerson && (
+                  <>
+                    {/* Person search */}
+                    <div className="relative">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <input
+                          type="search"
+                          value={personSearch}
+                          onChange={(e) => handlePersonSearch(e.target.value)}
+                          placeholder="Search for a player or coach..."
+                          className="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#EA580C]/30 focus:border-[#EA580C]"
+                          autoComplete="off"
+                          enterKeyHint="search"
+                          autoCapitalize="none"
+                          autoCorrect="off"
+                          spellCheck={false}
+                        />
+                        {isSearchingPeople && (
+                          <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 animate-spin" />
+                        )}
+                      </div>
+
+                      {/* Search results dropdown */}
+                      {personResults.length > 0 && (
+                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                          {personResults.map((person) => (
+                            <button
+                              key={person.id}
+                              type="button"
+                              onClick={() => {
+                                setSelectedPerson(person)
+                                setPersonSearch('')
+                                setPersonResults([])
+                              }}
+                              className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 transition-colors text-left"
+                            >
+                              <Avatar
+                                src={person.avatar_url}
+                                initials={person.full_name?.slice(0, 2) || '?'}
+                                size="sm"
+                              />
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2">
+                                  <p className="text-sm font-medium text-gray-900 truncate">{person.full_name}</p>
+                                  <RoleBadge role={person.role} />
+                                </div>
+                                <p className="text-xs text-gray-500 truncate">
+                                  {[person.position, person.current_club, person.base_location].filter(Boolean).join(' · ')}
+                                </p>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* No results state */}
+                      {personSearch.trim().length >= 2 && !isSearchingPeople && personResults.length === 0 && (
+                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-3">
+                          <p className="text-sm text-gray-500 text-center">No players or coaches found</p>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
+
+                {/* Selected person display */}
+                {selectedPerson && (
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <Avatar
+                      src={selectedPerson.avatar_url}
+                      initials={selectedPerson.full_name?.slice(0, 2) || '?'}
+                      size="sm"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-semibold text-gray-900 truncate">{selectedPerson.full_name}</p>
+                        <RoleBadge role={selectedPerson.role} />
+                      </div>
+                      <p className="text-xs text-gray-500 truncate">
+                        {[selectedPerson.position, selectedPerson.current_club].filter(Boolean).join(' · ')}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedPerson(null)}
+                      className="p-1 text-gray-400 hover:text-gray-600 rounded"
+                      aria-label="Remove selected person"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Transfer: Club selection (player/coach role) */}
+            {mode === 'transfer' && !isEdit && !isClubRole && (
               <div className="space-y-3">
                 {!selectedClub && !showUnknownClub && (
                   <>
@@ -759,7 +981,7 @@ export function PostComposerModal({
                 ref={textareaRef}
                 value={content}
                 onChange={handleContentChange}
-                placeholder={mode === 'transfer' ? 'Share something about your transfer... (optional)' : "What's on your mind?"}
+                placeholder={mode === 'transfer' ? (isClubRole ? 'Share something about this signing... (optional)' : 'Share something about your transfer... (optional)') : "What's on your mind?"}
                 rows={mode === 'transfer' ? 3 : 4}
                 maxLength={MAX_CONTENT_LENGTH}
                 autoCapitalize="sentences"
@@ -799,7 +1021,7 @@ export function PostComposerModal({
                 : isEdit
                   ? 'Save Changes'
                   : mode === 'transfer'
-                    ? 'Announce Transfer'
+                    ? (isClubRole ? 'Announce Signing' : 'Announce Transfer')
                     : 'Post'
               }
             </button>
