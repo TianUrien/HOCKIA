@@ -1,0 +1,64 @@
+import { useNavigate } from 'react-router-dom'
+import { ChevronRight } from 'lucide-react'
+import Avatar from '@/components/Avatar'
+import RoleBadge from '@/components/RoleBadge'
+import AvailabilityPill from '@/components/AvailabilityPill'
+import type { DiscoverResult } from '@/hooks/useDiscover'
+
+interface DiscoverResultCardProps {
+  result: DiscoverResult
+}
+
+export default function DiscoverResultCard({ result }: DiscoverResultCardProps) {
+  const navigate = useNavigate()
+
+  const handleClick = () => {
+    if (result.role === 'brand') {
+      navigate('/brands')
+    } else if (result.role === 'club') {
+      navigate(`/clubs/id/${result.id}?ref=discover`)
+    } else {
+      navigate(`/players/id/${result.id}?ref=discover`)
+    }
+  }
+
+  const subtitle = [
+    result.position,
+    result.base_location || result.base_country_name,
+  ]
+    .filter(Boolean)
+    .join(' · ')
+
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+    >
+      <Avatar
+        src={result.avatar_url}
+        alt={result.full_name ?? undefined}
+        initials={result.full_name?.charAt(0)}
+        size="md"
+      />
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1.5">
+          <span className="text-sm font-medium text-gray-900 truncate">
+            {result.full_name ?? 'Unknown'}
+          </span>
+          <RoleBadge role={result.role} />
+          {result.open_to_play && (
+            <AvailabilityPill variant="play" size="sm" />
+          )}
+          {result.open_to_coach && !result.open_to_play && (
+            <AvailabilityPill variant="coach" size="sm" />
+          )}
+        </div>
+        {subtitle && (
+          <p className="text-xs text-gray-500 truncate">{subtitle}</p>
+        )}
+      </div>
+      <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
+    </button>
+  )
+}

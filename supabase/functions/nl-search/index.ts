@@ -7,7 +7,7 @@
  * values to database IDs, and calls the discover_profiles RPC.
  *
  * POST /functions/v1/nl-search
- * Body: { query: string }
+ * Body: { query: string, history?: { role: 'user'|'assistant', content: string }[] }
  * Auth: Bearer token (authenticated users only)
  */
 
@@ -15,7 +15,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { getServiceClient } from '../_shared/supabase-client.ts'
 import { getCorsHeaders } from '../_shared/cors.ts'
 import { captureException } from '../_shared/sentry.ts'
-import { parseSearchQuery, type ParsedFilters } from '../_shared/llm-client.ts'
+import { parseSearchQuery, synthesizeQualitativeInsights, LLMRateLimitError, type ParsedFilters, type LLMResult, type HistoryTurn, type ProfileQualitativeData, type UserContext } from '../_shared/llm-client.ts'
 
 Deno.serve(async (req) => {
   const correlationId = crypto.randomUUID().slice(0, 8)
@@ -84,6 +84,10 @@ Deno.serve(async (req) => {
     // ── Parse body ──────────────────────────────────────────────────────
     const body = await req.json()
     const query = body?.query?.trim()
+    const rawHistory = Array.isArray(body?.history) ? body.history : []
+    const history: HistoryTurn[] = rawHistory
+      .slice(-10)
+      .filter((t: any) => (t?.role === 'user' || t?.role === 'assistant') && typeof t?.content === 'string')
 
     if (!query || typeof query !== 'string') {
       return new Response(
@@ -99,8 +103,104 @@ Deno.serve(async (req) => {
       )
     }
 
+    // ── Fetch user context for LLM ─────────────────────────────────────
+    let userContext: UserContext | undefined
+
+    try {
+      const { data: userProfile } = await adminClient
+        .from('profiles')
+        .select(`
+          role, full_name, gender, position,
+          base_city, base_country_id,
+          nationality_country_id, nationality2_country_id,
+          current_club, current_world_club_id,
+          eu_passport, open_to_play, open_to_coach
+        `)
+        .eq('id', user.id)
+        .single()
+
+      if (userProfile) {
+        const countryIds = [
+          userProfile.base_country_id,
+          userProfile.nationality_country_id,
+          userProfile.nationality2_country_id,
+        ].filter(Boolean)
+
+        const [countriesRes, clubRes] = await Promise.all([
+          countryIds.length > 0
+            ? adminClient.from('countries').select('id, name').in('id', countryIds)
+            : Promise.resolve({ data: [] }),
+          userProfile.current_world_club_id
+            ? adminClient
+                .from('world_clubs')
+                .select(`
+                  club_name,
+                  men_league:world_leagues!world_clubs_men_league_id_fkey(name),
+                  women_league:world_leagues!world_clubs_women_league_id_fkey(name),
+                  country:countries!world_clubs_country_id_fkey(name)
+                `)
+                .eq('id', userProfile.current_world_club_id)
+                .single()
+            : Promise.resolve({ data: null }),
+        ])
+
+        const countryMap = new Map(
+          ((countriesRes.data || []) as any[]).map((c: any) => [c.id, c.name])
+        )
+
+        const club = clubRes.data as any
+        let currentLeague: string | null = null
+        let leagueCountry: string | null = null
+        if (club) {
+          currentLeague = userProfile.gender === 'Women'
+            ? club.women_league?.name || null
+            : club.men_league?.name || null
+          leagueCountry = club.country?.name || null
+        }
+
+        userContext = {
+          role: userProfile.role,
+          full_name: userProfile.full_name,
+          gender: userProfile.gender,
+          position: userProfile.position,
+          base_city: userProfile.base_city,
+          base_country_name: countryMap.get(userProfile.base_country_id) || null,
+          nationality_name: countryMap.get(userProfile.nationality_country_id) || null,
+          nationality2_name: countryMap.get(userProfile.nationality2_country_id) || null,
+          current_club: club?.club_name || userProfile.current_club || null,
+          current_league: currentLeague,
+          league_country: leagueCountry,
+          eu_passport: userProfile.eu_passport || false,
+          open_to_play: userProfile.open_to_play || false,
+          open_to_coach: userProfile.open_to_coach || false,
+        }
+      }
+    } catch (ctxError) {
+      // Non-fatal: AI works generically without user context
+      captureException(ctxError, { functionName: 'nl-search', correlationId, note: 'user-context-fetch' })
+    }
+
     // ── LLM parsing ─────────────────────────────────────────────────────
-    const parsed: ParsedFilters = await parseSearchQuery(query)
+    const llmResult: LLMResult = await parseSearchQuery(query, history, userContext)
+
+    // ── Conversation-only response (no search needed) ────────────────
+    if (llmResult.type === 'conversation') {
+      return new Response(
+        JSON.stringify({
+          success: true,
+          data: [],
+          total: 0,
+          has_more: false,
+          parsed_filters: null,
+          summary: null,
+          ai_message: llmResult.message,
+        }),
+        { status: 200, headers: { ...headers, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // ── Search intent: resolve filters + call RPC ────────────────────
+    const parsed: ParsedFilters = llmResult.filters
 
     // ── Resolve text values → IDs ───────────────────────────────────────
     let nationalityCountryIds: number[] | null = null
@@ -177,6 +277,85 @@ Deno.serve(async (req) => {
 
     const result = rpcResult as { results: any[]; total: number; has_more: boolean }
 
+    // ── Result-aware AI message ──────────────────────────────────────
+    let aiMessage: string
+    if (result.total === 0) {
+      aiMessage = `I couldn't find any profiles matching that. Try broadening your search or adjusting your filters.`
+    } else {
+      const countPhrase = `I found ${result.total} profile${result.total === 1 ? '' : 's'} for you.`
+      aiMessage = llmResult.message ? `${countPhrase} ${llmResult.message}` : countPhrase
+    }
+
+    // ── Qualitative enrichment (opt-in, triggered by LLM) ───────────
+    if (llmResult.include_qualitative && result.results.length > 0) {
+      try {
+        const topIds = result.results.slice(0, 5).map((r: any) => r.id).filter(Boolean)
+
+        if (topIds.length > 0) {
+          const [commentsRes, refsRes] = await Promise.all([
+            adminClient
+              .from('profile_comments')
+              .select('profile_id, content, rating, author:profiles!profile_comments_author_profile_id_fkey(full_name, role)')
+              .in('profile_id', topIds)
+              .eq('status', 'visible')
+              .order('created_at', { ascending: false })
+              .limit(50),
+            adminClient
+              .from('profile_references')
+              .select('requester_id, endorsement_text, relationship_type, endorser:profiles!profile_references_reference_id_fkey(full_name, role)')
+              .in('requester_id', topIds)
+              .eq('status', 'accepted')
+              .order('accepted_at', { ascending: false })
+              .limit(25),
+          ])
+
+          // Group by profile (max 10 comments, 5 references each)
+          const commentsByProfile = new Map<string, any[]>()
+          for (const c of (commentsRes.data || [])) {
+            const arr = commentsByProfile.get(c.profile_id) || []
+            if (arr.length < 10) { arr.push(c); commentsByProfile.set(c.profile_id, arr) }
+          }
+
+          const refsByProfile = new Map<string, any[]>()
+          for (const r of (refsRes.data || [])) {
+            const arr = refsByProfile.get(r.requester_id) || []
+            if (arr.length < 5) { arr.push(r); refsByProfile.set(r.requester_id, arr) }
+          }
+
+          const qualData: ProfileQualitativeData[] = topIds.map((pid: string) => {
+            const profile = result.results.find((r: any) => r.id === pid)
+            return {
+              profile_id: pid,
+              full_name: profile?.full_name || null,
+              role: profile?.role || 'unknown',
+              position: profile?.position || null,
+              comments: (commentsByProfile.get(pid) || []).map((c: any) => ({
+                content: c.content,
+                rating: c.rating,
+                author_name: c.author?.full_name || null,
+                author_role: c.author?.role || null,
+              })),
+              references: (refsByProfile.get(pid) || []).map((r: any) => ({
+                endorsement_text: r.endorsement_text,
+                relationship_type: r.relationship_type,
+                endorser_name: r.endorser?.full_name || null,
+                endorser_role: r.endorser?.role || null,
+              })),
+            }
+          })
+
+          const hasAnyData = qualData.some(p => p.comments.length > 0 || p.references.length > 0)
+          if (hasAnyData) {
+            const synthesis = await synthesizeQualitativeInsights(qualData, query)
+            if (synthesis) aiMessage += `\n\n${synthesis}`
+          }
+        }
+      } catch (qualError) {
+        // Non-fatal: log but don't fail the search
+        captureException(qualError, { functionName: 'nl-search', correlationId })
+      }
+    }
+
     // ── Response ────────────────────────────────────────────────────────
     return new Response(
       JSON.stringify({
@@ -186,11 +365,22 @@ Deno.serve(async (req) => {
         has_more: result.has_more,
         parsed_filters: parsed,
         summary: parsed.summary || `Found ${result.total} result${result.total === 1 ? '' : 's'}.`,
+        ai_message: aiMessage,
       }),
       { status: 200, headers: { ...headers, 'Content-Type': 'application/json' } }
     )
 
   } catch (error) {
+    if (error instanceof LLMRateLimitError) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'The AI assistant has reached its usage limit for now. Please try again in a few minutes.',
+        }),
+        { status: 429, headers: { ...headers, 'Retry-After': '60', 'Content-Type': 'application/json' } }
+      )
+    }
+
     captureException(error, { functionName: 'nl-search', correlationId })
     return new Response(
       JSON.stringify({

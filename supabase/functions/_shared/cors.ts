@@ -10,14 +10,24 @@ const ALLOWED_ORIGINS = [
   'http://127.0.0.1:5173',
 ]
 
+/** Check if an origin is allowed (static list + Vercel preview deployments). */
+function isAllowedOrigin(origin: string): boolean {
+  if (ALLOWED_ORIGINS.includes(origin)) return true
+  try {
+    const { hostname } = new URL(origin)
+    if (hostname.endsWith('.vercel.app') && hostname.startsWith('playr-')) return true
+  } catch { /* invalid URL */ }
+  return false
+}
+
 /**
  * Get CORS headers with origin validation.
  * Returns the request origin if allowed, otherwise defaults to primary production domain.
- * 
+ *
  * USE THIS FOR: Client-facing APIs that handle sensitive operations (auth, profile, account)
  */
 export function getCorsHeaders(requestOrigin?: string | null): Record<string, string> {
-  const origin = requestOrigin && ALLOWED_ORIGINS.includes(requestOrigin)
+  const origin = requestOrigin && isAllowedOrigin(requestOrigin)
     ? requestOrigin
     : ALLOWED_ORIGINS[0]
 

@@ -1,5 +1,5 @@
-import { useMutation } from '@tanstack/react-query'
-import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from '@/lib/supabase'
+import { create } from 'zustand'
+import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 
 export interface DiscoverResult {
@@ -55,37 +55,130 @@ export interface DiscoverResponse {
   data: DiscoverResult[]
   total: number
   has_more: boolean
-  parsed_filters: ParsedFilters
-  summary: string
+  parsed_filters: ParsedFilters | null
+  summary: string | null
+  ai_message: string
   error?: string
 }
 
-export function useDiscover() {
-  return useMutation({
-    mutationFn: async (query: string): Promise<DiscoverResponse> => {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) throw new Error('Not authenticated')
+// ── Chat message types ──────────────────────────────────────────────────
 
-      const response = await fetch(`${SUPABASE_URL}/functions/v1/nl-search`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-          'apikey': SUPABASE_ANON_KEY,
-        },
-        body: JSON.stringify({ query }),
+export interface DiscoverChatMessage {
+  id: string
+  role: 'user' | 'assistant'
+  content: string
+  results?: DiscoverResult[]
+  parsed_filters?: ParsedFilters | null
+  total?: number
+  timestamp: number
+  status: 'sending' | 'complete' | 'error'
+  error?: string
+}
+
+interface HistoryTurn {
+  role: 'user' | 'assistant'
+  content: string
+}
+
+// ── Zustand store — persists across navigation ──────────────────────────
+
+interface DiscoverChatStore {
+  messages: DiscoverChatMessage[]
+  isPending: boolean
+  sendMessage: (query: string) => Promise<void>
+  clearChat: () => void
+}
+
+export const useDiscoverChat = create<DiscoverChatStore>((set, get) => ({
+  messages: [],
+  isPending: false,
+
+  sendMessage: async (query: string) => {
+    const trimmed = query.trim()
+    if (!trimmed || get().isPending) return
+
+    const userMsg: DiscoverChatMessage = {
+      id: crypto.randomUUID(),
+      role: 'user',
+      content: trimmed,
+      timestamp: Date.now(),
+      status: 'complete',
+    }
+
+    const assistantId = crypto.randomUUID()
+    const assistantPlaceholder: DiscoverChatMessage = {
+      id: assistantId,
+      role: 'assistant',
+      content: '',
+      timestamp: Date.now(),
+      status: 'sending',
+    }
+
+    set(s => ({
+      messages: [...s.messages, userMsg, assistantPlaceholder],
+      isPending: true,
+    }))
+
+    // Build history from completed messages (last 10 turns)
+    const history: HistoryTurn[] = get()
+      .messages.filter(m => m.status === 'complete')
+      .map(m => ({ role: m.role, content: m.content }))
+      .slice(-10)
+
+    try {
+      const { data, error } = await supabase.functions.invoke('nl-search', {
+        body: { query: trimmed, history },
       })
 
-      const result = await response.json()
+      if (error) {
+        let serverMessage = ''
+        if (error.context && typeof error.context.json === 'function') {
+          try {
+            const body = await error.context.json()
+            serverMessage = body?.error || ''
+          } catch { /* response body not parseable */ }
+        }
+        throw new Error(serverMessage || error.message || 'Search failed')
+      }
 
-      if (!response.ok || !result.success) {
+      const result = data as DiscoverResponse
+      if (!result.success) {
         throw new Error(result.error || 'Search failed')
       }
 
-      return result as DiscoverResponse
-    },
-    onError: (error) => {
-      logger.error('[useDiscover] Error:', error)
-    },
-  })
-}
+      set(s => ({
+        messages: s.messages.map(m =>
+          m.id === assistantId
+            ? {
+                ...m,
+                content: result.ai_message,
+                results: result.data,
+                parsed_filters: result.parsed_filters,
+                total: result.total,
+                status: 'complete' as const,
+              }
+            : m
+        ),
+      }))
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : 'Unknown error'
+      logger.error('[useDiscoverChat] Error:', errMsg)
+      set(s => ({
+        messages: s.messages.map(m =>
+          m.id === assistantId
+            ? {
+                ...m,
+                content: errMsg || 'Something went wrong. Please try again.',
+                status: 'error' as const,
+                error: errMsg,
+              }
+            : m
+        ),
+      }))
+    } finally {
+      set({ isPending: false })
+    }
+  },
+
+  clearChat: () => set({ messages: [], isPending: false }),
+}))

@@ -82,7 +82,7 @@ export default function MobileBottomNav() {
 
   // Hide on certain routes (modals, auth pages)
   useEffect(() => {
-    const hiddenRoutes = ['/', '/signup', '/login', '/complete-profile']
+    const hiddenRoutes = ['/', '/signup', '/login', '/complete-profile', '/discover']
     const searchParams = new URLSearchParams(location.search)
     const isConversationPath = location.pathname.startsWith('/messages/')
     const hasMessagesOverlayParam = searchParams.has('conversation') || searchParams.has('new')
