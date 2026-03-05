@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Sparkles, Send, Loader2, RotateCcw, ChevronLeft } from 'lucide-react'
 import { useDiscoverChat } from '@/hooks/useDiscover'
 import DiscoverChat from '@/components/DiscoverChat'
+import { useSafeArea } from '@/hooks/useSafeArea'
 
 const EXAMPLE_QUERIES = [
   'Find U25 defenders with a EU passport and 2+ references',
@@ -11,6 +12,7 @@ const EXAMPLE_QUERIES = [
 ]
 
 export default function DiscoverPage() {
+  useSafeArea()
   const navigate = useNavigate()
   const { messages, sendMessage, clearChat, isPending } = useDiscoverChat()
   const [input, setInput] = useState('')
@@ -74,8 +76,17 @@ export default function DiscoverPage() {
     sendMessage(query)
   }, [sendMessage])
 
+  const handleFocus = useCallback(() => {
+    setTimeout(() => {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }, 300)
+  }, [])
+
   return (
-    <div className="fixed inset-0 flex flex-col bg-gray-50">
+    <div
+      className="fixed inset-x-0 top-0 flex flex-col bg-gray-50"
+      style={{ height: 'var(--chat-viewport-height, 100dvh)' }}
+    >
       {/* ── Chat header ──────────────────────────────────────────── */}
       <header className="flex items-center gap-3 h-14 px-3 border-b border-gray-200 bg-white flex-shrink-0 pt-[env(safe-area-inset-top)]">
         <button
@@ -106,7 +117,7 @@ export default function DiscoverPage() {
       </header>
 
       {/* ── Scrollable chat area ─────────────────────────────────── */}
-      <div ref={scrollAreaRef} className="flex-1 overflow-y-auto">
+      <div ref={scrollAreaRef} className="flex-1 overflow-y-auto overscroll-contain">
         <div className="max-w-2xl mx-auto px-4 py-4">
           {!hasMessages ? (
             <div className="flex flex-col items-center justify-center min-h-[60vh]">
@@ -153,6 +164,7 @@ export default function DiscoverPage() {
                 if (e.target.value.length <= 500) setInput(e.target.value)
               }}
               onKeyDown={handleKeyDown}
+              onFocus={handleFocus}
               placeholder={hasMessages ? 'Follow up or ask something new…' : EXAMPLE_QUERIES[placeholderIndex]}
               rows={1}
               disabled={isPending}
