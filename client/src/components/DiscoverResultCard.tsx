@@ -29,6 +29,12 @@ export default function DiscoverResultCard({ result }: DiscoverResultCardProps) 
     .filter(Boolean)
     .join(' · ')
 
+  const availabilityPill = result.open_to_play
+    ? <AvailabilityPill variant="play" size="sm" />
+    : result.open_to_coach
+      ? <AvailabilityPill variant="coach" size="sm" />
+      : null
+
   return (
     <button
       type="button"
@@ -46,17 +52,16 @@ export default function DiscoverResultCard({ result }: DiscoverResultCardProps) 
           <span className="text-sm font-medium text-gray-900 truncate">
             {result.full_name ?? 'Unknown'}
           </span>
-          <RoleBadge role={result.role} />
-          {result.open_to_play && (
-            <AvailabilityPill variant="play" size="sm" />
+          <RoleBadge role={result.role} className="flex-shrink-0" />
+        </div>
+        <div className="flex items-center gap-1.5 mt-0.5">
+          {subtitle && (
+            <p className="text-xs text-gray-500 truncate">{subtitle}</p>
           )}
-          {result.open_to_coach && !result.open_to_play && (
-            <AvailabilityPill variant="coach" size="sm" />
+          {availabilityPill && (
+            <span className="flex-shrink-0">{availabilityPill}</span>
           )}
         </div>
-        {subtitle && (
-          <p className="text-xs text-gray-500 truncate">{subtitle}</p>
-        )}
       </div>
       <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
     </button>
