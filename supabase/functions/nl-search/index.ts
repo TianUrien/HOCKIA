@@ -351,6 +351,8 @@ Deno.serve(async (req) => {
           }
         }
       } catch (qualError) {
+        // Rate limit errors should propagate to the outer handler for a clean 429
+        if (qualError instanceof LLMRateLimitError) throw qualError
         // Non-fatal: log but don't fail the search
         captureException(qualError, { functionName: 'nl-search', correlationId })
       }

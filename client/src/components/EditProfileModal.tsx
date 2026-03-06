@@ -861,7 +861,6 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                     <option value="">Select gender</option>
                     <option value="Men">Men</option>
                     <option value="Women">Women</option>
-                    <option value="Other">Other</option>
                   </select>
                 </div>
 
