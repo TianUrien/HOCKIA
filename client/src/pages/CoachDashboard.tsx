@@ -20,6 +20,8 @@ import { useNotificationStore } from '@/lib/notifications'
 import { derivePublicContactEmail } from '@/lib/profile'
 import type { SocialLinks } from '@/lib/socialLinks'
 import { useCoachProfileStrength } from '@/hooks/useCoachProfileStrength'
+import AvailabilityToggleStrip from '@/components/AvailabilityToggleStrip'
+import ClubLinkPrompt from '@/components/ClubLinkPrompt'
 import { useWorldClubLogo } from '@/hooks/useWorldClubLogo'
 import { calculateAge, formatDateOfBirth } from '@/lib/utils'
 
@@ -103,7 +105,12 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
   useEffect(() => {
     if (readOnly || strengthLoading) return
     if (prevPercentageRef.current !== null && percentage > prevPercentageRef.current) {
-      addToast(`Profile strength: ${percentage}%`, 'success')
+      const increase = percentage - prevPercentageRef.current
+      if (percentage >= 100) {
+        addToast("Your profile is now complete! You're fully visible to clubs.", 'success')
+      } else {
+        addToast(`Profile strength +${increase}%. Keep going!`, 'success')
+      }
     }
     prevPercentageRef.current = percentage
   }, [percentage, readOnly, strengthLoading, addToast])
@@ -443,10 +450,17 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
                         if (mediaSection) {
                           mediaSection.scrollIntoView({ behavior: 'smooth' })
                         }
+                      } else if (actionId === 'friends-tab') {
+                        setActiveTab('friends')
+                        setSearchParams({ tab: 'friends' })
                       }
                     }}
                   />
                 )}
+                {!readOnly && (
+                  <AvailabilityToggleStrip role="coach" />
+                )}
+                {!readOnly && <ClubLinkPrompt />}
 
                 {!readOnly && (
                   <div className="bg-gradient-to-br from-[#8026FA] to-[#924CEC] rounded-xl p-6 text-white">

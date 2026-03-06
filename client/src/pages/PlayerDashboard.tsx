@@ -21,6 +21,8 @@ import { useNotificationStore } from '@/lib/notifications'
 import { derivePublicContactEmail } from '@/lib/profile'
 import type { SocialLinks } from '@/lib/socialLinks'
 import { useProfileStrength, type ProfileStrengthBucket } from '@/hooks/useProfileStrength'
+import AvailabilityToggleStrip from '@/components/AvailabilityToggleStrip'
+import ClubLinkPrompt from '@/components/ClubLinkPrompt'
 import { useWorldClubLogo } from '@/hooks/useWorldClubLogo'
 import { calculateAge, formatDateOfBirth } from '@/lib/utils'
 
@@ -91,6 +93,13 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
       setActiveTab(tabParam)
     }
   }, [tabParam, activeTab])
+
+  // Refresh profile strength when switching tabs (picks up gallery/journey changes)
+  useEffect(() => {
+    if (!readOnly) {
+      void profileStrength.refresh()
+    }
+  }, [activeTab, readOnly]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (readOnly) {
@@ -498,6 +507,10 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
                     onBucketAction={handleProfileStrengthAction}
                   />
                 )}
+                {!readOnly && (
+                  <AvailabilityToggleStrip role="player" />
+                )}
+                {!readOnly && <ClubLinkPrompt />}
                 {/* Basic Information - Only shown in private view (not readOnly) to avoid duplication with header card */}
                 {!readOnly && (
                 <section className="space-y-6">

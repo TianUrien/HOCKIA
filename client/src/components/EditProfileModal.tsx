@@ -295,12 +295,21 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
     })
   }
 
+  const isDirty = useCallback(() => {
+    if (!profile) return false
+    const initial = buildInitialFormData(profile)
+    return JSON.stringify(formData) !== JSON.stringify(initial)
+  }, [formData, profile])
+
   const handleDismiss = useCallback(() => {
     if (loading) {
       return
     }
+    if (isDirty() && !window.confirm('You have unsaved changes. Discard them?')) {
+      return
+    }
     onClose()
-  }, [loading, onClose])
+  }, [loading, onClose, isDirty])
 
   useFocusTrap({ containerRef: dialogRef, isActive: isOpen && Boolean(profile), initialFocusRef: closeButtonRef })
 

@@ -55,7 +55,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
       path: location.pathname,
       loading,
       hasUser: !!user,
-      isPublic: PUBLIC_ROUTES.some(route => location.pathname.startsWith(route))
+      isPublic: PUBLIC_ROUTES.some(route => route === '/' ? location.pathname === '/' : location.pathname === route || location.pathname.startsWith(route + '/'))
     })
   }, [location.pathname, loading, user])
 
@@ -71,12 +71,12 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     )
   }
 
-  // Check if current route is public
-  const isPublicRoute = PUBLIC_ROUTES.some(route =>
-    route === '/'
-      ? location.pathname === '/'
-      : location.pathname.startsWith(route)
-  )
+  // Check if current route is public (exact match for /, prefix match for others)
+  const isPublicRoute = PUBLIC_ROUTES.some(route => {
+    if (route === '/') return location.pathname === '/'
+    // Ensure prefix match doesn't collide: /opportunities must not match /opportunities-admin
+    return location.pathname === route || location.pathname.startsWith(route + '/')
+  })
 
   // Public routes - allow access regardless of auth status
   if (isPublicRoute) {

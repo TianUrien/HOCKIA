@@ -108,7 +108,7 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
           async () => {
             let query = supabase
               .from('profiles')
-              .select('id, avatar_url, full_name, role, nationality, nationality_country_id, nationality2_country_id, base_location, position, secondary_position, current_club, current_world_club_id, gender, created_at, is_test_account, open_to_play, open_to_coach')
+              .select('id, avatar_url, full_name, role, nationality, nationality_country_id, nationality2_country_id, base_location, position, secondary_position, current_club, current_world_club_id, gender, created_at, is_test_account, open_to_play, open_to_coach, accepted_reference_count')
               .eq('onboarding_completed', true) // Only show fully onboarded users
 
             // If current user is NOT a test account, exclude test accounts from results
@@ -186,7 +186,7 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
             const searchTerm = `%${query}%`
             let dbQuery = supabase
               .from('profiles')
-              .select('id, avatar_url, full_name, role, nationality, nationality_country_id, nationality2_country_id, base_location, position, secondary_position, current_club, current_world_club_id, gender, created_at, is_test_account, open_to_play, open_to_coach')
+              .select('id, avatar_url, full_name, role, nationality, nationality_country_id, nationality2_country_id, base_location, position, secondary_position, current_club, current_world_club_id, gender, created_at, is_test_account, open_to_play, open_to_coach, accepted_reference_count')
               .eq('onboarding_completed', true) // Only show fully onboarded users
               .or(
                 `full_name.ilike.${searchTerm},nationality.ilike.${searchTerm},base_location.ilike.${searchTerm},position.ilike.${searchTerm},secondary_position.ilike.${searchTerm},current_club.ilike.${searchTerm}`
@@ -667,6 +667,7 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
                     created_at={member.created_at}
                     open_to_play={member.open_to_play}
                     open_to_coach={member.open_to_coach}
+                    accepted_reference_count={member.accepted_reference_count ?? 0}
                   />
                 ))}
               </div>

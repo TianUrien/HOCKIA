@@ -192,7 +192,12 @@ export default function BrandDashboard() {
     strengthSnapshotRef.current = null
 
     if (percentage > before) {
-      addToast(`Profile strength: ${percentage}%`, 'success')
+      const increase = percentage - before
+      if (percentage >= 100) {
+        addToast("Your brand profile is now complete!", 'success')
+      } else {
+        addToast(`Profile strength +${increase}%. Keep going!`, 'success')
+      }
     }
   }, [percentage, strengthLoading, addToast])
 

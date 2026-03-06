@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { ChevronRight } from 'lucide-react'
+import { ChevronRight, Shield } from 'lucide-react'
 import Avatar from '@/components/Avatar'
 import RoleBadge from '@/components/RoleBadge'
 import AvailabilityPill from '@/components/AvailabilityPill'
@@ -53,6 +53,12 @@ export default function DiscoverResultCard({ result }: DiscoverResultCardProps) 
             {result.full_name ?? 'Unknown'}
           </span>
           <RoleBadge role={result.role} className="flex-shrink-0" />
+          {result.accepted_reference_count > 0 && (
+            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 text-[10px] font-medium flex-shrink-0">
+              <Shield className="w-2.5 h-2.5" />
+              {result.accepted_reference_count}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-1.5 mt-0.5">
           {subtitle && (

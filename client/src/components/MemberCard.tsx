@@ -27,6 +27,7 @@ interface MemberCardProps {
   created_at: string
   open_to_play?: boolean
   open_to_coach?: boolean
+  accepted_reference_count?: number
 }
 
 export default function MemberCard({
@@ -46,6 +47,7 @@ export default function MemberCard({
   current_world_club_id,
   open_to_play,
   open_to_coach,
+  accepted_reference_count,
 }: MemberCardProps) {
   const navigate = useNavigate()
   const { user } = useAuthStore()
@@ -142,6 +144,12 @@ export default function MemberCard({
             )}
             {role === 'player' && open_to_play && <AvailabilityPill variant="play" size="sm" className="!shadow-none" />}
             {role === 'coach' && open_to_coach && <AvailabilityPill variant="coach" size="sm" className="!shadow-none" />}
+            {(accepted_reference_count ?? 0) > 0 && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-[10px] font-medium">
+                <Shield className="w-2.5 h-2.5" />
+                Trusted by {accepted_reference_count}
+              </span>
+            )}
           </div>
         </div>
       </div>

@@ -110,7 +110,12 @@ export default function ClubDashboard({ profileData, readOnly = false, isOwnProf
   useEffect(() => {
     if (readOnly || strengthLoading) return
     if (prevPercentageRef.current !== null && percentage > prevPercentageRef.current) {
-      addToast(`Profile strength: ${percentage}%`, 'success')
+      const increase = percentage - prevPercentageRef.current
+      if (percentage >= 100) {
+        addToast("Your club profile is now complete!", 'success')
+      } else {
+        addToast(`Profile strength +${increase}%. Keep going!`, 'success')
+      }
     }
     prevPercentageRef.current = percentage
   }, [percentage, readOnly, strengthLoading, addToast])

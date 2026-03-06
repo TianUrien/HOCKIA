@@ -622,7 +622,7 @@ export async function getWorldClubs(
     claimed_profile_id: row.claimed_profile_id,
     claimed_profile_name: row.claimed_profile?.full_name ?? null,
     claimed_at: row.claimed_at,
-    created_from: row.created_from,
+    created_from: row.created_from as WorldClub['created_from'],
     created_at: row.created_at,
     updated_at: row.updated_at,
   }))
@@ -665,12 +665,16 @@ export async function getWorldCountries(): Promise<WorldCountry[]> {
 
   if (error) throw new Error(`Failed to get world countries: ${error.message}`)
 
-  return (data || []).map((row) => ({
-    id: row.country_id,
-    code: row.country_code,
-    name: row.country_name,
-    flag_emoji: row.flag_emoji,
-  }))
+  return (data || [])
+    .filter((row): row is typeof row & { country_id: number; country_code: string; country_name: string } =>
+      row.country_id != null && row.country_code != null && row.country_name != null
+    )
+    .map((row) => ({
+      id: row.country_id,
+      code: row.country_code,
+      name: row.country_name,
+      flag_emoji: row.flag_emoji,
+    }))
 }
 
 /**
@@ -828,6 +832,20 @@ export async function forceClaimWorldClub(
   clubId: string,
   profileId: string
 ): Promise<void> {
+  // Validate that the profile exists and is a club
+  const { data: targetProfile, error: profileError } = await supabase
+    .from('profiles')
+    .select('id, role')
+    .eq('id', profileId)
+    .single()
+
+  if (profileError || !targetProfile) {
+    throw new Error('Profile not found. Please check the profile ID.')
+  }
+  if (targetProfile.role !== 'club') {
+    throw new Error(`Profile has role "${targetProfile.role}" — only club profiles can claim world clubs.`)
+  }
+
   const { error } = await supabase
     .from('world_clubs')
     .update({

@@ -174,7 +174,7 @@ export default function InstallPrompt() {
 
         <div className="flex items-start gap-3">
           <img
-            src="/pwa-icons/android/android-launchericon-96-96.png"
+            src="/pwa-icons/ios/100.png"
             alt="PLAYR"
             className="w-10 h-10 rounded-xl flex-shrink-0"
           />

@@ -7,6 +7,7 @@ import { useHomeFeed } from '@/hooks/useHomeFeed'
 import { HomeFeedItemCard } from './HomeFeedItemCard'
 import { FeedSkeleton } from './FeedSkeleton'
 import { PostComposer } from './PostComposer'
+import ProfileCompletionCard from './ProfileCompletionCard'
 
 /**
  * Lightweight error boundary for individual feed items.
@@ -65,6 +66,9 @@ export function HomeFeed() {
 
   return (
     <div>
+      {/* Profile completion nudge */}
+      <ProfileCompletionCard />
+
       {/* Post composer — visually separated from feed */}
       <div className="mb-8">
         <PostComposer onPostCreated={prependItem} />
