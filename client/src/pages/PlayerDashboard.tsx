@@ -164,6 +164,10 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
       return
     }
     if (!profileData) return
+    if (user.id === profileData.id) {
+      addToast('You cannot message yourself.', 'error')
+      return
+    }
 
     setSendingMessage(true)
     try {
@@ -218,7 +222,12 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
       navigate(`/messages?conversation=${newConv.id}`)
     } catch (error) {
       logger.error('Error creating conversation:', error)
-      addToast('Failed to start conversation. Please try again.', 'error')
+      const msg = error instanceof Error ? error.message : typeof error === 'object' && error !== null && 'message' in error ? String((error as Record<string, unknown>).message) : ''
+      if (msg.includes('Brands cannot initiate')) {
+        addToast('Brands cannot start conversations yet. Players and clubs can message you first.', 'error')
+      } else {
+        addToast('Failed to start conversation. Please try again.', 'error')
+      }
     } finally {
       setSendingMessage(false)
     }
@@ -300,24 +309,26 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
                 {readOnly ? (
                   <div className="flex flex-wrap items-center gap-2">
                     <FriendshipButton profileId={profile.id} />
-                    <button
-                      type="button"
-                      onClick={handleSendMessage}
-                      disabled={sendingMessage}
-                      className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-[#8026FA] to-[#924CEC] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-90 disabled:opacity-60"
-                    >
-                      {sendingMessage ? (
-                        <>
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          Sending...
-                        </>
-                      ) : (
-                        <>
-                          <MessageCircle className="w-4 h-4" />
-                          Message
-                        </>
-                      )}
-                    </button>
+                    {authProfile?.role !== 'brand' && (
+                      <button
+                        type="button"
+                        onClick={handleSendMessage}
+                        disabled={sendingMessage}
+                        className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-[#8026FA] to-[#924CEC] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-90 disabled:opacity-60"
+                      >
+                        {sendingMessage ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            Sending...
+                          </>
+                        ) : (
+                          <>
+                            <MessageCircle className="w-4 h-4" />
+                            Message
+                          </>
+                        )}
+                      </button>
+                    )}
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">

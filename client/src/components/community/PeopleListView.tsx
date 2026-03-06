@@ -412,6 +412,7 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
             setShowSuggestions(true)
           }}
           onFocus={() => { if (searchQuery.trim()) setShowSuggestions(true) }}
+          onKeyDown={(e) => { if (e.key === 'Enter') setShowSuggestions(false) }}
           placeholder="Search by name, location, position, or club..."
           className="w-full pl-12 pr-4 py-2.5 sm:py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
           autoComplete="off"
