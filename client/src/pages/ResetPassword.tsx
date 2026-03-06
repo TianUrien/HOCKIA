@@ -47,9 +47,13 @@ export default function ResetPassword() {
       return
     }
 
-    // Validate password length
+    // Validate password strength
     if (password.length < 8) {
       setError('Password must be at least 8 characters long')
+      return
+    }
+    if (!/[a-z]/.test(password) || !/[A-Z]/.test(password) || !/\d/.test(password)) {
+      setError('Password must include uppercase, lowercase, and a number')
       return
     }
 

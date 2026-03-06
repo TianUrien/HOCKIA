@@ -49,6 +49,9 @@ export default function SignUp() {
       if (formData.password.length < 8) {
         throw new Error('Password must be at least 8 characters long')
       }
+      if (!/[a-z]/.test(formData.password) || !/[A-Z]/.test(formData.password) || !/\d/.test(formData.password)) {
+        throw new Error('Password must include uppercase, lowercase, and a number')
+      }
 
       // Check rate limit before attempting signup
       const rateLimit = await checkSignupRateLimit(formData.email)
@@ -309,7 +312,7 @@ export default function SignUp() {
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <input
                       type={showPassword ? 'text' : 'password'}
-                      placeholder="Create a password (min. 8 characters)"
+                      placeholder="Min. 8 chars, uppercase, lowercase & number"
                       value={formData.password}
                       onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                       className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8026FA] focus:border-transparent"

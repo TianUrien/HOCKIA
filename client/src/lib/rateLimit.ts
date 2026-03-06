@@ -13,6 +13,14 @@ export interface RateLimitResult {
   limit: number
 }
 
+/** Fail-closed fallback when the rate-limit RPC itself errors out. */
+const FAIL_CLOSED: RateLimitResult = {
+  allowed: false,
+  remaining: 0,
+  reset_at: new Date(Date.now() + 60_000).toISOString(),
+  limit: 0,
+}
+
 /**
  * Get a stable identifier for rate limiting.
  * Uses email (normalized) when available for pre-auth flows,
@@ -31,7 +39,7 @@ const getClientIdentifier = (email?: string): string => {
 
 /**
  * Check login rate limit
- * @returns RateLimitResult or null if check fails
+ * @returns RateLimitResult (fail-closed on RPC error)
  */
 export const checkLoginRateLimit = async (email?: string): Promise<RateLimitResult | null> => {
   try {
@@ -42,20 +50,19 @@ export const checkLoginRateLimit = async (email?: string): Promise<RateLimitResu
 
     if (error) {
       logger.error('[RATE_LIMIT] Login rate limit check failed', { error })
-      // On error, allow the request (fail open)
-      return null
+      return FAIL_CLOSED
     }
 
     return data as RateLimitResult
   } catch (err) {
     logger.error('[RATE_LIMIT] Unexpected error checking login rate limit', { err })
-    return null
+    return FAIL_CLOSED
   }
 }
 
 /**
  * Check signup rate limit
- * @returns RateLimitResult or null if check fails
+ * @returns RateLimitResult (fail-closed on RPC error)
  */
 export const checkSignupRateLimit = async (email?: string): Promise<RateLimitResult | null> => {
   try {
@@ -66,20 +73,20 @@ export const checkSignupRateLimit = async (email?: string): Promise<RateLimitRes
 
     if (error) {
       logger.error('[RATE_LIMIT] Signup rate limit check failed', { error })
-      return null
+      return FAIL_CLOSED
     }
 
     return data as RateLimitResult
   } catch (err) {
     logger.error('[RATE_LIMIT] Unexpected error checking signup rate limit', { err })
-    return null
+    return FAIL_CLOSED
   }
 }
 
 /**
  * Check password reset rate limit
  * @param email - User's email address
- * @returns RateLimitResult or null if check fails
+ * @returns RateLimitResult (fail-closed on RPC error)
  */
 export const checkPasswordResetRateLimit = async (email: string): Promise<RateLimitResult | null> => {
   try {
@@ -89,20 +96,20 @@ export const checkPasswordResetRateLimit = async (email: string): Promise<RateLi
 
     if (error) {
       logger.error('[RATE_LIMIT] Password reset rate limit check failed', { error })
-      return null
+      return FAIL_CLOSED
     }
 
     return data as RateLimitResult
   } catch (err) {
     logger.error('[RATE_LIMIT] Unexpected error checking password reset rate limit', { err })
-    return null
+    return FAIL_CLOSED
   }
 }
 
 /**
  * Check opportunity application rate limit
  * @param userId - User's ID
- * @returns RateLimitResult or null if check fails
+ * @returns RateLimitResult (fail-closed on RPC error)
  */
 export const checkApplicationRateLimit = async (userId: string): Promise<RateLimitResult | null> => {
   try {
@@ -112,20 +119,20 @@ export const checkApplicationRateLimit = async (userId: string): Promise<RateLim
 
     if (error) {
       logger.error('[RATE_LIMIT] Application rate limit check failed', { error })
-      return null
+      return FAIL_CLOSED
     }
 
     return data as RateLimitResult
   } catch (err) {
     logger.error('[RATE_LIMIT] Unexpected error checking application rate limit', { err })
-    return null
+    return FAIL_CLOSED
   }
 }
 
 /**
  * Check message sending rate limit
  * @param userId - User's ID
- * @returns RateLimitResult or null if check fails
+ * @returns RateLimitResult (fail-closed on RPC error)
  */
 export const checkMessageRateLimit = async (userId: string): Promise<RateLimitResult | null> => {
   try {
@@ -135,13 +142,13 @@ export const checkMessageRateLimit = async (userId: string): Promise<RateLimitRe
 
     if (error) {
       logger.error('[RATE_LIMIT] Message rate limit check failed', { error })
-      return null
+      return FAIL_CLOSED
     }
 
     return data as RateLimitResult
   } catch (err) {
     logger.error('[RATE_LIMIT] Unexpected error checking message rate limit', { err })
-    return null
+    return FAIL_CLOSED
   }
 }
 

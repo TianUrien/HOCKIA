@@ -163,7 +163,7 @@ export default function InstallPrompt() {
   // iOS Safari instructions
   if (installState === 'ios-safari') {
     return (
-      <div className="fixed bottom-24 left-4 right-4 md:left-auto md:right-4 md:bottom-6 md:w-80 bg-white rounded-xl shadow-2xl border border-gray-200 p-4 z-50 animate-slide-up">
+      <div className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] left-4 right-4 md:left-auto md:right-4 md:bottom-6 md:w-80 bg-white rounded-xl shadow-2xl border border-gray-200 p-4 z-50 animate-slide-up">
         <button
           onClick={handleDismiss}
           className="absolute top-2 right-2 p-1 hover:bg-gray-100 rounded-full transition-colors"
@@ -202,7 +202,7 @@ export default function InstallPrompt() {
 
   // Standard install prompt (Chrome, Edge, Samsung, etc.)
   return (
-    <div className="fixed bottom-24 left-4 right-4 md:left-auto md:right-4 md:bottom-6 md:w-80 bg-white rounded-xl shadow-2xl border border-gray-200 p-4 z-50 animate-slide-up">
+    <div className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] left-4 right-4 md:left-auto md:right-4 md:bottom-6 md:w-80 bg-white rounded-xl shadow-2xl border border-gray-200 p-4 z-50 animate-slide-up">
       <button
         onClick={handleDismiss}
         className="absolute top-2 right-2 p-1 hover:bg-gray-100 rounded-full transition-colors"

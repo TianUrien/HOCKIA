@@ -37,7 +37,7 @@ import {
   updateProfile,
 } from '../api/adminApi'
 
-const PAGE_SIZE = 20
+const PAGE_SIZE = 50
 
 export function AdminDirectory() {
   const [searchParams, setSearchParams] = useSearchParams()

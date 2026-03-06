@@ -74,6 +74,26 @@ Deno.serve(async (req: Request) => {
     }
 
     // ========================================================================
+    // Rate limit: max 5 campaigns per admin per hour
+    // ========================================================================
+    const serviceClientForRateCheck = getServiceClient()
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
+    const { count: recentSends } = await serviceClientForRateCheck
+      .from('email_campaigns')
+      .select('id', { count: 'exact', head: true })
+      .eq('created_by', user.id)
+      .in('status', ['sending', 'sent'])
+      .gte('updated_at', oneHourAgo)
+
+    if ((recentSends ?? 0) >= 5) {
+      logger.warn('Campaign rate limit exceeded', { adminId: user.id, recentSends })
+      return new Response(
+        JSON.stringify({ success: false, error: 'Rate limit: max 5 campaigns per hour. Please wait before sending another.' }),
+        { status: 429, headers: { ...headers, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // ========================================================================
     // Parse request
     // ========================================================================
     const body = await req.json()

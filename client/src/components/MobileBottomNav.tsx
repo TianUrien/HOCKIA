@@ -1,10 +1,7 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
 import { Home, Users, Briefcase, Globe } from 'lucide-react'
-import { useAuthStore } from '@/lib/auth'
 import { Avatar, NotificationBadge } from '@/components'
-import { useOpportunityNotifications } from '@/hooks/useOpportunityNotifications'
-import { useNotificationStore } from '@/lib/notifications'
+import { useNavigation } from '@/hooks/useNavigation'
 
 interface NavItem {
   id: string
@@ -14,18 +11,17 @@ interface NavItem {
 }
 
 export default function MobileBottomNav() {
-  const navigate = useNavigate()
-  const location = useLocation()
-  const { profile, user } = useAuthStore()
-  const { count: opportunityCount } = useOpportunityNotifications()
-  const toggleNotificationDrawer = useNotificationStore((state) => state.toggleDrawer)
-  const closeNotificationsDrawer = () => toggleNotificationDrawer(false)
+  const {
+    user,
+    profile,
+    location,
+    isActive,
+    handleNavigate,
+    opportunityCount,
+    profileInitials,
+  } = useNavigation()
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false)
   const [isHidden, setIsHidden] = useState(false)
-  const handleNavigate = (path: string) => {
-    closeNotificationsDrawer()
-    navigate(path)
-  }
 
   // Navigation items
   const navItems: NavItem[] = [
@@ -54,11 +50,6 @@ export default function MobileBottomNav() {
       icon: Users,
     },
   ]
-
-  // Check if path is active
-  const isActive = (path: string) => {
-    return location.pathname === path || location.pathname.startsWith(path + '/')
-  }
 
   // Handle keyboard visibility (iOS specific)
   useEffect(() => {
@@ -103,18 +94,6 @@ export default function MobileBottomNav() {
   // Hide when keyboard is open
   if (isKeyboardOpen) {
     return null
-  }
-
-  const getInitials = (name: string | null) => {
-    if (!name) return '?'
-    return name
-      .trim()
-      .split(' ')
-      .filter(n => n.length > 0)
-      .map(n => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2)
   }
 
   return (
@@ -184,7 +163,7 @@ export default function MobileBottomNav() {
             }`}>
               <Avatar
                 src={profile.avatar_url}
-                initials={getInitials(profile.full_name)}
+                initials={profileInitials}
                 size="sm"
                 className={`transition-all duration-200 ${
                   location.pathname.startsWith('/dashboard')

@@ -250,6 +250,10 @@ export default function SettingsPage() {
       setPasswordError('Password must be at least 8 characters')
       return
     }
+    if (!/[a-z]/.test(passwordForm.newPassword) || !/[A-Z]/.test(passwordForm.newPassword) || !/\d/.test(passwordForm.newPassword)) {
+      setPasswordError('Password must include uppercase, lowercase, and a number')
+      return
+    }
 
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
       setPasswordError('Passwords do not match')

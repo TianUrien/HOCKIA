@@ -1,29 +1,21 @@
 import { useEffect, useRef } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
 import { MessageCircle, Home, Users, Briefcase, Bell, Globe, Sparkles } from 'lucide-react'
 import { Avatar, NotificationBadge } from '@/components'
-import { useAuthStore } from '@/lib/auth'
-import { useUnreadMessages } from '@/hooks/useUnreadMessages'
-import { useOpportunityNotifications } from '@/hooks/useOpportunityNotifications'
-import { useNotificationStore } from '@/lib/notifications'
+import { useNavigation } from '@/hooks/useNavigation'
 
 export default function Header() {
-  const navigate = useNavigate()
-  const location = useLocation()
-  const { user, profile } = useAuthStore()
-  const { count: unreadCount } = useUnreadMessages()
-  const { count: opportunityCount } = useOpportunityNotifications()
-  const notificationCount = useNotificationStore((state) => state.unreadCount)
-  const toggleNotificationDrawer = useNotificationStore((state) => state.toggleDrawer)
-  const closeNotificationsDrawer = () => toggleNotificationDrawer(false)
+  const {
+    user,
+    profile,
+    isActive,
+    handleNavigate,
+    toggleNotificationDrawer,
+    unreadCount,
+    opportunityCount,
+    notificationCount,
+    profileInitials,
+  } = useNavigation()
   const headerRef = useRef<HTMLElement>(null)
-  const fullName = profile?.full_name ?? ''
-  const profileInitials = fullName
-    .trim()
-    .split(' ')
-    .filter(Boolean)
-    .map(part => part[0])
-    .join('') || '?'
 
   useEffect(() => {
     if (typeof window === 'undefined' || !headerRef.current) {
@@ -63,14 +55,6 @@ export default function Header() {
       window.removeEventListener('orientationchange', updateHeaderMetrics)
     }
   }, [])
-
-  const handleNavigate = (path: string) => {
-    closeNotificationsDrawer()
-    navigate(path)
-  }
-
-  const isActive = (path: string) =>
-    location.pathname === path || location.pathname.startsWith(path + '/')
 
   return (
     <header
