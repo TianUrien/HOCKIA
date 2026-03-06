@@ -22,30 +22,14 @@ const FAIL_CLOSED: RateLimitResult = {
 }
 
 /**
- * Get a stable identifier for rate limiting.
- * Uses email (normalized) when available for pre-auth flows,
- * falls back to session-based identifier.
- */
-const getClientIdentifier = (email?: string): string => {
-  if (email) return email.trim().toLowerCase()
-
-  const sessionId = sessionStorage.getItem('rate_limit_session')
-  if (sessionId) return sessionId
-
-  const newSessionId = crypto.randomUUID?.() ?? Math.random().toString(36).slice(2) + Date.now().toString(36)
-  sessionStorage.setItem('rate_limit_session', newSessionId)
-  return newSessionId
-}
-
-/**
- * Check login rate limit
+ * Check login rate limit (keyed on email, normalized server-side)
+ * @param email - The email address being used to log in
  * @returns RateLimitResult (fail-closed on RPC error)
  */
-export const checkLoginRateLimit = async (email?: string): Promise<RateLimitResult | null> => {
+export const checkLoginRateLimit = async (email: string): Promise<RateLimitResult | null> => {
   try {
-    const identifier = getClientIdentifier(email)
     const { data, error } = await supabase.rpc('check_login_rate_limit', {
-      p_ip: identifier
+      p_email: email,
     })
 
     if (error) {
@@ -61,14 +45,14 @@ export const checkLoginRateLimit = async (email?: string): Promise<RateLimitResu
 }
 
 /**
- * Check signup rate limit
+ * Check signup rate limit (keyed on email, normalized server-side)
+ * @param email - The email address being used to sign up
  * @returns RateLimitResult (fail-closed on RPC error)
  */
-export const checkSignupRateLimit = async (email?: string): Promise<RateLimitResult | null> => {
+export const checkSignupRateLimit = async (email: string): Promise<RateLimitResult | null> => {
   try {
-    const identifier = getClientIdentifier(email)
     const { data, error } = await supabase.rpc('check_signup_rate_limit', {
-      p_ip: identifier
+      p_email: email,
     })
 
     if (error) {

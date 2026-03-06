@@ -244,8 +244,8 @@ export default function CompleteProfile() {
     setFormData(prev => {
       const next = { ...prev }
       next.city = profile.base_location ?? prev.city
-      next.baseCity = (profile as unknown as { base_city?: string | null }).base_city ?? prev.baseCity
-      next.baseCountryId = (profile as unknown as { base_country_id?: number | null }).base_country_id ?? prev.baseCountryId
+      next.baseCity = profile.base_city ?? prev.baseCity
+      next.baseCountryId = profile.base_country_id ?? prev.baseCountryId
       next.locationSelected = !!(next.baseCity && next.baseCountryId)
       next.nationality = profile.nationality ?? prev.nationality
 
@@ -253,8 +253,8 @@ export default function CompleteProfile() {
         next.clubName = profile.full_name ?? prev.clubName
         next.nationalityCountryId = profile.nationality_country_id ?? prev.nationalityCountryId
         next.yearFounded = profile.year_founded ? String(profile.year_founded) : prev.yearFounded
-        next.womensLeagueDivision = (profile as unknown as { womens_league_division?: string | null }).womens_league_division ?? prev.womensLeagueDivision
-        next.mensLeagueDivision = (profile as unknown as { mens_league_division?: string | null }).mens_league_division ?? prev.mensLeagueDivision
+        next.womensLeagueDivision = profile.womens_league_division ?? prev.womensLeagueDivision
+        next.mensLeagueDivision = profile.mens_league_division ?? prev.mensLeagueDivision
         next.website = profile.website ?? prev.website
         next.contactEmail = profile.contact_email ?? next.contactEmail
         next.clubBio = profile.club_bio ?? prev.clubBio

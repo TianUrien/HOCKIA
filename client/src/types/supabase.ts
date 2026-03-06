@@ -3740,7 +3740,7 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: Json
       }
-      check_login_rate_limit: { Args: { p_ip: string }; Returns: Json }
+      check_login_rate_limit: { Args: { p_email: string }; Returns: Json }
       check_message_rate_limit: { Args: { p_user_id: string }; Returns: Json }
       check_password_reset_rate_limit: {
         Args: { p_email: string }
@@ -3755,7 +3755,7 @@ export type Database = {
         }
         Returns: Json
       }
-      check_signup_rate_limit: { Args: { p_ip: string }; Returns: Json }
+      check_signup_rate_limit: { Args: { p_email: string }; Returns: Json }
       check_user_post_rate_limit: { Args: { p_user_id: string }; Returns: Json }
       claim_world_club: {
         Args: {

@@ -1,13 +1,19 @@
 /**
  * useAdminStats Hook
- * 
+ *
  * Fetches and caches dashboard statistics for the admin portal.
+ * Uses React Query for automatic caching (5-minute stale time).
  */
 
-import { useState, useEffect, useCallback } from 'react'
-import { logger } from '@/lib/logger'
+import { useQuery } from '@tanstack/react-query'
 import type { DashboardStats, SignupTrend, TopCountry } from '../types'
 import { getDashboardStats, getSignupTrends, getTopCountries } from '../api/adminApi'
+
+interface AdminStatsData {
+  stats: DashboardStats
+  signupTrends: SignupTrend[]
+  topCountries: TopCountry[]
+}
 
 interface UseAdminStatsResult {
   stats: DashboardStats | null
@@ -15,48 +21,29 @@ interface UseAdminStatsResult {
   topCountries: TopCountry[]
   isLoading: boolean
   error: string | null
-  refetch: () => Promise<void>
+  refetch: () => unknown
 }
 
 export function useAdminStats(): UseAdminStatsResult {
-  const [stats, setStats] = useState<DashboardStats | null>(null)
-  const [signupTrends, setSignupTrends] = useState<SignupTrend[]>([])
-  const [topCountries, setTopCountries] = useState<TopCountry[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  const fetchAllStats = useCallback(async () => {
-    setIsLoading(true)
-    setError(null)
-
-    try {
-      const [statsData, trendsData, countriesData] = await Promise.all([
+  const { data, isLoading, isFetching, error, refetch } = useQuery<AdminStatsData>({
+    queryKey: ['admin', 'stats'],
+    queryFn: async () => {
+      const [stats, signupTrends, topCountries] = await Promise.all([
         getDashboardStats(),
         getSignupTrends(30),
         getTopCountries(10),
       ])
-
-      setStats(statsData)
-      setSignupTrends(trendsData)
-      setTopCountries(countriesData)
-    } catch (err) {
-      logger.error('[useAdminStats] Failed to fetch stats:', err)
-      setError(err instanceof Error ? err.message : 'Failed to fetch statistics')
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    fetchAllStats()
-  }, [fetchAllStats])
+      return { stats, signupTrends, topCountries }
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  })
 
   return {
-    stats,
-    signupTrends,
-    topCountries,
-    isLoading,
-    error,
-    refetch: fetchAllStats,
+    stats: data?.stats ?? null,
+    signupTrends: data?.signupTrends ?? [],
+    topCountries: data?.topCountries ?? [],
+    isLoading: isLoading || isFetching,
+    error: error instanceof Error ? error.message : error ? String(error) : null,
+    refetch,
   }
 }

@@ -1,7 +1,20 @@
-import { useState, useEffect, useCallback } from 'react'
-import { logger } from '@/lib/logger'
+/**
+ * useCommandCenter Hook
+ *
+ * Fetches and caches command center analytics for the admin portal.
+ * Uses React Query for automatic caching (5-minute stale time).
+ */
+
+import { useQuery } from '@tanstack/react-query'
 import type { CommandCenterStats, RetentionCohort, ActivationFunnelData, UserGrowthPoint } from '../types'
 import { getCommandCenterStats, getRetentionCohorts, getActivationFunnel, getUserGrowthChart } from '../api/adminApi'
+
+interface CommandCenterData {
+  stats: CommandCenterStats
+  growthData: UserGrowthPoint[]
+  cohorts: RetentionCohort[]
+  funnel: ActivationFunnelData
+}
 
 interface UseCommandCenterResult {
   stats: CommandCenterStats | null
@@ -10,44 +23,31 @@ interface UseCommandCenterResult {
   funnel: ActivationFunnelData | null
   isLoading: boolean
   error: string | null
-  refetch: () => Promise<void>
+  refetch: () => unknown
 }
 
 export function useCommandCenter(days: number): UseCommandCenterResult {
-  const [stats, setStats] = useState<CommandCenterStats | null>(null)
-  const [growthData, setGrowthData] = useState<UserGrowthPoint[]>([])
-  const [cohorts, setCohorts] = useState<RetentionCohort[]>([])
-  const [funnel, setFunnel] = useState<ActivationFunnelData | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  const fetchAll = useCallback(async () => {
-    setIsLoading(true)
-    setError(null)
-
-    try {
-      const [statsData, growthChartData, cohortsData, funnelData] = await Promise.all([
+  const { data, isLoading, isFetching, error, refetch } = useQuery<CommandCenterData>({
+    queryKey: ['admin', 'commandCenter', days],
+    queryFn: async () => {
+      const [stats, growthData, cohorts, funnel] = await Promise.all([
         getCommandCenterStats(days),
         getUserGrowthChart(days),
         getRetentionCohorts(3),
         getActivationFunnel(days),
       ])
+      return { stats, growthData, cohorts, funnel }
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  })
 
-      setStats(statsData)
-      setGrowthData(growthChartData)
-      setCohorts(cohortsData)
-      setFunnel(funnelData)
-    } catch (err) {
-      logger.error('[useCommandCenter] Failed to fetch:', err)
-      setError(err instanceof Error ? err.message : 'Failed to fetch command center data')
-    } finally {
-      setIsLoading(false)
-    }
-  }, [days])
-
-  useEffect(() => {
-    fetchAll()
-  }, [fetchAll])
-
-  return { stats, growthData, cohorts, funnel, isLoading, error, refetch: fetchAll }
+  return {
+    stats: data?.stats ?? null,
+    growthData: data?.growthData ?? [],
+    cohorts: data?.cohorts ?? [],
+    funnel: data?.funnel ?? null,
+    isLoading: isLoading || isFetching,
+    error: error instanceof Error ? error.message : error ? String(error) : null,
+    refetch,
+  }
 }

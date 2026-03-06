@@ -1467,6 +1467,7 @@ export type Database = {
           priority: Database["public"]["Enums"]["opportunity_priority"] | null
           published_at: string | null
           requirements: string[]
+          search_vector: unknown
           start_date: string | null
           status: Database["public"]["Enums"]["opportunity_status"]
           title: string
@@ -1495,6 +1496,7 @@ export type Database = {
           priority?: Database["public"]["Enums"]["opportunity_priority"] | null
           published_at?: string | null
           requirements?: string[]
+          search_vector?: unknown
           start_date?: string | null
           status?: Database["public"]["Enums"]["opportunity_status"]
           title: string
@@ -1523,6 +1525,7 @@ export type Database = {
           priority?: Database["public"]["Enums"]["opportunity_priority"] | null
           published_at?: string | null
           requirements?: string[]
+          search_vector?: unknown
           start_date?: string | null
           status?: Database["public"]["Enums"]["opportunity_status"]
           title?: string
@@ -3867,7 +3870,7 @@ export type Database = {
         Returns: Json
       }
       check_brand_follow_status: { Args: { p_brand_id: string }; Returns: Json }
-      check_login_rate_limit: { Args: { p_ip: string }; Returns: Json }
+      check_login_rate_limit: { Args: { p_email: string }; Returns: Json }
       check_message_rate_limit: { Args: { p_user_id: string }; Returns: Json }
       check_password_reset_rate_limit: {
         Args: { p_email: string }
@@ -3882,7 +3885,7 @@ export type Database = {
         }
         Returns: Json
       }
-      check_signup_rate_limit: { Args: { p_ip: string }; Returns: Json }
+      check_signup_rate_limit: { Args: { p_email: string }; Returns: Json }
       check_user_post_rate_limit: { Args: { p_user_id: string }; Returns: Json }
       claim_world_club: {
         Args: {
@@ -4229,6 +4232,7 @@ export type Database = {
         Args: { p_bucket: string; p_prefix: string; p_reason?: string }
         Returns: number
       }
+      escape_ilike: { Args: { input: string }; Returns: string }
       extract_storage_path: {
         Args: { p_bucket: string; p_url: string }
         Returns: string
