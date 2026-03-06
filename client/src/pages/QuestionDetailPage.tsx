@@ -5,8 +5,8 @@
  * Allows users to read, answer, edit, and delete content.
  */
 
-import { useState, useCallback } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useState, useCallback, useRef, useEffect } from 'react'
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom'
 import { ArrowLeft, MessageCircle, MoreVertical, Pencil, Trash2, LogIn } from 'lucide-react'
 import { Header, Avatar, RoleBadge } from '@/components'
 import Breadcrumbs from '@/components/Breadcrumbs'
@@ -20,7 +20,9 @@ import type { Answer } from '@/types/questions'
 export default function QuestionDetailPage() {
   const { questionId } = useParams<{ questionId: string }>()
   const navigate = useNavigate()
+  const location = useLocation()
   const { user } = useAuthStore()
+  const answerTextareaRef = useRef<HTMLTextAreaElement>(null)
   const [answerText, setAnswerText] = useState('')
   const [isSubmittingAnswer, setIsSubmittingAnswer] = useState(false)
   const [editingAnswerId, setEditingAnswerId] = useState<string | null>(null)
@@ -90,6 +92,16 @@ export default function QuestionDetailPage() {
       navigate('/community/questions')
     }
   }
+
+  // Scroll to and focus answer textarea when navigating with #answer
+  useEffect(() => {
+    if (location.hash === '#answer' && !isLoading && question) {
+      setTimeout(() => {
+        answerTextareaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        answerTextareaRef.current?.focus()
+      }, 100)
+    }
+  }, [location.hash, isLoading, question])
 
   const isQuestionAuthor = user?.id === question?.author.id
 
@@ -348,6 +360,7 @@ export default function QuestionDetailPage() {
           {user ? (
             <form onSubmit={handleSubmitAnswer}>
               <textarea
+                ref={answerTextareaRef}
                 value={answerText}
                 onChange={(e) => setAnswerText(e.target.value)}
                 placeholder="Share your knowledge or experience..."

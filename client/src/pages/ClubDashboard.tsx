@@ -150,6 +150,10 @@ export default function ClubDashboard({ profileData, readOnly = false, isOwnProf
       return
     }
     if (!profileData) return
+    if (user.id === profileData.id) {
+      addToast('You cannot message yourself.', 'error')
+      return
+    }
 
     setSendingMessage(true)
     try {
@@ -204,7 +208,12 @@ export default function ClubDashboard({ profileData, readOnly = false, isOwnProf
       navigate(`/messages?conversation=${newConv.id}`)
     } catch (error) {
       logger.error('Error creating conversation:', error)
-      addToast('Failed to start conversation. Please try again.', 'error')
+      const msg = error instanceof Error ? error.message : typeof error === 'object' && error !== null && 'message' in error ? String((error as Record<string, unknown>).message) : ''
+      if (msg.includes('Brands cannot initiate')) {
+        addToast('Brands cannot start conversations yet. Players and clubs can message you first.', 'error')
+      } else {
+        addToast('Failed to start conversation. Please try again.', 'error')
+      }
     } finally {
       setSendingMessage(false)
     }
@@ -327,20 +336,22 @@ export default function ClubDashboard({ profileData, readOnly = false, isOwnProf
                       Network View
                     </div>
                     <FriendshipButton profileId={profile.id} />
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={handleSendMessage}
-                      disabled={sendingMessage}
-                      className="gap-2"
-                    >
-                      {sendingMessage ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <MessageCircle className="w-4 h-4" />
-                      )}
-                      {sendingMessage ? 'Starting...' : 'Message'}
-                    </Button>
+                    {authProfile?.role !== 'brand' && (
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={handleSendMessage}
+                        disabled={sendingMessage}
+                        className="gap-2"
+                      >
+                        {sendingMessage ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <MessageCircle className="w-4 h-4" />
+                        )}
+                        {sendingMessage ? 'Starting...' : 'Message'}
+                      </Button>
+                    )}
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">

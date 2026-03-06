@@ -529,7 +529,12 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
       }
 
       // Force refresh from server to pick up computed fields/triggers
-      await invalidateProfile({ userId: profileId, reason: 'profile-updated' })
+      // Wrapped separately so refresh failures don't trigger a false save error
+      try {
+        await invalidateProfile({ userId: profileId, reason: 'profile-updated' })
+      } catch {
+        // Refresh failed but save succeeded — ignore silently
+      }
       clearProfileDraft(profileId, role)
     } catch (err) {
       captureOnboardingError(err, {

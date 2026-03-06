@@ -185,3 +185,52 @@ export function getTimeAgo(dateString: string, compact = false): string {
   if (weeks < 4) return `${weeks} week${weeks > 1 ? 's' : ''} ago`
   return formatDate(dateString)
 }
+
+/**
+ * Extract a user-friendly error message from Supabase or network errors.
+ *
+ * Technical DB/network errors are mapped to plain-English messages.
+ * Only returns the raw message if it looks safe for end-users.
+ * Falls back to the provided default otherwise.
+ */
+
+const TECHNICAL_ERROR_MAP: [RegExp, string][] = [
+  [/row-level security/i, 'You don\'t have permission to do that.'],
+  [/duplicate key|unique.?constraint|already exists/i, 'This already exists. Try refreshing the page.'],
+  [/violates check constraint/i, 'Some of the data provided is invalid. Please review and try again.'],
+  [/violates foreign key/i, 'A related record is missing or was deleted.'],
+  [/not found|does not exist/i, 'The item was not found — it may have been deleted.'],
+  [/rate limit|too many requests|429/i, 'Too many requests. Please wait a moment and try again.'],
+  [/timeout|timed out|deadline exceeded/i, 'The request timed out. Please try again.'],
+  [/network|fetch|ERR_INTERNET|ECONNREFUSED|ENOTFOUND/i, 'Network error. Please check your connection and try again.'],
+  [/JWT|token.*expired|auth.*expired/i, 'Your session has expired. Please sign in again.'],
+  [/FetchError/i, 'Network error. Please check your connection and try again.'],
+]
+
+export function extractErrorMessage(error: unknown, fallback: string): string {
+  if (!error) return fallback
+
+  // Extract the raw message string
+  let raw = ''
+  if (error instanceof Error) {
+    raw = error.message ?? ''
+  } else if (typeof error === 'object' && error !== null) {
+    const obj = error as Record<string, unknown>
+    if (typeof obj.message === 'string') raw = obj.message
+    else if (typeof obj.error_description === 'string') raw = obj.error_description
+  }
+
+  if (!raw) return fallback
+
+  // Map known technical patterns to user-friendly messages
+  for (const [pattern, friendly] of TECHNICAL_ERROR_MAP) {
+    if (pattern.test(raw)) return friendly
+  }
+
+  // If the raw message is short and doesn't look like a stack trace or SQL,
+  // it's probably already user-friendly (e.g. from our own RPCs)
+  const looksTechnical = /postgres|sql|supabase|pgrst|pg_|constraint|relation|column|schema|operator/i.test(raw)
+  if (!looksTechnical && raw.length < 200) return raw
+
+  return fallback
+}

@@ -183,8 +183,8 @@ Deno.serve(async (req) => {
     // ── LLM parsing ─────────────────────────────────────────────────────
     const llmResult: LLMResult = await parseSearchQuery(query, history, userContext)
 
-    // ── Conversation-only response (no search needed) ────────────────
-    if (llmResult.type === 'conversation') {
+    // ── Conversation or knowledge response (no search needed) ────────
+    if (llmResult.type === 'conversation' || llmResult.type === 'knowledge') {
       return new Response(
         JSON.stringify({
           success: true,

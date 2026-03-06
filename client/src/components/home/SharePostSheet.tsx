@@ -13,6 +13,7 @@ import RoleBadge from '../RoleBadge'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
+import { extractErrorMessage } from '@/lib/utils'
 import { sendSharedPostMessage } from '@/lib/sharePost'
 import { logger } from '@/lib/logger'
 import { cn } from '@/lib/utils'
@@ -170,8 +171,8 @@ export function SharePostSheet({
         } else {
           addToast(result.error || 'Failed to send post', 'error')
         }
-      } catch {
-        addToast('Something went wrong', 'error')
+      } catch (error) {
+        addToast(extractErrorMessage(error, 'Failed to share post. Please try again.'), 'error')
       } finally {
         setSendingTo(null)
       }

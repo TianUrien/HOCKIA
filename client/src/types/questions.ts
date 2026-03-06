@@ -118,6 +118,7 @@ export interface QuestionsListResponse {
 export interface QuestionsQueryParams {
   category?: QuestionCategory | null
   sort?: QuestionSortOption
+  search?: string | null
   limit?: number
   offset?: number
 }

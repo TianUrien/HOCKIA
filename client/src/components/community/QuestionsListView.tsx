@@ -5,8 +5,8 @@
  * Displays list of questions with filtering and sorting.
  */
 
-import { useState, useCallback } from 'react'
-import { Plus, ChevronDown } from 'lucide-react'
+import { useState, useCallback, useRef } from 'react'
+import { Plus, ChevronDown, Search, X } from 'lucide-react'
 import { QuestionCard } from './QuestionCard'
 import { AskQuestionModal } from './AskQuestionModal'
 import SignInPromptModal from '@/components/SignInPromptModal'
@@ -23,9 +23,27 @@ export function QuestionsListView() {
   const { user } = useAuthStore()
   const [selectedCategory, setSelectedCategory] = useState<QuestionCategory | null>(null)
   const [sortBy, setSortBy] = useState<QuestionSortOption>('latest')
+  const [searchInput, setSearchInput] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState<string | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showSignInPrompt, setShowSignInPrompt] = useState(false)
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(null)
+
+  // Debounce search input (500ms)
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchInput(value)
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      setDebouncedSearch(value.trim() || null)
+    }, 500)
+  }, [])
+
+  const clearSearch = useCallback(() => {
+    setSearchInput('')
+    setDebouncedSearch(null)
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+  }, [])
 
   const {
     questions,
@@ -36,6 +54,7 @@ export function QuestionsListView() {
   } = useQuestions({
     category: selectedCategory,
     sort: sortBy,
+    search: debouncedSearch,
   })
 
   const handleCreateQuestion = useCallback(async (input: CreateQuestionInput) => {
@@ -68,6 +87,28 @@ export function QuestionsListView() {
           <Plus className="w-5 h-5" />
           Ask a Question
         </button>
+      </div>
+
+      {/* Search */}
+      <div className="relative mb-4">
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-gray-400 pointer-events-none" />
+        <input
+          type="text"
+          value={searchInput}
+          onChange={(e) => handleSearchChange(e.target.value)}
+          placeholder="Search questions by keyword or topic..."
+          className="w-full pl-10 pr-10 py-2.5 rounded-lg border border-gray-300 bg-white text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+        />
+        {searchInput && (
+          <button
+            type="button"
+            onClick={clearSearch}
+            className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-gray-100 transition-colors"
+            aria-label="Clear search"
+          >
+            <X className="w-4 h-4 text-gray-400" />
+          </button>
+        )}
       </div>
 
       {/* Filters */}
@@ -134,12 +175,18 @@ export function QuestionsListView() {
               <Plus className="w-8 h-8 text-purple-500" />
             </div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              {selectedCategory ? 'No questions in this category' : 'No questions yet'}
+              {debouncedSearch
+                ? 'No questions found'
+                : selectedCategory
+                  ? 'No questions in this category'
+                  : 'No questions yet'}
             </h3>
             <p className="text-gray-500 mb-6">
-              {selectedCategory
-                ? 'Be the first to ask a question in this category!'
-                : 'Start the conversation by asking the first question.'}
+              {debouncedSearch
+                ? 'Try different keywords or clear your search.'
+                : selectedCategory
+                  ? 'Be the first to ask a question in this category!'
+                  : 'Start the conversation by asking the first question.'}
             </p>
             <button
               onClick={handleAskQuestionClick}

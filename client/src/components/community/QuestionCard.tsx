@@ -6,7 +6,7 @@
  */
 
 import { Link, useNavigate } from 'react-router-dom'
-import { MessageCircle } from 'lucide-react'
+import { MessageCircle, PenLine } from 'lucide-react'
 import { Avatar, RoleBadge } from '@/components'
 import { CATEGORY_LABELS, CATEGORY_COLORS } from '@/types/questions'
 import type { Question } from '@/types/questions'
@@ -30,6 +30,13 @@ export function QuestionCard({ question }: QuestionCardProps) {
     e.preventDefault()
     e.stopPropagation()
     navigate(`/members/id/${question.author.id}`)
+  }
+
+  // Navigate directly to answer form on question page
+  const handleAnswerClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    navigate(`/community/questions/${question.id}#answer`)
   }
 
   return (
@@ -62,6 +69,14 @@ export function QuestionCard({ question }: QuestionCardProps) {
               {question.answer_count} {question.answer_count === 1 ? 'answer' : 'answers'}
             </span>
           </div>
+          <button
+            type="button"
+            onClick={handleAnswerClick}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#8026FA] bg-[#8026FA]/5 hover:bg-[#8026FA]/10 rounded-full transition-colors"
+          >
+            <PenLine className="w-3.5 h-3.5" />
+            Answer
+          </button>
           <span className="text-sm text-gray-400 sm:hidden">{timeAgo}</span>
         </div>
 

@@ -12,6 +12,7 @@ import { loadMessageDraft, saveMessageDraft, clearMessageDraft } from '@/lib/mes
 import { reportSupabaseError } from '@/lib/sentryHelpers'
 import { checkMessageRateLimit, formatRateLimitError } from '@/lib/rateLimit'
 import { trackDbEvent } from '@/lib/trackDbEvent'
+import { extractErrorMessage } from '@/lib/utils'
 import type { ChatMessage, Message, Conversation, ChatMessageEvent, MessageDeliveryStatus, MessageMetadata } from '@/types/chat'
 
 const MESSAGES_PAGE_SIZE = 50
@@ -693,7 +694,7 @@ export function useChat({
         }
       }
 
-      addToast('Failed to send message. Please try again.', 'error')
+      addToast(extractErrorMessage(error, 'Failed to send message. Please try again.'), 'error')
       return false
     } finally {
       setSending(false)

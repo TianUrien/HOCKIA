@@ -111,6 +111,12 @@ export function useQuestions(params: QuestionsQueryParams = {}) {
         query = query.eq('category', params.category)
       }
 
+      // Search filter (title + body)
+      if (params.search?.trim()) {
+        const term = `%${params.search.trim()}%`
+        query = query.or(`title.ilike.${term},body.ilike.${term}`)
+      }
+
       // Sort order
       if (params.sort === 'most_answered') {
         query = query.order('answer_count', { ascending: false })
@@ -143,7 +149,7 @@ export function useQuestions(params: QuestionsQueryParams = {}) {
     } finally {
       setIsLoading(false)
     }
-  }, [params.category, params.sort, params.limit])
+  }, [params.category, params.sort, params.search, params.limit])
 
   // Initial fetch
   useEffect(() => {

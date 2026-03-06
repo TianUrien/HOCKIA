@@ -42,7 +42,12 @@ export interface ConversationIntent {
   message: string
 }
 
-export type LLMResult = SearchIntent | ConversationIntent
+export interface KnowledgeIntent {
+  type: 'knowledge'
+  message: string
+}
+
+export type LLMResult = SearchIntent | ConversationIntent | KnowledgeIntent
 
 export class LLMRateLimitError extends Error {
   constructor() {
@@ -105,11 +110,19 @@ function buildUserContextBlock(ctx: UserContext): string {
   return lines.join('\n')
 }
 
-const SYSTEM_PROMPT = `You are PLAYR Assistant, a friendly AI for PLAYR — a field hockey platform connecting players, coaches, clubs, and brands.
+const SYSTEM_PROMPT = `You are PLAYR Assistant, a friendly and knowledgeable AI for PLAYR — a field hockey platform connecting players, coaches, clubs, and brands. You are also a field hockey expert.
 
-You have two tools:
+You have three tools:
 1. search_profiles — Use when the user wants to find or discover people/profiles. Extract structured filters from their query. Always include a conversational "message" field describing what you're looking for.
-2. respond — Use for greetings, questions about PLAYR, help requests, or anything that is NOT a profile search. Be warm and helpful. Mention that you can help discover players, coaches, clubs, and brands.
+2. answer_hockey_question — Use when the user asks about field hockey knowledge: rules, positions, tactics, formations, tournament formats (Olympics, World Cup, Pro League, EHL), FIH regulations, equipment (sticks, goalkeeping gear, balls, turf types), hockey history, training concepts, terminology (drag flick, aerial, jab tackle, penalty corner, etc.), or differences between indoor and outdoor hockey. Provide accurate, helpful answers. You can be detailed (multiple paragraphs) when the question warrants it.
+3. respond — Use for greetings, questions about PLAYR the platform, help requests, or anything that is NOT a profile search and NOT a hockey knowledge question. Be warm and helpful. Mention that you can help discover players, coaches, clubs, and brands, AND answer field hockey questions.
+
+TOOL SELECTION RULES:
+- "Find defenders" or "best players in England" → search_profiles (looking for people)
+- "What does a defender do?" or "rules of penalty corner" → answer_hockey_question (hockey knowledge)
+- "Hi" or "What is PLAYR?" → respond (greeting or platform question)
+- For medical/injury advice, say you'd recommend consulting a sports medicine professional.
+- For non-hockey, non-PLAYR topics (weather, coding, cooking, etc.), politely redirect: you're a field hockey assistant and can help with hockey questions or discovering profiles.
 
 FILTER EXTRACTION RULES (for search_profiles only):
 - Only extract information explicitly stated or clearly implied in the query.
@@ -217,13 +230,28 @@ const SEARCH_TOOL = {
 
 const RESPOND_TOOL = {
   name: 'respond',
-  description: 'Respond conversationally when the user is not searching for profiles. Use for greetings, questions about PLAYR, or anything that is not a profile search.',
+  description: 'Respond conversationally when the user is not searching for profiles and not asking a hockey knowledge question. Use for greetings, questions about PLAYR the platform, or off-topic redirects.',
   input_schema: {
     type: 'object',
     properties: {
       message: {
         type: 'string',
         description: 'A friendly, helpful response to the user. Keep it concise (1-2 sentences).',
+      },
+    },
+    required: ['message'],
+  },
+}
+
+const HOCKEY_KNOWLEDGE_TOOL = {
+  name: 'answer_hockey_question',
+  description: 'Answer field hockey knowledge questions: rules, positions, tactics, formations, tournaments, FIH regulations, equipment, history, training, terminology, indoor vs outdoor hockey. Use when the user asks about the sport itself, NOT when searching for profiles.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      message: {
+        type: 'string',
+        description: 'An accurate, helpful answer about field hockey. Can be detailed — use multiple paragraphs when the question warrants depth. Write in plain conversational text (no markdown). Use numbered lists for rules or steps.',
       },
     },
     required: ['message'],
@@ -270,6 +298,11 @@ async function callGemini(query: string, history: HistoryTurn[] = [], userContex
               description: RESPOND_TOOL.description,
               parameters: RESPOND_TOOL.input_schema,
             },
+            {
+              name: HOCKEY_KNOWLEDGE_TOOL.name,
+              description: HOCKEY_KNOWLEDGE_TOOL.description,
+              parameters: HOCKEY_KNOWLEDGE_TOOL.input_schema,
+            },
           ],
         }],
         tool_config: {
@@ -301,6 +334,9 @@ async function callGemini(query: string, history: HistoryTurn[] = [], userContex
   const { name, args } = fnCall.functionCall
   if (name === 'respond') {
     return { type: 'conversation', message: args.message || DEFAULT_CONVERSATION_RESPONSE }
+  }
+  if (name === 'answer_hockey_question') {
+    return { type: 'knowledge', message: args.message || 'I couldn\'t generate an answer. Try rephrasing your question.' }
   }
 
   const { message, include_qualitative, ...filters } = args
@@ -336,6 +372,7 @@ async function callClaude(query: string, history: HistoryTurn[] = [], userContex
       tools: [
         { name: SEARCH_TOOL.name, description: SEARCH_TOOL.description, input_schema: SEARCH_TOOL.input_schema },
         { name: RESPOND_TOOL.name, description: RESPOND_TOOL.description, input_schema: RESPOND_TOOL.input_schema },
+        { name: HOCKEY_KNOWLEDGE_TOOL.name, description: HOCKEY_KNOWLEDGE_TOOL.description, input_schema: HOCKEY_KNOWLEDGE_TOOL.input_schema },
       ],
       tool_choice: { type: 'auto' },
       messages,
@@ -357,6 +394,9 @@ async function callClaude(query: string, history: HistoryTurn[] = [], userContex
 
   if (toolUse.name === 'respond') {
     return { type: 'conversation', message: toolUse.input.message || DEFAULT_CONVERSATION_RESPONSE }
+  }
+  if (toolUse.name === 'answer_hockey_question') {
+    return { type: 'knowledge', message: toolUse.input.message || 'I couldn\'t generate an answer. Try rephrasing your question.' }
   }
 
   const { message, include_qualitative, ...filters } = toolUse.input
@@ -391,6 +431,7 @@ async function callOpenAI(query: string, history: HistoryTurn[] = [], userContex
       tools: [
         { type: 'function', function: { name: SEARCH_TOOL.name, description: SEARCH_TOOL.description, parameters: SEARCH_TOOL.input_schema } },
         { type: 'function', function: { name: RESPOND_TOOL.name, description: RESPOND_TOOL.description, parameters: RESPOND_TOOL.input_schema } },
+        { type: 'function', function: { name: HOCKEY_KNOWLEDGE_TOOL.name, description: HOCKEY_KNOWLEDGE_TOOL.description, parameters: HOCKEY_KNOWLEDGE_TOOL.input_schema } },
       ],
       tool_choice: 'auto',
     }),
@@ -412,6 +453,9 @@ async function callOpenAI(query: string, history: HistoryTurn[] = [], userContex
   const args = JSON.parse(toolCall.function.arguments)
   if (toolCall.function.name === 'respond') {
     return { type: 'conversation', message: args.message || DEFAULT_CONVERSATION_RESPONSE }
+  }
+  if (toolCall.function.name === 'answer_hockey_question') {
+    return { type: 'knowledge', message: args.message || 'I couldn\'t generate an answer. Try rephrasing your question.' }
   }
 
   const { message, include_qualitative, ...filters } = args

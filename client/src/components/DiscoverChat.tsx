@@ -96,7 +96,7 @@ export default function DiscoverChat({ messages, onRetry }: DiscoverChatProps) {
 
                 {msg.status === 'complete' && (
                   <>
-                    <p className="text-sm text-gray-800 leading-relaxed">{msg.content}</p>
+                    <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-line">{msg.content}</p>
                     {msg.results && msg.results.length > 0 && (
                       <ResultList results={msg.results} />
                     )}

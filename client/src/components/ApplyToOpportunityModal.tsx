@@ -10,6 +10,7 @@ import { trackApplicationSubmit } from '@/lib/analytics'
 import type { Vacancy } from '@/lib/supabase'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
+import { extractErrorMessage } from '@/lib/utils'
 
 interface ApplyToVacancyModalProps {
   isOpen: boolean
@@ -126,8 +127,9 @@ export default function ApplyToVacancyModal({
             operation: 'apply_vacancy'
           })
           onError?.(vacancy.id)
-          setError('Failed to submit application. Please try again.')
-          addToast('Failed to submit application. Please try again.', 'error')
+          const msg = extractErrorMessage(insertError, 'Failed to submit application. Please try again.')
+          setError(msg)
+          addToast(msg, 'error')
         }
       } else {
         trackDbEvent('application_submit', 'vacancy', vacancy.id, { position: vacancy.position ?? undefined })
@@ -145,8 +147,9 @@ export default function ApplyToVacancyModal({
         operation: 'apply_vacancy'
       })
       onError?.(vacancy.id)
-      setError('Network error. Please check your connection and try again.')
-      addToast('Network error. Please check your connection and try again.', 'error')
+      const msg = extractErrorMessage(err, 'Network error. Please check your connection and try again.')
+      setError(msg)
+      addToast(msg, 'error')
     } finally {
       setIsSubmitting(false)
     }

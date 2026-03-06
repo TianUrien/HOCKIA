@@ -7,6 +7,7 @@ import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
 import { useNotificationStore } from '@/lib/notifications'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
+import { extractErrorMessage } from '@/lib/utils'
 
 type FriendStatus = Database['public']['Enums']['friendship_status']
 type FriendEdge = Database['public']['Views']['profile_friend_edges']['Row']
@@ -154,7 +155,7 @@ export function useFriendship(profileId: string): FriendshipState {
         feature: 'friends',
         operation: 'send_request'
       })
-      addToast('Unable to send friend request. Please try again.', 'error')
+      addToast(extractErrorMessage(error, 'Unable to send friend request. Please try again.'), 'error')
     } finally {
       setMutating(false)
     }
@@ -196,7 +197,7 @@ export function useFriendship(profileId: string): FriendshipState {
           feature: 'friends',
           operation: 'update_friendship'
         })
-        addToast('Unable to update friendship. Please try again.', 'error')
+        addToast(extractErrorMessage(error, 'Unable to update friendship. Please try again.'), 'error')
       } finally {
         setMutating(false)
       }

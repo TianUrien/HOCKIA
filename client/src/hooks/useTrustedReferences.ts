@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
+import { extractErrorMessage } from '@/lib/utils'
 
 const MAX_REFERENCES = 5 as const
 
@@ -261,7 +262,7 @@ export function useTrustedReferences(profileId: string) {
         return true
       } catch (error) {
         logger.error('Failed to send reference request', error)
-        addToast('Unable to send reference request. Please try again.', 'error')
+        addToast(extractErrorMessage(error, 'Unable to send reference request. Please try again.'), 'error')
         return false
       } finally {
         setMutating(null)
@@ -286,7 +287,7 @@ export function useTrustedReferences(profileId: string) {
         return true
       } catch (error) {
         logger.error('Failed to respond to reference request', error)
-        addToast('Unable to update reference request. Please try again.', 'error')
+        addToast(extractErrorMessage(error, 'Unable to update reference. Please try again.'), 'error')
         return false
       } finally {
         setMutating(null)
@@ -307,7 +308,7 @@ export function useTrustedReferences(profileId: string) {
         return true
       } catch (error) {
         logger.error('Failed to remove reference', error)
-        addToast('Unable to remove reference. Please try again.', 'error')
+        addToast(extractErrorMessage(error, 'Unable to remove reference. Please try again.'), 'error')
         return false
       } finally {
         setMutating(null)
@@ -327,7 +328,7 @@ export function useTrustedReferences(profileId: string) {
         return true
       } catch (error) {
         logger.error('Failed to withdraw reference', error)
-        addToast('Unable to withdraw reference. Please try again.', 'error')
+        addToast(extractErrorMessage(error, 'Unable to withdraw reference. Please try again.'), 'error')
         return false
       } finally {
         setMutating(null)
@@ -351,7 +352,7 @@ export function useTrustedReferences(profileId: string) {
         return true
       } catch (error) {
         logger.error('Failed to edit endorsement', error)
-        addToast('Unable to update endorsement. Please try again.', 'error')
+        addToast(extractErrorMessage(error, 'Unable to update endorsement. Please try again.'), 'error')
         return false
       } finally {
         setMutating(null)
