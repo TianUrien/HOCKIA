@@ -457,14 +457,22 @@ export default function MessagesPage() {
           const exists = prev.find(c => c.id === newRecord.id)
           if (exists) {
             return prev
-              .map(c => (c.id === newRecord.id
-                ? {
-                    ...c,
-                    last_message_at: newRecord.last_message_at,
-                    updated_at: newRecord.updated_at
-                  }
-                : c))
-              .sort((a, b) => new Date(b.last_message_at || b.updated_at).getTime() - new Date(a.last_message_at || a.updated_at).getTime())
+              .map(c => {
+                if (c.id !== newRecord.id) return c
+                const newLastMessageAt = newRecord.last_message_at || c.last_message_at
+                const newSortTimestamp = newLastMessageAt || newRecord.updated_at || c.sortTimestamp
+                return {
+                  ...c,
+                  last_message_at: newLastMessageAt,
+                  updated_at: newRecord.updated_at || c.updated_at,
+                  sortTimestamp: newSortTimestamp,
+                }
+              })
+              .sort((a, b) => {
+                const aTime = a.sortTimestamp || a.last_message_at || a.updated_at
+                const bTime = b.sortTimestamp || b.last_message_at || b.updated_at
+                return new Date(bTime).getTime() - new Date(aTime).getTime()
+              })
           }
           return prev
         })

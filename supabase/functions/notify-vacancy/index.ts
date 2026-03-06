@@ -264,6 +264,36 @@ Deno.serve(async (req: Request) => {
       isTestAccount: false,
     })
 
+    // ==========================================================================
+    // IDEMPOTENCY CHECK: Prevent duplicate sends from webhook double-delivery
+    // If we already sent vacancy_notification emails for this vacancy in the
+    // last 10 minutes, skip to avoid spamming recipients.
+    // ==========================================================================
+    const { count: alreadySentCount } = await supabase
+      .from('email_sends')
+      .select('id', { count: 'exact', head: true })
+      .eq('template_key', 'vacancy_notification')
+      .eq('status', 'sent')
+      .gte('sent_at', new Date(Date.now() - 10 * 60 * 1000).toISOString())
+      .ilike('subject', `%${vacancy.title}%`)
+
+    if (alreadySentCount && alreadySentCount > 0) {
+      logger.info('Idempotency guard: vacancy notification already sent recently', {
+        vacancyId: vacancy.id,
+        vacancyTitle: vacancy.title,
+        existingSendCount: alreadySentCount,
+      })
+      return new Response(
+        JSON.stringify({
+          success: true,
+          mode: 'REAL',
+          message: 'Duplicate webhook — notification already sent',
+          vacancyId: vacancy.id,
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
     // Fetch eligible recipients based on vacancy type
     const recipients = await fetchEligibleRecipients(supabase, vacancy, logger)
 

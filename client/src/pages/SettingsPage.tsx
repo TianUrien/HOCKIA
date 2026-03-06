@@ -42,6 +42,12 @@ export default function SettingsPage() {
   const [passwordError, setPasswordError] = useState('')
   const [passwordSuccess, setPasswordSuccess] = useState(false)
 
+  // Email change state
+  const [newEmail, setNewEmail] = useState('')
+  const [emailLoading, setEmailLoading] = useState(false)
+  const [emailError, setEmailError] = useState('')
+  const [emailSuccess, setEmailSuccess] = useState(false)
+
   // Notification preferences state
   const [notifyOpportunities, setNotifyOpportunities] = useState(true)
   const [notifyApplications, setNotifyApplications] = useState(true)
@@ -294,6 +300,33 @@ export default function SettingsPage() {
     }
   }
 
+  const handleEmailChange = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setEmailError('')
+    setEmailSuccess(false)
+
+    const trimmed = newEmail.trim().toLowerCase()
+    if (!trimmed || trimmed === user?.email) {
+      setEmailError('Please enter a different email address')
+      return
+    }
+
+    setEmailLoading(true)
+
+    try {
+      const { error } = await supabase.auth.updateUser({ email: trimmed })
+      if (error) throw error
+
+      setEmailSuccess(true)
+      setNewEmail('')
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update email'
+      setEmailError(errorMessage)
+    } finally {
+      setEmailLoading(false)
+    }
+  }
+
   const handleSignOut = async () => {
     setSignOutLoading(true)
     try {
@@ -438,9 +471,34 @@ export default function SettingsPage() {
                     </span>
                   </div>
                   <p className="text-gray-900 font-medium">{user.email}</p>
-                  <p className="text-xs text-gray-500 mt-2">
-                    Contact <a href="mailto:team@oplayr.com" className="text-[#8026FA]">support</a> to change your email
-                  </p>
+
+                  {emailSuccess ? (
+                    <p className="text-xs text-green-600 mt-2 flex items-center gap-1">
+                      <CheckCircle className="w-3 h-3" />
+                      Confirmation sent to your new email. Check both inboxes to confirm the change.
+                    </p>
+                  ) : (
+                    <form onSubmit={handleEmailChange} className="mt-3 flex gap-2">
+                      <input
+                        type="email"
+                        value={newEmail}
+                        onChange={(e) => setNewEmail(e.target.value)}
+                        placeholder="New email address"
+                        className="flex-1 px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8026FA] focus:border-transparent"
+                        required
+                      />
+                      <button
+                        type="submit"
+                        disabled={emailLoading}
+                        className="px-4 py-2 text-sm font-medium text-white bg-[#8026FA] rounded-lg hover:bg-[#6b1ed4] transition-colors disabled:opacity-50"
+                      >
+                        {emailLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Change'}
+                      </button>
+                    </form>
+                  )}
+                  {emailError && (
+                    <p className="text-xs text-red-600 mt-1">{emailError}</p>
+                  )}
                 </div>
 
                 {/* Change Password */}

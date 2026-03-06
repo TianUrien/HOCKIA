@@ -38,6 +38,7 @@ export default function ApplicantsList() {
   const [error, setError] = useState<string | null>(null)
   const [updatingId, setUpdatingId] = useState<string | null>(null)
   const [referenceMap, setReferenceMap] = useState<Map<string, ApplicantReferenceInfo>>(new Map())
+  const [referencesUnavailable, setReferencesUnavailable] = useState(false)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -144,7 +145,7 @@ export default function ApplicantsList() {
                 endorsement_text,
                 relationship_type,
                 accepted_at,
-                reference:reference_id (
+                reference:profiles!profile_references_reference_id_fkey (
                   id,
                   full_name,
                   role,
@@ -185,6 +186,7 @@ export default function ApplicantsList() {
           }
         } catch (refErr) {
           logger.error('Failed to fetch reference data for applicants:', refErr)
+          setReferencesUnavailable(true)
         }
 
         setReferenceMap(refMap)
@@ -316,6 +318,11 @@ export default function ApplicantsList() {
 
       {/* Content */}
       <div className="mx-auto w-full max-w-4xl px-4 py-6 sm:px-6 sm:py-8">
+        {referencesUnavailable && applications.length > 0 && (
+          <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            Reference data could not be loaded. Applicant references may not be shown.
+          </div>
+        )}
         {applications.length === 0 ? (
           <div className="rounded-2xl border border-gray-200 bg-white p-10 text-center">
             <div className="mb-4 text-5xl">📭</div>
