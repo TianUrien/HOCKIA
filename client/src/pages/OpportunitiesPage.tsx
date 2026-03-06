@@ -126,8 +126,9 @@ export default function OpportunitiesPage() {
     }
     setFetchError(null)
 
-    // Cache key includes test account status to separate results
-    const cacheKey = isCurrentUserTestAccount ? 'open-vacancies-test' : 'open-vacancies'
+    // Cache key includes test account status and active filters to separate results
+    const filterKey = `${filters.opportunityType}-${filters.gender}-${filters.position.join(',')}-${filters.priority}`
+    const cacheKey = isCurrentUserTestAccount ? `open-vacancies-test-${filterKey}` : `open-vacancies-${filterKey}`
 
     if (options?.skipCache) {
       requestCache.invalidate(cacheKey)
@@ -138,9 +139,8 @@ export default function OpportunitiesPage() {
         const { vacanciesData, clubsMap, wcMap } = await requestCache.dedupe(
           cacheKey,
           async () => {
-            // Fetch vacancies with club data in a single query using JOIN
-            // Include is_test_account to filter test vacancies
-            const { data: vacanciesData, error: vacanciesError } = await supabase
+            // Build query with server-side filters
+            let query = supabase
               .from('opportunities')
               .select(`
                 *,
@@ -165,8 +165,28 @@ export default function OpportunitiesPage() {
                 )
               `)
               .eq('status', 'open')
+
+            // Server-side filters: push filtering to the DB instead of fetching all
+            if (filters.opportunityType !== 'all') {
+              query = query.eq('opportunity_type', filters.opportunityType)
+            }
+            if (filters.gender !== 'all') {
+              query = query.eq('gender', filters.gender)
+            }
+            if (filters.position.length > 0) {
+              query = query.in('position', filters.position)
+            }
+            if (filters.priority !== 'all') {
+              query = query.eq('priority', filters.priority)
+            }
+            if (filters.startDate === 'immediate') {
+              query = query.is('start_date', null)
+            } else if (filters.startDate === 'specific') {
+              query = query.not('start_date', 'is', null)
+            }
+
+            const { data: vacanciesData, error: vacanciesError } = await query
               .order('created_at', { ascending: false })
-              .limit(100) // Limit to 100 most recent opportunities
 
             if (vacanciesError) throw vacanciesError
 
@@ -242,7 +262,7 @@ export default function OpportunitiesPage() {
         }
       }
     })
-  }, [isCurrentUserTestAccount])
+  }, [isCurrentUserTestAccount, filters])
 
   const fetchUserApplications = useCallback(async (options?: { skipCache?: boolean }) => {
     if (!user || (profile?.role !== 'player' && profile?.role !== 'coach')) return
@@ -359,7 +379,10 @@ export default function OpportunitiesPage() {
     return false
   }
 
-  // Apply search + filters
+  // Apply client-side search, remaining filters, and sort
+  // Note: opportunityType, gender, position, priority, and startDate are now
+  // applied server-side in fetchVacancies. Only text search, location, and
+  // benefits still need client-side filtering.
   useEffect(() => {
     let filtered = [...vacancies]
 
@@ -377,26 +400,7 @@ export default function OpportunitiesPage() {
       })
     }
 
-    // Opportunity type filter
-    if (filters.opportunityType !== 'all') {
-      filtered = filtered.filter(v => v.opportunity_type === filters.opportunityType)
-    }
-
-    // Position filter
-    if (filters.position.length > 0) {
-      filtered = filtered.filter(v => {
-        if (!v.position) return false
-        const vacancyPosition = v.position.toLowerCase()
-        return filters.position.includes(vacancyPosition)
-      })
-    }
-
-    // Gender filter
-    if (filters.gender !== 'all') {
-      filtered = filtered.filter(v => v.gender === filters.gender)
-    }
-
-    // Location filter
+    // Location filter (client-side — needs club join data)
     if (filters.location.trim()) {
       const locationLower = filters.location.toLowerCase()
       filtered = filtered.filter(v => {
@@ -406,23 +410,11 @@ export default function OpportunitiesPage() {
       })
     }
 
-    // Start date filter
-    if (filters.startDate === 'immediate') {
-      filtered = filtered.filter(v => !v.start_date)
-    } else if (filters.startDate === 'specific') {
-      filtered = filtered.filter(v => v.start_date)
-    }
-
-    // Benefits filter
+    // Benefits filter (client-side — array contains check)
     if (filters.benefits.length > 0) {
       filtered = filtered.filter(v =>
         v.benefits && filters.benefits.some(benefit => v.benefits?.includes(benefit))
       )
-    }
-
-    // Priority filter
-    if (filters.priority !== 'all') {
-      filtered = filtered.filter(v => v.priority === filters.priority)
     }
 
     // Sort

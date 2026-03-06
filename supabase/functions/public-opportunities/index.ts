@@ -75,7 +75,7 @@ async function checkDbRateLimit(
 
     if (minuteError) {
       console.error('Rate limit RPC error (minute):', minuteError)
-      return { allowed: true } // fail-open for public API
+      return { allowed: false, retryAfter: 30 } // fail-closed: block when rate limit backend is degraded
     }
 
     const minuteResult = minuteCheck as RateLimitResult
@@ -95,7 +95,7 @@ async function checkDbRateLimit(
 
     if (hourError) {
       console.error('Rate limit RPC error (hour):', hourError)
-      return { allowed: true } // fail-open for public API
+      return { allowed: false, retryAfter: 30 } // fail-closed: block when rate limit backend is degraded
     }
 
     const hourResult = hourCheck as RateLimitResult
@@ -108,7 +108,7 @@ async function checkDbRateLimit(
     return { allowed: true }
   } catch (err) {
     console.error('Rate limit check failed:', err)
-    return { allowed: true } // fail-open for public API
+    return { allowed: false, retryAfter: 30 } // fail-closed: block when rate limit backend is degraded
   }
 }
 
