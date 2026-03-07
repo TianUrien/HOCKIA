@@ -117,7 +117,7 @@ export default function BrandProfilePage() {
               {user && profile?.role !== 'brand' && (
                 <div className="flex flex-wrap gap-3 mb-6">
                   {brand && (
-                    <Link to={`/messages?to=${brand.profile_id}`}>
+                    <Link to={`/messages?new=${brand.profile_id}`}>
                       <Button className="gap-2">
                         <MessageCircle className="w-4 h-4" />
                         Send Message

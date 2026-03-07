@@ -39,10 +39,10 @@ describe('MediaLightbox', () => {
     )
 
     expect(screen.getByRole('dialog')).toBeInTheDocument()
-    expect(screen.getByAltText('Post image 1')).toBeInTheDocument()
+    expect(screen.getByAltText('Post media 1')).toBeInTheDocument()
     expect(screen.queryByText(/\//)).not.toBeInTheDocument()
-    expect(screen.queryByLabelText('Previous image')).not.toBeInTheDocument()
-    expect(screen.queryByLabelText('Next image')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Previous')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Next')).not.toBeInTheDocument()
   })
 
   it('renders position indicator for multiple images', () => {
@@ -66,7 +66,7 @@ describe('MediaLightbox', () => {
       />
     )
 
-    fireEvent.click(screen.getByLabelText('Next image'))
+    fireEvent.click(screen.getByLabelText('Next'))
     expect(screen.getByText('2 / 3')).toBeInTheDocument()
   })
 
@@ -79,7 +79,7 @@ describe('MediaLightbox', () => {
       />
     )
 
-    fireEvent.click(screen.getByLabelText('Previous image'))
+    fireEvent.click(screen.getByLabelText('Previous'))
     expect(screen.getByText('2 / 3')).toBeInTheDocument()
   })
 
@@ -93,7 +93,7 @@ describe('MediaLightbox', () => {
     )
 
     // No prev button when at first image
-    expect(screen.queryByLabelText('Previous image')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Previous')).not.toBeInTheDocument()
     expect(screen.getByText('1 / 3')).toBeInTheDocument()
   })
 
@@ -107,7 +107,7 @@ describe('MediaLightbox', () => {
     )
 
     // No next button when at last image
-    expect(screen.queryByLabelText('Next image')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Next')).not.toBeInTheDocument()
     expect(screen.getByText('3 / 3')).toBeInTheDocument()
   })
 
@@ -150,7 +150,7 @@ describe('MediaLightbox', () => {
       />
     )
 
-    fireEvent.click(screen.getByAltText('Post image 1'))
+    fireEvent.click(screen.getByAltText('Post media 1'))
     expect(onClose).not.toHaveBeenCalled()
   })
 

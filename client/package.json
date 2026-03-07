@@ -15,7 +15,7 @@
     "test:unit:coverage": "vitest run --coverage --reporter=verbose",
     "test:watch": "vitest watch",
     "test:e2e": "playwright test --project=chromium",
-    "test:e2e:smoke": "playwright test --grep @smoke --project=setup --project=chromium --project=chromium-player --project=chromium-club --project=chromium-brand --project=mobile-player",
+    "test:e2e:smoke": "playwright test --grep @smoke --project=setup --project=chromium --project=chromium-player --project=chromium-club --project=chromium-coach --project=chromium-brand --project=mobile-player",
     "test:e2e:auth": "playwright test --project=setup --project=chromium-player",
     "test:e2e:all": "playwright test",
     "test:all": "npm run lint && npm run typecheck && npm run test:unit && npm run build && npm run test:e2e:smoke",

@@ -70,6 +70,44 @@ test.describe('@smoke player', () => {
     await expect(messageList.getByText(message)).toBeVisible({ timeout: 20000 })
   })
 
+  test('player can message a brand from its profile', async ({ page }) => {
+    await page.goto('/brands/e2e-test-brand')
+
+    await expect(
+      page.getByRole('heading', { name: /e2e test brand/i })
+    ).toBeVisible({ timeout: 20000 })
+
+    // "Send Message" button should be visible (brand messaging is now enabled)
+    const messageLink = page.getByRole('link', { name: /send message/i })
+    await expect(messageLink).toBeVisible({ timeout: 10000 })
+
+    await messageLink.click()
+
+    // Should navigate to messages with the brand's profile_id
+    await expect(page).toHaveURL(/\/messages/i, { timeout: 20000 })
+    await expect(page.getByPlaceholder(/type a message/i)).toBeVisible({ timeout: 20000 })
+  })
+
+  test('player can send a message to a brand', async ({ page }) => {
+    await page.goto('/brands/e2e-test-brand')
+    await expect(
+      page.getByRole('heading', { name: /e2e test brand/i })
+    ).toBeVisible({ timeout: 20000 })
+
+    await page.getByRole('link', { name: /send message/i }).click()
+    await expect(page).toHaveURL(/\/messages/i, { timeout: 20000 })
+
+    const composer = page.getByPlaceholder(/type a message/i)
+    await expect(composer).toBeVisible({ timeout: 20000 })
+
+    const message = `E2E brand message ${Date.now()}`
+    await composer.fill(message)
+    await page.keyboard.press('Enter')
+
+    const messageList = page.getByTestId('chat-message-list')
+    await expect(messageList.getByText(message)).toBeVisible({ timeout: 20000 })
+  })
+
   test('player cannot access club dashboard applicants', async ({ page }) => {
     await page.goto('/dashboard/opportunities/some-fake-id/applicants')
 
