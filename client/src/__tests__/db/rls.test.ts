@@ -41,18 +41,25 @@ describe.skipIf(skip)('RLS Policy Isolation', () => {
   // =========================================================================
   describe('messages', () => {
     it('user cannot read messages from conversations they are not in', async () => {
-      // Find any conversation the player participates in
+      // Find a player conversation where the coach is NOT a participant.
+      // The test coach and player may share a conversation on staging,
+      // so we must explicitly exclude conversations the coach is in.
       const { data: playerConvs } = await player.client
         .from('conversations')
-        .select('id')
-        .limit(1)
+        .select('id, participant_one_id, participant_two_id')
 
-      if (!playerConvs?.length) {
-        console.warn('  ⏭  No player conversations found — skipping')
+      const excluded = playerConvs?.find(
+        (c) =>
+          c.participant_one_id !== coach.userId &&
+          c.participant_two_id !== coach.userId
+      )
+
+      if (!excluded) {
+        console.warn('  ⏭  No player conversation excluding coach found — skipping')
         return
       }
 
-      const convId = playerConvs[0].id
+      const convId = excluded.id
 
       // Coach tries to read messages in that conversation
       const { data: coachMsgs } = await coach.client
