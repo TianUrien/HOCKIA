@@ -1,5 +1,7 @@
 import { useState, useCallback } from 'react'
-import { FeedVideoPlayer } from './FeedVideoPlayer'
+import { Play } from 'lucide-react'
+import { getImageUrl } from '@/lib/imageUrl'
+import type { ImageSize } from '@/lib/imageUrl'
 import type { PostMediaItem } from '@/types/homeFeed'
 
 interface FeedMediaGridProps {
@@ -11,22 +13,34 @@ function MediaItem({
   item,
   className = '',
   onClick,
+  imageSize = 'feed-thumb',
 }: {
   item: PostMediaItem
   className?: string
   onClick?: () => void
+  imageSize?: ImageSize
 }) {
   const mediaType = item.media_type ?? 'image'
 
   if (mediaType === 'video') {
     return (
-      <div className={`overflow-hidden ${className}`}>
-        <FeedVideoPlayer
-          src={item.url}
-          poster={item.thumb_url}
-          className="w-full h-full"
-        />
-      </div>
+      <button
+        type="button"
+        aria-label="Play video"
+        className={`relative overflow-hidden cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8026FA] ${className}`}
+        onClick={onClick}
+      >
+        {item.thumb_url ? (
+          <img src={getImageUrl(item.thumb_url, imageSize) ?? undefined} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full bg-gray-900" />
+        )}
+        <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+          <div className="w-12 h-12 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center">
+            <Play className="w-6 h-6 text-white ml-0.5" fill="white" />
+          </div>
+        </div>
+      </button>
     )
   }
 
@@ -37,9 +51,10 @@ function MediaItem({
       onClick={onClick}
     >
       <img
-        src={item.url}
+        src={getImageUrl(item.url, imageSize) ?? undefined}
         alt=""
         loading="lazy"
+        decoding="async"
         className="w-full h-full object-cover transition-transform duration-200 hover:scale-[1.02]"
       />
     </button>
@@ -74,6 +89,7 @@ export function FeedMediaGrid({ media, onImageClick }: FeedMediaGridProps) {
         <MediaItem
           item={item}
           className={aspectClass}
+          imageSize="feed-full"
           onClick={() => handleImageClick(0)}
         />
       </div>

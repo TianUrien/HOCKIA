@@ -46,20 +46,12 @@ export function UserPostCard({ item, onLikeUpdate, onDelete }: UserPostCardProps
     [item.images]
   )
 
-  const lightboxImages = useMemo(
-    () => sortedImages.filter((m) => (m.media_type ?? 'image') === 'image'),
-    [sortedImages]
-  )
-
-  const handleImageClick = useCallback((gridIndex: number) => {
-    const clickedItem = sortedImages[gridIndex]
-    if (!clickedItem || (clickedItem.media_type ?? 'image') !== 'image') return
-    const idx = lightboxImages.findIndex((img) => img.url === clickedItem.url)
-    if (idx >= 0) {
-      setLightboxIndex(idx)
+  const handleMediaClick = useCallback((gridIndex: number) => {
+    if (gridIndex >= 0 && gridIndex < sortedImages.length) {
+      setLightboxIndex(gridIndex)
       setLightboxOpen(true)
     }
-  }, [sortedImages, lightboxImages])
+  }, [sortedImages.length])
 
   // Content truncation (show more/less)
   const isLongContent = item.content.length > 300
@@ -180,7 +172,7 @@ export function UserPostCard({ item, onLikeUpdate, onDelete }: UserPostCardProps
         {/* Media grid */}
         {sortedImages.length > 0 && (
           <div className="px-4 pb-2">
-            <FeedMediaGrid media={sortedImages} onImageClick={handleImageClick} />
+            <FeedMediaGrid media={sortedImages} onImageClick={handleMediaClick} />
           </div>
         )}
 
@@ -229,9 +221,9 @@ export function UserPostCard({ item, onLikeUpdate, onDelete }: UserPostCardProps
       )}
 
       {/* Media lightbox */}
-      {lightboxOpen && lightboxImages.length > 0 && (
+      {lightboxOpen && sortedImages.length > 0 && (
         <MediaLightbox
-          images={lightboxImages}
+          images={sortedImages}
           initialIndex={lightboxIndex}
           onClose={() => setLightboxOpen(false)}
         />
