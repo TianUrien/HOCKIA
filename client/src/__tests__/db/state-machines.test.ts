@@ -134,6 +134,8 @@ describe.skipIf(skip)('State Machine Transitions', () => {
     let friendshipId: string | null = null
     let referenceId: string | null = null
 
+    let revokedSlotId: string | null = null
+
     beforeAll(async () => {
       // Ensure an accepted friendship exists between player and coach
       // Clean up existing friendships
@@ -160,6 +162,22 @@ describe.skipIf(skip)('State Machine Transitions', () => {
         .eq('requester_id', coach.userId)
         .eq('reference_id', player.userId)
         .in('status', ['pending', 'accepted'])
+
+      // Ensure player has < 5 accepted references (max_references = 5).
+      // If at the limit, temporarily revoke one to make room for the test.
+      const { data: accepted } = await player.client
+        .from('profile_references')
+        .select('id')
+        .eq('requester_id', player.userId)
+        .eq('status', 'accepted')
+
+      if (accepted && accepted.length >= 5) {
+        revokedSlotId = accepted[0].id
+        await player.client
+          .from('profile_references')
+          .update({ status: 'revoked' })
+          .eq('id', revokedSlotId)
+      }
 
       // Create and accept friendship
       const { data: f } = await player.client
@@ -190,6 +208,13 @@ describe.skipIf(skip)('State Machine Transitions', () => {
           .from('profile_references')
           .update({ status: 'revoked' })
           .eq('id', referenceId)
+      }
+      // Restore the temporarily revoked reference slot
+      if (revokedSlotId) {
+        await player.client
+          .from('profile_references')
+          .update({ status: 'accepted' })
+          .eq('id', revokedSlotId)
       }
       if (friendshipId) {
         await player.client
