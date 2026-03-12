@@ -1288,3 +1288,65 @@ export interface DiscoveryAnalyticsData {
   generated_at: string
 }
 
+// ── Monthly Report ──────────────────────────────────────────────────────
+
+export interface MonthlyMetrics {
+  // Growth
+  new_signups: number
+  new_players: number
+  new_coaches: number
+  new_clubs: number
+  new_brands: number
+  onboarding_completed: number
+  total_users: number
+
+  // Engagement
+  mau: number
+  avg_dau: number
+  total_sessions: number
+  total_minutes: number
+  avg_session_minutes: number
+  returning_users: number
+
+  // Opportunities
+  opportunities_created: number
+  opportunities_closed: number
+  applications_submitted: number
+  unique_applicants: number
+
+  // Social & Trust
+  messages_sent: number
+  active_conversations: number
+  friend_requests_sent: number
+  friendships_accepted: number
+  references_requested: number
+  references_accepted: number
+
+  // Content
+  posts_created: number
+  comments_created: number
+  likes_given: number
+  media_uploads: number
+  community_questions: number
+  community_answers: number
+
+  // Feature Adoption
+  discovery_queries: number
+  discovery_users: number
+  brand_posts_published: number
+  brand_followers_gained: number
+
+  // Email
+  emails_sent: number
+  email_open_rate: number
+  email_click_rate: number
+}
+
+export interface MonthlyReportData {
+  current: MonthlyMetrics
+  previous: MonthlyMetrics
+  month: number
+  year: number
+  generated_at: string
+}
+

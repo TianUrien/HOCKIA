@@ -72,6 +72,7 @@ const AdminWorld = lazy(() => import('@/features/admin/pages/AdminWorld'))
 const AdminEmail = lazy(() => import('@/features/admin/pages/AdminEmail').then(m => ({ default: m.AdminEmail })))
 const AdminEmailTemplateEditor = lazy(() => import('@/features/admin/pages/AdminEmailTemplateEditor').then(m => ({ default: m.AdminEmailTemplateEditor })))
 const AdminOutreach = lazy(() => import('@/features/admin/pages/AdminOutreach'))
+const AdminMonthlyReport = lazy(() => import('@/features/admin/pages/AdminMonthlyReport').then(m => ({ default: m.AdminMonthlyReport })))
 
 // Public investor dashboard (no auth required)
 const PublicInvestorDashboard = lazy(() => import('@/pages/PublicInvestorDashboard'))
@@ -314,6 +315,7 @@ function App() {
                   <Route path="email" element={<AdminEmail />} />
                   <Route path="email/template/:templateId" element={<AdminEmailTemplateEditor />} />
                   <Route path="outreach" element={<AdminOutreach />} />
+                  <Route path="monthly-report" element={<AdminMonthlyReport />} />
                   <Route path="investors" element={<AdminInvestorDashboard />} />
                   <Route path="world" element={<AdminWorld />} />
                   <Route path="data-issues" element={<AdminDataIssues />} />

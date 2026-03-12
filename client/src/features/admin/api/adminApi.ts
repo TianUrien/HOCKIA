@@ -37,6 +37,7 @@ import type {
   RetentionCohort,
   ActivationFunnelData,
   UserGrowthPoint,
+  MonthlyReportData,
 } from '../types'
 
 // Helper to call RPC functions that aren't in generated types yet
@@ -1667,5 +1668,21 @@ export async function getUserGrowthChart(days = 30): Promise<UserGrowthPoint[]> 
   const { data, error } = await adminRpc('admin_get_user_growth_chart', { p_days: days })
   if (error) throw new Error(`Failed to get user growth chart: ${error.message}`)
   return (data ?? []) as UserGrowthPoint[]
+}
+
+// ============================================================================
+// MONTHLY REPORT
+// ============================================================================
+
+export async function getMonthlyReport(
+  year?: number,
+  month?: number,
+): Promise<MonthlyReportData> {
+  const params: Record<string, number> = {}
+  if (year !== undefined) params.p_year = year
+  if (month !== undefined) params.p_month = month
+  const { data, error } = await adminRpc('admin_get_monthly_report', params)
+  if (error) throw new Error(`Failed to get monthly report: ${error.message}`)
+  return data as MonthlyReportData
 }
 
