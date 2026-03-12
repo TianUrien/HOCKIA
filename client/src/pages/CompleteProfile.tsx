@@ -447,6 +447,14 @@ export default function CompleteProfile() {
         throw new Error('Profile role not found')
       }
 
+      // Refresh the session before making auth-dependent calls.
+      // Users in iOS WebViews or who spent a long time filling the form
+      // may have a stale/expired token by the time they hit submit.
+      const { error: refreshError } = await supabase.auth.refreshSession()
+      if (refreshError) {
+        logger.warn('[COMPLETE_PROFILE] Session refresh failed at submit — token may be expired', refreshError)
+      }
+
       // Prepare data based on role
       // Derive nationality text from country ID for consistency
       const selectedCountry = formData.nationalityCountryId
