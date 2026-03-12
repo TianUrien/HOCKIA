@@ -14,7 +14,6 @@ import SignInPromptModal from '@/components/SignInPromptModal'
 import SocialLinksDisplay from '@/components/SocialLinksDisplay'
 import type { Profile } from '@/lib/supabase'
 import { supabase } from '@/lib/supabase'
-import { isUniqueViolationError } from '@/lib/supabaseErrors'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useToastStore } from '@/lib/toast'
 import { useNotificationStore } from '@/lib/notifications'
@@ -192,45 +191,11 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
 
       if (existingConv?.id) {
         navigate(`/messages?conversation=${existingConv.id}`)
-        return
+      } else {
+        navigate(`/messages?new=${profileData.id}`)
       }
-
-      const { data: newConv, error: insertError } = await supabase
-        .from('conversations')
-        .insert({
-          participant_one_id: user.id,
-          participant_two_id: profileData.id
-        })
-        .select('id')
-        .single()
-
-      if (insertError) {
-        if (isUniqueViolationError(insertError)) {
-          const { data: refetchedConv, error: refetchError } = await supabase
-            .from('conversations')
-            .select('id')
-            .or(
-              `and(participant_one_id.eq.${user.id},participant_two_id.eq.${profileData.id}),and(participant_one_id.eq.${profileData.id},participant_two_id.eq.${user.id})`
-            )
-            .maybeSingle()
-
-          if (refetchError) throw refetchError
-          if (refetchedConv?.id) {
-            navigate(`/messages?conversation=${refetchedConv.id}`)
-            return
-          }
-        }
-
-        throw insertError
-      }
-
-      if (!newConv?.id) {
-        throw new Error('Conversation insert returned no data')
-      }
-
-      navigate(`/messages?conversation=${newConv.id}`)
     } catch (error) {
-      logger.error('Error creating conversation:', error)
+      logger.error('Error starting conversation:', error)
       addToast('Failed to start conversation. Please try again.', 'error')
     } finally {
       setSendingMessage(false)

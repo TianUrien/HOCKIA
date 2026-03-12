@@ -144,18 +144,20 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
               }
             }
 
-            // Batch-prefetch world club logos to avoid N+1 queries in MemberCard
-            const worldClubIds = members
-              .map(m => m.current_world_club_id)
-              .filter((id): id is string => !!id)
-            if (worldClubIds.length > 0) {
-              prefetchWorldClubLogos(worldClubIds)
-            }
-
             return members
           },
           30000 // 30 second cache for community members
         )
+
+        // Batch-prefetch world club logos BEFORE rendering to avoid N+1 queries in MemberCard.
+        // Must be outside requestCache.dedupe so it runs on cache hits too, and awaited
+        // so logoCache is warm before MemberCard hooks fire.
+        const worldClubIds = members
+          .map(m => m.current_world_club_id)
+          .filter((id): id is string => !!id)
+        if (worldClubIds.length > 0) {
+          await prefetchWorldClubLogos(worldClubIds)
+        }
 
         setBaseMembers(members)
         setAllMembers(members)
@@ -233,18 +235,18 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
               }
             }
 
-            // Batch-prefetch world club logos to avoid N+1 queries in MemberCard
-            const worldClubIds = members
-              .map(m => m.current_world_club_id)
-              .filter((id): id is string => !!id)
-            if (worldClubIds.length > 0) {
-              prefetchWorldClubLogos(worldClubIds)
-            }
-
             return members
           },
           20000 // 20 second cache for searches
         )
+
+        // Batch-prefetch world club logos BEFORE rendering (same pattern as fetchMembers)
+        const worldClubIds = members
+          .map(m => m.current_world_club_id)
+          .filter((id): id is string => !!id)
+        if (worldClubIds.length > 0) {
+          await prefetchWorldClubLogos(worldClubIds)
+        }
 
         setAllMembers(members)
         setDisplayedMembers(members.slice(0, pageSize))

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, lazy, Suspense } from 'react'
+import type { ComponentType } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigationType } from 'react-router-dom'
 import { initializeAuth } from '@/lib/auth'
 import { logger } from '@/lib/logger'
@@ -25,60 +26,85 @@ import DevelopersPage from '@/pages/DevelopersPage'
 import SettingsPage from '@/pages/SettingsPage'
 import OfflinePage from '@/pages/OfflinePage'
 
+// Auto-reload on stale chunk errors (after deploy, old hashed filenames 404).
+// Uses sessionStorage guard to prevent infinite reload loops.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function lazyWithRetry<T extends ComponentType<any>>(
+  importFn: () => Promise<{ default: T }>,
+) {
+  return lazy(() =>
+    importFn().catch((error: Error) => {
+      const msg = (error.message ?? '').toLowerCase()
+      const isStale =
+        msg.includes('failed to fetch dynamically imported module') ||
+        msg.includes('failed to load module script')
+
+      if (isStale && !sessionStorage.getItem('chunk-reload')) {
+        sessionStorage.setItem('chunk-reload', '1')
+        window.location.reload()
+        return new Promise<never>(() => {}) // hang until reload completes
+      }
+
+      sessionStorage.removeItem('chunk-reload')
+      throw error // not stale or already retried — let ErrorBoundary handle
+    }),
+  )
+}
+
 // Lazy load heavy components
-const CompleteProfile = lazy(() => import('@/pages/CompleteProfile'))
-const DashboardRouter = lazy(() => import('@/pages/DashboardRouter'))
-const HomePage = lazy(() => import('@/pages/HomePage'))
-const OpportunitiesPage = lazy(() => import('@/pages/OpportunitiesPage'))
-const OpportunityDetailPage = lazy(() => import('@/pages/OpportunityDetailPage'))
-const CommunityPage = lazy(() => import('@/pages/CommunityPage'))
-const QuestionDetailPage = lazy(() => import('@/pages/QuestionDetailPage'))
-const ApplicantsList = lazy(() => import('@/pages/ApplicantsList'))
-const PublicPlayerProfile = lazy(() => import('@/pages/PublicPlayerProfile'))
-const PublicClubProfile = lazy(() => import('@/pages/PublicClubProfile'))
-const MessagesPage = lazy(() => import('@/pages/MessagesPage'))
-const SearchPage = lazy(() => import('@/pages/SearchPage'))
-const DiscoverPage = lazy(() => import('@/pages/DiscoverPage'))
+const CompleteProfile = lazyWithRetry(() => import('@/pages/CompleteProfile'))
+const DashboardRouter = lazyWithRetry(() => import('@/pages/DashboardRouter'))
+const HomePage = lazyWithRetry(() => import('@/pages/HomePage'))
+const OpportunitiesPage = lazyWithRetry(() => import('@/pages/OpportunitiesPage'))
+const OpportunityDetailPage = lazyWithRetry(() => import('@/pages/OpportunityDetailPage'))
+const CommunityPage = lazyWithRetry(() => import('@/pages/CommunityPage'))
+const QuestionDetailPage = lazyWithRetry(() => import('@/pages/QuestionDetailPage'))
+const ApplicantsList = lazyWithRetry(() => import('@/pages/ApplicantsList'))
+const PublicPlayerProfile = lazyWithRetry(() => import('@/pages/PublicPlayerProfile'))
+const PublicClubProfile = lazyWithRetry(() => import('@/pages/PublicClubProfile'))
+const MessagesPage = lazyWithRetry(() => import('@/pages/MessagesPage'))
+const SearchPage = lazyWithRetry(() => import('@/pages/SearchPage'))
+const DiscoverPage = lazyWithRetry(() => import('@/pages/DiscoverPage'))
 
 // World directory pages
-const WorldPage = lazy(() => import('@/pages/WorldPage'))
-const WorldCountryPage = lazy(() => import('@/pages/WorldCountryPage'))
-const WorldProvincePage = lazy(() => import('@/pages/WorldProvincePage'))
+const WorldPage = lazyWithRetry(() => import('@/pages/WorldPage'))
+const WorldCountryPage = lazyWithRetry(() => import('@/pages/WorldCountryPage'))
+const WorldProvincePage = lazyWithRetry(() => import('@/pages/WorldProvincePage'))
 
 // Brand pages
-const BrandProfilePage = lazy(() => import('@/pages/BrandProfilePage'))
-const BrandOnboardingPage = lazy(() => import('@/pages/BrandOnboardingPage'))
-const BrandDashboardPage = lazy(() => import('@/pages/BrandDashboardPage'))
+const BrandProfilePage = lazyWithRetry(() => import('@/pages/BrandProfilePage'))
+const BrandOnboardingPage = lazyWithRetry(() => import('@/pages/BrandOnboardingPage'))
+const BrandDashboardPage = lazyWithRetry(() => import('@/pages/BrandDashboardPage'))
 
 // Lazy load admin components (code splitting)
-const AdminGuard = lazy(() => import('@/features/admin/components/AdminGuard').then(m => ({ default: m.AdminGuard })))
-const AdminLayout = lazy(() => import('@/features/admin/components/AdminLayout').then(m => ({ default: m.AdminLayout })))
-const AdminOverview = lazy(() => import('@/features/admin/pages/AdminOverview').then(m => ({ default: m.AdminOverview })))
-const AdminDataIssues = lazy(() => import('@/features/admin/pages/AdminDataIssues').then(m => ({ default: m.AdminDataIssues })))
-const AdminDirectory = lazy(() => import('@/features/admin/pages/AdminDirectory').then(m => ({ default: m.AdminDirectory })))
-const AdminAuditLog = lazy(() => import('@/features/admin/pages/AdminAuditLog').then(m => ({ default: m.AdminAuditLog })))
-const AdminSettings = lazy(() => import('@/features/admin/pages/AdminSettings').then(m => ({ default: m.AdminSettings })))
-const AdminOpportunities = lazy(() => import('@/features/admin/pages/AdminOpportunities').then(m => ({ default: m.AdminOpportunities })))
-const AdminOpportunityDetail = lazy(() => import('@/features/admin/pages/AdminOpportunityDetail').then(m => ({ default: m.AdminOpportunityDetail })))
-const AdminClubs = lazy(() => import('@/features/admin/pages/AdminClubs').then(m => ({ default: m.AdminClubs })))
-const AdminBrands = lazy(() => import('@/features/admin/pages/AdminBrands').then(m => ({ default: m.AdminBrands })))
-const AdminPlayers = lazy(() => import('@/features/admin/pages/AdminPlayers').then(m => ({ default: m.AdminPlayers })))
-const AdminEngagement = lazy(() => import('@/features/admin/pages/AdminEngagement').then(m => ({ default: m.AdminEngagement })))
-const AdminFeatureUsage = lazy(() => import('@/features/admin/pages/AdminFeatureUsage').then(m => ({ default: m.AdminFeatureUsage })))
-const AdminDiscovery = lazy(() => import('@/features/admin/pages/AdminDiscovery').then(m => ({ default: m.AdminDiscovery })))
-const AdminNetworking = lazy(() => import('@/features/admin/pages/AdminNetworking').then(m => ({ default: m.AdminNetworking })))
-const AdminInvestorDashboard = lazy(() => import('@/features/admin/pages/AdminInvestorDashboard').then(m => ({ default: m.AdminInvestorDashboard })))
-const AdminWorld = lazy(() => import('@/features/admin/pages/AdminWorld'))
-const AdminEmail = lazy(() => import('@/features/admin/pages/AdminEmail').then(m => ({ default: m.AdminEmail })))
-const AdminEmailTemplateEditor = lazy(() => import('@/features/admin/pages/AdminEmailTemplateEditor').then(m => ({ default: m.AdminEmailTemplateEditor })))
-const AdminOutreach = lazy(() => import('@/features/admin/pages/AdminOutreach'))
-const AdminMonthlyReport = lazy(() => import('@/features/admin/pages/AdminMonthlyReport').then(m => ({ default: m.AdminMonthlyReport })))
+const AdminGuard = lazyWithRetry(() => import('@/features/admin/components/AdminGuard').then(m => ({ default: m.AdminGuard })))
+const AdminLayout = lazyWithRetry(() => import('@/features/admin/components/AdminLayout').then(m => ({ default: m.AdminLayout })))
+const AdminOverview = lazyWithRetry(() => import('@/features/admin/pages/AdminOverview').then(m => ({ default: m.AdminOverview })))
+const AdminDataIssues = lazyWithRetry(() => import('@/features/admin/pages/AdminDataIssues').then(m => ({ default: m.AdminDataIssues })))
+const AdminDirectory = lazyWithRetry(() => import('@/features/admin/pages/AdminDirectory').then(m => ({ default: m.AdminDirectory })))
+const AdminAuditLog = lazyWithRetry(() => import('@/features/admin/pages/AdminAuditLog').then(m => ({ default: m.AdminAuditLog })))
+const AdminSettings = lazyWithRetry(() => import('@/features/admin/pages/AdminSettings').then(m => ({ default: m.AdminSettings })))
+const AdminOpportunities = lazyWithRetry(() => import('@/features/admin/pages/AdminOpportunities').then(m => ({ default: m.AdminOpportunities })))
+const AdminOpportunityDetail = lazyWithRetry(() => import('@/features/admin/pages/AdminOpportunityDetail').then(m => ({ default: m.AdminOpportunityDetail })))
+const AdminClubs = lazyWithRetry(() => import('@/features/admin/pages/AdminClubs').then(m => ({ default: m.AdminClubs })))
+const AdminBrands = lazyWithRetry(() => import('@/features/admin/pages/AdminBrands').then(m => ({ default: m.AdminBrands })))
+const AdminPlayers = lazyWithRetry(() => import('@/features/admin/pages/AdminPlayers').then(m => ({ default: m.AdminPlayers })))
+const AdminEngagement = lazyWithRetry(() => import('@/features/admin/pages/AdminEngagement').then(m => ({ default: m.AdminEngagement })))
+const AdminFeatureUsage = lazyWithRetry(() => import('@/features/admin/pages/AdminFeatureUsage').then(m => ({ default: m.AdminFeatureUsage })))
+const AdminDiscovery = lazyWithRetry(() => import('@/features/admin/pages/AdminDiscovery').then(m => ({ default: m.AdminDiscovery })))
+const AdminNetworking = lazyWithRetry(() => import('@/features/admin/pages/AdminNetworking').then(m => ({ default: m.AdminNetworking })))
+const AdminInvestorDashboard = lazyWithRetry(() => import('@/features/admin/pages/AdminInvestorDashboard').then(m => ({ default: m.AdminInvestorDashboard })))
+const AdminWorld = lazyWithRetry(() => import('@/features/admin/pages/AdminWorld'))
+const AdminEmail = lazyWithRetry(() => import('@/features/admin/pages/AdminEmail').then(m => ({ default: m.AdminEmail })))
+const AdminEmailTemplateEditor = lazyWithRetry(() => import('@/features/admin/pages/AdminEmailTemplateEditor').then(m => ({ default: m.AdminEmailTemplateEditor })))
+const AdminOutreach = lazyWithRetry(() => import('@/features/admin/pages/AdminOutreach'))
+const AdminMonthlyReport = lazyWithRetry(() => import('@/features/admin/pages/AdminMonthlyReport').then(m => ({ default: m.AdminMonthlyReport })))
 
 // Public investor dashboard (no auth required)
-const PublicInvestorDashboard = lazy(() => import('@/pages/PublicInvestorDashboard'))
+const PublicInvestorDashboard = lazyWithRetry(() => import('@/pages/PublicInvestorDashboard'))
 
 // 404 page
-const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'))
+const NotFoundPage = lazyWithRetry(() => import('@/pages/NotFoundPage'))
 
 // Route-level error fallback — keeps nav alive so user can recover
 const RouteErrorFallback = () => (
