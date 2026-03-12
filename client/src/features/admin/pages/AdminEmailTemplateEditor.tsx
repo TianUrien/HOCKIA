@@ -389,6 +389,7 @@ export function AdminEmailTemplateEditor() {
               blocks={blocks}
               variables={sampleVars}
               mode={previewMode}
+              isOutreach={detail.template.template_key.startsWith('outreach_')}
             />
           </div>
         </div>
