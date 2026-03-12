@@ -20,6 +20,7 @@ import { useNotificationStore } from '@/lib/notifications'
 import { derivePublicContactEmail } from '@/lib/profile'
 import type { SocialLinks } from '@/lib/socialLinks'
 import { useProfileStrength, type ProfileStrengthBucket } from '@/hooks/useProfileStrength'
+import { ProfileViewersSection } from '@/components/ProfileViewersSection'
 import AvailabilityToggleStrip from '@/components/AvailabilityToggleStrip'
 import ClubLinkPrompt from '@/components/ClubLinkPrompt'
 import { useWorldClubLogo } from '@/hooks/useWorldClubLogo'
@@ -467,6 +468,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
                     onBucketAction={handleProfileStrengthAction}
                   />
                 )}
+                {!readOnly && <ProfileViewersSection />}
                 {!readOnly && (
                   <AvailabilityToggleStrip role="player" />
                 )}

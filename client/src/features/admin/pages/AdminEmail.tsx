@@ -14,6 +14,8 @@ import {
   Mail,
   Plus,
   Loader2,
+  Contact,
+  Search,
 } from 'lucide-react'
 import { StatCard } from '../components/StatCard'
 import { DataTable } from '../components/DataTable'
@@ -22,15 +24,17 @@ import { EmailVolumeChart } from '../components/EmailVolumeChart'
 import { EmailTemplateBreakdownChart } from '../components/EmailTemplateBreakdownChart'
 import { EmailDeliveryFunnelChart } from '../components/EmailDeliveryFunnelChart'
 import { CreateCampaignModal } from '../components/CreateCampaignModal'
-import { useEmailOverview, useEmailTemplates, useEmailCampaigns, useEmailEngagement } from '../hooks/useEmailStats'
-import { sendCampaign, previewCampaignAudience } from '../api/adminApi'
+import { useEmailOverview, useEmailTemplates, useEmailCampaigns, useEmailEngagement, useEmailContactsSummary, useEmailContacts } from '../hooks/useEmailStats'
+import { sendCampaign, previewCampaignAudience, getAllCountries, toggleEmailTemplateActive } from '../api/adminApi'
 import type {
   EmailTemplate,
   EmailCampaign,
   EmailEngagementItem,
+  EmailContact,
+  WorldCountry,
 } from '../types'
 
-type TabType = 'overview' | 'campaigns' | 'notifications' | 'engagement'
+type TabType = 'overview' | 'campaigns' | 'notifications' | 'engagement' | 'contacts'
 type DaysFilter = 7 | 30 | 90
 
 const STATUS_BADGES: Record<string, string> = {
@@ -72,7 +76,22 @@ export function AdminEmail() {
   const [engTemplateKey, setEngTemplateKey] = useState<string>('')
   const [engStatus, setEngStatus] = useState<string>('')
   const [engRole, setEngRole] = useState<string>('')
+  const [engCountry, setEngCountry] = useState<string>('')
+  const [engSince, setEngSince] = useState<string>('')
+  const [engUntil, setEngUntil] = useState<string>('')
   const [engPage, setEngPage] = useState(0)
+
+  // Countries for engagement filter
+  const [countries, setCountries] = useState<WorldCountry[]>([])
+
+  // Template toggle loading state
+  const [togglingTemplateId, setTogglingTemplateId] = useState<string | null>(null)
+
+  // Contacts filters
+  const [contactRole, setContactRole] = useState<string>('')
+  const [contactCountry, setContactCountry] = useState<string>('')
+  const [contactSearch, setContactSearch] = useState<string>('')
+  const [contactPage, setContactPage] = useState(0)
 
   // Data hooks
   const overview = useEmailOverview(daysFilter)
@@ -82,12 +101,24 @@ export function AdminEmail() {
     template_key: engTemplateKey || undefined,
     status: engStatus || undefined,
     role: engRole || undefined,
+    country: engCountry || undefined,
+    since: engSince || undefined,
+    until: engUntil || undefined,
     limit: 50,
     offset: engPage * 50,
+  })
+  const contactsSummary = useEmailContactsSummary()
+  const contacts = useEmailContacts({
+    role: contactRole || undefined,
+    country: contactCountry || undefined,
+    search: contactSearch || undefined,
+    limit: 50,
+    offset: contactPage * 50,
   })
 
   useEffect(() => {
     document.title = 'Email Intelligence | PLAYR Admin'
+    getAllCountries().then(setCountries).catch(() => {})
   }, [])
 
   const handleTabChange = useCallback((tab: TabType) => {
@@ -111,11 +142,30 @@ export function AdminEmail() {
       key: 'is_active',
       label: 'Status',
       render: (_, row) => (
-        <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${
-          row.is_active ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'
-        }`}>
+        <button
+          type="button"
+          onClick={async (e) => {
+            e.stopPropagation()
+            if (togglingTemplateId) return
+            setTogglingTemplateId(row.id)
+            try {
+              await toggleEmailTemplateActive(row.id, !row.is_active)
+              templates.refetch()
+            } finally {
+              setTogglingTemplateId(null)
+            }
+          }}
+          disabled={togglingTemplateId === row.id}
+          className={`inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-medium rounded-full transition-colors ${
+            row.is_active ? 'bg-green-50 text-green-700 hover:bg-green-100' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+          } ${togglingTemplateId === row.id ? 'opacity-50' : ''}`}
+          title={`Click to ${row.is_active ? 'deactivate' : 'activate'} template`}
+        >
+          {togglingTemplateId === row.id ? (
+            <Loader2 className="w-3 h-3 animate-spin" />
+          ) : null}
           {row.is_active ? 'Active' : 'Inactive'}
-        </span>
+        </button>
       ),
     },
     {
@@ -228,6 +278,61 @@ export function AdminEmail() {
     },
   ]
 
+  // Contact table columns
+  const contactColumns: Column<EmailContact>[] = [
+    {
+      key: 'full_name',
+      label: 'Contact',
+      render: (_, row) => (
+        <div className="flex items-center gap-3">
+          {row.avatar_url ? (
+            <img src={row.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover" />
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+              <Users className="w-4 h-4 text-gray-400" />
+            </div>
+          )}
+          <div>
+            <p className="text-sm font-medium text-gray-900">{row.full_name || 'Unknown'}</p>
+            <p className="text-xs text-gray-500">{row.email}</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: 'role',
+      label: 'Role',
+      render: (_, row) => {
+        const roleStyles: Record<string, string> = {
+          player: 'bg-blue-50 text-blue-700',
+          coach: 'bg-teal-50 text-teal-700',
+          club: 'bg-orange-50 text-orange-700',
+          brand: 'bg-rose-50 text-rose-700',
+        }
+        return (
+          <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full capitalize ${roleStyles[row.role] || 'bg-gray-100 text-gray-600'}`}>
+            {row.role}
+          </span>
+        )
+      },
+    },
+    {
+      key: 'country_name',
+      label: 'Country',
+      render: (_, row) => <span className="text-sm text-gray-600">{row.country_name || '—'}</span>,
+    },
+    {
+      key: 'base_location',
+      label: 'Location',
+      render: (_, row) => <span className="text-sm text-gray-600">{row.base_location || '—'}</span>,
+    },
+    {
+      key: 'created_at',
+      label: 'Joined',
+      render: (_, row) => <span className="text-xs text-gray-500">{new Date(row.created_at).toLocaleDateString()}</span>,
+    },
+  ]
+
   const stats = overview.data
   const isLoading = overview.isLoading
 
@@ -271,6 +376,7 @@ export function AdminEmail() {
           {([
             { id: 'overview' as TabType, label: 'Overview', icon: BarChart3 },
             { id: 'campaigns' as TabType, label: 'Campaigns', icon: Megaphone },
+            { id: 'contacts' as TabType, label: 'Contacts', icon: Contact },
             { id: 'notifications' as TabType, label: 'Notifications', icon: Bell },
             { id: 'engagement' as TabType, label: 'User Engagement', icon: Users },
           ]).map((tab) => (
@@ -350,7 +456,7 @@ export function AdminEmail() {
                     try {
                       const preview = await previewCampaignAudience(
                         row.category,
-                        (row.audience_filter as { role?: string; country?: string }) || {}
+                        (row.audience_filter as { role?: string; roles?: string[]; country?: string }) || {}
                       )
                       setConfirmAudienceCount(preview.count)
                     } catch {
@@ -442,6 +548,98 @@ export function AdminEmail() {
         </div>
       )}
 
+      {/* Tab: Contacts */}
+      {activeTab === 'contacts' && (
+        <div className="space-y-6">
+          {/* Segment Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {([
+              { role: 'player', label: 'Players', color: 'bg-blue-50 border-blue-200 text-blue-700', iconBg: 'bg-blue-100' },
+              { role: 'coach', label: 'Coaches', color: 'bg-teal-50 border-teal-200 text-teal-700', iconBg: 'bg-teal-100' },
+              { role: 'club', label: 'Clubs', color: 'bg-orange-50 border-orange-200 text-orange-700', iconBg: 'bg-orange-100' },
+              { role: 'brand', label: 'Brands', color: 'bg-rose-50 border-rose-200 text-rose-700', iconBg: 'bg-rose-100' },
+            ] as const).map((seg) => (
+              <button
+                key={seg.role}
+                type="button"
+                onClick={() => {
+                  setContactRole(contactRole === seg.role ? '' : seg.role)
+                  setContactPage(0)
+                }}
+                className={`rounded-xl border p-4 text-left transition-all ${
+                  contactRole === seg.role
+                    ? `${seg.color} ring-2 ring-offset-1 ring-current`
+                    : 'bg-white border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className={`w-8 h-8 rounded-lg ${contactRole === seg.role ? seg.iconBg : 'bg-gray-100'} flex items-center justify-center`}>
+                    <Users className={`w-4 h-4 ${contactRole === seg.role ? '' : 'text-gray-500'}`} />
+                  </div>
+                  {contactRole === seg.role && (
+                    <span className="text-xs font-medium">Active filter</span>
+                  )}
+                </div>
+                <p className={`text-2xl font-bold ${contactRole === seg.role ? '' : 'text-gray-900'}`}>
+                  {contactsSummary.isLoading ? '—' : (contactsSummary.data?.[seg.role] ?? 0).toLocaleString()}
+                </p>
+                <p className={`text-sm mt-0.5 ${contactRole === seg.role ? '' : 'text-gray-500'}`}>{seg.label}</p>
+              </button>
+            ))}
+          </div>
+
+          {/* Total + search/filters */}
+          <div className="bg-white rounded-xl border border-gray-200 p-4 flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-2 mr-auto">
+              <span className="text-sm font-medium text-gray-900">
+                {contactsSummary.isLoading ? '...' : (contactsSummary.data?.total ?? 0).toLocaleString()} email-eligible contacts
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Search className="w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search name or email..."
+                value={contactSearch}
+                onChange={(e) => { setContactSearch(e.target.value); setContactPage(0) }}
+                className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 w-56 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-600">Country:</label>
+              <select
+                value={contactCountry}
+                onChange={(e) => { setContactCountry(e.target.value); setContactPage(0) }}
+                aria-label="Contact country filter"
+                className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              >
+                <option value="">All</option>
+                {countries.map(c => (
+                  <option key={c.id} value={c.code}>{c.flag_emoji} {c.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Contact list */}
+          <div className="bg-white rounded-xl border border-gray-200 p-6">
+            <DataTable
+              data={contacts.data}
+              columns={contactColumns}
+              keyField="id"
+              loading={contacts.isLoading}
+              emptyMessage="No contacts found matching the filters"
+              pagination={{
+                page: contactPage,
+                pageSize: 50,
+                totalCount: contacts.totalCount,
+                onPageChange: setContactPage,
+              }}
+            />
+          </div>
+        </div>
+      )}
+
       {/* Tab: Notifications */}
       {activeTab === 'notifications' && (
         <div className="space-y-4">
@@ -497,6 +695,7 @@ export function AdminEmail() {
                 <option value="opened_not_clicked">Opened (not clicked)</option>
                 <option value="clicked">Clicked</option>
                 <option value="bounced">Bounced</option>
+                <option value="complained">Complained</option>
                 <option value="unsubscribed">Unsubscribed</option>
               </select>
             </div>
@@ -513,6 +712,39 @@ export function AdminEmail() {
                 <option value="club">Club</option>
                 <option value="brand">Brand</option>
               </select>
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-600">Country:</label>
+              <select
+                value={engCountry}
+                onChange={(e) => { setEngCountry(e.target.value); setEngPage(0) }}
+                className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              >
+                <option value="">All</option>
+                {countries.map(c => (
+                  <option key={c.id} value={c.code}>{c.flag_emoji} {c.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-600">From:</label>
+              <input
+                type="date"
+                aria-label="Filter from date"
+                value={engSince}
+                onChange={(e) => { setEngSince(e.target.value); setEngPage(0) }}
+                className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-600">To:</label>
+              <input
+                type="date"
+                aria-label="Filter to date"
+                value={engUntil}
+                onChange={(e) => { setEngUntil(e.target.value); setEngPage(0) }}
+                className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              />
             </div>
           </div>
 

@@ -1,3 +1,4 @@
+Initialising login role...
 export type Json =
   | string
   | number
@@ -751,6 +752,66 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "world_countries_with_directory"
             referencedColumns: ["country_id"]
+          },
+        ]
+      }
+      discovery_events: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          has_qualitative: boolean | null
+          id: string
+          intent: string
+          llm_provider: string | null
+          parsed_filters: Json | null
+          query_text: string
+          response_time_ms: number | null
+          result_count: number
+          role: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          has_qualitative?: boolean | null
+          id?: string
+          intent: string
+          llm_provider?: string | null
+          parsed_filters?: Json | null
+          query_text: string
+          response_time_ms?: number | null
+          result_count?: number
+          role?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          has_qualitative?: boolean | null
+          id?: string
+          intent?: string
+          llm_provider?: string | null
+          parsed_filters?: Json | null
+          query_text?: string
+          response_time_ms?: number | null
+          result_count?: number
+          role?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discovery_events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "discovery_events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -2177,6 +2238,54 @@ export type Database = {
           },
         ]
       }
+      profile_view_email_queue: {
+        Row: {
+          anonymous_viewers: number
+          created_at: string
+          id: string
+          processed_at: string | null
+          recipient_id: string
+          top_viewer_ids: string[]
+          total_views: number
+          unique_viewers: number
+        }
+        Insert: {
+          anonymous_viewers?: number
+          created_at?: string
+          id?: string
+          processed_at?: string | null
+          recipient_id: string
+          top_viewer_ids?: string[]
+          total_views?: number
+          unique_viewers?: number
+        }
+        Update: {
+          anonymous_viewers?: number
+          created_at?: string
+          id?: string
+          processed_at?: string | null
+          recipient_id?: string
+          top_viewer_ids?: string[]
+          total_views?: number
+          unique_viewers?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_view_email_queue_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profile_view_email_queue_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           accepted_friend_count: number
@@ -2190,6 +2299,7 @@ export type Database = {
           blocked_by: string | null
           blocked_reason: string | null
           brand_representation: string | null
+          browse_anonymously: boolean
           career_entry_count: number
           club_bio: string | null
           club_history: string | null
@@ -2209,6 +2319,7 @@ export type Database = {
           is_test_account: boolean
           last_active_at: string | null
           last_message_email_at: string | null
+          last_profile_view_email_at: string | null
           league_division: string | null
           mens_league_division: string | null
           mens_league_id: number | null
@@ -2219,6 +2330,7 @@ export type Database = {
           notify_friends: boolean
           notify_messages: boolean
           notify_opportunities: boolean
+          notify_profile_views: boolean
           notify_push: boolean
           notify_references: boolean
           onboarding_completed: boolean
@@ -2254,6 +2366,7 @@ export type Database = {
           blocked_by?: string | null
           blocked_reason?: string | null
           brand_representation?: string | null
+          browse_anonymously?: boolean
           career_entry_count?: number
           club_bio?: string | null
           club_history?: string | null
@@ -2273,6 +2386,7 @@ export type Database = {
           is_test_account?: boolean
           last_active_at?: string | null
           last_message_email_at?: string | null
+          last_profile_view_email_at?: string | null
           league_division?: string | null
           mens_league_division?: string | null
           mens_league_id?: number | null
@@ -2283,6 +2397,7 @@ export type Database = {
           notify_friends?: boolean
           notify_messages?: boolean
           notify_opportunities?: boolean
+          notify_profile_views?: boolean
           notify_push?: boolean
           notify_references?: boolean
           onboarding_completed?: boolean
@@ -2318,6 +2433,7 @@ export type Database = {
           blocked_by?: string | null
           blocked_reason?: string | null
           brand_representation?: string | null
+          browse_anonymously?: boolean
           career_entry_count?: number
           club_bio?: string | null
           club_history?: string | null
@@ -2337,6 +2453,7 @@ export type Database = {
           is_test_account?: boolean
           last_active_at?: string | null
           last_message_email_at?: string | null
+          last_profile_view_email_at?: string | null
           league_division?: string | null
           mens_league_division?: string | null
           mens_league_id?: number | null
@@ -2347,6 +2464,7 @@ export type Database = {
           notify_friends?: boolean
           notify_messages?: boolean
           notify_opportunities?: boolean
+          notify_profile_views?: boolean
           notify_push?: boolean
           notify_references?: boolean
           onboarding_completed?: boolean
@@ -3402,6 +3520,10 @@ export type Database = {
       admin_get_club_summary: { Args: never; Returns: Json }
       admin_get_command_center: { Args: { p_days?: number }; Returns: Json }
       admin_get_dashboard_stats: { Args: never; Returns: Json }
+      admin_get_discovery_analytics: {
+        Args: { p_days?: number; p_exclude_test?: boolean }
+        Returns: Json
+      }
       admin_get_email_campaigns: {
         Args: {
           p_category?: string
@@ -3470,6 +3592,10 @@ export type Database = {
       }
       admin_get_messaging_metrics: {
         Args: { p_days?: number; p_exclude_test?: boolean; p_role?: string }
+        Returns: Json
+      }
+      admin_get_monthly_report: {
+        Args: { p_month?: number; p_year?: number }
         Returns: Json
       }
       admin_get_opportunities:
@@ -3945,6 +4071,7 @@ export type Database = {
           blocked_by: string | null
           blocked_reason: string | null
           brand_representation: string | null
+          browse_anonymously: boolean
           career_entry_count: number
           club_bio: string | null
           club_history: string | null
@@ -3964,6 +4091,7 @@ export type Database = {
           is_test_account: boolean
           last_active_at: string | null
           last_message_email_at: string | null
+          last_profile_view_email_at: string | null
           league_division: string | null
           mens_league_division: string | null
           mens_league_id: number | null
@@ -3974,6 +4102,7 @@ export type Database = {
           notify_friends: boolean
           notify_messages: boolean
           notify_opportunities: boolean
+          notify_profile_views: boolean
           notify_push: boolean
           notify_references: boolean
           onboarding_completed: boolean
@@ -4059,6 +4188,7 @@ export type Database = {
           blocked_by: string | null
           blocked_reason: string | null
           brand_representation: string | null
+          browse_anonymously: boolean
           career_entry_count: number
           club_bio: string | null
           club_history: string | null
@@ -4078,6 +4208,7 @@ export type Database = {
           is_test_account: boolean
           last_active_at: string | null
           last_message_email_at: string | null
+          last_profile_view_email_at: string | null
           league_division: string | null
           mens_league_division: string | null
           mens_league_id: number | null
@@ -4088,6 +4219,7 @@ export type Database = {
           notify_friends: boolean
           notify_messages: boolean
           notify_opportunities: boolean
+          notify_profile_views: boolean
           notify_push: boolean
           notify_references: boolean
           onboarding_completed: boolean
@@ -4228,6 +4360,7 @@ export type Database = {
         Args: { p_limit?: number; p_min_age?: string }
         Returns: number
       }
+      enqueue_profile_view_emails: { Args: never; Returns: undefined }
       enqueue_storage_objects_for_prefix: {
         Args: { p_bucket: string; p_prefix: string; p_reason?: string }
         Returns: number
@@ -4397,6 +4530,20 @@ export type Database = {
       get_my_ambassador_invitations: { Args: never; Returns: Json }
       get_my_brand: { Args: never; Returns: Json }
       get_my_brand_analytics: { Args: { p_days?: number }; Returns: Json }
+      get_my_profile_view_stats: { Args: { p_days?: number }; Returns: Json }
+      get_my_profile_viewers: {
+        Args: { p_days?: number; p_limit?: number }
+        Returns: {
+          avatar_url: string
+          base_location: string
+          full_name: string
+          role: string
+          username: string
+          view_count: number
+          viewed_at: string
+          viewer_id: string
+        }[]
+      }
       get_my_reference_requests: {
         Args: never
         Returns: {
@@ -4755,6 +4902,10 @@ export type Database = {
           women_league_tier: number
         }[]
       }
+      send_profile_view_notifications: {
+        Args: { p_batch?: number; p_min_views?: number }
+        Returns: number
+      }
       set_profile_comment_status: {
         Args: {
           p_comment_id: string
@@ -4906,6 +5057,7 @@ export type Database = {
         | "opportunity_published"
         | "ambassador_request_received"
         | "ambassador_request_accepted"
+        | "profile_viewed"
       profile_reference_status: "pending" | "accepted" | "declined" | "revoked"
       question_category:
         | "trials_club_selection"
@@ -5098,6 +5250,7 @@ export const Constants = {
         "opportunity_published",
         "ambassador_request_received",
         "ambassador_request_accepted",
+        "profile_viewed",
       ],
       profile_reference_status: ["pending", "accepted", "declined", "revoked"],
       question_category: [

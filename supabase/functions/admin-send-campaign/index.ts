@@ -227,7 +227,10 @@ Deno.serve(async (req: Request) => {
       })
     } else {
       // Original path: query profiles
-      const filterRole = audienceFilter.role || null
+      // Support both "roles" array and legacy "role" string
+      const filterRoles: string[] = Array.isArray(audienceFilter.roles) && audienceFilter.roles.length > 0
+        ? audienceFilter.roles
+        : audienceFilter.role ? [audienceFilter.role] : []
 
       let recipientQuery = serviceClient
         .from('profiles')
@@ -237,8 +240,10 @@ Deno.serve(async (req: Request) => {
         .eq('is_blocked', false)
         .eq('is_test_account', false)
 
-      if (filterRole) {
-        recipientQuery = recipientQuery.eq('role', filterRole)
+      if (filterRoles.length === 1) {
+        recipientQuery = recipientQuery.eq('role', filterRoles[0])
+      } else if (filterRoles.length > 1) {
+        recipientQuery = recipientQuery.in('role', filterRoles)
       }
 
       const { data: recipientData, error: recipientError } = await recipientQuery

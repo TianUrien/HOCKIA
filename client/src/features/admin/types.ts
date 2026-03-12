@@ -1106,6 +1106,8 @@ export interface EmailEngagementSearchParams {
   status?: string
   role?: string
   country?: string
+  since?: string
+  until?: string
   limit?: number
   offset?: number
 }
@@ -1139,8 +1141,43 @@ export interface CreateCampaignParams {
   name: string
   template_id: string
   category: string
-  audience_filter: { role?: string; country?: string; status?: string }
+  audience_filter: { role?: string; roles?: string[]; country?: string; status?: string }
   audience_source?: 'users' | 'outreach'
+}
+
+// ============================================================================
+// CONTACT SEGMENTATION TYPES
+// ============================================================================
+
+export interface EmailContactsSummary {
+  total: number
+  player: number
+  coach: number
+  club: number
+  brand: number
+}
+
+export interface EmailContact {
+  id: string
+  email: string
+  full_name: string | null
+  username: string | null
+  role: string
+  avatar_url: string | null
+  base_location: string | null
+  country_name: string | null
+  country_code: string | null
+  onboarding_completed: boolean
+  created_at: string
+  total_count: number
+}
+
+export interface EmailContactSearchParams {
+  role?: string
+  country?: string
+  search?: string
+  limit?: number
+  offset?: number
 }
 
 // ============================================================================

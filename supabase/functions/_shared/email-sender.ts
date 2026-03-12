@@ -17,6 +17,7 @@ declare const Deno: { env: { get(key: string): string | undefined } }
 
 // @ts-expect-error Deno URL imports are resolved at runtime in Supabase Edge Functions.
 import { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { captureException } from './sentry.ts'
 
 // ============================================================================
 // Constants
@@ -140,11 +141,21 @@ async function recordSend(
     })
     if (error) {
       logger.warn('Failed to record email send', { error: error.message, recipient: params.recipientEmail })
+      captureException(new Error(`DB record send failed: ${error.message}`), {
+        functionName: 'email-sender/recordSend',
+        tags: { template_key: params.templateKey, ...(params.campaignId ? { campaign_id: params.campaignId } : {}) },
+        extra: { recipient: params.recipientEmail },
+      })
     }
   } catch (err) {
     logger.warn('Error recording email send', {
       error: err instanceof Error ? err.message : 'Unknown',
       recipient: params.recipientEmail,
+    })
+    captureException(err, {
+      functionName: 'email-sender/recordSend',
+      tags: { template_key: params.templateKey, ...(params.campaignId ? { campaign_id: params.campaignId } : {}) },
+      extra: { recipient: params.recipientEmail },
     })
   }
 }
@@ -233,6 +244,11 @@ export async function sendTrackedEmail(params: {
         const errorData = await response.text()
         lastError = `Resend API error: ${response.status} - ${errorData}`
         logger.error('Resend API error', { status: response.status, error: errorData, recipient: to })
+        captureException(new Error(lastError), {
+          functionName: 'email-sender/sendTrackedEmail',
+          tags: { template_key: templateKey, ...(campaignId ? { campaign_id: campaignId } : {}), http_status: String(response.status) },
+          extra: { recipient: to },
+        })
         // Record as failed
         await recordSend(supabase, {
           resendEmailId: null, templateKey, campaignId,
@@ -269,6 +285,11 @@ export async function sendTrackedEmail(params: {
   }
 
   logger.error('Failed to send email after retries', { error: lastError, recipient: to })
+  captureException(new Error(`Email send failed after ${MAX_RETRIES} retries: ${lastError}`), {
+    functionName: 'email-sender/sendTrackedEmail',
+    tags: { template_key: templateKey, ...(campaignId ? { campaign_id: campaignId } : {}) },
+    extra: { recipient: to, maxRetries: MAX_RETRIES },
+  })
   await recordSend(supabase, {
     resendEmailId: null, templateKey, campaignId,
     recipientEmail: to, recipientId, recipientRole, recipientCountry,
@@ -328,6 +349,11 @@ async function sendBatchWithRetry(
     if (!response.ok) {
       const errorData = await response.text()
       logger.error('Batch API error', { status: response.status, error: errorData, batchSize: emailPayloads.length })
+      captureException(new Error(`Batch API error: ${response.status} - ${errorData}`), {
+        functionName: 'email-sender/sendBatchWithRetry',
+        tags: { http_status: String(response.status) },
+        extra: { batchSize: emailPayloads.length },
+      })
       emailPayloads.forEach(p => {
         failed.push({ email: p.to, error: `Batch API error: ${response.status}` })
       })
@@ -377,6 +403,10 @@ async function sendBatchWithRetry(
 
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     logger.error('Batch failed after retries', { error: errorMessage, batchSize: emailPayloads.length })
+    captureException(error, {
+      functionName: 'email-sender/sendBatchWithRetry',
+      extra: { batchSize: emailPayloads.length, maxRetries: MAX_RETRIES },
+    })
     emailPayloads.forEach(p => {
       failed.push({ email: p.to, error: errorMessage })
     })
@@ -487,6 +517,11 @@ export async function sendTrackedBatch(params: {
       const { error } = await supabase.from('email_sends').insert(sendRows)
       if (error) {
         logger.warn('Failed to record batch sends', { error: error.message, count: sendRows.length })
+        captureException(new Error(`DB batch send recording failed: ${error.message}`), {
+          functionName: 'email-sender/sendTrackedBatch',
+          tags: { template_key: templateKey, ...(campaignId ? { campaign_id: campaignId } : {}) },
+          extra: { rowCount: sendRows.length },
+        })
       }
     }
 
@@ -515,6 +550,11 @@ export async function sendTrackedBatch(params: {
       const { error } = await supabase.from('email_sends').insert(failRows)
       if (error) {
         logger.warn('Failed to record batch failures', { error: error.message, count: failRows.length })
+        captureException(new Error(`DB batch failure recording failed: ${error.message}`), {
+          functionName: 'email-sender/sendTrackedBatch',
+          tags: { template_key: templateKey, ...(campaignId ? { campaign_id: campaignId } : {}) },
+          extra: { rowCount: failRows.length },
+        })
       }
     }
 

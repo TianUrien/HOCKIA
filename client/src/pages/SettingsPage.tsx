@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react'
-import { 
-  ArrowLeft, 
-  Mail, 
-  Lock, 
-  Trash2, 
-  CheckCircle, 
-  Bell, 
+import {
+  ArrowLeft,
+  Mail,
+  Lock,
+  Trash2,
+  CheckCircle,
+  Bell,
   Loader2,
   ChevronRight,
   Shield,
@@ -14,7 +14,8 @@ import {
   Info,
   Code,
   LogOut,
-  ExternalLink
+  ExternalLink,
+  EyeOff
 } from 'lucide-react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuthStore } from '@/lib/auth'
@@ -54,6 +55,8 @@ export default function SettingsPage() {
   const [notifyFriends, setNotifyFriends] = useState(true)
   const [notifyReferences, setNotifyReferences] = useState(true)
   const [notifyMessages, setNotifyMessages] = useState(true)
+  const [notifyProfileViews, setNotifyProfileViews] = useState(true)
+  const [browseAnonymously, setBrowseAnonymously] = useState(false)
   const [loadingToggles, setLoadingToggles] = useState<Set<string>>(new Set())
   const [notificationSuccess, setNotificationSuccess] = useState(false)
 
@@ -80,6 +83,8 @@ export default function SettingsPage() {
       setNotifyFriends(profile.notify_friends ?? true)
       setNotifyReferences(profile.notify_references ?? true)
       setNotifyMessages(profile.notify_messages ?? true)
+      setNotifyProfileViews(profile.notify_profile_views ?? true)
+      setBrowseAnonymously(profile.browse_anonymously ?? false)
     }
   }, [profile])
 
@@ -238,6 +243,58 @@ export default function SettingsPage() {
       setTimeout(() => setNotificationSuccess(false), 3000)
     } catch (error) {
       logger.error('Failed to toggle push notifications:', error)
+    }
+  }
+
+  const handleProfileViewNotificationToggle = async () => {
+    if (!user) return
+
+    const newValue = !notifyProfileViews
+    setToggleLoading('profile_views', true)
+    setNotificationSuccess(false)
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ notify_profile_views: newValue })
+        .eq('id', user.id)
+
+      if (error) throw error
+
+      setNotifyProfileViews(newValue)
+      setNotificationSuccess(true)
+
+      await refreshProfile()
+      setTimeout(() => setNotificationSuccess(false), 3000)
+    } catch (error) {
+      logger.error('Failed to update profile view notification preferences:', error)
+      setNotifyProfileViews(!newValue)
+    } finally {
+      setToggleLoading('profile_views', false)
+    }
+  }
+
+  const handleAnonymousBrowsingToggle = async () => {
+    if (!user) return
+
+    const newValue = !browseAnonymously
+    setToggleLoading('anonymous', true)
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ browse_anonymously: newValue })
+        .eq('id', user.id)
+
+      if (error) throw error
+
+      setBrowseAnonymously(newValue)
+      await refreshProfile()
+    } catch (error) {
+      logger.error('Failed to update anonymous browsing:', error)
+      setBrowseAnonymously(!newValue)
+    } finally {
+      setToggleLoading('anonymous', false)
     }
   }
 
@@ -759,12 +816,79 @@ export default function SettingsPage() {
                   </button>
                 </div>
 
+                {/* Profile View Digest Emails -- All roles */}
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div className="flex-1 pr-4">
+                    <p className="text-gray-900 font-medium text-sm">Profile View Emails</p>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      Daily email summary of who viewed your profile
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleProfileViewNotificationToggle}
+                    disabled={loadingToggles.has('profile_views')}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
+                      notifyProfileViews ? 'bg-indigo-600' : 'bg-gray-300'
+                    } ${loadingToggles.has('profile_views') ? 'opacity-50' : ''}`}
+                  >
+                    {loadingToggles.has('profile_views') ? (
+                      <Loader2 className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 text-white animate-spin" />
+                    ) : (
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          notifyProfileViews ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    )}
+                  </button>
+                </div>
+
                 {notificationSuccess && (
                   <p className="text-xs text-green-600 flex items-center gap-1 px-4">
                     <CheckCircle className="w-3 h-3" />
                     Preferences updated
                   </p>
                 )}
+              </div>
+            )}
+          </div>
+
+          {/* PRIVACY SECTION */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+            <SectionHeader
+              id="privacy"
+              icon={EyeOff}
+              title="Privacy"
+              iconBg="bg-purple-50 text-purple-600"
+            />
+
+            {expandedSection === 'privacy' && (
+              <div className="px-4 pb-4 space-y-3">
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div className="flex-1 pr-4">
+                    <p className="text-gray-900 font-medium text-sm">Anonymous Browsing</p>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      When enabled, you won't appear in other users' "Who Viewed Your Profile" lists
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleAnonymousBrowsingToggle}
+                    disabled={loadingToggles.has('anonymous')}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
+                      browseAnonymously ? 'bg-indigo-600' : 'bg-gray-300'
+                    } ${loadingToggles.has('anonymous') ? 'opacity-50' : ''}`}
+                  >
+                    {loadingToggles.has('anonymous') ? (
+                      <Loader2 className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 text-white animate-spin" />
+                    ) : (
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          browseAnonymously ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    )}
+                  </button>
+                </div>
               </div>
             )}
           </div>

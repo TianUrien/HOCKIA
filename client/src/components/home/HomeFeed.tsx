@@ -6,8 +6,8 @@ import * as Sentry from '@sentry/react'
 import { useHomeFeed } from '@/hooks/useHomeFeed'
 import { HomeFeedItemCard } from './HomeFeedItemCard'
 import { FeedSkeleton } from './FeedSkeleton'
-import { PostComposer } from './PostComposer'
 import ProfileCompletionCard from './ProfileCompletionCard'
+import type { HomeFeedItem } from '@/types/homeFeed'
 
 /**
  * Lightweight error boundary for individual feed items.
@@ -39,10 +39,21 @@ class FeedItemErrorBoundary extends Component<
   }
 }
 
-export function HomeFeed() {
+interface HomeFeedProps {
+  prependItemRef?: React.RefObject<((item: HomeFeedItem) => void) | null>
+}
+
+export function HomeFeed({ prependItemRef }: HomeFeedProps) {
   const { items, isLoading, isFetchingNextPage, error, refetch, hasMore, loadMore, updateItemLike, removeItem, prependItem, newCount, showNewItems } = useHomeFeed()
   const sentinelRef = useRef<HTMLDivElement>(null)
   const feedTopRef = useRef<HTMLDivElement>(null)
+
+  // Expose prependItem to parent so PostComposer can live in the sticky header
+  useEffect(() => {
+    if (prependItemRef) {
+      prependItemRef.current = prependItem
+    }
+  }, [prependItem, prependItemRef])
 
   const handleShowNewItems = useCallback(async () => {
     await showNewItems()
@@ -68,11 +79,6 @@ export function HomeFeed() {
     <div>
       {/* Profile completion nudge */}
       <ProfileCompletionCard />
-
-      {/* Post composer — visually separated from feed */}
-      <div className="mb-8">
-        <PostComposer onPostCreated={prependItem} />
-      </div>
 
       {/* Scroll anchor for new posts */}
       <div ref={feedTopRef} />

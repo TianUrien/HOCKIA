@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import Header from '@/components/Header'
 import { Avatar, Button, CountryDisplay, DashboardMenu, EditProfileModal, CommentsTab, FriendsTab, FriendshipButton, ProfileStrengthCard, PublicViewBanner, RoleBadge, ScrollableTabs } from '@/components'
 import { useClubProfileStrength } from '@/hooks/useClubProfileStrength'
+import { ProfileViewersSection } from '@/components/ProfileViewersSection'
 import { logger } from '@/lib/logger'
 import OpportunitiesTab from '@/components/OpportunitiesTab'
 import ProfilePostsTab from '@/components/ProfilePostsTab'
@@ -410,6 +411,8 @@ export default function ClubDashboard({ profileData, readOnly = false, isOwnProf
                     }}
                   />
                 )}
+
+                {!readOnly && <ProfileViewersSection />}
 
                 {!readOnly && (
                   <div className="bg-gradient-to-br from-[#8026FA] to-[#924CEC] rounded-xl p-6 text-white">

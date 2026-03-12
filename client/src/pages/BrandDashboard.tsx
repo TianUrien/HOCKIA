@@ -14,6 +14,7 @@ import { BrandForm, type BrandFormData, ProductCard, AddProductModal, BrandPostC
 import ProfilePostsTab from '@/components/ProfilePostsTab'
 import ConfirmActionModal from '@/components/ConfirmActionModal'
 import { useBrandProfileStrength } from '@/hooks/useBrandProfileStrength'
+import { ProfileViewersSection } from '@/components/ProfileViewersSection'
 import { useBrandProducts } from '@/hooks/useBrandProducts'
 import type { BrandProduct, CreateProductInput, UpdateProductInput } from '@/hooks/useBrandProducts'
 import { useBrandPosts } from '@/hooks/useBrandPosts'
@@ -577,6 +578,8 @@ export default function BrandDashboard() {
                     }
                   }}
                 />
+
+                <ProfileViewersSection />
 
                 {/* Brand Info Section */}
                 <div>

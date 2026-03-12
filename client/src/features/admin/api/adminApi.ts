@@ -1341,6 +1341,9 @@ import type {
   CampaignDetail,
   AudiencePreview,
   CreateCampaignParams,
+  EmailContactsSummary,
+  EmailContact,
+  EmailContactSearchParams,
 } from '../types'
 
 /**
@@ -1426,6 +1429,20 @@ export async function rollbackEmailTemplate(
 }
 
 /**
+ * Toggle a template's active/inactive state
+ */
+export async function toggleEmailTemplateActive(
+  templateId: string,
+  isActive: boolean
+): Promise<void> {
+  const { error } = await adminRpc('admin_toggle_email_template_active', {
+    p_template_id: templateId,
+    p_is_active: isActive,
+  })
+  if (error) throw new Error(`Failed to toggle template: ${error.message}`)
+}
+
+/**
  * Get campaigns list with pagination
  */
 export async function getEmailCampaigns(params: {
@@ -1498,6 +1515,8 @@ export async function getEmailEngagementExplorer(
     p_status: params.status || null,
     p_role: params.role || null,
     p_country: params.country || null,
+    p_since: params.since || null,
+    p_until: params.until || null,
     p_limit: params.limit || 50,
     p_offset: params.offset || 0,
   })
@@ -1575,7 +1594,7 @@ export async function getCampaignDetail(campaignId: string): Promise<CampaignDet
  */
 export async function previewCampaignAudience(
   category: string,
-  audienceFilter: { role?: string; country?: string }
+  audienceFilter: { role?: string; roles?: string[]; country?: string }
 ): Promise<AudiencePreview> {
   const { data, error } = await adminRpc('admin_preview_campaign_audience', {
     p_category: category,
@@ -1610,6 +1629,40 @@ export async function sendCampaign(campaignId: string): Promise<{
     throw new Error(result.error || 'Failed to send campaign')
   }
   return { sent: result.sent, failed: result.failed, duration_ms: result.duration_ms }
+}
+
+// ============================================================================
+// CONTACT SEGMENTATION
+// ============================================================================
+
+/**
+ * Get email contacts summary (per-role counts of email-eligible users)
+ */
+export async function getEmailContactsSummary(): Promise<EmailContactsSummary> {
+  const { data, error } = await adminRpc('admin_get_email_contacts_summary')
+  if (error) throw new Error(`Failed to get contacts summary: ${error.message}`)
+  return data as EmailContactsSummary
+}
+
+/**
+ * Get paginated email contacts list with filters
+ */
+export async function getEmailContacts(
+  params: EmailContactSearchParams = {}
+): Promise<{ contacts: EmailContact[]; totalCount: number }> {
+  const { data, error } = await adminRpc('admin_get_email_contacts', {
+    p_role: params.role || null,
+    p_country: params.country || null,
+    p_search: params.search || null,
+    p_limit: params.limit || 50,
+    p_offset: params.offset || 0,
+  })
+  if (error) throw new Error(`Failed to get email contacts: ${error.message}`)
+
+  const contacts = data as EmailContact[]
+  const totalCount = contacts.length > 0 ? contacts[0].total_count : 0
+
+  return { contacts, totalCount }
 }
 
 // ============================================================================

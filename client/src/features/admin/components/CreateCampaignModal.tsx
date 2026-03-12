@@ -17,7 +17,7 @@ export function CreateCampaignModal({ templates, onClose, onCreated }: CreateCam
   const [templateId, setTemplateId] = useState('')
   const [category, setCategory] = useState('notification')
   const [audienceSource, setAudienceSource] = useState<'users' | 'outreach'>('users')
-  const [filterRole, setFilterRole] = useState('')
+  const [filterRoles, setFilterRoles] = useState<string[]>([])
   const [filterCountry, setFilterCountry] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
   const [countries, setCountries] = useState<WorldCountry[]>([])
@@ -49,7 +49,7 @@ export function CreateCampaignModal({ templates, onClose, onCreated }: CreateCam
 
   // Reset filters when audience source changes
   useEffect(() => {
-    setFilterRole('')
+    setFilterRoles([])
     setFilterCountry('')
     setFilterStatus('')
     setTemplateId('')
@@ -63,10 +63,10 @@ export function CreateCampaignModal({ templates, onClose, onCreated }: CreateCam
   }, [audienceSource])
 
   const audienceFilter = useMemo(() => ({
-    ...(filterRole ? { role: filterRole } : {}),
+    ...(filterRoles.length > 0 ? { roles: filterRoles } : {}),
     ...(filterCountry ? { country: filterCountry } : {}),
     ...(filterStatus ? { status: filterStatus } : {}),
-  }), [filterRole, filterCountry, filterStatus])
+  }), [filterRoles, filterCountry, filterStatus])
 
   const handlePreview = useCallback(async () => {
     if (isOutreach) {
@@ -88,6 +88,12 @@ export function CreateCampaignModal({ templates, onClose, onCreated }: CreateCam
       fetchUsersPreview(category, audienceFilter)
     }
   }, [isOutreach, filterCountry, filterStatus, category, audienceFilter, fetchUsersPreview])
+
+  const toggleRole = useCallback((role: string) => {
+    setFilterRoles(prev =>
+      prev.includes(role) ? prev.filter(r => r !== role) : [...prev, role]
+    )
+  }, [])
 
   const handleCreate = async () => {
     if (!name.trim() || !templateId) return
@@ -114,7 +120,7 @@ export function CreateCampaignModal({ templates, onClose, onCreated }: CreateCam
     resetUsersPreview()
     setOutreachPreview(null)
     setOutreachPreviewError(null)
-  }, [filterRole, filterCountry, filterStatus, category, resetUsersPreview])
+  }, [filterRoles, filterCountry, filterStatus, category, resetUsersPreview])
 
   const previewLoading = isOutreach ? outreachPreviewLoading : usersPreviewLoading
   const previewError = isOutreach ? outreachPreviewError : usersPreviewError
@@ -212,20 +218,36 @@ export function CreateCampaignModal({ templates, onClose, onCreated }: CreateCam
             <div className="grid grid-cols-2 gap-3">
               {/* Role filter — only for users */}
               {!isOutreach && (
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1">Role</label>
-                  <select
-                    value={filterRole}
-                    onChange={(e) => setFilterRole(e.target.value)}
-                    aria-label="Role"
-                    className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  >
-                    <option value="">All roles</option>
-                    <option value="player">Player</option>
-                    <option value="coach">Coach</option>
-                    <option value="club">Club</option>
-                    <option value="brand">Brand</option>
-                  </select>
+                <div className="col-span-2">
+                  <label className="block text-xs text-gray-500 mb-2">Roles {filterRoles.length === 0 && <span className="text-gray-400">(all)</span>}</label>
+                  <div className="flex flex-wrap gap-2">
+                    {(['player', 'coach', 'club', 'brand'] as const).map((role) => {
+                      const checked = filterRoles.includes(role)
+                      const styles: Record<string, { active: string; inactive: string }> = {
+                        player: { active: 'bg-blue-50 border-blue-300 text-blue-700', inactive: 'bg-white border-gray-200 text-gray-600 hover:border-gray-300' },
+                        coach: { active: 'bg-teal-50 border-teal-300 text-teal-700', inactive: 'bg-white border-gray-200 text-gray-600 hover:border-gray-300' },
+                        club: { active: 'bg-orange-50 border-orange-300 text-orange-700', inactive: 'bg-white border-gray-200 text-gray-600 hover:border-gray-300' },
+                        brand: { active: 'bg-rose-50 border-rose-300 text-rose-700', inactive: 'bg-white border-gray-200 text-gray-600 hover:border-gray-300' },
+                      }
+                      return (
+                        <button
+                          key={role}
+                          type="button"
+                          onClick={() => toggleRole(role)}
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors ${
+                            checked ? styles[role].active : styles[role].inactive
+                          }`}
+                        >
+                          <span className={`w-3.5 h-3.5 rounded border flex items-center justify-center ${
+                            checked ? 'bg-current border-current' : 'border-gray-300'
+                          }`}>
+                            {checked && <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+                          </span>
+                          <span className="capitalize">{role}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
                 </div>
               )}
 

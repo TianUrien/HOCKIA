@@ -6,6 +6,7 @@ import {
   Briefcase,
   CheckCircle2,
   ClipboardCheck,
+  Eye,
   Handshake,
   Heart,
   Megaphone,
@@ -244,6 +245,25 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
     getTitle: (notification) => `${getActorName(notification)} accepted your ambassador invitation`,
     getDescription: () => 'They now appear on your brand profile.',
     getRoute: () => '/dashboard?tab=ambassadors',
+  },
+  profile_viewed: {
+    icon: Eye,
+    badgeText: 'Profile views',
+    accentClassName: 'bg-purple-50 text-purple-600',
+    getTitle: (notification) => {
+      const uniqueViewers = notification.metadata?.unique_viewers
+      const count = typeof uniqueViewers === 'number' ? uniqueViewers : 1
+      return count === 1
+        ? `${getActorName(notification)} viewed your profile`
+        : `${count} people viewed your profile today`
+    },
+    getDescription: (notification) => {
+      const totalViews = notification.metadata?.total_views
+      return typeof totalViews === 'number' && totalViews > 1
+        ? `${totalViews} total views`
+        : null
+    },
+    getRoute: () => '/dashboard/profile?tab=profile&section=viewers',
   },
   system_announcement: {
     icon: Megaphone,

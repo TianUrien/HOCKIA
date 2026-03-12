@@ -1,12 +1,16 @@
+import { useRef } from 'react'
 import { Header } from '@/components'
 import { HomeFeed } from '@/components/home/HomeFeed'
+import { PostComposer } from '@/components/home/PostComposer'
 import { SearchOverlay } from '@/components/search/SearchOverlay'
 import { useScrollRestore } from '@/hooks/useScrollRestore'
 import { useScrollDirection } from '@/hooks/useScrollDirection'
+import type { HomeFeedItem } from '@/types/homeFeed'
 
 export default function HomePage() {
   useScrollRestore()
   const scrollDirection = useScrollDirection()
+  const prependItemRef = useRef<((item: HomeFeedItem) => void) | null>(null)
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -21,8 +25,11 @@ export default function HomePage() {
           }`}
         >
           <SearchOverlay />
+          <div className="mt-4">
+            <PostComposer onPostCreated={(item) => prependItemRef.current?.(item)} />
+          </div>
         </div>
-        <HomeFeed />
+        <HomeFeed prependItemRef={prependItemRef} />
       </main>
     </div>
   )
