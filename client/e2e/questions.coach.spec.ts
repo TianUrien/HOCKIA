@@ -1,55 +1,23 @@
 import { test, expect } from './fixtures'
-import fs from 'fs'
-import path from 'path'
-import { fileURLToPath } from 'url'
 
 /**
  * Questions (Q&A) Feature E2E Tests - Coach Role
- * 
+ *
  * Tests for cross-account interactions (coach answering player questions)
  * and the answer count synchronization fix.
- * 
+ *
  * Test accounts used:
  *   - Coach: coachplayr@gmail.com (answers questions created by other roles)
- * 
+ *
  * These tests verify:
  *   - Coach can answer questions from players/clubs
  *   - Answer count updates correctly in list view (regression test for bug fix)
  *   - Coach cannot edit/delete other users' content
  */
 
-// ESM-compatible __dirname
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
-
 const testId = () => `e2e-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 
-// Shared data directory for cross-spec coordination
-const dataDir = path.join(__dirname, '.data')
-
-// Helper to save/load question ID between specs
-function saveQuestionId(id: string, title: string) {
-  if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true })
-  }
-  fs.writeFileSync(
-    path.join(dataDir, 'test-question.json'),
-    JSON.stringify({ id, title, createdAt: new Date().toISOString() })
-  )
-}
-
-function loadQuestionId(): { id: string; title: string } | null {
-  const filePath = path.join(dataDir, 'test-question.json')
-  if (!fs.existsSync(filePath)) return null
-  try {
-    const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'))
-    return data
-  } catch {
-    return null
-  }
-}
-
-test.describe.skip('@questions coach flows', () => {
+test.describe('@questions coach flows', () => {
   test.describe('Cross-Account Answering', () => {
     test('coach can answer a question', async ({ questionsPage, page }) => {
       await questionsPage.openQuestionsPage()
@@ -213,9 +181,6 @@ test.describe.skip('@questions coach flows', () => {
             await questionsPage.waitForLoadingToComplete()
 
             // Look for answer options buttons (should only be visible for own answers)
-            const answerOptions = page.getByRole('button', { name: /answer options/i })
-            const optionsCount = await answerOptions.count()
-
             // If we see any options, it means we authored some answers
             // The test is that we DON'T see options on OTHER people's answers
             // This is hard to test without knowing which answers are ours

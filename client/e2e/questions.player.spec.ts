@@ -16,7 +16,7 @@ import { test, expect } from './fixtures'
 // Generate unique identifiers for test data to avoid collisions
 const testId = () => `e2e-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 
-test.describe.skip('@questions player flows', () => {
+test.describe('@questions player flows', () => {
   test.describe('Questions List', () => {
     test('questions page loads successfully', async ({ questionsPage, page }) => {
       await questionsPage.openQuestionsPage()
@@ -35,7 +35,7 @@ test.describe.skip('@questions player flows', () => {
       await page.goto('/community')
       await questionsPage.waitForLoadingToComplete()
 
-      // Start on People mode (default)
+      // Start on Members mode (default)
       await expect(page.getByRole('heading', { name: /community/i })).toBeVisible({ timeout: 20000 })
 
       // Switch to Questions
@@ -43,8 +43,8 @@ test.describe.skip('@questions player flows', () => {
       await questionsPage.waitForLoadingToComplete()
       await expect(page.getByRole('heading', { name: 'Questions' })).toBeVisible()
 
-      // Switch back to People
-      await page.getByRole('button', { name: /people/i }).click()
+      // Switch back to Members
+      await page.getByRole('button', { name: /members/i }).click()
       await questionsPage.waitForLoadingToComplete()
       await expect(page.getByRole('heading', { name: 'Questions' })).not.toBeVisible()
     })
@@ -186,7 +186,7 @@ test.describe.skip('@questions player flows', () => {
       await expect(page.getByRole('heading', { level: 1, name: questionTitle })).toBeVisible({ timeout: 10000 })
 
       // Should show author name and Player badge
-      await expect(page.getByText('Test Player')).toBeVisible()
+      await expect(page.getByText(/Test Player/)).toBeVisible()
       await expect(page.getByText('Player')).toBeVisible()
     })
 
@@ -388,7 +388,7 @@ test.describe.skip('@questions player flows', () => {
       await expect(card.getByText(/0 answers/i)).toBeVisible()
       
       // Should show author name
-      await expect(card.getByText('Test Player')).toBeVisible()
+      await expect(card.getByText(/Test Player/)).toBeVisible()
       
       // Should show Player role badge
       await expect(card.getByText('Player')).toBeVisible()
