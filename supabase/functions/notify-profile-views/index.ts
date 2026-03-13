@@ -179,14 +179,14 @@ Deno.serve(async (req: Request) => {
 
     const templateVars = {
       first_name: firstName,
-      heading: stats.uniqueViewers === 1
-        ? `${viewers[0]?.full_name?.trim() || 'Someone'} viewed your profile`
-        : `${stats.uniqueViewers} people viewed your profile`,
+      view_count: stats.uniqueViewers === 1
+        ? '1 person'
+        : `${stats.uniqueViewers} people`,
       unique_viewers: String(stats.uniqueViewers),
       total_views: String(stats.totalViews),
       anonymous_viewers: String(stats.anonymousViewers),
       cta_url: `${PLAYR_BASE_URL}/dashboard/profile?tab=profile&section=viewers`,
-      cta_label: 'See All Viewers',
+      cta_label: 'See Who Viewed Your Profile',
       settings_url: `${PLAYR_BASE_URL}/settings`,
     }
 
@@ -205,8 +205,8 @@ Deno.serve(async (req: Request) => {
       emailHtml = generateEmailHtml(recipient as RecipientData, viewers, stats)
       emailText = generateEmailText(recipient as RecipientData, viewers, stats)
       subject = stats.uniqueViewers === 1
-        ? `${viewers[0]?.full_name?.trim() || 'Someone'} viewed your profile on PLAYR`
-        : `${stats.uniqueViewers} people viewed your profile on PLAYR`
+        ? 'Someone viewed your PLAYR profile'
+        : `${stats.uniqueViewers} people viewed your PLAYR profile`
       logger.info('Falling back to hardcoded template')
     }
 
