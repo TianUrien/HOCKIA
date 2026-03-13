@@ -37,7 +37,6 @@ function retentionColor(pct: number): string {
   return 'text-red-600'
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function AdminChurn() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [data, setData] = useState<any>(null)
