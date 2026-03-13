@@ -9,6 +9,7 @@ import type { Database } from '@/lib/database.types'
 import ApplicantCard from '@/components/ApplicantCard'
 import type { ApplicantReferenceInfo } from '@/components/ApplicantCard'
 import { logger } from '@/lib/logger'
+import { trackDbEvent } from '@/lib/trackDbEvent'
 
 type ApplicationStatus = Database['public']['Enums']['application_status']
 
@@ -216,6 +217,7 @@ export default function ApplicantsList() {
         .eq('id', applicationId)
 
       if (updateError) throw updateError
+      trackDbEvent('applicant_status_change', 'application', applicationId, { new_status: newStatus })
     } catch (err) {
       // Revert optimistic update
       setApplications((prev) =>

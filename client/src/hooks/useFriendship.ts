@@ -8,6 +8,7 @@ import { useToastStore } from '@/lib/toast'
 import { useNotificationStore } from '@/lib/notifications'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
 import { extractErrorMessage } from '@/lib/utils'
+import { trackDbEvent } from '@/lib/trackDbEvent'
 
 type FriendStatus = Database['public']['Enums']['friendship_status']
 type FriendEdge = Database['public']['Views']['profile_friend_edges']['Row']
@@ -147,6 +148,7 @@ export function useFriendship(profileId: string): FriendshipState {
         )
 
       if (error) throw error
+      trackDbEvent('friend_request_send', 'friendship', profileId)
       addToast('Friend request sent.', 'success')
       await fetchRelationship()
     } catch (error) {
@@ -188,6 +190,7 @@ export function useFriendship(profileId: string): FriendshipState {
           .eq('id', friendshipId)
 
         if (error) throw error
+        trackDbEvent('friend_request_update', 'friendship', friendshipId, { status: nextStatus })
         addToast(successMessage, 'success')
         dismissNotification('friend_request_received', friendshipId)
         await fetchRelationship()

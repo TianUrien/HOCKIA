@@ -2,6 +2,7 @@ import { useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { withTimeout } from '@/lib/retry'
+import { trackDbEvent } from '@/lib/trackDbEvent'
 
 export interface PostImage {
   url: string
@@ -42,6 +43,9 @@ export function useUserPosts() {
       if (error) throw error
 
       const result = data as unknown as PostResult
+      if (result.success && result.post_id) {
+        trackDbEvent('post_create', 'post', result.post_id, { type: 'user' })
+      }
       return result
     } catch (err) {
       logger.error('[useUserPosts] createPost error:', err)
@@ -94,6 +98,9 @@ export function useUserPosts() {
       if (error) throw error
 
       const result = data as unknown as SimpleResult
+      if (result.success) {
+        trackDbEvent('post_delete', 'post', postId, { type: 'user' })
+      }
       return result
     } catch (err) {
       logger.error('[useUserPosts] deletePost error:', err)
@@ -129,6 +136,9 @@ export function useUserPosts() {
       if (error) throw error
 
       const result = data as unknown as PostResult
+      if (result.success && result.post_id) {
+        trackDbEvent('post_create', 'post', result.post_id, { type: 'transfer' })
+      }
       return result
     } catch (err) {
       logger.error('[useUserPosts] createTransferPost error:', err)
@@ -158,6 +168,9 @@ export function useUserPosts() {
       if (error) throw error
 
       const result = data as unknown as PostResult
+      if (result.success && result.post_id) {
+        trackDbEvent('post_create', 'post', result.post_id, { type: 'signing' })
+      }
       return result
     } catch (err) {
       logger.error('[useUserPosts] createSigningPost error:', err)

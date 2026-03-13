@@ -25,6 +25,7 @@ interface ParsedRow {
   country: string
   role_at_club: string
   phone: string
+  instagram: string
   notes: string
 }
 
@@ -58,6 +59,10 @@ function normalizeHeader(header: string): string {
     phone: 'phone',
     telephone: 'phone',
     phone_number: 'phone',
+    instagram: 'instagram',
+    ig: 'instagram',
+    instagram_handle: 'instagram',
+    social: 'instagram',
     notes: 'notes',
     note: 'notes',
     comments: 'notes',
@@ -98,6 +103,7 @@ function validateRows(rows: Record<string, string>[]): ValidationResult {
       country: normalized.country || '',
       role_at_club: normalized.role_at_club || '',
       phone: normalized.phone || '',
+      instagram: (normalized.instagram || '').replace(/^@/, ''),
       notes: normalized.notes || '',
     })
   })
@@ -205,7 +211,7 @@ export function OutreachImportModal({ onClose, onImported }: OutreachImportModal
                   Required columns: email, club_name
                 </p>
                 <p className="text-xs text-gray-400">
-                  Optional: contact_name, country, role_at_club, phone, notes
+                  Optional: contact_name, country, role_at_club, instagram, phone, notes
                 </p>
                 <input
                   id="csv-file-input"

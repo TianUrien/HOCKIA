@@ -15,6 +15,7 @@ import { useToastStore } from '@/lib/toast'
 import { deleteStorageObject } from '@/lib/storage'
 import { toSentryError } from '@/lib/sentryHelpers'
 import { clearProfileDraft, loadProfileDraft, saveProfileDraft } from '@/lib/profileDrafts'
+import { trackDbEvent } from '@/lib/trackDbEvent'
 import SocialLinksInput from './SocialLinksInput'
 import WorldClubSearch from './WorldClubSearch'
 import { type SocialLinks, cleanSocialLinks, validateSocialLinks } from '@/lib/socialLinks'
@@ -558,6 +559,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
       } catch {
         // Refresh failed but save succeeded — ignore silently
       }
+      trackDbEvent('profile_edit', 'profile', profileId, { fields: updatedFields, role })
       clearProfileDraft(profileId, role)
     } catch (err) {
       captureOnboardingError(err, {

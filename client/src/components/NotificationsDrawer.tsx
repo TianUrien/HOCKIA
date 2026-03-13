@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
 import type { NotificationKind, NotificationRecord } from '@/lib/api/notifications'
 import { getNotificationConfig, resolveNotificationRoute } from './notifications/config'
+import { trackDbEvent } from '@/lib/trackDbEvent'
 
 const FRIEND_REQUEST_KINDS = new Set<NotificationKind>(['friend_request_received'])
 const AMBASSADOR_REQUEST_KINDS = new Set<NotificationKind>(['ambassador_request_received'])
@@ -167,6 +168,7 @@ export default function NotificationsDrawer() {
     if (!notification.readAt) {
       void markRead(notification.id)
     }
+    trackDbEvent('notification_click', 'notification', notification.id, { kind: notification.kind })
     const route = resolveNotificationRoute(notification)
     navigateToRoute(route)
   }

@@ -8,6 +8,7 @@ import { getAuthRedirectUrl } from '@/lib/siteUrl'
 import { logger } from '@/lib/logger'
 import { supportsReliableOAuth } from '@/lib/inAppBrowser'
 import { checkSignupRateLimit, formatRateLimitError } from '@/lib/rateLimit'
+import { trackSignUpStart, trackSignUp } from '@/lib/analytics'
 
 type UserRole = 'player' | 'coach' | 'club' | 'brand'
 type SignUpResponse = Awaited<ReturnType<typeof supabase.auth.signUp>>
@@ -62,6 +63,7 @@ export default function SignUp() {
       }
 
       logger.debug('Creating auth account with role:', selectedRole)
+      trackSignUpStart('email')
 
       // Create auth account (no session until email verified)
       const { data: authData, error: signUpError }: SignUpResponse = await supabase.auth.signUp({
@@ -105,6 +107,7 @@ export default function SignUp() {
       if (!authUser) throw new Error('No user data returned from signup')
 
       logger.debug('Auth account created successfully:', authUser.id)
+      trackSignUp(selectedRole)
 
       // Store role in localStorage as fallback
       localStorage.setItem('pending_role', selectedRole)
@@ -249,6 +252,7 @@ export default function SignUp() {
                       alert('Google Sign-In may not work in this browser. Please use email/password signup, or open PLAYR in Safari or Chrome.')
                       return
                     }
+                    trackSignUpStart('google')
                     supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: getAuthRedirectUrl() } })
                   }}
                   className="mt-4 w-full flex items-center justify-center gap-3 px-4 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors shadow-sm"

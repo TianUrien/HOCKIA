@@ -10,7 +10,8 @@ import { monitor } from './monitor'
 import { logger } from './logger'
 import { useUnreadStore } from './unread'
 import { reportSupabaseError } from './sentryHelpers'
-import { setUserProperties, clearUserProperties } from './analytics'
+import { setUserProperties, clearUserProperties, trackLogin } from './analytics'
+import { trackDbEvent } from './trackDbEvent'
 
 interface AuthState {
   user: User | null
@@ -404,6 +405,12 @@ export const initializeAuth = () => {
       clearLocalSession('onAuthStateChange-signed-out', { skipSupabaseSignOut: true })
         .finally(() => setLoading(false))
       return
+    }
+
+    if (event === 'SIGNED_IN' && session?.user) {
+      const method = session.user.app_metadata?.provider === 'google' ? 'google' : 'email'
+      trackLogin(method)
+      trackDbEvent('login', undefined, undefined, { method })
     }
 
     runSessionEffects(session)

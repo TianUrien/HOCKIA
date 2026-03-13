@@ -1202,6 +1202,7 @@ export interface OutreachContact {
   country: string | null
   role_at_club: string | null
   phone: string | null
+  instagram: string | null
   notes: string | null
   status: OutreachStatus
   source: 'csv_import' | 'manual'
@@ -1384,6 +1385,173 @@ export interface MonthlyReportData {
   previous: MonthlyMetrics
   month: number
   year: number
+  generated_at: string
+}
+
+// ============================================================================
+// PREFERENCE ANALYTICS TYPES
+// ============================================================================
+
+export type PreferenceKey =
+  | 'notify_applications'
+  | 'notify_friends'
+  | 'notify_references'
+  | 'notify_messages'
+  | 'notify_opportunities'
+  | 'notify_push'
+  | 'notify_profile_views'
+  | 'browse_anonymously'
+
+export interface PreferenceRoleBreakdown {
+  enabled: number
+  disabled: number
+}
+
+export interface PreferenceStat {
+  enabled: number
+  disabled: number
+  by_role: Record<string, PreferenceRoleBreakdown>
+}
+
+export interface PreferenceSummary {
+  total_users: number
+  preferences: Record<PreferenceKey, PreferenceStat>
+  generated_at: string
+}
+
+export interface PreferenceUser {
+  id: string
+  email: string
+  full_name: string | null
+  role: string
+  avatar_url: string | null
+  created_at: string
+  total_count: number
+}
+
+// ============================================================================
+// ADVANCED ANALYTICS TYPES
+// ============================================================================
+
+export interface FeedAnalytics {
+  summary: {
+    total_posts: number
+    unique_authors: number
+    user_posts: number
+    transfer_posts: number
+    signing_posts: number
+    brand_posts: number
+    prev_total_posts: number
+    total_likes: number
+    unique_likers: number
+    prev_total_likes: number
+    total_comments: number
+    unique_commenters: number
+    prev_total_comments: number
+  }
+  daily_trend: Array<{ day: string; posts: number; likes: number; comments: number }>
+  posts_by_role: Array<{ role: string; count: number }>
+  top_posts: Array<{
+    id: string
+    content: string
+    post_type: string
+    created_at: string
+    author_name: string
+    author_role: string
+    author_avatar: string | null
+    like_count: number
+    comment_count: number
+  }>
+  generated_at: string
+}
+
+export interface NotificationEffectiveness {
+  totals: {
+    total_created: number
+    total_read: number
+    total_clicks: number
+    overall_read_rate: number
+    overall_click_rate: number
+  }
+  per_kind: Array<{
+    kind: string
+    created: number
+    read: number
+    cleared: number
+    clicks: number
+    unique_clickers: number
+    read_rate: number
+    click_rate: number
+  }>
+  daily_trend: Array<{ day: string; created: number; read: number; clicks: number }>
+  generated_at: string
+}
+
+export interface ConversionFunnels {
+  networking_funnel: {
+    profile_viewers: number
+    friend_requesters: number
+    friend_accepted: number
+  }
+  opportunity_funnel: {
+    vacancy_viewers: number
+    applicants: number
+    shortlisted: number
+  }
+  notification_funnel: {
+    recipients: number
+    readers: number
+    clickers: number
+  }
+  reference_funnel: {
+    requesters: number
+    accepted: number
+  }
+  generated_at: string
+}
+
+export interface CommunityAnalytics {
+  summary: {
+    total_questions: number
+    unique_askers: number
+    prev_total_questions: number
+    total_answers: number
+    unique_answerers: number
+    prev_total_answers: number
+    response_rate: number
+  }
+  questions_by_role: Array<{ role: string; count: number }>
+  top_contributors: Array<{
+    id: string
+    full_name: string | null
+    role: string
+    avatar_url: string | null
+    answer_count: number
+  }>
+  daily_trend: Array<{ day: string; questions: number; answers: number }>
+  generated_at: string
+}
+
+export interface MarketplaceHealth {
+  supply: {
+    players_available: number
+    total_players: number
+    coaches_available: number
+    total_coaches: number
+  }
+  demand: {
+    open_vacancies: number
+    clubs_hiring: number
+    new_vacancies_period: number
+  }
+  velocity: {
+    applications_period: number
+    unique_applicants: number
+    vacancies_applied_to: number
+    avg_hours_to_first_app: number
+  }
+  status_breakdown: Array<{ status: string; count: number }>
+  by_position: Array<{ position: string; count: number }>
   generated_at: string
 }
 

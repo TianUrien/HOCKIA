@@ -12,6 +12,7 @@ import { loadMessageDraft, saveMessageDraft, clearMessageDraft } from '@/lib/mes
 import { reportSupabaseError } from '@/lib/sentryHelpers'
 import { checkMessageRateLimit, formatRateLimitError } from '@/lib/rateLimit'
 import { trackDbEvent } from '@/lib/trackDbEvent'
+import { trackMessageSend, trackConversationStart } from '@/lib/analytics'
 import { extractErrorMessage } from '@/lib/utils'
 import type { ChatMessage, Message, Conversation, ChatMessageEvent, MessageDeliveryStatus, MessageMetadata } from '@/types/chat'
 
@@ -650,6 +651,7 @@ export function useChat({
       )
 
       trackDbEvent('message_send', 'conversation', conversationIdForMetrics)
+      trackMessageSend()
 
       if (onMessageSent && (deliveredMessage || optimisticMessage)) {
         onMessageSent({
@@ -660,6 +662,8 @@ export function useChat({
       }
 
       if (newlyCreatedConversation) {
+        trackDbEvent('conversation_start', 'conversation', newlyCreatedConversation.id, { context: 'direct_message' })
+        trackConversationStart('direct_message')
         onConversationCreated(newlyCreatedConversation)
       }
       

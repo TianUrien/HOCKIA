@@ -8,6 +8,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { trackDbEvent } from '@/lib/trackDbEvent'
 
 export interface BrandPost {
   id: string
@@ -89,6 +90,7 @@ export function useBrandPosts(brandId: string | null | undefined): UseBrandPosts
         return { success: false, error: response.error }
       }
 
+      trackDbEvent('post_create', 'post', response.post_id, { type: 'brand' })
       await fetchPosts()
       return { success: true, post_id: response.post_id }
     } catch (err) {
@@ -141,6 +143,7 @@ export function useBrandPosts(brandId: string | null | undefined): UseBrandPosts
         return { success: false, error: response.error }
       }
 
+      trackDbEvent('post_delete', 'post', postId, { type: 'brand' })
       await fetchPosts()
       return { success: true }
     } catch (err) {

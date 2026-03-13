@@ -10,6 +10,7 @@ import { SearchBrandResult } from '@/components/search/SearchBrandResult'
 import { SearchOpportunityResult } from '@/components/search/SearchOpportunityResult'
 import { useSearch } from '@/hooks/useSearch'
 import { trackDbEvent } from '@/lib/trackDbEvent'
+import { trackSearch } from '@/lib/analytics'
 import type { SearchResult } from '@/hooks/useSearch'
 
 type TabType = 'all' | 'posts' | 'people' | 'clubs' | 'brands' | 'opportunities'
@@ -66,24 +67,35 @@ export default function SearchPage() {
       search_term: query,
       result_count: data.pages[0].total,
     })
+    trackSearch(activeTab, query)
   }, [data?.pages, query, activeTab])
 
   // Flatten all pages' results
   const results: SearchResult[] = data?.pages.flatMap((page) => page.results) ?? []
   const typeCounts = data?.pages[0]?.type_counts
 
+  const trackResultClick = useCallback((result: SearchResult, index: number) => {
+    const entityId = result.profile_id || result.post_id || result.world_club_id || result.brand_id || result.opportunity_id
+    trackDbEvent('search_result_click', result.result_type, entityId ?? undefined, {
+      query,
+      position: index,
+      result_type: result.result_type,
+    })
+  }, [query])
+
   const renderResult = (result: SearchResult, index: number) => {
+    const handleClick = () => trackResultClick(result, index)
     switch (result.result_type) {
       case 'post':
-        return <SearchPostResult key={`post-${result.post_id}-${index}`} result={result} />
+        return <div key={`post-${result.post_id}-${index}`} onClick={handleClick}><SearchPostResult result={result} /></div>
       case 'person':
-        return <SearchPersonResult key={`person-${result.profile_id}-${index}`} result={result} />
+        return <div key={`person-${result.profile_id}-${index}`} onClick={handleClick}><SearchPersonResult result={result} /></div>
       case 'club':
-        return <SearchClubResult key={`club-${result.world_club_id}-${index}`} result={result} />
+        return <div key={`club-${result.world_club_id}-${index}`} onClick={handleClick}><SearchClubResult result={result} /></div>
       case 'brand':
-        return <SearchBrandResult key={`brand-${result.brand_id}-${index}`} result={result} />
+        return <div key={`brand-${result.brand_id}-${index}`} onClick={handleClick}><SearchBrandResult result={result} /></div>
       case 'opportunity':
-        return <SearchOpportunityResult key={`opp-${result.opportunity_id}-${index}`} result={result} />
+        return <div key={`opp-${result.opportunity_id}-${index}`} onClick={handleClick}><SearchOpportunityResult result={result} /></div>
       default:
         return null
     }

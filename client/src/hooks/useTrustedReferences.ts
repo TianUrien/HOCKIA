@@ -6,6 +6,7 @@ import { logger } from '@/lib/logger'
 import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
 import { extractErrorMessage } from '@/lib/utils'
+import { trackDbEvent } from '@/lib/trackDbEvent'
 
 const MAX_REFERENCES = 5 as const
 
@@ -257,6 +258,7 @@ export function useTrustedReferences(profileId: string) {
         })
 
         if (error) throw error
+        trackDbEvent('reference_request', 'reference', params.referenceId, { relationship_type: params.relationshipType })
         addToast('Reference request sent.', 'success')
         await fetchReferences()
         return true
@@ -282,6 +284,7 @@ export function useTrustedReferences(profileId: string) {
         })
 
         if (error) throw error
+        trackDbEvent('reference_respond', 'reference', params.referenceId, { accepted: params.accept })
         addToast(params.accept ? 'Reference accepted.' : 'Reference declined.', 'success')
         await fetchReferences()
         return true
@@ -303,6 +306,7 @@ export function useTrustedReferences(profileId: string) {
       try {
         const { error } = await supabase.rpc('remove_reference', { p_reference_id: referenceId })
         if (error) throw error
+        trackDbEvent('reference_remove', 'reference', referenceId)
         addToast('Reference removed.', 'success')
         await fetchReferences()
         return true
@@ -323,6 +327,7 @@ export function useTrustedReferences(profileId: string) {
       try {
         const { error } = await supabase.rpc('withdraw_reference', { p_reference_id: referenceId })
         if (error) throw error
+        trackDbEvent('reference_withdraw', 'reference', referenceId)
         addToast('Reference withdrawn.', 'success')
         await fetchReferences()
         return true
@@ -347,6 +352,7 @@ export function useTrustedReferences(profileId: string) {
         })
 
         if (error) throw error
+        trackDbEvent('reference_edit', 'reference', referenceId)
         addToast('Endorsement updated.', 'success')
         await fetchReferences()
         return true

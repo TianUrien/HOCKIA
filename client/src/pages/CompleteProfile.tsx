@@ -14,6 +14,8 @@ import { optimizeAvatarImage, validateImage } from '@/lib/imageOptimization'
 import { invalidateProfile } from '@/lib/profile'
 import { deleteStorageObject } from '@/lib/storage'
 import { toSentryError } from '@/lib/sentryHelpers'
+import { trackOnboardingComplete } from '@/lib/analytics'
+import { trackDbEvent } from '@/lib/trackDbEvent'
 
 type UserRole = 'player' | 'coach' | 'club' | 'brand'
 
@@ -160,6 +162,7 @@ export default function CompleteProfile() {
       await fetchProfile(user.id, { force: true })
 
       logger.debug('[COMPLETE_PROFILE] Profile fetched after creation')
+      trackDbEvent('onboarding_step', 'profile', user.id, { step: 'role_selected', role: selectedRole })
 
       // Brands have a separate onboarding flow
       if (selectedRole === 'brand') {
@@ -381,6 +384,7 @@ export default function CompleteProfile() {
         await deleteStorageObject({ bucket: 'avatars', publicUrl: previousUrl, context: 'complete-profile:replace-avatar' })
       }
       logger.info('Avatar uploaded successfully')
+      trackDbEvent('onboarding_step', 'profile', user.id, { step: 'avatar_uploaded' })
     } catch (err) {
       captureOnboardingError(err, {
         stage: 'avatarUploadCatch',
@@ -436,6 +440,7 @@ export default function CompleteProfile() {
     }
     
     setLoading(true)
+    trackDbEvent('onboarding_step', 'profile', user?.id, { step: 'form_submitted', role: userRole })
     let lastUpdatedFields: string[] = []
 
     try {
@@ -591,6 +596,8 @@ export default function CompleteProfile() {
       
       logger.debug('Auth store refreshed - profile now complete')
       localStorage.setItem('playr-onboarding-completed', '1')
+      trackOnboardingComplete(userRole ?? 'unknown')
+      trackDbEvent('onboarding_completed', 'profile', user?.id, { role: userRole })
       navigate('/dashboard/profile', { replace: true })
 
     } catch (err) {

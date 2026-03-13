@@ -2,6 +2,7 @@ import { useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { withTimeout } from '@/lib/retry'
+import { trackDbEvent } from '@/lib/trackDbEvent'
 import type { PostComment } from '@/types/homeFeed'
 
 interface LikeResult {
@@ -41,6 +42,9 @@ export function usePostInteractions() {
       if (error) throw error
 
       const result = data as unknown as LikeResult
+      if (result.success) {
+        trackDbEvent('post_like', 'post', postId, { liked: result.liked })
+      }
       return result
     } catch (err) {
       logger.error('[usePostInteractions] toggleLike error:', err)
@@ -97,6 +101,9 @@ export function usePostInteractions() {
       if (error) throw error
 
       const result = data as unknown as CommentCreateResult
+      if (result.success) {
+        trackDbEvent('post_comment_create', 'post', postId)
+      }
       return result
     } catch (err) {
       logger.error('[usePostInteractions] createComment error:', err)
@@ -120,6 +127,9 @@ export function usePostInteractions() {
       if (error) throw error
 
       const result = data as unknown as SimpleResult
+      if (result.success) {
+        trackDbEvent('post_comment_delete', 'comment', commentId)
+      }
       return result
     } catch (err) {
       logger.error('[usePostInteractions] deleteComment error:', err)
