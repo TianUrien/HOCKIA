@@ -37,6 +37,10 @@ vi.mock('@/lib/toast', () => ({
   useToastStore: () => ({ addToast }),
 }))
 
+vi.mock('@/lib/trackDbEvent', () => ({
+  trackDbEvent: vi.fn(),
+}))
+
 const createNotification = (overrides: Partial<NotificationRecord> = {}): NotificationRecord => ({
   id: 'notif-1',
   kind: 'friend_request_received',
