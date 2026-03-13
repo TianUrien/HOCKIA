@@ -51,12 +51,14 @@ export function AdminSearchQuality() {
 
   // Chart calculations
   const dailyTrend = data?.daily_trend ?? []
-  const maxDailyValue = Math.max(
-    ...dailyTrend.map((d: { traditional_searches: number; ai_searches: number }) =>
-      d.traditional_searches + d.ai_searches,
-    ),
-    1,
-  )
+  const maxDailyValue = dailyTrend.length > 0
+    ? Math.max(
+        ...dailyTrend.map((d: { traditional_searches: number; ai_searches: number }) =>
+          d.traditional_searches + d.ai_searches,
+        ),
+        1,
+      )
+    : 1
 
   // Top queries
   const topQueries = data?.top_queries ?? []
@@ -251,7 +253,7 @@ export function AdminSearchQuality() {
             <div className="h-48 flex items-end gap-0.5">
               {dailyTrend.map(
                 (
-                  day: { day: string; traditional_searches: number; ai_searches: number },
+                  day: { date: string; traditional_searches: number; ai_searches: number },
                   index: number,
                 ) => {
                   const traditionalHeight =
@@ -261,9 +263,9 @@ export function AdminSearchQuality() {
 
                   return (
                     <div
-                      key={day.day}
+                      key={day.date}
                       className="flex-1 group relative flex flex-col items-stretch justify-end"
-                      title={`${day.day}: ${day.traditional_searches} traditional, ${day.ai_searches} AI`}
+                      title={`${day.date}: ${day.traditional_searches} traditional, ${day.ai_searches} AI`}
                     >
                       <div className="flex items-end gap-px flex-1">
                         <div
@@ -284,7 +286,7 @@ export function AdminSearchQuality() {
                       {/* Tooltip */}
                       <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-10">
                         <div className="bg-gray-900 text-white text-xs rounded px-2 py-1 whitespace-nowrap">
-                          <div>{formatAdminDate(day.day)}</div>
+                          <div>{formatAdminDate(day.date)}</div>
                           <div>{day.traditional_searches} traditional</div>
                           <div>{day.ai_searches} AI</div>
                         </div>
@@ -298,7 +300,7 @@ export function AdminSearchQuality() {
 
           {dailyTrend.length > 0 && (
             <div className="flex justify-between mt-2 text-xs text-gray-500">
-              <span>{dailyTrend[0]?.day ? formatAdminDate(dailyTrend[0].day) : ''}</span>
+              <span>{dailyTrend[0]?.date ? formatAdminDate(dailyTrend[0].date) : ''}</span>
               <span>Today</span>
             </div>
           )}
@@ -318,19 +320,19 @@ export function AdminSearchQuality() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="bg-gray-50 rounded-lg p-4 text-center">
                 <div className="text-2xl font-bold text-gray-900">
-                  {(data?.total_clicks ?? 0).toLocaleString()}
+                  {Number(data?.clicks?.total_clicks ?? 0).toLocaleString()}
                 </div>
                 <div className="text-xs text-gray-500 mt-1">Total Clicks</div>
               </div>
               <div className="bg-gray-50 rounded-lg p-4 text-center">
                 <div className="text-2xl font-bold text-gray-900">
-                  {(data?.searches_with_clicks ?? 0).toLocaleString()}
+                  {Number(data?.clicks?.searches_with_clicks ?? 0).toLocaleString()}
                 </div>
                 <div className="text-xs text-gray-500 mt-1">Searches with Clicks</div>
               </div>
               <div className="bg-gray-50 rounded-lg p-4 text-center">
                 <div className="text-2xl font-bold text-gray-900">
-                  {data?.avg_click_position ?? 0}
+                  {data?.clicks?.avg_click_position ?? 0}
                 </div>
                 <div className="text-xs text-gray-500 mt-1">Avg Click Position</div>
               </div>
@@ -367,16 +369,16 @@ export function AdminSearchQuality() {
               <tbody>
                 {topQueries.map(
                   (
-                    query: { query: string; count: number; avg_results: number },
+                    query: { search_term: string; query_count: number; avg_results: number },
                     index: number,
                   ) => (
                     <tr
-                      key={`${query.query}-${index}`}
+                      key={`${query.search_term}-${index}`}
                       className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
                     >
-                      <td className="py-3 px-2 text-gray-900 font-medium">{query.query}</td>
+                      <td className="py-3 px-2 text-gray-900 font-medium">{query.search_term}</td>
                       <td className="py-3 px-2 text-right font-mono text-gray-900">
-                        {query.count.toLocaleString()}
+                        {Number(query.query_count).toLocaleString()}
                       </td>
                       <td className="py-3 px-2 text-right font-mono text-gray-600">
                         {query.avg_results}
