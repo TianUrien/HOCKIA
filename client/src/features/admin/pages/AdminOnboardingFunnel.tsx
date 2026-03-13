@@ -88,12 +88,17 @@ export function AdminOnboardingFunnel() {
   const completionRate = signedUp > 0 ? ((completed / signedUp) * 100).toFixed(1) : '0.0'
   const stuckUsers: Array<{ role: string; last_step: string; days_since_signup: number }> =
     data?.stuck_users ?? []
+  // by_role comes back as { player: { signed_up, completed, completion_rate }, ... }
+  const byRoleRaw = data?.by_role ?? {}
   const byRole: Array<{
     role: string
     signed_up: number
     completed: number
     completion_rate: number
-  }> = data?.by_role ?? []
+  }> = Object.entries(byRoleRaw).map(([role, counts]) => ({
+    role,
+    ...(counts as { signed_up: number; completed: number; completion_rate: number }),
+  }))
   const timeToComplete: Array<{ role: string; median_minutes: number }> =
     data?.time_to_complete ?? []
 

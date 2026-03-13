@@ -74,7 +74,9 @@ export function AdminChurn() {
   // Chart calculations
   const churnByRole = data?.churn_by_role ?? []
   const lastActions = data?.last_action_before_churn ?? []
-  const maxActionCount = Math.max(...lastActions.map((a: { user_count: number }) => a.user_count), 1)
+  const maxActionCount = lastActions.length > 0
+    ? Math.max(...lastActions.map((a: { user_count: number }) => a.user_count), 1)
+    : 1
   const retentionByRole = retentionData?.by_role ?? []
   const atRiskUsers = data?.at_risk_users ?? []
   const engagementBeforeChurn = data?.engagement_before_churn ?? null
@@ -256,13 +258,13 @@ export function AdminChurn() {
             <p className="text-sm text-gray-400 text-center py-4">No data available</p>
           ) : (
             <div className="space-y-3">
-              {lastActions.map((action: { event_name: string; user_count: number }) => {
+              {lastActions.map((action: { last_action: string; user_count: number }) => {
                 const widthPct = (action.user_count / maxActionCount) * 100
                 return (
-                  <div key={action.event_name}>
+                  <div key={action.last_action}>
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-sm text-gray-700">
-                        {formatEventName(action.event_name)}
+                        {formatEventName(action.last_action)}
                       </span>
                       <span className="text-sm font-mono text-gray-600">
                         {action.user_count.toLocaleString()}
@@ -309,7 +311,7 @@ export function AdminChurn() {
                 </tr>
               </thead>
               <tbody>
-                {retentionByRole.map((row: { role: string; users: number; day_1: number; week_1: number; week_2: number; week_3_4: number }) => {
+                {retentionByRole.map((row: { role: string; total_users: number; day_1_pct: number; week_1_pct: number; week_2_pct: number; week_3_4_pct: number }) => {
                   const colors = ROLE_COLORS[row.role] ?? {
                     bg: '#F3F4F6',
                     text: '#4B5563',
@@ -332,19 +334,19 @@ export function AdminChurn() {
                         </span>
                       </td>
                       <td className="py-3 px-2 text-right font-mono text-gray-900">
-                        {row.users.toLocaleString()}
+                        {Number(row.total_users).toLocaleString()}
                       </td>
-                      <td className={`py-3 px-2 text-right font-mono font-medium ${retentionColor(row.day_1)}`}>
-                        {row.day_1}%
+                      <td className={`py-3 px-2 text-right font-mono font-medium ${retentionColor(Number(row.day_1_pct))}`}>
+                        {row.day_1_pct}%
                       </td>
-                      <td className={`py-3 px-2 text-right font-mono font-medium ${retentionColor(row.week_1)}`}>
-                        {row.week_1}%
+                      <td className={`py-3 px-2 text-right font-mono font-medium ${retentionColor(Number(row.week_1_pct))}`}>
+                        {row.week_1_pct}%
                       </td>
-                      <td className={`py-3 px-2 text-right font-mono font-medium ${retentionColor(row.week_2)}`}>
-                        {row.week_2}%
+                      <td className={`py-3 px-2 text-right font-mono font-medium ${retentionColor(Number(row.week_2_pct))}`}>
+                        {row.week_2_pct}%
                       </td>
-                      <td className={`py-3 px-2 text-right font-mono font-medium ${retentionColor(row.week_3_4)}`}>
-                        {row.week_3_4}%
+                      <td className={`py-3 px-2 text-right font-mono font-medium ${retentionColor(Number(row.week_3_4_pct))}`}>
+                        {row.week_3_4_pct}%
                       </td>
                     </tr>
                   )
@@ -384,7 +386,7 @@ export function AdminChurn() {
                   </tr>
                 </thead>
                 <tbody>
-                  {atRiskUsers.map((user: { name: string; role: string; sessions_this_week: number; sessions_last_week: number }, index: number) => {
+                  {atRiskUsers.map((user: { display_name: string; role: string; sessions_this_week: number; sessions_prev_week: number }, index: number) => {
                     const colors = ROLE_COLORS[user.role] ?? {
                       bg: '#F3F4F6',
                       text: '#4B5563',
@@ -395,7 +397,7 @@ export function AdminChurn() {
                         key={index}
                         className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
                       >
-                        <td className="py-3 px-2 font-medium text-gray-900">{user.name}</td>
+                        <td className="py-3 px-2 font-medium text-gray-900">{user.display_name}</td>
                         <td className="py-3 px-2">
                           <span
                             className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium capitalize"
@@ -411,7 +413,7 @@ export function AdminChurn() {
                           {user.sessions_this_week}
                         </td>
                         <td className="py-3 px-2 text-right font-mono text-gray-600">
-                          {user.sessions_last_week}
+                          {user.sessions_prev_week}
                         </td>
                       </tr>
                     )
