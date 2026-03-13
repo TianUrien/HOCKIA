@@ -13,12 +13,14 @@ import {
   Eye,
   MousePointerClick,
   UserCheck,
+  UserPlus,
   AlertTriangle,
   Loader2,
   RefreshCw,
 } from 'lucide-react'
 import { StatCard } from '../components/StatCard'
 import { OutreachImportModal } from '../components/OutreachImportModal'
+import { AddContactModal } from '../components/AddContactModal'
 import { getOutreachContacts, getOutreachStats } from '../api/outreachApi'
 import type { OutreachContact, OutreachStats, OutreachContactFilters } from '../types'
 import { logger } from '@/lib/logger'
@@ -50,8 +52,9 @@ export function AdminOutreach() {
   const [filterCountry, setFilterCountry] = useState('')
   const [page, setPage] = useState(0)
 
-  // Modal
+  // Modals
   const [showImport, setShowImport] = useState(false)
+  const [showAddContact, setShowAddContact] = useState(false)
 
   // Debounced search
   const [debouncedSearch, setDebouncedSearch] = useState('')
@@ -107,6 +110,12 @@ export function AdminOutreach() {
     fetchContacts()
   }
 
+  const handleAddComplete = () => {
+    setShowAddContact(false)
+    fetchStats()
+    fetchContacts()
+  }
+
   const totalPages = Math.ceil(totalCount / PAGE_SIZE)
 
   return (
@@ -128,6 +137,15 @@ export function AdminOutreach() {
             <RefreshCw className="w-4 h-4" />
           </button>
           <button
+            type="button"
+            onClick={() => setShowAddContact(true)}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-purple-700 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors"
+          >
+            <UserPlus className="w-4 h-4" />
+            Add Contact
+          </button>
+          <button
+            type="button"
             onClick={() => setShowImport(true)}
             className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors"
           >
@@ -329,6 +347,14 @@ export function AdminOutreach() {
         <OutreachImportModal
           onClose={() => setShowImport(false)}
           onImported={handleImportComplete}
+        />
+      )}
+
+      {/* Add Contact Modal */}
+      {showAddContact && (
+        <AddContactModal
+          onClose={() => setShowAddContact(false)}
+          onAdded={handleAddComplete}
         />
       )}
     </div>

@@ -1202,6 +1202,7 @@ export interface OutreachContact {
   country: string | null
   role_at_club: string | null
   phone: string | null
+  instagram: string | null
   notes: string | null
   status: OutreachStatus
   source: 'csv_import' | 'manual'
@@ -1385,5 +1386,46 @@ export interface MonthlyReportData {
   month: number
   year: number
   generated_at: string
+}
+
+// ============================================================================
+// PREFERENCE ANALYTICS TYPES
+// ============================================================================
+
+export type PreferenceKey =
+  | 'notify_applications'
+  | 'notify_friends'
+  | 'notify_references'
+  | 'notify_messages'
+  | 'notify_opportunities'
+  | 'notify_push'
+  | 'notify_profile_views'
+  | 'browse_anonymously'
+
+export interface PreferenceRoleBreakdown {
+  enabled: number
+  disabled: number
+}
+
+export interface PreferenceStat {
+  enabled: number
+  disabled: number
+  by_role: Record<string, PreferenceRoleBreakdown>
+}
+
+export interface PreferenceSummary {
+  total_users: number
+  preferences: Record<PreferenceKey, PreferenceStat>
+  generated_at: string
+}
+
+export interface PreferenceUser {
+  id: string
+  email: string
+  full_name: string | null
+  role: string
+  avatar_url: string | null
+  created_at: string
+  total_count: number
 }
 

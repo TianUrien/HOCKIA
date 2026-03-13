@@ -69,6 +69,31 @@ export async function getOutreachStats(): Promise<OutreachStats> {
 }
 
 /**
+ * Add a single outreach contact manually
+ */
+export async function addOutreachContact(contact: {
+  email: string
+  club_name: string
+  contact_name?: string
+  country?: string
+  role_at_club?: string
+  instagram?: string
+  notes?: string
+}): Promise<{ id: string }> {
+  const { data, error } = await adminRpc('admin_add_outreach_contact', {
+    p_email: contact.email,
+    p_club_name: contact.club_name,
+    p_contact_name: contact.contact_name || null,
+    p_country: contact.country || null,
+    p_role_at_club: contact.role_at_club || null,
+    p_instagram: contact.instagram || null,
+    p_notes: contact.notes || null,
+  })
+  if (error) throw new Error(error.message)
+  return data as { id: string }
+}
+
+/**
  * Preview outreach campaign audience
  */
 export async function previewOutreachAudience(

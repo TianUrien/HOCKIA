@@ -15,7 +15,8 @@ declare const Deno: { env: { get(key: string): string | undefined } }
  *   - Resend tags for webhook correlation
  */
 
-// @ts-expect-error Deno URL imports are resolved at runtime in Supabase Edge Functions.
+// deno-lint-ignore-file
+// @ts-ignore: Deno URL imports are resolved at runtime in Supabase Edge Functions.
 import { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { captureException } from './sentry.ts'
 
