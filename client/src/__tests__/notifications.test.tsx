@@ -10,6 +10,7 @@ import type { NotificationRecord } from '@/lib/api/notifications'
 type NotificationStoreSlice = {
   isDrawerOpen: boolean
   notifications: NotificationRecord[]
+  markRead: (notificationId: string) => Promise<void> | void
   markAllRead: () => Promise<void> | void
   toggleDrawer: (open?: boolean) => void
   respondToFriendRequest: (params: { friendshipId: string; action: 'accept' | 'decline' }) => Promise<boolean>
@@ -60,6 +61,7 @@ const createNotification = (overrides: Partial<NotificationRecord> = {}): Notifi
 const defaultNotificationStore = (): NotificationStoreSlice => ({
   isDrawerOpen: false,
   notifications: [],
+  markRead: vi.fn(),
   markAllRead: vi.fn(),
   toggleDrawer: vi.fn(),
   respondToFriendRequest: vi.fn().mockResolvedValue(true),
@@ -104,7 +106,7 @@ describe('NotificationsDrawer', () => {
     setNotificationStoreState()
   })
 
-  it('marks all notifications as read when opened', async () => {
+  it('does not mark all notifications as read when opened', async () => {
     const markAllRead = vi.fn()
     setNotificationStoreState({ isDrawerOpen: true, markAllRead })
 
@@ -114,9 +116,8 @@ describe('NotificationsDrawer', () => {
       </MemoryRouter>
     )
 
-    await waitFor(() => {
-      expect(markAllRead).toHaveBeenCalled()
-    })
+    // markAllRead should NOT be called — notifications are marked read individually on click
+    expect(markAllRead).not.toHaveBeenCalled()
   })
 
   it('allows accepting friend requests and shows success toasts', async () => {
