@@ -5,7 +5,7 @@ const E2E_VACANCY_TITLE = 'E2E Vacancy - Automated Test'
 
 async function getE2EVacancyCard(page: import('@playwright/test').Page) {
   const titleHeading = page.getByRole('heading', { level: 2, name: E2E_VACANCY_TITLE })
-  return titleHeading.locator('xpath=ancestor::div[contains(@class,"rounded-xl")]').first()
+  return titleHeading.locator('xpath=ancestor::div[contains(@class,"rounded-2xl")]').first()
 }
 
 test.describe('@smoke player', () => {
