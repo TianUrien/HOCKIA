@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react'
-import { X, MapPin, Calendar, Clock, Home, Car, Globe as GlobeIcon, Plane, Utensils, Briefcase, Shield, GraduationCap, Mail, Phone, CheckCircle, AlertTriangle, BadgeCheck } from 'lucide-react'
+import { X, MapPin, Calendar, Clock, Home, Car, Globe as GlobeIcon, Plane, Utensils, Briefcase, Shield, GraduationCap, Mail, Phone, CheckCircle, AlertTriangle, DollarSign, Dumbbell, Award, Share2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import type { Vacancy } from '../lib/supabase'
 import { Avatar, StorageImage } from './index'
 import Button from './Button'
-import { getCountryColor, formatCountryBanner } from '@/lib/countryColors'
 import type { WorldClubInfo } from './OpportunityCard'
 
 interface VacancyDetailViewProps {
@@ -22,15 +21,41 @@ interface VacancyDetailViewProps {
   hideClubProfileButton?: boolean
 }
 
-const BENEFIT_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
-  housing: Home,
-  car: Car,
-  visa: GlobeIcon,
-  flights: Plane,
-  meals: Utensils,
-  job: Briefcase,
-  insurance: Shield,
-  education: GraduationCap,
+const BENEFIT_CONFIG: Record<string, { icon: React.ComponentType<{ className?: string }>; label: string; iconColor: string }> = {
+  housing: { icon: Home, label: 'Housing', iconColor: 'text-blue-500' },
+  car: { icon: Car, label: 'Car', iconColor: 'text-amber-500' },
+  visa: { icon: GlobeIcon, label: 'Visa', iconColor: 'text-emerald-500' },
+  flights: { icon: Plane, label: 'Flights', iconColor: 'text-purple-500' },
+  meals: { icon: Utensils, label: 'Meals', iconColor: 'text-orange-500' },
+  job: { icon: Briefcase, label: 'Job', iconColor: 'text-cyan-500' },
+  insurance: { icon: Shield, label: 'Insurance', iconColor: 'text-rose-500' },
+  education: { icon: GraduationCap, label: 'Education', iconColor: 'text-indigo-500' },
+  bonuses: { icon: DollarSign, label: 'Bonuses', iconColor: 'text-green-500' },
+  equipment: { icon: Dumbbell, label: 'Equipment', iconColor: 'text-teal-500' },
+}
+
+function getClubAbbreviation(name: string): string {
+  const words = name.split(/\s+/).filter(Boolean)
+  if (words.length === 1) return words[0].slice(0, 3).toUpperCase()
+  return words.map(w => w[0]).join('').slice(0, 4).toUpperCase()
+}
+
+function getClubBrandColors(name: string): { bgTint: string; watermarkColor: string } {
+  let hash = 0
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  const hue = Math.abs(hash) % 360
+  return {
+    bgTint: `hsla(${hue}, 20%, 80%, 0.10)`,
+    watermarkColor: `hsla(${hue}, 25%, 55%, 0.06)`,
+  }
+}
+
+function getCardType(publisherRole: string | null | undefined, worldClub: WorldClubInfo | null | undefined, organizationName: string | null | undefined): 'club' | 'coach_club' | 'coach_independent' {
+  if (publisherRole !== 'coach') return 'club'
+  if (worldClub || organizationName) return 'coach_club'
+  return 'coach_independent'
 }
 
 export default function VacancyDetailView({
@@ -45,307 +70,230 @@ export default function VacancyDetailView({
   onClose,
   onApply,
   hasApplied = false,
-  hideClubProfileButton = false
+  hideClubProfileButton = false,
 }: VacancyDetailViewProps) {
   const navigate = useNavigate()
+  const [isVisible, setIsVisible] = useState(false)
 
-  const isDualIdentity = publisherRole === 'coach' && worldClub
+  const cardType = getCardType(publisherRole, worldClub, publisherOrganization)
+  const watermarkName = cardType === 'club' ? (worldClub?.clubName || clubName) : clubName
+  const clubAbbr = getClubAbbreviation(watermarkName)
+  const { bgTint, watermarkColor } = getClubBrandColors(watermarkName)
+  const displayClubName = worldClub?.clubName || clubName
+  const displayClubLogo = worldClub?.avatarUrl || clubLogo
+  const displayLeague = worldClub?.leagueName || leagueDivision
+  const isUrgent = vacancy.priority === 'high'
 
   const handleClubClick = () => {
     onClose()
     navigate(publisherRole === 'coach' ? `/players/id/${clubId}` : `/clubs/id/${clubId}`)
   }
 
+  const handleWorldClubClick = () => {
+    if (worldClub) { onClose(); navigate(`/world/clubs/${worldClub.id}`) }
+  }
+
+  const handleShareClick = () => {
+    const url = `${window.location.origin}/opportunities/${vacancy.id}`
+    if (navigator.share) {
+      navigator.share({ title: vacancy.title, url }).catch(() => {})
+    } else {
+      navigator.clipboard.writeText(url).catch(() => {})
+    }
+  }
+
   const formatDate = (dateString: string | null) => {
     if (!dateString) return 'Not specified'
-    const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', { 
-      month: 'long', 
-      day: 'numeric',
-      year: 'numeric' 
-    })
+    return new Date(dateString).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
   }
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'high': return 'bg-red-100 text-red-700'
-      case 'medium': return 'bg-blue-100 text-blue-700'
-      case 'low': return 'bg-gray-100 text-gray-700'
-      default: return 'bg-gray-100 text-gray-700'
+  const formatShortDate = (dateString: string | null) => {
+    if (!dateString) return null
+    return new Date(dateString).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+  }
+
+  const isImmediate = !vacancy.start_date
+
+  // Build tag pills
+  const tags: string[] = []
+  if (vacancy.opportunity_type === 'player') tags.push('Player')
+  if (vacancy.opportunity_type === 'coach') tags.push('Coach')
+  if (vacancy.gender === 'Men') tags.push("Men's")
+  if (vacancy.gender === 'Women') tags.push("Women's")
+  if (vacancy.position) {
+    tags.push(vacancy.position.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()))
+  }
+
+  // Deadline
+  let deadlineText: string | null = null
+  if (vacancy.application_deadline) {
+    const daysLeft = Math.ceil((new Date(vacancy.application_deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+    if (daysLeft >= 0) {
+      if (daysLeft === 0) deadlineText = 'Closes today'
+      else if (daysLeft === 1) deadlineText = 'Closes tomorrow'
+      else deadlineText = `${daysLeft} days left`
     }
   }
 
-  const getPriorityLabel = (priority: string) => {
-    if (priority === 'high' && vacancy.start_date) {
-      const startDate = new Date(vacancy.start_date)
-      const now = new Date()
-      const daysUntilStart = Math.ceil((startDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-      
-      if (daysUntilStart <= 30 && daysUntilStart > 0) {
-        return `Urgent - Starts in ${daysUntilStart} days`
-      }
-    }
-    return priority.charAt(0).toUpperCase() + priority.slice(1) + ' Priority'
-  }
-
-  const formatGender = (gender: string) => {
-    const genderMap: Record<string, string> = {
-      'Men': "Men's",
-      'Women': "Women's",
-      'men': "Men's",
-      'women': "Women's",
-      'male': "Men's",
-      'female': "Women's"
-    }
-    return genderMap[gender] || gender
-  }
-
-  const [isVisible, setIsVisible] = useState(false)
-
-  // Lock body scroll and trigger enter animation
   useEffect(() => {
     const originalOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
-    // Trigger enter animation on next frame
     requestAnimationFrame(() => setIsVisible(true))
-
-    return () => {
-      document.body.style.overflow = originalOverflow
-    }
+    return () => { document.body.style.overflow = originalOverflow }
   }, [])
-
-  // Get country color for banner
-  const countryColor = getCountryColor(vacancy.location_country)
-  const countryBannerText = formatCountryBanner(vacancy.location_country)
 
   return (
     <div
       className={`fixed inset-0 z-50 overflow-y-auto transition-opacity duration-200 ease-out ${isVisible ? 'bg-black/50' : 'bg-black/0'}`}
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div className="min-h-screen px-4 py-8 flex items-center justify-center">
+      <div className="min-h-screen px-4 py-8 flex items-start sm:items-center justify-center">
         <div
-          className={`bg-white rounded-2xl shadow-2xl max-w-4xl w-full relative overflow-hidden transition-all duration-200 ease-out ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+          className={`bg-white rounded-2xl shadow-2xl max-w-[600px] w-full relative overflow-hidden transition-all duration-200 ease-out ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
         >
-          {/* Country Banner - Context only, no buttons */}
-          {countryBannerText && (
-            <div
-              className="w-full py-3 px-4 text-center text-sm font-semibold tracking-wide"
-              style={{ backgroundColor: countryColor.bg, color: countryColor.text }}
-            >
-              {countryBannerText}
+          {/* Close button — always visible top-right */}
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 z-10 p-2 bg-white/80 backdrop-blur-sm hover:bg-white rounded-full transition-colors shadow-sm"
+            aria-label="Close"
+          >
+            <X className="w-5 h-5 text-gray-500" />
+          </button>
+
+          {/* ─── HERO SECTION (tinted + watermark) ─── */}
+          {cardType === 'club' ? (
+            <div className="relative overflow-hidden pt-8 pb-6 px-6 border-b border-gray-100" style={{ backgroundColor: bgTint }}>
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden" aria-hidden="true">
+                <span className="text-[180px] font-black leading-none tracking-tighter" style={{ color: watermarkColor }}>{clubAbbr}</span>
+              </div>
+              <div className="relative flex flex-col items-center text-center">
+                <button type="button" onClick={handleClubClick} className="flex flex-col items-center hover:opacity-80 transition-opacity">
+                  {displayClubLogo ? (
+                    <StorageImage src={displayClubLogo} alt={displayClubName} className="w-20 h-20 rounded-xl object-cover shadow-sm" />
+                  ) : (
+                    <Avatar initials={displayClubName.split(' ').map(n => n[0]).join('').slice(0, 2)} size="xl" className="rounded-xl" />
+                  )}
+                  <h3 className="mt-3 text-lg font-bold text-gray-900">{displayClubName}</h3>
+                </button>
+                {displayLeague && <p className="text-sm text-gray-500 mt-0.5">{displayLeague}</p>}
+              </div>
+            </div>
+          ) : (
+            <div className="relative overflow-hidden pt-6 pb-5 px-6 border-b border-gray-100" style={{ backgroundColor: bgTint }}>
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden" aria-hidden="true">
+                <span className="text-[180px] font-black leading-none tracking-tighter" style={{ color: watermarkColor }}>{clubAbbr}</span>
+              </div>
+              <div className="relative flex flex-col items-center text-center">
+                <button type="button" onClick={handleClubClick} className="flex flex-col items-center hover:opacity-80 transition-opacity">
+                  <Avatar src={clubLogo} initials={clubName.split(' ').map(n => n[0]).join('').slice(0, 2)} size="lg" />
+                  <div className="mt-2 flex items-center gap-1.5">
+                    <span className="text-lg font-bold text-gray-900">{clubName}</span>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide bg-[#F0FDFA] text-[#0D9488] border border-teal-100">Coach</span>
+                  </div>
+                </button>
+                {worldClub ? (
+                  <div className="mt-1.5 flex items-center gap-1">
+                    <span className="text-gray-400 text-sm">↳</span>
+                    <button type="button" onClick={handleWorldClubClick} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/60 border border-gray-200 hover:bg-white transition-colors">
+                      {worldClub.avatarUrl ? (
+                        <StorageImage src={worldClub.avatarUrl} alt={worldClub.clubName} className="w-4 h-4 rounded-full object-cover" />
+                      ) : (
+                        <Award className="w-3.5 h-3.5 text-gray-400" />
+                      )}
+                      <span className="text-xs font-medium text-gray-700">{worldClub.clubName}</span>
+                    </button>
+                  </div>
+                ) : publisherOrganization ? (
+                  <div className="mt-1.5 flex items-center gap-1">
+                    <span className="text-gray-400 text-sm">↳</span>
+                    <span className="text-sm text-gray-600">{publisherOrganization}</span>
+                  </div>
+                ) : null}
+              </div>
             </div>
           )}
 
-          {/* Content */}
-          <div className="p-6 sm:p-8">
-            {/* Header Section with Close Button */}
-            {isDualIdentity ? (
-              /* Dual Identity Header — Coach first, Club second */
-              <div className="mb-4">
-                <div className="flex items-start justify-between gap-2 mb-2.5">
-                  {/* Row 1: Coach (primary — large avatar) */}
-                  <div className="flex items-center gap-4 min-w-0">
-                    <button
-                      onClick={handleClubClick}
-                      className="hover:opacity-80 transition-opacity flex-shrink-0"
-                      aria-label={`View ${clubName} profile`}
-                    >
-                      <Avatar
-                        src={clubLogo}
-                        alt={clubName}
-                        size="lg"
-                      />
-                    </button>
-                    <div className="min-w-0">
-                      <button
-                        type="button"
-                        onClick={handleClubClick}
-                        className="text-sm font-semibold text-gray-900 hover:text-[#8026FA] transition-colors block truncate"
-                      >
-                        {clubName}
-                      </button>
-                      <p className="text-xs text-gray-500 mt-0.5 truncate">
-                        {publisherOrganization ? `Coach at ${publisherOrganization}` : 'Coach'}
-                      </p>
-                    </div>
-                  </div>
-                  {/* Close Button */}
-                  <button
-                    onClick={onClose}
-                    className="p-2 min-w-[36px] min-h-[36px] hover:bg-gray-100 rounded-full transition-colors flex items-center justify-center flex-shrink-0 -mt-1 -mr-2"
-                    aria-label="Close"
-                  >
-                    <X className="w-5 h-5 text-gray-400" />
-                  </button>
-                </div>
-
-                {/* Row 2: World Club (secondary — smaller logo) */}
-                <div className="flex items-center gap-2.5 ml-1">
-                  <button
-                    type="button"
-                    onClick={() => { onClose(); navigate(`/world/clubs/${worldClub!.id}`) }}
-                    className="flex items-center gap-2.5 hover:opacity-80 transition-opacity min-w-0"
-                  >
-                    {worldClub!.avatarUrl ? (
-                      <StorageImage
-                        src={worldClub!.avatarUrl}
-                        alt={worldClub!.clubName}
-                        className="w-8 h-8 rounded-full object-cover flex-shrink-0"
-                        containerClassName="w-8 h-8 flex-shrink-0"
-                      />
-                    ) : (
-                      <div className="w-8 h-8 rounded-full bg-orange-50 flex items-center justify-center flex-shrink-0 border border-orange-200">
-                        <span className="text-[10px] font-bold text-orange-600">
-                          {worldClub!.clubName.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                        </span>
-                      </div>
-                    )}
-                    <span className="text-sm font-medium text-gray-700 hover:text-[#8026FA] transition-colors truncate">
-                      {worldClub!.clubName}
-                    </span>
-                  </button>
-                  {worldClub!.flagEmoji && (
-                    <span className="text-sm flex-shrink-0">{worldClub!.flagEmoji}</span>
-                  )}
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#FFF7ED] text-[#EA580C] border border-orange-100 flex-shrink-0 whitespace-nowrap">
-                    <BadgeCheck className="w-3 h-3" />
-                    Official
+          {/* ─── BODY ─── */}
+          <div className="px-6 pt-5 pb-6">
+            {/* Top row: badges + share */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                {isUrgent && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-orange-50 text-orange-600 border border-orange-100">
+                    <AlertTriangle className="w-3 h-3" />
+                    URGENT
                   </span>
-                </div>
+                )}
+                {cardType !== 'club' && (
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-[#F0FDFA] text-[#0D9488] border border-teal-100">
+                    COACH LISTED
+                  </span>
+                )}
               </div>
-            ) : (
-              /* Single Identity Header (existing) */
-              <div className="flex items-start gap-4 mb-4">
-                <button
-                  onClick={handleClubClick}
-                  className="hover:opacity-80 transition-opacity flex-shrink-0"
-                  aria-label={`View ${clubName} profile`}
-                >
-                  <Avatar
-                    src={clubLogo}
-                    alt={clubName}
-                    size="lg"
-                  />
-                </button>
-
-                <div className="flex-1 min-w-0">
-                  {/* Club Name Row with Close Button */}
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <button
-                        type="button"
-                        onClick={handleClubClick}
-                        className="text-sm text-gray-600 hover:text-gray-900 block"
-                      >
-                        {clubName}
-                      </button>
-                      {publisherRole && (
-                        <p className="text-xs text-gray-500 mt-0.5">
-                          {publisherRole === 'coach'
-                            ? publisherOrganization
-                              ? `Coach at ${publisherOrganization}`
-                              : 'Coach'
-                            : 'Club'}
-                          {leagueDivision ? ` · ${leagueDivision}` : ''}
-                        </p>
-                      )}
-                    </div>
-                    {/* Close Button - Subtle, inside white area */}
-                    <button
-                      onClick={onClose}
-                      className="p-2 min-w-[36px] min-h-[36px] hover:bg-gray-100 rounded-full transition-colors flex items-center justify-center flex-shrink-0 -mt-1 -mr-2"
-                      aria-label="Close"
-                    >
-                      <X className="w-5 h-5 text-gray-400" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
+              <button type="button" onClick={handleShareClick} className="p-2 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors" aria-label="Share opportunity">
+                <Share2 className="w-[18px] h-[18px]" />
+              </button>
+            </div>
 
             {/* Title */}
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3">
+            <h1 className="text-2xl font-bold text-gray-900 mb-4 leading-tight">
               {vacancy.title}
             </h1>
 
-            {/* Position Block */}
-            {vacancy.position && (
-              <div className="mb-3 rounded-lg bg-gray-50 border border-gray-200 px-4 py-2.5 max-w-xs">
-                <span className="block text-[11px] uppercase tracking-wider text-gray-500 font-medium">Position</span>
-                <span className="block text-sm font-semibold text-gray-900 capitalize">{vacancy.position.replace(/_/g, ' ')}</span>
-              </div>
-            )}
-
-            {/* Secondary Tags Row - Role, Gender, Priority */}
-            <div className="flex flex-wrap gap-2 mb-4">
-              <span className="inline-flex h-8 items-center rounded-full px-3 text-xs font-semibold bg-[#8026FA]/10 text-[#8026FA]">
-                {vacancy.opportunity_type === 'player' ? 'Player' : 'Coach'}
-                {vacancy.opportunity_type === 'player' && vacancy.gender && ` · ${formatGender(vacancy.gender)}`}
-                {vacancy.position && ` · ${vacancy.position.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}`}
-              </span>
-              {vacancy.priority && vacancy.priority !== 'low' && (
-                <span className={`inline-flex h-8 items-center gap-1 rounded-full px-3 text-xs font-medium ${getPriorityColor(vacancy.priority)}`}>
-                  {vacancy.priority === 'high' && <AlertTriangle className="w-3.5 h-3.5" />}
-                  {getPriorityLabel(vacancy.priority)}
-                </span>
-              )}
-              {hasApplied && (
-                <span className="inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-semibold border border-[#8026FA]/15 bg-[#8026FA]/5 text-[#8026FA]">
-                  <CheckCircle className="w-3.5 h-3.5" />
-                  <span className="leading-none">Applied</span>
-                </span>
-              )}
-            </div>
-
-            {/* Location & Timeline */}
-            <div className="flex flex-wrap gap-4 text-sm text-gray-600 mb-0">
-              <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4" />
-                <span>{vacancy.location_city}</span>
-              </div>
-              {vacancy.start_date && (
+            {/* Meta info */}
+            <div className="space-y-1.5 text-[15px] text-gray-500 mb-5">
+              <div className="flex items-center gap-x-5 flex-wrap">
                 <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  <span>Starts {formatDate(vacancy.start_date)}</span>
+                  <MapPin className="w-4 h-4 flex-shrink-0" />
+                  <span>{vacancy.location_city}{vacancy.location_country ? `, ${vacancy.location_country}` : ''}</span>
                 </div>
-              )}
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 flex-shrink-0" />
+                  <span>{isImmediate ? 'Starts Immediately' : `Starts ${formatShortDate(vacancy.start_date)}`}</span>
+                </div>
+              </div>
               {vacancy.duration_text && (
                 <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4" />
+                  <Clock className="w-4 h-4 flex-shrink-0" />
                   <span>{vacancy.duration_text}</span>
                 </div>
               )}
             </div>
 
-            {/* Divider */}
-            <div className="border-t border-gray-200 my-6"></div>
+            {/* Tags */}
+            <div className="flex items-center flex-wrap gap-2 mb-6">
+              {tags.map((tag) => (
+                <span key={tag} className="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium bg-gray-100 text-gray-700 border border-gray-200">
+                  {tag}
+                </span>
+              ))}
+            </div>
 
             {/* Description */}
             {vacancy.description && (
-              <div className="mb-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-3">About This Opportunity</h2>
-                <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                  {vacancy.description}
-                </p>
-              </div>
+              <>
+                <div className="border-t border-gray-100 my-5" />
+                <div className="mb-5">
+                  <h2 className="text-base font-semibold text-gray-900 mb-2">About This Opportunity</h2>
+                  <p className="text-[15px] text-gray-600 leading-relaxed whitespace-pre-wrap">{vacancy.description}</p>
+                </div>
+              </>
             )}
 
-            {/* Benefits Section */}
+            {/* Benefits */}
             {vacancy.benefits && vacancy.benefits.length > 0 && (
-              <div className="mb-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-3">Benefits & Perks</h2>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <div className="mb-5">
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-3">Benefits Included</p>
+                <div className="flex items-center flex-wrap gap-2.5">
                   {vacancy.benefits.map((benefit) => {
-                    const Icon = BENEFIT_ICONS[benefit.toLowerCase()]
+                    const config = BENEFIT_CONFIG[benefit.toLowerCase()]
+                    if (!config) return null
+                    const Icon = config.icon
                     return (
-                      <div
-                        key={benefit}
-                        className="flex items-center gap-2 px-4 py-3 bg-gray-50 text-gray-700 rounded-lg border border-gray-200"
-                      >
-                        {Icon && <Icon className="w-5 h-5 flex-shrink-0" />}
-                        <span className="text-sm font-medium capitalize">{benefit}</span>
-                      </div>
+                      <span key={benefit} className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-gray-50 text-gray-700 border border-gray-200">
+                        <Icon className={`w-4 h-4 ${config.iconColor}`} />
+                        {config.label}
+                      </span>
                     )
                   })}
                 </div>
@@ -354,12 +302,12 @@ export default function VacancyDetailView({
 
             {/* Custom Benefits */}
             {vacancy.custom_benefits && vacancy.custom_benefits.length > 0 && (
-              <div className="mb-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-3">Additional Benefits</h2>
-                <ul className="space-y-2">
-                  {vacancy.custom_benefits.map((benefit, index) => (
-                    <li key={index} className="flex items-start gap-2 text-gray-700">
-                      <span className="text-[#8026FA] mt-1">✓</span>
+              <div className="mb-5">
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-3">Additional Benefits</p>
+                <ul className="space-y-1.5">
+                  {vacancy.custom_benefits.map((benefit, i) => (
+                    <li key={i} className="flex items-start gap-2 text-[15px] text-gray-600">
+                      <span className="text-[#8026FA] mt-0.5">✓</span>
                       <span>{benefit}</span>
                     </li>
                   ))}
@@ -367,106 +315,84 @@ export default function VacancyDetailView({
               </div>
             )}
 
-            {/* Requirements Section */}
+            {/* Requirements */}
             {vacancy.requirements && vacancy.requirements.length > 0 && (
-              <div className="mb-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-3">Requirements</h2>
-                <ul className="space-y-2">
-                  {vacancy.requirements.map((requirement, index) => (
-                    <li key={index} className="flex items-start gap-2 text-gray-700">
-                      <span className="text-[#8026FA] mt-1">•</span>
-                      <span>{requirement}</span>
+              <div className="mb-5">
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-3">Requirements</p>
+                <ul className="space-y-1.5">
+                  {vacancy.requirements.map((req, i) => (
+                    <li key={i} className="flex items-start gap-2 text-[15px] text-gray-600">
+                      <span className="text-gray-400 mt-0.5">•</span>
+                      <span>{req}</span>
                     </li>
                   ))}
                 </ul>
               </div>
             )}
 
-            {/* Application Deadline */}
+            {/* Deadline */}
             {vacancy.application_deadline && (
-              <div className="mb-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-3">Application Deadline</h2>
-                <div className="flex items-center gap-2 text-gray-700">
-                  <Calendar className="w-5 h-5 text-red-500" />
+              <div className="mb-5">
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Application Deadline</p>
+                <div className="flex items-center gap-2 text-[15px] text-gray-600">
+                  <Calendar className="w-4 h-4 text-red-500" />
                   <span className="font-medium">{formatDate(vacancy.application_deadline)}</span>
+                  {deadlineText && <span className="text-gray-400">({deadlineText})</span>}
                 </div>
               </div>
             )}
 
-            {/* Contact Information */}
+            {/* Contact */}
             {(vacancy.contact_email || vacancy.contact_phone) && (
-              <div className="mb-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-3">Contact Information</h2>
-                <div className="space-y-2">
+              <div className="mb-5">
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Contact</p>
+                <div className="space-y-1.5">
                   {vacancy.contact_email && (
-                    <div className="flex items-center gap-2 text-gray-700">
-                      <Mail className="w-5 h-5 text-gray-500" />
-                      <a 
-                        href={`mailto:${vacancy.contact_email}`}
-                        className="hover:text-[#8026FA] transition-colors"
-                      >
-                        {vacancy.contact_email}
-                      </a>
+                    <div className="flex items-center gap-2 text-[15px]">
+                      <Mail className="w-4 h-4 text-gray-400" />
+                      <a href={`mailto:${vacancy.contact_email}`} className="text-gray-600 hover:text-[#8026FA] transition-colors">{vacancy.contact_email}</a>
                     </div>
                   )}
                   {vacancy.contact_phone && (
-                    <div className="flex items-center gap-2 text-gray-700">
-                      <Phone className="w-5 h-5 text-gray-500" />
-                      <a 
-                        href={`tel:${vacancy.contact_phone}`}
-                        className="hover:text-[#8026FA] transition-colors"
-                      >
-                        {vacancy.contact_phone}
-                      </a>
+                    <div className="flex items-center gap-2 text-[15px]">
+                      <Phone className="w-4 h-4 text-gray-400" />
+                      <a href={`tel:${vacancy.contact_phone}`} className="text-gray-600 hover:text-[#8026FA] transition-colors">{vacancy.contact_phone}</a>
                     </div>
                   )}
                 </div>
               </div>
             )}
 
-            {/* Divider */}
-            <div className="border-t border-gray-200 my-6"></div>
+            {/* Divider before actions */}
+            <div className="border-t border-gray-100 my-5" />
 
             {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex items-center gap-3">
               {hasApplied ? (
-                <Button
-                  disabled
-                  className="flex-1 cursor-not-allowed bg-gradient-to-r from-[#ede8ff] via-[#f6edff] to-[#fbf2ff] text-[#7c3aed] border border-[#e3d6ff] shadow-[0_20px_40px_rgba(124,58,237,0.18)] flex items-center justify-center gap-2"
-                >
-                  <CheckCircle className="w-5 h-5" />
+                <div className="flex-1 flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl font-semibold text-sm border border-[#8026FA]/15 bg-[#8026FA]/5 text-[#8026FA]">
+                  <CheckCircle className="w-4 h-4" />
                   Application Submitted
-                </Button>
+                </div>
               ) : onApply ? (
-                <Button
-                  onClick={onApply}
-                  className="flex-1 bg-gradient-to-r from-[#8026FA] to-[#924CEC] hover:opacity-90"
-                >
-                  Apply for This Position
+                <Button onClick={onApply} className="flex-1 rounded-xl py-3.5 bg-gradient-to-r from-[#8026FA] to-[#924CEC] hover:opacity-90 text-base font-semibold">
+                  Apply Now &rsaquo;
                 </Button>
               ) : (
-                <Button
-                  onClick={onClose}
-                  className="flex-1 bg-gradient-to-r from-[#8026FA] to-[#924CEC] hover:opacity-90"
-                >
+                <Button onClick={onClose} className="flex-1 rounded-xl py-3.5 bg-gradient-to-r from-[#8026FA] to-[#924CEC] hover:opacity-90 text-base font-semibold">
                   Close
                 </Button>
               )}
               {!hideClubProfileButton && (
-                <Button
-                  onClick={handleClubClick}
-                  variant="outline"
-                  className="sm:w-auto"
-                >
-                  {publisherRole === 'coach' ? 'View Profile' : 'View Club Profile'}
+                <Button onClick={handleClubClick} variant="outline" className="rounded-xl py-3.5 px-5 flex-shrink-0">
+                  {publisherRole === 'coach' ? 'View Profile' : 'View Club'}
                 </Button>
               )}
             </div>
 
             {/* Timestamp */}
-            <div className="mt-6 text-sm text-gray-500 text-center">
+            <p className="mt-5 text-xs text-gray-400 text-center">
               Posted on {formatDate(vacancy.created_at)}
-            </div>
+            </p>
           </div>
         </div>
       </div>
