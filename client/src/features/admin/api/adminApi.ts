@@ -1651,6 +1651,51 @@ export async function sendCampaign(campaignId: string): Promise<{
   return { sent: result.sent, failed: result.failed, duration_ms: result.duration_ms }
 }
 
+/**
+ * Update a draft campaign
+ */
+export async function updateEmailCampaign(params: {
+  campaignId: string
+  name?: string
+  template_id?: string
+  category?: string
+  audience_filter?: Record<string, unknown>
+  audience_source?: string
+}): Promise<void> {
+  const { data, error } = await adminRpc('admin_update_email_campaign', {
+    p_campaign_id: params.campaignId,
+    p_name: params.name ?? null,
+    p_template_id: params.template_id ?? null,
+    p_category: params.category ?? null,
+    p_audience_filter: params.audience_filter ?? null,
+    p_audience_source: params.audience_source ?? null,
+  })
+  if (error) throw new Error(`Failed to update campaign: ${error.message}`)
+  return data
+}
+
+/**
+ * Delete a campaign and its associated sends
+ */
+export async function deleteEmailCampaign(campaignId: string): Promise<{ deleted_sends: number }> {
+  const { data, error } = await adminRpc('admin_delete_email_campaign', {
+    p_campaign_id: campaignId,
+  })
+  if (error) throw new Error(`Failed to delete campaign: ${error.message}`)
+  return data as { deleted_sends: number }
+}
+
+/**
+ * Duplicate a campaign as a new draft
+ */
+export async function duplicateEmailCampaign(campaignId: string): Promise<{ campaign_id: string }> {
+  const { data, error } = await adminRpc('admin_duplicate_email_campaign', {
+    p_campaign_id: campaignId,
+  })
+  if (error) throw new Error(`Failed to duplicate campaign: ${error.message}`)
+  return data as { campaign_id: string }
+}
+
 // ============================================================================
 // CONTACT SEGMENTATION
 // ============================================================================

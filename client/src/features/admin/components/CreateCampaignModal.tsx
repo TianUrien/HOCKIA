@@ -1,25 +1,46 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { X, Users, Loader2, Megaphone } from 'lucide-react'
-import type { EmailTemplate, WorldCountry, OutreachAudiencePreview } from '../types'
-import { getAllCountries, createEmailCampaign } from '../api/adminApi'
+import type { EmailTemplate, EmailCampaign, WorldCountry, OutreachAudiencePreview } from '../types'
+import { getAllCountries, createEmailCampaign, updateEmailCampaign } from '../api/adminApi'
 import { previewOutreachAudience } from '../api/outreachApi'
 import { useAudiencePreview } from '../hooks/useEmailStats'
 import { logger } from '@/lib/logger'
 
 interface CreateCampaignModalProps {
   templates: EmailTemplate[]
+  editCampaign?: EmailCampaign | null
   onClose: () => void
   onCreated: () => void
 }
 
-export function CreateCampaignModal({ templates, onClose, onCreated }: CreateCampaignModalProps) {
-  const [name, setName] = useState('')
-  const [templateId, setTemplateId] = useState('')
-  const [category, setCategory] = useState('notification')
-  const [audienceSource, setAudienceSource] = useState<'users' | 'outreach'>('users')
-  const [filterRoles, setFilterRoles] = useState<string[]>([])
-  const [filterCountry, setFilterCountry] = useState('')
-  const [filterStatus, setFilterStatus] = useState('')
+export function CreateCampaignModal({ templates, editCampaign, onClose, onCreated }: CreateCampaignModalProps) {
+  const isEditing = !!editCampaign
+  const [name, setName] = useState(editCampaign?.name ?? '')
+  const [templateId, setTemplateId] = useState(editCampaign?.template_id ?? '')
+  const [category, setCategory] = useState(editCampaign?.category ?? 'notification')
+  const [audienceSource, setAudienceSource] = useState<'users' | 'outreach'>(
+    (editCampaign?.audience_source as 'users' | 'outreach') ?? 'users'
+  )
+  const [filterRoles, setFilterRoles] = useState<string[]>(
+    () => {
+      const af = editCampaign?.audience_filter as Record<string, unknown> | null
+      if (af?.roles && Array.isArray(af.roles)) return af.roles as string[]
+      if (af?.role && typeof af.role === 'string') return [af.role]
+      return []
+    }
+  )
+  const [filterCountry, setFilterCountry] = useState(
+    () => {
+      const af = editCampaign?.audience_filter as Record<string, unknown> | null
+      return (af?.country as string) ?? ''
+    }
+  )
+  const [filterStatus, setFilterStatus] = useState(
+    () => {
+      const af = editCampaign?.audience_filter as Record<string, unknown> | null
+      return (af?.status as string) ?? ''
+    }
+  )
   const [countries, setCountries] = useState<WorldCountry[]>([])
   const [creating, setCreating] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -95,21 +116,32 @@ export function CreateCampaignModal({ templates, onClose, onCreated }: CreateCam
     )
   }, [])
 
-  const handleCreate = async () => {
+  const handleSave = async () => {
     if (!name.trim() || !templateId) return
     setCreating(true)
     setError(null)
     try {
-      await createEmailCampaign({
-        name: name.trim(),
-        template_id: templateId,
-        category,
-        audience_filter: audienceFilter,
-        audience_source: audienceSource,
-      })
+      if (isEditing && editCampaign) {
+        await updateEmailCampaign({
+          campaignId: editCampaign.id,
+          name: name.trim(),
+          template_id: templateId,
+          category,
+          audience_filter: audienceFilter,
+          audience_source: audienceSource,
+        })
+      } else {
+        await createEmailCampaign({
+          name: name.trim(),
+          template_id: templateId,
+          category,
+          audience_filter: audienceFilter,
+          audience_source: audienceSource,
+        })
+      }
       onCreated()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create campaign')
+      setError(err instanceof Error ? err.message : isEditing ? 'Failed to update campaign' : 'Failed to create campaign')
     } finally {
       setCreating(false)
     }
@@ -131,7 +163,7 @@ export function CreateCampaignModal({ templates, onClose, onCreated }: CreateCam
       <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">Create Campaign</h2>
+          <h2 className="text-lg font-semibold text-gray-900">{isEditing ? 'Edit Campaign' : 'Create Campaign'}</h2>
           <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600">
             <X className="w-5 h-5" />
           </button>
@@ -365,12 +397,12 @@ export function CreateCampaignModal({ templates, onClose, onCreated }: CreateCam
             Cancel
           </button>
           <button
-            onClick={handleCreate}
+            onClick={handleSave}
             disabled={!name.trim() || !templateId || creating}
             className="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {creating && <Loader2 className="w-4 h-4 animate-spin" />}
-            Create Draft Campaign
+            {isEditing ? 'Save Changes' : 'Create Draft Campaign'}
           </button>
         </div>
       </div>
