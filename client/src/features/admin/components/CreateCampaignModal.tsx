@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { X, Users, Loader2, Megaphone } from 'lucide-react'
-import type { EmailTemplate, EmailCampaign, WorldCountry, OutreachAudiencePreview } from '../types'
+import { X, Users, Loader2, Megaphone, Search, CheckSquare, Square, MinusSquare } from 'lucide-react'
+import type { EmailTemplate, EmailCampaign, WorldCountry, OutreachContact } from '../types'
 import { getAllCountries, createEmailCampaign, updateEmailCampaign } from '../api/adminApi'
-import { previewOutreachAudience } from '../api/outreachApi'
+import { getAllOutreachContacts } from '../api/outreachApi'
 import { useAudiencePreview } from '../hooks/useEmailStats'
 import { logger } from '@/lib/logger'
 
@@ -11,6 +11,14 @@ interface CreateCampaignModalProps {
   editCampaign?: EmailCampaign | null
   onClose: () => void
   onCreated: () => void
+}
+
+const STATUS_COLORS: Record<string, string> = {
+  imported: 'bg-gray-100 text-gray-700',
+  contacted: 'bg-blue-50 text-blue-700',
+  delivered: 'bg-green-50 text-green-700',
+  opened: 'bg-amber-50 text-amber-700',
+  clicked: 'bg-purple-50 text-purple-700',
 }
 
 export function CreateCampaignModal({ templates, editCampaign, onClose, onCreated }: CreateCampaignModalProps) {
@@ -41,17 +49,30 @@ export function CreateCampaignModal({ templates, editCampaign, onClose, onCreate
       return (af?.status as string) ?? ''
     }
   )
+  const [filterClub, setFilterClub] = useState(
+    () => {
+      const af = editCampaign?.audience_filter as Record<string, unknown> | null
+      return (af?.club as string) ?? ''
+    }
+  )
   const [countries, setCountries] = useState<WorldCountry[]>([])
   const [creating, setCreating] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Outreach contact picker state
+  const [allContacts, setAllContacts] = useState<OutreachContact[]>([])
+  const [contactsLoading, setContactsLoading] = useState(false)
+  const [selectedContactIds, setSelectedContactIds] = useState<Set<string>>(
+    () => {
+      const af = editCampaign?.audience_filter as Record<string, unknown> | null
+      if (af?.contact_ids && Array.isArray(af.contact_ids)) return new Set(af.contact_ids as string[])
+      return new Set<string>()
+    }
+  )
+  const [contactSearch, setContactSearch] = useState('')
+
   // Users audience preview
   const { preview: usersPreview, isLoading: usersPreviewLoading, error: usersPreviewError, fetchPreview: fetchUsersPreview, reset: resetUsersPreview } = useAudiencePreview()
-
-  // Outreach audience preview
-  const [outreachPreview, setOutreachPreview] = useState<OutreachAudiencePreview | null>(null)
-  const [outreachPreviewLoading, setOutreachPreviewLoading] = useState(false)
-  const [outreachPreviewError, setOutreachPreviewError] = useState<string | null>(null)
 
   const isOutreach = audienceSource === 'outreach'
 
@@ -68,47 +89,125 @@ export function CreateCampaignModal({ templates, editCampaign, onClose, onCreate
     })
   }, [])
 
+  // Load outreach contacts when switching to outreach mode
+  useEffect(() => {
+    if (isOutreach) {
+      setContactsLoading(true)
+      getAllOutreachContacts()
+        .then(setAllContacts)
+        .catch((err) => {
+          logger.warn('[CreateCampaignModal] Failed to load outreach contacts', err)
+        })
+        .finally(() => setContactsLoading(false))
+    }
+  }, [isOutreach])
+
   // Reset filters when audience source changes
   useEffect(() => {
     setFilterRoles([])
     setFilterCountry('')
     setFilterStatus('')
+    setFilterClub('')
     setTemplateId('')
+    setContactSearch('')
     resetUsersPreview()
-    setOutreachPreview(null)
-    setOutreachPreviewError(null)
+    if (!isEditing) {
+      setSelectedContactIds(new Set())
+    }
     if (isOutreach) {
       setCategory('marketing')
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [audienceSource])
 
-  const audienceFilter = useMemo(() => ({
-    ...(filterRoles.length > 0 ? { roles: filterRoles } : {}),
-    ...(filterCountry ? { country: filterCountry } : {}),
-    ...(filterStatus ? { status: filterStatus } : {}),
-  }), [filterRoles, filterCountry, filterStatus])
+  // Derive unique clubs and countries from contacts for dropdown filters
+  const uniqueClubs = useMemo(() => {
+    const clubs = new Set<string>()
+    allContacts.forEach(c => { if (c.club_name) clubs.add(c.club_name) })
+    return Array.from(clubs).sort()
+  }, [allContacts])
 
-  const handlePreview = useCallback(async () => {
-    if (isOutreach) {
-      setOutreachPreviewLoading(true)
-      setOutreachPreviewError(null)
-      try {
-        const result = await previewOutreachAudience({
-          ...(filterCountry ? { country: filterCountry } : {}),
-          ...(filterStatus ? { status: filterStatus } : {}),
-        })
-        setOutreachPreview(result)
-      } catch (err) {
-        setOutreachPreviewError(err instanceof Error ? err.message : 'Failed to preview')
-        setOutreachPreview(null)
-      } finally {
-        setOutreachPreviewLoading(false)
+  const uniqueCountries = useMemo(() => {
+    const ctrs = new Set<string>()
+    allContacts.forEach(c => { if (c.country) ctrs.add(c.country) })
+    return Array.from(ctrs).sort()
+  }, [allContacts])
+
+  // Filter contacts client-side
+  const filteredContacts = useMemo(() => {
+    return allContacts.filter(c => {
+      // Exclude bounced/unsubscribed/signed_up
+      if (['bounced', 'unsubscribed', 'signed_up'].includes(c.status)) return false
+      if (filterStatus && c.status !== filterStatus) return false
+      if (filterClub && c.club_name !== filterClub) return false
+      if (filterCountry && c.country !== filterCountry) return false
+      if (contactSearch) {
+        const q = contactSearch.toLowerCase()
+        const matchesName = c.contact_name?.toLowerCase().includes(q)
+        const matchesEmail = c.email.toLowerCase().includes(q)
+        const matchesClub = c.club_name?.toLowerCase().includes(q)
+        if (!matchesName && !matchesEmail && !matchesClub) return false
       }
+      return true
+    })
+  }, [allContacts, filterStatus, filterClub, filterCountry, contactSearch])
+
+  // Selection helpers
+  const allFilteredSelected = filteredContacts.length > 0 && filteredContacts.every(c => selectedContactIds.has(c.id))
+  const someFilteredSelected = filteredContacts.some(c => selectedContactIds.has(c.id))
+
+  const toggleContact = useCallback((id: string) => {
+    setSelectedContactIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }, [])
+
+  const selectAllFiltered = useCallback(() => {
+    setSelectedContactIds(prev => {
+      const next = new Set(prev)
+      filteredContacts.forEach(c => next.add(c.id))
+      return next
+    })
+  }, [filteredContacts])
+
+  const deselectAllFiltered = useCallback(() => {
+    setSelectedContactIds(prev => {
+      const next = new Set(prev)
+      filteredContacts.forEach(c => next.delete(c.id))
+      return next
+    })
+  }, [filteredContacts])
+
+  const toggleSelectAllFiltered = useCallback(() => {
+    if (allFilteredSelected) {
+      deselectAllFiltered()
     } else {
-      fetchUsersPreview(category, audienceFilter)
+      selectAllFiltered()
     }
-  }, [isOutreach, filterCountry, filterStatus, category, audienceFilter, fetchUsersPreview])
+  }, [allFilteredSelected, selectAllFiltered, deselectAllFiltered])
+
+  const clearSelection = useCallback(() => {
+    setSelectedContactIds(new Set())
+  }, [])
+
+  // Build audience filter for save
+  const audienceFilter = useMemo(() => {
+    if (isOutreach) {
+      return {
+        ...(selectedContactIds.size > 0 ? { contact_ids: Array.from(selectedContactIds) } : {}),
+        ...(filterClub ? { club: filterClub } : {}),
+        ...(filterCountry ? { country: filterCountry } : {}),
+        ...(filterStatus ? { status: filterStatus } : {}),
+      }
+    }
+    return {
+      ...(filterRoles.length > 0 ? { roles: filterRoles } : {}),
+      ...(filterCountry ? { country: filterCountry } : {}),
+    }
+  }, [isOutreach, selectedContactIds, filterClub, filterCountry, filterStatus, filterRoles])
 
   const toggleRole = useCallback((role: string) => {
     setFilterRoles(prev =>
@@ -118,6 +217,7 @@ export function CreateCampaignModal({ templates, editCampaign, onClose, onCreate
 
   const handleSave = async () => {
     if (!name.trim() || !templateId) return
+    if (isOutreach && selectedContactIds.size === 0) return
     setCreating(true)
     setError(null)
     try {
@@ -147,22 +247,23 @@ export function CreateCampaignModal({ templates, editCampaign, onClose, onCreate
     }
   }
 
-  // Reset preview when filters change
+  // Users preview
+  const handleUsersPreview = useCallback(() => {
+    fetchUsersPreview(category, audienceFilter)
+  }, [category, audienceFilter, fetchUsersPreview])
+
+  // Reset users preview when filters change
   useEffect(() => {
     resetUsersPreview()
-    setOutreachPreview(null)
-    setOutreachPreviewError(null)
-  }, [filterRoles, filterCountry, filterStatus, category, resetUsersPreview])
+  }, [filterRoles, filterCountry, category, resetUsersPreview])
 
-  const previewLoading = isOutreach ? outreachPreviewLoading : usersPreviewLoading
-  const previewError = isOutreach ? outreachPreviewError : usersPreviewError
-  const preview = isOutreach ? outreachPreview : usersPreview
+  const canSave = name.trim() && templateId && (isOutreach ? selectedContactIds.size > 0 : true)
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 shrink-0">
           <h2 className="text-lg font-semibold text-gray-900">{isEditing ? 'Edit Campaign' : 'Create Campaign'}</h2>
           <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600">
             <X className="w-5 h-5" />
@@ -170,7 +271,7 @@ export function CreateCampaignModal({ templates, editCampaign, onClose, onCreate
         </div>
 
         {/* Body */}
-        <div className="px-6 py-4 space-y-4">
+        <div className="px-6 py-4 space-y-4 overflow-y-auto flex-1 min-h-0">
           {/* Audience Source Toggle */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Audience</label>
@@ -244,12 +345,207 @@ export function CreateCampaignModal({ templates, editCampaign, onClose, onCreate
             </div>
           )}
 
-          {/* Audience filters */}
-          <div className="border-t border-gray-100 pt-4">
-            <h3 className="text-sm font-medium text-gray-700 mb-3">Audience Filters</h3>
-            <div className="grid grid-cols-2 gap-3">
-              {/* Role filter — only for users */}
-              {!isOutreach && (
+          {/* ================================================================ */}
+          {/* OUTREACH: Contact Picker                                        */}
+          {/* ================================================================ */}
+          {isOutreach && (
+            <div className="border-t border-gray-100 pt-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-medium text-gray-700">Select Recipients</h3>
+                {selectedContactIds.size > 0 && (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-700">
+                    {selectedContactIds.size} selected
+                  </span>
+                )}
+              </div>
+
+              {/* Filters row */}
+              <div className="grid grid-cols-3 gap-2 mb-3">
+                <div>
+                  <select
+                    value={filterClub}
+                    onChange={(e) => setFilterClub(e.target.value)}
+                    aria-label="Club filter"
+                    className="w-full text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  >
+                    <option value="">All clubs</option>
+                    {uniqueClubs.map(club => (
+                      <option key={club} value={club}>{club}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <select
+                    value={filterCountry}
+                    onChange={(e) => setFilterCountry(e.target.value)}
+                    aria-label="Country filter"
+                    className="w-full text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  >
+                    <option value="">All countries</option>
+                    {uniqueCountries.map(c => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <select
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                    aria-label="Status filter"
+                    className="w-full text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  >
+                    <option value="">All statuses</option>
+                    <option value="imported">Imported</option>
+                    <option value="contacted">Contacted</option>
+                    <option value="delivered">Delivered</option>
+                    <option value="opened">Opened</option>
+                    <option value="clicked">Clicked</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Search */}
+              <div className="relative mb-3">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search by name, email, or club..."
+                  value={contactSearch}
+                  onChange={(e) => setContactSearch(e.target.value)}
+                  className="w-full text-xs border border-gray-200 rounded-lg pl-8 pr-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                />
+              </div>
+
+              {/* Select all bar */}
+              <div className="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-t-lg border border-gray-200 border-b-0">
+                <button
+                  type="button"
+                  onClick={toggleSelectAllFiltered}
+                  className="flex items-center gap-2 text-xs font-medium text-gray-700 hover:text-gray-900"
+                >
+                  {allFilteredSelected ? (
+                    <CheckSquare className="w-4 h-4 text-purple-600" />
+                  ) : someFilteredSelected ? (
+                    <MinusSquare className="w-4 h-4 text-purple-400" />
+                  ) : (
+                    <Square className="w-4 h-4 text-gray-400" />
+                  )}
+                  {allFilteredSelected ? 'Deselect all' : `Select all (${filteredContacts.length})`}
+                </button>
+                <div className="flex items-center gap-3">
+                  {selectedContactIds.size > 0 && (
+                    <button
+                      type="button"
+                      onClick={clearSelection}
+                      className="text-xs text-red-500 hover:text-red-700 font-medium"
+                    >
+                      Clear selection
+                    </button>
+                  )}
+                  <span className="text-xs text-gray-500">
+                    {filteredContacts.length} contact{filteredContacts.length !== 1 ? 's' : ''}
+                  </span>
+                </div>
+              </div>
+
+              {/* Contact list */}
+              <div className="border border-gray-200 rounded-b-lg max-h-[240px] overflow-y-auto">
+                {contactsLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+                    <span className="ml-2 text-sm text-gray-500">Loading contacts...</span>
+                  </div>
+                ) : filteredContacts.length === 0 ? (
+                  <div className="py-8 text-center text-sm text-gray-500">
+                    {allContacts.length === 0 ? 'No outreach contacts yet' : 'No contacts match the filters'}
+                  </div>
+                ) : (
+                  <table className="w-full">
+                    <thead className="sticky top-0 bg-white border-b border-gray-100">
+                      <tr>
+                        <th className="w-10 px-3 py-2"><span className="sr-only">Select</span></th>
+                        <th className="text-left text-xs font-medium text-gray-500 px-2 py-2">Contact</th>
+                        <th className="text-left text-xs font-medium text-gray-500 px-2 py-2">Club</th>
+                        <th className="text-left text-xs font-medium text-gray-500 px-2 py-2">Country</th>
+                        <th className="text-left text-xs font-medium text-gray-500 px-2 py-2">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredContacts.map((contact) => {
+                        const isSelected = selectedContactIds.has(contact.id)
+                        return (
+                          <tr
+                            key={contact.id}
+                            onClick={() => toggleContact(contact.id)}
+                            className={`cursor-pointer transition-colors ${
+                              isSelected
+                                ? 'bg-purple-50 hover:bg-purple-100'
+                                : 'hover:bg-gray-50'
+                            }`}
+                          >
+                            <td className="px-3 py-2 text-center">
+                              {isSelected ? (
+                                <CheckSquare className="w-4 h-4 text-purple-600 mx-auto" />
+                              ) : (
+                                <Square className="w-4 h-4 text-gray-300 mx-auto" />
+                              )}
+                            </td>
+                            <td className="px-2 py-2">
+                              <div>
+                                <p className="text-xs font-medium text-gray-900 truncate max-w-[140px]">
+                                  {contact.contact_name || contact.email}
+                                </p>
+                                {contact.contact_name && (
+                                  <p className="text-[11px] text-gray-400 truncate max-w-[140px]">{contact.email}</p>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-2 py-2">
+                              <span className="text-xs text-gray-700">{contact.club_name || '—'}</span>
+                            </td>
+                            <td className="px-2 py-2">
+                              <span className="text-xs text-gray-600">{contact.country || '—'}</span>
+                            </td>
+                            <td className="px-2 py-2">
+                              <span className={`inline-flex px-1.5 py-0.5 text-[10px] font-medium rounded-full ${
+                                STATUS_COLORS[contact.status] || 'bg-gray-100 text-gray-600'
+                              }`}>
+                                {contact.status}
+                              </span>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+
+              {/* Selection summary */}
+              {selectedContactIds.size > 0 && (
+                <div className="mt-2 bg-purple-50 border border-purple-200 rounded-lg p-2.5">
+                  <p className="text-xs font-medium text-purple-800">
+                    Campaign will be sent to {selectedContactIds.size} recipient{selectedContactIds.size !== 1 ? 's' : ''}
+                  </p>
+                </div>
+              )}
+
+              {selectedContactIds.size === 0 && !contactsLoading && allContacts.length > 0 && (
+                <div className="mt-2 bg-amber-50 border border-amber-200 rounded-lg p-2.5">
+                  <p className="text-xs text-amber-700">Select at least one contact to create the campaign</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ================================================================ */}
+          {/* USERS: Filter-based audience                                     */}
+          {/* ================================================================ */}
+          {!isOutreach && (
+            <div className="border-t border-gray-100 pt-4">
+              <h3 className="text-sm font-medium text-gray-700 mb-3">Audience Filters</h3>
+              <div className="grid grid-cols-2 gap-3">
+                {/* Role filter */}
                 <div className="col-span-2">
                   <label className="block text-xs text-gray-500 mb-2">Roles {filterRoles.length === 0 && <span className="text-gray-400">(all)</span>}</label>
                   <div className="flex flex-wrap gap-2">
@@ -281,39 +577,10 @@ export function CreateCampaignModal({ templates, editCampaign, onClose, onCreate
                     })}
                   </div>
                 </div>
-              )}
 
-              {/* Status filter — only for outreach */}
-              {isOutreach && (
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1">Status</label>
-                  <select
-                    value={filterStatus}
-                    onChange={(e) => setFilterStatus(e.target.value)}
-                    aria-label="Status"
-                    className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  >
-                    <option value="">All statuses</option>
-                    <option value="imported">Imported</option>
-                    <option value="contacted">Contacted</option>
-                    <option value="delivered">Delivered</option>
-                    <option value="opened">Opened</option>
-                  </select>
-                </div>
-              )}
-
-              {/* Country filter */}
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">Country</label>
-                {isOutreach ? (
-                  <input
-                    type="text"
-                    placeholder="e.g. Italy"
-                    value={filterCountry}
-                    onChange={(e) => setFilterCountry(e.target.value)}
-                    className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  />
-                ) : (
+                {/* Country filter */}
+                <div className="col-span-2">
+                  <label className="block text-xs text-gray-500 mb-1">Country</label>
                   <select
                     value={filterCountry}
                     onChange={(e) => setFilterCountry(e.target.value)}
@@ -325,61 +592,54 @@ export function CreateCampaignModal({ templates, editCampaign, onClose, onCreate
                       <option key={c.id} value={c.code}>{c.flag_emoji} {c.name}</option>
                     ))}
                   </select>
-                )}
+                </div>
               </div>
-            </div>
 
-            {/* Preview audience button */}
-            <button
-              type="button"
-              onClick={handlePreview}
-              disabled={previewLoading}
-              className="mt-3 flex items-center gap-2 text-sm text-purple-600 hover:text-purple-700 font-medium disabled:opacity-50"
-            >
-              {previewLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Users className="w-4 h-4" />}
-              Preview Audience
-            </button>
+              {/* Preview audience button */}
+              <button
+                type="button"
+                onClick={handleUsersPreview}
+                disabled={usersPreviewLoading}
+                className="mt-3 flex items-center gap-2 text-sm text-purple-600 hover:text-purple-700 font-medium disabled:opacity-50"
+              >
+                {usersPreviewLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Users className="w-4 h-4" />}
+                Preview Audience
+              </button>
 
-            {previewError && (
-              <p className="mt-2 text-xs text-red-600">{previewError}</p>
-            )}
+              {usersPreviewError && (
+                <p className="mt-2 text-xs text-red-600">{usersPreviewError}</p>
+              )}
 
-            {/* Preview results */}
-            {preview && (
-              <div className="mt-3 bg-gray-50 rounded-lg border border-gray-200 p-3">
-                <p className="text-sm font-medium text-gray-900 mb-2">
-                  {preview.count.toLocaleString()} recipient{preview.count !== 1 ? 's' : ''} match
-                </p>
-                {preview.sample.length > 0 && (
-                  <div className="space-y-1">
-                    <p className="text-xs text-gray-500 mb-1">Sample:</p>
-                    {preview.sample.map((s: Record<string, unknown>, i: number) => (
-                      <div key={i} className="flex items-center justify-between text-xs">
-                        <span className="text-gray-700 truncate max-w-[180px]">
-                          {isOutreach
-                            ? (s.club_name as string) || (s.email as string)
-                            : (s.full_name as string) || (s.email as string)
-                          }
-                        </span>
-                        <div className="flex items-center gap-2">
-                          {isOutreach
-                            ? <span className="text-gray-500">{(s.status as string) || ''}</span>
-                            : <span className="text-gray-500 capitalize">{(s.role as string) || ''}</span>
-                          }
-                          {(s.country_name || s.country) && (
-                            <span className="text-gray-400">{(s.country_name || s.country) as string}</span>
-                          )}
+              {usersPreview && (
+                <div className="mt-3 bg-gray-50 rounded-lg border border-gray-200 p-3">
+                  <p className="text-sm font-medium text-gray-900 mb-2">
+                    {usersPreview.count.toLocaleString()} recipient{usersPreview.count !== 1 ? 's' : ''} match
+                  </p>
+                  {usersPreview.sample.length > 0 && (
+                    <div className="space-y-1">
+                      <p className="text-xs text-gray-500 mb-1">Sample:</p>
+                      {usersPreview.sample.map((s, i) => (
+                        <div key={i} className="flex items-center justify-between text-xs">
+                          <span className="text-gray-700 truncate max-w-[180px]">
+                            {s.full_name || s.email}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-500 capitalize">{s.role || ''}</span>
+                            {s.country_name && (
+                              <span className="text-gray-400">{s.country_name}</span>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                    {preview.count > 10 && (
-                      <p className="text-xs text-gray-400 mt-1">...and {(preview.count - 10).toLocaleString()} more</p>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+                      ))}
+                      {usersPreview.count > 10 && (
+                        <p className="text-xs text-gray-400 mt-1">...and {(usersPreview.count - 10).toLocaleString()} more</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3">
@@ -389,7 +649,7 @@ export function CreateCampaignModal({ templates, editCampaign, onClose, onCreate
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200">
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 shrink-0">
           <button
             onClick={onClose}
             className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800"
@@ -398,7 +658,7 @@ export function CreateCampaignModal({ templates, editCampaign, onClose, onCreate
           </button>
           <button
             onClick={handleSave}
-            disabled={!name.trim() || !templateId || creating}
+            disabled={!canSave || creating}
             className="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {creating && <Loader2 className="w-4 h-4 animate-spin" />}

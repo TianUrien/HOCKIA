@@ -947,7 +947,7 @@ export interface EmailTemplate {
   template_key: string
   name: string
   description: string | null
-  category: 'notification' | 'campaign' | 'transactional'
+  category: 'notification' | 'marketing'
   subject_template: string
   content_json: EmailContentBlock[]
   text_template: string | null
@@ -1142,7 +1142,7 @@ export interface CreateCampaignParams {
   name: string
   template_id: string
   category: string
-  audience_filter: { role?: string; roles?: string[]; country?: string; status?: string }
+  audience_filter: { role?: string; roles?: string[]; country?: string; status?: string; club?: string; contact_ids?: string[] }
   audience_source?: 'users' | 'outreach'
 }
 

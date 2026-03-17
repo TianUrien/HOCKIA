@@ -94,10 +94,27 @@ export async function addOutreachContact(contact: {
 }
 
 /**
+ * Get all outreach contacts (for contact picker — no pagination)
+ */
+export async function getAllOutreachContacts(
+  filters: { status?: string; country?: string; club?: string } = {}
+): Promise<OutreachContact[]> {
+  const { data, error } = await adminRpc('admin_get_outreach_contacts', {
+    p_status: filters.status || null,
+    p_country: filters.country || null,
+    p_search: filters.club || null,
+    p_limit: 1000,
+    p_offset: 0,
+  })
+  if (error) throw new Error(`Failed to get outreach contacts: ${error.message}`)
+  return (data || []) as OutreachContact[]
+}
+
+/**
  * Preview outreach campaign audience
  */
 export async function previewOutreachAudience(
-  audienceFilter: { country?: string; status?: string } = {}
+  audienceFilter: { country?: string; status?: string; club?: string; contact_ids?: string[] } = {}
 ): Promise<OutreachAudiencePreview> {
   const { data, error } = await adminRpc('admin_preview_outreach_audience', {
     p_audience_filter: audienceFilter,

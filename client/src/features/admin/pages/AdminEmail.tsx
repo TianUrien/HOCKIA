@@ -480,10 +480,15 @@ export function AdminEmail() {
                     setConfirmAudienceCount(null)
                     setConfirmLoading(true)
                     try {
-                      const filter = (row.audience_filter as Record<string, string>) || {}
+                      const filter = (row.audience_filter as Record<string, unknown>) || {}
                       const preview = row.audience_source === 'outreach'
-                        ? await previewOutreachAudience({ country: filter.country, status: filter.status })
-                        : await previewCampaignAudience(row.category, filter)
+                        ? await previewOutreachAudience({
+                            country: filter.country as string | undefined,
+                            status: filter.status as string | undefined,
+                            club: filter.club as string | undefined,
+                            contact_ids: Array.isArray(filter.contact_ids) ? filter.contact_ids as string[] : undefined,
+                          })
+                        : await previewCampaignAudience(row.category, filter as Record<string, string>)
                       setConfirmAudienceCount(preview.count)
                     } catch {
                       setConfirmAudienceCount(-1)

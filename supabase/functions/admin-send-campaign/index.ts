@@ -186,8 +186,19 @@ Deno.serve(async (req: Request) => {
         .select('id, email, contact_name, club_name, country, status')
         .not('status', 'in', '("bounced","unsubscribed","signed_up")')
 
+      // Filter by specific contact IDs if provided
+      const contactIds = Array.isArray(audienceFilter.contact_ids) ? audienceFilter.contact_ids : null
+      if (contactIds && contactIds.length > 0) {
+        outreachQuery = outreachQuery.in('id', contactIds)
+      }
+
       if (filterCountry) {
         outreachQuery = outreachQuery.ilike('country', `%${filterCountry}%`)
+      }
+
+      const filterClub = audienceFilter.club || null
+      if (filterClub) {
+        outreachQuery = outreachQuery.ilike('club_name', `%${filterClub}%`)
       }
 
       const filterStatus = audienceFilter.status || null
