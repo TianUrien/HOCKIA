@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useToastStore } from '@/lib/toast'
 import {
   BarChart3,
   Megaphone,
@@ -64,6 +65,7 @@ const ENGAGEMENT_BADGES: Record<string, string> = {
 
 export function AdminEmail() {
   const navigate = useNavigate()
+  const { addToast } = useToastStore()
   const [searchParams, setSearchParams] = useSearchParams()
   const initialTab = (searchParams.get('tab') as TabType) || 'overview'
   const [activeTab, setActiveTab] = useState<TabType>(initialTab)
@@ -579,10 +581,13 @@ export function AdminEmail() {
                       const campaignId = confirmSendCampaign.id
                       setSendingCampaignId(campaignId)
                       try {
-                        await sendCampaign(campaignId)
+                        const result = await sendCampaign(campaignId)
+                        addToast(`Campaign sent to ${result.sent} recipient${result.sent !== 1 ? 's' : ''}${result.failed > 0 ? ` (${result.failed} failed)` : ''}.`, result.failed > 0 ? 'warning' : 'success')
                         setConfirmSendCampaign(null)
                         campaigns.refetch()
-                      } catch {
+                      } catch (err) {
+                        const message = err instanceof Error ? err.message : 'Failed to send campaign'
+                        addToast(message, 'error')
                         setConfirmSendCampaign(null)
                         campaigns.refetch()
                       } finally {

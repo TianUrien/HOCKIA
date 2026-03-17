@@ -1,2 +1,2 @@
-[functions.admin-send-campaign]
+[function]
 verify_jwt = false

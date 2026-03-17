@@ -1,2 +1,2 @@
-[functions.health]
+[function]
 verify_jwt = false
