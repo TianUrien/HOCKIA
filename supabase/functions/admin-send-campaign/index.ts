@@ -49,6 +49,13 @@ Deno.serve(async (req: Request) => {
         { status: 401, headers: { ...headers, 'Content-Type': 'application/json' } }
       )
     }
+    const token = authHeader.replace(/^Bearer\s+/i, '').trim()
+    if (!token) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Missing bearer token' }),
+        { status: 401, headers: { ...headers, 'Content-Type': 'application/json' } }
+      )
+    }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!
@@ -57,8 +64,11 @@ Deno.serve(async (req: Request) => {
       global: { headers: { Authorization: authHeader } },
     })
 
-    const { data: { user }, error: authError } = await userClient.auth.getUser()
+    const { data: { user }, error: authError } = await userClient.auth.getUser(token)
     if (authError || !user) {
+      logger.warn('Auth check failed for campaign send', {
+        error: authError?.message,
+      })
       return new Response(
         JSON.stringify({ success: false, error: 'Unauthorized' }),
         { status: 401, headers: { ...headers, 'Content-Type': 'application/json' } }
@@ -294,6 +304,7 @@ Deno.serve(async (req: Request) => {
         p_campaign_id: campaign_id,
         p_status: 'sent',
         p_sent_count: 0,
+        p_total_recipients: 0,
       })
       return new Response(
         JSON.stringify({ success: true, sent: 0, message: 'No recipients matched the audience filter' }),
@@ -302,6 +313,13 @@ Deno.serve(async (req: Request) => {
     }
 
     logger.info('Recipients found', { count: recipients.length, audienceSource: isOutreach ? 'outreach' : 'users' })
+
+    await serviceClient.rpc('admin_update_campaign_status', {
+      p_campaign_id: campaign_id,
+      p_status: 'sending',
+      p_sent_count: 0,
+      p_total_recipients: recipients.length,
+    })
 
     // ========================================================================
     // Send via batch
@@ -368,6 +386,7 @@ Deno.serve(async (req: Request) => {
       p_campaign_id: campaign_id,
       p_status: finalStatus,
       p_sent_count: batchResult.stats.sent,
+      p_total_recipients: recipients.length,
     })
 
     logger.info('Campaign send complete', {

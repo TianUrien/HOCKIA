@@ -31,6 +31,7 @@ import { CreateCampaignModal } from '../components/CreateCampaignModal'
 import { useEmailOverview, useEmailTemplates, useEmailCampaigns, useEmailEngagement, useEmailContactsSummary, useEmailContacts } from '../hooks/useEmailStats'
 import { sendCampaign, previewCampaignAudience, getAllCountries, toggleEmailTemplateActive, diagnoseEmailMetrics, backfillEmailStatuses, deleteEmailCampaign, duplicateEmailCampaign } from '../api/adminApi'
 import { previewOutreachAudience } from '../api/outreachApi'
+import { getCampaignDisplayRecipientCount } from '../utils/campaigns'
 import type {
   EmailTemplate,
   EmailCampaign,
@@ -236,7 +237,7 @@ export function AdminEmail() {
     {
       key: 'total_recipients',
       label: 'Recipients',
-      render: (_, row) => <span className="text-sm text-gray-700">{row.total_recipients.toLocaleString()}</span>,
+      render: (_, row) => <span className="text-sm text-gray-700">{getCampaignDisplayRecipientCount(row).toLocaleString()}</span>,
     },
     {
       key: 'total_sent',

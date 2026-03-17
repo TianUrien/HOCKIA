@@ -9,8 +9,9 @@
  * regenerating types with `supabase gen types typescript`, these can be simplified.
  */
 
-import { supabase, SUPABASE_URL } from '@/lib/supabase'
+import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { normalizeEmailCampaign } from '../utils/campaigns'
 import type {
   DashboardStats,
   SignupTrend,
@@ -241,6 +242,7 @@ export async function deleteAuthUser(userId: string, reason?: string): Promise<v
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${session.access_token}`,
+      'apikey': SUPABASE_ANON_KEY,
     },
     body: JSON.stringify({
       action: 'delete_auth_user',
@@ -267,6 +269,7 @@ export async function setAdminStatus(userId: string, isAdmin: boolean, reason?: 
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${session.access_token}`,
+      'apikey': SUPABASE_ANON_KEY,
     },
     body: JSON.stringify({
       action: 'set_admin_status',
@@ -1479,7 +1482,7 @@ export async function getEmailCampaigns(params: {
   })
   if (error) throw new Error(`Failed to get email campaigns: ${error.message}`)
 
-  const campaigns = data as EmailCampaign[]
+  const campaigns = ((data || []) as EmailCampaign[]).map(normalizeEmailCampaign)
   const totalCount = campaigns.length > 0 ? campaigns[0].total_count : 0
 
   return { campaigns, totalCount }
@@ -1564,6 +1567,7 @@ export async function sendTestEmail(
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${session.access_token}`,
+      'apikey': SUPABASE_ANON_KEY,
     },
     body: JSON.stringify({
       template_id: templateId,
@@ -1606,7 +1610,13 @@ export async function getCampaignDetail(campaignId: string): Promise<CampaignDet
     p_campaign_id: campaignId,
   })
   if (error) throw new Error(`Failed to get campaign detail: ${error.message}`)
-  return data as CampaignDetail
+
+  const detail = data as CampaignDetail
+
+  return {
+    ...detail,
+    campaign: normalizeEmailCampaign(detail.campaign),
+  }
 }
 
 /**
@@ -1632,12 +1642,24 @@ export async function sendCampaign(campaignId: string): Promise<{
   failed: number
   duration_ms: number
 }> {
-  const { data, error } = await supabase.functions.invoke('admin-send-campaign', {
-    body: { campaign_id: campaignId },
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) throw new Error('No active session')
+
+  const response = await fetch(`${SUPABASE_URL}/functions/v1/admin-send-campaign`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session.access_token}`,
+      'apikey': SUPABASE_ANON_KEY,
+    },
+    body: JSON.stringify({ campaign_id: campaignId }),
   })
 
-  if (error) throw new Error(error.message || 'Failed to send campaign')
-  if (!data?.success) throw new Error(data?.error || 'Failed to send campaign')
+  const data = await response.json()
+  if (!response.ok || !data?.success) {
+    throw new Error(data?.error || `Failed to send campaign (${response.status})`)
+  }
+
   return { sent: data.sent, failed: data.failed, duration_ms: data.duration_ms }
 }
 
@@ -1793,4 +1815,3 @@ export async function getMonthlyReport(
   if (error) throw new Error(`Failed to get monthly report: ${error.message}`)
   return data as MonthlyReportData
 }
-

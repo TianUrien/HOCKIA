@@ -43,6 +43,25 @@ log_success() { echo -e "${GREEN}✓${NC} $1"; }
 log_warning() { echo -e "${YELLOW}⚠${NC} $1"; }
 log_error() { echo -e "${RED}✗${NC} $1"; }
 
+deploy_all_functions() {
+  local function_dir
+  local function_name
+  local config_file
+
+  while IFS= read -r function_dir; do
+    function_name=$(basename "$function_dir")
+    config_file="$function_dir/config.toml"
+
+    if [ -f "$config_file" ] && grep -q "verify_jwt = false" "$config_file"; then
+      log_info "Deploying $function_name with JWT verification disabled..."
+      supabase functions deploy "$function_name" --no-verify-jwt
+    else
+      log_info "Deploying $function_name..."
+      supabase functions deploy "$function_name"
+    fi
+  done < <(find supabase/functions -mindepth 1 -maxdepth 1 -type d ! -name "_shared" | sort)
+}
+
 # Check we're in the right directory
 if [ ! -f "supabase/config.toml" ]; then
   log_error "Must run from PLAYR repository root"
@@ -81,7 +100,7 @@ fi
 # Deploy functions
 if [ "$DB_ONLY" = false ]; then
   log_info "Deploying edge functions..."
-  if supabase functions deploy; then
+  if deploy_all_functions; then
     log_success "Functions deployed"
   else
     log_error "Function deployment failed!"

@@ -77,6 +77,25 @@ log_error() {
   echo -e "${RED}✗${NC} $1"
 }
 
+deploy_all_functions() {
+  local function_dir
+  local function_name
+  local config_file
+
+  while IFS= read -r function_dir; do
+    function_name=$(basename "$function_dir")
+    config_file="$function_dir/config.toml"
+
+    if [ -f "$config_file" ] && grep -q "verify_jwt = false" "$config_file"; then
+      log_info "Deploying $function_name with JWT verification disabled..."
+      supabase functions deploy "$function_name" --no-verify-jwt
+    else
+      log_info "Deploying $function_name..."
+      supabase functions deploy "$function_name"
+    fi
+  done < <(find supabase/functions -mindepth 1 -maxdepth 1 -type d ! -name "_shared" | sort)
+}
+
 log_header() {
   echo ""
   echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
@@ -223,7 +242,7 @@ if [ "$DB_ONLY" = false ]; then
     confirm "Deploy edge functions to PRODUCTION?"
     
     log_info "Deploying all edge functions..."
-    if supabase functions deploy; then
+    if deploy_all_functions; then
       log_success "Edge functions deployed successfully"
     else
       log_error "Function deployment failed! Check output above."
