@@ -1,2 +1,2 @@
-[functions.admin-send-test-email]
+[function]
 verify_jwt = false
