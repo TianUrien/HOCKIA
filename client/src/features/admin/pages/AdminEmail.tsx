@@ -29,6 +29,7 @@ import { EmailDeliveryFunnelChart } from '../components/EmailDeliveryFunnelChart
 import { CreateCampaignModal } from '../components/CreateCampaignModal'
 import { useEmailOverview, useEmailTemplates, useEmailCampaigns, useEmailEngagement, useEmailContactsSummary, useEmailContacts } from '../hooks/useEmailStats'
 import { sendCampaign, previewCampaignAudience, getAllCountries, toggleEmailTemplateActive, diagnoseEmailMetrics, backfillEmailStatuses, deleteEmailCampaign, duplicateEmailCampaign } from '../api/adminApi'
+import { previewOutreachAudience } from '../api/outreachApi'
 import type {
   EmailTemplate,
   EmailCampaign,
@@ -479,10 +480,10 @@ export function AdminEmail() {
                     setConfirmAudienceCount(null)
                     setConfirmLoading(true)
                     try {
-                      const preview = await previewCampaignAudience(
-                        row.category,
-                        (row.audience_filter as { role?: string; roles?: string[]; country?: string }) || {}
-                      )
+                      const filter = (row.audience_filter as Record<string, string>) || {}
+                      const preview = row.audience_source === 'outreach'
+                        ? await previewOutreachAudience({ country: filter.country, status: filter.status })
+                        : await previewCampaignAudience(row.category, filter)
                       setConfirmAudienceCount(preview.count)
                     } catch {
                       setConfirmAudienceCount(-1)
