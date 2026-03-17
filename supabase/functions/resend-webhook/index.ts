@@ -155,7 +155,7 @@ Deno.serve(async (req: Request) => {
     // ========================================================================
     const { data: sendRow, error: lookupError } = await supabase
       .from('email_sends')
-      .select('id, status')
+      .select('id, status, delivered_at, opened_at, clicked_at, bounced_at')
       .eq('resend_email_id', resendEmailId)
       .maybeSingle()
 

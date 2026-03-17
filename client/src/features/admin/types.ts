@@ -1041,6 +1041,7 @@ export interface EmailCampaign {
   scheduled_at: string | null
   sent_at: string | null
   total_recipients: number
+  audience_source: 'users' | 'outreach'
   created_by: string | null
   created_at: string
   updated_at: string

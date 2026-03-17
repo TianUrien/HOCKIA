@@ -16,6 +16,9 @@ import {
   Loader2,
   Contact,
   Search,
+  Pencil,
+  Trash2,
+  Copy,
 } from 'lucide-react'
 import { StatCard } from '../components/StatCard'
 import { DataTable } from '../components/DataTable'
@@ -25,7 +28,7 @@ import { EmailTemplateBreakdownChart } from '../components/EmailTemplateBreakdow
 import { EmailDeliveryFunnelChart } from '../components/EmailDeliveryFunnelChart'
 import { CreateCampaignModal } from '../components/CreateCampaignModal'
 import { useEmailOverview, useEmailTemplates, useEmailCampaigns, useEmailEngagement, useEmailContactsSummary, useEmailContacts } from '../hooks/useEmailStats'
-import { sendCampaign, previewCampaignAudience, getAllCountries, toggleEmailTemplateActive } from '../api/adminApi'
+import { sendCampaign, previewCampaignAudience, getAllCountries, toggleEmailTemplateActive, diagnoseEmailMetrics, backfillEmailStatuses, deleteEmailCampaign, duplicateEmailCampaign } from '../api/adminApi'
 import type {
   EmailTemplate,
   EmailCampaign,
@@ -67,10 +70,13 @@ export function AdminEmail() {
 
   // Campaign state
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [editingCampaign, setEditingCampaign] = useState<EmailCampaign | null>(null)
   const [sendingCampaignId, setSendingCampaignId] = useState<string | null>(null)
   const [confirmSendCampaign, setConfirmSendCampaign] = useState<EmailCampaign | null>(null)
   const [confirmAudienceCount, setConfirmAudienceCount] = useState<number | null>(null)
   const [confirmLoading, setConfirmLoading] = useState(false)
+  const [confirmDeleteCampaign, setConfirmDeleteCampaign] = useState<EmailCampaign | null>(null)
+  const [deletingCampaignId, setDeletingCampaignId] = useState<string | null>(null)
 
   // Engagement filters
   const [engTemplateKey, setEngTemplateKey] = useState<string>('')
@@ -86,6 +92,14 @@ export function AdminEmail() {
 
   // Template toggle loading state
   const [togglingTemplateId, setTogglingTemplateId] = useState<string | null>(null)
+
+  // Diagnostic state
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [diagResult, setDiagResult] = useState<any>(null)
+  const [diagLoading, setDiagLoading] = useState(false)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [backfillResult, setBackfillResult] = useState<any>(null)
+  const [backfillLoading, setBackfillLoading] = useState(false)
 
   // Contacts filters
   const [contactRole, setContactRole] = useState<string>('')
@@ -432,7 +446,8 @@ export function AdminEmail() {
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-gray-900">Campaigns</h2>
               <button
-                onClick={() => setShowCreateModal(true)}
+                type="button"
+                onClick={() => { setEditingCampaign(null); setShowCreateModal(true) }}
                 className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors"
               >
                 <Plus className="w-4 h-4" />
@@ -447,7 +462,17 @@ export function AdminEmail() {
               emptyMessage="No campaigns yet. Click 'Create Campaign' to get started."
               actions={[
                 {
+                  label: 'Edit',
+                  icon: <Pencil className="w-3.5 h-3.5" />,
+                  onClick: (row: EmailCampaign) => {
+                    setEditingCampaign(row)
+                    setShowCreateModal(true)
+                  },
+                  disabled: (row: EmailCampaign) => row.status !== 'draft',
+                },
+                {
                   label: 'Send',
+                  icon: <Send className="w-3.5 h-3.5" />,
                   onClick: async (row: EmailCampaign) => {
                     if (row.status !== 'draft') return
                     setConfirmSendCampaign(row)
@@ -467,17 +492,39 @@ export function AdminEmail() {
                   },
                   disabled: (row: EmailCampaign) => row.status !== 'draft',
                 },
+                {
+                  label: 'Duplicate',
+                  icon: <Copy className="w-3.5 h-3.5" />,
+                  onClick: async (row: EmailCampaign) => {
+                    try {
+                      await duplicateEmailCampaign(row.id)
+                      campaigns.refetch()
+                    } catch {
+                      // silently fail
+                    }
+                  },
+                },
+                {
+                  label: 'Delete',
+                  icon: <Trash2 className="w-3.5 h-3.5" />,
+                  variant: 'danger',
+                  onClick: (row: EmailCampaign) => {
+                    setConfirmDeleteCampaign(row)
+                  },
+                },
               ]}
             />
           </div>
 
-          {/* Create Campaign Modal */}
+          {/* Create / Edit Campaign Modal */}
           {showCreateModal && (
             <CreateCampaignModal
               templates={templates.data}
-              onClose={() => setShowCreateModal(false)}
+              editCampaign={editingCampaign}
+              onClose={() => { setShowCreateModal(false); setEditingCampaign(null) }}
               onCreated={() => {
                 setShowCreateModal(false)
+                setEditingCampaign(null)
                 campaigns.refetch()
               }}
             />
@@ -513,6 +560,7 @@ export function AdminEmail() {
 
                 <div className="flex justify-end gap-3">
                   <button
+                    type="button"
                     onClick={() => setConfirmSendCampaign(null)}
                     disabled={sendingCampaignId === confirmSendCampaign.id}
                     className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800"
@@ -520,6 +568,7 @@ export function AdminEmail() {
                     Cancel
                   </button>
                   <button
+                    type="button"
                     onClick={async () => {
                       const campaignId = confirmSendCampaign.id
                       setSendingCampaignId(campaignId)
@@ -528,7 +577,6 @@ export function AdminEmail() {
                         setConfirmSendCampaign(null)
                         campaigns.refetch()
                       } catch {
-                        // Campaign will show as failed after refetch
                         setConfirmSendCampaign(null)
                         campaigns.refetch()
                       } finally {
@@ -540,6 +588,55 @@ export function AdminEmail() {
                   >
                     {sendingCampaignId === confirmSendCampaign.id && <Loader2 className="w-4 h-4 animate-spin" />}
                     Confirm Send
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Delete Confirmation Dialog */}
+          {confirmDeleteCampaign && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+              <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Delete Campaign</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  Are you sure you want to delete <span className="font-medium">{confirmDeleteCampaign.name}</span>?
+                  {confirmDeleteCampaign.status !== 'draft' && (
+                    <span className="block mt-2 text-red-600 font-medium">
+                      This campaign has already been sent. All associated send data will also be deleted.
+                    </span>
+                  )}
+                </p>
+                <p className="text-xs text-gray-500 mb-4">This action cannot be undone.</p>
+                <div className="flex justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setConfirmDeleteCampaign(null)}
+                    disabled={deletingCampaignId === confirmDeleteCampaign.id}
+                    className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const campaignId = confirmDeleteCampaign.id
+                      setDeletingCampaignId(campaignId)
+                      try {
+                        await deleteEmailCampaign(campaignId)
+                        setConfirmDeleteCampaign(null)
+                        campaigns.refetch()
+                      } catch {
+                        setConfirmDeleteCampaign(null)
+                      } finally {
+                        setDeletingCampaignId(null)
+                      }
+                    }}
+                    disabled={deletingCampaignId !== null}
+                    className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  >
+                    {deletingCampaignId === confirmDeleteCampaign.id && <Loader2 className="w-4 h-4 animate-spin" />}
+                    Delete Campaign
                   </button>
                 </div>
               </div>
@@ -661,6 +758,69 @@ export function AdminEmail() {
                 },
               ]}
             />
+          </div>
+
+          {/* Diagnostic & Repair Panel */}
+          <div className="bg-white rounded-xl border border-gray-200 p-6">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">Metrics Diagnostic & Repair</h3>
+            <div className="flex items-center gap-3 mb-4">
+              <button
+                type="button"
+                onClick={async () => {
+                  setDiagLoading(true)
+                  setDiagResult(null)
+                  try {
+                    const result = await diagnoseEmailMetrics()
+                    setDiagResult(result)
+                  } catch (err) {
+                    setDiagResult({ error: err instanceof Error ? err.message : 'Unknown error' })
+                  } finally {
+                    setDiagLoading(false)
+                  }
+                }}
+                disabled={diagLoading}
+                className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-200 bg-gray-50 hover:bg-gray-100 disabled:opacity-50"
+              >
+                {diagLoading ? 'Running...' : 'Diagnose Metrics'}
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!confirm('This will update email_sends statuses from email_events. Proceed?')) return
+                  setBackfillLoading(true)
+                  setBackfillResult(null)
+                  try {
+                    const result = await backfillEmailStatuses()
+                    setBackfillResult(result)
+                    templates.refetch()
+                  } catch (err) {
+                    setBackfillResult({ error: err instanceof Error ? err.message : 'Unknown error' })
+                  } finally {
+                    setBackfillLoading(false)
+                  }
+                }}
+                disabled={backfillLoading}
+                className="px-4 py-2 text-sm font-medium rounded-lg border border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 disabled:opacity-50"
+              >
+                {backfillLoading ? 'Repairing...' : 'Repair Statuses'}
+              </button>
+            </div>
+            {diagResult && (
+              <details open className="mb-3">
+                <summary className="text-sm font-medium text-gray-600 cursor-pointer">Diagnostic Results</summary>
+                <pre className="mt-2 p-3 bg-gray-50 rounded-lg text-xs overflow-auto max-h-80 whitespace-pre-wrap">
+                  {JSON.stringify(diagResult, null, 2)}
+                </pre>
+              </details>
+            )}
+            {backfillResult && (
+              <details open>
+                <summary className="text-sm font-medium text-gray-600 cursor-pointer">Repair Results</summary>
+                <pre className="mt-2 p-3 bg-gray-50 rounded-lg text-xs overflow-auto max-h-80 whitespace-pre-wrap">
+                  {JSON.stringify(backfillResult, null, 2)}
+                </pre>
+              </details>
+            )}
           </div>
         </div>
       )}
