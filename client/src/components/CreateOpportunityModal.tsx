@@ -3,7 +3,7 @@ import { X, Plus, Home, Car, Globe as GlobeIcon, Plane, Utensils, Briefcase, Shi
 import { supabase } from '../lib/supabase'
 import { logger } from '../lib/logger'
 import { useAuthStore } from '../lib/auth'
-import type { Vacancy, VacancyInsert } from '../lib/supabase'
+import type { Vacancy } from '../lib/supabase'
 import Button from './Button'
 import LocationAutocomplete from './LocationAutocomplete'
 import type { LocationSelection } from './LocationAutocomplete'
