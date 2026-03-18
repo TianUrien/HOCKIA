@@ -20,6 +20,7 @@ import {
   Pencil,
   Trash2,
   Copy,
+  FlaskConical,
 } from 'lucide-react'
 import { StatCard } from '../components/StatCard'
 import { DataTable } from '../components/DataTable'
@@ -28,8 +29,9 @@ import { EmailVolumeChart } from '../components/EmailVolumeChart'
 import { EmailTemplateBreakdownChart } from '../components/EmailTemplateBreakdownChart'
 import { EmailDeliveryFunnelChart } from '../components/EmailDeliveryFunnelChart'
 import { CreateCampaignModal } from '../components/CreateCampaignModal'
+import { ABResultsPanel } from '../components/ABResultsPanel'
 import { useEmailOverview, useEmailTemplates, useEmailCampaigns, useEmailEngagement, useEmailContactsSummary, useEmailContacts } from '../hooks/useEmailStats'
-import { sendCampaign, previewCampaignAudience, getAllCountries, toggleEmailTemplateActive, diagnoseEmailMetrics, backfillEmailStatuses, deleteEmailCampaign, duplicateEmailCampaign } from '../api/adminApi'
+import { sendCampaign, previewCampaignAudience, getAllCountries, toggleEmailTemplateActive, diagnoseEmailMetrics, backfillEmailStatuses, deleteEmailCampaign, duplicateEmailCampaign, duplicateEmailTemplate } from '../api/adminApi'
 import { previewOutreachAudience } from '../api/outreachApi'
 import { getCampaignDisplayRecipientCount } from '../utils/campaigns'
 import type {
@@ -81,6 +83,7 @@ export function AdminEmail() {
   const [confirmLoading, setConfirmLoading] = useState(false)
   const [confirmDeleteCampaign, setConfirmDeleteCampaign] = useState<EmailCampaign | null>(null)
   const [deletingCampaignId, setDeletingCampaignId] = useState<string | null>(null)
+  const [abResultsCampaign, setAbResultsCampaign] = useState<EmailCampaign | null>(null)
 
   // Engagement filters
   const [engTemplateKey, setEngTemplateKey] = useState<string>('')
@@ -215,7 +218,15 @@ export function AdminEmail() {
       label: 'Campaign',
       render: (_, row) => (
         <div>
-          <p className="text-sm font-medium text-gray-900">{row.name}</p>
+          <div className="flex items-center gap-1.5">
+            <p className="text-sm font-medium text-gray-900">{row.name}</p>
+            {row.ab_variants && (
+              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-semibold rounded bg-purple-100 text-purple-700">
+                <FlaskConical className="w-2.5 h-2.5" />
+                A/B
+              </span>
+            )}
+          </div>
           <p className="text-xs text-gray-500">{row.template_name || row.template_key}</p>
         </div>
       ),
@@ -248,6 +259,11 @@ export function AdminEmail() {
       key: 'total_opened',
       label: 'Opened',
       render: (_, row) => <span className="text-sm text-gray-700">{row.total_opened.toLocaleString()}</span>,
+    },
+    {
+      key: 'total_clicked',
+      label: 'Clicked',
+      render: (_, row) => <span className="text-sm text-gray-700">{row.total_clicked.toLocaleString()}</span>,
     },
     {
       key: 'created_at',
@@ -502,6 +518,12 @@ export function AdminEmail() {
                   disabled: (row: EmailCampaign) => row.status !== 'draft',
                 },
                 {
+                  label: 'A/B Results',
+                  icon: <FlaskConical className="w-3.5 h-3.5" />,
+                  onClick: (row: EmailCampaign) => setAbResultsCampaign(row),
+                  disabled: (row: EmailCampaign) => !row.ab_variants,
+                },
+                {
                   label: 'Duplicate',
                   icon: <Copy className="w-3.5 h-3.5" />,
                   onClick: async (row: EmailCampaign) => {
@@ -564,6 +586,15 @@ export function AdminEmail() {
                     <p className="text-sm text-yellow-800">Could not preview audience count. Proceed with caution.</p>
                   </div>
                 ) : null}
+
+                {confirmSendCampaign.ab_variants && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                    <p className="text-sm text-blue-800 font-medium flex items-center gap-1.5">
+                      <FlaskConical className="w-3.5 h-3.5" />
+                      A/B Test — recipients will be randomly split 50/50 between variants.
+                    </p>
+                  </div>
+                )}
 
                 <p className="text-xs text-gray-500 mb-4">This action cannot be undone.</p>
 
@@ -653,6 +684,14 @@ export function AdminEmail() {
                 </div>
               </div>
             </div>
+          )}
+
+          {/* A/B Results Panel */}
+          {abResultsCampaign && (
+            <ABResultsPanel
+              campaign={abResultsCampaign}
+              onClose={() => setAbResultsCampaign(null)}
+            />
           )}
         </div>
       )}
@@ -766,7 +805,20 @@ export function AdminEmail() {
               actions={[
                 {
                   label: 'Edit',
+                  icon: <Pencil className="w-3.5 h-3.5" />,
                   onClick: (row) => navigate(`/admin/email/template/${row.id}`),
+                },
+                {
+                  label: 'Duplicate',
+                  icon: <Copy className="w-3.5 h-3.5" />,
+                  onClick: async (row) => {
+                    try {
+                      await duplicateEmailTemplate(row.id)
+                      templates.refetch()
+                    } catch {
+                      // silently fail
+                    }
+                  },
                 },
               ]}
             />

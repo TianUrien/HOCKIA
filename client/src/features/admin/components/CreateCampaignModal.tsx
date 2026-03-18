@@ -71,6 +71,13 @@ export function CreateCampaignModal({ templates, editCampaign, onClose, onCreate
   )
   const [contactSearch, setContactSearch] = useState('')
 
+  // A/B testing state
+  const [isAbTest, setIsAbTest] = useState(() => !!editCampaign?.ab_variants)
+  const [variantASubject, setVariantASubject] = useState(() => editCampaign?.ab_variants?.A?.subject ?? '')
+  const [variantBSubject, setVariantBSubject] = useState(() => editCampaign?.ab_variants?.B?.subject ?? '')
+  const [variantATemplateId, setVariantATemplateId] = useState(() => editCampaign?.ab_variants?.A?.template_id ?? '')
+  const [variantBTemplateId, setVariantBTemplateId] = useState(() => editCampaign?.ab_variants?.B?.template_id ?? '')
+
   // Users audience preview
   const { preview: usersPreview, isLoading: usersPreviewLoading, error: usersPreviewError, fetchPreview: fetchUsersPreview, reset: resetUsersPreview } = useAudiencePreview()
 
@@ -216,27 +223,52 @@ export function CreateCampaignModal({ templates, editCampaign, onClose, onCreate
   }, [])
 
   const handleSave = async () => {
-    if (!name.trim() || !templateId) return
+    if (!name.trim()) return
+    if (!templateId && !(isAbTest && (variantATemplateId || variantBTemplateId))) return
     if (isOutreach && selectedContactIds.size === 0) return
     setCreating(true)
     setError(null)
     try {
+      // For A/B campaigns, use variant A's template as the base if main template is empty
+      const effectiveTemplateId = templateId || variantATemplateId || variantBTemplateId
+
+      const abVariants = isAbTest && variantASubject.trim() && variantBSubject.trim()
+        ? {
+            A: {
+              subject: variantASubject.trim(),
+              ...(variantATemplateId ? {
+                template_id: variantATemplateId,
+                template_key: activeTemplates.find(t => t.id === variantATemplateId)?.template_key,
+              } : {}),
+            },
+            B: {
+              subject: variantBSubject.trim(),
+              ...(variantBTemplateId ? {
+                template_id: variantBTemplateId,
+                template_key: activeTemplates.find(t => t.id === variantBTemplateId)?.template_key,
+              } : {}),
+            },
+          }
+        : null
+
       if (isEditing && editCampaign) {
         await updateEmailCampaign({
           campaignId: editCampaign.id,
           name: name.trim(),
-          template_id: templateId,
+          template_id: effectiveTemplateId,
           category,
           audience_filter: audienceFilter,
           audience_source: audienceSource,
+          ab_variants: abVariants,
         })
       } else {
         await createEmailCampaign({
           name: name.trim(),
-          template_id: templateId,
+          template_id: effectiveTemplateId,
           category,
           audience_filter: audienceFilter,
           audience_source: audienceSource,
+          ab_variants: abVariants,
         })
       }
       onCreated()
@@ -257,7 +289,10 @@ export function CreateCampaignModal({ templates, editCampaign, onClose, onCreate
     resetUsersPreview()
   }, [filterRoles, filterCountry, category, resetUsersPreview])
 
-  const canSave = name.trim() && templateId && (isOutreach ? selectedContactIds.size > 0 : true)
+  const hasTemplate = isAbTest
+    ? (variantATemplateId || templateId) && (variantBTemplateId || templateId)
+    : !!templateId
+  const canSave = name.trim() && hasTemplate && (isOutreach ? selectedContactIds.size > 0 : true) && (!isAbTest || (variantASubject.trim() && variantBSubject.trim()))
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
@@ -344,6 +379,84 @@ export function CreateCampaignModal({ templates, editCampaign, onClose, onCreate
               </select>
             </div>
           )}
+
+          {/* A/B Testing */}
+          <div className="border-t border-gray-100 pt-4">
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-sm font-medium text-gray-700">A/B Test</label>
+              <button
+                type="button"
+                onClick={() => setIsAbTest(!isAbTest)}
+                aria-label="Toggle A/B testing"
+                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${isAbTest ? 'bg-purple-600' : 'bg-gray-300'}`}
+              >
+                <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${isAbTest ? 'translate-x-[18px]' : 'translate-x-[3px]'}`} />
+              </button>
+            </div>
+            {isAbTest && (
+              <div className="space-y-4 mt-3">
+                <p className="text-xs text-gray-500">Recipients will be randomly split 50/50 between variants. Each variant can use a different template and subject.</p>
+
+                {/* Variant A */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 space-y-2">
+                  <p className="text-xs font-semibold text-blue-700">Variant A</p>
+                  <div>
+                    <label className="block text-xs text-blue-600 mb-1">Template (optional override)</label>
+                    <select
+                      value={variantATemplateId}
+                      onChange={(e) => setVariantATemplateId(e.target.value)}
+                      aria-label="Variant A template"
+                      className="w-full text-sm border border-blue-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    >
+                      <option value="">Same as campaign template</option>
+                      {activeTemplates.map(t => (
+                        <option key={t.id} value={t.id}>{t.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-blue-600 mb-1">Subject line</label>
+                    <input
+                      type="text"
+                      value={variantASubject}
+                      onChange={(e) => setVariantASubject(e.target.value)}
+                      placeholder="e.g. Your club is already on PLAYR"
+                      className="w-full text-sm border border-blue-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    />
+                  </div>
+                </div>
+
+                {/* Variant B */}
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-2">
+                  <p className="text-xs font-semibold text-amber-700">Variant B</p>
+                  <div>
+                    <label className="block text-xs text-amber-600 mb-1">Template (optional override)</label>
+                    <select
+                      value={variantBTemplateId}
+                      onChange={(e) => setVariantBTemplateId(e.target.value)}
+                      aria-label="Variant B template"
+                      className="w-full text-sm border border-amber-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-amber-400"
+                    >
+                      <option value="">Same as campaign template</option>
+                      {activeTemplates.map(t => (
+                        <option key={t.id} value={t.id}>{t.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-amber-600 mb-1">Subject line</label>
+                    <input
+                      type="text"
+                      value={variantBSubject}
+                      onChange={(e) => setVariantBSubject(e.target.value)}
+                      placeholder="e.g. Join the hockey community on PLAYR"
+                      className="w-full text-sm border border-amber-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-amber-400"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* ================================================================ */}
           {/* OUTREACH: Contact Picker                                        */}

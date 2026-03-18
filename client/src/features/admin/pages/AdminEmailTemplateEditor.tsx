@@ -13,7 +13,7 @@ import {
   X,
   Variable,
 } from 'lucide-react'
-import { getEmailTemplateDetail, saveEmailTemplateDraft, activateEmailTemplate, rollbackEmailTemplate, sendTestEmail } from '../api/adminApi'
+import { getEmailTemplateDetail, saveEmailTemplateDraft, activateEmailTemplate, rollbackEmailTemplate, sendTestEmail, updateEmailTemplateName } from '../api/adminApi'
 import type { EmailTemplateDetail, EmailContentBlock, EmailTemplateVariable } from '../types'
 import { EmailBlockEditor } from '../components/EmailBlockEditor'
 import { EmailPreview } from '../components/EmailPreview'
@@ -28,6 +28,7 @@ export function AdminEmailTemplateEditor() {
   const [error, setError] = useState<string | null>(null)
 
   // Editor state
+  const [templateName, setTemplateName] = useState('')
   const [subject, setSubject] = useState('')
   const [blocks, setBlocks] = useState<EmailContentBlock[]>([])
   const [textTemplate, setTextTemplate] = useState('')
@@ -51,6 +52,7 @@ export function AdminEmailTemplateEditor() {
     try {
       const data = await getEmailTemplateDetail(templateId)
       setDetail(data)
+      setTemplateName(data.template.name)
       setSubject(data.template.subject_template)
       setBlocks(data.template.content_json)
       setTextTemplate(data.template.text_template || '')
@@ -110,6 +112,10 @@ export function AdminEmailTemplateEditor() {
     setIsSaving(true)
     setSaveMessage(null)
     try {
+      // Update name if changed
+      if (templateName.trim() && templateName !== detail?.template.name) {
+        await updateEmailTemplateName(templateId, templateName.trim())
+      }
       // Save as new version, then immediately activate it
       const result = await saveEmailTemplateDraft({
         templateId,
@@ -278,6 +284,17 @@ export function AdminEmailTemplateEditor() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left: Editor */}
         <div className="space-y-4">
+          {/* Name */}
+          <div className="bg-white rounded-xl border border-gray-200 p-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Template Name</label>
+            <input
+              value={templateName}
+              onChange={(e) => { setTemplateName(e.target.value); setIsDirty(true) }}
+              placeholder="Template display name"
+              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            />
+          </div>
+
           {/* Subject */}
           <div className="bg-white rounded-xl border border-gray-200 p-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">Subject Line</label>

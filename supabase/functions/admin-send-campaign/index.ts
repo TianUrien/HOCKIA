@@ -27,6 +27,41 @@ import type { RecipientInfo } from '../_shared/email-sender.ts'
  * Security: Validates JWT and checks is_platform_admin()
  */
 
+async function updateCampaignStatus(
+  serviceClient: ReturnType<typeof getServiceClient>,
+  logger: ReturnType<typeof createLogger>,
+  params: {
+    campaignId: string
+    status: 'draft' | 'sending' | 'sent' | 'failed'
+    sentCount?: number
+    totalRecipients?: number | null
+    strict?: boolean
+  }
+): Promise<void> {
+  const { campaignId, status, sentCount = 0, totalRecipients = null, strict = true } = params
+
+  const { error } = await serviceClient.rpc('admin_update_campaign_status', {
+    p_campaign_id: campaignId,
+    p_status: status,
+    p_sent_count: sentCount,
+    p_total_recipients: totalRecipients,
+  })
+
+  if (!error) return
+
+  logger.error('Failed to update campaign status', {
+    campaignId,
+    status,
+    sentCount,
+    totalRecipients,
+    error: error.message,
+  })
+
+  if (strict) {
+    throw new Error(`Failed to update campaign status to "${status}": ${error.message}`)
+  }
+}
+
 Deno.serve(async (req: Request) => {
   const origin = req.headers.get('origin')
   const headers = getCorsHeaders(origin)
@@ -151,10 +186,10 @@ Deno.serve(async (req: Request) => {
     // ========================================================================
     // Set status to 'sending'
     // ========================================================================
-    await serviceClient.rpc('admin_update_campaign_status', {
-      p_campaign_id: campaign_id,
-      p_status: 'sending',
-      p_sent_count: 0,
+    await updateCampaignStatus(serviceClient, logger, {
+      campaignId: campaign_id,
+      status: 'sending',
+      sentCount: 0,
     })
 
     // ========================================================================
@@ -163,10 +198,11 @@ Deno.serve(async (req: Request) => {
     const isOutreach = campaign.audience_source === 'outreach'
     const rendered = await renderTemplate(serviceClient, campaign.template_key, {})
     if (!rendered) {
-      await serviceClient.rpc('admin_update_campaign_status', {
-        p_campaign_id: campaign_id,
-        p_status: 'failed',
-        p_sent_count: 0,
+      await updateCampaignStatus(serviceClient, logger, {
+        campaignId: campaign_id,
+        status: 'failed',
+        sentCount: 0,
+        strict: false,
       })
       return new Response(
         JSON.stringify({ success: false, error: 'Failed to render template' }),
@@ -220,10 +256,11 @@ Deno.serve(async (req: Request) => {
 
       if (outreachError) {
         logger.error('Failed to query outreach contacts', { error: outreachError.message })
-        await serviceClient.rpc('admin_update_campaign_status', {
-          p_campaign_id: campaign_id,
-          p_status: 'failed',
-          p_sent_count: 0,
+        await updateCampaignStatus(serviceClient, logger, {
+          campaignId: campaign_id,
+          status: 'failed',
+          sentCount: 0,
+          strict: false,
         })
         return new Response(
           JSON.stringify({ success: false, error: 'Failed to query outreach contacts' }),
@@ -271,10 +308,11 @@ Deno.serve(async (req: Request) => {
 
       if (recipientError) {
         logger.error('Failed to query recipients', { error: recipientError.message })
-        await serviceClient.rpc('admin_update_campaign_status', {
-          p_campaign_id: campaign_id,
-          p_status: 'failed',
-          p_sent_count: 0,
+        await updateCampaignStatus(serviceClient, logger, {
+          campaignId: campaign_id,
+          status: 'failed',
+          sentCount: 0,
+          strict: false,
         })
         return new Response(
           JSON.stringify({ success: false, error: 'Failed to query recipients' }),
@@ -283,7 +321,7 @@ Deno.serve(async (req: Request) => {
       }
 
       // Apply country filter client-side (join filtering)
-      let profileRecipients = (recipientData || []).map((r: any) => ({
+      let profileRecipients: Array<{ email: string; recipientId: string; recipientRole: string; recipientCountry: string | null; countryCode: string | null }> = (recipientData || []).map((r: any) => ({
         email: r.email as string,
         recipientId: r.id as string,
         recipientRole: r.role as string,
@@ -300,11 +338,11 @@ Deno.serve(async (req: Request) => {
 
     if (recipients.length === 0) {
       logger.warn('No recipients found for campaign', { campaignId: campaign_id })
-      await serviceClient.rpc('admin_update_campaign_status', {
-        p_campaign_id: campaign_id,
-        p_status: 'sent',
-        p_sent_count: 0,
-        p_total_recipients: 0,
+      await updateCampaignStatus(serviceClient, logger, {
+        campaignId: campaign_id,
+        status: 'sent',
+        sentCount: 0,
+        totalRecipients: 0,
       })
       return new Response(
         JSON.stringify({ success: true, sent: 0, message: 'No recipients matched the audience filter' }),
@@ -314,11 +352,53 @@ Deno.serve(async (req: Request) => {
 
     logger.info('Recipients found', { count: recipients.length, audienceSource: isOutreach ? 'outreach' : 'users' })
 
-    await serviceClient.rpc('admin_update_campaign_status', {
-      p_campaign_id: campaign_id,
-      p_status: 'sending',
-      p_sent_count: 0,
-      p_total_recipients: recipients.length,
+    // ========================================================================
+    // A/B split: assign variants if this is an A/B test campaign
+    // ========================================================================
+    const abVariants = campaign.ab_variants as {
+      A: { subject: string; content_json?: any[]; template_id?: string; template_key?: string }
+      B: { subject: string; content_json?: any[]; template_id?: string; template_key?: string }
+    } | null
+
+    // Pre-fetch variant-specific templates if different from base
+    const variantTemplates: Record<string, any> = {}
+    if (abVariants) {
+      for (const key of ['A', 'B'] as const) {
+        const vKey = abVariants[key].template_key
+        if (vKey && vKey !== campaign.template_key) {
+          const tmpl = await getActiveTemplate(serviceClient, vKey)
+          if (tmpl) {
+            variantTemplates[key] = tmpl
+            logger.info(`Loaded variant ${key} template`, { templateKey: vKey })
+          } else {
+            logger.warn(`Variant ${key} template not found, falling back to base template`, { templateKey: vKey })
+          }
+        }
+      }
+    }
+    const variantMap = new Map<string, 'A' | 'B'>()
+
+    if (abVariants) {
+      // Fisher-Yates shuffle for random 50/50 split
+      for (let i = recipients.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [recipients[i], recipients[j]] = [recipients[j], recipients[i]]
+      }
+      const midpoint = Math.ceil(recipients.length / 2)
+      recipients.forEach((r, idx) => {
+        variantMap.set(r.email, idx < midpoint ? 'A' : 'B')
+      })
+      logger.info('A/B split applied', {
+        variantA: midpoint,
+        variantB: recipients.length - midpoint,
+      })
+    }
+
+    await updateCampaignStatus(serviceClient, logger, {
+      campaignId: campaign_id,
+      status: 'sending',
+      sentCount: 0,
+      totalRecipients: recipients.length,
     })
 
     // ========================================================================
@@ -326,10 +406,11 @@ Deno.serve(async (req: Request) => {
     // ========================================================================
     const resendApiKey = Deno.env.get('RESEND_API_KEY')
     if (!resendApiKey) {
-      await serviceClient.rpc('admin_update_campaign_status', {
-        p_campaign_id: campaign_id,
-        p_status: 'failed',
-        p_sent_count: 0,
+      await updateCampaignStatus(serviceClient, logger, {
+        campaignId: campaign_id,
+        status: 'failed',
+        sentCount: 0,
+        strict: false,
       })
       return new Response(
         JSON.stringify({ success: false, error: 'RESEND_API_KEY not configured' }),
@@ -337,7 +418,7 @@ Deno.serve(async (req: Request) => {
       )
     }
 
-    // Build per-recipient rendering function for outreach campaigns
+    // Build per-recipient rendering function for outreach campaigns (and A/B variants)
     let renderForRecipient: ((recipient: RecipientInfo) => { html: string; text: string; subject: string }) | undefined
 
     if (isOutreach && outreachTemplate && outreachContactMap) {
@@ -351,12 +432,43 @@ Deno.serve(async (req: Request) => {
           country: contact?.country || '',
           cta_url: 'https://oplayr.com/signup',
         }
-        const subject = interpolateVariables(outreachTemplate.subject_template, vars)
-        const { html } = renderContentBlocks(outreachTemplate.content_json, vars)
-        const text = outreachTemplate.text_template
-          ? interpolateVariables(outreachTemplate.text_template, vars)
+
+        // A/B variant: use variant-specific template or subject
+        const variant = variantMap.get(recipient.email)
+        const vTemplate = variant ? variantTemplates[variant] : null
+        const baseTemplate = vTemplate || outreachTemplate
+
+        const subjectTemplate = (variant && abVariants)
+          ? abVariants[variant].subject
+          : baseTemplate.subject_template
+        const contentJson = (variant && abVariants && abVariants[variant].content_json)
+          ? abVariants[variant].content_json
+          : baseTemplate.content_json
+
+        const subject = interpolateVariables(subjectTemplate, vars)
+        const { html } = renderContentBlocks(contentJson, vars)
+        const text = baseTemplate.text_template
+          ? interpolateVariables(baseTemplate.text_template, vars)
           : subject
         return { html, text, subject }
+      }
+    } else if (abVariants) {
+      // Non-outreach A/B campaign: use variant-specific template or just subject
+      renderForRecipient = (recipient: RecipientInfo) => {
+        const variant = variantMap.get(recipient.email)
+        const vTemplate = variant ? variantTemplates[variant] : null
+
+        if (vTemplate) {
+          // Variant has its own template — render it fully
+          const subject = (variant && abVariants) ? abVariants[variant].subject : rendered.subject
+          const { html } = renderContentBlocks(vTemplate.content_json, {})
+          const text = vTemplate.text_template || subject
+          return { html, text, subject }
+        }
+
+        // Same template, just different subject
+        const subject = (variant && abVariants) ? abVariants[variant].subject : rendered.subject
+        return { html: rendered.html, text: rendered.text, subject }
       }
     }
 
@@ -368,6 +480,7 @@ Deno.serve(async (req: Request) => {
         recipientId: r.recipientId || undefined,
         recipientRole: r.recipientRole,
         recipientCountry: r.recipientCountry || undefined,
+        variant: variantMap.get(r.email),
       })),
       subject: rendered.subject,
       html: rendered.html,
@@ -382,11 +495,11 @@ Deno.serve(async (req: Request) => {
     // Update campaign status
     // ========================================================================
     const finalStatus = batchResult.stats.failed > 0 && batchResult.stats.sent === 0 ? 'failed' : 'sent'
-    await serviceClient.rpc('admin_update_campaign_status', {
-      p_campaign_id: campaign_id,
-      p_status: finalStatus,
-      p_sent_count: batchResult.stats.sent,
-      p_total_recipients: recipients.length,
+    await updateCampaignStatus(serviceClient, logger, {
+      campaignId: campaign_id,
+      status: finalStatus,
+      sentCount: batchResult.stats.sent,
+      totalRecipients: recipients.length,
     })
 
     logger.info('Campaign send complete', {
