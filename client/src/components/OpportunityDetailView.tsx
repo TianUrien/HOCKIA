@@ -192,16 +192,19 @@ export default function VacancyDetailView({
                   </div>
                 </button>
                 {worldClub ? (
-                  <div className="mt-1.5 flex items-center gap-1">
-                    <span className="text-gray-400 text-sm">↳</span>
-                    <button type="button" onClick={handleWorldClubClick} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/60 border border-gray-200 hover:bg-white transition-colors">
-                      {worldClub.avatarUrl ? (
-                        <StorageImage src={worldClub.avatarUrl} alt={worldClub.clubName} className="w-4 h-4 rounded-full object-cover" />
-                      ) : (
-                        <Award className="w-3.5 h-3.5 text-gray-400" />
-                      )}
-                      <span className="text-xs font-medium text-gray-700">{worldClub.clubName}</span>
-                    </button>
+                  <div className="mt-1.5 flex flex-col items-center">
+                    <div className="flex items-center gap-1">
+                      <span className="text-gray-400 text-sm">↳</span>
+                      <button type="button" onClick={handleWorldClubClick} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/60 border border-gray-200 hover:bg-white transition-colors">
+                        {worldClub.avatarUrl ? (
+                          <StorageImage src={worldClub.avatarUrl} alt={worldClub.clubName} className="w-4 h-4 rounded-full object-cover" />
+                        ) : (
+                          <Award className="w-3.5 h-3.5 text-gray-400" />
+                        )}
+                        <span className="text-xs font-medium text-gray-700">{worldClub.clubName}</span>
+                      </button>
+                    </div>
+                    {displayLeague && <p className="text-sm text-gray-500 mt-0.5">{displayLeague}</p>}
                   </div>
                 ) : publisherOrganization ? (
                   <div className="mt-1.5 flex items-center gap-1">

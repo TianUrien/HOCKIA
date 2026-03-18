@@ -141,9 +141,15 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
         try {
           const parsed = JSON.parse(rawDraft) as VacancyDraftStorage
           const base = buildInitialFormData(null)
-          setFormData({ ...base, ...(parsed.formData || {}) })
+          const restored = { ...base, ...(parsed.formData || {}) }
+          setFormData(restored)
           setNewRequirement(parsed.newRequirement ?? '')
           setNewCustomBenefit(parsed.newCustomBenefit ?? '')
+          // Restore location autocomplete state from draft
+          if (restored.location_city && restored.location_country) {
+            setLocationText(`${restored.location_city}, ${restored.location_country}`)
+            setLocationSelected(true)
+          }
           vacancyDraftRestoringRef.current = true
           addToast('Opportunity draft restored.', 'info')
           return
