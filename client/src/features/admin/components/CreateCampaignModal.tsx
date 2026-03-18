@@ -228,18 +228,21 @@ export function CreateCampaignModal({ templates, editCampaign, onClose, onCreate
     setCreating(true)
     setError(null)
     try {
+      // For A/B campaigns, use variant A's template as the base if main template is empty
+      const effectiveTemplateId = templateId || variantATemplateId || variantBTemplateId
+
       const abVariants = isAbTest && variantASubject.trim() && variantBSubject.trim()
         ? {
             A: {
               subject: variantASubject.trim(),
-              ...(variantATemplateId && variantATemplateId !== templateId ? {
+              ...(variantATemplateId ? {
                 template_id: variantATemplateId,
                 template_key: activeTemplates.find(t => t.id === variantATemplateId)?.template_key,
               } : {}),
             },
             B: {
               subject: variantBSubject.trim(),
-              ...(variantBTemplateId && variantBTemplateId !== templateId ? {
+              ...(variantBTemplateId ? {
                 template_id: variantBTemplateId,
                 template_key: activeTemplates.find(t => t.id === variantBTemplateId)?.template_key,
               } : {}),
@@ -251,7 +254,7 @@ export function CreateCampaignModal({ templates, editCampaign, onClose, onCreate
         await updateEmailCampaign({
           campaignId: editCampaign.id,
           name: name.trim(),
-          template_id: templateId,
+          template_id: effectiveTemplateId,
           category,
           audience_filter: audienceFilter,
           audience_source: audienceSource,
@@ -260,7 +263,7 @@ export function CreateCampaignModal({ templates, editCampaign, onClose, onCreate
       } else {
         await createEmailCampaign({
           name: name.trim(),
-          template_id: templateId,
+          template_id: effectiveTemplateId,
           category,
           audience_filter: audienceFilter,
           audience_source: audienceSource,
@@ -285,7 +288,10 @@ export function CreateCampaignModal({ templates, editCampaign, onClose, onCreate
     resetUsersPreview()
   }, [filterRoles, filterCountry, category, resetUsersPreview])
 
-  const canSave = name.trim() && templateId && (isOutreach ? selectedContactIds.size > 0 : true) && (!isAbTest || (variantASubject.trim() && variantBSubject.trim() && (variantATemplateId || templateId) && (variantBTemplateId || templateId)))
+  const hasTemplate = isAbTest
+    ? (variantATemplateId || templateId) && (variantBTemplateId || templateId)
+    : !!templateId
+  const canSave = name.trim() && hasTemplate && (isOutreach ? selectedContactIds.size > 0 : true) && (!isAbTest || (variantASubject.trim() && variantBSubject.trim()))
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
