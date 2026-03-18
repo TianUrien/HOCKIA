@@ -587,6 +587,15 @@ export function AdminEmail() {
                   </div>
                 ) : null}
 
+                {confirmSendCampaign.ab_variants && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                    <p className="text-sm text-blue-800 font-medium flex items-center gap-1.5">
+                      <FlaskConical className="w-3.5 h-3.5" />
+                      A/B Test — recipients will be randomly split 50/50 between variants.
+                    </p>
+                  </div>
+                )}
+
                 <p className="text-xs text-gray-500 mb-4">This action cannot be undone.</p>
 
                 <div className="flex justify-end gap-3">

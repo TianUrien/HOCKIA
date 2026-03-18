@@ -1139,6 +1139,7 @@ export interface CampaignDetail {
     clicked: number
     bounced: number
   }
+  variant_metrics?: CampaignVariantMetrics[]
 }
 
 export interface AudiencePreview {

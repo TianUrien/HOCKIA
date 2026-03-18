@@ -1675,7 +1675,7 @@ export async function updateEmailCampaign(params: {
   category?: string
   audience_filter?: Record<string, unknown>
   audience_source?: string
-  ab_variants?: { A: { subject: string }; B: { subject: string } } | null
+  ab_variants?: { A: { subject: string; content_json?: unknown[] }; B: { subject: string; content_json?: unknown[] } } | null
 }): Promise<void> {
   const { data, error } = await adminRpc('admin_update_email_campaign', {
     p_campaign_id: params.campaignId,

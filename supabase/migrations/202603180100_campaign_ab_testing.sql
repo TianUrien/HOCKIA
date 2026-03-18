@@ -241,7 +241,7 @@ BEGIN
       target_role = v_target_role,
       target_country = NULLIF(v_effective_audience_filter->>'country', ''),
       total_recipients = v_total_recipients,
-      ab_variants = COALESCE(p_ab_variants, ab_variants),
+      ab_variants = p_ab_variants,
       updated_at = now()
   WHERE id = p_campaign_id;
 
