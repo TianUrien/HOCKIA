@@ -1,12 +1,16 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Eye, TrendingUp, TrendingDown, Users, EyeOff } from 'lucide-react'
+import { Eye, TrendingUp, TrendingDown, Users, EyeOff, ChevronDown } from 'lucide-react'
 import { Avatar, RoleBadge } from '@/components'
 import { useProfileViewers } from '@/hooks/useProfileViewers'
 import { getTimeAgo } from '@/lib/utils'
 
+const COLLAPSED_COUNT = 3
+
 export function ProfileViewersSection() {
   const navigate = useNavigate()
   const { viewers, stats, isLoading } = useProfileViewers()
+  const [expanded, setExpanded] = useState(false)
 
   if (isLoading) {
     return (
@@ -77,7 +81,7 @@ export function ProfileViewersSection() {
       {/* Viewer list */}
       {viewers.length > 0 ? (
         <div className="space-y-1">
-          {viewers.map((viewer) => (
+          {(expanded ? viewers : viewers.slice(0, COLLAPSED_COUNT)).map((viewer) => (
             <button
               key={viewer.viewer_id}
               type="button"
@@ -107,6 +111,16 @@ export function ProfileViewersSection() {
               </span>
             </button>
           ))}
+          {viewers.length > COLLAPSED_COUNT && (
+            <button
+              type="button"
+              onClick={() => setExpanded(!expanded)}
+              className="w-full flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium text-[#8026FA] hover:bg-purple-50 rounded-xl transition-colors"
+            >
+              {expanded ? 'Show less' : `See all ${viewers.length} viewers`}
+              <ChevronDown className={`w-4 h-4 transition-transform ${expanded ? 'rotate-180' : ''}`} />
+            </button>
+          )}
         </div>
       ) : (
         <div className="text-center py-6">
