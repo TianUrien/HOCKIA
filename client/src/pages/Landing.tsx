@@ -344,7 +344,7 @@ export default function Landing() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Email"
-                  className="!bg-white border-0 text-gray-900 placeholder:text-gray-400 !h-10 !text-[13px] !rounded-xl"
+                  className="!bg-white border-0 text-gray-900 placeholder:text-gray-400 !h-10 text-[13px] !rounded-xl"
                   required
                 />
               </div>
@@ -357,7 +357,7 @@ export default function Landing() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Password"
-                    className="!bg-white border-0 text-gray-900 placeholder:text-gray-400 !h-10 !text-[13px] !rounded-xl !pr-10"
+                    className="!bg-white border-0 text-gray-900 placeholder:text-gray-400 !h-10 text-[13px] !rounded-xl !pr-10"
                     required
                   />
                   <button
