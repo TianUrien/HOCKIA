@@ -1425,6 +1425,17 @@ export async function saveEmailTemplateDraft(params: {
 }
 
 /**
+ * Update a template's display name
+ */
+export async function updateEmailTemplateName(templateId: string, name: string): Promise<void> {
+  const { error } = await adminRpc('admin_update_email_template_name', {
+    p_template_id: templateId,
+    p_name: name,
+  })
+  if (error) throw new Error(`Failed to update template name: ${error.message}`)
+}
+
+/**
  * Activate a specific template version (makes it live)
  */
 export async function activateEmailTemplate(
