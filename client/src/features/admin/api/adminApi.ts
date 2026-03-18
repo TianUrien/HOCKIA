@@ -1467,6 +1467,17 @@ export async function toggleEmailTemplateActive(
 }
 
 /**
+ * Duplicate an email template
+ */
+export async function duplicateEmailTemplate(templateId: string): Promise<{ template_id: string }> {
+  const { data, error } = await adminRpc('admin_duplicate_email_template', {
+    p_template_id: templateId,
+  })
+  if (error) throw new Error(`Failed to duplicate template: ${error.message}`)
+  return data as { template_id: string }
+}
+
+/**
  * Get campaigns list with pagination
  */
 export async function getEmailCampaigns(params: {

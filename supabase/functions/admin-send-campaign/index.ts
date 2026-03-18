@@ -355,7 +355,25 @@ Deno.serve(async (req: Request) => {
     // ========================================================================
     // A/B split: assign variants if this is an A/B test campaign
     // ========================================================================
-    const abVariants = campaign.ab_variants as { A: { subject: string; content_json?: any[] }; B: { subject: string; content_json?: any[] } } | null
+    const abVariants = campaign.ab_variants as {
+      A: { subject: string; content_json?: any[]; template_id?: string; template_key?: string }
+      B: { subject: string; content_json?: any[]; template_id?: string; template_key?: string }
+    } | null
+
+    // Pre-fetch variant-specific templates if different from base
+    const variantTemplates: Record<string, any> = {}
+    if (abVariants) {
+      for (const key of ['A', 'B'] as const) {
+        const vKey = abVariants[key].template_key
+        if (vKey && vKey !== campaign.template_key) {
+          const tmpl = await getActiveTemplate(serviceClient, vKey)
+          if (tmpl) {
+            variantTemplates[key] = tmpl
+            logger.info(`Loaded variant ${key} template`, { templateKey: vKey })
+          }
+        }
+      }
+    }
     const variantMap = new Map<string, 'A' | 'B'>()
 
     if (abVariants) {
@@ -413,26 +431,40 @@ Deno.serve(async (req: Request) => {
           cta_url: 'https://oplayr.com/signup',
         }
 
-        // A/B variant: use variant-specific subject template
+        // A/B variant: use variant-specific template or subject
         const variant = variantMap.get(recipient.email)
+        const vTemplate = variant ? variantTemplates[variant] : null
+        const baseTemplate = vTemplate || outreachTemplate
+
         const subjectTemplate = (variant && abVariants)
           ? abVariants[variant].subject
-          : outreachTemplate.subject_template
+          : baseTemplate.subject_template
         const contentJson = (variant && abVariants && abVariants[variant].content_json)
           ? abVariants[variant].content_json
-          : outreachTemplate.content_json
+          : baseTemplate.content_json
 
         const subject = interpolateVariables(subjectTemplate, vars)
         const { html } = renderContentBlocks(contentJson, vars)
-        const text = outreachTemplate.text_template
-          ? interpolateVariables(outreachTemplate.text_template, vars)
+        const text = baseTemplate.text_template
+          ? interpolateVariables(baseTemplate.text_template, vars)
           : subject
         return { html, text, subject }
       }
     } else if (abVariants) {
-      // Non-outreach A/B campaign: only subject differs per variant
+      // Non-outreach A/B campaign: use variant-specific template or just subject
       renderForRecipient = (recipient: RecipientInfo) => {
         const variant = variantMap.get(recipient.email)
+        const vTemplate = variant ? variantTemplates[variant] : null
+
+        if (vTemplate) {
+          // Variant has its own template — render it fully
+          const subject = (variant && abVariants) ? abVariants[variant].subject : rendered.subject
+          const { html } = renderContentBlocks(vTemplate.content_json, {})
+          const text = vTemplate.text_template || subject
+          return { html, text, subject }
+        }
+
+        // Same template, just different subject
         const subject = (variant && abVariants) ? abVariants[variant].subject : rendered.subject
         return { html: rendered.html, text: rendered.text, subject }
       }

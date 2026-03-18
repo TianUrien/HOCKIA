@@ -31,7 +31,7 @@ import { EmailDeliveryFunnelChart } from '../components/EmailDeliveryFunnelChart
 import { CreateCampaignModal } from '../components/CreateCampaignModal'
 import { ABResultsPanel } from '../components/ABResultsPanel'
 import { useEmailOverview, useEmailTemplates, useEmailCampaigns, useEmailEngagement, useEmailContactsSummary, useEmailContacts } from '../hooks/useEmailStats'
-import { sendCampaign, previewCampaignAudience, getAllCountries, toggleEmailTemplateActive, diagnoseEmailMetrics, backfillEmailStatuses, deleteEmailCampaign, duplicateEmailCampaign } from '../api/adminApi'
+import { sendCampaign, previewCampaignAudience, getAllCountries, toggleEmailTemplateActive, diagnoseEmailMetrics, backfillEmailStatuses, deleteEmailCampaign, duplicateEmailCampaign, duplicateEmailTemplate } from '../api/adminApi'
 import { previewOutreachAudience } from '../api/outreachApi'
 import { getCampaignDisplayRecipientCount } from '../utils/campaigns'
 import type {
@@ -805,7 +805,20 @@ export function AdminEmail() {
               actions={[
                 {
                   label: 'Edit',
+                  icon: <Pencil className="w-3.5 h-3.5" />,
                   onClick: (row) => navigate(`/admin/email/template/${row.id}`),
+                },
+                {
+                  label: 'Duplicate',
+                  icon: <Copy className="w-3.5 h-3.5" />,
+                  onClick: async (row) => {
+                    try {
+                      await duplicateEmailTemplate(row.id)
+                      templates.refetch()
+                    } catch {
+                      // silently fail
+                    }
+                  },
                 },
               ]}
             />

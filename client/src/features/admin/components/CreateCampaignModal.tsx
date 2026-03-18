@@ -75,6 +75,8 @@ export function CreateCampaignModal({ templates, editCampaign, onClose, onCreate
   const [isAbTest, setIsAbTest] = useState(() => !!editCampaign?.ab_variants)
   const [variantASubject, setVariantASubject] = useState(() => editCampaign?.ab_variants?.A?.subject ?? '')
   const [variantBSubject, setVariantBSubject] = useState(() => editCampaign?.ab_variants?.B?.subject ?? '')
+  const [variantATemplateId, setVariantATemplateId] = useState(() => (editCampaign?.ab_variants?.A as Record<string, unknown>)?.template_id as string ?? '')
+  const [variantBTemplateId, setVariantBTemplateId] = useState(() => (editCampaign?.ab_variants?.B as Record<string, unknown>)?.template_id as string ?? '')
 
   // Users audience preview
   const { preview: usersPreview, isLoading: usersPreviewLoading, error: usersPreviewError, fetchPreview: fetchUsersPreview, reset: resetUsersPreview } = useAudiencePreview()
@@ -227,7 +229,22 @@ export function CreateCampaignModal({ templates, editCampaign, onClose, onCreate
     setError(null)
     try {
       const abVariants = isAbTest && variantASubject.trim() && variantBSubject.trim()
-        ? { A: { subject: variantASubject.trim() }, B: { subject: variantBSubject.trim() } }
+        ? {
+            A: {
+              subject: variantASubject.trim(),
+              ...(variantATemplateId && variantATemplateId !== templateId ? {
+                template_id: variantATemplateId,
+                template_key: activeTemplates.find(t => t.id === variantATemplateId)?.template_key,
+              } : {}),
+            },
+            B: {
+              subject: variantBSubject.trim(),
+              ...(variantBTemplateId && variantBTemplateId !== templateId ? {
+                template_id: variantBTemplateId,
+                template_key: activeTemplates.find(t => t.id === variantBTemplateId)?.template_key,
+              } : {}),
+            },
+          }
         : null
 
       if (isEditing && editCampaign) {
@@ -268,7 +285,7 @@ export function CreateCampaignModal({ templates, editCampaign, onClose, onCreate
     resetUsersPreview()
   }, [filterRoles, filterCountry, category, resetUsersPreview])
 
-  const canSave = name.trim() && templateId && (isOutreach ? selectedContactIds.size > 0 : true) && (!isAbTest || (variantASubject.trim() && variantBSubject.trim()))
+  const canSave = name.trim() && templateId && (isOutreach ? selectedContactIds.size > 0 : true) && (!isAbTest || (variantASubject.trim() && variantBSubject.trim() && (variantATemplateId || templateId) && (variantBTemplateId || templateId)))
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
@@ -370,27 +387,65 @@ export function CreateCampaignModal({ templates, editCampaign, onClose, onCreate
               </button>
             </div>
             {isAbTest && (
-              <div className="space-y-3 mt-3">
-                <p className="text-xs text-gray-500">Recipients will be randomly split 50/50 between variants.</p>
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Variant A — Subject line</label>
-                  <input
-                    type="text"
-                    value={variantASubject}
-                    onChange={(e) => setVariantASubject(e.target.value)}
-                    placeholder="e.g. Your club is already on PLAYR"
-                    className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  />
+              <div className="space-y-4 mt-3">
+                <p className="text-xs text-gray-500">Recipients will be randomly split 50/50 between variants. Each variant can use a different template and subject.</p>
+
+                {/* Variant A */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 space-y-2">
+                  <p className="text-xs font-semibold text-blue-700">Variant A</p>
+                  <div>
+                    <label className="block text-xs text-blue-600 mb-1">Template (optional override)</label>
+                    <select
+                      value={variantATemplateId}
+                      onChange={(e) => setVariantATemplateId(e.target.value)}
+                      aria-label="Variant A template"
+                      className="w-full text-sm border border-blue-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    >
+                      <option value="">Same as campaign template</option>
+                      {activeTemplates.map(t => (
+                        <option key={t.id} value={t.id}>{t.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-blue-600 mb-1">Subject line</label>
+                    <input
+                      type="text"
+                      value={variantASubject}
+                      onChange={(e) => setVariantASubject(e.target.value)}
+                      placeholder="e.g. Your club is already on PLAYR"
+                      className="w-full text-sm border border-blue-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Variant B — Subject line</label>
-                  <input
-                    type="text"
-                    value={variantBSubject}
-                    onChange={(e) => setVariantBSubject(e.target.value)}
-                    placeholder="e.g. Join the hockey community on PLAYR"
-                    className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  />
+
+                {/* Variant B */}
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-2">
+                  <p className="text-xs font-semibold text-amber-700">Variant B</p>
+                  <div>
+                    <label className="block text-xs text-amber-600 mb-1">Template (optional override)</label>
+                    <select
+                      value={variantBTemplateId}
+                      onChange={(e) => setVariantBTemplateId(e.target.value)}
+                      aria-label="Variant B template"
+                      className="w-full text-sm border border-amber-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-amber-400"
+                    >
+                      <option value="">Same as campaign template</option>
+                      {activeTemplates.map(t => (
+                        <option key={t.id} value={t.id}>{t.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-amber-600 mb-1">Subject line</label>
+                    <input
+                      type="text"
+                      value={variantBSubject}
+                      onChange={(e) => setVariantBSubject(e.target.value)}
+                      placeholder="e.g. Join the hockey community on PLAYR"
+                      className="w-full text-sm border border-amber-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-amber-400"
+                    />
+                  </div>
                 </div>
               </div>
             )}
