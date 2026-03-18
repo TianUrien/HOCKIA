@@ -1344,6 +1344,7 @@ import type {
   CampaignDetail,
   AudiencePreview,
   CreateCampaignParams,
+  CampaignVariantMetrics,
   EmailContactsSummary,
   EmailContact,
   EmailContactSearchParams,
@@ -1597,6 +1598,7 @@ export async function createEmailCampaign(params: CreateCampaignParams): Promise
     p_category: params.category,
     p_audience_filter: params.audience_filter,
     p_audience_source: params.audience_source || 'users',
+    p_ab_variants: params.ab_variants || null,
   })
   if (error) throw new Error(`Failed to create campaign: ${error.message}`)
   return data as EmailCampaign
@@ -1673,6 +1675,7 @@ export async function updateEmailCampaign(params: {
   category?: string
   audience_filter?: Record<string, unknown>
   audience_source?: string
+  ab_variants?: { A: { subject: string }; B: { subject: string } } | null
 }): Promise<void> {
   const { data, error } = await adminRpc('admin_update_email_campaign', {
     p_campaign_id: params.campaignId,
@@ -1681,6 +1684,7 @@ export async function updateEmailCampaign(params: {
     p_category: params.category ?? null,
     p_audience_filter: params.audience_filter ?? null,
     p_audience_source: params.audience_source ?? null,
+    p_ab_variants: params.ab_variants ?? null,
   })
   if (error) throw new Error(`Failed to update campaign: ${error.message}`)
   return data
@@ -1706,6 +1710,17 @@ export async function duplicateEmailCampaign(campaignId: string): Promise<{ camp
   })
   if (error) throw new Error(`Failed to duplicate campaign: ${error.message}`)
   return data as { campaign_id: string }
+}
+
+/**
+ * Get per-variant metrics for an A/B test campaign
+ */
+export async function getCampaignVariantMetrics(campaignId: string): Promise<CampaignVariantMetrics[]> {
+  const { data, error } = await adminRpc('admin_get_campaign_variant_metrics', {
+    p_campaign_id: campaignId,
+  })
+  if (error) throw new Error(`Failed to get variant metrics: ${error.message}`)
+  return (data || []) as CampaignVariantMetrics[]
 }
 
 // ============================================================================

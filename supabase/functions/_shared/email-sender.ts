@@ -83,6 +83,7 @@ export interface RecipientInfo {
   recipientRole?: string
   recipientCountry?: string
   recipientName?: string
+  variant?: string
 }
 
 // ============================================================================
@@ -123,6 +124,7 @@ async function recordSend(
     recipientCountry?: string
     subject: string
     status?: string
+    variant?: string
     metadata?: Record<string, unknown>
   },
   logger: Logger
@@ -138,6 +140,7 @@ async function recordSend(
       recipient_country: params.recipientCountry || null,
       subject: params.subject,
       status: params.status || 'sent',
+      variant: params.variant || null,
       metadata: params.metadata || {},
     })
     if (error) {
@@ -511,6 +514,7 @@ export async function sendTrackedBatch(params: {
           recipient_country: r.recipientCountry || null,
           subject: recipientSubject,
           status: 'sent',
+          variant: r.variant || null,
         }
       })
 
@@ -543,6 +547,7 @@ export async function sendTrackedBatch(params: {
           recipient_country: r.recipientCountry || null,
           subject: recipientSubject,
           status: 'failed',
+          variant: r.variant || null,
           metadata: { error: batchResult.failed.find(f => f.email === r.email)?.error },
         }
       })

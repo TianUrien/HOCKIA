@@ -71,6 +71,11 @@ export function CreateCampaignModal({ templates, editCampaign, onClose, onCreate
   )
   const [contactSearch, setContactSearch] = useState('')
 
+  // A/B testing state
+  const [isAbTest, setIsAbTest] = useState(() => !!editCampaign?.ab_variants)
+  const [variantASubject, setVariantASubject] = useState(() => editCampaign?.ab_variants?.A?.subject ?? '')
+  const [variantBSubject, setVariantBSubject] = useState(() => editCampaign?.ab_variants?.B?.subject ?? '')
+
   // Users audience preview
   const { preview: usersPreview, isLoading: usersPreviewLoading, error: usersPreviewError, fetchPreview: fetchUsersPreview, reset: resetUsersPreview } = useAudiencePreview()
 
@@ -221,6 +226,10 @@ export function CreateCampaignModal({ templates, editCampaign, onClose, onCreate
     setCreating(true)
     setError(null)
     try {
+      const abVariants = isAbTest && variantASubject.trim() && variantBSubject.trim()
+        ? { A: { subject: variantASubject.trim() }, B: { subject: variantBSubject.trim() } }
+        : null
+
       if (isEditing && editCampaign) {
         await updateEmailCampaign({
           campaignId: editCampaign.id,
@@ -229,6 +238,7 @@ export function CreateCampaignModal({ templates, editCampaign, onClose, onCreate
           category,
           audience_filter: audienceFilter,
           audience_source: audienceSource,
+          ab_variants: abVariants,
         })
       } else {
         await createEmailCampaign({
@@ -237,6 +247,7 @@ export function CreateCampaignModal({ templates, editCampaign, onClose, onCreate
           category,
           audience_filter: audienceFilter,
           audience_source: audienceSource,
+          ab_variants: abVariants,
         })
       }
       onCreated()
@@ -257,7 +268,7 @@ export function CreateCampaignModal({ templates, editCampaign, onClose, onCreate
     resetUsersPreview()
   }, [filterRoles, filterCountry, category, resetUsersPreview])
 
-  const canSave = name.trim() && templateId && (isOutreach ? selectedContactIds.size > 0 : true)
+  const canSave = name.trim() && templateId && (isOutreach ? selectedContactIds.size > 0 : true) && (!isAbTest || (variantASubject.trim() && variantBSubject.trim()))
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
@@ -344,6 +355,46 @@ export function CreateCampaignModal({ templates, editCampaign, onClose, onCreate
               </select>
             </div>
           )}
+
+          {/* A/B Testing */}
+          <div className="border-t border-gray-100 pt-4">
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-sm font-medium text-gray-700">A/B Test</label>
+              <button
+                type="button"
+                onClick={() => setIsAbTest(!isAbTest)}
+                aria-label="Toggle A/B testing"
+                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${isAbTest ? 'bg-purple-600' : 'bg-gray-300'}`}
+              >
+                <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${isAbTest ? 'translate-x-[18px]' : 'translate-x-[3px]'}`} />
+              </button>
+            </div>
+            {isAbTest && (
+              <div className="space-y-3 mt-3">
+                <p className="text-xs text-gray-500">Recipients will be randomly split 50/50 between variants.</p>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Variant A — Subject line</label>
+                  <input
+                    type="text"
+                    value={variantASubject}
+                    onChange={(e) => setVariantASubject(e.target.value)}
+                    placeholder="e.g. Your club is already on PLAYR"
+                    className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Variant B — Subject line</label>
+                  <input
+                    type="text"
+                    value={variantBSubject}
+                    onChange={(e) => setVariantBSubject(e.target.value)}
+                    placeholder="e.g. Join the hockey community on PLAYR"
+                    className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* ================================================================ */}
           {/* OUTREACH: Contact Picker                                        */}

@@ -20,6 +20,7 @@ import {
   Pencil,
   Trash2,
   Copy,
+  FlaskConical,
 } from 'lucide-react'
 import { StatCard } from '../components/StatCard'
 import { DataTable } from '../components/DataTable'
@@ -28,6 +29,7 @@ import { EmailVolumeChart } from '../components/EmailVolumeChart'
 import { EmailTemplateBreakdownChart } from '../components/EmailTemplateBreakdownChart'
 import { EmailDeliveryFunnelChart } from '../components/EmailDeliveryFunnelChart'
 import { CreateCampaignModal } from '../components/CreateCampaignModal'
+import { ABResultsPanel } from '../components/ABResultsPanel'
 import { useEmailOverview, useEmailTemplates, useEmailCampaigns, useEmailEngagement, useEmailContactsSummary, useEmailContacts } from '../hooks/useEmailStats'
 import { sendCampaign, previewCampaignAudience, getAllCountries, toggleEmailTemplateActive, diagnoseEmailMetrics, backfillEmailStatuses, deleteEmailCampaign, duplicateEmailCampaign } from '../api/adminApi'
 import { previewOutreachAudience } from '../api/outreachApi'
@@ -81,6 +83,7 @@ export function AdminEmail() {
   const [confirmLoading, setConfirmLoading] = useState(false)
   const [confirmDeleteCampaign, setConfirmDeleteCampaign] = useState<EmailCampaign | null>(null)
   const [deletingCampaignId, setDeletingCampaignId] = useState<string | null>(null)
+  const [abResultsCampaign, setAbResultsCampaign] = useState<EmailCampaign | null>(null)
 
   // Engagement filters
   const [engTemplateKey, setEngTemplateKey] = useState<string>('')
@@ -215,7 +218,15 @@ export function AdminEmail() {
       label: 'Campaign',
       render: (_, row) => (
         <div>
-          <p className="text-sm font-medium text-gray-900">{row.name}</p>
+          <div className="flex items-center gap-1.5">
+            <p className="text-sm font-medium text-gray-900">{row.name}</p>
+            {row.ab_variants && (
+              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-semibold rounded bg-purple-100 text-purple-700">
+                <FlaskConical className="w-2.5 h-2.5" />
+                A/B
+              </span>
+            )}
+          </div>
           <p className="text-xs text-gray-500">{row.template_name || row.template_key}</p>
         </div>
       ),
@@ -507,6 +518,12 @@ export function AdminEmail() {
                   disabled: (row: EmailCampaign) => row.status !== 'draft',
                 },
                 {
+                  label: 'A/B Results',
+                  icon: <FlaskConical className="w-3.5 h-3.5" />,
+                  onClick: (row: EmailCampaign) => setAbResultsCampaign(row),
+                  disabled: (row: EmailCampaign) => !row.ab_variants,
+                },
+                {
                   label: 'Duplicate',
                   icon: <Copy className="w-3.5 h-3.5" />,
                   onClick: async (row: EmailCampaign) => {
@@ -658,6 +675,14 @@ export function AdminEmail() {
                 </div>
               </div>
             </div>
+          )}
+
+          {/* A/B Results Panel */}
+          {abResultsCampaign && (
+            <ABResultsPanel
+              campaign={abResultsCampaign}
+              onClose={() => setAbResultsCampaign(null)}
+            />
           )}
         </div>
       )}

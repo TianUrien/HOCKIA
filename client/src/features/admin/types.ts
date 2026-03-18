@@ -1050,6 +1050,19 @@ export interface EmailCampaign {
   total_opened: number
   total_clicked: number
   total_count: number
+  ab_variants: {
+    A: { subject: string; content_json?: unknown[] }
+    B: { subject: string; content_json?: unknown[] }
+  } | null
+}
+
+export interface CampaignVariantMetrics {
+  variant: 'A' | 'B'
+  total: number
+  delivered: number
+  opened: number
+  clicked: number
+  bounced: number
 }
 
 export interface EmailSendItem {
@@ -1144,6 +1157,10 @@ export interface CreateCampaignParams {
   category: string
   audience_filter: { role?: string; roles?: string[]; country?: string; status?: string; club?: string; contact_ids?: string[] }
   audience_source?: 'users' | 'outreach'
+  ab_variants?: {
+    A: { subject: string; content_json?: unknown[] }
+    B: { subject: string; content_json?: unknown[] }
+  } | null
 }
 
 // ============================================================================
