@@ -20,7 +20,7 @@ import {
  * ============================================================================
  *
  * A public, read-only API for AI agents and external consumers to discover
- * field hockey opportunities on PLAYR.
+ * field hockey opportunities on HOCKIA.
  *
  * Endpoints:
  *   GET /public-opportunities         - List all open opportunities

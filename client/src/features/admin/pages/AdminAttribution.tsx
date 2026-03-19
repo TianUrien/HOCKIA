@@ -74,7 +74,7 @@ export function AdminAttribution() {
   }, [daysFilter, windowHours])
 
   useEffect(() => {
-    document.title = 'Attribution | PLAYR Admin'
+    document.title = 'Attribution | HOCKIA Admin'
     fetchData()
   }, [fetchData])
 

@@ -16,7 +16,7 @@
 // ---------------------------------------------------------------------------
 
 Deno.env.set('SENTRY_DSN', 'https://abc123@o123.ingest.sentry.io/456')
-Deno.env.set('PUBLIC_SITE_URL', 'https://staging.oplayr.com')
+Deno.env.set('PUBLIC_SITE_URL', 'https://staging.inhockia.com')
 
 // ---------------------------------------------------------------------------
 // Intercept global fetch — captures both Resend and Sentry calls

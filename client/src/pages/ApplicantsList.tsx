@@ -166,7 +166,7 @@ export default function ApplicantsList() {
                     count: 1,
                     topEndorsement: ref.endorsement_text ? {
                       text: ref.endorsement_text,
-                      endorserName: endorser?.full_name ?? 'PLAYR Member',
+                      endorserName: endorser?.full_name ?? 'HOCKIA Member',
                       endorserRole: endorser?.role ?? null,
                       relationshipType: ref.relationship_type,
                     } : null,
@@ -176,7 +176,7 @@ export default function ApplicantsList() {
                   if (!existing.topEndorsement && ref.endorsement_text) {
                     existing.topEndorsement = {
                       text: ref.endorsement_text,
-                      endorserName: endorser?.full_name ?? 'PLAYR Member',
+                      endorserName: endorser?.full_name ?? 'HOCKIA Member',
                       endorserRole: endorser?.role ?? null,
                       relationshipType: ref.relationship_type,
                     }

@@ -488,7 +488,7 @@ export default function AuthCallback() {
         {/* Show hint if in-app browser detected */}
         {browserInfo.isInAppBrowser && (
           <p className="text-sm text-amber-600 mt-4 max-w-xs mx-auto">
-            If this takes too long, try opening PLAYR in Safari or Chrome
+            If this takes too long, try opening HOCKIA in Safari or Chrome
           </p>
         )}
       </div>

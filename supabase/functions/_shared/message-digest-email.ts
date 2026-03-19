@@ -12,10 +12,10 @@ declare const Deno: { env: { get(key: string): string | undefined } }
  */
 
 export const RESEND_API_URL = 'https://api.resend.com/emails'
-export const SENDER_EMAIL = 'PLAYR Hockey <team@oplayr.com>'
-export const REPLY_TO_EMAIL = 'team@oplayr.com'
-export const PLAYR_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://oplayr.com'
-export const UNSUBSCRIBE_URL = `${PLAYR_BASE_URL}/settings`
+export const SENDER_EMAIL = 'HOCKIA <team@inhockia.com>'
+export const REPLY_TO_EMAIL = 'team@inhockia.com'
+export const HOCKIA_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://inhockia.com'
+export const UNSUBSCRIBE_URL = `${HOCKIA_BASE_URL}/settings`
 
 export interface DigestQueueRecord {
   id: string
@@ -106,8 +106,8 @@ export function generateEmailHtml(
     : 'You have new messages'
 
   const ctaUrl = isSingle
-    ? `${PLAYR_BASE_URL}/messages?conversation=${conversations[0].conversation_id}`
-    : `${PLAYR_BASE_URL}/messages`
+    ? `${HOCKIA_BASE_URL}/messages?conversation=${conversations[0].conversation_id}`
+    : `${HOCKIA_BASE_URL}/messages`
 
   const ctaLabel = isSingle ? 'View Conversation' : 'Open Messages'
 
@@ -125,14 +125,14 @@ export function generateEmailHtml(
 
   <!-- Header -->
   <div style="background: linear-gradient(135deg, #8026FA 0%, #924CEC 100%); padding: 32px 24px; border-radius: 16px 16px 0 0; text-align: center;">
-    <img src="https://www.oplayr.com/playr-logo-white.png" alt="PLAYR" width="120" height="29" style="height: 29px; width: 120px;" />
+    <img src="https://www.inhockia.com/hockia-logo-white.png" alt="HOCKIA" width="120" height="29" style="height: 29px; width: 120px;" />
   </div>
 
   <!-- Main Content -->
   <div style="background: #ffffff; padding: 32px 24px; border-left: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb;">
 
     <h1 style="color: #1f2937; margin: 0 0 8px 0; font-size: 24px; font-weight: 700;">${heading}</h1>
-    <p style="color: #6b7280; margin: 0 0 24px 0; font-size: 16px;">Hi ${firstName}, you have unread messages on PLAYR.</p>
+    <p style="color: #6b7280; margin: 0 0 24px 0; font-size: 16px;">Hi ${firstName}, you have unread messages on HOCKIA.</p>
 
     <!-- Conversation Cards -->
     <div style="margin-bottom: 24px;">
@@ -152,7 +152,7 @@ export function generateEmailHtml(
   <!-- Footer -->
   <div style="background: #f3f4f6; padding: 20px 24px; border-radius: 0 0 16px 16px; border: 1px solid #e5e7eb; border-top: none; text-align: center;">
     <p style="color: #9ca3af; font-size: 12px; margin: 0;">
-      You're receiving this because you're on PLAYR.<br>
+      You're receiving this because you're on HOCKIA.<br>
       <a href="${UNSUBSCRIBE_URL}" style="color: #8026FA; text-decoration: none;">Manage notification preferences</a>
     </p>
   </div>
@@ -171,7 +171,7 @@ export function generateEmailText(
   const lines = [
     isSingle
       ? `New message from ${conversations[0].sender_name}`
-      : 'You have new messages on PLAYR',
+      : 'You have new messages on HOCKIA',
     '',
     `Hi ${firstName},`,
     '',
@@ -185,8 +185,8 @@ export function generateEmailText(
   }
 
   const ctaUrl = isSingle
-    ? `${PLAYR_BASE_URL}/messages?conversation=${conversations[0].conversation_id}`
-    : `${PLAYR_BASE_URL}/messages`
+    ? `${HOCKIA_BASE_URL}/messages?conversation=${conversations[0].conversation_id}`
+    : `${HOCKIA_BASE_URL}/messages`
 
   lines.push(
     '',
@@ -194,7 +194,7 @@ export function generateEmailText(
     ctaUrl,
     '',
     '---',
-    "You're receiving this because you're on PLAYR.",
+    "You're receiving this because you're on HOCKIA.",
     `Manage preferences: ${UNSUBSCRIBE_URL}`
   )
 

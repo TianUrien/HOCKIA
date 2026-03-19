@@ -14,7 +14,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     const variants = {
       primary: 'btn-primary',
       glass: 'btn-glass',
-      outline: 'border-2 border-playr-primary text-playr-primary hover:bg-playr-primary/10'
+      outline: 'border-2 border-hockia-primary text-hockia-primary hover:bg-hockia-primary/10'
     }
     
     const sizes = {

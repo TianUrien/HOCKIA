@@ -6,7 +6,7 @@ import { test, expect } from './fixtures'
  * Tests the natural-language search feature that queries player/coach/club
  * profiles via an edge function. Uses the authenticated player session.
  *
- * Test account: E2E Player (playrplayer93@gmail.com)
+ * Test account: E2E Player
  *
  * NOTE: Discovery calls an AI-powered backend, so results are non-deterministic.
  * Tests focus on UI behavior (loading, results rendering, error handling)

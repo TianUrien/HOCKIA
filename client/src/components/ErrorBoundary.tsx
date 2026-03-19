@@ -158,17 +158,17 @@ export class ErrorBoundary extends Component<Props, State> {
               </svg>
             </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              PLAYR has just been updated
+              HOCKIA has just been updated
             </h2>
             <p className="text-gray-600 mb-6">
-              A new version of the app is available. Please reload the page to continue using PLAYR.
+              A new version of the app is available. Please reload the page to continue using HOCKIA.
             </p>
           </div>
           <button
             onClick={this.handleReload}
             className="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
           >
-            Reload PLAYR
+            Reload HOCKIA
           </button>
         </div>
       </div>

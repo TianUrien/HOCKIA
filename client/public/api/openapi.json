@@ -1,17 +1,17 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "PLAYR Public Opportunities API",
-    "description": "A public, read-only API for discovering field hockey opportunities on PLAYR. This API is designed for AI agents, job aggregators, and external integrations to surface PLAYR opportunities to their users.\n\n## Rate Limits\n- 60 requests per minute per IP\n- 500 requests per hour per IP\n- Responses are cached for 5 minutes\n\n## Data Boundary\nThis API only exposes public vacancy data. Private information (player profiles, applications, messages, contact details) is never exposed.",
+    "title": "HOCKIA Public Opportunities API",
+    "description": "A public, read-only API for discovering field hockey opportunities on HOCKIA. This API is designed for AI agents, job aggregators, and external integrations to surface HOCKIA opportunities to their users.\n\n## Rate Limits\n- 60 requests per minute per IP\n- 500 requests per hour per IP\n- Responses are cached for 5 minutes\n\n## Data Boundary\nThis API only exposes public vacancy data. Private information (player profiles, applications, messages, contact details) is never exposed.",
     "version": "1.0.0",
     "contact": {
-      "name": "PLAYR",
-      "url": "https://oplayr.com",
-      "email": "team@oplayr.com"
+      "name": "HOCKIA",
+      "url": "https://inhockia.com",
+      "email": "team@inhockia.com"
     },
     "license": {
       "name": "Proprietary",
-      "url": "https://oplayr.com/terms"
+      "url": "https://inhockia.com/terms"
     }
   },
   "servers": [
@@ -130,7 +130,7 @@
                       },
                       "published_at": "2025-12-01T10:00:00Z",
                       "created_at": "2025-12-01T09:30:00Z",
-                      "apply_url": "https://oplayr.com/opportunities/123e4567-e89b-12d3-a456-426614174000"
+                      "apply_url": "https://inhockia.com/opportunities/123e4567-e89b-12d3-a456-426614174000"
                     }
                   ],
                   "meta": {
@@ -333,7 +333,7 @@
           "apply_url": {
             "type": "string",
             "format": "uri",
-            "description": "Direct link to view and apply on PLAYR"
+            "description": "Direct link to view and apply on HOCKIA"
           }
         }
       },

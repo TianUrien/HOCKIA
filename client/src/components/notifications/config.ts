@@ -30,7 +30,7 @@ export type NotificationRenderConfig = {
 }
 
 const getActorName = (notification: NotificationRecord) =>
-  notification.actor?.fullName || notification.actor?.username || 'A PLAYR member'
+  notification.actor?.fullName || notification.actor?.username || 'A HOCKIA member'
 
 const getMetadataString = (notification: NotificationRecord, key: string): string | null => {
   const value = notification.metadata?.[key]
@@ -222,7 +222,7 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
     badgeText: 'Account verified',
     accentClassName: 'bg-emerald-50 text-emerald-600',
     getTitle: () => 'Your account has been verified',
-    getDescription: () => 'You now have full access to the PLAYR platform.',
+    getDescription: () => 'You now have full access to the HOCKIA platform.',
     getRoute: () => '/settings',
   },
   ambassador_request_received: {
@@ -269,7 +269,7 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
     icon: Megaphone,
     badgeText: 'Announcement',
     accentClassName: 'bg-gray-100 text-gray-700',
-    getTitle: (notification) => getMetadataString(notification, 'title') || 'PLAYR update',
+    getTitle: (notification) => getMetadataString(notification, 'title') || 'HOCKIA update',
     getDescription: (notification) => getMetadataString(notification, 'summary'),
     getRoute: defaultConfig.getRoute,
   },

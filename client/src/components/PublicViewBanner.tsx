@@ -32,7 +32,7 @@ export default function PublicViewBanner() {
                   You are viewing your network profile.
                 </p>
                 <p className="text-white/80 text-xs md:text-sm">
-                  This is how other PLAYR members see you.
+                  This is how other HOCKIA members see you.
                 </p>
               </div>
             </div>

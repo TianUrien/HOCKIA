@@ -1,7 +1,7 @@
 /**
  * In-App Browser Detection
  * 
- * Detects when users are viewing PLAYR in restricted browser environments
+ * Detects when users are viewing HOCKIA in restricted browser environments
  * like Instagram, Facebook, WhatsApp, TikTok, Snapchat, Line, etc.
  * 
  * These browsers have limitations:

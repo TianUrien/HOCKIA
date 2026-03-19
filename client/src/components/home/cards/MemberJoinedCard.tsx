@@ -23,7 +23,7 @@ export function MemberJoinedCard({ item }: MemberJoinedCardProps) {
             <UserPlus className="w-4 h-4 text-green-600" />
           </div>
           <div className="flex items-center gap-1.5 text-sm text-gray-500">
-            <span className="font-medium text-gray-700">New member joined PLAYR</span>
+            <span className="font-medium text-gray-700">New member joined HOCKIA</span>
             <span>&middot;</span>
             <span>{timeAgo}</span>
           </div>

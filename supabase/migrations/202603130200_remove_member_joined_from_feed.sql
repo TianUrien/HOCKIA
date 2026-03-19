@@ -1,5 +1,5 @@
 -- ============================================================================
--- Remove "New member joined PLAYR" cards from Home feed
+-- Remove "New member joined HOCKIA" cards from Home feed
 -- ============================================================================
 -- This info is already available in the Community section. Showing it on
 -- the Home feed duplicates the same content and creates noise.

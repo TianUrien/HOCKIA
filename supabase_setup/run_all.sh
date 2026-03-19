@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Sequentially apply Supabase SQL setup files for PLAYR
+# Sequentially apply Supabase SQL setup files for HOCKIA
 
 set -euo pipefail
 

@@ -64,7 +64,7 @@ export default function PublicInvestorDashboard() {
             to="/"
             className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
           >
-            Go to PLAYR
+            Go to HOCKIA
           </Link>
         </div>
       </div>
@@ -81,7 +81,7 @@ export default function PublicInvestorDashboard() {
               <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">P</span>
               </div>
-              <span className="text-xl font-bold text-gray-900">PLAYR</span>
+              <span className="text-xl font-bold text-gray-900">HOCKIA</span>
             </Link>
             <button
               onClick={fetchData}

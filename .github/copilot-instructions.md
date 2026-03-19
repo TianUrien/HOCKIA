@@ -1,8 +1,8 @@
-# PLAYR Codebase Instructions
+# HOCKIA Codebase Instructions
 
 ## Architecture Overview
 
-PLAYR is a hockey player recruitment platform with a React 19 frontend (`client/`) and Supabase backend (auth, database, edge functions, storage).
+HOCKIA is a hockey player recruitment platform with a React 19 frontend (`client/`) and Supabase backend (auth, database, edge functions, storage).
 
 ### Frontend Structure (`client/src/`)
 - **`pages/`** - Route-level components (Landing, Dashboard variants, MessagesPage, etc.)
@@ -41,7 +41,7 @@ import { useAuthStore } from '@/lib/auth'
 Single typed client instance in `lib/supabase.ts`. Environment variables support both `SUPABASE_*` and `VITE_SUPABASE_*` prefixes.
 
 ### Component Conventions
-- Components use Tailwind with PLAYR brand colors (`playr-primary`, `dark-bg`, etc.)
+- Components use Tailwind with HOCKIA brand colors (`hockia-primary`, `dark-bg`, etc.)
 - Glassmorphism UI pattern with dark mode default
 - Export components via `components/index.ts` barrel file
 - Lucide icons for all iconography
@@ -169,5 +169,5 @@ This prevents test data from ever reaching real users.
 - [client/src/lib/supabase.ts](client/src/lib/supabase.ts) - Supabase client setup, type exports
 - [client/src/App.tsx](client/src/App.tsx) - Route definitions, lazy loading setup
 - [client/src/hooks/useChat.ts](client/src/hooks/useChat.ts) - Core messaging logic
-- [client/tailwind.config.js](client/tailwind.config.js) - PLAYR brand colors
+- [client/tailwind.config.js](client/tailwind.config.js) - HOCKIA brand colors
 - [supabase_setup/](supabase_setup/) - Database schema reference (run 001-008 for fresh setup)

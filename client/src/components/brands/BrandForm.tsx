@@ -370,7 +370,7 @@ export function BrandForm({
           URL Slug *
         </label>
         <div className="flex items-center gap-2">
-          <span className="text-gray-500 text-sm">playr.com/brands/</span>
+          <span className="text-gray-500 text-sm">inhockia.com/brands/</span>
           <Input
             id="brand-slug"
             value={formData.slug}

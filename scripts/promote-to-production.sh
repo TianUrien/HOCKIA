@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================================
-# PLAYR: Staging → Production Promotion Script
+# HOCKIA: Staging → Production Promotion Script
 # =============================================================================
 # This script safely promotes database migrations and edge functions from
 # staging to production with built-in safety checks.
@@ -144,7 +144,7 @@ log_success "Required commands available"
 
 # Check we're in the right directory
 if [ ! -f "supabase/config.toml" ]; then
-  log_error "Must run from PLAYR repository root (supabase/config.toml not found)"
+  log_error "Must run from HOCKIA repository root (supabase/config.toml not found)"
   exit 1
 fi
 log_success "Running from repository root"
@@ -306,11 +306,11 @@ else
   echo "  ⚡ Edge functions:      $([ "$DB_ONLY" = true ] && echo "Skipped" || echo "Deployed")"
   echo ""
   echo "  🔗 Production Dashboard: https://supabase.com/dashboard/project/$PRODUCTION_REF"
-  echo "  🌐 Production Site:      https://oplayr.com"
+  echo "  🌐 Production Site:      https://inhockia.com"
   echo ""
   log_info "Remember to:"
   echo "    1. Monitor Sentry for new errors"
   echo "    2. Check Supabase Dashboard for query performance"
-  echo "    3. Do a quick manual smoke test on https://oplayr.com"
+  echo "    3. Do a quick manual smoke test on https://inhockia.com"
 fi
 echo ""

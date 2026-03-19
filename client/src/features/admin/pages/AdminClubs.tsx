@@ -57,7 +57,7 @@ export function AdminClubs() {
   }, [daysFilter, page])
 
   useEffect(() => {
-    document.title = 'Club Analytics | PLAYR Admin'
+    document.title = 'Club Analytics | HOCKIA Admin'
     fetchData()
   }, [fetchData])
 

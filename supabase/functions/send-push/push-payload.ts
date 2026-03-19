@@ -164,7 +164,7 @@ export function buildPushPayload(
     case 'account_verified':
       return {
         title: 'Account Verified',
-        body: 'You now have full access to PLAYR.',
+        body: 'You now have full access to HOCKIA.',
         url: '/settings',
         tag: 'verified',
       }
@@ -172,7 +172,7 @@ export function buildPushPayload(
     // ── System ──
     case 'system_announcement':
       return {
-        title: getString(metadata, 'title') || 'PLAYR Update',
+        title: getString(metadata, 'title') || 'HOCKIA Update',
         body: getString(metadata, 'summary') || 'You have a new update',
         url: '/home',
         tag: 'announcement',
@@ -181,7 +181,7 @@ export function buildPushPayload(
     // ── Fallback ──
     default:
       return {
-        title: 'PLAYR',
+        title: 'HOCKIA',
         body: 'You have a new notification',
         url: '/home',
       }

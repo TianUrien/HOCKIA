@@ -63,7 +63,7 @@ export interface PublicOpportunity {
   club: PublicOpportunityClub
   published_at: string | null
   created_at: string
-  /** Direct link to apply on PLAYR */
+  /** Direct link to apply on HOCKIA */
   apply_url: string
 }
 
@@ -122,7 +122,7 @@ export interface PublicOpportunityRow {
 // CONSTANTS
 // =============================================================================
 
-export const PLAYR_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://oplayr.com'
+export const HOCKIA_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://inhockia.com'
 
 export const DEFAULT_LIMIT = 20
 export const MAX_LIMIT = 100
@@ -182,7 +182,7 @@ export function transformToPublicOpportunity(row: PublicOpportunityRow): PublicO
     },
     published_at: row.published_at,
     created_at: row.created_at,
-    apply_url: `${PLAYR_BASE_URL}/opportunities/${row.id}`,
+    apply_url: `${HOCKIA_BASE_URL}/opportunities/${row.id}`,
   }
 }
 

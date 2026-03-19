@@ -1,14 +1,14 @@
-# PLAYR Environment Setup Guide
+# HOCKIA Environment Setup Guide
 
-This document describes the multi-environment setup for PLAYR's Supabase backend.
+This document describes the multi-environment setup for HOCKIA's Supabase backend.
 
 ## Environment Overview
 
 | Environment | Supabase Project | Vercel Target | Domain | Purpose |
 |-------------|------------------|---------------|--------|---------|
 | **Local** | `supabase start` | N/A | `localhost:5173` | Daily development |
-| **Staging** | `ivjkdaylalhsteyyclvl` | Preview | `playr-staging.vercel.app` | E2E tests, pre-prod validation |
-| **Production** | `xtertgftujnebubxgqit` | Production | `oplayr.com` | Real users |
+| **Staging** | `ivjkdaylalhsteyyclvl` | Preview | `hockia-staging.vercel.app` | E2E tests, pre-prod validation |
+| **Production** | `xtertgftujnebubxgqit` | Production | `inhockia.com` | Real users |
 
 ## Supabase Project Details
 
@@ -28,7 +28,7 @@ This document describes the multi-environment setup for PLAYR's Supabase backend
 
 ```bash
 # Start local Supabase (requires Docker)
-cd /path/to/PLAYR
+cd /path/to/HOCKIA
 supabase start
 
 # This outputs local credentials - copy them to .env.local
@@ -165,7 +165,7 @@ These accounts must exist in **STAGING** database:
 | `clubplayr8@gmail.com` | club | (set in env) |
 | `coachplayr@gmail.com` | coach | (set in env) |
 
-To create them, sign up manually on `https://playr-staging.vercel.app` or run:
+To create them, sign up manually on `https://hockia-staging.vercel.app` or run:
 ```bash
 supabase link --project-ref ivjkdaylalhsteyyclvl
 psql <staging-connection-string> -f client/e2e/setup-e2e-accounts.sql
@@ -242,7 +242,7 @@ Before promoting to production, ALL of the following must be true:
 
 - [ ] **CI passes** — All GitHub Actions checks green on `main` branch
 - [ ] **E2E tests pass** — Smoke tests run successfully against staging
-- [ ] **Manual QA complete** — Tested on Preview deployment (`playr-staging.vercel.app`)
+- [ ] **Manual QA complete** — Tested on Preview deployment (`hockia-staging.vercel.app`)
 - [ ] **No regressions** — Core flows work: signup, login, vacancy creation, messaging
 - [ ] **Migrations validated** — Schema changes applied to staging without errors
 
@@ -255,7 +255,7 @@ Before promoting to production, ALL of the following must be true:
 git checkout main && git pull
 
 # Verify CI passed
-# Check: https://github.com/<org>/PLAYR/actions
+# Check: https://github.com/<org>/HOCKIA/actions
 
 # Run E2E tests locally against staging (optional extra validation)
 cd client
@@ -304,7 +304,7 @@ git push origin main
 
 # Vercel will:
 # 1. Build with production env vars
-# 2. Deploy to oplayr.com
+# 2. Deploy to inhockia.com
 # 3. Show deployment status in GitHub PR
 ```
 
@@ -373,7 +373,7 @@ Copy this checklist for each promotion:
 ### Frontend
 - [ ] Vercel deployment triggered (automatic on merge)
 - [ ] Deployment successful (check Vercel Dashboard)
-- [ ] Production site accessible: https://oplayr.com
+- [ ] Production site accessible: https://inhockia.com
 
 ### Post-Promotion Validation
 - [ ] Sign up flow works

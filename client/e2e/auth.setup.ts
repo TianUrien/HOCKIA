@@ -153,7 +153,7 @@ const TEST_CLUB = {
     nationality: 'United Kingdom',
     club_bio: 'E2E test club account for automated testing',
     league_division: 'Division 1',
-    contact_email: 'contact@e2e-test-fc.playr.test',
+    contact_email: 'contact@e2e-test-fc.hockia.test',
     year_founded: 2020,
     onboarding_completed: true,
     is_test_account: testAccountFlag,
@@ -531,7 +531,7 @@ setup('@smoke authenticate as brand', async ({ page }) => {
     slug: brandSlug,
     category: 'equipment',
     bio: 'E2E automated test brand. Safe to ignore.',
-    website_url: 'https://e2e-test-brand.playr.test',
+    website_url: 'https://e2e-test-brand.hockia.test',
   }
 
   if (!existingBrand) {

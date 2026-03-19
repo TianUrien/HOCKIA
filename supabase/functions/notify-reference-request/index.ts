@@ -202,10 +202,10 @@ Deno.serve(async (req: Request) => {
     logger.info('Both accounts are real - proceeding with email')
 
     const requesterName = requester.full_name?.trim() || 'Someone'
-    const PLAYR_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://oplayr.com'
+    const HOCKIA_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://inhockia.com'
     const profileUrl = requester.username
-      ? `${PLAYR_BASE_URL}/players/${requester.username}`
-      : `${PLAYR_BASE_URL}/players/id/${requester.id}`
+      ? `${HOCKIA_BASE_URL}/players/${requester.username}`
+      : `${HOCKIA_BASE_URL}/players/id/${requester.id}`
 
     const templateVars = {
       requester_name: requesterName,
@@ -213,9 +213,9 @@ Deno.serve(async (req: Request) => {
       request_note: reference.request_note || '',
       requester_location: requester.base_location?.trim() || '',
       requester_avatar_url: requester.avatar_url || '',
-      cta_url: `${PLAYR_BASE_URL}/references`,
+      cta_url: `${HOCKIA_BASE_URL}/references`,
       profile_url: profileUrl,
-      settings_url: `${PLAYR_BASE_URL}/settings`,
+      settings_url: `${HOCKIA_BASE_URL}/settings`,
     }
 
     // Try DB template, fall back to hardcoded
@@ -240,7 +240,7 @@ Deno.serve(async (req: Request) => {
         reference.relationship_type,
         reference.request_note
       )
-      subject = `${requesterName} requested a reference on PLAYR`
+      subject = `${requesterName} requested a reference on HOCKIA`
       logger.info('Falling back to hardcoded template')
     }
 

@@ -36,12 +36,12 @@ test.describe('Signup Flow', () => {
     await expect(page).toHaveURL(/\/signup/)
 
     // Role selection should be visible
-    await expect(page.getByRole('heading', { name: /join playr/i })).toBeVisible()
+    await expect(page.getByRole('heading', { name: /join hockia/i })).toBeVisible()
   })
 
   test('navigates to signup from sign-in card link', async ({ page }) => {
-    // Desktop sign-in card has "Join PLAYR" button inside "New here?" text
-    await page.locator('[data-signin-card]').last().getByRole('button', { name: /join playr/i }).click()
+    // Desktop sign-in card has "Join HOCKIA" button inside "New here?" text
+    await page.locator('[data-signin-card]').last().getByRole('button', { name: /join hockia/i }).click()
 
     // Should be on signup page
     await expect(page).toHaveURL(/\/signup/)
@@ -224,8 +224,8 @@ test.describe('Public Pages Access', () => {
     // Main content should be visible
     await expect(page.getByRole('main')).toBeVisible()
 
-    // PLAYR logo in the main content area (scoped to avoid matching hidden PublicNav logo)
-    await expect(page.locator('main img[alt="PLAYR"]').last()).toBeVisible()
+    // HOCKIA logo in the main content area (scoped to avoid matching hidden PublicNav logo)
+    await expect(page.locator('main img[alt="HOCKIA"]').last()).toBeVisible()
   })
 
   test('privacy policy page loads', async ({ page }) => {
@@ -268,9 +268,9 @@ test.describe('Navigation', () => {
     await page.setViewportSize({ width: 1280, height: 720 })
     await page.goto('/')
 
-    // Hero heading and PLAYR logo should be visible on desktop
+    // Hero heading and HOCKIA logo should be visible on desktop
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
-    await expect(page.locator('main img[alt="PLAYR"]').last()).toBeVisible()
+    await expect(page.locator('main img[alt="HOCKIA"]').last()).toBeVisible()
   })
 
   test('mobile view hides desktop navigation', async ({ page }) => {
@@ -278,6 +278,6 @@ test.describe('Navigation', () => {
     await page.goto('/')
 
     // Page should load correctly on mobile — PublicNav logo is visible
-    await expect(page.getByAltText(/playr/i).first()).toBeVisible()
+    await expect(page.getByAltText(/hockia/i).first()).toBeVisible()
   })
 })

@@ -1,8 +1,8 @@
-# FIGMA PLAYR - Supabase Backend
+# HOCKIA - Supabase Backend
 
 ## Project Information
 
-- **Project Name:** FIGMA PLAYR
+- **Project Name:** HOCKIA
 - **Project ID:** xtertgftujnebubxgqit
 - **Project URL:** https://xtertgftujnebubxgqit.supabase.co
 - **Region:** East US (North Virginia)

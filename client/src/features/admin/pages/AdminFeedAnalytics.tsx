@@ -51,7 +51,7 @@ export function AdminFeedAnalytics() {
   }, [daysFilter])
 
   useEffect(() => {
-    document.title = 'Feed & Content | PLAYR Admin'
+    document.title = 'Feed & Content | HOCKIA Admin'
     fetchData()
   }, [fetchData])
 

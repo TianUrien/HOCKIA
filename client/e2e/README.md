@@ -1,6 +1,6 @@
 # E2E Testing Setup
 
-This directory contains end-to-end tests for PLAYR using Playwright.
+This directory contains end-to-end tests for HOCKIA using Playwright.
 
 ## ⚠️ IMPORTANT: Use Dedicated Test Accounts
 

@@ -1,5 +1,5 @@
 -- 002_functions_and_triggers.sql
--- Helper functions, triggers, and grants for PLAYR Supabase project
+-- Helper functions, triggers, and grants for HOCKIA Supabase project
 -- Run via: supabase db execute --file supabase_setup/002_functions_and_triggers.sql
 
 SET search_path = public;

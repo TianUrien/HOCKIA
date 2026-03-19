@@ -1,7 +1,7 @@
 import { test as base, expect, Page } from '@playwright/test'
 
 /**
- * Test fixtures and helpers for PLAYR E2E tests
+ * Test fixtures and helpers for HOCKIA E2E tests
  * 
  * IMPORTANT: E2E tests require REAL email addresses to avoid Supabase email bounces.
  * Set these environment variables in .env.local:
@@ -62,7 +62,7 @@ export const TEST_USERS = {
 /**
  * Page Object Model for common page interactions
  */
-export class PlayrPage {
+export class HockiaPage {
   constructor(public page: Page) {}
 
   // Navigation helpers
@@ -111,9 +111,9 @@ export class PlayrPage {
 /**
  * Page Object for Landing/Auth pages
  */
-export class AuthPage extends PlayrPage {
+export class AuthPage extends HockiaPage {
   async clickSignUp() {
-    await this.page.getByRole('link', { name: /join playr/i }).click()
+    await this.page.getByRole('link', { name: /join hockia/i }).click()
   }
 
   async selectRole(role: 'player' | 'coach' | 'club') {
@@ -140,7 +140,7 @@ export class AuthPage extends PlayrPage {
 /**
  * Page Object for Profile Completion
  */
-export class ProfilePage extends PlayrPage {
+export class ProfilePage extends HockiaPage {
   async fillPlayerProfile(data: typeof TEST_USERS.player) {
     await this.page.getByLabel(/full name/i).fill(data.fullName)
     await this.page.getByLabel(/nationality/i).fill(data.nationality)
@@ -168,7 +168,7 @@ export class ProfilePage extends PlayrPage {
 /**
  * Page Object for Messaging
  */
-export class MessagesPage extends PlayrPage {
+export class MessagesPage extends HockiaPage {
   async openMessagesPage() {
     await this.page.goto('/messages')
     await this.waitForLoadingToComplete()
@@ -200,7 +200,7 @@ export class MessagesPage extends PlayrPage {
 /**
  * Page Object for Opportunities/Vacancies
  */
-export class OpportunitiesPage extends PlayrPage {
+export class OpportunitiesPage extends HockiaPage {
   async openOpportunitiesPage() {
     await this.page.goto('/opportunities')
     await this.waitForLoadingToComplete()
@@ -238,7 +238,7 @@ export class OpportunitiesPage extends PlayrPage {
 /**
  * Page Object for Community Page
  */
-export class CommunityPage extends PlayrPage {
+export class CommunityPage extends HockiaPage {
   async openCommunityPage() {
     await this.page.goto('/community')
     await this.waitForLoadingToComplete()
@@ -262,7 +262,7 @@ export class CommunityPage extends PlayrPage {
 /**
  * Page Object for Questions (Q&A) Feature
  */
-export class QuestionsPage extends PlayrPage {
+export class QuestionsPage extends HockiaPage {
   async openQuestionsPage() {
     await this.page.goto('/community/questions')
     await this.waitForLoadingToComplete()
@@ -371,7 +371,7 @@ export class QuestionsPage extends PlayrPage {
 /**
  * Page Object for Home Feed
  */
-export class HomeFeedPage extends PlayrPage {
+export class HomeFeedPage extends HockiaPage {
   async openHomeFeed() {
     await this.page.goto('/home')
     await this.waitForLoadingToComplete()
@@ -434,7 +434,7 @@ export class HomeFeedPage extends PlayrPage {
  * so Playwright's isVisible() always returns true since the element is in the DOM
  * with non-zero dimensions. We check the `translate-x-0` class instead.
  */
-export class NotificationsPage extends PlayrPage {
+export class NotificationsPage extends HockiaPage {
   get drawer() {
     return this.page.locator('[role="dialog"][aria-label="Notifications"]')
   }
@@ -492,7 +492,7 @@ export class NotificationsPage extends PlayrPage {
 /**
  * Page Object for Brand Dashboard & Brand Pages
  */
-export class BrandsPage extends PlayrPage {
+export class BrandsPage extends HockiaPage {
   async openBrandsDirectory() {
     await this.page.goto('/brands')
     await this.waitForLoadingToComplete()

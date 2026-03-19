@@ -28,7 +28,7 @@ export const BRAND_STORAGE_STATE = path.join(authDir, 'brand.json')
 const includeWebkit = process.env.PLAYWRIGHT_WEBKIT === '1'
 
 /**
- * Playwright configuration for PLAYR E2E tests
+ * Playwright configuration for HOCKIA E2E tests
  * @see https://playwright.dev/docs/test-configuration
  */
 export default defineConfig({

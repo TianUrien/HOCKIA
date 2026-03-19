@@ -670,18 +670,18 @@ export default function CompleteProfile() {
               <div className="flex items-center gap-3 mb-2">
                 <img
                   src="/WhiteLogo.svg"
-                  alt="PLAYR"
+                  alt="HOCKIA"
                   className="h-8"
                 />
               </div>
               <p className="text-white/90 text-sm">
-                Welcome to PLAYR! Let's get you set up.
+                Welcome to HOCKIA! Let's get you set up.
               </p>
             </div>
 
             <div className="p-8">
               <h3 className="text-2xl font-bold text-gray-900 mb-2">Choose Your Role</h3>
-              <p className="text-gray-600 mb-6">How will you be using PLAYR?</p>
+              <p className="text-gray-600 mb-6">How will you be using HOCKIA?</p>
 
               {error && (
                 <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg" role="alert" aria-live="assertive">
@@ -794,7 +794,7 @@ export default function CompleteProfile() {
             <div className="flex items-center gap-3 mb-2">
               <img
                 src="/WhiteLogo.svg"
-                alt="PLAYR"
+                alt="HOCKIA"
                 className="h-8"
               />
             </div>

@@ -1,5 +1,5 @@
 -- 001_initial_schema.sql
--- Core schema objects for PLAYR Supabase project
+-- Core schema objects for HOCKIA Supabase project
 -- Run via: supabase db execute --file supabase_setup/001_initial_schema.sql
 
 SET search_path = public;

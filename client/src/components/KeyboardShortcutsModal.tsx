@@ -14,7 +14,7 @@ export default function KeyboardShortcutsModal({ isOpen, onClose }: KeyboardShor
           Keyboard Shortcuts
         </h2>
         <p className="text-sm text-gray-500 mb-6">
-          Navigate PLAYR faster with your keyboard
+          Navigate HOCKIA faster with your keyboard
         </p>
 
         <div className="space-y-5">

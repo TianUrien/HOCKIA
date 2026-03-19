@@ -1,16 +1,16 @@
-# PLAYR - Field Hockey Professional Network
+# HOCKIA - Field Hockey Professional Network
 
-PLAYR is the professional network for field hockey, connecting players, coaches, and clubs in a single platform.
+HOCKIA is the professional network for field hockey, connecting players, coaches, and clubs in a single platform.
 
-## What PLAYR Does
+## What HOCKIA Does
 
-PLAYR solves a fundamental problem in field hockey: **discovery and connection**.
+HOCKIA solves a fundamental problem in field hockey: **discovery and connection**.
 
 - **Players** struggle to find opportunities (trials, contracts, positions) beyond their local network
 - **Coaches** lack visibility into coaching positions available globally
 - **Clubs** have difficulty discovering talent outside their immediate region
 
-PLAYR bridges these gaps by providing a centralized platform where all three stakeholder groups can connect professionally.
+HOCKIA bridges these gaps by providing a centralized platform where all three stakeholder groups can connect professionally.
 
 ## Core Entities
 

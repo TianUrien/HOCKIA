@@ -35,11 +35,11 @@ export default function PrivacyPolicy() {
             <h2 className="text-2xl font-semibold text-gray-900 mb-4">1. Introduction</h2>
             <div className="space-y-4 text-gray-700 leading-relaxed">
               <p>
-                Welcome to PLAYR ("we", "us", "our"). We respect your privacy and are committed to
+                Welcome to HOCKIA ("we", "us", "our"). We respect your privacy and are committed to
                 protecting your personal data. This Privacy Policy explains how we collect, use, and
                 safeguard your information when you use our platform and related services.
               </p>
-              <p>By using PLAYR, you agree to the terms of this Privacy Policy.</p>
+              <p>By using HOCKIA, you agree to the terms of this Privacy Policy.</p>
             </div>
           </section>
 
@@ -84,7 +84,7 @@ export default function PrivacyPolicy() {
             <div className="space-y-4 text-gray-700 leading-relaxed">
               <p>We use your information to:</p>
               <ul className="list-none space-y-3 ml-4">
-                <li>• Operate and maintain the PLAYR platform.</li>
+                <li>• Operate and maintain the HOCKIA platform.</li>
                 <li>• Enable login, profile creation, and communication between users.</li>
                 <li>• Improve the platform experience and fix issues.</li>
                 <li>• Respond to support requests.</li>
@@ -126,7 +126,7 @@ export default function PrivacyPolicy() {
               <ul className="list-none space-y-3 ml-4">
                 <li>• Access, edit, or delete your profile data anytime from Settings.</li>
                 <li>• Request permanent account deletion.</li>
-                <li>• Contact us for any privacy concerns at team@oplayr.com.</li>
+                <li>• Contact us for any privacy concerns at team@inhockia.com.</li>
               </ul>
             </div>
           </section>
@@ -138,7 +138,7 @@ export default function PrivacyPolicy() {
             <h2 className="text-2xl font-semibold text-gray-900 mb-4">6. Cookies and Analytics</h2>
             <div className="space-y-4 text-gray-700 leading-relaxed">
               <p>
-                PLAYR uses limited cookies or local storage to maintain your session and improve
+                HOCKIA uses limited cookies or local storage to maintain your session and improve
                 navigation. We do not use invasive tracking tools or third-party ads.
               </p>
             </div>
@@ -180,10 +180,10 @@ export default function PrivacyPolicy() {
               <p className="flex items-center gap-2">
                 <span>📧</span>
                 <a
-                  href="mailto:team@oplayr.com"
+                  href="mailto:team@inhockia.com"
                   className="text-[#8026FA] hover:text-[#924CEC] transition-colors"
                 >
-                  team@oplayr.com
+                  team@inhockia.com
                 </a>
               </p>
             </div>

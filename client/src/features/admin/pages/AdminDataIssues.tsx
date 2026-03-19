@@ -40,7 +40,7 @@ export function AdminDataIssues() {
   } = useDataIssues()
 
   useEffect(() => {
-    document.title = 'Data Issues | PLAYR Admin'
+    document.title = 'Data Issues | HOCKIA Admin'
     fetchAll()
   }, [fetchAll])
 

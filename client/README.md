@@ -1,4 +1,4 @@
-# PLAYR - Modern React Application
+# HOCKIA - Modern React Application
 
 A production-ready React application built with Vite, TypeScript, Tailwind CSS v4, and Supabase integration.
 
@@ -6,7 +6,7 @@ A production-ready React application built with Vite, TypeScript, Tailwind CSS v
 
 - **Framework:** React 18 with TypeScript
 - **Build Tool:** Vite (with Rolldown experimental)
-- **Styling:** Tailwind CSS v4 (next) with custom PLAYR branding
+- **Styling:** Tailwind CSS v4 (next) with custom HOCKIA branding
 - **Backend:** Supabase (Authentication, Database, Storage)
 - **UI Components:** Custom glassmorphism components
 - **Icons:** Lucide React
@@ -15,7 +15,7 @@ A production-ready React application built with Vite, TypeScript, Tailwind CSS v
 
 ## ✨ Features
 
-- 🎨 **Custom Design System** - PLAYR brand colors and theme
+- 🎨 **Custom Design System** - HOCKIA brand colors and theme
 - 🌓 **Dark Mode** - Default dark theme with custom color palette
 - 💎 **Glassmorphism** - Beautiful glass-morphic UI components
 - ⚡ **Lightning Fast** - Vite HMR and optimized builds

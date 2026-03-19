@@ -5,7 +5,7 @@ declare const Deno: { env: { get(key: string): string | undefined } }
  * Email Template Rendering Pipeline
  *
  * Fetches structured templates from the database (email_templates table),
- * renders content_json blocks into full HTML emails with the PLAYR brand
+ * renders content_json blocks into full HTML emails with the HOCKIA brand
  * layout, and interpolates personalization variables.
  *
  * Block types supported:
@@ -16,7 +16,7 @@ declare const Deno: { env: { get(key: string): string | undefined } }
 // @ts-expect-error Deno URL imports are resolved at runtime in Supabase Edge Functions.
 import { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-const PLAYR_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://oplayr.com'
+const HOCKIA_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://inhockia.com'
 
 // ============================================================================
 // Types
@@ -322,7 +322,7 @@ function renderBlock(block: ContentBlock, vars: Record<string, string>): string 
 // ============================================================================
 
 /**
- * Render content_json blocks into a complete PLAYR-branded HTML email.
+ * Render content_json blocks into a complete HOCKIA-branded HTML email.
  */
 export function renderContentBlocks(
   blocks: ContentBlock[],
@@ -334,16 +334,16 @@ export function renderContentBlocks(
     .filter(Boolean)
     .join('\n    ')
 
-  const settingsUrl = variables.settings_url || `${PLAYR_BASE_URL}/settings`
+  const settingsUrl = variables.settings_url || `${HOCKIA_BASE_URL}/settings`
   const isOutreach = options?.isOutreach ?? false
 
   const footerHtml = isOutreach
     ? `<p style="color: #9ca3af; font-size: 12px; margin: 0;">
-      You received this email because we believe your organization may benefit from PLAYR.<br>
-      <a href="https://oplayr.com" style="color: #8026FA; text-decoration: none;">Learn more about PLAYR</a>
+      You received this email because we believe your organization may benefit from HOCKIA.<br>
+      <a href="https://inhockia.com" style="color: #8026FA; text-decoration: none;">Learn more about HOCKIA</a>
     </p>`
     : `<p style="color: #9ca3af; font-size: 12px; margin: 0;">
-      You're receiving this because you're on PLAYR.<br>
+      You're receiving this because you're on HOCKIA.<br>
       <a href="${settingsUrl}" style="color: #8026FA; text-decoration: none;">Manage notification preferences</a>
     </p>`
 
@@ -358,7 +358,7 @@ export function renderContentBlocks(
 
   <!-- Header -->
   <div style="background: linear-gradient(135deg, #8026FA 0%, #924CEC 100%); padding: 32px 24px; border-radius: 16px 16px 0 0; text-align: center;">
-    <img src="https://www.oplayr.com/playr-logo-white.png" alt="PLAYR" width="120" height="29" style="height: 29px; width: 120px;" />
+    <img src="https://www.inhockia.com/hockia-logo-white.png" alt="HOCKIA" width="120" height="29" style="height: 29px; width: 120px;" />
   </div>
 
   <!-- Main Content -->
@@ -391,7 +391,7 @@ export async function renderTemplate(
 
   // Add settings_url if not provided
   if (!variables.settings_url) {
-    variables.settings_url = `${PLAYR_BASE_URL}/settings`
+    variables.settings_url = `${HOCKIA_BASE_URL}/settings`
   }
 
   const isOutreach = template.template_key.startsWith('outreach_')

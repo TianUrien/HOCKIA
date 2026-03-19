@@ -60,7 +60,7 @@ export default function ConfirmActionModal({
 
   const confirmStyles = confirmTone === 'danger'
     ? 'bg-red-600 hover:bg-red-700 focus-visible:ring-red-600'
-    : 'bg-playr-primary hover:bg-playr-primary/90 focus-visible:ring-playr-primary'
+    : 'bg-hockia-primary hover:bg-hockia-primary/90 focus-visible:ring-hockia-primary'
 
   const iconWrapperStyles = confirmTone === 'danger'
     ? 'bg-red-100 text-red-600'

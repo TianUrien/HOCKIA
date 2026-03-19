@@ -101,7 +101,7 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole }:
       seen.add(friend.id)
       options.push({
         id: friend.id,
-        fullName: friend.full_name || friend.username || 'PLAYR Member',
+        fullName: friend.full_name || friend.username || 'HOCKIA Member',
         username: friend.username,
         avatarUrl: friend.avatar_url,
         role: friend.role,
@@ -187,7 +187,7 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole }:
             previewInteraction="pointer"
           />
           <div>
-            <p className="font-semibold text-gray-900">{connection.friend?.full_name || connection.friend?.username || 'PLAYR Member'}</p>
+            <p className="font-semibold text-gray-900">{connection.friend?.full_name || connection.friend?.username || 'HOCKIA Member'}</p>
             <RoleBadge role={connection.friend?.role ?? 'member'} className="mt-1" />
             {connection.friend?.base_location && (
               <p className="text-xs text-gray-500">{connection.friend.base_location}</p>
@@ -232,7 +232,7 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole }:
             previewInteraction="pointer"
           />
           <div>
-            <p className="font-semibold text-gray-900">{connection.friend?.full_name || connection.friend?.username || 'PLAYR Member'}</p>
+            <p className="font-semibold text-gray-900">{connection.friend?.full_name || connection.friend?.username || 'HOCKIA Member'}</p>
             <RoleBadge role={connection.friend?.role ?? 'member'} className="mt-1" />
             <p className="text-xs text-gray-500">Requested {humanizeDate(connection.created_at)}</p>
           </div>
@@ -319,7 +319,7 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole }:
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">Friends</h2>
-            <p className="text-sm text-gray-600">Trusted connections build credibility on PLAYR.</p>
+            <p className="text-sm text-gray-600">Trusted connections build credibility on HOCKIA.</p>
           </div>
           <div className="inline-flex items-center gap-2 rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-700">
             <Users className="h-4 w-4 text-[#8026FA]" />
@@ -363,7 +363,7 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole }:
       <section className="space-y-6">
         <div>
           <h3 className="text-lg font-semibold text-gray-900">Connections</h3>
-          <p className="text-sm text-gray-500">Visible to all PLAYR members for transparency.</p>
+          <p className="text-sm text-gray-500">Visible to all HOCKIA members for transparency.</p>
         </div>
 
         {acceptedConnections.length === 0

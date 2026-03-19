@@ -13,10 +13,10 @@ self.addEventListener('push', (event) => {
   try {
     data = event.data.json()
   } catch {
-    data = { title: 'PLAYR', body: event.data.text() }
+    data = { title: 'HOCKIA', body: event.data.text() }
   }
 
-  const { title = 'PLAYR', body, icon, badge, url, tag } = data
+  const { title = 'HOCKIA', body, icon, badge, url, tag } = data
 
   event.waitUntil(
     self.registration.showNotification(title, {
@@ -38,7 +38,7 @@ self.addEventListener('notificationclick', (event) => {
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-      // Focus existing PLAYR tab if one is open
+      // Focus existing HOCKIA tab if one is open
       for (const client of windowClients) {
         if (client.url.includes(self.location.origin)) {
           client.focus()

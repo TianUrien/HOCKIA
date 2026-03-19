@@ -1,8 +1,8 @@
-n bnm mm n nn m# PLAYR Analytics & Observability Audit — March 2026
+n bnm mm n nn m# HOCKIA Analytics & Observability Audit — March 2026
 
 ## Executive Summary
 
-PLAYR has a **solid analytics foundation** — 24 admin pages, 40+ RPCs, heartbeat-based engagement, email delivery tracking via Resend webhooks, and a flexible `events` table with 22+ event types. However, there is a significant **GA4 disconnect** (functions defined but mostly unused), several **cross-feature conversion funnels are missing**, and key user journey steps go untracked.
+HOCKIA has a **solid analytics foundation** — 24 admin pages, 40+ RPCs, heartbeat-based engagement, email delivery tracking via Resend webhooks, and a flexible `events` table with 22+ event types. However, there is a significant **GA4 disconnect** (functions defined but mostly unused), several **cross-feature conversion funnels are missing**, and key user journey steps go untracked.
 
 **Overall coverage: 7.3/10** — strong on engagement, marketplace, and email delivery; weak on search behavior, GA4 utilization, onboarding funnels, and cross-feature attribution.
 

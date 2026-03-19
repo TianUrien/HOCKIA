@@ -68,7 +68,7 @@ export function AdminFeatureUsage() {
   }, [daysFilter])
 
   useEffect(() => {
-    document.title = 'Feature Usage | PLAYR Admin'
+    document.title = 'Feature Usage | HOCKIA Admin'
     fetchData()
   }, [fetchData])
 

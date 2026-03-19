@@ -1,9 +1,9 @@
-# PLAYR - Robots.txt
+# HOCKIA - Robots.txt
 User-agent: *
 Allow: /
 
 # Sitemap
-Sitemap: https://www.oplayr.com/api/sitemap.xml
+Sitemap: https://www.inhockia.com/api/sitemap.xml
 
 # Disallow admin/private routes
 Disallow: /admin/

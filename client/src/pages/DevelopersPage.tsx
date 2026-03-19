@@ -87,7 +87,7 @@ export default function DevelopersPage() {
           location: "Zürich, Switzerland",
           league: "National League A"
         },
-        apply_url: "https://oplayr.com/opportunities/abc-123-def-456"
+        apply_url: "https://inhockia.com/opportunities/abc-123-def-456"
       }
     ],
     meta: {
@@ -119,7 +119,7 @@ export default function DevelopersPage() {
             <span className="text-white/80 text-sm font-medium uppercase tracking-wide">Public API</span>
           </div>
           <h1 className="text-3xl md:text-4xl font-bold mb-4">
-            PLAYR for AI & Developers
+            HOCKIA for AI & Developers
           </h1>
           <p className="text-lg text-white/90 max-w-2xl">
             Discover field hockey opportunities programmatically. Built for AI assistants, job platforms, and integrations.
@@ -129,24 +129,24 @@ export default function DevelopersPage() {
         {/* Content */}
         <div className="space-y-8">
           
-          {/* What is PLAYR */}
+          {/* What is HOCKIA */}
           <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
             <div className="flex items-start gap-4 mb-6">
               <div className="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center flex-shrink-0">
                 <Globe className="w-5 h-5 text-purple-600" />
               </div>
               <div>
-                <h2 className="text-2xl font-semibold text-gray-900">What is PLAYR?</h2>
+                <h2 className="text-2xl font-semibold text-gray-900">What is HOCKIA?</h2>
               </div>
             </div>
             <div className="text-gray-700 leading-relaxed space-y-4">
               <p>
-                <strong>PLAYR</strong> is the home of field hockey — a platform where players, coaches, and clubs connect. 
+                <strong>HOCKIA</strong> is the home of field hockey — a platform where players, coaches, and clubs connect.
                 Clubs post opportunities, and players from around the world discover and apply to join their teams.
               </p>
               <p>
                 We believe the future of discovery is AI-first. That's why we've opened a <strong>public API</strong> that 
-                lets AI assistants, job aggregators, and developers surface PLAYR opportunities to their users — safely and responsibly.
+                lets AI assistants, job aggregators, and developers surface HOCKIA opportunities to their users — safely and responsibly.
               </p>
             </div>
           </section>
@@ -180,9 +180,9 @@ export default function DevelopersPage() {
               <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mt-6">
                 <p className="text-blue-900 font-medium mb-2">🔒 Your privacy is protected</p>
                 <p className="text-blue-800 text-sm">
-                  PLAYR <strong>never</strong> exposes player profiles, applications, messages, or any personal contact details 
-                  through this public API. Only open, club-published opportunities are available, and all sensitive 
-                  user data remains protected inside PLAYR.
+                  HOCKIA <strong>never</strong> exposes player profiles, applications, messages, or any personal contact details
+                  through this public API. Only open, club-published opportunities are available, and all sensitive
+                  user data remains protected inside HOCKIA.
                 </p>
               </div>
             </div>
@@ -266,7 +266,7 @@ export default function DevelopersPage() {
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Response Format</h2>
               <p className="text-gray-700 text-sm mb-4">
                 Responses are JSON. Each opportunity includes an <code className="bg-gray-100 px-1.5 py-0.5 rounded text-purple-600">apply_url</code> that 
-                links directly to PLAYR — users must visit PLAYR to apply.
+                links directly to HOCKIA — users must visit HOCKIA to apply.
               </p>
               <JsonBlock json={exampleResponse} />
             </section>
@@ -287,7 +287,7 @@ export default function DevelopersPage() {
             <p className="text-gray-600 text-sm mt-3">
               Use of this API is subject to{' '}
               <Link to="/terms" className="text-purple-600 hover:text-purple-700 underline underline-offset-2">
-                PLAYR's Terms of Use
+                HOCKIA's Terms of Use
               </Link>.
             </p>
           </section>
@@ -331,8 +331,8 @@ export default function DevelopersPage() {
               </a>
             </div>
             <p className="text-gray-600 text-sm mt-6">
-              If you're integrating PLAYR into a conversational AI, we recommend surfacing opportunities 
-              with clear links back to PLAYR so users can apply.
+              If you're integrating HOCKIA into a conversational AI, we recommend surfacing opportunities
+              with clear links back to HOCKIA so users can apply.
             </p>
           </section>
 
@@ -343,11 +343,11 @@ export default function DevelopersPage() {
                 <Zap className="w-5 h-5 text-emerald-600" />
               </div>
               <div>
-                <h2 className="text-2xl font-semibold text-gray-900">Using PLAYR with ChatGPT</h2>
+                <h2 className="text-2xl font-semibold text-gray-900">Using HOCKIA with ChatGPT</h2>
               </div>
             </div>
             <p className="text-gray-700 mb-4">
-              You can create a Custom GPT that searches PLAYR opportunities. Here's how:
+              You can create a Custom GPT that searches HOCKIA opportunities. Here's how:
             </p>
             <ol className="list-decimal list-inside space-y-3 text-gray-700 mb-6">
               <li>
@@ -360,7 +360,7 @@ export default function DevelopersPage() {
                 <strong>Click "Import from URL"</strong> and paste:
                 <div className="mt-2 mb-2">
                   <code className="block bg-gray-100 px-4 py-2 rounded-lg text-purple-600 text-sm break-all">
-                    https://www.oplayr.com/api/openapi.json
+                    https://inhockia.com/api/openapi.json
                   </code>
                 </div>
               </li>
@@ -379,7 +379,7 @@ export default function DevelopersPage() {
             <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4">
               <p className="text-emerald-900 text-sm">
                 <strong>Tip:</strong> In your GPT's instructions, tell it to always include the <code className="bg-emerald-100 px-1 py-0.5 rounded">apply_url</code> so 
-                users can visit PLAYR to apply for opportunities.
+                users can visit HOCKIA to apply for opportunities.
               </p>
             </div>
           </section>
@@ -388,13 +388,13 @@ export default function DevelopersPage() {
           <section className="bg-gray-100 rounded-2xl p-8 text-center">
             <h2 className="text-xl font-semibold text-gray-900 mb-2">Questions?</h2>
             <p className="text-gray-600 mb-4">
-              If you're building something interesting with PLAYR data, we'd love to hear about it.
+              If you're building something interesting with HOCKIA data, we'd love to hear about it.
             </p>
             <a
-              href="mailto:team@oplayr.com"
+              href="mailto:team@inhockia.com"
               className="inline-flex items-center gap-2 text-purple-600 hover:text-purple-700 font-medium"
             >
-              team@oplayr.com
+              team@inhockia.com
               <ExternalLink className="w-4 h-4" />
             </a>
           </section>

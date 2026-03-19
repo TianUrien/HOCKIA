@@ -847,7 +847,7 @@ export function PostComposerModal({
                               </div>
                               {club.is_claimed && (
                                 <span className="text-[10px] font-medium text-[#8026FA] bg-[#8026FA]/10 px-1.5 py-0.5 rounded flex-shrink-0">
-                                  On PLAYR
+                                  On HOCKIA
                                 </span>
                               )}
                             </button>

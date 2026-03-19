@@ -1,4 +1,4 @@
--- PLAYR Stability Improvements - Minimal Safe Version
+-- HOCKIA Stability Improvements - Minimal Safe Version
 -- Only adds indexes and features that are compatible with the existing schema
 
 -- ============================================================================
@@ -246,7 +246,7 @@ END $$;
 
 DO $$ 
 BEGIN
-  RAISE NOTICE '✅ PLAYR Stability Improvements Applied Successfully!';
+  RAISE NOTICE '✅ HOCKIA Stability Improvements Applied Successfully!';
   RAISE NOTICE '   - Performance indexes created for faster queries';
   RAISE NOTICE '   - Optimistic locking enabled on critical tables';
   RAISE NOTICE '   - Race condition prevention mechanisms in place';

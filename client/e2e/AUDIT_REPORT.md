@@ -1,13 +1,13 @@
 # E2E Smoke Test Suite — Audit Report
 
 **Date:** 2026-02-06
-**Scope:** PLAYR E2E test suite (Playwright)
+**Scope:** HOCKIA E2E test suite (Playwright)
 
 ---
 
 ## 1. Executive Summary
 
-The PLAYR E2E suite had significant coverage gaps, especially for the **Brand role** (zero coverage) and **Club role** (1 test). This audit expanded the smoke suite from **8 → 21 active smoke tests** across 4 role projects + public, added Brand infrastructure from scratch, strengthened existing tests, and added cross-role access control validation.
+The HOCKIA E2E suite had significant coverage gaps, especially for the **Brand role** (zero coverage) and **Club role** (1 test). This audit expanded the smoke suite from **8 → 21 active smoke tests** across 4 role projects + public, added Brand infrastructure from scratch, strengthened existing tests, and added cross-role access control validation.
 
 ### Before vs After
 

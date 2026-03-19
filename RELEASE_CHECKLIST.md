@@ -75,7 +75,7 @@
 | 6.1 | **No staging URLs in prod code** | `grep -r 'ivjkdaylalhsteyyclvl' client/src/` | Empty (staging project ID must not be hardcoded in app source) |
 | 6.2 | **Vercel env vars** | Verify in Vercel dashboard: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_ENVIRONMENT=production`, `VITE_SENTRY_DSN`, `VITE_GA_MEASUREMENT_ID` | All set for Production environment |
 | 6.3 | **Supabase secrets** | Verify in GitHub repo Settings → Secrets: `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD`, E2E test credentials | All present |
-| 6.4 | **Auth callback URLs** | Supabase Dashboard → Auth → URL Configuration → Redirect URLs | Production domain (`https://www.oplayr.com/**`) listed |
+| 6.4 | **Auth callback URLs** | Supabase Dashboard → Auth → URL Configuration → Redirect URLs | Production domain (`https://www.inhockia.com/**`) listed |
 | 6.5 | **CORS / CSP** | Review `client/vercel.json` CSP header | Both staging + production Supabase URLs allowed |
 
 ---
@@ -93,7 +93,7 @@
 
 ## 8 — Manual Smoke Test (Staging)
 
-Run against the staging preview URL (Vercel preview or `https://staging.oplayr.com`):
+Run against the staging preview URL (Vercel preview or `https://staging.inhockia.com`):
 
 | # | Flow | Steps | Pass criteria |
 |---|------|-------|---------------|
@@ -129,9 +129,9 @@ Run against the staging preview URL (Vercel preview or `https://staging.oplayr.c
 | 10.2 | **Push migrations to prod** | `supabase link --project-ref xtertgftujnebubxgqit && supabase db push --linked --include-all` | All migrations applied, no errors |
 | 10.3 | **Re-link to staging** | `supabase link --project-ref ivjkdaylalhsteyyclvl` | Linked back to staging |
 | 10.4 | **Deploy edge functions** | `supabase functions deploy <name> --project-ref xtertgftujnebubxgqit` | Only if function source changed |
-| 10.5 | **Vercel auto-deploy** | Check Vercel dashboard or `curl -sI https://www.oplayr.com` | 200 OK, latest commit deployed |
+| 10.5 | **Vercel auto-deploy** | Check Vercel dashboard or `curl -sI https://www.inhockia.com` | 200 OK, latest commit deployed |
 | 10.6 | **Production health** | `curl -s https://xtertgftujnebubxgqit.supabase.co/functions/v1/health` | `{"status":"healthy"}` |
-| 10.7 | **Post-deploy smoke** | Repeat gates 8.1, 8.3, 8.4, 8.7, 8.8 on `https://www.oplayr.com` | All green |
+| 10.7 | **Post-deploy smoke** | Repeat gates 8.1, 8.3, 8.4, 8.7, 8.8 on `https://www.inhockia.com` | All green |
 | 10.8 | **Monitor logs** | Supabase Dashboard → Logs (5 min) + Sentry → Issues | No new errors |
 
 ---

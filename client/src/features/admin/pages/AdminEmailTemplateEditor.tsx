@@ -67,7 +67,7 @@ export function AdminEmailTemplateEditor() {
   }, [templateId])
 
   useEffect(() => {
-    document.title = 'Edit Template | PLAYR Admin'
+    document.title = 'Edit Template | HOCKIA Admin'
     fetchDetail()
   }, [fetchDetail])
 
@@ -82,7 +82,7 @@ export function AdminEmailTemplateEditor() {
         const name = v.name.toLowerCase()
         if (name.includes('name')) samples[v.name] = 'Jane Smith'
         else if (name.includes('email')) samples[v.name] = 'jane@example.com'
-        else if (name.includes('url')) samples[v.name] = 'https://oplayr.com'
+        else if (name.includes('url')) samples[v.name] = 'https://inhockia.com'
         else if (name.includes('title')) samples[v.name] = 'Sample Title'
         else if (name.includes('location')) samples[v.name] = 'Melbourne, Australia'
         else if (name.includes('position')) samples[v.name] = 'Forward'
@@ -93,7 +93,7 @@ export function AdminEmailTemplateEditor() {
         else samples[v.name] = `[${v.name}]`
       }
     }
-    samples.settings_url = 'https://oplayr.com/settings'
+    samples.settings_url = 'https://inhockia.com/settings'
     return samples
   }, [variables, testVars])
 

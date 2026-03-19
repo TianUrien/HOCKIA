@@ -1,5 +1,5 @@
 -- ============================================================================
--- Remove passport fields from PLAYR
+-- Remove passport fields from HOCKIA
 -- Passports have been fully replaced by Nationality 1 / Nationality 2
 -- (nationality_country_id and nationality2_country_id)
 -- ============================================================================
@@ -128,7 +128,7 @@ BEGIN
     END IF;
 
     IF p_role IS NOT NULL AND p_role <> target_profile.role THEN
-      RAISE EXCEPTION 'Profile role is managed by PLAYR staff';
+      RAISE EXCEPTION 'Profile role is managed by HOCKIA staff';
     END IF;
 
     new_role := target_profile.role;

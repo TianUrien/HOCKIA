@@ -1,6 +1,6 @@
-# PLAYR Admin Portal
+# HOCKIA Admin Portal
 
-Internal admin portal for managing PLAYR users, data issues, and platform operations.
+Internal admin portal for managing HOCKIA users, data issues, and platform operations.
 
 ## Overview
 
@@ -31,7 +31,7 @@ The existing `is_platform_admin()` function checks this claim.
 ### 1. Run Database Migrations
 
 ```bash
-cd /path/to/PLAYR
+cd /path/to/HOCKIA
 
 # Push migrations to Supabase
 supabase db push

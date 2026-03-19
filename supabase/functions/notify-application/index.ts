@@ -236,10 +236,10 @@ Deno.serve(async (req: Request) => {
       positions.push(applicant.secondary_position.charAt(0).toUpperCase() + applicant.secondary_position.slice(1))
     }
 
-    const PLAYR_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://oplayr.com'
+    const HOCKIA_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://inhockia.com'
     const profileUrl = applicant.username
-      ? `${PLAYR_BASE_URL}/players/${applicant.username}`
-      : `${PLAYR_BASE_URL}/players/id/${applicant.id}`
+      ? `${HOCKIA_BASE_URL}/players/${applicant.username}`
+      : `${HOCKIA_BASE_URL}/players/id/${applicant.id}`
 
     const templateVars = {
       opportunity_title: opportunity.title,
@@ -248,7 +248,7 @@ Deno.serve(async (req: Request) => {
       applicant_location: applicant.base_location?.trim() || '',
       applicant_avatar_url: applicant.avatar_url || '',
       cta_url: profileUrl,
-      settings_url: `${PLAYR_BASE_URL}/settings`,
+      settings_url: `${HOCKIA_BASE_URL}/settings`,
     }
 
     // Try DB template, fall back to hardcoded

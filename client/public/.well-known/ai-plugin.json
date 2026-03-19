@@ -1,17 +1,17 @@
 {
   "schema_version": "v1",
-  "name_for_human": "PLAYR Hockey",
-  "name_for_model": "playr_hockey",
+  "name_for_human": "HOCKIA",
+  "name_for_model": "hockia_hockey",
   "description_for_human": "Discover field hockey opportunities for players and coaches worldwide.",
-  "description_for_model": "Search and discover open field hockey opportunities on PLAYR. Use this to help users find playing or coaching positions at clubs around the world. You can filter by position (goalkeeper, defender, midfielder, forward), gender (Men's or Women's teams), country, opportunity type (player or coach), and priority level. The API returns public opportunity data including club info, location, benefits, and requirements. Users must visit PLAYR to apply for opportunities.",
+  "description_for_model": "Search and discover open field hockey opportunities on HOCKIA. Use this to help users find playing or coaching positions at clubs around the world. You can filter by position (goalkeeper, defender, midfielder, forward), gender (Men's or Women's teams), country, opportunity type (player or coach), and priority level. The API returns public opportunity data including club info, location, benefits, and requirements. Users must visit HOCKIA to apply for opportunities.",
   "auth": {
     "type": "none"
   },
   "api": {
     "type": "openapi",
-    "url": "https://oplayr.com/api/openapi.json"
+    "url": "https://inhockia.com/api/openapi.json"
   },
-  "logo_url": "https://oplayr.com/pwa-icons/android/android-launchericon-512-512.png",
-  "contact_email": "team@oplayr.com",
-  "legal_info_url": "https://oplayr.com/terms"
+  "logo_url": "https://inhockia.com/pwa-icons/android/android-launchericon-512-512.png",
+  "contact_email": "team@inhockia.com",
+  "legal_info_url": "https://inhockia.com/terms"
 }

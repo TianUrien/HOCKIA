@@ -54,7 +54,7 @@ BEGIN
     END IF;
 
     IF p_role IS NOT NULL AND p_role <> target_profile.role THEN
-      RAISE EXCEPTION 'Profile role is managed by PLAYR staff';
+      RAISE EXCEPTION 'Profile role is managed by HOCKIA staff';
     END IF;
 
     new_role := target_profile.role;

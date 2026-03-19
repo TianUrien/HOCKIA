@@ -1,7 +1,7 @@
 /**
  * SharePostSheet
  *
- * Bottom-sheet modal for sharing a post via PLAYR Messages or copying a link.
+ * Bottom-sheet modal for sharing a post via HOCKIA Messages or copying a link.
  * Reuses the contact search pattern from NewMessageModal.
  */
 

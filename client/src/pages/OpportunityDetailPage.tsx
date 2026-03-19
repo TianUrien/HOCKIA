@@ -157,17 +157,17 @@ export default function OpportunityDetailPage() {
   // SEO: Update page title and meta tags for crawlers
   useEffect(() => {
     if (!opportunity || !club) {
-      document.title = 'Field Hockey Opportunity | PLAYR'
+      document.title = 'Field Hockey Opportunity | HOCKIA'
       return
     }
 
     // Dynamic page title
-    const pageTitle = `${opportunity.title} at ${club.full_name || 'Club'} | PLAYR`
+    const pageTitle = `${opportunity.title} at ${club.full_name || 'Club'} | HOCKIA`
     document.title = pageTitle
 
     // Build meta description
     const location = [opportunity.location_city, opportunity.location_country].filter(Boolean).join(', ')
-    const metaDescription = `${opportunity.title} opportunity at ${club.full_name || 'a club'}${location ? ` in ${location}` : ''}. ${opportunity.description?.slice(0, 120) || 'Apply now on PLAYR - the field hockey community platform.'}`
+    const metaDescription = `${opportunity.title} opportunity at ${club.full_name || 'a club'}${location ? ` in ${location}` : ''}. ${opportunity.description?.slice(0, 120) || 'Apply now on HOCKIA - the field hockey community platform.'}`
 
     // Update or create meta description
     const metaDescTag = document.querySelector('meta[name="description"]')
@@ -183,7 +183,7 @@ export default function OpportunityDetailPage() {
     if (ogDesc) ogDesc.setAttribute('content', metaDescription)
 
     const ogUrl = document.querySelector('meta[property="og:url"]')
-    if (ogUrl) ogUrl.setAttribute('content', `https://www.oplayr.com/opportunities/${opportunity.id}`)
+    if (ogUrl) ogUrl.setAttribute('content', `https://inhockia.com/opportunities/${opportunity.id}`)
 
     // Update Twitter tags
     const twitterTitle = document.querySelector('meta[name="twitter:title"]')
@@ -194,14 +194,14 @@ export default function OpportunityDetailPage() {
 
     // Cleanup: restore defaults when leaving page
     return () => {
-      document.title = 'PLAYR | Field Hockey Community'
-      const defaultDesc = 'Connect players, coaches, and clubs. Raise the sport together. Join PLAYR.'
-      
+      document.title = 'HOCKIA | Field Hockey Community'
+      const defaultDesc = 'Connect players, coaches, and clubs. Raise the sport together. Join HOCKIA.'
+
       if (metaDescTag) metaDescTag.setAttribute('content', defaultDesc)
-      if (ogTitle) ogTitle.setAttribute('content', 'PLAYR | Field Hockey Community')
+      if (ogTitle) ogTitle.setAttribute('content', 'HOCKIA | Field Hockey Community')
       if (ogDesc) ogDesc.setAttribute('content', defaultDesc)
-      if (ogUrl) ogUrl.setAttribute('content', 'https://www.oplayr.com')
-      if (twitterTitle) twitterTitle.setAttribute('content', 'PLAYR | Field Hockey Community')
+      if (ogUrl) ogUrl.setAttribute('content', 'https://inhockia.com')
+      if (twitterTitle) twitterTitle.setAttribute('content', 'HOCKIA | Field Hockey Community')
       if (twitterDesc) twitterDesc.setAttribute('content', defaultDesc)
     }
   }, [opportunity, club])
@@ -355,7 +355,7 @@ export default function OpportunityDetailPage() {
         isOpen={showSignInPrompt}
         onClose={() => setShowSignInPrompt(false)}
         title="Sign in to apply"
-        message="Sign in or create a free PLAYR account to apply to this opportunity."
+        message="Sign in or create a free HOCKIA account to apply to this opportunity."
       />
 
       {/* Apply Modal */}

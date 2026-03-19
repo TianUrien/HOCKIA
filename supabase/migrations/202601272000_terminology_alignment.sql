@@ -1,5 +1,5 @@
 -- ============================================================================
--- PLAYR Terminology Alignment Migration
+-- HOCKIA Terminology Alignment Migration
 -- ============================================================================
 -- This migration aligns database terminology with product terminology:
 --   - vacancies → opportunities

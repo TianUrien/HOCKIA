@@ -64,7 +64,7 @@ const main = async () => {
   const victimPlayerEmail = `e2e-delete-victim-player-${runId}@example.com`
   const victimClubEmail = `e2e-delete-victim-club-${runId}@example.com`
   const otherEmail = `e2e-delete-other-${runId}@example.com`
-  const commonPassword = `PlayrE2E!${crypto.randomBytes(6).toString('hex')}`
+  const commonPassword = `HockiaE2E!${crypto.randomBytes(6).toString('hex')}`
 
   const createdUserIds = []
 

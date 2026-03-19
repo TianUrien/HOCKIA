@@ -174,7 +174,7 @@ export default function AddReferenceModal({ isOpen, onClose, friends, onSubmit, 
           <div className="space-y-5">
             {/* Header */}
             <div>
-              <p className="text-sm font-semibold uppercase tracking-wide text-playr-primary">Add Reference</p>
+              <p className="text-sm font-semibold uppercase tracking-wide text-hockia-primary">Add Reference</p>
               <h2 className="text-xl font-bold text-gray-900">Request a trusted reference</h2>
               <p className="mt-1 text-sm text-gray-500">{5 - remainingSlots} of 5 references used</p>
             </div>
@@ -214,7 +214,7 @@ export default function AddReferenceModal({ isOpen, onClose, friends, onSubmit, 
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                     className={cn(
                       'flex w-full items-center justify-between rounded-xl border bg-gray-50 px-3 py-2.5 text-left text-sm transition-colors',
-                      isDropdownOpen ? 'border-playr-primary bg-white' : 'border-gray-200 hover:border-gray-300'
+                      isDropdownOpen ? 'border-hockia-primary bg-white' : 'border-gray-200 hover:border-gray-300'
                     )}
                   >
                     <span className="text-gray-400">Search connections...</span>
@@ -230,7 +230,7 @@ export default function AddReferenceModal({ isOpen, onClose, friends, onSubmit, 
                             ref={searchInputRef}
                             type="search"
                             placeholder="Search by name, club, or location"
-                            className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm placeholder:text-gray-400 focus:border-playr-primary focus:outline-none"
+                            className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm placeholder:text-gray-400 focus:border-hockia-primary focus:outline-none"
                             value={searchTerm}
                             onChange={(event) => setSearchTerm(event.target.value)}
                             aria-label="Search connections"
@@ -284,7 +284,7 @@ export default function AddReferenceModal({ isOpen, onClose, friends, onSubmit, 
               <select
                 id={relationshipSelectId}
                 className={cn(
-                  'mt-2 w-full rounded-xl border bg-white px-3 py-2.5 text-sm focus:border-playr-primary focus:outline-none',
+                  'mt-2 w-full rounded-xl border bg-white px-3 py-2.5 text-sm focus:border-hockia-primary focus:outline-none',
                   relationshipType ? 'border-gray-200 text-gray-900' : 'border-gray-200 text-gray-400'
                 )}
                 value={relationshipType}
@@ -309,7 +309,7 @@ export default function AddReferenceModal({ isOpen, onClose, friends, onSubmit, 
                 rows={3}
                 autoCapitalize="sentences"
                 spellCheck
-                className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-playr-primary focus:outline-none"
+                className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-hockia-primary focus:outline-none"
                 maxLength={MAX_NOTE_LENGTH}
               />
               <p className="mt-1 text-right text-xs text-gray-400">{requestNote.length}/{MAX_NOTE_LENGTH}</p>

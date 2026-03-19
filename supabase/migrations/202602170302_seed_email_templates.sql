@@ -18,7 +18,7 @@ INSERT INTO public.email_templates (
   'Vacancy Notification',
   'Sent when a club publishes a new opportunity. Recipients: eligible players/coaches matching the vacancy type.',
   'notification',
-  'New opportunity on PLAYR: {{vacancy_title}}',
+  'New opportunity on HOCKIA: {{vacancy_title}}',
   '[
     {"type": "heading", "text": "New Opportunity Available! \uD83C\uDFD1", "level": 1},
     {"type": "paragraph", "text": "A club has just published a new opportunity."},
@@ -30,7 +30,7 @@ INSERT INTO public.email_templates (
     {"type": "button", "text": "View Opportunity", "url": "{{cta_url}}"},
     {"type": "footnote", "text": "Don''t miss out \u2013 great opportunities go fast!"}
   ]'::jsonb,
-  E'New Opportunity Available on PLAYR! \uD83C\uDFD1\n\nA club has just published a new opportunity.\n\n{{vacancy_title}}\n{{club_name}}\nPosition: {{position}}\nLocation: {{location}}\n\n{{summary}}\n\nView this opportunity:\n{{cta_url}}\n\nDon''t miss out \u2013 great opportunities go fast!\n\n---\nYou''re receiving this because you''re on PLAYR.\nManage preferences: {{settings_url}}',
+  E'New Opportunity Available on HOCKIA! \uD83C\uDFD1\n\nA club has just published a new opportunity.\n\n{{vacancy_title}}\n{{club_name}}\nPosition: {{position}}\nLocation: {{location}}\n\n{{summary}}\n\nView this opportunity:\n{{cta_url}}\n\nDon''t miss out \u2013 great opportunities go fast!\n\n---\nYou''re receiving this because you''re on HOCKIA.\nManage preferences: {{settings_url}}',
   '[
     {"name": "vacancy_title", "description": "Opportunity title", "required": true},
     {"name": "club_name", "description": "Club display name", "required": true},
@@ -66,7 +66,7 @@ INSERT INTO public.email_templates (
     {"type": "button", "text": "View Profile", "url": "{{cta_url}}"},
     {"type": "footnote", "text": "Open their profile to learn more."}
   ]'::jsonb,
-  E'You''ve received a new application on PLAYR! \uD83C\uDFD1\n\nYou have a new application for one of your opportunities.\n\nOPPORTUNITY:\n{{opportunity_title}}\n\nAPPLICANT:\n{{applicant_name}}\nPosition: {{applicant_position}}\nLocation: {{applicant_location}}\n\nView their profile:\n{{cta_url}}\n\nOpen their profile to learn more.\n\n---\nYou''re receiving this because you''re on PLAYR.\nManage preferences: {{settings_url}}',
+  E'You''ve received a new application on HOCKIA! \uD83C\uDFD1\n\nYou have a new application for one of your opportunities.\n\nOPPORTUNITY:\n{{opportunity_title}}\n\nAPPLICANT:\n{{applicant_name}}\nPosition: {{applicant_position}}\nLocation: {{applicant_location}}\n\nView their profile:\n{{cta_url}}\n\nOpen their profile to learn more.\n\n---\nYou''re receiving this because you''re on HOCKIA.\nManage preferences: {{settings_url}}',
   '[
     {"name": "opportunity_title", "description": "Title of the opportunity", "required": true},
     {"name": "applicant_name", "description": "Applicant display name", "required": true},
@@ -93,15 +93,15 @@ INSERT INTO public.email_templates (
   'Friend Request',
   'Sent when a user receives a friend request.',
   'notification',
-  '{{requester_name}} sent you a friend request on PLAYR',
+  '{{requester_name}} sent you a friend request on HOCKIA',
   '[
     {"type": "heading", "text": "You have a new friend request! \uD83C\uDFD1", "level": 1},
-    {"type": "paragraph", "text": "Someone wants to connect with you on PLAYR."},
+    {"type": "paragraph", "text": "Someone wants to connect with you on HOCKIA."},
     {"type": "user_card", "name_var": "requester_name", "avatar_var": "requester_avatar_url", "detail_vars": ["requester_location"]},
     {"type": "button", "text": "View Request", "url": "{{cta_url}}"},
     {"type": "paragraph", "text": "<a href=\"{{profile_url}}\">View their profile</a> to learn more.", "is_html": true, "align": "center", "size": "small", "color": "muted"}
   ]'::jsonb,
-  E'New Friend Request on PLAYR\n\n{{requester_name}} wants to connect with you on PLAYR.\nLocation: {{requester_location}}\n\nView their request:\n{{cta_url}}\n\nView their profile:\n{{profile_url}}\n\n---\nYou''re receiving this because you''re on PLAYR.\nManage preferences: {{settings_url}}',
+  E'New Friend Request on HOCKIA\n\n{{requester_name}} wants to connect with you on HOCKIA.\nLocation: {{requester_location}}\n\nView their request:\n{{cta_url}}\n\nView their profile:\n{{profile_url}}\n\n---\nYou''re receiving this because you''re on HOCKIA.\nManage preferences: {{settings_url}}',
   '[
     {"name": "requester_name", "description": "Requester display name", "required": true},
     {"name": "requester_location", "description": "Requester base location", "required": false},
@@ -127,16 +127,16 @@ INSERT INTO public.email_templates (
   'Reference Request',
   'Sent when a user requests a reference from someone.',
   'notification',
-  '{{requester_name}} requested a reference from you on PLAYR',
+  '{{requester_name}} requested a reference from you on HOCKIA',
   '[
     {"type": "heading", "text": "Someone has requested a reference! \uD83C\uDFD1", "level": 1},
-    {"type": "paragraph", "text": "A PLAYR member has asked you to write a reference for them."},
+    {"type": "paragraph", "text": "A HOCKIA member has asked you to write a reference for them."},
     {"type": "user_card", "name_var": "requester_name", "avatar_var": "requester_avatar_url", "detail_vars": ["relationship_type", "requester_location"]},
     {"type": "note", "text": "{{request_note}}", "label": "Message from {{requester_name}}", "conditional": true},
     {"type": "button", "text": "View Request", "url": "{{cta_url}}"},
     {"type": "paragraph", "text": "<a href=\"{{profile_url}}\">View their profile</a> to learn more.", "is_html": true, "align": "center", "size": "small", "color": "muted"}
   ]'::jsonb,
-  E'Reference Request on PLAYR\n\n{{requester_name}} has asked you to write a reference for them.\nRelationship: {{relationship_type}}\nLocation: {{requester_location}}\n\nMessage: "{{request_note}}"\n\nView the request:\n{{cta_url}}\n\nView their profile:\n{{profile_url}}\n\n---\nYou''re receiving this because you''re on PLAYR.\nManage preferences: {{settings_url}}',
+  E'Reference Request on HOCKIA\n\n{{requester_name}} has asked you to write a reference for them.\nRelationship: {{relationship_type}}\nLocation: {{requester_location}}\n\nMessage: "{{request_note}}"\n\nView the request:\n{{cta_url}}\n\nView their profile:\n{{profile_url}}\n\n---\nYou''re receiving this because you''re on HOCKIA.\nManage preferences: {{settings_url}}',
   '[
     {"name": "requester_name", "description": "Requester display name", "required": true},
     {"name": "relationship_type", "description": "Relationship type (e.g. Coach, Teammate)", "required": true},
@@ -164,14 +164,14 @@ INSERT INTO public.email_templates (
   'Message Digest',
   'Sent as a digest of unread messages. Triggered by pg_cron every 30 minutes, max once per 6 hours per user.',
   'notification',
-  'You have {{message_count}} new messages on PLAYR',
+  'You have {{message_count}} new messages on HOCKIA',
   '[
     {"type": "heading", "text": "{{heading}}", "level": 1},
-    {"type": "paragraph", "text": "Hi {{first_name}}, you have unread messages on PLAYR."},
+    {"type": "paragraph", "text": "Hi {{first_name}}, you have unread messages on HOCKIA."},
     {"type": "conversation_list", "conversations_var": "conversations"},
     {"type": "button", "text": "{{cta_label}}", "url": "{{cta_url}}"}
   ]'::jsonb,
-  E'{{heading}}\n\nHi {{first_name}},\n\n{{conversations_text}}\n\n{{cta_label}}:\n{{cta_url}}\n\n---\nYou''re receiving this because you''re on PLAYR.\nManage preferences: {{settings_url}}',
+  E'{{heading}}\n\nHi {{first_name}},\n\n{{conversations_text}}\n\n{{cta_label}}:\n{{cta_url}}\n\n---\nYou''re receiving this because you''re on HOCKIA.\nManage preferences: {{settings_url}}',
   '[
     {"name": "first_name", "description": "Recipient first name", "required": true},
     {"name": "heading", "description": "Dynamic heading (single sender or generic)", "required": true},

@@ -5,7 +5,7 @@ interface UpdatePromptProps {
 }
 
 /**
- * UpdatePrompt - Shows when a new version of PLAYR is available
+ * UpdatePrompt - Shows when a new version of HOCKIA is available
  * 
  * Displays a non-intrusive banner at the top of the screen prompting
  * the user to refresh and get the latest version.
@@ -24,7 +24,7 @@ export default function UpdatePrompt({ onUpdate }: UpdatePromptProps) {
               <RefreshCw className="w-4 h-4" />
             </div>
             <p className="text-sm font-medium truncate">
-              A new version of PLAYR is available
+              A new version of HOCKIA is available
             </p>
           </div>
           <button

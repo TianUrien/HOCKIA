@@ -1,6 +1,6 @@
 # Supabase Setup Guide
 
-This folder consolidates everything needed to recreate the PLAYR backend on a new Supabase project. Apply the SQL files in order, then complete the manual dashboard steps below to finish configuration.
+This folder consolidates everything needed to recreate the HOCKIA backend on a new Supabase project. Apply the SQL files in order, then complete the manual dashboard steps below to finish configuration.
 
 ## Prerequisites
 - Supabase CLI v1.177.3 or newer (`brew install supabase/tap/supabase` on macOS).
@@ -9,7 +9,7 @@ This folder consolidates everything needed to recreate the PLAYR backend on a ne
 - `.env.local` already populated with your new `SUPABASE_URL` and `SUPABASE_ANON_KEY` (done earlier in this project).
 
 ## Apply the SQL migrations
-Run everything from the repository root (`/Users/tianurien/Desktop/Code/PLAYR`).
+Run everything from the repository root (`/Users/tianurien/Desktop/Code/HOCKIA`).
 
 ### Option A – one command
 ```bash
@@ -32,8 +32,8 @@ Each script is idempotent; rerunning is safe if something fails mid-way.
 Perform these steps inside the Supabase dashboard after the SQL finishes.
 
 1. **Authentication → URL Configuration**
-   - Site URL: `https://oplayr.com`
-   - Additional Redirect URLs: `http://localhost:5173/auth/callback`, `https://oplayr.com/auth/callback`
+   - Site URL: `https://inhockia.com`
+   - Additional Redirect URLs: `http://localhost:5173/auth/callback`, `https://inhockia.com/auth/callback`
    - Enable email confirmations (already default) because the app relies on PKCE verification.
 
 2. **Authentication → Providers**

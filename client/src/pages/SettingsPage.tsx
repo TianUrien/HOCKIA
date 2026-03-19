@@ -905,7 +905,7 @@ export default function SettingsPage() {
             {expandedSection === 'support' && (
               <div className="px-4 pb-4">
                 <LinkRow 
-                  to="mailto:team@oplayr.com" 
+                  to="mailto:team@inhockia.com"
                   icon={Mail} 
                   label="Contact Support" 
                   external 

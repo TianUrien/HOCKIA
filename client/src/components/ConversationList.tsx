@@ -100,7 +100,7 @@ export default function ConversationList({
           const participantName =
             conversation.otherParticipant?.full_name ||
             conversation.otherParticipant?.username ||
-            'PLAYR Member'
+            'HOCKIA Member'
           const avatarInitials = getInitials(participantName)
 
           return (

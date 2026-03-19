@@ -3,15 +3,15 @@
 
 UPDATE public.email_templates
 SET
-  subject_template = '{{view_count}} viewed your PLAYR profile',
+  subject_template = '{{view_count}} viewed your HOCKIA profile',
   content_json = '[
     {"type": "paragraph", "text": "Hi {{first_name}},"},
-    {"type": "paragraph", "text": "{{view_count}} checked out your PLAYR profile this week."},
+    {"type": "paragraph", "text": "{{view_count}} checked out your HOCKIA profile this week."},
     {"type": "paragraph", "text": "Log in to see who''s been looking and what caught their attention.", "color": "#6b7280"},
     {"type": "button", "text": "{{cta_label}}", "url": "{{cta_url}}"},
     {"type": "footnote", "text": "Tip: Keep your profile up to date so others can see everything you have to offer."}
   ]'::jsonb,
-  text_template = E'Hi {{first_name}},\n\n{{view_count}} checked out your PLAYR profile this week.\n\nLog in to see who''s been looking and what caught their attention.\n\n{{cta_label}}:\n{{cta_url}}\n\nTip: Keep your profile up to date so others can see everything you have to offer.\n\n---\nYou''re receiving this because you''re on PLAYR.\nManage preferences: {{settings_url}}',
+  text_template = E'Hi {{first_name}},\n\n{{view_count}} checked out your HOCKIA profile this week.\n\nLog in to see who''s been looking and what caught their attention.\n\n{{cta_label}}:\n{{cta_url}}\n\nTip: Keep your profile up to date so others can see everything you have to offer.\n\n---\nYou''re receiving this because you''re on HOCKIA.\nManage preferences: {{settings_url}}',
   description = 'Weekly digest teasing profile view count. Drives users back to the app to see who viewed them.',
   variables = '[
     {"name": "first_name", "description": "Recipient first name", "required": true},

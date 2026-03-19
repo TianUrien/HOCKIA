@@ -430,7 +430,7 @@ Deno.serve(async (req: Request) => {
           contact_name_greeting: contactName ? ` ${contactName}` : '',
           club_name: contact?.club_name || '',
           country: contact?.country || '',
-          cta_url: 'https://oplayr.com/signup',
+          cta_url: 'https://inhockia.com/signup',
         }
 
         // A/B variant: use variant-specific template or subject

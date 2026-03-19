@@ -154,7 +154,7 @@ export default function SignUp() {
               <div className="flex items-center gap-3 mb-2">
                 <img
                   src="/WhiteLogo.svg"
-                  alt="PLAYR"
+                  alt="HOCKIA"
                   className="h-8"
                 />
               </div>
@@ -166,7 +166,7 @@ export default function SignUp() {
           {/* Role Selection */}
           {!selectedRole && (
             <div className="p-8">
-              <h3 className="text-2xl font-bold text-gray-900 mb-2 text-center">Join PLAYR</h3>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2 text-center">Join HOCKIA</h3>
               <p className="text-gray-600 mb-8 text-center">Select your role to get started</p>
 
               <div className="space-y-4">
@@ -249,7 +249,7 @@ export default function SignUp() {
                   onClick={() => {
                     if (!supportsReliableOAuth()) {
                       // Show warning - OAuth may not work in in-app browsers
-                      alert('Google Sign-In may not work in this browser. Please use email/password signup, or open PLAYR in Safari or Chrome.')
+                      alert('Google Sign-In may not work in this browser. Please use email/password signup, or open HOCKIA in Safari or Chrome.')
                       return
                     }
                     trackSignUpStart('google')

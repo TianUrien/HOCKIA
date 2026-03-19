@@ -1,5 +1,5 @@
 -- 002_tables.sql
--- Primary relational tables for the PLAYR Supabase project
+-- Primary relational tables for the HOCKIA Supabase project
 -- Run via: supabase db execute --file supabase_setup/002_functions_and_triggers.sql
 
 SET search_path = public;

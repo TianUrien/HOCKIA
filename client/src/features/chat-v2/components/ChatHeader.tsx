@@ -13,7 +13,7 @@ interface ChatHeaderProps {
   immersiveMobile?: boolean
 }
 
-const fallbackName = 'PLAYR Member'
+const fallbackName = 'HOCKIA Member'
 
 export function ChatHeader({ participant, onBack, profilePath, isMobile, immersiveMobile = false }: ChatHeaderProps) {
   const participantName = participant?.full_name || participant?.username || fallbackName

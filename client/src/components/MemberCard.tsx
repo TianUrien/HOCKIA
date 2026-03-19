@@ -226,8 +226,8 @@ export default function MemberCard({
         onClose={() => setShowSignInPrompt(false)}
         title={signInAction === 'message' ? 'Sign in to message' : 'Sign in to view profile'}
         message={signInAction === 'message' 
-          ? 'Sign in or create a free PLAYR account to connect with this member.'
-          : 'Sign in or create a free PLAYR account to view member profiles.'
+          ? 'Sign in or create a free HOCKIA account to connect with this member.'
+          : 'Sign in or create a free HOCKIA account to view member profiles.'
         }
       />
     </div>

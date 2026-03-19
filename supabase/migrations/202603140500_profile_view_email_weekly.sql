@@ -133,7 +133,7 @@ SET
     {"type": "button", "text": "{{cta_label}}", "url": "{{cta_url}}"},
     {"type": "footnote", "text": "Keep your profile fresh to attract more views."}
   ]'::jsonb,
-  text_template = E'{{heading}} on PLAYR\n\nHi {{first_name}},\n\nHere''s who checked out your profile this week.\n\n{{unique_viewers}} unique viewers · {{total_views}} total views\n\n{{cta_label}}:\n{{cta_url}}\n\nKeep your profile fresh to attract more views.\n\n---\nYou''re receiving this because you''re on PLAYR.\nManage preferences: {{settings_url}}',
+  text_template = E'{{heading}} on HOCKIA\n\nHi {{first_name}},\n\nHere''s who checked out your profile this week.\n\n{{unique_viewers}} unique viewers · {{total_views}} total views\n\n{{cta_label}}:\n{{cta_url}}\n\nKeep your profile fresh to attract more views.\n\n---\nYou''re receiving this because you''re on HOCKIA.\nManage preferences: {{settings_url}}',
   description = 'Weekly digest summarising who viewed the user''s profile. Sent once every 7 days when profile views are detected.'
 WHERE template_key = 'profile_view_digest';
 

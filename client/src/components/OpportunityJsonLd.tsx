@@ -2,7 +2,7 @@
  * VacancyJsonLd - Structured data component for AI discoverability
  * 
  * Generates schema.org/JobPosting JSON-LD for vacancy pages.
- * This makes PLAYR opportunities machine-readable for:
+ * This makes HOCKIA opportunities machine-readable for:
  * - Search engines (Google, Bing)
  * - AI assistants (ChatGPT, Claude, Siri, etc.)
  * - Job aggregators
@@ -61,7 +61,7 @@ interface JobPostingSchema {
 }
 
 /**
- * Maps PLAYR position enum to human-readable category
+ * Maps HOCKIA position enum to human-readable category
  */
 function formatPosition(position: string | null, gender: string | null): string {
   if (!position) return 'Field Hockey Player'
@@ -80,7 +80,7 @@ function formatPosition(position: string | null, gender: string | null): string 
 }
 
 /**
- * Maps PLAYR benefits array to human-readable string
+ * Maps HOCKIA benefits array to human-readable string
  */
 function formatBenefits(benefits: string[], customBenefits: string[]): string | undefined {
   const benefitLabels: Record<string, string> = {
@@ -139,7 +139,7 @@ function createDescription(vacancy: Vacancy, club: ClubInfo): string {
 
 export default function VacancyJsonLd({ vacancy, club }: VacancyJsonLdProps) {
   const jsonLd = useMemo<JobPostingSchema>(() => {
-    const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://oplayr.com'
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://inhockia.com'
     
     return {
       '@context': 'https://schema.org',
@@ -188,13 +188,13 @@ export default function VacancyJsonLd({ vacancy, club }: VacancyJsonLdProps) {
         },
       },
       
-      // Link back to PLAYR
+      // Link back to HOCKIA
       url: `${baseUrl}/opportunities/${vacancy.id}`,
       
       // Identifier for deduplication
       identifier: {
         '@type': 'PropertyValue',
-        name: 'PLAYR Opportunity ID',
+        name: 'HOCKIA Opportunity ID',
         value: vacancy.id,
       },
     }
@@ -244,12 +244,12 @@ interface ItemListSchema {
 
 export function OpportunitiesListJsonLd({ opportunities, totalCount }: OpportunitiesListJsonLdProps) {
   const jsonLd = useMemo<ItemListSchema>(() => {
-    const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://oplayr.com'
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://inhockia.com'
     
     return {
       '@context': 'https://schema.org',
       '@type': 'ItemList',
-      name: 'Field Hockey Opportunities on PLAYR',
+      name: 'Field Hockey Opportunities on HOCKIA',
       description: `Browse ${totalCount} open field hockey opportunities for players and coaches worldwide.`,
       numberOfItems: totalCount,
       itemListElement: opportunities.slice(0, 10).map((opp, index) => ({

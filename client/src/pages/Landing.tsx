@@ -407,7 +407,7 @@ export default function Landing() {
               type="button"
               onClick={() => {
                 if (!supportsReliableOAuth()) {
-                  alert('Google Sign-In may not work in this browser. Please use email/password login, or open PLAYR in Safari or Chrome.')
+                  alert('Google Sign-In may not work in this browser. Please use email/password login, or open HOCKIA in Safari or Chrome.')
                   return
                 }
                 supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: getAuthRedirectUrl() } })
@@ -447,7 +447,7 @@ export default function Landing() {
           <div className="flex-1 pr-12 xl:pr-24">
             <img 
               src="/WhiteLogo.svg" 
-              alt="PLAYR" 
+              alt="HOCKIA"
               className="h-24 xl:h-32 mb-6 object-contain"
               fetchPriority="high"
               loading="eager"
@@ -534,7 +534,7 @@ export default function Landing() {
                 type="button"
                 onClick={() => {
                   if (!supportsReliableOAuth()) {
-                    alert('Google Sign-In may not work in this browser. Please use email/password login, or open PLAYR in Safari or Chrome.')
+                    alert('Google Sign-In may not work in this browser. Please use email/password login, or open HOCKIA in Safari or Chrome.')
                     return
                   }
                   supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: getAuthRedirectUrl() } })
@@ -557,7 +557,7 @@ export default function Landing() {
                   onClick={() => navigate('/signup')}
                   className="text-[#924CEC] hover:text-[#a855f7] font-semibold transition-colors"
                 >
-                  Join PLAYR
+                  Join HOCKIA
                 </button>
               </p>
             </div>

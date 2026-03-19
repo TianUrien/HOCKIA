@@ -1,5 +1,5 @@
 /**
- * Google Analytics 4 (GA4) integration for PLAYR
+ * Google Analytics 4 (GA4) integration for HOCKIA
  * 
  * This module provides utilities for tracking page views, events, and user properties.
  * GA4 Measurement ID: G-1QZ48FMV1V
@@ -94,7 +94,7 @@ export function clearUserProperties(): void {
 }
 
 // ============================================
-// Pre-defined events for PLAYR
+// Pre-defined events for HOCKIA
 // ============================================
 
 /** Track sign up initiation */

@@ -1,5 +1,5 @@
 -- 005_indexes_views_storage.sql
--- Secondary indexes, analytical views, and storage policies for PLAYR Supabase
+-- Secondary indexes, analytical views, and storage policies for HOCKIA Supabase
 -- Run via: supabase db execute --file supabase_setup/005_storage.sql
 
 SET search_path = public;

@@ -70,8 +70,8 @@ export default function Header() {
               className="flex items-center gap-2 hover:opacity-80 transition-opacity"
             >
               <img 
-                src="/New-LogoBlack.svg" 
-                alt="PLAYR" 
+                src="/HockiaLogoBlack.svg"
+                alt="HOCKIA"
                 className="h-8"
               />
             </button>
@@ -239,7 +239,7 @@ export default function Header() {
                   onClick={() => handleNavigate('/signup')}
                   className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white text-sm font-medium hover:opacity-90 transition-opacity"
                 >
-                  Join PLAYR
+                  Join HOCKIA
                 </button>
               </>
             )}

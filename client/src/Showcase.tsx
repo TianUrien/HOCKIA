@@ -8,7 +8,7 @@ export default function Showcase() {
       <div className="max-w-7xl mx-auto space-y-12">
         {/* Header */}
         <div className="text-center space-y-4">
-          <h1 className="text-5xl font-bold text-gradient">PLAYR Design System</h1>
+          <h1 className="text-5xl font-bold text-gradient">HOCKIA Design System</h1>
           <p className="text-dark-text-muted">
             A showcase of components, colors, and styles
           </p>
@@ -19,27 +19,27 @@ export default function Showcase() {
           <h2 className="text-3xl font-bold">Brand Colors</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             <div className="space-y-2">
-              <div className="h-24 rounded-xl bg-playr-primary" />
+              <div className="h-24 rounded-xl bg-hockia-primary" />
               <p className="text-sm text-dark-text-muted">Primary</p>
             </div>
             <div className="space-y-2">
-              <div className="h-24 rounded-xl bg-playr-secondary" />
+              <div className="h-24 rounded-xl bg-hockia-secondary" />
               <p className="text-sm text-dark-text-muted">Secondary</p>
             </div>
             <div className="space-y-2">
-              <div className="h-24 rounded-xl bg-playr-accent" />
+              <div className="h-24 rounded-xl bg-hockia-accent" />
               <p className="text-sm text-dark-text-muted">Accent</p>
             </div>
             <div className="space-y-2">
-              <div className="h-24 rounded-xl bg-playr-success" />
+              <div className="h-24 rounded-xl bg-hockia-success" />
               <p className="text-sm text-dark-text-muted">Success</p>
             </div>
             <div className="space-y-2">
-              <div className="h-24 rounded-xl bg-playr-warning" />
+              <div className="h-24 rounded-xl bg-hockia-warning" />
               <p className="text-sm text-dark-text-muted">Warning</p>
             </div>
             <div className="space-y-2">
-              <div className="h-24 rounded-xl bg-playr-danger" />
+              <div className="h-24 rounded-xl bg-hockia-danger" />
               <p className="text-sm text-dark-text-muted">Danger</p>
             </div>
           </div>
@@ -66,21 +66,21 @@ export default function Showcase() {
           <h2 className="text-3xl font-bold">Cards</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="card">
-              <Sparkles className="w-12 h-12 text-playr-primary mb-4" />
+              <Sparkles className="w-12 h-12 text-hockia-primary mb-4" />
               <h3 className="text-xl font-bold mb-2">Standard Card</h3>
               <p className="text-dark-text-muted">
                 A solid card with hover effects and border styling.
               </p>
             </div>
             <div className="card-glass">
-              <Zap className="w-12 h-12 text-playr-secondary mb-4" />
+              <Zap className="w-12 h-12 text-hockia-secondary mb-4" />
               <h3 className="text-xl font-bold mb-2">Glass Card</h3>
               <p className="text-dark-text-muted">
                 Beautiful glassmorphism with backdrop blur.
               </p>
             </div>
             <div className="glass-strong rounded-xl p-6">
-              <Heart className="w-12 h-12 text-playr-accent mb-4" />
+              <Heart className="w-12 h-12 text-hockia-accent mb-4" />
               <h3 className="text-xl font-bold mb-2">Strong Glass</h3>
               <p className="text-dark-text-muted">
                 Stronger glass effect with more opacity.
@@ -146,38 +146,38 @@ export default function Showcase() {
           <h2 className="text-3xl font-bold">Icons (Lucide React)</h2>
           <div className="flex flex-wrap gap-6">
             <div className="flex flex-col items-center gap-2">
-              <div className="w-12 h-12 rounded-xl bg-playr-primary/20 flex items-center justify-center">
-                <Sparkles className="w-6 h-6 text-playr-primary" />
+              <div className="w-12 h-12 rounded-xl bg-hockia-primary/20 flex items-center justify-center">
+                <Sparkles className="w-6 h-6 text-hockia-primary" />
               </div>
               <span className="text-xs text-dark-text-muted">Sparkles</span>
             </div>
             <div className="flex flex-col items-center gap-2">
-              <div className="w-12 h-12 rounded-xl bg-playr-secondary/20 flex items-center justify-center">
-                <Zap className="w-6 h-6 text-playr-secondary" />
+              <div className="w-12 h-12 rounded-xl bg-hockia-secondary/20 flex items-center justify-center">
+                <Zap className="w-6 h-6 text-hockia-secondary" />
               </div>
               <span className="text-xs text-dark-text-muted">Zap</span>
             </div>
             <div className="flex flex-col items-center gap-2">
-              <div className="w-12 h-12 rounded-xl bg-playr-accent/20 flex items-center justify-center">
-                <Rocket className="w-6 h-6 text-playr-accent" />
+              <div className="w-12 h-12 rounded-xl bg-hockia-accent/20 flex items-center justify-center">
+                <Rocket className="w-6 h-6 text-hockia-accent" />
               </div>
               <span className="text-xs text-dark-text-muted">Rocket</span>
             </div>
             <div className="flex flex-col items-center gap-2">
-              <div className="w-12 h-12 rounded-xl bg-playr-success/20 flex items-center justify-center">
-                <Star className="w-6 h-6 text-playr-success" />
+              <div className="w-12 h-12 rounded-xl bg-hockia-success/20 flex items-center justify-center">
+                <Star className="w-6 h-6 text-hockia-success" />
               </div>
               <span className="text-xs text-dark-text-muted">Star</span>
             </div>
             <div className="flex flex-col items-center gap-2">
-              <div className="w-12 h-12 rounded-xl bg-playr-warning/20 flex items-center justify-center">
-                <Code className="w-6 h-6 text-playr-warning" />
+              <div className="w-12 h-12 rounded-xl bg-hockia-warning/20 flex items-center justify-center">
+                <Code className="w-6 h-6 text-hockia-warning" />
               </div>
               <span className="text-xs text-dark-text-muted">Code</span>
             </div>
             <div className="flex flex-col items-center gap-2">
-              <div className="w-12 h-12 rounded-xl bg-playr-danger/20 flex items-center justify-center">
-                <Heart className="w-6 h-6 text-playr-danger" />
+              <div className="w-12 h-12 rounded-xl bg-hockia-danger/20 flex items-center justify-center">
+                <Heart className="w-6 h-6 text-hockia-danger" />
               </div>
               <span className="text-xs text-dark-text-muted">Heart</span>
             </div>
@@ -188,11 +188,11 @@ export default function Showcase() {
         <section className="space-y-6">
           <h2 className="text-3xl font-bold">Gradients</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="gradient-playr h-32 rounded-xl flex items-center justify-center">
-              <span className="text-white font-bold text-xl">.gradient-playr</span>
+            <div className="gradient-hockia h-32 rounded-xl flex items-center justify-center">
+              <span className="text-white font-bold text-xl">.gradient-hockia</span>
             </div>
-            <div className="gradient-playr-soft h-32 rounded-xl flex items-center justify-center">
-              <span className="text-white font-bold text-xl">.gradient-playr-soft</span>
+            <div className="gradient-hockia-soft h-32 rounded-xl flex items-center justify-center">
+              <span className="text-white font-bold text-xl">.gradient-hockia-soft</span>
             </div>
           </div>
         </section>

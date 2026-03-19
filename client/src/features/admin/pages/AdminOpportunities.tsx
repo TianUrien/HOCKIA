@@ -69,7 +69,7 @@ export function AdminOpportunities() {
   }, [statusFilter, daysFilter, page])
 
   useEffect(() => {
-    document.title = 'Vacancies | PLAYR Admin'
+    document.title = 'Vacancies | HOCKIA Admin'
     fetchData()
   }, [fetchData])
 

@@ -55,7 +55,7 @@ export function AdminCommunity() {
   }, [daysFilter])
 
   useEffect(() => {
-    document.title = 'Community & Q&A | PLAYR Admin'
+    document.title = 'Community & Q&A | HOCKIA Admin'
     fetchData()
   }, [fetchData])
 

@@ -28,7 +28,7 @@ SET
     {"type": "paragraph", "text": "{{summary}}", "conditional": true},
     {"type": "button", "text": "View Opportunity", "url": "{{cta_url}}"}
   ]'::jsonb,
-  text_template = E'New Opportunity\n\nHi {{first_name}}, a club has published a new opportunity that may interest you.\n\n{{vacancy_title}}\n{{club_name}}\nPosition: {{position}}\nLocation: {{location}}\n\n{{summary}}\n\nView this opportunity:\n{{cta_url}}\n\n---\nYou''re receiving this because you have a PLAYR account.\nManage preferences: {{settings_url}}',
+  text_template = E'New Opportunity\n\nHi {{first_name}}, a club has published a new opportunity that may interest you.\n\n{{vacancy_title}}\n{{club_name}}\nPosition: {{position}}\nLocation: {{location}}\n\n{{summary}}\n\nView this opportunity:\n{{cta_url}}\n\n---\nYou''re receiving this because you have a HOCKIA account.\nManage preferences: {{settings_url}}',
   variables = '[
     {"name": "vacancy_title", "description": "Opportunity title", "required": true},
     {"name": "club_name", "description": "Club display name", "required": true},

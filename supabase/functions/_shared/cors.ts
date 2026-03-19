@@ -1,9 +1,9 @@
 // Allowed origins for CORS - restrict to known domains
 const ALLOWED_ORIGINS = [
-  'https://www.oplayr.com',
-  'https://oplayr.com',
-  'https://playr-flax.vercel.app',
-  'https://playr-staging.vercel.app',
+  'https://www.inhockia.com',
+  'https://inhockia.com',
+  'https://hockia.vercel.app',
+  'https://hockia-staging.vercel.app',
   // Development origins
   'http://localhost:5173',
   'http://localhost:3000',
@@ -15,7 +15,7 @@ function isAllowedOrigin(origin: string): boolean {
   if (ALLOWED_ORIGINS.includes(origin)) return true
   try {
     const { hostname } = new URL(origin)
-    if (hostname.endsWith('.vercel.app') && hostname.startsWith('playr-')) return true
+    if (hostname.endsWith('.vercel.app') && hostname.startsWith('hockia-')) return true
   } catch { /* invalid URL */ }
   return false
 }

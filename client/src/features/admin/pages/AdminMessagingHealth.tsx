@@ -58,7 +58,7 @@ export function AdminMessagingHealth() {
   }, [daysFilter])
 
   useEffect(() => {
-    document.title = 'Messaging Health | PLAYR Admin'
+    document.title = 'Messaging Health | HOCKIA Admin'
     fetchData()
   }, [fetchData])
 

@@ -82,7 +82,7 @@ export function AdminNetworking() {
   }, [daysFilter, excludeTest, roleFilter])
 
   useEffect(() => {
-    document.title = 'Networking Analytics | PLAYR Admin'
+    document.title = 'Networking Analytics | HOCKIA Admin'
     fetchData()
   }, [fetchData])
 

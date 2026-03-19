@@ -12,10 +12,10 @@ declare const Deno: { env: { get(key: string): string | undefined } }
  */
 
 export const RESEND_API_URL = 'https://api.resend.com/emails'
-export const SENDER_EMAIL = 'PLAYR Hockey <team@oplayr.com>'
-export const REPLY_TO_EMAIL = 'team@oplayr.com'
-export const PLAYR_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://oplayr.com'
-export const UNSUBSCRIBE_URL = `${PLAYR_BASE_URL}/settings`
+export const SENDER_EMAIL = 'HOCKIA <team@inhockia.com>'
+export const REPLY_TO_EMAIL = 'team@inhockia.com'
+export const HOCKIA_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://inhockia.com'
+export const UNSUBSCRIBE_URL = `${HOCKIA_BASE_URL}/settings`
 
 export interface VacancyRecord {
   id: string
@@ -52,7 +52,7 @@ export function generateEmailHtml(vacancy: VacancyRecord, clubName: string): str
   
   const summary = vacancy.description?.trim()?.slice(0, 200) || null
   const hasMoreSummary = vacancy.description && vacancy.description.length > 200
-  const vacancyUrl = `${PLAYR_BASE_URL}/opportunities/${vacancy.id}`
+  const vacancyUrl = `${HOCKIA_BASE_URL}/opportunities/${vacancy.id}`
   const safeClubName = clubName?.trim() || 'A club'
 
   // Build details section conditionally
@@ -72,13 +72,13 @@ export function generateEmailHtml(vacancy: VacancyRecord, clubName: string): str
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>New Opportunity on PLAYR</title>
+  <title>New Opportunity on HOCKIA</title>
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
   
   <!-- Header -->
   <div style="background: linear-gradient(135deg, #8026FA 0%, #924CEC 100%); padding: 32px 24px; border-radius: 16px 16px 0 0; text-align: center;">
-    <img src="https://www.oplayr.com/playr-logo-white.png" alt="PLAYR" width="120" height="29" style="height: 29px; width: 120px;" />
+    <img src="https://www.inhockia.com/hockia-logo-white.png" alt="HOCKIA" width="120" height="29" style="height: 29px; width: 120px;" />
   </div>
   
   <!-- Main Content -->
@@ -112,10 +112,10 @@ export function generateEmailHtml(vacancy: VacancyRecord, clubName: string): str
   <!-- Footer -->
   <div style="background: #f3f4f6; padding: 24px; border-radius: 0 0 16px 16px; border: 1px solid #e5e7eb; border-top: none; text-align: center;">
     <p style="color: #6b7280; font-size: 13px; margin: 0 0 8px 0;">
-      You're receiving this because you're on PLAYR.
+      You're receiving this because you're on HOCKIA.
     </p>
     <p style="color: #9ca3af; font-size: 12px; margin: 0;">
-      <a href="${PLAYR_BASE_URL}/settings" style="color: #8026FA; text-decoration: none;">Manage notification preferences</a>
+      <a href="${HOCKIA_BASE_URL}/settings" style="color: #8026FA; text-decoration: none;">Manage notification preferences</a>
     </p>
   </div>
   
@@ -139,12 +139,12 @@ export function generateEmailText(vacancy: VacancyRecord, clubName: string): str
   
   const summary = vacancy.description?.trim()?.slice(0, 200) || null
   const hasMoreSummary = vacancy.description && vacancy.description.length > 200
-  const vacancyUrl = `${PLAYR_BASE_URL}/opportunities/${vacancy.id}`
+  const vacancyUrl = `${HOCKIA_BASE_URL}/opportunities/${vacancy.id}`
   const safeClubName = clubName?.trim() || 'A club'
 
   // Build text content
   const lines: string[] = [
-    'New Opportunity Available on PLAYR! 🏑',
+    'New Opportunity Available on HOCKIA! 🏑',
     '',
     'A club has just published a new opportunity.',
     '',
@@ -173,8 +173,8 @@ export function generateEmailText(vacancy: VacancyRecord, clubName: string): str
     "Don't miss out – great opportunities go fast!",
     '',
     '---',
-    "You're receiving this because you're on PLAYR.",
-    `Manage preferences: ${PLAYR_BASE_URL}/settings`
+    "You're receiving this because you're on HOCKIA.",
+    `Manage preferences: ${HOCKIA_BASE_URL}/settings`
   )
 
   return lines.join('\n')

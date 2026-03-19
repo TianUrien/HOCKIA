@@ -18,7 +18,7 @@ export default function SignInPromptModal({
   isOpen,
   onClose,
   title = 'Sign in to continue',
-  message = 'Sign in or create a free PLAYR account to apply to this opportunity.',
+  message = 'Sign in or create a free HOCKIA account to apply to this opportunity.',
 }: SignInPromptModalProps) {
   const navigate = useNavigate()
   const location = useLocation()
@@ -70,7 +70,7 @@ export default function SignInPromptModal({
 
         {/* Footer note */}
         <p className="text-xs text-gray-500 mt-4">
-          It only takes a minute to join PLAYR and start connecting with clubs worldwide.
+          It only takes a minute to join HOCKIA and start connecting with clubs worldwide.
         </p>
       </div>
     </Modal>

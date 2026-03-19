@@ -2,7 +2,7 @@
 -- Fix Campaign Open Tracking Metrics
 -- ============================================================================
 -- Problem:
---   Resend can record delivered/opened events, but PLAYR campaign metrics still
+--   Resend can record delivered/opened events, but HOCKIA campaign metrics still
 --   show 0 opens if the email_events row is not linked back to email_sends in
 --   time. The existing campaign RPCs only read email_sends.status.
 --

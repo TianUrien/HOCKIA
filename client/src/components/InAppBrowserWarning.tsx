@@ -79,13 +79,13 @@ export default function InAppBrowserWarning({
     
     switch (context) {
       case 'signup':
-        return `You're viewing PLAYR inside ${browser}. For the best signup experience, open this page in Safari or Chrome.`
+        return `You're viewing HOCKIA inside ${browser}. For the best signup experience, open this page in Safari or Chrome.`
       case 'login':
         return `${browser}'s browser may have trouble with login. Open in Safari or Chrome for a smoother experience.`
       case 'verification':
         return `Email verification works best when opened in Safari or Chrome, not inside ${browser}.`
       default:
-        return `You're viewing PLAYR inside ${browser}. Some features work better in Safari or Chrome.`
+        return `You're viewing HOCKIA inside ${browser}. Some features work better in Safari or Chrome.`
     }
   }
 

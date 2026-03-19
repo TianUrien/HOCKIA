@@ -375,7 +375,7 @@ export default function CommentsTab({ profileId, highlightedCommentIds }: Commen
                 {COMMENTS_HEADER_INFO}
               </InfoTooltip>
             </div>
-            <p className="text-sm text-gray-600">Verified testimonials from PLAYR members.</p>
+            <p className="text-sm text-gray-600">Verified testimonials from HOCKIA members.</p>
           </div>
           <div className="inline-flex items-center gap-2 rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-700">
             <MessageSquare className="h-4 w-4 text-[#8026FA]" />
@@ -471,7 +471,7 @@ export default function CommentsTab({ profileId, highlightedCommentIds }: Commen
               <p>You can&apos;t leave a comment on your own profile, but other members can.</p>
             ) : (
               <p>
-                Sign in with a PLAYR profile to leave a public, attributed comment.
+                Sign in with a HOCKIA profile to leave a public, attributed comment.
               </p>
             )}
           </div>
@@ -493,7 +493,7 @@ export default function CommentsTab({ profileId, highlightedCommentIds }: Commen
                   src={existingComment.author?.avatar_url}
                   initials={getInitials(existingComment.author?.full_name ?? existingComment.author?.username ?? null)}
                   size="md"
-                  alt={existingComment.author?.full_name || existingComment.author?.username || 'PLAYR member'}
+                  alt={existingComment.author?.full_name || existingComment.author?.username || 'HOCKIA member'}
                   enablePreview
                   previewTitle={existingComment.author?.full_name || existingComment.author?.username || undefined}
                 />
@@ -502,7 +502,7 @@ export default function CommentsTab({ profileId, highlightedCommentIds }: Commen
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
                         <p className="font-semibold text-gray-900">
-                          {existingComment.author?.full_name || existingComment.author?.username || 'PLAYR member'}
+                          {existingComment.author?.full_name || existingComment.author?.username || 'HOCKIA member'}
                         </p>
                         <RoleBadge role={existingComment.author?.role} />
                       </div>
@@ -650,7 +650,7 @@ export default function CommentsTab({ profileId, highlightedCommentIds }: Commen
                       src={comment.author?.avatar_url}
                       initials={getInitials(comment.author?.full_name ?? comment.author?.username ?? null)}
                       size="md"
-                      alt={comment.author?.full_name || comment.author?.username || 'Former PLAYR member'}
+                      alt={comment.author?.full_name || comment.author?.username || 'Former HOCKIA member'}
                       enablePreview
                       previewTitle={comment.author?.full_name || comment.author?.username || undefined}
                     />
@@ -659,7 +659,7 @@ export default function CommentsTab({ profileId, highlightedCommentIds }: Commen
                         <div>
                           <div className="flex flex-wrap items-center gap-2">
                             <p className="font-semibold text-gray-900">
-                              {comment.author?.full_name || comment.author?.username || 'Former PLAYR member'}
+                              {comment.author?.full_name || comment.author?.username || 'Former HOCKIA member'}
                             </p>
                             <RoleBadge role={comment.author?.role} />
                           </div>

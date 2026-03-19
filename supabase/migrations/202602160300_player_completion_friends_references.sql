@@ -2,7 +2,7 @@
 -- Player profile completion: add friends + references requirements
 -- ============================================================================
 -- A player profile is no longer 100% without at least one accepted friend
--- connection and one approved reference. These are core to PLAYR's
+-- connection and one approved reference. These are core to HOCKIA's
 -- networking value proposition (trusted circle + real connections).
 --
 -- Updated player weights (7 buckets, total 100):

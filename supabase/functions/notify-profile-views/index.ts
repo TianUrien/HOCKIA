@@ -175,7 +175,7 @@ Deno.serve(async (req: Request) => {
     }
 
     const firstName = recipient.full_name?.split(' ')[0]?.trim() || 'there'
-    const PLAYR_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://oplayr.com'
+    const HOCKIA_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://inhockia.com'
 
     const templateVars = {
       first_name: firstName,
@@ -185,9 +185,9 @@ Deno.serve(async (req: Request) => {
       unique_viewers: String(stats.uniqueViewers),
       total_views: String(stats.totalViews),
       anonymous_viewers: String(stats.anonymousViewers),
-      cta_url: `${PLAYR_BASE_URL}/dashboard/profile?tab=profile&section=viewers`,
+      cta_url: `${HOCKIA_BASE_URL}/dashboard/profile?tab=profile&section=viewers`,
       cta_label: 'See Who Viewed Your Profile',
-      settings_url: `${PLAYR_BASE_URL}/settings`,
+      settings_url: `${HOCKIA_BASE_URL}/settings`,
     }
 
     // Try DB template, fall back to hardcoded
@@ -205,8 +205,8 @@ Deno.serve(async (req: Request) => {
       emailHtml = generateEmailHtml(recipient as RecipientData, viewers, stats)
       emailText = generateEmailText(recipient as RecipientData, viewers, stats)
       subject = stats.uniqueViewers === 1
-        ? 'Someone viewed your PLAYR profile'
-        : `${stats.uniqueViewers} people viewed your PLAYR profile`
+        ? 'Someone viewed your HOCKIA profile'
+        : `${stats.uniqueViewers} people viewed your HOCKIA profile`
       logger.info('Falling back to hardcoded template')
     }
 

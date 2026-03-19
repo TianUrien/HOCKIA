@@ -138,7 +138,7 @@ export function AdminEmail() {
   })
 
   useEffect(() => {
-    document.title = 'Email Intelligence | PLAYR Admin'
+    document.title = 'Email Intelligence | HOCKIA Admin'
     getAllCountries().then(setCountries).catch(() => {})
   }, [])
 

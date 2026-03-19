@@ -175,11 +175,11 @@ export default function InstallPrompt() {
         <div className="flex items-start gap-3">
           <img
             src="/pwa-icons/ios/100.png"
-            alt="PLAYR"
+            alt="HOCKIA"
             className="w-10 h-10 rounded-xl flex-shrink-0"
           />
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-gray-900 text-sm">Install PLAYR</h3>
+            <h3 className="font-semibold text-gray-900 text-sm">Install HOCKIA</h3>
             <p className="text-xs text-gray-600 mt-0.5">
               Add to your home screen for the best experience
             </p>
@@ -214,11 +214,11 @@ export default function InstallPrompt() {
       <div className="flex items-start gap-3">
         <img
           src="/pwa-icons/android/android-launchericon-96-96.png"
-          alt="PLAYR"
+          alt="HOCKIA"
           className="w-10 h-10 rounded-xl flex-shrink-0"
         />
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-gray-900 text-sm">Install PLAYR</h3>
+          <h3 className="font-semibold text-gray-900 text-sm">Install HOCKIA</h3>
           <p className="text-xs text-gray-600 mt-0.5">
             Get quick access from your home screen
           </p>

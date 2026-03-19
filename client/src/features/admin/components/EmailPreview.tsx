@@ -77,16 +77,16 @@ export function EmailPreview({ subject, blocks, variables, mode = 'html', isOutr
     if (mode === 'text') return null
 
     const body = blocks.map(b => renderBlockHtml(b, variables)).filter(Boolean).join('\n')
-    const settingsUrl = variables.settings_url || 'https://oplayr.com/settings'
+    const settingsUrl = variables.settings_url || 'https://inhockia.com/settings'
 
     const footerHtml = isOutreach
-      ? `<p style="color:#9ca3af;font-size:12px;margin:0;">You received this email because we believe your organization may benefit from PLAYR.<br><a href="https://oplayr.com" style="color:#8026FA;text-decoration:none;">Learn more about PLAYR</a></p>`
-      : `<p style="color:#9ca3af;font-size:12px;margin:0;">You're receiving this because you're on PLAYR.<br><a href="${settingsUrl}" style="color:#8026FA;text-decoration:none;">Manage notification preferences</a></p>`
+      ? `<p style="color:#9ca3af;font-size:12px;margin:0;">You received this email because we believe your organization may benefit from HOCKIA.<br><a href="https://inhockia.com" style="color:#8026FA;text-decoration:none;">Learn more about HOCKIA</a></p>`
+      : `<p style="color:#9ca3af;font-size:12px;margin:0;">You're receiving this because you're on HOCKIA.<br><a href="${settingsUrl}" style="color:#8026FA;text-decoration:none;">Manage notification preferences</a></p>`
 
     return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
 <body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.6;color:#333;max-width:600px;margin:0 auto;padding:20px;background:#f9fafb;">
 <div style="background:linear-gradient(135deg,#8026FA,#924CEC);padding:32px 24px;border-radius:16px 16px 0 0;text-align:center;">
-  <img src="https://www.oplayr.com/playr-logo-white.png" alt="PLAYR" width="120" height="29" style="height:29px;width:120px;" />
+  <img src="https://inhockia.com/hockia-logo-white.png" alt="HOCKIA" width="120" height="29" style="height:29px;width:120px;" />
 </div>
 <div style="background:#fff;padding:32px 24px;border-left:1px solid #e5e7eb;border-right:1px solid #e5e7eb;">
   ${body}

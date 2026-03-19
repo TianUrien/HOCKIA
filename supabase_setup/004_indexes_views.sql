@@ -1,5 +1,5 @@
 -- 004_rls_policies.sql
--- Row Level Security configuration for PLAYR Supabase project
+-- Row Level Security configuration for HOCKIA Supabase project
 -- Run via: supabase db execute --file supabase_setup/004_indexes_views.sql
 
 SET search_path = public;

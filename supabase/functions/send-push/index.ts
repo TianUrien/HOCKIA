@@ -24,7 +24,7 @@ import { buildPushPayload } from './push-payload.ts'
 
 const VAPID_PUBLIC_KEY = Deno.env.get('VAPID_PUBLIC_KEY')
 const VAPID_PRIVATE_KEY = Deno.env.get('VAPID_PRIVATE_KEY')
-const VAPID_CONTACT = Deno.env.get('VAPID_CONTACT') || 'mailto:team@oplayr.com'
+const VAPID_CONTACT = Deno.env.get('VAPID_CONTACT') || 'mailto:team@inhockia.com'
 
 if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
   webpush.setVapidDetails(VAPID_CONTACT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY)
@@ -92,7 +92,7 @@ Deno.serve(async (req: Request) => {
     }
 
     // Get actor name for notification copy
-    let actorName = 'A PLAYR member'
+    let actorName = 'A HOCKIA member'
     if (actorId) {
       const { data: actor } = await supabase
         .from('profiles')

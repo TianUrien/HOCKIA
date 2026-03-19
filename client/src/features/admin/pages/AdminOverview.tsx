@@ -55,7 +55,7 @@ export function AdminOverview() {
   const [errorBudget, setErrorBudget] = useState<ErrorBudgetStatus | null>(null)
 
   useEffect(() => {
-    document.title = 'Founder Command Center | PLAYR'
+    document.title = 'Founder Command Center | HOCKIA'
     setErrorBudget(getErrorBudgetStatus())
     const interval = setInterval(() => setErrorBudget(getErrorBudgetStatus()), 60000)
     return () => clearInterval(interval)

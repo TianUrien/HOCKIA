@@ -94,7 +94,7 @@ function CompactClubRow({ result, onSelect }: { result: SearchClubResult; onSele
       </div>
       {result.is_claimed && (
         <span className="text-[10px] font-medium text-[#8026FA] bg-[#8026FA]/10 px-2 py-0.5 rounded-full flex-shrink-0">
-          On PLAYR
+          On HOCKIA
         </span>
       )}
       <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0" />

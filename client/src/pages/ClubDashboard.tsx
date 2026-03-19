@@ -496,13 +496,13 @@ export default function ClubDashboard({ profileData, readOnly = false, isOwnProf
                           {publicContact.displayEmail}
                         </a>
                       ) : (
-                        <p className="text-gray-500 italic">Not shared with other PLAYR members</p>
+                        <p className="text-gray-500 italic">Not shared with other HOCKIA members</p>
                       )}
                       {!readOnly && (
                         <p className="text-xs text-gray-500 mt-1">
                           {profile.contact_email_public
                             ? publicContact.source === 'contact'
-                              ? 'Other PLAYR members see your contact email.'
+                              ? 'Other HOCKIA members see your contact email.'
                               : 'Add a contact email to be reachable.'
                             : savedContactEmail
                               ? 'Saved contact email is private.'
@@ -602,7 +602,7 @@ export default function ClubDashboard({ profileData, readOnly = false, isOwnProf
         isOpen={showSignInPrompt}
         onClose={() => setShowSignInPrompt(false)}
         title="Sign in to message"
-        message="Sign in or create a free PLAYR account to connect with this club."
+        message="Sign in or create a free HOCKIA account to connect with this club."
       />
     </div>
   )

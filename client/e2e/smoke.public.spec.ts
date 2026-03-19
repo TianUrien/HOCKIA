@@ -6,7 +6,7 @@ test.describe('@smoke public', () => {
 
     // Landing CTA is implemented as a button (not a link) and varies by breakpoint.
     const joinCta = page
-      .getByRole('button', { name: /join playr/i })
+      .getByRole('button', { name: /join hockia/i })
       .or(page.getByRole('button', { name: /join now/i }))
       .first()
     await expect(joinCta).toBeVisible({ timeout: 20000 })

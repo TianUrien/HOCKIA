@@ -1,9 +1,9 @@
-# PLAYR Production Readiness Audit Report
+# HOCKIA Production Readiness Audit Report
 
 **Date:** January 24, 2026
 **Auditor:** Principal Software Engineer Review
 **Scope:** Full-stack production readiness + quality audit
-**Repository:** PLAYR Web Application
+**Repository:** HOCKIA Web Application
 
 ---
 
@@ -11,7 +11,7 @@
 
 ### Overall Quality Rating: **B+**
 
-The PLAYR web application demonstrates solid architectural foundations with modern tooling, comprehensive error handling, and thoughtful security implementations. However, several critical bugs in the opportunity/application flow and gaps in testing coverage prevent an A rating.
+The HOCKIA web application demonstrates solid architectural foundations with modern tooling, comprehensive error handling, and thoughtful security implementations. However, several critical bugs in the opportunity/application flow and gaps in testing coverage prevent an A rating.
 
 ### Production Readiness Score: **72/100**
 
@@ -63,7 +63,7 @@ The PLAYR web application demonstrates solid architectural foundations with mode
 | SEC-001 | Security | Major | Local credential files contain sensitive data | [.env.local](.env.local), [client/.env](client/.env) contain test passwords (`Hola1234`), Sentry token | If laptop compromised, credentials exposed | Rotate Sentry token, use stronger test passwords, consider vault solution | S |
 | SEC-002 | Security | Major | No rate limiting on admin API | [supabase/functions/admin-actions/index.ts](supabase/functions/admin-actions/index.ts) | Potential brute force or abuse | Add rate limiting (10 req/min per admin) | M |
 | SEC-003 | Security | Minor | Search input has no length validation | [client/src/features/admin/api/adminApi.ts:523-538](client/src/features/admin/api/adminApi.ts#L523-L538) | DoS via very large search strings | Add client-side maxLength (255 chars) | S |
-| SEC-004 | Security | Minor | Email logo domain inconsistency | [supabase/functions/_shared/vacancy-email.ts:76](supabase/functions/_shared/vacancy-email.ts#L76) uses `www.oplayr.com` while base URLs use `oplayr.com` | Potential broken images if DNS misconfigured | Standardize to single domain | S |
+| SEC-004 | Security | Minor | Email logo domain inconsistency | [supabase/functions/_shared/vacancy-email.ts:76](supabase/functions/_shared/vacancy-email.ts#L76) uses `www.inhockia.com` while base URLs use `inhockia.com` | Potential broken images if DNS misconfigured | Standardize to single domain | S |
 
 ### Product/Functionality Findings
 
@@ -322,7 +322,7 @@ const validated = VacancySchema.array().parse(data);
 
 ## Summary
 
-The PLAYR application has strong foundations with modern architecture, comprehensive security (RLS), and good operational practices. The critical blockers are:
+The HOCKIA application has strong foundations with modern architecture, comprehensive security (RLS), and good operational practices. The critical blockers are:
 
 1. **Coach application flow bug** - Must fix immediately
 2. **Opportunity type validation gap** - Business logic flaw

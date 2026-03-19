@@ -2,7 +2,7 @@
 -- ADD BRANDS TO INVESTOR METRICS
 -- ============================================================================
 -- The investor dashboard was missing total_brands from both the admin and
--- public metrics RPCs. All four PLAYR roles (player, coach, club, brand)
+-- public metrics RPCs. All four HOCKIA roles (player, coach, club, brand)
 -- must be represented for investor-grade reporting.
 --
 -- Based on the latest version from 202601281800 (geographic distribution fix).

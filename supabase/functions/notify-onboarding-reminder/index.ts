@@ -16,9 +16,9 @@ import { sendTrackedEmail, createLogger } from '../_shared/email-sender.ts'
  * - pg_cron runs enqueue_onboarding_reminders() daily at 10:00 UTC
  *
  * 3-touch cadence:
- *   Reminder 1 (24h): "Complete your PLAYR profile and start connecting"
- *   Reminder 2 (72h): "Your PLAYR profile is almost ready"
- *   Reminder 3 (7d):  "Last chance to complete your PLAYR profile"
+ *   Reminder 1 (24h): "Complete your HOCKIA profile and start connecting"
+ *   Reminder 2 (72h): "Your HOCKIA profile is almost ready"
+ *   Reminder 3 (7d):  "Last chance to complete your HOCKIA profile"
  *
  * Safety guarantees:
  * 1. Re-checks onboarding_completed at send time (may have completed since enqueue)
@@ -44,24 +44,24 @@ interface ReminderContent {
 
 const REMINDER_CONTENT: Record<number, ReminderContent> = {
   1: {
-    subject: 'Complete your PLAYR profile and start connecting',
+    subject: 'Complete your HOCKIA profile and start connecting',
     heading: 'Your profile is waiting for you \uD83C\uDFD1',
     bodyText:
       "You're one step away from joining the field hockey community. Complete your profile to discover opportunities, connect with players and coaches, and showcase your skills.",
     ctaLabel: 'Complete My Profile',
   },
   2: {
-    subject: 'Your PLAYR profile is almost ready',
+    subject: 'Your HOCKIA profile is almost ready',
     heading: 'Don\'t miss out \uD83C\uDFD1',
     bodyText:
-      "Players and coaches on PLAYR are already connecting and finding opportunities. Don't miss out — finish setting up your profile to get started.",
+      "Players and coaches on HOCKIA are already connecting and finding opportunities. Don't miss out — finish setting up your profile to get started.",
     ctaLabel: 'Finish Setup',
   },
   3: {
-    subject: 'Last chance to complete your PLAYR profile',
+    subject: 'Last chance to complete your HOCKIA profile',
     heading: 'We\'re still waiting for you \uD83C\uDFD1',
     bodyText:
-      "We noticed you haven't finished setting up your PLAYR profile. Complete it now to start receiving opportunity notifications and connect with the community.",
+      "We noticed you haven't finished setting up your HOCKIA profile. Complete it now to start receiving opportunity notifications and connect with the community.",
     ctaLabel: 'Complete Profile Now',
   },
 }
@@ -217,15 +217,15 @@ Deno.serve(async (req: Request) => {
       : recipient.email.split('@')[0].trim()
 
     const content = REMINDER_CONTENT[reminderNumber]
-    const PLAYR_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://oplayr.com'
+    const HOCKIA_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://inhockia.com'
 
     const templateVars = {
       first_name: firstName,
       heading: content.heading,
       body_text: content.bodyText,
       cta_label: content.ctaLabel,
-      cta_url: `${PLAYR_BASE_URL}/complete-profile`,
-      settings_url: `${PLAYR_BASE_URL}/settings`,
+      cta_url: `${HOCKIA_BASE_URL}/complete-profile`,
+      settings_url: `${HOCKIA_BASE_URL}/settings`,
     }
 
     // Try DB template, fall back to plain text

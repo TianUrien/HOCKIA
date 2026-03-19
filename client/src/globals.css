@@ -2,16 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
-/* PLAYR Brand Colors & Custom Properties */
+/* HOCKIA Brand Colors & Custom Properties */
 :root {
   /* Primary Brand Colors */
-  --color-playr-primary: #8026FA;
-  --color-playr-secondary: #924CEC;
-  --color-playr-accent: #ec4899;
-  --color-playr-success: #10b981;
-  --color-playr-warning: #f59e0b;
-  --color-playr-danger: #ef4444;
-  --color-playr-orange: #ff9500;
+  --color-hockia-primary: #8026FA;
+  --color-hockia-secondary: #924CEC;
+  --color-hockia-accent: #ec4899;
+  --color-hockia-success: #10b981;
+  --color-hockia-warning: #f59e0b;
+  --color-hockia-danger: #ef4444;
+  --color-hockia-orange: #ff9500;
 
   /* Layout metrics */
   --app-safe-area-top: 0px;
@@ -107,17 +107,17 @@
   }
 
   /* Gradient Backgrounds */
-  .gradient-playr {
-    background: linear-gradient(135deg, var(--color-playr-primary) 0%, var(--color-playr-secondary) 50%, var(--color-playr-accent) 100%);
+  .gradient-hockia {
+    background: linear-gradient(135deg, var(--color-hockia-primary) 0%, var(--color-hockia-secondary) 50%, var(--color-hockia-accent) 100%);
   }
 
-  .gradient-playr-soft {
+  .gradient-hockia-soft {
     background: linear-gradient(135deg, rgba(128, 38, 250, 0.1) 0%, rgba(146, 76, 236, 0.1) 50%, rgba(236, 72, 153, 0.1) 100%);
   }
 
   /* Text Gradient */
   .text-gradient {
-    background: linear-gradient(135deg, var(--color-playr-primary), var(--color-playr-accent));
+    background: linear-gradient(135deg, var(--color-hockia-primary), var(--color-hockia-accent));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -202,7 +202,7 @@
   }
 
   .btn-primary {
-    background: linear-gradient(135deg, var(--color-playr-primary), var(--color-playr-secondary));
+    background: linear-gradient(135deg, var(--color-hockia-primary), var(--color-hockia-secondary));
     color: white;
   }
 
@@ -397,13 +397,13 @@
 
 /* Selection */
 ::selection {
-  background-color: var(--color-playr-primary);
+  background-color: var(--color-hockia-primary);
   color: white;
 }
 
 /* Focus Styles */
 *:focus-visible {
-  outline: 2px solid var(--color-playr-primary);
+  outline: 2px solid var(--color-hockia-primary);
   outline-offset: 2px;
   border-radius: 0.375rem;
 }

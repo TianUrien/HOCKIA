@@ -147,7 +147,7 @@ export default function WorldProvincePage() {
 
         if (!provinceError && provinceData) {
           setProvince(provinceData)
-          document.title = `${provinceData.name} | ${countryData.name} | PLAYR`
+          document.title = `${provinceData.name} | ${countryData.name} | HOCKIA`
           await fetchLeaguesAndClubData(provinceData.id)
         } else {
           navigate(`/world/${countrySlug}`, { replace: true })

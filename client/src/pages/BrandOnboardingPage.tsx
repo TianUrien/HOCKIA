@@ -116,7 +116,7 @@ export default function BrandOnboardingPage() {
             <div className="flex items-center gap-3 mb-2">
               <img
                 src="/WhiteLogo.svg"
-                alt="PLAYR"
+                alt="HOCKIA"
                 className="h-8"
               />
             </div>

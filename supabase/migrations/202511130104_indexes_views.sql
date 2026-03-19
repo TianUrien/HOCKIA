@@ -1,5 +1,5 @@
 -- 004_indexes_views.sql
--- Performance indexes and analytical views for PLAYR Supabase project
+-- Performance indexes and analytical views for HOCKIA Supabase project
 -- Run via: supabase db execute --file supabase_setup/004_indexes_views.sql
 
 SET search_path = public;

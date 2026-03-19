@@ -83,7 +83,7 @@ export default function WorldPage() {
   }, [])
 
   useEffect(() => {
-    document.title = 'World | PLAYR'
+    document.title = 'World | HOCKIA'
     fetchCountries()
   }, [fetchCountries])
 

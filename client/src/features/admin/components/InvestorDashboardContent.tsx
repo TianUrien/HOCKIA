@@ -296,12 +296,12 @@ export function InvestorDashboardContent({
           <p className="text-sm text-gray-400">
             Generated with{' '}
             <a
-              href="https://playr.app"
+              href="https://inhockia.com"
               target="_blank"
               rel="noopener noreferrer"
               className="text-purple-500 hover:text-purple-600 font-medium"
             >
-              PLAYR
+              HOCKIA
             </a>
           </p>
         </div>

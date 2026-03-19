@@ -96,7 +96,7 @@ export function AdminDirectory() {
   }, [searchQuery, roleFilter, statusFilter, testFilter, page])
 
   useEffect(() => {
-    document.title = 'User Directory | PLAYR Admin'
+    document.title = 'User Directory | HOCKIA Admin'
     fetchProfiles()
   }, [fetchProfiles])
 

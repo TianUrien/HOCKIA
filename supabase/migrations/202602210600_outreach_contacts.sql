@@ -46,7 +46,7 @@ CREATE TABLE public.outreach_contacts (
   CONSTRAINT outreach_contacts_email_unique UNIQUE (email)
 );
 
-COMMENT ON TABLE public.outreach_contacts IS 'External contacts for outbound email campaigns (clubs, coaches not yet on PLAYR)';
+COMMENT ON TABLE public.outreach_contacts IS 'External contacts for outbound email campaigns (clubs, coaches not yet on HOCKIA)';
 COMMENT ON COLUMN public.outreach_contacts.status IS 'Funnel status: imported → contacted → delivered → opened → clicked → signed_up (or bounced/unsubscribed)';
 
 -- Indexes
@@ -492,18 +492,18 @@ INSERT INTO public.email_templates (
 ) VALUES (
   'outreach_introduction',
   'Outreach: Club Introduction',
-  'Cold outreach to clubs — introduces PLAYR and invites them to claim their club profile.',
+  'Cold outreach to clubs — introduces HOCKIA and invites them to claim their club profile.',
   'marketing',
-  '{{club_name}}, your club is already on PLAYR',
+  '{{club_name}}, your club is already on HOCKIA',
   '[
-    {"type": "heading", "text": "Your club is on PLAYR", "level": 1},
+    {"type": "heading", "text": "Your club is on HOCKIA", "level": 1},
     {"type": "paragraph", "text": "Hi{{contact_name_greeting}},"},
-    {"type": "paragraph", "text": "We''re reaching out because {{club_name}} is already listed on PLAYR — the field hockey platform where clubs find players and coaches."},
+    {"type": "paragraph", "text": "We''re reaching out because {{club_name}} is already listed on HOCKIA — the field hockey platform where clubs find players and coaches."},
     {"type": "paragraph", "text": "Claim your club profile to start posting opportunities and connecting with talent in {{country}} and beyond."},
     {"type": "button", "text": "Claim Your Club Profile", "url": "{{cta_url}}"},
-    {"type": "footnote", "text": "PLAYR is free for clubs. No commitment required."}
+    {"type": "footnote", "text": "HOCKIA is free for clubs. No commitment required."}
   ]'::jsonb,
-  E'Your club is on PLAYR\n\nHi{{contact_name_greeting}},\n\nWe''re reaching out because {{club_name}} is already listed on PLAYR — the field hockey platform where clubs find players and coaches.\n\nClaim your club profile to start posting opportunities and connecting with talent in {{country}} and beyond.\n\nClaim Your Club Profile:\n{{cta_url}}\n\nPLAYR is free for clubs. No commitment required.\n\n---\nPLAYR Hockey | oplayr.com',
+  E'Your club is on HOCKIA\n\nHi{{contact_name_greeting}},\n\nWe''re reaching out because {{club_name}} is already listed on HOCKIA — the field hockey platform where clubs find players and coaches.\n\nClaim your club profile to start posting opportunities and connecting with talent in {{country}} and beyond.\n\nClaim Your Club Profile:\n{{cta_url}}\n\nHOCKIA is free for clubs. No commitment required.\n\n---\nHOCKIA Hockey | inhockia.com',
   '[
     {"name": "contact_name", "description": "Contact person name (optional)", "required": false},
     {"name": "contact_name_greeting", "description": "Greeting fragment: empty or '' Name'' (with leading space)", "required": false},
@@ -523,13 +523,13 @@ INSERT INTO public.email_templates (
 ) VALUES (
   'outreach_value_proof',
   'Outreach: Value Proof',
-  'Follow-up outreach — explains how PLAYR works and the value for clubs.',
+  'Follow-up outreach — explains how HOCKIA works and the value for clubs.',
   'marketing',
-  'Find your next player or coach on PLAYR',
+  'Find your next player or coach on HOCKIA',
   '[
-    {"type": "heading", "text": "How clubs use PLAYR", "level": 1},
+    {"type": "heading", "text": "How clubs use HOCKIA", "level": 1},
     {"type": "paragraph", "text": "Hi{{contact_name_greeting}},"},
-    {"type": "paragraph", "text": "Clubs on PLAYR post opportunities and receive applications from verified players and coaches — complete with highlight videos, references, and playing history."},
+    {"type": "paragraph", "text": "Clubs on HOCKIA post opportunities and receive applications from verified players and coaches — complete with highlight videos, references, and playing history."},
     {"type": "card", "title": "What you can do", "fields": [
       {"label": "Post opportunities", "value": "Player & coach vacancies"},
       {"label": "Browse talent", "value": "Filter by position, nationality, experience"},
@@ -538,7 +538,7 @@ INSERT INTO public.email_templates (
     {"type": "button", "text": "Get Started — It''s Free", "url": "{{cta_url}}"},
     {"type": "footnote", "text": "Questions? Reply to this email — we read every message."}
   ]'::jsonb,
-  E'How clubs use PLAYR\n\nHi{{contact_name_greeting}},\n\nClubs on PLAYR post opportunities and receive applications from verified players and coaches — complete with highlight videos, references, and playing history.\n\nWhat you can do:\n- Post opportunities (player & coach vacancies)\n- Browse talent (filter by position, nationality, experience)\n- Get applications (with video, references & history)\n\nGet Started — It''s Free:\n{{cta_url}}\n\nQuestions? Reply to this email — we read every message.\n\n---\nPLAYR Hockey | oplayr.com',
+  E'How clubs use HOCKIA\n\nHi{{contact_name_greeting}},\n\nClubs on HOCKIA post opportunities and receive applications from verified players and coaches — complete with highlight videos, references, and playing history.\n\nWhat you can do:\n- Post opportunities (player & coach vacancies)\n- Browse talent (filter by position, nationality, experience)\n- Get applications (with video, references & history)\n\nGet Started — It''s Free:\n{{cta_url}}\n\nQuestions? Reply to this email — we read every message.\n\n---\nHOCKIA Hockey | inhockia.com',
   '[
     {"name": "contact_name", "description": "Contact person name (optional)", "required": false},
     {"name": "contact_name_greeting", "description": "Greeting fragment", "required": false},
@@ -558,18 +558,18 @@ INSERT INTO public.email_templates (
 ) VALUES (
   'outreach_social_proof',
   'Outreach: Social Proof',
-  'Final outreach push — social proof, other clubs in their country are already on PLAYR.',
+  'Final outreach push — social proof, other clubs in their country are already on HOCKIA.',
   'marketing',
-  '{{club_name}} — clubs in {{country}} are already on PLAYR',
+  '{{club_name}} — clubs in {{country}} are already on HOCKIA',
   '[
-    {"type": "heading", "text": "Clubs in {{country}} are on PLAYR", "level": 1},
+    {"type": "heading", "text": "Clubs in {{country}} are on HOCKIA", "level": 1},
     {"type": "paragraph", "text": "Hi{{contact_name_greeting}},"},
-    {"type": "paragraph", "text": "Field hockey clubs across {{country}} are using PLAYR to find players and coaches. Don''t miss out on connecting with the next generation of talent."},
+    {"type": "paragraph", "text": "Field hockey clubs across {{country}} are using HOCKIA to find players and coaches. Don''t miss out on connecting with the next generation of talent."},
     {"type": "paragraph", "text": "Claiming your profile takes less than 2 minutes — and it''s completely free."},
     {"type": "button", "text": "Claim {{club_name}}''s Profile", "url": "{{cta_url}}"},
     {"type": "footnote", "text": "This is our last email about this. We won''t contact you again unless you sign up."}
   ]'::jsonb,
-  E'Clubs in {{country}} are on PLAYR\n\nHi{{contact_name_greeting}},\n\nField hockey clubs across {{country}} are using PLAYR to find players and coaches. Don''t miss out on connecting with the next generation of talent.\n\nClaiming your profile takes less than 2 minutes — and it''s completely free.\n\nClaim {{club_name}}''s Profile:\n{{cta_url}}\n\nThis is our last email about this. We won''t contact you again unless you sign up.\n\n---\nPLAYR Hockey | oplayr.com',
+  E'Clubs in {{country}} are on HOCKIA\n\nHi{{contact_name_greeting}},\n\nField hockey clubs across {{country}} are using HOCKIA to find players and coaches. Don''t miss out on connecting with the next generation of talent.\n\nClaiming your profile takes less than 2 minutes — and it''s completely free.\n\nClaim {{club_name}}''s Profile:\n{{cta_url}}\n\nThis is our last email about this. We won''t contact you again unless you sign up.\n\n---\nHOCKIA Hockey | inhockia.com',
   '[
     {"name": "contact_name", "description": "Contact person name (optional)", "required": false},
     {"name": "contact_name_greeting", "description": "Greeting fragment", "required": false},

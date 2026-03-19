@@ -21,7 +21,7 @@ import { captureException } from '../_shared/sentry.ts'
  * ============================================================================
  */
 
-const SITE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://www.oplayr.com'
+const SITE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://www.inhockia.com'
 
 // Static pages with their priorities and change frequencies
 const STATIC_PAGES = [

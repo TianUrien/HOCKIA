@@ -228,7 +228,7 @@ Deno.serve(async (req: Request) => {
 
     const totalMessages = conversations.reduce((sum, c) => sum + c.message_count, 0)
     const firstName = recipient.full_name?.split(' ')[0]?.trim() || 'there'
-    const PLAYR_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://oplayr.com'
+    const HOCKIA_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://inhockia.com'
 
     const templateVars = {
       first_name: firstName,
@@ -240,9 +240,9 @@ Deno.serve(async (req: Request) => {
       conversations_text: conversations
         .map(c => `${c.sender_name}: ${c.message_count} new message${c.message_count === 1 ? '' : 's'}`)
         .join('\n'),
-      cta_url: `${PLAYR_BASE_URL}/messages`,
+      cta_url: `${HOCKIA_BASE_URL}/messages`,
       cta_label: 'View Messages',
-      settings_url: `${PLAYR_BASE_URL}/settings`,
+      settings_url: `${HOCKIA_BASE_URL}/settings`,
     }
 
     // Try DB template, fall back to hardcoded
@@ -260,8 +260,8 @@ Deno.serve(async (req: Request) => {
       emailHtml = generateEmailHtml(recipient as RecipientData, conversations)
       emailText = generateEmailText(recipient as RecipientData, conversations)
       subject = conversations.length === 1
-        ? `New message from ${conversations[0].sender_name} on PLAYR`
-        : 'You have new messages on PLAYR'
+        ? `New message from ${conversations[0].sender_name} on HOCKIA`
+        : 'You have new messages on HOCKIA'
       logger.info('Falling back to hardcoded template')
     }
 

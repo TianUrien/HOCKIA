@@ -54,7 +54,7 @@ export function AdminFunnels() {
   }, [daysFilter])
 
   useEffect(() => {
-    document.title = 'Conversion & Health | PLAYR Admin'
+    document.title = 'Conversion & Health | HOCKIA Admin'
     fetchData()
   }, [fetchData])
 

@@ -336,23 +336,23 @@ export default function OpportunitiesPage() {
 
   // SEO meta tags
   useEffect(() => {
-    document.title = 'Field Hockey Opportunities | PLAYR'
-    const metaDescription = 'Browse field hockey opportunities for players and coaches. Find your next team, coaching position, or club role on PLAYR.'
+    document.title = 'Field Hockey Opportunities | HOCKIA'
+    const metaDescription = 'Browse field hockey opportunities for players and coaches. Find your next team, coaching position, or club role on HOCKIA.'
     const metaDescTag = document.querySelector('meta[name="description"]')
     if (metaDescTag) metaDescTag.setAttribute('content', metaDescription)
     const ogTitle = document.querySelector('meta[property="og:title"]')
-    if (ogTitle) ogTitle.setAttribute('content', 'Field Hockey Opportunities | PLAYR')
+    if (ogTitle) ogTitle.setAttribute('content', 'Field Hockey Opportunities | HOCKIA')
     const ogDesc = document.querySelector('meta[property="og:description"]')
     if (ogDesc) ogDesc.setAttribute('content', metaDescription)
     const ogUrl = document.querySelector('meta[property="og:url"]')
-    if (ogUrl) ogUrl.setAttribute('content', 'https://www.oplayr.com/opportunities')
+    if (ogUrl) ogUrl.setAttribute('content', 'https://inhockia.com/opportunities')
     return () => {
-      document.title = 'PLAYR | Field Hockey Community'
-      const defaultDesc = 'Connect players, coaches, and clubs. Raise the sport together. Join PLAYR.'
+      document.title = 'HOCKIA | Field Hockey Community'
+      const defaultDesc = 'Connect players, coaches, and clubs. Raise the sport together. Join HOCKIA.'
       if (metaDescTag) metaDescTag.setAttribute('content', defaultDesc)
-      if (ogTitle) ogTitle.setAttribute('content', 'PLAYR | Field Hockey Community')
+      if (ogTitle) ogTitle.setAttribute('content', 'HOCKIA | Field Hockey Community')
       if (ogDesc) ogDesc.setAttribute('content', defaultDesc)
-      if (ogUrl) ogUrl.setAttribute('content', 'https://www.oplayr.com')
+      if (ogUrl) ogUrl.setAttribute('content', 'https://inhockia.com')
     }
   }, [])
 
@@ -678,7 +678,7 @@ export default function OpportunitiesPage() {
           isOpen={showSignInPrompt}
           onClose={() => setShowSignInPrompt(false)}
           title="Sign in to apply"
-          message="Sign in or create a free PLAYR account to apply to this opportunity."
+          message="Sign in or create a free HOCKIA account to apply to this opportunity."
         />
 
         {/* Apply Modal */}

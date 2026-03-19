@@ -420,7 +420,7 @@ export function CreateCampaignModal({ templates, editCampaign, onClose, onCreate
                       type="text"
                       value={variantASubject}
                       onChange={(e) => setVariantASubject(e.target.value)}
-                      placeholder="e.g. Your club is already on PLAYR"
+                      placeholder="e.g. Your club is already on HOCKIA"
                       className="w-full text-sm border border-blue-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
                     />
                   </div>
@@ -449,7 +449,7 @@ export function CreateCampaignModal({ templates, editCampaign, onClose, onCreate
                       type="text"
                       value={variantBSubject}
                       onChange={(e) => setVariantBSubject(e.target.value)}
-                      placeholder="e.g. Join the hockey community on PLAYR"
+                      placeholder="e.g. Join the hockey community on HOCKIA"
                       className="w-full text-sm border border-amber-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-amber-400"
                     />
                   </div>

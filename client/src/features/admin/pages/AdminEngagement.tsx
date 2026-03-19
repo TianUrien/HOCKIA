@@ -84,7 +84,7 @@ export function AdminEngagement() {
   }, [daysFilter, sortField, sortDir, page])
 
   useEffect(() => {
-    document.title = 'User Engagement | PLAYR Admin'
+    document.title = 'User Engagement | HOCKIA Admin'
     fetchData()
   }, [fetchData])
 

@@ -1,5 +1,5 @@
 -- 005_storage.sql
--- Storage bucket provisioning and policies for PLAYR Supabase project
+-- Storage bucket provisioning and policies for HOCKIA Supabase project
 -- Run via: supabase db execute --file supabase_setup/005_storage.sql
 
 SET search_path = storage;

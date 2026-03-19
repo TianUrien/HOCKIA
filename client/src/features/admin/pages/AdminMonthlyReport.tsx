@@ -145,7 +145,7 @@ export function AdminMonthlyReport() {
   }, [year, month])
 
   useEffect(() => {
-    document.title = `${MONTH_NAMES[month - 1]} ${year} Report | PLAYR Admin`
+    document.title = `${MONTH_NAMES[month - 1]} ${year} Report | HOCKIA Admin`
     fetchData()
   }, [fetchData, month, year])
 

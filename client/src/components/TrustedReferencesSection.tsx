@@ -250,7 +250,7 @@ export default function TrustedReferencesSection({ profileId, friendOptions, pro
           </div>
         ) : acceptedReferences.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-gray-200 bg-white/90 p-5 text-center">
-            <p className="text-sm text-gray-600">No trusted references yet. This user hasn&apos;t added any references on PLAYR.</p>
+            <p className="text-sm text-gray-600">No trusted references yet. This user hasn&apos;t added any references on HOCKIA.</p>
           </div>
         ) : (
           <>
@@ -351,7 +351,7 @@ export default function TrustedReferencesSection({ profileId, friendOptions, pro
                   size="sm"
                 />
                 <div className="flex-1">
-                  <p className="text-sm font-semibold text-gray-900">{pending.profile?.fullName ?? 'PLAYR Member'}</p>
+                  <p className="text-sm font-semibold text-gray-900">{pending.profile?.fullName ?? 'HOCKIA Member'}</p>
                   <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
                     <RoleBadge role={pending.profile?.role ?? undefined} />
                     <span>{pending.relationshipType}</span>
@@ -478,7 +478,7 @@ export default function TrustedReferencesSection({ profileId, friendOptions, pro
                         size="sm"
                       />
                       <div>
-                        <p className="font-semibold text-gray-900">{request.requesterProfile?.fullName ?? 'PLAYR Member'}</p>
+                        <p className="font-semibold text-gray-900">{request.requesterProfile?.fullName ?? 'HOCKIA Member'}</p>
                         <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
                           <RoleBadge role={request.requesterProfile?.role ?? undefined} />
                           <span>{request.relationshipType}</span>
@@ -531,7 +531,7 @@ export default function TrustedReferencesSection({ profileId, friendOptions, pro
                         size="sm"
                       />
                       <div>
-                        <p className="font-semibold text-gray-900">{reference.requesterProfile?.fullName ?? 'PLAYR Member'}</p>
+                        <p className="font-semibold text-gray-900">{reference.requesterProfile?.fullName ?? 'HOCKIA Member'}</p>
                         <p className="text-xs text-gray-500">{reference.relationshipType}</p>
                       </div>
                     </div>

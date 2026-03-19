@@ -385,7 +385,7 @@ export const initializeAuth = () => {
     // resets (loading flash → ProtectedRoute unmounts children → form state
     // lost) caused by:
     //   - TOKEN_REFRESHED: JWT renewed on tab focus
-    //   - SIGNED_IN via broadcast channel: another PLAYR tab refreshed its token
+    //   - SIGNED_IN via broadcast channel: another HOCKIA tab refreshed its token
     // We still process SIGNED_OUT (clear session) and USER_UPDATED (metadata
     // changed) which represent real user-state changes.
     const currentUser = useAuthStore.getState().user

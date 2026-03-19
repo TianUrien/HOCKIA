@@ -71,7 +71,7 @@ function getEnvironment(): string {
   if (explicit) return explicit
 
   const siteUrl = Deno.env.get('PUBLIC_SITE_URL') ?? ''
-  if (siteUrl.includes('oplayr.com')) return 'production'
+  if (siteUrl.includes('inhockia.com')) return 'production'
   if (siteUrl.includes('staging')) return 'staging'
   return 'development'
 }
@@ -172,7 +172,7 @@ function sendEnvelope(event: Record<string, any>): void {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-sentry-envelope',
-      'X-Sentry-Auth': `Sentry sentry_version=7, sentry_client=playr-edge/1.0, sentry_key=${config.publicKey}`,
+      'X-Sentry-Auth': `Sentry sentry_version=7, sentry_client=hockia-edge/1.0, sentry_key=${config.publicKey}`,
     },
     body: envelope,
   }).catch(() => {

@@ -13,7 +13,7 @@ export default function Footer() {
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-6 text-sm text-gray-600 dark:text-gray-400">
           {/* Copyright */}
           <div className="text-center sm:text-left">
-            © {currentYear} PLAYR
+            © {currentYear} HOCKIA
           </div>
 
           {/* Links */}
@@ -49,7 +49,7 @@ export default function Footer() {
             <span className="text-gray-400 dark:text-gray-600" aria-hidden="true">•</span>
 
             <a
-              href="mailto:team@oplayr.com"
+              href="mailto:team@inhockia.com"
               className="hover:text-purple-600 dark:hover:text-purple-400 transition-colors underline-offset-4 hover:underline"
               aria-label="Contact support via email"
             >

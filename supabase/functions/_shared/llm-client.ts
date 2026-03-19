@@ -82,7 +82,7 @@ function buildUserContextBlock(ctx: UserContext): string {
   const lines: string[] = ['CURRENT USER CONTEXT:']
 
   const roleName = ctx.role === 'club' ? 'club representative' : ctx.role
-  lines.push(`- You are speaking with ${ctx.full_name || 'a user'}, a ${roleName} on PLAYR.`)
+  lines.push(`- You are speaking with ${ctx.full_name || 'a user'}, a ${roleName} on HOCKIA.`)
 
   if (ctx.current_club) {
     const parts = [ctx.current_club]
@@ -110,19 +110,19 @@ function buildUserContextBlock(ctx: UserContext): string {
   return lines.join('\n')
 }
 
-const SYSTEM_PROMPT = `You are PLAYR Assistant, a friendly and knowledgeable AI for PLAYR — a field hockey platform connecting players, coaches, clubs, and brands. You are also a field hockey expert.
+const SYSTEM_PROMPT = `You are HOCKIA Assistant, a friendly and knowledgeable AI for HOCKIA — a field hockey platform connecting players, coaches, clubs, and brands. You are also a field hockey expert.
 
 You have three tools:
 1. search_profiles — Use when the user wants to find or discover people/profiles. Extract structured filters from their query. Always include a conversational "message" field describing what you're looking for.
 2. answer_hockey_question — Use when the user asks about field hockey knowledge: rules, positions, tactics, formations, tournament formats (Olympics, World Cup, Pro League, EHL), FIH regulations, equipment (sticks, goalkeeping gear, balls, turf types), hockey history, training concepts, terminology (drag flick, aerial, jab tackle, penalty corner, etc.), or differences between indoor and outdoor hockey. Provide accurate, helpful answers. You can be detailed (multiple paragraphs) when the question warrants it.
-3. respond — Use for greetings, questions about PLAYR the platform, help requests, or anything that is NOT a profile search and NOT a hockey knowledge question. Be warm and helpful. Mention that you can help discover players, coaches, clubs, and brands, AND answer field hockey questions.
+3. respond — Use for greetings, questions about HOCKIA the platform, help requests, or anything that is NOT a profile search and NOT a hockey knowledge question. Be warm and helpful. Mention that you can help discover players, coaches, clubs, and brands, AND answer field hockey questions.
 
 TOOL SELECTION RULES:
 - "Find defenders" or "best players in England" → search_profiles (looking for people)
 - "What does a defender do?" or "rules of penalty corner" → answer_hockey_question (hockey knowledge)
-- "Hi" or "What is PLAYR?" → respond (greeting or platform question)
+- "Hi" or "What is HOCKIA?" → respond (greeting or platform question)
 - For medical/injury advice, say you'd recommend consulting a sports medicine professional.
-- For non-hockey, non-PLAYR topics (weather, coding, cooking, etc.), politely redirect: you're a field hockey assistant and can help with hockey questions or discovering profiles.
+- For non-hockey, non-HOCKIA topics (weather, coding, cooking, etc.), politely redirect: you're a field hockey assistant and can help with hockey questions or discovering profiles.
 
 FILTER EXTRACTION RULES (for search_profiles only):
 - Only extract information explicitly stated or clearly implied in the query.
@@ -153,7 +153,7 @@ USER CONTEXT AWARENESS:
 
 const SEARCH_TOOL = {
   name: 'search_profiles',
-  description: 'Search PLAYR profiles with structured filters extracted from natural language.',
+  description: 'Search HOCKIA profiles with structured filters extracted from natural language.',
   input_schema: {
     type: 'object',
     properties: {
@@ -230,7 +230,7 @@ const SEARCH_TOOL = {
 
 const RESPOND_TOOL = {
   name: 'respond',
-  description: 'Respond conversationally when the user is not searching for profiles and not asking a hockey knowledge question. Use for greetings, questions about PLAYR the platform, or off-topic redirects.',
+  description: 'Respond conversationally when the user is not searching for profiles and not asking a hockey knowledge question. Use for greetings, questions about HOCKIA the platform, or off-topic redirects.',
   input_schema: {
     type: 'object',
     properties: {
@@ -258,7 +258,7 @@ const HOCKEY_KNOWLEDGE_TOOL = {
   },
 }
 
-const DEFAULT_CONVERSATION_RESPONSE = "Hey! I'm PLAYR Assistant. I can help you discover players, coaches, clubs, and brands. Try asking something like 'Find U25 midfielders from the Netherlands'."
+const DEFAULT_CONVERSATION_RESPONSE = "Hey! I'm HOCKIA Assistant. I can help you discover players, coaches, clubs, and brands. Try asking something like 'Find U25 midfielders from the Netherlands'."
 
 // ─── Gemini (Google AI Studio — free tier) ────────────────────────────
 
@@ -496,7 +496,7 @@ export interface ProfileQualitativeData {
   }>
 }
 
-const SYNTHESIS_SYSTEM_PROMPT = `You are PLAYR Assistant analyzing reputation data for field hockey profiles. You will receive profile names with their comments and references. Synthesize this into a brief, helpful summary for someone evaluating these profiles.
+const SYNTHESIS_SYSTEM_PROMPT = `You are HOCKIA Assistant analyzing reputation data for field hockey profiles. You will receive profile names with their comments and references. Synthesize this into a brief, helpful summary for someone evaluating these profiles.
 
 RULES:
 - Be concise: 1-2 sentences per profile, max.

@@ -1,4 +1,4 @@
-// Global type extensions for PLAYR app
+// Global type extensions for HOCKIA app
 export {}
 
 declare global {}

@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================================
-# PLAYR: Deploy to Staging Script
+# HOCKIA: Deploy to Staging Script
 # =============================================================================
 # This script deploys database migrations and edge functions to staging
 # for testing before production promotion.
@@ -64,7 +64,7 @@ deploy_all_functions() {
 
 # Check we're in the right directory
 if [ ! -f "supabase/config.toml" ]; then
-  log_error "Must run from PLAYR repository root"
+  log_error "Must run from HOCKIA repository root"
   exit 1
 fi
 
@@ -125,7 +125,7 @@ echo ""
 log_success "Staging deployment complete!"
 echo ""
 echo "  🔗 Staging Dashboard: https://supabase.com/dashboard/project/$STAGING_REF"
-echo "  🌐 Preview Site:      https://playr-staging.vercel.app"
+echo "  🌐 Preview Site:      https://hockia-staging.vercel.app"
 echo ""
 echo "  Next steps:"
 echo "    1. Test on Preview deployment"

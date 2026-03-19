@@ -727,7 +727,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                 onChange={(e) => setFormData({ ...formData, contact_email_public: e.target.checked })}
               />
               <span>
-                Share my contact email with other PLAYR members
+                Share my contact email with other HOCKIA members
                 <span className="block text-xs text-gray-500 mt-1">
                   Your login email is never shown. Add a contact email above to be reachable.
                 </span>

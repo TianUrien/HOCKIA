@@ -7,6 +7,8 @@ declare const Deno: {
 
 import { getServiceClient } from '../_shared/supabase-client.ts'
 import { captureException } from '../_shared/sentry.ts'
+// @ts-expect-error Deno URL imports are resolved at runtime in Supabase Edge Functions.
+import { Webhook } from 'https://esm.sh/svix@1.64.1'
 
 /**
  * Resend Webhook Handler
@@ -80,42 +82,26 @@ Deno.serve(async (req: Request) => {
       return new Response('Server misconfiguration', { status: 500 })
     }
 
-    const svixId = req.headers.get('svix-id')
-    const svixTimestamp = req.headers.get('svix-timestamp')
-    const svixSignature = req.headers.get('svix-signature')
+    const svixId = req.headers.get('svix-id') ?? req.headers.get('webhook-id')
+    const svixTimestamp = req.headers.get('svix-timestamp') ?? req.headers.get('webhook-timestamp')
+    const svixSignature = req.headers.get('svix-signature') ?? req.headers.get('webhook-signature')
 
     if (!svixId || !svixTimestamp || !svixSignature) {
       log('warn', 'Missing svix headers, rejecting')
       return new Response('Missing signature headers', { status: 401 })
     }
 
-    // Verify timestamp is within 5 minutes
-    const timestampSec = parseInt(svixTimestamp, 10)
-    const nowSec = Math.floor(Date.now() / 1000)
-    if (Math.abs(nowSec - timestampSec) > 300) {
-      log('warn', 'Webhook timestamp too old', { age: nowSec - timestampSec })
-      return new Response('Timestamp too old', { status: 401 })
-    }
-
-    // Verify signature using HMAC-SHA256
-    const signedContent = `${svixId}.${svixTimestamp}.${rawBody}`
-    const secretBytes = base64Decode(webhookSecret.replace('whsec_', ''))
-    const key = await crypto.subtle.importKey(
-      'raw',
-      secretBytes,
-      { name: 'HMAC', hash: 'SHA-256' },
-      false,
-      ['sign']
-    )
-    const signatureBytes = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(signedContent))
-    const expectedSignature = `v1,${base64Encode(new Uint8Array(signatureBytes))}`
-
-    // Svix can send multiple signatures separated by spaces
-    const signatures = svixSignature.split(' ')
-    const isValid = signatures.some(sig => sig === expectedSignature)
-
-    if (!isValid) {
-      log('warn', 'Invalid webhook signature')
+    try {
+      const webhook = new Webhook(webhookSecret)
+      webhook.verify(rawBody, {
+        'svix-id': svixId,
+        'svix-timestamp': svixTimestamp,
+        'svix-signature': svixSignature,
+      })
+    } catch (verifyError) {
+      log('warn', 'Invalid webhook signature', {
+        error: verifyError instanceof Error ? verifyError.message : 'Unknown verification error',
+      })
       return new Response('Invalid signature', { status: 401 })
     }
 
@@ -247,24 +233,3 @@ Deno.serve(async (req: Request) => {
     return new Response('OK', { status: 200 })
   }
 })
-
-// ============================================================================
-// Base64 helpers (for Svix signature verification)
-// ============================================================================
-
-function base64Decode(str: string): Uint8Array {
-  const binaryStr = atob(str)
-  const bytes = new Uint8Array(binaryStr.length)
-  for (let i = 0; i < binaryStr.length; i++) {
-    bytes[i] = binaryStr.charCodeAt(i)
-  }
-  return bytes
-}
-
-function base64Encode(bytes: Uint8Array): string {
-  let binary = ''
-  for (let i = 0; i < bytes.length; i++) {
-    binary += String.fromCharCode(bytes[i])
-  }
-  return btoa(binary)
-}

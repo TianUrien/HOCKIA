@@ -45,7 +45,7 @@ export function AdminSearchQuality() {
   }, [daysFilter])
 
   useEffect(() => {
-    document.title = 'Search Quality | PLAYR Admin'
+    document.title = 'Search Quality | HOCKIA Admin'
     fetchData()
   }, [fetchData])
 

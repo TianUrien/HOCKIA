@@ -6,7 +6,7 @@ const VIEWPORTS = {
   tablet: { width: 820, height: 1180 }, // iPad Air-ish
 } as const
 
-test.describe('PLAYR audit screenshots (public)', () => {
+test.describe('HOCKIA audit screenshots (public)', () => {
   for (const [name, viewport] of Object.entries(VIEWPORTS)) {
     test(`${name}: landing + signup + opportunities`, async ({ page }, testInfo) => {
       await page.setViewportSize(viewport)
@@ -20,7 +20,7 @@ test.describe('PLAYR audit screenshots (public)', () => {
 
       // Signup
       await page.goto('/signup')
-      await expect(page.getByRole('heading', { name: /join playr/i })).toBeVisible()
+      await expect(page.getByRole('heading', { name: /join hockia/i })).toBeVisible()
       await page.screenshot({
         path: testInfo.outputPath(`${name}-signup-role-selection.png`),
         fullPage: true,

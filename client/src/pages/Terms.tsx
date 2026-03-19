@@ -36,8 +36,8 @@ export default function Terms() {
             <h2 className="text-2xl font-semibold text-gray-900 mb-4">1. Introduction</h2>
             <div className="space-y-4 text-gray-700 leading-relaxed">
               <p>
-                These Terms & Conditions ("Terms") govern your use of PLAYR, the online platform
-                connecting field hockey players, coaches, and clubs. By accessing or using PLAYR, you
+                These Terms & Conditions ("Terms") govern your use of HOCKIA, the online platform
+                connecting field hockey players, coaches, and clubs. By accessing or using HOCKIA, you
                 agree to comply with these Terms.
               </p>
             </div>
@@ -66,7 +66,7 @@ export default function Terms() {
             <div className="space-y-4 text-gray-700 leading-relaxed">
               <ul className="list-none space-y-3 ml-4">
                 <li>
-                  • You agree to use PLAYR only for legitimate purposes related to hockey networking,
+                  • You agree to use HOCKIA only for legitimate purposes related to hockey networking,
                   recruitment, and community.
                 </li>
                 <li>
@@ -74,7 +74,7 @@ export default function Terms() {
                   credentials.
                 </li>
                 <li>
-                  • PLAYR may suspend or remove accounts that violate these Terms or engage in
+                  • HOCKIA may suspend or remove accounts that violate these Terms or engage in
                   harmful behavior.
                 </li>
               </ul>
@@ -89,7 +89,7 @@ export default function Terms() {
             <div className="space-y-4 text-gray-700 leading-relaxed">
               <p>
                 You retain ownership of all content you upload (photos, descriptions, etc.), but
-                grant PLAYR a non-exclusive, worldwide license to display and distribute it within
+                grant HOCKIA a non-exclusive, worldwide license to display and distribute it within
                 the platform for service purposes.
               </p>
               <p className="font-medium">
@@ -107,7 +107,7 @@ export default function Terms() {
             <div className="space-y-4 text-gray-700 leading-relaxed">
               <p>You agree not to:</p>
               <ul className="list-none space-y-3 ml-4">
-                <li>• Use PLAYR for harassment, spam, or misinformation.</li>
+                <li>• Use HOCKIA for harassment, spam, or misinformation.</li>
                 <li>• Attempt to hack, scrape, or exploit the platform.</li>
                 <li>• Misrepresent your identity or role.</li>
               </ul>
@@ -121,7 +121,7 @@ export default function Terms() {
             <h2 className="text-2xl font-semibold text-gray-900 mb-4">6. Disclaimer</h2>
             <div className="space-y-4 text-gray-700 leading-relaxed">
               <p>
-                PLAYR is currently in beta testing and provided "as is." We do not guarantee
+                HOCKIA is currently in beta testing and provided "as is." We do not guarantee
                 uninterrupted operation or error-free performance, but we work continuously to
                 improve the experience.
               </p>
@@ -137,7 +137,7 @@ export default function Terms() {
             </h2>
             <div className="space-y-4 text-gray-700 leading-relaxed">
               <p>
-                PLAYR, its creators, and contributors shall not be liable for any direct or indirect
+                HOCKIA, its creators, and contributors shall not be liable for any direct or indirect
                 damages resulting from your use of the platform.
               </p>
             </div>
@@ -150,7 +150,7 @@ export default function Terms() {
             <h2 className="text-2xl font-semibold text-gray-900 mb-4">8. Account Termination</h2>
             <div className="space-y-4 text-gray-700 leading-relaxed">
               <p>
-                You may delete your account at any time through Settings. PLAYR may suspend or
+                You may delete your account at any time through Settings. HOCKIA may suspend or
                 terminate accounts violating these Terms or used inappropriately.
               </p>
             </div>
@@ -163,7 +163,7 @@ export default function Terms() {
             <h2 className="text-2xl font-semibold text-gray-900 mb-4">9. Changes to the Terms</h2>
             <div className="space-y-4 text-gray-700 leading-relaxed">
               <p>
-                We may modify these Terms occasionally. Continued use of PLAYR after updates
+                We may modify these Terms occasionally. Continued use of HOCKIA after updates
                 constitutes acceptance of the new Terms.
               </p>
             </div>
@@ -179,10 +179,10 @@ export default function Terms() {
               <p className="flex items-center gap-2">
                 <span>📧</span>
                 <a
-                  href="mailto:team@oplayr.com"
+                  href="mailto:team@inhockia.com"
                   className="text-[#8026FA] hover:text-[#924CEC] transition-colors"
                 >
-                  team@oplayr.com
+                  team@inhockia.com
                 </a>
               </p>
             </div>

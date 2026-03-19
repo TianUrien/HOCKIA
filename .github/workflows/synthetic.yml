@@ -35,7 +35,7 @@ jobs:
       - name: Run public smoke tests against production
         working-directory: ./client
         env:
-          PLAYWRIGHT_BASE_URL: https://oplayr.com
+          PLAYWRIGHT_BASE_URL: https://inhockia.com
         run: npx playwright test --project=chromium --grep @smoke --retries=2 --reporter=list
 
       - name: Upload Playwright report on failure

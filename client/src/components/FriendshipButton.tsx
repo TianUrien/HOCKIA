@@ -59,7 +59,7 @@ export default function FriendshipButton({ profileId, className }: FriendshipBut
   if (isOwnProfile) return null
 
   const handleAuthRequired = () => {
-    addToast('Sign in with your PLAYR profile to manage connections.', 'error')
+    addToast('Sign in with your HOCKIA profile to manage connections.', 'error')
   }
 
   const handleAction = async (action: () => Promise<void>) => {

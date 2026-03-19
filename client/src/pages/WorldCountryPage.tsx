@@ -147,7 +147,7 @@ export default function WorldCountryPage() {
         }
         setCountry(countryData)
         setHasRegions(data.has_regions ?? false)
-        document.title = `${countryData.name} | World | PLAYR`
+        document.title = `${countryData.name} | World | HOCKIA`
 
         if (data.has_regions) {
           const { data: provinceData, error: provinceError } = await supabase

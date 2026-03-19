@@ -26,10 +26,10 @@ import { captureException } from './sentry.ts'
 
 const RESEND_API_URL = 'https://api.resend.com/emails'
 const RESEND_BATCH_API_URL = 'https://api.resend.com/emails/batch'
-const SENDER_EMAIL = 'PLAYR Hockey <team@oplayr.com>'
-const REPLY_TO_EMAIL = 'team@oplayr.com'
-const PLAYR_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://oplayr.com'
-const UNSUBSCRIBE_URL = `${PLAYR_BASE_URL}/settings`
+const SENDER_EMAIL = 'HOCKIA <team@inhockia.com>'
+const REPLY_TO_EMAIL = 'team@inhockia.com'
+const HOCKIA_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://inhockia.com'
+const UNSUBSCRIBE_URL = `${HOCKIA_BASE_URL}/settings`
 
 const BATCH_SIZE = 100
 const BATCH_API_DELAY_MS = 600

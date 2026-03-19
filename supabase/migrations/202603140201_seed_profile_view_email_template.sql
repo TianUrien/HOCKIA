@@ -10,7 +10,7 @@ INSERT INTO public.email_templates (
   'Profile View Digest',
   'Daily digest summarising who viewed the user''s profile. Sent once every 24 hours when profile views are detected.',
   'notification',
-  '{{heading}} on PLAYR',
+  '{{heading}} on HOCKIA',
   '[
     {"type": "heading", "text": "{{heading}}", "level": 1},
     {"type": "paragraph", "text": "Hi {{first_name}}, here''s who checked out your profile in the last 24 hours."},
@@ -18,7 +18,7 @@ INSERT INTO public.email_templates (
     {"type": "button", "text": "{{cta_label}}", "url": "{{cta_url}}"},
     {"type": "footnote", "text": "Keep your profile fresh to attract more views."}
   ]'::jsonb,
-  E'{{heading}} on PLAYR\n\nHi {{first_name}},\n\nHere''s who checked out your profile in the last 24 hours.\n\n{{unique_viewers}} unique viewers \u00b7 {{total_views}} total views\n\n{{cta_label}}:\n{{cta_url}}\n\nKeep your profile fresh to attract more views.\n\n---\nYou''re receiving this because you''re on PLAYR.\nManage preferences: {{settings_url}}',
+  E'{{heading}} on HOCKIA\n\nHi {{first_name}},\n\nHere''s who checked out your profile in the last 24 hours.\n\n{{unique_viewers}} unique viewers \u00b7 {{total_views}} total views\n\n{{cta_label}}:\n{{cta_url}}\n\nKeep your profile fresh to attract more views.\n\n---\nYou''re receiving this because you''re on HOCKIA.\nManage preferences: {{settings_url}}',
   '[
     {"name": "first_name", "description": "Recipient first name", "required": true},
     {"name": "heading", "description": "Dynamic heading (e.g. ''3 people viewed your profile'')", "required": true},

@@ -1,4 +1,4 @@
--- PLAYR Stability Improvements for 200 Concurrent Users
+-- HOCKIA Stability Improvements for 200 Concurrent Users
 -- This migration safely adds performance indexes and concurrency protection
 -- All operations use IF NOT EXISTS to prevent conflicts with existing schema
 
@@ -227,7 +227,7 @@ COMMENT ON FUNCTION release_profile_lock IS 'Releases advisory lock after profil
 
 DO $$ 
 BEGIN
-  RAISE NOTICE '✅ PLAYR Stability Improvements Applied Successfully!';
+  RAISE NOTICE '✅ HOCKIA Stability Improvements Applied Successfully!';
   RAISE NOTICE '   - Performance indexes created for 10-50x query speedup';
   RAISE NOTICE '   - Optimistic locking enabled on critical tables';
   RAISE NOTICE '   - Race condition prevention mechanisms in place';

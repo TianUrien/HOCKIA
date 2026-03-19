@@ -322,7 +322,7 @@ Deno.serve(async (req: Request) => {
     const location = city && country ? `${city}, ${country}` : city || country || ''
     const summary = vacancy.description?.trim()?.slice(0, 200) || ''
 
-    const PLAYR_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://oplayr.com'
+    const HOCKIA_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://inhockia.com'
 
     // Use a sentinel placeholder for first_name so we can personalize per-recipient.
     // The template will render "Hi __FIRST_NAME__," and we replace it per-recipient.
@@ -334,8 +334,8 @@ Deno.serve(async (req: Request) => {
       location,
       summary,
       first_name: FIRST_NAME_SENTINEL,
-      cta_url: `${PLAYR_BASE_URL}/opportunities/${vacancy.id}`,
-      settings_url: `${PLAYR_BASE_URL}/settings`,
+      cta_url: `${HOCKIA_BASE_URL}/opportunities/${vacancy.id}`,
+      settings_url: `${HOCKIA_BASE_URL}/settings`,
     }
 
     let baseSubject: string
@@ -349,7 +349,7 @@ Deno.serve(async (req: Request) => {
       baseText = rendered.text
       logger.info('Using DB template for vacancy_notification')
     } else {
-      baseSubject = `New opportunity on PLAYR: ${vacancy.title}`
+      baseSubject = `New opportunity on HOCKIA: ${vacancy.title}`
       baseHtml = generateEmailHtml(vacancy, clubName)
       baseText = generateEmailText(vacancy, clubName)
       logger.info('Falling back to hardcoded template')

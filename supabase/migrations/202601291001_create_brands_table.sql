@@ -72,6 +72,6 @@ COMMENT ON TABLE public.brands IS 'Brand profiles for equipment manufacturers, a
 COMMENT ON COLUMN public.brands.profile_id IS 'Reference to the profile with role=brand (1:1 relationship)';
 COMMENT ON COLUMN public.brands.slug IS 'URL-friendly unique identifier for the brand';
 COMMENT ON COLUMN public.brands.category IS 'Brand category: equipment, apparel, accessories, nutrition, services, technology, or other';
-COMMENT ON COLUMN public.brands.is_verified IS 'Whether the brand has been verified by PLAYR staff (manual process)';
+COMMENT ON COLUMN public.brands.is_verified IS 'Whether the brand has been verified by HOCKIA staff (manual process)';
 
 COMMIT;

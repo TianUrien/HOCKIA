@@ -57,7 +57,7 @@ export default function ReferenceEndorsementModal({
     <Modal isOpen={isOpen} onClose={handleClose} className="max-w-lg">
       <div className="space-y-6 p-6">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-wide text-playr-primary">
+          <p className="text-sm font-semibold uppercase tracking-wide text-hockia-primary">
             {isEditMode ? 'Edit Endorsement' : 'Add Endorsement'}
           </p>
           <h2 className="text-2xl font-bold text-gray-900">
@@ -90,7 +90,7 @@ export default function ReferenceEndorsementModal({
             value={endorsement}
             onChange={(event) => setEndorsement(event.target.value)}
             placeholder="Add a quick testimonial or highlight their impact."
-            className="mt-2 w-full rounded-2xl border border-gray-200 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-playr-primary focus:outline-none"
+            className="mt-2 w-full rounded-2xl border border-gray-200 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-hockia-primary focus:outline-none"
           />
           <p className="mt-1 text-right text-xs text-gray-400">{endorsement.length}/800</p>
         </div>

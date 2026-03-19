@@ -1,7 +1,7 @@
-# Gitleaks configuration for PLAYR
+# Gitleaks configuration for HOCKIA
 # https://github.com/gitleaks/gitleaks
 
-title = "PLAYR Gitleaks Config"
+title = "HOCKIA Gitleaks Config"
 
 [allowlist]
   description = "Known safe patterns"

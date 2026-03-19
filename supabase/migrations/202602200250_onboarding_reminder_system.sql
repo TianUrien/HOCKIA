@@ -148,7 +148,7 @@ INSERT INTO public.email_templates (
   'Onboarding Reminder',
   'Sent to users who verified email but did not complete onboarding. 3-touch cadence: 24h, 72h, 7d after signup.',
   'notification',
-  'Complete your PLAYR profile and start connecting',
+  'Complete your HOCKIA profile and start connecting',
   '[
     {"type": "heading", "text": "Your profile is waiting for you \uD83C\uDFD1", "level": 1},
     {"type": "paragraph", "text": "Hi {{first_name}},"},
@@ -157,7 +157,7 @@ INSERT INTO public.email_templates (
     {"type": "divider"},
     {"type": "footnote", "text": "If you didn''t create this account, you can safely ignore this email."}
   ]'::jsonb,
-  E'{{heading}}\n\nHi {{first_name}},\n\n{{body_text}}\n\n{{cta_label}}:\n{{cta_url}}\n\nIf you didn''t create this account, you can safely ignore this email.\n\n---\nYou''re receiving this because you signed up for PLAYR.\nManage preferences: {{settings_url}}',
+  E'{{heading}}\n\nHi {{first_name}},\n\n{{body_text}}\n\n{{cta_label}}:\n{{cta_url}}\n\nIf you didn''t create this account, you can safely ignore this email.\n\n---\nYou''re receiving this because you signed up for HOCKIA.\nManage preferences: {{settings_url}}',
   '[
     {"name": "first_name", "description": "Recipient first name (derived from email if full_name is NULL)", "required": true},
     {"name": "heading", "description": "Dynamic heading based on reminder number", "required": true},

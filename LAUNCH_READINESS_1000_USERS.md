@@ -1,4 +1,4 @@
-# PLAYR — Launch Readiness for 1,000 Users (Go/No‑Go)
+# HOCKIA — Launch Readiness for 1,000 Users (Go/No‑Go)
 
 Date: 2025-12-11
 
@@ -54,7 +54,7 @@ Date: 2025-12-12
 **A) Summary of fixes applied (non-breaking)**
 - Added network-view route aliases for member profiles: `/members/:username` and `/members/id/:id` (old `/players/*` and `/clubs/*` routes left intact).
 - Fixed a dead unauthenticated redirect in references messaging CTA (`/sign-in` → `/`).
-- Aligned UI semantics away from “Public” toward “Network / PLAYR members” across banners and dashboard CTAs.
+- Aligned UI semantics away from “Public” toward “Network / HOCKIA members” across banners and dashboard CTAs.
 - Reduced accidental sensitive exposure:
   - Network-view profile fetches no longer select `email`.
   - Contact email display logic no longer falls back to account/login email.
@@ -66,7 +66,7 @@ Date: 2025-12-12
   - After: UI uses “Network View” wording; primary CTAs route to `/members/id/:id` (while keeping old routes to avoid breaking existing links).
 - **Unauthenticated messaging CTA (references)**
   - Before: attempted to send users to `/sign-in` (dead route), undermining trust.
-  - After: sends users to `/` with a clear toast (“Sign in to message PLAYR members.”).
+  - After: sends users to `/` with a clear toast (“Sign in to message HOCKIA members.”).
 - **Contact email visibility**
   - Before: if a user enabled “show email” but left `contact_email` blank, the system could fall back to the account/login email (unintended exposure).
   - After: only an explicitly saved `contact_email` can be displayed; account/login email is never displayed in network views.

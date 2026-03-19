@@ -12,10 +12,10 @@ declare const Deno: { env: { get(key: string): string | undefined } }
  */
 
 export const RESEND_API_URL = 'https://api.resend.com/emails'
-export const SENDER_EMAIL = 'PLAYR Hockey <team@oplayr.com>'
-export const REPLY_TO_EMAIL = 'team@oplayr.com'
-export const PLAYR_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://oplayr.com'
-export const UNSUBSCRIBE_URL = `${PLAYR_BASE_URL}/settings`
+export const SENDER_EMAIL = 'HOCKIA <team@inhockia.com>'
+export const REPLY_TO_EMAIL = 'team@inhockia.com'
+export const HOCKIA_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://inhockia.com'
+export const UNSUBSCRIBE_URL = `${HOCKIA_BASE_URL}/settings`
 
 export interface FriendshipRecord {
   id: string
@@ -60,12 +60,12 @@ function getInitials(name: string): string {
 }
 
 export function generateEmailHtml(requester: RequesterData): string {
-  const displayName = requester.full_name?.trim() || 'A PLAYR member'
+  const displayName = requester.full_name?.trim() || 'A HOCKIA member'
   const location = requester.base_location?.trim() || null
 
   const profileUrl = requester.username
-    ? `${PLAYR_BASE_URL}/players/${requester.username}`
-    : `${PLAYR_BASE_URL}/players/id/${requester.id}`
+    ? `${HOCKIA_BASE_URL}/players/${requester.username}`
+    : `${HOCKIA_BASE_URL}/players/id/${requester.id}`
 
   const initials = getInitials(displayName)
 
@@ -87,20 +87,20 @@ export function generateEmailHtml(requester: RequesterData): string {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>New Friend Request on PLAYR</title>
+  <title>New Friend Request on HOCKIA</title>
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
 
   <!-- Header -->
   <div style="background: linear-gradient(135deg, #8026FA 0%, #924CEC 100%); padding: 32px 24px; border-radius: 16px 16px 0 0; text-align: center;">
-    <img src="https://www.oplayr.com/playr-logo-white.png" alt="PLAYR" width="120" height="29" style="height: 29px; width: 120px;" />
+    <img src="https://www.inhockia.com/hockia-logo-white.png" alt="HOCKIA" width="120" height="29" style="height: 29px; width: 120px;" />
   </div>
 
   <!-- Main Content -->
   <div style="background: #ffffff; padding: 32px 24px; border-left: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb;">
 
     <h1 style="color: #1f2937; margin: 0 0 8px 0; font-size: 24px; font-weight: 700;">You have a new friend request! \u{1F3D1}</h1>
-    <p style="color: #6b7280; margin: 0 0 24px 0; font-size: 16px;">Someone wants to connect with you on PLAYR.</p>
+    <p style="color: #6b7280; margin: 0 0 24px 0; font-size: 16px;">Someone wants to connect with you on HOCKIA.</p>
 
     <!-- Requester Card -->
     <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px 20px; margin-bottom: 24px;">
@@ -119,7 +119,7 @@ export function generateEmailHtml(requester: RequesterData): string {
 
     <!-- CTA Button -->
     <div style="text-align: center; margin-bottom: 24px;">
-      <a href="${PLAYR_BASE_URL}/dashboard/profile?tab=friends&section=requests"
+      <a href="${HOCKIA_BASE_URL}/dashboard/profile?tab=friends&section=requests"
          style="display: inline-block; background: linear-gradient(135deg, #8026FA 0%, #924CEC 100%); color: #ffffff; padding: 14px 32px; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 16px;">
         View Request
       </a>
@@ -133,7 +133,7 @@ export function generateEmailHtml(requester: RequesterData): string {
   <!-- Footer -->
   <div style="background: #f3f4f6; padding: 20px 24px; border-radius: 0 0 16px 16px; border: 1px solid #e5e7eb; border-top: none; text-align: center;">
     <p style="color: #9ca3af; font-size: 12px; margin: 0;">
-      You're receiving this because you're on PLAYR.<br>
+      You're receiving this because you're on HOCKIA.<br>
       <a href="${UNSUBSCRIBE_URL}" style="color: #8026FA; text-decoration: none;">Manage notification preferences</a>
     </p>
   </div>
@@ -143,17 +143,17 @@ export function generateEmailHtml(requester: RequesterData): string {
 }
 
 export function generateEmailText(requester: RequesterData): string {
-  const displayName = requester.full_name?.trim() || 'A PLAYR member'
+  const displayName = requester.full_name?.trim() || 'A HOCKIA member'
   const location = requester.base_location?.trim() || null
 
   const profileUrl = requester.username
-    ? `${PLAYR_BASE_URL}/players/${requester.username}`
-    : `${PLAYR_BASE_URL}/players/id/${requester.id}`
+    ? `${HOCKIA_BASE_URL}/players/${requester.username}`
+    : `${HOCKIA_BASE_URL}/players/id/${requester.id}`
 
   const lines = [
-    'New Friend Request on PLAYR',
+    'New Friend Request on HOCKIA',
     '',
-    `${displayName} wants to connect with you on PLAYR.`,
+    `${displayName} wants to connect with you on HOCKIA.`,
   ]
 
   if (location) {
@@ -163,13 +163,13 @@ export function generateEmailText(requester: RequesterData): string {
   lines.push(
     '',
     'View their request:',
-    `${PLAYR_BASE_URL}/dashboard/profile?tab=friends&section=requests`,
+    `${HOCKIA_BASE_URL}/dashboard/profile?tab=friends&section=requests`,
     '',
     'View their profile:',
     profileUrl,
     '',
     '---',
-    "You're receiving this because you're on PLAYR.",
+    "You're receiving this because you're on HOCKIA.",
     `Manage preferences: ${UNSUBSCRIBE_URL}`
   )
 

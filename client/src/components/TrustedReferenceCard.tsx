@@ -44,7 +44,7 @@ export default function TrustedReferenceCard({
 }: TrustedReferenceCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
 
-  const profileName = reference.profile?.fullName ?? 'PLAYR Member'
+  const profileName = reference.profile?.fullName ?? 'HOCKIA Member'
   const profileInitials = reference.profile?.fullName?.slice(0, 2) ?? 'PM'
   const hasNationality = Boolean(reference.profile?.nationalityCountryId)
   const profileDetails = useMemo(() => {

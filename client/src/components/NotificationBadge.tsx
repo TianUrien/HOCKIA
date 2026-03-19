@@ -10,7 +10,7 @@ interface NotificationBadgeProps {
  * NotificationBadge Component
  * 
  * A refined, modern notification badge with gradient styling and smooth animations.
- * Designed to integrate seamlessly with PLAYR's glassmorphism and gradient-driven aesthetic.
+ * Designed to integrate seamlessly with HOCKIA's glassmorphism and gradient-driven aesthetic.
  * 
  * Features:
  * - Gradient background (red to orange) with subtle glow

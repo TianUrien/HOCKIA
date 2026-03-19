@@ -3,7 +3,7 @@
 -- ============================================================================
 -- This migration adds 'brand' as a valid role for profiles, enabling
 -- equipment manufacturers, apparel companies, and service providers
--- to join the PLAYR platform.
+-- to join the HOCKIA platform.
 -- ============================================================================
 
 SET search_path = public;

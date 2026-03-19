@@ -85,7 +85,7 @@ export function AdminAuditLog() {
   }, [actionFilter, targetTypeFilter, page])
 
   useEffect(() => {
-    document.title = 'Audit Log | PLAYR Admin'
+    document.title = 'Audit Log | HOCKIA Admin'
     fetchLogs()
   }, [fetchLogs])
 

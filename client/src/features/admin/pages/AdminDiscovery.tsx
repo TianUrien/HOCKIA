@@ -96,7 +96,7 @@ export function AdminDiscovery() {
   }, [daysFilter])
 
   useEffect(() => {
-    document.title = 'Discovery Analytics | PLAYR Admin'
+    document.title = 'Discovery Analytics | HOCKIA Admin'
     fetchData()
   }, [fetchData])
 
