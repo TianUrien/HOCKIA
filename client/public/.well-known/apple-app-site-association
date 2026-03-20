@@ -3,19 +3,24 @@
     "apps": [],
     "details": [
       {
-        "appIDs": [],
+        "appIDs": ["TEAM_ID.com.inhockia.app"],
         "paths": [
           "/auth/callback",
           "/auth/callback/*",
           "/verify-email",
           "/verify-email/*",
           "/reset-password",
-          "/reset-password/*"
+          "/reset-password/*",
+          "/player/*",
+          "/coach/*",
+          "/club/*",
+          "/opportunities/*",
+          "/community/*"
         ],
         "components": [
           {
             "/": "/auth/callback*",
-            "comment": "Email verification callback - open in Safari"
+            "comment": "Email verification callback"
           },
           {
             "/": "/verify-email*",
@@ -24,15 +29,23 @@
           {
             "/": "/reset-password*",
             "comment": "Password reset page"
+          },
+          {
+            "/": "/player/*",
+            "comment": "Player profile deep links"
+          },
+          {
+            "/": "/opportunities/*",
+            "comment": "Opportunity deep links"
           }
         ]
       }
     ]
   },
   "webcredentials": {
-    "apps": []
+    "apps": ["TEAM_ID.com.inhockia.app"]
   },
   "activitycontinuation": {
-    "apps": []
+    "apps": ["TEAM_ID.com.inhockia.app"]
   }
 }

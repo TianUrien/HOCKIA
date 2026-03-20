@@ -23,9 +23,14 @@
     "test:e2e:headed": "playwright test --headed",
     "test:db": "vitest run --config vitest.db.config.ts",
     "test:e2e:debug": "playwright test --debug",
-    "test:e2e:staging": "E2E_STAGING_MODE=1 playwright test --project=setup --project=staging"
+    "test:e2e:staging": "E2E_STAGING_MODE=1 playwright test --project=setup --project=staging",
+    "cap:sync": "npx cap sync ios",
+    "cap:open": "npx cap open ios",
+    "cap:build": "npm run build && npx cap sync ios"
   },
   "dependencies": {
+    "@capacitor/core": "^8.2.0",
+    "@capacitor/ios": "^8.2.0",
     "@googlemaps/js-api-loader": "^2.0.2",
     "@hookform/resolvers": "^5.2.2",
     "@sentry/react": "^10.26.0",
@@ -75,6 +80,7 @@
     "vite": "npm:rolldown-vite@7.1.14",
     "vite-plugin-pwa": "^1.2.0",
     "vitest": "^4.0.12",
+    "@capacitor/cli": "^8.2.0",
     "workbox-window": "^7.4.0"
   },
   "overrides": {

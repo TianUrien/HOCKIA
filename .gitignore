@@ -21,7 +21,15 @@ node_modules/
 # Build outputs
 dist/
 client/dist/
+.vite/
 client/.vite/
+
+# iOS build artifacts
+client/ios/App/App/public/
+client/ios/App/Pods/
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+DerivedData/
 
 # Test coverage
 coverage/
