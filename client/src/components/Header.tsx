@@ -59,7 +59,7 @@ export default function Header() {
   return (
     <header
       ref={headerRef}
-      className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200"
+      className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 pt-[env(safe-area-inset-top)]"
     >
       <nav className="max-w-7xl mx-auto px-4 md:px-6 py-4">
         <div className="flex items-center justify-between">
