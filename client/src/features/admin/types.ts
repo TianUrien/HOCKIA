@@ -60,6 +60,13 @@ export interface DashboardStats {
   pwa_installs_android: number
   pwa_installs_desktop: number
 
+  // Device tracking (all logged-in users)
+  device_users_ios: number
+  device_users_android: number
+  device_users_desktop: number
+  device_users_pwa: number
+  device_users_multi_platform: number
+
   // Meta
   generated_at: string
 }

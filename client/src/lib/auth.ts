@@ -12,6 +12,8 @@ import { useUnreadStore } from './unread'
 import { reportSupabaseError } from './sentryHelpers'
 import { setUserProperties, clearUserProperties, trackLogin } from './analytics'
 import { trackDbEvent } from './trackDbEvent'
+import { trackUserDevice } from './trackUserDevice'
+import { detectPlatform } from './detectPlatform'
 
 interface AuthState {
   user: User | null
@@ -356,6 +358,7 @@ const runSessionEffects = async (session: Session | null) => {
     const role = resolvedRole ?? (typeof user.user_metadata?.role === 'string' ? (user.user_metadata.role as string) : null)
     Sentry.setUser({ id: user.id, role: role ?? undefined })
     await fetchProfile(user.id)
+    trackUserDevice()
   } else {
     useAuthStore.setState({ profile: null, profileStatus: 'idle', profileFetchedAt: null })
     Sentry.setUser(null)
@@ -410,7 +413,8 @@ export const initializeAuth = () => {
     if (event === 'SIGNED_IN' && session?.user) {
       const method = session.user.app_metadata?.provider === 'google' ? 'google' : 'email'
       trackLogin(method)
-      trackDbEvent('login', undefined, undefined, { method })
+      trackDbEvent('login', undefined, undefined, { method, platform: detectPlatform() })
+      trackUserDevice()
     }
 
     runSessionEffects(session)

@@ -4,6 +4,7 @@ import { trackPwaInstall, trackPwaInstallDismiss } from '@/lib/analytics'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
+import { detectPlatform } from '@/lib/detectPlatform'
 
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: string[]
@@ -24,13 +25,6 @@ type InstallState = 'idle' | 'can-install' | 'ios-safari' | 'installed'
 
 // Version key — bumped to force re-tracking for users who hit the v1 bug
 const TRACKED_KEY = 'pwa-install-tracked-v2'
-
-function detectPlatform(): 'ios' | 'android' | 'desktop' {
-  const ua = navigator.userAgent
-  if (/iPad|iPhone|iPod/i.test(ua)) return 'ios'
-  if (/Android/i.test(ua)) return 'android'
-  return 'desktop'
-}
 
 async function persistInstallToDb(platform: 'ios' | 'android' | 'desktop'): Promise<boolean> {
   const userId = useAuthStore.getState().user?.id

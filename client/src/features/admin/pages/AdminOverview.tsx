@@ -459,6 +459,48 @@ export function AdminOverview() {
             </div>
           </section>
 
+          {/* Device Tracking */}
+          <section>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Devices (All Users)</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+              <StatCard
+                label="iOS Users"
+                value={stats?.device_users_ios ?? 0}
+                icon={Smartphone}
+                color="blue"
+                loading={isLoading}
+              />
+              <StatCard
+                label="Android Users"
+                value={stats?.device_users_android ?? 0}
+                icon={Smartphone}
+                color="green"
+                loading={isLoading}
+              />
+              <StatCard
+                label="Desktop Users"
+                value={stats?.device_users_desktop ?? 0}
+                icon={Smartphone}
+                color="purple"
+                loading={isLoading}
+              />
+              <StatCard
+                label="PWA Users"
+                value={stats?.device_users_pwa ?? 0}
+                icon={Smartphone}
+                color="amber"
+                loading={isLoading}
+              />
+              <StatCard
+                label="Multi-Platform"
+                value={stats?.device_users_multi_platform ?? 0}
+                icon={Smartphone}
+                color="rose"
+                loading={isLoading}
+              />
+            </div>
+          </section>
+
           {/* Data Health */}
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Data Health</h2>
