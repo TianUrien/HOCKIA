@@ -24,7 +24,6 @@ export interface ApplicationRecord {
   id: string
   opportunity_id: string
   applicant_id: string
-  cover_letter: string | null
   status: string
   applied_at: string
 }

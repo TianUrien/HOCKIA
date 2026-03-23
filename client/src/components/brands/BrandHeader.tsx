@@ -25,17 +25,8 @@ const CATEGORY_LABELS: Record<string, string> = {
 export function BrandHeader({ brand }: BrandHeaderProps) {
   return (
     <div className="relative">
-      {/* Cover Image */}
-      <div className="h-32 sm:h-48 bg-gradient-to-br from-indigo-500 to-purple-600 relative overflow-hidden">
-        {brand.cover_url && (
-          <img
-            src={getImageUrl(brand.cover_url, 'feed-full') ?? undefined}
-            alt=""
-            className="w-full h-full object-cover"
-            decoding="async"
-          />
-        )}
-      </div>
+      {/* Cover */}
+      <div className="h-32 sm:h-48 bg-gradient-to-br from-indigo-500 to-purple-600" />
 
       {/* Logo and Info */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6">

@@ -248,7 +248,6 @@ test.describe.serial('Notification System E2E', () => {
     const { data: application, error } = await playerSb.from('opportunity_applications').insert({
       opportunity_id: freshPlayerVacancyId,
       applicant_id: playerId,
-      cover_letter: 'E2E notification test application from player',
       status: 'pending',
     }).select('id').single()
     expect(error).toBeNull()
@@ -280,7 +279,6 @@ test.describe.serial('Notification System E2E', () => {
     const { data: application, error } = await coachSb.from('opportunity_applications').insert({
       opportunity_id: freshCoachVacancyId,
       applicant_id: coachId,
-      cover_letter: 'E2E notification test application from coach',
       status: 'pending',
     }).select('id').single()
     expect(error).toBeNull()

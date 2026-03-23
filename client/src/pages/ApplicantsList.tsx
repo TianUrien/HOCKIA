@@ -96,7 +96,6 @@ export default function ApplicantsList() {
           id: string
           opportunity_id: string
           applicant_id: string
-          cover_letter: string | null
           status: string
           applied_at: string
           updated_at: string
@@ -117,7 +116,6 @@ export default function ApplicantsList() {
           id: app.id,
           opportunity_id: app.opportunity_id,
           applicant_id: app.applicant_id,
-          cover_letter: app.cover_letter,
           status: app.status as OpportunityApplicationWithApplicant['status'],
           applied_at: app.applied_at,
           updated_at: app.updated_at,

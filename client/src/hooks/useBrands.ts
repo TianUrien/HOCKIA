@@ -23,7 +23,6 @@ export interface Brand {
   slug: string
   name: string
   logo_url: string | null
-  cover_url: string | null
   bio: string | null
   category: BrandCategory
   website_url: string | null

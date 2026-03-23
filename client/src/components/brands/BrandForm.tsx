@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Camera, Loader2, ImagePlus } from 'lucide-react'
+import { Camera, Loader2 } from 'lucide-react'
 import { Input, Button } from '@/components'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
@@ -29,7 +29,6 @@ export interface BrandFormData {
   category: BrandCategory
   bio: string
   logo_url: string
-  cover_url: string
   website_url: string
   instagram_url: string
 }
@@ -63,9 +62,7 @@ export function BrandForm({
 }: BrandFormProps) {
   const { user } = useAuthStore()
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const coverInputRef = useRef<HTMLInputElement>(null)
   const [uploadingLogo, setUploadingLogo] = useState(false)
-  const [uploadingCover, setUploadingCover] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   // Load initial data from localStorage draft or brand prop
@@ -81,7 +78,6 @@ export function BrandForm({
             category: parsed.category || brand?.category || 'equipment',
             bio: parsed.bio || brand?.bio || '',
             logo_url: parsed.logo_url || brand?.logo_url || '',
-            cover_url: parsed.cover_url || brand?.cover_url || '',
             website_url: parsed.website_url || brand?.website_url || '',
             instagram_url: parsed.instagram_url || brand?.instagram_url || '',
           }
@@ -96,7 +92,6 @@ export function BrandForm({
       category: brand?.category || 'equipment',
       bio: brand?.bio || '',
       logo_url: brand?.logo_url || '',
-      cover_url: brand?.cover_url || '',
       website_url: brand?.website_url || '',
       instagram_url: brand?.instagram_url || '',
     }
@@ -186,59 +181,10 @@ export function BrandForm({
     }
   }, [user])
 
-  const handleCoverUpload = useCallback(async (file: File) => {
-    if (!user) return
-
-    try {
-      setUploadingCover(true)
-      setError(null)
-
-      const validation = validateImage(file, { maxFileSizeMB: 10 })
-      if (!validation.valid) {
-        throw new Error(validation.error)
-      }
-
-      const optimizedBlob = await optimizeAvatarImage(file)
-      const fileExt = 'webp'
-      const fileName = `${user.id}/brand-cover-${Date.now()}.${fileExt}`
-
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(fileName, optimizedBlob, {
-          contentType: 'image/webp',
-          upsert: true,
-          cacheControl: '31536000',
-        })
-
-      if (uploadError) throw uploadError
-
-      const { data: urlData } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(fileName)
-
-      setFormData(prev => ({
-        ...prev,
-        cover_url: urlData.publicUrl,
-      }))
-    } catch (err) {
-      logger.error('[BrandForm] Error uploading cover:', err)
-      setError(err instanceof Error ? err.message : 'Failed to upload cover image')
-    } finally {
-      setUploadingCover(false)
-    }
-  }, [user])
-
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
       handleLogoUpload(file)
-    }
-  }
-
-  const handleCoverFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      handleCoverUpload(file)
     }
   }
 
@@ -271,45 +217,6 @@ export function BrandForm({
           <p className="text-sm text-red-600">{error}</p>
         </div>
       )}
-
-      {/* Cover Image Upload */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Cover Image
-        </label>
-        <button
-          type="button"
-          onClick={() => coverInputRef.current?.click()}
-          disabled={uploadingCover}
-          className="w-full h-32 rounded-xl bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center hover:border-indigo-400 hover:bg-indigo-50 transition-colors overflow-hidden relative"
-        >
-          {uploadingCover ? (
-            <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
-          ) : formData.cover_url ? (
-            <img
-              src={formData.cover_url}
-              alt="Cover"
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="flex flex-col items-center gap-1 text-gray-400">
-              <ImagePlus className="w-6 h-6" />
-              <span className="text-xs">Upload cover image</span>
-            </div>
-          )}
-        </button>
-        <p className="mt-1 text-xs text-gray-500">
-          Recommended: Wide banner image (1200x400px or similar)
-        </p>
-        <input
-          ref={coverInputRef}
-          type="file"
-          accept="image/*"
-          onChange={handleCoverFileChange}
-          className="hidden"
-          aria-label="Upload cover image"
-        />
-      </div>
 
       {/* Logo Upload */}
       <div>

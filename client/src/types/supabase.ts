@@ -203,7 +203,6 @@ export type Database = {
         Row: {
           bio: string | null
           category: string
-          cover_url: string | null
           created_at: string | null
           deleted_at: string | null
           id: string
@@ -219,7 +218,6 @@ export type Database = {
         Insert: {
           bio?: string | null
           category?: string
-          cover_url?: string | null
           created_at?: string | null
           deleted_at?: string | null
           id?: string
@@ -235,7 +233,6 @@ export type Database = {
         Update: {
           bio?: string | null
           category?: string
-          cover_url?: string | null
           created_at?: string | null
           deleted_at?: string | null
           id?: string
@@ -1457,7 +1454,6 @@ export type Database = {
         Row: {
           applicant_id: string
           applied_at: string
-          cover_letter: string | null
           id: string
           metadata: Json
           opportunity_id: string
@@ -1467,7 +1463,6 @@ export type Database = {
         Insert: {
           applicant_id: string
           applied_at?: string
-          cover_letter?: string | null
           id?: string
           metadata?: Json
           opportunity_id: string
@@ -1477,7 +1472,6 @@ export type Database = {
         Update: {
           applicant_id?: string
           applied_at?: string
-          cover_letter?: string | null
           id?: string
           metadata?: Json
           opportunity_id?: string
@@ -3597,7 +3591,6 @@ export type Database = {
           application_id: string
           applied_at: string
           avatar_url: string
-          cover_letter: string
           highlight_video_url: string
           nationality: string
           onboarding_completed: boolean
@@ -4624,7 +4617,6 @@ export type Database = {
         Args: {
           p_bio?: string
           p_category?: string
-          p_cover_url?: string
           p_instagram_url?: string
           p_logo_url?: string
           p_name?: string

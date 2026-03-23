@@ -337,7 +337,6 @@ export interface VacancyApplicant {
   highlight_video_url: string | null
   status: ApplicationStatus
   applied_at: string
-  cover_letter: string | null
   onboarding_completed: boolean
   total_count: number
 }
