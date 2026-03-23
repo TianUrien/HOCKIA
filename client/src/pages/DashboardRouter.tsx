@@ -90,6 +90,22 @@ export default function DashboardRouter() {
   }
 
   if (!profile) {
+    if (profileStatus === 'error') {
+      return (
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-gray-600 mb-2">Something went wrong loading your profile.</p>
+            <p className="text-sm text-gray-500 mb-4">Please try refreshing the page.</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-6 py-3 bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white rounded-lg hover:opacity-90 transition-opacity font-medium"
+            >
+              Refresh
+            </button>
+          </div>
+        </div>
+      )
+    }
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">

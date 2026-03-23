@@ -21,7 +21,7 @@ export default function PushPrompt() {
     if (!push.isSupported || push.isSubscribed || push.permission === 'denied') return
 
     // Only show after onboarding is complete
-    if (!localStorage.getItem('playr-onboarding-completed')) return
+    if (!localStorage.getItem('hockia-onboarding-completed') && !localStorage.getItem('playr-onboarding-completed')) return
 
     // Check 3-day dismiss window
     const dismissedAt = localStorage.getItem(DISMISS_KEY)
