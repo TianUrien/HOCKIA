@@ -3,7 +3,7 @@ import * as Sentry from '@sentry/react'
 import type { User, PostgrestError, Session, AuthError } from '@supabase/supabase-js'
 import { AuthApiError } from '@supabase/supabase-js'
 import type { Profile, ProfileInsert } from './supabase'
-import { supabase } from './supabase'
+import { supabase, AUTH_STORAGE_KEY } from './supabase'
 import { getAuthRedirectUrl } from './siteUrl'
 import { requestCache, generateCacheKey } from './requestCache'
 import { monitor } from './monitor'
@@ -220,7 +220,7 @@ const clearLocalSession = async (reason: string, options?: ClearSessionOptions) 
 
   if (localStorageAvailable()) {
     try {
-      window.localStorage.removeItem('playr-auth')
+      window.localStorage.removeItem(AUTH_STORAGE_KEY)
     } catch (storageError) {
       logger.error('[AUTH_STORE] Failed to remove cached session from storage', { storageError })
     }

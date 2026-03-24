@@ -73,7 +73,7 @@ export default function AuthCallback() {
     logger.debug('[AUTH_CALLBACK] Error in hash:', hasError)
 
     if (typeof window !== 'undefined') {
-      const storageKey = 'playr-auth'
+      const storageKey = 'hockia-auth'
       const codeVerifierKey = `${storageKey}-code-verifier`
       const localCodeVerifier = window.localStorage.getItem(codeVerifierKey)
       const sessionSnapshot = window.localStorage.getItem(storageKey)
@@ -151,7 +151,7 @@ export default function AuthCallback() {
 
         if (error) {
           if (typeof window !== 'undefined') {
-            const storageKey = 'playr-auth'
+            const storageKey = 'hockia-auth'
             const codeVerifierKey = `${storageKey}-code-verifier`
             logger.debug('[AUTH_CALLBACK] Exchange failed; code verifier present:', !!window.localStorage.getItem(codeVerifierKey))
           }
