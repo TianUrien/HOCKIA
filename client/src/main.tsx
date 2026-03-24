@@ -10,6 +10,8 @@ import { queryClient } from './lib/queryClient'
 import { logger } from './lib/logger'
 import { initSentryInAppBrowserContext } from './lib/sentryHelpers'
 import UpdatePrompt from './components/UpdatePrompt'
+import CookieConsent from './components/CookieConsent'
+import { hasAnalyticsConsent, enableGA4 } from './lib/cookieConsent'
 
 // Create a container for the update prompt (outside main React tree)
 let updatePromptRoot: ReturnType<typeof createRoot> | null = null
@@ -147,12 +149,18 @@ const RootErrorFallback = () => (
 // Initialize Web Vitals tracking
 initWebVitals()
 
+// Load GA4 immediately if user previously consented (no flash of unconsented tracking)
+if (hasAnalyticsConsent()) {
+  enableGA4()
+}
+
 export function RootApp() {
   return (
     <Sentry.ErrorBoundary fallback={<RootErrorFallback />}>
       <StrictMode>
         <QueryClientProvider client={queryClient}>
           <App />
+          <CookieConsent />
         </QueryClientProvider>
       </StrictMode>
     </Sentry.ErrorBoundary>

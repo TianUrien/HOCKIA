@@ -103,20 +103,20 @@ export interface ProfileOrphan {
 }
 
 export interface BrokenReferences {
-  applications_missing_player: Array<{
+  applications_missing_applicant: Array<{
     application_id: string
-    player_id: string
-    vacancy_id: string
+    applicant_id: string
+    opportunity_id: string
     created_at: string
   }> | null
-  applications_missing_vacancy: Array<{
+  applications_missing_opportunity: Array<{
     application_id: string
-    player_id: string
-    vacancy_id: string
+    applicant_id: string
+    opportunity_id: string
     created_at: string
   }> | null
-  vacancies_missing_club: Array<{
-    vacancy_id: string
+  opportunities_missing_club: Array<{
+    opportunity_id: string
     club_id: string
     title: string
     created_at: string
@@ -337,7 +337,6 @@ export interface VacancyApplicant {
   highlight_video_url: string | null
   status: ApplicationStatus
   applied_at: string
-  cover_letter: string | null
   onboarding_completed: boolean
   total_count: number
 }

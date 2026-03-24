@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
+import { Capacitor } from '@capacitor/core'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
+import { detectPlatform } from '@/lib/detectPlatform'
 
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined
 
@@ -17,6 +19,17 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
   return outputArray
 }
 
+/** True when running inside a Capacitor native shell (iOS/Android) */
+const isNative = Capacitor.isNativePlatform()
+
+/** Web push is supported in browsers with service workers and VAPID key configured */
+const isWebPushSupported =
+  typeof window !== 'undefined' &&
+  'serviceWorker' in navigator &&
+  'PushManager' in window &&
+  'Notification' in window &&
+  !!VAPID_PUBLIC_KEY
+
 export function usePushSubscription() {
   const { user } = useAuthStore()
   const [permission, setPermission] = useState<NotificationPermission>(
@@ -25,22 +38,36 @@ export function usePushSubscription() {
   const [isSubscribed, setIsSubscribed] = useState(false)
   const [loading, setLoading] = useState(false)
 
-  const isSupported =
-    typeof window !== 'undefined' &&
-    'serviceWorker' in navigator &&
-    'PushManager' in window &&
-    'Notification' in window &&
-    !!VAPID_PUBLIC_KEY
+  const isSupported = isNative || isWebPushSupported
 
   // Check current subscription state on mount and when user changes
   useEffect(() => {
-    if (!isSupported || !user) {
+    if (!user) {
+      setIsSubscribed(false)
+      return
+    }
+
+    if (isNative) {
+      // For native, check if we have an FCM token stored in the database
+      let cancelled = false
+      supabase
+        .from('push_subscriptions')
+        .select('id')
+        .eq('profile_id', user.id)
+        .not('fcm_token', 'is', null)
+        .limit(1)
+        .then(({ data }) => {
+          if (!cancelled) setIsSubscribed(!!data && data.length > 0)
+        })
+      return () => { cancelled = true }
+    }
+
+    if (!isWebPushSupported) {
       setIsSubscribed(false)
       return
     }
 
     let cancelled = false
-
     navigator.serviceWorker.ready.then((registration) => {
       registration.pushManager.getSubscription().then((sub) => {
         if (!cancelled) {
@@ -48,7 +75,6 @@ export function usePushSubscription() {
         }
       })
     })
-
     return () => { cancelled = true }
   }, [isSupported, user])
 
@@ -60,58 +86,119 @@ export function usePushSubscription() {
   }, [isSubscribed])
 
   const subscribe = useCallback(async () => {
-    if (!isSupported || !user || !VAPID_PUBLIC_KEY) return
+    if (!isSupported || !user) return
 
     setLoading(true)
     try {
-      // Request permission
-      const result = await Notification.requestPermission()
-      setPermission(result)
+      if (isNative) {
+        // ---- Native (Capacitor) FCM registration ----
+        const { PushNotifications } = await import('@capacitor/push-notifications')
 
-      if (result !== 'granted') {
-        logger.info('[Push] Permission denied by user')
-        return
-      }
+        let permResult = await PushNotifications.checkPermissions()
+        if (permResult.receive === 'prompt') {
+          permResult = await PushNotifications.requestPermissions()
+        }
 
-      // Subscribe via PushManager
-      const registration = await navigator.serviceWorker.ready
-      let subscription = await registration.pushManager.getSubscription()
+        if (permResult.receive !== 'granted') {
+          logger.info('[Push] Native permission denied')
+          setPermission('denied')
+          return
+        }
+        setPermission('granted')
 
-      if (!subscription) {
-        subscription = await registration.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+        // Register will trigger the 'registration' event with the FCM token
+        await PushNotifications.register()
+
+        // Listen for the registration token
+        const tokenPromise = new Promise<string>((resolve, reject) => {
+          const timeout = setTimeout(() => reject(new Error('FCM registration timeout')), 15000)
+
+          PushNotifications.addListener('registration', (token) => {
+            clearTimeout(timeout)
+            resolve(token.value)
+          })
+
+          PushNotifications.addListener('registrationError', (err) => {
+            clearTimeout(timeout)
+            reject(new Error(err.error))
+          })
         })
+
+        const fcmToken = await tokenPromise
+        const platform = detectPlatform()
+
+        // Upsert FCM token to database
+        // Cast needed because fcm_token/platform columns are added via migration
+        // and may not yet be in the generated types
+        const { error } = await supabase
+          .from('push_subscriptions')
+          .upsert(
+            {
+              profile_id: user.id,
+              fcm_token: fcmToken,
+              platform,
+              user_agent: navigator.userAgent,
+              endpoint: `fcm:${fcmToken}`,
+              p256dh: 'fcm',
+              auth: 'fcm',
+            } as never,
+            { onConflict: 'profile_id,endpoint' }
+          )
+
+        if (error) throw error
+
+        setIsSubscribed(true)
+        logger.info('[Push] Native FCM registered', { platform })
+      } else {
+        // ---- Web Push (VAPID) registration ----
+        if (!VAPID_PUBLIC_KEY) return
+
+        const result = await Notification.requestPermission()
+        setPermission(result)
+
+        if (result !== 'granted') {
+          logger.info('[Push] Permission denied by user')
+          return
+        }
+
+        const registration = await navigator.serviceWorker.ready
+        let subscription = await registration.pushManager.getSubscription()
+
+        if (!subscription) {
+          subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) as BufferSource,
+          })
+        }
+
+        const subJson = subscription.toJSON()
+        const endpoint = subscription.endpoint
+        const p256dh = subJson.keys?.p256dh
+        const auth = subJson.keys?.auth
+
+        if (!endpoint || !p256dh || !auth) {
+          throw new Error('Invalid push subscription: missing keys')
+        }
+
+        const { error } = await supabase
+          .from('push_subscriptions')
+          .upsert(
+            {
+              profile_id: user.id,
+              endpoint,
+              p256dh,
+              auth,
+              platform: 'web',
+              user_agent: navigator.userAgent,
+            },
+            { onConflict: 'profile_id,endpoint' }
+          )
+
+        if (error) throw error
+
+        setIsSubscribed(true)
+        logger.info('[Push] Web push subscribed')
       }
-
-      // Extract keys
-      const subJson = subscription.toJSON()
-      const endpoint = subscription.endpoint
-      const p256dh = subJson.keys?.p256dh
-      const auth = subJson.keys?.auth
-
-      if (!endpoint || !p256dh || !auth) {
-        throw new Error('Invalid push subscription: missing keys')
-      }
-
-      // Upsert to database
-      const { error } = await supabase
-        .from('push_subscriptions')
-        .upsert(
-          {
-            profile_id: user.id,
-            endpoint,
-            p256dh,
-            auth,
-            user_agent: navigator.userAgent,
-          },
-          { onConflict: 'profile_id,endpoint' }
-        )
-
-      if (error) throw error
-
-      setIsSubscribed(true)
-      logger.info('[Push] Subscribed successfully')
     } catch (err) {
       logger.error('[Push] Subscribe failed:', err)
       throw err
@@ -125,20 +212,28 @@ export function usePushSubscription() {
 
     setLoading(true)
     try {
-      // Unsubscribe from PushManager
-      const registration = await navigator.serviceWorker.ready
-      const subscription = await registration.pushManager.getSubscription()
-
-      if (subscription) {
-        const endpoint = subscription.endpoint
-        await subscription.unsubscribe()
-
-        // Remove from database
+      if (isNative) {
+        // Remove all native subscriptions for this user
         await supabase
           .from('push_subscriptions')
           .delete()
           .eq('profile_id', user.id)
-          .eq('endpoint', endpoint)
+          .not('fcm_token', 'is', null)
+      } else {
+        // Unsubscribe from PushManager
+        const registration = await navigator.serviceWorker.ready
+        const subscription = await registration.pushManager.getSubscription()
+
+        if (subscription) {
+          const endpoint = subscription.endpoint
+          await subscription.unsubscribe()
+
+          await supabase
+            .from('push_subscriptions')
+            .delete()
+            .eq('profile_id', user.id)
+            .eq('endpoint', endpoint)
+        }
       }
 
       setIsSubscribed(false)

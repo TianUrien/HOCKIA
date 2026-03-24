@@ -36,7 +36,6 @@ const baseApplication: OpportunityApplicationWithApplicant = {
   id: 'app-1',
   opportunity_id: 'opp-1',
   applicant_id: 'player-1',
-  cover_letter: null,
   status: 'pending',
   applied_at: '2026-02-10T12:00:00Z',
   updated_at: '2026-02-10T12:00:00Z',

@@ -436,7 +436,7 @@ async function authenticateUser(
       localStorage.setItem(storageKey, JSON.stringify(sessionData))
       console.log('[E2E] Session injected into localStorage')
     },
-    { session: data.session, storageKey: 'playr-auth' }
+    { session: data.session, storageKey: 'hockia-auth' }
   )
 
   // Navigate to a protected route to trigger auth initialization

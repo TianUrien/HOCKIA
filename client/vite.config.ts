@@ -22,7 +22,10 @@ export default defineConfig(({ mode }) => {
     { name: 'tanstack', pattern: /node_modules\/(@tanstack|@hookform)\// },
     { name: 'state', pattern: /node_modules\/(zustand|immer)\// },
     { name: 'icons', pattern: /node_modules\/lucide-react\// },
-    { name: 'datetime', pattern: /node_modules\/date-fns\// }
+    { name: 'datetime', pattern: /node_modules\/date-fns\// },
+    { name: 'sentry', pattern: /node_modules\/@sentry\// },
+    { name: 'charts', pattern: /node_modules\/(recharts|d3-|victory)\// },
+    { name: 'router', pattern: /node_modules\/react-router/ },
   ]
 
   return {

@@ -8,7 +8,7 @@ import { reportSupabaseError } from '@/lib/sentryHelpers'
 import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
 import { Avatar, RoleBadge } from '@/components'
-import type { Database } from '@/types/database.types'
+import type { Database } from '@/lib/database.types'
 
 type ClubMember = Database['public']['Functions']['get_club_members']['Returns'][number]
 

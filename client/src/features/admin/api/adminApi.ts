@@ -336,8 +336,8 @@ export async function getVacancyApplicants(
   applicants: VacancyApplicant[]
   totalCount: number
 }> {
-  const { data, error } = await adminRpc('admin_get_vacancy_applicants', {
-    p_vacancy_id: vacancyId,
+  const { data, error } = await adminRpc('admin_get_opportunity_applicants', {
+    p_opportunity_id: vacancyId,
     p_status: status || null,
     p_limit: limit,
     p_offset: offset,
@@ -354,8 +354,8 @@ export async function getVacancyApplicants(
  * Get full vacancy details with club info and application stats
  */
 export async function getVacancyDetail(vacancyId: string): Promise<VacancyDetail> {
-  const { data, error } = await adminRpc('admin_get_vacancy_detail', {
-    p_vacancy_id: vacancyId,
+  const { data, error } = await adminRpc('admin_get_opportunity_detail', {
+    p_opportunity_id: vacancyId,
   })
   if (error) throw new Error(`Failed to get opportunity detail: ${error.message}`)
   return data as VacancyDetail

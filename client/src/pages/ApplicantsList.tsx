@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Users, Star, HelpCircle, XCircle, Inbox } from 'lucide-react'
+import { ArrowLeft, Users, Star, HelpCircle, XCircle, Inbox, Search, X } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
@@ -40,6 +40,8 @@ export default function ApplicantsList() {
   const [updatingId, setUpdatingId] = useState<string | null>(null)
   const [referenceMap, setReferenceMap] = useState<Map<string, ApplicantReferenceInfo>>(new Map())
   const [referencesUnavailable, setReferencesUnavailable] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [positionFilter, setPositionFilter] = useState<string>('')
 
   useEffect(() => {
     const fetchData = async () => {
@@ -96,7 +98,6 @@ export default function ApplicantsList() {
           id: string
           opportunity_id: string
           applicant_id: string
-          cover_letter: string | null
           status: string
           applied_at: string
           updated_at: string
@@ -117,7 +118,6 @@ export default function ApplicantsList() {
           id: app.id,
           opportunity_id: app.opportunity_id,
           applicant_id: app.applicant_id,
-          cover_letter: app.cover_letter,
           status: app.status as OpportunityApplicationWithApplicant['status'],
           applied_at: app.applied_at,
           updated_at: app.updated_at,
@@ -253,13 +253,43 @@ export default function ApplicantsList() {
     }
   }, [addToast, opportunityId])
 
+  // Derive unique positions from applicants for filter dropdown
+  const availablePositions = useMemo(() => {
+    const positions = new Set<string>()
+    for (const app of applications) {
+      if (app.applicant.position) positions.add(app.applicant.position)
+      if (app.applicant.secondary_position) positions.add(app.applicant.secondary_position)
+    }
+    return Array.from(positions).sort()
+  }, [applications])
+
+  // Filter applications by search query and position
+  const filteredApplications = useMemo(() => {
+    let result = applications
+    const q = searchQuery.trim().toLowerCase()
+    if (q) {
+      result = result.filter((app) => {
+        const name = (app.applicant.full_name ?? '').toLowerCase()
+        const location = (app.applicant.base_location ?? '').toLowerCase()
+        const nationality = (app.applicant.nationality ?? '').toLowerCase()
+        return name.includes(q) || location.includes(q) || nationality.includes(q)
+      })
+    }
+    if (positionFilter) {
+      result = result.filter((app) =>
+        app.applicant.position === positionFilter || app.applicant.secondary_position === positionFilter
+      )
+    }
+    return result
+  }, [applications, searchQuery, positionFilter])
+
   // Group applications by tier
   const groupedApplications = useMemo(() => {
     return TIER_GROUPS.map((group) => ({
       ...group,
-      applications: applications.filter((app) => group.statuses.includes(app.status)),
+      applications: filteredApplications.filter((app) => group.statuses.includes(app.status)),
     })).filter((group) => group.applications.length > 0)
-  }, [applications])
+  }, [filteredApplications])
 
   if (isLoading) {
     return (
@@ -313,8 +343,54 @@ export default function ApplicantsList() {
             <p className="mt-2 flex items-center gap-2 text-sm text-gray-600">
               <Users className="h-4 w-4" />
               {applications.length} applicant{applications.length !== 1 ? 's' : ''}
+              {filteredApplications.length !== applications.length && (
+                <span className="text-gray-400">
+                  ({filteredApplications.length} shown)
+                </span>
+              )}
             </p>
           </div>
+
+          {/* Search & Filter */}
+          {applications.length > 0 && (
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search by name, location, nationality..."
+                  className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-8 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#8026FA] focus:outline-none focus:ring-1 focus:ring-[#8026FA]"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    aria-label="Clear search"
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+              {availablePositions.length > 1 && (
+                <select
+                  aria-label="Filter by position"
+                  value={positionFilter}
+                  onChange={(e) => setPositionFilter(e.target.value)}
+                  className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-[#8026FA] focus:outline-none focus:ring-1 focus:ring-[#8026FA]"
+                >
+                  <option value="">All positions</option>
+                  {availablePositions.map((pos) => (
+                    <option key={pos} value={pos}>
+                      {pos.charAt(0).toUpperCase() + pos.slice(1).replace(/_/g, ' ')}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -332,6 +408,20 @@ export default function ApplicantsList() {
             <p className="text-sm text-gray-600 sm:text-base">
               Applications will appear here once players start applying to this opportunity.
             </p>
+          </div>
+        ) : filteredApplications.length === 0 ? (
+          <div className="rounded-2xl border border-gray-200 bg-white p-10 text-center">
+            <h3 className="mb-2 text-lg font-semibold text-gray-900">No matches</h3>
+            <p className="text-sm text-gray-600">
+              No applicants match your current search or filter.
+            </p>
+            <button
+              type="button"
+              onClick={() => { setSearchQuery(''); setPositionFilter('') }}
+              className="mt-3 text-sm font-medium text-[#8026FA] hover:underline"
+            >
+              Clear filters
+            </button>
           </div>
         ) : (
           <div className="space-y-8">

@@ -39,7 +39,7 @@ test.describe('HOCKIA audit screenshots (public)', () => {
       await page.setViewportSize(viewport)
 
       await page.goto('/privacy-policy')
-      await expect(page.getByRole('heading', { name: /privacy/i })).toBeVisible()
+      await expect(page.getByRole('heading', { name: 'Privacy Policy', exact: true })).toBeVisible()
       await page.screenshot({
         path: testInfo.outputPath(`${name}-privacy.png`),
         fullPage: true,

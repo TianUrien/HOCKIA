@@ -25,6 +25,7 @@ interface FiltersState {
   role: 'all' | 'player' | 'coach'
   gender: 'all' | 'Men' | 'Women'
   position: string       // single position or '' for all
+  euPassport: boolean    // only show opportunities requiring EU passport
 }
 
 const POSITIONS = ['goalkeeper', 'defender', 'midfielder', 'forward'] as const
@@ -148,6 +149,7 @@ export default function OpportunitiesPage() {
       role: (roleParam === 'player' || roleParam === 'coach') ? roleParam : 'all',
       gender: (genderParam === 'Men' || genderParam === 'Women') ? genderParam : 'all',
       position: searchParams.get('position') || '',
+      euPassport: searchParams.get('eu_passport') === 'true',
     }
   })
 
@@ -158,6 +160,7 @@ export default function OpportunitiesPage() {
     if (filters.role !== 'all') params.set('role', filters.role)
     if (filters.gender !== 'all') params.set('gender', filters.gender)
     if (filters.position) params.set('position', filters.position)
+    if (filters.euPassport) params.set('eu_passport', 'true')
     setSearchParams(params, { replace: true })
   }, [filters, setSearchParams])
 
@@ -202,7 +205,7 @@ export default function OpportunitiesPage() {
     if (!options?.silent) setIsLoading(true)
     setFetchError(null)
 
-    const filterKey = `${filters.role}-${filters.gender}-${filters.position}`
+    const filterKey = `${filters.role}-${filters.gender}-${filters.position}-${filters.euPassport}`
     const cacheKey = isCurrentUserTestAccount ? `open-vacancies-test-${filterKey}` : `open-vacancies-${filterKey}`
 
     if (options?.skipCache) requestCache.invalidate(cacheKey)
@@ -234,6 +237,7 @@ export default function OpportunitiesPage() {
             if (filters.role !== 'all') query = query.eq('opportunity_type', filters.role)
             if (filters.gender !== 'all') query = query.eq('gender', filters.gender)
             if (filters.position) query = query.eq('position', filters.position as NonNullable<Vacancy['position']>)
+            if (filters.euPassport) query = query.eq('eu_passport_required', true)
 
             const { data: vacanciesData, error: vacanciesError } = await query
               .order('created_at', { ascending: false })
@@ -439,10 +443,10 @@ export default function OpportunitiesPage() {
 
   const totalFilteredCount = groupedOpportunities.reduce((sum, g) => sum + g.opportunities.length, 0)
 
-  const hasActiveFilters = filters.country !== '' || filters.role !== 'all' || filters.gender !== 'all' || filters.position !== ''
+  const hasActiveFilters = filters.country !== '' || filters.role !== 'all' || filters.gender !== 'all' || filters.position !== '' || filters.euPassport
 
   const clearFilters = () => {
-    setFilters({ country: '', role: 'all', gender: 'all', position: '' })
+    setFilters({ country: '', role: 'all', gender: 'all', position: '', euPassport: false })
   }
 
   // ─── Render ────────────────────────────────────────────────────────────────
@@ -517,6 +521,29 @@ export default function OpportunitiesPage() {
               ]}
               onChange={(v) => setFilters(prev => ({ ...prev, position: v }))}
             />
+            <button
+              type="button"
+              onClick={() => setFilters(prev => ({ ...prev, euPassport: !prev.euPassport }))}
+              className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium border transition-colors whitespace-nowrap ${
+                filters.euPassport
+                  ? 'bg-blue-50 border-blue-200 text-blue-700'
+                  : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <span>EU Passport</span>
+              {filters.euPassport && (
+                <span
+                  role="button"
+                  tabIndex={0}
+                  onClick={(e) => { e.stopPropagation(); setFilters(prev => ({ ...prev, euPassport: false })) }}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); setFilters(prev => ({ ...prev, euPassport: false })) } }}
+                  className="ml-0.5 p-0.5 rounded-full hover:bg-blue-100 cursor-pointer"
+                  aria-label="Clear EU passport filter"
+                >
+                  <X className="w-3 h-3" />
+                </span>
+              )}
+            </button>
 
             {/* Sort indicator */}
             <div className="ml-auto flex items-center gap-1.5 text-sm text-gray-500">

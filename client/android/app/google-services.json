@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "225997178270",
+    "project_id": "hockia-1ec3c",
+    "storage_bucket": "hockia-1ec3c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:225997178270:android:e421234f64aa44dad5c28f",
+        "android_client_info": {
+          "package_name": "com.inhockia.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDSwd_OdPgvW1CX3oA_7DMbagJ4x0xnL7s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

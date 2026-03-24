@@ -115,7 +115,7 @@ export function OpportunityPostedCard({ item }: OpportunityPostedCardProps) {
 
         {/* CTA */}
         <button
-          onClick={() => navigate(`/opportunities/${item.vacancy_id}`)}
+          onClick={() => navigate(`/opportunities/${item.opportunity_id}`)}
           className="w-full px-4 py-2.5 bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white rounded-lg font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
         >
           Apply Now

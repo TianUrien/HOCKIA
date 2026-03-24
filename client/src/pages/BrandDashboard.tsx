@@ -317,7 +317,6 @@ export default function BrandDashboard() {
         name: data.name,
         bio: data.bio || undefined,
         logo_url: data.logo_url || undefined,
-        cover_url: data.cover_url || undefined,
         website_url: data.website_url || undefined,
         instagram_url: data.instagram_url || undefined,
         category: data.category,

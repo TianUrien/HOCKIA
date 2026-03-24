@@ -312,7 +312,6 @@ const main = async () => {
     const { error: appError } = await service.from('opportunity_applications').insert({
       opportunity_id: vacancyId,
       applicant_id: applicantId,
-      cover_letter: 'Excited to apply.',
       status: 'pending',
     })
     if (appError) throw appError

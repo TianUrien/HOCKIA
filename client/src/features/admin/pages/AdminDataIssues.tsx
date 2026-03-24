@@ -145,9 +145,9 @@ export function AdminDataIssues() {
 
   // Count broken references
   const brokenRefCounts = {
-    applications_missing_player: brokenReferences?.applications_missing_player?.length ?? 0,
-    applications_missing_vacancy: brokenReferences?.applications_missing_vacancy?.length ?? 0,
-    vacancies_missing_club: brokenReferences?.vacancies_missing_club?.length ?? 0,
+    applications_missing_applicant: brokenReferences?.applications_missing_applicant?.length ?? 0,
+    applications_missing_opportunity: brokenReferences?.applications_missing_opportunity?.length ?? 0,
+    opportunities_missing_club: brokenReferences?.opportunities_missing_club?.length ?? 0,
     messages_missing_sender: brokenReferences?.messages_missing_sender?.length ?? 0,
     friendships_missing_users: brokenReferences?.friendships_missing_users?.length ?? 0,
   }

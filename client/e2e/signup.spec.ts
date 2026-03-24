@@ -1,8 +1,34 @@
 import { test, expect } from './fixtures'
 
+/** Dismiss any overlay dialogs (notification drawer, cookie consent) that may block interactions */
+async function dismissOverlays(page: import('@playwright/test').Page) {
+  // Close notification drawer if open (force click — may be off-viewport on mobile)
+  const closeBtn = page.getByRole('button', { name: /close notifications/i })
+  if (await closeBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
+    await closeBtn.click({ force: true }).catch(() => {})
+    await closeBtn.waitFor({ state: 'hidden', timeout: 3000 }).catch(() => {})
+  }
+  // Press Escape as fallback to close any open dialogs/drawers
+  await page.keyboard.press('Escape')
+  // Brief settle time for animations
+  await page.waitForTimeout(300)
+  // Dismiss cookie consent if visible
+  const cookieDecline = page.getByRole('button', { name: /decline/i })
+  if (await cookieDecline.isVisible({ timeout: 500 }).catch(() => false)) {
+    await cookieDecline.click({ force: true }).catch(() => {})
+  }
+}
+
 test.describe('Signup Flow', () => {
   test.beforeEach(async ({ page }) => {
-    // Start fresh from landing page
+    // Clear all storage to ensure a fully unauthenticated state — prevents
+    // notification drawers and other authenticated UI from leaking into public tests
+    await page.context().clearCookies()
+    await page.goto('/')
+    await page.evaluate(() => {
+      localStorage.clear()
+      sessionStorage.clear()
+    })
     await page.goto('/')
   })
 
@@ -79,12 +105,13 @@ test.describe('Signup Flow', () => {
 
   test('validates email format on signup', async ({ page }) => {
     await page.goto('/signup')
+    await dismissOverlays(page)
     await page.getByRole('button', { name: /join as player/i }).click()
 
     // Try invalid email
     await page.getByPlaceholder(/enter your email/i).fill('invalid-email')
     // Fill password to pass required check
-    await page.getByPlaceholder(/create a password/i).fill('TestPass123!')
+    await page.getByPlaceholder(/min\. 8 chars/i).fill('TestPass123!')
     await page.getByRole('button', { name: /create account/i }).click()
 
     // Should show validation error (either HTML5 or custom)
@@ -97,6 +124,7 @@ test.describe('Signup Flow', () => {
 
   test('signup form submits and shows feedback', async ({ page }) => {
     await page.goto('/signup')
+    await dismissOverlays(page)
     await page.getByRole('button', { name: /join as player/i }).click()
 
     // Fill the form with valid-looking data but intercept the API call
@@ -115,7 +143,7 @@ test.describe('Signup Flow', () => {
     })
 
     await page.getByPlaceholder(/enter your email/i).fill('test-signup@example.com')
-    await page.getByPlaceholder(/create a password/i).fill('TestPassword123!')
+    await page.getByPlaceholder(/min\. 8 chars/i).fill('TestPassword123!')
 
     await page.getByRole('button', { name: /create account/i }).click()
 
@@ -231,7 +259,7 @@ test.describe('Public Pages Access', () => {
   test('privacy policy page loads', async ({ page }) => {
     await page.goto('/privacy-policy')
 
-    await expect(page.getByRole('heading', { name: /privacy/i })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Privacy Policy', exact: true })).toBeVisible()
   })
 
   test('terms page loads', async ({ page }) => {

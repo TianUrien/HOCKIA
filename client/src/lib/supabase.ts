@@ -16,6 +16,20 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables – check .env.local')
 }
 
+export const AUTH_STORAGE_KEY = 'hockia-auth'
+
+// One-time migration: move session from legacy key so existing users stay logged in
+if (typeof window !== 'undefined') {
+  const legacy = window.localStorage.getItem('playr-auth')
+  if (legacy && !window.localStorage.getItem(AUTH_STORAGE_KEY)) {
+    window.localStorage.setItem(AUTH_STORAGE_KEY, legacy)
+  }
+  // Clean up legacy key regardless (after copy or if new key already exists)
+  if (legacy) {
+    window.localStorage.removeItem('playr-auth')
+  }
+}
+
 // Create Supabase client with typed database
 // Use implicit auth flow so email links work across devices/browsers
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
@@ -25,7 +39,7 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     detectSessionInUrl: true, // Automatically detect and exchange tokens from URL
     storage: typeof window !== 'undefined' ? window.localStorage : undefined,
-    storageKey: 'playr-auth', // Custom storage key to avoid conflicts
+    storageKey: AUTH_STORAGE_KEY,
   }
 })
 

@@ -26,12 +26,14 @@
     "test:e2e:staging": "E2E_STAGING_MODE=1 playwright test --project=setup --project=staging",
     "cap:sync": "npx cap sync ios",
     "cap:open": "npx cap open ios",
-    "cap:build": "npm run build && npx cap sync ios"
+    "cap:build": "npm run build && npx cap sync ios",
+    "gen:types": "npx supabase gen types typescript --project-id \"$SUPABASE_PROJECT_ID\" > src/lib/database.types.ts"
   },
   "dependencies": {
     "@capacitor/android": "^8.2.0",
     "@capacitor/core": "^8.2.0",
     "@capacitor/ios": "^8.2.0",
+    "@capacitor/push-notifications": "^8.0.2",
     "@googlemaps/js-api-loader": "^2.0.2",
     "@hookform/resolvers": "^5.2.2",
     "@sentry/react": "^10.26.0",

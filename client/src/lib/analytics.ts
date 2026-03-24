@@ -1,14 +1,13 @@
 /**
  * Google Analytics 4 (GA4) integration for HOCKIA
- * 
+ *
  * This module provides utilities for tracking page views, events, and user properties.
- * GA4 Measurement ID: G-1QZ48FMV1V
- * 
- * Note: Initial config is done in index.html for immediate activation.
+ *
+ * Note: GA4 is loaded dynamically after cookie consent via CookieConsent.tsx.
  * This module handles SPA navigation and custom events.
  */
 
-const GA_MEASUREMENT_ID = 'G-1QZ48FMV1V'
+const GA_MEASUREMENT_ID = import.meta.env.VITE_GA_MEASUREMENT_ID ?? 'G-NE620GQKTX'
 
 // Type declaration for window.gtag
 declare global {

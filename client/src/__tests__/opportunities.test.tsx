@@ -82,7 +82,7 @@ const createQueryBuilder = (rows: Array<Record<string, unknown>> = []) => ({
 })
 
 let rpcResponse: Array<Record<string, unknown>> = []
-let applicationRows: Array<{ vacancy_id: string }> = []
+let applicationRows: Array<{ opportunity_id: string }> = []
 
 beforeEach(() => {
   rpcResponse = []
@@ -122,8 +122,8 @@ const renderTab = (props?: Partial<React.ComponentProps<typeof OpportunitiesTab>
   )
 }
 
-const baseVacancy = {
-  id: 'vac-1',
+const baseOpportunity = {
+  id: 'opp-1',
   title: 'Midfield Maestro',
   status: 'open',
   opportunity_type: 'player',
@@ -143,9 +143,9 @@ const baseVacancy = {
   closed_at: null
 }
 
-describe('Vacancies tab', () => {
+describe('Opportunities tab', () => {
   it('renders club management view with applicant controls', async () => {
-    rpcResponse = [{ ...baseVacancy, applicant_count: 4 }]
+    rpcResponse = [{ ...baseOpportunity, applicant_count: 4 }]
 
     renderTab()
 
@@ -156,7 +156,7 @@ describe('Vacancies tab', () => {
     expect(screen.getByText('4 applicants')).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /4 applicants/i }))
-    expect(mockNavigate).toHaveBeenCalledWith('/dashboard/opportunities/vac-1/applicants')
+    expect(mockNavigate).toHaveBeenCalledWith('/dashboard/opportunities/opp-1/applicants')
 
     expect(screen.getByLabelText(/open opportunity menu/i)).toBeInTheDocument()
   })
@@ -164,7 +164,7 @@ describe('Vacancies tab', () => {
   it('shows public view with accurate cards and actions', async () => {
     authState.user = { id: 'player-9' }
     authState.profile = { id: 'player-9', role: 'player' }
-    rpcResponse = [{ ...baseVacancy, applicant_count: 0 }]
+    rpcResponse = [{ ...baseOpportunity, applicant_count: 0 }]
     applicationRows = []
 
     renderTab({ readOnly: true, profileId: 'club-1' })

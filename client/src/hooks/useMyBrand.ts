@@ -35,7 +35,6 @@ export interface UpdateBrandInput {
   name?: string
   bio?: string
   logo_url?: string
-  cover_url?: string
   website_url?: string
   instagram_url?: string
   category?: string
@@ -121,7 +120,6 @@ export function useMyBrand(): UseMyBrandResult {
         p_name: data.name ?? null,
         p_bio: data.bio ?? null,
         p_logo_url: data.logo_url ?? null,
-        p_cover_url: data.cover_url ?? null,
         p_website_url: data.website_url ?? null,
         p_instagram_url: data.instagram_url ?? null,
         p_category: data.category ?? null,
