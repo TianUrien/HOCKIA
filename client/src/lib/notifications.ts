@@ -459,6 +459,15 @@ export const useNotificationStore = create<NotificationState>((set, get) => {
       set({ userId, channel: null })
       await get().refresh({ bypassCache: true })
 
+      // Warn if too many realtime channels are open (indicates a leak somewhere)
+      const activeChannels = supabase.getChannels()
+      if (activeChannels.length > 10) {
+        logger.warn('[NOTIFICATIONS] High realtime channel count — possible leak', {
+          count: activeChannels.length,
+          names: activeChannels.map(c => c.topic).slice(0, 15),
+        })
+      }
+
       const nextChannel = attachChannel(userId)
       set({ channel: nextChannel })
     },

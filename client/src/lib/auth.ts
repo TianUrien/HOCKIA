@@ -218,6 +218,19 @@ const clearLocalSession = async (reason: string, options?: ClearSessionOptions) 
     logger.error('[AUTH_STORE] Failed to reset unread store during sign-out', { unreadResetError })
   }
 
+  // Remove ALL realtime channels to prevent leaked subscriptions across sessions.
+  // Individual stores (unread, notifications) clean their own channels, but this
+  // catches any orphaned channels from unmounted components (e.g. chat, messages page).
+  try {
+    const channels = supabase.getChannels()
+    if (channels.length > 0) {
+      logger.debug('[AUTH_STORE] Removing all realtime channels on sign-out', { count: channels.length })
+      await supabase.removeAllChannels()
+    }
+  } catch (channelError) {
+    logger.error('[AUTH_STORE] Failed to remove realtime channels during sign-out', { channelError })
+  }
+
   if (localStorageAvailable()) {
     try {
       window.localStorage.removeItem(AUTH_STORAGE_KEY)

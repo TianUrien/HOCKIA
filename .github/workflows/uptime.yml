@@ -13,14 +13,18 @@ jobs:
     name: Health Check
     runs-on: ubuntu-latest
 
+    env:
+      SUPABASE_BASE: https://xtertgftujnebubxgqit.supabase.co/functions/v1
+      ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0ZXJ0Z2Z0dWpuZWJ1YnhncWl0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMwMzEwNTUsImV4cCI6MjA3ODYwNzA1NX0.hmJLa5nkS9EM3LIRLrrDhsnbZqqoL4RCsve84Qtk8Hw
+
     steps:
       - name: Ping health endpoint
         id: health
         run: |
           HTTP_STATUS=$(curl -s -o /tmp/health-response.json -w "%{http_code}" \
             --max-time 30 \
-            -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0ZXJ0Z2Z0dWpuZWJ1YnhncWl0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMwMzEwNTUsImV4cCI6MjA3ODYwNzA1NX0.hmJLa5nkS9EM3LIRLrrDhsnbZqqoL4RCsve84Qtk8Hw" \
-            "https://xtertgftujnebubxgqit.supabase.co/functions/v1/health")
+            -H "Authorization: Bearer $ANON_KEY" \
+            "$SUPABASE_BASE/health")
 
           echo "status=$HTTP_STATUS" >> $GITHUB_OUTPUT
 
@@ -32,6 +36,20 @@ jobs:
 
           echo "Health check passed (HTTP $HTTP_STATUS)"
           cat /tmp/health-response.json | python3 -m json.tool || true
+
+      - name: Warm up critical edge functions
+        if: success()
+        run: |
+          # Fire CORS preflights to warm Deno workers without triggering business logic.
+          # These run in parallel and failures are non-blocking (warm-up is best-effort).
+          for fn in nl-search notify-vacancy notify-application send-push delete-account public-opportunities; do
+            curl -s -o /dev/null --max-time 10 -X OPTIONS \
+              -H "Origin: https://inhockia.com" \
+              -H "Access-Control-Request-Method: POST" \
+              "$SUPABASE_BASE/$fn" &
+          done
+          wait
+          echo "Warm-up pings sent for critical edge functions"
 
       - name: Create issue on failure
         if: failure()
