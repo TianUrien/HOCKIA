@@ -36,6 +36,7 @@ export default function Landing() {
   
   // Check if user was redirected from a protected route (e.g., /settings from email link)
   const redirectTo = (location.state as { from?: string } | null)?.from
+    ?? (() => { try { return sessionStorage.getItem('hockia-redirect-after-login') } catch { return null } })()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -141,6 +142,7 @@ export default function Landing() {
     if (user && profile) {
       const destination = redirectTo || '/dashboard/profile'
       logger.debug('[LANDING] User has profile, redirecting to', destination)
+      try { sessionStorage.removeItem('hockia-redirect-after-login') } catch { /* noop */ }
       navigate(destination)
     } else if (user && !profile && (profileStatus === 'missing' || profileStatus === 'error' || profileStatus === 'loaded')) {
       // User authenticated but no profile (e.g., new Google OAuth user)
@@ -233,6 +235,7 @@ export default function Landing() {
       // Profile is complete - redirect to intended destination or dashboard
       const destination = redirectTo || '/dashboard/profile'
       logger.debug('[SIGN IN] Profile complete, redirecting to:', destination)
+      try { sessionStorage.removeItem('hockia-redirect-after-login') } catch { /* noop */ }
       navigate(destination)
 
     } catch (err) {

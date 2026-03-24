@@ -5,7 +5,7 @@ import { requestCache, generateCacheKey } from './requestCache'
 import { monitor } from './monitor'
 import { logger } from './logger'
 
-let visibilityListenerBound = false
+let visibilityHandler: (() => void) | null = null
 
 type RefreshOptions = {
   bypassCache?: boolean
@@ -68,6 +68,10 @@ export const useUnreadStore = create<UnreadState>((set, get) => ({
     const { channel } = get()
     if (channel) {
       supabase.removeChannel(channel)
+    }
+    if (visibilityHandler) {
+      window.removeEventListener('visibilitychange', visibilityHandler)
+      visibilityHandler = null
     }
     set({ count: 0, loading: false, userId: null, channel: null, initializing: false })
   },
@@ -143,14 +147,14 @@ export const useUnreadStore = create<UnreadState>((set, get) => ({
 
     set({ channel, initializing: false })
 
-    // Bind visibility listener once to refresh unread count when tab regains focus
-    if (typeof window !== 'undefined' && !visibilityListenerBound) {
-      window.addEventListener('visibilitychange', () => {
+    // Bind visibility listener (cleaned up on reset) to refresh when tab regains focus
+    if (typeof window !== 'undefined' && !visibilityHandler) {
+      visibilityHandler = () => {
         if (document.visibilityState !== 'hidden' && get().userId) {
           void get().refresh({ bypassCache: true })
         }
-      })
-      visibilityListenerBound = true
+      }
+      window.addEventListener('visibilitychange', visibilityHandler)
     }
   }
 }))

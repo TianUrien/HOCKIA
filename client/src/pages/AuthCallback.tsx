@@ -193,6 +193,17 @@ export default function AuthCallback() {
       if (navigationRef.current || !isMountedRef.current) return
       navigationRef.current = true
 
+      // Honour redirect saved before OAuth (only for dashboard, not onboarding)
+      if (destination === '/dashboard/profile') {
+        try {
+          const saved = sessionStorage.getItem('hockia-redirect-after-login')
+          if (saved && saved.startsWith('/')) {
+            destination = saved as typeof destination
+          }
+        } catch { /* noop */ }
+        try { sessionStorage.removeItem('hockia-redirect-after-login') } catch { /* noop */ }
+      }
+
       if (fallbackRef.current) {
         clearTimeout(fallbackRef.current)
         fallbackRef.current = undefined

@@ -85,7 +85,8 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   // Protected routes - require authentication
   if (!user) {
-    // Store intended destination for redirect after login
+    // Store intended destination for redirect after login (state for email/password, sessionStorage for OAuth)
+    try { sessionStorage.setItem('hockia-redirect-after-login', location.pathname) } catch { /* noop */ }
     return <Navigate to="/" state={{ from: location.pathname }} replace />
   }
 
