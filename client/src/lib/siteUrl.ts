@@ -35,8 +35,28 @@ const explicitSiteUrl = (() => {
   return resolved ? stripTrailingSlash(resolved) : undefined
 })()
 
+/** Detect if running inside a Capacitor native shell (iOS/Android). */
+const isNativeApp = (): boolean => {
+  if (typeof window === 'undefined') return false
+  // Capacitor sets window.Capacitor when running natively
+  const cap = (window as unknown as Record<string, unknown>).Capacitor as { isNativePlatform?: () => boolean } | undefined
+  if (cap?.isNativePlatform?.()) return true
+  // Fallback: capacitor:// or ionic:// schemes indicate native WebView
+  const origin = window.location?.origin ?? ''
+  return origin.startsWith('capacitor://') || origin.startsWith('ionic://')
+}
+
+/**
+ * Canonical web URL for the production site.
+ * Used as the OAuth redirect target when running inside a native app,
+ * because OAuth providers reject capacitor:// origins.
+ */
+const PRODUCTION_SITE_URL = 'https://inhockia.com'
+
 const fallbackSiteUrl = (): string => {
   if (typeof window !== 'undefined' && window.location?.origin) {
+    // Native apps report capacitor://localhost — use the real site URL instead
+    if (isNativeApp()) return PRODUCTION_SITE_URL
     return window.location.origin
   }
   return 'http://localhost:3000'

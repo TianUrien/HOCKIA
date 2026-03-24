@@ -5,6 +5,7 @@ import * as Sentry from '@sentry/react'
 import { Input, Button, InAppBrowserWarning } from '@/components'
 import { supabase } from '@/lib/supabase'
 import { getAuthRedirectUrl } from '@/lib/siteUrl'
+import { startOAuthSignIn } from '@/lib/oauthSignIn'
 import { logger } from '@/lib/logger'
 import { supportsReliableOAuth } from '@/lib/inAppBrowser'
 import { checkSignupRateLimit, formatRateLimitError } from '@/lib/rateLimit'
@@ -253,7 +254,7 @@ export default function SignUp() {
                       return
                     }
                     trackSignUpStart('google')
-                    supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: getAuthRedirectUrl() } })
+                    startOAuthSignIn('google').catch(err => { logger.error('Google OAuth error:', err) })
                   }}
                   className="mt-4 w-full flex items-center justify-center gap-3 px-4 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
                 >
@@ -271,7 +272,7 @@ export default function SignUp() {
                   type="button"
                   onClick={() => {
                     trackSignUpStart('apple')
-                    supabase.auth.signInWithOAuth({ provider: 'apple', options: { redirectTo: getAuthRedirectUrl() } })
+                    startOAuthSignIn('apple').catch(err => { logger.error('Apple OAuth error:', err) })
                   }}
                   className="mt-3 w-full flex items-center justify-center gap-3 px-4 py-3 bg-black border border-gray-700 rounded-lg hover:bg-gray-900 transition-colors shadow-sm"
                 >

@@ -13,6 +13,7 @@ import { useCountries } from '@/hooks/useCountries'
 import { invalidateProfile } from '@/lib/profile'
 import { useToastStore } from '@/lib/toast'
 import { deleteStorageObject } from '@/lib/storage'
+import { isNativePlatform, pickImageNative } from '@/lib/nativeImagePicker'
 import { toSentryError } from '@/lib/sentryHelpers'
 import { clearProfileDraft, loadProfileDraft, saveProfileDraft } from '@/lib/profileDrafts'
 import { trackDbEvent } from '@/lib/trackDbEvent'
@@ -374,44 +375,38 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
 
   if (!isOpen || !profile) return null
 
-  const handleImageClick = () => {
-    fileInputRef.current?.click()
-  }
-
-  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file || !profile) return;
+  /** Upload a File to Supabase avatars bucket and update form state. */
+  const uploadAvatarFile = async (file: File) => {
+    if (!profile) return
 
     try {
-      // Validate image
       const validation = validateImage(file, { maxFileSizeMB: 5 })
       if (!validation.valid) {
-        setError(validation.error || 'Invalid image');
-        return;
+        setError(validation.error || 'Invalid image')
+        return
       }
 
-      // Optimize image before upload
       logger.debug('Optimizing avatar image...')
-      const optimizedFile = await optimizeAvatarImage(file);
+      const optimizedFile = await optimizeAvatarImage(file)
 
-      const fileExt = optimizedFile.name.split('.').pop() || 'jpg';
-      const filePath = `${profile.id}/avatar_${Date.now()}.${fileExt}`;
+      const fileExt = optimizedFile.name.split('.').pop() || 'jpg'
+      const filePath = `${profile.id}/avatar_${Date.now()}.${fileExt}`
 
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(filePath, optimizedFile, { upsert: true, cacheControl: '31536000' });
+        .upload(filePath, optimizedFile, { upsert: true, cacheControl: '31536000' })
 
       if (uploadError) {
         captureOnboardingError(uploadError, {
           profileId: profile.id,
           fileSizeBytes: optimizedFile.size,
         }, 'EditProfileModal.handleAvatarUpload.upload')
-        throw uploadError;
+        throw uploadError
       }
 
       const { data: { publicUrl } } = supabase.storage
         .from('avatars')
-        .getPublicUrl(filePath);
+        .getPublicUrl(filePath)
 
       const previousUrl = formData.avatar_url || profile.avatar_url || null
       setFormData(prev => ({ ...prev, avatar_url: publicUrl }))
@@ -424,10 +419,34 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
         profileId: profile.id,
         stage: 'avatarUploadCatch',
       }, 'EditProfileModal.handleAvatarUpload.catch')
-      logger.error('Error uploading avatar:', error);
-      setError('We couldn’t upload this image. Please use PNG or JPG up to 5MB.');
+      logger.error('Error uploading avatar:', error)
+      setError('We couldn\'t upload this image. Please use PNG or JPG up to 5MB.')
     }
-  };
+  }
+
+  const handleImageClick = async () => {
+    // On native platforms, use Capacitor Camera plugin (handles permissions + camera properly)
+    if (isNativePlatform()) {
+      try {
+        const result = await pickImageNative('prompt')
+        if (result) {
+          await uploadAvatarFile(result.file)
+        }
+      } catch (err) {
+        logger.error('Native image picker error:', err)
+        setError('Could not access camera or photos. Please check app permissions.')
+      }
+      return
+    }
+    // On web, fall back to standard file input
+    fileInputRef.current?.click()
+  }
+
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file || !profile) return
+    await uploadAvatarFile(file)
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

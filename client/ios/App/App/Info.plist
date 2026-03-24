@@ -62,5 +62,11 @@
 	</dict>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<key>NSCameraUsageDescription</key>
+	<string>HOCKIA needs access to your camera to take a profile photo.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>HOCKIA needs access to your photo library to choose a profile photo.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>HOCKIA needs permission to save photos to your library.</string>
 </dict>
 </plist>

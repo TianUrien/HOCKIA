@@ -6,7 +6,7 @@ import { Input, Button, InAppBrowserWarning, PublicNav } from '@/components'
 import { useAuthStore } from '@/lib/auth'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
-import { getAuthRedirectUrl } from '@/lib/siteUrl'
+import { startOAuthSignIn } from '@/lib/oauthSignIn'
 import { supportsReliableOAuth } from '@/lib/inAppBrowser'
 import { checkLoginRateLimit, formatRateLimitError } from '@/lib/rateLimit'
 
@@ -413,7 +413,7 @@ export default function Landing() {
                   alert('Google Sign-In may not work in this browser. Please use email/password login, or open HOCKIA in Safari or Chrome.')
                   return
                 }
-                supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: getAuthRedirectUrl() } })
+                startOAuthSignIn('google').catch(err => { logger.error('Google OAuth error:', err); setError('Sign-in failed. Please try again.') })
               }}
               className="w-full flex items-center justify-center gap-2 h-10 bg-white rounded-xl hover:bg-gray-50 transition-colors shadow-sm"
             >
@@ -429,7 +429,7 @@ export default function Landing() {
             <button
               type="button"
               onClick={() => {
-                supabase.auth.signInWithOAuth({ provider: 'apple', options: { redirectTo: getAuthRedirectUrl() } })
+                startOAuthSignIn('apple').catch(err => { logger.error('Apple OAuth error:', err); setError('Sign-in failed. Please try again.') })
               }}
               className="w-full flex items-center justify-center gap-2 h-10 bg-black rounded-xl hover:bg-gray-900 transition-colors shadow-sm mt-2 border border-white/10"
             >
@@ -553,7 +553,7 @@ export default function Landing() {
                     alert('Google Sign-In may not work in this browser. Please use email/password login, or open HOCKIA in Safari or Chrome.')
                     return
                   }
-                  supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: getAuthRedirectUrl() } })
+                  startOAuthSignIn('google').catch(err => { logger.error('Google OAuth error:', err); setError('Sign-in failed. Please try again.') })
                 }}
                 className="w-full flex items-center justify-center gap-2.5 h-12 bg-white rounded-xl hover:bg-gray-50 transition-colors shadow-sm"
               >
@@ -570,7 +570,7 @@ export default function Landing() {
               <button
                 type="button"
                 onClick={() => {
-                  supabase.auth.signInWithOAuth({ provider: 'apple', options: { redirectTo: getAuthRedirectUrl() } })
+                  startOAuthSignIn('apple').catch(err => { logger.error('Apple OAuth error:', err); setError('Sign-in failed. Please try again.') })
                 }}
                 className="w-full flex items-center justify-center gap-2.5 h-12 bg-black rounded-xl hover:bg-gray-900 transition-colors shadow-sm mt-3 border border-white/10"
               >

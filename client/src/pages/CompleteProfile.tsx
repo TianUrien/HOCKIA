@@ -13,6 +13,7 @@ import { logger } from '@/lib/logger'
 import { optimizeAvatarImage, validateImage } from '@/lib/imageOptimization'
 import { invalidateProfile } from '@/lib/profile'
 import { deleteStorageObject } from '@/lib/storage'
+import { isNativePlatform, pickImageNative } from '@/lib/nativeImagePicker'
 import { toSentryError } from '@/lib/sentryHelpers'
 import { trackOnboardingComplete } from '@/lib/analytics'
 import { trackDbEvent } from '@/lib/trackDbEvent'
@@ -341,23 +342,20 @@ export default function CompleteProfile() {
     }))
   }
 
-  // Handle avatar upload
-  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file || !user) return
+  /** Upload a File to Supabase avatars bucket. */
+  const uploadAvatarFile = async (file: File) => {
+    if (!user) return
 
     try {
       setUploadingAvatar(true)
       setError('')
 
-      // Validate image
       const validation = validateImage(file, { maxFileSizeMB: 5 })
       if (!validation.valid) {
         setError(validation.error || 'Invalid image')
         return
       }
 
-      // Optimize image before upload
       logger.debug('Optimizing avatar image...')
       const optimizedFile = await optimizeAvatarImage(file)
 
@@ -395,10 +393,34 @@ export default function CompleteProfile() {
         hasUser: Boolean(user?.id),
       }, 'CompleteProfile.handleAvatarUpload.catch')
       logger.error('Error uploading avatar:', err)
-      setError('We couldn’t upload this image. Please use PNG or JPG up to 5MB.')
+      setError('We couldn\'t upload this image. Please use PNG or JPG up to 5MB.')
     } finally {
       setUploadingAvatar(false)
     }
+  }
+
+  // Handle avatar click — use native picker on Capacitor, file input on web
+  const handleAvatarClick = async () => {
+    if (isNativePlatform()) {
+      try {
+        const result = await pickImageNative('prompt')
+        if (result) {
+          await uploadAvatarFile(result.file)
+        }
+      } catch (err) {
+        logger.error('Native image picker error:', err)
+        setError('Could not access camera or photos. Please check app permissions.')
+      }
+      return
+    }
+    fileInputRef.current?.click()
+  }
+
+  // Handle file input change (web only)
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+    await uploadAvatarFile(file)
   }
 
   // Client-side validation
@@ -860,8 +882,8 @@ export default function CompleteProfile() {
                 Profile Photo <span className="text-gray-500">(Optional)</span>
               </label>
               <div className="flex items-center gap-4">
-                <div 
-                  onClick={() => fileInputRef.current?.click()}
+                <div
+                  onClick={handleAvatarClick}
                   className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-100 to-indigo-100 flex items-center justify-center cursor-pointer hover:from-purple-200 hover:to-indigo-200 transition-all overflow-hidden border-2 border-white shadow-md"
                 >
                   {avatarUrl ? (
@@ -873,7 +895,7 @@ export default function CompleteProfile() {
                 <div className="flex-1">
                   <button
                     type="button"
-                    onClick={() => fileInputRef.current?.click()}
+                    onClick={handleAvatarClick}
                     disabled={uploadingAvatar}
                     className="px-4 py-2 bg-white hover:bg-gray-50 text-gray-700 rounded-lg transition-colors text-sm font-medium border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
