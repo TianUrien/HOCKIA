@@ -82,7 +82,7 @@ const createQueryBuilder = (rows: Array<Record<string, unknown>> = []) => ({
 })
 
 let rpcResponse: Array<Record<string, unknown>> = []
-let applicationRows: Array<{ vacancy_id: string }> = []
+let applicationRows: Array<{ opportunity_id: string }> = []
 
 beforeEach(() => {
   rpcResponse = []

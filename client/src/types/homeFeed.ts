@@ -39,7 +39,7 @@ export interface MemberJoinedFeedItem extends BaseFeedItem {
 
 export interface OpportunityPostedFeedItem extends BaseFeedItem {
   item_type: 'opportunity_posted'
-  vacancy_id: string
+  opportunity_id: string
   title: string
   opportunity_type: string | null
   position: string | null

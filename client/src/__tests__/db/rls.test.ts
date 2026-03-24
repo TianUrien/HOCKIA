@@ -85,36 +85,36 @@ describe.skipIf(skip)('RLS Policy Isolation', () => {
   })
 
   // =========================================================================
-  // VACANCY APPLICATIONS
+  // OPPORTUNITY APPLICATIONS
   // =========================================================================
-  describe('vacancy_applications', () => {
-    it('coach cannot see applications to a club vacancy', async () => {
-      // Find club's vacancy
-      const { data: clubVacancies } = await club.client
+  describe('opportunity_applications', () => {
+    it('coach cannot see applications to a club opportunity', async () => {
+      // Find club's opportunity
+      const { data: clubOpportunities } = await club.client
         .from('opportunities')
         .select('id')
         .eq('club_id', club.userId)
         .limit(1)
 
-      if (!clubVacancies?.length) {
-        console.warn('  ⏭  No club vacancies found — skipping')
+      if (!clubOpportunities?.length) {
+        console.warn('  ⏭  No club opportunities found — skipping')
         return
       }
 
-      const vacancyId = clubVacancies[0].id
+      const opportunityId = clubOpportunities[0].id
 
-      // Coach tries to read applications for that vacancy
+      // Coach tries to read applications for that opportunity
       const { data: coachApps } = await coach.client
-        .from('vacancy_applications')
+        .from('opportunity_applications')
         .select('id')
-        .eq('vacancy_id', vacancyId)
+        .eq('opportunity_id', opportunityId)
 
       expect(coachApps ?? []).toHaveLength(0)
     })
 
     it('player can only see their own applications', async () => {
       const { data: playerApps } = await player.client
-        .from('vacancy_applications')
+        .from('opportunity_applications')
         .select('id, applicant_id')
 
       for (const app of playerApps ?? []) {

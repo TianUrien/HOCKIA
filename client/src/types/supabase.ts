@@ -3550,62 +3550,6 @@ export type Database = {
         Args: { p_days?: number; p_user_id: string }
         Returns: Json
       }
-      admin_get_vacancies: {
-        Args: {
-          p_club_id?: string
-          p_days?: number
-          p_limit?: number
-          p_offset?: number
-          p_status?: Database["public"]["Enums"]["opportunity_status"]
-        }
-        Returns: {
-          application_count: number
-          application_deadline: string
-          club_avatar_url: string
-          club_id: string
-          club_name: string
-          created_at: string
-          first_application_at: string
-          id: string
-          location_city: string
-          location_country: string
-          opportunity_type: Database["public"]["Enums"]["opportunity_type"]
-          pending_count: number
-          position: Database["public"]["Enums"]["opportunity_position"]
-          published_at: string
-          shortlisted_count: number
-          status: Database["public"]["Enums"]["opportunity_status"]
-          time_to_first_app_minutes: number
-          title: string
-          total_count: number
-        }[]
-      }
-      admin_get_vacancy_applicants: {
-        Args: {
-          p_limit?: number
-          p_offset?: number
-          p_status?: Database["public"]["Enums"]["application_status"]
-          p_vacancy_id: string
-        }
-        Returns: {
-          application_id: string
-          applied_at: string
-          avatar_url: string
-          highlight_video_url: string
-          nationality: string
-          onboarding_completed: boolean
-          player_email: string
-          player_id: string
-          player_name: string
-          position: string
-          status: Database["public"]["Enums"]["application_status"]
-          total_count: number
-        }[]
-      }
-      admin_get_vacancy_detail: {
-        Args: { p_vacancy_id: string }
-        Returns: Json
-      }
       admin_list_investor_tokens: {
         Args: never
         Returns: {
@@ -4127,40 +4071,6 @@ export type Database = {
           opportunity_type: Database["public"]["Enums"]["opportunity_type"]
           organization_name: string
           pending_count: number
-          position: Database["public"]["Enums"]["opportunity_position"]
-          priority: Database["public"]["Enums"]["opportunity_priority"]
-          published_at: string
-          requirements: string[]
-          start_date: string
-          status: Database["public"]["Enums"]["opportunity_status"]
-          title: string
-          updated_at: string
-          version: number
-        }[]
-      }
-      fetch_club_vacancies_with_counts: {
-        Args: {
-          p_club_id: string
-          p_include_closed?: boolean
-          p_limit?: number
-        }
-        Returns: {
-          applicant_count: number
-          application_deadline: string
-          benefits: string[]
-          closed_at: string
-          club_id: string
-          contact_email: string
-          contact_phone: string
-          created_at: string
-          custom_benefits: string[]
-          description: string
-          duration_text: string
-          gender: Database["public"]["Enums"]["opportunity_gender"]
-          id: string
-          location_city: string
-          location_country: string
-          opportunity_type: Database["public"]["Enums"]["opportunity_type"]
           position: Database["public"]["Enums"]["opportunity_position"]
           priority: Database["public"]["Enums"]["opportunity_priority"]
           published_at: string
