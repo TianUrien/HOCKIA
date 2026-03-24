@@ -8,7 +8,19 @@
 -- ============================================================================
 -- 1. admin_get_vacancies → admin_get_opportunities
 -- ============================================================================
-DROP FUNCTION IF EXISTS public.admin_get_vacancies(opportunity_status, UUID, INTEGER, INTEGER, INTEGER);
+-- Drop ALL overloads of both old and new names to start clean
+DO $$
+DECLARE r RECORD;
+BEGIN
+  FOR r IN
+    SELECT oid::regprocedure::text AS sig
+    FROM pg_proc
+    WHERE proname IN ('admin_get_vacancies', 'admin_get_opportunities')
+      AND pronamespace = 'public'::regnamespace
+  LOOP
+    EXECUTE 'DROP FUNCTION IF EXISTS ' || r.sig;
+  END LOOP;
+END $$;
 
 CREATE OR REPLACE FUNCTION public.admin_get_opportunities(
   p_status opportunity_status DEFAULT NULL,
@@ -104,13 +116,24 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.admin_get_opportunities IS 'Get paginated opportunity list with application statistics for admin';
-GRANT EXECUTE ON FUNCTION public.admin_get_opportunities TO authenticated;
+COMMENT ON FUNCTION public.admin_get_opportunities(opportunity_status, UUID, INTEGER, INTEGER, INTEGER) IS 'Get paginated opportunity list with application statistics for admin';
+GRANT EXECUTE ON FUNCTION public.admin_get_opportunities(opportunity_status, UUID, INTEGER, INTEGER, INTEGER) TO authenticated;
 
 -- ============================================================================
 -- 2. admin_get_vacancy_applicants → admin_get_opportunity_applicants
 -- ============================================================================
-DROP FUNCTION IF EXISTS public.admin_get_vacancy_applicants(UUID, application_status, INTEGER, INTEGER);
+DO $$
+DECLARE r RECORD;
+BEGIN
+  FOR r IN
+    SELECT oid::regprocedure::text AS sig
+    FROM pg_proc
+    WHERE proname IN ('admin_get_vacancy_applicants', 'admin_get_opportunity_applicants')
+      AND pronamespace = 'public'::regnamespace
+  LOOP
+    EXECUTE 'DROP FUNCTION IF EXISTS ' || r.sig;
+  END LOOP;
+END $$;
 
 CREATE OR REPLACE FUNCTION public.admin_get_opportunity_applicants(
   p_opportunity_id UUID,
@@ -179,7 +202,18 @@ GRANT EXECUTE ON FUNCTION public.admin_get_opportunity_applicants TO authenticat
 -- ============================================================================
 -- 3. admin_get_vacancy_detail → admin_get_opportunity_detail
 -- ============================================================================
-DROP FUNCTION IF EXISTS public.admin_get_vacancy_detail(UUID);
+DO $$
+DECLARE r RECORD;
+BEGIN
+  FOR r IN
+    SELECT oid::regprocedure::text AS sig
+    FROM pg_proc
+    WHERE proname IN ('admin_get_vacancy_detail', 'admin_get_opportunity_detail')
+      AND pronamespace = 'public'::regnamespace
+  LOOP
+    EXECUTE 'DROP FUNCTION IF EXISTS ' || r.sig;
+  END LOOP;
+END $$;
 
 CREATE OR REPLACE FUNCTION public.admin_get_opportunity_detail(
   p_opportunity_id UUID
