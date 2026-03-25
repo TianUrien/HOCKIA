@@ -43,7 +43,7 @@ export default function ReportUserModal({ targetId, targetName, contentType = 'u
 
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error: rpcError } = await (supabase.rpc as any)('report_user', {
+      const { error: rpcError } = await (supabase as any).rpc('report_user', {
         p_target_id: targetId,
         p_reason: reason.trim(),
         p_category: category,

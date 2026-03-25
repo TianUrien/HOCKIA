@@ -32,7 +32,7 @@ export default function TermsGate({ children }: { children: React.ReactNode }) {
 
     // Check database
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (supabase.rpc as any)('has_accepted_terms', { p_version: CURRENT_TERMS_VERSION })
+    (supabase as any).rpc('has_accepted_terms', { p_version: CURRENT_TERMS_VERSION })
       .then(({ data }: { data: boolean }) => {
         if (data) {
           localStorage.setItem(localKey, 'accepted')
@@ -48,7 +48,7 @@ export default function TermsGate({ children }: { children: React.ReactNode }) {
     setLoading(true)
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (supabase.rpc as any)('accept_terms', { p_version: CURRENT_TERMS_VERSION })
+      await (supabase as any).rpc('accept_terms', { p_version: CURRENT_TERMS_VERSION })
       localStorage.setItem(`hockia-terms-${CURRENT_TERMS_VERSION}`, 'accepted')
       setAccepted(true)
     } catch (err) {

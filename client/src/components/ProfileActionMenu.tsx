@@ -26,7 +26,7 @@ export default function ProfileActionMenu({ targetId, targetName }: ProfileActio
   useEffect(() => {
     if (!user) return
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(supabase.rpc as any)('is_user_blocked', { p_other_id: targetId })
+    ;(supabase as any).rpc('is_user_blocked', { p_other_id: targetId })
       .then(({ data }: { data: boolean }) => { if (data) setBlocked(true) })
       .catch(() => {})
   }, [user, targetId])
@@ -47,13 +47,13 @@ export default function ProfileActionMenu({ targetId, targetName }: ProfileActio
     setLoadingBlock(true)
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const rpc = supabase.rpc as any
+      const sb = supabase as any
       if (blocked) {
-        const { error: err } = await rpc('unblock_user', { p_blocked_id: targetId })
+        const { error: err } = await sb.rpc('unblock_user', { p_blocked_id: targetId })
         if (err) throw err
         setBlocked(false)
       } else {
-        const { error: err } = await rpc('block_user', { p_blocked_id: targetId })
+        const { error: err } = await sb.rpc('block_user', { p_blocked_id: targetId })
         if (err) throw err
         setBlocked(true)
       }
