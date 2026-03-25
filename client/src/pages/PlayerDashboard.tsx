@@ -3,6 +3,7 @@ import { ArrowLeft, MapPin, Calendar, Edit2, Eye, MessageCircle, Landmark, Mail,
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { Avatar, DashboardMenu, EditProfileModal, FriendsTab, FriendshipButton, PublicReferencesSection, PublicViewBanner, RoleBadge, ScrollableTabs, ProfileStrengthCard, DualNationalityDisplay, AvailabilityPill } from '@/components'
+import ProfileActionMenu from '@/components/ProfileActionMenu'
 import Header from '@/components/Header'
 import MediaTab from '@/components/MediaTab'
 import JourneyTab from '@/components/JourneyTab'
@@ -299,6 +300,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
                         )}
                       </button>
                     )}
+                    {!isOwnProfile && <ProfileActionMenu targetId={profile.id} targetName={profile.full_name ?? 'this user'} />}
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">

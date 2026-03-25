@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { formatDistanceToNow } from 'date-fns'
-import { MessageSquare, MessageSquarePlus, ShieldAlert, UserCheck } from 'lucide-react'
+import { Flag, MessageSquare, MessageSquarePlus, ShieldAlert, UserCheck } from 'lucide-react'
 import * as Sentry from '@sentry/react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
@@ -13,7 +13,9 @@ import RoleBadge from './RoleBadge'
 import { cn } from '@/lib/utils'
 import ConfirmActionModal from './ConfirmActionModal'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
+import { checkContent } from '@/lib/contentFilter'
 import InfoTooltip from './InfoTooltip'
+import ReportUserModal from './ReportUserModal'
 
 interface CommentsTabProps {
   profileId: string
@@ -74,6 +76,7 @@ export default function CommentsTab({ profileId, highlightedCommentIds }: Commen
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [friendIds, setFriendIds] = useState<Set<string>>(new Set())
+  const [reportingComment, setReportingComment] = useState<{ id: string; authorId: string; authorName: string } | null>(null)
 
   const canComment = Boolean(user && authProfile && authProfile.id !== profileId)
 
@@ -196,6 +199,12 @@ export default function CommentsTab({ profileId, highlightedCommentIds }: Commen
 
     if (!composerRating) {
       addToast('Select a sentiment to post your comment.', 'error')
+      return
+    }
+
+    const filterResult = checkContent(trimmed)
+    if (!filterResult.allowed) {
+      addToast(filterResult.reason || 'Content violates community guidelines.', 'error')
       return
     }
 
@@ -680,6 +689,20 @@ export default function CommentsTab({ profileId, highlightedCommentIds }: Commen
                       <p className="mt-3 text-sm leading-relaxed text-gray-700 whitespace-pre-line break-words">
                         {comment.content}
                       </p>
+                      {user && authorId !== user.id && (
+                        <button
+                          type="button"
+                          onClick={() => setReportingComment({
+                            id: comment.id,
+                            authorId: authorId ?? '',
+                            authorName: comment.author?.full_name || comment.author?.username || 'Unknown',
+                          })}
+                          className="mt-2 inline-flex items-center gap-1 text-xs text-gray-400 hover:text-red-500 transition-colors"
+                        >
+                          <Flag className="w-3 h-3" />
+                          Report
+                        </button>
+                      )}
                     </div>
                   </div>
                 </article>
@@ -700,6 +723,16 @@ export default function CommentsTab({ profileId, highlightedCommentIds }: Commen
         confirmLoading={deleteLoading}
         loadingLabel="Deleting..."
       />
+
+      {reportingComment && (
+        <ReportUserModal
+          targetId={reportingComment.authorId}
+          targetName={reportingComment.authorName}
+          contentType="comment"
+          contentId={reportingComment.id}
+          onClose={() => setReportingComment(null)}
+        />
+      )}
     </div>
   )
 }

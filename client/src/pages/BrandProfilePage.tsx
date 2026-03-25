@@ -20,6 +20,7 @@ import { useAuthStore } from '@/lib/auth'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import { trackProfileView } from '@/lib/analytics'
 import Skeleton from '@/components/Skeleton'
+import ProfileActionMenu from '@/components/ProfileActionMenu'
 
 export default function BrandProfilePage() {
   const { slug } = useParams<{ slug: string }>()
@@ -144,6 +145,7 @@ export default function BrandProfilePage() {
                       <span className="text-xs opacity-70">{followerCount}</span>
                     )}
                   </button>
+                  {brand && <ProfileActionMenu targetId={brand.profile_id} targetName={brand.name ?? 'this brand'} />}
                 </div>
               )}
 

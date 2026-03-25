@@ -151,6 +151,7 @@ vi.mock('@/lib/supabase', () => {
   return {
     supabase: {
       from: vi.fn(() => conversationQuery),
+      rpc: vi.fn().mockResolvedValue({ data: false, error: null }),
     },
   }
 })

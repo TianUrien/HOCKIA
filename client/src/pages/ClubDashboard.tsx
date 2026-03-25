@@ -3,6 +3,7 @@ import { ArrowLeft, MapPin, Calendar, Plus, Eye, MessageCircle, Edit, Loader2 } 
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import Header from '@/components/Header'
 import { Avatar, Button, CountryDisplay, DashboardMenu, EditProfileModal, CommentsTab, FriendsTab, FriendshipButton, ProfileStrengthCard, PublicViewBanner, RoleBadge, ScrollableTabs } from '@/components'
+import ProfileActionMenu from '@/components/ProfileActionMenu'
 import { useClubProfileStrength } from '@/hooks/useClubProfileStrength'
 import { ProfileViewersSection } from '@/components/ProfileViewersSection'
 import { logger } from '@/lib/logger'
@@ -318,6 +319,7 @@ export default function ClubDashboard({ profileData, readOnly = false, isOwnProf
                         {sendingMessage ? 'Starting...' : 'Message'}
                       </Button>
                     )}
+                    {!isOwnProfile && <ProfileActionMenu targetId={profile.id} targetName={profile.full_name ?? 'this club'} />}
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">

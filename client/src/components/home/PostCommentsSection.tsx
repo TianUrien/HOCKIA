@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Loader2, Send, Trash2 } from 'lucide-react'
+import { Flag, Loader2, Send, Trash2 } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
 import { usePostInteractions } from '@/hooks/usePostInteractions'
 import { Avatar } from '@/components'
+import ReportUserModal from '@/components/ReportUserModal'
 import { getTimeAgo } from '@/lib/utils'
+import { checkContent } from '@/lib/contentFilter'
 import type { PostComment } from '@/types/homeFeed'
 
 interface PostCommentsSectionProps {
@@ -28,6 +30,7 @@ export function PostCommentsSection({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showAll, setShowAll] = useState(false)
   const [newComment, setNewComment] = useState('')
+  const [reportingComment, setReportingComment] = useState<{ id: string; authorId: string; authorName: string } | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
   // Load initial comments
@@ -65,6 +68,12 @@ export function PostCommentsSection({
   const handleSubmit = useCallback(async () => {
     const trimmed = newComment.trim()
     if (!trimmed || !user || isSubmitting) return
+
+    const filterResult = checkContent(trimmed)
+    if (!filterResult.allowed) {
+      alert(filterResult.reason || 'Content violates community guidelines.')
+      return
+    }
 
     setIsSubmitting(true)
     const result = await createComment(postId, trimmed)
@@ -136,8 +145,8 @@ export function PostCommentsSection({
               </div>
               <p className="text-sm text-gray-700 mt-0.5">{comment.content}</p>
             </div>
-            {/* Delete button for own comments */}
-            {user && comment.author_id === user.id && (
+            {/* Delete button for own comments, Report for others */}
+            {user && comment.author_id === user.id ? (
               <button
                 type="button"
                 onClick={() => handleDelete(comment.id)}
@@ -146,7 +155,20 @@ export function PostCommentsSection({
                 <Trash2 className="w-3 h-3" />
                 Delete
               </button>
-            )}
+            ) : user ? (
+              <button
+                type="button"
+                onClick={() => setReportingComment({
+                  id: comment.id,
+                  authorId: comment.author_id,
+                  authorName: comment.author_name || 'Unknown',
+                })}
+                className="mt-1 ml-1 text-xs text-gray-400 hover:text-red-500 flex items-center gap-1 transition-colors"
+              >
+                <Flag className="w-3 h-3" />
+                Report
+              </button>
+            ) : null}
           </div>
         </div>
       ))}
@@ -199,6 +221,16 @@ export function PostCommentsSection({
             </button>
           </div>
         </div>
+      )}
+
+      {reportingComment && (
+        <ReportUserModal
+          targetId={reportingComment.authorId}
+          targetName={reportingComment.authorName}
+          contentType="comment"
+          contentId={reportingComment.id}
+          onClose={() => setReportingComment(null)}
+        />
       )}
     </div>
   )

@@ -130,9 +130,12 @@ export async function signInWithOAuthNative(provider: 'apple' | 'google'): Promi
   })
 
   // Open the OAuth URL in SFSafariViewController (iOS) / Chrome Custom Tab (Android)
+  // width/height required for iPad popover presentation (Apple Guideline 2.1a)
   await Browser.open({
     url: data.url,
     presentationStyle: 'popover',
+    width: 600,
+    height: 800,
     windowName: '_self',
   })
 

@@ -431,12 +431,12 @@ export default function Landing() {
               onClick={() => {
                 startOAuthSignIn('apple').catch(err => { logger.error('Apple OAuth error:', err); setError('Sign-in failed. Please try again.') })
               }}
-              className="w-full flex items-center justify-center gap-2 h-10 bg-black rounded-xl hover:bg-gray-900 transition-colors shadow-sm mt-2 border border-white/10"
+              className="w-full flex items-center justify-center gap-2 h-10 bg-white rounded-xl hover:bg-gray-100 transition-colors shadow-sm mt-2"
             >
-              <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="white">
+              <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="black">
                 <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
               </svg>
-              <span className="text-white text-[13px] font-medium">Continue with Apple</span>
+              <span className="text-black text-[13px] font-medium">Continue with Apple</span>
             </button>
 
             <p className="mt-3 text-center text-[11px] text-gray-400">
@@ -566,18 +566,18 @@ export default function Landing() {
                 <span className="text-gray-700 font-medium">Continue with Google</span>
               </button>
 
-              {/* Apple Button */}
+              {/* Apple Button — white style per Apple HIG (Guideline 4) */}
               <button
                 type="button"
                 onClick={() => {
                   startOAuthSignIn('apple').catch(err => { logger.error('Apple OAuth error:', err); setError('Sign-in failed. Please try again.') })
                 }}
-                className="w-full flex items-center justify-center gap-2.5 h-12 bg-black rounded-xl hover:bg-gray-900 transition-colors shadow-sm mt-3 border border-white/10"
+                className="w-full flex items-center justify-center gap-2.5 h-12 bg-white rounded-xl hover:bg-gray-100 transition-colors shadow-sm mt-3"
               >
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white">
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="black">
                   <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
                 </svg>
-                <span className="text-white font-medium">Continue with Apple</span>
+                <span className="text-black font-medium">Continue with Apple</span>
               </button>
 
               {/* Join CTA */}

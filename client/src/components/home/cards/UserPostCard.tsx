@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
+import { MoreHorizontal, Pencil, Trash2, Flag } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
 import { usePostInteractions } from '@/hooks/usePostInteractions'
 import { useUserPosts } from '@/hooks/useUserPosts'
@@ -11,6 +11,7 @@ import { MediaLightbox } from '../MediaLightbox'
 import { PostInteractionBar } from '../PostInteractionBar'
 import { PostCommentsSection } from '../PostCommentsSection'
 import { PostComposerModal } from '../PostComposerModal'
+import ReportUserModal from '@/components/ReportUserModal'
 import type { UserPostFeedItem } from '@/types/homeFeed'
 
 interface UserPostCardProps {
@@ -31,6 +32,7 @@ export function UserPostCard({ item, onLikeUpdate, onDelete }: UserPostCardProps
   const [localCommentCount, setLocalCommentCount] = useState(item.comment_count)
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [lightboxIndex, setLightboxIndex] = useState(0)
+  const [showReport, setShowReport] = useState(false)
 
   const timeAgo = getTimeAgo(item.created_at, true)
   const isOwner = user?.id === item.author_id
@@ -115,8 +117,8 @@ export function UserPostCard({ item, onLikeUpdate, onDelete }: UserPostCardProps
             <p className="text-xs text-gray-500">{timeAgo}</p>
           </div>
 
-          {/* Owner menu */}
-          {isOwner && (
+          {/* Post menu — owners: edit/delete, others: report */}
+          {user && (
             <div className="relative">
               <button
                 type="button"
@@ -131,22 +133,35 @@ export function UserPostCard({ item, onLikeUpdate, onDelete }: UserPostCardProps
                 <>
                   <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
                   <div className="absolute right-0 top-full mt-1 z-20 bg-white border border-gray-200 rounded-lg shadow-lg py-1 w-36">
-                    <button
-                      type="button"
-                      onClick={() => { setShowMenu(false); setIsEditing(true) }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                    >
-                      <Pencil className="w-3.5 h-3.5" />
-                      Edit post
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleDelete}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      Delete post
-                    </button>
+                    {isOwner ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => { setShowMenu(false); setIsEditing(true) }}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                          Edit post
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleDelete}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          Delete post
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => { setShowMenu(false); setShowReport(true) }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                      >
+                        <Flag className="w-3.5 h-3.5" />
+                        Report post
+                      </button>
+                    )}
                   </div>
                 </>
               )}
@@ -227,6 +242,17 @@ export function UserPostCard({ item, onLikeUpdate, onDelete }: UserPostCardProps
           images={sortedImages}
           initialIndex={lightboxIndex}
           onClose={() => setLightboxOpen(false)}
+        />
+      )}
+
+      {/* Report modal */}
+      {showReport && (
+        <ReportUserModal
+          targetId={item.author_id}
+          targetName={item.author_name || 'Unknown'}
+          contentType="post"
+          contentId={item.post_id}
+          onClose={() => setShowReport(false)}
         />
       )}
     </>

@@ -25,6 +25,7 @@ import Terms from '@/pages/Terms'
 import DevelopersPage from '@/pages/DevelopersPage'
 import SettingsPage from '@/pages/SettingsPage'
 import OfflinePage from '@/pages/OfflinePage'
+import TermsGate from '@/components/TermsGate'
 
 // Auto-reload on stale chunk errors (after deploy, old hashed filenames 404).
 // Uses sessionStorage guard to prevent infinite reload loops.
@@ -298,6 +299,7 @@ function App() {
           <ScrollToTop />
           <KeyboardShortcutsManager />
           {!isProduction && <SentryTestButton />}
+          <TermsGate>
           <ProtectedRoute>
             <Layout>
               <Suspense fallback={<PageLoader />}>
@@ -393,6 +395,7 @@ function App() {
               </Suspense>
             </Layout>
           </ProtectedRoute>
+          </TermsGate>
         </ProfileImagePreviewProvider>
       </BrowserRouter>
     </ErrorBoundary>

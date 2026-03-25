@@ -1,15 +1,22 @@
 import { useState, useEffect } from 'react'
+import { Capacitor } from '@capacitor/core'
 import { getConsentStatus, enableGA4 } from '@/lib/cookieConsent'
 
 /**
  * GDPR cookie consent banner.
  * Shown at the bottom of the page until user makes a choice.
  * Choice is persisted in localStorage.
+ *
+ * Hidden on native iOS/Android apps — no cookies are used in Capacitor
+ * and showing this prompt triggers Apple's ATT requirements (Guideline 5.1.2).
  */
 export default function CookieConsent() {
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
+    // Native apps don't use cookies — skip consent prompt entirely
+    if (Capacitor.isNativePlatform()) return
+
     const status = getConsentStatus()
     if (status === null) {
       setVisible(true)

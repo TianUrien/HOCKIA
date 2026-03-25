@@ -11,6 +11,7 @@ import { logger } from './lib/logger'
 import { initSentryInAppBrowserContext } from './lib/sentryHelpers'
 import UpdatePrompt from './components/UpdatePrompt'
 import CookieConsent from './components/CookieConsent'
+import { Capacitor } from '@capacitor/core'
 import { hasAnalyticsConsent, enableGA4 } from './lib/cookieConsent'
 
 // Create a container for the update prompt (outside main React tree)
@@ -150,7 +151,8 @@ const RootErrorFallback = () => (
 initWebVitals()
 
 // Load GA4 immediately if user previously consented (no flash of unconsented tracking)
-if (hasAnalyticsConsent()) {
+// Skip on native apps — no cookies/GA4 in Capacitor (Apple Guideline 5.1.2)
+if (!Capacitor.isNativePlatform() && hasAnalyticsConsent()) {
   enableGA4()
 }
 

@@ -4,6 +4,7 @@ import type { InfiniteData } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { withTimeout } from '@/lib/retry'
+import { useBlockedUsers } from '@/hooks/useBlockedUsers'
 import type { HomeFeedItem } from '@/types/homeFeed'
 
 interface FeedPage {
@@ -34,6 +35,7 @@ const NEW_ITEMS_CHECK_COOLDOWN = 5_000 // minimum 5s between checks
 
 export function useHomeFeed(): UseHomeFeedResult {
   const queryClient = useQueryClient()
+  const { blockedIds } = useBlockedUsers()
 
   const query = useInfiniteQuery<FeedPage>({
     queryKey: QUERY_KEY,
@@ -66,7 +68,10 @@ export function useHomeFeed(): UseHomeFeedResult {
   })
 
   const pages = query.data?.pages ?? []
-  const items = pages.flatMap(p => p.items)
+  // Filter out blocked users' content instantly (Apple Guideline 1.2)
+  const items = pages.flatMap(p => p.items).filter(
+    item => !('author_id' in item && blockedIds.has(item.author_id as string))
+  )
   const total = pages[pages.length - 1]?.total ?? 0
 
   // --- New items detection ---

@@ -4,10 +4,16 @@
  * This module provides utilities for tracking page views, events, and user properties.
  *
  * Note: GA4 is loaded dynamically after cookie consent via CookieConsent.tsx.
+ * GA4 is fully disabled on native iOS/Android apps (Apple Guideline 5.1.2).
  * This module handles SPA navigation and custom events.
  */
 
+import { Capacitor } from '@capacitor/core'
+
 const GA_MEASUREMENT_ID = import.meta.env.VITE_GA_MEASUREMENT_ID ?? 'G-NE620GQKTX'
+
+/** GA4 is disabled on native apps — no cookies, no tracking (Apple Guideline 5.1.2) */
+const isNative = Capacitor.isNativePlatform()
 
 // Type declaration for window.gtag
 declare global {
@@ -31,7 +37,7 @@ export function initGA(): void {
  * Call this in useEffect when location changes
  */
 export function trackPageView(path: string, title?: string): void {
-  if (typeof window === 'undefined') return
+  if (typeof window === 'undefined' || isNative) return
 
   window.gtag?.('event', 'page_view', {
     page_path: path,
@@ -53,7 +59,7 @@ interface TrackEventParams {
  * @example trackEvent({ action: 'sign_up', category: 'authentication', label: 'player' })
  */
 export function trackEvent({ action, category, label, value, ...params }: TrackEventParams): void {
-  if (typeof window === 'undefined') return
+  if (typeof window === 'undefined' || isNative) return
 
   window.gtag?.('event', action, {
     event_category: category,
@@ -68,7 +74,7 @@ export function trackEvent({ action, category, label, value, ...params }: TrackE
  * This links analytics data to a user ID for cross-device tracking
  */
 export function setUserProperties(userId: string, role: string): void {
-  if (typeof window === 'undefined') return
+  if (typeof window === 'undefined' || isNative) return
 
   window.gtag?.('set', 'user_properties', {
     user_id: userId,
@@ -84,7 +90,7 @@ export function setUserProperties(userId: string, role: string): void {
  * Clear user properties on logout
  */
 export function clearUserProperties(): void {
-  if (typeof window === 'undefined') return
+  if (typeof window === 'undefined' || isNative) return
 
   window.gtag?.('set', 'user_properties', {
     user_id: null,
