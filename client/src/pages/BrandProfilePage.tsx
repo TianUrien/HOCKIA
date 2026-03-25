@@ -40,6 +40,7 @@ export default function BrandProfilePage() {
   useEffect(() => {
     if (!brand) { setBlockChecked(true); return }
     if (!user) { setBlockChecked(true); return }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(supabase as any).rpc('is_blocked_pair', { p_user_a: user.id, p_user_b: brand.profile_id })
       .then(({ data }: { data: boolean }) => { if (data) setIsBlockedProfile(true) })
       .catch(() => {})

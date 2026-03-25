@@ -468,6 +468,9 @@ async function authenticateUser(
     }
   }
 
+  // Pre-accept terms gate so E2E tests aren't blocked by it
+  await page.evaluate(() => localStorage.setItem('hockia-terms-1.0', 'accepted'))
+
   // Save the storage state
   await page.context().storageState({ path: storagePath })
   console.log(`[Auth Setup] Saved storage state to ${storagePath}`)

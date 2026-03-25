@@ -746,7 +746,11 @@ CREATE POLICY "friendships insert"
       auth.uid() = requester_id
       AND (auth.uid() = user_one OR auth.uid() = user_two)
       AND status = 'pending'
-      AND NOT public.is_blocked_pair(user_one, user_two)
+      AND NOT EXISTS (
+        SELECT 1 FROM public.user_blocks ub
+        WHERE (ub.blocker_id = user_one AND ub.blocked_id = user_two)
+           OR (ub.blocker_id = user_two AND ub.blocked_id = user_one)
+      )
     )
   );
 

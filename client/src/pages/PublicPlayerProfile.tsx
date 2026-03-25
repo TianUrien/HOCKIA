@@ -80,6 +80,7 @@ export default function PublicPlayerProfile() {
 
   const checkBlocked = async (myId: string, otherId: string): Promise<boolean> => {
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data } = await (supabase as any).rpc('is_blocked_pair', { p_user_a: myId, p_user_b: otherId })
       if (data) {
         setError('This profile is not available.')
