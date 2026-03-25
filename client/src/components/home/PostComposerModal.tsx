@@ -408,6 +408,12 @@ export function PostComposerModal({
           return
         }
 
+        // Content filter on optional caption
+        if (content.trim()) {
+          const filterResult = checkContent(content.trim())
+          if (!filterResult.allowed) { setError(filterResult.reason || 'Content violates community guidelines.'); return }
+        }
+
         setIsSubmitting(true)
         setError(null)
 
@@ -470,6 +476,12 @@ export function PostComposerModal({
       if (!clubName) {
         setError('Please select or enter a club name')
         return
+      }
+
+      // Content filter on optional caption
+      if (content.trim()) {
+        const filterResult = checkContent(content.trim())
+        if (!filterResult.allowed) { setError(filterResult.reason || 'Content violates community guidelines.'); return }
       }
 
       setIsSubmitting(true)

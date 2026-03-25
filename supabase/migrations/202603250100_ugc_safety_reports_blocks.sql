@@ -152,9 +152,9 @@ BEGIN
   ON CONFLICT (blocker_id, blocked_id) DO NOTHING;
 
   -- Remove any friendship between the two users
-  DELETE FROM public.friendships
-  WHERE (sender_id = auth.uid() AND receiver_id = p_blocked_id)
-     OR (sender_id = p_blocked_id AND receiver_id = auth.uid());
+  DELETE FROM public.profile_friendships
+  WHERE (user_one = auth.uid() AND user_two = p_blocked_id)
+     OR (user_one = p_blocked_id AND user_two = auth.uid());
 
   -- Log to admin audit trail for developer notification (best-effort)
   BEGIN

@@ -4,9 +4,10 @@
  * Public profile page for a brand.
  */
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { ArrowLeft, Loader2, Store, MessageCircle, UserPlus, UserCheck, Award } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
 import { Header, Layout, Button, Avatar } from '@/components'
 import { BrandHeader, ProductCard, BrandPostCard } from '@/components/brands'
 import Breadcrumbs from '@/components/Breadcrumbs'
@@ -28,10 +29,22 @@ export default function BrandProfilePage() {
   const isMobile = useMediaQuery('(max-width: 1023px)')
   const { user, profile } = useAuthStore()
   const { brand, isLoading, error } = useBrand(slug)
+  const [isBlockedProfile, setIsBlockedProfile] = useState(false)
+  const [blockChecked, setBlockChecked] = useState(false)
   const { products, isLoading: productsLoading } = useBrandProducts(brand?.id)
   const { posts, isLoading: postsLoading } = useBrandPosts(brand?.id)
   const { isFollowing, followerCount, toggleFollow, isToggling } = useFollowBrand(brand?.id)
   const { ambassadors, total: ambassadorTotal, isLoading: ambassadorsLoading } = useBrandAmbassadorsPublic(brand?.id)
+
+  // Block check — must complete before rendering profile
+  useEffect(() => {
+    if (!brand) { setBlockChecked(true); return }
+    if (!user) { setBlockChecked(true); return }
+    ;(supabase as any).rpc('is_blocked_pair', { p_user_a: user.id, p_user_b: brand.profile_id })
+      .then(({ data }: { data: boolean }) => { if (data) setIsBlockedProfile(true) })
+      .catch(() => {})
+      .finally(() => setBlockChecked(true))
+  }, [brand?.profile_id, user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Track brand profile view (skip if brand owner)
   const isOwnBrand = profile?.role === 'brand' && brand?.profile_id === user?.id
@@ -74,8 +87,8 @@ export default function BrandProfilePage() {
           </div>
         )}
 
-        {/* Loading State */}
-        {isLoading && (
+        {/* Loading State (includes block check) */}
+        {(isLoading || !blockChecked) && (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
           </div>
@@ -90,8 +103,17 @@ export default function BrandProfilePage() {
           </div>
         )}
 
+        {/* Blocked State */}
+        {isBlockedProfile && (
+          <div className="max-w-4xl mx-auto px-4 py-12 text-center">
+            <Store className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">This profile is not available</h2>
+            <button type="button" onClick={() => navigate(-1)} className="mt-4 text-[#8026FA] hover:underline font-medium">Go back</button>
+          </div>
+        )}
+
         {/* Not Found State */}
-        {!isLoading && !error && !brand && (
+        {!isLoading && !error && !brand && !isBlockedProfile && (
           <div className="max-w-4xl mx-auto px-4 py-12 text-center">
             <Store className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-gray-900 mb-2">
@@ -107,7 +129,7 @@ export default function BrandProfilePage() {
         )}
 
         {/* Brand Profile */}
-        {brand && (
+        {brand && !isBlockedProfile && (
           <>
             {/* Header */}
             <BrandHeader brand={brand} />

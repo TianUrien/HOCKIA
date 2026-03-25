@@ -61,6 +61,17 @@ export default function PublicClubProfile() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  const checkBlocked = async (myId: string, otherId: string): Promise<boolean> => {
+    try {
+      const { data } = await (supabase as any).rpc('is_blocked_pair', { p_user_a: myId, p_user_b: otherId })
+      if (data) {
+        setError('This profile is not available.')
+        return true
+      }
+    } catch { /* fail open */ }
+    return false
+  }
+
   useEffect(() => {
     const fetchProfile = async () => {
       setIsLoading(true)
@@ -93,6 +104,9 @@ export default function PublicClubProfile() {
             return
           }
 
+          // Block check
+          if (currentUserProfile && await checkBlocked(currentUserProfile.id, typed.id)) return
+
           setProfile(typed)
         } else if (id) {
           const { data, error: fetchError } = await supabase
@@ -119,6 +133,9 @@ export default function PublicClubProfile() {
             return
           }
 
+          // Block check
+          if (currentUserProfile && await checkBlocked(currentUserProfile.id, typed.id)) return
+
           setProfile(typed)
         } else {
           setError('Invalid profile URL')
@@ -133,7 +150,8 @@ export default function PublicClubProfile() {
     }
 
     fetchProfile()
-  }, [username, id, isCurrentUserTestAccount])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [username, id, isCurrentUserTestAccount, currentUserProfile?.id])
 
   // Track profile view (skip own profile)
   const isOwnProfile = currentUserProfile?.id === profile?.id

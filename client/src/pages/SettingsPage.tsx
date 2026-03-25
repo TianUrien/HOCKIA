@@ -23,6 +23,7 @@ import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import Header from '@/components/Header'
 import DeleteAccountModal from '@/components/DeleteAccountModal'
+import BlockedAccountsList from '@/components/BlockedAccountsList'
 import { usePushSubscription } from '@/hooks/usePushSubscription'
 import { trackPushSubscribe, trackPushUnsubscribe } from '@/lib/analytics'
 
@@ -888,6 +889,12 @@ export default function SettingsPage() {
                       />
                     )}
                   </button>
+                </div>
+
+                {/* Blocked Accounts */}
+                <div className="mt-4">
+                  <p className="text-gray-900 font-medium text-sm mb-3">Blocked Accounts</p>
+                  <BlockedAccountsList />
                 </div>
               </div>
             )}

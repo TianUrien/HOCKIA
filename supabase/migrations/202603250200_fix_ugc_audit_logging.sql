@@ -17,9 +17,9 @@ BEGIN
   VALUES (auth.uid(), p_blocked_id)
   ON CONFLICT (blocker_id, blocked_id) DO NOTHING;
 
-  DELETE FROM public.friendships
-  WHERE (sender_id = auth.uid() AND receiver_id = p_blocked_id)
-     OR (sender_id = p_blocked_id AND receiver_id = auth.uid());
+  DELETE FROM public.profile_friendships
+  WHERE (user_one = auth.uid() AND user_two = p_blocked_id)
+     OR (user_one = p_blocked_id AND user_two = auth.uid());
 
   BEGIN
     INSERT INTO public.admin_audit_logs (admin_id, action, target_type, target_id, metadata)
