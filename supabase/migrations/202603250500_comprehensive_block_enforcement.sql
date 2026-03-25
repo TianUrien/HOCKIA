@@ -737,22 +737,8 @@ $$;
 -- ============================================================
 -- 7. FRIENDSHIPS — prevent friend requests with blocked users
 -- ============================================================
-DROP POLICY IF EXISTS "friendships insert" ON public.profile_friendships;
-CREATE POLICY "friendships insert"
-  ON public.profile_friendships FOR INSERT
-  WITH CHECK (
-    auth.role() = 'service_role'
-    OR (
-      auth.uid() = requester_id
-      AND (auth.uid() = user_one OR auth.uid() = user_two)
-      AND status = 'pending'
-      AND NOT EXISTS (
-        SELECT 1 FROM public.user_blocks ub
-        WHERE (ub.blocker_id = user_one AND ub.blocked_id = user_two)
-           OR (ub.blocker_id = user_two AND ub.blocked_id = user_one)
-      )
-    )
-  );
+-- Friendship block check enforced in handle_friendship_state trigger
+-- (NOT in RLS policy — causes PostgreSQL 42P10 error with generated column indexes)
 
 -- ============================================================
 -- 8. REFERENCES — block check on request + hide from blocked
@@ -841,9 +827,8 @@ BEGIN
     p_recipient_profile_id, p_actor_profile_id, p_kind, p_source_entity_id,
     coalesce(p_metadata, '{}'::jsonb), p_target_url, now_ts, now_ts, NULL, NULL, NULL
   )
-  ON CONFLICT (kind, source_entity_id) WHERE source_entity_id IS NOT NULL DO UPDATE
-    SET recipient_profile_id = excluded.recipient_profile_id,
-        actor_profile_id = excluded.actor_profile_id, metadata = excluded.metadata,
+  ON CONFLICT (recipient_profile_id, kind, source_entity_id) WHERE source_entity_id IS NOT NULL DO UPDATE
+    SET actor_profile_id = excluded.actor_profile_id, metadata = excluded.metadata,
         target_url = excluded.target_url, created_at = excluded.created_at,
         updated_at = excluded.updated_at, read_at = NULL, seen_at = NULL, cleared_at = NULL
   RETURNING id INTO inserted_id;

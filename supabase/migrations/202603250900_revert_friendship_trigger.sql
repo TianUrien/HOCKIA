@@ -1,21 +1,7 @@
--- Fix: Remove block check from friendship INSERT RLS policy (causes PostgreSQL
--- planning error 42P10 with generated column unique indexes). Instead, enforce
--- the block check in the handle_friendship_state trigger.
+-- Revert handle_friendship_state to original (without block check)
+-- Block enforcement for friendships is handled by block_user RPC
+-- which deletes existing friendships on block.
 
--- Restore original INSERT policy (no block check in RLS)
-DROP POLICY IF EXISTS "friendships insert" ON public.profile_friendships;
-CREATE POLICY "friendships insert"
-  ON public.profile_friendships FOR INSERT
-  WITH CHECK (
-    auth.role() = 'service_role'
-    OR (
-      auth.uid() = requester_id
-      AND (auth.uid() = user_one OR auth.uid() = user_two)
-      AND status = 'pending'
-    )
-  );
-
--- Add block check to the friendship state machine trigger instead
 CREATE OR REPLACE FUNCTION public.handle_friendship_state()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -32,17 +18,6 @@ BEGIN
 
   IF NEW.requester_id IS NULL OR (NEW.requester_id <> NEW.user_one AND NEW.requester_id <> NEW.user_two) THEN
     RAISE EXCEPTION 'Requester must be part of the friendship';
-  END IF;
-
-  -- Block check: prevent friendships between blocked users
-  IF TG_OP = 'INSERT' OR (TG_OP = 'UPDATE' AND NEW.status = 'pending') THEN
-    IF EXISTS (
-      SELECT 1 FROM public.user_blocks
-      WHERE (blocker_id = NEW.user_one AND blocked_id = NEW.user_two)
-         OR (blocker_id = NEW.user_two AND blocked_id = NEW.user_one)
-    ) THEN
-      RAISE EXCEPTION 'Cannot interact with this user.';
-    END IF;
   END IF;
 
   IF TG_OP = 'UPDATE' THEN

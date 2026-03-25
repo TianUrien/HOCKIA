@@ -1,8 +1,8 @@
--- Fix: Remove block check from friendship INSERT RLS policy (causes PostgreSQL
--- planning error 42P10 with generated column unique indexes). Instead, enforce
--- the block check in the handle_friendship_state trigger.
+-- Fix: Move block check from RLS INSERT policy to trigger.
+-- RLS subqueries against other tables cause PostgreSQL error 42P10
+-- with generated-column unique indexes on profile_friendships.
 
--- Restore original INSERT policy (no block check in RLS)
+-- Restore original INSERT policy (no block subquery)
 DROP POLICY IF EXISTS "friendships insert" ON public.profile_friendships;
 CREATE POLICY "friendships insert"
   ON public.profile_friendships FOR INSERT
@@ -15,7 +15,7 @@ CREATE POLICY "friendships insert"
     )
   );
 
--- Add block check to the friendship state machine trigger instead
+-- Enforce block check in the trigger instead
 CREATE OR REPLACE FUNCTION public.handle_friendship_state()
 RETURNS TRIGGER
 LANGUAGE plpgsql
