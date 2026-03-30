@@ -274,6 +274,9 @@ export default function CompleteProfile() {
         if (profile.role === 'player') {
           next.position = profile.position ?? prev.position
           next.secondaryPosition = profile.secondary_position ?? prev.secondaryPosition
+        } else if (profile.role === 'coach') {
+          next.coachSpecialization = (profile.coach_specialization ?? prev.coachSpecialization) as CoachSpecialization | ''
+          next.coachSpecializationCustom = profile.coach_specialization_custom ?? prev.coachSpecializationCustom
         }
       }
 
