@@ -99,11 +99,11 @@ export default function MobileBottomNav() {
   return (
     <>
       {/* Spacer to prevent content from being hidden behind fixed nav */}
-      <div className="h-20 md:hidden" aria-hidden="true" />
+      <div className="h-20 lg:hidden" aria-hidden="true" />
 
       {/* Bottom Navigation */}
       <nav 
-        className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-lg border-t border-gray-200/50 shadow-lg pb-[max(env(safe-area-inset-bottom),0.5rem)] [transform:translate3d(0,0,0)]"
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-lg border-t border-gray-200/50 shadow-lg pb-[max(env(safe-area-inset-bottom),0.5rem)] [transform:translate3d(0,0,0)]"
       >
         <div className="flex items-center justify-between px-2 pt-2 gap-1">
           {navItems.map((item) => {

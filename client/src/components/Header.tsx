@@ -76,14 +76,14 @@ export default function Header() {
               />
             </button>
             
-            <span className="hidden md:inline-block px-3 py-1 rounded-full text-xs font-medium text-white bg-[#ff9500]">
+            <span className="hidden lg:inline-block px-3 py-1 rounded-full text-xs font-medium text-white bg-[#ff9500]">
               The Home of Field Hockey.
             </span>
           </div>
 
           {/* Mobile Navigation - Discover + Messages + Notifications (rest in bottom nav) */}
           {user && profile && (
-            <div className="flex md:hidden items-center gap-1">
+            <div className="flex lg:hidden items-center gap-1">
               <button
                 onClick={() => handleNavigate('/discover')}
                 className={`relative min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg transition-colors ${
@@ -115,7 +115,7 @@ export default function Header() {
           )}
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-1">
+          <div className="hidden lg:flex items-center gap-1">
             {user && profile ? (
               <>
                 {/* Primary nav links */}

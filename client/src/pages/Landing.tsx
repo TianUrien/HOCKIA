@@ -155,6 +155,22 @@ export default function Landing() {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+
+    // Client-side validation
+    const trimmedEmail = email.trim()
+    if (!trimmedEmail) {
+      setError('Email is required.')
+      return
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      setError('Please enter a valid email address.')
+      return
+    }
+    if (!password) {
+      setError('Password is required.')
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -515,7 +531,7 @@ export default function Landing() {
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
+                    placeholder="Password"
                     className="!bg-white border-0 text-gray-900 placeholder:text-gray-400 !h-12 !rounded-xl"
                     required
                   />
