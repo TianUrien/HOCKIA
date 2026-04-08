@@ -322,6 +322,93 @@ function renderBlock(block: ContentBlock, vars: Record<string, string>): string 
 // ============================================================================
 
 /**
+ * Render content_json blocks into plain text paragraphs for outreach emails.
+ * Produces HTML that looks like a personal 1:1 email — no logo, no header,
+ * no cards, no buttons. Just text and links, like writing from Gmail.
+ */
+function renderPlainOutreach(
+  blocks: ContentBlock[],
+  variables: Record<string, string>
+): { html: string; text: string } {
+  const interpolate = (s: string | undefined) => s ? interpolateVariables(s, variables) : ''
+  const paragraphs: string[] = []
+  const textLines: string[] = []
+
+  for (const block of blocks) {
+    switch (block.type) {
+      case 'heading': {
+        const text = interpolate(block.text)
+        if (text) {
+          paragraphs.push(`<p style="margin: 0 0 16px 0; font-size: 16px; font-weight: 600; color: #1f2937;">${escapeHtml(text)}</p>`)
+          textLines.push(text, '')
+        }
+        break
+      }
+      case 'paragraph': {
+        const text = interpolate(block.text)
+        if (!text && block.conditional) break
+        const content = block.is_html ? text : escapeHtml(text)
+        paragraphs.push(`<p style="margin: 0 0 16px 0; color: #333;">${content}</p>`)
+        textLines.push(text, '')
+        break
+      }
+      case 'button': {
+        const text = interpolate(block.text) || 'Learn More'
+        const url = interpolate(block.url)
+        if (url) {
+          paragraphs.push(`<p style="margin: 0 0 16px 0;"><a href="${url}" style="color: #1a73e8;">${escapeHtml(text)}</a></p>`)
+          textLines.push(`${text}: ${url}`, '')
+        }
+        break
+      }
+      case 'footnote': {
+        const text = interpolate(block.text)
+        if (text) {
+          paragraphs.push(`<p style="margin: 0 0 16px 0; color: #666; font-size: 14px;">${escapeHtml(text)}</p>`)
+          textLines.push(text, '')
+        }
+        break
+      }
+      case 'divider':
+        break // Skip dividers in plain mode
+      case 'note': {
+        const text = interpolate(block.text)
+        if (text) {
+          paragraphs.push(`<p style="margin: 0 0 16px 0; color: #333;">${escapeHtml(text)}</p>`)
+          textLines.push(text, '')
+        }
+        break
+      }
+      default:
+        // Skip cards, user_cards, conversation_lists — not appropriate for plain outreach
+        break
+    }
+  }
+
+  const bodyContent = paragraphs.join('\n')
+
+  const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0;">
+<div style="max-width: 600px; padding: 8px 0;">
+${bodyContent}
+<p style="margin: 24px 0 0 0; color: #999; font-size: 12px;">If you'd rather not hear from us, <a href="mailto:team@inhockia.com?subject=Unsubscribe" style="color: #999;">let us know</a>.</p>
+</div>
+</body>
+</html>`.trim()
+
+  textLines.push('---', "If you'd rather not hear from us, reply with \"unsubscribe\".")
+  const text = textLines.join('\n')
+
+  return { html, text }
+}
+
+/**
  * Render content_json blocks into a complete HOCKIA-branded HTML email.
  */
 export function renderContentBlocks(
@@ -329,20 +416,21 @@ export function renderContentBlocks(
   variables: Record<string, string>,
   options?: { isOutreach?: boolean }
 ): { html: string; text: string | null } {
+  const isOutreach = options?.isOutreach ?? false
+
+  // Outreach emails render as plain personal-looking emails
+  if (isOutreach) {
+    return renderPlainOutreach(blocks, variables)
+  }
+
   const bodyContent = blocks
     .map(block => renderBlock(block, variables))
     .filter(Boolean)
     .join('\n    ')
 
   const settingsUrl = variables.settings_url || `${HOCKIA_BASE_URL}/settings`
-  const isOutreach = options?.isOutreach ?? false
 
-  const footerHtml = isOutreach
-    ? `<p style="color: #9ca3af; font-size: 12px; margin: 0;">
-      You received this email because we thought your organization might be interested in HOCKIA.<br>
-      <a href="mailto:team@inhockia.com?subject=Unsubscribe" style="color: #8026FA; text-decoration: none;">Unsubscribe</a> · <a href="https://inhockia.com" style="color: #8026FA; text-decoration: none;">Learn more</a>
-    </p>`
-    : `<p style="color: #9ca3af; font-size: 12px; margin: 0;">
+  const footerHtml = `<p style="color: #9ca3af; font-size: 12px; margin: 0;">
       You're receiving this because you have a HOCKIA account.<br>
       <a href="${settingsUrl}" style="color: #8026FA; text-decoration: none;">Notification settings</a>
     </p>`
