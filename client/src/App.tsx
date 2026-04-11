@@ -84,6 +84,7 @@ const AdminOverview = lazyWithRetry(() => import('@/features/admin/pages/AdminOv
 const AdminDataIssues = lazyWithRetry(() => import('@/features/admin/pages/AdminDataIssues').then(m => ({ default: m.AdminDataIssues })))
 const AdminDirectory = lazyWithRetry(() => import('@/features/admin/pages/AdminDirectory').then(m => ({ default: m.AdminDirectory })))
 const AdminAuditLog = lazyWithRetry(() => import('@/features/admin/pages/AdminAuditLog').then(m => ({ default: m.AdminAuditLog })))
+const AdminReports = lazyWithRetry(() => import('@/features/admin/pages/AdminReports').then(m => ({ default: m.AdminReports })))
 const AdminSettings = lazyWithRetry(() => import('@/features/admin/pages/AdminSettings').then(m => ({ default: m.AdminSettings })))
 const AdminOpportunities = lazyWithRetry(() => import('@/features/admin/pages/AdminOpportunities').then(m => ({ default: m.AdminOpportunities })))
 const AdminOpportunityDetail = lazyWithRetry(() => import('@/features/admin/pages/AdminOpportunityDetail').then(m => ({ default: m.AdminOpportunityDetail })))
@@ -385,6 +386,7 @@ function App() {
                   <Route path="world" element={<AdminWorld />} />
                   <Route path="data-issues" element={<AdminDataIssues />} />
                   <Route path="directory" element={<AdminDirectory />} />
+                  <Route path="reports" element={<AdminReports />} />
                   <Route path="audit-log" element={<AdminAuditLog />} />
                   <Route path="settings" element={<AdminSettings />} />
                 </Route>

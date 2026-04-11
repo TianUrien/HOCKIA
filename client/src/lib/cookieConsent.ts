@@ -1,3 +1,5 @@
+import { Capacitor } from '@capacitor/core'
+
 const CONSENT_KEY = 'hockia-cookie-consent'
 
 type ConsentStatus = 'accepted' | 'declined' | null
@@ -26,6 +28,9 @@ export function hasAnalyticsConsent(): boolean {
  * because gtag.js expects Arguments objects in the dataLayer, not arrays.
  */
 export function enableGA4() {
+  // Never load GA4 on native iOS/Android (Apple Guideline 5.1.2)
+  if (Capacitor.isNativePlatform()) return
+
   const GA_ID = import.meta.env.VITE_GA_MEASUREMENT_ID ?? 'G-NE620GQKTX'
 
   // Don't load twice

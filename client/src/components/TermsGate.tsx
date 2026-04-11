@@ -16,6 +16,7 @@ export default function TermsGate({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate()
   const [accepted, setAccepted] = useState<boolean | null>(null)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!user) {
@@ -23,8 +24,8 @@ export default function TermsGate({ children }: { children: React.ReactNode }) {
       return
     }
 
-    // Check localStorage first for fast path
-    const localKey = `hockia-terms-${CURRENT_TERMS_VERSION}`
+    // Check localStorage first for fast path (key includes user ID to prevent cross-user contamination)
+    const localKey = `hockia-terms-${user.id}-${CURRENT_TERMS_VERSION}`
     if (localStorage.getItem(localKey) === 'accepted') {
       setAccepted(true)
       return
@@ -40,22 +41,23 @@ export default function TermsGate({ children }: { children: React.ReactNode }) {
         setAccepted(data ?? false)
       })
       .catch(() => {
-        setAccepted(true) // Fail open — don't block users on DB errors
+        setAccepted(false) // Fail closed — require acceptance on DB errors
       })
   }, [user])
 
   const handleAccept = async () => {
+    if (!user) return
     setLoading(true)
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (supabase as any).rpc('accept_terms', { p_version: CURRENT_TERMS_VERSION })
-      localStorage.setItem(`hockia-terms-${CURRENT_TERMS_VERSION}`, 'accepted')
+      const { error } = await (supabase as any).rpc('accept_terms', { p_version: CURRENT_TERMS_VERSION })
+      if (error) throw error
+      localStorage.setItem(`hockia-terms-${user.id}-${CURRENT_TERMS_VERSION}`, 'accepted')
       setAccepted(true)
     } catch (err) {
       logger.error('Failed to accept terms:', err)
-      // Accept locally even if DB fails
-      localStorage.setItem(`hockia-terms-${CURRENT_TERMS_VERSION}`, 'accepted')
-      setAccepted(true)
+      // Retry once — if still fails, let user try again
+      setError('Failed to save acceptance. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -111,6 +113,9 @@ export default function TermsGate({ children }: { children: React.ReactNode }) {
         </div>
 
         <div className="p-6 border-t border-gray-100">
+          {error && (
+            <p className="text-sm text-red-600 mb-3 text-center">{error}</p>
+          )}
           <button
             onClick={handleAccept}
             disabled={loading}

@@ -1,4 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
+
+// Mock Capacitor — enableGA4 now guards against native platforms
+vi.mock('@capacitor/core', () => ({
+  Capacitor: { isNativePlatform: vi.fn(() => false) },
+}))
+
+import { Capacitor } from '@capacitor/core'
 import { getConsentStatus, hasAnalyticsConsent, enableGA4 } from '@/lib/cookieConsent'
 
 describe('cookieConsent utilities', () => {
@@ -73,6 +80,18 @@ describe('cookieConsent utilities', () => {
 
       const scripts = document.querySelectorAll('script[src*="googletagmanager"]')
       expect(scripts.length).toBe(1)
+    })
+
+    it('does not load GA4 on native platforms', () => {
+      vi.mocked(Capacitor.isNativePlatform).mockReturnValue(true)
+
+      enableGA4()
+
+      const scripts = document.querySelectorAll('script[src*="googletagmanager"]')
+      expect(scripts.length).toBe(0)
+      expect(window.dataLayer).toBeUndefined()
+
+      vi.mocked(Capacitor.isNativePlatform).mockReturnValue(false)
     })
   })
 })

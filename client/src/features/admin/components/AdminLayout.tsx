@@ -42,6 +42,7 @@ import {
   MessageSquare,
   Share2,
   TrendingDown,
+  Flag,
 } from 'lucide-react'
 import { searchProfiles } from '../api/adminApi'
 import type { AdminProfileListItem } from '../types'
@@ -72,6 +73,7 @@ const NAV_ITEMS = [
   { path: '/admin/world', icon: Globe2, label: 'Hockey World' },
   { path: '/admin/directory', icon: Users, label: 'Directory' },
   { path: '/admin/data-issues', icon: AlertTriangle, label: 'Data Issues' },
+  { path: '/admin/reports', icon: Flag, label: 'Content Reports' },
   { path: '/admin/audit-log', icon: ScrollText, label: 'Audit Log' },
   { path: '/admin/settings', icon: Settings, label: 'Settings' },
 ]
