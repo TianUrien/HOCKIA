@@ -461,43 +461,58 @@ export function AdminOverview() {
 
           {/* Device Tracking */}
           <section>
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Devices (All Users)</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-900">Devices (All Users)</h2>
+              <Link to="/admin/devices" className="text-sm text-purple-600 hover:text-purple-700 font-medium">
+                View all →
+              </Link>
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-              <StatCard
-                label="iOS Users"
-                value={stats?.device_users_ios ?? 0}
-                icon={Smartphone}
-                color="blue"
-                loading={isLoading}
-              />
-              <StatCard
-                label="Android Users"
-                value={stats?.device_users_android ?? 0}
-                icon={Smartphone}
-                color="green"
-                loading={isLoading}
-              />
-              <StatCard
-                label="Desktop Users"
-                value={stats?.device_users_desktop ?? 0}
-                icon={Smartphone}
-                color="purple"
-                loading={isLoading}
-              />
-              <StatCard
-                label="PWA Users"
-                value={stats?.device_users_pwa ?? 0}
-                icon={Smartphone}
-                color="amber"
-                loading={isLoading}
-              />
-              <StatCard
-                label="Multi-Platform"
-                value={stats?.device_users_multi_platform ?? 0}
-                icon={Smartphone}
-                color="rose"
-                loading={isLoading}
-              />
+              <Link to="/admin/devices/ios" className="block transition hover:-translate-y-0.5 hover:shadow-md rounded-xl">
+                <StatCard
+                  label="iOS Users"
+                  value={stats?.device_users_ios ?? 0}
+                  icon={Smartphone}
+                  color="blue"
+                  loading={isLoading}
+                />
+              </Link>
+              <Link to="/admin/devices/android" className="block transition hover:-translate-y-0.5 hover:shadow-md rounded-xl">
+                <StatCard
+                  label="Android Users"
+                  value={stats?.device_users_android ?? 0}
+                  icon={Smartphone}
+                  color="green"
+                  loading={isLoading}
+                />
+              </Link>
+              <Link to="/admin/devices/desktop" className="block transition hover:-translate-y-0.5 hover:shadow-md rounded-xl">
+                <StatCard
+                  label="Desktop Users"
+                  value={stats?.device_users_desktop ?? 0}
+                  icon={Smartphone}
+                  color="purple"
+                  loading={isLoading}
+                />
+              </Link>
+              <Link to="/admin/devices/pwa" className="block transition hover:-translate-y-0.5 hover:shadow-md rounded-xl">
+                <StatCard
+                  label="PWA Users"
+                  value={stats?.device_users_pwa ?? 0}
+                  icon={Smartphone}
+                  color="amber"
+                  loading={isLoading}
+                />
+              </Link>
+              <Link to="/admin/devices/multi" className="block transition hover:-translate-y-0.5 hover:shadow-md rounded-xl">
+                <StatCard
+                  label="Multi-Platform"
+                  value={stats?.device_users_multi_platform ?? 0}
+                  icon={Smartphone}
+                  color="rose"
+                  loading={isLoading}
+                />
+              </Link>
             </div>
           </section>
 

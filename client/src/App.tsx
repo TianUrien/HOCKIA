@@ -95,6 +95,7 @@ const AdminEngagement = lazyWithRetry(() => import('@/features/admin/pages/Admin
 const AdminFeatureUsage = lazyWithRetry(() => import('@/features/admin/pages/AdminFeatureUsage').then(m => ({ default: m.AdminFeatureUsage })))
 const AdminDiscovery = lazyWithRetry(() => import('@/features/admin/pages/AdminDiscovery').then(m => ({ default: m.AdminDiscovery })))
 const AdminNetworking = lazyWithRetry(() => import('@/features/admin/pages/AdminNetworking').then(m => ({ default: m.AdminNetworking })))
+const AdminDeviceUsers = lazyWithRetry(() => import('@/features/admin/pages/AdminDeviceUsers').then(m => ({ default: m.AdminDeviceUsers })))
 const AdminInvestorDashboard = lazyWithRetry(() => import('@/features/admin/pages/AdminInvestorDashboard').then(m => ({ default: m.AdminInvestorDashboard })))
 const AdminWorld = lazyWithRetry(() => import('@/features/admin/pages/AdminWorld'))
 const AdminEmail = lazyWithRetry(() => import('@/features/admin/pages/AdminEmail').then(m => ({ default: m.AdminEmail })))
@@ -369,6 +370,8 @@ function App() {
                   <Route path="feature-usage" element={<AdminFeatureUsage />} />
                   <Route path="discovery" element={<AdminDiscovery />} />
                   <Route path="networking" element={<AdminNetworking />} />
+                  <Route path="devices" element={<AdminDeviceUsers />} />
+                  <Route path="devices/:platform" element={<AdminDeviceUsers />} />
                   <Route path="email" element={<AdminEmail />} />
                   <Route path="email/template/:templateId" element={<AdminEmailTemplateEditor />} />
                   <Route path="outreach" element={<AdminOutreach />} />

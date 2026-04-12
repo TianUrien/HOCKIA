@@ -39,6 +39,8 @@ import type {
   ActivationFunnelData,
   UserGrowthPoint,
   MonthlyReportData,
+  DevicePlatformFilter,
+  DeviceUsersResult,
 } from '../types'
 
 // Helper to call RPC functions that aren't in generated types yet
@@ -64,6 +66,26 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   const { data, error } = await adminRpc('admin_get_dashboard_stats')
   if (error) throw new Error(`Failed to get dashboard stats: ${error.message}`)
   return data as DashboardStats
+}
+
+/**
+ * List users for a given device platform (or all if null).
+ * Supports search, pagination, and multi-platform filtering.
+ */
+export async function getDeviceUsers(params: {
+  platform: DevicePlatformFilter
+  search?: string
+  limit?: number
+  offset?: number
+}): Promise<DeviceUsersResult> {
+  const { data, error } = await adminRpc('admin_get_device_users', {
+    p_platform: params.platform,
+    p_search: params.search ?? null,
+    p_limit: params.limit ?? 50,
+    p_offset: params.offset ?? 0,
+  })
+  if (error) throw new Error(`Failed to get device users: ${error.message}`)
+  return data as DeviceUsersResult
 }
 
 /**

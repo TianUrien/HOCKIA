@@ -1582,3 +1582,31 @@ export interface MarketplaceHealth {
   generated_at: string
 }
 
+export type DevicePlatformFilter = 'ios' | 'android' | 'desktop' | 'pwa' | 'multi' | null
+
+export interface DeviceRecord {
+  platform: 'ios' | 'android' | 'desktop'
+  is_pwa: boolean
+  user_agent: string | null
+  last_seen_at: string
+}
+
+export interface DeviceUser {
+  id: string
+  full_name: string | null
+  email: string | null
+  username: string | null
+  role: string | null
+  avatar_url: string | null
+  signup_date: string | null
+  last_seen_at: string | null
+  devices: DeviceRecord[] | null
+}
+
+export interface DeviceUsersResult {
+  total: number
+  results: DeviceUser[]
+  limit: number
+  offset: number
+}
+
