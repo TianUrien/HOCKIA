@@ -1,15 +1,27 @@
 import { test, expect } from './fixtures'
 
+// Brand dashboards gate their testid/H1 on a two-fetch chain (profile + brands row
+// + useBrandAnalytics) against real staging in CI. 20s is too tight; 40s leaves
+// headroom without masking real regressions (local still settles in < 3s).
+const BRAND_DASH_TIMEOUT_MS = process.env.CI ? 40_000 : 20_000
+
+async function waitForAppReady(page: import('@playwright/test').Page) {
+  await page.waitForLoadState('networkidle', { timeout: 20_000 }).catch(() => {
+    // Don't fail the test if networkidle never settles; the toBeVisible assertion is the real signal.
+  })
+}
+
 test.describe('@smoke brand', () => {
   test('brand dashboard loads for authenticated brand user', async ({ page }) => {
     // Brand users land at /dashboard/profile which renders BrandDashboard
     await page.goto('/dashboard/profile')
+    await waitForAppReady(page)
 
     // The brand dashboard shows the brand name as h1 and has brand-specific tabs
     // Wait for any dashboard content to appear (brand name heading or tab navigation)
     await expect(
       page.getByTestId('dashboard-brand')
-    ).toBeVisible({ timeout: 20000 })
+    ).toBeVisible({ timeout: BRAND_DASH_TIMEOUT_MS })
   })
 
   test('brand edit page loads when brand exists', async ({ page }) => {
@@ -28,11 +40,12 @@ test.describe('@smoke brand', () => {
 
   test('brand can view public brands directory', async ({ page }) => {
     await page.goto('/brands')
+    await waitForAppReady(page)
 
     // /brands redirects to /community/brands — Members tab visible
     await expect(
       page.getByRole('button', { name: /members/i })
-    ).toBeVisible({ timeout: 20000 })
+    ).toBeVisible({ timeout: BRAND_DASH_TIMEOUT_MS })
   })
 
   test('brand cannot access player dashboard', async ({ page }) => {

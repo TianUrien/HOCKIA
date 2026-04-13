@@ -50,8 +50,8 @@ export default defineConfig({
   use: {
     /* Base URL to use in actions like `await page.goto('/')` */
     baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:5173',
-    /* Collect trace when retrying the failed test */
-    trace: 'on-first-retry',
+    /* Retain trace/video on any failure in CI so we can debug flakes post-hoc */
+    trace: process.env.CI ? 'retain-on-failure' : 'on-first-retry',
     /* Screenshot on failure */
     screenshot: 'only-on-failure',
     /* Video on failure */
