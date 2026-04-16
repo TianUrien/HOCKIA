@@ -15,6 +15,8 @@ test.describe('@smoke brand', () => {
   test('brand dashboard loads for authenticated brand user', async ({ page }) => {
     // Brand users land at /dashboard/profile which renders BrandDashboard
     await page.goto('/dashboard/profile')
+    // DashboardRouter does profile fetch → role routing; wait for routing to settle
+    await page.waitForURL(url => !url.pathname.includes('/complete-profile'), { timeout: BRAND_DASH_TIMEOUT_MS })
     await waitForAppReady(page)
 
     // The brand dashboard shows the brand name as h1 and has brand-specific tabs
@@ -40,9 +42,11 @@ test.describe('@smoke brand', () => {
 
   test('brand can view public brands directory', async ({ page }) => {
     await page.goto('/brands')
+    // /brands redirects client-side to /community/brands — wait for redirect to land
+    await page.waitForURL('**/community/**', { timeout: BRAND_DASH_TIMEOUT_MS })
     await waitForAppReady(page)
 
-    // /brands redirects to /community/brands — Members tab visible
+    // Members tab visible on CommunityPage
     await expect(
       page.getByRole('button', { name: /members/i })
     ).toBeVisible({ timeout: BRAND_DASH_TIMEOUT_MS })

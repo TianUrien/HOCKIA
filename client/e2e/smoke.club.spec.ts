@@ -35,6 +35,8 @@ async function waitForAppReady(page: import('@playwright/test').Page) {
 test.describe('@smoke club', () => {
   test('club dashboard loads for authenticated club user', async ({ page }) => {
     await page.goto('/dashboard/profile')
+    // DashboardRouter does profile fetch → role routing; wait for the final URL
+    await page.waitForURL(url => !url.pathname.includes('/complete-profile'), { timeout: CLUB_H1_TIMEOUT_MS })
     await waitForAppReady(page)
 
     // Club name should render as H1
@@ -52,6 +54,8 @@ test.describe('@smoke club', () => {
     expect(seeded.id, 'Seeded vacancy id should be written by auth.setup').toBeTruthy()
 
     await page.goto(`/dashboard/opportunities/${seeded.id}/applicants`)
+    // Wait for SPA routing to settle (DashboardRouter may redirect first)
+    await page.waitForURL(`**/applicants`, { timeout: CLUB_H1_TIMEOUT_MS })
     await waitForAppReady(page)
 
     await expect(
@@ -66,6 +70,7 @@ test.describe('@smoke club', () => {
 
   test('club public profile is accessible', async ({ page }) => {
     await page.goto('/clubs/e2e-test-fc')
+    await page.waitForURL('**/clubs/e2e-test-fc', { timeout: CLUB_H1_TIMEOUT_MS })
     await waitForAppReady(page)
 
     await expect(
