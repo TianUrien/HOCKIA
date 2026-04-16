@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigationType 
 import { initializeAuth } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { initGA, trackPageView } from '@/lib/analytics'
+import * as Sentry from '@sentry/react'
 import { ProtectedRoute, ErrorBoundary, Layout, SentryTestButton } from '@/components'
 import ToastContainer from '@/components/ToastContainer'
 import UploadIndicator from '@/components/UploadIndicator'
@@ -162,6 +163,16 @@ function AnalyticsTracker() {
   const isFirstRender = useRef(true)
 
   useEffect(() => {
+    // Tag current route on every event sent to Sentry (critical for debugging
+    // auth/onboarding flows where the crashing route is the key signal).
+    Sentry.setTag('route', location.pathname)
+    Sentry.addBreadcrumb({
+      category: 'navigation',
+      level: 'info',
+      message: `route.${location.pathname}`,
+      data: { pathname: location.pathname, search: location.search },
+    })
+
     // Skip the initial render (GA handles it via initGA)
     if (isFirstRender.current) {
       isFirstRender.current = false
@@ -306,12 +317,12 @@ function App() {
               <Suspense fallback={<PageLoader />}>
                 <Routes>
                 {/* Public Routes (allowlisted in ProtectedRoute) */}
-                <Route path="/" element={<Landing />} />
-                <Route path="/signup" element={<SignUp />} />
-                <Route path="/auth/callback" element={<AuthCallback />} />
-                <Route path="/verify-email" element={<VerifyEmail />} />
-                <Route path="/forgot-password" element={<ForgotPassword />} />
-                <Route path="/reset-password" element={<ResetPassword />} />
+                <Route path="/" element={<ErrorBoundary fallback={<RouteErrorFallback />}><Landing /></ErrorBoundary>} />
+                <Route path="/signup" element={<ErrorBoundary fallback={<RouteErrorFallback />}><SignUp /></ErrorBoundary>} />
+                <Route path="/auth/callback" element={<ErrorBoundary fallback={<RouteErrorFallback />}><AuthCallback /></ErrorBoundary>} />
+                <Route path="/verify-email" element={<ErrorBoundary fallback={<RouteErrorFallback />}><VerifyEmail /></ErrorBoundary>} />
+                <Route path="/forgot-password" element={<ErrorBoundary fallback={<RouteErrorFallback />}><ForgotPassword /></ErrorBoundary>} />
+                <Route path="/reset-password" element={<ErrorBoundary fallback={<RouteErrorFallback />}><ResetPassword /></ErrorBoundary>} />
                 <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                 <Route path="/terms" element={<Terms />} />
                 <Route path="/developers" element={<DevelopersPage />} />
@@ -324,7 +335,7 @@ function App() {
 
                 {/* Brands (redirect /brands to community tab, keep profile routes) */}
                 <Route path="/brands" element={<Navigate to="/community/brands" replace />} />
-                <Route path="/brands/onboarding" element={<BrandOnboardingPage />} />
+                <Route path="/brands/onboarding" element={<ErrorBoundary fallback={<RouteErrorFallback />}><BrandOnboardingPage /></ErrorBoundary>} />
                 <Route path="/brands/:slug" element={<BrandProfilePage />} />
                 <Route path="/dashboard/brand" element={<BrandDashboardPage />} />
 
@@ -332,7 +343,7 @@ function App() {
                 <Route path="/investors/:token" element={<PublicInvestorDashboard />} />
                 
                 {/* Protected Routes (require authentication) - Lazy loaded */}
-                <Route path="/complete-profile" element={<CompleteProfile />} />
+                <Route path="/complete-profile" element={<ErrorBoundary fallback={<RouteErrorFallback />}><CompleteProfile /></ErrorBoundary>} />
                 <Route path="/home" element={<ErrorBoundary fallback={<RouteErrorFallback />}><HomePage /></ErrorBoundary>} />
                 <Route path="/search" element={<ErrorBoundary fallback={<RouteErrorFallback />}><SearchPage /></ErrorBoundary>} />
                 <Route path="/discover" element={<ErrorBoundary fallback={<RouteErrorFallback />}><DiscoverPage /></ErrorBoundary>} />

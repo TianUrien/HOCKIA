@@ -100,12 +100,25 @@ export default function CompleteProfile() {
 
   const captureOnboardingError = (error: unknown, payload: Record<string, unknown>, sourceComponent: string) => {
     Sentry.captureException(toSentryError(error), {
-      tags: { feature: 'onboarding_profile' },
+      tags: {
+        feature: 'onboarding_profile',
+        onboarding_role: (payload?.role as string) ?? userRole ?? 'unknown',
+        onboarding_stage: (payload?.stage as string) ?? 'unknown',
+      },
       extra: {
         userId: user?.id ?? null,
         payload,
         sourceComponent,
       },
+    })
+  }
+
+  const onboardingBreadcrumb = (message: string, data?: Record<string, unknown>) => {
+    Sentry.addBreadcrumb({
+      category: 'onboarding',
+      level: 'info',
+      message,
+      data: { userId: user?.id ?? null, role: userRole ?? null, ...data },
     })
   }
 
@@ -135,6 +148,7 @@ export default function CompleteProfile() {
 
     try {
       logger.debug('[COMPLETE_PROFILE] Creating profile for OAuth user', { userId: user.id, role: selectedRole })
+      onboardingBreadcrumb('role_selected.start', { role: selectedRole })
 
       const userEmail = user.email || ''
 
@@ -168,8 +182,11 @@ export default function CompleteProfile() {
       logger.debug('[COMPLETE_PROFILE] Profile fetched after creation')
       trackDbEvent('onboarding_step', 'profile', user.id, { step: 'role_selected', role: selectedRole })
 
+      onboardingBreadcrumb('role_selected.success', { role: selectedRole })
+
       // Brands have a separate onboarding flow
       if (selectedRole === 'brand') {
+        onboardingBreadcrumb('redirect.brand_onboarding', { role: selectedRole })
         navigate('/brands/onboarding')
         return
       }

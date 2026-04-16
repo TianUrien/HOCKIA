@@ -107,6 +107,9 @@ Sentry.init({
   dsn: import.meta.env.VITE_SENTRY_DSN,
   enabled: Boolean(import.meta.env.VITE_SENTRY_DSN),
   environment: sentryEnvironment,
+  // Release tag — set via Vercel/Capacitor build env. Falls back to 'unknown'
+  // so events from an untagged build are still identifiable in Sentry.
+  release: import.meta.env.VITE_APP_VERSION || import.meta.env.VITE_VERCEL_GIT_COMMIT_SHA || 'unknown',
   integrations: [
     Sentry.browserTracingIntegration(),
     Sentry.replayIntegration(),

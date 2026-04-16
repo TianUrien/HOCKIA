@@ -9,7 +9,7 @@ import { requestCache, generateCacheKey } from './requestCache'
 import { monitor } from './monitor'
 import { logger } from './logger'
 import { useUnreadStore } from './unread'
-import { reportSupabaseError } from './sentryHelpers'
+import { reportSupabaseError, reportAuthFlowError } from './sentryHelpers'
 import { setUserProperties, clearUserProperties, trackLogin } from './analytics'
 import { trackDbEvent } from './trackDbEvent'
 import { trackUserDevice } from './trackUserDevice'
@@ -424,14 +424,30 @@ export const initializeAuth = () => {
     }
 
     if (event === 'SIGNED_IN' && session?.user) {
-      const method = session.user.app_metadata?.provider === 'google' ? 'google' : 'email'
+      const provider = session.user.app_metadata?.provider
+      const method: 'google' | 'apple' | 'email' =
+        provider === 'google' ? 'google' : provider === 'apple' ? 'apple' : 'email'
+      Sentry.setTag('auth_method', method)
+      Sentry.addBreadcrumb({
+        category: 'auth',
+        level: 'info',
+        message: 'auth.signed_in',
+        data: { method, platform: detectPlatform() },
+      })
       trackLogin(method)
       trackDbEvent('login', undefined, undefined, { method, platform: detectPlatform() })
       trackUserDevice()
     }
 
     runSessionEffects(session)
-      .catch((error) => logger.error('[AUTH_STORE] Error handling auth state change', { error, event }))
+      .catch((error) => {
+        logger.error('[AUTH_STORE] Error handling auth state change', { error, event })
+        reportAuthFlowError('auth_state_change.run_session_effects', error, {
+          event,
+          userId: session?.user?.id ?? null,
+          provider: session?.user?.app_metadata?.provider ?? null,
+        })
+      })
       .finally(() => setLoading(false))
   })
 
