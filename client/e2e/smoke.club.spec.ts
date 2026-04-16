@@ -34,24 +34,9 @@ async function waitForAppReady(page: import('@playwright/test').Page) {
 
 test.describe('@smoke club', () => {
   test('club dashboard loads for authenticated club user', async ({ page }) => {
-    // Capture browser console for diagnosis
-    const consoleLogs: string[] = []
-    page.on('console', msg => {
-      const text = `[${msg.type()}] ${msg.text()}`
-      consoleLogs.push(text)
-    })
-    page.on('pageerror', err => consoleLogs.push(`[PAGE_ERROR] ${err.message}`))
-
     await page.goto('/dashboard/profile')
-    await page.waitForTimeout(8000)
-
-    // Dump all console output and page state
-    const html = await page.locator('#root').innerHTML().catch(() => 'NO_ROOT')
-    console.log(`[DEBUG club] URL: ${page.url()}`)
-    console.log(`[DEBUG club] #root HTML (500 chars): ${html.slice(0, 500)}`)
-    console.log(`[DEBUG club] Console logs (last 20):`)
-    consoleLogs.slice(-20).forEach(l => console.log(`  ${l}`))
-
+    // DashboardRouter does profile fetch → role routing; wait for the final URL
+    await page.waitForURL(url => !url.pathname.includes('/complete-profile'), { timeout: CLUB_H1_TIMEOUT_MS })
     await waitForAppReady(page)
 
     // Club name should render as H1

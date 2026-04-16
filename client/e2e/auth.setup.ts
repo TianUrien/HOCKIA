@@ -468,8 +468,16 @@ async function authenticateUser(
     }
   }
 
-  // Pre-accept terms gate so E2E tests aren't blocked by it
-  await page.evaluate(() => localStorage.setItem('hockia-terms-1.0', 'accepted'))
+  // Pre-accept terms gate so E2E tests aren't blocked by it.
+  // TermsGate uses user-scoped key: `hockia-terms-${userId}-${version}`.
+  await page.evaluate(
+    ({ userId }) => {
+      localStorage.setItem(`hockia-terms-${userId}-1.0`, 'accepted')
+      // Keep legacy key for backwards compat with any old checks
+      localStorage.setItem('hockia-terms-1.0', 'accepted')
+    },
+    { userId: data.user?.id ?? '' }
+  )
 
   // Save the storage state
   await page.context().storageState({ path: storagePath })
