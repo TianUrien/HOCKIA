@@ -90,9 +90,9 @@ export function useBrandProducts(brandId: string | null | undefined): UseBrandPr
       const { data: result, error: rpcError } = await supabase.rpc('create_brand_product', {
         p_brand_id: brandId,
         p_name: data.name,
-        p_description: data.description ?? null,
+        p_description: (data.description ?? null) as string | undefined,
         p_images: data.images as unknown as string,
-        p_external_url: data.external_url ?? null,
+        p_external_url: (data.external_url ?? null) as string | undefined,
       })
 
       if (rpcError) throw rpcError
@@ -114,10 +114,10 @@ export function useBrandProducts(brandId: string | null | undefined): UseBrandPr
     try {
       const { error: rpcError } = await supabase.rpc('update_brand_product', {
         p_product_id: productId,
-        p_name: data.name ?? null,
-        p_description: data.description ?? null,
-        p_images: data.images ? (data.images as unknown as string) : null,
-        p_external_url: data.external_url ?? null,
+        p_name: (data.name ?? null) as string | undefined,
+        p_description: (data.description ?? null) as string | undefined,
+        p_images: (data.images ? (data.images as unknown as string) : null) as string | undefined,
+        p_external_url: (data.external_url ?? null) as string | undefined,
       })
 
       if (rpcError) throw rpcError

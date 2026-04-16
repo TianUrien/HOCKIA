@@ -52,8 +52,7 @@ export function MemberJoinedCard({ item }: MemberJoinedCardProps) {
             {item.nationality_country_id && (
               <div className="mb-1">
                 <NationalityCardDisplay
-                  nationalityCountryId={item.nationality_country_id}
-                  size="sm"
+                  primaryCountryId={item.nationality_country_id}
                 />
               </div>
             )}

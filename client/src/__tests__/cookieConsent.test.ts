@@ -7,7 +7,7 @@ describe('cookieConsent utilities', () => {
     // Clean up any injected gtag scripts
     document.querySelectorAll('script[src*="googletagmanager"]').forEach(s => s.remove())
     // Reset window.gtag
-    delete (window as Record<string, unknown>).gtag
+    delete (window as unknown as Record<string, unknown>).gtag
     window.dataLayer = undefined
   })
 

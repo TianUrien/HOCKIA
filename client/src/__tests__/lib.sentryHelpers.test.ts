@@ -76,7 +76,7 @@ describe('reportSupabaseError', () => {
 
     expect(Sentry.captureException).toHaveBeenCalledTimes(1)
 
-    const [, options] = vi.mocked(Sentry.captureException).mock.calls[0]
+    const [, options] = vi.mocked(Sentry.captureException).mock.calls[0] as unknown as [unknown, { tags?: Record<string, unknown>; extra?: Record<string, unknown> }]
     expect(options!.tags!.scope).toBe('messaging.send')
     expect(options!.tags!.isSupabase).toBe(true)
   })
@@ -88,7 +88,7 @@ describe('reportSupabaseError', () => {
       hint: 'Check constraint',
     })
 
-    const [, options] = vi.mocked(Sentry.captureException).mock.calls[0]
+    const [, options] = vi.mocked(Sentry.captureException).mock.calls[0] as unknown as [unknown, { tags?: Record<string, unknown>; extra?: Record<string, unknown> }]
     expect(options!.extra!.supabaseCode).toBe('23505')
     expect(options!.extra!.supabaseDetails).toBe('Key already exists')
     expect(options!.extra!.supabaseHint).toBe('Check constraint')
@@ -102,7 +102,7 @@ describe('reportSupabaseError', () => {
       { feature: 'opportunities', operation: 'apply' }
     )
 
-    const [, options] = vi.mocked(Sentry.captureException).mock.calls[0]
+    const [, options] = vi.mocked(Sentry.captureException).mock.calls[0] as unknown as [unknown, { tags?: Record<string, unknown>; extra?: Record<string, unknown> }]
     expect(options!.extra!.vacancyId).toBe('v-123')
     expect(options!.extra!.userId).toBe('u-456')
     expect(options!.tags!.feature).toBe('opportunities')
@@ -112,7 +112,7 @@ describe('reportSupabaseError', () => {
   it('includes in-app browser context in tags', () => {
     reportSupabaseError('test', { message: 'err' })
 
-    const [, options] = vi.mocked(Sentry.captureException).mock.calls[0]
+    const [, options] = vi.mocked(Sentry.captureException).mock.calls[0] as unknown as [unknown, { tags?: Record<string, unknown>; extra?: Record<string, unknown> }]
     expect(options!.tags).toHaveProperty('isInAppBrowser')
     expect(options!.tags).toHaveProperty('inAppBrowserName')
   })
@@ -126,21 +126,21 @@ describe('reportAuthFlowError', () => {
   it('includes feature: auth_flow tag', () => {
     reportAuthFlowError('login', new Error('auth failed'))
 
-    const [, options] = vi.mocked(Sentry.captureException).mock.calls[0]
+    const [, options] = vi.mocked(Sentry.captureException).mock.calls[0] as unknown as [unknown, { tags?: Record<string, unknown>; extra?: Record<string, unknown> }]
     expect(options!.tags!.feature).toBe('auth_flow')
   })
 
   it('includes the stage tag', () => {
     reportAuthFlowError('pkce_exchange', new Error('PKCE error'))
 
-    const [, options] = vi.mocked(Sentry.captureException).mock.calls[0]
+    const [, options] = vi.mocked(Sentry.captureException).mock.calls[0] as unknown as [unknown, { tags?: Record<string, unknown>; extra?: Record<string, unknown> }]
     expect(options!.tags!.stage).toBe('pkce_exchange')
   })
 
   it('passes custom extras through', () => {
     reportAuthFlowError('login', new Error('fail'), { userId: 'u-123', provider: 'email' })
 
-    const [, options] = vi.mocked(Sentry.captureException).mock.calls[0]
+    const [, options] = vi.mocked(Sentry.captureException).mock.calls[0] as unknown as [unknown, { tags?: Record<string, unknown>; extra?: Record<string, unknown> }]
     expect(options!.extra!.userId).toBe('u-123')
     expect(options!.extra!.provider).toBe('email')
   })

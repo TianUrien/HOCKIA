@@ -57,7 +57,8 @@ export function useBrandProfileStrength({ brand, productCount = 0, ambassadorCou
         .eq('id', profileId)
         .single()
 
-      setProfileCountry(data?.nationality_country_id || data?.nationality || null)
+      const countryValue = data?.nationality_country_id ?? data?.nationality ?? null
+      setProfileCountry(countryValue != null ? String(countryValue) : null)
     } finally {
       setLoading(false)
     }

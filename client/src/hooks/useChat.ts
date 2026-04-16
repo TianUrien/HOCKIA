@@ -199,7 +199,8 @@ export function useChat({
 
         const fetched: ChatMessage[] = (data ?? []).reverse().map(message => ({
           ...message,
-          status: 'delivered'
+          metadata: message.metadata as unknown as ChatMessage['metadata'],
+          status: 'delivered' as const
         }))
         logger.debug('Fetched messages:', fetched)
         syncMessagesState(fetched)
@@ -299,7 +300,7 @@ export function useChat({
           return prev
         }
 
-        return [...deduped.map(msg => ({ ...msg, status: 'delivered' as MessageDeliveryStatus })), ...prev]
+        return [...deduped.map(msg => ({ ...msg, status: 'delivered' as MessageDeliveryStatus } as ChatMessage)), ...prev]
       })
       
       return true
@@ -629,7 +630,7 @@ export function useChat({
                 sender_id: currentUserId,
                 content: messageContent,
                 idempotency_key: idempotencyKey,
-                ...(options?.metadata ? { metadata: options.metadata } : {}),
+                ...(options?.metadata ? { metadata: options.metadata as unknown as import('@/lib/database.types').Json } : {}),
               })
               .select()
 

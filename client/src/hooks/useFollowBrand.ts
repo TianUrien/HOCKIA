@@ -2,11 +2,6 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 
-interface FollowStatus {
-  isFollowing: boolean
-  followerCount: number
-}
-
 interface FollowResult {
   success: boolean
   followed: boolean
@@ -36,7 +31,7 @@ export function useFollowBrand(brandId: string | undefined) {
         if (error) throw error
         if (cancelled) return
 
-        const status = data as FollowStatus
+        const status = data as unknown as { is_following: boolean; follower_count: number }
         setIsFollowing(status.is_following)
         setFollowerCount(status.follower_count)
       } catch (err) {
@@ -70,7 +65,7 @@ export function useFollowBrand(brandId: string | undefined) {
 
       if (error) throw error
 
-      const result = data as FollowResult
+      const result = data as unknown as FollowResult
       if (result.success) {
         setIsFollowing(result.followed)
         setFollowerCount(result.follower_count)

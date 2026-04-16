@@ -35,7 +35,7 @@ export function useUserPosts() {
          
         async () => await supabase.rpc('create_user_post', {
           p_content: content,
-          p_images: images && images.length > 0 ? images : null,
+          p_images: (images && images.length > 0 ? images : null) as unknown as undefined,
         }),
         15_000
       )
@@ -67,7 +67,7 @@ export function useUserPosts() {
         async () => await supabase.rpc('update_user_post', {
           p_post_id: postId,
           p_content: content,
-          p_images: images && images.length > 0 ? images : null,
+          p_images: (images && images.length > 0 ? images : null) as unknown as undefined,
         }),
         15_000
       )
@@ -124,11 +124,11 @@ export function useUserPosts() {
          
         async () => await supabase.rpc('create_transfer_post', {
           p_club_name: clubName,
-          p_club_country_id: clubCountryId,
-          p_world_club_id: worldClubId,
-          p_club_avatar_url: clubAvatarUrl,
-          p_content: content || null,
-          p_images: images && images.length > 0 ? images : null,
+          p_club_country_id: (clubCountryId ?? undefined) as number | undefined,
+          p_world_club_id: (worldClubId ?? undefined) as string | undefined,
+          p_club_avatar_url: (clubAvatarUrl ?? undefined) as string | undefined,
+          p_content: (content || null) as string | undefined,
+          p_images: (images && images.length > 0 ? images : null) as unknown as undefined,
         }),
         15_000
       )
@@ -159,8 +159,8 @@ export function useUserPosts() {
          
         async () => await supabase.rpc('create_signing_post', {
           p_person_profile_id: personProfileId,
-          p_content: content || null,
-          p_images: images && images.length > 0 ? images : null,
+          p_content: (content || null) as string | undefined,
+          p_images: (images && images.length > 0 ? images : null) as unknown as undefined,
         }),
         15_000
       )

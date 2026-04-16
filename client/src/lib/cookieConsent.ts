@@ -39,8 +39,8 @@ export function enableGA4() {
 
   // Initialize dataLayer — must use `arguments` object, not rest params
   window.dataLayer = window.dataLayer || []
-  // eslint-disable-next-line prefer-rest-params
-  function gtag() { window.dataLayer!.push(arguments) }
+  // eslint-disable-next-line prefer-rest-params, @typescript-eslint/no-unused-vars -- gtag uses implicit `arguments` object per GA4 snippet
+  function gtag(..._args: unknown[]) { window.dataLayer!.push(arguments) }
   gtag('js', new Date())
   gtag('config', GA_ID, { send_page_view: true })
 

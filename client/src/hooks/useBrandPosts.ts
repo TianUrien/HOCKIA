@@ -79,7 +79,7 @@ export function useBrandPosts(brandId: string | null | undefined): UseBrandPosts
       const { data: result, error: rpcError } = await supabase.rpc('create_brand_post', {
         p_brand_id: brandId,
         p_content: data.content,
-        p_image_url: data.image_url ?? null,
+        p_image_url: (data.image_url ?? null) as string | undefined,
       })
 
       if (rpcError) throw rpcError
@@ -106,8 +106,8 @@ export function useBrandPosts(brandId: string | null | undefined): UseBrandPosts
     try {
       const { data: result, error: rpcError } = await supabase.rpc('update_brand_post', {
         p_post_id: postId,
-        p_content: data.content ?? null,
-        p_image_url: data.image_url ?? null,
+        p_content: (data.content ?? null) as string | undefined,
+        p_image_url: (data.image_url ?? null) as string | undefined,
       })
 
       if (rpcError) throw rpcError

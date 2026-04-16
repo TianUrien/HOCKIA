@@ -28,8 +28,6 @@ const baseMessage: ChatMessage = {
   content: 'Hello world',
   sent_at: '2026-02-12T10:00:00Z',
   read_at: null,
-  created_at: '2026-02-12T10:00:00Z',
-  updated_at: '2026-02-12T10:00:00Z',
 }
 
 const defaultProps = {

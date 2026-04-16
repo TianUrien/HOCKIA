@@ -236,7 +236,7 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
       }
     } catch (error) {
       logger.error('Error fetching vacancies:', error)
-      reportSupabaseError(error, 'fetch_club_opportunities_with_counts')
+      reportSupabaseError('fetch_club_opportunities_with_counts', error)
       if (!readOnly) {
         addToast('Failed to load opportunities. Please refresh the page.', 'error')
       }

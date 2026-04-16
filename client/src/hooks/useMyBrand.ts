@@ -79,10 +79,10 @@ export function useMyBrand(): UseMyBrandResult {
         p_name: data.name,
         p_slug: data.slug,
         p_category: data.category,
-        p_bio: data.bio ?? null,
-        p_logo_url: data.logo_url ?? null,
-        p_website_url: data.website_url ?? null,
-        p_instagram_url: data.instagram_url ?? null,
+        p_bio: (data.bio ?? null) as string | undefined,
+        p_logo_url: (data.logo_url ?? null) as string | undefined,
+        p_website_url: (data.website_url ?? null) as string | undefined,
+        p_instagram_url: (data.instagram_url ?? null) as string | undefined,
       })
 
       if (rpcError) {
@@ -117,12 +117,12 @@ export function useMyBrand(): UseMyBrandResult {
   const updateBrand = useCallback(async (data: UpdateBrandInput) => {
     try {
       const { error: rpcError } = await supabase.rpc('update_brand', {
-        p_name: data.name ?? null,
-        p_bio: data.bio ?? null,
-        p_logo_url: data.logo_url ?? null,
-        p_website_url: data.website_url ?? null,
-        p_instagram_url: data.instagram_url ?? null,
-        p_category: data.category ?? null,
+        p_name: (data.name ?? null) as string | undefined,
+        p_bio: (data.bio ?? null) as string | undefined,
+        p_logo_url: (data.logo_url ?? null) as string | undefined,
+        p_website_url: (data.website_url ?? null) as string | undefined,
+        p_instagram_url: (data.instagram_url ?? null) as string | undefined,
+        p_category: (data.category ?? null) as string | undefined,
       })
 
       if (rpcError) {

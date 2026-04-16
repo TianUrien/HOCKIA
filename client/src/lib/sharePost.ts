@@ -76,7 +76,7 @@ export async function sendSharedPostMessage(
       conversation_id: conversationId,
       sender_id: currentUserId,
       content: 'Shared a post',
-      metadata: postData,
+      metadata: postData as never,
     })
 
     if (msgError) {

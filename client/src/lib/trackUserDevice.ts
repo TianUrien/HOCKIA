@@ -19,14 +19,14 @@ export function trackUserDevice(): void {
     window.matchMedia('(display-mode: standalone)').matches ||
     (window.navigator as Navigator & { standalone?: boolean }).standalone === true
 
-  supabase
-    .rpc('track_user_device', {
+  void Promise.resolve(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- RPC not in generated types
+    (supabase.rpc as any)('track_user_device', {
       p_platform: platform,
       p_user_agent: navigator.userAgent,
       p_is_pwa: isPwa,
     })
-    .then(() => {
-      sessionStorage.setItem(DEVICE_TRACKED_KEY, '1')
-    })
-    .catch(() => {})
+  ).then(() => {
+    sessionStorage.setItem(DEVICE_TRACKED_KEY, '1')
+  }).catch(() => {})
 }

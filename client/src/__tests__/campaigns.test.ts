@@ -27,6 +27,7 @@ function makeCampaign(overrides: Partial<EmailCampaign> = {}): EmailCampaign {
     total_opened: 0,
     total_clicked: 0,
     total_count: 1,
+    ab_variants: null,
     ...overrides,
   }
 }

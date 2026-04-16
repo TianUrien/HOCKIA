@@ -74,7 +74,8 @@ export function RetentionCurveChart({ cohorts, loading }: RetentionCurveChartPro
           />
           <Tooltip
             contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb', fontSize: '13px' }}
-            formatter={(value: number) => [`${value?.toFixed(1) ?? '—'}%`]}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Recharts Formatter type mismatch
+            formatter={(value: number | undefined) => [`${value?.toFixed(1) ?? '—'}%`] as any}
           />
           <Legend wrapperStyle={{ fontSize: '12px' }} />
           {cohortLabels.map((label, i) => (

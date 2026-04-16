@@ -614,7 +614,7 @@ export function AdminEmail() {
                       setSendingCampaignId(campaignId)
                       try {
                         const result = await sendCampaign(campaignId)
-                        addToast(`Campaign sent to ${result.sent} recipient${result.sent !== 1 ? 's' : ''}${result.failed > 0 ? ` (${result.failed} failed)` : ''}.`, result.failed > 0 ? 'warning' : 'success')
+                        addToast(`Campaign sent to ${result.sent} recipient${result.sent !== 1 ? 's' : ''}${result.failed > 0 ? ` (${result.failed} failed)` : ''}.`, result.failed > 0 ? 'error' : 'success')
                         setConfirmSendCampaign(null)
                         campaigns.refetch()
                       } catch (err) {

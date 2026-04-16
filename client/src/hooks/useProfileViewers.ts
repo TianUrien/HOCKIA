@@ -40,7 +40,7 @@ export function useProfileViewers(days: number = 30, limit: number = 20) {
 
       setViewers((viewersRes.data as ProfileViewer[]) || [])
 
-      const statsData = statsRes.data as ProfileViewStats & { success: boolean }
+      const statsData = statsRes.data as unknown as ProfileViewStats & { success: boolean }
       if (statsData.success) {
         setStats({
           total_views: statsData.total_views,

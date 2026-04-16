@@ -47,14 +47,16 @@ export default function NewMessageModal({ isOpen, onClose }: NewMessageModalProp
       setIsLoadingRecent(true)
       try {
         // Get the most recent conversations to show as suggestions
-        const { data, error } = await supabase.rpc('get_conversations_for_user', {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- RPC not in generated types
+        const { data, error } = await (supabase.rpc as any)('get_conversations_for_user', {
           user_uuid: user.id
         })
 
         if (error) throw error
 
         // Extract the other users from conversations
-        const contacts: SearchResult[] = (data || [])
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- RPC return type not generated
+        const contacts: SearchResult[] = ((data || []) as any[])
           .slice(0, 5)
           .map((conv: { other_user_id: string; other_user_name: string; other_user_avatar: string | null; other_user_role: string }) => ({
             id: conv.other_user_id,
@@ -90,7 +92,7 @@ export default function NewMessageModal({ isOpen, onClose }: NewMessageModalProp
         .from('profiles')
         .select('id, full_name, avatar_url, role, base_location, current_club')
         .eq('onboarding_completed', true)
-        .neq('id', user?.id) // Exclude current user
+        .neq('id', user?.id ?? '') // Exclude current user
         .or(`full_name.ilike.${searchPattern},current_club.ilike.${searchPattern}`)
         .limit(10)
 

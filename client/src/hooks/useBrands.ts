@@ -69,8 +69,8 @@ export function useBrands(params: BrandsQueryParams = {}): UseBrandsResult {
       const currentOffset = reset ? 0 : offset
 
       const { data, error: rpcError } = await supabase.rpc('get_brands', {
-        p_category: params.category ?? null,
-        p_search: params.search ?? null,
+        p_category: (params.category ?? null) as string | undefined,
+        p_search: (params.search ?? null) as string | undefined,
         p_limit: limit,
         p_offset: currentOffset,
       })
@@ -79,7 +79,7 @@ export function useBrands(params: BrandsQueryParams = {}): UseBrandsResult {
         throw rpcError
       }
 
-      const result = data as { brands: Brand[]; total: number }
+      const result = data as unknown as { brands: Brand[]; total: number }
 
       if (reset) {
         setBrands(result.brands)

@@ -46,7 +46,7 @@ export function useBrandAmbassadors(brandId: string | null | undefined) {
 
       if (rpcError) throw rpcError
 
-      const result = data as { ambassadors: BrandAmbassador[]; total: number }
+      const result = data as unknown as { ambassadors: BrandAmbassador[]; total: number }
       setAmbassadors(prev => append ? [...prev, ...result.ambassadors] : result.ambassadors)
       setTotal(result.total)
     } catch (err) {

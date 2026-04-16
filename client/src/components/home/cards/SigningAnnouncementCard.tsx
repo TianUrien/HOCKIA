@@ -205,6 +205,12 @@ export function SigningAnnouncementCard({ item, onLikeUpdate, onDelete }: Signin
         onToggleLike={handleToggleLike}
         onToggleComments={() => setShowComments(!showComments)}
         showComments={showComments}
+        authorId={item.author_id}
+        authorName={item.author_name}
+        authorAvatar={item.author_avatar}
+        authorRole={item.author_role}
+        content={item.content || ''}
+        thumbnailUrl={item.images?.[0]?.url ?? null}
       />
 
       {/* Comments section */}

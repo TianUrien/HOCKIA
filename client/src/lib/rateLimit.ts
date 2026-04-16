@@ -37,7 +37,7 @@ export const checkLoginRateLimit = async (email: string): Promise<RateLimitResul
       return FAIL_CLOSED
     }
 
-    return data as RateLimitResult
+    return data as unknown as RateLimitResult
   } catch (err) {
     logger.error('[RATE_LIMIT] Unexpected error checking login rate limit', { err })
     return FAIL_CLOSED
@@ -60,7 +60,7 @@ export const checkSignupRateLimit = async (email: string): Promise<RateLimitResu
       return FAIL_CLOSED
     }
 
-    return data as RateLimitResult
+    return data as unknown as RateLimitResult
   } catch (err) {
     logger.error('[RATE_LIMIT] Unexpected error checking signup rate limit', { err })
     return FAIL_CLOSED
@@ -83,7 +83,7 @@ export const checkPasswordResetRateLimit = async (email: string): Promise<RateLi
       return FAIL_CLOSED
     }
 
-    return data as RateLimitResult
+    return data as unknown as RateLimitResult
   } catch (err) {
     logger.error('[RATE_LIMIT] Unexpected error checking password reset rate limit', { err })
     return FAIL_CLOSED
@@ -106,7 +106,7 @@ export const checkApplicationRateLimit = async (userId: string): Promise<RateLim
       return FAIL_CLOSED
     }
 
-    return data as RateLimitResult
+    return data as unknown as RateLimitResult
   } catch (err) {
     logger.error('[RATE_LIMIT] Unexpected error checking application rate limit', { err })
     return FAIL_CLOSED
@@ -129,7 +129,7 @@ export const checkMessageRateLimit = async (userId: string): Promise<RateLimitRe
       return FAIL_CLOSED
     }
 
-    return data as RateLimitResult
+    return data as unknown as RateLimitResult
   } catch (err) {
     logger.error('[RATE_LIMIT] Unexpected error checking message rate limit', { err })
     return FAIL_CLOSED

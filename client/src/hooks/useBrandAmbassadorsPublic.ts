@@ -33,7 +33,7 @@ export function useBrandAmbassadorsPublic(brandId: string | null | undefined) {
 
       if (error) throw error
 
-      const result = data as { ambassadors: PublicAmbassador[]; total: number }
+      const result = data as unknown as { ambassadors: PublicAmbassador[]; total: number }
       setAmbassadors(result.ambassadors)
       setTotal(result.total)
     } catch (err) {

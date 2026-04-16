@@ -34,7 +34,7 @@ export function useGooglePlaces() {
     }
 
     if (!optionsSet) {
-      setOptions({ key: apiKey, version: 'weekly' })
+      setOptions({ key: apiKey, v: 'weekly' })
       optionsSet = true
     }
 
@@ -68,8 +68,10 @@ export function useGooglePlaces() {
       })
 
       return suggestions
-        .filter((s) => s.placePrediction)
-        .map((s) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Google Places API untyped response
+        .filter((s: any) => s.placePrediction)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .map((s: any) => {
           const p = s.placePrediction!
           return {
             placeId: p.placeId,
@@ -106,14 +108,14 @@ export function useGooglePlaces() {
 
       for (const comp of components) {
         if (comp.types.includes('locality') && !city) {
-          city = comp.longText
+          city = comp.longText ?? ''
         } else if (comp.types.includes('sublocality_level_1') && !city) {
-          city = comp.longText
+          city = comp.longText ?? ''
         } else if (comp.types.includes('administrative_area_level_1')) {
-          adminArea = comp.longText
+          adminArea = comp.longText ?? ''
         } else if (comp.types.includes('country')) {
-          countryCode = comp.shortText
-          countryName = comp.longText
+          countryCode = comp.shortText ?? ''
+          countryName = comp.longText ?? ''
         }
       }
 

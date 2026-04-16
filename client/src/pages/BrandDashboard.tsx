@@ -113,7 +113,7 @@ export default function BrandDashboard() {
         p_offset: offset,
       })
       if (error) throw error
-      const result = data as { followers: FollowerItem[]; total: number }
+      const result = data as unknown as { followers: FollowerItem[]; total: number }
       setFollowers(prev => append ? [...prev, ...result.followers] : result.followers)
       setFollowersTotal(result.total)
     } catch (err) {

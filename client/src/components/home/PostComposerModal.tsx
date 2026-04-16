@@ -183,7 +183,7 @@ export function PostComposerModal({
           { p_query: query.trim(), p_limit: 8 }
         )
         if (rpcError) throw rpcError
-        setClubResults(Array.isArray(data) ? data : [])
+        setClubResults(Array.isArray(data) ? data as unknown as ClubSearchResult[] : [])
       } catch (err) {
         logger.error('[PostComposerModal] Club search error:', err)
         setClubResults([])
@@ -217,7 +217,7 @@ export function PostComposerModal({
           { p_query: query.trim(), p_limit: 8 }
         )
         if (rpcError) throw rpcError
-        setPersonResults(Array.isArray(data) ? data : [])
+        setPersonResults(Array.isArray(data) ? data as PersonSearchResult[] : [])
       } catch (err) {
         logger.error('[PostComposerModal] Person search error:', err)
         setPersonResults([])

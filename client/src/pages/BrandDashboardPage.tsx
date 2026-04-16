@@ -61,16 +61,10 @@ export default function BrandDashboardPage() {
         throw new Error(result.error || 'Failed to update brand')
       }
 
-      addToast({
-        type: 'success',
-        message: 'Brand profile updated successfully',
-      })
+      addToast('Brand profile updated successfully', 'success')
     } catch (err) {
       logger.error('[BrandDashboardPage] Error updating brand:', err)
-      addToast({
-        type: 'error',
-        message: err instanceof Error ? err.message : 'Failed to update brand',
-      })
+      addToast(err instanceof Error ? err.message : 'Failed to update brand', 'error')
     } finally {
       setIsSubmitting(false)
     }

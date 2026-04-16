@@ -17,10 +17,11 @@ export function useBlockedUsers() {
       return
     }
     try {
-      const { data } = await supabase
-        .from('user_blocks')
+      const { data } = await (supabase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- table not in generated types
+        .from('user_blocks' as any)
         .select('blocked_id')
-        .eq('blocker_id', user.id)
+        .eq('blocker_id', user.id)) as { data: { blocked_id: string }[] | null }
       if (data) {
         setBlockedIds(new Set(data.map(r => r.blocked_id)))
       }

@@ -15,13 +15,13 @@ export function trackDbEvent(
   entityId?: string,
   properties?: Record<string, unknown>,
 ): void {
-  supabase
-    .rpc('track_event', {
-      p_event_name: eventName,
-      p_entity_type: entityType ?? null,
-      p_entity_id: entityId ?? null,
-      p_properties: properties ?? {},
-    })
-    .then(() => {})
-    .catch(() => {})
+  void Promise.resolve(
+    supabase
+      .rpc('track_event', {
+        p_event_name: eventName,
+        p_entity_type: (entityType ?? null) as string | undefined,
+        p_entity_id: (entityId ?? null) as string | undefined,
+        p_properties: (properties ?? {}) as unknown as undefined,
+      })
+  ).then(() => {}).catch(() => {})
 }

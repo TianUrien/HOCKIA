@@ -69,13 +69,15 @@ export function SharePostSheet({
     const fetchRecentContacts = async () => {
       setIsLoadingRecent(true)
       try {
-        const { data, error } = await supabase.rpc('get_conversations_for_user', {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- RPC not in generated types
+        const { data, error } = await (supabase.rpc as any)('get_conversations_for_user', {
           user_uuid: user.id,
         })
 
         if (error) throw error
 
-        const contacts: ContactResult[] = (data || [])
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- RPC return type not generated
+        const contacts: ContactResult[] = ((data || []) as any[])
           .slice(0, 8)
           .map(
             (conv: {
@@ -117,7 +119,7 @@ export function SharePostSheet({
           .from('profiles')
           .select('id, full_name, avatar_url, role')
           .eq('onboarding_completed', true)
-          .neq('id', user?.id)
+          .neq('id', user?.id ?? '')
           .or(`full_name.ilike.${searchPattern},current_club.ilike.${searchPattern}`)
           .limit(10)
 

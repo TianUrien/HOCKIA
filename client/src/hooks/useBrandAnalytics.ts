@@ -25,7 +25,7 @@ export function useBrandAnalytics(days: number = 30) {
 
       if (error) throw error
 
-      const result = data as BrandAnalytics & { success: boolean }
+      const result = data as unknown as BrandAnalytics & { success: boolean }
       if (result.success) {
         setAnalytics({
           profile_views: result.profile_views,

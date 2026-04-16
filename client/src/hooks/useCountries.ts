@@ -73,23 +73,24 @@ export function useCountries(): UseCountriesResult {
     }
 
     if (!inflightRequest) {
-      inflightRequest = supabase
-        .from('countries')
-        .select('id, code, code_alpha3, name, common_name, nationality_name, region, flag_emoji')
-        .order('name')
-        .then(({ data, error: fetchError }) => {
-          if (fetchError) throw new Error(fetchError.message)
-          const countryList = (data ?? []) as Country[]
-          cachedCountries = countryList
-          return countryList
-        })
-        .finally(() => {
-          inflightRequest = null
-        })
+      inflightRequest = Promise.resolve(
+        supabase
+          .from('countries')
+          .select('id, code, code_alpha3, name, common_name, nationality_name, region, flag_emoji')
+          .order('name')
+          .then(({ data, error: fetchError }) => {
+            if (fetchError) throw new Error(fetchError.message)
+            const countryList = (data ?? []) as Country[]
+            cachedCountries = countryList
+            return countryList
+          })
+      ).finally(() => {
+        inflightRequest = null
+      })
     }
 
     setLoading(true)
-    inflightRequest
+    inflightRequest!
       .then((countryList) => {
         setCountries(countryList)
       })

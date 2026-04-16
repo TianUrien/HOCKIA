@@ -278,7 +278,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
   const toggleBenefit = (benefitId: string) => {
     const currentBenefits = formData.benefits || []
     const newBenefits = currentBenefits.includes(benefitId)
-      ? currentBenefits.filter(b => b !== benefitId)
+      ? currentBenefits.filter((b: string) => b !== benefitId)
       : [...currentBenefits, benefitId]
     handleInputChange('benefits', newBenefits)
   }
@@ -291,7 +291,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
   }
 
   const removeRequirement = (index: number) => {
-    handleInputChange('requirements', (formData.requirements || []).filter((_, i) => i !== index))
+    handleInputChange('requirements', (formData.requirements || []).filter((_: string, i: number) => i !== index))
   }
 
   const addCustomBenefit = () => {
@@ -302,7 +302,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
   }
 
   const removeCustomBenefit = (index: number) => {
-    handleInputChange('custom_benefits', (formData.custom_benefits || []).filter((_, i) => i !== index))
+    handleInputChange('custom_benefits', (formData.custom_benefits || []).filter((_: string, i: number) => i !== index))
   }
 
   const validate = (): boolean => {
@@ -702,7 +702,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
             </button>
 
             <div className="space-y-3">
-              {(formData.requirements || []).map((req, index) => (
+              {(formData.requirements || []).map((req: string, index: number) => (
                 <div key={index} className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
                   <span className="flex-1 text-sm text-gray-700">{req}</span>
                   <button
@@ -809,7 +809,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
             
             <div className="space-y-3">
               <div className="flex flex-wrap gap-2">
-                {(formData.custom_benefits || []).map((benefit, index) => (
+                {(formData.custom_benefits || []).map((benefit: string, index: number) => (
                   <span
                     key={index}
                     className="inline-flex items-center gap-2 px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm"

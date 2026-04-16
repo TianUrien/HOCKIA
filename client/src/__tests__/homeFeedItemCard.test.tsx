@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import { vi } from 'vitest'
-import type { MemberJoinedFeedItem, UserPostFeedItem, MilestoneAchievedFeedItem } from '@/types/homeFeed'
+import type { MemberJoinedFeedItem, UserPostFeedItem, MilestoneAchievedFeedItem, HomeFeedItem } from '@/types/homeFeed'
 
 // Mock all card components to isolate routing logic
 vi.mock('@/components/home/cards', () => ({
@@ -88,7 +88,7 @@ describe('HomeFeedItemCard', () => {
       created_at: '2026-02-09T00:00:00Z',
     }
 
-    const { container } = render(<HomeFeedItemCard item={item} />)
+    const { container } = render(<HomeFeedItemCard item={item as unknown as HomeFeedItem} />)
     expect(container.innerHTML).toBe('')
   })
 })

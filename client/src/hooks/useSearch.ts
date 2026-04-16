@@ -91,7 +91,7 @@ export function useSearch(query: string, type?: string | null) {
        
       const { data, error } = await supabase.rpc('search_content', {
         p_query: query,
-        p_type: type || null,
+        p_type: (type || null) as string | undefined,
         p_limit: PAGE_SIZE,
         p_offset: pageParam,
       })
@@ -101,7 +101,7 @@ export function useSearch(query: string, type?: string | null) {
         throw error
       }
 
-      return data as SearchResponse
+      return data as unknown as SearchResponse
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {

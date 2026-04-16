@@ -75,7 +75,9 @@ export default function SearchPage() {
   const typeCounts = data?.pages[0]?.type_counts
 
   const trackResultClick = useCallback((result: SearchResult, index: number) => {
-    const entityId = result.profile_id || result.post_id || result.world_club_id || result.brand_id || result.opportunity_id
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- accessing subtype-specific properties
+    const r = result as any
+    const entityId = r.profile_id || r.post_id || r.world_club_id || r.brand_id || r.opportunity_id
     trackDbEvent('search_result_click', result.result_type, entityId ?? undefined, {
       query,
       position: index,

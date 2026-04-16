@@ -36,14 +36,15 @@ export default function BlockedAccountsList() {
   const fetchBlocked = async () => {
     setLoading(true)
     try {
-      const { data, error } = await supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error }: { data: BlockedUser[] | null; error: unknown } = await (supabase as any)
         .from('user_blocks')
         .select('blocked_id, created_at, profile:profiles!user_blocks_blocked_id_fkey(full_name, username, avatar_url, role)')
         .eq('blocker_id', user!.id)
         .order('created_at', { ascending: false })
 
       if (error) throw error
-      setBlockedUsers((data ?? []) as unknown as BlockedUser[])
+      setBlockedUsers((data ?? []) as BlockedUser[])
     } catch (err) {
       logger.error('Failed to fetch blocked users:', err)
     } finally {
