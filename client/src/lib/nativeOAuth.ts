@@ -9,11 +9,17 @@
  *
  * This avoids the "Safari opens with error" issue that Apple rejected.
  */
+import * as Sentry from '@sentry/react'
 import { Capacitor } from '@capacitor/core'
 import { Browser } from '@capacitor/browser'
 import { App, type URLOpenListenerEvent } from '@capacitor/app'
 import { supabase } from './supabase'
 import { logger } from './logger'
+import { reportAuthFlowError } from './sentryHelpers'
+
+function breadcrumb(message: string, data?: Record<string, unknown>) {
+  Sentry.addBreadcrumb({ category: 'auth.native_oauth', level: 'info', message, data })
+}
 
 /** Returns true when running inside Capacitor native shell. */
 export const isNativePlatform = (): boolean => Capacitor.isNativePlatform()
@@ -29,6 +35,8 @@ export async function signInWithOAuthNative(provider: 'apple' | 'google'): Promi
     throw new Error('signInWithOAuthNative should only be called on native platforms')
   }
 
+  breadcrumb('request_oauth_url', { provider })
+
   // Get the OAuth URL from Supabase without auto-opening the browser
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider,
@@ -39,10 +47,13 @@ export async function signInWithOAuthNative(provider: 'apple' | 'google'): Promi
   })
 
   if (error || !data.url) {
-    throw error || new Error('Failed to get OAuth URL')
+    const failure = error || new Error('Failed to get OAuth URL')
+    reportAuthFlowError('native_oauth.get_url', failure, { provider })
+    throw failure
   }
 
   logger.debug('[nativeOAuth] Opening OAuth URL in in-app browser')
+  breadcrumb('browser_open', { provider })
 
   // Set up a listener for when the app receives the callback URL
   const authPromise = new Promise<void>((resolve, reject) => {
@@ -51,7 +62,9 @@ export async function signInWithOAuthNative(provider: 'apple' | 'google'): Promi
       if (!resolved) {
         resolved = true
         listenerHandle.then(h => h.remove())
-        reject(new Error('OAuth timed out after 5 minutes'))
+        const timeoutErr = new Error('OAuth timed out after 5 minutes')
+        reportAuthFlowError('native_oauth.timeout', timeoutErr, { provider })
+        reject(timeoutErr)
       }
     }, 5 * 60 * 1000) // 5 minute timeout
 
@@ -77,11 +90,15 @@ export async function signInWithOAuthNative(provider: 'apple' | 'google'): Promi
         // Parse the URL to extract auth params
         const urlObj = new URL(url)
 
+        breadcrumb('callback_received', { provider, hasCode: !!urlObj.searchParams.get('code'), hasHash: !!url.split('#')[1] })
+
         // Check for PKCE code (query param)
         const code = urlObj.searchParams.get('code')
         if (code) {
+          breadcrumb('pkce_exchange', { provider })
           const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
           if (exchangeError) {
+            reportAuthFlowError('native_oauth.pkce_exchange', exchangeError, { provider })
             reject(exchangeError)
             return
           }
@@ -95,11 +112,13 @@ export async function signInWithOAuthNative(provider: 'apple' | 'google'): Promi
         const refreshToken = hashParams.get('refresh_token')
 
         if (accessToken) {
+          breadcrumb('implicit_set_session', { provider })
           const { error: sessionError } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken || '',
           })
           if (sessionError) {
+            reportAuthFlowError('native_oauth.set_session', sessionError, { provider })
             reject(sessionError)
             return
           }
@@ -107,23 +126,32 @@ export async function signInWithOAuthNative(provider: 'apple' | 'google'): Promi
           return
         }
 
-        // Check for errors
+        // Check for errors in callback URL (provider returned an error)
         const errorParam = urlObj.searchParams.get('error') || hashParams.get('error')
         const errorDesc = urlObj.searchParams.get('error_description') || hashParams.get('error_description')
         if (errorParam) {
-          reject(new Error(errorDesc || errorParam))
+          const providerErr = new Error(errorDesc || errorParam)
+          providerErr.name = 'OAuthProviderError'
+          reportAuthFlowError('native_oauth.provider_error', providerErr, {
+            provider,
+            errorCode: errorParam,
+          })
+          reject(providerErr)
           return
         }
 
         // Let Supabase auto-detect the session from URL
         // This handles edge cases where tokens are set via cookies
+        breadcrumb('fallback_get_session', { provider })
         const { error: getError } = await supabase.auth.getSession()
         if (getError) {
+          reportAuthFlowError('native_oauth.fallback_get_session', getError, { provider })
           reject(getError)
         } else {
           resolve()
         }
       } catch (err) {
+        reportAuthFlowError('native_oauth.callback_exception', err, { provider })
         reject(err)
       }
     })

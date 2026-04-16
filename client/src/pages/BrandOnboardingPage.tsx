@@ -7,11 +7,13 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
+import * as Sentry from '@sentry/react'
 import { BrandForm, type BrandFormData } from '@/components/brands'
 import { useMyBrand } from '@/hooks/useMyBrand'
 import { useAuthStore } from '@/lib/auth'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { toSentryError } from '@/lib/sentryHelpers'
 
 export default function BrandOnboardingPage() {
   const navigate = useNavigate()
@@ -50,6 +52,18 @@ export default function BrandOnboardingPage() {
     setIsSubmitting(true)
     setError(null)
 
+    const tags = {
+      feature: 'onboarding_profile',
+      onboarding_role: 'brand' as const,
+    }
+
+    Sentry.addBreadcrumb({
+      category: 'onboarding',
+      level: 'info',
+      message: 'brand_onboarding.submit',
+      data: { userId: user?.id ?? null, category: data.category, hasLogo: !!data.logo_url },
+    })
+
     try {
       const result = await createBrand({
         name: data.name,
@@ -62,19 +76,46 @@ export default function BrandOnboardingPage() {
       })
 
       if (!result.success) {
-        throw new Error(result.error || 'Failed to create brand')
+        const brandErr = new Error(result.error || 'Failed to create brand')
+        Sentry.captureException(toSentryError(brandErr), {
+          tags: { ...tags, onboarding_stage: 'create_brand' },
+          extra: { userId: user?.id ?? null, slug: data.slug, category: data.category },
+        })
+        throw brandErr
       }
+
+      Sentry.addBreadcrumb({
+        category: 'onboarding',
+        level: 'info',
+        message: 'brand_onboarding.brand_created',
+        data: { slug: result.slug },
+      })
 
       // Mark onboarding as complete
       if (user) {
-        await supabase
+        const { error: updateError } = await supabase
           .from('profiles')
           .update({ onboarding_completed: true })
           .eq('id', user.id)
 
+        if (updateError) {
+          Sentry.captureException(toSentryError(updateError), {
+            tags: { ...tags, onboarding_stage: 'mark_onboarding_completed' },
+            extra: { userId: user.id },
+          })
+          throw updateError
+        }
+
         // Refresh profile
         await fetchProfile(user.id, { force: true })
       }
+
+      Sentry.addBreadcrumb({
+        category: 'onboarding',
+        level: 'info',
+        message: 'brand_onboarding.completed',
+        data: { slug: result.slug },
+      })
 
       // Navigate to the brand profile
       navigate(`/brands/${result.slug}`, { replace: true })
