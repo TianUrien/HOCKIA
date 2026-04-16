@@ -34,16 +34,39 @@ async function waitForAppReady(page: import('@playwright/test').Page) {
 
 test.describe('@smoke club', () => {
   test('club dashboard loads for authenticated club user', async ({ page }) => {
-    await page.goto('/dashboard/profile')
-    // DashboardRouter does profile fetch → role routing; wait for the final URL
-    await page.waitForURL(url => !url.pathname.includes('/complete-profile'), { timeout: CLUB_H1_TIMEOUT_MS })
-    await waitForAppReady(page)
+    // Debug: check localStorage BEFORE navigating
+    await page.goto('about:blank')
+    await page.goto('http://localhost:5173/')
+    await page.waitForLoadState('domcontentloaded')
+    const authBefore = await page.evaluate(() => {
+      const raw = localStorage.getItem('hockia-auth')
+      if (!raw) return 'NO_SESSION'
+      try {
+        const s = JSON.parse(raw)
+        return `token=${s.access_token?.slice(0,20)}... user=${s.user?.id} expires=${s.expires_at}`
+      } catch { return 'PARSE_ERROR' }
+    })
+    console.log(`[DEBUG club-auth] Session in localStorage: ${authBefore}`)
 
-    // Debug: log what the page shows if the assertion will fail
-    const url = page.url()
-    const bodyText = await page.locator('body').innerText().catch(() => '[could not read body]')
-    console.log(`[DEBUG club-dashboard] URL: ${url}`)
-    console.log(`[DEBUG club-dashboard] Body text (first 500 chars): ${bodyText.slice(0, 500)}`)
+    await page.goto('/dashboard/profile')
+    // Wait 5s for auth to initialize, then check state
+    await page.waitForTimeout(5000)
+
+    const debugState = await page.evaluate(() => {
+      const raw = localStorage.getItem('hockia-auth')
+      return {
+        url: window.location.href,
+        hasSession: !!raw,
+        bodyText: document.body?.innerText?.slice(0, 300) || 'empty',
+        allKeys: Object.keys(localStorage),
+      }
+    })
+    console.log(`[DEBUG club-dashboard] URL: ${debugState.url}`)
+    console.log(`[DEBUG club-dashboard] hasSession: ${debugState.hasSession}`)
+    console.log(`[DEBUG club-dashboard] localStorage keys: ${debugState.allKeys.join(', ')}`)
+    console.log(`[DEBUG club-dashboard] Body: ${debugState.bodyText}`)
+
+    await waitForAppReady(page)
 
     // Club name should render as H1
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: CLUB_H1_TIMEOUT_MS })
