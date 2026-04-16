@@ -375,7 +375,7 @@ export function BrandForm({
       <div className="pt-4">
         <Button
           type="submit"
-          disabled={isSubmitting || uploadingLogo || uploadingCover}
+          disabled={isSubmitting || uploadingLogo}
           className="w-full"
         >
           {isSubmitting ? (
