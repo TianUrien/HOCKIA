@@ -445,6 +445,10 @@ export default function Landing() {
             <button
               type="button"
               onClick={() => {
+                if (!supportsReliableOAuth()) {
+                  alert('Apple Sign-In may not work in this browser. Please use email/password login, or open HOCKIA in Safari or Chrome.')
+                  return
+                }
                 startOAuthSignIn('apple').catch(err => { logger.error('Apple OAuth error:', err); setError('Sign-in failed. Please try again.') })
               }}
               className="w-full flex items-center justify-center gap-2 h-10 bg-white rounded-xl hover:bg-gray-100 transition-colors shadow-sm mt-2"
@@ -586,6 +590,10 @@ export default function Landing() {
               <button
                 type="button"
                 onClick={() => {
+                  if (!supportsReliableOAuth()) {
+                    alert('Apple Sign-In may not work in this browser. Please use email/password login, or open HOCKIA in Safari or Chrome.')
+                    return
+                  }
                   startOAuthSignIn('apple').catch(err => { logger.error('Apple OAuth error:', err); setError('Sign-in failed. Please try again.') })
                 }}
                 className="w-full flex items-center justify-center gap-2.5 h-12 bg-white rounded-xl hover:bg-gray-100 transition-colors shadow-sm mt-3"

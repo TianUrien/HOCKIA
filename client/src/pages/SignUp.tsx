@@ -271,6 +271,10 @@ export default function SignUp() {
                 <button
                   type="button"
                   onClick={() => {
+                    if (!supportsReliableOAuth()) {
+                      alert('Apple Sign-In may not work in this browser. Please use email/password signup, or open HOCKIA in Safari or Chrome.')
+                      return
+                    }
                     trackSignUpStart('apple')
                     startOAuthSignIn('apple').catch(err => { logger.error('Apple OAuth error:', err) })
                   }}
