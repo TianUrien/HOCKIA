@@ -139,6 +139,7 @@ export default defineConfig(({ mode }) => {
     define: {
       'process.env.SUPABASE_URL': JSON.stringify(mergedEnv.SUPABASE_URL ?? ''),
       'process.env.SUPABASE_ANON_KEY': JSON.stringify(mergedEnv.SUPABASE_ANON_KEY ?? ''),
+      'import.meta.env.VITE_VERCEL_GIT_COMMIT_SHA': JSON.stringify(mergedEnv.VERCEL_GIT_COMMIT_SHA ?? ''),
     },
     envPrefix: ['VITE_', 'SUPABASE_'],
     test: {
