@@ -34,37 +34,23 @@ async function waitForAppReady(page: import('@playwright/test').Page) {
 
 test.describe('@smoke club', () => {
   test('club dashboard loads for authenticated club user', async ({ page }) => {
-    // Debug: check localStorage BEFORE navigating
-    await page.goto('about:blank')
-    await page.goto('http://localhost:5173/')
-    await page.waitForLoadState('domcontentloaded')
-    const authBefore = await page.evaluate(() => {
-      const raw = localStorage.getItem('hockia-auth')
-      if (!raw) return 'NO_SESSION'
-      try {
-        const s = JSON.parse(raw)
-        return `token=${s.access_token?.slice(0,20)}... user=${s.user?.id} expires=${s.expires_at}`
-      } catch { return 'PARSE_ERROR' }
+    // Capture browser console for diagnosis
+    const consoleLogs: string[] = []
+    page.on('console', msg => {
+      const text = `[${msg.type()}] ${msg.text()}`
+      consoleLogs.push(text)
     })
-    console.log(`[DEBUG club-auth] Session in localStorage: ${authBefore}`)
+    page.on('pageerror', err => consoleLogs.push(`[PAGE_ERROR] ${err.message}`))
 
     await page.goto('/dashboard/profile')
-    // Wait 5s for auth to initialize, then check state
-    await page.waitForTimeout(5000)
+    await page.waitForTimeout(8000)
 
-    const debugState = await page.evaluate(() => {
-      const raw = localStorage.getItem('hockia-auth')
-      return {
-        url: window.location.href,
-        hasSession: !!raw,
-        bodyText: document.body?.innerText?.slice(0, 300) || 'empty',
-        allKeys: Object.keys(localStorage),
-      }
-    })
-    console.log(`[DEBUG club-dashboard] URL: ${debugState.url}`)
-    console.log(`[DEBUG club-dashboard] hasSession: ${debugState.hasSession}`)
-    console.log(`[DEBUG club-dashboard] localStorage keys: ${debugState.allKeys.join(', ')}`)
-    console.log(`[DEBUG club-dashboard] Body: ${debugState.bodyText}`)
+    // Dump all console output and page state
+    const html = await page.locator('#root').innerHTML().catch(() => 'NO_ROOT')
+    console.log(`[DEBUG club] URL: ${page.url()}`)
+    console.log(`[DEBUG club] #root HTML (500 chars): ${html.slice(0, 500)}`)
+    console.log(`[DEBUG club] Console logs (last 20):`)
+    consoleLogs.slice(-20).forEach(l => console.log(`  ${l}`))
 
     await waitForAppReady(page)
 
