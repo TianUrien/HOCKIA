@@ -4,11 +4,12 @@ import { logger } from '@/lib/logger'
 
 export interface ProfileViewer {
   viewer_id: string
-  full_name: string
+  full_name: string | null
   role: string
   username: string | null
   avatar_url: string | null
   base_location: string | null
+  brand_slug: string | null
   viewed_at: string
   view_count: number
 }

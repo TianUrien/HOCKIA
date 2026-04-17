@@ -43,6 +43,10 @@ export function ProfileViewersSection() {
   const handleViewerClick = (viewer: typeof viewers[0]) => {
     if (viewer.role === 'club') {
       navigate(`/clubs/id/${viewer.viewer_id}`)
+    } else if (viewer.role === 'brand') {
+      if (viewer.brand_slug) {
+        navigate(`/brands/${viewer.brand_slug}`)
+      }
     } else {
       navigate(`/players/id/${viewer.viewer_id}`)
     }
@@ -81,7 +85,12 @@ export function ProfileViewersSection() {
       {/* Viewer list */}
       {viewers.length > 0 ? (
         <div className="space-y-1">
-          {(expanded ? viewers : viewers.slice(0, COLLAPSED_COUNT)).map((viewer) => (
+          {(expanded ? viewers : viewers.slice(0, COLLAPSED_COUNT)).map((viewer) => {
+            const displayName = viewer.full_name ?? (viewer.role === 'brand' ? 'Brand' : '')
+            const initials = viewer.full_name
+              ? viewer.full_name.split(' ').map(n => n[0]).filter(Boolean).join('').slice(0, 2)
+              : '?'
+            return (
             <button
               key={viewer.viewer_id}
               type="button"
@@ -90,13 +99,13 @@ export function ProfileViewersSection() {
             >
               <Avatar
                 src={viewer.avatar_url}
-                alt={viewer.full_name}
-                initials={viewer.full_name ? viewer.full_name.split(' ').map(n => n[0]).join('') : '?'}
+                alt={displayName}
+                initials={initials}
                 size="sm"
               />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="font-medium text-gray-900 text-sm truncate">{viewer.full_name}</span>
+                  <span className="font-medium text-gray-900 text-sm truncate">{displayName}</span>
                   <RoleBadge role={viewer.role as 'player' | 'coach' | 'club' | 'brand'} />
                 </div>
                 <p className="text-xs text-gray-500 truncate">
@@ -110,7 +119,8 @@ export function ProfileViewersSection() {
                 {getTimeAgo(viewer.viewed_at, true)}
               </span>
             </button>
-          ))}
+            )
+          })}
           {viewers.length > COLLAPSED_COUNT && (
             <button
               type="button"
