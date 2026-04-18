@@ -77,7 +77,7 @@ type StorageTarget = {
   label: string
 }
 
-const STORAGE_BUCKETS = ['avatars', 'gallery', 'club-media', 'player-media', 'journey', 'user-posts', 'brand-posts'] as const
+const STORAGE_BUCKETS = ['avatars', 'gallery', 'club-media', 'player-media', 'journey', 'user-posts', 'brand-posts', 'brand-products'] as const
 const STORAGE_PAGE_SIZE = 100
 const DB_BATCH_SIZE = 2000
 const DELETE_RELATIONS_FUNCTION = 'hard_delete_profile_relations'
