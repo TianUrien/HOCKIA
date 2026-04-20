@@ -221,6 +221,18 @@ export async function setTestAccount(profileId: string, isTest: boolean): Promis
 }
 
 /**
+ * Grant or revoke the profile's admin-granted verified badge.
+ * Audit-logged server-side via admin_log_action().
+ */
+export async function setProfileVerified(profileId: string, isVerified: boolean): Promise<void> {
+  const { error } = await adminRpc('admin_set_profile_verified', {
+    p_profile_id: profileId,
+    p_value: isVerified,
+  })
+  if (error) throw new Error(`Failed to set verified status: ${error.message}`)
+}
+
+/**
  * Delete orphan profile (profile without auth user)
  */
 export async function deleteOrphanProfile(profileId: string): Promise<void> {

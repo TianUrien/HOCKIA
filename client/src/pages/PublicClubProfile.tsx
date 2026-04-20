@@ -49,7 +49,9 @@ const PUBLIC_CLUB_FIELDS = [
   'contact_email',
   'contact_email_public',
   'social_links',
-  'is_test_account'
+  'is_test_account',
+  'is_verified',
+  'verified_at'
 ].join(',')
 
 export default function PublicClubProfile() {

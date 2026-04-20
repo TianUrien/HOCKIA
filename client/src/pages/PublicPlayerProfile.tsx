@@ -33,7 +33,11 @@ type PublicProfileBase = Pick<
   | 'contact_email_public'
   | 'open_to_play'
   | 'open_to_coach'
-> & { is_test_account?: boolean }
+> & {
+  is_test_account?: boolean
+  is_verified?: boolean | null
+  verified_at?: string | null
+}
 
 type PublicPlayerProfileShape = PublicProfileBase & { role: 'player' }
 type PublicCoachProfileShape = PublicProfileBase & { role: 'coach' }
@@ -66,7 +70,9 @@ const PUBLIC_PROFILE_FIELDS = [
   'open_to_play',
   'open_to_coach',
   'coach_specialization',
-  'coach_specialization_custom'
+  'coach_specialization_custom',
+  'is_verified',
+  'verified_at'
 ].join(',')
 
 export default function PublicPlayerProfile() {

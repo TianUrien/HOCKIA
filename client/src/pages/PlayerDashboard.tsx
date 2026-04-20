@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { ArrowLeft, MapPin, Calendar, Edit2, Eye, MessageCircle, Landmark, Mail, Award } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
-import { Avatar, DashboardMenu, EditProfileModal, FriendsTab, FriendshipButton, PublicReferencesSection, PublicViewBanner, RoleBadge, ScrollableTabs, NextStepCard, FreshnessCard, SearchAppearancesCard, DualNationalityDisplay, AvailabilityPill, TierBadge } from '@/components'
+import { Avatar, DashboardMenu, EditProfileModal, FriendsTab, FriendshipButton, PublicReferencesSection, PublicViewBanner, RoleBadge, ScrollableTabs, NextStepCard, FreshnessCard, SearchAppearancesCard, DualNationalityDisplay, AvailabilityPill, TierBadge, VerifiedBadge } from '@/components'
 import { calculateTier } from '@/lib/profileTier'
 import { useProfileFreshness } from '@/hooks/useProfileFreshness'
 import type { FreshnessNudge } from '@/lib/profileFreshness'
@@ -296,8 +296,12 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
             />
             <div className="flex-1">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-3">
-                <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
-                  {profile.full_name}
+                <h1 className="text-3xl md:text-4xl font-bold text-gray-900 flex items-center gap-2">
+                  <span>{profile.full_name}</span>
+                  <VerifiedBadge
+                    verified={(profile as unknown as { is_verified?: boolean; verified_at?: string | null } | null)?.is_verified}
+                    verifiedAt={(profile as unknown as { is_verified?: boolean; verified_at?: string | null } | null)?.verified_at ?? null}
+                  />
                 </h1>
                 {readOnly ? (
                   <div className="flex flex-wrap items-center gap-2">
