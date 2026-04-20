@@ -45,9 +45,6 @@ const MAX_CONTENT_LENGTH = 2000
 const BUCKET = 'user-posts'
 
 function getFlagUrl(countryCode: string): string {
-  if (countryCode.toUpperCase() === 'XE') {
-    return 'https://flagcdn.com/w40/gb-eng.png'
-  }
   return `https://flagcdn.com/w40/${countryCode.toLowerCase()}.png`
 }
 

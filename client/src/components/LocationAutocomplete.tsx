@@ -85,7 +85,7 @@ export default function LocationAutocomplete({
     if (countryCode === 'GB') {
       const admin = adminArea.toLowerCase()
       if (admin === 'england' || admin.includes('england')) {
-        const england = getCountryByCode('XE')
+        const england = getCountryByCode('GB-ENG')
         if (england) return england.id
       }
       // Scotland, Wales, Northern Ireland → fall through to GB
