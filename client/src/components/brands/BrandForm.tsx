@@ -10,6 +10,7 @@ import { Input, Button } from '@/components'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { optimizeAvatarImage, validateImage } from '@/lib/imageOptimization'
+import { isNativePlatform, pickImageNative } from '@/lib/nativeImagePicker'
 import { logger } from '@/lib/logger'
 import type { BrandCategory } from '@/hooks/useBrands'
 import type { BrandDetail } from '@/hooks/useBrand'
@@ -38,10 +39,21 @@ const CATEGORY_OPTIONS: { value: BrandCategory; label: string }[] = [
   { value: 'apparel', label: 'Apparel' },
   { value: 'accessories', label: 'Accessories' },
   { value: 'nutrition', label: 'Nutrition' },
-  { value: 'services', label: 'Services' },
   { value: 'technology', label: 'Technology' },
+  { value: 'coaching', label: 'Coaching & Training' },
+  { value: 'recruiting', label: 'Recruiting' },
+  { value: 'media', label: 'Media' },
+  { value: 'services', label: 'Services' },
   { value: 'other', label: 'Other' },
 ]
+
+// Mirrors the server-side reserved slug list in
+// 202604180500_brand_sync_trigger_hardening.sql so users get instant feedback
+// instead of a round-trip "Invalid slug format" error from the RPC.
+const RESERVED_SLUGS = new Set([
+  'onboarding', 'new', 'edit', 'admin', 'settings', 'api',
+  'null', 'undefined', 'brand', 'brands',
+])
 
 function generateSlug(name: string): string {
   return name
@@ -206,6 +218,22 @@ export function BrandForm({
     }
   }
 
+  const handleLogoClick = useCallback(async () => {
+    if (isNativePlatform()) {
+      try {
+        const result = await pickImageNative('prompt')
+        if (result) {
+          await handleLogoUpload(result.file)
+        }
+      } catch (err) {
+        logger.error('[BrandForm] Native image picker error:', err)
+        setError('Could not access camera or photos. Please check app permissions.')
+      }
+      return
+    }
+    fileInputRef.current?.click()
+  }, [handleLogoUpload])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
@@ -215,9 +243,25 @@ export function BrandForm({
       return
     }
 
-    if (!formData.slug.trim()) {
+    const trimmedSlug = formData.slug.trim()
+    if (!trimmedSlug) {
       setError('Brand URL slug is required')
       return
+    }
+
+    // Only validate slug rules on creation — existing brands cannot change their slug
+    if (!brand) {
+      if (RESERVED_SLUGS.has(trimmedSlug)) {
+        setError('That URL slug is reserved. Please pick another.')
+        return
+      }
+
+      // Same regex as server-side validation in create_brand RPC
+      const slugPattern = /^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/
+      if (!slugPattern.test(trimmedSlug)) {
+        setError('URL slug must be lowercase letters, numbers, and hyphens only (no leading or trailing hyphen).')
+        return
+      }
     }
 
     try {
@@ -244,7 +288,7 @@ export function BrandForm({
         <div className="flex items-center gap-4">
           <button
             type="button"
-            onClick={() => fileInputRef.current?.click()}
+            onClick={handleLogoClick}
             disabled={uploadingLogo}
             className="w-24 h-24 rounded-xl bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center hover:border-indigo-400 hover:bg-indigo-50 transition-colors overflow-hidden relative"
           >

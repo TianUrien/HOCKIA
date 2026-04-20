@@ -14,8 +14,11 @@ export type BrandCategory =
   | 'apparel'
   | 'accessories'
   | 'nutrition'
-  | 'services'
   | 'technology'
+  | 'coaching'
+  | 'recruiting'
+  | 'media'
+  | 'services'
   | 'other'
 
 export interface Brand {

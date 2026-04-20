@@ -64,4 +64,52 @@ test.describe('@smoke brand', () => {
     // Should NOT show player-specific elements
     await expect(page.getByText(/highlight video/i)).not.toBeVisible()
   })
+
+  // Regression guard for the category taxonomy expansion
+  // (202604210100_expand_brand_categories). If any of the 10 categories goes
+  // missing from the filter pill row, one of the label maps / enums is out of
+  // sync with the DB constraint. Scoped to the filter container because the
+  // header can render conflicting generic buttons (e.g. "All").
+  test('brand directory filter shows all 10 expanded categories', async ({ page }) => {
+    await page.goto('/community/brands')
+    await waitForAppReady(page)
+
+    const filter = page.getByTestId('brand-category-filter')
+    await expect(filter).toBeVisible({ timeout: BRAND_DASH_TIMEOUT_MS })
+
+    const expected = [
+      'All',
+      'Equipment',
+      'Apparel',
+      'Accessories',
+      'Nutrition',
+      'Technology',
+      'Coaching & Training',
+      'Recruiting',
+      'Media',
+      'Services',
+      'Other',
+    ]
+
+    for (const label of expected) {
+      await expect(
+        filter.getByRole('button', { name: label, exact: true })
+      ).toBeVisible({ timeout: BRAND_DASH_TIMEOUT_MS })
+    }
+  })
+
+  // Guard against the "stuck on onboarding" UX hazard: a brand user with an
+  // existing brand who lands on /brands/onboarding must be redirected away,
+  // never trapped on a form they can't submit (create_brand would reject
+  // with "Brand already exists").
+  test('brand user visiting /brands/onboarding is redirected to their brand page', async ({ page }) => {
+    await page.goto('/brands/onboarding')
+    await page.waitForURL(url => !url.pathname.endsWith('/brands/onboarding'), { timeout: BRAND_DASH_TIMEOUT_MS })
+
+    const url = page.url()
+    // Either /brands/{slug} (brand already exists) or /dashboard/profile
+    // (fallback). Both are acceptable — the key invariant is "not stuck on
+    // /brands/onboarding".
+    expect(url).not.toContain('/brands/onboarding')
+  })
 })
