@@ -8,6 +8,8 @@ export interface ProfileBucket {
   label: string
   /** Description shown when incomplete */
   hint: string
+  /** Honest, conservative line describing what completing this step unlocks for the user */
+  unlockCopy: string
   /** Weight out of 100 */
   weight: number
   /** True when this bucket is fully completed */
@@ -116,6 +118,7 @@ export function useCoachProfileStrength({ profile }: UseCoachProfileStrengthOpti
         id: 'basic',
         label: 'Basic Info',
         hint: 'Complete name, nationality, location, DOB, and gender',
+        unlockCopy: 'Clubs filter for coaches by nationality, location, and availability.',
         weight: 15,
         completed: basicComplete,
         actionId: 'edit-profile',
@@ -125,6 +128,7 @@ export function useCoachProfileStrength({ profile }: UseCoachProfileStrengthOpti
         id: 'specialization',
         label: 'Specialization',
         hint: 'Select your coaching specialization',
+        unlockCopy: 'Head coach, assistant, coaching staff — clubs search by specialization.',
         weight: 10,
         completed: specializationComplete,
         actionId: 'edit-profile',
@@ -134,6 +138,7 @@ export function useCoachProfileStrength({ profile }: UseCoachProfileStrengthOpti
         id: 'photo',
         label: 'Profile Photo',
         hint: 'Upload a profile photo',
+        unlockCopy: 'Helps clubs put a face to your name.',
         weight: 15,
         completed: photoComplete,
         actionId: 'edit-profile',
@@ -143,6 +148,7 @@ export function useCoachProfileStrength({ profile }: UseCoachProfileStrengthOpti
         id: 'bio',
         label: 'Professional Bio',
         hint: 'Add a bio about your coaching background',
+        unlockCopy: 'Gives clubs a feel for your coaching style and experience.',
         weight: 15,
         completed: bioComplete,
         actionId: 'edit-profile',
@@ -152,6 +158,7 @@ export function useCoachProfileStrength({ profile }: UseCoachProfileStrengthOpti
         id: 'journey',
         label: 'Experience / Journey',
         hint: 'Add at least one experience entry',
+        unlockCopy: 'Shows where you have coached and the teams you have developed.',
         weight: 20,
         completed: journeyComplete,
         actionId: 'journey-tab',
@@ -161,6 +168,7 @@ export function useCoachProfileStrength({ profile }: UseCoachProfileStrengthOpti
         id: 'gallery',
         label: 'Media Gallery',
         hint: 'Upload at least one gallery photo',
+        unlockCopy: 'Match photos, training sessions, moments from your career.',
         weight: 10,
         completed: galleryComplete,
         actionId: 'gallery-tab',
@@ -170,6 +178,7 @@ export function useCoachProfileStrength({ profile }: UseCoachProfileStrengthOpti
         id: 'references',
         label: 'Get a trusted reference',
         hint: 'Ask a player or fellow coach to vouch for you',
+        unlockCopy: 'Former players or clubs vouching for you builds trust fast.',
         weight: 15,
         completed: referencesComplete,
         actionId: 'friends-tab',

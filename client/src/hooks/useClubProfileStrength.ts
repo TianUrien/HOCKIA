@@ -7,6 +7,8 @@ export interface ProfileStrengthBucket {
   label: string
   /** Description shown when incomplete */
   hint: string
+  /** Honest, conservative line describing what completing this step unlocks for the user */
+  unlockCopy: string
   /** Weight out of 100 */
   weight: number
   /** True when this bucket is fully completed */
@@ -123,6 +125,7 @@ export function useClubProfileStrength({ profile }: UseClubProfileStrengthOption
         id: 'basic',
         label: 'Basic Info',
         hint: 'Complete country, city, year founded, and add website or contact email',
+        unlockCopy: 'Players filter by country, city, and league when looking for opportunities.',
         weight: 35,
         completed: basicComplete,
         actionId: 'edit-profile',
@@ -132,6 +135,7 @@ export function useClubProfileStrength({ profile }: UseClubProfileStrengthOption
         id: 'logo',
         label: 'Club Logo',
         hint: 'Upload your club logo',
+        unlockCopy: 'A recognisable logo makes your club stand out in searches.',
         weight: 25,
         completed: logoComplete,
         actionId: 'edit-profile',
@@ -141,6 +145,7 @@ export function useClubProfileStrength({ profile }: UseClubProfileStrengthOption
         id: 'about',
         label: 'About the Club',
         hint: 'Add a description about your club',
+        unlockCopy: 'Players understand your story and what the club stands for.',
         weight: 20,
         completed: bioComplete,
         actionId: 'edit-profile',
@@ -150,6 +155,7 @@ export function useClubProfileStrength({ profile }: UseClubProfileStrengthOption
         id: 'gallery',
         label: 'Photo Gallery',
         hint: 'Upload at least one photo to your gallery',
+        unlockCopy: 'Show your ground, training sessions, and match days.',
         weight: 20,
         completed: galleryComplete,
         actionId: 'gallery-section',

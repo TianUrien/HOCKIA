@@ -739,13 +739,18 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
               <p className="text-xs text-gray-500 mt-1">Only visible to you and used for login.</p>
             </div>
 
-            <Input
-              label="Contact Email (for networking)"
-              type="email"
-              placeholder="contact@example.com"
-              value={formData.contact_email}
-              onChange={(e) => setFormData({ ...formData, contact_email: e.target.value })}
-            />
+            <div>
+              <Input
+                label="Contact Email (for networking)"
+                type="email"
+                placeholder="contact@example.com"
+                value={formData.contact_email}
+                onChange={(e) => setFormData({ ...formData, contact_email: e.target.value })}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                So clubs can reach you directly when they are interested. Your login email is never shown.
+              </p>
+            </div>
 
             <label className="flex items-start gap-3 text-sm text-gray-700">
               <input
@@ -757,7 +762,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
               <span>
                 Share my contact email with other HOCKIA members
                 <span className="block text-xs text-gray-500 mt-1">
-                  Your login email is never shown. Add a contact email above to be reachable.
+                  Tick this so coaches and clubs can contact you after viewing your profile.
                 </span>
               </span>
             </label>

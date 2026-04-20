@@ -7,6 +7,8 @@ export type ProfileStrengthBucket = {
   id: string
   label: string
   description: string
+  /** Honest, conservative line describing what completing this step unlocks for the user */
+  unlockCopy: string
   weight: number
   completed: boolean
   /** Navigation target when clicking this item (tab name or action) */
@@ -116,6 +118,7 @@ export function useProfileStrength(profile: Profile | null): ProfileStrengthResu
         id: 'basic-info',
         label: 'Basic info completed',
         description: 'Add your nationality, location, and playing position',
+        unlockCopy: 'Clubs filter by position and location when they search for players.',
         weight: 15,
         completed: isBasicInfoComplete(profile),
         action: { type: 'edit-profile' },
@@ -124,6 +127,7 @@ export function useProfileStrength(profile: Profile | null): ProfileStrengthResu
         id: 'profile-photo',
         label: 'Add a profile photo',
         description: 'Help clubs recognize you with a profile picture',
+        unlockCopy: 'Helps clubs put a face to your name.',
         weight: 15,
         completed: hasProfilePhoto(profile),
         action: { type: 'edit-profile' },
@@ -132,6 +136,7 @@ export function useProfileStrength(profile: Profile | null): ProfileStrengthResu
         id: 'highlight-video',
         label: 'Add your highlight video',
         description: 'Show clubs what you can do on the pitch',
+        unlockCopy: 'Clubs see how you play, not just read about it.',
         weight: 20,
         completed: hasHighlightVideo(profile),
         action: { type: 'add-video' },
@@ -140,6 +145,7 @@ export function useProfileStrength(profile: Profile | null): ProfileStrengthResu
         id: 'journey',
         label: 'Share a moment in your Journey',
         description: 'Add your career history, milestones, or achievements',
+        unlockCopy: 'Shows where you have played and what you have achieved.',
         weight: 15,
         completed: journeyCount > 0,
         action: { type: 'tab', tab: 'journey' },
@@ -148,6 +154,7 @@ export function useProfileStrength(profile: Profile | null): ProfileStrengthResu
         id: 'media-gallery',
         label: 'Add a photo or video to your Gallery',
         description: 'Build your visual portfolio for clubs to see',
+        unlockCopy: 'A visual portfolio beyond a single highlight clip.',
         weight: 10,
         completed: galleryCount > 0,
         action: { type: 'tab', tab: 'profile' },
@@ -156,6 +163,7 @@ export function useProfileStrength(profile: Profile | null): ProfileStrengthResu
         id: 'friends',
         label: 'Make your first connection',
         description: 'Add a friend to start building your trusted circle',
+        unlockCopy: 'Coaches and clubs can see the teammates you play with.',
         weight: 10,
         completed: friendCount > 0,
         action: { type: 'tab', tab: 'friends' },
@@ -164,6 +172,7 @@ export function useProfileStrength(profile: Profile | null): ProfileStrengthResu
         id: 'references',
         label: 'Get a trusted reference',
         description: 'Ask a coach or teammate to vouch for you',
+        unlockCopy: 'A coach or teammate vouching for you carries weight with clubs.',
         weight: 15,
         completed: referenceCount > 0,
         action: { type: 'tab', tab: 'friends' },

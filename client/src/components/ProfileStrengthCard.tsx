@@ -1,11 +1,13 @@
 import { useState } from 'react'
-import { CheckCircle2, Circle, ChevronDown, ChevronUp, ChevronRight } from 'lucide-react'
+import { CheckCircle2, Circle, ChevronDown, ChevronUp, ChevronRight, ArrowRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 type BucketLike = {
   id: string
   label: string
   completed: boolean
+  /** Optional honest value line shown beneath the label for incomplete buckets */
+  unlockCopy?: string
 }
 
 interface ProfileStrengthCardProps<TBucket extends BucketLike = BucketLike> {
@@ -32,9 +34,10 @@ function getProgressColor(percentage: number): string {
 
 /**
  * ProfileStrengthCard - Compact, expandable profile completion indicator.
- * 
- * Collapsed: Shows progress bar, percentage, and step count
- * Expanded: Shows clickable checklist of steps
+ *
+ * Collapsed: Shows progress bar, percentage, step count, plus a "Complete next step"
+ * CTA that deep-links directly into the top incomplete bucket's action.
+ * Expanded: Shows full clickable checklist with unlock copy under each incomplete item.
  */
 export default function ProfileStrengthCard<TBucket extends BucketLike>({
   percentage,
@@ -45,6 +48,8 @@ export default function ProfileStrengthCard<TBucket extends BucketLike>({
   const [isExpanded, setIsExpanded] = useState(false)
   const completedCount = buckets.filter(b => b.completed).length
   const isComplete = percentage >= 100
+  // Top incomplete bucket in the order defined by the hook — the "next step" the user is asked to take.
+  const nextBucket = buckets.find(b => !b.completed)
 
   if (loading) {
     return (
@@ -76,7 +81,7 @@ export default function ProfileStrengthCard<TBucket extends BucketLike>({
                 {percentage}%
               </span>
             </div>
-            
+
             {/* Progress Bar - Thin and modern */}
             <div className="relative h-1.5 bg-gray-100 rounded-full overflow-hidden">
               <div
@@ -87,7 +92,7 @@ export default function ProfileStrengthCard<TBucket extends BucketLike>({
                 style={{ width: `${percentage}%` }}
               />
             </div>
-            
+
             {/* Step count */}
             <p className="text-xs text-gray-500 mt-1.5">
               {completedCount} of {buckets.length} steps completed
@@ -114,6 +119,30 @@ export default function ProfileStrengthCard<TBucket extends BucketLike>({
         </div>
       </div>
 
+      {/* Next step CTA - shown only when there's an incomplete bucket */}
+      {nextBucket && onBucketAction && (
+        <button
+          type="button"
+          onClick={() => onBucketAction(nextBucket)}
+          className="w-full flex items-start gap-3 px-4 py-3 border-t border-gray-100 bg-[#8026FA]/[0.03] hover:bg-[#8026FA]/[0.06] text-left transition-colors group"
+        >
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-wide text-[#8026FA] mb-0.5">
+              Next step
+            </p>
+            <p className="text-sm font-medium text-gray-900 truncate">
+              {nextBucket.label}
+            </p>
+            {nextBucket.unlockCopy && (
+              <p className="text-xs text-gray-600 mt-0.5 leading-snug">
+                {nextBucket.unlockCopy}
+              </p>
+            )}
+          </div>
+          <ArrowRight className="w-4 h-4 mt-0.5 text-[#8026FA] flex-shrink-0 transition-transform group-hover:translate-x-0.5" />
+        </button>
+      )}
+
       {/* Expanded Details - Animated dropdown */}
       <div
         className={cn(
@@ -134,11 +163,18 @@ export default function ProfileStrengthCard<TBucket extends BucketLike>({
                   ) : (
                     <button
                       onClick={() => onBucketAction?.(bucket)}
-                      className="w-full flex items-center gap-2.5 py-1.5 text-sm text-gray-600 hover:text-gray-900 transition-colors group"
+                      className="w-full flex items-start gap-2.5 py-1.5 text-sm text-gray-600 hover:text-gray-900 transition-colors group text-left"
                     >
-                      <Circle className="w-4 h-4 flex-shrink-0 text-gray-300" />
-                      <span className="truncate flex-1 text-left">{bucket.label}</span>
-                      <ChevronRight className="w-3.5 h-3.5 text-gray-400 group-hover:text-gray-600 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <Circle className="w-4 h-4 flex-shrink-0 text-gray-300 mt-0.5" />
+                      <span className="flex-1 min-w-0">
+                        <span className="block truncate">{bucket.label}</span>
+                        {bucket.unlockCopy && (
+                          <span className="block text-xs text-gray-500 mt-0.5 leading-snug">
+                            {bucket.unlockCopy}
+                          </span>
+                        )}
+                      </span>
+                      <ChevronRight className="w-3.5 h-3.5 text-gray-400 group-hover:text-gray-600 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity mt-0.5" />
                     </button>
                   )}
                 </li>

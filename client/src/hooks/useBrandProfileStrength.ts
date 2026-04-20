@@ -7,6 +7,8 @@ export interface ProfileStrengthBucket {
   label: string
   /** Description shown when incomplete */
   hint: string
+  /** Honest, conservative line describing what completing this step unlocks for the user */
+  unlockCopy: string
   /** Weight out of 100 */
   weight: number
   /** True when this bucket is fully completed */
@@ -112,6 +114,7 @@ export function useBrandProfileStrength({ brand, productCount = 0, ambassadorCou
         id: 'identity',
         label: 'Brand Identity',
         hint: 'Add your brand name, logo, and category',
+        unlockCopy: 'A clear name, logo, and category is the foundation for people finding you.',
         weight: 25,
         completed: identityComplete,
         actionId: 'edit-profile',
@@ -121,6 +124,7 @@ export function useBrandProfileStrength({ brand, productCount = 0, ambassadorCou
         id: 'about',
         label: 'About Your Brand',
         hint: 'Write a description about your brand (min 50 characters)',
+        unlockCopy: 'Tell players and clubs what makes your brand worth following.',
         weight: 20,
         completed: aboutComplete,
         actionId: 'edit-profile',
@@ -130,6 +134,7 @@ export function useBrandProfileStrength({ brand, productCount = 0, ambassadorCou
         id: 'contact',
         label: 'Contact Info',
         hint: 'Add your website or Instagram link',
+        unlockCopy: 'A direct way for people to reach you outside HOCKIA.',
         weight: 15,
         completed: contactComplete,
         actionId: 'edit-profile',
@@ -139,6 +144,7 @@ export function useBrandProfileStrength({ brand, productCount = 0, ambassadorCou
         id: 'location',
         label: 'Location',
         hint: 'Add your country in profile settings',
+        unlockCopy: 'Players favour brands they can buy from locally or that ship to their region.',
         weight: 10,
         completed: locationComplete,
         actionId: 'edit-profile',
@@ -148,6 +154,7 @@ export function useBrandProfileStrength({ brand, productCount = 0, ambassadorCou
         id: 'products',
         label: 'Products',
         hint: 'Add at least one product to showcase',
+        unlockCopy: 'A brand page without products is just an About section — show what you make.',
         weight: 20,
         completed: hasProducts,
         actionId: 'add-product',
@@ -157,6 +164,7 @@ export function useBrandProfileStrength({ brand, productCount = 0, ambassadorCou
         id: 'ambassadors',
         label: 'Ambassadors',
         hint: 'Add at least one brand ambassador',
+        unlockCopy: 'Players associated with your brand bring their network with them.',
         weight: 10,
         completed: hasAmbassadors,
         actionId: 'add-ambassador',
