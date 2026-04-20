@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { User, MapPin, Calendar, Building2, Camera, UserRound, Briefcase, Users, Store, ChevronRight } from 'lucide-react'
+import { User, MapPin, Calendar, Building2, Camera, UserRound, Briefcase, Users, Store, ChevronRight, Check } from 'lucide-react'
 import * as Sentry from '@sentry/react'
 import { Input, Button, CountrySelect, LocationAutocomplete } from '@/components'
 import type { LocationSelection } from '@/components/LocationAutocomplete'
@@ -18,6 +18,7 @@ import { toSentryError } from '@/lib/sentryHelpers'
 import { trackOnboardingComplete } from '@/lib/analytics'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import { COACH_SPECIALIZATIONS, type CoachSpecialization } from '@/lib/coachSpecializations'
+import { validateOnboardingStep, type WizardStep } from '@/lib/onboardingValidation'
 
 type UserRole = 'player' | 'coach' | 'club' | 'brand'
 
@@ -56,6 +57,11 @@ export default function CompleteProfile() {
   
   // Club claim step state (for clubs only)
   const [showClubClaimStep, setShowClubClaimStep] = useState(true)
+
+  // Staged wizard state for player/coach flows — splits the single long form into
+  // 3 progressive steps (identity → background → role details). Club and brand
+  // keep their existing flows untouched.
+  const [currentStep, setCurrentStep] = useState<WizardStep>(1)
 
   // Form data states
   const [formData, setFormData] = useState({
@@ -97,6 +103,25 @@ export default function CompleteProfile() {
   // Use profile data from auth store - no need to fetch again
   const userRole = (profile?.role as UserRole | null) ?? fallbackRole ?? (user?.user_metadata?.role as UserRole | undefined) ?? null
   const contactEmailFallback = profile?.contact_email ?? profile?.email ?? user?.email ?? fallbackEmail ?? ''
+
+  // Player and coach get a 3-step wizard. Club keeps its existing claim→form
+  // two-step flow; brand is handled on a separate onboarding page entirely.
+  const isWizardFlow = userRole === 'player' || userRole === 'coach'
+
+  const stepLabels: Record<UserRole, Record<WizardStep, string>> = {
+    player: {
+      1: 'About you',
+      2: 'Where you are based',
+      3: 'Your game',
+    },
+    coach: {
+      1: 'About you',
+      2: 'Where you are based',
+      3: 'Your coaching',
+    },
+    club: { 1: '', 2: '', 3: '' },
+    brand: { 1: '', 2: '', 3: '' },
+  }
 
   const captureOnboardingError = (error: unknown, payload: Record<string, unknown>, sourceComponent: string) => {
     Sentry.captureException(toSentryError(error), {
@@ -441,6 +466,27 @@ export default function CompleteProfile() {
     const file = event.target.files?.[0]
     if (!file) return
     await uploadAvatarFile(file)
+  }
+
+  // Per-step validation is delegated to the pure helper in
+  // lib/onboardingValidation.ts so the gating logic can be unit-tested
+  // without mounting this whole page. The whole-form `validateForm`
+  // below is still called on submit as a safety net in case the user
+  // navigates back and clears a field.
+  const handleNext = () => {
+    if (userRole !== 'player' && userRole !== 'coach') return
+    const stepError = validateOnboardingStep(currentStep, userRole, formData)
+    if (stepError) {
+      setError(stepError)
+      return
+    }
+    setError('')
+    setCurrentStep((prev) => (prev === 3 ? 3 : ((prev + 1) as WizardStep)))
+  }
+
+  const handleBack = () => {
+    setError('')
+    setCurrentStep((prev) => (prev === 1 ? 1 : ((prev - 1) as WizardStep)))
   }
 
   // Client-side validation
@@ -888,7 +934,46 @@ export default function CompleteProfile() {
               {userRole === 'coach' && 'Complete Coach Profile'}
               {userRole === 'club' && 'Complete Club Profile'}
             </h3>
-            <p className="text-gray-600 mb-6">Fill in your details below</p>
+            <p className="text-gray-600 mb-6">
+              {isWizardFlow ? `Step ${currentStep} of 3 — ${stepLabels[userRole][currentStep]}` : 'Fill in your details below'}
+            </p>
+
+            {/* Step indicator — player/coach only */}
+            {isWizardFlow && (
+              <div className="mb-6" aria-label={`Step ${currentStep} of 3`}>
+                <div className="flex items-center gap-2">
+                  {([1, 2, 3] as WizardStep[]).map((step, idx) => {
+                    const isCompleted = step < currentStep
+                    const isActive = step === currentStep
+                    return (
+                      <div key={step} className="flex items-center flex-1">
+                        <div
+                          className={
+                            isCompleted
+                              ? 'flex items-center justify-center w-7 h-7 rounded-full text-white text-xs font-semibold bg-emerald-500'
+                              : isActive
+                              ? 'flex items-center justify-center w-7 h-7 rounded-full text-white text-xs font-semibold bg-gradient-to-br from-[#8026FA] to-[#924CEC] ring-4 ring-[#8026FA]/15'
+                              : 'flex items-center justify-center w-7 h-7 rounded-full text-gray-400 text-xs font-semibold border-2 border-gray-200 bg-white'
+                          }
+                          aria-current={isActive ? 'step' : undefined}
+                        >
+                          {isCompleted ? <Check className="w-3.5 h-3.5" /> : step}
+                        </div>
+                        {idx < 2 && (
+                          <div
+                            className={
+                              step < currentStep
+                                ? 'flex-1 h-0.5 mx-2 bg-emerald-500'
+                                : 'flex-1 h-0.5 mx-2 bg-gray-200'
+                            }
+                          />
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
 
             {error && (
               <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg" role="alert" aria-live="assertive">
@@ -896,7 +981,8 @@ export default function CompleteProfile() {
               </div>
             )}
 
-            {/* Avatar Upload Section - Optional */}
+            {/* Avatar Upload Section - Optional. Club: always visible at top. Player/coach: only step 1. */}
+            {(!isWizardFlow || currentStep === 1) && (
             <div className="mb-6 p-4 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl border border-purple-200">
               <label className="block text-sm font-medium text-gray-700 mb-3">
                 Profile Photo <span className="text-gray-500">(Optional)</span>
@@ -943,255 +1029,280 @@ export default function CompleteProfile() {
                 aria-label="Upload profile photo"
               />
             </div>
+            )}
 
             <div className="space-y-4">
-              {/* Player Form */}
+              {/* Player Form — split across the 3 wizard steps. */}
               {userRole === 'player' && (
                 <>
-                  <Input
-                    label="Full Name"
-                    icon={<User className="w-5 h-5" />}
-                    placeholder="Enter your full name"
-                    value={formData.fullName}
-                    onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                    required
-                  />
+                  {currentStep === 1 && (
+                    <>
+                      <Input
+                        label="Full Name"
+                        icon={<User className="w-5 h-5" />}
+                        placeholder="Enter your full name"
+                        value={formData.fullName}
+                        onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                        required
+                      />
 
-                  <LocationAutocomplete
-                    label="Base Location (City)"
-                    icon={<MapPin className="w-5 h-5" />}
-                    placeholder="Where are you currently based?"
-                    value={formData.city}
-                    onChange={handleLocationChange}
-                    onLocationSelect={handleLocationSelect}
-                    onLocationClear={handleLocationClear}
-                    isSelected={formData.locationSelected}
-                    required
-                  />
+                      <CountrySelect
+                        label="Nationality"
+                        value={formData.nationalityCountryId}
+                        onChange={(id) => setFormData({ ...formData, nationalityCountryId: id })}
+                        placeholder="Select your nationality"
+                        showNationality
+                        required
+                      />
 
-                  <CountrySelect
-                    label="Nationality"
-                    value={formData.nationalityCountryId}
-                    onChange={(id) => setFormData({ ...formData, nationalityCountryId: id })}
-                    placeholder="Select your nationality"
-                    showNationality
-                    required
-                  />
+                      <CountrySelect
+                        label="Second Nationality (Optional)"
+                        value={formData.nationality2CountryId}
+                        onChange={(id) => setFormData({ ...formData, nationality2CountryId: id })}
+                        placeholder="Select second nationality"
+                        showNationality
+                      />
+                    </>
+                  )}
 
-                  <CountrySelect
-                    label="Second Nationality (Optional)"
-                    value={formData.nationality2CountryId}
-                    onChange={(id) => setFormData({ ...formData, nationality2CountryId: id })}
-                    placeholder="Select second nationality"
-                    showNationality
-                  />
+                  {currentStep === 2 && (
+                    <>
+                      <LocationAutocomplete
+                        label="Base Location (City)"
+                        icon={<MapPin className="w-5 h-5" />}
+                        placeholder="Where are you currently based?"
+                        value={formData.city}
+                        onChange={handleLocationChange}
+                        onLocationSelect={handleLocationSelect}
+                        onLocationClear={handleLocationClear}
+                        isSelected={formData.locationSelected}
+                        required
+                      />
 
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 pt-2">Hockey Details</p>
+                      <div>
+                        <label htmlFor="gender-select" className="block text-sm font-medium text-gray-700 mb-2">
+                          Gender <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          id="gender-select"
+                          value={formData.gender}
+                          onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8026FA] focus:border-transparent"
+                          required
+                        >
+                          <option value="">Select gender</option>
+                          <option value="Men">Men</option>
+                          <option value="Women">Women</option>
+                        </select>
+                      </div>
 
-                  <WorldClubSearch
-                    value={formData.currentClub}
-                    onChange={(v) => setFormData({ ...formData, currentClub: v })}
-                    onClubSelect={(club) => setFormData({
-                      ...formData,
-                      currentClub: club.club_name,
-                      currentWorldClubId: club.id,
-                    })}
-                    onClubClear={() => setFormData({ ...formData, currentWorldClubId: null })}
-                    selectedClubId={formData.currentWorldClubId}
-                    label="Current Club (Optional)"
-                    placeholder="e.g., Holcombe Hockey Club"
-                  />
+                      <Input
+                        label="Date of Birth (Optional)"
+                        type="date"
+                        icon={<Calendar className="w-5 h-5" />}
+                        value={formData.dateOfBirth}
+                        onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
+                      />
+                    </>
+                  )}
 
-                  <div>
-                    <label htmlFor="position-select" className="block text-sm font-medium text-gray-700 mb-2">
-                      Position <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      id="position-select"
-                      value={formData.position}
-                      onChange={(e) => setFormData({ ...formData, position: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8026FA] focus:border-transparent"
-                      required
-                    >
-                      <option value="">Select your position</option>
-                      <option value="goalkeeper">Goalkeeper</option>
-                      <option value="defender">Defender</option>
-                      <option value="midfielder">Midfielder</option>
-                      <option value="forward">Forward</option>
-                    </select>
-                  </div>
+                  {currentStep === 3 && (
+                    <>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 pt-2">Hockey Details</p>
 
-                  <div>
-                    <label htmlFor="secondary-position-select" className="block text-sm font-medium text-gray-700 mb-2">
-                      Second Position (Optional)
-                    </label>
-                    <select
-                      id="secondary-position-select"
-                      value={formData.secondaryPosition}
-                      onChange={(e) => setFormData({ ...formData, secondaryPosition: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8026FA] focus:border-transparent"
-                    >
-                      <option value="">No secondary position</option>
-                      {['goalkeeper', 'defender', 'midfielder', 'forward'].map((option) => (
-                        <option key={option} value={option} disabled={option === formData.position}>
-                          {option.charAt(0).toUpperCase() + option.slice(1)}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                      <WorldClubSearch
+                        value={formData.currentClub}
+                        onChange={(v) => setFormData({ ...formData, currentClub: v })}
+                        onClubSelect={(club) => setFormData({
+                          ...formData,
+                          currentClub: club.club_name,
+                          currentWorldClubId: club.id,
+                        })}
+                        onClubClear={() => setFormData({ ...formData, currentWorldClubId: null })}
+                        selectedClubId={formData.currentWorldClubId}
+                        label="Current Club (Optional)"
+                        placeholder="e.g., Holcombe Hockey Club"
+                      />
 
-                  <div>
-                    <label htmlFor="gender-select" className="block text-sm font-medium text-gray-700 mb-2">
-                      Gender <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      id="gender-select"
-                      value={formData.gender}
-                      onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8026FA] focus:border-transparent"
-                      required
-                    >
-                      <option value="">Select gender</option>
-                      <option value="Men">Men</option>
-                      <option value="Women">Women</option>
-                    </select>
-                  </div>
+                      <div>
+                        <label htmlFor="position-select" className="block text-sm font-medium text-gray-700 mb-2">
+                          Position <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          id="position-select"
+                          value={formData.position}
+                          onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8026FA] focus:border-transparent"
+                          required
+                        >
+                          <option value="">Select your position</option>
+                          <option value="goalkeeper">Goalkeeper</option>
+                          <option value="defender">Defender</option>
+                          <option value="midfielder">Midfielder</option>
+                          <option value="forward">Forward</option>
+                        </select>
+                      </div>
 
-                  <Input
-                    label="Date of Birth (Optional)"
-                    type="date"
-                    icon={<Calendar className="w-5 h-5" />}
-                    value={formData.dateOfBirth}
-                    onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
-                  />
+                      <div>
+                        <label htmlFor="secondary-position-select" className="block text-sm font-medium text-gray-700 mb-2">
+                          Second Position (Optional)
+                        </label>
+                        <select
+                          id="secondary-position-select"
+                          value={formData.secondaryPosition}
+                          onChange={(e) => setFormData({ ...formData, secondaryPosition: e.target.value })}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8026FA] focus:border-transparent"
+                        >
+                          <option value="">No secondary position</option>
+                          {['goalkeeper', 'defender', 'midfielder', 'forward'].map((option) => (
+                            <option key={option} value={option} disabled={option === formData.position}>
+                              {option.charAt(0).toUpperCase() + option.slice(1)}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </>
+                  )}
                 </>
               )}
 
-              {/* Coach Form */}
+              {/* Coach Form — split across the 3 wizard steps. */}
               {userRole === 'coach' && (
                 <>
-                  <Input
-                    label="Full Name"
-                    icon={<User className="w-5 h-5" />}
-                    placeholder="Enter your full name"
-                    value={formData.fullName}
-                    onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                    required
-                  />
+                  {currentStep === 1 && (
+                    <>
+                      <Input
+                        label="Full Name"
+                        icon={<User className="w-5 h-5" />}
+                        placeholder="Enter your full name"
+                        value={formData.fullName}
+                        onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                        required
+                      />
 
-                  <LocationAutocomplete
-                    label="Base Location (City)"
-                    icon={<MapPin className="w-5 h-5" />}
-                    placeholder="Where are you currently based?"
-                    value={formData.city}
-                    onChange={handleLocationChange}
-                    onLocationSelect={handleLocationSelect}
-                    onLocationClear={handleLocationClear}
-                    isSelected={formData.locationSelected}
-                    required
-                  />
+                      <CountrySelect
+                        label="Nationality"
+                        value={formData.nationalityCountryId}
+                        onChange={(id) => setFormData({ ...formData, nationalityCountryId: id })}
+                        placeholder="Select your nationality"
+                        showNationality
+                        required
+                      />
 
-                  <CountrySelect
-                    label="Nationality"
-                    value={formData.nationalityCountryId}
-                    onChange={(id) => setFormData({ ...formData, nationalityCountryId: id })}
-                    placeholder="Select your nationality"
-                    showNationality
-                    required
-                  />
+                      <CountrySelect
+                        label="Secondary Nationality (Optional)"
+                        value={formData.nationality2CountryId}
+                        onChange={(id) => setFormData({ ...formData, nationality2CountryId: id })}
+                        placeholder="Select secondary nationality"
+                        showNationality
+                      />
+                    </>
+                  )}
 
-                  <CountrySelect
-                    label="Secondary Nationality (Optional)"
-                    value={formData.nationality2CountryId}
-                    onChange={(id) => setFormData({ ...formData, nationality2CountryId: id })}
-                    placeholder="Select secondary nationality"
-                    showNationality
-                  />
+                  {currentStep === 2 && (
+                    <>
+                      <LocationAutocomplete
+                        label="Base Location (City)"
+                        icon={<MapPin className="w-5 h-5" />}
+                        placeholder="Where are you currently based?"
+                        value={formData.city}
+                        onChange={handleLocationChange}
+                        onLocationSelect={handleLocationSelect}
+                        onLocationClear={handleLocationClear}
+                        isSelected={formData.locationSelected}
+                        required
+                      />
 
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 pt-2">Coaching Details</p>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Specialization <span className="text-red-500">*</span>
-                    </label>
-                    <p className="text-xs text-gray-500 mb-3">What best describes your professional role?</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {COACH_SPECIALIZATIONS.map((spec) => (
-                        <button
-                          key={spec.value}
-                          type="button"
-                          onClick={() => setFormData({ ...formData, coachSpecialization: spec.value })}
-                          className={`p-3 rounded-lg border-2 text-left transition-all ${
-                            formData.coachSpecialization === spec.value
-                              ? 'border-[#8026FA] bg-purple-50'
-                              : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className={`text-sm font-medium ${
-                              formData.coachSpecialization === spec.value ? 'text-[#8026FA]' : 'text-gray-900'
-                            }`}>
-                              {spec.label}
-                            </span>
-                            {formData.coachSpecialization === spec.value && (
-                              <ChevronRight className="w-4 h-4 text-[#8026FA]" />
-                            )}
-                          </div>
-                          <p className="text-xs text-gray-500 mt-0.5">{spec.description}</p>
-                        </button>
-                      ))}
-                    </div>
-                    {formData.coachSpecialization === 'other' && (
-                      <div className="mt-3">
-                        <Input
-                          label="Your Role Title"
-                          placeholder="e.g., Team Manager, Umpire Coach"
-                          value={formData.coachSpecializationCustom}
-                          onChange={(e) => setFormData({ ...formData, coachSpecializationCustom: e.target.value })}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="coach-gender">
+                          Gender <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          id="coach-gender"
+                          value={formData.gender}
+                          onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8026FA] focus:border-transparent"
                           required
-                        />
+                        >
+                          <option value="">Select gender</option>
+                          <option value="Men">Men</option>
+                          <option value="Women">Women</option>
+                        </select>
                       </div>
-                    )}
-                  </div>
 
-                  <WorldClubSearch
-                    value={formData.currentClub}
-                    onChange={(v) => setFormData({ ...formData, currentClub: v })}
-                    onClubSelect={(club) => setFormData({
-                      ...formData,
-                      currentClub: club.club_name,
-                      currentWorldClubId: club.id,
-                    })}
-                    onClubClear={() => setFormData({ ...formData, currentWorldClubId: null })}
-                    selectedClubId={formData.currentWorldClubId}
-                    label="Current Club (Optional)"
-                    placeholder="e.g., Holcombe Hockey Club"
-                  />
+                      <Input
+                        label="Date of Birth"
+                        type="date"
+                        icon={<Calendar className="w-5 h-5" />}
+                        value={formData.dateOfBirth}
+                        onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
+                      />
+                    </>
+                  )}
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="coach-gender">
-                      Gender
-                    </label>
-                    <select
-                      id="coach-gender"
-                      value={formData.gender}
-                      onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8026FA] focus:border-transparent"
-                      required
-                    >
-                      <option value="">Select gender</option>
-                      <option value="Men">Men</option>
-                      <option value="Women">Women</option>
-                    </select>
-                  </div>
+                  {currentStep === 3 && (
+                    <>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 pt-2">Coaching Details</p>
 
-                  <Input
-                    label="Date of Birth"
-                    type="date"
-                    icon={<Calendar className="w-5 h-5" />}
-                    value={formData.dateOfBirth}
-                    onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
-                  />
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Specialization <span className="text-red-500">*</span>
+                        </label>
+                        <p className="text-xs text-gray-500 mb-3">What best describes your professional role?</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {COACH_SPECIALIZATIONS.map((spec) => (
+                            <button
+                              key={spec.value}
+                              type="button"
+                              onClick={() => setFormData({ ...formData, coachSpecialization: spec.value })}
+                              className={`p-3 rounded-lg border-2 text-left transition-all ${
+                                formData.coachSpecialization === spec.value
+                                  ? 'border-[#8026FA] bg-purple-50'
+                                  : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <span className={`text-sm font-medium ${
+                                  formData.coachSpecialization === spec.value ? 'text-[#8026FA]' : 'text-gray-900'
+                                }`}>
+                                  {spec.label}
+                                </span>
+                                {formData.coachSpecialization === spec.value && (
+                                  <ChevronRight className="w-4 h-4 text-[#8026FA]" />
+                                )}
+                              </div>
+                              <p className="text-xs text-gray-500 mt-0.5">{spec.description}</p>
+                            </button>
+                          ))}
+                        </div>
+                        {formData.coachSpecialization === 'other' && (
+                          <div className="mt-3">
+                            <Input
+                              label="Your Role Title"
+                              placeholder="e.g., Team Manager, Umpire Coach"
+                              value={formData.coachSpecializationCustom}
+                              onChange={(e) => setFormData({ ...formData, coachSpecializationCustom: e.target.value })}
+                              required
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      <WorldClubSearch
+                        value={formData.currentClub}
+                        onChange={(v) => setFormData({ ...formData, currentClub: v })}
+                        onClubSelect={(club) => setFormData({
+                          ...formData,
+                          currentClub: club.club_name,
+                          currentWorldClubId: club.id,
+                        })}
+                        onClubClear={() => setFormData({ ...formData, currentWorldClubId: null })}
+                        selectedClubId={formData.currentWorldClubId}
+                        label="Current Club (Optional)"
+                        placeholder="e.g., Holcombe Hockey Club"
+                      />
+                    </>
+                  )}
                 </>
               )}
 
@@ -1298,13 +1409,41 @@ export default function CompleteProfile() {
                   Back
                 </Button>
               )}
-              <Button
-                type="submit"
-                disabled={loading}
-                className="flex-1 bg-gradient-to-r from-[#8026FA] to-[#924CEC]"
-              >
-                {loading ? 'Saving Profile...' : 'Complete Profile'}
-              </Button>
+
+              {/* Wizard Back button (player/coach, steps 2+) */}
+              {isWizardFlow && currentStep > 1 && (
+                <Button
+                  type="button"
+                  onClick={handleBack}
+                  disabled={loading}
+                  className="px-6 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                >
+                  Back
+                </Button>
+              )}
+
+              {/* Next (wizard flow, steps 1 and 2) */}
+              {isWizardFlow && currentStep < 3 && (
+                <Button
+                  type="button"
+                  onClick={handleNext}
+                  disabled={loading}
+                  className="flex-1 bg-gradient-to-r from-[#8026FA] to-[#924CEC]"
+                >
+                  Next
+                </Button>
+              )}
+
+              {/* Complete Profile (final step for wizard, always for club) */}
+              {(!isWizardFlow || currentStep === 3) && (
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  className="flex-1 bg-gradient-to-r from-[#8026FA] to-[#924CEC]"
+                >
+                  {loading ? 'Saving Profile...' : 'Complete Profile'}
+                </Button>
+              )}
             </div>
           </form>
           )}
