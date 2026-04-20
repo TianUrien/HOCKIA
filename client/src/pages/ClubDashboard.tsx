@@ -2,9 +2,9 @@ import { useEffect, useState, useRef } from 'react'
 import { ArrowLeft, MapPin, Calendar, Plus, Eye, MessageCircle, Edit, Loader2 } from 'lucide-react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import Header from '@/components/Header'
-import { Avatar, Button, CountryDisplay, DashboardMenu, EditProfileModal, CommentsTab, FriendsTab, FriendshipButton, ProfileStrengthCard, PublicViewBanner, RoleBadge, ScrollableTabs } from '@/components'
+import { Avatar, Button, CountryDisplay, DashboardMenu, EditProfileModal, CommentsTab, FriendsTab, FriendshipButton, ProfileStrengthCard, NextStepCard, PublicViewBanner, RoleBadge, ScrollableTabs } from '@/components'
 import ProfileActionMenu from '@/components/ProfileActionMenu'
-import { useClubProfileStrength } from '@/hooks/useClubProfileStrength'
+import { useClubProfileStrength, type ProfileStrengthBucket as ClubStrengthBucket } from '@/hooks/useClubProfileStrength'
 import { ProfileViewersSection } from '@/components/ProfileViewersSection'
 import { logger } from '@/lib/logger'
 import OpportunitiesTab from '@/components/OpportunitiesTab'
@@ -82,6 +82,19 @@ export default function ClubDashboard({ profileData, readOnly = false, isOwnProf
   const { percentage, buckets, loading: strengthLoading, refresh: refreshStrength } = useClubProfileStrength({
     profile: readOnly ? null : (profileData ?? authProfile) as ClubProfileShape | null,
   })
+
+  // Shared handler for ProfileStrengthCard and NextStepCard — routes a bucket to the right deep-link.
+  const handleStrengthBucketAction = (bucket: ClubStrengthBucket) => {
+    if (bucket.actionId === 'edit-profile') {
+      setShowEditModal(true)
+    } else if (bucket.actionId === 'gallery-section') {
+      // Scroll to gallery section
+      const gallerySection = document.querySelector('[data-section="gallery"]')
+      if (gallerySection) {
+        gallerySection.scrollIntoView({ behavior: 'smooth' })
+      }
+    }
+  }
 
   // Track previous percentage to show toast on improvement
   const prevPercentageRef = useRef<number | null>(null)
@@ -379,6 +392,16 @@ export default function ClubDashboard({ profileData, readOnly = false, isOwnProf
           </div>
         </div>
 
+        {/* Next-step prompt — visible on every tab while the profile is incomplete (owner only) */}
+        {!readOnly && (
+          <NextStepCard
+            percentage={percentage}
+            buckets={buckets}
+            loading={strengthLoading}
+            onBucketAction={handleStrengthBucketAction}
+          />
+        )}
+
         <div className="bg-white rounded-2xl shadow-sm animate-slide-in-up">
           <div className="sticky top-[68px] z-40 border-b border-gray-200 bg-white/90 backdrop-blur">
             <ScrollableTabs
@@ -394,23 +417,14 @@ export default function ClubDashboard({ profileData, readOnly = false, isOwnProf
           <div className="p-6 md:p-8">
             {activeTab === 'overview' && (
               <div className="space-y-8 animate-fade-in">
-                {/* Profile Strength Card - only for own profile */}
+                {/* Profile Strength Card - only for own profile. Inline Next-step row is suppressed because NextStepCard above handles the prompt. */}
                 {!readOnly && (
                   <ProfileStrengthCard
                     percentage={percentage}
                     buckets={buckets}
                     loading={strengthLoading}
-                    onBucketAction={(bucket) => {
-                      if (bucket.actionId === 'edit-profile') {
-                        setShowEditModal(true)
-                      } else if (bucket.actionId === 'gallery-section') {
-                        // Scroll to gallery section
-                        const gallerySection = document.querySelector('[data-section="gallery"]')
-                        if (gallerySection) {
-                          gallerySection.scrollIntoView({ behavior: 'smooth' })
-                        }
-                      }
-                    }}
+                    onBucketAction={handleStrengthBucketAction}
+                    showNextStep={false}
                   />
                 )}
 

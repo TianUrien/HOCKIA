@@ -34,6 +34,7 @@ vi.mock('@/components', () => ({
   PublicViewBanner: () => <div data-testid="public-view-banner" />,
   RoleBadge: () => <span data-testid="role-badge">Role badge</span>,
   ProfileStrengthCard: () => <div data-testid="profile-strength-card">Profile Strength</div>,
+  NextStepCard: () => <div data-testid="next-step-card">Next Step</div>,
   CountryDisplay: ({ fallbackText, className }: { countryId?: number | null; fallbackText?: string | null; showNationality?: boolean; className?: string }) => (
     <span data-testid="country-display" className={className}>{fallbackText}</span>
   ),

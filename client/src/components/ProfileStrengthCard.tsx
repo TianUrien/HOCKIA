@@ -19,6 +19,13 @@ interface ProfileStrengthCardProps<TBucket extends BucketLike = BucketLike> {
   loading?: boolean
   /** Callback when a bucket action is clicked */
   onBucketAction?: (bucket: TBucket) => void
+  /**
+   * When true, renders the inline "Next step" CTA below the header.
+   * Set to false when a NextStepCard is rendered elsewhere on the page
+   * (e.g. above the tab strip) to avoid duplicating the same prompt.
+   * Defaults to true for backward compatibility.
+   */
+  showNextStep?: boolean
 }
 
 /**
@@ -44,6 +51,7 @@ export default function ProfileStrengthCard<TBucket extends BucketLike>({
   buckets,
   loading = false,
   onBucketAction,
+  showNextStep = true,
 }: ProfileStrengthCardProps<TBucket>) {
   const [isExpanded, setIsExpanded] = useState(false)
   const completedCount = buckets.filter(b => b.completed).length
@@ -119,8 +127,8 @@ export default function ProfileStrengthCard<TBucket extends BucketLike>({
         </div>
       </div>
 
-      {/* Next step CTA - shown only when there's an incomplete bucket */}
-      {nextBucket && onBucketAction && (
+      {/* Next step CTA - shown only when there's an incomplete bucket and no external NextStepCard is rendering the same prompt */}
+      {showNextStep && nextBucket && onBucketAction && (
         <button
           type="button"
           onClick={() => onBucketAction(nextBucket)}

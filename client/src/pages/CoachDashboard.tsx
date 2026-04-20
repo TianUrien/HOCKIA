@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { ArrowLeft, MapPin, Calendar, Edit2, Eye, MessageCircle, Landmark, Mail, Plus } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
-import { Avatar, DashboardMenu, EditProfileModal, JourneyTab, CommentsTab, FriendsTab, FriendshipButton, ProfileStrengthCard, PublicReferencesSection, PublicViewBanner, RoleBadge, ScrollableTabs, DualNationalityDisplay, AvailabilityPill } from '@/components'
+import { Avatar, DashboardMenu, EditProfileModal, JourneyTab, CommentsTab, FriendsTab, FriendshipButton, ProfileStrengthCard, NextStepCard, PublicReferencesSection, PublicViewBanner, RoleBadge, ScrollableTabs, DualNationalityDisplay, AvailabilityPill } from '@/components'
 import ProfileActionMenu from '@/components/ProfileActionMenu'
 import Header from '@/components/Header'
 import MediaTab from '@/components/MediaTab'
@@ -19,7 +19,7 @@ import { useToastStore } from '@/lib/toast'
 import { useNotificationStore } from '@/lib/notifications'
 import { derivePublicContactEmail } from '@/lib/profile'
 import type { SocialLinks } from '@/lib/socialLinks'
-import { useCoachProfileStrength } from '@/hooks/useCoachProfileStrength'
+import { useCoachProfileStrength, type ProfileBucket as CoachStrengthBucket } from '@/hooks/useCoachProfileStrength'
 import { ProfileViewersSection } from '@/components/ProfileViewersSection'
 import AvailabilityToggleStrip from '@/components/AvailabilityToggleStrip'
 import ClubLinkPrompt from '@/components/ClubLinkPrompt'
@@ -85,6 +85,28 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
   const { percentage, buckets, loading: strengthLoading, refresh: refreshStrength } = useCoachProfileStrength({
     profile: readOnly ? null : (profileData ?? authProfile) as CoachProfileShape | null,
   })
+
+  // Shared handler for ProfileStrengthCard and NextStepCard — routes a bucket to the right deep-link.
+  const handleStrengthBucketAction = (bucket: CoachStrengthBucket) => {
+    const actionId = bucket.actionId
+    if (!actionId) return
+
+    if (actionId === 'edit-profile') {
+      setShowEditModal(true)
+    } else if (actionId === 'journey-tab') {
+      setActiveTab('journey')
+      setSearchParams({ tab: 'journey' })
+    } else if (actionId === 'gallery-tab') {
+      // Scroll to MediaTab section within profile tab
+      const mediaSection = document.querySelector('[data-section="media"]')
+      if (mediaSection) {
+        mediaSection.scrollIntoView({ behavior: 'smooth' })
+      }
+    } else if (actionId === 'friends-tab') {
+      setActiveTab('friends')
+      setSearchParams({ tab: 'friends' })
+    }
+  }
 
   // Track previous percentage to show toast on improvement
   const prevPercentageRef = useRef<number | null>(null)
@@ -389,6 +411,16 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
           </div>
         </div>
 
+        {/* Next-step prompt — visible on every tab while the profile is incomplete (owner only) */}
+        {!readOnly && (
+          <NextStepCard
+            percentage={percentage}
+            buckets={buckets}
+            loading={strengthLoading}
+            onBucketAction={handleStrengthBucketAction}
+          />
+        )}
+
         {/* Tabs */}
         <div className="bg-white rounded-2xl shadow-sm animate-slide-in-up">
           <div className="border-b border-gray-200 overflow-x-auto">
@@ -406,32 +438,14 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
             {/* Profile Tab */}
             {activeTab === 'profile' && (
               <div className="space-y-6 animate-fade-in">
-                {/* Profile Strength Card - only for own profile */}
+                {/* Profile Strength Card - only for own profile. Inline Next-step row is suppressed because NextStepCard above handles the prompt. */}
                 {!readOnly && (
                   <ProfileStrengthCard
                     percentage={percentage}
                     buckets={buckets}
                     loading={strengthLoading}
-                    onBucketAction={(bucket) => {
-                      const actionId = bucket.actionId
-                      if (!actionId) return
-
-                      if (actionId === 'edit-profile') {
-                        setShowEditModal(true)
-                      } else if (actionId === 'journey-tab') {
-                        setActiveTab('journey')
-                        setSearchParams({ tab: 'journey' })
-                      } else if (actionId === 'gallery-tab') {
-                        // Scroll to MediaTab section within profile tab
-                        const mediaSection = document.querySelector('[data-section="media"]')
-                        if (mediaSection) {
-                          mediaSection.scrollIntoView({ behavior: 'smooth' })
-                        }
-                      } else if (actionId === 'friends-tab') {
-                        setActiveTab('friends')
-                        setSearchParams({ tab: 'friends' })
-                      }
-                    }}
+                    onBucketAction={handleStrengthBucketAction}
+                    showNextStep={false}
                   />
                 )}
                 {!readOnly && <ProfileViewersSection />}

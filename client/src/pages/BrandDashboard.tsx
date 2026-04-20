@@ -9,11 +9,11 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import { Globe, Instagram, ExternalLink, Eye, Edit, Store, Package, Users, Plus, FileText, Loader2, Award, X } from 'lucide-react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import Header from '@/components/Header'
-import { Avatar, Button, DashboardMenu, ProfileStrengthCard, RoleBadge, ScrollableTabs } from '@/components'
+import { Avatar, Button, DashboardMenu, ProfileStrengthCard, NextStepCard, RoleBadge, ScrollableTabs } from '@/components'
 import { BrandForm, type BrandFormData, ProductCard, AddProductModal, BrandPostCard, AddPostModal, AddAmbassadorModal } from '@/components/brands'
 import ProfilePostsTab from '@/components/ProfilePostsTab'
 import ConfirmActionModal from '@/components/ConfirmActionModal'
-import { useBrandProfileStrength } from '@/hooks/useBrandProfileStrength'
+import { useBrandProfileStrength, type ProfileStrengthBucket as BrandStrengthBucket } from '@/hooks/useBrandProfileStrength'
 import { ProfileViewersSection } from '@/components/ProfileViewersSection'
 import { useBrandProducts } from '@/hooks/useBrandProducts'
 import type { BrandProduct, CreateProductInput, UpdateProductInput } from '@/hooks/useBrandProducts'
@@ -143,6 +143,20 @@ export default function BrandDashboard() {
     productCount: products.length,
     ambassadorCount: acceptedAmbassadors.length,
   })
+
+  // Shared handler for ProfileStrengthCard and NextStepCard — routes a bucket to the right deep-link.
+  const handleStrengthBucketAction = (bucket: BrandStrengthBucket) => {
+    if (bucket.actionId === 'edit-profile') {
+      setShowEditModal(true)
+    } else if (bucket.actionId === 'add-product') {
+      handleTabChange('products')
+      setEditingProduct(null)
+      setShowAddProductModal(true)
+    } else if (bucket.actionId === 'add-ambassador') {
+      handleTabChange('ambassadors')
+      setShowAddAmbassadorModal(true)
+    }
+  }
 
   // Snapshot ref for action-triggered strength toasts: set to current percentage
   // BEFORE a user action that may change strength, then compared after refresh.
@@ -489,6 +503,14 @@ export default function BrandDashboard() {
         </div>
 
         {/* Tabs */}
+        {/* Next-step prompt — visible on every tab while the brand profile is incomplete */}
+        <NextStepCard
+          percentage={percentage}
+          buckets={buckets}
+          loading={strengthLoading}
+          onBucketAction={handleStrengthBucketAction}
+        />
+
         <div className="bg-white rounded-2xl shadow-sm animate-slide-in-up">
           <div className="sticky top-[68px] z-40 border-b border-gray-200 bg-white/90 backdrop-blur">
             <ScrollableTabs
@@ -559,23 +581,13 @@ export default function BrandDashboard() {
                   </div>
                 )}
 
-                {/* Profile Strength Card */}
+                {/* Profile Strength Card. Inline Next-step row is suppressed because NextStepCard above handles the prompt. */}
                 <ProfileStrengthCard
                   percentage={percentage}
                   buckets={buckets}
                   loading={strengthLoading}
-                  onBucketAction={(bucket) => {
-                    if (bucket.actionId === 'edit-profile') {
-                      setShowEditModal(true)
-                    } else if (bucket.actionId === 'add-product') {
-                      handleTabChange('products')
-                      setEditingProduct(null)
-                      setShowAddProductModal(true)
-                    } else if (bucket.actionId === 'add-ambassador') {
-                      handleTabChange('ambassadors')
-                      setShowAddAmbassadorModal(true)
-                    }
-                  }}
+                  onBucketAction={handleStrengthBucketAction}
+                  showNextStep={false}
                 />
 
                 <ProfileViewersSection />
