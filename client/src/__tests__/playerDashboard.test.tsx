@@ -33,6 +33,7 @@ vi.mock('@/components', () => ({
   PublicReferencesSection: () => <div data-testid="public-references">Public references</div>,
   PublicViewBanner: () => <div data-testid="public-view-banner" />,
   RoleBadge: () => <span data-testid="role-badge">Role badge</span>,
+  TierBadge: () => <span data-testid="tier-badge">Tier</span>,
   NextStepCard: () => <div data-testid="next-step-card">Next Step</div>,
   CountryDisplay: ({ fallbackText, className }: { countryId?: number | null; fallbackText?: string | null; showNationality?: boolean; className?: string }) => (
     <span data-testid="country-display" className={className}>{fallbackText}</span>

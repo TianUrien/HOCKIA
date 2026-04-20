@@ -2,7 +2,8 @@ import { useEffect, useState, useRef } from 'react'
 import { ArrowLeft, MapPin, Calendar, Plus, Eye, MessageCircle, Edit, Loader2 } from 'lucide-react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import Header from '@/components/Header'
-import { Avatar, Button, CountryDisplay, DashboardMenu, EditProfileModal, CommentsTab, FriendsTab, FriendshipButton, NextStepCard, PublicViewBanner, RoleBadge, ScrollableTabs } from '@/components'
+import { Avatar, Button, CountryDisplay, DashboardMenu, EditProfileModal, CommentsTab, FriendsTab, FriendshipButton, NextStepCard, PublicViewBanner, RoleBadge, ScrollableTabs, TierBadge } from '@/components'
+import { calculateTier } from '@/lib/profileTier'
 import ProfileActionMenu from '@/components/ProfileActionMenu'
 import { useClubProfileStrength, type ProfileStrengthBucket as ClubStrengthBucket } from '@/hooks/useClubProfileStrength'
 import { ProfileViewersSection } from '@/components/ProfileViewersSection'
@@ -383,7 +384,10 @@ export default function ClubDashboard({ profileData, readOnly = false, isOwnProf
 
               <div className="mt-2 flex flex-wrap items-center gap-3">
                 <RoleBadge role="club" />
-                <SocialLinksDisplay 
+                {!readOnly && !strengthLoading && (
+                  <TierBadge tier={calculateTier(percentage)} />
+                )}
+                <SocialLinksDisplay
                   links={profile.social_links as SocialLinks | null | undefined} 
                   iconSize="sm" 
                 />

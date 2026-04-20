@@ -2,7 +2,8 @@ import { useEffect, useState, useRef } from 'react'
 import { ArrowLeft, MapPin, Calendar, Edit2, Eye, MessageCircle, Landmark, Mail, Award } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
-import { Avatar, DashboardMenu, EditProfileModal, FriendsTab, FriendshipButton, PublicReferencesSection, PublicViewBanner, RoleBadge, ScrollableTabs, NextStepCard, DualNationalityDisplay, AvailabilityPill } from '@/components'
+import { Avatar, DashboardMenu, EditProfileModal, FriendsTab, FriendshipButton, PublicReferencesSection, PublicViewBanner, RoleBadge, ScrollableTabs, NextStepCard, DualNationalityDisplay, AvailabilityPill, TierBadge } from '@/components'
+import { calculateTier } from '@/lib/profileTier'
 import ProfileActionMenu from '@/components/ProfileActionMenu'
 import Header from '@/components/Header'
 import MediaTab from '@/components/MediaTab'
@@ -433,8 +434,11 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
 
               <div className="mt-4 flex flex-wrap items-center gap-4">
                 <RoleBadge role="player" />
+                {!readOnly && !profileStrength.loading && (
+                  <TierBadge tier={calculateTier(profileStrength.percentage)} />
+                )}
                 {profile.open_to_play && <AvailabilityPill variant="play" />}
-                <SocialLinksDisplay 
+                <SocialLinksDisplay
                   links={profile.social_links as SocialLinks | null | undefined} 
                   iconSize="sm" 
                 />

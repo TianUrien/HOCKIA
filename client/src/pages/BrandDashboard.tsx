@@ -9,7 +9,8 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import { Globe, Instagram, ExternalLink, Eye, Edit, Store, Package, Users, Plus, FileText, Loader2, Award, X } from 'lucide-react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import Header from '@/components/Header'
-import { Avatar, Button, DashboardMenu, NextStepCard, RoleBadge, ScrollableTabs } from '@/components'
+import { Avatar, Button, DashboardMenu, NextStepCard, RoleBadge, ScrollableTabs, TierBadge } from '@/components'
+import { calculateTier } from '@/lib/profileTier'
 import { BrandForm, type BrandFormData, ProductCard, AddProductModal, BrandPostCard, AddPostModal, AddAmbassadorModal } from '@/components/brands'
 import ProfilePostsTab from '@/components/ProfilePostsTab'
 import ConfirmActionModal from '@/components/ConfirmActionModal'
@@ -492,6 +493,7 @@ export default function BrandDashboard() {
 
               <div className="mt-2 flex flex-wrap items-center gap-3">
                 <RoleBadge role="brand" />
+                {!strengthLoading && <TierBadge tier={calculateTier(percentage)} />}
                 {brand.is_verified && (
                   <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
                     Verified

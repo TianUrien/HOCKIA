@@ -2,7 +2,8 @@ import { useEffect, useState, useRef } from 'react'
 import { ArrowLeft, MapPin, Calendar, Edit2, Eye, MessageCircle, Landmark, Mail, Plus } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
-import { Avatar, DashboardMenu, EditProfileModal, JourneyTab, CommentsTab, FriendsTab, FriendshipButton, NextStepCard, PublicReferencesSection, PublicViewBanner, RoleBadge, ScrollableTabs, DualNationalityDisplay, AvailabilityPill } from '@/components'
+import { Avatar, DashboardMenu, EditProfileModal, JourneyTab, CommentsTab, FriendsTab, FriendshipButton, NextStepCard, PublicReferencesSection, PublicViewBanner, RoleBadge, ScrollableTabs, DualNationalityDisplay, AvailabilityPill, TierBadge } from '@/components'
+import { calculateTier } from '@/lib/profileTier'
 import ProfileActionMenu from '@/components/ProfileActionMenu'
 import Header from '@/components/Header'
 import MediaTab from '@/components/MediaTab'
@@ -283,6 +284,9 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
                   </h1>
                   <div className="mb-3 flex flex-wrap items-center gap-3">
                     <RoleBadge role="coach" />
+                    {!readOnly && !strengthLoading && (
+                      <TierBadge tier={calculateTier(percentage)} />
+                    )}
                     {(profile as Partial<Profile>).coach_specialization && (
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-50 text-teal-700">
                         {getSpecializationLabel(

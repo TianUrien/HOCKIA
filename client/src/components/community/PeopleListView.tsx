@@ -19,7 +19,7 @@ import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { usePageState } from '@/hooks/usePageState'
 import { useScrollRestore } from '@/hooks/useScrollRestore'
 import { prefetchWorldClubLogos } from '@/hooks/useWorldClubLogo'
-import { isProfileComplete } from '@/lib/profileCompletion'
+import { getMemberTier } from '@/lib/profileTier'
 
 interface Profile {
   id: string
@@ -722,7 +722,7 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
                     accepted_reference_count={member.accepted_reference_count ?? 0}
                     coach_specialization={member.coach_specialization}
                     coach_specialization_custom={member.coach_specialization_custom}
-                    isProfileComplete={isProfileComplete(member)}
+                    tier={getMemberTier(member)}
                   />
                 ))}
               </div>
