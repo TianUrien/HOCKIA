@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { ArrowLeft, MapPin, Calendar, Edit2, Eye, MessageCircle, Landmark, Mail, Award } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
-import { Avatar, DashboardMenu, EditProfileModal, FriendsTab, FriendshipButton, PublicReferencesSection, PublicViewBanner, RoleBadge, ScrollableTabs, ProfileStrengthCard, NextStepCard, DualNationalityDisplay, AvailabilityPill } from '@/components'
+import { Avatar, DashboardMenu, EditProfileModal, FriendsTab, FriendshipButton, PublicReferencesSection, PublicViewBanner, RoleBadge, ScrollableTabs, NextStepCard, DualNationalityDisplay, AvailabilityPill } from '@/components'
 import ProfileActionMenu from '@/components/ProfileActionMenu'
 import Header from '@/components/Header'
 import MediaTab from '@/components/MediaTab'
@@ -471,16 +471,6 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
           <div className="p-6 md:p-8">
             {activeTab === 'profile' && (
               <div className="space-y-10 animate-fade-in">
-                {/* Profile Strength Card - Only show for own profile (not readOnly). Inline Next-step row is suppressed because NextStepCard above handles the prompt. */}
-                {!readOnly && (
-                  <ProfileStrengthCard
-                    percentage={profileStrength.percentage}
-                    buckets={profileStrength.buckets}
-                    loading={profileStrength.loading}
-                    onBucketAction={handleProfileStrengthAction}
-                    showNextStep={false}
-                  />
-                )}
                 {!readOnly && <ProfileViewersSection />}
                 {!readOnly && (
                   <AvailabilityToggleStrip role="player" />
