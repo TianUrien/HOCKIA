@@ -2,8 +2,10 @@ import { useEffect, useState, useRef } from 'react'
 import { ArrowLeft, MapPin, Calendar, Edit2, Eye, MessageCircle, Landmark, Mail, Award } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
-import { Avatar, DashboardMenu, EditProfileModal, FriendsTab, FriendshipButton, PublicReferencesSection, PublicViewBanner, RoleBadge, ScrollableTabs, NextStepCard, DualNationalityDisplay, AvailabilityPill, TierBadge } from '@/components'
+import { Avatar, DashboardMenu, EditProfileModal, FriendsTab, FriendshipButton, PublicReferencesSection, PublicViewBanner, RoleBadge, ScrollableTabs, NextStepCard, FreshnessCard, DualNationalityDisplay, AvailabilityPill, TierBadge } from '@/components'
 import { calculateTier } from '@/lib/profileTier'
+import { useProfileFreshness } from '@/hooks/useProfileFreshness'
+import type { FreshnessNudge } from '@/lib/profileFreshness'
 import ProfileActionMenu from '@/components/ProfileActionMenu'
 import Header from '@/components/Header'
 import MediaTab from '@/components/MediaTab'
@@ -80,6 +82,11 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
 
   // Profile strength for player profiles (only for own profile)
   const profileStrength = useProfileStrength(!readOnly ? (profile as Profile) : null)
+  // Freshness nudges (owner only — no value in showing "your Journey is stale" to visitors)
+  const { nudge: freshnessNudge } = useProfileFreshness({
+    role: 'player',
+    profileId: readOnly ? null : profile?.id ?? null,
+  })
   const prevPercentageRef = useRef<number | null>(null)
   const clearCommentNotifications = useNotificationStore((state) => state.clearCommentNotifications)
   const commentHighlightVersion = useNotificationStore((state) => state.commentHighlightVersion)
@@ -164,6 +171,15 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
         }
         setShowAddVideoModal(true)
         break
+    }
+  }
+
+  // Handler for freshness nudges — routes to the relevant tab or edit modal.
+  const handleFreshnessAction = (nudge: FreshnessNudge) => {
+    if (nudge.action.type === 'edit-profile') {
+      setShowEditModal(true)
+    } else if (nudge.action.type === 'tab') {
+      handleTabChange(nudge.action.tab as TabType)
     }
   }
 
@@ -449,12 +465,17 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
 
         {/* Next-step prompt — visible on every tab while the profile is incomplete (owner only) */}
         {!readOnly && (
-          <NextStepCard
-            percentage={profileStrength.percentage}
-            buckets={profileStrength.buckets}
-            loading={profileStrength.loading}
-            onBucketAction={handleProfileStrengthAction}
-          />
+          <>
+            <NextStepCard
+              percentage={profileStrength.percentage}
+              buckets={profileStrength.buckets}
+              loading={profileStrength.loading}
+              onBucketAction={handleProfileStrengthAction}
+            />
+            <div className="mt-3">
+              <FreshnessCard nudge={freshnessNudge} onAction={handleFreshnessAction} />
+            </div>
+          </>
         )}
 
         {/* Tabs Card */}

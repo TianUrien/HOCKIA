@@ -59,6 +59,7 @@ type ProfileFormData = {
   social_links: SocialLinks
   open_to_play: boolean
   open_to_coach: boolean
+  open_to_opportunities: boolean
   brand_representation: string
   coach_specialization: CoachSpecialization | ''
   coach_specialization_custom: string
@@ -148,6 +149,7 @@ const buildInitialFormData = (profile?: Profile | null): ProfileFormData => ({
   social_links: (profile?.social_links as SocialLinks) || {},
   open_to_play: Boolean(profile?.open_to_play),
   open_to_coach: Boolean(profile?.open_to_coach),
+  open_to_opportunities: Boolean(profile?.open_to_opportunities),
   brand_representation: profile?.brand_representation || '',
   coach_specialization: (profile?.coach_specialization as CoachSpecialization) || '',
   coach_specialization_custom: profile?.coach_specialization_custom || '',
@@ -489,6 +491,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
       optimisticUpdate.current_world_club_id = formData.current_world_club_id
       optimisticUpdate.bio = formData.bio || null
       optimisticUpdate.open_to_play = formData.open_to_play
+      optimisticUpdate.open_to_opportunities = formData.open_to_opportunities
       optimisticUpdate.brand_representation = formData.brand_representation || null
     } else if (role === 'coach') {
       optimisticUpdate.nationality = formData.nationality
@@ -500,6 +503,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
       optimisticUpdate.current_world_club_id = formData.current_world_club_id
       optimisticUpdate.bio = formData.bio || null
       optimisticUpdate.open_to_coach = formData.open_to_coach
+      optimisticUpdate.open_to_opportunities = formData.open_to_opportunities
       optimisticUpdate.coach_specialization = formData.coach_specialization || null
       optimisticUpdate.coach_specialization_custom = formData.coach_specialization === 'other'
         ? formData.coach_specialization_custom.trim() || null
@@ -884,7 +888,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                 </div>
 
                 {/* Availability Status */}
-                <div className="pt-4 border-t border-gray-200">
+                <div className="pt-4 border-t border-gray-200 space-y-3">
                   <label className="flex items-start gap-3 text-sm text-gray-700 cursor-pointer">
                     <input
                       type="checkbox"
@@ -895,7 +899,21 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                     <span>
                       <span className="font-medium">Open to Play</span>
                       <span className="block text-xs text-gray-500 mt-1">
-                        Show that you're actively looking for playing opportunities. A badge will appear on your profile in the Community.
+                        Looking to join a team or club to play regular matches. A badge appears on your profile in the Community.
+                      </span>
+                    </span>
+                  </label>
+                  <label className="flex items-start gap-3 text-sm text-gray-700 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-500 focus:ring-blue-500"
+                      checked={formData.open_to_opportunities}
+                      onChange={(e) => setFormData({ ...formData, open_to_opportunities: e.target.checked })}
+                    />
+                    <span>
+                      <span className="font-medium">Open to Opportunities</span>
+                      <span className="block text-xs text-gray-500 mt-1">
+                        Broader than playing — trials, transfers, sponsorships, or other offers related to hockey. Clubs and brands use this to filter who is actively seeking.
                       </span>
                     </span>
                   </label>
@@ -988,7 +1006,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                 </div>
 
                 {/* Availability Status */}
-                <div className="pt-4 border-t border-gray-200">
+                <div className="pt-4 border-t border-gray-200 space-y-3">
                   <label className="flex items-start gap-3 text-sm text-gray-700 cursor-pointer">
                     <input
                       type="checkbox"
@@ -999,7 +1017,21 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                     <span>
                       <span className="font-medium">Open to Coach</span>
                       <span className="block text-xs text-gray-500 mt-1">
-                        Show that you're actively looking for coaching opportunities. A badge will appear on your profile in the Community.
+                        Looking for a head, assistant, or youth coaching role. A badge appears on your profile in the Community.
+                      </span>
+                    </span>
+                  </label>
+                  <label className="flex items-start gap-3 text-sm text-gray-700 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-500 focus:ring-blue-500"
+                      checked={formData.open_to_opportunities}
+                      onChange={(e) => setFormData({ ...formData, open_to_opportunities: e.target.checked })}
+                    />
+                    <span>
+                      <span className="font-medium">Open to Opportunities</span>
+                      <span className="block text-xs text-gray-500 mt-1">
+                        Broader than coaching — consulting, clinics, sponsorships, or other offers related to hockey. Clubs and brands use this to filter who is actively seeking.
                       </span>
                     </span>
                   </label>

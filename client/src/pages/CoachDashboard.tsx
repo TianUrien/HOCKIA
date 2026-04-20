@@ -2,8 +2,10 @@ import { useEffect, useState, useRef } from 'react'
 import { ArrowLeft, MapPin, Calendar, Edit2, Eye, MessageCircle, Landmark, Mail, Plus } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
-import { Avatar, DashboardMenu, EditProfileModal, JourneyTab, CommentsTab, FriendsTab, FriendshipButton, NextStepCard, PublicReferencesSection, PublicViewBanner, RoleBadge, ScrollableTabs, DualNationalityDisplay, AvailabilityPill, TierBadge } from '@/components'
+import { Avatar, DashboardMenu, EditProfileModal, JourneyTab, CommentsTab, FriendsTab, FriendshipButton, NextStepCard, FreshnessCard, PublicReferencesSection, PublicViewBanner, RoleBadge, ScrollableTabs, DualNationalityDisplay, AvailabilityPill, TierBadge } from '@/components'
 import { calculateTier } from '@/lib/profileTier'
+import { useProfileFreshness } from '@/hooks/useProfileFreshness'
+import type { FreshnessNudge } from '@/lib/profileFreshness'
 import ProfileActionMenu from '@/components/ProfileActionMenu'
 import Header from '@/components/Header'
 import MediaTab from '@/components/MediaTab'
@@ -87,6 +89,13 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
     profile: readOnly ? null : (profileData ?? authProfile) as CoachProfileShape | null,
   })
 
+  // Freshness nudges (owner only)
+  const { nudge: freshnessNudge } = useProfileFreshness({
+    role: 'coach',
+    profileId: readOnly ? null : (profileData?.id ?? authProfile?.id ?? null),
+    profileUpdatedAt: readOnly ? null : (profile as Partial<Profile> | null)?.updated_at ?? null,
+  })
+
   // Shared handler for NextStepCard — routes a bucket to the right deep-link.
   const handleStrengthBucketAction = (bucket: CoachStrengthBucket) => {
     const actionId = bucket.actionId
@@ -106,6 +115,17 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
     } else if (actionId === 'friends-tab') {
       setActiveTab('friends')
       setSearchParams({ tab: 'friends' })
+    }
+  }
+
+  // Handler for freshness nudges.
+  const handleFreshnessAction = (nudge: FreshnessNudge) => {
+    if (nudge.action.type === 'edit-profile') {
+      setShowEditModal(true)
+    } else if (nudge.action.type === 'tab') {
+      const tab = nudge.action.tab as TabType
+      setActiveTab(tab)
+      setSearchParams({ tab })
     }
   }
 
@@ -417,12 +437,17 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
 
         {/* Next-step prompt — visible on every tab while the profile is incomplete (owner only) */}
         {!readOnly && (
-          <NextStepCard
-            percentage={percentage}
-            buckets={buckets}
-            loading={strengthLoading}
-            onBucketAction={handleStrengthBucketAction}
-          />
+          <>
+            <NextStepCard
+              percentage={percentage}
+              buckets={buckets}
+              loading={strengthLoading}
+              onBucketAction={handleStrengthBucketAction}
+            />
+            <div className="mt-3">
+              <FreshnessCard nudge={freshnessNudge} onAction={handleFreshnessAction} />
+            </div>
+          </>
         )}
 
         {/* Tabs */}

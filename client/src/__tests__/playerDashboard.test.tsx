@@ -35,6 +35,7 @@ vi.mock('@/components', () => ({
   RoleBadge: () => <span data-testid="role-badge">Role badge</span>,
   TierBadge: () => <span data-testid="tier-badge">Tier</span>,
   NextStepCard: () => <div data-testid="next-step-card">Next Step</div>,
+  FreshnessCard: () => <div data-testid="freshness-card" />,
   CountryDisplay: ({ fallbackText, className }: { countryId?: number | null; fallbackText?: string | null; showNationality?: boolean; className?: string }) => (
     <span data-testid="country-display" className={className}>{fallbackText}</span>
   ),
@@ -88,6 +89,10 @@ vi.mock('@/components/AddVideoLinkModal', () => ({
 
 vi.mock('@/components/ProfilePostsTab', () => ({
   default: () => <div data-testid="profile-posts-tab">Profile Posts</div>,
+}))
+
+vi.mock('@/hooks/useProfileFreshness', () => ({
+  useProfileFreshness: () => ({ nudge: null, loading: false, refresh: vi.fn() }),
 }))
 
 vi.mock('@/hooks/useProfileStrength', () => ({

@@ -9,8 +9,10 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import { Globe, Instagram, ExternalLink, Eye, Edit, Store, Package, Users, Plus, FileText, Loader2, Award, X } from 'lucide-react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import Header from '@/components/Header'
-import { Avatar, Button, DashboardMenu, NextStepCard, RoleBadge, ScrollableTabs, TierBadge } from '@/components'
+import { Avatar, Button, DashboardMenu, NextStepCard, FreshnessCard, RoleBadge, ScrollableTabs, TierBadge } from '@/components'
 import { calculateTier } from '@/lib/profileTier'
+import { useProfileFreshness } from '@/hooks/useProfileFreshness'
+import type { FreshnessNudge } from '@/lib/profileFreshness'
 import { BrandForm, type BrandFormData, ProductCard, AddProductModal, BrandPostCard, AddPostModal, AddAmbassadorModal } from '@/components/brands'
 import ProfilePostsTab from '@/components/ProfilePostsTab'
 import ConfirmActionModal from '@/components/ConfirmActionModal'
@@ -145,6 +147,13 @@ export default function BrandDashboard() {
     ambassadorCount: acceptedAmbassadors.length,
   })
 
+  // Freshness nudges — brand posts / products staleness
+  const { nudge: freshnessNudge } = useProfileFreshness({
+    role: 'brand',
+    profileId: profile?.id ?? null,
+    brandId: brand?.id ?? null,
+  })
+
   // Shared handler for NextStepCard — routes a bucket to the right deep-link.
   const handleStrengthBucketAction = (bucket: BrandStrengthBucket) => {
     if (bucket.actionId === 'edit-profile') {
@@ -156,6 +165,13 @@ export default function BrandDashboard() {
     } else if (bucket.actionId === 'add-ambassador') {
       handleTabChange('ambassadors')
       setShowAddAmbassadorModal(true)
+    }
+  }
+
+  // Handler for freshness nudges.
+  const handleFreshnessAction = (nudge: FreshnessNudge) => {
+    if (nudge.action.type === 'tab') {
+      handleTabChange(nudge.action.tab as TabType)
     }
   }
 
@@ -512,6 +528,9 @@ export default function BrandDashboard() {
           loading={strengthLoading}
           onBucketAction={handleStrengthBucketAction}
         />
+        <div className="mt-3">
+          <FreshnessCard nudge={freshnessNudge} onAction={handleFreshnessAction} />
+        </div>
 
         <div className="bg-white rounded-2xl shadow-sm animate-slide-in-up">
           <div className="sticky top-[68px] z-40 border-b border-gray-200 bg-white/90 backdrop-blur">

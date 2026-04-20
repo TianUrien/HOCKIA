@@ -2,8 +2,10 @@ import { useEffect, useState, useRef } from 'react'
 import { ArrowLeft, MapPin, Calendar, Plus, Eye, MessageCircle, Edit, Loader2 } from 'lucide-react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import Header from '@/components/Header'
-import { Avatar, Button, CountryDisplay, DashboardMenu, EditProfileModal, CommentsTab, FriendsTab, FriendshipButton, NextStepCard, PublicViewBanner, RoleBadge, ScrollableTabs, TierBadge } from '@/components'
+import { Avatar, Button, CountryDisplay, DashboardMenu, EditProfileModal, CommentsTab, FriendsTab, FriendshipButton, NextStepCard, FreshnessCard, PublicViewBanner, RoleBadge, ScrollableTabs, TierBadge } from '@/components'
 import { calculateTier } from '@/lib/profileTier'
+import { useProfileFreshness } from '@/hooks/useProfileFreshness'
+import type { FreshnessNudge } from '@/lib/profileFreshness'
 import ProfileActionMenu from '@/components/ProfileActionMenu'
 import { useClubProfileStrength, type ProfileStrengthBucket as ClubStrengthBucket } from '@/hooks/useClubProfileStrength'
 import { ProfileViewersSection } from '@/components/ProfileViewersSection'
@@ -84,6 +86,12 @@ export default function ClubDashboard({ profileData, readOnly = false, isOwnProf
     profile: readOnly ? null : (profileData ?? authProfile) as ClubProfileShape | null,
   })
 
+  // Freshness nudges (owner only)
+  const { nudge: freshnessNudge } = useProfileFreshness({
+    role: 'club',
+    profileId: readOnly ? null : (profileData?.id ?? authProfile?.id ?? null),
+  })
+
   // Shared handler for NextStepCard — routes a bucket to the right deep-link.
   const handleStrengthBucketAction = (bucket: ClubStrengthBucket) => {
     if (bucket.actionId === 'edit-profile') {
@@ -94,6 +102,17 @@ export default function ClubDashboard({ profileData, readOnly = false, isOwnProf
       if (gallerySection) {
         gallerySection.scrollIntoView({ behavior: 'smooth' })
       }
+    }
+  }
+
+  // Handler for freshness nudges.
+  const handleFreshnessAction = (nudge: FreshnessNudge) => {
+    if (nudge.action.type === 'edit-profile') {
+      setShowEditModal(true)
+    } else if (nudge.action.type === 'tab') {
+      const tab = nudge.action.tab as TabType
+      setActiveTab(tab)
+      setSearchParams({ tab })
     }
   }
 
@@ -398,12 +417,17 @@ export default function ClubDashboard({ profileData, readOnly = false, isOwnProf
 
         {/* Next-step prompt — visible on every tab while the profile is incomplete (owner only) */}
         {!readOnly && (
-          <NextStepCard
-            percentage={percentage}
-            buckets={buckets}
-            loading={strengthLoading}
-            onBucketAction={handleStrengthBucketAction}
-          />
+          <>
+            <NextStepCard
+              percentage={percentage}
+              buckets={buckets}
+              loading={strengthLoading}
+              onBucketAction={handleStrengthBucketAction}
+            />
+            <div className="mt-3">
+              <FreshnessCard nudge={freshnessNudge} onAction={handleFreshnessAction} />
+            </div>
+          </>
         )}
 
         <div className="bg-white rounded-2xl shadow-sm animate-slide-in-up">
