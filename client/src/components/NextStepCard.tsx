@@ -1,4 +1,6 @@
-import { ArrowRight, Sparkles } from 'lucide-react'
+import { useState } from 'react'
+import { ArrowRight, Sparkles, CheckCircle2, Circle, ChevronDown, ChevronUp, ChevronRight } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 type BucketLike = {
   id: string
@@ -15,20 +17,19 @@ interface NextStepCardProps<TBucket extends BucketLike = BucketLike> {
   buckets: TBucket[]
   /** Whether data is loading */
   loading?: boolean
-  /** Called when the CTA is tapped with the top incomplete bucket */
+  /** Called when the CTA is tapped with the top incomplete bucket, or when a bucket is clicked in the expanded list */
   onBucketAction?: (bucket: TBucket) => void
 }
 
 /**
- * NextStepCard — a prominent, above-the-fold prompt that surfaces the single
- * most impactful missing profile field and deep-links the user straight to it.
+ * NextStepCard — the single, canonical "your profile progress" module on
+ * role dashboards. Merges the short-form Next Step CTA (top incomplete
+ * bucket, deep-linked via `onBucketAction`) with an optional expandable
+ * full-bucket checklist so users who want the overview can see it without
+ * a second card competing for the same real estate.
  *
- * Hidden automatically while loading, when the profile is already 100%, or
- * when there is no incomplete bucket (e.g. empty hook state).
- *
- * Reuses the per-role profile strength hook (`useProfileStrength`,
- * `useCoachProfileStrength`, etc.) so the CTA stays in sync with the
- * detailed `ProfileStrengthCard` lower down the page.
+ * Hidden automatically while loading, when the profile is already 100%,
+ * or when there is no incomplete bucket (empty hook state).
  */
 export default function NextStepCard<TBucket extends BucketLike>({
   percentage,
@@ -36,6 +37,8 @@ export default function NextStepCard<TBucket extends BucketLike>({
   loading = false,
   onBucketAction,
 }: NextStepCardProps<TBucket>) {
+  const [isExpanded, setIsExpanded] = useState(false)
+
   if (loading) return null
   if (percentage >= 100) return null
 
@@ -98,6 +101,67 @@ export default function NextStepCard<TBucket extends BucketLike>({
               Get started
               <ArrowRight className="w-4 h-4" />
             </button>
+          </div>
+        </div>
+
+        {/* Expandable full checklist — all buckets with check/circle markers */}
+        <div className="mt-4 border-t border-[#8026FA]/10 pt-3">
+          <button
+            type="button"
+            onClick={() => setIsExpanded(v => !v)}
+            aria-expanded={isExpanded}
+            className="flex items-center gap-1 text-xs font-medium text-[#8026FA] hover:text-[#6B20D4] transition-colors"
+          >
+            {isExpanded ? (
+              <>
+                Hide all steps
+                <ChevronUp className="w-3.5 h-3.5" />
+              </>
+            ) : (
+              <>
+                See all {buckets.length} steps
+                <ChevronDown className="w-3.5 h-3.5" />
+              </>
+            )}
+          </button>
+
+          <div
+            className={cn(
+              'grid transition-all duration-200 ease-out',
+              isExpanded ? 'grid-rows-[1fr] opacity-100 mt-2' : 'grid-rows-[0fr] opacity-0'
+            )}
+          >
+            <div className="overflow-hidden">
+              <ul className="space-y-1">
+                {buckets.map(bucket => (
+                  <li key={bucket.id}>
+                    {bucket.completed ? (
+                      <div className="flex items-center gap-2.5 py-1.5 text-sm text-emerald-600">
+                        <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+                        <span className="truncate">{bucket.label}</span>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => onBucketAction?.(bucket)}
+                        className="w-full flex items-start gap-2.5 py-1.5 text-sm text-gray-600 hover:text-gray-900 transition-colors group text-left"
+                      >
+                        <Circle className="w-4 h-4 flex-shrink-0 text-gray-300 mt-0.5" />
+                        <span className="flex-1 min-w-0">
+                          <span className="block truncate">{bucket.label}</span>
+                          {bucket.unlockCopy && (
+                            <span className="block text-xs text-gray-500 mt-0.5 leading-snug">
+                              {bucket.unlockCopy}
+                            </span>
+                          )}
+                        </span>
+                        <ChevronRight className="w-3.5 h-3.5 text-gray-400 group-hover:text-gray-600 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity mt-0.5" />
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         </div>
       </div>

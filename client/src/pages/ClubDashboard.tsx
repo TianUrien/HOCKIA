@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { ArrowLeft, MapPin, Calendar, Plus, Eye, MessageCircle, Edit, Loader2 } from 'lucide-react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import Header from '@/components/Header'
-import { Avatar, Button, CountryDisplay, DashboardMenu, EditProfileModal, CommentsTab, FriendsTab, FriendshipButton, ProfileStrengthCard, NextStepCard, PublicViewBanner, RoleBadge, ScrollableTabs } from '@/components'
+import { Avatar, Button, CountryDisplay, DashboardMenu, EditProfileModal, CommentsTab, FriendsTab, FriendshipButton, NextStepCard, PublicViewBanner, RoleBadge, ScrollableTabs } from '@/components'
 import ProfileActionMenu from '@/components/ProfileActionMenu'
 import { useClubProfileStrength, type ProfileStrengthBucket as ClubStrengthBucket } from '@/hooks/useClubProfileStrength'
 import { ProfileViewersSection } from '@/components/ProfileViewersSection'
@@ -83,7 +83,7 @@ export default function ClubDashboard({ profileData, readOnly = false, isOwnProf
     profile: readOnly ? null : (profileData ?? authProfile) as ClubProfileShape | null,
   })
 
-  // Shared handler for ProfileStrengthCard and NextStepCard — routes a bucket to the right deep-link.
+  // Shared handler for NextStepCard — routes a bucket to the right deep-link.
   const handleStrengthBucketAction = (bucket: ClubStrengthBucket) => {
     if (bucket.actionId === 'edit-profile') {
       setShowEditModal(true)
@@ -417,17 +417,6 @@ export default function ClubDashboard({ profileData, readOnly = false, isOwnProf
           <div className="p-6 md:p-8">
             {activeTab === 'overview' && (
               <div className="space-y-8 animate-fade-in">
-                {/* Profile Strength Card - only for own profile. Inline Next-step row is suppressed because NextStepCard above handles the prompt. */}
-                {!readOnly && (
-                  <ProfileStrengthCard
-                    percentage={percentage}
-                    buckets={buckets}
-                    loading={strengthLoading}
-                    onBucketAction={handleStrengthBucketAction}
-                    showNextStep={false}
-                  />
-                )}
-
                 {!readOnly && <ProfileViewersSection />}
 
                 {!readOnly && (

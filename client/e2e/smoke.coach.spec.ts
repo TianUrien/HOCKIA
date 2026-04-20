@@ -9,8 +9,8 @@ test.describe('@smoke coach', () => {
     // Coach name heading should render
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 20000 })
 
-    // Should show coach-specific tabs
-    await expect(page.getByText('Profile strength', { exact: false })).toBeVisible({ timeout: 10000 })
+    // Should show coach-specific tabs — Journey is stable regardless of profile-completion state
+    await expect(page.getByRole('tab', { name: 'Journey', exact: true })).toBeVisible({ timeout: 10000 })
   })
 
   test('coach public profile is accessible', async ({ page }) => {

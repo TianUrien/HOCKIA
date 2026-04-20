@@ -15,10 +15,8 @@ test.describe('@smoke player', () => {
     // Profile name heading should render
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 20000 })
 
-    // Should show player-specific nav items
-    await expect(page.getByRole('button', { name: /overview/i })
-      .or(page.getByText(/profile strength/i))
-    ).toBeVisible({ timeout: 10000 })
+    // Should show player-specific tabs — Journey is stable regardless of profile-completion state
+    await expect(page.getByRole('tab', { name: 'Journey', exact: true })).toBeVisible({ timeout: 10000 })
   })
 
   test('player can open seeded vacancy details', async ({ page, opportunitiesPage }) => {

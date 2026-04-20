@@ -9,7 +9,7 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import { Globe, Instagram, ExternalLink, Eye, Edit, Store, Package, Users, Plus, FileText, Loader2, Award, X } from 'lucide-react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import Header from '@/components/Header'
-import { Avatar, Button, DashboardMenu, ProfileStrengthCard, NextStepCard, RoleBadge, ScrollableTabs } from '@/components'
+import { Avatar, Button, DashboardMenu, NextStepCard, RoleBadge, ScrollableTabs } from '@/components'
 import { BrandForm, type BrandFormData, ProductCard, AddProductModal, BrandPostCard, AddPostModal, AddAmbassadorModal } from '@/components/brands'
 import ProfilePostsTab from '@/components/ProfilePostsTab'
 import ConfirmActionModal from '@/components/ConfirmActionModal'
@@ -144,7 +144,7 @@ export default function BrandDashboard() {
     ambassadorCount: acceptedAmbassadors.length,
   })
 
-  // Shared handler for ProfileStrengthCard and NextStepCard — routes a bucket to the right deep-link.
+  // Shared handler for NextStepCard — routes a bucket to the right deep-link.
   const handleStrengthBucketAction = (bucket: BrandStrengthBucket) => {
     if (bucket.actionId === 'edit-profile') {
       setShowEditModal(true)
@@ -580,15 +580,6 @@ export default function BrandDashboard() {
                     </div>
                   </div>
                 )}
-
-                {/* Profile Strength Card. Inline Next-step row is suppressed because NextStepCard above handles the prompt. */}
-                <ProfileStrengthCard
-                  percentage={percentage}
-                  buckets={buckets}
-                  loading={strengthLoading}
-                  onBucketAction={handleStrengthBucketAction}
-                  showNextStep={false}
-                />
 
                 <ProfileViewersSection />
 

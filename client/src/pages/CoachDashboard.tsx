@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { ArrowLeft, MapPin, Calendar, Edit2, Eye, MessageCircle, Landmark, Mail, Plus } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
-import { Avatar, DashboardMenu, EditProfileModal, JourneyTab, CommentsTab, FriendsTab, FriendshipButton, ProfileStrengthCard, NextStepCard, PublicReferencesSection, PublicViewBanner, RoleBadge, ScrollableTabs, DualNationalityDisplay, AvailabilityPill } from '@/components'
+import { Avatar, DashboardMenu, EditProfileModal, JourneyTab, CommentsTab, FriendsTab, FriendshipButton, NextStepCard, PublicReferencesSection, PublicViewBanner, RoleBadge, ScrollableTabs, DualNationalityDisplay, AvailabilityPill } from '@/components'
 import ProfileActionMenu from '@/components/ProfileActionMenu'
 import Header from '@/components/Header'
 import MediaTab from '@/components/MediaTab'
@@ -86,7 +86,7 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
     profile: readOnly ? null : (profileData ?? authProfile) as CoachProfileShape | null,
   })
 
-  // Shared handler for ProfileStrengthCard and NextStepCard — routes a bucket to the right deep-link.
+  // Shared handler for NextStepCard — routes a bucket to the right deep-link.
   const handleStrengthBucketAction = (bucket: CoachStrengthBucket) => {
     const actionId = bucket.actionId
     if (!actionId) return
@@ -438,16 +438,6 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
             {/* Profile Tab */}
             {activeTab === 'profile' && (
               <div className="space-y-6 animate-fade-in">
-                {/* Profile Strength Card - only for own profile. Inline Next-step row is suppressed because NextStepCard above handles the prompt. */}
-                {!readOnly && (
-                  <ProfileStrengthCard
-                    percentage={percentage}
-                    buckets={buckets}
-                    loading={strengthLoading}
-                    onBucketAction={handleStrengthBucketAction}
-                    showNextStep={false}
-                  />
-                )}
                 {!readOnly && <ProfileViewersSection />}
                 {!readOnly && (
                   <AvailabilityToggleStrip role="coach" />
