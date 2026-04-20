@@ -4,9 +4,10 @@
  * Cover image, logo, and name section for brand profiles.
  */
 
-import { Store, CheckCircle, Globe, Instagram } from 'lucide-react'
+import { Store, Globe, Instagram } from 'lucide-react'
 import { getImageUrl } from '@/lib/imageUrl'
 import type { BrandDetail } from '@/hooks/useBrand'
+import VerifiedBadge from '@/components/VerifiedBadge'
 
 interface BrandHeaderProps {
   brand: BrandDetail
@@ -54,9 +55,7 @@ export function BrandHeader({ brand }: BrandHeaderProps) {
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 truncate">
                 {brand.name}
               </h1>
-              {brand.is_verified && (
-                <CheckCircle className="w-6 h-6 text-indigo-500 flex-shrink-0" />
-              )}
+              <VerifiedBadge verified={brand.is_verified} />
             </div>
             <p className="text-gray-500 mt-1">
               {CATEGORY_LABELS[brand.category] || brand.category}

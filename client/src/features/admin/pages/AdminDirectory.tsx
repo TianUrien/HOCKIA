@@ -13,6 +13,7 @@ import {
   Eye,
   Ban,
   CheckCircle,
+  BadgeCheck,
   Beaker,
   X,
   User,
@@ -34,6 +35,7 @@ import {
   blockUser,
   unblockUser,
   setTestAccount,
+  setProfileVerified,
   updateProfile,
 } from '../api/adminApi'
 
@@ -64,7 +66,7 @@ export function AdminDirectory() {
   // Confirm dialogs
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean
-    type: 'block' | 'unblock' | 'mark-test' | 'unmark-test'
+    type: 'block' | 'unblock' | 'mark-test' | 'unmark-test' | 'verify' | 'unverify'
     profile: AdminProfileListItem | null
   }>({ isOpen: false, type: 'block', profile: null })
   const [blockReason, setBlockReason] = useState('')
@@ -165,6 +167,17 @@ export function AdminDirectory() {
     const isMarkingAsTest = confirmDialog.type === 'mark-test'
     await setTestAccount(confirmDialog.profile.id, isMarkingAsTest)
     await fetchProfiles()
+  }
+
+  const handleToggleVerified = async () => {
+    if (!confirmDialog.profile) return
+    const isVerifying = confirmDialog.type === 'verify'
+    try {
+      await setProfileVerified(confirmDialog.profile.id, isVerifying)
+      await fetchProfiles()
+    } catch (err) {
+      logger.error('[AdminDirectory] toggle verified failed', err)
+    }
   }
 
   const handleEditUser = async (profile: AdminProfileListItem) => {
@@ -273,6 +286,11 @@ export function AdminDirectory() {
               <Beaker className="w-3 h-3" /> Test
             </span>
           )}
+          {row.is_verified && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-700 rounded-full">
+              <BadgeCheck className="w-3 h-3" /> Verified
+            </span>
+          )}
           {!row.onboarding_completed && (
             <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-amber-100 text-amber-700 rounded-full">
               Incomplete
@@ -332,6 +350,18 @@ export function AdminDirectory() {
       icon: <Beaker className="w-4 h-4" />,
       onClick: (row) => setConfirmDialog({ isOpen: true, type: 'unmark-test', profile: row }),
       disabled: (row) => !row.is_test_account,
+    },
+    {
+      label: 'Verify Profile',
+      icon: <BadgeCheck className="w-4 h-4" />,
+      onClick: (row) => setConfirmDialog({ isOpen: true, type: 'verify', profile: row }),
+      disabled: (row) => row.is_verified,
+    },
+    {
+      label: 'Remove Verification',
+      icon: <BadgeCheck className="w-4 h-4" />,
+      onClick: (row) => setConfirmDialog({ isOpen: true, type: 'unverify', profile: row }),
+      disabled: (row) => !row.is_verified,
     },
   ]
 
@@ -690,6 +720,20 @@ export function AdminDirectory() {
             : `This will remove the test flag from "${confirmDialog.profile?.full_name || confirmDialog.profile?.email}". They will become visible to all users.`
         }
         confirmLabel={confirmDialog.type === 'mark-test' ? 'Mark as Test' : 'Remove Test Flag'}
+        variant="warning"
+      />
+
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen && (confirmDialog.type === 'verify' || confirmDialog.type === 'unverify')}
+        onClose={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
+        onConfirm={handleToggleVerified}
+        title={confirmDialog.type === 'verify' ? 'Verify Profile' : 'Remove Verification'}
+        message={
+          confirmDialog.type === 'verify'
+            ? `Grant the Verified badge to "${confirmDialog.profile?.full_name || confirmDialog.profile?.email}". Visible across the app; action is written to admin_audit_logs.`
+            : `Remove the Verified badge from "${confirmDialog.profile?.full_name || confirmDialog.profile?.email}". Action is written to admin_audit_logs.`
+        }
+        confirmLabel={confirmDialog.type === 'verify' ? 'Verify Profile' : 'Remove Verification'}
         variant="warning"
       />
 
