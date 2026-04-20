@@ -103,12 +103,8 @@ export default function WorldPage() {
     return colors[region] || 'bg-gray-100 text-gray-700'
   }
 
-  // Get the correct flag URL based on country code
+  // Get the correct flag URL based on country code (e.g. "GB-ENG" → "gb-eng")
   const getFlagUrl = (countryCode: string) => {
-    // England uses XE code but needs gb-eng for flagcdn
-    if (countryCode === 'XE') {
-      return 'https://flagcdn.com/w160/gb-eng.png'
-    }
     return `https://flagcdn.com/w160/${countryCode.toLowerCase()}.png`
   }
 

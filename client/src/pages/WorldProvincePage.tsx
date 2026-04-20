@@ -86,7 +86,6 @@ export default function WorldProvincePage() {
 
   const flagUrl = useMemo(() => {
     if (!country) return ''
-    if (country.code === 'XE') return 'https://flagcdn.com/w160/gb-eng.png'
     return `https://flagcdn.com/w160/${country.code.toLowerCase()}.png`
   }, [country])
 

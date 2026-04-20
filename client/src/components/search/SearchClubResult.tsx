@@ -7,9 +7,6 @@ interface SearchClubResultProps {
 }
 
 function getFlagUrl(countryCode: string): string {
-  if (countryCode.toUpperCase() === 'XE') {
-    return 'https://flagcdn.com/w40/gb-eng.png'
-  }
   return `https://flagcdn.com/w40/${countryCode.toLowerCase()}.png`
 }
 
