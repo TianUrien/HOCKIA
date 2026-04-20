@@ -47,7 +47,7 @@ export default function BrandsPage() {
               Brands
             </h1>
             <p className="text-gray-600 mt-1">
-              Discover equipment, apparel, and services for hockey
+              Discover brands, coaching, media, and services for field hockey
             </p>
           </div>
 

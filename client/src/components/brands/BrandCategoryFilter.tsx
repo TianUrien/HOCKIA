@@ -17,8 +17,11 @@ const CATEGORIES: CategoryOption[] = [
   { value: 'apparel', label: 'Apparel' },
   { value: 'accessories', label: 'Accessories' },
   { value: 'nutrition', label: 'Nutrition' },
-  { value: 'services', label: 'Services' },
   { value: 'technology', label: 'Technology' },
+  { value: 'coaching', label: 'Coaching & Training' },
+  { value: 'recruiting', label: 'Recruiting' },
+  { value: 'media', label: 'Media' },
+  { value: 'services', label: 'Services' },
   { value: 'other', label: 'Other' },
 ]
 

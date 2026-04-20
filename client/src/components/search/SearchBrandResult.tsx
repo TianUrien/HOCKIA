@@ -11,8 +11,11 @@ const CATEGORY_LABELS: Record<string, string> = {
   apparel: 'Apparel',
   accessories: 'Accessories',
   nutrition: 'Nutrition',
-  services: 'Services',
   technology: 'Technology',
+  coaching: 'Coaching & Training',
+  recruiting: 'Recruiting',
+  media: 'Media',
+  services: 'Services',
   other: 'Other',
 }
 
