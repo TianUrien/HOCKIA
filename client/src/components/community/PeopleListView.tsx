@@ -19,6 +19,7 @@ import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { usePageState } from '@/hooks/usePageState'
 import { useScrollRestore } from '@/hooks/useScrollRestore'
 import { prefetchWorldClubLogos } from '@/hooks/useWorldClubLogo'
+import { isProfileComplete } from '@/lib/profileCompletion'
 
 interface Profile {
   id: string
@@ -43,7 +44,22 @@ interface Profile {
   coach_specialization_custom?: string | null
   brand_slug?: string | null
   brand_category?: string | null
+  // Extra fields used to compute profile-complete pill (cheap, on the profile row or brand join)
+  highlight_video_url?: string | null
+  bio?: string | null
+  club_bio?: string | null
+  year_founded?: number | null
+  website?: string | null
+  contact_email?: string | null
+  career_entry_count?: number | null
+  accepted_friend_count?: number | null
+  brand_bio?: string | null
+  brand_website_url?: string | null
+  brand_instagram_url?: string | null
 }
+
+const PROFILES_SELECT =
+  'id, avatar_url, full_name, role, nationality, nationality_country_id, nationality2_country_id, base_location, position, secondary_position, current_club, current_world_club_id, gender, created_at, is_test_account, open_to_play, open_to_coach, accepted_reference_count, coach_specialization, coach_specialization_custom, highlight_video_url, bio, club_bio, year_founded, website, contact_email, career_entry_count, accepted_friend_count'
 
 interface CommunityFilters {
   role: 'all' | 'player' | 'coach' | 'club' | 'brand'
@@ -112,7 +128,7 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
           async () => {
             let query = supabase
               .from('profiles')
-              .select('id, avatar_url, full_name, role, nationality, nationality_country_id, nationality2_country_id, base_location, position, secondary_position, current_club, current_world_club_id, gender, created_at, is_test_account, open_to_play, open_to_coach, accepted_reference_count, coach_specialization, coach_specialization_custom')
+              .select(PROFILES_SELECT)
               .eq('onboarding_completed', true) // Only show fully onboarded users
 
             // If current user is NOT a test account, exclude test accounts from results
@@ -127,20 +143,27 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
             if (error) throw error
             const members = (data || []) as Profile[]
 
-            // Resolve brand slugs for navigation
+            // Resolve brand slugs + completion fields for brand cards
             const brandIds = members.filter(m => m.role === 'brand').map(m => m.id)
             if (brandIds.length > 0) {
               const { data: brands } = await supabase
                 .from('brands')
-                .select('profile_id, slug, category')
+                .select('profile_id, slug, category, bio, website_url, instagram_url')
                 .in('profile_id', brandIds)
               if (brands) {
-                const brandMap = new Map((brands as { profile_id: string; slug: string; category: string }[]).map((b) => [b.profile_id, b]))
+                const brandMap = new Map(
+                  (brands as { profile_id: string; slug: string; category: string; bio: string | null; website_url: string | null; instagram_url: string | null }[]).map(
+                    (b) => [b.profile_id, b]
+                  )
+                )
                 members.forEach(m => {
                   if (m.role === 'brand') {
                     const brand = brandMap.get(m.id)
                     m.brand_slug = brand?.slug || null
                     m.brand_category = brand?.category || null
+                    m.brand_bio = brand?.bio || null
+                    m.brand_website_url = brand?.website_url || null
+                    m.brand_instagram_url = brand?.instagram_url || null
                   }
                 })
               }
@@ -200,17 +223,17 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
             const searchTerm = `%${query}%`
             let dbQuery = supabase
               .from('profiles')
-              .select('id, avatar_url, full_name, role, nationality, nationality_country_id, nationality2_country_id, base_location, position, secondary_position, current_club, current_world_club_id, gender, created_at, is_test_account, open_to_play, open_to_coach, accepted_reference_count, coach_specialization, coach_specialization_custom')
+              .select(PROFILES_SELECT)
               .eq('onboarding_completed', true) // Only show fully onboarded users
               .or(
                 `full_name.ilike.${searchTerm},nationality.ilike.${searchTerm},base_location.ilike.${searchTerm},position.ilike.${searchTerm},secondary_position.ilike.${searchTerm},current_club.ilike.${searchTerm}`
               )
-            
+
             // If current user is NOT a test account, exclude test accounts from results
             if (!isCurrentUserTestAccount) {
               dbQuery = dbQuery.or('is_test_account.is.null,is_test_account.eq.false')
             }
-            
+
             const { data, error } = await dbQuery
               .order('created_at', { ascending: false })
               .limit(200)
@@ -218,20 +241,27 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
             if (error) throw error
             const members = (data || []) as Profile[]
 
-            // Resolve brand slugs for navigation
+            // Resolve brand slugs + completion fields for brand cards
             const brandIds = members.filter(m => m.role === 'brand').map(m => m.id)
             if (brandIds.length > 0) {
               const { data: brands } = await supabase
                 .from('brands')
-                .select('profile_id, slug, category')
+                .select('profile_id, slug, category, bio, website_url, instagram_url')
                 .in('profile_id', brandIds)
               if (brands) {
-                const brandMap = new Map((brands as { profile_id: string; slug: string; category: string }[]).map((b) => [b.profile_id, b]))
+                const brandMap = new Map(
+                  (brands as { profile_id: string; slug: string; category: string; bio: string | null; website_url: string | null; instagram_url: string | null }[]).map(
+                    (b) => [b.profile_id, b]
+                  )
+                )
                 members.forEach(m => {
                   if (m.role === 'brand') {
                     const brand = brandMap.get(m.id)
                     m.brand_slug = brand?.slug || null
                     m.brand_category = brand?.category || null
+                    m.brand_bio = brand?.bio || null
+                    m.brand_website_url = brand?.website_url || null
+                    m.brand_instagram_url = brand?.instagram_url || null
                   }
                 })
               }
@@ -692,6 +722,7 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
                     accepted_reference_count={member.accepted_reference_count ?? 0}
                     coach_specialization={member.coach_specialization}
                     coach_specialization_custom={member.coach_specialization_custom}
+                    isProfileComplete={isProfileComplete(member)}
                   />
                 ))}
               </div>

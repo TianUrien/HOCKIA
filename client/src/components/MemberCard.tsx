@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MessageCircle, User, Globe, MapPin, Shield, Building2 } from 'lucide-react'
+import { MessageCircle, User, Globe, MapPin, Shield, Building2, CheckCircle2 } from 'lucide-react'
 import { Avatar, RoleBadge, NationalityCardDisplay, AvailabilityPill } from '@/components'
 import SignInPromptModal from '@/components/SignInPromptModal'
 import { useAuthStore } from '@/lib/auth'
@@ -31,6 +31,12 @@ interface MemberCardProps {
   accepted_reference_count?: number
   coach_specialization?: string | null
   coach_specialization_custom?: string | null
+  /**
+   * True when the member meets the per-role "fully complete" threshold.
+   * When true, a positive "Profile complete" pill is shown in the badge row.
+   * Incomplete profiles are unmarked — no public score, no shaming.
+   */
+  isProfileComplete?: boolean
 }
 
 export default function MemberCard({
@@ -53,6 +59,7 @@ export default function MemberCard({
   accepted_reference_count,
   coach_specialization,
   coach_specialization_custom,
+  isProfileComplete = false,
 }: MemberCardProps) {
   const navigate = useNavigate()
   const { user } = useAuthStore()
@@ -149,6 +156,15 @@ export default function MemberCard({
             )}
             {role === 'player' && open_to_play && <AvailabilityPill variant="play" size="sm" className="!shadow-none" />}
             {role === 'coach' && open_to_coach && <AvailabilityPill variant="coach" size="sm" className="!shadow-none" />}
+            {isProfileComplete && (
+              <span
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-medium"
+                aria-label="Profile complete"
+              >
+                <CheckCircle2 className="w-2.5 h-2.5" />
+                Profile complete
+              </span>
+            )}
             {(accepted_reference_count ?? 0) > 0 && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-[10px] font-medium">
                 <Shield className="w-2.5 h-2.5" />
