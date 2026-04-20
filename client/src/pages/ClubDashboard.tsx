@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { ArrowLeft, MapPin, Calendar, Plus, Eye, MessageCircle, Edit, Loader2 } from 'lucide-react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import Header from '@/components/Header'
-import { Avatar, Button, CountryDisplay, DashboardMenu, EditProfileModal, CommentsTab, FriendsTab, FriendshipButton, NextStepCard, FreshnessCard, SearchAppearancesCard, PublicViewBanner, RoleBadge, ScrollableTabs, TierBadge } from '@/components'
+import { Avatar, Button, CountryDisplay, DashboardMenu, EditProfileModal, CommentsTab, FriendsTab, FriendshipButton, NextStepCard, FreshnessCard, SearchAppearancesCard, PublicViewBanner, RoleBadge, ScrollableTabs, TierBadge, VerifiedBadge } from '@/components'
 import { calculateTier } from '@/lib/profileTier'
 import { useProfileFreshness } from '@/hooks/useProfileFreshness'
 import type { FreshnessNudge } from '@/lib/profileFreshness'
@@ -333,7 +333,13 @@ export default function ClubDashboard({ profileData, readOnly = false, isOwnProf
 
             <div className="flex-1">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-3">
-                <h1 className="text-3xl md:text-4xl font-bold text-gray-900">{profile.full_name}</h1>
+                <h1 className="text-3xl md:text-4xl font-bold text-gray-900 flex items-center gap-2">
+                  <span>{profile.full_name}</span>
+                  <VerifiedBadge
+                    verified={(profile as unknown as { is_verified?: boolean; verified_at?: string | null } | null)?.is_verified}
+                    verifiedAt={(profile as unknown as { is_verified?: boolean; verified_at?: string | null } | null)?.verified_at ?? null}
+                  />
+                </h1>
                 {readOnly ? (
                   <div className="flex flex-wrap items-center gap-2">
                     <div className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium">

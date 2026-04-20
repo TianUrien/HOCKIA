@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MessageCircle, User, Globe, MapPin, Shield, Building2 } from 'lucide-react'
-import { Avatar, RoleBadge, TierBadge, NationalityCardDisplay, AvailabilityPill } from '@/components'
+import { Avatar, RoleBadge, TierBadge, VerifiedBadge, NationalityCardDisplay, AvailabilityPill } from '@/components'
 import type { ProfileTier } from '@/lib/profileTier'
 import SignInPromptModal from '@/components/SignInPromptModal'
 import { useAuthStore } from '@/lib/auth'
@@ -38,6 +38,10 @@ interface MemberCardProps {
    * TierBadge in the badge row. Omit to render no tier.
    */
   tier?: ProfileTier
+  /** Admin-granted verification flag (from profiles.is_verified or brands.is_verified). */
+  isVerified?: boolean
+  /** ISO timestamp for the current verification — powers the tooltip date. */
+  verifiedAt?: string | null
 }
 
 export default function MemberCard({
@@ -61,6 +65,8 @@ export default function MemberCard({
   coach_specialization,
   coach_specialization_custom,
   tier,
+  isVerified,
+  verifiedAt,
 }: MemberCardProps) {
   const navigate = useNavigate()
   const { user } = useAuthStore()
@@ -149,7 +155,10 @@ export default function MemberCard({
           previewTitle={full_name}
         />
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-gray-900 truncate">{full_name}</h3>
+          <h3 className="font-semibold text-gray-900 truncate flex items-center gap-1">
+            <span className="truncate">{full_name}</span>
+            <VerifiedBadge verified={isVerified} verifiedAt={verifiedAt} size="sm" />
+          </h3>
           <div className="flex items-center gap-2 mt-1.5 flex-wrap">
             <RoleBadge role={role} />
             {role === 'brand' && brandCategory && (

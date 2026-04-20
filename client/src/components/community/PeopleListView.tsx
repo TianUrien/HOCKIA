@@ -57,10 +57,16 @@ interface Profile {
   brand_bio?: string | null
   brand_website_url?: string | null
   brand_instagram_url?: string | null
+  // Admin-granted verified badge. For brands this is overridden below by
+  // brands.is_verified (they have their own column, unified in v1 via the
+  // badge component caller).
+  is_verified?: boolean | null
+  verified_at?: string | null
+  brand_is_verified?: boolean | null
 }
 
 const PROFILES_SELECT =
-  'id, avatar_url, full_name, role, nationality, nationality_country_id, nationality2_country_id, base_location, position, secondary_position, current_club, current_world_club_id, gender, created_at, is_test_account, open_to_play, open_to_coach, accepted_reference_count, coach_specialization, coach_specialization_custom, highlight_video_url, bio, club_bio, year_founded, website, contact_email, career_entry_count, accepted_friend_count'
+  'id, avatar_url, full_name, role, nationality, nationality_country_id, nationality2_country_id, base_location, position, secondary_position, current_club, current_world_club_id, gender, created_at, is_test_account, open_to_play, open_to_coach, accepted_reference_count, coach_specialization, coach_specialization_custom, highlight_video_url, bio, club_bio, year_founded, website, contact_email, career_entry_count, accepted_friend_count, is_verified, verified_at'
 
 interface CommunityFilters {
   role: 'all' | 'player' | 'coach' | 'club' | 'brand'
@@ -142,18 +148,18 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
               .limit(200) // Load reasonable batch for client-side filtering
 
             if (error) throw error
-            const members = (data || []) as Profile[]
+            const members = ((data || []) as unknown) as Profile[]
 
             // Resolve brand slugs + completion fields for brand cards
             const brandIds = members.filter(m => m.role === 'brand').map(m => m.id)
             if (brandIds.length > 0) {
               const { data: brands } = await supabase
                 .from('brands')
-                .select('profile_id, slug, category, bio, website_url, instagram_url')
+                .select('profile_id, slug, category, bio, website_url, instagram_url, is_verified')
                 .in('profile_id', brandIds)
               if (brands) {
                 const brandMap = new Map(
-                  (brands as { profile_id: string; slug: string; category: string; bio: string | null; website_url: string | null; instagram_url: string | null }[]).map(
+                  (brands as { profile_id: string; slug: string; category: string; bio: string | null; website_url: string | null; instagram_url: string | null; is_verified: boolean | null }[]).map(
                     (b) => [b.profile_id, b]
                   )
                 )
@@ -165,6 +171,7 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
                     m.brand_bio = brand?.bio || null
                     m.brand_website_url = brand?.website_url || null
                     m.brand_instagram_url = brand?.instagram_url || null
+                    m.brand_is_verified = brand?.is_verified ?? null
                   }
                 })
               }
@@ -240,18 +247,18 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
               .limit(200)
 
             if (error) throw error
-            const members = (data || []) as Profile[]
+            const members = ((data || []) as unknown) as Profile[]
 
             // Resolve brand slugs + completion fields for brand cards
             const brandIds = members.filter(m => m.role === 'brand').map(m => m.id)
             if (brandIds.length > 0) {
               const { data: brands } = await supabase
                 .from('brands')
-                .select('profile_id, slug, category, bio, website_url, instagram_url')
+                .select('profile_id, slug, category, bio, website_url, instagram_url, is_verified')
                 .in('profile_id', brandIds)
               if (brands) {
                 const brandMap = new Map(
-                  (brands as { profile_id: string; slug: string; category: string; bio: string | null; website_url: string | null; instagram_url: string | null }[]).map(
+                  (brands as { profile_id: string; slug: string; category: string; bio: string | null; website_url: string | null; instagram_url: string | null; is_verified: boolean | null }[]).map(
                     (b) => [b.profile_id, b]
                   )
                 )
@@ -263,6 +270,7 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
                     m.brand_bio = brand?.bio || null
                     m.brand_website_url = brand?.website_url || null
                     m.brand_instagram_url = brand?.instagram_url || null
+                    m.brand_is_verified = brand?.is_verified ?? null
                   }
                 })
               }
@@ -762,6 +770,12 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
                     coach_specialization={member.coach_specialization}
                     coach_specialization_custom={member.coach_specialization_custom}
                     tier={getMemberTier(member)}
+                    isVerified={
+                      member.role === 'brand'
+                        ? Boolean(member.brand_is_verified)
+                        : Boolean(member.is_verified)
+                    }
+                    verifiedAt={member.verified_at ?? null}
                   />
                 ))}
               </div>

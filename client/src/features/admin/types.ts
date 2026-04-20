@@ -146,6 +146,7 @@ export interface AdminProfileListItem {
   base_location: string | null
   is_blocked: boolean
   is_test_account: boolean
+  is_verified: boolean
   onboarding_completed: boolean
   created_at: string
   updated_at: string
