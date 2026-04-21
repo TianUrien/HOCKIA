@@ -105,6 +105,12 @@ export default function CompleteProfile() {
     umpireSince: '',
     officiatingSpecialization: '' as OfficiatingSpecialization,
     languages: [] as string[],
+    // Controlled value for the language chip-picker input. Kept in formData
+    // so handleNext / handleSubmit can flush uncommitted text into
+    // `languages[]` before validating, avoiding a blur-vs-submit race where
+    // a user typing "English" then clicking the button saw a "please add a
+    // language" error despite the input being populated.
+    pendingLanguage: '',
   })
 
   const normalizeGender = (value: string) => {
@@ -511,7 +517,21 @@ export default function CompleteProfile() {
 
   const handleNext = () => {
     if (userRole !== 'player' && userRole !== 'coach' && userRole !== 'umpire') return
-    const stepError = validateOnboardingStep(currentStep, userRole, formData)
+
+    // Flush any uncommitted language chip typing before validating so a user
+    // who typed "English" into the input and clicked Continue doesn't get
+    // bounced with a "please add a language" error.
+    let formForValidation = formData
+    if (userRole === 'umpire' && currentStep === 3 && formData.pendingLanguage.trim()) {
+      const pending = formData.pendingLanguage.trim()
+      const nextLanguages = formData.languages.includes(pending)
+        ? formData.languages
+        : [...formData.languages, pending]
+      formForValidation = { ...formData, languages: nextLanguages, pendingLanguage: '' }
+      setFormData(formForValidation)
+    }
+
+    const stepError = validateOnboardingStep(currentStep, userRole, formForValidation)
     if (stepError) {
       setError(stepError)
       // Emit so we can see which step + which validation rule users get stuck on.
@@ -537,45 +557,47 @@ export default function CompleteProfile() {
     setCurrentStep((prev) => (prev === 1 ? 1 : ((prev - 1) as WizardStep)))
   }
 
-  // Client-side validation
-  const validateForm = (): string | null => {
+  // Client-side validation. Takes the form explicitly so the caller can
+  // pass a flushed snapshot (with any pendingLanguage committed) even if
+  // React state hasn't re-rendered yet.
+  const validateForm = (form: typeof formData = formData): string | null => {
     if (userRole === 'player') {
-      if (!formData.fullName.trim()) return 'Full name is required.'
-      if (!formData.city.trim()) return 'Base location is required.'
-      if (!formData.nationalityCountryId) return 'Nationality is required.'
-      if (!formData.position) return 'Position is required.'
-      if (!formData.gender) return 'Gender is required.'
-      if (formData.secondaryPosition && formData.secondaryPosition === formData.position) {
+      if (!form.fullName.trim()) return 'Full name is required.'
+      if (!form.city.trim()) return 'Base location is required.'
+      if (!form.nationalityCountryId) return 'Nationality is required.'
+      if (!form.position) return 'Position is required.'
+      if (!form.gender) return 'Gender is required.'
+      if (form.secondaryPosition && form.secondaryPosition === form.position) {
         return 'Primary and secondary positions must be different.'
       }
     } else if (userRole === 'coach') {
-      if (!formData.fullName.trim()) return 'Full name is required.'
-      if (!formData.city.trim()) return 'Base location is required.'
-      if (!formData.nationalityCountryId) return 'Nationality is required.'
-      if (!formData.gender) return 'Gender is required.'
-      if (!formData.coachSpecialization) return 'Please select your coaching specialization.'
-      if (formData.coachSpecialization === 'other' && !formData.coachSpecializationCustom.trim()) {
+      if (!form.fullName.trim()) return 'Full name is required.'
+      if (!form.city.trim()) return 'Base location is required.'
+      if (!form.nationalityCountryId) return 'Nationality is required.'
+      if (!form.gender) return 'Gender is required.'
+      if (!form.coachSpecialization) return 'Please select your coaching specialization.'
+      if (form.coachSpecialization === 'other' && !form.coachSpecializationCustom.trim()) {
         return 'Please enter your role title.'
       }
     } else if (userRole === 'umpire') {
-      if (!formData.fullName.trim()) return 'Full name is required.'
-      if (!formData.city.trim()) return 'Base location is required.'
-      if (!formData.nationalityCountryId) return 'Nationality is required.'
-      if (!formData.gender) return 'Gender is required.'
-      if (!formData.umpireLevel.trim()) return 'Please add your umpire level.'
-      if (!formData.federation.trim()) return 'Please add the federation you officiate with.'
-      if (!formData.officiatingSpecialization) return 'Please choose outdoor, indoor, or both.'
-      if (formData.languages.length === 0) {
+      if (!form.fullName.trim()) return 'Full name is required.'
+      if (!form.city.trim()) return 'Base location is required.'
+      if (!form.nationalityCountryId) return 'Nationality is required.'
+      if (!form.gender) return 'Gender is required.'
+      if (!form.umpireLevel.trim()) return 'Please add your umpire level.'
+      if (!form.federation.trim()) return 'Please add the federation you officiate with.'
+      if (!form.officiatingSpecialization) return 'Please choose outdoor, indoor, or both.'
+      if (form.languages.length === 0) {
         return 'Please add at least one language you can officiate in.'
       }
     } else if (userRole === 'club') {
-      if (!formData.clubName.trim()) return 'Club name is required.'
-      if (!formData.city.trim()) return 'City is required.'
-      if (!formData.nationalityCountryId) return 'Country is required.'
-      if (!formData.contactEmail.trim()) return 'Contact email is required.'
+      if (!form.clubName.trim()) return 'Club name is required.'
+      if (!form.city.trim()) return 'City is required.'
+      if (!form.nationalityCountryId) return 'Country is required.'
+      if (!form.contactEmail.trim()) return 'Contact email is required.'
       // Basic email validation
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-      if (!emailRegex.test(formData.contactEmail)) {
+      if (!emailRegex.test(form.contactEmail)) {
         return 'Please enter a valid email address.'
       }
     }
@@ -598,8 +620,23 @@ export default function CompleteProfile() {
 
     setError('')
 
-    // Run client-side validation first
-    const validationError = validateForm()
+    // Flush any uncommitted language chip text into languages[] before
+    // validating + submitting. Avoids the blur-vs-submit race (see
+    // formData.pendingLanguage comment). Build a local snapshot used for
+    // both validation and the update payload below; also mirror it to
+    // state so the UI reflects the change.
+    let formSnapshot = formData
+    if (userRole === 'umpire' && formData.pendingLanguage.trim()) {
+      const pending = formData.pendingLanguage.trim()
+      const nextLanguages = formData.languages.includes(pending)
+        ? formData.languages
+        : [...formData.languages, pending]
+      formSnapshot = { ...formData, languages: nextLanguages, pendingLanguage: '' }
+      setFormData(formSnapshot)
+    }
+
+    // Run client-side validation against the flushed snapshot
+    const validationError = validateForm(formSnapshot)
     if (validationError) {
       setError(validationError)
       return
@@ -674,20 +711,23 @@ export default function CompleteProfile() {
             : null,
         }
       } else if (userRole === 'umpire') {
-        const umpireSinceYear = formData.umpireSince ? parseInt(formData.umpireSince, 10) : null
+        // Use the flushed snapshot (see "Flush any uncommitted language chip
+        // text" block above) so a just-typed language makes it into the
+        // payload even though the setFormData re-render hasn't happened yet.
+        const umpireSinceYear = formSnapshot.umpireSince ? parseInt(formSnapshot.umpireSince, 10) : null
         updateData = {
           ...updateData,
-          nationality2_country_id: formData.nationality2CountryId,
-          gender: normalizeGender(formData.gender),
-          date_of_birth: formData.dateOfBirth || null,
-          umpire_level: formData.umpireLevel.trim() || null,
-          federation: formData.federation.trim() || null,
+          nationality2_country_id: formSnapshot.nationality2CountryId,
+          gender: normalizeGender(formSnapshot.gender),
+          date_of_birth: formSnapshot.dateOfBirth || null,
+          umpire_level: formSnapshot.umpireLevel.trim() || null,
+          federation: formSnapshot.federation.trim() || null,
           umpire_since:
             umpireSinceYear && !Number.isNaN(umpireSinceYear) ? umpireSinceYear : null,
-          officiating_specialization: formData.officiatingSpecialization || null,
+          officiating_specialization: formSnapshot.officiatingSpecialization || null,
           // languages is a TEXT[] column; empty array would be valid but we
           // require ≥ 1 at validation time so this path always has entries.
-          languages: formData.languages.length > 0 ? formData.languages : null,
+          languages: formSnapshot.languages.length > 0 ? formSnapshot.languages : null,
         }
       } else if (userRole === 'club') {
         updateData = {
@@ -1653,50 +1693,59 @@ export default function CompleteProfile() {
                           </div>
                         )}
 
-                        {/* Add-language input (datalist) */}
+                        {/* Controlled add-language input — text lives in
+                            formData.pendingLanguage so handleNext can flush it
+                            before validating. Avoids the blur-vs-submit race. */}
                         <div className="flex gap-2">
                           <input
                             id="umpire-languages"
                             type="text"
                             list="language-suggestions"
+                            value={formData.pendingLanguage}
+                            onChange={(e) => setFormData({ ...formData, pendingLanguage: e.target.value })}
                             placeholder="e.g., English, Spanish, Dutch"
                             className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8026FA] focus:border-transparent"
                             autoComplete="off"
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') {
                                 e.preventDefault()
-                                const value = (e.currentTarget.value ?? '').trim()
+                                const value = formData.pendingLanguage.trim()
                                 if (!value) return
-                                if (!formData.languages.includes(value)) {
-                                  setFormData({
-                                    ...formData,
-                                    languages: [...formData.languages, value],
-                                  })
-                                }
-                                e.currentTarget.value = ''
-                              }
-                            }}
-                            onBlur={(e) => {
-                              // Commit on blur too — catches users who pick a
-                              // datalist suggestion then tab out without pressing Enter.
-                              const value = (e.currentTarget.value ?? '').trim()
-                              if (!value) return
-                              if (!formData.languages.includes(value)) {
                                 setFormData({
                                   ...formData,
-                                  languages: [...formData.languages, value],
+                                  languages: formData.languages.includes(value)
+                                    ? formData.languages
+                                    : [...formData.languages, value],
+                                  pendingLanguage: '',
                                 })
                               }
-                              e.currentTarget.value = ''
                             }}
                           />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const value = formData.pendingLanguage.trim()
+                              if (!value) return
+                              setFormData({
+                                ...formData,
+                                languages: formData.languages.includes(value)
+                                  ? formData.languages
+                                  : [...formData.languages, value],
+                                pendingLanguage: '',
+                              })
+                            }}
+                            disabled={!formData.pendingLanguage.trim()}
+                            className="px-4 py-3 rounded-lg bg-[#8026FA] text-white text-sm font-medium hover:bg-[#6B20D4] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                          >
+                            Add
+                          </button>
                         </div>
                         <datalist id="language-suggestions">
                           {LANGUAGE_SUGGESTIONS.map((lang) => (
                             <option key={lang} value={lang} />
                           ))}
                         </datalist>
-                        <p className="text-xs text-gray-400 mt-2">Press Enter to add. You can edit this later.</p>
+                        <p className="text-xs text-gray-400 mt-2">Press Enter or tap Add. You can edit this later.</p>
                       </div>
                     </>
                   )}

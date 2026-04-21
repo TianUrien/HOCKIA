@@ -23,7 +23,7 @@ interface ContactResult {
   id: string
   full_name: string
   avatar_url: string | null
-  role: 'player' | 'coach' | 'club' | 'brand'
+  role: 'player' | 'coach' | 'club' | 'brand' | 'umpire'
 }
 
 interface SharePostSheetProps {
@@ -33,7 +33,7 @@ interface SharePostSheetProps {
   authorId: string
   authorName: string | null
   authorAvatar: string | null
-  authorRole: 'player' | 'coach' | 'club' | 'brand'
+  authorRole: 'player' | 'coach' | 'club' | 'brand' | 'umpire'
   content: string
   thumbnailUrl: string | null
 }

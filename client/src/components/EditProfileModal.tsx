@@ -75,6 +75,9 @@ type ProfileFormData = {
   umpire_since: string
   officiating_specialization: UmpireSpec
   languages: string[]
+  // Controlled value for the language chip input — see handleSubmit flush
+  // in CompleteProfile.tsx for the blur-vs-submit race this avoids.
+  pending_language: string
 }
 
 interface WorldRegion {
@@ -182,6 +185,7 @@ const buildInitialFormData = (profile?: Profile | null): ProfileFormData => ({
   officiating_specialization:
     (((profile as unknown as { officiating_specialization?: string | null })?.officiating_specialization) as UmpireSpec) ?? '',
   languages: (((profile as unknown as { languages?: string[] | null })?.languages) ?? []) as string[],
+  pending_language: '',
 })
 
 export default function EditProfileModal({ isOpen, onClose, role }: EditProfileModalProps) {
@@ -483,7 +487,20 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
     e.preventDefault()
     setError('')
 
-    const validationError = validateFormData(formData, role)
+    // Flush any uncommitted language chip text before validating. Matches the
+    // pattern in CompleteProfile.handleSubmit — avoids a race where a user
+    // types "English" and clicks Save without pressing Enter first.
+    let formSnapshot = formData
+    if (role === 'umpire' && formData.pending_language.trim()) {
+      const pending = formData.pending_language.trim()
+      const nextLanguages = formData.languages.includes(pending)
+        ? formData.languages
+        : [...formData.languages, pending]
+      formSnapshot = { ...formData, languages: nextLanguages, pending_language: '' }
+      setFormData(formSnapshot)
+    }
+
+    const validationError = validateFormData(formSnapshot, role)
     if (validationError) {
       setError(validationError)
       return
@@ -538,19 +555,19 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
         ? formData.coach_specialization_custom.trim() || null
         : null
     } else if (role === 'umpire') {
-      const umpireSinceYear = formData.umpire_since ? parseInt(formData.umpire_since, 10) : null
-      optimisticUpdate.nationality = formData.nationality
-      optimisticUpdate.nationality_country_id = formData.nationality_country_id
-      optimisticUpdate.nationality2_country_id = formData.nationality2_country_id
-      optimisticUpdate.gender = formData.gender || null
-      optimisticUpdate.date_of_birth = formData.date_of_birth || null
-      optimisticUpdate.bio = formData.bio || null
-      optimisticUpdate.umpire_level = formData.umpire_level.trim() || null
-      optimisticUpdate.federation = formData.federation.trim() || null
+      const umpireSinceYear = formSnapshot.umpire_since ? parseInt(formSnapshot.umpire_since, 10) : null
+      optimisticUpdate.nationality = formSnapshot.nationality
+      optimisticUpdate.nationality_country_id = formSnapshot.nationality_country_id
+      optimisticUpdate.nationality2_country_id = formSnapshot.nationality2_country_id
+      optimisticUpdate.gender = formSnapshot.gender || null
+      optimisticUpdate.date_of_birth = formSnapshot.date_of_birth || null
+      optimisticUpdate.bio = formSnapshot.bio || null
+      optimisticUpdate.umpire_level = formSnapshot.umpire_level.trim() || null
+      optimisticUpdate.federation = formSnapshot.federation.trim() || null
       optimisticUpdate.umpire_since =
         umpireSinceYear && !Number.isNaN(umpireSinceYear) ? umpireSinceYear : null
-      optimisticUpdate.officiating_specialization = formData.officiating_specialization || null
-      optimisticUpdate.languages = formData.languages.length > 0 ? formData.languages : null
+      optimisticUpdate.officiating_specialization = formSnapshot.officiating_specialization || null
+      optimisticUpdate.languages = formSnapshot.languages.length > 0 ? formSnapshot.languages : null
     } else if (role === 'club') {
       optimisticUpdate.nationality = formData.nationality
       optimisticUpdate.nationality_country_id = formData.nationality_country_id
@@ -1216,45 +1233,56 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                       ))}
                     </div>
                   )}
-                  <input
-                    id="edit-umpire-languages"
-                    type="text"
-                    list="edit-language-suggestions"
-                    placeholder="e.g., English, Spanish, Dutch"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8026FA] focus:border-transparent"
-                    autoComplete="off"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault()
-                        const value = (e.currentTarget.value ?? '').trim()
-                        if (!value) return
-                        if (!formData.languages.includes(value)) {
+                  <div className="flex gap-2">
+                    <input
+                      id="edit-umpire-languages"
+                      type="text"
+                      list="edit-language-suggestions"
+                      value={formData.pending_language}
+                      onChange={(e) => setFormData({ ...formData, pending_language: e.target.value })}
+                      placeholder="e.g., English, Spanish, Dutch"
+                      className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8026FA] focus:border-transparent"
+                      autoComplete="off"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          const value = formData.pending_language.trim()
+                          if (!value) return
                           setFormData({
                             ...formData,
-                            languages: [...formData.languages, value],
+                            languages: formData.languages.includes(value)
+                              ? formData.languages
+                              : [...formData.languages, value],
+                            pending_language: '',
                           })
                         }
-                        e.currentTarget.value = ''
-                      }
-                    }}
-                    onBlur={(e) => {
-                      const value = (e.currentTarget.value ?? '').trim()
-                      if (!value) return
-                      if (!formData.languages.includes(value)) {
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const value = formData.pending_language.trim()
+                        if (!value) return
                         setFormData({
                           ...formData,
-                          languages: [...formData.languages, value],
+                          languages: formData.languages.includes(value)
+                            ? formData.languages
+                            : [...formData.languages, value],
+                          pending_language: '',
                         })
-                      }
-                      e.currentTarget.value = ''
-                    }}
-                  />
+                      }}
+                      disabled={!formData.pending_language.trim()}
+                      className="px-4 py-3 rounded-lg bg-[#8026FA] text-white text-sm font-medium hover:bg-[#6B20D4] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    >
+                      Add
+                    </button>
+                  </div>
                   <datalist id="edit-language-suggestions">
                     {LANGUAGE_SUGGESTIONS.map((lang) => (
                       <option key={lang} value={lang} />
                     ))}
                   </datalist>
-                  <p className="text-xs text-gray-400 mt-2">Press Enter to add.</p>
+                  <p className="text-xs text-gray-400 mt-2">Press Enter or tap Add.</p>
                 </div>
 
                 <div>

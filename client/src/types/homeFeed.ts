@@ -146,7 +146,7 @@ export interface UserPostFeedItem extends BaseFeedItem {
   author_id: string
   author_name: string | null
   author_avatar: string | null
-  author_role: 'player' | 'coach' | 'club' | 'brand'
+  author_role: 'player' | 'coach' | 'club' | 'brand' | 'umpire'
   content: string
   images: PostMediaItem[] | null
   like_count: number
