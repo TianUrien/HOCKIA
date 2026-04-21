@@ -6,6 +6,7 @@ import PlayerDashboard from './PlayerDashboard'
 import CoachDashboard from './CoachDashboard'
 import ClubDashboard from './ClubDashboard'
 import BrandDashboard from './BrandDashboard'
+import UmpireDashboard from './UmpireDashboard'
 
 /**
  * DashboardRouter - Single source of truth for profile-based routing
@@ -145,6 +146,12 @@ export default function DashboardRouter() {
   // Brand users: render BrandDashboard (handles its own loading/redirect logic)
   if (profile.role === 'brand') {
     return <div data-testid="dashboard-brand"><BrandDashboard /></div>
+  }
+
+  // Umpire is Phase A: no self-service onboarding yet. Admins flip profiles
+  // to role='umpire' manually to test the dashboard.
+  if (profile.role === 'umpire') {
+    return <div data-testid="dashboard-umpire"><UmpireDashboard /></div>
   }
 
   return <div data-testid="dashboard-club"><ClubDashboard /></div>
