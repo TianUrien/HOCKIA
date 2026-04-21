@@ -950,41 +950,58 @@ export default function CompleteProfile() {
               {isWizardFlow ? `Step ${currentStep} of 3 — ${stepLabels[userRole][currentStep]}` : 'Fill in your details below'}
             </p>
 
-            {/* Step indicator — player/coach only */}
+            {/* Step indicator — player/coach only.
+                A11y: the visual circles + connectors are decorative; each step
+                is an <li> whose sr-only text announces its number, label, and
+                status so screen-reader users get the same information. The
+                outer <ol> carries the list semantics (navigation convention
+                for wizard/step UIs). */}
             {isWizardFlow && (
-              <div className="mb-6" aria-label={`Step ${currentStep} of 3`}>
-                <div className="flex items-center gap-2">
-                  {([1, 2, 3] as WizardStep[]).map((step, idx) => {
-                    const isCompleted = step < currentStep
-                    const isActive = step === currentStep
-                    return (
-                      <div key={step} className="flex items-center flex-1">
-                        <div
-                          className={
-                            isCompleted
-                              ? 'flex items-center justify-center w-7 h-7 rounded-full text-white text-xs font-semibold bg-emerald-500'
-                              : isActive
-                              ? 'flex items-center justify-center w-7 h-7 rounded-full text-white text-xs font-semibold bg-gradient-to-br from-[#8026FA] to-[#924CEC] ring-4 ring-[#8026FA]/15'
-                              : 'flex items-center justify-center w-7 h-7 rounded-full text-gray-400 text-xs font-semibold border-2 border-gray-200 bg-white'
-                          }
-                          aria-current={isActive ? 'step' : undefined}
-                        >
+              <ol
+                className="mb-6 flex items-center gap-2"
+                aria-label="Profile completion steps"
+              >
+                {([1, 2, 3] as WizardStep[]).map((step, idx) => {
+                  const isCompleted = step < currentStep
+                  const isActive = step === currentStep
+                  const statusText = isCompleted
+                    ? 'completed'
+                    : isActive
+                    ? 'current step'
+                    : 'not started'
+                  return (
+                    <li key={step} className="flex items-center flex-1">
+                      <div
+                        className={
+                          isCompleted
+                            ? 'flex items-center justify-center w-7 h-7 rounded-full text-white text-xs font-semibold bg-emerald-500'
+                            : isActive
+                            ? 'flex items-center justify-center w-7 h-7 rounded-full text-white text-xs font-semibold bg-gradient-to-br from-[#8026FA] to-[#924CEC] ring-4 ring-[#8026FA]/15'
+                            : 'flex items-center justify-center w-7 h-7 rounded-full text-gray-400 text-xs font-semibold border-2 border-gray-200 bg-white'
+                        }
+                        aria-current={isActive ? 'step' : undefined}
+                      >
+                        <span aria-hidden="true">
                           {isCompleted ? <Check className="w-3.5 h-3.5" /> : step}
-                        </div>
-                        {idx < 2 && (
-                          <div
-                            className={
-                              step < currentStep
-                                ? 'flex-1 h-0.5 mx-2 bg-emerald-500'
-                                : 'flex-1 h-0.5 mx-2 bg-gray-200'
-                            }
-                          />
-                        )}
+                        </span>
+                        <span className="sr-only">
+                          {`Step ${step} of 3, ${stepLabels[userRole][step]}, ${statusText}`}
+                        </span>
                       </div>
-                    )
-                  })}
-                </div>
-              </div>
+                      {idx < 2 && (
+                        <div
+                          aria-hidden="true"
+                          className={
+                            step < currentStep
+                              ? 'flex-1 h-0.5 mx-2 bg-emerald-500'
+                              : 'flex-1 h-0.5 mx-2 bg-gray-200'
+                          }
+                        />
+                      )}
+                    </li>
+                  )
+                })}
+              </ol>
             )}
 
             {error && (
