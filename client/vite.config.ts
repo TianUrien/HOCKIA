@@ -119,6 +119,22 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       chunkSizeWarningLimit: 700,
+      // Strip admin-only chunks from the entry HTML's modulepreload list.
+      // Vite's default preload logic is aggressive: it preloads every chunk
+      // reachable through the dynamic-import graph from the entry, so users
+      // who never visit the admin dashboard still paid the download cost of
+      // `charts-*.js` (recharts + d3, ~110 KB gzip) on every cold load. Those
+      // chunks remain available — admin pages fetch them on demand when the
+      // lazy boundary fires. We only skip the *preload hint* on the HTML.
+      //
+      // Do NOT filter on js hosts: inside the dynamic-import graph the
+      // preload is already correctly scoped to the consumer chunk.
+      modulePreload: {
+        resolveDependencies(_filename, deps, { hostType }) {
+          if (hostType !== 'html') return deps
+          return deps.filter(dep => !/\/(charts)-/.test(dep))
+        },
+      },
       rollupOptions: {
         output: {
           manualChunks(id) {
