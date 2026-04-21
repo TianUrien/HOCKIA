@@ -26,7 +26,7 @@ interface Profile {
   id: string
   avatar_url: string | null
   full_name: string
-  role: 'player' | 'coach' | 'club' | 'brand'
+  role: 'player' | 'coach' | 'club' | 'brand' | 'umpire'
   nationality: string | null
   nationality_country_id: number | null
   nationality2_country_id: number | null
@@ -60,13 +60,19 @@ interface Profile {
   // Admin-granted verified badge — unified on profiles for every role.
   is_verified?: boolean | null
   verified_at?: string | null
+  // Umpire-only fields (on profiles row; gated by DB chk_umpire_fields_role)
+  umpire_level?: string | null
+  federation?: string | null
+  umpire_since?: number | null
+  officiating_specialization?: string | null
+  languages?: string[] | null
 }
 
 const PROFILES_SELECT =
-  'id, avatar_url, full_name, role, nationality, nationality_country_id, nationality2_country_id, base_location, position, secondary_position, current_club, current_world_club_id, gender, created_at, is_test_account, open_to_play, open_to_coach, accepted_reference_count, coach_specialization, coach_specialization_custom, highlight_video_url, bio, club_bio, year_founded, website, contact_email, career_entry_count, accepted_friend_count, is_verified, verified_at'
+  'id, avatar_url, full_name, role, nationality, nationality_country_id, nationality2_country_id, base_location, position, secondary_position, current_club, current_world_club_id, gender, created_at, is_test_account, open_to_play, open_to_coach, accepted_reference_count, coach_specialization, coach_specialization_custom, highlight_video_url, bio, club_bio, year_founded, website, contact_email, career_entry_count, accepted_friend_count, is_verified, verified_at, umpire_level, federation, umpire_since, officiating_specialization, languages'
 
 interface CommunityFilters {
-  role: 'all' | 'player' | 'coach' | 'club' | 'brand'
+  role: 'all' | 'player' | 'coach' | 'club' | 'brand' | 'umpire'
   position: string[]
   gender: 'all' | 'Men' | 'Women'
   location: string
@@ -464,6 +470,8 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
       navigate(member.brand_slug ? `/brands/${member.brand_slug}` : '/brands')
     } else if (member.role === 'club') {
       navigate(`/clubs/id/${member.id}`)
+    } else if (member.role === 'umpire') {
+      navigate(`/umpires/id/${member.id}`)
     } else {
       navigate(`/players/id/${member.id}`)
     }
@@ -626,7 +634,7 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Role</label>
                 <div className="space-y-2">
-                  {(['all', 'player', 'coach', 'club', 'brand'] as const).map((role) => (
+                  {(['all', 'player', 'coach', 'club', 'brand', 'umpire'] as const).map((role) => (
                     <label key={role} className="flex items-center gap-2 cursor-pointer">
                       <input
                         type="radio"
@@ -641,8 +649,9 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
               </div>
             )}
 
-            {/* Position — hidden when role is club or brand */}
-            {filters.role !== 'club' && filters.role !== 'brand' && (
+            {/* Position — hidden when role is club, brand, or umpire
+                (umpires don't have field positions). */}
+            {filters.role !== 'club' && filters.role !== 'brand' && filters.role !== 'umpire' && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   {filters.role === 'coach' ? 'Coaching Role' : 'Position'}
@@ -767,6 +776,8 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
                     tier={getMemberTier(member)}
                     isVerified={Boolean(member.is_verified)}
                     verifiedAt={member.verified_at ?? null}
+                    umpireLevel={member.umpire_level ?? null}
+                    federation={member.federation ?? null}
                   />
                 ))}
               </div>

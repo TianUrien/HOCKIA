@@ -71,11 +71,14 @@ export const FRESHNESS_THRESHOLDS: Record<FreshnessNudgeId, number> = {
 }
 
 /** Role-specific ordering — only these nudge ids are considered for each role. */
-const NUDGES_BY_ROLE: Record<'player' | 'coach' | 'club' | 'brand', FreshnessNudgeId[]> = {
+const NUDGES_BY_ROLE: Record<'player' | 'coach' | 'club' | 'brand' | 'umpire', FreshnessNudgeId[]> = {
   player: ['journey-stale', 'gallery-stale'],
   coach: ['journey-stale', 'gallery-stale', 'bio-stale'],
   club: ['media-stale', 'journey-stale'],
   brand: ['posts-stale', 'products-stale'],
+  // Umpires don't have Journey or Gallery in Phase B — the only meaningful
+  // freshness signal is a stale bio. Expand once Officiating Journey ships.
+  umpire: ['bio-stale'],
 }
 
 function daysBetween(fromIso: string, nowMs: number): number {
@@ -158,7 +161,7 @@ function buildNudge(
  * declaration order in NUDGES_BY_ROLE.
  */
 export function pickFreshnessNudge(
-  role: 'player' | 'coach' | 'club' | 'brand',
+  role: 'player' | 'coach' | 'club' | 'brand' | 'umpire',
   signals: FreshnessSignals,
   now: Date = new Date()
 ): FreshnessNudge | null {

@@ -15,7 +15,7 @@ interface MemberCardProps {
   id: string
   avatar_url: string | null
   full_name: string
-  role: 'player' | 'coach' | 'club' | 'brand'
+  role: 'player' | 'coach' | 'club' | 'brand' | 'umpire'
   brandSlug?: string
   brandCategory?: string
   nationality: string | null
@@ -42,6 +42,10 @@ interface MemberCardProps {
   isVerified?: boolean
   /** ISO timestamp for the current verification — powers the tooltip date. */
   verifiedAt?: string | null
+  /** Umpire certification level (only rendered when role === 'umpire'). */
+  umpireLevel?: string | null
+  /** Umpire federation (only rendered when role === 'umpire'). */
+  federation?: string | null
 }
 
 export default function MemberCard({
@@ -67,6 +71,8 @@ export default function MemberCard({
   tier,
   isVerified,
   verifiedAt,
+  umpireLevel,
+  federation,
 }: MemberCardProps) {
   const navigate = useNavigate()
   const { user } = useAuthStore()
@@ -136,8 +142,10 @@ export default function MemberCard({
       navigate(brandSlug ? `/brands/${brandSlug}?ref=community` : '/brands')
     } else if (role === 'club') {
       navigate(`/clubs/id/${id}?ref=community`)
+    } else if (role === 'umpire') {
+      navigate(`/umpires/id/${id}?ref=community`)
     } else {
-      // Players and Coaches use player profile route
+      // Players and Coaches share the player profile route
       navigate(`/players/id/${id}?ref=community`)
     }
   }
@@ -200,7 +208,19 @@ export default function MemberCard({
           </div>
         )}
 
-        {role === 'coach' && coach_specialization ? (
+        {role === 'umpire' ? (
+          (umpireLevel || federation) && (
+            <div className="flex items-center gap-2.5">
+              <Shield className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+              <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider min-w-[68px]">Level</span>
+              <span className="text-gray-700">
+                {umpireLevel ?? ''}
+                {umpireLevel && federation ? ' · ' : ''}
+                {federation ?? ''}
+              </span>
+            </div>
+          )
+        ) : role === 'coach' && coach_specialization ? (
           <div className="flex items-center gap-2.5">
             <Shield className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
             <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider min-w-[68px]">Role</span>

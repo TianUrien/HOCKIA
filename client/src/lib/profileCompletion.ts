@@ -18,7 +18,7 @@
  */
 
 export interface CommunityMemberFields {
-  role: 'player' | 'coach' | 'club' | 'brand'
+  role: 'player' | 'coach' | 'club' | 'brand' | 'umpire'
   full_name?: string | null
   avatar_url?: string | null
   nationality?: string | null
@@ -40,6 +40,12 @@ export interface CommunityMemberFields {
   brand_bio?: string | null
   brand_website_url?: string | null
   brand_instagram_url?: string | null
+  /** Umpire-only fields fetched directly from the profile row */
+  umpire_level?: string | null
+  federation?: string | null
+  umpire_since?: number | null
+  officiating_specialization?: string | null
+  languages?: string[] | null
 }
 
 const hasNationality = (m: CommunityMemberFields): boolean =>
@@ -113,6 +119,24 @@ function isBrandComplete(m: CommunityMemberFields): boolean {
 }
 
 /**
+ * Umpire: credentials-first. Level + federation + specialization + photo
+ * + bio + ≥ 1 language are the "complete" bar. Journey/Gallery are deferred
+ * to Phase C, so they're not part of completeness yet.
+ */
+function isUmpireComplete(m: CommunityMemberFields): boolean {
+  return (
+    hasNationality(m) &&
+    hasText(m.base_location) &&
+    hasText(m.umpire_level) &&
+    hasText(m.federation) &&
+    hasText(m.officiating_specialization) &&
+    hasText(m.avatar_url) &&
+    hasText(m.bio) &&
+    (m.languages?.length ?? 0) >= 1
+  )
+}
+
+/**
  * Returns true when the member meets the per-role "fully complete" threshold
  * using only the fields cheaply fetched in the community grid query.
  */
@@ -126,6 +150,8 @@ export function isProfileComplete(m: CommunityMemberFields): boolean {
       return isClubComplete(m)
     case 'brand':
       return isBrandComplete(m)
+    case 'umpire':
+      return isUmpireComplete(m)
     default:
       return false
   }

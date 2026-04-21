@@ -224,7 +224,7 @@ export interface AuditLogEntry {
 
 export interface ProfileSearchParams {
   query?: string
-  role?: 'player' | 'coach' | 'club' | 'brand'
+  role?: 'player' | 'coach' | 'club' | 'brand' | 'umpire'
   is_blocked?: boolean
   is_test_account?: boolean
   onboarding_completed?: boolean

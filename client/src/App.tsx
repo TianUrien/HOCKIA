@@ -64,6 +64,7 @@ const QuestionDetailPage = lazyWithRetry(() => import('@/pages/QuestionDetailPag
 const ApplicantsList = lazyWithRetry(() => import('@/pages/ApplicantsList'))
 const PublicPlayerProfile = lazyWithRetry(() => import('@/pages/PublicPlayerProfile'))
 const PublicClubProfile = lazyWithRetry(() => import('@/pages/PublicClubProfile'))
+const PublicUmpireProfile = lazyWithRetry(() => import('@/pages/PublicUmpireProfile'))
 const MessagesPage = lazyWithRetry(() => import('@/pages/MessagesPage'))
 const SearchPage = lazyWithRetry(() => import('@/pages/SearchPage'))
 const DiscoverPage = lazyWithRetry(() => import('@/pages/DiscoverPage'))
@@ -367,6 +368,8 @@ function App() {
                 <Route path="/players/id/:id" element={<PublicPlayerProfile />} />
                 <Route path="/clubs/:username" element={<PublicClubProfile />} />
                 <Route path="/clubs/id/:id" element={<PublicClubProfile />} />
+                <Route path="/umpires/:username" element={<PublicUmpireProfile />} />
+                <Route path="/umpires/id/:id" element={<PublicUmpireProfile />} />
                 
                 {/* Admin Routes - Protected + Admin Guard */}
                 <Route path="/admin" element={<ErrorBoundary fallback={<RouteErrorFallback />}><AdminGuard><AdminLayout /></AdminGuard></ErrorBoundary>}>

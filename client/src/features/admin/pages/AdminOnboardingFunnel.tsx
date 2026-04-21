@@ -20,13 +20,14 @@ import { getOnboardingFunnelDetail } from '../api/analyticsApi'
 import { logger } from '@/lib/logger'
 
 type DaysFilter = 7 | 30 | 90
-type RoleFilter = null | 'player' | 'coach' | 'club' | 'brand'
+type RoleFilter = null | 'player' | 'coach' | 'club' | 'brand' | 'umpire'
 
 const ROLE_COLORS: Record<string, { bg: string; text: string }> = {
   player: { bg: '#EFF6FF', text: '#2563EB' },
   coach: { bg: '#F0FDFA', text: '#0D9488' },
   club: { bg: '#FFF7ED', text: '#EA580C' },
   brand: { bg: '#FFF1F2', text: '#E11D48' },
+  umpire: { bg: '#FEFCE8', text: '#A16207' },
 }
 
 const FUNNEL_STEPS = [
@@ -163,6 +164,7 @@ export function AdminOnboardingFunnel() {
               <option value="coach">Coach</option>
               <option value="club">Club</option>
               <option value="brand">Brand</option>
+              <option value="umpire">Umpire</option>
             </select>
             <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           </div>

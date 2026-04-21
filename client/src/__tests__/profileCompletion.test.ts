@@ -49,6 +49,20 @@ const completeBrand: CommunityMemberFields = {
   brand_website_url: 'https://acmehockey.com',
 }
 
+const completeUmpire: CommunityMemberFields = {
+  role: 'umpire',
+  full_name: 'Umi Umpire',
+  avatar_url: 'https://example.com/u.png',
+  nationality_country_id: 11,
+  base_location: 'London',
+  bio: 'Twenty years officiating first-division matches across Europe.',
+  umpire_level: 'FIH International',
+  federation: 'FIH',
+  umpire_since: 2015,
+  officiating_specialization: 'outdoor',
+  languages: ['English', 'Spanish'],
+}
+
 describe('isProfileComplete', () => {
   describe('player', () => {
     it('returns true for a fully complete player', () => {
@@ -203,6 +217,37 @@ describe('isProfileComplete', () => {
       expect(
         isProfileComplete({
           ...completeBrand,
+          nationality_country_id: null,
+          nationality: null,
+        })
+      ).toBe(false)
+    })
+  })
+
+  describe('umpire', () => {
+    it('returns true for a fully complete umpire', () => {
+      expect(isProfileComplete(completeUmpire)).toBe(true)
+    })
+
+    it.each([
+      'avatar_url',
+      'base_location',
+      'bio',
+      'umpire_level',
+      'federation',
+      'officiating_specialization',
+    ] as const)('returns false when %s is missing', (field) => {
+      expect(isProfileComplete({ ...completeUmpire, [field]: null })).toBe(false)
+    })
+
+    it('returns false when no languages are set', () => {
+      expect(isProfileComplete({ ...completeUmpire, languages: [] })).toBe(false)
+    })
+
+    it('returns false when nationality is missing', () => {
+      expect(
+        isProfileComplete({
+          ...completeUmpire,
           nationality_country_id: null,
           nationality: null,
         })

@@ -23,10 +23,12 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, MapPin, Calendar, Shield, Flag, Edit2, Languages as LanguagesIcon } from 'lucide-react'
 import Header from '@/components/Header'
-import { Avatar, EditProfileModal, RoleBadge, VerifiedBadge, DualNationalityDisplay } from '@/components'
+import { Avatar, EditProfileModal, RoleBadge, TierBadge, VerifiedBadge, DualNationalityDisplay } from '@/components'
 import { useAuthStore } from '@/lib/auth'
 import type { Profile } from '@/lib/supabase'
 import { calculateAge, formatDateOfBirth } from '@/lib/utils'
+import { calculateTier, estimateMemberStrength } from '@/lib/profileTier'
+import type { CommunityMemberFields } from '@/lib/profileCompletion'
 
 export type UmpireProfileShape =
   Partial<Profile> &
@@ -78,6 +80,15 @@ export default function UmpireDashboard({ profileData, readOnly = false }: Umpir
     () => (profile ? (profile as unknown as UmpireFields) : {}),
     [profile]
   )
+
+  // Tier comes from the shared per-role estimator so the badge here matches
+  // what community-grid cards render. Once `useUmpireProfileStrength` exists
+  // (Phase B2), owner-view can upgrade to the precise percentage.
+  const tier = useMemo(() => {
+    if (!profile) return null
+    const asMember = profile as unknown as CommunityMemberFields
+    return calculateTier(estimateMemberStrength(asMember))
+  }, [profile])
 
   useEffect(() => {
     document.title = profile?.full_name
@@ -148,6 +159,7 @@ export default function UmpireDashboard({ profileData, readOnly = false }: Umpir
 
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <RoleBadge role="umpire" />
+                {!readOnly && tier && <TierBadge tier={tier} />}
                 {umpireFields.umpire_level && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800">
                     <Shield className="w-3 h-3" />

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Eye, EyeOff, Mail, Lock, User, Building2, Briefcase, Store } from 'lucide-react'
+import { Eye, EyeOff, Mail, Lock, User, Building2, Briefcase, Store, Flag } from 'lucide-react'
 import * as Sentry from '@sentry/react'
 import { Input, Button, InAppBrowserWarning } from '@/components'
 import { supabase } from '@/lib/supabase'
@@ -11,7 +11,7 @@ import { supportsReliableOAuth } from '@/lib/inAppBrowser'
 import { checkSignupRateLimit, formatRateLimitError } from '@/lib/rateLimit'
 import { trackSignUpStart, trackSignUp } from '@/lib/analytics'
 
-type UserRole = 'player' | 'coach' | 'club' | 'brand'
+type UserRole = 'player' | 'coach' | 'club' | 'brand' | 'umpire'
 type SignUpResponse = Awaited<ReturnType<typeof supabase.auth.signUp>>
 
 /**
@@ -220,6 +220,19 @@ export default function SignUp() {
                   <div className="flex-1 text-left">
                     <h4 className="text-lg font-bold text-gray-900 mb-1">Join as Brand</h4>
                     <p className="text-sm text-gray-600">Showcase products and connect with athletes</p>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => setSelectedRole('umpire')}
+                  className="w-full flex items-center gap-4 p-6 border-2 border-gray-200 rounded-xl hover:border-[#A16207] hover:bg-[#A16207]/5 transition-all group"
+                >
+                  <div className="w-14 h-14 rounded-full bg-[#A16207]/10 group-hover:bg-[#A16207] flex items-center justify-center transition-colors">
+                    <Flag className="w-7 h-7 text-[#A16207] group-hover:text-white transition-colors" />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <h4 className="text-lg font-bold text-gray-900 mb-1">Join as Umpire</h4>
+                    <p className="text-sm text-gray-600">Be recognized as an officiating professional in the hockey community</p>
                   </div>
                 </button>
               </div>

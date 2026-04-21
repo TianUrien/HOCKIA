@@ -17,7 +17,7 @@ interface SharedPostCardProps {
   postId: string
   authorName: string | null
   authorAvatar: string | null
-  authorRole: 'player' | 'coach' | 'club' | 'brand'
+  authorRole: 'player' | 'coach' | 'club' | 'brand' | 'umpire'
   contentPreview: string
   thumbnailUrl: string | null
   isMine: boolean

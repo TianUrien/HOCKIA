@@ -47,6 +47,8 @@ export function ProfileViewersSection() {
       if (viewer.brand_slug) {
         navigate(`/brands/${viewer.brand_slug}`)
       }
+    } else if (viewer.role === 'umpire') {
+      navigate(`/umpires/id/${viewer.viewer_id}`)
     } else {
       navigate(`/players/id/${viewer.viewer_id}`)
     }

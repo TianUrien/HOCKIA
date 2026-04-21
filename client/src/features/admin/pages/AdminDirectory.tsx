@@ -78,7 +78,7 @@ export function AdminDirectory() {
     try {
       const params: ProfileSearchParams = {
         query: searchQuery || undefined,
-        role: roleFilter as 'player' | 'coach' | 'club' | 'brand' | undefined,
+        role: roleFilter as 'player' | 'coach' | 'club' | 'brand' | 'umpire' | undefined,
         is_blocked: statusFilter === 'blocked' ? true : statusFilter === 'active' || statusFilter === 'incomplete' ? false : undefined,
         onboarding_completed: statusFilter === 'active' ? true : statusFilter === 'incomplete' ? false : undefined,
         is_test_account: testFilter === 'test' ? true : testFilter === 'real' ? false : undefined,
@@ -421,6 +421,7 @@ export function AdminDirectory() {
             <option value="coach">Coaches</option>
             <option value="club">Clubs</option>
             <option value="brand">Brands</option>
+            <option value="umpire">Umpires</option>
           </select>
 
           <select

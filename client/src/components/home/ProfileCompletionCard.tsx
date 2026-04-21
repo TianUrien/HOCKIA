@@ -57,7 +57,14 @@ export default function ProfileCompletionCard() {
           ? 'Clubs with logos get more attention from players.'
           : 'Profiles with photos are more likely to be shortlisted by clubs.',
         action: () => {
-          const dashPath = role === 'coach' ? '/coaches/' : role === 'club' ? '/clubs/' : '/players/'
+          const dashPath =
+            role === 'coach'
+              ? '/coaches/'
+              : role === 'club'
+                ? '/clubs/'
+                : role === 'umpire'
+                  ? '/umpires/'
+                  : '/players/'
           navigate(`${dashPath}${(p as Profile).username}?action=edit`)
         },
         actionLabel: 'Add Photo',

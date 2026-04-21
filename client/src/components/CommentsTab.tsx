@@ -87,7 +87,12 @@ export default function CommentsTab({ profileId, highlightedCommentIds }: Commen
     if (!isOwner || !authProfile) return ''
     const origin = typeof window !== 'undefined' ? window.location.origin : ''
     const slug = authProfile.username || `id/${authProfile.id}`
-    const basePath = authProfile.role === 'club' ? '/clubs' : '/players'
+    const basePath =
+      authProfile.role === 'club'
+        ? '/clubs'
+        : authProfile.role === 'umpire'
+          ? '/umpires'
+          : '/players'
     return `${origin}${basePath}/${slug}`
   }, [isOwner, authProfile])
 
