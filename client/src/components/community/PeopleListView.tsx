@@ -57,12 +57,9 @@ interface Profile {
   brand_bio?: string | null
   brand_website_url?: string | null
   brand_instagram_url?: string | null
-  // Admin-granted verified badge. For brands this is overridden below by
-  // brands.is_verified (they have their own column, unified in v1 via the
-  // badge component caller).
+  // Admin-granted verified badge — unified on profiles for every role.
   is_verified?: boolean | null
   verified_at?: string | null
-  brand_is_verified?: boolean | null
 }
 
 const PROFILES_SELECT =
@@ -155,11 +152,11 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
             if (brandIds.length > 0) {
               const { data: brands } = await supabase
                 .from('brands')
-                .select('profile_id, slug, category, bio, website_url, instagram_url, is_verified')
+                .select('profile_id, slug, category, bio, website_url, instagram_url')
                 .in('profile_id', brandIds)
               if (brands) {
                 const brandMap = new Map(
-                  (brands as { profile_id: string; slug: string; category: string; bio: string | null; website_url: string | null; instagram_url: string | null; is_verified: boolean | null }[]).map(
+                  (brands as { profile_id: string; slug: string; category: string; bio: string | null; website_url: string | null; instagram_url: string | null }[]).map(
                     (b) => [b.profile_id, b]
                   )
                 )
@@ -171,7 +168,6 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
                     m.brand_bio = brand?.bio || null
                     m.brand_website_url = brand?.website_url || null
                     m.brand_instagram_url = brand?.instagram_url || null
-                    m.brand_is_verified = brand?.is_verified ?? null
                   }
                 })
               }
@@ -254,11 +250,11 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
             if (brandIds.length > 0) {
               const { data: brands } = await supabase
                 .from('brands')
-                .select('profile_id, slug, category, bio, website_url, instagram_url, is_verified')
+                .select('profile_id, slug, category, bio, website_url, instagram_url')
                 .in('profile_id', brandIds)
               if (brands) {
                 const brandMap = new Map(
-                  (brands as { profile_id: string; slug: string; category: string; bio: string | null; website_url: string | null; instagram_url: string | null; is_verified: boolean | null }[]).map(
+                  (brands as { profile_id: string; slug: string; category: string; bio: string | null; website_url: string | null; instagram_url: string | null }[]).map(
                     (b) => [b.profile_id, b]
                   )
                 )
@@ -270,7 +266,6 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
                     m.brand_bio = brand?.bio || null
                     m.brand_website_url = brand?.website_url || null
                     m.brand_instagram_url = brand?.instagram_url || null
-                    m.brand_is_verified = brand?.is_verified ?? null
                   }
                 })
               }
@@ -770,11 +765,7 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
                     coach_specialization={member.coach_specialization}
                     coach_specialization_custom={member.coach_specialization_custom}
                     tier={getMemberTier(member)}
-                    isVerified={
-                      member.role === 'brand'
-                        ? Boolean(member.brand_is_verified)
-                        : Boolean(member.is_verified)
-                    }
+                    isVerified={Boolean(member.is_verified)}
                     verifiedAt={member.verified_at ?? null}
                   />
                 ))}
