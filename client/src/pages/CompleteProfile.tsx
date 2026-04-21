@@ -62,6 +62,10 @@ export default function CompleteProfile() {
   // 3 progressive steps (identity → background → role details). Club and brand
   // keep their existing flows untouched.
   const [currentStep, setCurrentStep] = useState<WizardStep>(1)
+  // Guards the step-viewed analytics so we emit once per (step, role) entry,
+  // not on every rerender. Drop-off is computed at analysis time from
+  // `wizard_step_viewed` vs. `wizard_step_completed` counts per step.
+  const viewedStepsRef = useRef<Set<string>>(new Set())
 
   // Form data states
   const [formData, setFormData] = useState({
@@ -473,14 +477,41 @@ export default function CompleteProfile() {
   // without mounting this whole page. The whole-form `validateForm`
   // below is still called on submit as a safety net in case the user
   // navigates back and clears a field.
+  // Fire `wizard_step_viewed` once per (step, role) entry. Runs after the
+  // user has picked a role (userRole becomes truthy) and whenever they land
+  // on a step they haven't seen yet — including back-navigation.
+  useEffect(() => {
+    if (!isWizardFlow || !user?.id) return
+    const key = `${userRole}:${currentStep}`
+    if (viewedStepsRef.current.has(key)) return
+    viewedStepsRef.current.add(key)
+    trackDbEvent('onboarding_step', 'profile', user.id, {
+      step: 'wizard_step_viewed',
+      role: userRole,
+      wizard_step: currentStep,
+    })
+  }, [currentStep, userRole, isWizardFlow, user?.id])
+
   const handleNext = () => {
     if (userRole !== 'player' && userRole !== 'coach') return
     const stepError = validateOnboardingStep(currentStep, userRole, formData)
     if (stepError) {
       setError(stepError)
+      // Emit so we can see which step + which validation rule users get stuck on.
+      trackDbEvent('onboarding_step', 'profile', user?.id, {
+        step: 'wizard_step_validation_failed',
+        role: userRole,
+        wizard_step: currentStep,
+        reason: stepError,
+      })
       return
     }
     setError('')
+    trackDbEvent('onboarding_step', 'profile', user?.id, {
+      step: 'wizard_step_completed',
+      role: userRole,
+      wizard_step: currentStep,
+    })
     setCurrentStep((prev) => (prev === 3 ? 3 : ((prev + 1) as WizardStep)))
   }
 
@@ -950,41 +981,58 @@ export default function CompleteProfile() {
               {isWizardFlow ? `Step ${currentStep} of 3 — ${stepLabels[userRole][currentStep]}` : 'Fill in your details below'}
             </p>
 
-            {/* Step indicator — player/coach only */}
+            {/* Step indicator — player/coach only.
+                A11y: the visual circles + connectors are decorative; each step
+                is an <li> whose sr-only text announces its number, label, and
+                status so screen-reader users get the same information. The
+                outer <ol> carries the list semantics (navigation convention
+                for wizard/step UIs). */}
             {isWizardFlow && (
-              <div className="mb-6" aria-label={`Step ${currentStep} of 3`}>
-                <div className="flex items-center gap-2">
-                  {([1, 2, 3] as WizardStep[]).map((step, idx) => {
-                    const isCompleted = step < currentStep
-                    const isActive = step === currentStep
-                    return (
-                      <div key={step} className="flex items-center flex-1">
-                        <div
-                          className={
-                            isCompleted
-                              ? 'flex items-center justify-center w-7 h-7 rounded-full text-white text-xs font-semibold bg-emerald-500'
-                              : isActive
-                              ? 'flex items-center justify-center w-7 h-7 rounded-full text-white text-xs font-semibold bg-gradient-to-br from-[#8026FA] to-[#924CEC] ring-4 ring-[#8026FA]/15'
-                              : 'flex items-center justify-center w-7 h-7 rounded-full text-gray-400 text-xs font-semibold border-2 border-gray-200 bg-white'
-                          }
-                          aria-current={isActive ? 'step' : undefined}
-                        >
+              <ol
+                className="mb-6 flex items-center gap-2"
+                aria-label="Profile completion steps"
+              >
+                {([1, 2, 3] as WizardStep[]).map((step, idx) => {
+                  const isCompleted = step < currentStep
+                  const isActive = step === currentStep
+                  const statusText = isCompleted
+                    ? 'completed'
+                    : isActive
+                    ? 'current step'
+                    : 'not started'
+                  return (
+                    <li key={step} className="flex items-center flex-1">
+                      <div
+                        className={
+                          isCompleted
+                            ? 'flex items-center justify-center w-7 h-7 rounded-full text-white text-xs font-semibold bg-emerald-500'
+                            : isActive
+                            ? 'flex items-center justify-center w-7 h-7 rounded-full text-white text-xs font-semibold bg-gradient-to-br from-[#8026FA] to-[#924CEC] ring-4 ring-[#8026FA]/15'
+                            : 'flex items-center justify-center w-7 h-7 rounded-full text-gray-400 text-xs font-semibold border-2 border-gray-200 bg-white'
+                        }
+                        aria-current={isActive ? 'step' : undefined}
+                      >
+                        <span aria-hidden="true">
                           {isCompleted ? <Check className="w-3.5 h-3.5" /> : step}
-                        </div>
-                        {idx < 2 && (
-                          <div
-                            className={
-                              step < currentStep
-                                ? 'flex-1 h-0.5 mx-2 bg-emerald-500'
-                                : 'flex-1 h-0.5 mx-2 bg-gray-200'
-                            }
-                          />
-                        )}
+                        </span>
+                        <span className="sr-only">
+                          {`Step ${step} of 3, ${stepLabels[userRole][step]}, ${statusText}`}
+                        </span>
                       </div>
-                    )
-                  })}
-                </div>
-              </div>
+                      {idx < 2 && (
+                        <div
+                          aria-hidden="true"
+                          className={
+                            step < currentStep
+                              ? 'flex-1 h-0.5 mx-2 bg-emerald-500'
+                              : 'flex-1 h-0.5 mx-2 bg-gray-200'
+                          }
+                        />
+                      )}
+                    </li>
+                  )
+                })}
+              </ol>
             )}
 
             {error && (
