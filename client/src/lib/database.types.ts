@@ -2357,6 +2357,7 @@ export type Database = {
           languages: string[] | null
           last_active_at: string | null
           last_message_email_at: string | null
+          last_officiated_at: string | null
           last_platform: string | null
           last_profile_view_email_at: string | null
           league_division: string | null
@@ -2436,6 +2437,7 @@ export type Database = {
           languages?: string[] | null
           last_active_at?: string | null
           last_message_email_at?: string | null
+          last_officiated_at?: string | null
           last_platform?: string | null
           last_profile_view_email_at?: string | null
           league_division?: string | null
@@ -2515,6 +2517,7 @@ export type Database = {
           languages?: string[] | null
           last_active_at?: string | null
           last_message_email_at?: string | null
+          last_officiated_at?: string | null
           last_platform?: string | null
           last_profile_view_email_at?: string | null
           league_division?: string | null
@@ -4544,6 +4547,7 @@ export type Database = {
           languages: string[] | null
           last_active_at: string | null
           last_message_email_at: string | null
+          last_officiated_at: string | null
           last_platform: string | null
           last_profile_view_email_at: string | null
           league_division: string | null
@@ -4674,6 +4678,7 @@ export type Database = {
           languages: string[] | null
           last_active_at: string | null
           last_message_email_at: string | null
+          last_officiated_at: string | null
           last_platform: string | null
           last_profile_view_email_at: string | null
           league_division: string | null

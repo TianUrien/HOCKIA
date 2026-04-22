@@ -57,6 +57,7 @@ const PUBLIC_UMPIRE_FIELDS = [
   'umpire_since',
   'officiating_specialization',
   'languages',
+  'last_officiated_at',
 ].join(',')
 
 export default function PublicUmpireProfile() {

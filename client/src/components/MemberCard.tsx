@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MessageCircle, User, Globe, MapPin, Shield, Building2 } from 'lucide-react'
+import { MessageCircle, User, Globe, MapPin, Shield, Building2, Activity } from 'lucide-react'
 import { Avatar, RoleBadge, TierBadge, VerifiedBadge, NationalityCardDisplay, AvailabilityPill } from '@/components'
 import type { ProfileTier } from '@/lib/profileTier'
 import SignInPromptModal from '@/components/SignInPromptModal'
@@ -10,6 +10,7 @@ import { logger } from '@/lib/logger'
 import { useToastStore } from '@/lib/toast'
 import { useWorldClubLogo } from '@/hooks/useWorldClubLogo'
 import { getSpecializationLabel } from '@/lib/coachSpecializations'
+import { getUmpireActivity } from '@/lib/umpireActivity'
 
 interface MemberCardProps {
   id: string
@@ -46,6 +47,8 @@ interface MemberCardProps {
   umpireLevel?: string | null
   /** Umpire federation (only rendered when role === 'umpire'). */
   federation?: string | null
+  /** Most recent appointment end/start date (profiles.last_officiated_at). Drives the Phase D activity pill for umpires. */
+  lastOfficiatedAt?: string | null
 }
 
 export default function MemberCard({
@@ -73,7 +76,9 @@ export default function MemberCard({
   verifiedAt,
   umpireLevel,
   federation,
+  lastOfficiatedAt,
 }: MemberCardProps) {
+  const umpireActivity = role === 'umpire' ? getUmpireActivity(lastOfficiatedAt) : null
   const navigate = useNavigate()
   const { user } = useAuthStore()
   const { addToast } = useToastStore()
@@ -209,17 +214,34 @@ export default function MemberCard({
         )}
 
         {role === 'umpire' ? (
-          (umpireLevel || federation) && (
-            <div className="flex items-center gap-2.5">
-              <Shield className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-              <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider min-w-[68px]">Level</span>
-              <span className="text-gray-700">
-                {umpireLevel ?? ''}
-                {umpireLevel && federation ? ' · ' : ''}
-                {federation ?? ''}
-              </span>
-            </div>
-          )
+          <>
+            {(umpireLevel || federation) && (
+              <div className="flex items-center gap-2.5">
+                <Shield className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider min-w-[68px]">Level</span>
+                <span className="text-gray-700">
+                  {umpireLevel ?? ''}
+                  {umpireLevel && federation ? ' · ' : ''}
+                  {federation ?? ''}
+                </span>
+              </div>
+            )}
+            {umpireActivity && (
+              <div className="flex items-center gap-2.5">
+                <Activity className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider min-w-[68px]">Activity</span>
+                <span
+                  className={
+                    umpireActivity.state === 'active'
+                      ? 'text-emerald-700 font-medium'
+                      : 'text-gray-700'
+                  }
+                >
+                  {umpireActivity.label}
+                </span>
+              </div>
+            )}
+          </>
         ) : role === 'coach' && coach_specialization ? (
           <div className="flex items-center gap-2.5">
             <Shield className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />

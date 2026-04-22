@@ -21,7 +21,7 @@
 
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, MapPin, Calendar, Shield, Flag, Edit2, Languages as LanguagesIcon } from 'lucide-react'
+import { ArrowLeft, MapPin, Calendar, Shield, Flag, Edit2, Languages as LanguagesIcon, Activity } from 'lucide-react'
 import Header from '@/components/Header'
 import { Avatar, EditProfileModal, RoleBadge, TierBadge, VerifiedBadge, DualNationalityDisplay } from '@/components'
 import UmpireAppointmentsSection from '@/components/UmpireAppointmentsSection'
@@ -30,6 +30,7 @@ import type { Profile } from '@/lib/supabase'
 import { calculateAge, formatDateOfBirth } from '@/lib/utils'
 import { calculateTier } from '@/lib/profileTier'
 import { useUmpireProfileStrength } from '@/hooks/useUmpireProfileStrength'
+import { getUmpireActivity } from '@/lib/umpireActivity'
 
 export type UmpireProfileShape =
   Partial<Profile> &
@@ -153,6 +154,22 @@ export default function UmpireDashboard({ profileData, readOnly = false }: Umpir
                     {profile.federation}
                   </span>
                 )}
+                {(() => {
+                  const activity = getUmpireActivity(profile.last_officiated_at)
+                  if (!activity) return null
+                  const colorClass =
+                    activity.state === 'active'
+                      ? 'bg-emerald-50 text-emerald-800'
+                      : activity.state === 'recent'
+                        ? 'bg-gray-100 text-gray-700'
+                        : 'bg-gray-50 text-gray-500'
+                  return (
+                    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${colorClass}`}>
+                      <Activity className="w-3 h-3" />
+                      {activity.label}
+                    </span>
+                  )
+                })()}
               </div>
 
               <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-gray-600">

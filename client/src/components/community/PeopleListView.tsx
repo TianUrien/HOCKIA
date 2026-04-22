@@ -66,10 +66,11 @@ interface Profile {
   umpire_since?: number | null
   officiating_specialization?: string | null
   languages?: string[] | null
+  last_officiated_at?: string | null
 }
 
 const PROFILES_SELECT =
-  'id, avatar_url, full_name, role, nationality, nationality_country_id, nationality2_country_id, base_location, position, secondary_position, current_club, current_world_club_id, gender, created_at, is_test_account, open_to_play, open_to_coach, accepted_reference_count, coach_specialization, coach_specialization_custom, highlight_video_url, bio, club_bio, year_founded, website, contact_email, career_entry_count, accepted_friend_count, is_verified, verified_at, umpire_level, federation, umpire_since, officiating_specialization, languages'
+  'id, avatar_url, full_name, role, nationality, nationality_country_id, nationality2_country_id, base_location, position, secondary_position, current_club, current_world_club_id, gender, created_at, is_test_account, open_to_play, open_to_coach, accepted_reference_count, coach_specialization, coach_specialization_custom, highlight_video_url, bio, club_bio, year_founded, website, contact_email, career_entry_count, accepted_friend_count, is_verified, verified_at, umpire_level, federation, umpire_since, officiating_specialization, languages, last_officiated_at'
 
 interface CommunityFilters {
   role: 'all' | 'player' | 'coach' | 'club' | 'brand' | 'umpire'
@@ -778,6 +779,7 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
                     verifiedAt={member.verified_at ?? null}
                     umpireLevel={member.umpire_level ?? null}
                     federation={member.federation ?? null}
+                    lastOfficiatedAt={member.last_officiated_at ?? null}
                   />
                 ))}
               </div>
