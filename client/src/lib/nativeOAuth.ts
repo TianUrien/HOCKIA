@@ -16,6 +16,7 @@ import { App, type URLOpenListenerEvent } from '@capacitor/app'
 import { supabase } from './supabase'
 import { logger } from './logger'
 import { reportAuthFlowError } from './sentryHelpers'
+import { scopesFor } from './oauthSignIn'
 
 function breadcrumb(message: string, data?: Record<string, unknown>) {
   Sentry.addBreadcrumb({ category: 'auth.native_oauth', level: 'info', message, data })
@@ -38,11 +39,13 @@ export async function signInWithOAuthNative(provider: 'apple' | 'google'): Promi
   breadcrumb('request_oauth_url', { provider })
 
   // Get the OAuth URL from Supabase without auto-opening the browser
+  const scopes = scopesFor(provider)
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider,
     options: {
       redirectTo: 'hockia://auth/callback',
       skipBrowserRedirect: true,
+      ...(scopes ? { scopes } : {}),
     },
   })
 

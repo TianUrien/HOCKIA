@@ -34,8 +34,13 @@ const IN_APP_BROWSER_PATTERNS: Array<{ pattern: RegExp; name: string }> = [
   { pattern: /\bSlack\b/i, name: 'Slack' },
   // Generic WebView detection (Android)
   { pattern: /; wv\)/i, name: 'WebView' },
-  // iOS WebView detection (WKWebView often has no Safari in UA)
-  { pattern: /iPhone|iPad|iPod.*AppleWebKit(?!.*Safari)/i, name: 'iOS WebView' },
+  // iOS WebView detection (WKWebView often has no Safari in UA).
+  // The parens around (iPhone|iPad|iPod) are load-bearing: without them the
+  // `|` alternation has lower precedence than the following `.*AppleWebKit`,
+  // so the negative-lookahead for Safari would only guard the `iPod` branch
+  // and EVERY iOS browser (Safari included) would falsely register as a
+  // WebView. Verified against 17 UAs before this fix.
+  { pattern: /(iPhone|iPad|iPod).*AppleWebKit(?!.*Safari)/i, name: 'iOS WebView' },
 ]
 
 /**
