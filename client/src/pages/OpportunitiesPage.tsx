@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { ChevronDown, X } from 'lucide-react'
+import { ChevronDown, Shield, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuthStore } from '../lib/auth'
 import type { Vacancy } from '../lib/supabase'
@@ -129,8 +129,10 @@ export default function OpportunitiesPage() {
   const { countries } = useCountries()
 
   // Vacancies today are player/coach only (RLS enforces role + opportunity_type
-  // match). Umpires get a tailored empty-state — no point loading a list they
-  // can't act on. Revisit when Phase E/F adds umpire appointments.
+  // on application insert). Umpires browse the list like everyone else — they
+  // just don't see Apply buttons (gated below via canShowApplyButton) and
+  // they still can't post. When umpire appointments ship we'll add an umpire
+  // filter + umpire-specific vacancy types.
   const isUmpire = profile?.role === 'umpire'
 
   const [vacancies, setVacancies] = useState<Vacancy[]>([])
@@ -338,11 +340,10 @@ export default function OpportunitiesPage() {
   }, [user, profile])
 
   useEffect(() => {
-    if (isUmpire) return
     fetchVacancies()
     fetchUserApplications()
     void markSeen()
-  }, [fetchVacancies, fetchUserApplications, markSeen, isUmpire])
+  }, [fetchVacancies, fetchUserApplications, markSeen])
 
   // SEO meta tags
   useEffect(() => {
@@ -457,36 +458,6 @@ export default function OpportunitiesPage() {
 
   // ─── Render ────────────────────────────────────────────────────────────────
 
-  if (isUmpire) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <main className="max-w-[600px] mx-auto px-4 pt-24 pb-12">
-          <div className="mb-6">
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">
-              Opportunities
-            </h1>
-            <p className="text-sm text-gray-500">
-              Find your next career move in field hockey
-            </p>
-          </div>
-          <div className="bg-white rounded-xl p-10 text-center">
-            <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-3xl">🏑</span>
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              Umpire opportunities are coming soon
-            </h3>
-            <p className="text-sm text-gray-600 max-w-md mx-auto">
-              HOCKIA opportunities today are for players and coaches. When we open
-              umpire appointments and assessments, you'll see them here.
-            </p>
-          </div>
-        </main>
-      </div>
-    )
-  }
-
   return (
     <>
       {!isLoading && totalFilteredCount > 0 && (
@@ -506,9 +477,28 @@ export default function OpportunitiesPage() {
               Opportunities
             </h1>
             <p className="text-sm text-gray-500">
-              Find your next career move in field hockey
+              {isUmpire
+                ? 'See what clubs are looking for — roster openings across the HOCKIA network.'
+                : 'Find your next career move in field hockey'}
             </p>
           </div>
+
+          {/* Umpire read-only notice — opportunities are player/coach roster
+              listings today, so Apply is hidden for umpires. Kept low-key so
+              it informs without blocking the browsing experience. */}
+          {isUmpire && (
+            <div className="mb-6 flex items-start gap-3 rounded-xl bg-amber-50 border border-amber-200 px-4 py-3">
+              <Shield className="w-5 h-5 text-amber-700 flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-amber-900">
+                <p className="font-medium">Browse-only for umpires right now</p>
+                <p className="text-amber-800 mt-0.5">
+                  Opportunities here are player and coach roster openings.
+                  You can see what clubs are building, but Apply is hidden.
+                  Umpire appointments and assessments will live here when we open them.
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Filter Bar */}
           <div className="flex items-center gap-2 flex-wrap mb-6">
