@@ -269,7 +269,9 @@ export function SearchOverlay() {
           ? `/clubs/id/${result.profile_id}?ref=search`
           : result.role === 'brand'
             ? `/brands/${result.profile_id}?ref=search`
-            : `/players/id/${result.profile_id}?ref=search`
+            : result.role === 'umpire'
+              ? `/umpires/id/${result.profile_id}?ref=search`
+              : `/players/id/${result.profile_id}?ref=search`
         navigateToResult(path)
         break
       }
@@ -285,7 +287,9 @@ export function SearchOverlay() {
           ? `/clubs/id/${result.author_id}`
           : result.author_role === 'brand'
             ? `/brands/${result.author_id}`
-            : `/players/id/${result.author_id}`
+            : result.author_role === 'umpire'
+              ? `/umpires/id/${result.author_id}`
+              : `/players/id/${result.author_id}`
         navigateToResult(authorPath)
         break
       }

@@ -14,7 +14,9 @@ export function SearchPostResult({ result }: SearchPostResultProps) {
     ? `/clubs/id/${result.author_id}`
     : result.author_role === 'brand'
       ? `/brands/${result.author_id}`
-      : `/players/id/${result.author_id}`
+      : result.author_role === 'umpire'
+        ? `/umpires/id/${result.author_id}`
+        : `/players/id/${result.author_id}`
 
   // Truncate content for preview
   const preview = result.content.length > 200

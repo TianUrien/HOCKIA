@@ -49,7 +49,9 @@ export function MilestoneCard({ item }: MilestoneCardProps) {
   const Icon = config.icon
   const profilePath = item.role === 'club'
     ? `/clubs/id/${item.profile_id}`
-    : `/players/id/${item.profile_id}`
+    : item.role === 'umpire'
+      ? `/umpires/id/${item.profile_id}`
+      : `/players/id/${item.profile_id}`
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
