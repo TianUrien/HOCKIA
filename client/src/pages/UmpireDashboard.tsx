@@ -103,7 +103,7 @@ export default function UmpireDashboard({ profileData, readOnly = false }: Umpir
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 md:py-10">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 pt-24 pb-12">
         {readOnly && (
           <button
             type="button"
@@ -331,7 +331,7 @@ export default function UmpireDashboard({ profileData, readOnly = false }: Umpir
 
         {/* Phase C adds UmpireAppointmentsSection above. Posts / Friends /
             Comments tabs remain deferred to a later phase. */}
-      </div>
+      </main>
 
       {!readOnly && (
         <EditProfileModal
