@@ -29,6 +29,7 @@ import { ArrowLeft, MapPin, Calendar, Shield, Flag, Edit2, Eye, Languages as Lan
 import Header from '@/components/Header'
 import {
   Avatar,
+  Button,
   CommentsTab,
   DashboardMenu,
   EditProfileModal,
@@ -188,7 +189,7 @@ export default function UmpireDashboard({
               previewTitle={profile.full_name ?? undefined}
             />
             <div className="flex-1 min-w-0">
-              <div className="flex items-start justify-between gap-3">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-1">
                 <h1 className="text-3xl md:text-4xl font-bold text-gray-900 flex items-center gap-2 flex-wrap">
                   <span>{profile.full_name}</span>
                   <VerifiedBadge
@@ -197,29 +198,32 @@ export default function UmpireDashboard({
                   />
                 </h1>
                 {!readOnly ? (
-                  <div className="flex-shrink-0 flex items-center gap-2">
-                    <button
-                      type="button"
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => navigate(`/umpires/id/${profile.id}?view=public`)}
-                      className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                      className="gap-1.5 whitespace-nowrap text-xs sm:text-sm px-2.5 sm:px-4"
                       title="See how your profile looks to other HOCKIA members"
                     >
-                      <Eye className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">Network View</span>
-                      <span className="sm:hidden">View</span>
-                    </button>
-                    <button
-                      type="button"
+                      <Eye className="w-4 h-4 flex-shrink-0" />
+                      <span className="hidden xs:inline">Network View</span>
+                      <span className="xs:hidden">View</span>
+                    </Button>
+                    <Button
+                      variant="primary"
+                      size="sm"
                       onClick={() => setShowEditModal(true)}
-                      className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                      className="gap-1.5 whitespace-nowrap text-xs sm:text-sm px-2.5 sm:px-4"
                     >
-                      <Edit2 className="w-3.5 h-3.5" />
-                      Edit
-                    </button>
+                      <Edit2 className="w-4 h-4 flex-shrink-0" />
+                      <span className="hidden xs:inline">Edit Profile</span>
+                      <span className="xs:hidden">Edit</span>
+                    </Button>
                     <DashboardMenu />
                   </div>
                 ) : (
-                  <div className="flex-shrink-0 flex items-center gap-2">
+                  <div className="flex items-center gap-2">
                     <FriendshipButton profileId={profile.id} />
                     <ProfileActionMenu
                       targetId={profile.id}
