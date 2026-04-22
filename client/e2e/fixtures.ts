@@ -2,12 +2,14 @@ import { test as base, expect, Page } from '@playwright/test'
 
 /**
  * Test fixtures and helpers for HOCKIA E2E tests
- * 
+ *
  * IMPORTANT: E2E tests require REAL email addresses to avoid Supabase email bounces.
  * Set these environment variables in .env.local:
  *   - E2E_PLAYER_EMAIL (e.g., yourname+e2e-player@gmail.com)
  *   - E2E_CLUB_EMAIL (e.g., yourname+e2e-club@gmail.com)
  *   - E2E_COACH_EMAIL (e.g., yourname+e2e-coach@gmail.com)
+ *   - E2E_BRAND_EMAIL (e.g., yourname+e2e-brand@gmail.com)
+ *   - E2E_UMPIRE_EMAIL (e.g., yourname+e2e-umpire@gmail.com)
  *
  * Set passwords via environment variables (do not hard-code secrets in code or docs).
  */
@@ -56,6 +58,16 @@ export const TEST_USERS = {
     brandName: 'E2E Test Brand',
     slug: 'e2e-test-brand',
     category: 'equipment',
+  },
+  umpire: {
+    get email() { return getRequiredEnv('E2E_UMPIRE_EMAIL') },
+    get password() { return getRequiredEnv('E2E_UMPIRE_PASSWORD') },
+    fullName: 'E2E Test Umpire',
+    nationality: 'United Kingdom',
+    baseLocation: 'London, UK',
+    umpireLevel: 'Regional',
+    federation: 'England Hockey',
+    officiatingSpecialization: 'outdoor',
   },
 } as const
 

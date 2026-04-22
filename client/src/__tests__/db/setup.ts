@@ -92,6 +92,13 @@ export function authenticateBrand() {
   )
 }
 
+export function authenticateUmpire() {
+  return authenticateAs(
+    requireEnv('E2E_UMPIRE_EMAIL'),
+    requireEnv('E2E_UMPIRE_PASSWORD')
+  )
+}
+
 // ---------------------------------------------------------------------------
 // Utilities
 // ---------------------------------------------------------------------------
@@ -113,6 +120,8 @@ export function hasRequiredEnv(): boolean {
     process.env.E2E_COACH_EMAIL &&
     process.env.E2E_COACH_PASSWORD &&
     process.env.E2E_BRAND_EMAIL &&
-    process.env.E2E_BRAND_PASSWORD
+    process.env.E2E_BRAND_PASSWORD &&
+    process.env.E2E_UMPIRE_EMAIL &&
+    process.env.E2E_UMPIRE_PASSWORD
   )
 }
