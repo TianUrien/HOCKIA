@@ -19,8 +19,10 @@ export default function PublicViewBanner() {
 
   return (
     <>
-      {/* Fixed banner below the navbar */}
-      <div className="fixed top-[64px] left-0 right-0 z-40 bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white shadow-md">
+      {/* Fixed banner below the navbar — small gap (top-[68px], not 64px)
+          gives the header's edge some breathing room so the white→purple
+          transition doesn't feel like a hard seam. */}
+      <div className="fixed top-[68px] left-0 right-0 z-40 bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white shadow-md">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
@@ -47,7 +49,7 @@ export default function PublicViewBanner() {
         </div>
       </div>
       {/* Spacer to push content below the fixed banner */}
-      <div className="h-[128px] sm:h-[64px]" aria-hidden="true" />
+      <div className="h-[132px] sm:h-[68px]" aria-hidden="true" />
     </>
   )
 }
