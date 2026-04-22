@@ -1,33 +1,49 @@
 /**
- * UmpireDashboard — Phase A
+ * UmpireDashboard — Phase F1 (tabbed)
  *
- * Shallow, read-only dashboard for profiles with role='umpire'. Phase A
- * goals:
- *   - Admin flips a test profile to role='umpire' via SQL and can see the
- *     five new columns (umpire_level / federation / umpire_since /
- *     officiating_specialization / languages) rendered sensibly.
- *   - No self-service onboarding (role tile is deferred to Phase B).
- *   - No edit modal, no tabs, no Journey — all Phase B+.
+ * Umpires are a full HOCKIA citizen: same tabbed architecture as Player /
+ * Coach / Club / Brand, but every tab is translated to officiating semantics
+ * instead of copy-pasted.
  *
- * Scaffold deliberately does NOT clone CoachDashboard. The hero of an
- * umpire profile is their certification, not their bio — so the
- * Certification & Level card sits first. Everything else is supporting
- * context for now.
+ * Tabs:
+ *   - Profile      — Certification & Level, Bio, Languages
+ *   - Officiating  — UmpireAppointmentsSection (Phase C content)
+ *   - Gallery      — MediaTab gallery (shared gallery_photos table)
+ *   - Friends      — FriendsTab (includes TrustedReferencesSection inside,
+ *                    so umpires' peer references live here too)
+ *   - Comments     — CommentsTab
+ *   - Posts        — ProfilePostsTab
  *
- * Aesthetic is intentionally close to the other dashboards (same
- * Avatar, RoleBadge, VerifiedBadge, Header) so nothing feels off when
- * an admin toggles between views.
+ * Hero card + empty-state CTA sit ABOVE the tabs so credentials pills and
+ * the "add credentials" nudge stay visible on every tab. Matches the
+ * NextStepCard-above-tabs pattern other role dashboards use.
+ *
+ * Phase F2 will convert the Officiating tab into a richer Journey (mixed
+ * appointments + milestones + panel inductions + certifications) via an
+ * entry_type extension on umpire_appointments.
  */
 
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, MapPin, Calendar, Shield, Flag, Edit2, Languages as LanguagesIcon, Activity } from 'lucide-react'
 import Header from '@/components/Header'
-import { Avatar, DashboardMenu, EditProfileModal, FriendshipButton, RoleBadge, TierBadge, VerifiedBadge, DualNationalityDisplay } from '@/components'
+import {
+  Avatar,
+  CommentsTab,
+  DashboardMenu,
+  EditProfileModal,
+  FriendsTab,
+  FriendshipButton,
+  RoleBadge,
+  ScrollableTabs,
+  TierBadge,
+  VerifiedBadge,
+  DualNationalityDisplay,
+} from '@/components'
 import UmpireAppointmentsSection from '@/components/UmpireAppointmentsSection'
-import TrustedReferencesSection from '@/components/TrustedReferencesSection'
 import ProfileActionMenu from '@/components/ProfileActionMenu'
-import { useReferenceFriendOptions } from '@/hooks/useReferenceFriendOptions'
+import ProfilePostsTab from '@/components/ProfilePostsTab'
+import MediaTab from '@/components/MediaTab'
 import { useAuthStore } from '@/lib/auth'
 import type { Profile } from '@/lib/supabase'
 import { calculateAge, formatDateOfBirth } from '@/lib/utils'
@@ -57,6 +73,14 @@ interface UmpireDashboardProps {
   readOnly?: boolean
 }
 
+type TabType = 'profile' | 'officiating' | 'gallery' | 'friends' | 'comments' | 'posts'
+
+const TAB_IDS: TabType[] = ['profile', 'officiating', 'gallery', 'friends', 'comments', 'posts']
+
+function isTabType(value: string | null): value is TabType {
+  return !!value && (TAB_IDS as string[]).includes(value)
+}
+
 function specializationLabel(value: string | null | undefined): string | null {
   if (!value) return null
   if (value === 'both') return 'Outdoor & Indoor'
@@ -67,18 +91,34 @@ export default function UmpireDashboard({ profileData, readOnly = false }: Umpir
   const { profile: authProfile } = useAuthStore()
   const profile = (profileData ?? authProfile) as UmpireProfileShape | null
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [showEditModal, setShowEditModal] = useState(false)
+
+  // Tab state, synced with ?tab= query param so notification deep-links
+  // (e.g., .../dashboard/profile?tab=friends) land on the right tab.
+  const tabParam = searchParams.get('tab')
+  const [activeTab, setActiveTab] = useState<TabType>(() =>
+    isTabType(tabParam) ? tabParam : 'profile'
+  )
+
+  useEffect(() => {
+    if (isTabType(tabParam) && tabParam !== activeTab) {
+      setActiveTab(tabParam)
+    }
+  }, [tabParam, activeTab])
+
+  const handleTabChange = (tab: TabType) => {
+    setActiveTab(tab)
+    const next = new URLSearchParams(searchParams)
+    next.set('tab', tab)
+    setSearchParams(next, { replace: true })
+  }
 
   // Owner-view tier uses the precise credentials-weighted strength hook so the
   // badge is exact (not estimated from community-grid fallbacks). Weights match
   // `estimateMemberStrength(umpire)`, so community cards and dashboard agree.
   const { percentage } = useUmpireProfileStrength({ profile })
   const tier = profile ? calculateTier(percentage) : null
-
-  // Accepted-friend list for the trusted references picker. Hook short-
-  // circuits when profile id is null, and section renders its own loading /
-  // empty states off the fetch within useTrustedReferences.
-  const { friendOptions } = useReferenceFriendOptions(profile?.id ?? null)
 
   useEffect(() => {
     document.title = profile?.full_name
@@ -100,6 +140,17 @@ export default function UmpireDashboard({ profileData, readOnly = false }: Umpir
   const hasLanguages = profile.languages && profile.languages.length > 0
   const hasBio = Boolean(profile.bio?.trim())
 
+  const tabs: { id: TabType; label: string }[] = [
+    { id: 'profile', label: 'Profile' },
+    { id: 'officiating', label: 'Officiating' },
+    { id: 'gallery', label: 'Gallery' },
+    { id: 'friends', label: 'Friends' },
+    { id: 'comments', label: 'Comments' },
+    { id: 'posts', label: 'Posts' },
+  ]
+
+  const isOwnProfile = !readOnly
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
@@ -115,7 +166,7 @@ export default function UmpireDashboard({ profileData, readOnly = false }: Umpir
           </button>
         )}
 
-        {/* ── Header row ── */}
+        {/* ── Hero card ── */}
         <div className="bg-white rounded-2xl shadow-sm p-5 md:p-8 animate-fade-in">
           <div className="flex flex-col md:flex-row md:items-center gap-5 md:gap-6">
             <Avatar
@@ -220,7 +271,7 @@ export default function UmpireDashboard({ profileData, readOnly = false }: Umpir
           </div>
         </div>
 
-        {/* ── Empty-state CTA for owners who haven't completed credentials ── */}
+        {/* ── Always-visible empty-state CTA for owners missing credentials ── */}
         {!readOnly && !hasCertification && (
           <section className="mt-6 bg-gradient-to-br from-amber-50 to-yellow-50 border border-amber-200 rounded-2xl p-5 md:p-6">
             <div className="flex items-start gap-4">
@@ -248,89 +299,135 @@ export default function UmpireDashboard({ profileData, readOnly = false }: Umpir
           </section>
         )}
 
-        {/* ── Certification & Level (hero) ── */}
-        {hasCertification && (
-          <section className="mt-6 bg-white rounded-2xl shadow-sm p-5 md:p-7 animate-slide-in-up">
-            <h2 className="text-2xl font-bold text-gray-900 mb-5 inline-flex items-center gap-2">
-              <Shield className="w-6 h-6 text-amber-700" />
-              Certification &amp; Level
-            </h2>
-            <dl className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              {profile.umpire_level && (
-                <div>
-                  <dt className="text-sm font-medium text-gray-500 mb-1">Level</dt>
-                  <dd className="text-gray-900 font-medium">{profile.umpire_level}</dd>
-                </div>
-              )}
-              {profile.federation && (
-                <div>
-                  <dt className="text-sm font-medium text-gray-500 mb-1">Federation</dt>
-                  <dd className="text-gray-900 font-medium">{profile.federation}</dd>
-                </div>
-              )}
-              {profile.umpire_since && (
-                <div>
-                  <dt className="text-sm font-medium text-gray-500 mb-1">Umpiring since</dt>
-                  <dd className="text-gray-900 font-medium">{profile.umpire_since}</dd>
-                </div>
-              )}
-              {specLabel && (
-                <div>
-                  <dt className="text-sm font-medium text-gray-500 mb-1">Specialization</dt>
-                  <dd className="text-gray-900 font-medium">{specLabel}</dd>
-                </div>
-              )}
-            </dl>
-          </section>
-        )}
-
-        {/* ── Officiating History (Phase C) ── */}
-        {profile.id && (
-          <UmpireAppointmentsSection userId={profile.id} readOnly={readOnly} />
-        )}
-
-        {/* ── Trusted References / Peer Assessments (Phase E) ── */}
-        {profile.id && (
-          <section className="mt-6">
-            <TrustedReferencesSection
-              profileId={profile.id}
-              friendOptions={friendOptions}
-              profileRole="umpire"
-              readOnly={readOnly}
+        {/* ── Tabs ── */}
+        <div className="mt-6 bg-white rounded-2xl shadow-sm animate-slide-in-up">
+          <div className="border-b border-gray-200 overflow-x-auto">
+            <ScrollableTabs
+              tabs={tabs}
+              activeTab={activeTab}
+              onTabChange={handleTabChange}
+              className="gap-8 px-6"
+              activeClassName="border-[#8026FA] text-[#8026FA]"
+              inactiveClassName="border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300"
             />
-          </section>
-        )}
+          </div>
 
-        {/* ── Bio ── */}
-        {hasBio && (
-          <section className="mt-6 bg-white rounded-2xl shadow-sm p-5 md:p-7 animate-slide-in-up">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">About</h2>
-            <p className="text-gray-700 leading-relaxed whitespace-pre-line">{profile.bio}</p>
-          </section>
-        )}
+          <div className="p-5 md:p-7">
+            {activeTab === 'profile' && (
+              <div className="space-y-6 animate-fade-in">
+                {hasCertification ? (
+                  <section>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-5 inline-flex items-center gap-2">
+                      <Shield className="w-6 h-6 text-amber-700" />
+                      Certification &amp; Level
+                    </h2>
+                    <dl className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                      {profile.umpire_level && (
+                        <div>
+                          <dt className="text-sm font-medium text-gray-500 mb-1">Level</dt>
+                          <dd className="text-gray-900 font-medium">{profile.umpire_level}</dd>
+                        </div>
+                      )}
+                      {profile.federation && (
+                        <div>
+                          <dt className="text-sm font-medium text-gray-500 mb-1">Federation</dt>
+                          <dd className="text-gray-900 font-medium">{profile.federation}</dd>
+                        </div>
+                      )}
+                      {profile.umpire_since && (
+                        <div>
+                          <dt className="text-sm font-medium text-gray-500 mb-1">Umpiring since</dt>
+                          <dd className="text-gray-900 font-medium">{profile.umpire_since}</dd>
+                        </div>
+                      )}
+                      {specLabel && (
+                        <div>
+                          <dt className="text-sm font-medium text-gray-500 mb-1">Specialization</dt>
+                          <dd className="text-gray-900 font-medium">{specLabel}</dd>
+                        </div>
+                      )}
+                    </dl>
+                  </section>
+                ) : (
+                  <section className="text-sm text-gray-500">
+                    No certification details yet.
+                  </section>
+                )}
 
-        {/* ── Languages ── */}
-        {hasLanguages && (
-          <section className="mt-6 bg-white rounded-2xl shadow-sm p-5 md:p-7 animate-slide-in-up">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4 inline-flex items-center gap-2">
-              <LanguagesIcon className="w-6 h-6 text-gray-500" />
-              Languages
-            </h2>
-            <div className="flex flex-wrap gap-2">
-              {profile.languages!.map((lang) => (
-                <span
-                  key={lang}
-                  className="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-700"
-                >
-                  {lang}
-                </span>
-              ))}
-            </div>
-          </section>
-        )}
+                {hasBio && (
+                  <section className="pt-2">
+                    <h2 className="text-2xl font-bold text-gray-900 mb-4">About</h2>
+                    <p className="text-gray-700 leading-relaxed whitespace-pre-line">{profile.bio}</p>
+                  </section>
+                )}
 
-        {/* Phase C adds UmpireAppointmentsSection above. Posts / Friends /
-            Comments tabs remain deferred to a later phase. */}
+                {hasLanguages && (
+                  <section className="pt-2">
+                    <h2 className="text-2xl font-bold text-gray-900 mb-4 inline-flex items-center gap-2">
+                      <LanguagesIcon className="w-6 h-6 text-gray-500" />
+                      Languages
+                    </h2>
+                    <div className="flex flex-wrap gap-2">
+                      {profile.languages!.map((lang) => (
+                        <span
+                          key={lang}
+                          className="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-700"
+                        >
+                          {lang}
+                        </span>
+                      ))}
+                    </div>
+                  </section>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'officiating' && (
+              <div className="animate-fade-in">
+                {/* UmpireAppointmentsSection already renders its own card styling
+                    (mt-6 bg-white rounded-2xl shadow-sm). Wrapping here would
+                    double the chrome, so we let it stand on its own. The
+                    outer tab panel already provides the container. */}
+                <UmpireAppointmentsSection userId={profile.id} readOnly={readOnly} />
+              </div>
+            )}
+
+            {activeTab === 'gallery' && (
+              <div className="animate-fade-in">
+                <MediaTab
+                  profileId={profile.id}
+                  readOnly={readOnly}
+                  showVideo={false}
+                  showGallery
+                  isOwnProfile={isOwnProfile}
+                  viewerRole="umpire"
+                />
+              </div>
+            )}
+
+            {activeTab === 'friends' && (
+              <div className="animate-fade-in">
+                <FriendsTab
+                  profileId={profile.id}
+                  readOnly={readOnly}
+                  profileRole="umpire"
+                />
+              </div>
+            )}
+
+            {activeTab === 'comments' && (
+              <div className="animate-fade-in">
+                <CommentsTab profileId={profile.id} />
+              </div>
+            )}
+
+            {activeTab === 'posts' && (
+              <div className="animate-fade-in">
+                <ProfilePostsTab profileId={profile.id} readOnly={readOnly} />
+              </div>
+            )}
+          </div>
+        </div>
       </main>
 
       {!readOnly && (
