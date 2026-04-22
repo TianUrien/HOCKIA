@@ -45,6 +45,12 @@ export function EditUserModal({
     current_world_club_id: null as string | null,
     coach_specialization: '' as CoachSpecialization | '',
     coach_specialization_custom: '',
+    // Umpire-specific (Phase F4 — admin edit surface)
+    umpire_level: '',
+    federation: '',
+    umpire_since: '',
+    officiating_specialization: '' as '' | 'outdoor' | 'indoor' | 'both',
+    languages: '',
   })
 
   // Initialize form when profile changes
@@ -63,6 +69,12 @@ export function EditUserModal({
         current_world_club_id: profile.current_world_club_id ?? null,
         coach_specialization: (profile.coach_specialization as CoachSpecialization) || '',
         coach_specialization_custom: profile.coach_specialization_custom || '',
+        umpire_level: profile.umpire_level || '',
+        federation: profile.federation || '',
+        umpire_since: profile.umpire_since != null ? String(profile.umpire_since) : '',
+        officiating_specialization:
+          (profile.officiating_specialization as 'outdoor' | 'indoor' | 'both' | null) ?? '',
+        languages: (profile.languages ?? []).join(', '),
       })
       setReason('')
       setError(null)
@@ -141,6 +153,43 @@ export function EditUserModal({
         updates.coach_specialization_custom = formData.coach_specialization === 'other'
           ? formData.coach_specialization_custom.trim() || null
           : null
+      }
+
+      // ── Umpire-specific fields ─────────────────────────────────────────
+      // Only diff these when the profile is actually an umpire. Sending
+      // umpire fields for a non-umpire would violate chk_umpire_fields_role
+      // at the DB layer and bounce the whole update.
+      if (profile.role === 'umpire') {
+        if (formData.umpire_level !== (profile.umpire_level || '')) {
+          updates.umpire_level = formData.umpire_level.trim() || null
+        }
+        if (formData.federation !== (profile.federation || '')) {
+          updates.federation = formData.federation.trim() || null
+        }
+        const currentYear = profile.umpire_since != null ? String(profile.umpire_since) : ''
+        if (formData.umpire_since !== currentYear) {
+          const parsed = formData.umpire_since.trim() === ''
+            ? null
+            : parseInt(formData.umpire_since, 10)
+          if (parsed !== null && (Number.isNaN(parsed) || parsed < 1950 || parsed > new Date().getFullYear())) {
+            setError(`Umpiring since must be a year between 1950 and ${new Date().getFullYear()}.`)
+            setIsSubmitting(false)
+            return
+          }
+          updates.umpire_since = parsed
+        }
+        const currentSpec = profile.officiating_specialization || ''
+        if (formData.officiating_specialization !== currentSpec) {
+          updates.officiating_specialization = formData.officiating_specialization || null
+        }
+        const currentLangs = (profile.languages ?? []).join(', ')
+        if (formData.languages !== currentLangs) {
+          const parsed = formData.languages
+            .split(',')
+            .map((l) => l.trim())
+            .filter((l) => l.length > 0)
+          updates.languages = parsed.length > 0 ? parsed : null
+        }
       }
 
       if (Object.keys(updates).length === 0) {
@@ -361,17 +410,108 @@ export function EditUserModal({
                 </>
               )}
 
-              {/* Umpire-specific fields are read-only in this modal until the
-                  admin_update_profile RPC allowlist is extended. Until then,
-                  edit umpire credentials via direct SQL or ask the umpire to
-                  use their own Edit Profile button. Adding the inputs here
-                  without RPC support would surface a misleading "Field not
-                  allowed for admin update" error on save. */}
+              {/* Umpire-specific fields (Phase F4 — admin edit surface).
+                  admin_update_profile now allowlists these columns, so
+                  admins can remediate umpire credentials directly.
+                  chk_umpire_fields_role at the DB layer means these are
+                  only editable when role='umpire'. */}
               {profile.role === 'umpire' && (
-                <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800">
-                  Admin editing of umpire-specific fields (level, federation,
-                  languages) is coming soon. Ask the umpire to open their own
-                  profile → Edit, or contact engineering to update via SQL.
+                <div className="pt-4 border-t border-gray-200 space-y-4">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-amber-700">
+                    Umpire credentials
+                  </p>
+
+                  <div>
+                    <label htmlFor="admin-edit-umpire-level" className="block text-sm font-medium text-gray-700 mb-1">
+                      Umpire level
+                    </label>
+                    <input
+                      id="admin-edit-umpire-level"
+                      type="text"
+                      value={formData.umpire_level}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, umpire_level: e.target.value }))}
+                      placeholder="e.g., FIH International, National, Regional"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      maxLength={120}
+                      aria-label="Umpire level"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="admin-edit-federation" className="block text-sm font-medium text-gray-700 mb-1">
+                      Federation
+                    </label>
+                    <input
+                      id="admin-edit-federation"
+                      type="text"
+                      value={formData.federation}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, federation: e.target.value }))}
+                      placeholder="e.g., FIH, England Hockey, USA Field Hockey"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      maxLength={120}
+                      aria-label="Federation"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label htmlFor="admin-edit-umpire-since" className="block text-sm font-medium text-gray-700 mb-1">
+                        Umpiring since (year)
+                      </label>
+                      <input
+                        id="admin-edit-umpire-since"
+                        type="number"
+                        inputMode="numeric"
+                        min={1950}
+                        max={new Date().getFullYear()}
+                        value={formData.umpire_since}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, umpire_since: e.target.value }))}
+                        placeholder="e.g., 2018"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        aria-label="Umpiring since year"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="admin-edit-officiating-specialization" className="block text-sm font-medium text-gray-700 mb-1">
+                        Specialization
+                      </label>
+                      <select
+                        id="admin-edit-officiating-specialization"
+                        value={formData.officiating_specialization}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            officiating_specialization: e.target.value as '' | 'outdoor' | 'indoor' | 'both',
+                          }))
+                        }
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
+                        aria-label="Officiating specialization"
+                      >
+                        <option value="">Not specified</option>
+                        <option value="outdoor">Outdoor</option>
+                        <option value="indoor">Indoor</option>
+                        <option value="both">Outdoor &amp; Indoor</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="admin-edit-umpire-languages" className="block text-sm font-medium text-gray-700 mb-1">
+                      Languages
+                    </label>
+                    <input
+                      id="admin-edit-umpire-languages"
+                      type="text"
+                      value={formData.languages}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, languages: e.target.value }))}
+                      placeholder="English, Spanish, Dutch"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      aria-label="Languages (comma separated)"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      Comma-separated. Leave empty to clear.
+                    </p>
+                  </div>
                 </div>
               )}
 

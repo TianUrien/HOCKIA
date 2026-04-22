@@ -1,4 +1,6 @@
-import { useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { supabase } from '@/lib/supabase'
+import { logger } from '@/lib/logger'
 import type { UmpireProfileShape } from '@/pages/UmpireDashboard'
 
 export interface ProfileBucket {
@@ -8,11 +10,11 @@ export interface ProfileBucket {
   hint: string
   /** Honest, conservative line describing what completing this step unlocks */
   unlockCopy: string
-  /** Weight out of 100 */
+  /** Weight out of the per-role total. Normalized to a 0–100 percentage. */
   weight: number
   /** True when this bucket is fully completed */
   completed: boolean
-  /** Optional action id the parent can handle (all umpire buckets open EditProfileModal today) */
+  /** Optional action id the parent can handle */
   actionId?: string
   /** Label for the CTA button */
   actionLabel?: string
@@ -25,23 +27,63 @@ interface UseUmpireProfileStrengthOptions {
 /**
  * Umpire-specific profile strength calculation.
  *
- * Credentials still lead (50 pts) but Phase C (officiating history) and
- * Phase E (peer references) now contribute — matches the umpire branch of
- * `estimateMemberStrength` in lib/profileTier.ts so the percentage here
- * (owner view) agrees with the tier badge shown on community cards.
+ * Credentials still lead the weighting, but Phase C (officiating journey),
+ * Phase E (peer references), and Phase F1 (gallery) now contribute — so the
+ * percentage reflects the full-citizen umpire experience, not just badges.
  *
- * Buckets (total 100):
- * - Umpire Level (20): umpire_level
- * - Federation (15): federation
- * - Specialization (10): officiating_specialization
- * - Profile Photo (10): avatar_url
- * - Bio (10): bio
- * - Languages (10): >=1 language
- * - Years Officiating (5): umpire_since
- * - Appointments (10): >=1 umpire_appointments row
- * - References (10): >=1 accepted profile_references row
+ * Weights (sum to 110 — normalized to 0–100 via percentage = score/total*100):
+ * - Umpire Level       (20): umpire_level
+ * - Federation         (15): federation
+ * - Specialization     (10): officiating_specialization
+ * - Profile Photo      (10): avatar_url
+ * - Bio                (10): bio
+ * - Languages          (10): >=1 language
+ * - Gallery            (10): >=1 gallery_photos row (requires a query)
+ * - Years Officiating   (5): umpire_since
+ * - Officiating Journey (10): >=1 umpire_appointments row
+ * - Peer References    (10): >=1 accepted profile_references row
+ *
+ * Community-grid estimator (lib/profileTier.ts estimateMemberStrength) stays
+ * at 100 without gallery because it runs on fields cheaply denormalized on
+ * the profile row — a gallery count isn't. The resulting tier mismatch
+ * between owner dashboard and community card is <=1 band in practice
+ * (normalization absorbs most of it), matches the pre-existing player
+ * pattern.
  */
 export function useUmpireProfileStrength({ profile }: UseUmpireProfileStrengthOptions) {
+  const [galleryCount, setGalleryCount] = useState<number>(0)
+  const [loading, setLoading] = useState<boolean>(Boolean(profile?.id))
+
+  const profileId = profile?.id ?? null
+
+  const fetchGalleryCount = useCallback(async () => {
+    if (!profileId) {
+      setGalleryCount(0)
+      setLoading(false)
+      return
+    }
+    setLoading(true)
+    try {
+      const { count, error } = await supabase
+        .from('gallery_photos')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', profileId)
+
+      if (error) {
+        logger.error('[useUmpireProfileStrength] gallery count failed:', error)
+        setGalleryCount(0)
+      } else {
+        setGalleryCount(count ?? 0)
+      }
+    } finally {
+      setLoading(false)
+    }
+  }, [profileId])
+
+  useEffect(() => {
+    void fetchGalleryCount()
+  }, [fetchGalleryCount])
+
   const buckets: ProfileBucket[] = useMemo(() => {
     const level = Boolean(profile?.umpire_level?.trim())
     const federation = Boolean(profile?.federation?.trim())
@@ -49,6 +91,7 @@ export function useUmpireProfileStrength({ profile }: UseUmpireProfileStrengthOp
     const photo = Boolean(profile?.avatar_url?.trim())
     const bio = Boolean(profile?.bio?.trim())
     const languages = (profile?.languages?.length ?? 0) >= 1
+    const gallery = galleryCount >= 1
     const years = (profile?.umpire_since ?? 0) > 0
     const appointments = (profile?.umpire_appointment_count ?? 0) >= 1
     const references = (profile?.accepted_reference_count ?? 0) >= 1
@@ -115,6 +158,16 @@ export function useUmpireProfileStrength({ profile }: UseUmpireProfileStrengthOp
         actionLabel: 'Add Languages',
       },
       {
+        id: 'gallery',
+        label: 'Gallery',
+        hint: 'Upload at least one photo from an event you\u2019ve officiated.',
+        unlockCopy: 'Match photos, venues, or team-with-fellow-officials moments.',
+        weight: 10,
+        completed: gallery,
+        actionId: 'gallery-tab',
+        actionLabel: 'Add Photo',
+      },
+      {
         id: 'umpire-since',
         label: 'Years Officiating',
         hint: 'Add the year you first became certified.',
@@ -126,13 +179,13 @@ export function useUmpireProfileStrength({ profile }: UseUmpireProfileStrengthOp
       },
       {
         id: 'appointments',
-        label: 'Officiating History',
-        hint: 'Log at least one tournament, league, or match you\u2019ve officiated.',
+        label: 'Officiating Journey',
+        hint: 'Log at least one appointment, milestone, certification, or panel.',
         unlockCopy: 'Concrete history is the strongest credibility signal beyond the badge.',
         weight: 10,
         completed: appointments,
-        actionId: 'appointments',
-        actionLabel: 'Add Appointment',
+        actionId: 'officiating-tab',
+        actionLabel: 'Add Entry',
       },
       {
         id: 'references',
@@ -141,25 +194,29 @@ export function useUmpireProfileStrength({ profile }: UseUmpireProfileStrengthOp
         unlockCopy: 'A peer vouching for you builds trust faster than any credential alone.',
         weight: 10,
         completed: references,
-        actionId: 'references',
+        actionId: 'friends-tab',
         actionLabel: 'Get Reference',
       },
     ]
-  }, [profile])
+  }, [profile, galleryCount])
 
-  const percentage = useMemo(
-    () => buckets.reduce((acc, b) => acc + (b.completed ? b.weight : 0), 0),
-    [buckets]
-  )
+  /** Normalized 0–100 percentage across all buckets, so a fully-complete
+   * umpire scores exactly 100 regardless of the bucket total changing. */
+  const percentage = useMemo(() => {
+    const total = buckets.reduce((acc, b) => acc + b.weight, 0)
+    if (total === 0) return 0
+    const score = buckets.reduce((acc, b) => acc + (b.completed ? b.weight : 0), 0)
+    return Math.round((score / total) * 100)
+  }, [buckets])
 
   return {
     /** Overall completion percentage (0-100) */
     percentage,
     /** Individual bucket states */
     buckets,
-    /** Always false — all umpire buckets derive from profile fields, no secondary queries */
-    loading: false,
-    /** No-op — kept for interface parity with the other strength hooks */
-    refresh: async () => {},
+    /** True while fetching gallery count. */
+    loading,
+    /** Re-fetch counts (call after updates). */
+    refresh: fetchGalleryCount,
   }
 }
