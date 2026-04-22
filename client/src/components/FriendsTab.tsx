@@ -168,6 +168,7 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole }:
     if (!friend) return '#'
     const slug = friend.username ? `${friend.username}` : `id/${friend.id}`
     if (friend.role === 'club') return `/clubs/${slug}`
+    if (friend.role === 'umpire') return `/umpires/${slug}`
     return `/players/${slug}`
   }
 

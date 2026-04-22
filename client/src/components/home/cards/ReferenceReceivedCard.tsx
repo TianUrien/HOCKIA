@@ -10,6 +10,7 @@ interface ReferenceReceivedCardProps {
 
 function getProfilePath(role: string, id: string) {
   if (role === 'club') return `/clubs/id/${id}?ref=feed`
+  if (role === 'umpire') return `/umpires/id/${id}?ref=feed`
   return `/players/id/${id}?ref=feed`
 }
 
