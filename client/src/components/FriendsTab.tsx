@@ -171,7 +171,8 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole }:
     return `/players/${slug}`
   }
 
-  const canShowTrustedReferences = isOwner || profileRole === 'player' || profileRole === 'coach'
+  const canShowTrustedReferences =
+    isOwner || profileRole === 'player' || profileRole === 'coach' || profileRole === 'umpire'
 
   const renderFriendCard = (connection: FriendConnection, showActions = false) => (
     <div key={`${connection.id}-${connection.friend_id}`} className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">

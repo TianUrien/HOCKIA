@@ -23,8 +23,10 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, MapPin, Calendar, Shield, Flag, Edit2, Languages as LanguagesIcon, Activity } from 'lucide-react'
 import Header from '@/components/Header'
-import { Avatar, EditProfileModal, RoleBadge, TierBadge, VerifiedBadge, DualNationalityDisplay } from '@/components'
+import { Avatar, EditProfileModal, FriendshipButton, RoleBadge, TierBadge, VerifiedBadge, DualNationalityDisplay } from '@/components'
 import UmpireAppointmentsSection from '@/components/UmpireAppointmentsSection'
+import TrustedReferencesSection from '@/components/TrustedReferencesSection'
+import { useReferenceFriendOptions } from '@/hooks/useReferenceFriendOptions'
 import { useAuthStore } from '@/lib/auth'
 import type { Profile } from '@/lib/supabase'
 import { calculateAge, formatDateOfBirth } from '@/lib/utils'
@@ -71,6 +73,11 @@ export default function UmpireDashboard({ profileData, readOnly = false }: Umpir
   // `estimateMemberStrength(umpire)`, so community cards and dashboard agree.
   const { percentage } = useUmpireProfileStrength({ profile })
   const tier = profile ? calculateTier(percentage) : null
+
+  // Accepted-friend list for the trusted references picker. Hook short-
+  // circuits when profile id is null, and section renders its own loading /
+  // empty states off the fetch within useTrustedReferences.
+  const { friendOptions } = useReferenceFriendOptions(profile?.id ?? null)
 
   useEffect(() => {
     document.title = profile?.full_name
@@ -127,7 +134,7 @@ export default function UmpireDashboard({ profileData, readOnly = false }: Umpir
                     verifiedAt={profile.verified_at ?? null}
                   />
                 </h1>
-                {!readOnly && (
+                {!readOnly ? (
                   <button
                     type="button"
                     onClick={() => setShowEditModal(true)}
@@ -136,6 +143,10 @@ export default function UmpireDashboard({ profileData, readOnly = false }: Umpir
                     <Edit2 className="w-3.5 h-3.5" />
                     Edit
                   </button>
+                ) : (
+                  <div className="flex-shrink-0">
+                    <FriendshipButton profileId={profile.id} />
+                  </div>
                 )}
               </div>
 
@@ -268,6 +279,18 @@ export default function UmpireDashboard({ profileData, readOnly = false }: Umpir
         {/* ── Officiating History (Phase C) ── */}
         {profile.id && (
           <UmpireAppointmentsSection userId={profile.id} readOnly={readOnly} />
+        )}
+
+        {/* ── Trusted References / Peer Assessments (Phase E) ── */}
+        {profile.id && (
+          <section className="mt-6">
+            <TrustedReferencesSection
+              profileId={profile.id}
+              friendOptions={friendOptions}
+              profileRole="umpire"
+              readOnly={readOnly}
+            />
+          </section>
         )}
 
         {/* ── Bio ── */}

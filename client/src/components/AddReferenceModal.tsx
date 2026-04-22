@@ -21,15 +21,24 @@ const RELATIONSHIP_MAP: Record<string, Record<string, string[]>> = {
     player: ['Teammate', 'Team Captain', 'Former Teammate', 'Former Captain'],
     coach:  ['Head Coach', 'Assistant Coach', 'Former Coach', 'Academy Coach'],
     club:   ['Club', 'Former Club'],
+    umpire: ['Match Umpire', 'Tournament Official'],
   },
   coach: {
     player: ['Player', 'Former Player', 'Team Captain', 'Mentor'],
     coach:  ['Colleague', 'Fellow Coach', 'Former Colleague'],
     club:   ['Club', 'Former Club'],
+    umpire: ['Match Umpire', 'Tournament Official'],
   },
   club: {
     player: ['Club Member', 'Former Member', 'Club Captain'],
     coach:  ['Club Coach', 'Former Coach', 'Head Coach'],
+    umpire: ['Club Umpire', 'Tournament Umpire'],
+  },
+  umpire: {
+    umpire: ['Fellow Umpire', 'Umpire Mentor', 'Umpire Assessor', 'Former Partner'],
+    coach:  ['Head Coach', 'Assistant Coach', 'Team Manager'],
+    player: ['Team Captain', 'Former Player'],
+    club:   ['Club', 'Former Club'],
   },
 }
 
