@@ -2831,6 +2831,7 @@ export type Database = {
           description: string | null
           display_order: number
           end_date: string | null
+          entry_type: Database["public"]["Enums"]["umpire_journey_entry_type"]
           event_name: string
           id: string
           image_url: string | null
@@ -2848,6 +2849,7 @@ export type Database = {
           description?: string | null
           display_order?: number
           end_date?: string | null
+          entry_type?: Database["public"]["Enums"]["umpire_journey_entry_type"]
           event_name: string
           id?: string
           image_url?: string | null
@@ -2865,6 +2867,7 @@ export type Database = {
           description?: string | null
           display_order?: number
           end_date?: string | null
+          entry_type?: Database["public"]["Enums"]["umpire_journey_entry_type"]
           event_name?: string
           id?: string
           image_url?: string | null
@@ -5608,6 +5611,11 @@ export type Database = {
         | "coaching_development"
         | "lifestyle_adaptation"
         | "other"
+      umpire_journey_entry_type:
+        | "appointment"
+        | "milestone"
+        | "certification"
+        | "panel"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -5804,6 +5812,12 @@ export const Constants = {
         "coaching_development",
         "lifestyle_adaptation",
         "other",
+      ],
+      umpire_journey_entry_type: [
+        "appointment",
+        "milestone",
+        "certification",
+        "panel",
       ],
     },
   },

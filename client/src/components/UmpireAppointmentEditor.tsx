@@ -1,20 +1,17 @@
 /**
  * UmpireAppointmentEditor
  *
- * Add / edit modal for a single umpire_appointments row. Owner-only — RLS
- * will reject the mutation if the caller isn't the profile owner.
+ * Add / edit modal for an umpire_appointments row. Phase F2 expanded the
+ * table from match-only appointments to a richer officiating journey that
+ * mixes appointments, milestones, certifications, and panel inductions —
+ * the editor now switches field visibility + labels based on entry_type.
  *
- * Form fields match the table columns minus internal ids:
- *   event_name (required)  ·  organizer  ·  match_level  ·  match_format
- *   location_city  ·  location_country  ·  start_date  ·  end_date  ·  description
- *
- * Kept intentionally simpler than JourneyTab's month/year picker — full-date
- * inputs are cleaner and appointments are typically short-range events (a
- * single tournament weekend, not a multi-year club tenure).
+ * Owner-only: RLS rejects the mutation if auth.uid() ≠ user_id.
  */
 
 import { useEffect, useRef, useState } from 'react'
-import { ImagePlus, Loader2, X } from 'lucide-react'
+import { Calendar as CalendarIcon, ImagePlus, Loader2, Shield, Trophy, Users, X } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { logger } from '@/lib/logger'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
@@ -27,6 +24,98 @@ import type {
 
 const JOURNEY_BUCKET = 'journey'
 const UMPIRE_PATH_PREFIX = 'umpire'
+
+type EntryType = 'appointment' | 'milestone' | 'certification' | 'panel'
+
+interface EntryTypeMeta {
+  value: EntryType
+  label: string
+  icon: LucideIcon
+  hint: string
+  fields: {
+    event_name: string
+    organizer: string
+    start_date: string
+    /** Only rendered when `showEndDate` is true (appointments only). */
+    end_date?: string
+  }
+  showEndDate: boolean
+  showMatchDetails: boolean
+  showLocation: boolean
+  addTitle: string
+  editTitle: string
+}
+
+const ENTRY_TYPES: EntryTypeMeta[] = [
+  {
+    value: 'appointment',
+    label: 'Appointment',
+    icon: CalendarIcon,
+    hint: 'A match, tournament, or event you officiated.',
+    fields: {
+      event_name: 'Event name',
+      organizer: 'Organizer',
+      start_date: 'Start date',
+      end_date: 'End date',
+    },
+    showEndDate: true,
+    showMatchDetails: true,
+    showLocation: true,
+    addTitle: 'Add an appointment',
+    editTitle: 'Edit appointment',
+  },
+  {
+    value: 'milestone',
+    label: 'Milestone',
+    icon: Trophy,
+    hint: 'A career milestone — first international, 100th match, award.',
+    fields: {
+      event_name: 'Title',
+      organizer: 'Sanctioning body',
+      start_date: 'Date',
+    },
+    showEndDate: false,
+    showMatchDetails: false,
+    showLocation: true,
+    addTitle: 'Add a milestone',
+    editTitle: 'Edit milestone',
+  },
+  {
+    value: 'certification',
+    label: 'Certification',
+    icon: Shield,
+    hint: 'A credential you earned or renewed.',
+    fields: {
+      event_name: 'Certification',
+      organizer: 'Issuing body',
+      start_date: 'Earned on',
+    },
+    showEndDate: false,
+    showMatchDetails: false,
+    showLocation: false,
+    addTitle: 'Add a certification',
+    editTitle: 'Edit certification',
+  },
+  {
+    value: 'panel',
+    label: 'Panel',
+    icon: Users,
+    hint: 'A panel or official board you joined.',
+    fields: {
+      event_name: 'Panel name',
+      organizer: 'Federation',
+      start_date: 'Inducted on',
+    },
+    showEndDate: false,
+    showMatchDetails: false,
+    showLocation: false,
+    addTitle: 'Add a panel entry',
+    editTitle: 'Edit panel entry',
+  },
+]
+
+const metaFor = (type: EntryType): EntryTypeMeta =>
+  ENTRY_TYPES.find((m) => m.value === type) ?? ENTRY_TYPES[0]
 
 const MATCH_FORMATS: Array<{ value: '' | 'outdoor_11v11' | 'indoor_5v5' | 'other'; label: string }> = [
   { value: '', label: 'Not specified' },
@@ -43,6 +132,7 @@ interface UmpireAppointmentEditorProps {
 }
 
 interface FormState {
+  entry_type: EntryType
   event_name: string
   organizer: string
   match_level: string
@@ -55,6 +145,7 @@ interface FormState {
 }
 
 const emptyForm = (): FormState => ({
+  entry_type: 'appointment',
   event_name: '',
   organizer: '',
   match_level: '',
@@ -69,6 +160,7 @@ const emptyForm = (): FormState => ({
 const seedForm = (appointment: UmpireAppointment | null): FormState => {
   if (!appointment) return emptyForm()
   return {
+    entry_type: (appointment.entry_type as EntryType) ?? 'appointment',
     event_name: appointment.event_name ?? '',
     organizer: appointment.organizer ?? '',
     match_level: appointment.match_level ?? '',
@@ -109,9 +201,10 @@ export default function UmpireAppointmentEditor({
 
   if (!isOpen) return null
 
+  const meta = metaFor(form.entry_type)
+
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
-    // Reset the input so the same file re-picked fires onChange again.
     if (fileInputRef.current) fileInputRef.current.value = ''
     if (!file || !userId) return
 
@@ -165,7 +258,10 @@ export default function UmpireAppointmentEditor({
   }
 
   const dateOrderOk =
-    !trimmed.start_date || !trimmed.end_date || trimmed.end_date >= trimmed.start_date
+    !meta.showEndDate ||
+    !trimmed.start_date ||
+    !trimmed.end_date ||
+    trimmed.end_date >= trimmed.start_date
 
   const canSubmit = !submitting && !uploading && trimmed.event_name.length > 0 && dateOrderOk
 
@@ -175,29 +271,29 @@ export default function UmpireAppointmentEditor({
     setError(null)
     try {
       const input: UmpireAppointmentInput = {
+        entry_type: form.entry_type,
         event_name: trimmed.event_name,
         organizer: trimmed.organizer || null,
-        match_level: trimmed.match_level || null,
-        match_format: trimmed.match_format || null,
-        location_city: trimmed.location_city || null,
-        location_country: trimmed.location_country || null,
+        // Match-only fields: only send when actually relevant to the entry
+        // type. Milestones / certifications / panels clear these columns so
+        // they don't carry stale values from a previous edit as appointment.
+        match_level: meta.showMatchDetails ? trimmed.match_level || null : null,
+        match_format: meta.showMatchDetails ? trimmed.match_format || null : null,
+        location_city: meta.showLocation ? trimmed.location_city || null : null,
+        location_country: meta.showLocation ? trimmed.location_country || null : null,
         start_date: trimmed.start_date || null,
-        end_date: trimmed.end_date || null,
+        end_date: meta.showEndDate ? trimmed.end_date || null : null,
         description: trimmed.description || null,
         image_url: imageUrl,
       }
       const result = await onSave(input, appointment?.id)
       if (result === null) {
-        // Hook returns null on failure — surface a generic error (the hook
-        // already logs specifics).
         setError('Could not save. Please try again.')
         setSubmitting(false)
         return
       }
 
-      // Best-effort cleanup: if the saved image replaced (or cleared) an
-      // older one, delete the orphan from storage. Failure is logged, not
-      // surfaced — the save already succeeded.
+      // Best-effort orphan cleanup when the saved image replaced an old one.
       const originalUrl = appointment?.image_url ?? null
       if (originalUrl && originalUrl !== imageUrl) {
         void deleteStorageObject({
@@ -210,7 +306,7 @@ export default function UmpireAppointmentEditor({
       onClose()
     } catch (err) {
       logger.error('[UmpireAppointmentEditor] save failed:', err)
-      setError(err instanceof Error ? err.message : 'Could not save appointment')
+      setError(err instanceof Error ? err.message : 'Could not save entry')
       setSubmitting(false)
     }
   }
@@ -218,8 +314,7 @@ export default function UmpireAppointmentEditor({
   const handleClose = () => {
     if (submitting || uploading) return
 
-    // If the user uploaded a new image but is cancelling without saving,
-    // clean up the orphan. The original image (if any) stays put.
+    // Clean up an unsaved uploaded image if the user is cancelling.
     const originalUrl = appointment?.image_url ?? null
     if (imageUrl && imageUrl !== originalUrl) {
       void deleteStorageObject({
@@ -251,11 +346,43 @@ export default function UmpireAppointmentEditor({
           </button>
 
           <h2 className="text-lg font-semibold text-gray-900 mb-1">
-            {appointment ? 'Edit appointment' : 'Add an appointment'}
+            {appointment ? meta.editTitle : meta.addTitle}
           </h2>
-          <p className="text-sm text-gray-500 mb-5">
-            Tournaments, leagues, and matches you've officiated.
-          </p>
+          <p className="text-sm text-gray-500 mb-5">{meta.hint}</p>
+
+          {/* Entry-type selector — disabled during edit to avoid schema
+              churn on a row that's already persisted with specific fields. */}
+          <div className="mb-5">
+            <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+              Entry type
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {ENTRY_TYPES.map((t) => {
+                const Icon = t.icon
+                const active = form.entry_type === t.value
+                const locked = Boolean(appointment) && !active
+                return (
+                  <button
+                    key={t.value}
+                    type="button"
+                    onClick={() => !locked && setForm({ ...form, entry_type: t.value })}
+                    disabled={locked || submitting}
+                    className={`flex flex-col items-center gap-1 rounded-xl border px-3 py-3 text-xs font-medium transition-colors ${
+                      active
+                        ? 'border-[#8026FA] bg-[#8026FA]/5 text-[#8026FA]'
+                        : locked
+                          ? 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed'
+                          : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                    }`}
+                    title={locked ? 'Create a new entry to change its type' : t.label}
+                  >
+                    <Icon className="w-4 h-4" />
+                    {t.label}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
 
           <div className="space-y-4">
             <div>
@@ -269,13 +396,13 @@ export default function UmpireAppointmentEditor({
                 onChange={handleFileChange}
                 className="hidden"
                 disabled={uploading || submitting}
-                aria-label="Upload appointment photo"
+                aria-label="Upload entry photo"
               />
               {imageUrl ? (
                 <div className="relative group">
                   <img
                     src={imageUrl}
-                    alt="Appointment"
+                    alt="Entry"
                     className="w-full h-40 object-cover rounded-lg border border-gray-200"
                   />
                   <div className="mt-2 flex items-center gap-2">
@@ -323,13 +450,18 @@ export default function UmpireAppointmentEditor({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Event name <span className="text-red-500">*</span>
+                {meta.fields.event_name} <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 value={form.event_name}
                 onChange={(e) => setForm({ ...form, event_name: e.target.value })}
-                placeholder="EuroHockey Junior Championship 2026"
+                placeholder={
+                  meta.value === 'appointment' ? 'EuroHockey Junior Championship 2026' :
+                  meta.value === 'milestone' ? 'First international appointment' :
+                  meta.value === 'certification' ? 'FIH Level 2' :
+                  'FIH World Panel'
+                }
                 className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 disabled={submitting}
                 autoFocus
@@ -339,90 +471,98 @@ export default function UmpireAppointmentEditor({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Organizer <span className="text-gray-400 font-normal">(optional)</span>
+                {meta.fields.organizer} <span className="text-gray-400 font-normal">(optional)</span>
               </label>
               <input
                 type="text"
                 value={form.organizer}
                 onChange={(e) => setForm({ ...form, organizer: e.target.value })}
-                placeholder="EuroHockey · FIH · England Hockey"
+                placeholder={
+                  meta.value === 'appointment' ? 'EuroHockey · FIH · England Hockey' :
+                  'FIH · USA Field Hockey · EuroHockey'
+                }
                 className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 disabled={submitting}
                 maxLength={120}
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Match level <span className="text-gray-400 font-normal">(optional)</span>
-                </label>
-                <input
-                  type="text"
-                  value={form.match_level}
-                  onChange={(e) => setForm({ ...form, match_level: e.target.value })}
-                  placeholder="U21 International · National League"
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  disabled={submitting}
-                  maxLength={80}
-                />
+            {meta.showMatchDetails && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Match level <span className="text-gray-400 font-normal">(optional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={form.match_level}
+                    onChange={(e) => setForm({ ...form, match_level: e.target.value })}
+                    placeholder="U21 International · National League"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    disabled={submitting}
+                    maxLength={80}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Format
+                  </label>
+                  <select
+                    value={form.match_format}
+                    onChange={(e) =>
+                      setForm({ ...form, match_format: e.target.value as FormState['match_format'] })
+                    }
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
+                    disabled={submitting}
+                    aria-label="Match format"
+                  >
+                    {MATCH_FORMATS.map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Format
-                </label>
-                <select
-                  value={form.match_format}
-                  onChange={(e) =>
-                    setForm({ ...form, match_format: e.target.value as FormState['match_format'] })
-                  }
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
-                  disabled={submitting}
-                >
-                  {MATCH_FORMATS.map((o) => (
-                    <option key={o.value} value={o.value}>
-                      {o.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
+            )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  City <span className="text-gray-400 font-normal">(optional)</span>
-                </label>
-                <input
-                  type="text"
-                  value={form.location_city}
-                  onChange={(e) => setForm({ ...form, location_city: e.target.value })}
-                  placeholder="Amsterdam"
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  disabled={submitting}
-                  maxLength={80}
-                />
+            {meta.showLocation && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    City <span className="text-gray-400 font-normal">(optional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={form.location_city}
+                    onChange={(e) => setForm({ ...form, location_city: e.target.value })}
+                    placeholder="Amsterdam"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    disabled={submitting}
+                    maxLength={80}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Country <span className="text-gray-400 font-normal">(optional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={form.location_country}
+                    onChange={(e) => setForm({ ...form, location_country: e.target.value })}
+                    placeholder="Netherlands"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    disabled={submitting}
+                    maxLength={80}
+                  />
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Country <span className="text-gray-400 font-normal">(optional)</span>
-                </label>
-                <input
-                  type="text"
-                  value={form.location_country}
-                  onChange={(e) => setForm({ ...form, location_country: e.target.value })}
-                  placeholder="Netherlands"
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  disabled={submitting}
-                  maxLength={80}
-                />
-              </div>
-            </div>
+            )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className={`grid grid-cols-1 ${meta.showEndDate ? 'sm:grid-cols-2' : ''} gap-3`}>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Start date
+                  {meta.fields.start_date}
                 </label>
                 <input
                   type="date"
@@ -430,22 +570,26 @@ export default function UmpireAppointmentEditor({
                   onChange={(e) => setForm({ ...form, start_date: e.target.value })}
                   className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   disabled={submitting}
+                  aria-label={meta.fields.start_date}
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  End date
-                </label>
-                <input
-                  type="date"
-                  value={form.end_date}
-                  onChange={(e) => setForm({ ...form, end_date: e.target.value })}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  disabled={submitting}
-                />
-              </div>
+              {meta.showEndDate && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {meta.fields.end_date}
+                  </label>
+                  <input
+                    type="date"
+                    value={form.end_date}
+                    onChange={(e) => setForm({ ...form, end_date: e.target.value })}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    disabled={submitting}
+                    aria-label={meta.fields.end_date ?? 'End date'}
+                  />
+                </div>
+              )}
             </div>
-            {!dateOrderOk && (
+            {meta.showEndDate && !dateOrderOk && (
               <p className="text-xs text-red-600">End date can't be before start date.</p>
             )}
 
@@ -456,7 +600,15 @@ export default function UmpireAppointmentEditor({
               <textarea
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
-                placeholder="What did you officiate — final, pool stage, specific matches?"
+                placeholder={
+                  meta.value === 'appointment'
+                    ? "What did you officiate — final, pool stage, specific matches?"
+                    : meta.value === 'milestone'
+                      ? 'What made this milestone memorable?'
+                      : meta.value === 'certification'
+                        ? 'Anything worth noting — exam details, assessors, score?'
+                        : 'Panel duties, tenure, role on the board?'
+                }
                 rows={3}
                 className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
                 disabled={submitting}
@@ -488,7 +640,7 @@ export default function UmpireAppointmentEditor({
               ) : appointment ? (
                 'Save changes'
               ) : (
-                'Add appointment'
+                'Add entry'
               )}
             </button>
           </div>
