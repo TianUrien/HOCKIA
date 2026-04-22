@@ -23,9 +23,10 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, MapPin, Calendar, Shield, Flag, Edit2, Languages as LanguagesIcon, Activity } from 'lucide-react'
 import Header from '@/components/Header'
-import { Avatar, EditProfileModal, FriendshipButton, RoleBadge, TierBadge, VerifiedBadge, DualNationalityDisplay } from '@/components'
+import { Avatar, DashboardMenu, EditProfileModal, FriendshipButton, RoleBadge, TierBadge, VerifiedBadge, DualNationalityDisplay } from '@/components'
 import UmpireAppointmentsSection from '@/components/UmpireAppointmentsSection'
 import TrustedReferencesSection from '@/components/TrustedReferencesSection'
+import ProfileActionMenu from '@/components/ProfileActionMenu'
 import { useReferenceFriendOptions } from '@/hooks/useReferenceFriendOptions'
 import { useAuthStore } from '@/lib/auth'
 import type { Profile } from '@/lib/supabase'
@@ -135,17 +136,24 @@ export default function UmpireDashboard({ profileData, readOnly = false }: Umpir
                   />
                 </h1>
                 {!readOnly ? (
-                  <button
-                    type="button"
-                    onClick={() => setShowEditModal(true)}
-                    className="flex-shrink-0 inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-                  >
-                    <Edit2 className="w-3.5 h-3.5" />
-                    Edit
-                  </button>
+                  <div className="flex-shrink-0 flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowEditModal(true)}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                      Edit
+                    </button>
+                    <DashboardMenu />
+                  </div>
                 ) : (
-                  <div className="flex-shrink-0">
+                  <div className="flex-shrink-0 flex items-center gap-2">
                     <FriendshipButton profileId={profile.id} />
+                    <ProfileActionMenu
+                      targetId={profile.id}
+                      targetName={profile.full_name ?? 'this umpire'}
+                    />
                   </div>
                 )}
               </div>

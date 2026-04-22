@@ -732,9 +732,11 @@ export default function SettingsPage() {
                   </button>
                 </div>
 
-                {/* Reference Request Notifications — hidden for umpires who
-                    don't participate in the references system in Phase B1. */}
-                {profile.role !== 'umpire' && (
+                {/* Reference Request Notifications — umpires joined the
+                    references system in Phase E, so they now see this toggle
+                    alongside players/coaches. Clubs + brands still can't
+                    collect references so the toggle stays hidden for them. */}
+                {profile.role !== 'club' && profile.role !== 'brand' && (
                   <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                     <div className="flex-1 pr-4">
                       <p className="text-gray-900 font-medium text-sm">Reference Request Emails</p>

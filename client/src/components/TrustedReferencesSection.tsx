@@ -149,6 +149,8 @@ export default function TrustedReferencesSection({ profileId, friendOptions, pro
     if (!targetId) return
     if (role === 'club') {
       navigate(`/clubs/id/${targetId}`)
+    } else if (role === 'umpire') {
+      navigate(`/umpires/id/${targetId}`)
     } else {
       navigate(`/players/id/${targetId}`)
     }
