@@ -15,7 +15,15 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
   const touchStartY = useRef(0)
   const isPulling = useRef(false)
 
+  // Skip pull-to-refresh when the body is scroll-locked — this is the
+  // convention modals use to prevent underlying scroll, and we should respect
+  // it instead of hijacking touchmove inside the modal (which would break
+  // in-modal scrolling and, if pulled past threshold, remount the page under
+  // the modal).
+  const isBodyLocked = () => document.body.style.overflow === 'hidden'
+
   const handleTouchStart = useCallback((e: TouchEvent) => {
+    if (isBodyLocked()) return
     if (window.scrollY <= 0 && !isRefreshing) {
       touchStartY.current = e.touches[0].clientY
       isPulling.current = true
@@ -24,6 +32,11 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
     if (!isPulling.current || isRefreshing) return
+    if (isBodyLocked()) {
+      isPulling.current = false
+      setPullDistance(0)
+      return
+    }
 
     const deltaY = e.touches[0].clientY - touchStartY.current
     if (deltaY <= 0) {

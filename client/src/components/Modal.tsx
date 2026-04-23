@@ -17,18 +17,22 @@ export default function Modal({ isOpen, onClose, children, className, showClose 
   useFocusTrap({ containerRef: dialogRef, isActive: isOpen })
 
   useEffect(() => {
+    if (!isOpen) return
+
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
     }
 
-    if (isOpen) {
-      document.addEventListener('keydown', handleEscape)
-      document.body.style.overflow = 'hidden'
-    }
+    // Save previous overflow so we can restore it on close. Prevents this
+    // cleanup from stomping a scroll lock owned by a surrounding modal
+    // (e.g. MemberPreviewModal hosting SignInPromptModal).
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    document.addEventListener('keydown', handleEscape)
 
     return () => {
       document.removeEventListener('keydown', handleEscape)
-      document.body.style.overflow = 'unset'
+      document.body.style.overflow = previousOverflow
     }
   }, [isOpen, onClose])
 
