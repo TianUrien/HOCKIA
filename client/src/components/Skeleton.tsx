@@ -274,5 +274,23 @@ export function BrandCardSkeleton() {
   )
 }
 
+// Member Tile Skeleton (Community redesign — compact visual-first tile)
+export function MemberTileSkeleton() {
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="aspect-square bg-gray-100 animate-pulse" />
+      <div className="p-2.5 sm:p-3 space-y-1.5">
+        <Skeleton width="80%" height={14} />
+        <div className="flex gap-1">
+          <Skeleton width={44} height={18} className="rounded-full" />
+          <Skeleton width={44} height={18} className="rounded-full" />
+        </div>
+        <Skeleton width="60%" height={12} />
+        <Skeleton width="70%" height={12} />
+      </div>
+    </div>
+  )
+}
+
 /** @deprecated Use OpportunityCardSkeleton instead */
 export const VacancyCardSkeleton = OpportunityCardSkeleton
