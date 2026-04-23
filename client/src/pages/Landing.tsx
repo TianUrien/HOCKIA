@@ -170,15 +170,11 @@ export default function Landing() {
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
         >
-          {/* Top: logo */}
-          <div className="flex justify-center pt-2">
-            <img
-              src="/WhiteLogo.svg"
-              alt="HOCKIA"
-              className="h-12 object-contain"
-              fetchPriority="high"
-            />
-          </div>
+          {/* Top spacer — the second HOCKIA logo was removed from mobile
+              because it duplicated the PublicNav wordmark right above it.
+              Desktop keeps its hero logo (different visual weight, serves
+              as the primary brand anchor on wide viewports). */}
+          <div aria-hidden="true" />
 
           {/* Middle: headline carousel */}
           <div className="flex flex-col items-center text-center">
