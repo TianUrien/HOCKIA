@@ -14,7 +14,9 @@ export function SearchPostResult({ result }: SearchPostResultProps) {
     ? `/clubs/id/${result.author_id}`
     : result.author_role === 'brand'
       ? `/brands/${result.author_id}`
-      : `/players/id/${result.author_id}`
+      : result.author_role === 'umpire'
+        ? `/umpires/id/${result.author_id}`
+        : `/players/id/${result.author_id}`
 
   // Truncate content for preview
   const preview = result.content.length > 200
@@ -39,7 +41,7 @@ export function SearchPostResult({ result }: SearchPostResultProps) {
             >
               {result.author_name || 'Unknown'}
             </Link>
-            <RoleBadge role={result.author_role as 'player' | 'coach' | 'club' | 'brand'} />
+            <RoleBadge role={result.author_role as 'player' | 'coach' | 'club' | 'brand' | 'umpire'} />
           </div>
           <p className="text-xs text-gray-500">{timeAgo}</p>
         </div>

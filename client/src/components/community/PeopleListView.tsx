@@ -8,9 +8,10 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { Search, Filter, Loader2 } from 'lucide-react'
 import { useNavigate, useNavigationType } from 'react-router-dom'
-import { Avatar, RoleBadge, MemberCard } from '@/components'
+import { Avatar, RoleBadge, MemberTile } from '@/components'
 import { logger } from '@/lib/logger'
-import { ProfileCardSkeleton } from '@/components/Skeleton'
+import { MemberTileSkeleton } from '@/components/Skeleton'
+import { MemberPreviewModal } from './MemberPreviewModal'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { requestCache } from '@/lib/requestCache'
@@ -22,11 +23,11 @@ import { prefetchWorldClubLogos } from '@/hooks/useWorldClubLogo'
 import { getMemberTier } from '@/lib/profileTier'
 import { logSearchAppearances } from '@/lib/searchAppearances'
 
-interface Profile {
+export interface Profile {
   id: string
   avatar_url: string | null
   full_name: string
-  role: 'player' | 'coach' | 'club' | 'brand'
+  role: 'player' | 'coach' | 'club' | 'brand' | 'umpire'
   nationality: string | null
   nationality_country_id: number | null
   nationality2_country_id: number | null
@@ -57,28 +58,51 @@ interface Profile {
   brand_bio?: string | null
   brand_website_url?: string | null
   brand_instagram_url?: string | null
+  brand_logo_url?: string | null
   // Admin-granted verified badge — unified on profiles for every role.
   is_verified?: boolean | null
   verified_at?: string | null
+  // Umpire-only fields (on profiles row; gated by DB chk_umpire_fields_role)
+  umpire_level?: string | null
+  federation?: string | null
+  umpire_since?: number | null
+  officiating_specialization?: string | null
+  languages?: string[] | null
+  last_officiated_at?: string | null
+  umpire_appointment_count?: number | null
 }
 
 const PROFILES_SELECT =
-  'id, avatar_url, full_name, role, nationality, nationality_country_id, nationality2_country_id, base_location, position, secondary_position, current_club, current_world_club_id, gender, created_at, is_test_account, open_to_play, open_to_coach, accepted_reference_count, coach_specialization, coach_specialization_custom, highlight_video_url, bio, club_bio, year_founded, website, contact_email, career_entry_count, accepted_friend_count, is_verified, verified_at'
+  'id, avatar_url, full_name, role, nationality, nationality_country_id, nationality2_country_id, base_location, position, secondary_position, current_club, current_world_club_id, gender, created_at, is_test_account, open_to_play, open_to_coach, accepted_reference_count, coach_specialization, coach_specialization_custom, highlight_video_url, bio, club_bio, year_founded, website, contact_email, career_entry_count, accepted_friend_count, is_verified, verified_at, umpire_level, federation, umpire_since, officiating_specialization, languages, last_officiated_at, umpire_appointment_count'
 
 interface CommunityFilters {
-  role: 'all' | 'player' | 'coach' | 'club' | 'brand'
+  role: 'all' | 'player' | 'coach' | 'club' | 'brand' | 'umpire'
   position: string[]
   gender: 'all' | 'Men' | 'Women'
   location: string
   nationality: string
   availability: 'all' | 'open'
+  brandCategory: string | null
 }
 
 const PLAYER_POSITIONS = ['goalkeeper', 'defender', 'midfielder', 'forward']
 const COACH_POSITIONS = ['head coach', 'assistant coach', 'youth coach']
 
+const BRAND_CATEGORIES: { value: string; label: string }[] = [
+  { value: 'equipment', label: 'Equipment' },
+  { value: 'apparel', label: 'Apparel' },
+  { value: 'accessories', label: 'Accessories' },
+  { value: 'nutrition', label: 'Nutrition' },
+  { value: 'technology', label: 'Technology' },
+  { value: 'coaching', label: 'Coaching & Training' },
+  { value: 'recruiting', label: 'Recruiting' },
+  { value: 'media', label: 'Media' },
+  { value: 'services', label: 'Services' },
+  { value: 'other', label: 'Other' },
+]
+
 interface PeopleListViewProps {
-  roleFilter?: 'player' | 'coach' | 'club'
+  roleFilter?: 'player' | 'coach' | 'club' | 'brand' | 'umpire'
 }
 
 export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
@@ -90,9 +114,11 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
   const [baseMembers, setBaseMembers] = useState<Profile[]>([])
   const [allMembers, setAllMembers] = useState<Profile[]>([])
   const [displayedMembers, setDisplayedMembers] = useState<Profile[]>([])
+  const [previewMember, setPreviewMember] = useState<Profile | null>(null)
   const [searchQuery, setSearchQuery] = usePageState('community-search', '')
   const [filters, setFilters] = usePageState<CommunityFilters>('community-filters', {
     role: roleFilter || 'all',
+    brandCategory: null,
     position: [],
     gender: 'all',
     location: '',
@@ -124,9 +150,17 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
     
     await monitor.measure('fetch_community_members', async () => {
       try {
-        // Cache key includes test account status to avoid mixing results
-        const cacheKey = isCurrentUserTestAccount ? 'community-members-test' : 'community-members'
-        
+        // Cache key includes test-account status AND roleFilter so:
+        //   (a) test and non-test users see different result sets
+        //   (b) each role route fetches its own newest-200 slice
+        // Without (b), a role chip would client-filter the 200 newest overall,
+        // which loses roles that aren't among the newest 200 once the community
+        // grows past ~200 members.
+        const roleKey = roleFilter ?? 'all'
+        const cacheKey = isCurrentUserTestAccount
+          ? `community-members-test-${roleKey}`
+          : `community-members-${roleKey}`
+
         const members = await requestCache.dedupe(
           cacheKey,
           async () => {
@@ -134,6 +168,12 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
               .from('profiles')
               .select(PROFILES_SELECT)
               .eq('onboarding_completed', true) // Only show fully onboarded users
+
+            // Narrow server-side when a role route is active — otherwise the
+            // 200-row ceiling silently truncates under-represented roles.
+            if (roleFilter) {
+              query = query.eq('role', roleFilter)
+            }
 
             // If current user is NOT a test account, exclude test accounts from results
             if (!isCurrentUserTestAccount) {
@@ -152,11 +192,11 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
             if (brandIds.length > 0) {
               const { data: brands } = await supabase
                 .from('brands')
-                .select('profile_id, slug, category, bio, website_url, instagram_url')
+                .select('profile_id, slug, category, bio, website_url, instagram_url, logo_url')
                 .in('profile_id', brandIds)
               if (brands) {
                 const brandMap = new Map(
-                  (brands as { profile_id: string; slug: string; category: string; bio: string | null; website_url: string | null; instagram_url: string | null }[]).map(
+                  (brands as { profile_id: string; slug: string; category: string; bio: string | null; website_url: string | null; instagram_url: string | null; logo_url: string | null }[]).map(
                     (b) => [b.profile_id, b]
                   )
                 )
@@ -168,6 +208,7 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
                     m.brand_bio = brand?.bio || null
                     m.brand_website_url = brand?.website_url || null
                     m.brand_instagram_url = brand?.instagram_url || null
+                    m.brand_logo_url = brand?.logo_url || null
                   }
                 })
               }
@@ -190,19 +231,27 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
 
         setBaseMembers(members)
         setAllMembers(members)
-        setDisplayedMembers(members.slice(0, pageSize))
-        setHasMore(members.length > pageSize)
+        // displayedMembers + hasMore are derived from filteredMembers via the
+        // useEffect below. Setting them here with unfiltered data would clobber
+        // the filtered list any time fetchMembers re-runs (StrictMode double
+        // invoke, pageSize change on resize, auth resolution, etc.) and leak
+        // non-matching roles into a role-filtered grid.
       } catch (error) {
         logger.error('Error fetching members:', error)
       } finally {
         setIsLoading(false)
       }
     })
-  }, [pageSize, isCurrentUserTestAccount])
+  }, [isCurrentUserTestAccount, roleFilter])
 
   // Sync role filter when roleFilter prop changes
   useEffect(() => {
-    setFilters(prev => ({ ...prev, role: roleFilter || 'all' }))
+    setFilters(prev => ({
+      ...prev,
+      role: roleFilter || 'all',
+      // Brand category only makes sense on the brand view — drop it when leaving.
+      brandCategory: (roleFilter || 'all') === 'brand' ? prev.brandCategory : null,
+    }))
   }, [roleFilter]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Initial load
@@ -213,13 +262,16 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
   // Perform server-side search
   const performServerSearch = useCallback(async (query: string) => {
     setIsSearching(true)
-    
+
     await monitor.measure('search_community_members', async () => {
-      // Cache key includes test account status
-      const cacheKey = isCurrentUserTestAccount 
-        ? `community-search-test-${query}` 
-        : `community-search-${query}`
-      
+      // Cache key scoped by test-account status and role route — mirrors
+      // fetchMembers so a search on /community/brands doesn't accidentally
+      // surface non-brand profiles.
+      const roleKey = roleFilter ?? 'all'
+      const cacheKey = isCurrentUserTestAccount
+        ? `community-search-test-${roleKey}-${query}`
+        : `community-search-${roleKey}-${query}`
+
       try {
         const members = await requestCache.dedupe(
           cacheKey,
@@ -232,6 +284,12 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
               .or(
                 `full_name.ilike.${searchTerm},nationality.ilike.${searchTerm},base_location.ilike.${searchTerm},position.ilike.${searchTerm},secondary_position.ilike.${searchTerm},current_club.ilike.${searchTerm}`
               )
+
+            // Match fetchMembers: narrow server-side by role when a chip-scoped
+            // route is active.
+            if (roleFilter) {
+              dbQuery = dbQuery.eq('role', roleFilter)
+            }
 
             // If current user is NOT a test account, exclude test accounts from results
             if (!isCurrentUserTestAccount) {
@@ -250,11 +308,11 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
             if (brandIds.length > 0) {
               const { data: brands } = await supabase
                 .from('brands')
-                .select('profile_id, slug, category, bio, website_url, instagram_url')
+                .select('profile_id, slug, category, bio, website_url, instagram_url, logo_url')
                 .in('profile_id', brandIds)
               if (brands) {
                 const brandMap = new Map(
-                  (brands as { profile_id: string; slug: string; category: string; bio: string | null; website_url: string | null; instagram_url: string | null }[]).map(
+                  (brands as { profile_id: string; slug: string; category: string; bio: string | null; website_url: string | null; instagram_url: string | null; logo_url: string | null }[]).map(
                     (b) => [b.profile_id, b]
                   )
                 )
@@ -266,6 +324,7 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
                     m.brand_bio = brand?.bio || null
                     m.brand_website_url = brand?.website_url || null
                     m.brand_instagram_url = brand?.instagram_url || null
+                    m.brand_logo_url = brand?.logo_url || null
                   }
                 })
               }
@@ -285,16 +344,17 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
         }
 
         setAllMembers(members)
-        setDisplayedMembers(members.slice(0, pageSize))
         setPage(1)
-        setHasMore(members.length > pageSize)
+        // displayedMembers + hasMore derive from filteredMembers (see useEffect
+        // below). Setting them here would clobber the filtered grid when
+        // performServerSearch double-fires under StrictMode.
       } catch (error) {
         logger.error('Error searching members:', error)
       } finally {
         setIsSearching(false)
       }
     }, { query })
-  }, [pageSize, isCurrentUserTestAccount]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isCurrentUserTestAccount, roleFilter]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Client-side search filtering (instant, for both grid and suggestions)
   const clientFilteredMembers = useMemo(() => {
@@ -331,6 +391,9 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
 
     if (filters.role !== 'all') {
       result = result.filter(m => m.role === filters.role)
+    }
+    if (filters.brandCategory) {
+      result = result.filter(m => m.role === 'brand' && m.brand_category === filters.brandCategory)
     }
     if (filters.position.length > 0) {
       result = result.filter(m =>
@@ -386,6 +449,7 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
     const searchActive = searchQuery.trim().length > 0
     const filtersNarrowed =
       (filters.role !== (roleFilter || 'all')) ||
+      filters.brandCategory !== null ||
       filters.position.length > 0 ||
       filters.gender !== 'all' ||
       filters.location.trim() !== '' ||
@@ -461,11 +525,13 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
   const handleSuggestionClick = (member: Profile) => {
     setShowSuggestions(false)
     if (member.role === 'brand') {
-      navigate(member.brand_slug ? `/brands/${member.brand_slug}` : '/brands')
+      navigate(member.brand_slug ? `/brands/${member.brand_slug}?ref=community` : '/brands')
     } else if (member.role === 'club') {
-      navigate(`/clubs/id/${member.id}`)
+      navigate(`/clubs/id/${member.id}?ref=community`)
+    } else if (member.role === 'umpire') {
+      navigate(`/umpires/id/${member.id}?ref=community`)
     } else {
-      navigate(`/players/id/${member.id}`)
+      navigate(`/players/id/${member.id}?ref=community`)
     }
   }
 
@@ -476,6 +542,7 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
       if (key === 'role') {
         next.position = []
         next.gender = 'all'
+        if (value !== 'brand') next.brandCategory = null
       }
       return next
     })
@@ -491,7 +558,7 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
   }
 
   const clearFilters = () => {
-    setFilters({ role: roleFilter || 'all', position: [], gender: 'all', location: '', nationality: '', availability: 'all' })
+    setFilters({ role: roleFilter || 'all', brandCategory: null, position: [], gender: 'all', location: '', nationality: '', availability: 'all' })
   }
 
   const hasActiveFilters = () => {
@@ -499,6 +566,7 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
     const expectedRole = roleFilter || 'all'
     return (
       filters.role !== expectedRole ||
+      filters.brandCategory !== null ||
       filters.position.length > 0 ||
       filters.gender !== 'all' ||
       filters.location.trim() !== '' ||
@@ -621,28 +689,27 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
               )}
             </div>
 
-            {/* Role — hidden when pre-filtered by tab */}
-            {!roleFilter && (
+            {/* Brand Category — only when role is brand (role itself is set via the chip subnav above). */}
+            {filters.role === 'brand' && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Role</label>
-                <div className="space-y-2">
-                  {(['all', 'player', 'coach', 'club', 'brand'] as const).map((role) => (
-                    <label key={role} className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        checked={filters.role === role}
-                        onChange={() => updateFilter('role', role)}
-                        className="w-4 h-4 text-purple-600"
-                      />
-                      <span className="text-sm text-gray-700 capitalize">{role === 'all' ? 'All' : role}</span>
-                    </label>
+                <label htmlFor="brand-category-filter" className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                <select
+                  id="brand-category-filter"
+                  value={filters.brandCategory ?? ''}
+                  onChange={(e) => updateFilter('brandCategory', e.target.value || null)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
+                >
+                  <option value="">All categories</option>
+                  {BRAND_CATEGORIES.map((cat) => (
+                    <option key={cat.value} value={cat.value}>{cat.label}</option>
                   ))}
-                </div>
+                </select>
               </div>
             )}
 
-            {/* Position — hidden when role is club or brand */}
-            {filters.role !== 'club' && filters.role !== 'brand' && (
+            {/* Position — hidden when role is club, brand, or umpire
+                (umpires don't have field positions). */}
+            {filters.role !== 'club' && filters.role !== 'brand' && filters.role !== 'umpire' && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   {filters.role === 'coach' ? 'Coaching Role' : 'Position'}
@@ -712,9 +779,9 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
         {/* Main Content */}
         <div className="flex-1">
           {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-              {[...Array(12)].map((_, i) => (
-                <ProfileCardSkeleton key={i} />
+            <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
+              {[...Array(15)].map((_, i) => (
+                <MemberTileSkeleton key={i} />
               ))}
             </div>
           ) : displayedMembers.length === 0 ? (
@@ -740,9 +807,9 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
+              <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 mb-6 sm:mb-8">
                 {displayedMembers.map((member) => (
-                  <MemberCard
+                  <MemberTile
                     key={member.id}
                     id={member.id}
                     avatar_url={member.avatar_url}
@@ -750,23 +817,21 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
                     role={member.role}
                     brandSlug={member.brand_slug ?? undefined}
                     brandCategory={member.brand_category ?? undefined}
+                    brandLogoUrl={member.brand_logo_url ?? null}
                     nationality={member.nationality}
                     nationality_country_id={member.nationality_country_id}
                     nationality2_country_id={member.role === 'club' ? null : member.nationality2_country_id}
                     base_location={member.base_location}
-                    position={member.position}
-                    secondary_position={member.secondary_position}
                     current_team={member.current_club}
                     current_world_club_id={member.current_world_club_id}
-                    created_at={member.created_at}
                     open_to_play={member.open_to_play}
                     open_to_coach={member.open_to_coach}
-                    accepted_reference_count={member.accepted_reference_count ?? 0}
-                    coach_specialization={member.coach_specialization}
-                    coach_specialization_custom={member.coach_specialization_custom}
                     tier={getMemberTier(member)}
                     isVerified={Boolean(member.is_verified)}
                     verifiedAt={member.verified_at ?? null}
+                    umpireLevel={member.umpire_level ?? null}
+                    federation={member.federation ?? null}
+                    onPreview={() => setPreviewMember(member)}
                   />
                 ))}
               </div>
@@ -782,6 +847,11 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
           )}
         </div>
       </div>
+
+      <MemberPreviewModal
+        member={previewMember}
+        onClose={() => setPreviewMember(null)}
+      />
     </div>
   )
 }

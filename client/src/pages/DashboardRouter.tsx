@@ -148,8 +148,6 @@ export default function DashboardRouter() {
     return <div data-testid="dashboard-brand"><BrandDashboard /></div>
   }
 
-  // Umpire is Phase A: no self-service onboarding yet. Admins flip profiles
-  // to role='umpire' manually to test the dashboard.
   if (profile.role === 'umpire') {
     return <div data-testid="dashboard-umpire"><UmpireDashboard /></div>
   }

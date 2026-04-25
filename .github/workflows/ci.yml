@@ -230,6 +230,8 @@ jobs:
           E2E_COACH_PASSWORD: ${{ secrets.E2E_COACH_PASSWORD }}
           E2E_BRAND_EMAIL: ${{ secrets.E2E_BRAND_EMAIL }}
           E2E_BRAND_PASSWORD: ${{ secrets.E2E_BRAND_PASSWORD }}
+          E2E_UMPIRE_EMAIL: ${{ secrets.E2E_UMPIRE_EMAIL }}
+          E2E_UMPIRE_PASSWORD: ${{ secrets.E2E_UMPIRE_PASSWORD }}
         run: npm run test:db
 
   e2e-tests:
@@ -274,6 +276,8 @@ jobs:
           E2E_COACH_PASSWORD: ${{ secrets.E2E_COACH_PASSWORD }}
           E2E_BRAND_EMAIL: ${{ secrets.E2E_BRAND_EMAIL }}
           E2E_BRAND_PASSWORD: ${{ secrets.E2E_BRAND_PASSWORD }}
+          E2E_UMPIRE_EMAIL: ${{ secrets.E2E_UMPIRE_EMAIL }}
+          E2E_UMPIRE_PASSWORD: ${{ secrets.E2E_UMPIRE_PASSWORD }}
         run: |
           echo "VITE_SUPABASE_URL=${VITE_SUPABASE_URL}" >> .env
           echo "VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}" >> .env
@@ -287,6 +291,8 @@ jobs:
           echo "E2E_COACH_PASSWORD=${E2E_COACH_PASSWORD}" >> .env
           echo "E2E_BRAND_EMAIL=${E2E_BRAND_EMAIL}" >> .env
           echo "E2E_BRAND_PASSWORD=${E2E_BRAND_PASSWORD}" >> .env
+          echo "E2E_UMPIRE_EMAIL=${E2E_UMPIRE_EMAIL}" >> .env
+          echo "E2E_UMPIRE_PASSWORD=${E2E_UMPIRE_PASSWORD}" >> .env
           # Also create root .env.local for Supabase config
           echo "SUPABASE_URL=${VITE_SUPABASE_URL}" >> ../.env.local
           echo "SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}" >> ../.env.local

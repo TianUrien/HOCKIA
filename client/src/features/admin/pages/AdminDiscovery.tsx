@@ -40,6 +40,7 @@ const ROLE_BADGE_CLASSES: Record<string, string> = {
   coach: 'bg-[#F0FDFA] text-[#0D9488]',
   club: 'bg-[#FFF7ED] text-[#EA580C]',
   brand: 'bg-[#FFF1F2] text-[#E11D48]',
+  umpire: 'bg-[#FEFCE8] text-[#A16207]',
 }
 
 const INTENT_BADGE_CLASSES: Record<string, string> = {

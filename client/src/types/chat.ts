@@ -8,7 +8,7 @@ export interface SharedPostMetadata {
   author_id: string
   author_name: string | null
   author_avatar: string | null
-  author_role: 'player' | 'coach' | 'club' | 'brand'
+  author_role: 'player' | 'coach' | 'club' | 'brand' | 'umpire'
   content_preview: string
   thumbnail_url: string | null
 }
@@ -36,7 +36,7 @@ export interface ConversationParticipant {
   full_name: string
   username: string | null
   avatar_url: string | null
-  role: 'player' | 'coach' | 'club'
+  role: 'player' | 'coach' | 'club' | 'umpire'
 }
 
 export interface Conversation {

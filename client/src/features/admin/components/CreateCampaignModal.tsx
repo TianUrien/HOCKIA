@@ -662,13 +662,14 @@ export function CreateCampaignModal({ templates, editCampaign, onClose, onCreate
                 <div className="col-span-2">
                   <label className="block text-xs text-gray-500 mb-2">Roles {filterRoles.length === 0 && <span className="text-gray-400">(all)</span>}</label>
                   <div className="flex flex-wrap gap-2">
-                    {(['player', 'coach', 'club', 'brand'] as const).map((role) => {
+                    {(['player', 'coach', 'club', 'brand', 'umpire'] as const).map((role) => {
                       const checked = filterRoles.includes(role)
                       const styles: Record<string, { active: string; inactive: string }> = {
                         player: { active: 'bg-blue-50 border-blue-300 text-blue-700', inactive: 'bg-white border-gray-200 text-gray-600 hover:border-gray-300' },
                         coach: { active: 'bg-teal-50 border-teal-300 text-teal-700', inactive: 'bg-white border-gray-200 text-gray-600 hover:border-gray-300' },
                         club: { active: 'bg-orange-50 border-orange-300 text-orange-700', inactive: 'bg-white border-gray-200 text-gray-600 hover:border-gray-300' },
                         brand: { active: 'bg-rose-50 border-rose-300 text-rose-700', inactive: 'bg-white border-gray-200 text-gray-600 hover:border-gray-300' },
+                        umpire: { active: 'bg-amber-50 border-amber-300 text-amber-800', inactive: 'bg-white border-gray-200 text-gray-600 hover:border-gray-300' },
                       }
                       return (
                         <button

@@ -82,6 +82,7 @@ export default function Terms() {
                 <li><strong>Coach:</strong> Field hockey coaches who can create profiles, post opportunities and vacancies, connect with players and clubs, and manage applications.</li>
                 <li><strong>Club:</strong> Field hockey clubs and organizations that can create club profiles, post opportunities for players and coaches, manage members, and recruit talent.</li>
                 <li><strong>Brand:</strong> Companies and brands in the field hockey industry that can create brand profiles, manage product catalogs, publish posts, and recruit brand ambassadors.</li>
+                <li><strong>Umpire:</strong> Field hockey officials who can create profiles showing their level, federation, specialization, and officiating languages, and connect with clubs and fellow officials.</li>
               </ul>
               <p>
                 You are responsible for maintaining the confidentiality of your account credentials. You must notify us immediately if you suspect unauthorized access to your account.

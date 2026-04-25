@@ -222,12 +222,29 @@ export async function setTestAccount(profileId: string, isTest: boolean): Promis
 
 /**
  * Grant or revoke the profile's admin-granted verified badge.
+ *
+ * Optional `sourceUrl` (e.g., federation panel page the admin checked) and
+ * `notes` (free-text admin context) are recorded in admin_audit_logs.metadata
+ * for provenance — so months later you can see WHY a profile was verified,
+ * not just that it was.
+ *
  * Audit-logged server-side via admin_log_action().
  */
-export async function setProfileVerified(profileId: string, isVerified: boolean): Promise<void> {
+export interface SetProfileVerifiedOptions {
+  sourceUrl?: string | null
+  notes?: string | null
+}
+
+export async function setProfileVerified(
+  profileId: string,
+  isVerified: boolean,
+  options: SetProfileVerifiedOptions = {}
+): Promise<void> {
   const { error } = await adminRpc('admin_set_profile_verified', {
     p_profile_id: profileId,
     p_value: isVerified,
+    p_source_url: options.sourceUrl?.trim() || null,
+    p_notes: options.notes?.trim() || null,
   })
   if (error) throw new Error(`Failed to set verified status: ${error.message}`)
 }

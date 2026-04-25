@@ -24,6 +24,17 @@ const validCoach: OnboardingFormSubset = {
   coachSpecializationCustom: '',
 }
 
+const validUmpire: OnboardingFormSubset = {
+  fullName: 'Umi Umpire',
+  nationalityCountryId: 11,
+  city: 'London',
+  gender: 'Women',
+  umpireLevel: 'FIH International',
+  federation: 'FIH',
+  officiatingSpecialization: 'outdoor',
+  languages: ['English', 'Spanish'],
+}
+
 describe('validateOnboardingStep', () => {
   describe('step 1 — identity', () => {
     it.each<OnboardingRole>(['player', 'coach'])(
@@ -155,6 +166,84 @@ describe('validateOnboardingStep', () => {
           coachSpecialization: 'other',
           coachSpecializationCustom: 'Umpire Coach',
         })
+      ).toBeNull()
+    })
+  })
+
+  describe('step 1 — umpire', () => {
+    it('returns null when fullName + nationality are present', () => {
+      expect(validateOnboardingStep(1, 'umpire', validUmpire)).toBeNull()
+    })
+
+    it('returns an error when fullName is missing (umpire)', () => {
+      expect(
+        validateOnboardingStep(1, 'umpire', { ...validUmpire, fullName: '' })
+      ).toMatch(/full name is required/i)
+    })
+
+    it('returns an error when nationality is missing (umpire)', () => {
+      expect(
+        validateOnboardingStep(1, 'umpire', { ...validUmpire, nationalityCountryId: null })
+      ).toMatch(/nationality is required/i)
+    })
+  })
+
+  describe('step 2 — umpire', () => {
+    it('returns null when city + gender are present', () => {
+      expect(validateOnboardingStep(2, 'umpire', validUmpire)).toBeNull()
+    })
+
+    it('returns an error when gender is missing (umpire)', () => {
+      expect(
+        validateOnboardingStep(2, 'umpire', { ...validUmpire, gender: '' })
+      ).toMatch(/gender is required/i)
+    })
+  })
+
+  describe('step 3 — umpire', () => {
+    it('returns null for a complete umpire credentials step', () => {
+      expect(validateOnboardingStep(3, 'umpire', validUmpire)).toBeNull()
+    })
+
+    it('requires umpire level', () => {
+      expect(
+        validateOnboardingStep(3, 'umpire', { ...validUmpire, umpireLevel: '' })
+      ).toMatch(/umpire level/i)
+    })
+
+    it('treats a whitespace-only umpire level as missing', () => {
+      expect(
+        validateOnboardingStep(3, 'umpire', { ...validUmpire, umpireLevel: '   ' })
+      ).toMatch(/umpire level/i)
+    })
+
+    it('requires federation', () => {
+      expect(
+        validateOnboardingStep(3, 'umpire', { ...validUmpire, federation: '' })
+      ).toMatch(/federation/i)
+    })
+
+    it('requires specialization (outdoor / indoor / both)', () => {
+      expect(
+        validateOnboardingStep(3, 'umpire', { ...validUmpire, officiatingSpecialization: '' })
+      ).toMatch(/outdoor, indoor, or both/i)
+    })
+
+    it('requires at least one language', () => {
+      expect(
+        validateOnboardingStep(3, 'umpire', { ...validUmpire, languages: [] })
+      ).toMatch(/language/i)
+    })
+
+    it('treats missing languages as missing (undefined)', () => {
+      expect(
+        validateOnboardingStep(3, 'umpire', { ...validUmpire, languages: undefined })
+      ).toMatch(/language/i)
+    })
+
+    it('accepts a single language as the minimum bar', () => {
+      expect(
+        validateOnboardingStep(3, 'umpire', { ...validUmpire, languages: ['English'] })
       ).toBeNull()
     })
   })

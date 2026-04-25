@@ -142,6 +142,7 @@ export function AdminEngagement() {
           row.role === 'coach' ? 'bg-[#F0FDFA] text-[#0D9488]' :
           row.role === 'club' ? 'bg-[#FFF7ED] text-[#EA580C]' :
           row.role === 'brand' ? 'bg-[#FFF1F2] text-[#E11D48]' :
+          row.role === 'umpire' ? 'bg-[#FEFCE8] text-[#A16207]' :
           'bg-gray-100 text-gray-600'
         }`}>
           {row.role}

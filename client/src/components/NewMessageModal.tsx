@@ -20,7 +20,7 @@ interface SearchResult {
   id: string
   full_name: string
   avatar_url: string | null
-  role: 'player' | 'coach' | 'club'
+  role: 'player' | 'coach' | 'club' | 'umpire'
   base_location: string | null
   current_club: string | null
 }
@@ -61,7 +61,7 @@ export default function NewMessageModal({ isOpen, onClose }: NewMessageModalProp
             id: conv.other_participant_id,
             full_name: conv.other_participant_name,
             avatar_url: conv.other_participant_avatar,
-            role: conv.other_participant_role as 'player' | 'coach' | 'club',
+            role: conv.other_participant_role as 'player' | 'coach' | 'club' | 'umpire',
             base_location: null,
             current_club: null
           }))

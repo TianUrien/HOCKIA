@@ -146,7 +146,9 @@ export default function NotificationsDrawer() {
     }
 
     const role = actor.role?.toLowerCase()
-    return role === 'club' ? `/clubs/id/${actor.id}` : `/players/id/${actor.id}`
+    if (role === 'club') return `/clubs/id/${actor.id}`
+    if (role === 'umpire') return `/umpires/id/${actor.id}`
+    return `/players/id/${actor.id}`
   }
 
   const navigateToRoute = (route: string | null) => {

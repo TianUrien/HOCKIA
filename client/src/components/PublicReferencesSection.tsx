@@ -180,6 +180,8 @@ export default function PublicReferencesSection({ profileId, profileName }: Publ
               if (!id) return
               if (role === 'club') {
                 navigate(`/clubs/id/${id}`)
+              } else if (role === 'umpire') {
+                navigate(`/umpires/id/${id}`)
               } else {
                 navigate(`/players/id/${id}`)
               }

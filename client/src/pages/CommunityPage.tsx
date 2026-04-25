@@ -12,13 +12,13 @@ import { Header } from '@/components'
 import { PullToRefresh } from '@/components/PullToRefresh'
 import {
   CommunityTabSwitcher,
+  CommunityRoleChips,
   PeopleListView,
-  BrandListView,
   QuestionsListView,
 } from '@/components/community'
 import type { CommunityTab } from '@/components/community'
 
-const VALID_TABS: CommunityTab[] = ['all', 'players', 'coaches', 'clubs', 'brands', 'questions']
+const VALID_TABS: CommunityTab[] = ['all', 'players', 'coaches', 'clubs', 'brands', 'umpires', 'questions']
 
 export default function CommunityPage() {
   const { tab } = useParams<{ tab?: string }>()
@@ -34,34 +34,40 @@ export default function CommunityPage() {
     setRefreshKey(k => k + 1)
   }, [])
 
+  const isMembers = activeTab !== 'questions'
+
   return (
     <div className="min-h-screen bg-gray-50 overflow-x-hidden">
       <Header />
 
       <PullToRefresh onRefresh={handleRefresh}>
-      <main className="max-w-7xl mx-auto px-4 md:px-6 pt-24 pb-12">
-        {/* Hero Section */}
-        <div className="text-center mb-5 sm:mb-8">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-2 sm:mb-4">
+      <main className="max-w-7xl mx-auto px-4 md:px-6 pt-20 pb-12">
+        {/* Hero Section — trimmed for the compact grid redesign */}
+        <div className="text-center mb-4 sm:mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3 sm:mb-4">
             <span className="bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-transparent bg-clip-text italic">
               Community
             </span>
           </h1>
-          <p className="text-base sm:text-lg text-gray-600 mb-5 sm:mb-8 max-w-md sm:max-w-none mx-auto">
-            Connect with players, coaches, clubs, brands, and ask questions.
-          </p>
 
-          {/* Tab Switcher */}
           <CommunityTabSwitcher activeTab={activeTab} />
         </div>
 
+        {/* Role chip subnav (members-only) */}
+        {isMembers && (
+          <div className="mb-4 sm:mb-5">
+            <CommunityRoleChips activeTab={activeTab} />
+          </div>
+        )}
+
         {/* Content based on active tab */}
-        <div key={`${activeTab}-${refreshKey}`} className="mt-6 sm:mt-10 animate-fade-in">
+        <div key={`${activeTab}-${refreshKey}`} className="animate-fade-in">
           {activeTab === 'all' && <PeopleListView />}
           {activeTab === 'players' && <PeopleListView roleFilter="player" />}
           {activeTab === 'coaches' && <PeopleListView roleFilter="coach" />}
           {activeTab === 'clubs' && <PeopleListView roleFilter="club" />}
-          {activeTab === 'brands' && <BrandListView />}
+          {activeTab === 'brands' && <PeopleListView roleFilter="brand" />}
+          {activeTab === 'umpires' && <PeopleListView roleFilter="umpire" />}
           {activeTab === 'questions' && <QuestionsListView />}
         </div>
       </main>

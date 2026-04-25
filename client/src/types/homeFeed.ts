@@ -29,7 +29,7 @@ export interface MemberJoinedFeedItem extends BaseFeedItem {
   item_type: 'member_joined'
   profile_id: string
   full_name: string | null
-  role: 'player' | 'coach' | 'club'
+  role: 'player' | 'coach' | 'club' | 'umpire'
   avatar_url: string | null
   nationality_country_id: number | null
   base_location: string | null
@@ -62,7 +62,7 @@ export interface MilestoneAchievedFeedItem extends BaseFeedItem {
   profile_id: string
   full_name: string | null
   avatar_url: string | null
-  role: 'player' | 'coach' | 'club'
+  role: 'player' | 'coach' | 'club' | 'umpire'
   image_url?: string | null
 }
 
@@ -72,7 +72,7 @@ export interface ReferenceReceivedFeedItem extends BaseFeedItem {
   profile_id: string
   full_name: string | null
   avatar_url: string | null
-  role: 'player' | 'coach' | 'club'
+  role: 'player' | 'coach' | 'club' | 'umpire'
   referee_id: string
   referee_name: string | null
   referee_avatar: string | null
@@ -146,7 +146,7 @@ export interface UserPostFeedItem extends BaseFeedItem {
   author_id: string
   author_name: string | null
   author_avatar: string | null
-  author_role: 'player' | 'coach' | 'club' | 'brand'
+  author_role: 'player' | 'coach' | 'club' | 'brand' | 'umpire'
   content: string
   images: PostMediaItem[] | null
   like_count: number

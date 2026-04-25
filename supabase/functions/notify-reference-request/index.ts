@@ -6,6 +6,7 @@ import {
   ReferenceRequestPayload,
   RequesterData,
   RecipientData,
+  buildRequesterProfileUrl,
   createLogger,
   generateEmailHtml,
   generateEmailText,
@@ -106,7 +107,7 @@ Deno.serve(async (req: Request) => {
     // Fetch requester profile
     const { data: requester, error: requesterError } = await supabase
       .from('profiles')
-      .select('id, username, full_name, base_location, avatar_url, is_test_account')
+      .select('id, username, full_name, base_location, avatar_url, is_test_account, role')
       .eq('id', reference.requester_id)
       .single()
 
@@ -203,9 +204,7 @@ Deno.serve(async (req: Request) => {
 
     const requesterName = requester.full_name?.trim() || 'Someone'
     const HOCKIA_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://inhockia.com'
-    const profileUrl = requester.username
-      ? `${HOCKIA_BASE_URL}/players/${requester.username}`
-      : `${HOCKIA_BASE_URL}/players/id/${requester.id}`
+    const profileUrl = buildRequesterProfileUrl(requester, HOCKIA_BASE_URL)
 
     const templateVars = {
       requester_name: requesterName,

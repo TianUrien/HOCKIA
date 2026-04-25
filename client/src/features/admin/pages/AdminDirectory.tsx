@@ -25,7 +25,7 @@ import {
   AlertTriangle,
   Pencil,
 } from 'lucide-react'
-import { DataTable, ConfirmDialog, EditUserModal } from '../components'
+import { DataTable, ConfirmDialog, EditUserModal, VerifyProfileDialog, type VerifyMetadata } from '../components'
 import { logger } from '@/lib/logger'
 import type { Column, Action } from '../components'
 import type { AdminProfileListItem, AdminProfileDetails, ProfileSearchParams } from '../types'
@@ -78,7 +78,7 @@ export function AdminDirectory() {
     try {
       const params: ProfileSearchParams = {
         query: searchQuery || undefined,
-        role: roleFilter as 'player' | 'coach' | 'club' | 'brand' | undefined,
+        role: roleFilter as 'player' | 'coach' | 'club' | 'brand' | 'umpire' | undefined,
         is_blocked: statusFilter === 'blocked' ? true : statusFilter === 'active' || statusFilter === 'incomplete' ? false : undefined,
         onboarding_completed: statusFilter === 'active' ? true : statusFilter === 'incomplete' ? false : undefined,
         is_test_account: testFilter === 'test' ? true : testFilter === 'real' ? false : undefined,
@@ -169,11 +169,14 @@ export function AdminDirectory() {
     await fetchProfiles()
   }
 
-  const handleToggleVerified = async () => {
+  const handleToggleVerified = async (meta: VerifyMetadata) => {
     if (!confirmDialog.profile) return
     const isVerifying = confirmDialog.type === 'verify'
     try {
-      await setProfileVerified(confirmDialog.profile.id, isVerifying)
+      await setProfileVerified(confirmDialog.profile.id, isVerifying, {
+        sourceUrl: meta.sourceUrl,
+        notes: meta.notes,
+      })
       await fetchProfiles()
     } catch (err) {
       logger.error('[AdminDirectory] toggle verified failed', err)
@@ -232,6 +235,7 @@ export function AdminDirectory() {
           coach: 'bg-[#F0FDFA] text-[#0D9488]',
           club: 'bg-[#FFF7ED] text-[#EA580C]',
           brand: 'bg-[#FFF1F2] text-[#E11D48]',
+          umpire: 'bg-[#FEFCE8] text-[#A16207]',
         }
         return (
           <span
@@ -421,6 +425,7 @@ export function AdminDirectory() {
             <option value="coach">Coaches</option>
             <option value="club">Clubs</option>
             <option value="brand">Brands</option>
+            <option value="umpire">Umpires</option>
           </select>
 
           <select
@@ -550,6 +555,7 @@ export function AdminDirectory() {
                           coach: 'bg-[#F0FDFA] text-[#0D9488]',
                           club: 'bg-[#FFF7ED] text-[#EA580C]',
                           brand: 'bg-[#FFF1F2] text-[#E11D48]',
+                          umpire: 'bg-[#FEFCE8] text-[#A16207]',
                         }
                         return (
                           <span
@@ -723,18 +729,12 @@ export function AdminDirectory() {
         variant="warning"
       />
 
-      <ConfirmDialog
+      <VerifyProfileDialog
         isOpen={confirmDialog.isOpen && (confirmDialog.type === 'verify' || confirmDialog.type === 'unverify')}
+        mode={confirmDialog.type === 'verify' ? 'verify' : 'unverify'}
+        profileName={confirmDialog.profile?.full_name || confirmDialog.profile?.email || ''}
         onClose={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
         onConfirm={handleToggleVerified}
-        title={confirmDialog.type === 'verify' ? 'Verify Profile' : 'Remove Verification'}
-        message={
-          confirmDialog.type === 'verify'
-            ? `Grant the Verified badge to "${confirmDialog.profile?.full_name || confirmDialog.profile?.email}". Visible across the app; action is written to admin_audit_logs.`
-            : `Remove the Verified badge from "${confirmDialog.profile?.full_name || confirmDialog.profile?.email}". Action is written to admin_audit_logs.`
-        }
-        confirmLabel={confirmDialog.type === 'verify' ? 'Verify Profile' : 'Remove Verification'}
-        variant="warning"
       />
 
       {/* Edit User Modal */}

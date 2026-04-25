@@ -44,6 +44,7 @@ const ROLE_COLORS: Record<string, string> = {
   coach: 'bg-[#F0FDFA] text-[#0D9488]',
   club: 'bg-[#FFF7ED] text-[#EA580C]',
   brand: 'bg-[#FFF1F2] text-[#E11D48]',
+  umpire: 'bg-[#FEFCE8] text-[#A16207]',
 }
 
 const PAGE_SIZE = 50
@@ -233,7 +234,7 @@ function PreferenceRow({ prefKey, label, description, defaultOn, stat, totalUser
           <div className="px-5 py-3 bg-gray-50 border-b border-gray-100">
             <p className="text-xs font-medium text-gray-500 mb-2">Breakdown by role</p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {['player', 'coach', 'club', 'brand'].map((role) => {
+              {['player', 'coach', 'club', 'brand', 'umpire'].map((role) => {
                 const roleData = stat.by_role[role]
                 if (!roleData) return null
                 const total = roleData.enabled + roleData.disabled

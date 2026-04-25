@@ -168,10 +168,12 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole }:
     if (!friend) return '#'
     const slug = friend.username ? `${friend.username}` : `id/${friend.id}`
     if (friend.role === 'club') return `/clubs/${slug}`
+    if (friend.role === 'umpire') return `/umpires/${slug}`
     return `/players/${slug}`
   }
 
-  const canShowTrustedReferences = isOwner || profileRole === 'player' || profileRole === 'coach'
+  const canShowTrustedReferences =
+    isOwner || profileRole === 'player' || profileRole === 'coach' || profileRole === 'umpire'
 
   const renderFriendCard = (connection: FriendConnection, showActions = false) => (
     <div key={`${connection.id}-${connection.friend_id}`} className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">

@@ -520,7 +520,7 @@ export function PostComposerModal({
             author_id: profile.id,
             author_name: profile.full_name,
             author_avatar: profile.avatar_url,
-            author_role: profile.role as 'player' | 'coach' | 'club' | 'brand',
+            author_role: profile.role as 'player' | 'coach' | 'club' | 'brand' | 'umpire',
             content: content.trim() || `Joined ${clubName}!`,
             images: postMedia,
             like_count: 0,
@@ -590,7 +590,7 @@ export function PostComposerModal({
             author_id: profile.id,
             author_name: profile.full_name,
             author_avatar: profile.avatar_url,
-            author_role: profile.role as 'player' | 'coach' | 'club' | 'brand',
+            author_role: profile.role as 'player' | 'coach' | 'club' | 'brand' | 'umpire',
             content: trimmed,
             images: postMedia,
             like_count: 0,
@@ -616,6 +616,7 @@ export function PostComposerModal({
 
   // Determine submit eligibility
   const isClubRole = profile?.role === 'club'
+  const isUmpireRole = profile?.role === 'umpire'
   const hasClub = selectedClub || customClubName.trim()
   const canSubmitTransfer = isClubRole
     ? Boolean(selectedPerson)
@@ -669,8 +670,8 @@ export function PostComposerModal({
               </div>
             )}
 
-            {/* Mode toggle — hidden when editing */}
-            {!isEdit && (
+            {/* Mode toggle — hidden when editing, and hidden for umpires (no transfer/signing semantics) */}
+            {!isEdit && !isUmpireRole && (
               <div className="flex bg-gray-100 rounded-lg p-1">
                 <button
                   type="button"
@@ -998,7 +999,15 @@ export function PostComposerModal({
                 ref={textareaRef}
                 value={content}
                 onChange={handleContentChange}
-                placeholder={mode === 'transfer' ? (isClubRole ? 'Share something about this signing... (optional)' : 'Share something about your transfer... (optional)') : "What's on your mind?"}
+                placeholder={
+                  mode === 'transfer'
+                    ? (isClubRole
+                        ? 'Share something about this signing... (optional)'
+                        : 'Share something about your transfer... (optional)')
+                    : isUmpireRole
+                      ? 'Share a match recap, a law clarification, or a panel update...'
+                      : "What's on your mind?"
+                }
                 rows={mode === 'transfer' ? 3 : 4}
                 maxLength={MAX_CONTENT_LENGTH}
                 autoCapitalize="sentences"

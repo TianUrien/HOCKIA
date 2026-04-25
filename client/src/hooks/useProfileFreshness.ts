@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { pickFreshnessNudge, type FreshnessNudge } from '@/lib/profileFreshness'
 
-type FreshnessRole = 'player' | 'coach' | 'club' | 'brand'
+type FreshnessRole = 'player' | 'coach' | 'club' | 'brand' | 'umpire'
 
 interface UseProfileFreshnessOptions {
   role: FreshnessRole

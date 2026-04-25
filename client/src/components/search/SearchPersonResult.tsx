@@ -11,7 +11,9 @@ export function SearchPersonResult({ result }: SearchPersonResultProps) {
     ? `/clubs/id/${result.profile_id}?ref=search`
     : result.role === 'brand'
       ? `/brands/${result.profile_id}?ref=search`
-      : `/players/id/${result.profile_id}?ref=search`
+      : result.role === 'umpire'
+        ? `/umpires/id/${result.profile_id}?ref=search`
+        : `/players/id/${result.profile_id}?ref=search`
 
   const subtitle = [result.position, result.base_location, result.current_club]
     .filter(Boolean)
@@ -37,7 +39,7 @@ export function SearchPersonResult({ result }: SearchPersonResultProps) {
           <span className="font-semibold text-gray-900 truncate text-sm">
             {result.full_name || 'Unknown'}
           </span>
-          <RoleBadge role={result.role as 'player' | 'coach' | 'club' | 'brand'} />
+          <RoleBadge role={result.role as 'player' | 'coach' | 'club' | 'brand' | 'umpire'} />
         </div>
         {subtitle && (
           <p className="text-xs text-gray-500 truncate mt-0.5">{subtitle}</p>

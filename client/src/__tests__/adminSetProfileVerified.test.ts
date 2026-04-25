@@ -26,16 +26,49 @@ afterEach(() => {
 })
 
 describe('setProfileVerified', () => {
-  it('calls admin_set_profile_verified with the profile id and value', async () => {
+  it('calls admin_set_profile_verified with the profile id and value (metadata null when omitted)', async () => {
     await setProfileVerified('profile-abc', true)
     expect(rpcCalls).toHaveLength(1)
     expect(rpcCalls[0].fn).toBe('admin_set_profile_verified')
-    expect(rpcCalls[0].args).toEqual({ p_profile_id: 'profile-abc', p_value: true })
+    expect(rpcCalls[0].args).toEqual({
+      p_profile_id: 'profile-abc',
+      p_value: true,
+      p_source_url: null,
+      p_notes: null,
+    })
   })
 
   it('forwards false values to the RPC (revoke path)', async () => {
     await setProfileVerified('profile-xyz', false)
-    expect(rpcCalls[0].args).toEqual({ p_profile_id: 'profile-xyz', p_value: false })
+    expect(rpcCalls[0].args).toEqual({
+      p_profile_id: 'profile-xyz',
+      p_value: false,
+      p_source_url: null,
+      p_notes: null,
+    })
+  })
+
+  it('passes provenance metadata when provided (trimmed)', async () => {
+    await setProfileVerified('profile-abc', true, {
+      sourceUrl: '  https://federation.example/panels  ',
+      notes: '  matches FIH panel listing  ',
+    })
+    expect(rpcCalls[0].args).toEqual({
+      p_profile_id: 'profile-abc',
+      p_value: true,
+      p_source_url: 'https://federation.example/panels',
+      p_notes: 'matches FIH panel listing',
+    })
+  })
+
+  it('treats empty / whitespace-only metadata as null', async () => {
+    await setProfileVerified('profile-abc', false, { sourceUrl: '   ', notes: '' })
+    expect(rpcCalls[0].args).toEqual({
+      p_profile_id: 'profile-abc',
+      p_value: false,
+      p_source_url: null,
+      p_notes: null,
+    })
   })
 
   it('rejects with a descriptive error when the RPC fails', async () => {

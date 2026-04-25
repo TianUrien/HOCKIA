@@ -7,17 +7,18 @@ interface ProtectedRouteProps {
   children: React.ReactNode
 }
 
-const PUBLIC_ROUTES = ['/', '/signup', '/verify-email', '/auth/callback', '/forgot-password', '/reset-password', '/privacy-policy', '/terms', '/developers', '/offline', '/opportunities', '/community', '/world', '/investors', '/brands']
+const PUBLIC_ROUTES = ['/', '/signup', '/signin', '/verify-email', '/auth/callback', '/forgot-password', '/reset-password', '/privacy-policy', '/terms', '/developers', '/offline', '/opportunities', '/community', '/world', '/investors', '/brands']
 
 /**
  * ProtectedRoute - Centralized auth guard
- * 
+ *
  * Uses global auth store (useAuthStore) instead of local state
  * to prevent duplicate auth listeners and state management conflicts.
- * 
+ *
  * PUBLIC ROUTES (no auth required):
- * - /                    Landing page with sign-in form
- * - /signup              Account creation
+ * - /                    Landing page (hero + CTAs only after 2026 redesign)
+ * - /signup              Role selection → AuthScreen in signup mode
+ * - /signin              AuthScreen in signin mode (added in redesign)
  * - /verify-email        Email verification instructions
  * - /auth/callback       OAuth/email verification handler
  * - /forgot-password     Password reset request

@@ -56,10 +56,27 @@ const completeBrand: CommunityMemberFields = {
   brand_website_url: 'https://acmehockey.com',
 }
 
+const completeUmpire: CommunityMemberFields = {
+  role: 'umpire',
+  full_name: 'Umi Umpire',
+  avatar_url: 'https://example.com/u.png',
+  nationality_country_id: 11,
+  base_location: 'London',
+  bio: 'Twenty years officiating first-division matches across Europe.',
+  umpire_level: 'FIH International',
+  federation: 'FIH',
+  umpire_since: 2015,
+  officiating_specialization: 'outdoor',
+  languages: ['English', 'Spanish'],
+  umpire_appointment_count: 3,
+  accepted_reference_count: 2,
+}
+
 const emptyPlayer: CommunityMemberFields = { role: 'player' }
 const emptyCoach: CommunityMemberFields = { role: 'coach' }
 const emptyClub: CommunityMemberFields = { role: 'club' }
 const emptyBrand: CommunityMemberFields = { role: 'brand' }
+const emptyUmpire: CommunityMemberFields = { role: 'umpire' }
 
 describe('calculateTier', () => {
   it('maps 0% to rookie', () => {
@@ -211,6 +228,52 @@ describe('estimateMemberStrength', () => {
     })
   })
 
+  describe('umpire', () => {
+    it('returns 100 when all credentials + presentation + evidence buckets are set', () => {
+      expect(estimateMemberStrength(completeUmpire)).toBe(100)
+    })
+
+    it('returns 0 for an empty umpire profile', () => {
+      expect(estimateMemberStrength(emptyUmpire)).toBe(0)
+    })
+
+    it('drops the federation bucket (15/100) when federation is missing', () => {
+      expect(
+        estimateMemberStrength({ ...completeUmpire, federation: null })
+      ).toBe(85)
+    })
+
+    it('drops the level bucket (20/100) when level is missing', () => {
+      expect(
+        estimateMemberStrength({ ...completeUmpire, umpire_level: null })
+      ).toBe(80)
+    })
+
+    it('drops the languages bucket (10/100) when languages is empty', () => {
+      expect(
+        estimateMemberStrength({ ...completeUmpire, languages: [] })
+      ).toBe(90)
+    })
+
+    it('drops the appointments bucket (10/100) when umpire_appointment_count is 0', () => {
+      expect(
+        estimateMemberStrength({ ...completeUmpire, umpire_appointment_count: 0 })
+      ).toBe(90)
+    })
+
+    it('drops the references bucket (10/100) when accepted_reference_count is 0', () => {
+      expect(
+        estimateMemberStrength({ ...completeUmpire, accepted_reference_count: 0 })
+      ).toBe(90)
+    })
+
+    it('drops the years-officiating bucket (5/100) when umpire_since is unset', () => {
+      expect(
+        estimateMemberStrength({ ...completeUmpire, umpire_since: null })
+      ).toBe(95)
+    })
+  })
+
   it('returns 0 for an unknown role', () => {
     const unknown = { role: 'alien' } as unknown as CommunityMemberFields
     expect(estimateMemberStrength(unknown)).toBe(0)
@@ -228,6 +291,10 @@ describe('getMemberTier', () => {
 
   it('lands on elite for a fully complete club', () => {
     expect(getMemberTier(completeClub)).toBe<ProfileTier>('elite')
+  })
+
+  it('lands on elite for a fully complete umpire', () => {
+    expect(getMemberTier(completeUmpire)).toBe<ProfileTier>('elite')
   })
 
   it('lands on elite for a fully complete brand', () => {

@@ -41,6 +41,26 @@ export interface RequesterData {
   base_location: string | null
   avatar_url: string | null
   is_test_account: boolean
+  /** 'player' | 'coach' | 'umpire' — determines the public profile path.
+   * Null fallback routes to /players/ (legacy behavior for pre-role-aware data). */
+  role: string | null
+}
+
+/**
+ * Map a requester to the correct public profile path.
+ *
+ * request_reference currently allows player / coach / umpire. Coaches still
+ * live on /players/ (legacy shared route). Umpires have their own /umpires/
+ * tree. Any other role defaults to /players/ as a defensive fallback.
+ */
+export function buildRequesterProfileUrl(
+  requester: Pick<RequesterData, 'id' | 'username' | 'role'>,
+  baseUrl: string
+): string {
+  const slug = requester.role === 'umpire' ? 'umpires' : 'players'
+  return requester.username
+    ? `${baseUrl}/${slug}/${requester.username}`
+    : `${baseUrl}/${slug}/id/${requester.id}`
 }
 
 export interface RecipientData {
@@ -68,9 +88,7 @@ export function generateEmailHtml(
   const displayName = requester.full_name?.trim() || 'A HOCKIA member'
   const location = requester.base_location?.trim() || null
 
-  const profileUrl = requester.username
-    ? `${HOCKIA_BASE_URL}/players/${requester.username}`
-    : `${HOCKIA_BASE_URL}/players/id/${requester.id}`
+  const profileUrl = buildRequesterProfileUrl(requester, HOCKIA_BASE_URL)
 
   const initials = getInitials(displayName)
 
@@ -165,9 +183,7 @@ export function generateEmailText(
   const displayName = requester.full_name?.trim() || 'A HOCKIA member'
   const location = requester.base_location?.trim() || null
 
-  const profileUrl = requester.username
-    ? `${HOCKIA_BASE_URL}/players/${requester.username}`
-    : `${HOCKIA_BASE_URL}/players/id/${requester.id}`
+  const profileUrl = buildRequesterProfileUrl(requester, HOCKIA_BASE_URL)
 
   const lines = [
     'Reference Request on HOCKIA',

@@ -17,6 +17,7 @@ import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import KeyboardShortcutsModal from '@/components/KeyboardShortcutsModal'
 import Landing from '@/pages/Landing'
 import SignUp from '@/pages/SignUp'
+import AuthScreen from '@/pages/AuthScreen'
 import AuthCallback from '@/pages/AuthCallback'
 import VerifyEmail from '@/pages/VerifyEmail'
 import ForgotPassword from '@/pages/ForgotPassword'
@@ -64,6 +65,7 @@ const QuestionDetailPage = lazyWithRetry(() => import('@/pages/QuestionDetailPag
 const ApplicantsList = lazyWithRetry(() => import('@/pages/ApplicantsList'))
 const PublicPlayerProfile = lazyWithRetry(() => import('@/pages/PublicPlayerProfile'))
 const PublicClubProfile = lazyWithRetry(() => import('@/pages/PublicClubProfile'))
+const PublicUmpireProfile = lazyWithRetry(() => import('@/pages/PublicUmpireProfile'))
 const MessagesPage = lazyWithRetry(() => import('@/pages/MessagesPage'))
 const SearchPage = lazyWithRetry(() => import('@/pages/SearchPage'))
 const DiscoverPage = lazyWithRetry(() => import('@/pages/DiscoverPage'))
@@ -320,6 +322,7 @@ function App() {
                 {/* Public Routes (allowlisted in ProtectedRoute) */}
                 <Route path="/" element={<ErrorBoundary fallback={<RouteErrorFallback />}><Landing /></ErrorBoundary>} />
                 <Route path="/signup" element={<ErrorBoundary fallback={<RouteErrorFallback />}><SignUp /></ErrorBoundary>} />
+                <Route path="/signin" element={<ErrorBoundary fallback={<RouteErrorFallback />}><AuthScreen mode="signin" /></ErrorBoundary>} />
                 <Route path="/auth/callback" element={<ErrorBoundary fallback={<RouteErrorFallback />}><AuthCallback /></ErrorBoundary>} />
                 <Route path="/verify-email" element={<ErrorBoundary fallback={<RouteErrorFallback />}><VerifyEmail /></ErrorBoundary>} />
                 <Route path="/forgot-password" element={<ErrorBoundary fallback={<RouteErrorFallback />}><ForgotPassword /></ErrorBoundary>} />
@@ -367,6 +370,8 @@ function App() {
                 <Route path="/players/id/:id" element={<PublicPlayerProfile />} />
                 <Route path="/clubs/:username" element={<PublicClubProfile />} />
                 <Route path="/clubs/id/:id" element={<PublicClubProfile />} />
+                <Route path="/umpires/:username" element={<PublicUmpireProfile />} />
+                <Route path="/umpires/id/:id" element={<PublicUmpireProfile />} />
                 
                 {/* Admin Routes - Protected + Admin Guard */}
                 <Route path="/admin" element={<ErrorBoundary fallback={<RouteErrorFallback />}><AdminGuard><AdminLayout /></AdminGuard></ErrorBoundary>}>

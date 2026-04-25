@@ -178,6 +178,13 @@ export interface AdminProfileDetails {
     coach_specialization: string | null
     coach_specialization_custom: string | null
     league_division: string | null
+    // Umpire-specific (populated when role='umpire', null otherwise per
+    // chk_umpire_fields_role CHECK constraint).
+    umpire_level: string | null
+    federation: string | null
+    umpire_since: number | null
+    officiating_specialization: string | null
+    languages: string[] | null
     is_blocked: boolean
     is_test_account: boolean
     onboarding_completed: boolean
@@ -224,7 +231,7 @@ export interface AuditLogEntry {
 
 export interface ProfileSearchParams {
   query?: string
-  role?: 'player' | 'coach' | 'club' | 'brand'
+  role?: 'player' | 'coach' | 'club' | 'brand' | 'umpire'
   is_blocked?: boolean
   is_test_account?: boolean
   onboarding_completed?: boolean

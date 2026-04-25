@@ -732,32 +732,37 @@ export default function SettingsPage() {
                   </button>
                 </div>
 
-                {/* Reference Request Notifications -- All roles */}
-                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                  <div className="flex-1 pr-4">
-                    <p className="text-gray-900 font-medium text-sm">Reference Request Emails</p>
-                    <p className="text-xs text-gray-500 mt-0.5">
-                      Email when someone requests a reference from you
-                    </p>
+                {/* Reference Request Notifications — umpires joined the
+                    references system in Phase E, so they now see this toggle
+                    alongside players/coaches. Clubs + brands still can't
+                    collect references so the toggle stays hidden for them. */}
+                {profile.role !== 'club' && profile.role !== 'brand' && (
+                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div className="flex-1 pr-4">
+                      <p className="text-gray-900 font-medium text-sm">Reference Request Emails</p>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        Email when someone requests a reference from you
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleReferenceNotificationToggle}
+                      disabled={loadingToggles.has('references')}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
+                        notifyReferences ? 'bg-indigo-600' : 'bg-gray-300'
+                      } ${loadingToggles.has('references') ? 'opacity-50' : ''}`}
+                    >
+                      {loadingToggles.has('references') ? (
+                        <Loader2 className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 text-white animate-spin" />
+                      ) : (
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                            notifyReferences ? 'translate-x-6' : 'translate-x-1'
+                          }`}
+                        />
+                      )}
+                    </button>
                   </div>
-                  <button
-                    onClick={handleReferenceNotificationToggle}
-                    disabled={loadingToggles.has('references')}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
-                      notifyReferences ? 'bg-indigo-600' : 'bg-gray-300'
-                    } ${loadingToggles.has('references') ? 'opacity-50' : ''}`}
-                  >
-                    {loadingToggles.has('references') ? (
-                      <Loader2 className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 text-white animate-spin" />
-                    ) : (
-                      <span
-                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                          notifyReferences ? 'translate-x-6' : 'translate-x-1'
-                        }`}
-                      />
-                    )}
-                  </button>
-                </div>
+                )}
 
                 {/* Message Digest Notifications -- All roles */}
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">

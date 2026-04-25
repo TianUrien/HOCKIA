@@ -234,8 +234,24 @@ const clearLocalSession = async (reason: string, options?: ClearSessionOptions) 
   if (localStorageAvailable()) {
     try {
       window.localStorage.removeItem(AUTH_STORAGE_KEY)
+      // Also clear onboarding + pending state so the NEXT user who logs in
+      // on this browser doesn't inherit the previous user's role / email.
+      window.localStorage.removeItem('pending_role')
+      window.localStorage.removeItem('pending_email')
     } catch (storageError) {
       logger.error('[AUTH_STORE] Failed to remove cached session from storage', { storageError })
+    }
+  }
+
+  // Clear cross-tab auth intents too — redirect-after-login is stashed by
+  // AuthScreen (for ?next= preservation) and ProtectedRoute (for unauth'd
+  // deep links). Leaving it around lets the next login tab bounce to the
+  // previous user's intended destination.
+  if (typeof window !== 'undefined') {
+    try {
+      window.sessionStorage.removeItem('hockia-redirect-after-login')
+    } catch {
+      /* noop */
     }
   }
 

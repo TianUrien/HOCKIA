@@ -79,7 +79,7 @@ export default function TrustedReferencesSection({ profileId, friendOptions, pro
   const { addToast } = useToastStore()
   const navigate = useNavigate()
   const dismissNotification = useNotificationStore((state) => state.dismissBySource)
-  const allowedRequesterRoles: Profile['role'][] = ['player', 'coach']
+  const allowedRequesterRoles: Profile['role'][] = ['player', 'coach', 'umpire']
   const canCollectReferences = isOwner && !!profileRole && allowedRequesterRoles.includes(profileRole)
 
   const handleScroll = useCallback(() => {
@@ -149,6 +149,8 @@ export default function TrustedReferencesSection({ profileId, friendOptions, pro
     if (!targetId) return
     if (role === 'club') {
       navigate(`/clubs/id/${targetId}`)
+    } else if (role === 'umpire') {
+      navigate(`/umpires/id/${targetId}`)
     } else {
       navigate(`/players/id/${targetId}`)
     }

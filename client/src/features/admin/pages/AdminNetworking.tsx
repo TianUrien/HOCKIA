@@ -46,6 +46,7 @@ const ROLE_COLORS: Record<string, string> = {
   coach: 'bg-[#F0FDFA] text-[#0D9488]',
   club: 'bg-[#FFF7ED] text-[#EA580C]',
   brand: 'bg-[#FFF1F2] text-[#E11D48]',
+  umpire: 'bg-[#FEFCE8] text-[#A16207]',
 }
 
 export function AdminNetworking() {

@@ -54,7 +54,7 @@ function CompactPersonRow({ result, onSelect }: { result: SearchPersonResult; on
           <span className="text-sm font-semibold text-gray-900 truncate">
             {result.full_name || 'Unknown'}
           </span>
-          <RoleBadge role={result.role as 'player' | 'coach' | 'club' | 'brand'} />
+          <RoleBadge role={result.role as 'player' | 'coach' | 'club' | 'brand' | 'umpire'} />
         </div>
         {subtitle && (
           <p className="text-xs text-gray-500 truncate">{subtitle}</p>
@@ -122,7 +122,7 @@ function CompactPostRow({ result, onSelect }: { result: SearchPostResult; onSele
           <span className="text-sm font-medium text-gray-900 truncate">
             {result.author_name || 'Unknown'}
           </span>
-          <RoleBadge role={result.author_role as 'player' | 'coach' | 'club' | 'brand'} />
+          <RoleBadge role={result.author_role as 'player' | 'coach' | 'club' | 'brand' | 'umpire'} />
         </div>
         <p className="text-xs text-gray-500 truncate">{preview}</p>
       </div>
@@ -269,7 +269,9 @@ export function SearchOverlay() {
           ? `/clubs/id/${result.profile_id}?ref=search`
           : result.role === 'brand'
             ? `/brands/${result.profile_id}?ref=search`
-            : `/players/id/${result.profile_id}?ref=search`
+            : result.role === 'umpire'
+              ? `/umpires/id/${result.profile_id}?ref=search`
+              : `/players/id/${result.profile_id}?ref=search`
         navigateToResult(path)
         break
       }
@@ -285,7 +287,9 @@ export function SearchOverlay() {
           ? `/clubs/id/${result.author_id}`
           : result.author_role === 'brand'
             ? `/brands/${result.author_id}`
-            : `/players/id/${result.author_id}`
+            : result.author_role === 'umpire'
+              ? `/umpires/id/${result.author_id}`
+              : `/players/id/${result.author_id}`
         navigateToResult(authorPath)
         break
       }

@@ -40,6 +40,27 @@ export interface RequesterData {
   base_location: string | null
   avatar_url: string | null
   is_test_account: boolean
+  /** 'player' | 'coach' | 'club' | 'brand' | 'umpire' — determines the public profile path.
+   * Null/unknown falls back to /players/ (legacy shared route for player + coach). */
+  role: string | null
+}
+
+/**
+ * Map a requester to the correct public profile path for the friend-request
+ * email. Umpires live at /umpires/, clubs at /clubs/, everyone else (player,
+ * coach, brand without a slug) falls back to /players/.
+ */
+export function buildRequesterProfileUrl(
+  requester: Pick<RequesterData, 'id' | 'username' | 'role'>,
+  baseUrl: string
+): string {
+  const slug =
+    requester.role === 'umpire' ? 'umpires' :
+    requester.role === 'club' ? 'clubs' :
+    'players'
+  return requester.username
+    ? `${baseUrl}/${slug}/${requester.username}`
+    : `${baseUrl}/${slug}/id/${requester.id}`
 }
 
 export interface RecipientData {
@@ -63,9 +84,7 @@ export function generateEmailHtml(requester: RequesterData): string {
   const displayName = requester.full_name?.trim() || 'A HOCKIA member'
   const location = requester.base_location?.trim() || null
 
-  const profileUrl = requester.username
-    ? `${HOCKIA_BASE_URL}/players/${requester.username}`
-    : `${HOCKIA_BASE_URL}/players/id/${requester.id}`
+  const profileUrl = buildRequesterProfileUrl(requester, HOCKIA_BASE_URL)
 
   const initials = getInitials(displayName)
 
@@ -137,9 +156,7 @@ export function generateEmailText(requester: RequesterData): string {
   const displayName = requester.full_name?.trim() || 'A HOCKIA member'
   const location = requester.base_location?.trim() || null
 
-  const profileUrl = requester.username
-    ? `${HOCKIA_BASE_URL}/players/${requester.username}`
-    : `${HOCKIA_BASE_URL}/players/id/${requester.id}`
+  const profileUrl = buildRequesterProfileUrl(requester, HOCKIA_BASE_URL)
 
   const lines = [
     'New Friend Request on HOCKIA',

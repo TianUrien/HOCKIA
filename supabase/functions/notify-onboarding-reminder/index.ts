@@ -47,14 +47,14 @@ const REMINDER_CONTENT: Record<number, ReminderContent> = {
     subject: 'Finish setting up your HOCKIA profile',
     heading: 'Your profile is waiting for you',
     bodyText:
-      "You're one step away from joining the field hockey community. Complete your profile to discover opportunities, connect with players and coaches, and showcase your skills.",
+      "You're one step away from joining the field hockey community. Complete your profile to discover opportunities, connect with the community, and showcase your skills.",
     ctaLabel: 'Complete My Profile',
   },
   2: {
     subject: 'Your HOCKIA profile is almost ready',
     heading: 'Pick up where you left off',
     bodyText:
-      "Players and coaches on HOCKIA are connecting and finding opportunities. Finish setting up your profile to get started.",
+      "Members across HOCKIA are connecting and finding opportunities. Finish setting up your profile to get started.",
     ctaLabel: 'Finish Setup',
   },
   3: {

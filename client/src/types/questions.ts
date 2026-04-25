@@ -55,7 +55,7 @@ export interface QuestionAuthor {
   id: string
   full_name: string | null
   avatar_url: string | null
-  role: 'player' | 'coach' | 'club'
+  role: 'player' | 'coach' | 'club' | 'brand' | 'umpire'
 }
 
 // Question item (list view)

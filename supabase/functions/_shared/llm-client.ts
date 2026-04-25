@@ -57,6 +57,95 @@ export class LLMRateLimitError extends Error {
   }
 }
 
+export class LLMTimeoutError extends Error {
+  constructor() {
+    super('AI_TIMEOUT')
+    this.name = 'LLMTimeoutError'
+  }
+}
+
+export interface LLMUsage {
+  prompt_tokens: number | null
+  completion_tokens: number | null
+  cached_tokens: number | null
+}
+
+export interface LLMCallMeta {
+  retry_count: number
+  usage: LLMUsage | null
+}
+
+/**
+ * Version tag for SYSTEM_PROMPT + tool schemas. Bump whenever the prompt text
+ * or tool parameters materially change. Logged on every discovery_event so
+ * quality/latency comparisons across prompt iterations don't require git
+ * archaeology.
+ */
+export const PROMPT_VERSION = '2026-04-24.1'
+
+const EMPTY_META: LLMCallMeta = { retry_count: 0, usage: null }
+
+// ─── HTTP reliability helpers ──────────────────────────────────────────
+
+function isTransientStatus(status: number): boolean {
+  return status === 502 || status === 503 || status === 504
+}
+
+function jitteredDelay(baseMs: number): number {
+  return baseMs + Math.floor(Math.random() * (baseMs / 2))
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+/**
+ * Fetch wrapper enforcing a per-attempt timeout plus retries on transient
+ * failures. Retries: AbortError/TimeoutError (signal timeout), network errors,
+ * HTTP 502/503/504. Does NOT retry HTTP 429 (provider quota — caller maps it
+ * to LLMRateLimitError which is handled upstream) or HTTP 4xx (won't succeed
+ * on retry).
+ *
+ * On final timeout throws LLMTimeoutError. Other errors propagate unchanged.
+ * Returns the successful Response plus the count of retries actually taken
+ * (0 when the first attempt succeeded).
+ */
+async function retryableFetch(
+  url: string,
+  init: RequestInit,
+  opts: { timeoutMs: number; maxRetries: number; baseBackoffMs?: number }
+): Promise<{ response: Response; retryCount: number }> {
+  const { timeoutMs, maxRetries, baseBackoffMs = 300 } = opts
+  let lastError: unknown = null
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await fetch(url, {
+        ...init,
+        signal: AbortSignal.timeout(timeoutMs),
+      })
+      if (!response.ok && isTransientStatus(response.status) && attempt < maxRetries) {
+        // Drain the body so the underlying connection can be reused.
+        await response.text().catch(() => null)
+        await sleep(jitteredDelay(baseBackoffMs))
+        continue
+      }
+      return { response, retryCount: attempt }
+    } catch (err) {
+      lastError = err
+      const isTimeout = err instanceof DOMException &&
+        (err.name === 'TimeoutError' || err.name === 'AbortError')
+      if (attempt < maxRetries) {
+        await sleep(jitteredDelay(baseBackoffMs))
+        continue
+      }
+      if (isTimeout) throw new LLMTimeoutError()
+      throw err
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error('retryableFetch exhausted retries')
+}
+
 export interface HistoryTurn {
   role: 'user' | 'assistant'
   content: string
@@ -111,12 +200,12 @@ function buildUserContextBlock(ctx: UserContext): string {
   return lines.join('\n')
 }
 
-const SYSTEM_PROMPT = `You are HOCKIA Assistant, a friendly and knowledgeable AI for HOCKIA — a field hockey platform connecting players, coaches, clubs, and brands. You are also a field hockey expert.
+const SYSTEM_PROMPT = `You are HOCKIA Assistant, a friendly and knowledgeable AI for HOCKIA — a field hockey platform connecting players, coaches, clubs, brands, and umpires. You are also a field hockey expert.
 
 You have three tools:
 1. search_profiles — Use when the user wants to find or discover people/profiles. Extract structured filters from their query. Always include a conversational "message" field describing what you're looking for.
 2. answer_hockey_question — Use when the user asks about field hockey knowledge: rules, positions, tactics, formations, tournament formats (Olympics, World Cup, Pro League, EHL), FIH regulations, equipment (sticks, goalkeeping gear, balls, turf types), hockey history, training concepts, terminology (drag flick, aerial, jab tackle, penalty corner, etc.), or differences between indoor and outdoor hockey. Provide accurate, helpful answers. You can be detailed (multiple paragraphs) when the question warrants it.
-3. respond — Use for greetings, questions about HOCKIA the platform, help requests, or anything that is NOT a profile search and NOT a hockey knowledge question. Be warm and helpful. Mention that you can help discover players, coaches, clubs, and brands, AND answer field hockey questions.
+3. respond — Use for greetings, questions about HOCKIA the platform, help requests, or anything that is NOT a profile search and NOT a hockey knowledge question. Be warm and helpful. Mention that you can help discover players, coaches, clubs, brands, and umpires, AND answer field hockey questions.
 
 TOOL SELECTION RULES:
 - "Find defenders" or "best players in England" → search_profiles (looking for people)
@@ -134,7 +223,8 @@ FILTER EXTRACTION RULES (for search_profiles only):
 - "EU passport" means eu_passport=true. Do NOT list individual EU countries unless the user specifically names them.
 - "Open to play", "available", or "looking for opportunities" means availability="open_to_play".
 - "Verified references" or "references" maps to min_references.
-- If role is not specified, infer from context: positions like "defender" imply role=["player"]; "head coach" implies role=["coach"]; "club" or "team" implies role=["club"]; "brand" or "sponsor" implies role=["brand"].
+- If role is not specified, infer from context: positions like "defender" imply role=["player"]; "head coach" implies role=["coach"]; "club" or "team" implies role=["club"]; "brand" or "sponsor" implies role=["brand"]; "umpire", "official", or "referee" implies role=["umpire"].
+- IMPORTANT — umpires are ONLY surfaced when the user explicitly asks for them (with words like "umpire", "umpires", "official", "officials", "referee", "referees"). Never volunteer umpires in searches for players, coaches, clubs, or brands. When the intent is unclear, default to NOT including "umpire" in roles.
 - For "playing in [country]" or "based in [country]", use the countries array for league/club country context, and locations for where they live.
 - When the user mentions "good feedback", "strong references", "well-regarded", "reputation", "endorsed", "reviewed", "testimonials", "comments about", or any qualitative assessment, set include_qualitative=true. This triggers a deeper analysis of profile comments and endorsements for the top results.
 - Always generate a human-readable summary field.
@@ -161,8 +251,8 @@ const SEARCH_TOOL = {
     properties: {
       roles: {
         type: 'array',
-        items: { type: 'string', enum: ['player', 'coach', 'club', 'brand'] },
-        description: 'Profile roles to search.',
+        items: { type: 'string', enum: ['player', 'coach', 'club', 'brand', 'umpire'] },
+        description: 'Profile roles to search. Only include "umpire" when the user explicitly asks for umpires, officials, or referees — never volunteer it for generic searches.',
       },
       positions: {
         type: 'array',
@@ -269,7 +359,7 @@ const DEFAULT_CONVERSATION_RESPONSE = "Hey! I'm HOCKIA Assistant. I can help you
 
 // ─── Gemini (Google AI Studio — free tier) ────────────────────────────
 
-async function callGemini(query: string, history: HistoryTurn[] = [], userContext?: UserContext): Promise<LLMResult> {
+async function callGemini(query: string, history: HistoryTurn[] = [], userContext?: UserContext): Promise<{ result: LLMResult; meta: LLMCallMeta }> {
   const apiKey = Deno.env.get('GOOGLE_AI_API_KEY')
   if (!apiKey) throw new Error('GOOGLE_AI_API_KEY not configured')
 
@@ -285,7 +375,7 @@ async function callGemini(query: string, history: HistoryTurn[] = [], userContex
     { role: 'user', parts: [{ text: query }] },
   ]
 
-  const response = await fetch(
+  const { response, retryCount } = await retryableFetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
     {
       method: 'POST',
@@ -295,28 +385,15 @@ async function callGemini(query: string, history: HistoryTurn[] = [], userContex
         contents,
         tools: [{
           function_declarations: [
-            {
-              name: SEARCH_TOOL.name,
-              description: SEARCH_TOOL.description,
-              parameters: SEARCH_TOOL.input_schema,
-            },
-            {
-              name: RESPOND_TOOL.name,
-              description: RESPOND_TOOL.description,
-              parameters: RESPOND_TOOL.input_schema,
-            },
-            {
-              name: HOCKEY_KNOWLEDGE_TOOL.name,
-              description: HOCKEY_KNOWLEDGE_TOOL.description,
-              parameters: HOCKEY_KNOWLEDGE_TOOL.input_schema,
-            },
+            { name: SEARCH_TOOL.name, description: SEARCH_TOOL.description, parameters: SEARCH_TOOL.input_schema },
+            { name: RESPOND_TOOL.name, description: RESPOND_TOOL.description, parameters: RESPOND_TOOL.input_schema },
+            { name: HOCKEY_KNOWLEDGE_TOOL.name, description: HOCKEY_KNOWLEDGE_TOOL.description, parameters: HOCKEY_KNOWLEDGE_TOOL.input_schema },
           ],
         }],
-        tool_config: {
-          function_calling_config: { mode: 'ANY' },
-        },
+        tool_config: { function_calling_config: { mode: 'ANY' } },
       }),
-    }
+    },
+    { timeoutMs: 4000, maxRetries: 1 }
   )
 
   if (!response.ok) {
@@ -328,6 +405,13 @@ async function callGemini(query: string, history: HistoryTurn[] = [], userContex
   }
 
   const data = await response.json()
+  const usage: LLMUsage = {
+    prompt_tokens: data.usageMetadata?.promptTokenCount ?? null,
+    completion_tokens: data.usageMetadata?.candidatesTokenCount ?? null,
+    cached_tokens: data.usageMetadata?.cachedContentTokenCount ?? null,
+  }
+  const meta: LLMCallMeta = { retry_count: retryCount, usage }
+
   const candidate = data.candidates?.[0]
   const parts = candidate?.content?.parts
 
@@ -340,14 +424,17 @@ async function callGemini(query: string, history: HistoryTurn[] = [], userContex
 
   const { name, args } = fnCall.functionCall
   if (name === 'respond') {
-    return { type: 'conversation', message: args.message || DEFAULT_CONVERSATION_RESPONSE }
+    return { result: { type: 'conversation', message: args.message || DEFAULT_CONVERSATION_RESPONSE }, meta }
   }
   if (name === 'answer_hockey_question') {
-    return { type: 'knowledge', message: args.message || 'I couldn\'t generate an answer. Try rephrasing your question.' }
+    return { result: { type: 'knowledge', message: args.message || "I couldn't generate an answer. Try rephrasing your question." }, meta }
   }
 
   const { message, include_qualitative, ...filters } = args
-  return { type: 'search', filters: filters as ParsedFilters, message: message || filters.summary || '', include_qualitative: include_qualitative === true }
+  return {
+    result: { type: 'search', filters: filters as ParsedFilters, message: message || filters.summary || '', include_qualitative: include_qualitative === true },
+    meta,
+  }
 }
 
 // ─── Claude (Anthropic — paid) ────────────────────────────────────────
@@ -471,13 +558,13 @@ async function callOpenAI(query: string, history: HistoryTurn[] = [], userContex
 
 // ─── Provider dispatcher ───────────────────────────────────────────────
 
-export async function parseSearchQuery(query: string, history: HistoryTurn[] = [], userContext?: UserContext): Promise<LLMResult> {
+export async function parseSearchQuery(query: string, history: HistoryTurn[] = [], userContext?: UserContext): Promise<{ result: LLMResult; meta: LLMCallMeta }> {
   const provider = Deno.env.get('LLM_PROVIDER') || 'gemini'
 
   switch (provider) {
     case 'gemini':  return callGemini(query, history, userContext)
-    case 'claude':  return callClaude(query, history, userContext)
-    case 'openai':  return callOpenAI(query, history, userContext)
+    case 'claude':  return { result: await callClaude(query, history, userContext), meta: EMPTY_META }
+    case 'openai':  return { result: await callOpenAI(query, history, userContext), meta: EMPTY_META }
     default:        return callGemini(query, history, userContext)
   }
 }
@@ -544,11 +631,11 @@ function buildSynthesisUserMessage(profiles: ProfileQualitativeData[], userQuery
   return `The user asked: "${userQuery}"\n\nReputation data for the top ${profiles.length} results:\n\n${sections}\n\nPlease synthesize these reputation signals concisely.`
 }
 
-async function synthesizeWithGemini(profiles: ProfileQualitativeData[], userQuery: string): Promise<string> {
+async function synthesizeWithGemini(profiles: ProfileQualitativeData[], userQuery: string): Promise<{ text: string; meta: LLMCallMeta }> {
   const apiKey = Deno.env.get('GOOGLE_AI_API_KEY')
   if (!apiKey) throw new Error('GOOGLE_AI_API_KEY not configured')
 
-  const response = await fetch(
+  const { response, retryCount } = await retryableFetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
     {
       method: 'POST',
@@ -557,7 +644,8 @@ async function synthesizeWithGemini(profiles: ProfileQualitativeData[], userQuer
         system_instruction: { parts: [{ text: SYNTHESIS_SYSTEM_PROMPT }] },
         contents: [{ role: 'user', parts: [{ text: buildSynthesisUserMessage(profiles, userQuery) }] }],
       }),
-    }
+    },
+    { timeoutMs: 3000, maxRetries: 0 }
   )
 
   if (!response.ok) {
@@ -569,7 +657,15 @@ async function synthesizeWithGemini(profiles: ProfileQualitativeData[], userQuer
   }
 
   const data = await response.json()
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+  const usage: LLMUsage = {
+    prompt_tokens: data.usageMetadata?.promptTokenCount ?? null,
+    completion_tokens: data.usageMetadata?.candidatesTokenCount ?? null,
+    cached_tokens: data.usageMetadata?.cachedContentTokenCount ?? null,
+  }
+  const meta: LLMCallMeta = { retry_count: retryCount, usage }
+
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+  return { text, meta }
 }
 
 async function synthesizeWithClaude(profiles: ProfileQualitativeData[], userQuery: string): Promise<string> {
@@ -633,13 +729,13 @@ async function synthesizeWithOpenAI(profiles: ProfileQualitativeData[], userQuer
 export async function synthesizeQualitativeInsights(
   profiles: ProfileQualitativeData[],
   userQuery: string
-): Promise<string> {
+): Promise<{ text: string; meta: LLMCallMeta }> {
   const provider = Deno.env.get('LLM_PROVIDER') || 'gemini'
 
   switch (provider) {
     case 'gemini':  return synthesizeWithGemini(profiles, userQuery)
-    case 'claude':  return synthesizeWithClaude(profiles, userQuery)
-    case 'openai':  return synthesizeWithOpenAI(profiles, userQuery)
+    case 'claude':  return { text: await synthesizeWithClaude(profiles, userQuery), meta: EMPTY_META }
+    case 'openai':  return { text: await synthesizeWithOpenAI(profiles, userQuery), meta: EMPTY_META }
     default:        return synthesizeWithGemini(profiles, userQuery)
   }
 }

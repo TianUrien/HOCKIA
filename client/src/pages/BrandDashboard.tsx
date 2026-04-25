@@ -1045,7 +1045,9 @@ export default function BrandDashboard() {
                               ? `/clubs/id/${follower.profile_id}`
                               : follower.role === 'coach'
                                 ? `/coaches/id/${follower.profile_id}`
-                                : `/players/id/${follower.profile_id}`
+                                : follower.role === 'umpire'
+                                  ? `/umpires/id/${follower.profile_id}`
+                                  : `/players/id/${follower.profile_id}`
                           }
                           className="flex items-center gap-3 bg-white rounded-xl border border-gray-200 p-4 hover:border-gray-300 transition-colors"
                         >

@@ -20,6 +20,8 @@ export { default as NotificationsDrawer } from './NotificationsDrawer'
 export { default as EditProfileModal } from './EditProfileModal'
 export { default as DeleteAccountModal } from './DeleteAccountModal'
 export { default as MemberCard } from './MemberCard'
+export { default as MemberTile } from './MemberTile'
+export { default as MagicLinkForm } from './MagicLinkForm'
 export { default as ResendVerificationButton } from './ResendVerificationButton'
 export { default as Toast } from './Toast'
 export { default as ToastContainer } from './ToastContainer'
@@ -51,7 +53,7 @@ export { default as VacancyJsonLd } from './OpportunityJsonLd'
 export { ErrorBoundary } from './ErrorBoundary'
 
 // Loading States
-export { default as Skeleton, ConversationSkeleton, OpportunityCardSkeleton, VacancyCardSkeleton, ProfileCardSkeleton, MessageSkeleton, ChatWindowSkeleton, TableRowSkeleton } from './Skeleton'
+export { default as Skeleton, ConversationSkeleton, OpportunityCardSkeleton, VacancyCardSkeleton, ProfileCardSkeleton, MemberTileSkeleton, MessageSkeleton, ChatWindowSkeleton, TableRowSkeleton } from './Skeleton'
 
 // Auth & Routing
 export { default as ProtectedRoute } from './ProtectedRoute'

@@ -21,15 +21,63 @@ const RELATIONSHIP_MAP: Record<string, Record<string, string[]>> = {
     player: ['Teammate', 'Team Captain', 'Former Teammate', 'Former Captain'],
     coach:  ['Head Coach', 'Assistant Coach', 'Former Coach', 'Academy Coach'],
     club:   ['Club', 'Former Club'],
+    umpire: ['Match Umpire', 'Tournament Official'],
   },
   coach: {
     player: ['Player', 'Former Player', 'Team Captain', 'Mentor'],
     coach:  ['Colleague', 'Fellow Coach', 'Former Colleague'],
     club:   ['Club', 'Former Club'],
+    umpire: ['Match Umpire', 'Tournament Official'],
   },
   club: {
     player: ['Club Member', 'Former Member', 'Club Captain'],
     coach:  ['Club Coach', 'Former Coach', 'Head Coach'],
+    umpire: ['Club Umpire', 'Tournament Umpire'],
+  },
+  umpire: {
+    // Primary trust pair — peer umpires are the strongest voice for an
+    // umpire's credibility. Rich list: partnership, seniority, mentorship,
+    // formal assessment, and panel colleagueship all carry distinct weight.
+    umpire: [
+      'Umpiring Partner',
+      'Fellow Umpire',
+      'Senior Umpire',
+      'Umpire Mentor',
+      'Umpire Assessor',
+      'Panel Colleague',
+    ],
+    // Describe the CONNECTION, not the coach's title. "Head Coach" by
+    // itself doesn't tell the reader how they know the umpire.
+    coach: [
+      'Coach at Matches I Officiated',
+      'Tournament Coach',
+      'Development Panel Coach',
+      'Opposing Coach',
+    ],
+    // Same principle — what was the umpire's relationship to the club?
+    club: [
+      'Home Club',
+      'Club I Regularly Officiated For',
+      'Tournament Host Club',
+      'Former Club',
+    ],
+    // Narrow to the honest cases: career pivot, senior player voice from
+    // officiated matches, or a high-level player whose observation carries
+    // weight. A UI advisory below the dropdown nudges umpires toward
+    // stronger reference sources (peer/assessor/coach) for this pair.
+    player: [
+      'Former Teammate',
+      'Team Captain I Officiated',
+      'Senior National Player',
+    ],
+    // Rare pair but missing entirely before — falling through to the
+    // generic Teammate/Colleague/Mentor fallback was incoherent. The
+    // three most plausible umpire↔brand connections.
+    brand: [
+      'Sponsor',
+      'Equipment Partner',
+      'Clinic / Academy Host',
+    ],
   },
 }
 
@@ -295,6 +343,16 @@ export default function AddReferenceModal({ isOpen, onClose, friends, onSubmit, 
                   <option key={option} value={option}>{option}</option>
                 ))}
               </select>
+
+              {/* Umpire → Player is legitimate in narrow cases (career pivot,
+                  senior player voice) but federations flag umpires soliciting
+                  player endorsements for officiated matches as a conflict of
+                  interest. Nudge toward stronger sources without blocking. */}
+              {requesterRole?.toLowerCase() === 'umpire' && selectedFriend?.role?.toLowerCase() === 'player' && (
+                <p className="mt-2 text-xs text-gray-500 leading-relaxed">
+                  Umpires usually get stronger references from peer umpires, assessors, or coaches who've observed them at matches.
+                </p>
+              )}
             </div>
 
             {/* Optional note */}

@@ -2,8 +2,8 @@
  * onboardingValidation.ts
  *
  * Pure, unit-testable per-step validation for the staged CompleteProfile
- * wizard (player + coach roles). Kept separate from the component so the
- * gating rules can be exercised without mounting the full 1,300-line
+ * wizard (player + coach + umpire roles). Kept separate from the component
+ * so the gating rules can be exercised without mounting the full 1,300-line
  * onboarding page and mocking its auth / supabase / location-autocomplete
  * dependencies.
  *
@@ -11,11 +11,12 @@
  * Step 2 (where):     base location + gender
  * Step 3 (role):      player → position (+ distinct secondary)
  *                     coach  → specialization (+ custom text when "other")
+ *                     umpire → level + federation + specialization + ≥ 1 language
  */
 
 export type WizardStep = 1 | 2 | 3
 
-export type OnboardingRole = 'player' | 'coach'
+export type OnboardingRole = 'player' | 'coach' | 'umpire'
 
 export interface OnboardingFormSubset {
   fullName?: string
@@ -26,6 +27,11 @@ export interface OnboardingFormSubset {
   secondaryPosition?: string
   coachSpecialization?: string
   coachSpecializationCustom?: string
+  // Umpire-specific fields (v1 — free text for level + federation)
+  umpireLevel?: string
+  federation?: string
+  officiatingSpecialization?: 'outdoor' | 'indoor' | 'both' | ''
+  languages?: string[]
 }
 
 /**
@@ -62,15 +68,34 @@ export function validateOnboardingStep(
     return null
   }
 
-  // role === 'coach'
-  if (!formData.coachSpecialization) {
-    return 'Please select your coaching specialization.'
+  if (role === 'coach') {
+    if (!formData.coachSpecialization) {
+      return 'Please select your coaching specialization.'
+    }
+    if (
+      formData.coachSpecialization === 'other' &&
+      !formData.coachSpecializationCustom?.trim()
+    ) {
+      return 'Please enter your role title.'
+    }
+    return null
   }
-  if (
-    formData.coachSpecialization === 'other' &&
-    !formData.coachSpecializationCustom?.trim()
-  ) {
-    return 'Please enter your role title.'
+
+  // role === 'umpire'
+  if (!formData.umpireLevel?.trim()) {
+    return 'Please add your umpire level.'
+  }
+  if (!formData.federation?.trim()) {
+    return 'Please add the federation you officiate with.'
+  }
+  if (!formData.officiatingSpecialization) {
+    return 'Please choose outdoor, indoor, or both.'
+  }
+  // Languages are deliberately required — officiating across the hockey
+  // ecosystem is bilingual by default, and leaving this blank produces
+  // a much weaker profile. At least one language keeps the bar low.
+  if (!formData.languages || formData.languages.length === 0) {
+    return 'Please add at least one language you can officiate in.'
   }
   return null
 }

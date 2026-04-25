@@ -14,7 +14,7 @@ interface PostInteractionBarProps {
   authorId: string
   authorName: string | null
   authorAvatar: string | null
-  authorRole: 'player' | 'coach' | 'club' | 'brand'
+  authorRole: 'player' | 'coach' | 'club' | 'brand' | 'umpire'
   content: string
   thumbnailUrl: string | null
 }

@@ -47,6 +47,8 @@ export function ProfileViewersSection() {
       if (viewer.brand_slug) {
         navigate(`/brands/${viewer.brand_slug}`)
       }
+    } else if (viewer.role === 'umpire') {
+      navigate(`/umpires/id/${viewer.viewer_id}`)
     } else {
       navigate(`/players/id/${viewer.viewer_id}`)
     }
@@ -106,7 +108,7 @@ export function ProfileViewersSection() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="font-medium text-gray-900 text-sm truncate">{displayName}</span>
-                  <RoleBadge role={viewer.role as 'player' | 'coach' | 'club' | 'brand'} />
+                  <RoleBadge role={viewer.role as 'player' | 'coach' | 'club' | 'brand' | 'umpire'} />
                 </div>
                 <p className="text-xs text-gray-500 truncate">
                   {[

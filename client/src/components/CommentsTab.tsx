@@ -21,6 +21,32 @@ import RequestFeedbackModal from './RequestFeedbackModal'
 interface CommentsTabProps {
   profileId: string
   highlightedCommentIds?: Set<string>
+  /** Profile role being viewed — drives tone of composer placeholder
+   * and empty-state copy. Optional; defaults to generic wording. */
+  profileRole?: Profile['role'] | null
+}
+
+/** Role-aware composer placeholder — keeps tone appropriate to the
+ * profile being commented on. */
+function composerPlaceholderFor(role: Profile['role'] | null | undefined): string {
+  if (role === 'umpire') {
+    return "Share a note about this umpire's officiating — fair decisions, professionalism, knowledge of the laws..."
+  }
+  if (role === 'coach') {
+    return "Tell clubs and players why this coach stands out..."
+  }
+  if (role === 'club') {
+    return 'Share your experience with this club — culture, facilities, professionalism...'
+  }
+  return 'Tell clubs, coaches, and players why this profile stands out...'
+}
+
+/** Role-aware empty-state body copy. */
+function emptyStateCopyFor(role: Profile['role'] | null | undefined): string {
+  if (role === 'umpire') {
+    return 'Be the first to share a note about this umpire.'
+  }
+  return 'Be the first to share constructive feedback for this profile.'
 }
 
 type CommentRating = Database['public']['Enums']['comment_rating']
@@ -61,7 +87,7 @@ const COMMENT_COMPOSER_INFO = (
   </div>
 )
 
-export default function CommentsTab({ profileId, highlightedCommentIds }: CommentsTabProps) {
+export default function CommentsTab({ profileId, highlightedCommentIds, profileRole }: CommentsTabProps) {
   const { profile: authProfile, user } = useAuthStore()
   const { addToast } = useToastStore()
 
@@ -87,7 +113,12 @@ export default function CommentsTab({ profileId, highlightedCommentIds }: Commen
     if (!isOwner || !authProfile) return ''
     const origin = typeof window !== 'undefined' ? window.location.origin : ''
     const slug = authProfile.username || `id/${authProfile.id}`
-    const basePath = authProfile.role === 'club' ? '/clubs' : '/players'
+    const basePath =
+      authProfile.role === 'club'
+        ? '/clubs'
+        : authProfile.role === 'umpire'
+          ? '/umpires'
+          : '/players'
     return `${origin}${basePath}/${slug}`
   }, [isOwner, authProfile])
 
@@ -434,7 +465,7 @@ export default function CommentsTab({ profileId, highlightedCommentIds }: Commen
                   value={composerContent}
                   onChange={(event) => setComposerContent(event.target.value.slice(0, MAX_LENGTH))}
                   rows={4}
-                  placeholder="Tell clubs, coaches, and players why this profile stands out..."
+                  placeholder={composerPlaceholderFor(profileRole)}
                   autoCapitalize="sentences"
                   spellCheck
                   className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 focus:border-[#8026FA] focus:ring-[#8026FA]"
@@ -668,9 +699,7 @@ export default function CommentsTab({ profileId, highlightedCommentIds }: Commen
         ) : comments.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-gray-200 bg-white p-10 text-center text-gray-500">
             <p className="text-base font-semibold text-gray-900 mb-2">No comments yet</p>
-            <p className="text-sm">
-              Be the first to share constructive feedback for this profile.
-            </p>
+            <p className="text-sm">{emptyStateCopyFor(profileRole)}</p>
           </div>
         ) : (
           <div className="space-y-4">

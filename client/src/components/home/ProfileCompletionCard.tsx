@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Camera, Building2, UserPlus, Shield, X } from 'lucide-react'
+import { Camera, Building2, UserPlus, Shield, X, Award } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
 import { useProfileStrength } from '@/hooks/useProfileStrength'
 import type { Profile } from '@/lib/supabase'
@@ -57,10 +57,76 @@ export default function ProfileCompletionCard() {
           ? 'Clubs with logos get more attention from players.'
           : 'Profiles with photos are more likely to be shortlisted by clubs.',
         action: () => {
-          const dashPath = role === 'coach' ? '/coaches/' : role === 'club' ? '/clubs/' : '/players/'
+          const dashPath =
+            role === 'coach'
+              ? '/coaches/'
+              : role === 'club'
+                ? '/clubs/'
+                : role === 'umpire'
+                  ? '/umpires/'
+                  : '/players/'
           navigate(`${dashPath}${(p as Profile).username}?action=edit`)
         },
         actionLabel: 'Add Photo',
+        completed: false,
+      })
+    }
+
+    // Umpire credentials — hero field for officiating role. Without these,
+    // the profile says nothing about trust/level to anyone browsing. Gate
+    // the follow-up umpire nudges (journey, references) on credentials
+    // being set, so a brand-new umpire sees one ask at a time.
+    const hasUmpireCredentials =
+      role === 'umpire' && Boolean(p.umpire_level?.trim() && p.federation?.trim())
+
+    if (role === 'umpire') {
+      const needsLevel = !p.umpire_level?.trim()
+      const needsFederation = !p.federation?.trim()
+      if (needsLevel || needsFederation) {
+        items.push({
+          id: 'umpire-credentials',
+          icon: <Shield className="w-5 h-5 text-[#8026FA]" />,
+          title: needsLevel && needsFederation
+            ? 'Add your umpire level and federation'
+            : needsLevel
+              ? 'Add your umpire level'
+              : 'Add the federation you officiate with',
+          description: 'This is what clubs and fellow officials look for first.',
+          action: () => navigate(`/umpires/${(p as Profile).username}?action=edit`),
+          actionLabel: needsLevel ? 'Add Level' : 'Add Federation',
+          completed: false,
+        })
+      }
+    }
+
+    // Umpire Officiating Journey — once credentials are in, nudge them to
+    // log their first entry (appointment, milestone, certification, panel).
+    // Without any journey entries, the profile is a static credentials card.
+    if (hasUmpireCredentials && (p.umpire_appointment_count ?? 0) === 0) {
+      items.push({
+        id: 'umpire-journey',
+        icon: <Award className="w-5 h-5 text-[#8026FA]" />,
+        title: 'Log your first officiating entry',
+        description:
+          'Add an appointment, milestone, certification, or panel — show what you\u2019ve done.',
+        action: () => navigate('/dashboard/profile?tab=officiating'),
+        actionLabel: 'Add Entry',
+        completed: false,
+      })
+    }
+
+    // Umpire peer reference — once credentials are in, surface the network
+    // ask so the profile collects its first endorsement from a coach /
+    // fellow umpire / club.
+    if (hasUmpireCredentials && (p.accepted_reference_count ?? 0) === 0) {
+      items.push({
+        id: 'umpire-reference',
+        icon: <UserPlus className="w-5 h-5 text-[#8026FA]" />,
+        title: 'Ask a peer to vouch for you',
+        description:
+          'A coach, fellow umpire, or club vouching for you builds trust fast.',
+        action: () => navigate('/dashboard/profile?tab=friends'),
+        actionLabel: 'Get Reference',
         completed: false,
       })
     }

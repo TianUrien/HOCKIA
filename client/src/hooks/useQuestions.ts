@@ -36,7 +36,7 @@ function transformQuestion(row: Record<string, unknown>): Question {
       id: author.id as string,
       full_name: author.full_name as string | null,
       avatar_url: author.avatar_url as string | null,
-      role: author.role as 'player' | 'coach' | 'club',
+      role: author.role as 'player' | 'coach' | 'club' | 'brand' | 'umpire',
     } : {
       id: '',
       full_name: 'Unknown',
@@ -59,7 +59,7 @@ function transformAnswer(row: Record<string, unknown>): Answer {
       id: author.id as string,
       full_name: author.full_name as string | null,
       avatar_url: author.avatar_url as string | null,
-      role: author.role as 'player' | 'coach' | 'club',
+      role: author.role as 'player' | 'coach' | 'club' | 'brand' | 'umpire',
     } : {
       id: '',
       full_name: 'Unknown',

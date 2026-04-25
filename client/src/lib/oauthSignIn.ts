@@ -15,6 +15,24 @@ import { reportAuthFlowError } from './sentryHelpers'
 export type OAuthProvider = 'apple' | 'google'
 
 /**
+ * Provider-specific OAuth scopes.
+ *
+ * Apple only returns the user's name (and sometimes email) on the FIRST
+ * consent, and only when these scopes are requested. Omit them and every
+ * Apple signup has an empty profile.full_name with no way to recover
+ * (Apple will not re-send on future sign-ins). Source:
+ * https://developer.apple.com/forums/thread/118209
+ *
+ * Google's defaults (email + profile) already cover what we need, so we
+ * leave the scopes unset for Google to avoid triggering verification
+ * review on any extra scope.
+ */
+export function scopesFor(provider: OAuthProvider): string | undefined {
+  if (provider === 'apple') return 'name email'
+  return undefined
+}
+
+/**
  * Initiate OAuth sign-in with the given provider.
  * Automatically uses the correct flow for web vs native.
  */
@@ -39,9 +57,13 @@ export async function startOAuthSignIn(provider: OAuthProvider): Promise<void> {
 
     // Standard web OAuth — Supabase handles the redirect
     logger.debug(`[oauthSignIn] Starting web OAuth for ${provider}`)
+    const scopes = scopesFor(provider)
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
-      options: { redirectTo: getAuthRedirectUrl() },
+      options: {
+        redirectTo: getAuthRedirectUrl(),
+        ...(scopes ? { scopes } : {}),
+      },
     })
     if (error) throw error
   } catch (err) {

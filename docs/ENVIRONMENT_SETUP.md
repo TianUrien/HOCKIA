@@ -88,6 +88,10 @@ For CI/CD to run E2E tests against staging:
 | `E2E_CLUB_PASSWORD` | Password for club test account |
 | `E2E_COACH_EMAIL` | `coachplayr@gmail.com` |
 | `E2E_COACH_PASSWORD` | Password for coach test account |
+| `E2E_BRAND_EMAIL` | `brandplayr@gmail.com` |
+| `E2E_BRAND_PASSWORD` | Password for brand test account |
+| `E2E_UMPIRE_EMAIL` | `umpirehockia93@gmail.com` |
+| `E2E_UMPIRE_PASSWORD` | Password for umpire test account |
 
 ## Database Migration Workflow
 
