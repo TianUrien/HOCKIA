@@ -15,24 +15,33 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { getServiceClient } from '../_shared/supabase-client.ts'
 import { getCorsHeaders } from '../_shared/cors.ts'
 import { captureException } from '../_shared/sentry.ts'
-import { parseSearchQuery, synthesizeQualitativeInsights, LLMRateLimitError, type ParsedFilters, type LLMResult, type HistoryTurn, type ProfileQualitativeData, type UserContext } from '../_shared/llm-client.ts'
+import { parseSearchQuery, synthesizeQualitativeInsights, PROMPT_VERSION, type LLMCallMeta, type ParsedFilters, type HistoryTurn, type ProfileQualitativeData, type UserContext } from '../_shared/llm-client.ts'
 
-/** Fire-and-forget: log a discovery event for admin analytics. */
+interface DiscoveryEventParams {
+  user_id: string
+  role: string | null
+  query_text: string
+  intent: string
+  parsed_filters: ParsedFilters | null
+  result_count: number
+  has_qualitative: boolean
+  llm_provider: string
+  response_time_ms: number
+  error_message: string | null
+  prompt_tokens: number | null
+  completion_tokens: number | null
+  cached_tokens: number | null
+  prompt_version: string
+  fallback_used: boolean
+  retry_count: number
+}
+
+/** Insert a discovery event row. Called via fireAndForget so it never blocks
+ *  the response; swallows any insert error to stay analytics-only. */
 async function logDiscoveryEvent(
   // deno-lint-ignore no-explicit-any
   client: any,
-  params: {
-    user_id: string
-    role: string | null
-    query_text: string
-    intent: string
-    parsed_filters: ParsedFilters | null
-    result_count: number
-    has_qualitative: boolean
-    llm_provider: string
-    response_time_ms: number
-    error_message: string | null
-  }
+  params: DiscoveryEventParams
 ): Promise<void> {
   try {
     await client.from('discovery_events').insert({
@@ -46,9 +55,126 @@ async function logDiscoveryEvent(
       llm_provider: params.llm_provider,
       response_time_ms: params.response_time_ms,
       error_message: params.error_message,
+      prompt_tokens: params.prompt_tokens,
+      completion_tokens: params.completion_tokens,
+      cached_tokens: params.cached_tokens,
+      prompt_version: params.prompt_version,
+      fallback_used: params.fallback_used,
+      retry_count: params.retry_count,
     })
   } catch {
     // Never fail the response over analytics logging
+  }
+}
+
+/** Run a promise detached from the response lifecycle. Uses EdgeRuntime.waitUntil
+ *  when available (keeps the runtime alive until the promise settles) and falls
+ *  back to a plain catch in local dev. */
+function fireAndForget(promise: Promise<unknown>): void {
+  // deno-lint-ignore no-explicit-any
+  const edgeRuntime = (globalThis as any).EdgeRuntime
+  const tracked = promise.catch(() => null)
+  if (edgeRuntime && typeof edgeRuntime.waitUntil === 'function') {
+    edgeRuntime.waitUntil(tracked)
+  }
+}
+
+function sumNullable(a: number | null, b: number | null): number | null {
+  if (a === null && b === null) return null
+  return (a ?? 0) + (b ?? 0)
+}
+
+/** Graceful degradation: the LLM parse failed (timeout, transient error, or
+ *  provider quota). Re-use the user's raw query as full-text input to the
+ *  existing discover_profiles RPC so the user still gets results. */
+async function runKeywordFallback(params: {
+  // deno-lint-ignore no-explicit-any
+  adminClient: any
+  rawQuery: string
+  userId: string
+  userRole: string | null
+  startTime: number
+  llmProvider: string
+  originalError: Error
+  parseRetryCount: number
+  headers: Record<string, string>
+  correlationId: string
+}): Promise<Response> {
+  const { adminClient, rawQuery, userId, userRole, startTime, llmProvider, originalError, parseRetryCount, headers, correlationId } = params
+
+  try {
+    const discoverableRoles = ['player', 'coach', 'club', 'brand']
+    const { data: rpcResult, error: rpcError } = await adminClient.rpc('discover_profiles', {
+      p_roles: discoverableRoles,
+      p_search_text: rawQuery,
+      p_sort_by: 'relevance',
+      p_limit: 20,
+      p_offset: 0,
+    })
+
+    if (rpcError) throw rpcError
+
+    const result = (rpcResult as { results: any[]; total: number; has_more: boolean } | null)
+      ?? { results: [], total: 0, has_more: false }
+
+    fireAndForget(logDiscoveryEvent(adminClient, {
+      user_id: userId,
+      role: userRole,
+      query_text: rawQuery,
+      intent: 'search_fallback',
+      parsed_filters: null,
+      result_count: result.total,
+      has_qualitative: false,
+      llm_provider: llmProvider,
+      response_time_ms: Date.now() - startTime,
+      error_message: originalError.message,
+      prompt_tokens: null,
+      completion_tokens: null,
+      cached_tokens: null,
+      prompt_version: PROMPT_VERSION,
+      fallback_used: true,
+      retry_count: parseRetryCount,
+    }))
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        data: result.results,
+        total: result.total,
+        has_more: result.has_more,
+        parsed_filters: null,
+        summary: `Showing ${result.total} keyword match${result.total === 1 ? '' : 'es'}.`,
+        ai_message: 'AI assistant is temporarily unavailable. Showing keyword matches instead.',
+      }),
+      { status: 200, headers: { ...headers, 'Content-Type': 'application/json' } }
+    )
+  } catch (fallbackError) {
+    captureException(fallbackError, { functionName: 'nl-search', correlationId, extra: { phase: 'fallback' } })
+    fireAndForget(logDiscoveryEvent(adminClient, {
+      user_id: userId,
+      role: userRole,
+      query_text: rawQuery,
+      intent: 'error',
+      parsed_filters: null,
+      result_count: 0,
+      has_qualitative: false,
+      llm_provider: llmProvider,
+      response_time_ms: Date.now() - startTime,
+      error_message: `${originalError.message} | fallback: ${fallbackError instanceof Error ? fallbackError.message : 'unknown'}`,
+      prompt_tokens: null,
+      completion_tokens: null,
+      cached_tokens: null,
+      prompt_version: PROMPT_VERSION,
+      fallback_used: true,
+      retry_count: parseRetryCount,
+    }))
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: 'Search is temporarily unavailable. Please try again in a moment.',
+      }),
+      { status: 500, headers: { ...headers, 'Content-Type': 'application/json' } }
+    )
   }
 }
 
@@ -58,6 +184,15 @@ Deno.serve(async (req) => {
   const headers = getCorsHeaders(origin)
   const startTime = Date.now()
   const llmProvider = Deno.env.get('LLM_PROVIDER') || 'gemini'
+
+  // Hoisted state for catch-block fallback. Set as the handler validates each
+  // prerequisite; the catch uses them to decide whether a keyword fallback is
+  // feasible (needs at least a validated query + user + admin client).
+  // deno-lint-ignore no-explicit-any
+  let pendingAdminClient: any = null
+  let pendingUserId: string | null = null
+  let pendingUserRole: string | null = null
+  let pendingQuery: string | null = null
 
   // CORS preflight
   if (req.method === 'OPTIONS') {
@@ -140,6 +275,12 @@ Deno.serve(async (req) => {
       )
     }
 
+    // All prerequisites validated — record state so the catch block can
+    // attempt a keyword fallback if the LLM call fails downstream.
+    pendingAdminClient = adminClient
+    pendingUserId = user.id
+    pendingQuery = query
+
     // ── Fetch user context for LLM ─────────────────────────────────────
     let userContext: UserContext | undefined
 
@@ -217,12 +358,14 @@ Deno.serve(async (req) => {
       captureException(ctxError, { functionName: 'nl-search', correlationId, note: 'user-context-fetch' })
     }
 
+    pendingUserRole = userContext?.role ?? null
+
     // ── LLM parsing ─────────────────────────────────────────────────────
-    const llmResult: LLMResult = await parseSearchQuery(query, history, userContext)
+    const { result: llmResult, meta: parseMeta } = await parseSearchQuery(query, history, userContext)
 
     // ── Conversation or knowledge response (no search needed) ────────
     if (llmResult.type === 'conversation' || llmResult.type === 'knowledge') {
-      await logDiscoveryEvent(adminClient, {
+      fireAndForget(logDiscoveryEvent(adminClient, {
         user_id: user.id,
         role: userContext?.role ?? null,
         query_text: query,
@@ -233,7 +376,13 @@ Deno.serve(async (req) => {
         llm_provider: llmProvider,
         response_time_ms: Date.now() - startTime,
         error_message: null,
-      })
+        prompt_tokens: parseMeta.usage?.prompt_tokens ?? null,
+        completion_tokens: parseMeta.usage?.completion_tokens ?? null,
+        cached_tokens: parseMeta.usage?.cached_tokens ?? null,
+        prompt_version: PROMPT_VERSION,
+        fallback_used: false,
+        retry_count: parseMeta.retry_count,
+      }))
       return new Response(
         JSON.stringify({
           success: true,
@@ -250,6 +399,7 @@ Deno.serve(async (req) => {
 
     // ── Search intent: resolve filters + call RPC ────────────────────
     const parsed: ParsedFilters = llmResult.filters
+    let synthMeta: LLMCallMeta | null = null
 
     // ── Resolve text values → IDs ───────────────────────────────────────
     let nationalityCountryIds: number[] | null = null
@@ -404,20 +554,21 @@ Deno.serve(async (req) => {
 
           const hasAnyData = qualData.some(p => p.comments.length > 0 || p.references.length > 0)
           if (hasAnyData) {
-            const synthesis = await synthesizeQualitativeInsights(qualData, query)
+            const { text: synthesis, meta } = await synthesizeQualitativeInsights(qualData, query)
+            synthMeta = meta
             if (synthesis) aiMessage += `\n\n${synthesis}`
           }
         }
       } catch (qualError) {
-        // Rate limit errors should propagate to the outer handler for a clean 429
-        if (qualError instanceof LLMRateLimitError) throw qualError
-        // Non-fatal: log but don't fail the search
-        captureException(qualError, { functionName: 'nl-search', correlationId })
+        // Synthesis is opt-in enrichment; any failure (including provider
+        // rate limit) is non-fatal. The user already has RPC results — we
+        // just skip the qualitative summary for this response.
+        captureException(qualError, { functionName: 'nl-search', correlationId, extra: { phase: 'synthesis' } })
       }
     }
 
     // ── Analytics logging ────────────────────────────────────────────────
-    await logDiscoveryEvent(adminClient, {
+    fireAndForget(logDiscoveryEvent(adminClient, {
       user_id: user.id,
       role: userContext?.role ?? null,
       query_text: query,
@@ -428,7 +579,13 @@ Deno.serve(async (req) => {
       llm_provider: llmProvider,
       response_time_ms: Date.now() - startTime,
       error_message: null,
-    })
+      prompt_tokens: sumNullable(parseMeta.usage?.prompt_tokens ?? null, synthMeta?.usage?.prompt_tokens ?? null),
+      completion_tokens: sumNullable(parseMeta.usage?.completion_tokens ?? null, synthMeta?.usage?.completion_tokens ?? null),
+      cached_tokens: sumNullable(parseMeta.usage?.cached_tokens ?? null, synthMeta?.usage?.cached_tokens ?? null),
+      prompt_version: PROMPT_VERSION,
+      fallback_used: false,
+      retry_count: parseMeta.retry_count + (synthMeta?.retry_count ?? 0),
+    }))
 
     // ── Response ────────────────────────────────────────────────────────
     return new Response(
@@ -445,60 +602,30 @@ Deno.serve(async (req) => {
     )
 
   } catch (error) {
-    if (error instanceof LLMRateLimitError) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'The AI assistant has reached its usage limit for now. Please try again in a few minutes.',
-        }),
-        { status: 429, headers: { ...headers, 'Retry-After': '60', 'Content-Type': 'application/json' } }
-      )
+    const err = error instanceof Error ? error : new Error('Unknown error')
+    captureException(err, { functionName: 'nl-search', correlationId })
+
+    // If all prerequisites were validated before the failure, attempt a
+    // graceful keyword-search fallback. Covers LLM timeouts, provider
+    // rate-limits, transient 5xx, and unexpected LLM errors alike.
+    if (pendingQuery && pendingUserId && pendingAdminClient) {
+      return runKeywordFallback({
+        adminClient: pendingAdminClient,
+        rawQuery: pendingQuery,
+        userId: pendingUserId,
+        userRole: pendingUserRole,
+        startTime,
+        llmProvider,
+        originalError: err,
+        parseRetryCount: 0,
+        headers,
+        correlationId,
+      })
     }
 
-    captureException(error, { functionName: 'nl-search', correlationId })
-
-    // Log failed queries for analytics (guard: variables may not be defined if error was early)
-    try {
-      const adminClientForLog = getServiceClient()
-      const body = await req.clone().json().catch(() => null)
-      const queryText = body?.query?.trim()
-      if (queryText) {
-        const token = req.headers.get('authorization')?.slice(7)
-        // deno-lint-ignore no-explicit-any
-        let userId: string | undefined
-        if (token) {
-          const tempClient = createClient(
-            Deno.env.get('SUPABASE_URL')!,
-            Deno.env.get('SUPABASE_ANON_KEY')!,
-            { global: { headers: { Authorization: `Bearer ${token}` } } }
-          )
-          const { data: { user: errUser } } = await tempClient.auth.getUser(token)
-          userId = errUser?.id
-        }
-        if (userId) {
-          await logDiscoveryEvent(adminClientForLog, {
-            user_id: userId,
-            role: null,
-            query_text: queryText,
-            intent: 'error',
-            parsed_filters: null,
-            result_count: 0,
-            has_qualitative: false,
-            llm_provider: llmProvider,
-            response_time_ms: Date.now() - startTime,
-            error_message: error instanceof Error ? error.message : 'Unknown error',
-          })
-        }
-      }
-    } catch {
-      // Never let analytics logging interfere with error response
-    }
-
+    // Failed before the query was validated — nothing to fall back to.
     return new Response(
-      JSON.stringify({
-        success: false,
-        error: error instanceof Error ? error.message : 'An unexpected error occurred',
-      }),
+      JSON.stringify({ success: false, error: err.message }),
       { status: 500, headers: { ...headers, 'Content-Type': 'application/json' } }
     )
   }
