@@ -1005,7 +1005,12 @@ export function PostComposerModal({
                         ? 'Share something about this signing... (optional)'
                         : 'Share something about your transfer... (optional)')
                     : isUmpireRole
-                      ? 'Share a match recap, a law clarification, or a panel update...'
+                      // Per professional officials' bodies (NASO, TASO, etc.)
+                      // umpires should NOT post specifics about matches,
+                      // calls, players, or coaches. Steer the prompt
+                      // toward credentials, courses, and general
+                      // officiating-positive content instead.
+                      ? 'Share a course you completed, a federation update, or your year in numbers...'
                       : "What's on your mind?"
                 }
                 rows={mode === 'transfer' ? 3 : 4}
