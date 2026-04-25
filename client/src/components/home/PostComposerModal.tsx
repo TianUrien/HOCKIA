@@ -8,6 +8,8 @@ import { validateImage, optimizeImage } from '@/lib/imageOptimization'
 import { useUploadManager } from '@/lib/uploadManager'
 import { logger } from '@/lib/logger'
 import { checkContent } from '@/lib/contentFilter'
+import { getDraft, saveDraft, clearDraft } from '@/lib/composerDraft'
+import { pickPlaceholder, type ComposerRole } from '@/lib/composerPlaceholders'
 import { Avatar, RoleBadge } from '@/components'
 import { PostMediaUploader, type UploadedMedia } from './PostMediaUploader'
 import type { HomeFeedItem, UserPostFeedItem, TransferMetadata, SigningMetadata } from '@/types/homeFeed'
@@ -70,6 +72,11 @@ export function PostComposerModal({
   const [uploadProgress, setUploadProgress] = useState<number | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // Rotating per-role placeholder picked once on modal open. Static within a
+  // session so it doesn't shift while the user is typing.
+  const [postPlaceholder, setPostPlaceholder] = useState<string>(() =>
+    pickPlaceholder((profile?.role ?? null) as ComposerRole | null)
+  )
 
   // Transfer mode state
   const [mode, setMode] = useState<'post' | 'transfer'>('post')
@@ -101,6 +108,10 @@ export function PostComposerModal({
   useEffect(() => {
     if (!isOpen) return
 
+    // Reroll the placeholder on each open so users see variety. Stays
+    // stable within a single session of the modal.
+    setPostPlaceholder(pickPlaceholder((profile?.role ?? null) as ComposerRole | null))
+
     if (editingPost) {
       setContent(editingPost.content)
       setMedia(
@@ -117,7 +128,10 @@ export function PostComposerModal({
           : []
       )
     } else {
-      setContent('')
+      // Restore in-progress draft text (per user + mode). Media is not
+      // persisted; uploaded files are tracked separately by the global
+      // upload manager.
+      setContent(getDraft(user?.id, mode))
       setMedia([])
     }
     setError(null)
@@ -154,7 +168,35 @@ export function PostComposerModal({
 
     // Auto-focus textarea
     setTimeout(() => textareaRef.current?.focus(), 100)
+    // Intentionally NOT depending on mode/profile/user — this is the
+    // open-once reset. Subsequent mode changes are handled by the
+    // mode-change effect below; profile.role and user.id are stable for
+    // the modal's lifetime so reading them inline is safe.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, editingPost])
+
+  // Reload draft when mode changes (Post ↔ Transfer). Each mode has its own
+  // draft slot — switching tabs swaps in the right one. Skipped when
+  // editing an existing post (the post's stored content is the source of
+  // truth there) and on initial open (the open-effect above already
+  // populated the draft for the default mode).
+  const lastModeRef = useRef(mode)
+  useEffect(() => {
+    if (!isOpen || editingPost) return
+    if (lastModeRef.current === mode) return
+    lastModeRef.current = mode
+    setContent(getDraft(user?.id, mode))
+  }, [mode, isOpen, editingPost, user?.id])
+
+  // Auto-save the textarea content as a draft (debounced). Skipped when
+  // editing an existing post.
+  useEffect(() => {
+    if (!isOpen || editingPost || !user?.id) return
+    const handle = setTimeout(() => {
+      saveDraft(user.id, mode, content)
+    }, 500)
+    return () => clearTimeout(handle)
+  }, [content, isOpen, editingPost, user?.id, mode])
 
   // Debounced club search
   const handleClubSearch = useCallback((query: string) => {
@@ -456,6 +498,7 @@ export function PostComposerModal({
             onPostCreated(newItem)
           }
 
+          clearDraft(user?.id, mode)
           setContent('')
           setMedia([])
           onClose()
@@ -532,6 +575,7 @@ export function PostComposerModal({
           onPostCreated(newItem)
         }
 
+        clearDraft(user?.id, mode)
         setContent('')
         setMedia([])
         onClose()
@@ -601,6 +645,7 @@ export function PostComposerModal({
         }
       }
 
+      clearDraft(user?.id, mode)
       setContent('')
       setMedia([])
       onClose()
@@ -610,7 +655,7 @@ export function PostComposerModal({
     } finally {
       setIsSubmitting(false)
     }
-  }, [content, media, mode, selectedClub, selectedPerson, customClubName, clubLogoUrl, isEdit, editingPost, createPost, createTransferPost, createSigningPost, updatePost, profile, onPostCreated, onClose, isSubmitting])
+  }, [content, media, mode, selectedClub, selectedPerson, customClubName, clubLogoUrl, isEdit, editingPost, createPost, createTransferPost, createSigningPost, updatePost, profile, onPostCreated, onClose, isSubmitting, user?.id])
 
   if (!isOpen) return null
 
@@ -1004,14 +1049,11 @@ export function PostComposerModal({
                     ? (isClubRole
                         ? 'Share something about this signing... (optional)'
                         : 'Share something about your transfer... (optional)')
-                    : isUmpireRole
-                      // Per professional officials' bodies (NASO, TASO, etc.)
-                      // umpires should NOT post specifics about matches,
-                      // calls, players, or coaches. Steer the prompt
-                      // toward credentials, courses, and general
-                      // officiating-positive content instead.
-                      ? 'Share a course you completed, a federation update, or your year in numbers...'
-                      : "What's on your mind?"
+                    // Default ('post') mode uses the per-role rotating
+                    // placeholder. Umpire prompts in that pool already
+                    // stick to credentials / federation / aggregates, per
+                    // officials' professional norms (NASO, TASO).
+                    : postPlaceholder
                 }
                 rows={mode === 'transfer' ? 3 : 4}
                 maxLength={MAX_CONTENT_LENGTH}

@@ -402,7 +402,9 @@ export class HomeFeedPage extends HockiaPage {
   }
 
   async fillPostContent(content: string) {
-    await this.page.getByPlaceholder(/what's on your mind/i).fill(content)
+    // Locate by role rather than placeholder copy — placeholders rotate
+    // per role (pickPlaceholder) so a fixed regex is brittle.
+    await this.page.locator('[role="dialog"] textarea').first().fill(content)
   }
 
   async submitPost() {

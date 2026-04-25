@@ -18,10 +18,11 @@ test.describe('@smoke home feed player', () => {
     // Open the modal
     await homeFeedPage.openPostComposer()
 
-    // Modal should show textarea
-    await expect(
-      page.getByPlaceholder(/what's on your mind/i)
-    ).toBeVisible({ timeout: 10000 })
+    // Modal should show textarea. Locate by role rather than placeholder
+    // copy — placeholders rotate per role (pickPlaceholder) so matching
+    // a fixed string is brittle.
+    const composerTextarea = page.locator('[role="dialog"] textarea').first()
+    await expect(composerTextarea).toBeVisible({ timeout: 10000 })
 
     // Submit button should be visible but disabled (no content yet)
     const postBtn = page.locator('button.w-full', { hasText: /^post$/i })
@@ -31,9 +32,7 @@ test.describe('@smoke home feed player', () => {
     await page.getByRole('button', { name: 'Close', exact: true }).click()
 
     // Modal should be gone
-    await expect(
-      page.getByPlaceholder(/what's on your mind/i)
-    ).not.toBeVisible({ timeout: 5000 })
+    await expect(composerTextarea).not.toBeVisible({ timeout: 5000 })
   })
 
   test('player can create a text post', async ({ page, homeFeedPage }) => {
@@ -41,9 +40,8 @@ test.describe('@smoke home feed player', () => {
 
     // Open composer
     await homeFeedPage.openPostComposer()
-    await expect(
-      page.getByPlaceholder(/what's on your mind/i)
-    ).toBeVisible({ timeout: 10000 })
+    const composerTextarea = page.locator('[role="dialog"] textarea').first()
+    await expect(composerTextarea).toBeVisible({ timeout: 10000 })
 
     // Type content
     const postContent = `E2E test post ${Date.now()}`
