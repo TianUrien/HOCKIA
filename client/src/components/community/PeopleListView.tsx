@@ -265,8 +265,9 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
 
     await monitor.measure('search_community_members', async () => {
       // Cache key scoped by test-account status and role route — mirrors
-      // fetchMembers so a search on /community/brands doesn't accidentally
-      // surface non-brand profiles.
+      // fetchMembers so a search on a role-filtered tab (e.g.
+      // /community/players) doesn't accidentally surface profiles from
+      // other roles.
       const roleKey = roleFilter ?? 'all'
       const cacheKey = isCurrentUserTestAccount
         ? `community-search-test-${roleKey}-${query}`
@@ -525,7 +526,7 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
   const handleSuggestionClick = (member: Profile) => {
     setShowSuggestions(false)
     if (member.role === 'brand') {
-      navigate(member.brand_slug ? `/brands/${member.brand_slug}?ref=community` : '/brands')
+      navigate(member.brand_slug ? `/brands/${member.brand_slug}?ref=community` : '/marketplace')
     } else if (member.role === 'club') {
       navigate(`/clubs/id/${member.id}?ref=community`)
     } else if (member.role === 'umpire') {

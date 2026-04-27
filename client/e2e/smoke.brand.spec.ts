@@ -40,15 +40,15 @@ test.describe('@smoke brand', () => {
     ).toBe(true)
   })
 
-  test('brand can view public brands directory', async ({ page }) => {
+  test('brand can view public marketplace', async ({ page }) => {
     await page.goto('/brands')
-    // /brands redirects client-side to /community/brands — wait for redirect to land
-    await page.waitForURL('**/community/**', { timeout: BRAND_DASH_TIMEOUT_MS })
+    // Legacy /brands redirects client-side to /marketplace — wait for redirect to land
+    await page.waitForURL('**/marketplace', { timeout: BRAND_DASH_TIMEOUT_MS })
     await waitForAppReady(page)
 
-    // Members tab visible on CommunityPage
+    // Marketplace heading visible on the canonical brand-discovery surface
     await expect(
-      page.getByRole('button', { name: /members/i })
+      page.getByRole('heading', { level: 1, name: /marketplace/i })
     ).toBeVisible({ timeout: BRAND_DASH_TIMEOUT_MS })
   })
 
@@ -70,23 +70,27 @@ test.describe('@smoke brand', () => {
   // missing from the filter, one of the label maps / enums is out of sync
   // with the DB constraint.
   //
-  // After the community redesign (commit fe07fb2), /community/brands is
-  // served by PeopleListView (not the old BrandListView), and the filter
-  // moved from a pill row to a <select> inside the Filters panel. The
-  // panel is `md:block` so it's open by default on the desktop chromium-
-  // brand viewport — no need to click a "Filters" toggle.
-  test('brand directory filter shows all 10 expanded categories', async ({ page }) => {
-    await page.goto('/community/brands')
+  // After the marketplace redesign, brand discovery moved out of Community
+  // into /marketplace (BrandsPage). The category filter is rendered by
+  // <BrandCategoryFilter> inside the Directory tab — pill-row buttons rather
+  // than a <select>. We assert each label appears as a button child of
+  // the filter. Switching to the Directory tab is required because the
+  // page defaults to the Feed tab.
+  test('marketplace directory filter shows all 10 expanded categories', async ({ page }) => {
+    await page.goto('/marketplace')
     await waitForAppReady(page)
 
-    const select = page.locator('select#brand-category-filter')
-    await expect(select).toBeVisible({ timeout: BRAND_DASH_TIMEOUT_MS })
+    // BrandsPage defaults to the Feed tab; switch to the Directory tab so
+    // the BrandCategoryFilter is rendered.
+    await page.getByRole('button', { name: /directory/i }).click()
 
-    // The first option is "All categories" (placeholder); the remaining 10
-    // come from BRAND_CATEGORIES. We verify by label text since label maps
-    // are what the constraint regression would surface.
+    const filter = page.getByTestId('brand-category-filter')
+    await expect(filter).toBeVisible({ timeout: BRAND_DASH_TIMEOUT_MS })
+
+    // The pill row uses "All" (not "All categories") for the null filter;
+    // the remaining 10 labels come from BRAND_CATEGORIES.
     const expectedLabels = [
-      'All categories',
+      'All',
       'Equipment',
       'Apparel',
       'Accessories',
@@ -101,8 +105,8 @@ test.describe('@smoke brand', () => {
 
     for (const label of expectedLabels) {
       await expect(
-        select.locator(`option:has-text("${label}")`)
-      ).toHaveCount(1)
+        filter.getByRole('button', { name: label, exact: true })
+      ).toBeVisible()
     }
   })
 

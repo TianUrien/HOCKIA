@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Home, Users, Briefcase, Globe } from 'lucide-react'
+import { Home, Users, Briefcase, Globe, Sparkles } from 'lucide-react'
 import { Avatar, NotificationBadge } from '@/components'
 import { useNavigation } from '@/hooks/useNavigation'
 
@@ -148,41 +148,67 @@ export default function MobileBottomNav() {
             )
           })}
 
-          {/* Profile Avatar - Direct Dashboard Navigation */}
-          <button
-            onClick={() => handleNavigate('/dashboard/profile')}
-            className={`flex flex-col items-center justify-center min-w-[48px] min-h-[44px] py-1 px-2 rounded-xl transition-all duration-200 ${
-              location.pathname.startsWith('/dashboard')
-                ? 'text-[#8026FA]'
-                : 'text-gray-600 active:bg-gray-100'
-            }`}
-            aria-label="Go to Dashboard"
-          >
-            <div className={`relative mb-0.5 transition-transform duration-200 ${
-              location.pathname.startsWith('/dashboard') ? 'scale-110' : 'scale-100'
-            }`}>
-              <Avatar
-                src={profile.avatar_url}
-                initials={profileInitials}
-                size="sm"
-                className={`transition-all duration-200 ${
-                  location.pathname.startsWith('/dashboard')
-                    ? 'ring-2 ring-[#8026FA] ring-offset-2'
-                    : ''
-                }`}
-              />
-              {location.pathname.startsWith('/dashboard') && (
-                <div className="absolute inset-0 bg-gradient-to-r from-[#8026FA] to-[#924CEC] opacity-20 rounded-full blur-md" />
-              )}
-            </div>
-            <span
-              className={`text-[10px] font-medium transition-all duration-200 ${
-                location.pathname.startsWith('/dashboard') ? 'opacity-100' : 'opacity-60'
-              }`}
+          {/* Dashboard slot — relative wrapper anchors the floating HOCKIA AI
+              button so it stays vertically centred over the avatar regardless
+              of viewport width. AI is intentionally NOT a sixth nav item:
+              it's an intelligent shortcut that links into the Discover chat
+              experience and sits visually above the Dashboard area, not in
+              line with the primary nav. Inherits visibility from the parent
+              nav, so it hides whenever the bottom nav hides (incl. /discover). */}
+          <div className="relative">
+            {/* Floating HOCKIA AI button */}
+            <button
+              type="button"
+              onClick={() => handleNavigate('/discover')}
+              aria-label="Open HOCKIA AI"
+              className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4
+                         w-12 h-12 rounded-full
+                         bg-gradient-to-br from-[#8026FA] to-[#924CEC]
+                         p-[2px] shadow-lg shadow-[#8026FA]/30
+                         active:scale-95 transition-transform duration-150"
             >
-              Dashboard
-            </span>
-          </button>
+              <span className="flex items-center justify-center w-full h-full rounded-full bg-white">
+                <Sparkles className="w-5 h-5 text-[#8026FA]" strokeWidth={2.25} />
+              </span>
+            </button>
+
+            {/* Profile Avatar - Direct Dashboard Navigation */}
+            <button
+              type="button"
+              onClick={() => handleNavigate('/dashboard/profile')}
+              className={`flex flex-col items-center justify-center min-w-[48px] min-h-[44px] py-1 px-2 rounded-xl transition-all duration-200 ${
+                location.pathname.startsWith('/dashboard')
+                  ? 'text-[#8026FA]'
+                  : 'text-gray-600 active:bg-gray-100'
+              }`}
+              aria-label="Go to Dashboard"
+            >
+              <div className={`relative mb-0.5 transition-transform duration-200 ${
+                location.pathname.startsWith('/dashboard') ? 'scale-110' : 'scale-100'
+              }`}>
+                <Avatar
+                  src={profile.avatar_url}
+                  initials={profileInitials}
+                  size="sm"
+                  className={`transition-all duration-200 ${
+                    location.pathname.startsWith('/dashboard')
+                      ? 'ring-2 ring-[#8026FA] ring-offset-2'
+                      : ''
+                  }`}
+                />
+                {location.pathname.startsWith('/dashboard') && (
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#8026FA] to-[#924CEC] opacity-20 rounded-full blur-md" />
+                )}
+              </div>
+              <span
+                className={`text-[10px] font-medium transition-all duration-200 ${
+                  location.pathname.startsWith('/dashboard') ? 'opacity-100' : 'opacity-60'
+                }`}
+              >
+                Dashboard
+              </span>
+            </button>
+          </div>
         </div>
       </nav>
     </>

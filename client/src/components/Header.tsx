@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { MessageCircle, Home, Users, Briefcase, Bell, Globe, Sparkles } from 'lucide-react'
+import { MessageCircle, Home, Users, Briefcase, Bell, Globe, Sparkles, Store } from 'lucide-react'
 import { Avatar, NotificationBadge } from '@/components'
 import { useNavigation } from '@/hooks/useNavigation'
 
@@ -81,19 +81,21 @@ export default function Header() {
             </span>
           </div>
 
-          {/* Mobile Navigation - Discover + Messages + Notifications (rest in bottom nav) */}
+          {/* Mobile Navigation — Marketplace + Messages + Notifications.
+              HOCKIA AI / Discover lives as a floating button above the Dashboard
+              slot in MobileBottomNav, no longer in the header. */}
           {user && profile && (
             <div className="flex lg:hidden items-center gap-1">
               <button
-                onClick={() => handleNavigate('/discover')}
+                onClick={() => handleNavigate('/marketplace')}
                 className={`relative min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg transition-colors ${
-                  isActive('/discover')
+                  isActive('/marketplace')
                     ? 'text-[#8026FA] bg-[#8026FA]/10'
                     : 'text-gray-700 hover:bg-gray-100'
                 }`}
-                aria-label="Discover"
+                aria-label="Marketplace"
               >
-                <Sparkles className="w-5 h-5" />
+                <Store className="w-5 h-5" />
               </button>
               <button
                 onClick={() => handleNavigate('/messages')}
@@ -146,7 +148,21 @@ export default function Header() {
                 {/* Separator */}
                 <div className="w-px h-6 bg-gray-200 mx-1" />
 
-                {/* Icon-only cluster: Discover + Messages + Notifications */}
+                {/* Icon-only cluster: Marketplace + Discover + Messages + Notifications.
+                    Desktop keeps both Marketplace and AI access in the header
+                    (mobile uses the floating AI button above Dashboard instead). */}
+                <button
+                  onClick={() => handleNavigate('/marketplace')}
+                  className={`relative p-2 rounded-lg transition-colors ${
+                    isActive('/marketplace')
+                      ? 'text-[#8026FA] bg-[#8026FA]/10'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                  }`}
+                  aria-label="Marketplace"
+                  aria-current={isActive('/marketplace') ? 'page' : undefined}
+                >
+                  <Store className="w-5 h-5" />
+                </button>
                 <button
                   onClick={() => handleNavigate('/discover')}
                   className={`relative p-2 rounded-lg transition-colors ${
@@ -154,7 +170,7 @@ export default function Header() {
                       ? 'text-[#8026FA] bg-[#8026FA]/10'
                       : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                   }`}
-                  aria-label="Discover"
+                  aria-label="HOCKIA AI"
                   aria-current={isActive('/discover') ? 'page' : undefined}
                 >
                   <Sparkles className="w-5 h-5" />
@@ -205,6 +221,7 @@ export default function Header() {
                 {/* Unauthenticated primary nav links */}
                 {([
                   { path: '/world', label: 'World', icon: Globe, badge: undefined as number | undefined },
+                  { path: '/marketplace', label: 'Marketplace', icon: Store, badge: undefined as number | undefined },
                   { path: '/opportunities', label: 'Opportunities', icon: Briefcase, badge: opportunityCount as number | undefined },
                   { path: '/community', label: 'Community', icon: Users, badge: undefined as number | undefined },
                 ]).map(({ path, label, icon: Icon, badge }) => (

@@ -1,9 +1,14 @@
 /**
- * BrandsPage
+ * BrandsPage — rendered at /marketplace.
  *
- * Two-tab page for brand discovery:
- *   1. Global Feed — dynamic, reverse-chronological feed of products and posts from all brands
+ * Canonical brand-discovery surface for HOCKIA. Two tabs:
+ *   1. Global Feed — reverse-chronological feed of products and posts from all brands
  *   2. Brand Directory — structured browse/search by category
+ *
+ * Mounted at /marketplace; legacy /brands and /community/brands redirect here.
+ * Filename kept as BrandsPage for git continuity (the export name is what
+ * matters for routing). A future product-grid-first redesign may rename and
+ * restructure this file.
  */
 
 import { useState } from 'react'
@@ -44,10 +49,10 @@ export default function BrandsPage() {
           {/* Page Header */}
           <div className="mb-6">
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-              Brands
+              Marketplace
             </h1>
             <p className="text-gray-600 mt-1">
-              Discover brands, coaching, media, and services for field hockey
+              Discover hockey gear, products, and services from brands on HOCKIA
             </p>
           </div>
 

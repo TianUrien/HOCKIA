@@ -2,7 +2,8 @@
  * CommunityPage
  *
  * Container page for the Community section with two tabs:
- * - Members: Unified directory of players, coaches, clubs, and brands
+ * - Members: Unified directory of players, coaches, clubs, and umpires.
+ *   (Brands moved out to /marketplace as the canonical brand-discovery surface.)
  * - Questions: Q&A for sharing knowledge
  */
 
@@ -18,7 +19,7 @@ import {
 } from '@/components/community'
 import type { CommunityTab } from '@/components/community'
 
-const VALID_TABS: CommunityTab[] = ['all', 'players', 'coaches', 'clubs', 'brands', 'umpires', 'questions']
+const VALID_TABS: CommunityTab[] = ['all', 'players', 'coaches', 'clubs', 'umpires', 'questions']
 
 export default function CommunityPage() {
   const { tab } = useParams<{ tab?: string }>()
@@ -66,7 +67,6 @@ export default function CommunityPage() {
           {activeTab === 'players' && <PeopleListView roleFilter="player" />}
           {activeTab === 'coaches' && <PeopleListView roleFilter="coach" />}
           {activeTab === 'clubs' && <PeopleListView roleFilter="club" />}
-          {activeTab === 'brands' && <PeopleListView roleFilter="brand" />}
           {activeTab === 'umpires' && <PeopleListView roleFilter="umpire" />}
           {activeTab === 'questions' && <QuestionsListView />}
         </div>

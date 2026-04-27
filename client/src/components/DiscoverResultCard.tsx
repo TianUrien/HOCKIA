@@ -15,7 +15,7 @@ export default function DiscoverResultCard({ result }: DiscoverResultCardProps) 
 
   const handleClick = () => {
     if (result.role === 'brand') {
-      navigate('/brands')
+      navigate('/marketplace')
     } else if (result.role === 'club') {
       navigate(`/clubs/id/${result.id}?ref=discover`)
     } else if (result.role === 'umpire') {

@@ -181,7 +181,7 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
     if (member.role === 'brand') {
       return member.brand_slug
         ? `/brands/${member.brand_slug}?ref=community_preview`
-        : '/brands'
+        : '/marketplace'
     }
     if (member.role === 'club') return `/clubs/id/${member.id}?ref=community_preview`
     if (member.role === 'umpire') return `/umpires/id/${member.id}?ref=community_preview`

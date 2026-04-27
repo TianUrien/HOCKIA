@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import type { CommunityTab } from './CommunityTabSwitcher'
 
 interface RoleChip {
-  id: Extract<CommunityTab, 'all' | 'players' | 'coaches' | 'clubs' | 'brands' | 'umpires'>
+  id: Extract<CommunityTab, 'all' | 'players' | 'coaches' | 'clubs' | 'umpires'>
   label: string
   path: string
 }
@@ -13,7 +13,6 @@ const CHIPS: RoleChip[] = [
   { id: 'players', label: 'Players', path: '/community/players' },
   { id: 'coaches', label: 'Coaches', path: '/community/coaches' },
   { id: 'clubs', label: 'Clubs', path: '/community/clubs' },
-  { id: 'brands', label: 'Brands', path: '/community/brands' },
   { id: 'umpires', label: 'Umpires', path: '/community/umpires' },
 ]
 

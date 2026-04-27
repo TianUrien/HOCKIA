@@ -91,7 +91,7 @@ export default function BrandDashboardPage() {
         <div className="bg-white border-b border-gray-200 px-4 py-3">
           <div className="max-w-2xl mx-auto flex items-center justify-between">
             <Link
-              to={brand ? `/brands/${brand.slug}` : '/brands'}
+              to={brand ? `/brands/${brand.slug}` : '/marketplace'}
               className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900"
             >
               <ArrowLeft className="w-5 h-5" />

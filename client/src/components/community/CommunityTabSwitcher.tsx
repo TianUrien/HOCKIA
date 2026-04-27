@@ -1,14 +1,14 @@
 import { useNavigate } from 'react-router-dom'
 import { Users, MessageCircleQuestion } from 'lucide-react'
 
-export type CommunityTab = 'all' | 'players' | 'coaches' | 'clubs' | 'brands' | 'umpires' | 'questions'
+export type CommunityTab = 'all' | 'players' | 'coaches' | 'clubs' | 'umpires' | 'questions'
 
 interface CommunityTabSwitcherProps {
   activeTab: CommunityTab
 }
 
 const TABS = [
-  { id: 'members' as const, label: 'Members', icon: Users, path: '/community', matchTabs: ['all', 'players', 'coaches', 'clubs', 'brands', 'umpires'] as CommunityTab[] },
+  { id: 'members' as const, label: 'Members', icon: Users, path: '/community', matchTabs: ['all', 'players', 'coaches', 'clubs', 'umpires'] as CommunityTab[] },
   { id: 'questions' as const, label: 'Questions', icon: MessageCircleQuestion, path: '/community/questions', matchTabs: ['questions'] as CommunityTab[] },
 ]
 

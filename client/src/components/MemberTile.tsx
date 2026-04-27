@@ -77,7 +77,7 @@ export default function MemberTile(props: MemberTileProps) {
       return
     }
     if (props.role === 'brand') {
-      navigate(props.brandSlug ? `/brands/${props.brandSlug}?ref=community` : '/brands')
+      navigate(props.brandSlug ? `/brands/${props.brandSlug}?ref=community` : '/marketplace')
     } else if (props.role === 'club') {
       navigate(`/clubs/id/${props.id}?ref=community`)
     } else if (props.role === 'umpire') {

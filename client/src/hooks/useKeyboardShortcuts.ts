@@ -16,7 +16,7 @@ const NAVIGATION_SHORTCUTS = [
   { key: 'c', path: '/community' },
   { key: 'o', path: '/opportunities' },
   { key: 'w', path: '/world' },
-  { key: 'b', path: '/brands' },
+  { key: 'b', path: '/marketplace' },
   { key: 'm', path: '/messages' },
   { key: 'd', path: '/dashboard/profile' },
 ] as const
@@ -121,7 +121,7 @@ export const KEYBOARD_SHORTCUTS = [
       { keys: ['g', 'c'], description: 'Go to Community' },
       { keys: ['g', 'o'], description: 'Go to Opportunities' },
       { keys: ['g', 'w'], description: 'Go to World Directory' },
-      { keys: ['g', 'b'], description: 'Go to Brands' },
+      { keys: ['g', 'b'], description: 'Go to Marketplace' },
       { keys: ['g', 'm'], description: 'Go to Messages' },
       { keys: ['g', 'd'], description: 'Go to Dashboard' },
     ],

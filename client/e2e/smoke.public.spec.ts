@@ -25,12 +25,12 @@ test.describe('@smoke public', () => {
     await expect(page.getByRole('heading', { level: 1, name: 'Opportunities' })).toBeVisible({ timeout: 20000 })
   })
 
-  test('brands directory loads (public)', async ({ page }) => {
+  test('marketplace loads (public)', async ({ page }) => {
     await page.goto('/brands')
 
-    // /brands redirects to /community/brands — Members tab is active
+    // Legacy /brands redirects to /marketplace — Marketplace heading is visible
     await expect(
-      page.getByRole('button', { name: /members/i })
+      page.getByRole('heading', { level: 1, name: /marketplace/i })
     ).toBeVisible({ timeout: 20000 })
   })
 

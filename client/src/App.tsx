@@ -79,6 +79,7 @@ const WorldProvincePage = lazyWithRetry(() => import('@/pages/WorldProvincePage'
 const BrandProfilePage = lazyWithRetry(() => import('@/pages/BrandProfilePage'))
 const BrandOnboardingPage = lazyWithRetry(() => import('@/pages/BrandOnboardingPage'))
 const BrandDashboardPage = lazyWithRetry(() => import('@/pages/BrandDashboardPage'))
+const MarketplacePage = lazyWithRetry(() => import('@/pages/BrandsPage'))
 
 // Lazy load admin components (code splitting)
 const AdminGuard = lazyWithRetry(() => import('@/features/admin/components/AdminGuard').then(m => ({ default: m.AdminGuard })))
@@ -192,6 +193,7 @@ function getFeatureFromPath(path: string): string {
   if (path.startsWith('/home') || path === '/') return 'feed'
   if (path.startsWith('/messages')) return 'messaging'
   if (path.startsWith('/opportunities')) return 'marketplace'
+  if (path.startsWith('/marketplace')) return 'marketplace'
   if (path.startsWith('/community')) return 'community'
   if (path.startsWith('/search')) return 'search'
   if (path.startsWith('/discover')) return 'discovery'
@@ -337,8 +339,12 @@ function App() {
                 <Route path="/world/:countrySlug" element={<WorldCountryPage />} />
                 <Route path="/world/:countrySlug/:provinceSlug" element={<WorldProvincePage />} />
 
-                {/* Brands (redirect /brands to community tab, keep profile routes) */}
-                <Route path="/brands" element={<Navigate to="/community/brands" replace />} />
+                {/* Marketplace (canonical brand discovery surface — products + brand directory) */}
+                <Route path="/marketplace" element={<ErrorBoundary fallback={<RouteErrorFallback />}><MarketplacePage /></ErrorBoundary>} />
+
+                {/* Legacy brand routes — redirect to canonical marketplace */}
+                <Route path="/brands" element={<Navigate to="/marketplace" replace />} />
+                <Route path="/community/brands" element={<Navigate to="/marketplace" replace />} />
                 <Route path="/brands/onboarding" element={<ErrorBoundary fallback={<RouteErrorFallback />}><BrandOnboardingPage /></ErrorBoundary>} />
                 <Route path="/brands/:slug" element={<BrandProfilePage />} />
                 <Route path="/dashboard/brand" element={<BrandDashboardPage />} />

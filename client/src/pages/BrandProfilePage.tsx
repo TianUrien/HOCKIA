@@ -81,7 +81,7 @@ export default function BrandProfilePage() {
           <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-24 pb-2">
             <Breadcrumbs
               items={[
-                { label: 'Brands', to: '/brands' },
+                { label: 'Marketplace', to: '/marketplace' },
                 { label: brand?.name || 'Brand' },
               ]}
             />
@@ -123,8 +123,8 @@ export default function BrandProfilePage() {
             <p className="text-gray-600 mb-6">
               The brand you're looking for doesn't exist or has been removed.
             </p>
-            <Link to="/brands">
-              <Button>Browse Brands</Button>
+            <Link to="/marketplace">
+              <Button>Browse Marketplace</Button>
             </Link>
           </div>
         )}
@@ -245,7 +245,7 @@ export default function BrandProfilePage() {
                   {posts.length > 3 && (
                     <div className="mt-4 text-center">
                       <Link
-                        to={`/brands?view=feed`}
+                        to={`/marketplace`}
                         className="text-sm font-medium text-[#8026FA] hover:text-[#6b1fd4]"
                       >
                         View all updates
