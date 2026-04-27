@@ -8,8 +8,9 @@
  */
 
 import { useProductHealthScore } from '../hooks/useProductHealthScore'
-import type { LoopName, ProductHealthScore, ProductHealthTier } from '../types/productHealth'
-import { AlertCircle, Activity, RefreshCw } from 'lucide-react'
+import { useProductHealthTrend } from '../hooks/useProductHealthTrend'
+import type { LoopName, ProductHealthScore, ProductHealthTier, ProductHealthTrendPoint } from '../types/productHealth'
+import { AlertCircle, Activity, RefreshCw, TrendingUp, TrendingDown, Minus } from 'lucide-react'
 
 const TIER_CONFIG: Record<
   ProductHealthTier,
@@ -50,10 +51,22 @@ function buildBottleneckExplanation(score: ProductHealthScore): string {
       if (r.applications_reviewed_30d === 0) {
         return `${r.applications_30d} applications received but clubs haven't reviewed any.`
       }
+      // Phase 2: tier 5–6 deepest measurement
+      const clubMessaged = r.applications_club_messaged_30d ?? 0
+      const applicantReplied = r.applications_applicant_replied_30d ?? 0
+      if (r.tiers_5_6_measured && clubMessaged === 0) {
+        return `${r.applications_reviewed_30d} applications reviewed but no club messaged an applicant. The loop stops at tier 4.`
+      }
+      if (r.tiers_5_6_measured && applicantReplied === 0 && clubMessaged > 0) {
+        return `${clubMessaged} applicants got a club message but none replied. Loop closure not happening.`
+      }
       const reviewRate = r.applications_30d > 0
         ? Math.round((r.applications_reviewed_30d / r.applications_30d) * 100)
         : 0
-      return `Only ${reviewRate}% of applications are being reviewed. Tiers 5–6 (club messages → reply) deferred to Phase 2.`
+      const replyRate = clubMessaged > 0
+        ? Math.round((applicantReplied / clubMessaged) * 100)
+        : 0
+      return `${reviewRate}% applications reviewed, ${replyRate}% of club-messaged applicants reply. Each tier needs to climb.`
     }
     case 'network': {
       const n = diagnostics.network
@@ -124,8 +137,88 @@ function buildNextActionSuggestion(score: ProductHealthScore): string {
   }
 }
 
+/**
+ * Compact 7d trend delta. Returns the difference between today and 7
+ * days ago, or null if not enough data.
+ */
+function computeWeekDelta(trend: ProductHealthTrendPoint[], todayScore: number): number | null {
+  if (trend.length < 2) return null
+  // The trend RPC returns oldest → newest; pick the one closest to 7 days back
+  const sevenDayPoint = trend.find((p, i) => {
+    const today = trend[trend.length - 1]?.snapshot_date
+    if (!today) return false
+    const diffDays = Math.round(
+      (new Date(today).getTime() - new Date(p.snapshot_date).getTime()) / (1000 * 60 * 60 * 24)
+    )
+    // Pick the snapshot 7d back (or first available if trend shorter)
+    return diffDays >= 7 || i === 0
+  })
+  if (!sevenDayPoint) return null
+  return Math.round((todayScore - sevenDayPoint.overall_score) * 10) / 10
+}
+
+/**
+ * Inline SVG sparkline — small, dependency-free. Highlights the line
+ * color based on whether the trend is improving or declining.
+ */
+function Sparkline({
+  points,
+  width = 240,
+  height = 40,
+}: {
+  points: ProductHealthTrendPoint[]
+  width?: number
+  height?: number
+}) {
+  if (points.length === 0) {
+    return (
+      <div className="text-xs text-gray-400 italic">
+        No history yet — daily snapshot starts running 02:00 UTC.
+      </div>
+    )
+  }
+  if (points.length === 1) {
+    return (
+      <div className="text-xs text-gray-400 italic">
+        First snapshot captured today. Trend appears starting tomorrow.
+      </div>
+    )
+  }
+
+  const values = points.map((p) => p.overall_score)
+  const min = Math.min(0, Math.min(...values))
+  const max = Math.max(100, Math.max(...values))
+  const range = max - min || 1
+
+  const stepX = points.length > 1 ? width / (points.length - 1) : 0
+  const path = points
+    .map((p, i) => {
+      const x = i * stepX
+      const y = height - ((p.overall_score - min) / range) * height
+      return `${i === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)}`
+    })
+    .join(' ')
+
+  const trendingUp = values[values.length - 1] >= values[0]
+  const lineColor = trendingUp ? '#16a34a' : '#dc2626'
+
+  return (
+    <svg width={width} height={height} className="overflow-visible" aria-label="Score trend over time">
+      <path d={path} fill="none" stroke={lineColor} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+      {/* Last point dot */}
+      <circle
+        cx={(points.length - 1) * stepX}
+        cy={height - ((values[values.length - 1] - min) / range) * height}
+        r={3}
+        fill={lineColor}
+      />
+    </svg>
+  )
+}
+
 export function ProductHealthHero() {
   const { score, isLoading, error, refetch } = useProductHealthScore()
+  const { trend } = useProductHealthTrend(30)
 
   if (isLoading && !score) {
     return (
@@ -189,15 +282,36 @@ export function ProductHealthHero() {
         </button>
       </div>
 
-      {/* Hero number */}
-      <div className="flex items-baseline gap-3 mb-6">
-        <span className={`text-6xl font-bold ${tier.color}`}>
-          {Math.round(overall)}
-        </span>
-        <span className="text-2xl text-gray-400">/100</span>
-        <span className={`ml-2 text-base font-semibold ${tier.color}`}>
-          {tier.emoji} {tier.label}
-        </span>
+      {/* Hero number + trend */}
+      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">
+        <div className="flex items-baseline gap-3">
+          <span className={`text-6xl font-bold ${tier.color}`}>
+            {Math.round(overall)}
+          </span>
+          <span className="text-2xl text-gray-400">/100</span>
+          <span className={`ml-2 text-base font-semibold ${tier.color}`}>
+            {tier.emoji} {tier.label}
+          </span>
+        </div>
+        {/* Trend (Phase 2) */}
+        <div className="flex flex-col items-start md:items-end gap-1">
+          {(() => {
+            const delta = computeWeekDelta(trend, overall)
+            if (delta === null) {
+              return <span className="text-xs text-gray-500 italic">Building 30-day history…</span>
+            }
+            const Icon = delta > 0 ? TrendingUp : delta < 0 ? TrendingDown : Minus
+            const color = delta > 0 ? 'text-green-700' : delta < 0 ? 'text-red-700' : 'text-gray-500'
+            const sign = delta > 0 ? '+' : ''
+            return (
+              <div className={`flex items-center gap-1.5 text-sm font-medium ${color}`}>
+                <Icon className="w-4 h-4" />
+                <span>{sign}{delta} vs 7d ago</span>
+              </div>
+            )
+          })()}
+          <Sparkline points={trend} />
+        </div>
       </div>
 
       {/* Sub-scores */}
