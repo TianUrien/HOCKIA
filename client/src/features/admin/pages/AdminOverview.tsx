@@ -33,6 +33,7 @@ import { CommandCenterGrowthChart } from '../components/CommandCenterGrowthChart
 import { RetentionCurveChart } from '../components/RetentionCurveChart'
 import { ActivationFunnel } from '../components/ActivationFunnel'
 import { HealthSignals } from '../components/HealthSignals'
+import { ProductHealthHero } from '../components/ProductHealthHero'
 import { useAdminStats } from '../hooks/useAdminStats'
 import { useCommandCenter } from '../hooks/useCommandCenter'
 import { getErrorBudgetStatus } from '@/lib/errorBudget'
@@ -140,6 +141,11 @@ export function AdminOverview() {
           </button>
         </div>
       </div>
+
+      {/* ============================================================= */}
+      {/* PRODUCT HEALTH SCORE — HERO                                    */}
+      {/* ============================================================= */}
+      <ProductHealthHero />
 
       {/* ============================================================= */}
       {/* 4 KPI CARDS                                                    */}

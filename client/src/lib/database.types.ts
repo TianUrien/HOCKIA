@@ -3987,6 +3987,7 @@ export type Database = {
       }
       admin_get_email_templates: { Args: never; Returns: Json }
       admin_get_engagement_summary: { Args: never; Returns: Json }
+      admin_get_product_health_score: { Args: never; Returns: Json }
       admin_get_engagement_trends: {
         Args: { p_days?: number }
         Returns: {
