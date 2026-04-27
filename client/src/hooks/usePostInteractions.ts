@@ -1,4 +1,5 @@
 import { useCallback } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
@@ -30,6 +31,17 @@ interface SimpleResult {
 }
 
 export function usePostInteractions() {
+  const queryClient = useQueryClient()
+
+  // Home (`['home-feed', filterKey]`) and Dashboard (`['profile-posts',
+  // profileId]`) render user_posts from independent caches. Likes and
+  // comments fired on one surface used to leave the other showing stale
+  // counts until manual refresh. Invalidating both keeps them in sync.
+  const invalidatePostQueries = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['home-feed'] })
+    queryClient.invalidateQueries({ queryKey: ['profile-posts'] })
+  }, [queryClient])
+
   const toggleLike = useCallback(async (postId: string): Promise<LikeResult> => {
     try {
       const { data, error } = await withTimeout(
@@ -45,6 +57,7 @@ export function usePostInteractions() {
       const result = data as unknown as LikeResult
       if (result.success) {
         trackDbEvent('post_like', 'post', postId, { liked: result.liked })
+        invalidatePostQueries()
       }
       return result
     } catch (err) {
@@ -57,7 +70,7 @@ export function usePostInteractions() {
         error: err instanceof Error ? err.message : 'Failed to toggle like',
       }
     }
-  }, [])
+  }, [invalidatePostQueries])
 
   const fetchComments = useCallback(async (
     postId: string,
@@ -107,6 +120,7 @@ export function usePostInteractions() {
       const result = data as unknown as CommentCreateResult
       if (result.success) {
         trackDbEvent('post_comment_create', 'post', postId)
+        invalidatePostQueries()
       }
       return result
     } catch (err) {
@@ -119,7 +133,7 @@ export function usePostInteractions() {
         error: err instanceof Error ? err.message : 'Failed to create comment',
       }
     }
-  }, [])
+  }, [invalidatePostQueries])
 
   const deleteComment = useCallback(async (commentId: string): Promise<SimpleResult> => {
     try {
@@ -136,6 +150,7 @@ export function usePostInteractions() {
       const result = data as unknown as SimpleResult
       if (result.success) {
         trackDbEvent('post_comment_delete', 'comment', commentId)
+        invalidatePostQueries()
       }
       return result
     } catch (err) {
@@ -148,7 +163,7 @@ export function usePostInteractions() {
         error: err instanceof Error ? err.message : 'Failed to delete comment',
       }
     }
-  }, [])
+  }, [invalidatePostQueries])
 
   return { toggleLike, fetchComments, createComment, deleteComment }
 }
