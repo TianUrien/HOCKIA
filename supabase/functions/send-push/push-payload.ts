@@ -85,6 +85,20 @@ export function buildPushPayload(
         url: '/dashboard/profile?tab=comments',
         tag: 'comment-like',
       }
+    case 'user_post_comment_received': {
+      const snippet = getString(metadata, 'snippet')
+      const postId = getString(metadata, 'post_id')
+      return {
+        title: 'New Post Comment',
+        body: snippet
+          ? `${actorName}: ${snippet}`
+          : `${actorName} commented on your post`,
+        url: '/home',
+        // Tag per post so multiple comments on the same post coalesce on
+        // mobile rather than stacking N pushes for one post.
+        tag: postId ? `post-comment-${postId}` : 'post-comment',
+      }
+    }
 
     // ── Messages ──
     case 'message_received': {

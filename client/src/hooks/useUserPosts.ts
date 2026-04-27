@@ -42,6 +42,21 @@ export function useUserPosts() {
     queryClient.invalidateQueries({ queryKey: ['profile-posts'] })
   }, [queryClient])
 
+  // Create-only invalidator — skips home-feed because:
+  //   1. The caller already prepended the new item via prependItemRef
+  //      (HomePage wires it through onPostCreated)
+  //   2. If filters are active and the new post doesn't match (e.g.
+  //      user is a player from AR but filter is "Netherlands only"),
+  //      a refetch would return 0 matching items and TanStack would
+  //      replace the cached pages — the optimistic prepend disappears.
+  //      User sees their post for ~1s then it vanishes — looks like
+  //      the post failed even though the server committed it.
+  // Dashboard is the canonical "my posts" surface and always shows
+  // the user's own posts regardless of filters, so it still invalidates.
+  const invalidatePostQueriesAfterCreate = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['profile-posts'] })
+  }, [queryClient])
+
   const createPost = useCallback(async (
     content: string,
     images?: PostImage[] | null
@@ -61,7 +76,7 @@ export function useUserPosts() {
       const result = data as unknown as PostResult
       if (result.success && result.post_id) {
         trackDbEvent('post_create', 'post', result.post_id, { type: 'user' })
-        invalidatePostQueries()
+        invalidatePostQueriesAfterCreate()
       }
       return result
     } catch (err) {
@@ -75,7 +90,7 @@ export function useUserPosts() {
         error: err instanceof Error ? err.message : 'Failed to create post',
       }
     }
-  }, [invalidatePostQueries])
+  }, [invalidatePostQueriesAfterCreate])
 
   const updatePost = useCallback(async (
     postId: string,
@@ -170,7 +185,7 @@ export function useUserPosts() {
       const result = data as unknown as PostResult
       if (result.success && result.post_id) {
         trackDbEvent('post_create', 'post', result.post_id, { type: 'transfer' })
-        invalidatePostQueries()
+        invalidatePostQueriesAfterCreate()
       }
       return result
     } catch (err) {
@@ -185,7 +200,7 @@ export function useUserPosts() {
         error: err instanceof Error ? err.message : 'Failed to create transfer post',
       }
     }
-  }, [invalidatePostQueries])
+  }, [invalidatePostQueriesAfterCreate])
 
   const createSigningPost = useCallback(async (
     personProfileId: string,
@@ -208,7 +223,7 @@ export function useUserPosts() {
       const result = data as unknown as PostResult
       if (result.success && result.post_id) {
         trackDbEvent('post_create', 'post', result.post_id, { type: 'signing' })
-        invalidatePostQueries()
+        invalidatePostQueriesAfterCreate()
       }
       return result
     } catch (err) {
@@ -222,7 +237,7 @@ export function useUserPosts() {
         error: err instanceof Error ? err.message : 'Failed to create signing post',
       }
     }
-  }, [invalidatePostQueries])
+  }, [invalidatePostQueriesAfterCreate])
 
   return { createPost, createTransferPost, createSigningPost, updatePost, deletePost }
 }
