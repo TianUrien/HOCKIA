@@ -5601,6 +5601,7 @@ export type Database = {
         | "ambassador_request_received"
         | "ambassador_request_accepted"
         | "profile_viewed"
+        | "user_post_comment_received"
       profile_reference_status: "pending" | "accepted" | "declined" | "revoked"
       question_category:
         | "trials_club_selection"
@@ -5801,6 +5802,7 @@ export const Constants = {
         "ambassador_request_received",
         "ambassador_request_accepted",
         "profile_viewed",
+        "user_post_comment_received",
       ],
       profile_reference_status: ["pending", "accepted", "declined", "revoked"],
       question_category: [

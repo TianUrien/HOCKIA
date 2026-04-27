@@ -95,6 +95,14 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
     getDescription: (notification) => getMetadataString(notification, 'snippet'),
     getRoute: () => commentRoute,
   },
+  user_post_comment_received: {
+    icon: MessageCircle,
+    badgeText: 'Post comment',
+    accentClassName: 'bg-amber-50 text-amber-700',
+    getTitle: (notification) => `${getActorName(notification)} commented on your post`,
+    getDescription: (notification) => getMetadataString(notification, 'snippet'),
+    getRoute: () => '/home',
+  },
   profile_comment_reply: {
     icon: MessageCircle,
     badgeText: 'Comment reply',
