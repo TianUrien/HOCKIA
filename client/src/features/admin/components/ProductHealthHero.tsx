@@ -8,8 +8,9 @@
  */
 
 import { useProductHealthScore } from '../hooks/useProductHealthScore'
-import type { LoopName, ProductHealthScore, ProductHealthTier } from '../types/productHealth'
-import { AlertCircle, Activity, RefreshCw } from 'lucide-react'
+import { useProductHealthTrend } from '../hooks/useProductHealthTrend'
+import type { LoopName, ProductHealthScore, ProductHealthTier, ProductHealthTrendPoint } from '../types/productHealth'
+import { AlertCircle, Activity, RefreshCw, TrendingUp, TrendingDown, Minus } from 'lucide-react'
 
 const TIER_CONFIG: Record<
   ProductHealthTier,
@@ -50,10 +51,22 @@ function buildBottleneckExplanation(score: ProductHealthScore): string {
       if (r.applications_reviewed_30d === 0) {
         return `${r.applications_30d} applications received but clubs haven't reviewed any.`
       }
+      // Phase 2: tier 5–6 deepest measurement
+      const clubMessaged = r.applications_club_messaged_30d ?? 0
+      const applicantReplied = r.applications_applicant_replied_30d ?? 0
+      if (r.tiers_5_6_measured && clubMessaged === 0) {
+        return `${r.applications_reviewed_30d} applications reviewed but no club messaged an applicant. The loop stops at tier 4.`
+      }
+      if (r.tiers_5_6_measured && applicantReplied === 0 && clubMessaged > 0) {
+        return `${clubMessaged} applicants got a club message but none replied. Loop closure not happening.`
+      }
       const reviewRate = r.applications_30d > 0
         ? Math.round((r.applications_reviewed_30d / r.applications_30d) * 100)
         : 0
-      return `Only ${reviewRate}% of applications are being reviewed. Tiers 5–6 (club messages → reply) deferred to Phase 2.`
+      const replyRate = clubMessaged > 0
+        ? Math.round((applicantReplied / clubMessaged) * 100)
+        : 0
+      return `${reviewRate}% applications reviewed, ${replyRate}% of club-messaged applicants reply. Each tier needs to climb.`
     }
     case 'network': {
       const n = diagnostics.network
@@ -124,8 +137,115 @@ function buildNextActionSuggestion(score: ProductHealthScore): string {
   }
 }
 
+/**
+ * Compact 7-day trend delta. Returns the difference between today and the
+ * snapshot closest to 7 days ago, or null when we don't have enough
+ * history to make that comparison honest.
+ *
+ * Previous version had a real bug: with <8 snapshots it returned
+ * "delta vs whatever-the-oldest-snapshot-is" while still labeling it
+ * "vs 7d ago". With 2 snapshots that meant "delta vs yesterday" labeled
+ * as "vs 7d ago" — actively misleading.
+ *
+ * Fixed semantics: pick the snapshot whose date is closest to today − 7
+ * days, with a ±2-day tolerance. If no snapshot lands in that window,
+ * return null and the UI shows "Building 30-day history..." instead of
+ * a wrong delta.
+ */
+function computeWeekDelta(trend: ProductHealthTrendPoint[], todayScore: number): number | null {
+  if (trend.length < 2) return null
+  const today = trend[trend.length - 1]
+  const todayMs = new Date(today.snapshot_date).getTime()
+  const targetOffsetDays = 7
+  const toleranceDays = 2
+
+  let best: ProductHealthTrendPoint | null = null
+  let bestOffsetGap = Infinity
+
+  for (const p of trend) {
+    if (p === today) continue
+    const offsetDays = (todayMs - new Date(p.snapshot_date).getTime()) / 86_400_000
+    const gap = Math.abs(offsetDays - targetOffsetDays)
+    if (gap < bestOffsetGap) {
+      bestOffsetGap = gap
+      best = p
+    }
+  }
+
+  if (!best || bestOffsetGap > toleranceDays) return null
+  return Math.round((todayScore - best.overall_score) * 10) / 10
+}
+
+/**
+ * Inline SVG sparkline — small, dependency-free. Highlights the line
+ * color based on whether the trend is improving or declining.
+ */
+function Sparkline({
+  points,
+  width = 240,
+  height = 40,
+}: {
+  points: ProductHealthTrendPoint[]
+  width?: number
+  height?: number
+}) {
+  if (points.length === 0) {
+    return (
+      <div className="text-xs text-gray-400 italic">
+        No history yet — daily snapshot starts running 02:00 UTC.
+      </div>
+    )
+  }
+  if (points.length === 1) {
+    return (
+      <div className="text-xs text-gray-400 italic">
+        First snapshot captured today. Trend appears starting tomorrow.
+      </div>
+    )
+  }
+
+  const values = points.map((p) => p.overall_score)
+  const min = Math.min(0, Math.min(...values))
+  const max = Math.max(100, Math.max(...values))
+  const range = max - min || 1
+
+  const stepX = points.length > 1 ? width / (points.length - 1) : 0
+  const path = points
+    .map((p, i) => {
+      const x = i * stepX
+      const y = height - ((p.overall_score - min) / range) * height
+      return `${i === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)}`
+    })
+    .join(' ')
+
+  const trendingUp = values[values.length - 1] >= values[0]
+  const lineColor = trendingUp ? '#16a34a' : '#dc2626'
+
+  return (
+    <svg width={width} height={height} className="overflow-visible" aria-label="Score trend over time">
+      <path d={path} fill="none" stroke={lineColor} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+      {/* Last point dot */}
+      <circle
+        cx={(points.length - 1) * stepX}
+        cy={height - ((values[values.length - 1] - min) / range) * height}
+        r={3}
+        fill={lineColor}
+      />
+    </svg>
+  )
+}
+
 export function ProductHealthHero() {
-  const { score, isLoading, error, refetch } = useProductHealthScore()
+  const { score, isLoading, error, refetch: refetchScore } = useProductHealthScore()
+  const { trend, refetch: refetchTrend } = useProductHealthTrend(30)
+
+  // Single handler so the refresh button reloads BOTH the live score
+  // and the trend data. Previously the button only refreshed the score
+  // — clicking refresh left the sparkline stale until staleTime expired.
+  const handleRefresh = () => {
+    void refetchScore()
+    void refetchTrend()
+  }
 
   if (isLoading && !score) {
     return (
@@ -151,7 +271,7 @@ export function ProductHealthHero() {
         <p className="text-sm text-red-600 mb-3">{error ?? 'Unknown error'}</p>
         <button
           type="button"
-          onClick={() => void refetch()}
+          onClick={handleRefresh}
           className="text-sm font-medium text-red-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 rounded"
         >
           Try again
@@ -181,7 +301,7 @@ export function ProductHealthHero() {
         </div>
         <button
           type="button"
-          onClick={() => void refetch()}
+          onClick={handleRefresh}
           className="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-white/60 transition-colors"
           aria-label="Refresh score"
         >
@@ -189,15 +309,36 @@ export function ProductHealthHero() {
         </button>
       </div>
 
-      {/* Hero number */}
-      <div className="flex items-baseline gap-3 mb-6">
-        <span className={`text-6xl font-bold ${tier.color}`}>
-          {Math.round(overall)}
-        </span>
-        <span className="text-2xl text-gray-400">/100</span>
-        <span className={`ml-2 text-base font-semibold ${tier.color}`}>
-          {tier.emoji} {tier.label}
-        </span>
+      {/* Hero number + trend */}
+      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">
+        <div className="flex items-baseline gap-3">
+          <span className={`text-6xl font-bold ${tier.color}`}>
+            {Math.round(overall)}
+          </span>
+          <span className="text-2xl text-gray-400">/100</span>
+          <span className={`ml-2 text-base font-semibold ${tier.color}`}>
+            {tier.emoji} {tier.label}
+          </span>
+        </div>
+        {/* Trend (Phase 2) */}
+        <div className="flex flex-col items-start md:items-end gap-1">
+          {(() => {
+            const delta = computeWeekDelta(trend, overall)
+            if (delta === null) {
+              return <span className="text-xs text-gray-500 italic">Building 30-day history…</span>
+            }
+            const Icon = delta > 0 ? TrendingUp : delta < 0 ? TrendingDown : Minus
+            const color = delta > 0 ? 'text-green-700' : delta < 0 ? 'text-red-700' : 'text-gray-500'
+            const sign = delta > 0 ? '+' : ''
+            return (
+              <div className={`flex items-center gap-1.5 text-sm font-medium ${color}`}>
+                <Icon className="w-4 h-4" />
+                <span>{sign}{delta} vs 7d ago</span>
+              </div>
+            )
+          })()}
+          <Sparkline points={trend} />
+        </div>
       </div>
 
       {/* Sub-scores */}

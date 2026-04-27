@@ -36,6 +36,10 @@ export interface ProductHealthDiagnostics {
     opportunities_with_apps: number
     applications_30d: number
     applications_reviewed_30d: number
+    /** Phase 2: applications that received a club->applicant message within 7d of applying */
+    applications_club_messaged_30d?: number
+    /** Phase 2: applications where the applicant replied to the club's message */
+    applications_applicant_replied_30d?: number
     tiers_5_6_measured: boolean
   }
   network: {
@@ -83,4 +87,15 @@ export interface ProductHealthScore {
     score: number
     weight: number
   }
+}
+
+/**
+ * One row from admin_get_product_health_trend(). Daily snapshot used to
+ * draw the AdminOverview sparkline.
+ */
+export interface ProductHealthTrendPoint {
+  snapshot_date: string  // YYYY-MM-DD
+  overall_score: number
+  tier: ProductHealthTier
+  sub_scores: Record<LoopName, SubScore>
 }
