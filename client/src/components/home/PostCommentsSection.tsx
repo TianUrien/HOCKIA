@@ -32,6 +32,12 @@ export function PostCommentsSection({
   const [newComment, setNewComment] = useState('')
   const [reportingComment, setReportingComment] = useState<{ id: string; authorId: string; authorName: string } | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  // Mirrors `total` for synchronous reads inside add/delete handlers.
+  // Reading `total` from the closure was off-by-one when two comments
+  // landed back-to-back (the second handler still saw the pre-first
+  // value and propagated a stale count to the parent).
+  const totalRef = useRef(commentCount)
+  useEffect(() => { totalRef.current = total }, [total])
 
   // Load initial comments
   useEffect(() => {
@@ -91,22 +97,26 @@ export function PostCommentsSection({
         created_at: new Date().toISOString(),
       }
       setComments(prev => [...prev, newCommentObj])
-      setTotal(prev => prev + 1)
-      onCommentCountChange(total + 1)
+      const nextTotal = totalRef.current + 1
+      totalRef.current = nextTotal
+      setTotal(nextTotal)
+      onCommentCountChange(nextTotal)
       setNewComment('')
     }
 
     setIsSubmitting(false)
-  }, [newComment, user, isSubmitting, postId, profile, createComment, onCommentCountChange, total])
+  }, [newComment, user, isSubmitting, postId, profile, createComment, onCommentCountChange])
 
   const handleDelete = useCallback(async (commentId: string) => {
     const result = await deleteComment(commentId)
     if (result.success) {
       setComments(prev => prev.filter(c => c.id !== commentId))
-      setTotal(prev => prev - 1)
-      onCommentCountChange(Math.max(0, total - 1))
+      const nextTotal = Math.max(0, totalRef.current - 1)
+      totalRef.current = nextTotal
+      setTotal(nextTotal)
+      onCommentCountChange(nextTotal)
     }
-  }, [deleteComment, onCommentCountChange, total])
+  }, [deleteComment, onCommentCountChange])
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
