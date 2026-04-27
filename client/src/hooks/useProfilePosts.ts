@@ -38,6 +38,10 @@ export function useProfilePosts(profileId: string): UseProfilePostsResult {
     queryKey: key,
     enabled: !!profileId,
     initialPageParam: 0,
+    // Refetch when web tab regains focus so multi-device sessions stay
+    // in sync (mobile commits a post → web sees it on next focus).
+    // See useHomeFeed.ts for the same rationale.
+    refetchOnWindowFocus: true,
     queryFn: async ({ pageParam }) => {
       const offset = typeof pageParam === 'number' ? pageParam : 0
 

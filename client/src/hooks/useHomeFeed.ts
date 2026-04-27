@@ -79,6 +79,13 @@ export function useHomeFeed(filters?: UseHomeFeedFilters): UseHomeFeedResult {
   const query = useInfiniteQuery<FeedPage>({
     queryKey,
     initialPageParam: 0,
+    // Multi-device drift: same user has the app open on web + mobile,
+    // commits a comment on mobile → mobile invalidates its TanStack
+    // cache; web's instance never hears about it. Refetching on window
+    // focus closes the gap when the user comes back to web. Global
+    // queryClient default is `false` (too aggressive for non-feed
+    // queries); enabling it per-feed keeps the rest of the app quiet.
+    refetchOnWindowFocus: true,
     queryFn: async ({ pageParam }) => {
       const offset = typeof pageParam === 'number' ? pageParam : 0
 
