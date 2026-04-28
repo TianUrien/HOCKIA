@@ -9,6 +9,7 @@ import { requestCache, generateCacheKey } from './requestCache'
 import { monitor } from './monitor'
 import { logger } from './logger'
 import { useUnreadStore } from './unread'
+import { useDiscoverChat } from '@/hooks/useDiscover'
 import { reportSupabaseError, reportAuthFlowError } from './sentryHelpers'
 import { setUserProperties, clearUserProperties, trackLogin } from './analytics'
 import { trackDbEvent } from './trackDbEvent'
@@ -216,6 +217,17 @@ const clearLocalSession = async (reason: string, options?: ClearSessionOptions) 
     useUnreadStore.getState().reset()
   } catch (unreadResetError) {
     logger.error('[AUTH_STORE] Failed to reset unread store during sign-out', { unreadResetError })
+  }
+
+  // Clear HOCKIA AI chat history on sign-out. The Zustand store lives in
+  // memory and would otherwise persist user A's conversation into user B's
+  // session if account-switching happens without a hard refresh — and the
+  // history is sent to nl-search as conversation context, so this is a
+  // real cross-account leak path (LLM-visible + UI-visible).
+  try {
+    useDiscoverChat.getState().clearChat()
+  } catch (discoverResetError) {
+    logger.error('[AUTH_STORE] Failed to reset discover chat during sign-out', { discoverResetError })
   }
 
   // Remove ALL realtime channels to prevent leaked subscriptions across sessions.

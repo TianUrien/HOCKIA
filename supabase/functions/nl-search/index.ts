@@ -16,6 +16,7 @@ import { getServiceClient } from '../_shared/supabase-client.ts'
 import { getCorsHeaders } from '../_shared/cors.ts'
 import { captureException } from '../_shared/sentry.ts'
 import { parseSearchQuery, synthesizeQualitativeInsights, PROMPT_VERSION, type LLMCallMeta, type ParsedFilters, type HistoryTurn, type ProfileQualitativeData, type UserContext } from '../_shared/llm-client.ts'
+import { classifyEntityType, entityTypeToRole, type RoutedIntent } from '../_shared/intent-router.ts'
 
 interface DiscoveryEventParams {
   user_id: string
@@ -150,6 +151,27 @@ async function runKeywordFallback(params: {
     )
   } catch (fallbackError) {
     captureException(fallbackError, { functionName: 'nl-search', correlationId, extra: { phase: 'fallback' } })
+    // Surface the actual fallback failure reason. supabase-js returns
+    // PostgrestError as a plain object (with `message`, `code`, `details`,
+    // `hint`) — `instanceof Error` is false for those, so the previous
+    // "unknown" string was hiding the real diagnostic. Walk the common
+    // shapes (Error, PostgrestError-like, plain string, JSON-stringify)
+    // to keep the discovery_events row meaningful.
+    const describeError = (e: unknown): string => {
+      if (e instanceof Error) return e.message
+      if (typeof e === 'string') return e
+      if (e && typeof e === 'object') {
+        const o = e as { message?: string; code?: string; details?: string; hint?: string }
+        const parts: string[] = []
+        if (o.code) parts.push(`code=${o.code}`)
+        if (o.message) parts.push(o.message)
+        if (o.details) parts.push(`details=${o.details}`)
+        if (o.hint) parts.push(`hint=${o.hint}`)
+        if (parts.length > 0) return parts.join(' ')
+        try { return JSON.stringify(e) } catch { return 'unserializable' }
+      }
+      return String(e)
+    }
     fireAndForget(logDiscoveryEvent(adminClient, {
       user_id: userId,
       role: userRole,
@@ -160,7 +182,7 @@ async function runKeywordFallback(params: {
       has_qualitative: false,
       llm_provider: llmProvider,
       response_time_ms: Date.now() - startTime,
-      error_message: `${originalError.message} | fallback: ${fallbackError instanceof Error ? fallbackError.message : 'unknown'}`,
+      error_message: `${originalError.message} | fallback: ${describeError(fallbackError)}`,
       prompt_tokens: null,
       completion_tokens: null,
       cached_tokens: null,
@@ -281,21 +303,54 @@ Deno.serve(async (req) => {
     pendingUserId = user.id
     pendingQuery = query
 
+    // ── Phase 0 intent routing ─────────────────────────────────────────
+    // Deterministic keyword router runs BEFORE the LLM. For HIGH-confidence
+    // queries (e.g. "find clubs for me"), the backend will ENFORCE the
+    // entity type after the LLM call, regardless of what the LLM extracts —
+    // this fixes the "asked for clubs, got mixed players/coaches/clubs/brands"
+    // bug. The hint is also passed to the LLM as a system-prompt nudge so
+    // it filters and writes its message accordingly.
+    const intent: RoutedIntent = classifyEntityType(query)
+
     // ── Fetch user context for LLM ─────────────────────────────────────
+    // Phase 1 personalization: pull a richer slice of the user's own profile
+    // (still public/visible-to-self data only — no DMs, admin notes, or
+    // private settings) so the LLM can answer "who am I?" / "what should I
+    // improve?" / role-specific next-action questions without inventing data.
     let userContext: UserContext | undefined
 
     try {
-      const { data: userProfile } = await adminClient
+      // NOTE — eu_passport is NOT a column on profiles. discover_profiles
+      // computes it dynamically by matching nationality_country_id against
+      // the EU country code list. We mirror that derivation below from the
+      // resolved country codes so the LLM gets a consistent EU flag.
+      const { data: userProfile, error: profileFetchError } = await adminClient
         .from('profiles')
         .select(`
-          role, full_name, gender, position,
+          role, full_name, gender, position, secondary_position,
+          date_of_birth,
           base_city, base_country_id,
           nationality_country_id, nationality2_country_id,
           current_club, current_world_club_id,
-          eu_passport, open_to_play, open_to_coach
+          open_to_play, open_to_coach, open_to_opportunities,
+          bio, avatar_url, highlight_video_url,
+          coach_specialization, coach_specialization_custom,
+          onboarding_completed
         `)
         .eq('id', user.id)
         .single()
+
+      // Surface schema-level fetch errors so a stale SELECT (e.g. column
+      // renamed/dropped) doesn't silently nuke the entire personalization
+      // context — the catch below would swallow it and the LLM would fall
+      // back to generic answers with no signal.
+      if (profileFetchError) {
+        captureException(profileFetchError, {
+          functionName: 'nl-search',
+          correlationId,
+          extra: { phase: 'user-context-profile-select' },
+        })
+      }
 
       if (userProfile) {
         const countryIds = [
@@ -304,9 +359,24 @@ Deno.serve(async (req) => {
           userProfile.nationality2_country_id,
         ].filter(Boolean)
 
-        const [countriesRes, clubRes] = await Promise.all([
+        // Role-specific aggregate fetches run in parallel with country/club
+        // resolution. Each is null-safe; failures degrade to 0/null rather
+        // than blocking the whole user-context build.
+        const [
+          countriesRes,
+          clubRes,
+          friendCountRes,
+          referenceCountRes,
+          careerCountRes,
+          galleryCountRes,
+          // Club-only — empty rows when role !== 'club'
+          openVacanciesRes,
+          pendingApplicationsRes,
+          // Brand-only — null when role !== 'brand'
+          brandRes,
+        ] = await Promise.all([
           countryIds.length > 0
-            ? adminClient.from('countries').select('id, name').in('id', countryIds)
+            ? adminClient.from('countries').select('id, name, code').in('id', countryIds)
             : Promise.resolve({ data: [] }),
           userProfile.current_world_club_id
             ? adminClient
@@ -320,11 +390,75 @@ Deno.serve(async (req) => {
                 .eq('id', userProfile.current_world_club_id)
                 .single()
             : Promise.resolve({ data: null }),
+          // Friendships: count rows where the user is on either side and accepted
+          adminClient
+            .from('profile_friendships')
+            .select('id', { count: 'exact', head: true })
+            .or(`user_one.eq.${user.id},user_two.eq.${user.id}`)
+            .eq('status', 'accepted'),
+          // References — accepted endorsements the user has RECEIVED.
+          // In profile_references the schema is requester_id = the endorsee
+          // (subject of the endorsement), reference_id = the endorser. So we
+          // filter on requester_id to match the "references received" semantic
+          // exposed everywhere else (discover_profiles.accepted_reference_count,
+          // BrandProfilePage breadcrumb counts, etc.).
+          adminClient
+            .from('profile_references')
+            .select('id', { count: 'exact', head: true })
+            .eq('requester_id', user.id)
+            .eq('status', 'accepted'),
+          // Career history entries the user has added
+          adminClient
+            .from('career_history')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', user.id),
+          // Gallery photos the user has uploaded
+          adminClient
+            .from('gallery_photos')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', user.id),
+          // Club-specific: open vacancies posted by this club
+          userProfile.role === 'club'
+            ? adminClient
+                .from('opportunities')
+                .select('id', { count: 'exact', head: true })
+                .eq('club_id', user.id)
+                .eq('status', 'open')
+            : Promise.resolve({ count: 0 }),
+          // Club-specific: pending applications across this club's vacancies.
+          // Inner-join filter on opportunities.club_id keeps this in one round
+          // trip without a dedicated RPC.
+          userProfile.role === 'club'
+            ? adminClient
+                .from('opportunity_applications')
+                .select('id, opportunities!inner(club_id)', { count: 'exact', head: true })
+                .eq('opportunities.club_id', user.id)
+                .eq('status', 'pending')
+            : Promise.resolve({ count: 0 }),
+          // Brand-specific: this user's owned brand record
+          userProfile.role === 'brand'
+            ? adminClient
+                .from('brands')
+                .select('id, category, is_verified')
+                .eq('profile_id', user.id)
+                .is('deleted_at', null)
+                .single()
+            : Promise.resolve({ data: null }),
         ])
 
         const countryMap = new Map(
           ((countriesRes.data || []) as any[]).map((c: any) => [c.id, c.name])
         )
+
+        // EU passport eligibility — mirror discover_profiles' derivation from
+        // nationality codes. Single source of truth: the country code list.
+        const EU_CODES = new Set(['AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IE','IT','LV','LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE'])
+        const codeForId = new Map(
+          ((countriesRes.data || []) as any[]).map((c: any) => [c.id, c.code])
+        )
+        const euPassport =
+          (userProfile.nationality_country_id !== null && EU_CODES.has(codeForId.get(userProfile.nationality_country_id))) ||
+          (userProfile.nationality2_country_id !== null && EU_CODES.has(codeForId.get(userProfile.nationality2_country_id)))
 
         const club = clubRes.data as any
         let currentLeague: string | null = null
@@ -336,21 +470,173 @@ Deno.serve(async (req) => {
           leagueCountry = club.country?.name || null
         }
 
+        // Brand product/post counts — only fetched when a brand row exists.
+        // Done after the parallel batch so we know the brand id; small extra
+        // round-trip but only on brand sessions.
+        let brandProductCount = 0
+        let brandPostCount = 0
+        const brandRow = (brandRes as any)?.data as any
+        if (brandRow?.id) {
+          const [productsRes, postsRes] = await Promise.all([
+            adminClient
+              .from('brand_products')
+              .select('id', { count: 'exact', head: true })
+              .eq('brand_id', brandRow.id)
+              .is('deleted_at', null),
+            adminClient
+              .from('brand_posts')
+              .select('id', { count: 'exact', head: true })
+              .eq('brand_id', brandRow.id)
+              .is('deleted_at', null),
+          ])
+          brandProductCount = (productsRes as any)?.count || 0
+          brandPostCount = (postsRes as any)?.count || 0
+        }
+
+        // Compute age from date_of_birth (years only — no exact date sent to LLM)
+        let age: number | null = null
+        if (userProfile.date_of_birth) {
+          const dob = new Date(userProfile.date_of_birth)
+          const now = new Date()
+          age = now.getFullYear() - dob.getFullYear()
+          const m = now.getMonth() - dob.getMonth()
+          if (m < 0 || (m === 0 && now.getDate() < dob.getDate())) age -= 1
+        }
+
+        // Truncate bio to a single line, max 200 chars, only if it has real content
+        const bioText = (userProfile.bio || '').trim()
+        const truncatedBio = bioText.length > 0
+          ? (bioText.length > 200 ? bioText.slice(0, 197) + '...' : bioText).replace(/\s+/g, ' ')
+          : null
+
+        const hasAvatar = !!userProfile.avatar_url
+        const hasBio = !!truncatedBio
+        const hasHighlightVideo = !!userProfile.highlight_video_url
+        const friendCount = (friendCountRes as any)?.count || 0
+        const referenceCount = (referenceCountRes as any)?.count || 0
+        const careerCount = (careerCountRes as any)?.count || 0
+        const galleryCount = (galleryCountRes as any)?.count || 0
+
+        // Compute role-specific completion + missing-fields list. This is the
+        // single source of truth that the LLM uses for "what should I improve"
+        // answers (see SYSTEM_PROMPT). Adding a field here surfaces it in
+        // the AI's suggestions; keep entries actionable and user-controllable.
+        const missingFields: string[] = []
+        let totalCriteria = 0
+        let metCriteria = 0
+
+        // Universal criteria (every role)
+        const universal = [
+          { key: 'avatar', met: hasAvatar, label: 'profile photo' },
+          { key: 'bio', met: hasBio, label: 'bio' },
+          { key: 'base_location', met: !!userProfile.base_city || !!userProfile.base_country_id, label: 'base location' },
+          { key: 'onboarding', met: userProfile.onboarding_completed === true, label: 'onboarding (complete sign-up flow)' },
+        ]
+        for (const c of universal) {
+          totalCriteria++
+          if (c.met) metCriteria++
+          else missingFields.push(c.label)
+        }
+
+        // Role-specific criteria
+        if (userProfile.role === 'player') {
+          const playerCriteria = [
+            { met: !!userProfile.position, label: 'primary position' },
+            { met: !!userProfile.gender, label: 'gender (Men / Women)' },
+            { met: !!userProfile.date_of_birth, label: 'date of birth' },
+            { met: !!userProfile.nationality_country_id, label: 'nationality' },
+            { met: hasHighlightVideo, label: 'highlight video' },
+            { met: careerCount > 0, label: 'career history (clubs you\'ve played for)' },
+            { met: galleryCount > 0, label: 'gallery photos' },
+            { met: referenceCount > 0, label: 'verified references' },
+            { met: userProfile.open_to_play || userProfile.open_to_opportunities || false, label: 'availability flag (open to play / opportunities)' },
+          ]
+          for (const c of playerCriteria) {
+            totalCriteria++
+            if (c.met) metCriteria++
+            else missingFields.push(c.label)
+          }
+        } else if (userProfile.role === 'coach') {
+          const spec = userProfile.coach_specialization_custom || userProfile.coach_specialization
+          const coachCriteria = [
+            { met: !!spec, label: 'coaching specialization' },
+            { met: careerCount > 0, label: 'career history (clubs you\'ve coached at)' },
+            { met: referenceCount > 0, label: 'verified references' },
+            { met: userProfile.open_to_coach || userProfile.open_to_opportunities || false, label: 'availability flag (open to coach / opportunities)' },
+          ]
+          for (const c of coachCriteria) {
+            totalCriteria++
+            if (c.met) metCriteria++
+            else missingFields.push(c.label)
+          }
+        } else if (userProfile.role === 'club') {
+          const openVacancyCount = (openVacanciesRes as any)?.count || 0
+          const clubCriteria = [
+            { met: openVacancyCount > 0, label: 'open opportunities (post a vacancy to attract players/coaches)' },
+          ]
+          for (const c of clubCriteria) {
+            totalCriteria++
+            if (c.met) metCriteria++
+            else missingFields.push(c.label)
+          }
+        } else if (userProfile.role === 'brand') {
+          const brandCriteria = [
+            { met: !!brandRow?.category, label: 'brand category' },
+            { met: brandProductCount > 0, label: 'products (add at least one product to the Marketplace)' },
+            { met: brandPostCount > 0, label: 'brand posts (share an update)' },
+          ]
+          for (const c of brandCriteria) {
+            totalCriteria++
+            if (c.met) metCriteria++
+            else missingFields.push(c.label)
+          }
+        }
+
+        const profileCompletionPct = totalCriteria > 0
+          ? Math.round((metCriteria / totalCriteria) * 100)
+          : 0
+
         userContext = {
           role: userProfile.role,
           full_name: userProfile.full_name,
           gender: userProfile.gender,
-          position: userProfile.position,
           base_city: userProfile.base_city,
           base_country_name: countryMap.get(userProfile.base_country_id) || null,
           nationality_name: countryMap.get(userProfile.nationality_country_id) || null,
           nationality2_name: countryMap.get(userProfile.nationality2_country_id) || null,
+          eu_passport: euPassport,
+          position: userProfile.position,
+          secondary_position: userProfile.secondary_position,
+          age,
+          has_highlight_video: hasHighlightVideo,
+          coach_specialization: userProfile.coach_specialization,
+          coach_specialization_custom: userProfile.coach_specialization_custom,
           current_club: club?.club_name || userProfile.current_club || null,
           current_league: currentLeague,
           league_country: leagueCountry,
-          eu_passport: userProfile.eu_passport || false,
           open_to_play: userProfile.open_to_play || false,
           open_to_coach: userProfile.open_to_coach || false,
+          open_to_opportunities: userProfile.open_to_opportunities || false,
+          bio: truncatedBio,
+          onboarding_completed: userProfile.onboarding_completed === true,
+          has_avatar: hasAvatar,
+          has_bio: hasBio,
+          has_career_entry: careerCount > 0,
+          has_gallery_photo: galleryCount > 0,
+          accepted_friend_count: friendCount,
+          accepted_reference_count: referenceCount,
+          career_entry_count: careerCount,
+          // Club-specific
+          open_vacancy_count: userProfile.role === 'club' ? ((openVacanciesRes as any)?.count || 0) : undefined,
+          pending_application_count: userProfile.role === 'club' ? ((pendingApplicationsRes as any)?.count || 0) : undefined,
+          // Brand-specific
+          brand_category: userProfile.role === 'brand' ? (brandRow?.category || null) : undefined,
+          brand_product_count: userProfile.role === 'brand' ? brandProductCount : undefined,
+          brand_post_count: userProfile.role === 'brand' ? brandPostCount : undefined,
+          brand_is_verified: userProfile.role === 'brand' ? !!brandRow?.is_verified : undefined,
+          // Computed
+          profile_completion_pct: profileCompletionPct,
+          missing_fields: missingFields,
         }
       }
     } catch (ctxError) {
@@ -360,17 +646,117 @@ Deno.serve(async (req) => {
 
     pendingUserRole = userContext?.role ?? null
 
+    // ── Phase 0 canned responses ───────────────────────────────────────
+    // Opportunities and products are not yet searchable by the AI (Phase 1).
+    // Rather than sending the query to the LLM and risking a mixed-profile
+    // result, return a clear, role-aware message immediately. This costs
+    // ~0 LLM tokens and ~0ms LLM latency.
+    if (intent.confidence === 'high' && (intent.entity_type === 'opportunities' || intent.entity_type === 'products')) {
+      const oppSuffix = userContext?.role === 'player'
+        ? ' — they are filtered for players by default.'
+        : userContext?.role === 'coach'
+          ? ' — switch the filter to coaching roles in the page header.'
+          : '.'
+      const productSuffix = userContext?.role === 'brand'
+        ? ' — and add your own products from the brand dashboard.'
+        : '.'
+      const cannedMessage = intent.entity_type === 'opportunities'
+        ? `Searching opportunities through HOCKIA AI is rolling out next. For now you can browse all open opportunities at /opportunities${oppSuffix}`
+        : `Browsing products through HOCKIA AI is rolling out next. For now visit the Marketplace at /marketplace to see what brands have posted${productSuffix}`
+      fireAndForget(logDiscoveryEvent(adminClient, {
+        user_id: user.id,
+        role: userContext?.role ?? null,
+        query_text: query,
+        intent: 'canned_redirect',
+        parsed_filters: { _meta: { entity_type: intent.entity_type, confidence: intent.confidence, filter_source: 'keyword', signals: intent.matched_signals } } as any,
+        result_count: 0,
+        has_qualitative: false,
+        llm_provider: llmProvider,
+        response_time_ms: Date.now() - startTime,
+        error_message: null,
+        prompt_tokens: 0,
+        completion_tokens: 0,
+        cached_tokens: 0,
+        prompt_version: PROMPT_VERSION,
+        fallback_used: false,
+        retry_count: 0,
+      }))
+      return new Response(
+        JSON.stringify({
+          success: true,
+          data: [],
+          total: 0,
+          has_more: false,
+          parsed_filters: null,
+          summary: null,
+          ai_message: cannedMessage,
+        }),
+        { status: 200, headers: { ...headers, 'Content-Type': 'application/json' } }
+      )
+    }
+
     // ── LLM parsing ─────────────────────────────────────────────────────
-    const { result: llmResult, meta: parseMeta } = await parseSearchQuery(query, history, userContext)
+    // Pass the intent hint so the LLM knows what entity type the user is
+    // asking for. The hint is informational; the backend ENFORCES below
+    // for HIGH-confidence intents regardless of the LLM's output.
+    const { result: parseResult, meta: parseMeta } = await parseSearchQuery(query, history, userContext, intent)
+
+    // ── Phase 0 forced-search override ──────────────────────────────────
+    // When the keyword router is HIGH confidence on a profile-entity type
+    // AND the user used a search-imperative verb (find/show/look-for/etc.)
+    // BUT the LLM still chose `respond`/`knowledge` instead of search_profiles,
+    // the backend overrides and runs the search anyway. The LLM is not
+    // allowed to opt out of searching when the user clearly asked for a
+    // search.
+    //
+    // Safeguard: we require a search-imperative verb so that knowledge-style
+    // queries like "tell me about defenders" don't accidentally get forced
+    // into a profile search. Self-reflection / hockey-knowledge / greeting
+    // intents are excluded by entity type.
+    const PROFILE_ENTITIES = new Set(['clubs', 'players', 'coaches', 'brands', 'umpires'])
+    const HAS_SEARCH_IMPERATIVE = /\b(find|show|look(ing)? for|recommend|search( for)?|browse|list|get me)\b/i.test(query)
+    const llmSelectedTool: 'search' | 'conversation' | 'knowledge' = parseResult.type
+    let backendForcedSearch = false
+    let forcedReason: string | null = null
+
+    let llmResult = parseResult
+    if (
+      (parseResult.type === 'conversation' || parseResult.type === 'knowledge') &&
+      intent.confidence === 'high' &&
+      PROFILE_ENTITIES.has(intent.entity_type) &&
+      HAS_SEARCH_IMPERATIVE
+    ) {
+      // Synthesize a search intent so the existing search path runs. The
+      // LLM didn't extract any filters (it chose respond) so we hand off
+      // to the backend's role enforcement + UserContext seeding for the
+      // actual filtering. result_count + count phrase do the rest.
+      llmResult = {
+        type: 'search',
+        filters: {} as ParsedFilters,
+        message: '',
+        include_qualitative: false,
+      }
+      backendForcedSearch = true
+      forcedReason = `router=${intent.entity_type}/high + imperative present, but LLM chose ${parseResult.type}`
+    }
 
     // ── Conversation or knowledge response (no search needed) ────────
     if (llmResult.type === 'conversation' || llmResult.type === 'knowledge') {
+      const convoMeta = {
+        _meta: {
+          router_entity_type: intent.entity_type,
+          router_confidence: intent.confidence,
+          router_signals: intent.matched_signals,
+          llm_selected_tool: llmSelectedTool,
+          backend_forced_search: false,
+        },
+      }
       fireAndForget(logDiscoveryEvent(adminClient, {
         user_id: user.id,
         role: userContext?.role ?? null,
         query_text: query,
         intent: llmResult.type,
-        parsed_filters: null,
+        parsed_filters: convoMeta as any,
         result_count: 0,
         has_qualitative: false,
         llm_provider: llmProvider,
@@ -444,19 +830,54 @@ Deno.serve(async (req) => {
       if (data?.length) countryIds = data.map(c => c.id)
     }
 
-    // ── Call discover_profiles RPC ──────────────────────────────────────
-    // Umpires are a credential-only role and should not surface in default
-    // player/coach/club/brand searches. When the LLM doesn't specify roles,
-    // default to the four discoverable roles rather than NULL (which the RPC
-    // treats as "all roles" and would include umpires).
-    const discoverableRoles = ['player', 'coach', 'club', 'brand']
-    const effectiveRoles = parsed.roles && parsed.roles.length > 0
-      ? parsed.roles
-      : discoverableRoles
+    // ── Phase 0 server-side role enforcement ────────────────────────────
+    // For HIGH-confidence keyword-router intents, IGNORE the LLM's role
+    // extraction and force the role we detected. This is the fix for the
+    // "asked for clubs, got mixed players/coaches/clubs/brands" bug — the
+    // LLM was dropping `roles` ~50% of the time on clear queries, then we
+    // were falling back to all 4 discoverable roles. Now the keyword
+    // router is the source of truth when confidence is high.
+    let effectiveRoles: string[]
+    let filterSource: 'keyword' | 'llm' | 'fallback' | 'none' = 'none'
+    const enforcedRole = intent.confidence === 'high' ? entityTypeToRole(intent.entity_type) : null
+    if (enforcedRole) {
+      effectiveRoles = [enforcedRole]
+      filterSource = 'keyword'
+    } else if (parsed.roles && parsed.roles.length > 0) {
+      effectiveRoles = parsed.roles
+      filterSource = 'llm'
+    } else {
+      // No clear keyword AND no LLM filter — historically we fell back to
+      // ['player','coach','club','brand'] which is exactly the mixed-result
+      // bug. Phase 0 keeps the fallback for now but tags it so we can spot
+      // it in telemetry. Phase 1 will replace this with a clarifying-question
+      // path: "Are you looking for clubs, players, coaches, or opportunities?"
+      effectiveRoles = ['player', 'coach', 'club', 'brand']
+      filterSource = 'fallback'
+    }
+
+    // ── Phase 0 UserContext-seeded gender (clubs only) ──────────────────
+    // When a player or coach asks "find clubs for me" and doesn't specify
+    // gender, seed it from their profile so we don't return men's clubs to
+    // a women's player. Players/coaches of either gender pretty much always
+    // want clubs in their own competition. Only applies to club searches —
+    // for player/coach/brand searches the gender filter would over-restrict.
+    let effectiveGender = parsed.gender || null
+    let genderSource: 'llm' | 'context' | 'none' = parsed.gender ? 'llm' : 'none'
+    if (
+      !effectiveGender &&
+      enforcedRole === 'club' &&
+      userContext?.gender &&
+      (userContext.role === 'player' || userContext.role === 'coach')
+    ) {
+      effectiveGender = userContext.gender
+      genderSource = 'context'
+    }
+
     const { data: rpcResult, error: rpcError } = await adminClient.rpc('discover_profiles', {
       p_roles: effectiveRoles,
       p_positions: parsed.positions || null,
-      p_gender: parsed.gender || null,
+      p_gender: effectiveGender,
       p_min_age: parsed.min_age || null,
       p_max_age: parsed.max_age || null,
       p_nationality_country_ids: nationalityCountryIds,
@@ -486,11 +907,24 @@ Deno.serve(async (req) => {
     const result = rpcResult as { results: any[]; total: number; has_more: boolean }
 
     // ── Result-aware AI message ──────────────────────────────────────
+    // When the keyword router enforced a specific entity type, phrase the
+    // empty/match copy in those terms ("no clubs found") rather than the
+    // generic "no profiles found", and suggest broadening only when it
+    // makes sense (e.g. drop the gender filter we auto-seeded).
+    const entityNoun = enforcedRole === 'club' ? 'clubs'
+      : enforcedRole === 'player' ? 'players'
+      : enforcedRole === 'coach' ? 'coaches'
+      : enforcedRole === 'brand' ? 'brands'
+      : enforcedRole === 'umpire' ? 'umpires'
+      : 'profiles'
     let aiMessage: string
     if (result.total === 0) {
-      aiMessage = `I couldn't find any profiles matching that. Try broadening your search or adjusting your filters.`
+      const broadenHint = genderSource === 'context'
+        ? ` I filtered by your gender (${effectiveGender}) — want me to broaden that?`
+        : ''
+      aiMessage = `I couldn't find any ${entityNoun} matching that.${broadenHint}`
     } else {
-      const countPhrase = `I found ${result.total} profile${result.total === 1 ? '' : 's'} for you.`
+      const countPhrase = `I found ${result.total} ${entityNoun.endsWith('s') && result.total === 1 ? entityNoun.slice(0, -1) : entityNoun}${result.total === 1 ? '' : ''} for you.`
       aiMessage = llmResult.message ? `${countPhrase} ${llmResult.message}` : countPhrase
     }
 
@@ -568,12 +1002,32 @@ Deno.serve(async (req) => {
     }
 
     // ── Analytics logging ────────────────────────────────────────────────
+    // Phase 0 enrichment: stash the routing decision into parsed_filters._meta
+    // so we can prove (or disprove) that the keyword router is actually
+    // overriding the LLM and producing entity-pure results.
+    const parsedWithMeta = {
+      ...parsed,
+      _meta: {
+        router_entity_type: intent.entity_type,
+        router_confidence: intent.confidence,
+        router_signals: intent.matched_signals,
+        llm_selected_tool: llmSelectedTool,
+        backend_forced_search: backendForcedSearch,
+        forced_entity_type: backendForcedSearch ? intent.entity_type : null,
+        forced_reason: forcedReason,
+        enforced_role: enforcedRole,
+        filter_source: filterSource,
+        gender_source: genderSource,
+        effective_roles: effectiveRoles,
+        effective_gender: effectiveGender,
+      },
+    }
     fireAndForget(logDiscoveryEvent(adminClient, {
       user_id: user.id,
       role: userContext?.role ?? null,
       query_text: query,
       intent: 'search',
-      parsed_filters: parsed,
+      parsed_filters: parsedWithMeta as any,
       result_count: result.total,
       has_qualitative: llmResult.include_qualitative === true && result.results.length > 0,
       llm_provider: llmProvider,

@@ -81,7 +81,7 @@ export interface LLMCallMeta {
  * quality/latency comparisons across prompt iterations don't require git
  * archaeology.
  */
-export const PROMPT_VERSION = '2026-04-24.1'
+export const PROMPT_VERSION = '2026-04-27.phase0-entity-router'
 
 const EMPTY_META: LLMCallMeta = { retry_count: 0, usage: null }
 
@@ -152,50 +152,167 @@ export interface HistoryTurn {
 }
 
 export interface UserContext {
+  // Identity
   role: string
   full_name: string | null
   gender: string | null
-  position: string | null
+  // Location
   base_city: string | null
   base_country_name: string | null
   nationality_name: string | null
   nationality2_name: string | null
+  eu_passport: boolean
+  // Player / coach: position context (null for club/brand/umpire)
+  position: string | null
+  secondary_position: string | null
+  age: number | null
+  // Player: highlight + body of work
+  has_highlight_video: boolean
+  // Coach: specialization
+  coach_specialization: string | null
+  coach_specialization_custom: string | null
+  // Club affiliation (player/coach side)
   current_club: string | null
   current_league: string | null
   league_country: string | null
-  eu_passport: boolean
+  // Availability
   open_to_play: boolean
   open_to_coach: boolean
+  open_to_opportunities: boolean
+  // Bio (truncated to ~200 chars; null when empty)
+  bio: string | null
+  // Onboarding + profile completeness
+  onboarding_completed: boolean
+  has_avatar: boolean
+  has_bio: boolean
+  has_career_entry: boolean
+  has_gallery_photo: boolean
+  // Engagement aggregates (already public on profiles)
+  accepted_friend_count: number
+  accepted_reference_count: number
+  career_entry_count: number
+  // Club-specific (only populated when role === 'club')
+  open_vacancy_count?: number
+  pending_application_count?: number
+  // Brand-specific (only populated when role === 'brand')
+  brand_category?: string | null
+  brand_product_count?: number
+  brand_post_count?: number
+  brand_is_verified?: boolean
+  // Computed
+  profile_completion_pct: number
+  missing_fields: string[]
 }
 
+/** Build the CURRENT USER CONTEXT block injected at the end of SYSTEM_PROMPT.
+ *  Lines are emitted only when the field is meaningful — a null bio renders
+ *  "Bio: not added yet" so the LLM has explicit grounding for "you haven't
+ *  added X yet" answers, while a null gender (legitimately optional) is
+ *  simply omitted. The "MISSING PROFILE FIELDS" section is the source of
+ *  truth for "what should I improve" answers — never invent suggestions. */
 function buildUserContextBlock(ctx: UserContext): string {
   const lines: string[] = ['CURRENT USER CONTEXT:']
 
-  const roleName = ctx.role === 'club' ? 'club representative' : ctx.role
-  lines.push(`- You are speaking with ${ctx.full_name || 'a user'}, a ${roleName} on HOCKIA.`)
+  const roleLabel = ctx.role === 'club' ? 'club representative' : ctx.role
+  lines.push(`- You are speaking with ${ctx.full_name || 'a user'}, a ${roleLabel} on HOCKIA.`)
 
-  if (ctx.current_club) {
-    const parts = [ctx.current_club]
-    if (ctx.current_league) parts.push(ctx.current_league)
-    if (ctx.league_country) parts.push(ctx.league_country)
-    lines.push(`- Club: ${parts.join(', ')}`)
+  // Profile completeness — explicit grounding for "what should I improve"
+  lines.push(`- Onboarding ${ctx.onboarding_completed ? 'completed' : 'NOT completed'}.`)
+  lines.push(`- Profile completion: ${ctx.profile_completion_pct}%.`)
+
+  // Location + nationality
+  const location = [ctx.base_city, ctx.base_country_name].filter(Boolean).join(', ')
+  if (location) lines.push(`- Based in: ${location}.`)
+  const nationalities = [ctx.nationality_name, ctx.nationality2_name].filter(Boolean)
+  if (nationalities.length) {
+    lines.push(`- Nationality: ${nationalities.join(' & ')}.`)
+    lines.push(`- EU passport: ${ctx.eu_passport ? 'Yes' : 'No'}.`)
   }
 
-  const location = [ctx.base_city, ctx.base_country_name].filter(Boolean).join(', ')
-  if (location) lines.push(`- Based in: ${location}`)
+  // Identity / playing context — players/coaches
+  if (ctx.role === 'player' || ctx.role === 'coach') {
+    if (ctx.gender) lines.push(`- Gender context: ${ctx.gender}.`)
+    if (ctx.position) {
+      const positions = [ctx.position, ctx.secondary_position].filter(Boolean).join(' / ')
+      lines.push(`- Position: ${positions}.`)
+    }
+    if (ctx.age !== null) lines.push(`- Age: ${ctx.age}.`)
 
-  const nationalities = [ctx.nationality_name, ctx.nationality2_name].filter(Boolean)
-  if (nationalities.length) lines.push(`- Nationality: ${nationalities.join(' & ')}`)
+    // Coach specialization — translate the enum value to a human-readable
+    // label so the AI doesn't echo "goalkeeper_coach" back to the coach.
+    if (ctx.role === 'coach') {
+      const SPECIALIZATION_LABEL: Record<string, string> = {
+        head_coach: 'head coach',
+        assistant_coach: 'assistant coach',
+        goalkeeper_coach: 'goalkeeper coach',
+        youth_coach: 'youth coach',
+        strength_conditioning: 'strength & conditioning coach',
+        performance_analyst: 'performance analyst',
+        sports_scientist: 'sports scientist',
+        other: 'other',
+      }
+      const customSpec = ctx.coach_specialization_custom?.trim()
+      const enumSpec = ctx.coach_specialization
+      const label = customSpec
+        || (enumSpec ? (SPECIALIZATION_LABEL[enumSpec] || enumSpec) : null)
+      lines.push(`- Coach specialization: ${label || 'not specified yet'}.`)
+    }
 
-  if (ctx.gender) lines.push(`- Gender context: ${ctx.gender}`)
-  lines.push(`- EU passport: ${ctx.eu_passport ? 'Yes' : 'No'}`)
+    // Club affiliation
+    if (ctx.current_club) {
+      const parts = [ctx.current_club]
+      if (ctx.current_league) parts.push(ctx.current_league)
+      if (ctx.league_country) parts.push(ctx.league_country)
+      lines.push(`- Current club: ${parts.join(', ')}.`)
+    } else {
+      lines.push(`- Current club: not set.`)
+    }
 
-  if (ctx.position) lines.push(`- Position: ${ctx.position}`)
+    // Availability flags (player + coach)
+    const availability: string[] = []
+    if (ctx.open_to_play) availability.push('open to play')
+    if (ctx.open_to_coach) availability.push('open to coach')
+    if (ctx.open_to_opportunities) availability.push('open to opportunities')
+    lines.push(`- Availability: ${availability.length ? availability.join(', ') : 'none set'}.`)
+  }
 
-  const availability = []
-  if (ctx.open_to_play) availability.push('open to play')
-  if (ctx.open_to_coach) availability.push('open to coach')
-  if (availability.length) lines.push(`- Availability: ${availability.join(', ')}`)
+  // Brand-specific block
+  if (ctx.role === 'brand') {
+    lines.push(`- Brand category: ${ctx.brand_category || 'not set'}.`)
+    lines.push(`- Products posted: ${ctx.brand_product_count ?? 0}.`)
+    lines.push(`- Brand posts: ${ctx.brand_post_count ?? 0}.`)
+    lines.push(`- Verified: ${ctx.brand_is_verified ? 'Yes' : 'No'}.`)
+  }
+
+  // Club-specific block
+  if (ctx.role === 'club') {
+    lines.push(`- Open opportunities: ${ctx.open_vacancy_count ?? 0}.`)
+    lines.push(`- Pending applications: ${ctx.pending_application_count ?? 0}.`)
+  }
+
+  // Engagement aggregates (always present)
+  lines.push(`- Accepted references: ${ctx.accepted_reference_count}.`)
+  lines.push(`- Friends/connections: ${ctx.accepted_friend_count}.`)
+  if (ctx.role === 'player' || ctx.role === 'coach') {
+    lines.push(`- Career history entries: ${ctx.career_entry_count}.`)
+  }
+
+  // Bio — emit explicit "not added" so the LLM grounds its answer.
+  // Internal double quotes are downgraded to single quotes so they can't
+  // confuse the LLM about where the quoted bio ends.
+  if (ctx.bio) {
+    const safe = ctx.bio.replace(/\s+/g, ' ').replace(/"/g, "'").trim()
+    lines.push(`- Bio (truncated): "${safe}"`)
+  } else {
+    lines.push(`- Bio: not added yet.`)
+  }
+
+  // Missing fields — single source of truth for improvement suggestions
+  if (ctx.missing_fields.length > 0) {
+    lines.push(`- MISSING PROFILE FIELDS (use these for "what should I improve" answers): ${ctx.missing_fields.join(', ')}.`)
+  } else {
+    lines.push(`- MISSING PROFILE FIELDS: none — profile is complete.`)
+  }
 
   return lines.join('\n')
 }
@@ -205,12 +322,14 @@ const SYSTEM_PROMPT = `You are HOCKIA Assistant, a friendly and knowledgeable AI
 You have three tools:
 1. search_profiles — Use when the user wants to find or discover people/profiles. Extract structured filters from their query. Always include a conversational "message" field describing what you're looking for.
 2. answer_hockey_question — Use when the user asks about field hockey knowledge: rules, positions, tactics, formations, tournament formats (Olympics, World Cup, Pro League, EHL), FIH regulations, equipment (sticks, goalkeeping gear, balls, turf types), hockey history, training concepts, terminology (drag flick, aerial, jab tackle, penalty corner, etc.), or differences between indoor and outdoor hockey. Provide accurate, helpful answers. You can be detailed (multiple paragraphs) when the question warrants it.
-3. respond — Use for greetings, questions about HOCKIA the platform, help requests, or anything that is NOT a profile search and NOT a hockey knowledge question. Be warm and helpful. Mention that you can help discover players, coaches, clubs, brands, and umpires, AND answer field hockey questions.
+3. respond — Use for greetings, platform questions, help requests, AND for any personalised question about the user themselves ("Who am I?", "What's in my profile?", "What should I improve?", "What can I do next on HOCKIA?", "How do I get more visibility?", "Who should I connect with?"). When responding to self-reflection questions, use the CURRENT USER CONTEXT block as the only source of truth.
 
 TOOL SELECTION RULES:
 - "Find defenders" or "best players in England" → search_profiles (looking for people)
 - "What does a defender do?" or "rules of penalty corner" → answer_hockey_question (hockey knowledge)
 - "Hi" or "What is HOCKIA?" → respond (greeting or platform question)
+- "Who am I?" / "What do you know about me?" / "What's in my profile?" / "What should I improve?" / "How can I get more visibility?" / "What can I do next?" / "Who should I connect with?" → respond (use the CURRENT USER CONTEXT block at the end of this prompt)
+- "What clubs would suit me?" / "Recommend players for my team" / "Show me {role} for me" → search_profiles, with filters seeded from the user's context
 - For medical/injury advice, say you'd recommend consulting a sports medicine professional.
 - For non-hockey, non-HOCKIA topics (weather, coding, cooking, etc.), politely redirect: you're a field hockey assistant and can help with hockey questions or discovering profiles.
 
@@ -241,7 +360,52 @@ USER CONTEXT AWARENESS:
   - Mention the global nature of recruitment when relevant (e.g., "I found players in England and some international options from Argentina and the Netherlands who could also be a fit").
 - When the user says "my league", "my club", "my team", or "nearby", resolve those from their CURRENT USER CONTEXT.
 - The user's gender context tells you whether to filter by "Men" or "Women" when they don't specify.
-- If no user context is provided, behave generically as before.`
+- If no user context is provided, behave generically as before.
+
+SELF-REFLECTION & PROFILE GUIDANCE (use the respond tool):
+- "Who am I?" / "What do you know about me?" / "What's in my profile?" → Summarise the CURRENT USER CONTEXT in 2-3 sentences. Use only fields that are present.
+- "What should I improve?" / "How do I get more visibility?" / "How can I make my profile better?" → List concrete items from the MISSING PROFILE FIELDS line, framed as suggestions ("Adding a highlight video would help clubs notice you"). Do NOT volunteer improvements that aren't in the missing-fields list.
+- "What should I search for?" / "Who should I connect with?" / "What can I do next on HOCKIA?" → Use the ROLE GUIDANCE block below to suggest 2-3 concrete next actions tailored to the user's role and current context. Where suggesting a search would help, you may use search_profiles directly with filters seeded from the user's context.
+- "Read my bio" / "what does my bio say" → quote the bio verbatim if present; if absent say "you haven't added a bio yet" and suggest adding one.
+
+NO-INVENTION RULE (critical):
+- The CURRENT USER CONTEXT is the ONLY source of truth about the user. Never fabricate fields that aren't there.
+- If a field is null, missing, or marked "not added yet" / "not set" / "not specified yet" — say so honestly and (when relevant) suggest adding it. Do NOT invent placeholder values.
+- Never assume things about the user from missing data ("you must be just starting out because your career history is empty" — wrong tone, don't do this).
+- Only quote bio text that appears literally in the context block. If the bio line says "not added yet", do NOT generate one.
+
+ROLE GUIDANCE (for suggesting next actions; ground every suggestion in the actual context — profile_completion_pct, missing_fields, and role-specific counts):
+
+PRIORITY ORDER for "what should I do next?" / "how can I get more visibility?":
+1. If profile_completion_pct < 80% OR there are items in MISSING PROFILE FIELDS → lead with the highest-impact missing field (see role list below).
+2. Then suggest one role-relevant search the user could try.
+3. Then suggest one connection or action.
+Do not pad to 3 if the context only supports 1-2 strong suggestions.
+
+- PLAYER:
+  - Highest-impact profile gaps (in this order): highlight video, verified references, career history, bio, gallery photos.
+  - Searches that typically help: clubs in target leagues/countries, coaches in their position, opportunities for their gender/age.
+  - Connections: coaches who specialise in their position, players at clubs they want to play for.
+  - Visibility: phrase availability suggestions as "set yourself as open to play / open to new opportunities" — never use raw field names like "open_to_play".
+- COACH:
+  - Highest-impact profile gaps: coaching specialization, career history, references, bio.
+  - Searches: clubs hiring staff in their region, opportunities open to coaches, players to recommend (only when they have a club affiliation in the context).
+  - Connections: clubs in target leagues, coaches with complementary specializations.
+  - Visibility: phrase availability suggestions as "set yourself as open to coach / open to new opportunities".
+- CLUB:
+  - Highest-impact profile gaps: bio, base location, posting at least one open opportunity.
+  - Actions: if open_vacancy_count is 0, suggest posting a vacancy first (highest leverage). If pending_application_count > 0, suggest reviewing applications.
+  - Searches: players matching their league/gender/position needs, coaches/staff for open roles.
+- BRAND:
+  - Highest-impact profile gaps: brand category, products (if brand_product_count is 0 — biggest single lever), brand posts (if brand_post_count is 0), bio, verification (if not yet verified).
+  - Actions: add products to the Marketplace, post brand updates, engage with relevant profiles.
+  - Searches: players, coaches, clubs as audience or potential ambassadors.
+
+TONE:
+- Helpful, practical, role-aware, honest. Like a smart hockey assistant who actually knows the user.
+- Concrete suggestions, not generic motivational advice. Avoid "you've got this!" / "keep going!" filler.
+- Never use surveillance framing ("I noticed you…", "you haven't been active…"). Just answer questions; don't volunteer observations.
+- When suggesting profile improvements, lead with the single highest-impact item, then list 1-2 more.`
 
 const SEARCH_TOOL = {
   name: 'search_profiles',
@@ -359,13 +523,16 @@ const DEFAULT_CONVERSATION_RESPONSE = "Hey! I'm HOCKIA Assistant. I can help you
 
 // ─── Gemini (Google AI Studio — free tier) ────────────────────────────
 
-async function callGemini(query: string, history: HistoryTurn[] = [], userContext?: UserContext): Promise<{ result: LLMResult; meta: LLMCallMeta }> {
+async function callGemini(query: string, history: HistoryTurn[] = [], userContext?: UserContext, intentHint?: IntentHint): Promise<{ result: LLMResult; meta: LLMCallMeta }> {
   const apiKey = Deno.env.get('GOOGLE_AI_API_KEY')
   if (!apiKey) throw new Error('GOOGLE_AI_API_KEY not configured')
 
-  const systemPrompt = userContext
-    ? SYSTEM_PROMPT + '\n\n' + buildUserContextBlock(userContext)
-    : SYSTEM_PROMPT
+  const hintBlock = intentHint ? buildIntentHintBlock(intentHint) : ''
+  const systemPrompt = [
+    SYSTEM_PROMPT,
+    userContext ? buildUserContextBlock(userContext) : '',
+    hintBlock,
+  ].filter(Boolean).join('\n\n')
 
   const contents = [
     ...history.map(turn => ({
@@ -439,13 +606,16 @@ async function callGemini(query: string, history: HistoryTurn[] = [], userContex
 
 // ─── Claude (Anthropic — paid) ────────────────────────────────────────
 
-async function callClaude(query: string, history: HistoryTurn[] = [], userContext?: UserContext): Promise<LLMResult> {
+async function callClaude(query: string, history: HistoryTurn[] = [], userContext?: UserContext, intentHint?: IntentHint): Promise<LLMResult> {
   const apiKey = Deno.env.get('ANTHROPIC_API_KEY')
   if (!apiKey) throw new Error('ANTHROPIC_API_KEY not configured')
 
-  const systemPrompt = userContext
-    ? SYSTEM_PROMPT + '\n\n' + buildUserContextBlock(userContext)
-    : SYSTEM_PROMPT
+  const hintBlock = intentHint ? buildIntentHintBlock(intentHint) : ''
+  const systemPrompt = [
+    SYSTEM_PROMPT,
+    userContext ? buildUserContextBlock(userContext) : '',
+    hintBlock,
+  ].filter(Boolean).join('\n\n')
 
   const messages = [
     ...history.map(turn => ({ role: turn.role as 'user' | 'assistant', content: turn.content })),
@@ -499,13 +669,16 @@ async function callClaude(query: string, history: HistoryTurn[] = [], userContex
 
 // ─── OpenAI (paid) ─────────────────────────────────────────────────────
 
-async function callOpenAI(query: string, history: HistoryTurn[] = [], userContext?: UserContext): Promise<LLMResult> {
+async function callOpenAI(query: string, history: HistoryTurn[] = [], userContext?: UserContext, intentHint?: IntentHint): Promise<LLMResult> {
   const apiKey = Deno.env.get('OPENAI_API_KEY')
   if (!apiKey) throw new Error('OPENAI_API_KEY not configured')
 
-  const systemPrompt = userContext
-    ? SYSTEM_PROMPT + '\n\n' + buildUserContextBlock(userContext)
-    : SYSTEM_PROMPT
+  const hintBlock = intentHint ? buildIntentHintBlock(intentHint) : ''
+  const systemPrompt = [
+    SYSTEM_PROMPT,
+    userContext ? buildUserContextBlock(userContext) : '',
+    hintBlock,
+  ].filter(Boolean).join('\n\n')
 
   const messages = [
     { role: 'system' as const, content: systemPrompt },
@@ -558,14 +731,72 @@ async function callOpenAI(query: string, history: HistoryTurn[] = [], userContex
 
 // ─── Provider dispatcher ───────────────────────────────────────────────
 
-export async function parseSearchQuery(query: string, history: HistoryTurn[] = [], userContext?: UserContext): Promise<{ result: LLMResult; meta: LLMCallMeta }> {
+/**
+ * Phase 0 routing hint — passed in from the deterministic keyword router
+ * (see `_shared/intent-router.ts`). Surfaced into the system prompt as a
+ * "DETECTED INTENT" block so the LLM tilts its tool selection accordingly.
+ * Backend ENFORCES the role afterwards for HIGH-confidence intents.
+ */
+export interface IntentHint {
+  entity_type: string
+  confidence: 'high' | 'medium' | 'low' | 'none'
+  matched_signals: string[]
+}
+
+function buildIntentHintBlock(hint: IntentHint): string {
+  if (hint.confidence === 'none' || hint.entity_type === 'unknown') return ''
+  const lines: string[] = ['DETECTED INTENT (from deterministic keyword router):']
+  lines.push(`- entity_type: ${hint.entity_type}`)
+  lines.push(`- confidence: ${hint.confidence}`)
+  if (hint.matched_signals.length > 0) {
+    lines.push(`- signals: ${hint.matched_signals.slice(0, 4).join(', ')}`)
+  }
+  // Tool-selection guidance per entity type
+  switch (hint.entity_type) {
+    case 'clubs':
+      lines.push('- ROUTING: use search_profiles with roles=["club"]. NEVER include other roles in the result. If you need to clarify, ask whether they want a specific country or league.')
+      break
+    case 'players':
+      lines.push('- ROUTING: use search_profiles with roles=["player"]. NEVER include coaches, clubs, brands, or umpires in the result.')
+      break
+    case 'coaches':
+      lines.push('- ROUTING: use search_profiles with roles=["coach"]. NEVER include other roles in the result.')
+      break
+    case 'brands':
+      lines.push('- ROUTING: use search_profiles with roles=["brand"]. NEVER include other roles in the result.')
+      break
+    case 'umpires':
+      lines.push('- ROUTING: use search_profiles with roles=["umpire"]. NEVER include other roles in the result.')
+      break
+    case 'self_profile':
+      lines.push('- ROUTING: use the respond tool. Summarise the CURRENT USER CONTEXT block in 2-3 sentences. Do NOT search.')
+      break
+    case 'self_advice':
+      lines.push('- ROUTING: use the respond tool. Reference items from MISSING PROFILE FIELDS. Do NOT search.')
+      break
+    case 'knowledge':
+      lines.push('- ROUTING: use the answer_hockey_question tool. Do NOT search profiles.')
+      break
+    case 'greeting':
+      lines.push('- ROUTING: use the respond tool. Be warm and short.')
+      break
+  }
+  return lines.join('\n')
+}
+
+export async function parseSearchQuery(
+  query: string,
+  history: HistoryTurn[] = [],
+  userContext?: UserContext,
+  intentHint?: IntentHint,
+): Promise<{ result: LLMResult; meta: LLMCallMeta }> {
   const provider = Deno.env.get('LLM_PROVIDER') || 'gemini'
 
   switch (provider) {
-    case 'gemini':  return callGemini(query, history, userContext)
-    case 'claude':  return { result: await callClaude(query, history, userContext), meta: EMPTY_META }
-    case 'openai':  return { result: await callOpenAI(query, history, userContext), meta: EMPTY_META }
-    default:        return callGemini(query, history, userContext)
+    case 'gemini':  return callGemini(query, history, userContext, intentHint)
+    case 'claude':  return { result: await callClaude(query, history, userContext, intentHint), meta: EMPTY_META }
+    case 'openai':  return { result: await callOpenAI(query, history, userContext, intentHint), meta: EMPTY_META }
+    default:        return callGemini(query, history, userContext, intentHint)
   }
 }
 

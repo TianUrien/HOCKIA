@@ -1,18 +1,63 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Sparkles, Send, Loader2, RotateCcw, ChevronLeft } from 'lucide-react'
 import { useDiscoverChat } from '@/hooks/useDiscover'
 import DiscoverChat from '@/components/DiscoverChat'
+import { useAuthStore } from '@/lib/auth'
 
-const EXAMPLE_QUERIES = [
+/** Default examples for unauthenticated visits + the universal fallback set.
+ *  Every role-specific example list also keeps a search prompt so the user
+ *  immediately sees what the AI can do beyond self-reflection. */
+const DEFAULT_EXAMPLES = [
   'Find U25 defenders with a EU passport and 2+ references',
   'Show female defenders open to play',
   'Find men goalkeepers from New Zealand',
 ]
 
+/** Role-aware first-impression prompts. Each role gets a mix of:
+ *  - one self-reflection prompt ("what should I improve")
+ *  - one search prompt seeded by their context
+ *  - one connection / next-action prompt
+ *  This is the entry-point onto Phase 1 personalisation. */
+const ROLE_EXAMPLES: Record<string, string[]> = {
+  player: [
+    'What should I improve in my profile?',
+    'What clubs would suit me?',
+    'Who should I connect with?',
+  ],
+  coach: [
+    'What should I add to my profile?',
+    'Show me clubs hiring head coaches',
+    'Players I could recommend for my staff',
+  ],
+  club: [
+    'What can I do next on HOCKIA?',
+    'Show me available defenders for my team',
+    'Show me coaches with head-coach experience',
+  ],
+  brand: [
+    'What\'s missing from my brand profile?',
+    'Players who could be ambassadors',
+    'How do I get more visibility on the Marketplace?',
+  ],
+  umpire: [
+    'What should I improve in my profile?',
+    'Show me umpires from my country',
+    'How can I get more visibility?',
+  ],
+}
+
+function getFirstName(fullName: string | null | undefined): string | null {
+  if (!fullName) return null
+  const trimmed = fullName.trim()
+  if (!trimmed) return null
+  return trimmed.split(/\s+/)[0]
+}
+
 export default function DiscoverPage() {
   const navigate = useNavigate()
   const { messages, sendMessage, clearChat, isPending } = useDiscoverChat()
+  const profile = useAuthStore(s => s.profile)
   const [input, setInput] = useState('')
   const [placeholderIndex, setPlaceholderIndex] = useState(0)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -21,6 +66,16 @@ export default function DiscoverPage() {
   const bottomRef = useRef<HTMLDivElement>(null)
 
   const hasMessages = messages.length > 0
+
+  // Greeting + example set are derived from the auth-store profile. When the
+  // profile hasn't loaded yet we fall back to the generic example set so the
+  // empty state never blocks on a network round-trip; once the profile
+  // arrives the examples swap to the role-aware variant.
+  const firstName = getFirstName(profile?.full_name ?? null)
+  const exampleQueries = useMemo(
+    () => (profile?.role && ROLE_EXAMPLES[profile.role]) || DEFAULT_EXAMPLES,
+    [profile?.role]
+  )
 
   // Track visual viewport for mobile keyboard awareness.
   // On iOS Safari, the keyboard changes visualViewport.height and may scroll
@@ -50,10 +105,10 @@ export default function DiscoverPage() {
   useEffect(() => {
     if (hasMessages) return
     const interval = setInterval(() => {
-      setPlaceholderIndex(i => (i + 1) % EXAMPLE_QUERIES.length)
+      setPlaceholderIndex(i => (i + 1) % exampleQueries.length)
     }, 4000)
     return () => clearInterval(interval)
-  }, [hasMessages])
+  }, [hasMessages, exampleQueries.length])
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
@@ -148,15 +203,19 @@ export default function DiscoverPage() {
               <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#8026FA] to-[#924CEC] flex items-center justify-center mb-4 shadow-lg shadow-[#8026FA]/20">
                 <Sparkles className="w-7 h-7 text-white" />
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-1">Discover</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-1">
+                {firstName ? `Hi ${firstName}!` : 'Discover'}
+              </h2>
               <p className="text-sm text-gray-500 text-center mb-8 max-w-xs">
-                Ask me anything — search for players, coaches, clubs, and brands using natural language.
+                {firstName
+                  ? 'What can I help you with today? I know your HOCKIA profile, so I can give answers tailored to you.'
+                  : 'Ask me anything — search for players, coaches, clubs, and brands using natural language.'}
               </p>
               <div className="w-full max-w-sm space-y-2">
                 <p className="text-xs font-medium text-gray-400 uppercase tracking-wide text-center mb-2">
                   Try asking
                 </p>
-                {EXAMPLE_QUERIES.map(example => (
+                {exampleQueries.map(example => (
                   <button
                     type="button"
                     key={example}
@@ -189,7 +248,7 @@ export default function DiscoverPage() {
               }}
               onKeyDown={handleKeyDown}
               onFocus={handleFocus}
-              placeholder={hasMessages ? 'Follow up or ask something new…' : EXAMPLE_QUERIES[placeholderIndex]}
+              placeholder={hasMessages ? 'Follow up or ask something new…' : exampleQueries[placeholderIndex]}
               rows={1}
               disabled={isPending}
               className="flex-1 resize-none rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 pr-12 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#8026FA]/30 focus:border-[#8026FA]/50 focus:bg-white transition-all disabled:opacity-60 min-h-[44px] max-h-[120px]"
