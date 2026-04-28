@@ -4,6 +4,7 @@ import { Sparkles, Send, Loader2, RotateCcw, ChevronLeft } from 'lucide-react'
 import { useDiscoverChat } from '@/hooks/useDiscover'
 import DiscoverChat from '@/components/DiscoverChat'
 import { useAuthStore } from '@/lib/auth'
+import { getFirstName } from '@/lib/profile'
 
 /** Default examples for unauthenticated visits + the universal fallback set.
  *  Every role-specific example list also keeps a search prompt so the user
@@ -45,13 +46,6 @@ const ROLE_EXAMPLES: Record<string, string[]> = {
     'Show me umpires from my country',
     'How can I get more visibility?',
   ],
-}
-
-function getFirstName(fullName: string | null | undefined): string | null {
-  if (!fullName) return null
-  const trimmed = fullName.trim()
-  if (!trimmed) return null
-  return trimmed.split(/\s+/)[0]
 }
 
 export default function DiscoverPage() {

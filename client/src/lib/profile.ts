@@ -40,6 +40,19 @@ export async function invalidateProfile({ userId, reason }: InvalidateProfileOpt
   await fetchProfile(targetUserId, { force: true })
 }
 
+/**
+ * Extract the first name from a free-form full_name field. Trims and splits on
+ * whitespace so multi-word first names ("Maria del Carmen") still surface only
+ * the first token. Returns null for null/empty/whitespace-only input so callers
+ * can branch cleanly on "do we know who this is yet?".
+ */
+export function getFirstName(fullName: string | null | undefined): string | null {
+  if (!fullName) return null
+  const trimmed = fullName.trim()
+  if (!trimmed) return null
+  return trimmed.split(/\s+/)[0]
+}
+
 export function derivePublicContactEmail(profile: ContactEmailCarrier): DerivedContactEmail {
   const contactEmail = profile.contact_email?.trim() || null
   const shouldShow = Boolean(profile.contact_email_public)
