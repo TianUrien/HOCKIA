@@ -88,9 +88,9 @@ export default function AssistantMessage({ msg }: AssistantMessageProps) {
         )
 
       case 'soft_error':
-        // Wired in PR-3 — for now this branch only fires if the backend ever
-        // returns kind=soft_error in a 200 body (it doesn't yet, but the
-        // dispatcher is ready).
+        // PR-3 ships this from the backend. Used for: RPC failure, doubly-
+        // degraded keyword fallback, force-debug query (staging only),
+        // non-search LLM timeouts (knowledge / self_advice / greeting).
         return (
           <SoftErrorCard
             message={msg.content}

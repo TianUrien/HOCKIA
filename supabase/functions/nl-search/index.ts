@@ -345,11 +345,44 @@ Deno.serve(async (req) => {
     // this is a recovery follow-up" without re-running the LLM. The frontend
     // populates it from the most recent assistant message's kind / applied
     // when that kind was no_results or soft_error.
-    const recoveryContext: {
+    const rawRecoveryContext: {
       last_kind?: ResponseKind
       last_applied?: AppliedSearch | null
       user_role?: string | null
     } | undefined = body?.recovery_context
+
+    // Adversarial-review fix: client-supplied recovery_context fields are NOT
+    // trusted verbatim. We:
+    //   1. Whitelist user_role against the known role set (else null).
+    //   2. Sanitize role_summary by stripping HTML tags and capping length
+    //      (defense-in-depth; today React escapes text, but a future
+    //      markdown renderer would not).
+    // This prevents telemetry pollution from spoofed roles and prevents raw
+    // markup from showing up in user-visible copy.
+    const ALLOWED_ROLES = new Set(['player', 'coach', 'club', 'brand', 'umpire'])
+    const safeUserRole: string | null =
+      rawRecoveryContext?.user_role && ALLOWED_ROLES.has(rawRecoveryContext.user_role)
+        ? rawRecoveryContext.user_role
+        : null
+    function sanitizeRoleSummary(s: string | undefined | null): string | null {
+      if (!s || typeof s !== 'string') return null
+      const cleaned = s.replace(/<[^>]*>/g, '').replace(/[\r\n]/g, ' ').trim()
+      if (cleaned.length === 0 || cleaned.length > 80) return null
+      return cleaned
+    }
+    const safeLastApplied: AppliedSearch | null = rawRecoveryContext?.last_applied
+      ? {
+          ...rawRecoveryContext.last_applied,
+          role_summary: sanitizeRoleSummary(rawRecoveryContext.last_applied.role_summary) ?? '',
+        }
+      : null
+    const recoveryContext = rawRecoveryContext
+      ? {
+          last_kind: rawRecoveryContext.last_kind,
+          last_applied: safeLastApplied,
+          user_role: safeUserRole,
+        }
+      : undefined
 
     if (!query || typeof query !== 'string') {
       return new Response(

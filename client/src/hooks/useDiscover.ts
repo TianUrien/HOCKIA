@@ -269,19 +269,27 @@ export const useDiscoverChat = create<DiscoverChatStore>((set, get) => ({
   },
 
   submitAction: (intent: SuggestedActionIntent) => {
-    if (intent.type === 'free_text') {
-      get().sendMessage(intent.query)
-      return
-    }
-    if (intent.type === 'retry') {
-      // Find the most recent user message and resubmit it.
-      const lastUserMsg = [...get().messages].reverse().find(m => m.role === 'user')
-      if (lastUserMsg) get().sendMessage(lastUserMsg.content)
-      return
-    }
-    if (intent.type === 'clear') {
-      get().clearChat()
-      return
+    // Discriminated-union switch with an explicit unknown-type warning so a
+    // future intent type added to the backend catalog before the frontend
+    // ships an update doesn't disappear silently. Default branch logs to
+    // Sentry-feeding logger so we see it in dashboards.
+    switch (intent.type) {
+      case 'free_text':
+        get().sendMessage(intent.query)
+        return
+      case 'retry': {
+        const lastUserMsg = [...get().messages].reverse().find(m => m.role === 'user')
+        if (lastUserMsg) get().sendMessage(lastUserMsg.content)
+        return
+      }
+      case 'clear':
+        get().clearChat()
+        return
+      default: {
+        const exhaustive: never = intent
+        logger.warn('[useDiscoverChat] unknown action intent — chip will no-op', { intent: exhaustive })
+        return
+      }
     }
   },
 
