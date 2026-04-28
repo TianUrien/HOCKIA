@@ -915,8 +915,19 @@ Deno.serve(async (req) => {
     // for player/coach/brand searches the gender filter would over-restrict.
     let effectiveGender = parsed.gender || null
     let genderSource: 'llm' | 'context' | 'none' = parsed.gender ? 'llm' : 'none'
+
+    // Phase 1A — when the query is a "broaden" follow-up (e.g. coming from a
+    // no-results action chip), skip the UserContext gender seeding entirely.
+    // Without this the chip "Show all clubs" silently re-applies the user's
+    // gender and the broaden never broadens. The phrases below are the exact
+    // forms the suggested-actions catalog ships, plus a few user-typed
+    // equivalents.
+    const QUERY_FORBIDS_GENDER_SEED =
+      /\b(any gender|all genders?|without (a |any )?gender( filter)?|regardless of gender|gender[- ]neutral|both genders|men[''']?s and women[''']?s|men and women)\b/i.test(query)
+
     if (
       !effectiveGender &&
+      !QUERY_FORBIDS_GENDER_SEED &&
       enforcedRole === 'club' &&
       userContext?.gender &&
       (userContext.role === 'player' || userContext.role === 'coach')

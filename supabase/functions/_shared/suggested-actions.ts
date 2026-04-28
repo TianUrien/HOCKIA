@@ -92,9 +92,13 @@ export function getNoResultsActions(applied: AppliedSearch | null, userRole: str
   const entity = applied?.entity ?? 'clubs'
 
   // 1. Show all of the entity (drops most filters).
+  // Note the explicit "regardless of gender" — the backend recognizes this
+  // phrasing and skips UserContext gender seeding so the broaden actually
+  // broadens. Without it the user-context gender (e.g. Women) is re-applied
+  // and the user sees the same no-results card again.
   actions.push({
     label: `Show all ${entity}`,
-    intent: { type: 'free_text', query: `Show me all ${entity}` },
+    intent: { type: 'free_text', query: `Show me all ${entity} regardless of gender` },
   })
 
   // 2. Search by country — only when location wasn't already part of the query.
@@ -107,10 +111,11 @@ export function getNoResultsActions(applied: AppliedSearch | null, userRole: str
 
   // 3. Remove the seeded filter (UserContext usually adds gender; lifting it is the
   //    most-impactful single change a player/coach can make to a club search).
+  // Same explicit phrasing — see the catalog comment on chip 1.
   if (applied?.gender_label) {
     actions.push({
       label: `Remove ${applied.gender_label.toLowerCase()} filter`,
-      intent: { type: 'free_text', query: `Find ${entity} without gender filter` },
+      intent: { type: 'free_text', query: `Find ${entity} regardless of gender` },
     })
   }
 
