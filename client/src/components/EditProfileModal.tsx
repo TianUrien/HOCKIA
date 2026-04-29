@@ -22,6 +22,7 @@ import WorldClubSearch from './WorldClubSearch'
 import { type SocialLinks, cleanSocialLinks, validateSocialLinks } from '@/lib/socialLinks'
 import { COACH_SPECIALIZATIONS, type CoachSpecialization } from '@/lib/coachSpecializations'
 import { UMPIRE_LEVEL_SUGGESTIONS } from '@/lib/umpireLevels'
+import { PREFER_NOT_TO_SAY, normalizeGenderInput } from '@/lib/genderLabels'
 import { FEDERATION_SUGGESTIONS } from '@/lib/umpireFederations'
 import { LANGUAGE_SUGGESTIONS } from '@/lib/languages'
 import { X as XIcon } from 'lucide-react'
@@ -528,7 +529,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
       optimisticUpdate.nationality2_country_id = formData.nationality2_country_id
       optimisticUpdate.position = formData.position || null
       optimisticUpdate.secondary_position = formData.secondary_position || null
-      optimisticUpdate.gender = formData.gender || null
+      optimisticUpdate.gender = normalizeGenderInput(formData.gender)
       optimisticUpdate.date_of_birth = formData.date_of_birth || null
       optimisticUpdate.current_club = formData.current_club || null
       optimisticUpdate.current_world_club_id = formData.current_world_club_id
@@ -540,7 +541,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
       optimisticUpdate.nationality = formData.nationality
       optimisticUpdate.nationality_country_id = formData.nationality_country_id
       optimisticUpdate.nationality2_country_id = formData.nationality2_country_id
-      optimisticUpdate.gender = formData.gender || null
+      optimisticUpdate.gender = normalizeGenderInput(formData.gender)
       optimisticUpdate.date_of_birth = formData.date_of_birth || null
       optimisticUpdate.current_club = formData.current_club || null
       optimisticUpdate.current_world_club_id = formData.current_world_club_id
@@ -556,7 +557,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
       optimisticUpdate.nationality = formSnapshot.nationality
       optimisticUpdate.nationality_country_id = formSnapshot.nationality_country_id
       optimisticUpdate.nationality2_country_id = formSnapshot.nationality2_country_id
-      optimisticUpdate.gender = formSnapshot.gender || null
+      optimisticUpdate.gender = normalizeGenderInput(formSnapshot.gender)
       optimisticUpdate.date_of_birth = formSnapshot.date_of_birth || null
       optimisticUpdate.bio = formSnapshot.bio || null
       optimisticUpdate.umpire_level = formSnapshot.umpire_level.trim() || null
@@ -889,8 +890,9 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                     aria-label="Select gender"
                   >
                     <option value="">Select gender</option>
-                    <option value="Men">Men</option>
-                    <option value="Women">Women</option>
+                    <option value="Men">Male</option>
+                    <option value="Women">Female</option>
+                    <option value={PREFER_NOT_TO_SAY}>Prefer not to say</option>
                   </select>
                 </div>
 
@@ -1023,8 +1025,9 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8026FA] focus:border-transparent"
                   >
                     <option value="">Select gender</option>
-                    <option value="Men">Men</option>
-                    <option value="Women">Women</option>
+                    <option value="Men">Male</option>
+                    <option value="Women">Female</option>
+                    <option value={PREFER_NOT_TO_SAY}>Prefer not to say</option>
                   </select>
                 </div>
 

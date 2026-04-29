@@ -22,6 +22,7 @@ import { validateOnboardingStep, type WizardStep } from '@/lib/onboardingValidat
 import { UMPIRE_LEVEL_SUGGESTIONS } from '@/lib/umpireLevels'
 import { FEDERATION_SUGGESTIONS } from '@/lib/umpireFederations'
 import { LANGUAGE_SUGGESTIONS } from '@/lib/languages'
+import { PREFER_NOT_TO_SAY, normalizeGenderInput } from '@/lib/genderLabels'
 
 type UserRole = 'player' | 'coach' | 'club' | 'brand' | 'umpire'
 
@@ -113,14 +114,7 @@ export default function CompleteProfile() {
     pendingLanguage: '',
   })
 
-  const normalizeGender = (value: string) => {
-    const trimmed = value.trim()
-    if (!trimmed) return null
-    const lower = trimmed.toLowerCase()
-    if (lower === 'men' || lower === 'male') return 'Men'
-    if (lower === 'women' || lower === 'female') return 'Women'
-    return null
-  }
+  const normalizeGender = normalizeGenderInput
 
   // Use profile data from auth store - no need to fetch again
   const userRole = (profile?.role as UserRole | null) ?? fallbackRole ?? (user?.user_metadata?.role as UserRole | undefined) ?? null
@@ -1254,8 +1248,9 @@ export default function CompleteProfile() {
                           required
                         >
                           <option value="">Select gender</option>
-                          <option value="Men">Men</option>
-                          <option value="Women">Women</option>
+                          <option value="Men">Male</option>
+                          <option value="Women">Female</option>
+                          <option value={PREFER_NOT_TO_SAY}>Prefer not to say</option>
                         </select>
                       </div>
 
@@ -1388,8 +1383,9 @@ export default function CompleteProfile() {
                           required
                         >
                           <option value="">Select gender</option>
-                          <option value="Men">Men</option>
-                          <option value="Women">Women</option>
+                          <option value="Men">Male</option>
+                          <option value="Women">Female</option>
+                          <option value={PREFER_NOT_TO_SAY}>Prefer not to say</option>
                         </select>
                       </div>
 
@@ -1522,18 +1518,18 @@ export default function CompleteProfile() {
 
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="umpire-gender">
-                          Gender <span className="text-red-500">*</span>
+                          Gender <span className="text-gray-400 font-normal">(optional)</span>
                         </label>
                         <select
                           id="umpire-gender"
                           value={formData.gender}
                           onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8026FA] focus:border-transparent"
-                          required
                         >
                           <option value="">Select gender</option>
-                          <option value="Men">Men</option>
-                          <option value="Women">Women</option>
+                          <option value="Men">Male</option>
+                          <option value="Women">Female</option>
+                          <option value={PREFER_NOT_TO_SAY}>Prefer not to say</option>
                         </select>
                       </div>
 

@@ -18,6 +18,7 @@ import Button from '@/components/Button'
 import SignInPromptModal from '@/components/SignInPromptModal'
 import SocialLinksDisplay from '@/components/SocialLinksDisplay'
 import type { Profile } from '@/lib/supabase'
+import { genderToDisplay } from '@/lib/genderLabels'
 import { supabase } from '@/lib/supabase'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useToastStore } from '@/lib/toast'
@@ -396,7 +397,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
                           ? 'text-[#5c6bc0]' 
                           : 'text-gray-600'
                     }`}>
-                      <span>{profile.gender}</span>
+                      <span>{genderToDisplay(profile.gender)}</span>
                     </div>
                   </>
                 )}
@@ -611,7 +612,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
                         Gender
                       </label>
                       <p className={profile.gender ? "text-gray-900" : "text-gray-500 italic"}>
-                        {profile.gender || 'Not specified'}
+                        {genderToDisplay(profile.gender) || 'Not specified'}
                       </p>
                     </div>
 

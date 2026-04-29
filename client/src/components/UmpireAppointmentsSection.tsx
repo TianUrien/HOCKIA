@@ -49,7 +49,8 @@ interface UmpireAppointmentsSectionProps {
 
 const MATCH_FORMAT_LABELS: Record<string, string> = {
   outdoor_11v11: 'Outdoor 11v11',
-  indoor_5v5: 'Indoor 5v5',
+  hockey5s: 'Hockey5s',
+  indoor_5v5: 'Indoor',
   other: 'Other format',
 }
 

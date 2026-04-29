@@ -17,6 +17,7 @@ import { DashboardSkeleton } from '@/components/Skeleton'
 import SignInPromptModal from '@/components/SignInPromptModal'
 import SocialLinksDisplay from '@/components/SocialLinksDisplay'
 import type { Profile } from '@/lib/supabase'
+import { genderToDisplay } from '@/lib/genderLabels'
 import { supabase } from '@/lib/supabase'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useToastStore } from '@/lib/toast'
@@ -411,7 +412,7 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
                         ? 'text-[#5c6bc0]' 
                         : 'text-gray-600'
                   }`}>
-                    <span>{profile.gender}</span>
+                    <span>{genderToDisplay(profile.gender)}</span>
                   </div>
                 )}
                 {/* Current Club (if specified) */}
@@ -543,7 +544,7 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Gender
                         </label>
-                        <p className="text-gray-900 capitalize">{profile.gender}</p>
+                        <p className="text-gray-900">{genderToDisplay(profile.gender)}</p>
                       </div>
                     )}
 

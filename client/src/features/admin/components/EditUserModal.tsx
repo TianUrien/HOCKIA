@@ -12,6 +12,7 @@ import type { WorldClubSearchResult } from '@/components/WorldClubSearch'
 import { useCountries } from '@/hooks/useCountries'
 import type { AdminProfileDetails } from '../types'
 import { COACH_SPECIALIZATIONS, type CoachSpecialization } from '@/lib/coachSpecializations'
+import { PREFER_NOT_TO_SAY, normalizeGenderInput } from '@/lib/genderLabels'
 
 interface EditUserModalProps {
   isOpen: boolean
@@ -138,7 +139,7 @@ export function EditUserModal({
         updates.secondary_position = formData.secondary_position || null
       }
       if (formData.gender !== (profile.gender || '')) {
-        updates.gender = formData.gender || null
+        updates.gender = normalizeGenderInput(formData.gender)
       }
       if (formData.current_club !== (profile.current_club || '')) {
         updates.current_club = formData.current_club || null
@@ -364,8 +365,9 @@ export function EditUserModal({
                     aria-label="Gender"
                   >
                     <option value="">Select gender</option>
-                    <option value="Men">Men</option>
-                    <option value="Women">Women</option>
+                    <option value="Men">Male</option>
+                    <option value="Women">Female</option>
+                    <option value={PREFER_NOT_TO_SAY}>Prefer not to say</option>
                   </select>
                 </div>
               )}

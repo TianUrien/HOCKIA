@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback, useId } from 'react'
 import { ChevronDown, Search, X, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useCountries, type Country } from '@/hooks/useCountries'
+import { searchCountries } from '@/lib/countrySearch'
 
 interface CountrySelectProps {
   label?: string
@@ -47,19 +48,9 @@ export default function CountrySelect({
 
   const selectedCountry = getCountryById(value)
 
-  // Filter countries based on search query
-  const filteredCountries = searchQuery.trim()
-    ? countries.filter((country) => {
-        const query = searchQuery.toLowerCase()
-        return (
-          country.name.toLowerCase().includes(query) ||
-          country.nationality_name.toLowerCase().includes(query) ||
-          country.code.toLowerCase().includes(query) ||
-          country.code_alpha3.toLowerCase().includes(query) ||
-          (country.common_name?.toLowerCase().includes(query) ?? false)
-        )
-      })
-    : countries
+  // Filter + relevance-rank countries based on search query.
+  // Ranking lives in lib/countrySearch.ts so it can be unit-tested.
+  const filteredCountries = searchCountries(countries, searchQuery)
 
   // Close dropdown when clicking outside
   useEffect(() => {

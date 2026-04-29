@@ -117,10 +117,11 @@ const ENTRY_TYPES: EntryTypeMeta[] = [
 const metaFor = (type: EntryType): EntryTypeMeta =>
   ENTRY_TYPES.find((m) => m.value === type) ?? ENTRY_TYPES[0]
 
-const MATCH_FORMATS: Array<{ value: '' | 'outdoor_11v11' | 'indoor_5v5' | 'other'; label: string }> = [
+const MATCH_FORMATS: Array<{ value: '' | 'outdoor_11v11' | 'indoor_5v5' | 'hockey5s' | 'other'; label: string }> = [
   { value: '', label: 'Not specified' },
   { value: 'outdoor_11v11', label: 'Outdoor 11v11' },
-  { value: 'indoor_5v5', label: 'Indoor 5v5' },
+  { value: 'hockey5s', label: 'Hockey5s' },
+  { value: 'indoor_5v5', label: 'Indoor' },
   { value: 'other', label: 'Other' },
 ]
 
@@ -136,7 +137,7 @@ interface FormState {
   event_name: string
   organizer: string
   match_level: string
-  match_format: '' | 'outdoor_11v11' | 'indoor_5v5' | 'other'
+  match_format: '' | 'outdoor_11v11' | 'indoor_5v5' | 'hockey5s' | 'other'
   location_city: string
   location_country: string
   start_date: string
