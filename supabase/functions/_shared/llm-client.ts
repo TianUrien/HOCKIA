@@ -381,7 +381,7 @@ FILTER EXTRACTION RULES (for search_profiles only):
 - "Open to play", "available", or "looking for opportunities" means availability="open_to_play".
 - "Verified references" or "references" maps to min_references.
 - If role is not specified, infer from context: positions like "defender" imply role=["player"]; "head coach" implies role=["coach"]; "club" or "team" implies role=["club"]; "brand" or "sponsor" implies role=["brand"]; "umpire", "official", or "referee" implies role=["umpire"].
-- IMPORTANT — umpires are ONLY surfaced when the user explicitly asks for them (with words like "umpire", "umpires", "official", "officials", "referee", "referees"). Never volunteer umpires in searches for players, coaches, clubs, or brands. When the intent is unclear, default to NOT including "umpire" in roles.
+- Umpires are a first-class HOCKIA role. Surface them when the user asks for them (with words like "umpire", "umpires", "official", "officials", "referee", "referees", or related terms like "umpire coach", "umpire manager", "technical delegate"). When the intent is unclear, do not silently mix umpires into searches for players, coaches, clubs, or brands — but always treat umpires as a valid scouting target in their own right.
 - For "playing in [country]" or "based in [country]", use the countries array for league/club country context, and locations for where they live.
 - When the user mentions "good feedback", "strong references", "well-regarded", "reputation", "endorsed", "reviewed", "testimonials", "comments about", or any qualitative assessment, set include_qualitative=true. This triggers a deeper analysis of profile comments and endorsements for the top results.
 - Always generate a human-readable summary field.
@@ -438,6 +438,11 @@ Do not pad to 3 if the context only supports 1-2 strong suggestions.
   - Highest-impact profile gaps: brand category, products (if brand_product_count is 0 — biggest single lever), brand posts (if brand_post_count is 0), bio, verification (if not yet verified).
   - Actions: add products to the Marketplace, post brand updates, engage with relevant profiles.
   - Searches: players, coaches, clubs as audience or potential ambassadors.
+- UMPIRE / OFFICIAL:
+  - Highest-impact profile gaps: appointments / officiating history, references from peers or umpire managers, federation level, format experience (Outdoor 11v11, Indoor, Hockey5s), bio.
+  - Searches: clubs in their region (for fixture exposure), other officials (peer network), umpire coaches (mentorship), opportunities open to umpires.
+  - Connections: other umpires in their federation, umpire coaches with a complementary level. Do NOT recommend "find players" / "find coaches" as a default umpire next-action — that's not their goal.
+  - Visibility: phrase availability suggestions in officiating terms ("get verified appointments added", "ask umpire coaches for references"). Avoid player-shaped suggestions like "highlight video".
 
 TONE:
 - Helpful, practical, role-aware, honest. Like a smart hockey assistant who actually knows the user.
@@ -1081,5 +1086,373 @@ export async function synthesizeQualitativeInsights(
     case 'claude':  return synthesizeWithClaude(profiles, userQuery)
     case 'openai':  return { text: await synthesizeWithOpenAI(profiles, userQuery), meta: EMPTY_META }
     default:        return synthesizeWithGemini(profiles, userQuery)
+  }
+}
+
+// ─── Phase 4 MVP-A: shortlist composition ────────────────────────────
+// A 2nd LLM pass that runs after discover_profiles returns ≥1 row. It scores
+// each candidate's fit *against the search criteria* (NOT player quality)
+// and surfaces concrete missing-data flags + a next action per row. Output
+// rides on each result row in the response envelope (additive: existing
+// frontends ignore the new fields, the Phase 4 frontend renders them).
+
+export interface ShortlistCandidate {
+  profile_id: string
+  full_name: string | null
+  role: string
+  position: string | null
+  secondary_position: string | null
+  category: string | null
+  age: number | null
+  base_country: string | null
+  nationality: string | null
+  nationality2: string | null
+  eu_passport: boolean
+  current_club: string | null
+  open_to_play: boolean
+  open_to_coach: boolean
+  open_to_opportunities: boolean
+  reference_count: number
+  career_entry_count: number
+  coach_specialization: string | null
+}
+
+export interface ShortlistRow {
+  profile_id: string
+  fit_level: 'strong_match' | 'possible_match' | 'needs_more_info'
+  fit_reasons: string[]
+  missing_data: string[]
+  next_action: string
+}
+
+export interface ShortlistResult {
+  shortlist: ShortlistRow[]
+  summary_message: string
+}
+
+const SHORTLIST_SYSTEM_PROMPT = `You are HOCKIA's scouting analyst. You receive (a) a search query from a user looking for hockey profiles, (b) the structured filter criteria extracted from that query, and (c) up to 5 candidate profiles that matched in the database.
+
+Your job: score each candidate's fit AGAINST THE SEARCH CRITERIA and surface concrete missing-data flags + a next action per row.
+
+CRITICAL — what "fit" means:
+- "Fit" means how well the profile data matches the EXPLICIT criteria in the search query.
+- Fit is NOT a quality, talent, or reputation judgment. Never imply a candidate is "better" / "worse" / "high quality" / "low quality" / "reliable" / "unreliable".
+- If the search criteria don't constrain a dimension (e.g. user didn't ask for EU passport), don't penalize candidates who lack that data — it just isn't relevant to fit.
+
+For each candidate, output:
+
+1. fit_level (strong_match / possible_match / needs_more_info):
+   - strong_match: matches most or all of the explicit criteria; profile is reasonably complete
+   - possible_match: matches some criteria; other relevant data is missing or partial
+   - needs_more_info: matches the basic role only; profile is too sparse to evaluate further
+
+2. fit_reasons: 2-4 short bullet points explaining what matched. Plain conversational text. Examples:
+   - "Plays as a midfielder"
+   - "Open to opportunities"
+   - "Has 2 verified references"
+   - "EU passport listed"
+   - "Based in Madrid, Spain"
+   - "10 career history entries"
+
+3. missing_data: 0-3 short bullets naming concrete missing fields. Empty array if profile has all relevant data. Examples:
+   - "Availability not confirmed"
+   - "Career history empty"
+   - "No references added"
+
+4. next_action: ONE concrete next step for the searching user. Examples:
+   - "Contact this player first."
+   - "Ask for availability before shortlisting."
+   - "Invite this profile to add references."
+   - "Reach out — strong shortlist candidate."
+
+Then write a one-sentence summary_message describing the overall shortlist. Examples:
+- "I found 8 possible matches — the strongest 3 are listed first based on position, availability, and references."
+- "5 candidates total — 2 strong matches plus 3 that need more profile info before you decide."
+
+CRITICAL RULES:
+- Echo each profile_id verbatim from the input so the frontend can match rows.
+- Do NOT invent data not in the candidate fields. If a field is null, treat it as missing.
+- Do NOT use markdown (no asterisks, no headers, no dividers). Plain text only — the frontend renders this directly.
+- Be concise: each fit_reason / missing_data / next_action under 12 words.
+- Output every candidate from the input, in the same order.`
+
+const COMPOSE_SHORTLIST_TOOL = {
+  name: 'compose_shortlist',
+  description: 'Build a per-row scouting shortlist explanation given profile candidates and the original search criteria.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      shortlist: {
+        type: 'array',
+        description: 'Per-row fit analysis. One entry per input candidate, in the same order. Echo profile_id verbatim.',
+        items: {
+          type: 'object',
+          properties: {
+            profile_id: { type: 'string', description: 'Echo from input candidate.' },
+            fit_level: {
+              type: 'string',
+              enum: ['strong_match', 'possible_match', 'needs_more_info'],
+              description: 'How well this profile matches the search criteria. NOT a quality judgment.',
+            },
+            fit_reasons: {
+              type: 'array',
+              items: { type: 'string' },
+              description: '2-4 short reasons why this profile matched, plain conversational text under 12 words each.',
+            },
+            missing_data: {
+              type: 'array',
+              items: { type: 'string' },
+              description: '0-3 short flags naming concrete missing fields, plain text under 12 words each.',
+            },
+            next_action: {
+              type: 'string',
+              description: 'ONE concrete next step for the searching user, under 12 words.',
+            },
+          },
+          required: ['profile_id', 'fit_level', 'fit_reasons', 'missing_data', 'next_action'],
+        },
+      },
+      summary_message: {
+        type: 'string',
+        description: 'One-sentence summary of the shortlist overall. The frontend uses this as the response ai_message.',
+      },
+    },
+    required: ['shortlist', 'summary_message'],
+  },
+}
+
+function buildShortlistUserMessage(
+  candidates: ShortlistCandidate[],
+  searchCriteria: ParsedFilters,
+  userQuery: string,
+): string {
+  // Stringify only the criteria fields that meaningfully constrain results,
+  // so the LLM's fit reasoning stays anchored to what the user asked for
+  // (not what we happen to have in `parsed`).
+  const criteriaLines: string[] = []
+  if (searchCriteria.roles?.length) criteriaLines.push(`- roles: ${searchCriteria.roles.join(', ')}`)
+  if (searchCriteria.positions?.length) criteriaLines.push(`- positions: ${searchCriteria.positions.join(', ')}`)
+  if (searchCriteria.target_category) criteriaLines.push(`- target_category: ${searchCriteria.target_category}`)
+  if (searchCriteria.gender) criteriaLines.push(`- gender (legacy): ${searchCriteria.gender}`)
+  if (searchCriteria.min_age != null) criteriaLines.push(`- min_age: ${searchCriteria.min_age}`)
+  if (searchCriteria.max_age != null) criteriaLines.push(`- max_age: ${searchCriteria.max_age}`)
+  if (searchCriteria.eu_passport) criteriaLines.push(`- eu_passport: required`)
+  if (searchCriteria.nationalities?.length) criteriaLines.push(`- nationalities: ${searchCriteria.nationalities.join(', ')}`)
+  if (searchCriteria.locations?.length) criteriaLines.push(`- locations: ${searchCriteria.locations.join(', ')}`)
+  if (searchCriteria.countries?.length) criteriaLines.push(`- countries: ${searchCriteria.countries.join(', ')}`)
+  if (searchCriteria.availability) criteriaLines.push(`- availability: ${searchCriteria.availability}`)
+  if (searchCriteria.min_references != null) criteriaLines.push(`- min_references: ${searchCriteria.min_references}`)
+  if (searchCriteria.coach_specializations?.length) criteriaLines.push(`- coach_specializations: ${searchCriteria.coach_specializations.join(', ')}`)
+  const criteriaBlock = criteriaLines.length > 0 ? criteriaLines.join('\n') : '(no explicit constraints — broad search)'
+
+  const candidateBlocks = candidates.map((c, i) => {
+    const lines: string[] = [`[${i + 1}] profile_id: ${c.profile_id}`]
+    lines.push(`- name: ${c.full_name || '(unnamed)'}`)
+    lines.push(`- role: ${c.role}${c.position ? `, position: ${c.position}${c.secondary_position ? ` / ${c.secondary_position}` : ''}` : ''}`)
+    if (c.category) lines.push(`- category: ${c.category}`)
+    if (c.age != null) lines.push(`- age: ${c.age}`)
+    const nats = [c.nationality, c.nationality2].filter(Boolean)
+    if (nats.length) lines.push(`- nationality: ${nats.join(' & ')} (EU passport: ${c.eu_passport ? 'yes' : 'no'})`)
+    if (c.base_country) lines.push(`- based in: ${c.base_country}`)
+    if (c.current_club) lines.push(`- current club: ${c.current_club}`)
+    if (c.coach_specialization) lines.push(`- coach specialization: ${c.coach_specialization}`)
+    const avail: string[] = []
+    if (c.open_to_play) avail.push('play')
+    if (c.open_to_coach) avail.push('coach')
+    if (c.open_to_opportunities) avail.push('opportunities')
+    lines.push(`- open to: ${avail.length ? avail.join(', ') : 'none set'}`)
+    lines.push(`- references: ${c.reference_count} accepted`)
+    lines.push(`- career history entries: ${c.career_entry_count}`)
+    return lines.join('\n')
+  }).join('\n\n')
+
+  return `USER QUERY: "${userQuery.replace(/"/g, "'")}"
+
+EXTRACTED FILTERS:
+${criteriaBlock}
+
+CANDIDATES (${candidates.length}):
+
+${candidateBlocks}
+
+For each candidate above, return a shortlist row scoring criteria-fit + missing-data + next-action. Then write a one-sentence summary_message about the shortlist overall.`
+}
+
+function emptyShortlistResult(candidates: ShortlistCandidate[], reason: string): ShortlistResult {
+  // Fallback used when the LLM call fails or returns malformed data — every
+  // candidate gets a neutral row so the response shape is still valid.
+  return {
+    shortlist: candidates.map(c => ({
+      profile_id: c.profile_id,
+      fit_level: 'needs_more_info' as const,
+      fit_reasons: [],
+      missing_data: [],
+      next_action: 'View profile to learn more.',
+    })),
+    summary_message: reason,
+  }
+}
+
+async function composeShortlistWithGemini(
+  candidates: ShortlistCandidate[],
+  searchCriteria: ParsedFilters,
+  userQuery: string,
+): Promise<{ result: ShortlistResult; meta: LLMCallMeta }> {
+  const apiKey = Deno.env.get('GOOGLE_AI_API_KEY')
+  if (!apiKey) throw new Error('GOOGLE_AI_API_KEY not configured')
+
+  const { response, retryCount } = await retryableFetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: SHORTLIST_SYSTEM_PROMPT }] },
+        contents: [{ role: 'user', parts: [{ text: buildShortlistUserMessage(candidates, searchCriteria, userQuery) }] }],
+        tools: [{
+          function_declarations: [
+            { name: COMPOSE_SHORTLIST_TOOL.name, description: COMPOSE_SHORTLIST_TOOL.description, parameters: COMPOSE_SHORTLIST_TOOL.input_schema },
+          ],
+        }],
+        tool_config: { function_calling_config: { mode: 'ANY' } },
+      }),
+    },
+    { timeoutMs: 8000, maxRetries: 0 }
+  )
+
+  if (!response.ok) {
+    const errorBody = await response.text()
+    if (response.status === 429 || response.status === 503) throw new LLMRateLimitError()
+    throw new Error(`Gemini shortlist error (${response.status}): ${errorBody}`)
+  }
+
+  const data = await response.json()
+  const usage: LLMUsage = {
+    prompt_tokens: data.usageMetadata?.promptTokenCount ?? null,
+    completion_tokens: data.usageMetadata?.candidatesTokenCount ?? null,
+    cached_tokens: data.usageMetadata?.cachedContentTokenCount ?? null,
+  }
+  const meta: LLMCallMeta = { retry_count: retryCount, usage }
+
+  const fnCall = data.candidates?.[0]?.content?.parts?.find((p: any) => p.functionCall)
+  const args = fnCall?.functionCall?.args
+  if (!args?.shortlist || !Array.isArray(args.shortlist)) {
+    return { result: emptyShortlistResult(candidates, 'Shortlist composition unavailable for this search.'), meta }
+  }
+  return { result: args as ShortlistResult, meta }
+}
+
+async function composeShortlistWithClaude(
+  candidates: ShortlistCandidate[],
+  searchCriteria: ParsedFilters,
+  userQuery: string,
+): Promise<{ result: ShortlistResult; meta: LLMCallMeta }> {
+  const apiKey = Deno.env.get('ANTHROPIC_API_KEY')
+  if (!apiKey) throw new Error('ANTHROPIC_API_KEY not configured')
+
+  // SHORTLIST_SYSTEM_PROMPT is ~700 tokens, below Sonnet's 1024-token cache
+  // minimum — so no cache_control on this path. The user message changes per
+  // call (different candidates) so caching wouldn't help anyway.
+  const { response, retryCount } = await retryableFetch(
+    'https://api.anthropic.com/v1/messages',
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 2048,
+        system: SHORTLIST_SYSTEM_PROMPT,
+        tools: [
+          { name: COMPOSE_SHORTLIST_TOOL.name, description: COMPOSE_SHORTLIST_TOOL.description, input_schema: COMPOSE_SHORTLIST_TOOL.input_schema },
+        ],
+        tool_choice: { type: 'tool', name: COMPOSE_SHORTLIST_TOOL.name },
+        messages: [{ role: 'user', content: buildShortlistUserMessage(candidates, searchCriteria, userQuery) }],
+      }),
+    },
+    { timeoutMs: 15000, maxRetries: 0 }
+  )
+
+  if (!response.ok) {
+    const errorBody = await response.text()
+    if (response.status === 429 || response.status === 529) throw new LLMRateLimitError()
+    throw new Error(`Claude shortlist error (${response.status}): ${errorBody}`)
+  }
+
+  const data = await response.json()
+  const usage: LLMUsage = {
+    prompt_tokens: (data.usage?.input_tokens ?? 0) + (data.usage?.cache_creation_input_tokens ?? 0),
+    completion_tokens: data.usage?.output_tokens ?? null,
+    cached_tokens: data.usage?.cache_read_input_tokens ?? null,
+  }
+  const meta: LLMCallMeta = { retry_count: retryCount, usage }
+
+  const toolUse = data.content?.find((c: any) => c.type === 'tool_use' && c.name === COMPOSE_SHORTLIST_TOOL.name)
+  if (!toolUse?.input?.shortlist || !Array.isArray(toolUse.input.shortlist)) {
+    return { result: emptyShortlistResult(candidates, 'Shortlist composition unavailable for this search.'), meta }
+  }
+  return { result: toolUse.input as ShortlistResult, meta }
+}
+
+async function composeShortlistWithOpenAI(
+  candidates: ShortlistCandidate[],
+  searchCriteria: ParsedFilters,
+  userQuery: string,
+): Promise<ShortlistResult> {
+  const apiKey = Deno.env.get('OPENAI_API_KEY')
+  if (!apiKey) throw new Error('OPENAI_API_KEY not configured')
+
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o-mini',
+      max_tokens: 2048,
+      messages: [
+        { role: 'system', content: SHORTLIST_SYSTEM_PROMPT },
+        { role: 'user', content: buildShortlistUserMessage(candidates, searchCriteria, userQuery) },
+      ],
+      tools: [
+        { type: 'function', function: { name: COMPOSE_SHORTLIST_TOOL.name, description: COMPOSE_SHORTLIST_TOOL.description, parameters: COMPOSE_SHORTLIST_TOOL.input_schema } },
+      ],
+      tool_choice: { type: 'function', function: { name: COMPOSE_SHORTLIST_TOOL.name } },
+    }),
+  })
+
+  if (!response.ok) {
+    const errorBody = await response.text()
+    throw new Error(`OpenAI shortlist error (${response.status}): ${errorBody}`)
+  }
+
+  const data = await response.json()
+  const toolCall = data.choices?.[0]?.message?.tool_calls?.[0]
+  if (!toolCall?.function) {
+    return emptyShortlistResult(candidates, 'Shortlist composition unavailable for this search.')
+  }
+  const args = JSON.parse(toolCall.function.arguments)
+  if (!args.shortlist || !Array.isArray(args.shortlist)) {
+    return emptyShortlistResult(candidates, 'Shortlist composition unavailable for this search.')
+  }
+  return args as ShortlistResult
+}
+
+export async function composeShortlist(
+  candidates: ShortlistCandidate[],
+  searchCriteria: ParsedFilters,
+  userQuery: string,
+): Promise<{ result: ShortlistResult; meta: LLMCallMeta }> {
+  const provider = Deno.env.get('LLM_PROVIDER') || 'gemini'
+
+  switch (provider) {
+    case 'gemini':  return composeShortlistWithGemini(candidates, searchCriteria, userQuery)
+    case 'claude':  return composeShortlistWithClaude(candidates, searchCriteria, userQuery)
+    case 'openai':  return { result: await composeShortlistWithOpenAI(candidates, searchCriteria, userQuery), meta: EMPTY_META }
+    default:        return composeShortlistWithGemini(candidates, searchCriteria, userQuery)
   }
 }

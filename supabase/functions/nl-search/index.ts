@@ -15,7 +15,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { getServiceClient } from '../_shared/supabase-client.ts'
 import { getCorsHeaders } from '../_shared/cors.ts'
 import { captureException } from '../_shared/sentry.ts'
-import { parseSearchQuery, synthesizeQualitativeInsights, PROMPT_VERSION, type LLMCallMeta, type ParsedFilters, type HistoryTurn, type ProfileQualitativeData, type UserContext } from '../_shared/llm-client.ts'
+import { parseSearchQuery, synthesizeQualitativeInsights, composeShortlist, PROMPT_VERSION, type LLMCallMeta, type ParsedFilters, type HistoryTurn, type ProfileQualitativeData, type ShortlistCandidate, type ShortlistRow, type UserContext } from '../_shared/llm-client.ts'
 import { classifyEntityType, entityTypeToRole, type RoutedIntent } from '../_shared/intent-router.ts'
 import {
   type AppliedSearch,
@@ -1437,6 +1437,91 @@ Deno.serve(async (req) => {
       }
     }
 
+    // ── Phase 4 MVP-A: compose per-row shortlist ─────────────────────
+    // For any non-empty result set, run a 2nd LLM pass that scores each
+    // row's fit against the search criteria and surfaces concrete missing
+    // data + a next action per row. The output rides on `data[i]` as
+    // additive fields — old frontends ignore them, the Phase 4 frontend
+    // renders them. Failure is non-fatal: we keep the original results.
+    let shortlistMeta: LLMCallMeta | null = null
+    let shortlistMalformed = false
+    const shortlistByProfileId = new Map<string, ShortlistRow>()
+    if (result.results.length > 0) {
+      try {
+        const top = result.results.slice(0, 5)
+        const candidates: ShortlistCandidate[] = top.map((r: any) => ({
+          profile_id: r.id,
+          full_name: r.full_name ?? null,
+          role: r.role ?? 'unknown',
+          position: r.position ?? null,
+          secondary_position: r.secondary_position ?? null,
+          // Phase 3e — playing_category is primary; coach/umpire use
+          // their respective arrays. We send a single representative
+          // category string to keep the shortlist prompt compact.
+          category: (r.playing_category
+            ?? (Array.isArray(r.coaching_categories) && r.coaching_categories.length > 0 ? r.coaching_categories.join(', ') : null)
+            ?? (Array.isArray(r.umpiring_categories) && r.umpiring_categories.length > 0 ? r.umpiring_categories.join(', ') : null)
+            ?? null) as string | null,
+          age: r.age ?? null,
+          base_country: r.base_country_name ?? null,
+          nationality: r.nationality_name ?? null,
+          nationality2: r.nationality2_name ?? null,
+          eu_passport: !!r.eu_passport,
+          current_club: r.current_club ?? null,
+          open_to_play: !!r.open_to_play,
+          open_to_coach: !!r.open_to_coach,
+          open_to_opportunities: !!r.open_to_opportunities,
+          reference_count: r.accepted_reference_count ?? 0,
+          career_entry_count: r.career_entry_count ?? 0,
+          coach_specialization: r.coach_specialization_custom?.trim() || r.coach_specialization || null,
+        }))
+
+        const { result: shortlistResult, meta: smeta } = await composeShortlist(candidates, parsed, query)
+        shortlistMeta = smeta
+
+        // Validate + index the shortlist by profile_id. If the LLM omitted
+        // rows or returned IDs that don't match, log it and degrade
+        // gracefully — the empty Map below means rows just don't get
+        // augmented (existing behavior), no breakage.
+        if (Array.isArray(shortlistResult.shortlist) && shortlistResult.shortlist.length === candidates.length) {
+          for (const row of shortlistResult.shortlist) {
+            if (row?.profile_id) shortlistByProfileId.set(row.profile_id, row)
+          }
+          if (shortlistByProfileId.size !== candidates.length) {
+            shortlistMalformed = true
+          }
+        } else {
+          shortlistMalformed = true
+        }
+
+        // Replace the templated aiMessage with the LLM's summary_message
+        // when present and non-empty. This is the brief's hero behavior:
+        // "I found 8 possible matches — the strongest 3 are listed first..."
+        if (shortlistResult.summary_message?.trim()) {
+          aiMessage = shortlistResult.summary_message.trim()
+        }
+      } catch (shortlistError) {
+        // Compose pass is non-fatal. Log and continue with current behavior.
+        captureException(shortlistError, { functionName: 'nl-search', correlationId, extra: { phase: 'compose_shortlist' } })
+        shortlistMalformed = true
+      }
+    }
+
+    // Augment each result row with its shortlist analysis (if present).
+    // Additive — old frontends see the same shape with extra optional fields,
+    // Phase 4 frontend renders them.
+    const augmentedResults = result.results.map((r: any) => {
+      const sl = r?.id ? shortlistByProfileId.get(r.id) : undefined
+      if (!sl) return r
+      return {
+        ...r,
+        fit_level: sl.fit_level,
+        fit_reasons: sl.fit_reasons,
+        missing_data: sl.missing_data,
+        next_action: sl.next_action,
+      }
+    })
+
     // ── Phase 1A envelope: build applied + kind + suggested_actions ──────
     // The applied block summarizes what was actually searched in human-readable
     // form. The new frontend uses this for the no-results card; old frontend
@@ -1497,6 +1582,10 @@ Deno.serve(async (req) => {
         kind: responseKind,
         applied_role_summary: applied.role_summary,
         suggested_actions_count: suggestedActions.length,
+        // Phase 4 MVP-A telemetry — shortlist composition
+        shortlist_used: shortlistByProfileId.size > 0,
+        shortlist_rows_returned: shortlistByProfileId.size,
+        shortlist_malformed: shortlistMalformed,
       },
     }
     fireAndForget(logDiscoveryEvent(adminClient, {
@@ -1510,19 +1599,21 @@ Deno.serve(async (req) => {
       llm_provider: llmProvider,
       response_time_ms: Date.now() - startTime,
       error_message: null,
-      prompt_tokens: sumNullable(parseMeta.usage?.prompt_tokens ?? null, synthMeta?.usage?.prompt_tokens ?? null),
-      completion_tokens: sumNullable(parseMeta.usage?.completion_tokens ?? null, synthMeta?.usage?.completion_tokens ?? null),
-      cached_tokens: sumNullable(parseMeta.usage?.cached_tokens ?? null, synthMeta?.usage?.cached_tokens ?? null),
+      // Phase 4 MVP-A — sum tokens across all 3 LLM passes (parse + synth + shortlist)
+      // so cost-per-query stays comparable across provider switches.
+      prompt_tokens: sumNullable(sumNullable(parseMeta.usage?.prompt_tokens ?? null, synthMeta?.usage?.prompt_tokens ?? null), shortlistMeta?.usage?.prompt_tokens ?? null),
+      completion_tokens: sumNullable(sumNullable(parseMeta.usage?.completion_tokens ?? null, synthMeta?.usage?.completion_tokens ?? null), shortlistMeta?.usage?.completion_tokens ?? null),
+      cached_tokens: sumNullable(sumNullable(parseMeta.usage?.cached_tokens ?? null, synthMeta?.usage?.cached_tokens ?? null), shortlistMeta?.usage?.cached_tokens ?? null),
       prompt_version: PROMPT_VERSION,
       fallback_used: false,
-      retry_count: parseMeta.retry_count + (synthMeta?.retry_count ?? 0),
+      retry_count: parseMeta.retry_count + (synthMeta?.retry_count ?? 0) + (shortlistMeta?.retry_count ?? 0),
     }))
 
     // ── Response ────────────────────────────────────────────────────────
     return new Response(
       JSON.stringify({
         success: true,
-        data: result.results,
+        data: augmentedResults,
         total: result.total,
         has_more: result.has_more,
         parsed_filters: parsed,

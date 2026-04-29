@@ -37,6 +37,14 @@ export interface DiscoverResult {
   last_active_at: string | null
   coach_specialization: string | null
   coach_specialization_custom: string | null
+  // Phase 4 MVP-A — per-row scouting shortlist fields. All optional: only
+  // populated when the backend's compose_shortlist pass succeeds for this
+  // row. Frontend renders a fit-card when present; falls back to the legacy
+  // flat row when absent.
+  fit_level?: 'strong_match' | 'possible_match' | 'needs_more_info'
+  fit_reasons?: string[]
+  missing_data?: string[]
+  next_action?: string
 }
 
 export interface ParsedFilters {
