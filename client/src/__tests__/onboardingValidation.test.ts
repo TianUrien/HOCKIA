@@ -88,9 +88,15 @@ describe('validateOnboardingStep', () => {
       ).toMatch(/base location is required/i)
     })
 
-    it('returns an error when gender is empty', () => {
+    it('returns an error when gender is empty (player)', () => {
       expect(
         validateOnboardingStep(2, 'player', { ...validPlayer, gender: '' })
+      ).toMatch(/gender is required/i)
+    })
+
+    it('returns an error when gender is empty (coach)', () => {
+      expect(
+        validateOnboardingStep(2, 'coach', { ...validCoach, gender: '' })
       ).toMatch(/gender is required/i)
     })
   })
@@ -193,10 +199,13 @@ describe('validateOnboardingStep', () => {
       expect(validateOnboardingStep(2, 'umpire', validUmpire)).toBeNull()
     })
 
-    it('returns an error when gender is missing (umpire)', () => {
+    // Phase 2: umpire gender is intentionally optional. Tester argued
+    // umpiring is gender-blind for appointments; the dropdown shows
+    // "(optional)" and drops the asterisk. The library agrees.
+    it('does NOT require gender for umpire (optional in Phase 2)', () => {
       expect(
         validateOnboardingStep(2, 'umpire', { ...validUmpire, gender: '' })
-      ).toMatch(/gender is required/i)
+      ).toBeNull()
     })
   })
 

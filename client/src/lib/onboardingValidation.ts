@@ -52,7 +52,10 @@ export function validateOnboardingStep(
 
   if (step === 2) {
     if (!formData.city?.trim()) return 'Base location is required.'
-    if (!formData.gender) return 'Gender is required.'
+    // Umpire onboarding makes gender optional (Phase 2 — tester noted that
+    // umpiring appointments are gender-blind). Player + coach still require
+    // a value because gender feeds league/team-context matching.
+    if (role !== 'umpire' && !formData.gender) return 'Gender is required.'
     return null
   }
 
