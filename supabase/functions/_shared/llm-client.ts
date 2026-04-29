@@ -698,12 +698,16 @@ async function callClaude(
         messages,
       }),
     },
-    // Sonnet is slower than Gemini Flash on the same shape; bump per-attempt
-    // timeout from 4s → 15s. The 15s ceiling is sized for the slowest tool
-    // path (multi-paragraph answer_hockey_question responses) which can
-    // legitimately take 10-15s. Search-tool calls typically return in 4-7s.
-    // One retry on transient 5xx/timeout, same as Gemini.
-    { timeoutMs: 15000, maxRetries: 1 }
+    // Sonnet is slower than Gemini Flash on the same shape. The 25s ceiling
+    // is sized for the slowest tool path — multi-paragraph
+    // answer_hockey_question responses generate at ~30-50 tokens/sec and can
+    // legitimately take 15-25s for a 600-800 token answer. Search-tool calls
+    // typically return in 4-7s. maxRetries:0 because retry-on-timeout is
+    // wasteful for LLM generation — the second attempt is no faster, and the
+    // 50s worst-case wall clock from retries crosses the user-patience
+    // threshold. Transient 5xx is also rare on Anthropic; if it happens the
+    // user retries.
+    { timeoutMs: 25000, maxRetries: 0 }
   )
 
   if (!response.ok) {
