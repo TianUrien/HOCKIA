@@ -14,7 +14,16 @@
 export interface ParsedFilters {
   roles?: string[]
   positions?: string[]
+  /** @deprecated Phase 3e — use target_category. Kept on the wire for one
+   * deploy cycle to absorb in-flight LLM responses + stale frontends. The
+   * backend translates Men → adult_men, Women → adult_women internally. */
   gender?: string
+  /** Phase 3e: hockey-category filter. One of adult_women, adult_men, girls,
+   * boys, mixed. The LLM should set this when the query mentions a category
+   * ("women's clubs" → adult_women; "girls coaches" → girls). The backend
+   * routes per role: player → playing_category; coach → coaching_categories
+   * (with 'any' override); umpire → umpiring_categories. */
+  target_category?: string
   min_age?: number
   max_age?: number
   eu_passport?: boolean
@@ -81,7 +90,7 @@ export interface LLMCallMeta {
  * quality/latency comparisons across prompt iterations don't require git
  * archaeology.
  */
-export const PROMPT_VERSION = '2026-04-27.phase0-entity-router'
+export const PROMPT_VERSION = '2026-04-30.phase3e-hockey-categories'
 
 const EMPTY_META: LLMCallMeta = { retry_count: 0, usage: null }
 
@@ -155,7 +164,14 @@ export interface UserContext {
   // Identity
   role: string
   full_name: string | null
+  /** @deprecated Phase 3e — superseded by playing_category /
+   * coaching_categories / umpiring_categories. Kept temporarily so any
+   * UserContext built before the migration still type-checks. */
   gender: string | null
+  // Phase 3e — hockey category context. Player single, coach + umpire multi.
+  playing_category: string | null
+  coaching_categories: string[] | null
+  umpiring_categories: string[] | null
   // Location
   base_city: string | null
   base_country_name: string | null
@@ -231,7 +247,17 @@ function buildUserContextBlock(ctx: UserContext): string {
 
   // Identity / playing context — players/coaches
   if (ctx.role === 'player' || ctx.role === 'coach') {
-    if (ctx.gender) lines.push(`- Gender context: ${ctx.gender}.`)
+    // Phase 3e — emit hockey-category context (replaces the legacy
+    // "Gender context" line). Player has one playing category; coach has a
+    // list (or ['any']). The model uses this to seed target_category for
+    // club / opportunity searches when the user doesn't specify one.
+    if (ctx.role === 'player' && ctx.playing_category) {
+      lines.push(`- Playing category: ${ctx.playing_category}.`)
+    }
+    if (ctx.role === 'coach' && ctx.coaching_categories && ctx.coaching_categories.length > 0) {
+      const isAny = ctx.coaching_categories.includes('any')
+      lines.push(`- Coaching categories: ${isAny ? 'any (open to all)' : ctx.coaching_categories.join(', ')}.`)
+    }
     if (ctx.position) {
       const positions = [ctx.position, ctx.secondary_position].filter(Boolean).join(' / ')
       lines.push(`- Position: ${positions}.`)
@@ -338,7 +364,17 @@ FILTER EXTRACTION RULES (for search_profiles only):
 - For age: "U21" means max_age=20, "U18" means max_age=17, "U23" means max_age=22. "Senior" means min_age=21.
 - For positions: use exactly "goalkeeper", "defender", "midfielder", or "forward" for players.
 - For coach specializations: use "head_coach", "assistant_coach", "goalkeeper_coach", "youth_coach", "strength_conditioning", "performance_analyst", "sports_scientist", or "other". Map natural language like "S&C coach" → "strength_conditioning", "video analyst" → "performance_analyst", "GK coach" → "goalkeeper_coach". Set roles=["coach"] when a specialization is used.
-- For gender: use "Men" or "Women" exactly (capital first letter).
+- For target_category: use one of "adult_women", "adult_men", "girls", "boys", "mixed". This is HOCKEY CATEGORY context (the team/match category), NOT personal gender identity. Set when the query mentions a specific category.
+  Mapping examples:
+    "women's clubs"  → target_category=adult_women
+    "men's clubs"    → target_category=adult_men
+    "Adult Women coaches" → target_category=adult_women
+    "Adult Men players"   → target_category=adult_men
+    "girls coaches" / "girls hockey" → target_category=girls
+    "boys umpires" / "boys hockey"   → target_category=boys
+    "mixed players" / "mixed league" / "mixed hockey" → target_category=mixed
+  If the user uses the OLD vocabulary ("men's" / "women's"), still treat it as adult_men / adult_women — the category model is the new source of truth.
+  Do NOT set target_category for vague queries like "find players" or "show me coaches" without a category hint.
 - "EU passport" means eu_passport=true. Do NOT list individual EU countries unless the user specifically names them.
 - "Open to play", "available", or "looking for opportunities" means availability="open_to_play".
 - "Verified references" or "references" maps to min_references.
@@ -353,13 +389,13 @@ When the user refers to previous results or modifies a previous search (e.g., "n
 
 USER CONTEXT AWARENESS:
 - You know who you're speaking with. Their profile details appear at the end of this prompt under "CURRENT USER CONTEXT". Use it to give smarter, personalized answers.
-- When a coach or club asks "recommend players for my team", "who could fit my club", or similar, use their club's league, country, and gender context to infer relevant filters (e.g., set gender to match their league context).
+- When a coach or club asks "recommend players for my team", "who could fit my club", or similar, use their league, country, and category context to infer relevant filters (e.g., set target_category to match the coach's primary coaching_category if it's a single concrete value).
 - IMPORTANT — field hockey recruitment is global:
   - Always consider BOTH local players (same country/league) AND international players who could relocate. Do NOT over-filter by location.
   - EU passport eligibility is a critical factor in European recruitment. When searching for a European club, highlight EU-eligible players but don't exclude non-EU players entirely.
   - Mention the global nature of recruitment when relevant (e.g., "I found players in England and some international options from Argentina and the Netherlands who could also be a fit").
 - When the user says "my league", "my club", "my team", or "nearby", resolve those from their CURRENT USER CONTEXT.
-- The user's gender context tells you whether to filter by "Men" or "Women" when they don't specify.
+- The user's hockey-category context (Playing Category for players, Coaching Categories for coaches) tells you which target_category to use when they don't specify one. Apply it ONLY when the search target is clubs, opportunities, or teams — and only if the user's category is a single concrete value (e.g. adult_women). Coaches with "Any category" or multiple categories should NOT auto-seed — leave target_category unset and let the user broaden.
 - If no user context is provided, behave generically as before.
 
 SELF-REFLECTION & PROFILE GUIDANCE (use the respond tool):
@@ -426,7 +462,12 @@ const SEARCH_TOOL = {
       gender: {
         type: 'string',
         enum: ['Men', 'Women'],
-        description: 'Gender filter. Only set if explicitly mentioned.',
+        description: 'DEPRECATED — use target_category instead. Kept for one cycle to absorb stale clients. The backend translates Men → adult_men, Women → adult_women.',
+      },
+      target_category: {
+        type: 'string',
+        enum: ['adult_women', 'adult_men', 'girls', 'boys', 'mixed'],
+        description: "Hockey-category filter. Set when the user mentions a category (e.g. \"women's clubs\" → adult_women, \"girls coaches\" → girls, \"mixed players\" → mixed). NOT personal gender — this is the team/match category. Leave unset for vague queries that don't specify a category.",
       },
       min_age: { type: 'integer', description: 'Minimum age in years.' },
       max_age: { type: 'integer', description: 'Maximum age. U21=20, U18=17, U23=22.' },

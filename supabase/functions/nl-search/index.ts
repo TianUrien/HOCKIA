@@ -625,6 +625,7 @@ Deno.serve(async (req) => {
         .from('profiles')
         .select(`
           role, full_name, gender, position, secondary_position,
+          playing_category, coaching_categories, umpiring_categories,
           date_of_birth,
           base_city, base_country_id,
           nationality_country_id, nationality2_country_id,
@@ -761,9 +762,18 @@ Deno.serve(async (req) => {
         let currentLeague: string | null = null
         let leagueCountry: string | null = null
         if (club) {
-          currentLeague = userProfile.gender === 'Women'
-            ? club.women_league?.name || null
-            : club.men_league?.name || null
+          // Phase 3e — derive league from playing_category. Women + Girls
+          // map to women's league family; Men + Boys to men's; Mixed
+          // defaults to women's first then men's. Falls back to legacy
+          // gender if the category isn't set yet (existing rows that
+          // skipped the migration window).
+          const cat = userProfile.playing_category as string | null
+          const useWomensLeague = cat
+            ? (cat === 'adult_women' || cat === 'girls' || cat === 'mixed')
+            : userProfile.gender === 'Women'
+          currentLeague = useWomensLeague
+            ? club.women_league?.name || club.men_league?.name || null
+            : club.men_league?.name || club.women_league?.name || null
           leagueCountry = club.country?.name || null
         }
 
@@ -839,7 +849,7 @@ Deno.serve(async (req) => {
         if (userProfile.role === 'player') {
           const playerCriteria = [
             { met: !!userProfile.position, label: 'primary position' },
-            { met: !!userProfile.gender, label: 'gender (Men / Women)' },
+            { met: !!userProfile.playing_category, label: 'playing category' },
             { met: !!userProfile.date_of_birth, label: 'date of birth' },
             { met: !!userProfile.nationality_country_id, label: 'nationality' },
             { met: hasHighlightVideo, label: 'highlight video' },
@@ -897,6 +907,10 @@ Deno.serve(async (req) => {
           role: userProfile.role,
           full_name: userProfile.full_name,
           gender: userProfile.gender,
+          // Phase 3e — hockey-category context flows into the LLM prompt.
+          playing_category: userProfile.playing_category as string | null,
+          coaching_categories: userProfile.coaching_categories as string[] | null,
+          umpiring_categories: userProfile.umpiring_categories as string[] | null,
           base_city: userProfile.base_city,
           base_country_name: countryMap.get(userProfile.base_country_id) || null,
           nationality_name: countryMap.get(userProfile.nationality_country_id) || null,
@@ -1174,38 +1188,70 @@ Deno.serve(async (req) => {
       filterSource = 'fallback'
     }
 
-    // ── Phase 0 UserContext-seeded gender (clubs only) ──────────────────
-    // When a player or coach asks "find clubs for me" and doesn't specify
-    // gender, seed it from their profile so we don't return men's clubs to
-    // a women's player. Players/coaches of either gender pretty much always
-    // want clubs in their own competition. Only applies to club searches —
-    // for player/coach/brand searches the gender filter would over-restrict.
-    let effectiveGender = parsed.gender || null
-    let genderSource: 'llm' | 'context' | 'none' = parsed.gender ? 'llm' : 'none'
+    // ── Phase 3e: UserContext-seeded category (clubs only) ────────────
+    // Replaces the Phase 0 gender-seeding block. When a player or coach
+    // asks "find clubs for me" without specifying a category, seed it from
+    // their profile so the search isn't generic. Only applies to club
+    // searches; player/coach/brand searches would over-restrict.
+    //
+    // The LLM emits `target_category`; we accept legacy `gender` from any
+    // stale clients and translate at the boundary.
+    const llmCategory: string | null = (parsed.target_category as string | undefined) || null
+    let effectiveCategory: string | null = llmCategory
+    let categorySource: 'llm' | 'context' | 'none' = llmCategory ? 'llm' : 'none'
 
-    // Phase 1A — when the query is a "broaden" follow-up (e.g. coming from a
-    // no-results action chip), skip the UserContext gender seeding entirely.
-    // Without this the chip "Show all clubs" silently re-applies the user's
-    // gender and the broaden never broadens. The phrases below are the exact
-    // forms the suggested-actions catalog ships, plus a few user-typed
-    // equivalents.
-    const QUERY_FORBIDS_GENDER_SEED =
-      /\b(any gender|all genders?|without (a |any )?gender( filter)?|regardless of gender|gender[- ]neutral|both genders|men[''']?s and women[''']?s|men and women)\b/i.test(query)
+    // Legacy gender fallback. If the LLM still emitted `gender` (rare with
+    // the new prompt but possible during the deploy window), translate it.
+    let effectiveGender = parsed.gender || null
+    if (!effectiveCategory && parsed.gender) {
+      if (parsed.gender === 'Men') effectiveCategory = 'adult_men'
+      else if (parsed.gender === 'Women') effectiveCategory = 'adult_women'
+      if (effectiveCategory) categorySource = 'llm'
+    }
+
+    // Phase 1A — when the query is a "broaden" follow-up (chip-driven),
+    // skip the UserContext seeding entirely. Updated regex to match the
+    // new chip wording ("Remove [Adult Women] filter", "Show all categories")
+    // plus the legacy gender phrasings still in flight.
+    const QUERY_FORBIDS_CATEGORY_SEED =
+      /\b(any (gender|category)|all (genders?|categories?)|without (a |any )?(gender|category)( filter)?|regardless of (gender|category)|gender[- ]neutral|both genders|men[''']?s and women[''']?s|men and women|show all (clubs|players|coaches|umpires|categories))\b/i.test(query)
 
     if (
-      !effectiveGender &&
-      !QUERY_FORBIDS_GENDER_SEED &&
+      !effectiveCategory &&
+      !QUERY_FORBIDS_CATEGORY_SEED &&
       enforcedRole === 'club' &&
-      userContext?.gender &&
-      (userContext.role === 'player' || userContext.role === 'coach')
+      (userContext?.role === 'player' || userContext?.role === 'coach')
     ) {
-      effectiveGender = userContext.gender
-      genderSource = 'context'
+      // Player: seed from playing_category if present.
+      if (userContext?.role === 'player' && userContext.playing_category) {
+        effectiveCategory = userContext.playing_category
+        categorySource = 'context'
+      }
+      // Coach: seed from coaching_categories ONLY if they have a single
+      // concrete value. Multi-category coaches and 'any' coaches don't
+      // auto-seed — over-filtering would hurt them more than helping.
+      if (userContext?.role === 'coach' && userContext.coaching_categories) {
+        const cats = userContext.coaching_categories
+        if (cats.length === 1 && cats[0] !== 'any') {
+          effectiveCategory = cats[0]
+          categorySource = 'context'
+        }
+      }
+    }
+
+    // Phase 3e: also derive a legacy gender label for the dual-write era —
+    // helps any older client still reading `gender_label` on the response.
+    if (!effectiveGender && effectiveCategory) {
+      if (effectiveCategory === 'adult_men') effectiveGender = 'Men'
+      else if (effectiveCategory === 'adult_women') effectiveGender = 'Women'
     }
 
     const { data: rpcResult, error: rpcError } = await adminClient.rpc('discover_profiles', {
       p_roles: effectiveRoles,
       p_positions: parsed.positions || null,
+      // Phase 3e: prefer the new category param. Legacy p_gender is also
+      // passed for one cycle in case the RPC migration is rolled back.
+      p_target_category: effectiveCategory,
       p_gender: effectiveGender,
       p_min_age: parsed.min_age || null,
       p_max_age: parsed.max_age || null,
@@ -1286,8 +1332,9 @@ Deno.serve(async (req) => {
       : 'profiles'
     let aiMessage: string
     if (result.total === 0) {
-      const broadenHint = genderSource === 'context'
-        ? ` I filtered by your gender (${effectiveGender}) — want me to broaden that?`
+      // Phase 3e — broaden hint references the auto-seeded category, not gender.
+      const broadenHint = categorySource === 'context' && effectiveCategory
+        ? ` I filtered by your category (${effectiveCategory.replace('_', ' ')}) — want me to broaden that?`
         : ''
       aiMessage = `I couldn't find any ${entityNoun} matching that.${broadenHint}`
     } else {
@@ -1384,6 +1431,10 @@ Deno.serve(async (req) => {
     const appliedEntity = enforcedRole ? ENTITY_PLURAL[enforcedRole] ?? null : null
     const applied: AppliedSearch = {
       entity: appliedEntity,
+      // Phase 3e — primary label is the hockey category. Legacy gender_label
+      // is still populated for one cycle so frontends mid-deploy don't show
+      // empty chips for adult_men/adult_women.
+      category_label: effectiveCategory,
       gender_label: effectiveGender,
       location_label: baseLocationText,
       age: (parsed.min_age != null || parsed.max_age != null)
@@ -1415,8 +1466,10 @@ Deno.serve(async (req) => {
         forced_reason: forcedReason,
         enforced_role: enforcedRole,
         filter_source: filterSource,
-        gender_source: genderSource,
+        category_source: categorySource,
+        gender_source: categorySource,  // alias kept for telemetry continuity
         effective_roles: effectiveRoles,
+        effective_category: effectiveCategory,
         effective_gender: effectiveGender,
         // Phase 1A telemetry additions
         kind: responseKind,

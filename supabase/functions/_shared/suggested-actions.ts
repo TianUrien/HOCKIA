@@ -23,11 +23,48 @@ export type ResponseKind =
 
 export interface AppliedSearch {
   entity: 'clubs' | 'players' | 'coaches' | 'brands' | 'umpires' | null
-  gender_label: string | null    // "Women" / "Men"
+  /** Phase 3e — primary category label. One of adult_women / adult_men /
+   * girls / boys / mixed. Used by the frontend chip + suggested-action text.
+   * Optional so existing fixtures (Deno tests) compile without modification;
+   * the live nl-search response always populates it (or null). */
+  category_label?: string | null
+  /** @deprecated Phase 3e — superseded by category_label. Kept for one
+   * deploy cycle so a stale frontend still renders adult_men/adult_women
+   * chips correctly. The backend populates this only when the category is
+   * adult_men or adult_women; otherwise it's null. */
+  gender_label: string | null
   location_label: string | null  // "Spain" / "Madrid"
   age?: { min?: number; max?: number }
   /** Human-readable summary the UI can drop straight into a sentence. */
   role_summary: string
+}
+
+/** Display label for a category enum value — used by chip text + role_summary. */
+function categoryDisplay(category: string | null | undefined): string {
+  if (!category) return ''
+  if (category === 'adult_women') return 'Adult Women'
+  if (category === 'adult_men') return 'Adult Men'
+  if (category === 'girls') return 'Girls'
+  if (category === 'boys') return 'Boys'
+  if (category === 'mixed') return 'Mixed'
+  return ''
+}
+
+/** Possessive role-summary form. Adult Women → "women's"; Girls → "girls'";
+ * Mixed → "mixed" (no apostrophe — reads better). Falls back to legacy
+ * gender_label for adult_men / adult_women if category isn't set yet. */
+function categorySummaryForm(applied: Pick<AppliedSearch, 'category_label' | 'gender_label'> | null): string {
+  const cat = applied?.category_label ?? null
+  if (cat === 'adult_women') return "women's"
+  if (cat === 'adult_men') return "men's"
+  if (cat === 'girls') return "girls'"
+  if (cat === 'boys') return "boys'"
+  if (cat === 'mixed') return 'mixed'
+  // Legacy gender fallback so any in-flight call without category_label
+  // still produces sensible role_summary text.
+  if (applied?.gender_label === 'Women') return "women's"
+  if (applied?.gender_label === 'Men') return "men's"
+  return ''
 }
 
 export type SuggestedActionIntent =
@@ -47,12 +84,12 @@ export interface ClarifyingOption {
 
 // ── Helpers ────────────────────────────────────────────────────────────
 
-/** Build a human-readable summary like "women's clubs in Spain" or "U21 defenders". */
-export function buildRoleSummary(applied: Pick<AppliedSearch, 'entity' | 'gender_label' | 'location_label' | 'age'> | null): string {
+/** Build a human-readable summary like "women's clubs in Spain" or "girls' coaches". */
+export function buildRoleSummary(applied: Pick<AppliedSearch, 'entity' | 'category_label' | 'gender_label' | 'location_label' | 'age'> | null): string {
   if (!applied?.entity) return 'profiles'
   const parts: string[] = []
-  if (applied.gender_label === 'Women') parts.push("women's")
-  else if (applied.gender_label === 'Men') parts.push("men's")
+  const summary = categorySummaryForm(applied)
+  if (summary) parts.push(summary)
   if (applied.age?.max != null) parts.push(`U${applied.age.max + 1}`)
   parts.push(applied.entity)
   if (applied.location_label) parts.push(`in ${applied.location_label}`)
@@ -92,13 +129,13 @@ export function getNoResultsActions(applied: AppliedSearch | null, userRole: str
   const entity = applied?.entity ?? 'clubs'
 
   // 1. Show all of the entity (drops most filters).
-  // Note the explicit "regardless of gender" — the backend recognizes this
-  // phrasing and skips UserContext gender seeding so the broaden actually
-  // broadens. Without it the user-context gender (e.g. Women) is re-applied
-  // and the user sees the same no-results card again.
+  // Phase 3e — query phrasing now uses "all categories" so the backend's
+  // QUERY_FORBIDS_CATEGORY_SEED regex skips the auto-seed and the broaden
+  // actually broadens. The legacy "regardless of gender" phrasing is also
+  // accepted by that regex so older clients keep working.
   actions.push({
     label: `Show all ${entity}`,
-    intent: { type: 'free_text', query: `Show me all ${entity} regardless of gender` },
+    intent: { type: 'free_text', query: `Show me all ${entity} regardless of category` },
   })
 
   // 2. Search by country — only when location wasn't already part of the query.
@@ -109,13 +146,19 @@ export function getNoResultsActions(applied: AppliedSearch | null, userRole: str
     })
   }
 
-  // 3. Remove the seeded filter (UserContext usually adds gender; lifting it is the
-  //    most-impactful single change a player/coach can make to a club search).
-  // Same explicit phrasing — see the catalog comment on chip 1.
-  if (applied?.gender_label) {
+  // 3. Remove the seeded filter. Phase 3e — chip label uses the user-facing
+  //    category name ("Adult Women", "Girls", etc.) instead of "men/women".
+  //    Falls back to legacy gender_label so any AppliedSearch produced before
+  //    the category_label rollout still generates a sensible chip.
+  const seededLabel = applied?.category_label
+    ? categoryDisplay(applied.category_label)
+    : applied?.gender_label
+      ? (applied.gender_label === 'Men' ? 'Adult Men' : 'Adult Women')
+      : null
+  if (seededLabel) {
     actions.push({
-      label: `Remove ${applied.gender_label.toLowerCase()} filter`,
-      intent: { type: 'free_text', query: `Find ${entity} regardless of gender` },
+      label: `Remove ${seededLabel} filter`,
+      intent: { type: 'free_text', query: `Find ${entity} regardless of category` },
     })
   }
 

@@ -13,6 +13,10 @@ export interface DiscoverResult {
   position: string | null
   secondary_position: string | null
   gender: string | null
+  /** Phase 3e — hockey-category fields piped through the discover_profiles RPC. */
+  playing_category: string | null
+  coaching_categories: string[] | null
+  umpiring_categories: string[] | null
   age: number | null
   nationality_country_id: number | null
   nationality2_country_id: number | null
@@ -38,7 +42,12 @@ export interface DiscoverResult {
 export interface ParsedFilters {
   roles?: string[]
   positions?: string[]
+  /** @deprecated Phase 3e — superseded by target_category. The backend
+   * accepts both for one cycle so a stale frontend keeps working. */
   gender?: string
+  /** Phase 3e — hockey-category filter. One of adult_women, adult_men,
+   * girls, boys, mixed. */
+  target_category?: string
   min_age?: number
   max_age?: number
   eu_passport?: boolean
@@ -67,6 +76,11 @@ export type ResponseKind =
 
 export interface AppliedSearch {
   entity: 'clubs' | 'players' | 'coaches' | 'brands' | 'umpires' | null
+  /** Phase 3e — primary category label. Optional so old responses without
+   * the field still type-check (the chip falls back to gender_label). */
+  category_label?: string | null
+  /** @deprecated Phase 3e — superseded by category_label but kept on the
+   * wire for one cycle for back-compat. */
   gender_label: string | null
   location_label: string | null
   age?: { min?: number; max?: number }

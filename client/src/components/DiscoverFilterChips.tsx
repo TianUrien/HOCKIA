@@ -1,5 +1,6 @@
 import type { ParsedFilters } from '@/hooks/useDiscover'
 import { getSpecializationLabel } from '@/lib/coachSpecializations'
+import { categoryToDisplay } from '@/lib/hockeyCategories'
 
 interface DiscoverFilterChipsProps {
   filters: ParsedFilters
@@ -26,8 +27,16 @@ export default function DiscoverFilterChips({ filters }: DiscoverFilterChipsProp
     }))
   }
 
-  if (filters.gender) {
-    chips.push({ label: filters.gender, color: 'bg-gray-100 text-gray-800' })
+  // Phase 3e — show the new category chip if the LLM emitted one. Fall back
+  // to legacy gender (translated to the new label) so an in-flight stale
+  // backend response still renders sensible text.
+  const categoryLabel = filters.target_category
+    ? categoryToDisplay(filters.target_category)
+    : filters.gender
+      ? (filters.gender === 'Men' ? 'Adult Men' : filters.gender === 'Women' ? 'Adult Women' : null)
+      : null
+  if (categoryLabel) {
+    chips.push({ label: categoryLabel, color: 'bg-gray-100 text-gray-800' })
   }
 
   if (filters.min_age != null || filters.max_age != null) {
