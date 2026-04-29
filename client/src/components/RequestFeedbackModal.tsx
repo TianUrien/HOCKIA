@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Copy, Share2, Check, MessageSquareQuote } from 'lucide-react'
 import Modal from './Modal'
 import Button from './Button'
+import type { Profile } from '@/lib/supabase'
 
 interface RequestFeedbackModalProps {
   isOpen: boolean
@@ -10,6 +11,35 @@ interface RequestFeedbackModalProps {
   profileUrl: string
   /** Owner's display name, used to compose a natural-sounding request. */
   ownerName?: string | null
+  /** Owner's role — drives role-appropriate share copy. Optional; defaults to generic player wording. */
+  profileRole?: Profile['role'] | null
+}
+
+function helperCopyFor(role: Profile['role'] | null | undefined): string {
+  if (role === 'umpire') {
+    return 'Send this to a colleague, umpire manager, coach, or club representative who can vouch for your officiating.'
+  }
+  return 'Send this to a teammate, coach, or former club. Comments help clubs and coaches get a fuller picture of who you are on and off the pitch.'
+}
+
+function messageTemplateFor(
+  role: Profile['role'] | null | undefined,
+  ownerName: string | null | undefined,
+  profileUrl: string,
+): string {
+  const intro = ownerName ? `Hey! ${ownerName.split(' ')[0]} here. ` : 'Hey! '
+  if (role === 'umpire') {
+    return (
+      `${intro}I'm building out my HOCKIA officiating profile and would love a short note from you ` +
+      `about working with me on the pitch — even a couple of sentences helps tournaments and clubs get a fuller picture. ` +
+      `It takes 30 seconds:\n\n${profileUrl}`
+    )
+  }
+  return (
+    `${intro}I'm building out my HOCKIA profile and would love a short comment from you ` +
+    `about playing with me — even a couple of sentences helps clubs and coaches get a fuller picture. ` +
+    `It takes 30 seconds:\n\n${profileUrl}`
+  )
 }
 
 /**
@@ -26,17 +56,12 @@ export default function RequestFeedbackModal({
   onClose,
   profileUrl,
   ownerName,
+  profileRole,
 }: RequestFeedbackModalProps) {
-  const defaultMessage = useMemo(() => {
-    const intro = ownerName
-      ? `Hey! ${ownerName.split(' ')[0]} here. `
-      : 'Hey! '
-    return (
-      `${intro}I'm building out my HOCKIA profile and would love a short comment from you ` +
-      `about playing with me — even a couple of sentences helps clubs and coaches get a fuller picture. ` +
-      `It takes 30 seconds:\n\n${profileUrl}`
-    )
-  }, [ownerName, profileUrl])
+  const defaultMessage = useMemo(
+    () => messageTemplateFor(profileRole, ownerName, profileUrl),
+    [profileRole, ownerName, profileUrl],
+  )
 
   const [message, setMessage] = useState(defaultMessage)
   const [copied, setCopied] = useState(false)
@@ -91,7 +116,7 @@ export default function RequestFeedbackModal({
         <div className="flex items-start gap-3 rounded-xl bg-[#8026FA]/5 border border-[#8026FA]/15 p-3">
           <MessageSquareQuote className="w-5 h-5 text-[#8026FA] flex-shrink-0 mt-0.5" />
           <p className="text-sm text-gray-700 leading-relaxed">
-            Send this to a teammate, coach, or former club. Comments help clubs and coaches get a fuller picture of who you are on and off the pitch.
+            {helperCopyFor(profileRole)}
           </p>
         </div>
 

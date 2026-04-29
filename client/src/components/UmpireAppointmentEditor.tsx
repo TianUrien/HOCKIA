@@ -530,13 +530,13 @@ export default function UmpireAppointmentEditor({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    City <span className="text-gray-400 font-normal">(optional)</span>
+                    City, State/Province <span className="text-gray-400 font-normal">(optional)</span>
                   </label>
                   <input
                     type="text"
                     value={form.location_city}
                     onChange={(e) => setForm({ ...form, location_city: e.target.value })}
-                    placeholder="Amsterdam"
+                    placeholder="e.g., Port Jervis, NY"
                     className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                     disabled={submitting}
                     maxLength={80}

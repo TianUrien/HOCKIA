@@ -759,9 +759,9 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
             />
 
             <LocationAutocomplete
-              label="Base Location (City)"
+              label="Base Location (City, State/Province)"
               icon={<MapPin className="w-5 h-5" />}
-              placeholder="Where are you currently based?"
+              placeholder="e.g., Port Jervis, NY"
               value={formData.base_location}
               onChange={handleLocationChange}
               onLocationSelect={handleLocationSelect}
@@ -1199,12 +1199,9 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="edit-umpire-languages">
-                    Languages you can officiate in <span className="text-red-500">*</span>
+                  <label className="block text-sm font-medium text-gray-700 mb-3" htmlFor="edit-umpire-languages">
+                    Languages <span className="text-red-500">*</span>
                   </label>
-                  <p className="text-xs text-gray-500 mb-3">
-                    At least one. Add more anytime.
-                  </p>
                   {formData.languages.length > 0 && (
                     <div className="flex flex-wrap gap-2 mb-3">
                       {formData.languages.map((lang) => (

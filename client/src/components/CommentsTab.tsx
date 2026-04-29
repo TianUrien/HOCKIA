@@ -49,6 +49,23 @@ function emptyStateCopyFor(role: Profile['role'] | null | undefined): string {
   return 'Be the first to share constructive feedback for this profile.'
 }
 
+/** Role-aware section header subtitle for the Comments tab. */
+function commentsSubtitleFor(role: Profile['role'] | null | undefined): string {
+  if (role === 'umpire') {
+    return 'References from HOCKIA members.'
+  }
+  return 'Verified testimonials from HOCKIA members.'
+}
+
+/** Role-aware copy shown on the owner's own Comments tab when they cannot
+ * comment on themselves — guides them on whom to ask. */
+function ownerInviteHintFor(role: Profile['role'] | null | undefined): string {
+  if (role === 'umpire') {
+    return "You can't leave a comment on your own profile, but other members can — ask a colleague, umpire manager, or coach to share one."
+  }
+  return "You can't leave a comment on your own profile, but other members can — ask a teammate or coach to share one."
+}
+
 type CommentRating = Database['public']['Enums']['comment_rating']
 type CommentRow = Database['public']['Tables']['profile_comments']['Row']
 
@@ -428,7 +445,7 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
                 {COMMENTS_HEADER_INFO}
               </InfoTooltip>
             </div>
-            <p className="text-sm text-gray-600">Verified testimonials from HOCKIA members.</p>
+            <p className="text-sm text-gray-600">{commentsSubtitleFor(profileRole)}</p>
           </div>
           <div className="inline-flex items-center gap-2 rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-700">
             <MessageSquare className="h-4 w-4 text-[#8026FA]" />
@@ -522,9 +539,7 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div className="flex items-start gap-3">
                 <ShieldAlert className="h-5 w-5 text-gray-400 flex-shrink-0 mt-0.5" />
-                <p>
-                  You can&apos;t leave a comment on your own profile, but other members can — ask a teammate or coach to share one.
-                </p>
+                <p>{ownerInviteHintFor(profileRole)}</p>
               </div>
               <button
                 type="button"
@@ -552,6 +567,7 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
           onClose={() => setShowRequestFeedback(false)}
           profileUrl={ownerProfileUrl}
           ownerName={authProfile?.full_name}
+          profileRole={profileRole}
         />
       )}
 

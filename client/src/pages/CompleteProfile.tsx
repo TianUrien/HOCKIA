@@ -1509,9 +1509,9 @@ export default function CompleteProfile() {
                   {currentStep === 2 && (
                     <>
                       <LocationAutocomplete
-                        label="Base Location (City)"
+                        label="Base Location (City, State/Province)"
                         icon={<MapPin className="w-5 h-5" />}
-                        placeholder="Where are you currently based?"
+                        placeholder="e.g., Port Jervis, NY"
                         value={formData.city}
                         onChange={handleLocationChange}
                         onLocationSelect={handleLocationSelect}
@@ -1654,17 +1654,10 @@ export default function CompleteProfile() {
                         </div>
                       </div>
 
-                      {/* Languages — deliberately given its own prominent block.
-                          Umpiring internationally is bilingual by default; leaving
-                          this blank produces a much weaker profile. Keep the bar
-                          low (min 1) but surface the question cleanly. */}
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="umpire-languages">
-                          Languages you can officiate in <span className="text-red-500">*</span>
+                        <label className="block text-sm font-medium text-gray-700 mb-3" htmlFor="umpire-languages">
+                          Languages <span className="text-red-500">*</span>
                         </label>
-                        <p className="text-xs text-gray-500 mb-3">
-                          Officials pair and get assigned across languages. Add at least one — more is better.
-                        </p>
 
                         {/* Selected chips */}
                         {formData.languages.length > 0 && (
