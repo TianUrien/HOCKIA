@@ -725,44 +725,62 @@ export type Database = {
       }
       discovery_events: {
         Row: {
+          cached_tokens: number | null
+          completion_tokens: number | null
           created_at: string
           error_message: string | null
+          fallback_used: boolean
           has_qualitative: boolean | null
           id: string
           intent: string
           llm_provider: string | null
           parsed_filters: Json | null
+          prompt_tokens: number | null
+          prompt_version: string | null
           query_text: string
           response_time_ms: number | null
           result_count: number
+          retry_count: number
           role: string | null
           user_id: string | null
         }
         Insert: {
+          cached_tokens?: number | null
+          completion_tokens?: number | null
           created_at?: string
           error_message?: string | null
+          fallback_used?: boolean
           has_qualitative?: boolean | null
           id?: string
           intent: string
           llm_provider?: string | null
           parsed_filters?: Json | null
+          prompt_tokens?: number | null
+          prompt_version?: string | null
           query_text: string
           response_time_ms?: number | null
           result_count?: number
+          retry_count?: number
           role?: string | null
           user_id?: string | null
         }
         Update: {
+          cached_tokens?: number | null
+          completion_tokens?: number | null
           created_at?: string
           error_message?: string | null
+          fallback_used?: boolean
           has_qualitative?: boolean | null
           id?: string
           intent?: string
           llm_provider?: string | null
           parsed_filters?: Json | null
+          prompt_tokens?: number | null
+          prompt_version?: string | null
           query_text?: string
           response_time_ms?: number | null
           result_count?: number
+          retry_count?: number
           role?: string | null
           user_id?: string | null
         }
@@ -1262,6 +1280,9 @@ export type Database = {
       }
       home_feed_items: {
         Row: {
+          author_country_id: number | null
+          author_profile_id: string | null
+          author_role: string | null
           created_at: string
           deleted_at: string | null
           id: string
@@ -1272,6 +1293,9 @@ export type Database = {
           source_type: string
         }
         Insert: {
+          author_country_id?: number | null
+          author_profile_id?: string | null
+          author_role?: string | null
           created_at?: string
           deleted_at?: string | null
           id?: string
@@ -1282,6 +1306,9 @@ export type Database = {
           source_type: string
         }
         Update: {
+          author_country_id?: number | null
+          author_profile_id?: string | null
+          author_role?: string | null
           created_at?: string
           deleted_at?: string | null
           id?: string
@@ -1291,7 +1318,36 @@ export type Database = {
           source_id?: string
           source_type?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "home_feed_items_author_country_id_fkey"
+            columns: ["author_country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "home_feed_items_author_country_id_fkey"
+            columns: ["author_country_id"]
+            isOneToOne: false
+            referencedRelation: "world_countries_with_directory"
+            referencedColumns: ["country_id"]
+          },
+          {
+            foreignKeyName: "home_feed_items_author_profile_id_fkey"
+            columns: ["author_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "home_feed_items_author_profile_id_fkey"
+            columns: ["author_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       investor_share_tokens: {
         Row: {
@@ -1867,6 +1923,33 @@ export type Database = {
           },
         ]
       }
+      product_health_snapshots: {
+        Row: {
+          computed_at: string
+          diagnostics: Json
+          overall_score: number
+          snapshot_date: string
+          sub_scores: Json
+          tier: string
+        }
+        Insert: {
+          computed_at: string
+          diagnostics: Json
+          overall_score: number
+          snapshot_date: string
+          sub_scores: Json
+          tier: string
+        }
+        Update: {
+          computed_at?: string
+          diagnostics?: Json
+          overall_score?: number
+          snapshot_date?: string
+          sub_scores?: Json
+          tier?: string
+        }
+        Relationships: []
+      }
       profile_comments: {
         Row: {
           author_profile_id: string
@@ -2334,10 +2417,12 @@ export type Database = {
           brand_representation: string | null
           browse_anonymously: boolean
           career_entry_count: number
+          category_confirmation_needed: boolean
           club_bio: string | null
           club_history: string | null
           coach_specialization: string | null
           coach_specialization_custom: string | null
+          coaching_categories: string[] | null
           contact_email: string | null
           contact_email_public: boolean
           created_at: string
@@ -2380,6 +2465,7 @@ export type Database = {
           open_to_coach: boolean
           open_to_opportunities: boolean
           open_to_play: boolean
+          playing_category: string | null
           position: string | null
           post_count: number
           role: string
@@ -2389,6 +2475,7 @@ export type Database = {
           umpire_appointment_count: number
           umpire_level: string | null
           umpire_since: number | null
+          umpiring_categories: string[] | null
           updated_at: string
           username: string | null
           verified_at: string | null
@@ -2414,10 +2501,12 @@ export type Database = {
           brand_representation?: string | null
           browse_anonymously?: boolean
           career_entry_count?: number
+          category_confirmation_needed?: boolean
           club_bio?: string | null
           club_history?: string | null
           coach_specialization?: string | null
           coach_specialization_custom?: string | null
+          coaching_categories?: string[] | null
           contact_email?: string | null
           contact_email_public?: boolean
           created_at?: string
@@ -2460,6 +2549,7 @@ export type Database = {
           open_to_coach?: boolean
           open_to_opportunities?: boolean
           open_to_play?: boolean
+          playing_category?: string | null
           position?: string | null
           post_count?: number
           role: string
@@ -2469,6 +2559,7 @@ export type Database = {
           umpire_appointment_count?: number
           umpire_level?: string | null
           umpire_since?: number | null
+          umpiring_categories?: string[] | null
           updated_at?: string
           username?: string | null
           verified_at?: string | null
@@ -2494,10 +2585,12 @@ export type Database = {
           brand_representation?: string | null
           browse_anonymously?: boolean
           career_entry_count?: number
+          category_confirmation_needed?: boolean
           club_bio?: string | null
           club_history?: string | null
           coach_specialization?: string | null
           coach_specialization_custom?: string | null
+          coaching_categories?: string[] | null
           contact_email?: string | null
           contact_email_public?: boolean
           created_at?: string
@@ -2540,6 +2633,7 @@ export type Database = {
           open_to_coach?: boolean
           open_to_opportunities?: boolean
           open_to_play?: boolean
+          playing_category?: string | null
           position?: string | null
           post_count?: number
           role?: string
@@ -2549,6 +2643,7 @@ export type Database = {
           umpire_appointment_count?: number
           umpire_level?: string | null
           umpire_since?: number | null
+          umpiring_categories?: string[] | null
           updated_at?: string
           username?: string | null
           verified_at?: string | null
@@ -3707,6 +3802,10 @@ export type Database = {
         Args: { p_images: Json; p_post_id: string; p_reason: string }
         Returns: undefined
       }
+      _phs_normalize: {
+        Args: { p_floor?: number; p_target: number; p_value: number }
+        Returns: number
+      }
       accept_terms: { Args: { p_version?: string }; Returns: undefined }
       acquire_profile_lock: { Args: { profile_id: string }; Returns: boolean }
       add_brand_ambassador: {
@@ -3987,16 +4086,6 @@ export type Database = {
       }
       admin_get_email_templates: { Args: never; Returns: Json }
       admin_get_engagement_summary: { Args: never; Returns: Json }
-      admin_get_product_health_score: { Args: never; Returns: Json }
-      admin_get_product_health_trend: {
-        Args: { p_days?: number }
-        Returns: {
-          snapshot_date: string
-          overall_score: number
-          tier: string
-          sub_scores: Json
-        }[]
-      }
       admin_get_engagement_trends: {
         Args: { p_days?: number }
         Returns: {
@@ -4134,6 +4223,16 @@ export type Database = {
           p_search?: string
         }
         Returns: Json
+      }
+      admin_get_product_health_score: { Args: never; Returns: Json }
+      admin_get_product_health_trend: {
+        Args: { p_days?: number }
+        Returns: {
+          overall_score: number
+          snapshot_date: string
+          sub_scores: Json
+          tier: string
+        }[]
       }
       admin_get_profile_completeness_distribution: {
         Args: { p_role?: string }
@@ -4540,10 +4639,12 @@ export type Database = {
           brand_representation: string | null
           browse_anonymously: boolean
           career_entry_count: number
+          category_confirmation_needed: boolean
           club_bio: string | null
           club_history: string | null
           coach_specialization: string | null
           coach_specialization_custom: string | null
+          coaching_categories: string[] | null
           contact_email: string | null
           contact_email_public: boolean
           created_at: string
@@ -4586,6 +4687,7 @@ export type Database = {
           open_to_coach: boolean
           open_to_opportunities: boolean
           open_to_play: boolean
+          playing_category: string | null
           position: string | null
           post_count: number
           role: string
@@ -4595,6 +4697,7 @@ export type Database = {
           umpire_appointment_count: number
           umpire_level: string | null
           umpire_since: number | null
+          umpiring_categories: string[] | null
           updated_at: string
           username: string | null
           verified_at: string | null
@@ -4613,6 +4716,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      compute_product_health_score: { Args: never; Returns: Json }
       content_check: { Args: { p_text: string }; Returns: string }
       create_and_claim_world_club: {
         Args: {
@@ -4671,10 +4775,12 @@ export type Database = {
           brand_representation: string | null
           browse_anonymously: boolean
           career_entry_count: number
+          category_confirmation_needed: boolean
           club_bio: string | null
           club_history: string | null
           coach_specialization: string | null
           coach_specialization_custom: string | null
+          coaching_categories: string[] | null
           contact_email: string | null
           contact_email_public: boolean
           created_at: string
@@ -4717,6 +4823,7 @@ export type Database = {
           open_to_coach: boolean
           open_to_opportunities: boolean
           open_to_play: boolean
+          playing_category: string | null
           position: string | null
           post_count: number
           role: string
@@ -4726,6 +4833,7 @@ export type Database = {
           umpire_appointment_count: number
           umpire_level: string | null
           umpire_since: number | null
+          umpiring_categories: string[] | null
           updated_at: string
           username: string | null
           verified_at: string | null
@@ -5029,7 +5137,13 @@ export type Database = {
         }[]
       }
       get_home_feed: {
-        Args: { p_item_type?: string; p_limit?: number; p_offset?: number }
+        Args: {
+          p_country_ids?: number[]
+          p_item_type?: string
+          p_limit?: number
+          p_offset?: number
+          p_roles?: string[]
+        }
         Returns: Json
       }
       get_home_feed_new_count: { Args: { p_since: string }; Returns: number }
@@ -5474,6 +5588,7 @@ export type Database = {
       }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
+      snapshot_product_health_score: { Args: never; Returns: undefined }
       toggle_post_like: { Args: { p_post_id: string }; Returns: Json }
       track_event: {
         Args: {
