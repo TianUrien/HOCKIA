@@ -2,6 +2,7 @@
 const ALLOWED_ORIGINS = [
   'https://www.inhockia.com',
   'https://inhockia.com',
+  'https://staging.inhockia.com',
   'https://hockia.vercel.app',
   'https://hockia-staging.vercel.app',
   // Development origins
