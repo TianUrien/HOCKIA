@@ -338,7 +338,10 @@ export default function OpportunityDetailPage() {
             publisherRole={club.role}
             publisherOrganization={opportunity.organization_name || club.current_club || null}
             leagueDivision={(() => {
-              return opportunity.gender === 'Women'
+              // Phase 3d — Women + Girls families map to women's league;
+              // Men + Boys to men's; Mixed defaults to first available.
+              const womensFamily = opportunity.gender === 'Women' || opportunity.gender === 'Girls'
+              return womensFamily
                 ? club.womens_league_division ?? club.mens_league_division ?? null
                 : club.mens_league_division ?? club.womens_league_division ?? null
             })()}

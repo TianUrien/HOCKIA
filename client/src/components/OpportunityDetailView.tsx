@@ -5,6 +5,7 @@ import type { Vacancy } from '../lib/supabase'
 import { Avatar, StorageImage } from './index'
 import Button from './Button'
 import type { WorldClubInfo } from './OpportunityCard'
+import { opportunityGenderToTeamLabel } from '@/lib/hockeyCategories'
 
 interface VacancyDetailViewProps {
   vacancy: Vacancy
@@ -114,12 +115,15 @@ export default function VacancyDetailView({
 
   const isImmediate = !vacancy.start_date
 
-  // Build tag pills
+  // Build tag pills. Phase 3d — opportunityGenderToTeamLabel covers all
+  // five enum values (Men/Women/Girls/Boys/Mixed) with possessive labels.
   const tags: string[] = []
   if (vacancy.opportunity_type === 'player') tags.push('Player')
   if (vacancy.opportunity_type === 'coach') tags.push('Coach')
-  if (vacancy.gender === 'Men') tags.push("Men's")
-  if (vacancy.gender === 'Women') tags.push("Women's")
+  if (vacancy.gender) {
+    const teamLabel = opportunityGenderToTeamLabel(vacancy.gender)
+    if (teamLabel) tags.push(teamLabel.replace(' Team', ''))
+  }
   if (vacancy.position) {
     tags.push(vacancy.position.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()))
   }

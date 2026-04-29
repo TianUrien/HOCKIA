@@ -5688,7 +5688,7 @@ export type Database = {
         | "milestone"
         | "academy"
         | "other"
-      opportunity_gender: "Men" | "Women"
+      opportunity_gender: "Men" | "Women" | "Girls" | "Boys" | "Mixed"
       opportunity_position:
         | "goalkeeper"
         | "defender"
@@ -5888,7 +5888,7 @@ export const Constants = {
         "academy",
         "other",
       ],
-      opportunity_gender: ["Men", "Women"],
+      opportunity_gender: ["Men", "Women", "Girls", "Boys", "Mixed"],
       opportunity_position: [
         "goalkeeper",
         "defender",

@@ -8,6 +8,7 @@ import { logger } from '../lib/logger'
 import { useAuthStore } from '../lib/auth'
 import { useToastStore } from '@/lib/toast'
 import type { Vacancy } from '../lib/supabase'
+import { opportunityGenderToTeamLabel } from '@/lib/hockeyCategories'
 import Button from './Button'
 import CreateOpportunityModal from './CreateOpportunityModal'
 import ApplyToOpportunityModal from './ApplyToOpportunityModal'
@@ -665,11 +666,13 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
           {vacancies.filter(v => statusFilter === 'all' || v.status === statusFilter).map((vacancy) => {
             const locationLabel = [vacancy.location_city, vacancy.location_country].filter(Boolean).join(', ')
 
-            // Compound badge: "Player · Men's · Forward" (same pattern as public cards)
+            // Compound badge: "Player · Men's · Forward" (Phase 3d — handles
+            // all 5 enum values via opportunityGenderToTeamLabel).
             const badgeParts: string[] = []
             badgeParts.push(vacancy.opportunity_type === 'player' ? 'Player' : 'Coach')
             if (vacancy.opportunity_type === 'player' && vacancy.gender) {
-              badgeParts.push(vacancy.gender === 'Men' ? "Men's" : "Women's")
+              const teamLabel = opportunityGenderToTeamLabel(vacancy.gender)
+              if (teamLabel) badgeParts.push(teamLabel.replace(' Team', ''))
             }
             if (vacancy.position) {
               badgeParts.push(vacancy.position.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()))

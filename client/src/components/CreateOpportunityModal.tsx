@@ -309,10 +309,10 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
     const newErrors: Record<string, string> = {}
 
     if (!formData.title?.trim()) newErrors.title = 'Title is required'
-    // Only validate position and gender for player opportunities
+    // Only validate position and category for player opportunities
     if (formData.opportunity_type === 'player') {
       if (!formData.position) newErrors.position = 'Position is required'
-      if (!formData.gender) newErrors.gender = 'Gender is required'
+      if (!formData.gender) newErrors.gender = 'Category is required'
     }
     if (!formData.location_city?.trim()) newErrors.location_city = 'City is required'
     if (!formData.location_country?.trim()) newErrors.location_country = 'Country is required'
@@ -575,19 +575,27 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                 {formData.opportunity_type === 'player' && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Gender <span className="text-red-500">*</span>
+                    Category <span className="text-red-500">*</span>
                   </label>
                   <select
                     value={formData.gender || ''}
-                    onChange={(e) => handleInputChange('gender', e.target.value as 'Men' | 'Women')}
+                    onChange={(e) =>
+                      handleInputChange('gender', e.target.value as 'Men' | 'Women' | 'Girls' | 'Boys' | 'Mixed')
+                    }
                     className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#10b981] focus:border-transparent bg-white ${
                       errors.gender ? 'border-red-500' : 'border-gray-300'
                     }`}
-                    title="Gender"
+                    title="Category"
                   >
-                    <option value="">Select gender</option>
-                    <option value="Men">Men</option>
-                    <option value="Women">Women</option>
+                    <option value="">Select category</option>
+                    {/* Display labels are the new Phase 3 vocabulary; stored
+                        values stay as the legacy enum for back-compat. New
+                        Girls / Boys / Mixed values were added in 3d. */}
+                    <option value="Men">Adult Men</option>
+                    <option value="Women">Adult Women</option>
+                    <option value="Girls">Girls</option>
+                    <option value="Boys">Boys</option>
+                    <option value="Mixed">Mixed</option>
                   </select>
                   {errors.gender && <p className="mt-1 text-sm text-red-600">{errors.gender}</p>}
                 </div>

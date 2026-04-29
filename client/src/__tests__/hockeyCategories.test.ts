@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   ANY_CATEGORY,
   CATEGORY_LABELS,
+  OPPORTUNITY_GENDERS,
   PLAYING_CATEGORIES,
   categoriesToDisplay,
   categoryToDisplay,
@@ -9,7 +10,11 @@ import {
   isValidCategoryArray,
   isValidPlayingCategory,
   legacyGenderToPlayingCategory,
+  opportunityGenderToDisplay,
+  opportunityGenderToPlayingCategory,
+  opportunityGenderToTeamLabel,
   playingCategoryToLegacyGender,
+  playingCategoryToOpportunityGender,
 } from '@/lib/hockeyCategories'
 
 describe('CATEGORY_LABELS', () => {
@@ -104,6 +109,97 @@ describe('playingCategoryToLegacyGender', () => {
     expect(playingCategoryToLegacyGender('boys')).toBeNull()
     expect(playingCategoryToLegacyGender('mixed')).toBeNull()
     expect(playingCategoryToLegacyGender(null)).toBeNull()
+  })
+})
+
+// ────────────────────────────────────────────────────────────────────────
+// Phase 3d — opportunity_gender enum mapping
+// ────────────────────────────────────────────────────────────────────────
+
+describe('opportunityGenderToDisplay', () => {
+  it('renders legacy Men / Women as the new "Adult" labels', () => {
+    expect(opportunityGenderToDisplay('Men')).toBe('Adult Men')
+    expect(opportunityGenderToDisplay('Women')).toBe('Adult Women')
+  })
+
+  it('renders Girls / Boys / Mixed verbatim', () => {
+    expect(opportunityGenderToDisplay('Girls')).toBe('Girls')
+    expect(opportunityGenderToDisplay('Boys')).toBe('Boys')
+    expect(opportunityGenderToDisplay('Mixed')).toBe('Mixed')
+  })
+
+  it('returns empty string for null / unknown', () => {
+    expect(opportunityGenderToDisplay(null)).toBe('')
+    expect(opportunityGenderToDisplay(undefined)).toBe('')
+    expect(opportunityGenderToDisplay('')).toBe('')
+    expect(opportunityGenderToDisplay('xyz')).toBe('')
+  })
+})
+
+describe('opportunityGenderToTeamLabel', () => {
+  it("uses possessive forms for Men's / Women's / Girls' / Boys'", () => {
+    expect(opportunityGenderToTeamLabel('Men')).toBe("Men's Team")
+    expect(opportunityGenderToTeamLabel('Women')).toBe("Women's Team")
+    expect(opportunityGenderToTeamLabel('Girls')).toBe("Girls' Team")
+    expect(opportunityGenderToTeamLabel('Boys')).toBe("Boys' Team")
+  })
+
+  it('uses non-possessive for Mixed (reads more naturally)', () => {
+    expect(opportunityGenderToTeamLabel('Mixed')).toBe('Mixed Team')
+  })
+
+  it('returns empty for null / unknown', () => {
+    expect(opportunityGenderToTeamLabel(null)).toBe('')
+    expect(opportunityGenderToTeamLabel(undefined)).toBe('')
+  })
+})
+
+describe('playingCategoryToOpportunityGender (player → vacancy filter)', () => {
+  // The user's specific verification cases:
+  it('matches Adult Men player to legacy Men opportunity', () => {
+    expect(playingCategoryToOpportunityGender('adult_men')).toBe('Men')
+  })
+
+  it('matches Adult Women player to legacy Women opportunity', () => {
+    expect(playingCategoryToOpportunityGender('adult_women')).toBe('Women')
+  })
+
+  it('matches Girls player to Girls opportunity', () => {
+    expect(playingCategoryToOpportunityGender('girls')).toBe('Girls')
+  })
+
+  it('matches Boys player to Boys opportunity', () => {
+    expect(playingCategoryToOpportunityGender('boys')).toBe('Boys')
+  })
+
+  it('matches Mixed player to Mixed opportunity', () => {
+    expect(playingCategoryToOpportunityGender('mixed')).toBe('Mixed')
+  })
+
+  it('returns null for empty / unknown', () => {
+    expect(playingCategoryToOpportunityGender(null)).toBeNull()
+    expect(playingCategoryToOpportunityGender(undefined)).toBeNull()
+  })
+})
+
+describe('opportunityGenderToPlayingCategory (reverse)', () => {
+  it('inverts the mapping', () => {
+    for (const enumVal of OPPORTUNITY_GENDERS) {
+      const cat = opportunityGenderToPlayingCategory(enumVal)
+      expect(cat).not.toBeNull()
+      expect(playingCategoryToOpportunityGender(cat!)).toBe(enumVal)
+    }
+  })
+
+  it('returns null for unknown values', () => {
+    expect(opportunityGenderToPlayingCategory(null)).toBeNull()
+    expect(opportunityGenderToPlayingCategory('xyz')).toBeNull()
+  })
+})
+
+describe('OPPORTUNITY_GENDERS constant', () => {
+  it('exposes the full Phase 3d enum in declaration order', () => {
+    expect(OPPORTUNITY_GENDERS).toEqual(['Men', 'Women', 'Girls', 'Boys', 'Mixed'])
   })
 })
 

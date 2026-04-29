@@ -1,13 +1,17 @@
 import { X, SlidersHorizontal } from 'lucide-react'
+import { opportunityGenderToDisplay, OPPORTUNITY_GENDERS, type OpportunityGender } from '@/lib/hockeyCategories'
 
 const POSITIONS = ['goalkeeper', 'defender', 'midfielder', 'forward']
 
+/** Filter chip-row gender type. Phase 3d — accepts the full enum. */
+export type QuickFilterGender = 'all' | OpportunityGender
+
 interface QuickFiltersProps {
   opportunityType: 'all' | 'player' | 'coach'
-  gender: 'all' | 'Men' | 'Women'
+  gender: QuickFilterGender
   position: string[]
   onSetType: (type: 'all' | 'player' | 'coach') => void
-  onSetGender: (gender: 'all' | 'Men' | 'Women') => void
+  onSetGender: (gender: QuickFilterGender) => void
   onTogglePosition: (position: string) => void
   onClearAll: () => void
   hasActiveFilters: boolean
@@ -37,11 +41,16 @@ export default function OpportunityQuickFilters({
     else onSetType('all')
   }
 
-  // Cycle through gender: all → Men → Women → all
+  // Cycle through category: all → Adult Men → Adult Women → Girls → Boys → Mixed → all.
+  // Phase 3d — covers all five enum values for the mobile chip cycle.
   const cycleGender = () => {
-    if (gender === 'all') onSetGender('Men')
-    else if (gender === 'Men') onSetGender('Women')
-    else onSetGender('all')
+    if (gender === 'all') {
+      onSetGender(OPPORTUNITY_GENDERS[0])
+      return
+    }
+    const idx = OPPORTUNITY_GENDERS.indexOf(gender)
+    const next = OPPORTUNITY_GENDERS[idx + 1]
+    onSetGender(next ?? 'all')
   }
 
   return (
@@ -61,19 +70,19 @@ export default function OpportunityQuickFilters({
         </button>
       )}
 
-      {/* Gender chip (only for player opportunities) */}
+      {/* Category chip (only for player opportunities) */}
       {opportunityType !== 'coach' && (
         gender !== 'all' ? (
           <button
             onClick={() => onSetGender('all')}
             className={activeChip}
           >
-            {gender === 'Men' ? "Men's" : "Women's"}
+            {opportunityGenderToDisplay(gender)}
             <X className="w-3.5 h-3.5" />
           </button>
         ) : (
           <button onClick={cycleGender} className={inactiveChip}>
-            Gender
+            Category
           </button>
         )
       )}

@@ -23,10 +23,17 @@ import { useCountries, type Country } from '@/hooks/useCountries'
 interface FiltersState {
   country: string        // country name or '' for all
   role: 'all' | 'player' | 'coach'
-  gender: 'all' | 'Men' | 'Women'
+  /** Phase 3d — accepts the full opportunity_gender enum. URL param remains
+   * `gender` for backward compatibility with public links and saved bookmarks. */
+  gender: 'all' | 'Men' | 'Women' | 'Girls' | 'Boys' | 'Mixed'
   position: string       // single position or '' for all
   euPassport: boolean    // only show opportunities requiring EU passport
 }
+
+const GENDER_FILTER_VALUES = ['Men', 'Women', 'Girls', 'Boys', 'Mixed'] as const
+type GenderFilterValue = typeof GENDER_FILTER_VALUES[number]
+const isGenderFilterValue = (v: string | null): v is GenderFilterValue =>
+  v !== null && (GENDER_FILTER_VALUES as readonly string[]).includes(v)
 
 const POSITIONS = ['goalkeeper', 'defender', 'midfielder', 'forward'] as const
 
@@ -154,7 +161,7 @@ export default function OpportunitiesPage() {
     return {
       country: searchParams.get('country') || '',
       role: (roleParam === 'player' || roleParam === 'coach') ? roleParam : 'all',
-      gender: (genderParam === 'Men' || genderParam === 'Women') ? genderParam : 'all',
+      gender: isGenderFilterValue(genderParam) ? genderParam : 'all',
       position: searchParams.get('position') || '',
       euPassport: searchParams.get('eu_passport') === 'true',
     }
@@ -525,12 +532,15 @@ export default function OpportunitiesPage() {
             />
             {filters.role !== 'coach' && (
               <FilterDropdown
-                label="Gender"
+                label="Category"
                 value={filters.gender}
                 options={[
                   { value: 'all', label: 'All' },
-                  { value: 'Men', label: "Men's" },
-                  { value: 'Women', label: "Women's" },
+                  { value: 'Men', label: 'Adult Men' },
+                  { value: 'Women', label: 'Adult Women' },
+                  { value: 'Girls', label: 'Girls' },
+                  { value: 'Boys', label: 'Boys' },
+                  { value: 'Mixed', label: 'Mixed' },
                 ]}
                 onChange={(v) => setFilters(prev => ({ ...prev, gender: v as FiltersState['gender'] }))}
               />
@@ -669,7 +679,9 @@ export default function OpportunitiesPage() {
                       const club = clubs[vacancy.club_id]
                       const isApplied = userApplications.includes(vacancy.id)
                       const org = vacancy.organization_name || club?.current_club || null
-                      const leagueDivision = vacancy.gender === 'Women'
+                      // Phase 3d — Women + Girls map to women's league;
+                      // Men + Boys to men's; Mixed defaults to first available.
+                      const leagueDivision = (vacancy.gender === 'Women' || vacancy.gender === 'Girls')
                         ? club?.womens_league_division ?? club?.mens_league_division ?? null
                         : club?.mens_league_division ?? club?.womens_league_division ?? null
 
@@ -711,7 +723,8 @@ export default function OpportunitiesPage() {
             publisherOrganization={selectedVacancy.organization_name || clubs[selectedVacancy.club_id]?.current_club || null}
             leagueDivision={(() => {
               const c = clubs[selectedVacancy.club_id]
-              return selectedVacancy.gender === 'Women'
+              const womensFamily = selectedVacancy.gender === 'Women' || selectedVacancy.gender === 'Girls'
+              return womensFamily
                 ? c?.womens_league_division ?? c?.mens_league_division ?? null
                 : c?.mens_league_division ?? c?.womens_league_division ?? null
             })()}

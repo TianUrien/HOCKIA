@@ -28,7 +28,7 @@ import {
  *
  * Query Parameters (for list endpoint):
  *   - position: goalkeeper | defender | midfielder | forward
- *   - gender: Men | Women
+ *   - gender: Men | Women | Girls | Boys | Mixed (Phase 3d — extended)
  *   - country: Country name (e.g., "Netherlands")
  *   - opportunity_type: player | coach
  *   - priority: high | medium | low

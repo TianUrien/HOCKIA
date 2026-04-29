@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import type { Vacancy } from '../lib/supabase'
 import { Avatar } from './index'
 import StorageImage from './StorageImage'
+import { opportunityGenderToTeamLabel } from '@/lib/hockeyCategories'
 import Button from './Button'
 
 export interface WorldClubInfo {
@@ -134,13 +135,16 @@ export default function OpportunityCard({
     return new Date(dateString).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
   }
 
-  // Build tag pills
+  // Build tag pills. Phase 3d — opportunityGenderToTeamLabel handles all
+  // five enum values (Men/Women/Girls/Boys/Mixed) with possessive labels
+  // ("Men's Team", "Girls' Team", etc.).
   const tags: string[] = []
   if (vacancy.opportunity_type === 'player') tags.push('Player')
   if (vacancy.opportunity_type === 'coach') tags.push('Coach')
-  if (vacancy.gender) tags.push(vacancy.gender === 'Men' ? "Women's" : "Women's")
-  if (vacancy.gender === 'Men') { tags.pop(); tags.push("Men's") }
-  if (vacancy.gender === 'Women') { /* already added */ }
+  if (vacancy.gender) {
+    const teamLabel = opportunityGenderToTeamLabel(vacancy.gender)
+    if (teamLabel) tags.push(teamLabel.replace(' Team', ''))
+  }
   if (vacancy.position) {
     tags.push(vacancy.position.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()))
   }

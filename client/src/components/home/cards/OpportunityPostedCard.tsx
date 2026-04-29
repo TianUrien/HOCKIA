@@ -3,6 +3,7 @@ import { Briefcase, MapPin, BadgeCheck } from 'lucide-react'
 import { Avatar, StorageImage } from '@/components'
 import { getTimeAgo } from '@/lib/utils'
 import type { OpportunityPostedFeedItem } from '@/types/homeFeed'
+import { opportunityGenderToTeamLabel } from '@/lib/hockeyCategories'
 
 interface OpportunityPostedCardProps {
   item: OpportunityPostedFeedItem
@@ -41,7 +42,7 @@ export function OpportunityPostedCard({ item }: OpportunityPostedCardProps) {
             )}
             {item.gender && (
               <span className="px-2.5 py-1 bg-pink-50 text-pink-700 rounded-full text-xs font-medium">
-                {item.gender === 'Men' ? "Men's Team" : "Women's Team"}
+                {opportunityGenderToTeamLabel(item.gender)}
               </span>
             )}
             {(item.location_city || item.location_country) && (

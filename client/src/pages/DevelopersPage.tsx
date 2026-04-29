@@ -170,7 +170,7 @@ export default function DevelopersPage() {
               <ul className="list-none space-y-2 ml-4">
                 <li>• Position title and type (player or coach)</li>
                 <li>• Location (city and country)</li>
-                <li>• Team gender (Men's or Women's)</li>
+                <li>• Team category (Adult Men, Adult Women, Girls, Boys, Mixed)</li>
                 <li>• Requirements and benefits offered</li>
                 <li>• Club name and logo</li>
                 <li>• Application deadline and start date</li>
@@ -234,7 +234,7 @@ export default function DevelopersPage() {
                     </tr>
                     <tr className="border-b border-gray-100">
                       <td className="py-2 pr-4 font-mono text-purple-600">gender</td>
-                      <td className="py-2">Men, Women</td>
+                      <td className="py-2">Men, Women, Girls, Boys, Mixed</td>
                     </tr>
                     <tr className="border-b border-gray-100">
                       <td className="py-2 pr-4 font-mono text-purple-600">country</td>

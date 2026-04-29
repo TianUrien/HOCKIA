@@ -73,9 +73,17 @@ function formatPosition(position: string | null, gender: string | null): string 
     forward: 'Forward',
   }
   
-  const genderPrefix = gender === 'Women' ? "Women's" : gender === 'Men' ? "Men's" : ''
+  // Phase 3d — JSON-LD uses the possessive prefix for natural-sounding job
+  // titles ("Men's Defender", "Girls' Forward"). Mixed reads better as a
+  // descriptor without an apostrophe.
+  let genderPrefix = ''
+  if (gender === 'Men') genderPrefix = "Men's"
+  else if (gender === 'Women') genderPrefix = "Women's"
+  else if (gender === 'Girls') genderPrefix = "Girls'"
+  else if (gender === 'Boys') genderPrefix = "Boys'"
+  else if (gender === 'Mixed') genderPrefix = 'Mixed'
   const positionLabel = positionMap[position] || position
-  
+
   return genderPrefix ? `${genderPrefix} ${positionLabel}` : positionLabel
 }
 

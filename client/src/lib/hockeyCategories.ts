@@ -81,6 +81,80 @@ export function playingCategoryToLegacyGender(
   return null
 }
 
+// ────────────────────────────────────────────────────────────────────────
+// Opportunity-gender enum mapping (Phase 3d)
+// ────────────────────────────────────────────────────────────────────────
+// The DB `opportunity_gender` enum is the value clubs select when posting a
+// vacancy: 'Men' | 'Women' | 'Girls' | 'Boys' | 'Mixed'. The first two are
+// historical and continue to map to "Adult Men" / "Adult Women" in the UI;
+// the last three were added in Phase 3d. We never rename the enum (would
+// break public API consumers), so the helpers here translate to/from the
+// player's playing_category vocabulary.
+
+/** Type-safe alias for the DB enum. Mirrors database.types.ts exactly. */
+export type OpportunityGender = 'Men' | 'Women' | 'Girls' | 'Boys' | 'Mixed'
+
+export const OPPORTUNITY_GENDERS: readonly OpportunityGender[] = [
+  'Men',
+  'Women',
+  'Girls',
+  'Boys',
+  'Mixed',
+]
+
+/** UI label for an opportunity_gender value. 'Men' → "Adult Men" so a club
+ * vacancy posted before Phase 3d still reads naturally in the new vocabulary. */
+export function opportunityGenderToDisplay(value: string | null | undefined): string {
+  if (!value) return ''
+  if (value === 'Men') return 'Adult Men'
+  if (value === 'Women') return 'Adult Women'
+  if (value === 'Girls') return 'Girls'
+  if (value === 'Boys') return 'Boys'
+  if (value === 'Mixed') return 'Mixed'
+  return ''
+}
+
+/** Possessive team-style label for an opportunity_gender value. Used by the
+ * home-feed card and the vacancy card chips: "Men's Team", "Girls' Team", etc.
+ * Matches hockey vernacular for vacancy categories. */
+export function opportunityGenderToTeamLabel(value: string | null | undefined): string {
+  if (!value) return ''
+  if (value === 'Men') return "Men's Team"
+  if (value === 'Women') return "Women's Team"
+  if (value === 'Girls') return "Girls' Team"
+  if (value === 'Boys') return "Boys' Team"
+  if (value === 'Mixed') return 'Mixed Team'
+  return ''
+}
+
+/** Map a player's playing_category to the matching opportunity_gender enum
+ * value. Used by the opportunity filter logic and any auto-matching surface
+ * so a player with playing_category='girls' sees vacancies posted as 'Girls'. */
+export function playingCategoryToOpportunityGender(
+  category: PlayingCategory | null | undefined,
+): OpportunityGender | null {
+  if (category === 'adult_men') return 'Men'
+  if (category === 'adult_women') return 'Women'
+  if (category === 'girls') return 'Girls'
+  if (category === 'boys') return 'Boys'
+  if (category === 'mixed') return 'Mixed'
+  return null
+}
+
+/** Reverse of the above — used by the OpportunityFilters chip ordering and
+ * the searchAppearances analytics row so a "Men" filter still maps cleanly
+ * to "Adult Men" in any UI that's already category-aware. */
+export function opportunityGenderToPlayingCategory(
+  value: string | null | undefined,
+): PlayingCategory | null {
+  if (value === 'Men') return 'adult_men'
+  if (value === 'Women') return 'adult_women'
+  if (value === 'Girls') return 'girls'
+  if (value === 'Boys') return 'boys'
+  if (value === 'Mixed') return 'mixed'
+  return null
+}
+
 /** Validate that a value is in the player category set. */
 export function isValidPlayingCategory(
   value: string | null | undefined,
