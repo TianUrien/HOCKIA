@@ -162,6 +162,22 @@ async function runKeywordFallback(params: {
       retry_count: parseRetryCount,
     }))
 
+    // Phase 3e — actionable fallback UX. Rate-limit / timeout errors are
+    // transient (Gemini free tier hits its quota during dense use), so the
+    // user benefits from a Retry chip + a clearer message that explains the
+    // situation. Other LLM errors (parse, network) get the original copy.
+    const isTransientLlmError =
+      originalError.message === 'AI_RATE_LIMIT' || originalError.message === 'AI_TIMEOUT'
+    const fallbackMessage = isTransientLlmError
+      ? (result.total === 0
+          ? "The AI search is busy right now and I couldn't find a quick keyword match. Try again in a moment, or rephrase your search."
+          : "The AI search is busy right now — here are some keyword matches in the meantime. Try again in a moment for the full AI response.")
+      : (result.total === 0
+          ? "I couldn't complete the full AI response and didn't find a quick match either."
+          : "I couldn't complete the full AI response, but here are some relevant matches.")
+    const fallbackActions: SuggestedAction[] = isTransientLlmError
+      ? [{ label: 'Try again', intent: { type: 'retry' } }]
+      : []
     return new Response(
       JSON.stringify({
         success: true,
@@ -170,16 +186,10 @@ async function runKeywordFallback(params: {
         has_more: result.has_more,
         parsed_filters: null,
         summary: `Showing ${result.total} keyword match${result.total === 1 ? '' : 'es'}.`,
-        // PR-4 — softer fallback copy. The previous "AI assistant is
-        // temporarily unavailable. Showing keyword matches instead." felt
-        // technical. New copy frames the partial answer as useful, not a
-        // degraded apology.
-        ai_message: result.total === 0
-          ? "I couldn't complete the full AI response and didn't find a quick match either."
-          : "I couldn't complete the full AI response, but here are some relevant matches.",
+        ai_message: fallbackMessage,
         kind: (result.total === 0 ? 'no_results' : 'results') as ResponseKind,
         applied: null,
-        suggested_actions: [] as SuggestedAction[],
+        suggested_actions: fallbackActions,
       }),
       { status: 200, headers: { ...headers, 'Content-Type': 'application/json' } }
     )
@@ -1330,6 +1340,17 @@ Deno.serve(async (req) => {
       : enforcedRole === 'brand' ? 'brands'
       : enforcedRole === 'umpire' ? 'umpires'
       : 'profiles'
+    // Phase 3e — proper singular forms. The previous slice(-1) trick produced
+    // "1 coache" because "coaches" → "coache" instead of "coach". Map-based
+    // singularisation handles the -es words correctly.
+    const ENTITY_SINGULAR: Record<string, string> = {
+      clubs: 'club',
+      players: 'player',
+      coaches: 'coach',
+      brands: 'brand',
+      umpires: 'umpire',
+      profiles: 'profile',
+    }
     let aiMessage: string
     if (result.total === 0) {
       // Phase 3e — broaden hint references the auto-seeded category, not gender.
@@ -1338,7 +1359,8 @@ Deno.serve(async (req) => {
         : ''
       aiMessage = `I couldn't find any ${entityNoun} matching that.${broadenHint}`
     } else {
-      const countPhrase = `I found ${result.total} ${entityNoun.endsWith('s') && result.total === 1 ? entityNoun.slice(0, -1) : entityNoun}${result.total === 1 ? '' : ''} for you.`
+      const noun = result.total === 1 ? (ENTITY_SINGULAR[entityNoun] ?? entityNoun) : entityNoun
+      const countPhrase = `I found ${result.total} ${noun} for you.`
       aiMessage = llmResult.message ? `${countPhrase} ${llmResult.message}` : countPhrase
     }
 
