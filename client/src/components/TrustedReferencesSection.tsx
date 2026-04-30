@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef, useCallback } from 'react'
+import { useEffect, useMemo, useState, useRef, useCallback } from 'react'
 import { format } from 'date-fns'
 import { ShieldCheck, Plus, Clock3, AlertTriangle } from 'lucide-react'
 import { logger } from '@/lib/logger'
@@ -24,6 +24,13 @@ interface TrustedReferencesSectionProps {
   profileRole?: Profile['role'] | null
   /** When true, hides owner-only features (for Public View mode) */
   readOnly?: boolean
+  /** Phase 4 References UX Plan #1.3 — when set, the section auto-opens
+   *  AddReferenceModal pre-selected to this friend. Drives the per-friend
+   *  "Ask to vouch" CTA from FriendsTab. The parent should clear this
+   *  via `onAddReferenceConsumed` once the modal opens so subsequent
+   *  clicks on the same friend re-trigger the open. */
+  openAddReferenceForFriendId?: string | null
+  onAddReferenceConsumed?: () => void
 }
 
 type ConfirmState = {
@@ -45,7 +52,14 @@ const TRUSTED_REFERENCES_GUIDE = (
   </div>
 )
 
-export default function TrustedReferencesSection({ profileId, friendOptions, profileRole, readOnly = false }: TrustedReferencesSectionProps) {
+export default function TrustedReferencesSection({
+  profileId,
+  friendOptions,
+  profileRole,
+  readOnly = false,
+  openAddReferenceForFriendId = null,
+  onAddReferenceConsumed,
+}: TrustedReferencesSectionProps) {
   const {
     loading,
     isOwner: isActualOwner,
@@ -69,6 +83,7 @@ export default function TrustedReferencesSection({ profileId, friendOptions, pro
   const isOwner = !readOnly && isActualOwner
 
   const [addModalOpen, setAddModalOpen] = useState(false)
+  const [preselectedFriendId, setPreselectedFriendId] = useState<string | null>(null)
   const [endorsementRequest, setEndorsementRequest] = useState<typeof incomingRequests[number] | null>(null)
   const [editingReference, setEditingReference] = useState<typeof givenReferences[number] | null>(null)
   const [confirmState, setConfirmState] = useState<ConfirmState | null>(null)
@@ -81,6 +96,18 @@ export default function TrustedReferencesSection({ profileId, friendOptions, pro
   const dismissNotification = useNotificationStore((state) => state.dismissBySource)
   const allowedRequesterRoles: Profile['role'][] = ['player', 'coach', 'umpire']
   const canCollectReferences = isOwner && !!profileRole && allowedRequesterRoles.includes(profileRole)
+
+  // Phase 4 References UX Plan #1.3 — when the parent (FriendsTab's per-row
+  // "Ask to vouch" CTA) signals an open-with-friend, mirror it into local
+  // state and notify the parent so it clears the signal. The parent's clear
+  // is what lets a second tap on the same friend re-trigger this effect.
+  useEffect(() => {
+    if (!openAddReferenceForFriendId) return
+    if (!canCollectReferences) return
+    setPreselectedFriendId(openAddReferenceForFriendId)
+    setAddModalOpen(true)
+    onAddReferenceConsumed?.()
+  }, [openAddReferenceForFriendId, canCollectReferences, onAddReferenceConsumed])
 
   const handleScroll = useCallback(() => {
     const container = scrollRef.current
@@ -569,12 +596,19 @@ export default function TrustedReferencesSection({ profileId, friendOptions, pro
       {canCollectReferences && (
         <AddReferenceModal
           isOpen={addModalOpen}
-          onClose={() => setAddModalOpen(false)}
+          onClose={() => {
+            setAddModalOpen(false)
+            // Clear the preselect so the next per-friend CTA tap re-runs the
+            // effect cleanly. Without this, a second tap on the same friend
+            // wouldn't re-open the modal because state hadn't changed.
+            setPreselectedFriendId(null)
+          }}
           friends={availableFriends}
           onSubmit={requestReference}
           isSubmitting={isMutating('request')}
           remainingSlots={maxReferences - acceptedCount}
           requesterRole={profileRole}
+          preselectedFriendId={preselectedFriendId}
         />
       )}
 

@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { ArrowLeft, MapPin, Calendar, Edit2, Eye, MessageCircle, Landmark, Mail, Award } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
-import { Avatar, DashboardMenu, EditProfileModal, FriendsTab, FriendshipButton, PublicReferencesSection, PublicViewBanner, RoleBadge, ScrollableTabs, NextStepCard, FreshnessCard, SearchAppearancesCard, DualNationalityDisplay, AvailabilityPill, TierBadge, VerifiedBadge, CategoryConfirmationBanner } from '@/components'
+import { Avatar, DashboardMenu, EditProfileModal, FriendsTab, FriendshipButton, PublicReferencesSection, PublicViewBanner, RoleBadge, ScrollableTabs, NextStepCard, FreshnessCard, SearchAppearancesCard, DualNationalityDisplay, AvailabilityPill, TierBadge, TrustBadge, VerifiedBadge, CategoryConfirmationBanner } from '@/components'
 import { calculateTier } from '@/lib/profileTier'
 import { useProfileFreshness } from '@/hooks/useProfileFreshness'
 import type { FreshnessNudge } from '@/lib/profileFreshness'
@@ -466,10 +466,35 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
                 {!readOnly && !profileStrength.loading && (
                   <TierBadge tier={calculateTier(profileStrength.percentage)} />
                 )}
+                {/* Phase 4 References UX Plan #1.5 — TrustBadge in the metadata
+                    pills row. Owner with 0 references sees a "Get vouches →"
+                    CTA that switches to the friends tab and scrolls to the
+                    references area (uses the B2 deep-link wiring). Visitor
+                    with 0 references sees nothing (silent). Owner or visitor
+                    with N>0 sees "Trusted by N" and tapping anchors to
+                    PublicReferencesSection (visitor) or the trust subarea
+                    (owner). */}
+                <TrustBadge
+                  count={profile.accepted_reference_count ?? 0}
+                  isOwner={!readOnly}
+                  onClick={() => {
+                    if (!readOnly) {
+                      // Owner — go to friends tab, scroll references into view.
+                      setActiveTab('friends')
+                      const next = new URLSearchParams(searchParams)
+                      next.set('tab', 'friends')
+                      next.set('section', 'references')
+                      setSearchParams(next, { replace: false })
+                    } else {
+                      // Visitor — anchor scroll to public references.
+                      document.getElementById('public-references')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                    }
+                  }}
+                />
                 {profile.open_to_play && <AvailabilityPill variant="play" />}
                 <SocialLinksDisplay
-                  links={profile.social_links as SocialLinks | null | undefined} 
-                  iconSize="sm" 
+                  links={profile.social_links as SocialLinks | null | undefined}
+                  iconSize="sm"
                 />
               </div>
             </div>
@@ -656,7 +681,11 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
                 )}
 
                 {readOnly && (
-                  <PublicReferencesSection profileId={profile.id} profileName={profile.full_name ?? profile.username ?? null} />
+                  // Phase 4 References UX Plan #1.6 — anchor for the
+                  // visitor-side TrustBadge scroll target.
+                  <div id="public-references" className="scroll-mt-[88px]">
+                    <PublicReferencesSection profileId={profile.id} profileName={profile.full_name ?? profile.username ?? null} />
+                  </div>
                 )}
 
                 {/* Highlight Video - placed early for immediate visual context */}

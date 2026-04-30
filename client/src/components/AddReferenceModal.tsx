@@ -95,9 +95,15 @@ interface AddReferenceModalProps {
   remainingSlots: number
   /** Role of the logged-in user requesting the reference */
   requesterRole?: string | null
+  /** Phase 4 References UX Plan #1.2 — when set, the modal opens with this
+   *  friend already selected (skips the search dropdown step). Drives the
+   *  "Ask to vouch" CTA on individual friend rows in FriendsTab. The id
+   *  must match a friend in the `friends` prop; if not present, the modal
+   *  silently falls back to the dropdown flow. */
+  preselectedFriendId?: string | null
 }
 
-export default function AddReferenceModal({ isOpen, onClose, friends, onSubmit, isSubmitting, remainingSlots, requesterRole }: AddReferenceModalProps) {
+export default function AddReferenceModal({ isOpen, onClose, friends, onSubmit, isSubmitting, remainingSlots, requesterRole, preselectedFriendId }: AddReferenceModalProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedFriendId, setSelectedFriendId] = useState<string>('')
   const [relationshipType, setRelationshipType] = useState('')
@@ -204,6 +210,23 @@ export default function AddReferenceModal({ isOpen, onClose, friends, onSubmit, 
       searchInputRef.current.focus()
     }
   }, [isDropdownOpen])
+
+  // Phase 4 References UX Plan #1.2 — when a parent component (e.g. the
+  // "Ask to vouch" CTA on a friend row) signals a preselected friend,
+  // mirror that into local state on every open. Only honored if the friend
+  // is actually present in the friends list (defensive fallback to the
+  // dropdown flow when the id doesn't match).
+  useEffect(() => {
+    if (!isOpen) return
+    if (!preselectedFriendId) return
+    const exists = friends.some((f) => f.id === preselectedFriendId)
+    if (exists) {
+      setSelectedFriendId(preselectedFriendId)
+      setRelationshipType('')
+      setSearchTerm('')
+      setIsDropdownOpen(false)
+    }
+  }, [isOpen, preselectedFriendId, friends])
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose}>

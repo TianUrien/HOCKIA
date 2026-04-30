@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { formatDistanceToNow } from 'date-fns'
-import { Users, UserPlus, Check, X, Loader2, UserMinus } from 'lucide-react'
+import { Users, UserPlus, Check, X, Loader2, UserMinus, ShieldCheck } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import type { Database } from '@/lib/database.types'
@@ -49,6 +49,19 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole }:
   const [searchParams] = useSearchParams()
   const requestedSection = searchParams.get('section')
   const trustedReferencesRef = useRef<HTMLDivElement | null>(null)
+
+  // Phase 4 References UX Plan #1.4 — per-friend "Ask to vouch" CTA. The
+  // friend-row button sets this state to the target friend.id; the
+  // TrustedReferencesSection mounted above watches this prop, opens its
+  // AddReferenceModal pre-selected to that friend, then calls back via
+  // onAddReferenceConsumed so we clear the signal (so the SAME friend can be
+  // asked again after a withdraw without state-drift confusion).
+  const [askVouchFor, setAskVouchFor] = useState<string | null>(null)
+  // References can only be COLLECTED by player / coach / umpire (per
+  // request_reference RPC). Hide the friend-row CTA for clubs and brands —
+  // they can still be GIVEN references, but can't ask for them.
+  const canAskForReferences =
+    isOwner && (profileRole === 'player' || profileRole === 'coach' || profileRole === 'umpire')
 
   const fetchConnections = useCallback(async () => {
     setLoading(true)
@@ -233,17 +246,37 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole }:
           {connection.accepted_at && <span>Friends since {humanizeDate(connection.accepted_at)}</span>}
           {!connection.accepted_at && <span>Requested {humanizeDate(connection.created_at)}</span>}
 
-          {showActions && connection.id && (
-            <button
-              type="button"
-              disabled={isActionLoading(connection.id)}
-              onClick={() => void updateFriendship(connection.id, 'cancelled', 'Friend removed.')}
-              className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-            >
-              {isActionLoading(connection.id) ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UserMinus className="h-3.5 w-3.5" />}
-              Remove
-            </button>
-          )}
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Phase 4 References UX Plan #1.4 — per-friend "Ask to vouch" CTA.
+                Only renders for accepted-friendship rows on owner-mode views,
+                and only when the owner's role can collect references at all
+                (player / coach / umpire). The button signals up to the parent
+                via askVouchFor; the TrustedReferencesSection mounted above
+                watches the same state and opens its modal pre-selected. */}
+            {canAskForReferences && showActions && connection.friend_id && connection.accepted_at && (
+              <button
+                type="button"
+                onClick={() => setAskVouchFor(connection.friend_id)}
+                className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors"
+                title={`Ask ${connection.friend?.full_name ?? 'them'} to vouch for you on HOCKIA`}
+              >
+                <ShieldCheck className="h-3.5 w-3.5" />
+                Ask to vouch
+              </button>
+            )}
+
+            {showActions && connection.id && (
+              <button
+                type="button"
+                disabled={isActionLoading(connection.id)}
+                onClick={() => void updateFriendship(connection.id, 'cancelled', 'Friend removed.')}
+                className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              >
+                {isActionLoading(connection.id) ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UserMinus className="h-3.5 w-3.5" />}
+                Remove
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -354,6 +387,8 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole }:
             friendOptions={referenceFriendOptions}
             profileRole={profileRole}
             readOnly={readOnly}
+            openAddReferenceForFriendId={askVouchFor}
+            onAddReferenceConsumed={() => setAskVouchFor(null)}
           />
         </div>
       )}

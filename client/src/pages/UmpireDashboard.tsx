@@ -41,6 +41,7 @@ import {
   RoleBadge,
   ScrollableTabs,
   TierBadge,
+  TrustBadge,
   VerifiedBadge,
   DualNationalityDisplay,
 } from '@/components'
@@ -307,6 +308,25 @@ export default function UmpireDashboard({
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <RoleBadge role="umpire" />
                 {!readOnly && tier && <TierBadge tier={tier} />}
+                {/* Phase 4 References UX Plan #1.5 — TrustBadge in umpire
+                    header. Tap navigates to friends tab + scrolls to refs
+                    (owner) or anchors to public-references (visitor). */}
+                <TrustBadge
+                  count={profile.accepted_reference_count ?? 0}
+                  isOwner={!readOnly}
+                  size="sm"
+                  onClick={() => {
+                    if (!readOnly) {
+                      setActiveTab('friends')
+                      const next = new URLSearchParams(searchParams)
+                      next.set('tab', 'friends')
+                      next.set('section', 'references')
+                      setSearchParams(next, { replace: false })
+                    } else {
+                      document.getElementById('public-references')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                    }
+                  }}
+                />
                 {profile.umpire_level && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800">
                     <Shield className="w-3 h-3" />
@@ -458,10 +478,13 @@ export default function UmpireDashboard({
                     credentials + peer vouching is the umpire's primary trust
                     spine. Matches Player's PublicReferencesSection placement. */}
                 {readOnly && (
-                  <PublicReferencesSection
-                    profileId={profile.id}
-                    profileName={profile.full_name ?? null}
-                  />
+                  // Phase 4 References UX Plan #1.6 — anchor for visitor TrustBadge scroll.
+                  <div id="public-references" className="scroll-mt-[88px]">
+                    <PublicReferencesSection
+                      profileId={profile.id}
+                      profileName={profile.full_name ?? null}
+                    />
+                  </div>
                 )}
 
                 {hasBio && (

@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { ArrowLeft, MapPin, Calendar, Edit2, Eye, MessageCircle, Landmark, Mail, Plus } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
-import { Avatar, DashboardMenu, EditProfileModal, JourneyTab, CommentsTab, FriendsTab, FriendshipButton, NextStepCard, FreshnessCard, SearchAppearancesCard, PublicReferencesSection, PublicViewBanner, RoleBadge, ScrollableTabs, DualNationalityDisplay, AvailabilityPill, TierBadge, VerifiedBadge, CategoryConfirmationBanner } from '@/components'
+import { Avatar, DashboardMenu, EditProfileModal, JourneyTab, CommentsTab, FriendsTab, FriendshipButton, NextStepCard, FreshnessCard, SearchAppearancesCard, PublicReferencesSection, PublicViewBanner, RoleBadge, ScrollableTabs, DualNationalityDisplay, AvailabilityPill, TierBadge, TrustBadge, VerifiedBadge, CategoryConfirmationBanner } from '@/components'
 import { calculateTier } from '@/lib/profileTier'
 import { useProfileFreshness } from '@/hooks/useProfileFreshness'
 import type { FreshnessNudge } from '@/lib/profileFreshness'
@@ -324,6 +324,23 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
                     {!readOnly && !strengthLoading && (
                       <TierBadge tier={calculateTier(percentage)} />
                     )}
+                    {/* Phase 4 References UX Plan #1.5 — TrustBadge in coach
+                        header. Same click semantics as PlayerDashboard. */}
+                    <TrustBadge
+                      count={(profile as Partial<Profile>).accepted_reference_count ?? 0}
+                      isOwner={!readOnly}
+                      onClick={() => {
+                        if (!readOnly) {
+                          setActiveTab('friends')
+                          const next = new URLSearchParams(searchParams)
+                          next.set('tab', 'friends')
+                          next.set('section', 'references')
+                          setSearchParams(next, { replace: false })
+                        } else {
+                          document.getElementById('public-references')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                        }
+                      }}
+                    />
                     {(profile as Partial<Profile>).coach_specialization && (
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-50 text-teal-700">
                         {getSpecializationLabel(
@@ -333,9 +350,9 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
                       </span>
                     )}
                     {profile.open_to_coach && <AvailabilityPill variant="coach" />}
-                    <SocialLinksDisplay 
-                      links={profile.social_links as SocialLinks | null | undefined} 
-                      iconSize="sm" 
+                    <SocialLinksDisplay
+                      links={profile.social_links as SocialLinks | null | undefined}
+                      iconSize="sm"
                     />
                   </div>
                 </div>
@@ -597,7 +614,10 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
                 )}
 
                 {readOnly && (
-                  <PublicReferencesSection profileId={profile.id} profileName={profile.full_name} />
+                  // Phase 4 References UX Plan #1.6 — anchor for visitor TrustBadge scroll.
+                  <div id="public-references" className="scroll-mt-[88px]">
+                    <PublicReferencesSection profileId={profile.id} profileName={profile.full_name} />
+                  </div>
                 )}
 
                 <section className="space-y-4">
