@@ -9,6 +9,11 @@ import type { ReferenceFriendOption } from './AddReferenceModal'
 interface RecentlyConnectedCardProps {
   /** Accepted-friendship options from useReferenceFriendOptions / FriendsTab. */
   friendOptions: ReferenceFriendOption[]
+  /** Owner profile id. Used to scope the localStorage dismissal key so a
+   *  shared browser does not leak User A's dismissals onto User B. Also
+   *  used for a defence-in-depth filter so the owner is never offered
+   *  themselves as a vouch candidate (data corruption case). */
+  ownerProfileId: string
   /** Friend ids excluded from the nudge — typically those already in pending
    *  or accepted references for this owner. */
   excludeIds?: Set<string>
@@ -29,14 +34,16 @@ const DISMISS_KEY_PREFIX = 'hockia-recently-connected-dismiss:'
 const DISMISS_COOLDOWN_MS = 14 * 24 * 60 * 60 * 1000
 const DEFAULT_WINDOW_DAYS = 14
 
-function getDismissKey(friendId: string): string {
-  return `${DISMISS_KEY_PREFIX}${friendId}`
+function getDismissKey(ownerId: string, friendId: string): string {
+  // Scope the key by owner — otherwise dismissals leak across sign-ins on
+  // shared browsers. Format: hockia-recently-connected-dismiss:<owner>:<friend>
+  return `${DISMISS_KEY_PREFIX}${ownerId}:${friendId}`
 }
 
-function isDismissed(friendId: string, now: number = Date.now()): boolean {
+function isDismissed(ownerId: string, friendId: string, now: number = Date.now()): boolean {
   try {
     if (typeof window === 'undefined' || !window.localStorage) return false
-    const raw = window.localStorage.getItem(getDismissKey(friendId))
+    const raw = window.localStorage.getItem(getDismissKey(ownerId, friendId))
     if (!raw) return false
     const ts = Date.parse(raw)
     if (Number.isNaN(ts)) return false
@@ -46,10 +53,10 @@ function isDismissed(friendId: string, now: number = Date.now()): boolean {
   }
 }
 
-function recordDismiss(friendId: string): void {
+function recordDismiss(ownerId: string, friendId: string): void {
   try {
     if (typeof window === 'undefined' || !window.localStorage) return
-    window.localStorage.setItem(getDismissKey(friendId), new Date().toISOString())
+    window.localStorage.setItem(getDismissKey(ownerId, friendId), new Date().toISOString())
   } catch (err) {
     logger.error('[RecentlyConnectedCard] failed to persist dismissal', err)
   }
@@ -75,31 +82,39 @@ function recordDismiss(friendId: string): void {
  */
 export default function RecentlyConnectedCard({
   friendOptions,
+  ownerProfileId,
   excludeIds,
   acceptedReferenceCount,
   windowDays = DEFAULT_WINDOW_DAYS,
   onAsk,
 }: RecentlyConnectedCardProps) {
   // Track which friend ids have been dismissed in this session so the card
-  // visibly drops off when the user taps the X without waiting for a refetch.
+  // visibly drops off when the user taps the X (or Ask) without waiting for
+  // a refetch. Reset only when the owner identity changes — resetting on
+  // every friendOptions reference would clobber a just-dismissed-this-render
+  // friend the moment useReferenceFriendOptions re-fetches.
   const [sessionDismissed, setSessionDismissed] = useState<Set<string>>(new Set())
 
-  // Recompute dismiss state on every friend list change so re-mounting the
-  // dashboard re-reads localStorage.
   useEffect(() => {
     setSessionDismissed(new Set())
-  }, [friendOptions])
+  }, [ownerProfileId])
 
   const candidate = useMemo(() => {
+    if (!ownerProfileId) return null
     if (acceptedReferenceCount > 0) return null
     const cutoff = Date.now() - windowDays * 24 * 60 * 60 * 1000
 
     const eligible = friendOptions
       .filter((f) => {
         if (!f.acceptedAt) return false
+        // Defence-in-depth: never offer the owner themselves as a vouch
+        // candidate. profile_friend_edges should never produce self-pairs
+        // (CHECK constraint on profile_friendships), but if data corruption
+        // ever creates one, this prevents a "Ask Yourself to vouch" card.
+        if (f.id === ownerProfileId) return false
         if (excludeIds?.has(f.id)) return false
         if (sessionDismissed.has(f.id)) return false
-        if (isDismissed(f.id)) return false
+        if (isDismissed(ownerProfileId, f.id)) return false
         const ts = Date.parse(f.acceptedAt)
         if (Number.isNaN(ts)) return false
         return ts >= cutoff
@@ -111,18 +126,36 @@ export default function RecentlyConnectedCard({
       })
 
     return eligible[0] ?? null
-  }, [friendOptions, excludeIds, acceptedReferenceCount, windowDays, sessionDismissed])
+  }, [friendOptions, ownerProfileId, excludeIds, acceptedReferenceCount, windowDays, sessionDismissed])
 
   if (!candidate) return null
 
   const handleDismiss = () => {
-    recordDismiss(candidate.id)
+    recordDismiss(ownerProfileId, candidate.id)
     trackReferenceNudgeDismiss()
     setSessionDismissed((prev) => {
       const next = new Set(prev)
       next.add(candidate.id)
       return next
     })
+  }
+
+  const handleAsk = () => {
+    // Mark this friend dismissed at the moment we hand off to the modal flow.
+    // The dashboard's useTrustedReferences instance does NOT refetch when the
+    // user submits the request inside FriendsTab (it's a separate hook
+    // instance), so without this dismissal the same friend would re-appear in
+    // the nudge after the user navigates back to the Profile tab — and a
+    // double-tap would attempt a duplicate request. The 14-day cooldown gives
+    // the friend time to accept/decline before this candidate could resurface.
+    recordDismiss(ownerProfileId, candidate.id)
+    setSessionDismissed((prev) => {
+      const next = new Set(prev)
+      next.add(candidate.id)
+      return next
+    })
+    trackReferenceModalOpen('recently_connected')
+    onAsk(candidate.id)
   }
 
   const firstName = candidate.fullName?.split(' ')[0] ?? candidate.fullName ?? 'them'
@@ -172,10 +205,7 @@ export default function RecentlyConnectedCard({
             </div>
             <button
               type="button"
-              onClick={() => {
-                trackReferenceModalOpen('recently_connected')
-                onAsk(candidate.id)
-              }}
+              onClick={handleAsk}
               className="inline-flex flex-shrink-0 items-center gap-1 rounded-full bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-1"
             >
               Ask to vouch

@@ -23,7 +23,7 @@
  * entry_type extension on umpire_appointments.
  */
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, MapPin, Calendar, Shield, Flag, Edit2, Eye, Languages as LanguagesIcon, Activity, MessageCircle, Award } from 'lucide-react'
 import Header from '@/components/Header'
@@ -182,12 +182,20 @@ export default function UmpireDashboard({
   const tier = profile ? calculateTier(percentage) : null
 
   // Phase 3 — RecentlyConnectedCard data (owner-only).
-  const { friendOptions: nudgeFriendOptions } = useReferenceFriendOptions(
-    readOnly ? null : profile?.id ?? null,
-  )
+  const nudgeOwnerId = readOnly ? null : profile?.id ?? null
+  const { friendOptions: nudgeFriendOptions } = useReferenceFriendOptions(nudgeOwnerId)
   const { acceptedReferences: nudgeAccepted, pendingReferences: nudgePending } = useTrustedReferences(
-    readOnly ? '' : profile?.id ?? '',
+    nudgeOwnerId ?? '',
   )
+  const nudgeExcludeIds = useMemo(
+    () =>
+      new Set([
+        ...nudgeAccepted.map((r) => r.profile?.id).filter((id): id is string => Boolean(id)),
+        ...nudgePending.map((r) => r.profile?.id).filter((id): id is string => Boolean(id)),
+      ]),
+    [nudgeAccepted, nudgePending],
+  )
+  const nudgeAcceptedFloor = nudgeAccepted.length + nudgePending.length
 
   useEffect(() => {
     document.title = profile?.full_name
@@ -405,15 +413,13 @@ export default function UmpireDashboard({
         </div>
 
         {/* Phase 4 References UX Plan — Phase 3.1 (post-friendship prompt). */}
-        {!readOnly && (
+        {nudgeOwnerId && (
           <div className="mt-6">
             <RecentlyConnectedCard
               friendOptions={nudgeFriendOptions}
-              excludeIds={new Set([
-                ...nudgeAccepted.map((r) => r.profile?.id).filter((id): id is string => Boolean(id)),
-                ...nudgePending.map((r) => r.profile?.id).filter((id): id is string => Boolean(id)),
-              ])}
-              acceptedReferenceCount={nudgeAccepted.length}
+              ownerProfileId={nudgeOwnerId}
+              excludeIds={nudgeExcludeIds}
+              acceptedReferenceCount={nudgeAcceptedFloor}
               onAsk={(friendId) => {
                 setActiveTab('friends')
                 const next = new URLSearchParams(searchParams)

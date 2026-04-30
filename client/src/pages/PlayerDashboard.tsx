@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useMemo, useState, useRef } from 'react'
 import { ArrowLeft, MapPin, Calendar, Edit2, Eye, MessageCircle, Landmark, Mail, Award } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
@@ -105,6 +105,23 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
   const { acceptedReferences: nudgeAccepted, pendingReferences: nudgePending } = useTrustedReferences(
     readOnly ? '' : profile?.id ?? '',
   )
+  // Stable Set identity so RecentlyConnectedCard's useMemo doesn't recompute
+  // on every parent render. Memo deps are the raw arrays whose identity only
+  // changes after a refetch.
+  const nudgeExcludeIds = useMemo(
+    () =>
+      new Set([
+        ...nudgeAccepted.map((r) => r.profile?.id).filter((id): id is string => Boolean(id)),
+        ...nudgePending.map((r) => r.profile?.id).filter((id): id is string => Boolean(id)),
+      ]),
+    [nudgeAccepted, nudgePending],
+  )
+  // Treat pending requests like accepted ones for the discovery-nudge
+  // visibility check. A user with 0 accepted but several pending references
+  // has already discovered the feature; the nudge would just push them to
+  // create more requests they're already at the cap for (server rejects at
+  // MAX_REFERENCES). nudgeFloor collapses both into one "has activity?" gate.
+  const nudgeAcceptedFloor = nudgeAccepted.length + nudgePending.length
   const prevPercentageRef = useRef<number | null>(null)
   const clearCommentNotifications = useNotificationStore((state) => state.clearCommentNotifications)
   const commentHighlightVersion = useNotificationStore((state) => state.commentHighlightVersion)
@@ -529,25 +546,25 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
             {/* Phase 4 References UX Plan — Phase 3.1 (post-friendship prompt).
                 Surfaces a single recent connection as a vouch candidate on the
                 Profile tab, the surface owners actually visit. Hidden once the
-                owner has any accepted reference. */}
-            <div className="mt-3">
-              <RecentlyConnectedCard
-                friendOptions={nudgeFriendOptions}
-                excludeIds={new Set([
-                  ...nudgeAccepted.map((r) => r.profile?.id).filter((id): id is string => Boolean(id)),
-                  ...nudgePending.map((r) => r.profile?.id).filter((id): id is string => Boolean(id)),
-                ])}
-                acceptedReferenceCount={nudgeAccepted.length}
-                onAsk={(friendId) => {
-                  setActiveTab('friends')
-                  const next = new URLSearchParams(searchParams)
-                  next.set('tab', 'friends')
-                  next.set('section', 'references')
-                  next.set('ask', friendId)
-                  setSearchParams(next, { replace: false })
-                }}
-              />
-            </div>
+                owner has any accepted OR pending reference. */}
+            {profile?.id && (
+              <div className="mt-3">
+                <RecentlyConnectedCard
+                  friendOptions={nudgeFriendOptions}
+                  ownerProfileId={profile.id}
+                  excludeIds={nudgeExcludeIds}
+                  acceptedReferenceCount={nudgeAcceptedFloor}
+                  onAsk={(friendId) => {
+                    setActiveTab('friends')
+                    const next = new URLSearchParams(searchParams)
+                    next.set('tab', 'friends')
+                    next.set('section', 'references')
+                    next.set('ask', friendId)
+                    setSearchParams(next, { replace: false })
+                  }}
+                />
+              </div>
+            )}
             {searchAppearances && searchAppearances.total > 0 && (
               <div className="mt-3">
                 <SearchAppearancesCard
