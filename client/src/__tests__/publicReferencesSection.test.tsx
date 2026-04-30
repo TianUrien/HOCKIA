@@ -113,7 +113,14 @@ describe('PublicReferencesSection', () => {
   it('shows the empty state when there are no references', () => {
     renderSection()
 
-    expect(screen.getByText("Jamie hasn't published any trusted references yet.")).toBeInTheDocument()
+    // Phase 4 References UX Plan #2.2 — empty-state rewrite. Header line
+    // is "No vouches yet" + an educational subline that teaches what
+    // trust references are on HOCKIA. Visitor walks away with a clearer
+    // mental model even when the profile has no references.
+    expect(screen.getByText('No vouches yet')).toBeInTheDocument()
+    expect(
+      screen.getByText(/Jamie hasn't received any trusted references yet/),
+    ).toBeInTheDocument()
   })
 
   it('requires sign-in before messaging a reference', async () => {
