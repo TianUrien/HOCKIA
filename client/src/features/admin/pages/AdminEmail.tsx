@@ -342,6 +342,9 @@ export function AdminEmail() {
           coach: 'bg-teal-50 text-teal-700',
           club: 'bg-orange-50 text-orange-700',
           brand: 'bg-rose-50 text-rose-700',
+          // Umpire was missing — entire role rendered gray on the admin
+          // grid. Match the amber/gold tone used by RoleBadge for umpires.
+          umpire: 'bg-yellow-50 text-yellow-800',
         }
         return (
           <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full capitalize ${roleStyles[row.role] || 'bg-gray-100 text-gray-600'}`}>

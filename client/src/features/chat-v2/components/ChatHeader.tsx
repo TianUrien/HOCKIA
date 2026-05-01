@@ -87,6 +87,7 @@ export function ChatHeader({ participant, onBack, profilePath, isMobile, immersi
           initials={initials}
           className="h-10 w-10 text-base ring-2 ring-gray-100"
           enablePreview={false}
+          role={participant?.role}
         />
       )}
       {headerContents}

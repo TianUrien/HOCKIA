@@ -20,7 +20,12 @@ interface SearchResult {
   id: string
   full_name: string
   avatar_url: string | null
-  role: 'player' | 'coach' | 'club' | 'umpire'
+  // Brand was excluded historically when DMs were profile-only; the
+  // messaging_eligible migration enabled brand DMs server-side, but this
+  // type union was never widened. Search RPC at line ~92 has no role
+  // filter, so brand profiles surface in results — the previous union
+  // forced a cast that lost the role info.
+  role: 'player' | 'coach' | 'club' | 'umpire' | 'brand'
   base_location: string | null
   current_club: string | null
 }
@@ -61,7 +66,7 @@ export default function NewMessageModal({ isOpen, onClose }: NewMessageModalProp
             id: conv.other_participant_id,
             full_name: conv.other_participant_name,
             avatar_url: conv.other_participant_avatar,
-            role: conv.other_participant_role as 'player' | 'coach' | 'club' | 'umpire',
+            role: conv.other_participant_role as 'player' | 'coach' | 'club' | 'umpire' | 'brand',
             base_location: null,
             current_club: null
           }))

@@ -158,4 +158,20 @@ describe('Avatar — role-placeholder fallback', () => {
     const stop = container.querySelector('linearGradient stop')
     expect(stop?.getAttribute('stop-color')).toBe('#DBEAFE') // player bgFrom
   })
+
+  it('all 5 role palettes have a unique fill colour (deuteranopia separation guard)', () => {
+    // Locks the palette so a future refactor can't accidentally make two
+    // roles render with the same silhouette colour. Player blue and coach
+    // green are the closest pair on the deuteranopia axis but still
+    // distinguishable; this test fails fast if anyone collapses them.
+    const fills = new Set<string>()
+    for (const role of ['player', 'coach', 'club', 'brand', 'umpire'] as const) {
+      const { container, unmount } = render(<RolePlaceholder role={role} label="x" />)
+      const path = container.querySelector('path')
+      const fill = path?.getAttribute('fill') ?? ''
+      fills.add(fill)
+      unmount()
+    }
+    expect(fills.size).toBe(5)
+  })
 })
