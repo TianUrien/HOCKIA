@@ -175,7 +175,7 @@ export default function VacancyDetailView({
                   {displayClubLogo ? (
                     <StorageImage src={displayClubLogo} alt={displayClubName} className="w-20 h-20 rounded-xl object-cover shadow-sm" />
                   ) : (
-                    <Avatar initials={displayClubName.split(' ').map(n => n[0]).join('').slice(0, 2)} size="xl" className="rounded-xl" />
+                    <Avatar initials={displayClubName.split(' ').map(n => n[0]).join('').slice(0, 2)} size="xl" className="rounded-xl" role="club" />
                   )}
                   <h3 className="mt-3 text-lg font-bold text-gray-900">{displayClubName}</h3>
                 </button>
@@ -189,7 +189,7 @@ export default function VacancyDetailView({
               </div>
               <div className="relative flex flex-col items-center text-center">
                 <button type="button" onClick={handleClubClick} className="flex flex-col items-center hover:opacity-80 transition-opacity">
-                  <Avatar src={clubLogo} initials={clubName.split(' ').map(n => n[0]).join('').slice(0, 2)} size="lg" />
+                  <Avatar src={clubLogo} initials={clubName.split(' ').map(n => n[0]).join('').slice(0, 2)} size="lg" role="club" />
                   <div className="mt-2 flex items-center gap-1.5">
                     <span className="text-lg font-bold text-gray-900">{clubName}</span>
                     <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide bg-[#F0FDFA] text-[#0D9488] border border-teal-100">Coach</span>

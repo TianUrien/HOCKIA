@@ -121,6 +121,7 @@ export default function ClubLinkPrompt() {
               alt={club.club_name}
               initials={club.club_name.charAt(0)}
               size="sm"
+              role="club"
             />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900 truncate">

@@ -265,6 +265,7 @@ export default function AddReferenceModal({ isOpen, onClose, friends, onSubmit, 
                     initials={selectedFriend.fullName.split(' ').map((n) => n[0]).join('').slice(0, 2) || '?'}
                     alt={selectedFriend.fullName}
                     size="sm"
+                    role={selectedFriend.role}
                   />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold text-gray-900">{selectedFriend.fullName}</p>
@@ -335,6 +336,7 @@ export default function AddReferenceModal({ isOpen, onClose, friends, onSubmit, 
                                 initials={friend.fullName.split(' ').map((n) => n[0]).join('').slice(0, 2) || '?'}
                                 alt={friend.fullName}
                                 size="sm"
+                                role={friend.role}
                               />
                               <div className="min-w-0 flex-1">
                                 <p className="truncate text-sm font-semibold text-gray-900">{friend.fullName}</p>

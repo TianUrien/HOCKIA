@@ -216,6 +216,7 @@ export default function QuestionDetailPage() {
                 alt={question.author.full_name || 'User'}
                 size="md"
                 className="w-10 h-10"
+                role={question.author.role}
               />
             </Link>
             <div className="flex-1 min-w-0">
@@ -326,6 +327,7 @@ export default function QuestionDetailPage() {
                               alt={answer.author.full_name || 'User'}
                               size="sm"
                               className="w-8 h-8"
+                              role={answer.author.role}
                             />
                           </Link>
                           <div className="flex-1 min-w-0">

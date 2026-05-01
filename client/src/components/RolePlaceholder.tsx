@@ -55,7 +55,13 @@ interface RolePlaceholderProps {
 export default function RolePlaceholder({ role, className, label }: RolePlaceholderProps) {
   const id = useId()
   const gradientId = `role-placeholder-bg-${id}`
-  const palette = PALETTES[role]
+  // Defensive: if a runtime-corrupted role value somehow bypasses the TS
+  // narrowing (stale cached query, future role added without updating
+  // the palette, etc.), fall back to the player palette so the SVG still
+  // renders something instead of empty stops/transparent fills. Logged
+  // via the type guard at every entry point in production callers; this
+  // is the last line of defence at render time.
+  const palette = PALETTES[role] ?? PALETTES.player
   const accessibleName = label ?? `${role.charAt(0).toUpperCase() + role.slice(1)} profile photo placeholder`
   const isDecorative = label === ''
   const wrapperClass = cn('block h-full w-full', className)

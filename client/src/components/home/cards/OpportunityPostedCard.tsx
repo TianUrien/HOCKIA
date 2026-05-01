@@ -106,6 +106,7 @@ export function OpportunityPostedCard({ item }: OpportunityPostedCardProps) {
                 initials={item.club_name?.slice(0, 2) || '?'}
                 size="sm"
                 className="flex-shrink-0"
+                role={item.publisher_role}
               />
               <span className="text-sm font-medium text-gray-700 group-hover:text-[#8026FA] transition-colors">
                 {item.club_name}

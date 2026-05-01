@@ -200,6 +200,7 @@ export default function OpportunityCard({
                     initials={displayClubName.split(' ').map(n => n[0]).join('').slice(0, 2)}
                     size="xl"
                     className="rounded-xl"
+                    role="club"
                   />
                 )}
                 <h3 className="mt-3 text-base font-bold text-gray-900 group-hover:text-[#8026FA] transition-colors">
@@ -240,6 +241,7 @@ export default function OpportunityCard({
                 src={clubLogo}
                 initials={clubName.split(' ').map(n => n[0]).join('').slice(0, 2)}
                 size="lg"
+                role="club"
               />
               <div className="mt-2 flex items-center gap-1.5">
                 <span className="text-base font-bold text-gray-900 group-hover:text-[#8026FA] transition-colors">
@@ -312,6 +314,7 @@ export default function OpportunityCard({
                 src={clubLogo}
                 initials={clubName.split(' ').map(n => n[0]).join('').slice(0, 2)}
                 size="lg"
+                role="club"
               />
               <div className="mt-2 flex items-center gap-1.5">
                 <span className="text-base font-bold text-gray-900 group-hover:text-[#8026FA] transition-colors">

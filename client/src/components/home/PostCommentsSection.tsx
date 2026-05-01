@@ -142,6 +142,7 @@ export function PostCommentsSection({
             initials={comment.author_name?.slice(0, 2) || '?'}
             size="sm"
             className="flex-shrink-0 mt-0.5"
+            role={comment.author_role}
           />
           <div className="flex-1 min-w-0">
             <div className="bg-gray-50 rounded-lg px-3 py-2">
@@ -203,6 +204,7 @@ export function PostCommentsSection({
             initials={profile?.full_name?.slice(0, 2) || '?'}
             size="sm"
             className="flex-shrink-0"
+            role={profile?.role}
           />
           <div className="flex-1 flex items-center gap-2 bg-gray-50 rounded-full px-3 py-1.5">
             <input

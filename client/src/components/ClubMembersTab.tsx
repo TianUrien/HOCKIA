@@ -200,6 +200,7 @@ export default function ClubMembersTab({ profileId }: ClubMembersTabProps) {
                 alt={member.full_name}
                 initials={member.full_name ? member.full_name.split(' ').map(n => n[0]).join('') : '?'}
                 size="md"
+                role={member.role}
               />
 
               <div className="flex-1 min-w-0">

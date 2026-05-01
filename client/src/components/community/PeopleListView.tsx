@@ -649,6 +649,7 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
                   alt={member.full_name}
                   initials={member.full_name ? member.full_name.split(' ').map(n => n[0]).join('') : '?'}
                   size="sm"
+                  role={member.role}
                 />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">

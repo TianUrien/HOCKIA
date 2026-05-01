@@ -48,6 +48,7 @@ function CompactPersonRow({ result, onSelect }: { result: SearchPersonResult; on
         src={result.avatar_url}
         initials={result.full_name?.slice(0, 2) || '?'}
         size="sm"
+        role={result.role}
       />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
@@ -116,6 +117,7 @@ function CompactPostRow({ result, onSelect }: { result: SearchPostResult; onSele
         src={result.author_avatar}
         initials={result.author_name?.slice(0, 2) || '?'}
         size="sm"
+        role={result.author_role}
       />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">

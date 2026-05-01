@@ -95,6 +95,7 @@ export default function BlockedAccountsList() {
               src={p?.avatar_url}
               initials={name.slice(0, 2)}
               size="sm"
+              role={p?.role}
             />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900 truncate">{name}</p>

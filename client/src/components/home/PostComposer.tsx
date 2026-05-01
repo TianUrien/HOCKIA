@@ -24,6 +24,7 @@ export function PostComposer({ onPostCreated }: PostComposerProps) {
             initials={profile.full_name?.slice(0, 2) || '?'}
             size="md"
             className="flex-shrink-0"
+            role={profile.role}
           />
           <button
             type="button"

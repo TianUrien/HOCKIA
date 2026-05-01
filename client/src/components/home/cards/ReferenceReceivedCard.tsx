@@ -44,6 +44,7 @@ export function ReferenceReceivedCard({ item }: ReferenceReceivedCardProps) {
               initials={item.referee_name?.slice(0, 2) || '?'}
               size="md"
               className="flex-shrink-0"
+              role={item.referee_role}
             />
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
@@ -61,6 +62,7 @@ export function ReferenceReceivedCard({ item }: ReferenceReceivedCardProps) {
               initials={item.referee_name?.slice(0, 2) || '?'}
               size="md"
               className="flex-shrink-0"
+              role={item.referee_role}
             />
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
@@ -89,6 +91,7 @@ export function ReferenceReceivedCard({ item }: ReferenceReceivedCardProps) {
             initials={item.full_name?.slice(0, 2) || '?'}
             size="md"
             className="flex-shrink-0"
+            role={item.role}
           />
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">

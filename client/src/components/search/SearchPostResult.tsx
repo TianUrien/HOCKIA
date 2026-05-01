@@ -31,6 +31,7 @@ export function SearchPostResult({ result }: SearchPostResultProps) {
             src={result.author_avatar}
             initials={result.author_name?.slice(0, 2) || '?'}
             size="sm"
+            role={result.author_role}
           />
         </Link>
         <div className="flex-1 min-w-0">

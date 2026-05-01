@@ -121,6 +121,7 @@ export function UserPostCard({ item, onLikeUpdate, onDelete }: UserPostCardProps
                 src={item.author_avatar}
                 initials={item.author_name?.slice(0, 2) || '?'}
                 size="md"
+                role={item.author_role}
               />
             </Link>
           ) : (
@@ -129,6 +130,7 @@ export function UserPostCard({ item, onLikeUpdate, onDelete }: UserPostCardProps
                 src={item.author_avatar}
                 initials={item.author_name?.slice(0, 2) || '?'}
                 size="md"
+                role={item.author_role}
               />
             </div>
           )}

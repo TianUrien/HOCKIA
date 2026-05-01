@@ -198,6 +198,7 @@ export function AddAmbassadorModal({ isOpen, onClose, onAdd, existingPlayerIds }
                       initials={player.full_name?.split(' ').map((n) => n[0]).join('').slice(0, 2) || '?'}
                       alt={player.full_name}
                       size="sm"
+                      role="player"
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">

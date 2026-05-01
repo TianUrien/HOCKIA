@@ -447,6 +447,7 @@ export default function BrandDashboard() {
               alt={brand.name ?? undefined}
               enablePreview
               previewTitle={brand.name ?? undefined}
+              role="brand"
             />
 
             <div className="flex-1">
@@ -894,6 +895,7 @@ export default function BrandDashboard() {
                                   src={ambassador.avatar_url}
                                   initials={ambassador.full_name?.slice(0, 2) || '?'}
                                   size="sm"
+                                  role="player"
                                 />
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-2">
@@ -951,6 +953,7 @@ export default function BrandDashboard() {
                                   src={ambassador.avatar_url}
                                   initials={ambassador.full_name?.slice(0, 2) || '?'}
                                   size="sm"
+                                  role="player"
                                 />
                                 <div className="flex-1 min-w-0">
                                   <p className="text-sm font-semibold text-gray-900 truncate">

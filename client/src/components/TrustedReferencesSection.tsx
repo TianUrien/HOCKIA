@@ -390,6 +390,7 @@ export default function TrustedReferencesSection({
                   initials={pending.profile?.fullName?.slice(0, 2) ?? '?'}
                   alt={pending.profile?.fullName ?? 'Reference'}
                   size="sm"
+                  role={pending.profile?.role}
                 />
                 <div className="flex-1">
                   <p className="text-sm font-semibold text-gray-900">{pending.profile?.fullName ?? 'HOCKIA Member'}</p>
@@ -609,6 +610,7 @@ export default function TrustedReferencesSection({
                         initials={request.requesterProfile?.fullName?.slice(0, 2) ?? '?'}
                         alt={request.requesterProfile?.fullName ?? 'Player'}
                         size="sm"
+                        role={request.requesterProfile?.role}
                       />
                       <div>
                         <p className="font-semibold text-gray-900">{request.requesterProfile?.fullName ?? 'HOCKIA Member'}</p>
@@ -662,6 +664,7 @@ export default function TrustedReferencesSection({
                         initials={reference.requesterProfile?.fullName?.slice(0, 2) ?? '?'}
                         alt={reference.requesterProfile?.fullName ?? 'Player'}
                         size="sm"
+                        role={reference.requesterProfile?.role}
                       />
                       <div>
                         <p className="font-semibold text-gray-900">{reference.requesterProfile?.fullName ?? 'HOCKIA Member'}</p>

@@ -146,6 +146,7 @@ export function TransferAnnouncementCard({ item, onLikeUpdate, onDelete }: Trans
                 src={item.author_avatar}
                 initials={item.author_name?.slice(0, 2) || '?'}
                 size="lg"
+                role={item.author_role}
               />
             </Link>
             <div className="mt-2 min-h-[40px] flex items-start justify-center">

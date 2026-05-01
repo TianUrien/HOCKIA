@@ -870,6 +870,7 @@ export function PostComposerModal({
                   src={profile.avatar_url}
                   initials={profile.full_name?.slice(0, 2) || '?'}
                   size="md"
+                  role={profile.role}
                 />
                 <div>
                   <p className="font-semibold text-gray-900 text-sm">{profile.full_name}</p>
@@ -959,6 +960,7 @@ export function PostComposerModal({
                                 src={person.avatar_url}
                                 initials={person.full_name?.slice(0, 2) || '?'}
                                 size="sm"
+                                role={person.role}
                               />
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2">
@@ -991,6 +993,7 @@ export function PostComposerModal({
                       src={selectedPerson.avatar_url}
                       initials={selectedPerson.full_name?.slice(0, 2) || '?'}
                       size="sm"
+                      role={selectedPerson.role}
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">

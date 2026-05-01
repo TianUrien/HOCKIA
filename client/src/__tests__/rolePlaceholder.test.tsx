@@ -113,4 +113,49 @@ describe('Avatar — role-placeholder fallback', () => {
     expect(container.querySelector('svg')).not.toBeNull()
     expect(container.querySelector('img')).toBeNull()
   })
+
+  it('whitespace-only src is treated as a real (broken) URL → placeholder via onError', () => {
+    // `"   "` is truthy, so Avatar enters the img branch. The browser will
+    // fail to load such a URL and fire onError. After the error event,
+    // showRolePlaceholder kicks in and the SVG renders.
+    const { container } = render(<Avatar src="   " role="umpire" alt="X" />)
+    const img = container.querySelector('img')
+    expect(img).not.toBeNull()
+    fireEvent.error(img!)
+    expect(container.querySelector('svg')).not.toBeNull()
+    expect(container.querySelector('img')).toBeNull()
+  })
+
+  it('renders the role-specific palette per role (smoke check across all 5 via Avatar)', () => {
+    // End-to-end check: Avatar with each of the 5 roles produces a
+    // RolePlaceholder whose first gradient stop matches that role's
+    // bgFrom hex. Catches regressions where a future refactor swaps a
+    // dashboard's hardcoded role and shows the wrong colour.
+    const expected: Record<string, string> = {
+      player: '#DBEAFE',
+      coach: '#D1FAE5',
+      club: '#FFEDD5',
+      brand: '#FFE4E6',
+      umpire: '#FEF3C7',
+    }
+    for (const [role, expectedFirstStop] of Object.entries(expected)) {
+      const { container, unmount } = render(<Avatar role={role} alt="X" />)
+      const stop = container.querySelector('linearGradient stop')
+      expect(stop?.getAttribute('stop-color')).toBe(expectedFirstStop)
+      unmount()
+    }
+  })
+
+  it('falls back to player palette when role corruption bypasses the type guard (defence-in-depth)', () => {
+    // RolePlaceholder uses `PALETTES[role] ?? PALETTES.player` as a last-
+    // line-of-defence so a future caller that bypasses isRoleAvatarRole
+    // (e.g. with a stale cached query result) still renders something
+    // legible instead of empty stops/transparent fills.
+    const { container } = render(
+      // Cast to bypass the TS narrowing — simulating runtime corruption.
+      <RolePlaceholder role={'definitely-not-a-role' as 'player'} label="X" />,
+    )
+    const stop = container.querySelector('linearGradient stop')
+    expect(stop?.getAttribute('stop-color')).toBe('#DBEAFE') // player bgFrom
+  })
 })

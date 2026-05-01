@@ -55,6 +55,7 @@ export function SharedPostCard({
           src={authorAvatar}
           initials={authorName?.slice(0, 2) || '?'}
           size="sm"
+          role={authorRole}
         />
         <span
           className={cn(

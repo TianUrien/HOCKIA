@@ -78,6 +78,7 @@ export function MilestoneCard({ item }: MilestoneCardProps) {
             initials={item.full_name?.slice(0, 2) || '?'}
             size="md"
             className="flex-shrink-0"
+            role={item.role}
           />
 
           <div className="flex-1 min-w-0">

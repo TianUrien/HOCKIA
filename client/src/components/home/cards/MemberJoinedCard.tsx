@@ -41,6 +41,7 @@ export function MemberJoinedCard({ item }: MemberJoinedCardProps) {
             initials={item.full_name?.slice(0, 2) || '?'}
             size="lg"
             className="flex-shrink-0"
+            role={item.role}
           />
 
           <div className="flex-1 min-w-0">
