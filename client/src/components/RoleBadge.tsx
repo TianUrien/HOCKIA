@@ -1,7 +1,10 @@
 import { cn } from '@/lib/utils'
 
 type RoleBadgeProps = {
-  role?: 'player' | 'coach' | 'club' | string | null
+  // All 5 HOCKIA roles explicitly listed so callers narrow correctly. The
+  // `string | null` fallback keeps backward compatibility with code paths
+  // that pass already-normalised role strings of unknown provenance.
+  role?: 'player' | 'coach' | 'club' | 'brand' | 'umpire' | string | null
   className?: string
 }
 

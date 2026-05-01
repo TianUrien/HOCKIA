@@ -59,7 +59,11 @@ export default function AvailabilityPill({ variant, size = 'md', className = '' 
  * based on role and availability flags
  */
 interface ConditionalAvailabilityPillProps {
-  role: 'player' | 'coach' | 'club'
+  // Accepts any of the 5 HOCKIA roles. Only player + coach actually render
+  // a pill (the other three return null below) but typing the union loosely
+  // here lets generic profile-card components pass `profile.role` directly
+  // without needing `as any` casts.
+  role: 'player' | 'coach' | 'club' | 'brand' | 'umpire'
   openToPlay?: boolean
   openToCoach?: boolean
   className?: string

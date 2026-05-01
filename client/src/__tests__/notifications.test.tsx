@@ -231,7 +231,7 @@ describe('getNotificationConfig', () => {
     const config = getNotificationConfig(notification)
     expect(config.badgeText).toBe('Ambassador update')
     expect(config.getTitle(notification)).toBe('Jordan Hall accepted your ambassador invitation')
-    expect(config.getRoute?.(notification)).toBe('/dashboard?tab=ambassadors')
+    expect(config.getRoute?.(notification)).toBe('/dashboard/profile?tab=ambassadors')
   })
 
   it('returns default config for unknown notification kinds', () => {

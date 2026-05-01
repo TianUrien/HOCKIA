@@ -17,7 +17,7 @@ interface Conversation {
     full_name: string
     username: string | null
     avatar_url: string | null
-    role: 'player' | 'coach' | 'club' | 'umpire'
+    role: 'player' | 'coach' | 'club' | 'umpire' | 'brand'
   }
   lastMessage?: {
     content: string

@@ -51,7 +51,7 @@ const conversationRoute = (notification: NotificationRecord) => {
 
 const opportunityApplicantsRoute = (notification: NotificationRecord) => {
   const opportunityId = getMetadataString(notification, 'opportunity_id')
-  return opportunityId ? `/dashboard/opportunities/${opportunityId}/applicants` : '/dashboard?tab=vacancies'
+  return opportunityId ? `/dashboard/opportunities/${opportunityId}/applicants` : '/dashboard/profile?tab=vacancies'
 }
 
 const opportunityDetailRoute = (notification: NotificationRecord) => {
@@ -253,7 +253,7 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
     accentClassName: 'bg-rose-50 text-rose-600',
     getTitle: (notification) => `${getActorName(notification)} accepted your ambassador invitation`,
     getDescription: () => 'They now appear on your brand profile.',
-    getRoute: () => '/dashboard?tab=ambassadors',
+    getRoute: () => '/dashboard/profile?tab=ambassadors',
   },
   profile_viewed: {
     icon: Eye,

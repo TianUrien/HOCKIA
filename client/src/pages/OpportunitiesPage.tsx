@@ -657,7 +657,7 @@ export default function OpportunitiesPage() {
                       : 'As a club, you can post opportunities to attract players and coaches.'}
                   </p>
                   <Button
-                    onClick={() => navigate('/dashboard?tab=vacancies')}
+                    onClick={() => navigate('/dashboard/profile?tab=vacancies')}
                     className="mx-auto bg-gradient-to-r from-[#8026FA] to-[#924CEC]"
                   >
                     Post an Opportunity

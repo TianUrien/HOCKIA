@@ -66,7 +66,7 @@ interface Conversation {
     full_name: string
     username: string | null
     avatar_url: string | null
-    role: 'player' | 'coach' | 'club' | 'umpire'
+    role: 'player' | 'coach' | 'club' | 'umpire' | 'brand'
   }
   lastMessage?: {
     content: string
@@ -235,7 +235,7 @@ export default function MessagesPage() {
                   full_name: row.other_participant_name,
                   username: row.other_participant_username,
                   avatar_url: row.other_participant_avatar,
-                  role: row.other_participant_role as 'player' | 'coach' | 'club' | 'umpire'
+                  role: row.other_participant_role as 'player' | 'coach' | 'club' | 'umpire' | 'brand'
                 }
               : undefined,
             lastMessage: row.last_message_content
@@ -407,7 +407,7 @@ export default function MessagesPage() {
             full_name: data.full_name || '',
             username: data.username,
             avatar_url: data.avatar_url,
-            role: ((data.role ?? 'player') as 'player' | 'coach' | 'club' | 'umpire')
+            role: ((data.role ?? 'player') as 'player' | 'coach' | 'club' | 'umpire' | 'brand')
           },
           unreadCount: 0,
           isPending: true
@@ -838,7 +838,7 @@ export default function MessagesPage() {
                 full_name: profileData.full_name || '',
                 username: profileData.username,
                 avatar_url: profileData.avatar_url,
-                role: (profileData.role ?? 'player') as 'player' | 'coach' | 'club' | 'umpire'
+                role: (profileData.role ?? 'player') as 'player' | 'coach' | 'club' | 'umpire' | 'brand'
               }
             : undefined,
           lastMessage: lastMessageData

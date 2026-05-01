@@ -36,7 +36,11 @@ export interface ConversationParticipant {
   full_name: string
   username: string | null
   avatar_url: string | null
-  role: 'player' | 'coach' | 'club' | 'umpire'
+  // Brand messaging was enabled server-side in migration 202603070200; the
+  // client union must include 'brand' so DM partners are correctly typed
+  // and `buildPublicProfilePath` can route to /brands/<slug> instead of
+  // falling through to /players/<slug> (404).
+  role: 'player' | 'coach' | 'club' | 'umpire' | 'brand'
 }
 
 export interface Conversation {

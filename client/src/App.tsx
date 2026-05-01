@@ -374,6 +374,13 @@ function App() {
 
                 <Route path="/players/:username" element={<PublicPlayerProfile />} />
                 <Route path="/players/id/:id" element={<PublicPlayerProfile />} />
+                {/* Coaches share PublicPlayerProfile (multi-role union per
+                    PublicPlayerProfile.tsx) but several call sites build
+                    /coaches/<...> URLs directly (BrandDashboard followers,
+                    ProfileCompletionCard, etc). Without these aliases those
+                    clicks 404. Cheap fix; same component renders coach view. */}
+                <Route path="/coaches/:username" element={<PublicPlayerProfile />} />
+                <Route path="/coaches/id/:id" element={<PublicPlayerProfile />} />
                 <Route path="/clubs/:username" element={<PublicClubProfile />} />
                 <Route path="/clubs/id/:id" element={<PublicClubProfile />} />
                 <Route path="/umpires/:username" element={<PublicUmpireProfile />} />

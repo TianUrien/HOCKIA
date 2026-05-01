@@ -378,15 +378,17 @@ export function BrandForm({
 
       {/* Bio */}
       <div>
-        <label htmlFor="brand-bio" className="block text-sm font-medium text-gray-700 mb-1">
-          About
+        <label htmlFor="brand-bio" className="flex items-center justify-between text-sm font-medium text-gray-700 mb-1">
+          <span>About</span>
+          <span className="text-xs font-normal text-gray-400">{formData.bio.length}/2000</span>
         </label>
         <textarea
           id="brand-bio"
           value={formData.bio}
-          onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
+          onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value.slice(0, 2000) }))}
           placeholder="Tell us about your brand..."
           rows={4}
+          maxLength={2000}
           autoCapitalize="sentences"
           spellCheck
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"

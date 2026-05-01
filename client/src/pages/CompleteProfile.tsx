@@ -296,6 +296,17 @@ export default function CompleteProfile() {
     if (profile?.role === 'brand' && !profile?.onboarding_completed) {
       logger.debug('[COMPLETE_PROFILE] Brand user, redirecting to brand onboarding')
       navigate('/brands/onboarding', { replace: true })
+      return
+    }
+
+    // Already-onboarded users navigating here directly should bounce to
+    // their dashboard rather than re-running the wizard. Without this guard
+    // a returning user can re-submit the form and overwrite their existing
+    // data with whatever the form's pre-filled state happens to contain
+    // (which has known gaps for some fields, see the prefill effect).
+    if (profile?.onboarding_completed) {
+      logger.debug('[COMPLETE_PROFILE] User already onboarded, redirecting to dashboard')
+      navigate('/dashboard/profile', { replace: true })
     }
   }, [user, profile, authLoading, navigate, profileStatus])
 
@@ -326,10 +337,15 @@ export default function CompleteProfile() {
       next.baseCountryId = profile.base_country_id ?? prev.baseCountryId
       next.locationSelected = !!(next.baseCity && next.baseCountryId)
       next.nationality = profile.nationality ?? prev.nationality
+      // Pre-fill primary AND secondary nationality for ALL roles. Previously
+      // only the club branch read these back, so a returning player/coach/
+      // umpire who'd already set their nationality(ies) in a partial
+      // onboarding would re-submit blank — silently overwriting their data.
+      next.nationalityCountryId = profile.nationality_country_id ?? prev.nationalityCountryId
+      next.nationality2CountryId = profile.nationality2_country_id ?? prev.nationality2CountryId
 
       if (profile.role === 'club') {
         next.clubName = profile.full_name ?? prev.clubName
-        next.nationalityCountryId = profile.nationality_country_id ?? prev.nationalityCountryId
         next.yearFounded = profile.year_founded ? String(profile.year_founded) : prev.yearFounded
         next.womensLeagueDivision = profile.womens_league_division ?? prev.womensLeagueDivision
         next.mensLeagueDivision = profile.mens_league_division ?? prev.mensLeagueDivision
@@ -354,8 +370,25 @@ export default function CompleteProfile() {
             next.coachingCategories = (profile.coaching_categories ?? []) as CoachUmpireCategory[]
           }
         } else if (profile.role === 'umpire') {
+          // Pre-fill ALL umpire-specific fields. Previously only
+          // umpiring_categories was read back; a returning umpire would
+          // lose their level / federation / specialization / languages
+          // / umpire_since on resubmit.
           if (isValidCategoryArray(profile.umpiring_categories)) {
             next.umpiringCategories = (profile.umpiring_categories ?? []) as CoachUmpireCategory[]
+          }
+          next.umpireLevel = profile.umpire_level ?? prev.umpireLevel
+          next.federation = profile.federation ?? prev.federation
+          next.umpireSince = profile.umpire_since ? String(profile.umpire_since) : prev.umpireSince
+          if (
+            profile.officiating_specialization === 'outdoor' ||
+            profile.officiating_specialization === 'indoor' ||
+            profile.officiating_specialization === 'both'
+          ) {
+            next.officiatingSpecialization = profile.officiating_specialization
+          }
+          if (Array.isArray(profile.languages) && profile.languages.length > 0) {
+            next.languages = profile.languages.filter((l): l is string => typeof l === 'string')
           }
         }
       }
@@ -377,12 +410,16 @@ export default function CompleteProfile() {
     logger.debug('[CompleteProfile] Club claim completed:', result)
     setShowClubClaimStep(false)
 
-    // Pre-fill form with claim data (country ID + region from Step 1)
+    // Pre-fill form with claim data (country ID + leagues only). We
+    // intentionally do NOT pre-fill `city` from `result.regionName` — the
+    // city field is wired to LocationAutocomplete which needs the user to
+    // pick a real city so `baseCity` + `baseCountryId` are set in parallel.
+    // Stuffing a region name in here leaves locationSelected=false and
+    // breaks structured-location filters in Discovery / maps.
     setFormData(prev => ({
       ...prev,
       clubName: result.clubName,
       nationalityCountryId: result.countryId || prev.nationalityCountryId,
-      city: result.regionName || prev.city,
       womensLeagueDivision: result.womenLeagueName || '',
       mensLeagueDivision: result.menLeagueName || '',
     }))
@@ -714,6 +751,12 @@ export default function CompleteProfile() {
           date_of_birth: formData.dateOfBirth || null,
           current_club: formData.currentClub || null,
           current_world_club_id: formData.currentWorldClubId,
+          // Default to "open" so new players show up in availability-filtered
+          // Discovery searches immediately. Without this, AI Discovery's
+          // `WHERE open_to_play = true` excludes every freshly-onboarded
+          // player until they edit their settings — invisible damage.
+          // Users can always toggle off later via the AvailabilityToggleStrip.
+          open_to_play: true,
         }
       } else if (userRole === 'coach') {
         const coachingCategories = formData.coachingCategories.length > 0 ? formData.coachingCategories : null
@@ -735,6 +778,9 @@ export default function CompleteProfile() {
           coach_specialization_custom: formData.coachSpecialization === 'other'
             ? formData.coachSpecializationCustom.trim()
             : null,
+          // Same rationale as the player branch — default new coaches to
+          // open so they appear in availability-filtered Discovery results.
+          open_to_coach: true,
         }
       } else if (userRole === 'umpire') {
         // Use the flushed snapshot (see "Flush any uncommitted language chip
