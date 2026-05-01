@@ -259,6 +259,7 @@ export default function UmpireDashboard({
               size="xl"
               enablePreview
               previewTitle={profile.full_name ?? undefined}
+              role="umpire"
             />
             <div className="flex-1 min-w-0">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-1">

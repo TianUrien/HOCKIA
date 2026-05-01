@@ -213,6 +213,7 @@ export default function Header() {
                     initials={profileInitials}
                     size="sm"
                     loading="eager"
+                    role={profile.role}
                   />
                 </button>
               </>

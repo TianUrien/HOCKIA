@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
 import RolePlaceholder from '@/components/RolePlaceholder'
 import { isRoleAvatarRole } from '@/lib/roleAvatar'
@@ -89,5 +89,28 @@ describe('Avatar — role-placeholder fallback', () => {
     const { container } = render(<Avatar initials="MG" />)
     const wrapper = container.firstChild as HTMLElement
     expect(wrapper.className).toContain('from-[#8026FA]')
+  })
+
+  it('falls back to RolePlaceholder when src loads but errors (broken URL)', () => {
+    // Regression guard: a real photo URL that 404s should still show the
+    // role-tinted placeholder, not a broken-image icon. The onError
+    // handler flips imageError → next render goes through the
+    // showRolePlaceholder path.
+    const { container } = render(<Avatar src="https://broken.test/x.png" role="coach" alt="X" />)
+    const img = container.querySelector('img')
+    expect(img).not.toBeNull()
+    fireEvent.error(img!)
+    // After the error, the SVG should be present and no img element.
+    expect(container.querySelector('svg')).not.toBeNull()
+    expect(container.querySelector('img')).toBeNull()
+  })
+
+  it('treats empty-string src the same as missing src (placeholder shown)', () => {
+    // Belt-and-braces: profiles that store '' (rare, but possible from
+    // legacy migrations) should still show the placeholder, not be
+    // treated as a valid src that fails to load.
+    const { container } = render(<Avatar src="" role="club" alt="X" />)
+    expect(container.querySelector('svg')).not.toBeNull()
+    expect(container.querySelector('img')).toBeNull()
   })
 })

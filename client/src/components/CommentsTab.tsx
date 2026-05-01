@@ -589,6 +589,7 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
                   alt={existingComment.author?.full_name || existingComment.author?.username || 'HOCKIA member'}
                   enablePreview
                   previewTitle={existingComment.author?.full_name || existingComment.author?.username || undefined}
+                  role={existingComment.author?.role}
                 />
                 <div className="flex-1 space-y-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
@@ -744,6 +745,7 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
                       alt={comment.author?.full_name || comment.author?.username || 'Former HOCKIA member'}
                       enablePreview
                       previewTitle={comment.author?.full_name || comment.author?.username || undefined}
+                      role={comment.author?.role}
                     />
                     <div className="flex-1">
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">

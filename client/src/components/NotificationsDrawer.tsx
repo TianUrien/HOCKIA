@@ -300,7 +300,7 @@ export default function NotificationsDrawer() {
           className="relative h-fit focus-visible:outline-none"
           aria-label={profileRoute ? `View ${fullName}'s profile` : undefined}
         >
-          <Avatar src={actor.avatarUrl ?? undefined} initials={initials} size="lg" className="shadow-sm" />
+          <Avatar src={actor.avatarUrl ?? undefined} initials={initials} size="lg" className="shadow-sm" role={actor.role ?? undefined} />
           <span className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full border border-white bg-white text-[#0866FF] shadow-md">
             <Icon className="h-3.5 w-3.5" />
           </span>

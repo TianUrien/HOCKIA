@@ -209,6 +209,11 @@ export default function BrandProfilePage() {
                           src={ambassador.avatar_url}
                           initials={ambassador.full_name?.slice(0, 2) || '?'}
                           size="lg"
+                          // Ambassadors are linked via player_id; the
+                          // brand_ambassadors table FK guarantees they're
+                          // players. Hardcode role to render the blue
+                          // player-tinted placeholder when no avatar.
+                          role="player"
                         />
                         <p className="text-sm font-semibold text-gray-900 mt-2 truncate w-full">
                           {ambassador.full_name || 'Unknown'}

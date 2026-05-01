@@ -323,6 +323,7 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
                 size="xl"
                 enablePreview
                 previewTitle={profile.full_name ?? undefined}
+                role="coach"
               />
             </div>
 

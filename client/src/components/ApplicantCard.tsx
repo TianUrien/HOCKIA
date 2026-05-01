@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { MapPin, Star, HelpCircle, XCircle, ChevronDown, Minus, ShieldCheck } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import Avatar from './Avatar'
 import type { OpportunityApplicationWithApplicant } from '@/lib/supabase'
 import type { Database } from '@/lib/database.types'
 
@@ -114,19 +115,18 @@ export default function ApplicantCard({ application, onStatusChange, isUpdating,
           onClick={handleViewProfile}
           className="group flex-shrink-0 cursor-pointer"
         >
-          {applicant.avatar_url ? (
-            <img
-              src={applicant.avatar_url}
-              alt={displayName}
-              className="h-14 w-14 rounded-full object-cover ring-2 ring-gray-200 transition-all group-hover:ring-[#8026FA] sm:h-16 sm:w-16"
-            />
-          ) : (
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-[#8026FA] to-[#924CEC] ring-2 ring-gray-200 transition-all group-hover:ring-[#8026FA] sm:h-16 sm:w-16">
-              <span className="text-base font-bold text-white sm:text-lg">
-                {getInitials(displayName)}
-              </span>
-            </div>
-          )}
+          {/* Replaces the inline purple-gradient + initials block. The
+              Avatar component handles src + role-tinted placeholder
+              fallback (player blue / coach green / umpire gold) when no
+              avatar uploaded. Ring + group-hover treatment preserved via
+              className so the visual affordance is unchanged. */}
+          <Avatar
+            src={applicant.avatar_url}
+            alt={displayName}
+            initials={getInitials(displayName)}
+            role={applicant.role}
+            className="h-14 w-14 ring-2 ring-gray-200 transition-all group-hover:ring-[#8026FA] sm:h-16 sm:w-16"
+          />
         </button>
 
         {/* Applicant Info */}

@@ -212,6 +212,7 @@ export default function NewMessageModal({ isOpen, onClose }: NewMessageModalProp
                     initials={profile.full_name.split(' ').map((n) => n[0]).join('').slice(0, 2) || '?'}
                     alt={profile.full_name}
                     size="sm"
+                    role={profile.role}
                   />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-gray-900 truncate">{profile.full_name}</p>

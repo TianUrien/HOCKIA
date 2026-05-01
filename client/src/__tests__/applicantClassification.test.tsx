@@ -49,6 +49,7 @@ const baseApplication: OpportunityApplicationWithApplicant = {
     base_location: 'London, UK',
     nationality: 'British',
     username: 'janesmith',
+    role: 'player',
   },
 }
 

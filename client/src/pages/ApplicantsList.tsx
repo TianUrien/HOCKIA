@@ -83,7 +83,8 @@ export default function ApplicantsList() {
               secondary_position,
               base_location,
               nationality,
-              username
+              username,
+              role
             )
           `)
           .eq('opportunity_id', opportunityId)
@@ -111,6 +112,7 @@ export default function ApplicantsList() {
             base_location: string
             nationality: string
             username: string | null
+            role: string | null
           }
         }
 
@@ -131,6 +133,10 @@ export default function ApplicantsList() {
             base_location: app.applicant.base_location,
             nationality: app.applicant.nationality,
             username: app.applicant.username,
+            // Role added so ApplicantCard can render the role-tinted
+            // avatar placeholder (player blue / coach green / umpire gold)
+            // when the applicant has no profile photo yet.
+            role: app.applicant.role as OpportunityApplicationWithApplicant['applicant']['role'],
           },
         }))
 

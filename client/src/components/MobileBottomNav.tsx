@@ -190,6 +190,7 @@ export default function MobileBottomNav() {
                   src={profile.avatar_url}
                   initials={profileInitials}
                   size="sm"
+                  role={profile.role}
                   className={`transition-all duration-200 ${
                     location.pathname.startsWith('/dashboard')
                       ? 'ring-2 ring-[#8026FA] ring-offset-2'

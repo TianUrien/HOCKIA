@@ -32,6 +32,7 @@ import {
   Activity,
 } from 'lucide-react'
 import { RoleBadge, TierBadge, VerifiedBadge, AvailabilityPill, DualNationalityDisplay } from '@/components'
+import RolePlaceholder from '@/components/RolePlaceholder'
 import SignInPromptModal from '@/components/SignInPromptModal'
 import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
@@ -245,9 +246,8 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
     (member.role === 'player' && member.open_to_play) ||
     (member.role === 'coach' && member.open_to_coach)
 
-  const initials = member.full_name
-    ? member.full_name.trim().split(/\s+/).filter(Boolean).map(n => n[0]).join('').slice(0, 2).toUpperCase()
-    : '?'
+  // initials block was the previous purple fallback; replaced by
+  // RolePlaceholder. Computation removed.
 
   const tier = getMemberTier(member)
   const positions = [member.position, member.secondary_position]
@@ -328,8 +328,11 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
                 decoding="async"
               />
             ) : (
-              <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#8026FA] to-[#924CEC] text-white font-semibold text-5xl select-none">
-                {initials}
+              // Role-tinted placeholder. Matches the MemberTile fallback so
+              // tapping a tile and opening this modal stays visually
+              // consistent. Profile is still flagged photo-missing in DB.
+              <div className="absolute inset-0">
+                <RolePlaceholder role={member.role} label="" />
               </div>
             )}
             {showGreenDot && (

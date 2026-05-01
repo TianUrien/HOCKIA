@@ -91,6 +91,7 @@ export function QuestionCard({ question }: QuestionCardProps) {
             alt={question.author.full_name || 'User'}
             size="sm"
             className="w-7 h-7 shrink-0"
+            role={question.author.role}
           />
           <span className="text-sm font-medium text-gray-700 truncate max-w-[100px] sm:max-w-[120px]">
             {question.author.full_name || 'Unknown'}

@@ -109,9 +109,12 @@ export type ConversationUpdate = Database['public']['Tables']['conversations']['
 
 // Complex joined types
 export type OpportunityApplicationWithApplicant = OpportunityApplication & {
+  // `role` added 2026-05-01 so ApplicantCard can render the role-tinted
+  // avatar placeholder when the applicant has no photo yet (no longer
+  // falls back to the generic purple-gradient block).
   applicant: Pick<
     Profile,
-    'id' | 'full_name' | 'avatar_url' | 'position' | 'secondary_position' | 'base_location' | 'nationality' | 'username'
+    'id' | 'full_name' | 'avatar_url' | 'position' | 'secondary_position' | 'base_location' | 'nationality' | 'username' | 'role'
   >
 }
 

@@ -330,6 +330,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
               alt={profile.full_name ?? undefined}
               enablePreview
               previewTitle={profile.full_name ?? undefined}
+              role="player"
             />
             <div className="flex-1">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-3">

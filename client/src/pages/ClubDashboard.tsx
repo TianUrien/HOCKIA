@@ -329,6 +329,7 @@ export default function ClubDashboard({ profileData, readOnly = false, isOwnProf
               alt={profile.full_name ?? undefined}
               enablePreview
               previewTitle={profile.full_name ?? undefined}
+              role="club"
             />
 
             <div className="flex-1">

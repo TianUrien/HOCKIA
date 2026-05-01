@@ -260,6 +260,7 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole }:
             enablePreview
             previewTitle={connection.friend?.full_name || connection.friend?.username || undefined}
             previewInteraction="pointer"
+            role={connection.friend?.role}
           />
           <div>
             <p className="font-semibold text-gray-900">{connection.friend?.full_name || connection.friend?.username || 'HOCKIA Member'}</p>
@@ -328,6 +329,7 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole }:
             enablePreview
             previewTitle={connection.friend?.full_name || connection.friend?.username || undefined}
             previewInteraction="pointer"
+            role={connection.friend?.role}
           />
           <div>
             <p className="font-semibold text-gray-900">{connection.friend?.full_name || connection.friend?.username || 'HOCKIA Member'}</p>
