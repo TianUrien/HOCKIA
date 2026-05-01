@@ -83,6 +83,12 @@ export function useMyBrand(): UseMyBrandResult {
         p_logo_url: (data.logo_url ?? null) as string | undefined,
         p_website_url: (data.website_url ?? null) as string | undefined,
         p_instagram_url: (data.instagram_url ?? null) as string | undefined,
+        // Atomic profile-identity sync — folded into the RPC by migration
+        // 20260501120000. Replaces the previous post-RPC profiles.update
+        // which could leave the user in a half-state if the network dropped
+        // between the brand insert and the profile sync.
+        p_profile_full_name: (data.name ?? null) as string | undefined,
+        p_profile_avatar_url: (data.logo_url ?? null) as string | undefined,
       })
 
       if (rpcError) {
@@ -90,16 +96,6 @@ export function useMyBrand(): UseMyBrandResult {
       }
 
       const response = result as { success: boolean; brand_id: string; slug: string }
-
-      // Sync brand identity to profile so it shows in Community, Messages, Header, etc.
-      if (user) {
-        const profileUpdate: Record<string, string> = {}
-        if (data.name) profileUpdate.full_name = data.name
-        if (data.logo_url) profileUpdate.avatar_url = data.logo_url
-        if (Object.keys(profileUpdate).length > 0) {
-          await supabase.from('profiles').update(profileUpdate).eq('id', user.id)
-        }
-      }
 
       // Refetch to get the full brand data
       await fetchMyBrand()
@@ -112,7 +108,7 @@ export function useMyBrand(): UseMyBrandResult {
         error: err instanceof Error ? err.message : 'Failed to create brand',
       }
     }
-  }, [fetchMyBrand, user])
+  }, [fetchMyBrand])
 
   const updateBrand = useCallback(async (data: UpdateBrandInput) => {
     try {

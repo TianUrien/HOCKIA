@@ -128,6 +128,11 @@ export function BrandForm({
   }
 
   const [formData, setFormData] = useState<BrandFormData>(getInitialFormData)
+  // Slug-availability check: 'idle' before user starts typing, 'checking'
+  // during the debounced RPC call, 'available' / 'taken' / 'invalid' once
+  // settled. Surface state inline below the slug input so collisions don't
+  // explode at submit. Skip entirely for existing brands (slug is locked).
+  const [slugStatus, setSlugStatus] = useState<'idle' | 'checking' | 'available' | 'taken' | 'invalid'>('idle')
 
   // Persist form data to localStorage when it changes
   useEffect(() => {
@@ -160,6 +165,46 @@ export function BrandForm({
       }))
     }
   }, [formData.name, brand])
+
+  // Debounced slug-availability check via the check_brand_slug_available
+  // RPC. Surfaces inline status so collisions don't explode at submit.
+  // Skipped for existing brands (slug is immutable post-creation).
+  useEffect(() => {
+    if (brand) {
+      setSlugStatus('idle')
+      return
+    }
+    const trimmed = formData.slug.trim()
+    if (!trimmed) {
+      setSlugStatus('idle')
+      return
+    }
+    const slugPattern = /^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/
+    if (!slugPattern.test(trimmed) || RESERVED_SLUGS.has(trimmed)) {
+      setSlugStatus('invalid')
+      return
+    }
+    setSlugStatus('checking')
+    const handle = window.setTimeout(async () => {
+      try {
+        // RPC type cast: Supabase generated types haven't been refreshed
+        // since migration 20260501120000 added this function. Casting to
+        // `never` lets us call it without regenerating types just for one
+        // helper. Server-side validation is still authoritative.
+        const { data, error: rpcError } = await supabase.rpc('check_brand_slug_available' as never, { p_slug: trimmed } as never) as { data: boolean | null; error: unknown }
+        if (rpcError) {
+          // Network / RPC failure — stay 'checking' is wrong, set to 'idle'
+          // so the user isn't blocked. Submit-time check is authoritative.
+          setSlugStatus('idle')
+          return
+        }
+        setSlugStatus(data ? 'available' : 'taken')
+      } catch {
+        setSlugStatus('idle')
+      }
+    }, 350)
+    return () => window.clearTimeout(handle)
+  }, [formData.slug, brand])
 
   const handleLogoUpload = useCallback(async (file: File) => {
     if (!user) return
@@ -262,6 +307,19 @@ export function BrandForm({
         setError('URL slug must be lowercase letters, numbers, and hyphens only (no leading or trailing hyphen).')
         return
       }
+
+      // Pre-flight collision guard. The check_brand_slug_available RPC
+      // result is already surfaced inline via slugStatus; if it landed on
+      // 'taken' or 'invalid' since the user last typed, block submit with
+      // a clear message instead of letting it explode at create_brand time.
+      if (slugStatus === 'taken') {
+        setError('That URL is already taken. Please choose another.')
+        return
+      }
+      if (slugStatus === 'invalid') {
+        setError('That URL is not valid. Use lowercase letters, numbers and hyphens only.')
+        return
+      }
     }
 
     try {
@@ -352,6 +410,22 @@ export function BrandForm({
         {!brand && (
           <p className="mt-1 text-xs text-gray-500">
             This will be your brand's unique URL. It cannot be changed later.
+          </p>
+        )}
+        {!brand && slugStatus === 'checking' && (
+          <p className="mt-1 text-xs text-gray-400">Checking availability…</p>
+        )}
+        {!brand && slugStatus === 'available' && (
+          <p className="mt-1 text-xs text-emerald-600">✓ Available</p>
+        )}
+        {!brand && slugStatus === 'taken' && (
+          <p className="mt-1 text-xs text-red-600">
+            That URL is already taken. Try a different one.
+          </p>
+        )}
+        {!brand && slugStatus === 'invalid' && (
+          <p className="mt-1 text-xs text-red-600">
+            URL must be lowercase letters, numbers and hyphens only (no leading/trailing hyphen).
           </p>
         )}
       </div>

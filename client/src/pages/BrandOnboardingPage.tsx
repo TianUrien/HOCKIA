@@ -4,16 +4,16 @@
  * Onboarding flow for new brand users to create their brand profile.
  */
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
 import * as Sentry from '@sentry/react'
 import { BrandForm, type BrandFormData } from '@/components/brands'
 import { useMyBrand } from '@/hooks/useMyBrand'
 import { useAuthStore } from '@/lib/auth'
-import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { toSentryError } from '@/lib/sentryHelpers'
+import { supabase } from '@/lib/supabase'
 
 export default function BrandOnboardingPage() {
   const navigate = useNavigate()
@@ -41,12 +41,50 @@ export default function BrandOnboardingPage() {
     }
   }, [user, profile, authLoading, navigate])
 
-  // If brand already exists, redirect to brand page
+  // Loop-safe brand-exists handling. Three legacy/edge cases this guards
+  // against, all of which previously trapped the user:
+  //
+  //   (a) brand row exists + onboarding_completed=true (happy returning
+  //       user): just send them to /dashboard/profile so DashboardRouter
+  //       picks up the canonical role-based dashboard.
+  //
+  //   (b) brand row exists + onboarding_completed=false (legacy half-state
+  //       from before atomic onboarding migration 202604180200, OR an
+  //       admin-edited row): heal the state by setting the flag to true
+  //       (the brand row is the source of truth for "did the user finish
+  //       brand onboarding"), then send them to the dashboard. Without
+  //       this, the user would bounce between /dashboard/profile (sees
+  //       !onboarding_completed → /complete-profile → sees role=brand →
+  //       /brands/onboarding → sees brand exists → /brands/:slug … no way
+  //       to re-finish).
+  //
+  //   (c) ref guard so we don't hammer the heal-update on every re-render.
+  const healAttemptedRef = useRef(false)
   useEffect(() => {
-    if (!brandLoading && brand) {
-      navigate(`/brands/${brand.slug}`, { replace: true })
+    if (brandLoading || !brand || !user) return
+    if (profile?.onboarding_completed) {
+      navigate('/dashboard/profile', { replace: true })
+      return
     }
-  }, [brand, brandLoading, navigate])
+    if (healAttemptedRef.current) return
+    healAttemptedRef.current = true
+    void (async () => {
+      try {
+        const { error: healError } = await supabase
+          .from('profiles')
+          .update({ onboarding_completed: true })
+          .eq('id', user.id)
+        if (healError) {
+          logger.error('[BrandOnboarding] Failed to heal half-state', healError)
+          // Fall through — dashboard router will surface the issue rather
+          // than us trapping the user here. Better than a silent loop.
+        }
+        await fetchProfile(user.id, { force: true })
+      } finally {
+        navigate('/dashboard/profile', { replace: true })
+      }
+    })()
+  }, [brand, brandLoading, navigate, profile?.onboarding_completed, user, fetchProfile])
 
   const handleSubmit = async (data: BrandFormData) => {
     setIsSubmitting(true)
@@ -91,22 +129,13 @@ export default function BrandOnboardingPage() {
         data: { slug: result.slug },
       })
 
-      // Mark onboarding as complete
+      // create_brand RPC now sets onboarding_completed = true AND syncs
+      // brand identity (full_name, avatar_url) to the profile in the same
+      // transaction (migration 20260501120000). The post-RPC profiles.update
+      // that lived here previously was redundant and re-introduced split-
+      // brain risk — removed. We still refresh the profile cache so the
+      // app picks up the new flag immediately.
       if (user) {
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({ onboarding_completed: true })
-          .eq('id', user.id)
-
-        if (updateError) {
-          Sentry.captureException(toSentryError(updateError), {
-            tags: { ...tags, onboarding_stage: 'mark_onboarding_completed' },
-            extra: { userId: user.id },
-          })
-          throw updateError
-        }
-
-        // Refresh profile
         await fetchProfile(user.id, { force: true })
       }
 

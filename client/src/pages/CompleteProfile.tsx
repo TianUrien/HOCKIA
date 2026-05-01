@@ -79,6 +79,11 @@ export default function CompleteProfile() {
   // `wizard_step_viewed` vs. `wizard_step_completed` counts per step.
   const viewedStepsRef = useRef<Set<string>>(new Set())
 
+  // Wizard-draft hydration guard. Refs declared up here; the actual
+  // wizardDraftKey is computed AFTER userRole is derived (it depends on
+  // both user.id and userRole, which need to be in scope first).
+  const wizardDraftHydratedRef = useRef(false)
+
   // Form data states
   const [formData, setFormData] = useState({
     fullName: '',
@@ -109,6 +114,11 @@ export default function CompleteProfile() {
     currentWorldClubId: null as string | null,
     coachSpecialization: '' as CoachSpecialization | '',
     coachSpecializationCustom: '',
+    // Coach professional bio. Optional but contributes 20pts to the coach
+    // profile-strength milestone, so collecting at onboarding makes the
+    // 100% celebration reachable in one pass instead of forcing the user
+    // to revisit their profile later.
+    coachBio: '',
     // Umpire-specific fields (free text for level + federation in v1; see
     // umpireLevels.ts / umpireFederations.ts for the datalist suggestions).
     umpireLevel: '',
@@ -127,6 +137,15 @@ export default function CompleteProfile() {
   // Use profile data from auth store - no need to fetch again
   const userRole = (profile?.role as UserRole | null) ?? fallbackRole ?? (user?.user_metadata?.role as UserRole | undefined) ?? null
   const contactEmailFallback = profile?.contact_email ?? profile?.email ?? user?.email ?? fallbackEmail ?? ''
+
+  // Wizard-draft localStorage key. Scoped by user id AND role so a tester
+  // switching between accounts on the same browser doesn't see another
+  // user's draft, and a user who switches role mid-flow doesn't see a
+  // player draft on a coach mount. null when either is missing — effects
+  // gate on this and skip persistence until both resolve.
+  const wizardDraftKey = user?.id && userRole
+    ? `hockia-onboarding-draft:${userRole}:${user.id}`
+    : null
 
   // Player, coach, and umpire get a 3-step wizard. Club keeps its existing
   // claim→form two-step flow; brand is handled on a separate onboarding page.
@@ -366,6 +385,7 @@ export default function CompleteProfile() {
         } else if (profile.role === 'coach') {
           next.coachSpecialization = (profile.coach_specialization ?? prev.coachSpecialization) as CoachSpecialization | ''
           next.coachSpecializationCustom = profile.coach_specialization_custom ?? prev.coachSpecializationCustom
+          next.coachBio = profile.bio ?? prev.coachBio
           if (isValidCategoryArray(profile.coaching_categories)) {
             next.coachingCategories = (profile.coaching_categories ?? []) as CoachUmpireCategory[]
           }
@@ -404,6 +424,58 @@ export default function CompleteProfile() {
       setAvatarUrl(profile.avatar_url)
     }
   }, [profile])
+
+  // Wizard draft hydration: on mount (per user+role), if there's a saved
+  // draft from a prior interrupted session, restore the form fields AND
+  // the step the user was on. Runs ONCE — guarded by hydratedRef. Runs
+  // AFTER server-side prefill so the user's most-recent typed state wins
+  // over stale DB state (which might be from before they typed).
+  useEffect(() => {
+    if (!isWizardFlow || !wizardDraftKey || wizardDraftHydratedRef.current) return
+    wizardDraftHydratedRef.current = true
+    try {
+      if (typeof window === 'undefined' || !window.localStorage) return
+      const raw = window.localStorage.getItem(wizardDraftKey)
+      if (!raw) return
+      const parsed = JSON.parse(raw) as { step?: number; formData?: Record<string, unknown>; savedAt?: string }
+      // Stale-draft guard: drop drafts older than 7 days. Prevents a
+      // draft from a different feature/version of the form from
+      // resurrecting after an app update.
+      if (parsed.savedAt) {
+        const ageDays = (Date.now() - Date.parse(parsed.savedAt)) / 86_400_000
+        if (Number.isFinite(ageDays) && ageDays > 7) {
+          window.localStorage.removeItem(wizardDraftKey)
+          return
+        }
+      }
+      if (parsed.formData && typeof parsed.formData === 'object') {
+        setFormData(prev => ({ ...prev, ...(parsed.formData as Record<string, unknown>) }) as typeof prev)
+      }
+      if (parsed.step === 1 || parsed.step === 2 || parsed.step === 3) {
+        setCurrentStep(parsed.step as WizardStep)
+      }
+    } catch (err) {
+      logger.warn('[COMPLETE_PROFILE] Failed to hydrate wizard draft', { error: err })
+    }
+  }, [isWizardFlow, wizardDraftKey])
+
+  // Wizard draft persistence: save form + step on every change, debounced
+  // implicitly by React's batching. Skipped for non-wizard roles (club
+  // already has its own draft mechanism via showClubClaimStep state, and
+  // brand has a separate persistKey-based BrandForm draft).
+  useEffect(() => {
+    if (!isWizardFlow || !wizardDraftKey || !wizardDraftHydratedRef.current) return
+    try {
+      if (typeof window === 'undefined' || !window.localStorage) return
+      window.localStorage.setItem(
+        wizardDraftKey,
+        JSON.stringify({ step: currentStep, formData, savedAt: new Date().toISOString() }),
+      )
+    } catch {
+      // Quota exceeded or storage blocked — silently no-op. The fallback
+      // is the server-side prefill from `profiles` on next mount.
+    }
+  }, [isWizardFlow, wizardDraftKey, currentStep, formData])
 
   // Handle club claim step completion
   const handleClubClaimComplete = (result: ClubClaimResult) => {
@@ -778,6 +850,10 @@ export default function CompleteProfile() {
           coach_specialization_custom: formData.coachSpecialization === 'other'
             ? formData.coachSpecializationCustom.trim()
             : null,
+          // Optional bio captured on step 3. Trim + nullify empties so the
+          // milestone scorer's `bio IS NOT NULL AND bio != ''` check
+          // correctly counts a populated bio.
+          bio: formData.coachBio.trim() || null,
           // Same rationale as the player branch — default new coaches to
           // open so they appear in availability-filtered Discovery results.
           open_to_coach: true,
@@ -895,9 +971,16 @@ export default function CompleteProfile() {
 
       // CRITICAL: Refresh the auth store so dependent routes pick up the update
       await invalidateProfile({ userId: user.id, reason: 'complete-profile' })
-      
+
       logger.debug('Auth store refreshed - profile now complete')
       localStorage.setItem('hockia-onboarding-completed', '1')
+      // Clear the wizard-draft persistence — the user finished, the
+      // profile row is now authoritative. Without this, a returning user
+      // who edits their profile elsewhere then somehow lands back on
+      // /complete-profile would see stale draft data.
+      if (wizardDraftKey) {
+        try { localStorage.removeItem(wizardDraftKey) } catch { /* no-op */ }
+      }
       trackOnboardingComplete(userRole ?? 'unknown')
       trackDbEvent('onboarding_completed', 'profile', user?.id, { role: userRole })
       navigate('/dashboard/profile', { replace: true })
@@ -1530,6 +1613,30 @@ export default function CompleteProfile() {
                         label="Current Club (Optional)"
                         placeholder="e.g., Holcombe Hockey Club"
                       />
+
+                      {/* Coach professional bio. Optional but contributes to
+                          profile-strength scoring; collecting at onboarding
+                          makes the 100% milestone reachable in one pass. */}
+                      <div>
+                        <label htmlFor="coach-bio" className="flex items-center justify-between text-sm font-medium text-gray-700 mb-2">
+                          <span>About you <span className="text-gray-400 font-normal">(Optional)</span></span>
+                          <span className="text-xs font-normal text-gray-400">{formData.coachBio.length}/600</span>
+                        </label>
+                        <p className="text-xs text-gray-500 mb-2">
+                          A short intro for clubs and players who view your profile. Coaching philosophy, experience, what you're known for.
+                        </p>
+                        <textarea
+                          id="coach-bio"
+                          value={formData.coachBio}
+                          onChange={(e) => setFormData({ ...formData, coachBio: e.target.value.slice(0, 600) })}
+                          placeholder="e.g., Former national team midfielder, now developing U18 talent at..."
+                          rows={4}
+                          maxLength={600}
+                          autoCapitalize="sentences"
+                          spellCheck
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8026FA] focus:border-transparent resize-none"
+                        />
+                      </div>
                     </>
                   )}
                 </>

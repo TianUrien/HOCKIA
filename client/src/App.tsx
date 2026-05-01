@@ -78,7 +78,9 @@ const WorldProvincePage = lazyWithRetry(() => import('@/pages/WorldProvincePage'
 // Brand pages
 const BrandProfilePage = lazyWithRetry(() => import('@/pages/BrandProfilePage'))
 const BrandOnboardingPage = lazyWithRetry(() => import('@/pages/BrandOnboardingPage'))
-const BrandDashboardPage = lazyWithRetry(() => import('@/pages/BrandDashboardPage'))
+// BrandDashboardPage was the legacy /dashboard/brand page; replaced by the
+// rich BrandDashboard component used by DashboardRouter at /dashboard/profile.
+// Import removed; legacy route now redirects.
 const MarketplacePage = lazyWithRetry(() => import('@/pages/BrandsPage'))
 
 // Lazy load admin components (code splitting)
@@ -347,7 +349,11 @@ function App() {
                 <Route path="/community/brands" element={<Navigate to="/marketplace" replace />} />
                 <Route path="/brands/onboarding" element={<ErrorBoundary fallback={<RouteErrorFallback />}><BrandOnboardingPage /></ErrorBoundary>} />
                 <Route path="/brands/:slug" element={<BrandProfilePage />} />
-                <Route path="/dashboard/brand" element={<BrandDashboardPage />} />
+                {/* Legacy /dashboard/brand was a stripped-down edit-only page;
+                    canonical brand UX now lives at /dashboard/profile (rich
+                    BrandDashboard via DashboardRouter). Redirect any stale
+                    bookmarks rather than 404. */}
+                <Route path="/dashboard/brand" element={<Navigate to="/dashboard/profile" replace />} />
 
                 {/* Public Investor Dashboard (shareable link) */}
                 <Route path="/investors/:token" element={<PublicInvestorDashboard />} />

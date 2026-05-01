@@ -29,14 +29,15 @@ test.describe('@smoke brand', () => {
   test('brand edit page loads when brand exists', async ({ page }) => {
     await page.goto('/dashboard/brand')
 
-    // The edit page either shows "Edit Brand Profile" or redirects to onboarding
-    // Wait for the page to settle
+    // /dashboard/brand was the legacy stripped-down edit page. As of the
+    // 2026-05-01 cleanup, it redirects to /dashboard/profile (canonical
+    // brand dashboard via DashboardRouter). For brands without a brand row
+    // yet, the chain redirects further to /brands/onboarding.
     await page.waitForTimeout(3000)
 
     const url = page.url()
-    // Should be on edit page OR redirected to onboarding
     expect(
-      url.includes('/dashboard/brand') || url.includes('/brands/onboarding')
+      url.includes('/dashboard/profile') || url.includes('/brands/onboarding')
     ).toBe(true)
   })
 
