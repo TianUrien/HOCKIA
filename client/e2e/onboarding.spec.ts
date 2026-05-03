@@ -1,4 +1,6 @@
 import { test, expect } from '@playwright/test'
+import { existsSync } from 'node:fs'
+import { resolve } from 'node:path'
 
 /**
  * Onboarding pre-prod release validation
@@ -18,14 +20,40 @@ import { test, expect } from '@playwright/test'
  * its own throwaway account, both of which create more risk than they
  * close. Those flows are documented in the manual-verification list at
  * the bottom of the pre-prod release report instead.
+ *
+ * RUNTIME ENVIRONMENTS
+ * ----------------------------------------------------------------------------
+ * Two distinct runners use --grep @smoke:
+ *   1. Local CI (`npm run test:e2e:smoke`) — runs --project=setup first to
+ *      generate e2e/.auth/<role>.json storage states, then runs the smoke
+ *      projects. Auth-dependent tests work normally.
+ *   2. Synthetic monitoring (.github/workflows/synthetic.yml) — runs
+ *      --project=chromium --grep @smoke against PROD. No setup project,
+ *      no storage files. Auth-dependent tests would ENOENT-fail.
+ *
+ * The auth-dependent tests below check `existsSync(authFile)` and
+ * `test.skip()` cleanly when the file is absent — local CI runs them,
+ * synthetic monitoring skips them without false alarms.
  * ============================================================================
  */
 
+// Helper: skip the calling test cleanly when a storage-state file isn't
+// present (synthetic monitoring scenario). Returns the resolved path so
+// callers can pass it straight to browser.newContext().
+const requireAuthFile = (relativePath: string): string => {
+  const absolute = resolve(process.cwd(), relativePath)
+  test.skip(
+    !existsSync(absolute),
+    `Skipping — storage state ${relativePath} not present (synthetic-monitoring run with no --project=setup).`,
+  )
+  return absolute
+}
+
 test.describe('@smoke onboarding routes — already-onboarded redirect guard', () => {
   test('player who is already onboarded gets redirected away from /complete-profile', async ({ browser }) => {
-    // Use the pre-authenticated player storage state from auth.setup.ts.
+    const storageState = requireAuthFile('e2e/.auth/player.json')
     // This player has onboarding_completed=true on staging.
-    const context = await browser.newContext({ storageState: 'e2e/.auth/player.json' })
+    const context = await browser.newContext({ storageState })
     const page = await context.newPage()
     await page.goto('/complete-profile')
     // CompleteProfile init effect should detect onboarding_completed and
@@ -36,7 +64,8 @@ test.describe('@smoke onboarding routes — already-onboarded redirect guard', (
   })
 
   test('coach who is already onboarded gets redirected away from /complete-profile', async ({ browser }) => {
-    const context = await browser.newContext({ storageState: 'e2e/.auth/coach.json' })
+    const storageState = requireAuthFile('e2e/.auth/coach.json')
+    const context = await browser.newContext({ storageState })
     const page = await context.newPage()
     await page.goto('/complete-profile')
     await page.waitForURL((url) => !url.pathname.includes('/complete-profile'), { timeout: 10_000 })
@@ -47,7 +76,8 @@ test.describe('@smoke onboarding routes — already-onboarded redirect guard', (
 
 test.describe('@smoke onboarding routes — legacy redirects', () => {
   test('/dashboard/brand redirects to canonical /dashboard/profile (cleanup #1)', async ({ browser }) => {
-    const context = await browser.newContext({ storageState: 'e2e/.auth/brand.json' })
+    const storageState = requireAuthFile('e2e/.auth/brand.json')
+    const context = await browser.newContext({ storageState })
     const page = await context.newPage()
     await page.goto('/dashboard/brand')
     await page.waitForURL(
@@ -67,7 +97,8 @@ test.describe('@smoke onboarding routes — legacy redirects', () => {
   })
 
   test('/dashboard/profile?tab=vacancies does NOT 404 (route fix)', async ({ browser }) => {
-    const context = await browser.newContext({ storageState: 'e2e/.auth/club.json' })
+    const storageState = requireAuthFile('e2e/.auth/club.json')
+    const context = await browser.newContext({ storageState })
     const page = await context.newPage()
     await page.goto('/dashboard/profile?tab=vacancies')
     // The page should render (not the 404 fallback). DashboardRouter resolves
@@ -114,7 +145,8 @@ test.describe('@smoke onboarding — brand form polish', () => {
     // The brand test account already has a brand row, so /brands/onboarding
     // redirects them to their dashboard. Skipping in CI by checking
     // whether we landed on /brands/onboarding before asserting placeholder.
-    const context = await browser.newContext({ storageState: 'e2e/.auth/brand.json' })
+    const storageState = requireAuthFile('e2e/.auth/brand.json')
+    const context = await browser.newContext({ storageState })
     const page = await context.newPage()
     await page.goto('/brands/onboarding')
     await page.waitForLoadState('networkidle')
