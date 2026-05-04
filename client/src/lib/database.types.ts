@@ -2406,6 +2406,7 @@ export type Database = {
         Row: {
           accepted_friend_count: number
           accepted_reference_count: number
+          availability_confirmed_at: string | null
           avatar_url: string | null
           base_city: string | null
           base_country_id: number | null
@@ -2442,6 +2443,7 @@ export type Database = {
           is_verified: boolean
           languages: string[] | null
           last_active_at: string | null
+          last_meaningful_update_at: string | null
           last_message_email_at: string | null
           last_officiated_at: string | null
           last_platform: string | null
@@ -2491,6 +2493,7 @@ export type Database = {
         Insert: {
           accepted_friend_count?: number
           accepted_reference_count?: number
+          availability_confirmed_at?: string | null
           avatar_url?: string | null
           base_city?: string | null
           base_country_id?: number | null
@@ -2526,6 +2529,7 @@ export type Database = {
           is_verified?: boolean
           languages?: string[] | null
           last_active_at?: string | null
+          last_meaningful_update_at?: string | null
           last_message_email_at?: string | null
           last_officiated_at?: string | null
           last_platform?: string | null
@@ -2575,6 +2579,7 @@ export type Database = {
         Update: {
           accepted_friend_count?: number
           accepted_reference_count?: number
+          availability_confirmed_at?: string | null
           avatar_url?: string | null
           base_city?: string | null
           base_country_id?: number | null
@@ -2610,6 +2615,7 @@ export type Database = {
           is_verified?: boolean
           languages?: string[] | null
           last_active_at?: string | null
+          last_meaningful_update_at?: string | null
           last_message_email_at?: string | null
           last_officiated_at?: string | null
           last_platform?: string | null
@@ -4629,6 +4635,7 @@ export type Database = {
         Returns: {
           accepted_friend_count: number
           accepted_reference_count: number
+          availability_confirmed_at: string | null
           avatar_url: string | null
           base_city: string | null
           base_country_id: number | null
@@ -4665,6 +4672,7 @@ export type Database = {
           is_verified: boolean
           languages: string[] | null
           last_active_at: string | null
+          last_meaningful_update_at: string | null
           last_message_email_at: string | null
           last_officiated_at: string | null
           last_platform: string | null
@@ -4766,6 +4774,7 @@ export type Database = {
         Returns: {
           accepted_friend_count: number
           accepted_reference_count: number
+          availability_confirmed_at: string | null
           avatar_url: string | null
           base_city: string | null
           base_country_id: number | null
@@ -4802,6 +4811,7 @@ export type Database = {
           is_verified: boolean
           languages: string[] | null
           last_active_at: string | null
+          last_meaningful_update_at: string | null
           last_message_email_at: string | null
           last_officiated_at: string | null
           last_platform: string | null
