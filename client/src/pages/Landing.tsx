@@ -25,11 +25,11 @@ const CAROUSEL_SLIDES = [
   },
   {
     title: 'For Players\n& Coaches.',
-    subtitle: 'Connect with your community.\nTrack your journey. Elevate your game.',
+    subtitle: 'Build the profile that gets you found.\nFind opportunities that fit.',
   },
   {
     title: 'For Clubs\n& Brands.',
-    subtitle: 'Build your presence. Engage your fans.\nGrow the sport.',
+    subtitle: 'Recruit and partner with full context.\nReach the hockey community.',
   },
 ] as const
 
@@ -277,9 +277,9 @@ export default function Landing() {
               Built for Field Hockey.
             </h1>
             <p className="text-xl lg:text-2xl text-gray-200 mt-6 mb-2">
-              Connect players, coaches, and clubs.
+              Build the profile that gets you found.
             </p>
-            <p className="text-xl lg:text-2xl text-gray-200 mb-10">Raise the sport together.</p>
+            <p className="text-xl lg:text-2xl text-gray-200 mb-10">Recruit and partner with full context.</p>
 
             <div className="flex flex-wrap items-center gap-5">
               <Button

@@ -34,9 +34,9 @@ interface MemberCardProps {
   coach_specialization?: string | null
   coach_specialization_custom?: string | null
   /**
-   * Profile tier (Rookie → Active → Rising → Elite), derived client-side from
-   * the member's profile-strength estimate. When provided, rendered as a
-   * TierBadge in the badge row. Omit to render no tier.
+   * Profile completeness band (Just started → Getting there → Looking good → All set),
+   * derived client-side from the member's profile-strength estimate. When
+   * provided, rendered as a TierBadge in the badge row. Omit to render no badge.
    */
   tier?: ProfileTier
   /** Admin-granted verification flag (from profiles.is_verified or brands.is_verified). */

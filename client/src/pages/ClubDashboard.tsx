@@ -471,13 +471,13 @@ export default function ClubDashboard({ profileData, readOnly = false, isOwnProf
                 {!readOnly && (
                   <div className="bg-gradient-to-br from-[#8026FA] to-[#924CEC] rounded-xl p-6 text-white">
                     <h3 className="text-lg font-semibold mb-2">Quick Actions</h3>
-                    <p className="text-purple-100 mb-4 text-sm">Manage your club and find the best talent</p>
+                    <p className="text-purple-100 mb-4 text-sm">Recruit your next player or coach with full context</p>
                     <button
                       onClick={handleCreateVacancyClick}
                       className="inline-flex items-center gap-2 px-4 py-2 bg-white text-[#8026FA] rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm"
                     >
                       <Plus className="w-4 h-4" />
-                      Create Vacancy
+                      Post a vacancy
                     </button>
                   </div>
                 )}

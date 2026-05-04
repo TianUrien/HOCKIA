@@ -1,9 +1,9 @@
 /**
  * profileTier.ts
  *
- * Pure per-role profile-tier mapping. Four tiers in ascending order of
- * completeness — Rookie → Active → Rising → Elite — assigned from a
- * profile-strength percentage. Used by:
+ * Pure per-role profile-completeness mapping. Four bands in ascending
+ * order — Just started → Getting there → Looking good → All set — assigned
+ * from a profile-strength percentage. Used by:
  *
  * - Profile headers (PlayerDashboard, CoachDashboard, ClubDashboard,
  *   BrandDashboard): pass the real `percentage` from the per-role strength
@@ -12,8 +12,11 @@
  *   would fire N queries for gallery counts, so `getMemberTier()` estimates
  *   the strength from the fields already fetched on the profile/brand row.
  *
+ * Internal enum keys (rookie / active / rising / elite) preserved for
+ * back-compat with sort + tests; user-facing labels come from TierBadge.
+ *
  * Verified-style trust badges are intentionally a separate, admin-granted
- * concept — not one of these tiers.
+ * concept — not one of these bands.
  */
 import type { CommunityMemberFields } from './profileCompletion'
 
@@ -46,7 +49,7 @@ const hasNationality = (m: CommunityMemberFields): boolean =>
  * denormalized on the profile/brand row). The remaining bucket weights are
  * rescaled to sum to 100, so "all community-visible buckets filled" reads as
  * 100% — avoiding the case where an otherwise-complete profile never reaches
- * Elite just because gallery isn't fetched here.
+ * the top band just because gallery isn't fetched here.
  */
 export function estimateMemberStrength(m: CommunityMemberFields): number {
   switch (m.role) {

@@ -1088,7 +1088,7 @@ export default function CompleteProfile() {
                     </div>
                     <div>
                       <h4 className="font-semibold text-gray-900">I'm a Player</h4>
-                      <p className="text-sm text-gray-500">Looking for opportunities and showcasing my skills</p>
+                      <p className="text-sm text-gray-500">Build the profile that gets me found by clubs</p>
                     </div>
                   </div>
                 </button>
@@ -1106,7 +1106,7 @@ export default function CompleteProfile() {
                     </div>
                     <div>
                       <h4 className="font-semibold text-gray-900">I'm a Coach</h4>
-                      <p className="text-sm text-gray-500">Seeking coaching positions and connecting with clubs</p>
+                      <p className="text-sm text-gray-500">Find coaching opportunities and recruit players for my teams</p>
                     </div>
                   </div>
                 </button>
@@ -1142,7 +1142,7 @@ export default function CompleteProfile() {
                     </div>
                     <div>
                       <h4 className="font-semibold text-gray-900">I'm a Brand</h4>
-                      <p className="text-sm text-gray-500">Showcasing products and connecting with athletes</p>
+                      <p className="text-sm text-gray-500">Build my brand in the hockey community</p>
                     </div>
                   </div>
                 </button>

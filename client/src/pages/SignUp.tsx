@@ -31,7 +31,7 @@ const ROLE_CARDS: Array<{
   {
     role: 'player',
     label: 'Join as Player',
-    description: 'Showcase your skills and connect with clubs',
+    description: 'Build the profile that gets you found by clubs',
     iconBg: 'bg-[#8026FA]/10',
     iconText: 'text-[#8026FA]',
     Icon: User,
@@ -39,7 +39,7 @@ const ROLE_CARDS: Array<{
   {
     role: 'coach',
     label: 'Join as Coach',
-    description: 'Find opportunities and mentor players',
+    description: 'Find coaching opportunities and recruit players for your teams',
     iconBg: 'bg-[#924CEC]/10',
     iconText: 'text-[#924CEC]',
     Icon: Briefcase,
@@ -47,7 +47,7 @@ const ROLE_CARDS: Array<{
   {
     role: 'club',
     label: 'Join as Club',
-    description: 'Discover talent and build your team',
+    description: 'Recruit field hockey players with trust and context',
     iconBg: 'bg-[#ec4899]/10',
     iconText: 'text-[#ec4899]',
     Icon: Building2,
@@ -55,7 +55,7 @@ const ROLE_CARDS: Array<{
   {
     role: 'brand',
     label: 'Join as Brand',
-    description: 'Showcase products and connect with athletes',
+    description: 'Build your brand in the hockey community',
     iconBg: 'bg-[#f59e0b]/10',
     iconText: 'text-[#f59e0b]',
     Icon: Store,

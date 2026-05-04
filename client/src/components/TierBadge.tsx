@@ -10,33 +10,40 @@ type TierBadgeProps = {
 }
 
 const tierStyles: Record<ProfileTier, { label: string; icon: typeof Sparkles; classes: string }> = {
+  // Phase 1A.1 (v5 plan) — labels rebranded from quality-implying words
+  // (Rookie/Active/Rising/Elite) to neutral profile-completeness words.
+  // The underlying ProfileTier enum + thresholds in profileTier.ts are
+  // unchanged so sort/filter behavior is preserved; only the visible
+  // label moves. Internal tier keys (rookie/active/rising/elite) stay
+  // for back-compat with existing tests + community-grid sort.
   rookie: {
-    label: 'Rookie',
+    label: 'Just started',
     icon: Sprout,
     classes: 'bg-gray-100 text-gray-600',
   },
   active: {
-    label: 'Active',
+    label: 'Getting there',
     icon: TrendingUp,
     classes: 'bg-blue-50 text-blue-700',
   },
   rising: {
-    label: 'Rising',
+    label: 'Looking good',
     icon: Sparkles,
     classes: 'bg-amber-50 text-amber-700',
   },
   elite: {
-    label: 'Elite',
+    label: 'All set',
     icon: CheckCircle2,
     classes: 'bg-emerald-50 text-emerald-700',
   },
 }
 
 /**
- * Visual tier indicator for a profile — Rookie → Active → Rising → Elite,
- * derived client-side from profile-strength percentage. Positive framing:
- * lower tiers get neutral tones rather than warning colors so that early
- * profiles feel welcomed, not shamed.
+ * Visual indicator of profile completeness — describes the state of the
+ * profile, not the person. Labels: Just started → Getting there →
+ * Looking good → All set. Positive framing: lower bands get neutral
+ * tones rather than warning colors so that early profiles feel
+ * welcomed, not shamed.
  *
  * Verified-style trust badges are a separate, admin-granted concept.
  */
@@ -51,7 +58,7 @@ export default function TierBadge({ tier, size = 'md', className }: TierBadgePro
   return (
     <span
       className={cn('inline-flex items-center rounded-full font-medium', sizing, classes, className)}
-      aria-label={`Profile tier: ${label}`}
+      aria-label={`Profile completeness: ${label}`}
     >
       <Icon className={iconSize} aria-hidden="true" />
       {label}

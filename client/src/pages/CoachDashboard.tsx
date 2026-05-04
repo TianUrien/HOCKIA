@@ -553,14 +553,14 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
                 {!readOnly && (
                   <div className="bg-gradient-to-br from-[#8026FA] to-[#924CEC] rounded-xl p-6 text-white">
                     <h3 className="text-lg font-semibold mb-2">Quick Actions</h3>
-                    <p className="text-purple-100 mb-4 text-sm">Manage your coaching profile and find opportunities</p>
+                    <p className="text-purple-100 mb-4 text-sm">Find coaching opportunities, or recruit players for your team</p>
                     <button
                       type="button"
                       onClick={handleCreateVacancyClick}
                       className="inline-flex items-center gap-2 px-4 py-2 bg-white text-[#8026FA] rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm"
                     >
                       <Plus className="w-4 h-4" />
-                      Create Opportunity
+                      Post an opportunity
                     </button>
                   </div>
                 )}

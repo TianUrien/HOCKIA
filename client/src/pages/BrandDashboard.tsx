@@ -715,7 +715,7 @@ export default function BrandDashboard() {
                     <Package className="w-12 h-12 text-gray-300 mx-auto mb-4" />
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">No products yet</h3>
                     <p className="text-gray-600 max-w-md mx-auto mb-4">
-                      Showcase your products and services here. Athletes will be able to discover and connect with your brand.
+                      Add products so players, clubs, and coaches can discover your brand and reach out for partnerships.
                     </p>
                     <Button
                       variant="primary"
