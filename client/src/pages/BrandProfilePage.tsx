@@ -175,15 +175,17 @@ export default function BrandProfilePage() {
 
               {/* Profile Snapshot — Phase 1A.3. Public-side signal block.
                   Public mode hides missing signals, so visitors only see
-                  what's actually present on the brand profile.
-                  TODO Phase 1A.4+: thread the brand owner's
-                  nationality_country_id through useBrand so the Country
-                  signal can render publicly. Today we pass a synthetic
-                  profile with role='brand' and no country — Country signal
-                  will simply not render in public mode. */}
+                  what's actually present on the brand profile. Owner
+                  nationality is threaded from useBrand so the Country
+                  signal can render publicly. */}
               <div className="mb-6">
                 <ProfileSnapshot
-                  profile={{ id: brand.profile_id, role: 'brand' } as unknown as Profile}
+                  profile={{
+                    id: brand.profile_id,
+                    role: 'brand',
+                    nationality_country_id: brand.nationality_country_id,
+                    nationality: brand.nationality,
+                  } as unknown as Profile}
                   mode="public"
                   brand={{
                     logo_url: brand.logo_url,

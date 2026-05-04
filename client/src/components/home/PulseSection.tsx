@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { CheckCircle2 } from 'lucide-react'
 import { useMyPulse } from '@/hooks/useMyPulse'
 import { PulseCard } from './PulseCard'
+import { isKnownPulseItemType } from './pulseItemTypes'
 
 /**
  * PulseSection — "Since you last visited" surface for the v5-plan Movement
@@ -38,10 +39,17 @@ export function PulseSection() {
   // unseen ID set from items every render but only fire the RPC when the
   // join-key changes, so this is O(items) per state change rather than
   // every render.
+  //
+  // Skip items whose type the dispatcher doesn't recognise — without this
+  // guard, a future SQL signal that ships before frontend support would
+  // be marked seen here and then sit in the user's feed forever (the row
+  // is invisible because PulseCard renders null, and the user can never
+  // dismiss what they can't see). The dispatcher still fires its
+  // once-per-session Sentry warning so we know about the drift.
   const unseenIdsKey = useMemo(
     () =>
       items
-        .filter((item) => !item.seen_at)
+        .filter((item) => !item.seen_at && isKnownPulseItemType(item.item_type))
         .map((item) => item.id)
         .join(','),
     [items],

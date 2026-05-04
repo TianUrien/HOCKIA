@@ -249,6 +249,8 @@ describe('BrandForm', () => {
             created_at: '',
             updated_at: '',
             last_activity_at: '',
+            nationality_country_id: null,
+            nationality: null,
           }}
           onSubmit={onSubmit}
           submitLabel="Save"

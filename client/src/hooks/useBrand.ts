@@ -13,6 +13,11 @@ import type { Brand } from './useBrands'
 export interface BrandDetail extends Brand {
   profile_id: string
   updated_at: string
+  /** Brand owner's nationality — used by the public Profile Snapshot to
+   *  render the brand-side Country signal. Both fields populated by the
+   *  same profiles JOIN inside get_brand_by_slug. */
+  nationality_country_id: number | null
+  nationality: string | null
 }
 
 interface UseBrandResult {

@@ -21,6 +21,11 @@ interface PulseCardProps {
   onDismiss: (id: string) => void
 }
 
+// The known-types set + isKnownPulseItemType helper live in
+// `./pulseItemTypes` so this .tsx file only exports a component (Vite
+// react-refresh rule). The switch below is the canonical dispatcher;
+// keep `pulseItemTypes.ts` in sync when adding new card types.
+
 // Module-level set so we only report each unknown item_type once per session.
 // Same rate-limit pattern as HomeFeedItemCard — Sentry budget is precious.
 const reportedUnknownTypes = new Set<string>()
