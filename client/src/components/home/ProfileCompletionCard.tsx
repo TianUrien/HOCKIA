@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Camera, Building2, UserPlus, Shield, X, Award } from 'lucide-react'
+import { Camera, Building2, UserPlus, Shield, X } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
 import { useProfileStrength } from '@/hooks/useProfileStrength'
 import type { Profile } from '@/lib/supabase'
@@ -19,14 +19,25 @@ const DISMISSED_KEY = 'profile-completion-dismissed'
 const DISMISSED_ITEMS_KEY = 'profile-completion-dismissed-items'
 
 /**
- * ProfileCompletionCard — shown at the top of the home feed when the user's
+ * ProfileCompletionCard — shown at the top of the home feed when a player's
  * profile is incomplete. Shows one step at a time, ordered by AI data value.
  * Dismissible per-item; fully hidden at 80%+ or after 3 dismissals.
+ *
+ * Player-only by design: useProfileStrength is the player-bucket calculator
+ * and would surface a misleading % for other roles. Coach/club/brand/umpire
+ * get role-correct nudges via NextStepCard + FreshnessCard on their own
+ * dashboards.
  */
 export default function ProfileCompletionCard() {
   const { profile, user } = useAuthStore()
   const navigate = useNavigate()
-  const profileStrength = useProfileStrength(profile as Profile | null)
+  // Short-circuit the strength query for non-players. Hand the hook `null`
+  // unless the user is a player so we never run the wrong-bucket calculator
+  // and never surface a wrong % if the role gate is removed.
+  const playerProfile = (profile as Profile | null)?.role === 'player'
+    ? (profile as Profile)
+    : null
+  const profileStrength = useProfileStrength(playerProfile)
   const [dismissedItems, setDismissedItems] = useState<Set<string>>(() => {
     try {
       const stored = localStorage.getItem(DISMISSED_ITEMS_KEY)
@@ -41,9 +52,12 @@ export default function ProfileCompletionCard() {
 
   const role = profile?.role ?? null
 
-  // Build steps ordered by AI data value (S-tier → A-tier → B-tier)
+  // Build steps ordered by AI data value (S-tier → A-tier → B-tier).
+  // Player-only — the role gate at the bottom of the component returns null
+  // for any other role, so there's no need to branch on role inside.
   const steps: CompletionStep[] = useMemo(() => {
     if (!profile || !user) return []
+    if (role !== 'player') return []
     const p = profile as Profile
     const items: CompletionStep[] = []
 
@@ -53,95 +67,21 @@ export default function ProfileCompletionCard() {
         id: 'photo',
         icon: <Camera className="w-5 h-5 text-[#8026FA]" />,
         title: 'Add a profile photo',
-        description: role === 'club'
-          ? 'Clubs with logos get more attention from players.'
-          : 'Profiles with photos are more likely to be shortlisted by clubs.',
-        action: () => {
-          const dashPath =
-            role === 'coach'
-              ? '/coaches/'
-              : role === 'club'
-                ? '/clubs/'
-                : role === 'umpire'
-                  ? '/umpires/'
-                  : '/players/'
-          navigate(`${dashPath}${(p as Profile).username}?action=edit`)
-        },
+        description: 'Profiles with photos are more likely to be shortlisted by clubs.',
+        action: () => navigate(`/players/${p.username}?action=edit`),
         actionLabel: 'Add Photo',
         completed: false,
       })
     }
 
-    // Umpire credentials — hero field for officiating role. Without these,
-    // the profile says nothing about trust/level to anyone browsing. Gate
-    // the follow-up umpire nudges (journey, references) on credentials
-    // being set, so a brand-new umpire sees one ask at a time.
-    const hasUmpireCredentials =
-      role === 'umpire' && Boolean(p.umpire_level?.trim() && p.federation?.trim())
-
-    if (role === 'umpire') {
-      const needsLevel = !p.umpire_level?.trim()
-      const needsFederation = !p.federation?.trim()
-      if (needsLevel || needsFederation) {
-        items.push({
-          id: 'umpire-credentials',
-          icon: <Shield className="w-5 h-5 text-[#8026FA]" />,
-          title: needsLevel && needsFederation
-            ? 'Add your umpire level and federation'
-            : needsLevel
-              ? 'Add your umpire level'
-              : 'Add the federation you officiate with',
-          description: 'This is what clubs and fellow officials look for first.',
-          action: () => navigate(`/umpires/${(p as Profile).username}?action=edit`),
-          actionLabel: needsLevel ? 'Add Level' : 'Add Federation',
-          completed: false,
-        })
-      }
-    }
-
-    // Umpire Officiating Journey — once credentials are in, nudge them to
-    // log their first entry (appointment, milestone, certification, panel).
-    // Without any journey entries, the profile is a static credentials card.
-    if (hasUmpireCredentials && (p.umpire_appointment_count ?? 0) === 0) {
-      items.push({
-        id: 'umpire-journey',
-        icon: <Award className="w-5 h-5 text-[#8026FA]" />,
-        title: 'Log your first officiating entry',
-        description:
-          'Add an appointment, milestone, certification, or panel — show what you\u2019ve done.',
-        action: () => navigate('/dashboard/profile?tab=officiating'),
-        actionLabel: 'Add Entry',
-        completed: false,
-      })
-    }
-
-    // Umpire peer reference — once credentials are in, surface the network
-    // ask so the profile collects its first endorsement from a coach /
-    // fellow umpire / club.
-    if (hasUmpireCredentials && (p.accepted_reference_count ?? 0) === 0) {
-      items.push({
-        id: 'umpire-reference',
-        icon: <UserPlus className="w-5 h-5 text-[#8026FA]" />,
-        title: 'Ask a peer to vouch for you',
-        description:
-          'A coach, fellow umpire, or club vouching for you builds trust fast.',
-        action: () => navigate('/dashboard/profile?tab=friends'),
-        actionLabel: 'Get Reference',
-        completed: false,
-      })
-    }
-
-    // Club linking — unlocks league AI filtering (players/coaches only)
-    if ((role === 'player' || role === 'coach') && !p.current_world_club_id && p.current_club?.trim()) {
+    // Club linking — unlocks league AI filtering
+    if (!p.current_world_club_id && p.current_club?.trim()) {
       items.push({
         id: 'club',
         icon: <Building2 className="w-5 h-5 text-[#8026FA]" />,
         title: 'Link your current club',
         description: 'Coaches in your league will find you faster in search.',
-        action: () => {
-          const dashPath = role === 'coach' ? '/coaches/' : '/players/'
-          navigate(`${dashPath}${(p as Profile).username}?action=edit`)
-        },
+        action: () => navigate(`/players/${p.username}?action=edit`),
         actionLabel: 'Link Club',
         completed: false,
       })
@@ -161,16 +101,13 @@ export default function ProfileCompletionCard() {
     }
 
     // References — highest AI value signal
-    if ((role === 'player' || role === 'coach') && (p.accepted_reference_count ?? 0) === 0 && (p.accepted_friend_count ?? 0) > 0) {
+    if ((p.accepted_reference_count ?? 0) === 0 && (p.accepted_friend_count ?? 0) > 0) {
       items.push({
         id: 'references',
         icon: <Shield className="w-5 h-5 text-[#8026FA]" />,
         title: 'Get your first reference',
         description: 'Players with references rank higher in every search.',
-        action: () => {
-          const dashPath = role === 'coach' ? '/coaches/' : '/players/'
-          navigate(`${dashPath}${(p as Profile).username}?tab=friends`)
-        },
+        action: () => navigate(`/players/${p.username}?tab=friends`),
         actionLabel: 'Ask for Reference',
         completed: false,
       })
@@ -194,12 +131,6 @@ export default function ProfileCompletionCard() {
   // Don't render for unauthenticated users, loading state, or completed profiles
   if (!user || !profile || profileStrength.loading) return null
   if (fullyDismissed) return null
-  // Player-only on the home feed. useProfileStrength is the player-bucket
-  // calculator; running it on coach/club/brand/umpire produces a wrong %
-  // (most player buckets fail for non-player roles), and the resulting
-  // progress bar at 0–25% is misleading. Non-player roles get NextStepCard
-  // + FreshnessCard on their own dashboards — a separate, role-correct
-  // surface — so we don't lose nudge coverage by gating this card to player.
   if (role !== 'player') return null
   if (profileStrength.percentage >= 80) return null
   if (!currentStep) return null

@@ -103,7 +103,9 @@ export default function ProfileSnapshot({
           )}
         </div>
         <p className="text-xs text-gray-500">
-          {mode === 'owner' ? getOwnerSubtitle(profile.role) : 'Highlights from this profile'}
+          {mode === 'owner'
+            ? getOwnerSubtitle(profile.role, profile.coach_recruits_for_team ?? false)
+            : 'Highlights from this profile'}
         </p>
       </header>
 

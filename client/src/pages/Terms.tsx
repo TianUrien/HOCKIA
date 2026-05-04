@@ -79,7 +79,7 @@ export default function Terms() {
               </p>
               <ul className="list-none space-y-3 ml-4">
                 <li><strong>Player:</strong> Individual field hockey players who can create profiles, showcase their career history, connect with others, apply for opportunities, and request references.</li>
-                <li><strong>Coach:</strong> Field hockey coaches who can create profiles, post opportunities and vacancies, connect with players and clubs, and manage applications.</li>
+                <li><strong>Coach:</strong> Field hockey coaches who can create profiles, post opportunities, connect with players and clubs, and manage applications.</li>
                 <li><strong>Club:</strong> Field hockey clubs and organizations that can create club profiles, post opportunities for players and coaches, manage members, and recruit talent.</li>
                 <li><strong>Brand:</strong> Companies and brands in the field hockey industry that can create brand profiles, manage product catalogs, publish posts, and recruit brand ambassadors.</li>
                 <li><strong>Umpire:</strong> Field hockey officials who can create profiles showing their level, federation, specialization, and officiating languages, and connect with clubs and fellow officials.</li>
@@ -127,7 +127,7 @@ export default function Terms() {
               <ul className="list-none space-y-3 ml-4">
                 <li>- User profiles with personal information, career history, media galleries, and social links.</li>
                 <li>- A directory of players, coaches, clubs, and brands from around the world.</li>
-                <li>- An opportunity board where clubs and coaches can post vacancies and users can apply.</li>
+                <li>- An opportunity board where clubs and coaches can post opportunities and users can apply.</li>
                 <li>- A messaging system for direct communication between users.</li>
                 <li>- Friend connections and networking features.</li>
                 <li>- A reference and endorsement system for professional credibility.</li>

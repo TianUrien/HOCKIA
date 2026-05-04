@@ -416,12 +416,21 @@ export default function AddReferenceModal({ isOpen, onClose, friends, onSubmit, 
                 understand WHY they're sending the request, not just what
                 the button does. Sits above the submit button so it's the
                 last thing the user reads before tapping Send. */}
+            {/* Trailing trust copy varies by requester role. Umpires aren't
+                being scouted by clubs in the recruitment sense — they're
+                appointed by assigners — so the default "clubs scouting"
+                language reads off-tone for them. */}
             <p className="flex items-start gap-1.5 rounded-xl border border-emerald-100 bg-emerald-50/50 px-3 py-2.5 text-xs text-emerald-800 leading-relaxed">
               <Shield className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" aria-hidden="true" />
               <span>
-                {selectedFriend
-                  ? `Once ${selectedFriend.fullName.split(' ')[0]} accepts, this reference appears on your profile and helps clubs scouting on HOCKIA trust your background.`
-                  : 'Once accepted, this reference appears on your profile and helps clubs scouting on HOCKIA trust your background.'}
+                {(() => {
+                  const trustTrailing = requesterRole?.toLowerCase() === 'umpire'
+                    ? 'helps assigners and clubs trust your background.'
+                    : 'helps clubs scouting on HOCKIA trust your background.'
+                  return selectedFriend
+                    ? `Once ${selectedFriend.fullName.split(' ')[0]} accepts, this reference appears on your profile and ${trustTrailing}`
+                    : `Once accepted, this reference appears on your profile and ${trustTrailing}`
+                })()}
               </span>
             </p>
 

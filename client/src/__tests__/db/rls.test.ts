@@ -588,4 +588,211 @@ describe.skipIf(skip)('RLS Policy Isolation', () => {
       expect(check?.length).toBeGreaterThan(0)
     })
   })
+
+  // =========================================================================
+  // USER PULSE ITEMS (v5 plan, Phase 1B.1+)
+  // =========================================================================
+  // The pulse layer is owner-only sensitive surface. Migration
+  // 20260505000100_pulse_lock_update_to_rpcs.sql revoked direct UPDATE so the
+  // only write paths are the four SECURITY DEFINER lifecycle RPCs and the
+  // SECURITY DEFINER trigger functions. These tests defend the perimeter.
+  describe('user_pulse_items', () => {
+    it('user cannot SELECT another user\'s pulse items', async () => {
+      // Coach attempts to read player's pulse items by id filter. RLS
+      // SELECT policy scopes to user_id = auth.uid(), so the result must
+      // be empty regardless of whether player has pulse rows.
+      const { data: leaked } = await coach.client
+        .from('user_pulse_items')
+        .select('id, user_id')
+        .eq('user_id', player.userId)
+
+      expect(leaked ?? []).toHaveLength(0)
+    })
+
+    it('user cannot directly INSERT into user_pulse_items', async () => {
+      // No INSERT policy exists for `authenticated`. Only SECURITY DEFINER
+      // functions (triggers + RPCs) can insert. A direct .insert() must
+      // either error or silently insert nothing.
+      const { data, error } = await player.client
+        .from('user_pulse_items')
+        .insert({
+          user_id: player.userId,
+          item_type: 'test_should_be_blocked',
+          priority: 5,
+          metadata: {},
+        })
+        .select()
+
+      // Either RLS rejects with an error, or the row count is 0.
+      if (!error) {
+        expect(data ?? []).toHaveLength(0)
+      } else {
+        expect(error).not.toBeNull()
+      }
+    })
+
+    it('user cannot directly UPDATE their own pulse items (RPC-only write path)', async () => {
+      // After the lock-down migration, direct .update() should be blocked
+      // even on own rows. Find one of the player's pulse items first.
+      const { data: ownItems } = await player.client
+        .from('user_pulse_items')
+        .select('id')
+        .limit(1)
+
+      if (!ownItems?.length) {
+        console.warn('  ⏭  No pulse items for player — skipping direct-update denial test')
+        return
+      }
+
+      const { error } = await player.client
+        .from('user_pulse_items')
+        .update({ priority: 99 })
+        .eq('id', ownItems[0].id)
+
+      // Permission revoke should result in an error.
+      expect(error).not.toBeNull()
+    })
+
+    it('user cannot UPDATE another user\'s pulse items', async () => {
+      // Even if direct UPDATE were re-enabled, RLS would scope it. Belt
+      // + braces: try a cross-user update and confirm nothing changes.
+      const { data: playerItems } = await player.client
+        .from('user_pulse_items')
+        .select('id, priority')
+        .limit(1)
+
+      if (!playerItems?.length) {
+        console.warn('  ⏭  No pulse items for player — skipping cross-user update test')
+        return
+      }
+
+      const original = playerItems[0]
+      await coach.client
+        .from('user_pulse_items')
+        .update({ priority: 99 })
+        .eq('id', original.id)
+
+      // Owner re-reads — value must be unchanged.
+      const { data: check } = await player.client
+        .from('user_pulse_items')
+        .select('priority')
+        .eq('id', original.id)
+        .single()
+
+      expect(check?.priority).toBe(original.priority)
+    })
+
+    it('mark_pulse_seen RPC is a no-op for another user\'s pulse_id', async () => {
+      // Find a player pulse id, then have coach call mark_pulse_seen on it.
+      // The RPC scopes by auth.uid() in its UPDATE, so coach's call should
+      // not stamp seen_at on the player's row.
+      const { data: playerItems } = await player.client
+        .from('user_pulse_items')
+        .select('id, seen_at')
+        .is('seen_at', null)
+        .limit(1)
+
+      if (!playerItems?.length) {
+        console.warn('  ⏭  No unseen player pulse items — skipping cross-user RPC test')
+        return
+      }
+
+      const targetId = playerItems[0].id
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (coach.client as any).rpc('mark_pulse_seen', { p_pulse_ids: [targetId] })
+
+      // Owner re-reads — seen_at must still be null.
+      const { data: check } = await player.client
+        .from('user_pulse_items')
+        .select('seen_at')
+        .eq('id', targetId)
+        .single()
+
+      expect(check?.seen_at).toBeNull()
+    })
+
+    it('_maybe_insert_snapshot_gain_celebration is not callable by authenticated', async () => {
+      // Migration 20260504230000 revoked EXECUTE from PUBLIC. The internal
+      // helper must reject calls from any authenticated client — closing
+      // the cross-user feed-injection vector.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (player.client as any).rpc(
+        '_maybe_insert_snapshot_gain_celebration',
+        {
+          p_user_id: coach.userId,
+          p_signal: 'first_reference',
+          p_metadata: { endorser_name: 'rls_test_pwn_attempt' },
+        }
+      )
+
+      expect(error).not.toBeNull()
+    })
+  })
+
+  // =========================================================================
+  // OPPORTUNITIES — coach_recruits_for_team gating (Phase 1A.4)
+  // =========================================================================
+  // Migration 20260505000000 added an RLS check that coaches can only
+  // INSERT/UPDATE/DELETE opportunities when their `coach_recruits_for_team`
+  // flag is true. UI gate alone was bypassable via direct API.
+  describe('opportunities — coach recruiter gating', () => {
+    it('candidate-only coach (flag=false) cannot INSERT into opportunities', async () => {
+      // Read the coach's current flag. Test only runs when the seed coach
+      // is a candidate-only coach (flag=false); skips otherwise so we
+      // never need to mutate seed data.
+      const { data: coachProfile } = await coach.client
+        .from('profiles')
+        .select('coach_recruits_for_team')
+        .eq('id', coach.userId)
+        .single()
+
+      if (coachProfile?.coach_recruits_for_team) {
+        console.warn('  ⏭  Seed coach has recruiter flag = true — skipping candidate-only INSERT denial test')
+        return
+      }
+
+      const { data, error } = await coach.client
+        .from('opportunities')
+        .insert({
+          club_id: coach.userId,
+          title: 'rls_test_should_be_blocked',
+          opportunity_type: 'player',
+          description: 'rls_test',
+        })
+        .select()
+
+      // Either RLS error or empty result — both prove the gate held.
+      if (!error) {
+        expect(data ?? []).toHaveLength(0)
+      } else {
+        expect(error).not.toBeNull()
+      }
+    })
+
+    it('club user can always INSERT into opportunities (smoke check on the gate\'s OR branch)', async () => {
+      const { data, error } = await club.client
+        .from('opportunities')
+        .insert({
+          club_id: club.userId,
+          title: 'rls_test_club_can_post',
+          opportunity_type: 'player',
+          description: 'rls_test',
+        })
+        .select('id')
+        .single()
+
+      // Cleanup if the row landed.
+      if (data?.id) {
+        await club.client.from('opportunities').delete().eq('id', data.id)
+      }
+
+      // Either it succeeded (no error + data) or the seed has constraints
+      // we don't know about — but RLS specifically should NOT be the
+      // blocker. If error, it must not be a permission/RLS error.
+      if (error) {
+        expect(error.code).not.toBe('42501') // permission denied
+        expect(error.message?.toLowerCase() ?? '').not.toContain('row-level security')
+      }
+    })
+  })
 })

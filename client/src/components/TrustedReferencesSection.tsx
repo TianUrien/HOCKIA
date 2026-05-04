@@ -507,14 +507,20 @@ export default function TrustedReferencesSection({
 
                 // Default: has friends, has eligible options. Standard "ask
                 // someone to vouch" empty state with strong value prop.
+                const headlineCopy = profileRole === 'umpire'
+                  ? 'References are how peers and assigners verify your officiating'
+                  : 'References are how clubs verify your hockey'
+                const subCopyTrailing = profileRole === 'umpire'
+                  ? 'Assigners and clubs see your references on your profile.'
+                  : 'Clubs scouting on HOCKIA see your references on your profile.'
                 return (
                   <div className="space-y-3">
                     <ShieldCheck className="mx-auto h-8 w-8 text-emerald-500" aria-hidden="true" />
                     <p className="text-sm font-semibold text-gray-900">
-                      References are how clubs verify your hockey
+                      {headlineCopy}
                     </p>
                     <p className="text-sm text-gray-600">
-                      Ask 1-2 of your {friendOptions.length} {friendOptions.length === 1 ? 'connection' : 'connections'} to vouch for you. Clubs scouting on HOCKIA see your references on your profile.
+                      Ask 1-2 of your {friendOptions.length} {friendOptions.length === 1 ? 'connection' : 'connections'} to vouch for you. {subCopyTrailing}
                     </p>
                     <button
                       type="button"

@@ -223,7 +223,10 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
     badgeText: 'Profile milestone',
     accentClassName: 'bg-emerald-50 text-emerald-600',
     getTitle: () => 'Your profile is complete',
-    getDescription: () => 'Great work! Keep it fresh so scouts can find you.',
+    // Role-agnostic copy. The notification fires for every role (player,
+    // coach, club, brand, umpire); "so scouts can find you" implied a
+    // recruitment relationship that doesn't apply to brand or umpire.
+    getDescription: () => 'Great work — keep it fresh so the right people find you.',
     getRoute: () => '/dashboard/profile',
   },
   account_verified: {

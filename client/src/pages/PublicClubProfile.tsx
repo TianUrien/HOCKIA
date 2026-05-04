@@ -31,28 +31,9 @@ type PublicClubProfile = Partial<Profile> &
     mens_league_division?: string | null
   }
 
-const PUBLIC_CLUB_FIELDS = [
-  'id',
-  'role',
-  'username',
-  'full_name',
-  'avatar_url',
-  'base_location',
-  'nationality',
-  'nationality_country_id',
-  'club_bio',
-  'club_history',
-  'website',
-  'year_founded',
-  'womens_league_division',
-  'mens_league_division',
-  'contact_email',
-  'contact_email_public',
-  'social_links',
-  'is_test_account',
-  'is_verified',
-  'verified_at'
-].join(',')
+// SELECT list moved to `client/src/lib/publicProfileFields.ts` (see note
+// in PublicPlayerProfile.tsx for rationale).
+import { PUBLIC_CLUB_FIELDS } from '@/lib/publicProfileFields'
 
 export default function PublicClubProfile() {
   const { username, id } = useParams<{ username?: string; id?: string }>()

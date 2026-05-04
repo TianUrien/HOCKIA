@@ -26,11 +26,11 @@ const ROLE_EXAMPLES: Record<string, string[]> = {
     'What clubs would suit me?',
     'Who should I connect with?',
   ],
-  coach: [
-    'What should I add to my profile?',
-    'Show me clubs hiring head coaches',
-    'Players I could recommend for my staff',
-  ],
+  // Coach examples are computed dynamically — see buildCoachExamples — so
+  // candidate-only coaches don't get recruiter prompts they can't act on.
+  // (This entry stays present so role-detection short-circuits to the
+  // dynamic path rather than DEFAULT_EXAMPLES.)
+  coach: [],
   club: [
     'What can I do next on HOCKIA?',
     'Show me available defenders for my team',
@@ -46,6 +46,25 @@ const ROLE_EXAMPLES: Record<string, string[]> = {
     'Show me umpires from my country',
     'How can I get more visibility?',
   ],
+}
+
+/** Per the Phase 1A.4 plan, coaches see different example prompts based on
+ *  the `coach_recruits_for_team` flag. Candidate-only coaches (default) get
+ *  a candidate-shaped set; recruiter-mode coaches get a recruiter-first set
+ *  with the candidate-side prompt last. */
+function buildCoachExamples(coachRecruitsForTeam: boolean): string[] {
+  if (coachRecruitsForTeam) {
+    return [
+      'Players I could recommend for my staff',
+      'Show me clubs hiring head coaches',
+      'What should I add to my profile?',
+    ]
+  }
+  return [
+    'What should I add to my profile?',
+    'Show me clubs hiring head coaches',
+    'Who should I connect with?',
+  ]
 }
 
 export default function DiscoverPage() {
@@ -72,10 +91,13 @@ export default function DiscoverPage() {
   // empty state never blocks on a network round-trip; once the profile
   // arrives the examples swap to the role-aware variant.
   const firstName = getFirstName(profile?.full_name ?? null)
-  const exampleQueries = useMemo(
-    () => (profile?.role && ROLE_EXAMPLES[profile.role]) || DEFAULT_EXAMPLES,
-    [profile?.role]
-  )
+  const exampleQueries = useMemo(() => {
+    if (profile?.role === 'coach') {
+      return buildCoachExamples(profile.coach_recruits_for_team ?? false)
+    }
+    const examples = profile?.role ? ROLE_EXAMPLES[profile.role] : null
+    return examples && examples.length > 0 ? examples : DEFAULT_EXAMPLES
+  }, [profile?.role, profile?.coach_recruits_for_team])
 
   // Track visual viewport for mobile keyboard awareness.
   // On iOS Safari, the keyboard changes visualViewport.height and may scroll

@@ -382,13 +382,24 @@ export function computeSignals(
 }
 
 /** Per-role subtitle for the owner-side card. Public mode uses a neutral
- *  default in the component itself. */
-export function getOwnerSubtitle(role: Profile['role']): string {
+ *  default in the component itself.
+ *
+ *  Coach branch is dual-mode: a coach who's flipped the recruiter flag is
+ *  not "evaluated by clubs" in the candidate sense — they ARE the recruiter,
+ *  so the candidate-side framing reads off-tone. The optional
+ *  `coachRecruitsForTeam` argument routes them to a recruiter-aware string.
+ */
+export function getOwnerSubtitle(
+  role: Profile['role'],
+  coachRecruitsForTeam: boolean = false,
+): string {
   switch (role) {
     case 'player':
       return 'What clubs see when they evaluate you'
     case 'coach':
-      return 'What clubs see when they evaluate you'
+      return coachRecruitsForTeam
+        ? 'How your coaching profile reads to clubs and players you reach out to'
+        : 'What clubs see when they evaluate you'
     case 'club':
       return 'What players, coaches, and brands see when they look at your club'
     case 'brand':

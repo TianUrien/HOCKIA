@@ -503,8 +503,8 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                     errors.title ? 'border-red-500' : 'border-gray-300'
                   }`}
                   placeholder={
-                    formData.opportunity_type === 'player' 
-                      ? "e.g., Elite Youth Player Opportunity"
+                    formData.opportunity_type === 'player'
+                      ? "e.g., Senior Women's First XI Opportunity"
                       : "e.g., Head Coach - Youth Development"
                   }
                   aria-invalid={errors.title ? true : undefined}

@@ -83,7 +83,7 @@ export default function PrivacyPolicy() {
                 <li>- Messages sent to other users</li>
                 <li>- Profile comments</li>
                 <li>- References and endorsements</li>
-                <li>- Opportunity and vacancy listings</li>
+                <li>- Opportunity listings</li>
                 <li>- Applications to opportunities (including cover letters)</li>
                 <li>- Community questions and answers</li>
                 <li>- Brand posts and product listings</li>

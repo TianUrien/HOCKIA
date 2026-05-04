@@ -36,34 +36,9 @@ type PublicUmpireShape = Partial<Profile> &
     | 'date_of_birth'
   > & { is_test_account?: boolean }
 
-const PUBLIC_UMPIRE_FIELDS = [
-  'id',
-  'role',
-  'username',
-  'full_name',
-  'avatar_url',
-  'base_location',
-  'bio',
-  'nationality',
-  'nationality_country_id',
-  'nationality2_country_id',
-  'gender',
-  // Phase 3: umpiring_categories drives the categories chip in the hero card.
-  'umpiring_categories',
-  'date_of_birth',
-  'social_links',
-  'is_test_account',
-  'is_verified',
-  'verified_at',
-  'umpire_level',
-  'federation',
-  'umpire_since',
-  'officiating_specialization',
-  'languages',
-  'last_officiated_at',
-  'umpire_appointment_count',
-  'accepted_reference_count',
-].join(',')
+// SELECT list moved to `client/src/lib/publicProfileFields.ts` (see note
+// in PublicPlayerProfile.tsx for rationale).
+import { PUBLIC_UMPIRE_FIELDS } from '@/lib/publicProfileFields'
 
 export default function PublicUmpireProfile() {
   const { username, id } = useParams<{ username?: string; id?: string }>()

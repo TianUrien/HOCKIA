@@ -588,6 +588,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
                   ownerProfileId={profile.id}
                   excludeIds={nudgeExcludeIds}
                   acceptedReferenceCount={nudgeAcceptedFloor}
+                  profileRole={profile.role}
                   onAsk={(friendId) => {
                     setActiveTab('friends')
                     const next = new URLSearchParams(searchParams)

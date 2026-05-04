@@ -28,6 +28,10 @@ interface RecentlyConnectedCardProps {
    *  the parent dashboard is responsible for navigating to FriendsTab,
    *  scrolling to references, and opening the modal pre-selected. */
   onAsk: (friendId: string) => void
+  /** Owner's role — drives copy. Without it, the card always says
+   *  "clubs scouting on HOCKIA" which leaks recruitment-flavored language
+   *  to umpires (a trust-and-appointment role, not a recruitment one). */
+  profileRole?: string | null
 }
 
 const DISMISS_KEY_PREFIX = 'hockia-recently-connected-dismiss:'
@@ -118,7 +122,23 @@ export default function RecentlyConnectedCard({
   acceptedReferenceCount,
   windowDays = DEFAULT_WINDOW_DAYS,
   onAsk,
+  profileRole,
 }: RecentlyConnectedCardProps) {
+  // Per-role rationale for the reference-ask. Default (player/coach) leans on
+  // recruitment trust; umpire framing is peer/assigner trust; brand framing
+  // is partnership trust. The card is owner-only so this is "what reads true
+  // for me as I read it on my own dashboard."
+  const rationaleByRole: Record<string, string> = {
+    umpire:
+      'References from coaches, fellow umpires and clubs appear on your profile and help assigners and clubs trust your background.',
+    brand:
+      'References from athletes, clubs and partners appear on your profile and help the community trust your brand.',
+  }
+  const defaultRationale =
+    'References from coaches, teammates and clubs appear on your profile and help clubs scouting on HOCKIA trust your background.'
+  const rationaleCopy = profileRole && rationaleByRole[profileRole]
+    ? rationaleByRole[profileRole]
+    : defaultRationale
   // Track which friend ids have been dismissed in this session so the card
   // visibly drops off when the user taps the X (or Ask) without waiting for
   // a refetch. Reset only when the owner identity changes — resetting on
@@ -243,10 +263,7 @@ export default function RecentlyConnectedCard({
           <p className="mt-1 text-sm font-semibold text-gray-900">
             Ask {firstName} for a reference?
           </p>
-          <p className="mt-1 text-xs text-gray-600">
-            References from coaches, teammates and clubs appear on your profile and help
-            clubs scouting on HOCKIA trust your background.
-          </p>
+          <p className="mt-1 text-xs text-gray-600">{rationaleCopy}</p>
 
           <div className="mt-3 flex items-center gap-3 rounded-lg border border-emerald-100 bg-white/80 p-2.5">
             <Avatar

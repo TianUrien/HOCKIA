@@ -437,6 +437,7 @@ export default function UmpireDashboard({
               ownerProfileId={nudgeOwnerId}
               excludeIds={nudgeExcludeIds}
               acceptedReferenceCount={nudgeAcceptedFloor}
+              profileRole="umpire"
               onAsk={(friendId) => {
                 setActiveTab('friends')
                 const next = new URLSearchParams(searchParams)

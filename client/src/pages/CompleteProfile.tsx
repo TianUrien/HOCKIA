@@ -1115,7 +1115,7 @@ export default function CompleteProfile() {
                     </div>
                     <div>
                       <h4 className="font-semibold text-gray-900">I'm a Coach</h4>
-                      <p className="text-sm text-gray-500">Find coaching opportunities and recruit players for my teams</p>
+                      <p className="text-sm text-gray-500">Find coaching opportunities — and recruit players if I also manage a team</p>
                     </div>
                   </div>
                 </button>
@@ -2012,7 +2012,7 @@ export default function CompleteProfile() {
 
                   <Input
                     label="Men's League (Optional)"
-                    placeholder="e.g. Elite Division"
+                    placeholder="e.g. Premier Division"
                     value={formData.mensLeagueDivision}
                     onChange={(e) => setFormData({ ...formData, mensLeagueDivision: e.target.value })}
                   />

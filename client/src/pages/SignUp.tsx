@@ -39,7 +39,7 @@ const ROLE_CARDS: Array<{
   {
     role: 'coach',
     label: 'Join as Coach',
-    description: 'Find coaching opportunities and recruit players for your teams',
+    description: 'Find coaching opportunities — and recruit players if you also manage a team',
     iconBg: 'bg-[#924CEC]/10',
     iconText: 'text-[#924CEC]',
     Icon: Briefcase,

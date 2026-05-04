@@ -1489,7 +1489,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
 
                     <Input
                       label="Men's League (Optional)"
-                      placeholder="e.g. Elite Division"
+                      placeholder="e.g. Premier Division"
                       value={formData.mens_league_division}
                       onChange={(e) => setFormData({ ...formData, mens_league_division: e.target.value })}
                     />

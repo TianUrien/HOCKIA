@@ -511,7 +511,7 @@ export default function ClubDashboard({ profileData, readOnly = false, isOwnProf
                         className="inline-flex items-center gap-2 px-4 py-2 bg-white text-[#8026FA] rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm"
                       >
                         <Plus className="w-4 h-4" />
-                        Post a vacancy
+                        Post an opportunity
                       </button>
                     </div>
                     <div className="bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-xl p-6 text-white">

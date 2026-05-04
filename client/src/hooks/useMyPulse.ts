@@ -13,7 +13,7 @@
  * Phase 1B.2: hook + frontend surface ship without any card types yet.
  * Card types start landing in 1B.3 (Snapshot Gain Celebration first).
  */
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
@@ -39,6 +39,14 @@ export function useMyPulse(): UseMyPulseResult {
   const [items, setItems] = useState<PulseItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  // Mirror current items into a ref so mutation callbacks can read the
+  // latest list without depending on `items` in their useCallback deps
+  // (which was the source of the markDismissed race — each new items
+  // reference rebuilt markDismissed and captured a stale `previous` for
+  // its own restore path).
+  const itemsRef = useRef(items)
+  itemsRef.current = items
 
   const refetch = useCallback(async () => {
     if (!userId) {
@@ -125,7 +133,18 @@ export function useMyPulse(): UseMyPulseResult {
     // Optimistic: remove from the visible list immediately. The frontend
     // filters dismissed items out of the feed, so the user sees instant
     // disappearance. The next refetch confirms.
-    const previous = items
+    //
+    // Snapshot the failing item only (not the whole `items` array) so a
+    // rapid double-dismiss doesn't restore the first card if the second
+    // dismiss's RPC fails. Closure over `items` here was the bug — the
+    // second markDismissed closure captured `items` after the first
+    // optimistic remove, so its restore would clobber the first card too.
+    // Read from the ref rather than from a closed-over `items` so two
+    // rapid dismisses don't make the second one capture a list that's
+    // already missing the first card. setState updaters can run twice
+    // in StrictMode, so we deliberately do NOT use a setItems-side-effect
+    // to capture the snapshot.
+    const restored = itemsRef.current.find((item) => item.id === id) ?? null
     setItems((prev) => prev.filter((item) => item.id !== id))
 
     try {
@@ -133,11 +152,19 @@ export function useMyPulse(): UseMyPulseResult {
       if (rpcError) throw rpcError
     } catch (err) {
       logger.error('[useMyPulse] markDismissed failed', err)
-      // On failure, restore the item so the user knows the action didn't land.
-      setItems(previous)
+      // On failure, restore only the one item we removed. Insert at the
+      // top — the next refetch reconciles ordering.
+      if (restored) {
+        setItems((prev) => (prev.some((p) => p.id === restored.id) ? prev : [restored, ...prev]))
+      }
     }
-  }, [items])
+  }, [])
 
+  // TODO (post-1B.3): wire up by the first card type whose action is a
+  // multi-step flow (e.g. "Ask Maria for a vouch" → user actually sends
+  // the request). Defined now so card components can call it without
+  // needing a hook update later. Currently no caller — analytics for the
+  // action-completed funnel step won't populate until a card uses it.
   const markActionCompleted = useCallback(async (id: string) => {
     const now = new Date().toISOString()
 

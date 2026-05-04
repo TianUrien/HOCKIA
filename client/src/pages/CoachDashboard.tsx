@@ -181,6 +181,20 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
     }
   }, [tabParam, activeTab])
 
+  // If a candidate-only coach lands on ?tab=vacancies (e.g. via stale link
+  // from when the tab was visible), bounce them to Profile rather than show
+  // a blank pane. Runs after profile loads since the gate depends on
+  // coach_recruits_for_team.
+  useEffect(() => {
+    if (!profile) return
+    if (activeTab === 'vacancies' && !(profile.coach_recruits_for_team ?? false)) {
+      setActiveTab('profile')
+      const next = new URLSearchParams(searchParams)
+      next.set('tab', 'profile')
+      setSearchParams(next, { replace: true })
+    }
+  }, [profile, activeTab, searchParams, setSearchParams])
+
   // Refresh profile strength when switching to profile tab (to pick up gallery/journey changes)
   useEffect(() => {
     if (!readOnly && activeTab === 'profile') {
@@ -272,9 +286,16 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
     }
   }
 
+  // Opportunities tab is recruiter-mode only. Gated on the *visited* coach's
+  // `coach_recruits_for_team` flag — for the owner this means the tab only
+  // appears once they've opted into recruiter mode; for visitors it means
+  // they only see it on coaches who actually recruit. Without this gate, the
+  // flag was cosmetic only — any coach could navigate to ?tab=vacancies and
+  // create an opportunity from the empty-state CTA.
+  const showOpportunitiesTab = profile?.coach_recruits_for_team ?? false
   const tabs: { id: TabType; label: string }[] = [
     { id: 'profile', label: 'Profile' },
-    { id: 'vacancies', label: 'Opportunities' },
+    ...(showOpportunitiesTab ? [{ id: 'vacancies' as TabType, label: 'Opportunities' }] : []),
     { id: 'journey', label: 'Journey' },
     { id: 'friends', label: 'Friends' },
     { id: 'comments', label: 'Comments' },
@@ -532,6 +553,7 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
                   ownerProfileId={nudgeOwnerId}
                   excludeIds={nudgeExcludeIds}
                   acceptedReferenceCount={nudgeAcceptedFloor}
+                  profileRole={profile.role}
                   onAsk={(friendId) => {
                     setActiveTab('friends')
                     const next = new URLSearchParams(searchParams)
@@ -767,7 +789,7 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
               </div>
             )}
 
-            {activeTab === 'vacancies' && (
+            {activeTab === 'vacancies' && showOpportunitiesTab && (
               <div className="animate-fade-in">
                 <OpportunitiesTab
                   profileId={profile.id}

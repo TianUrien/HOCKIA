@@ -35,6 +35,9 @@ type PublicProfileBase = Pick<
   | 'contact_email_public'
   | 'open_to_play'
   | 'open_to_coach'
+  | 'last_active_at'
+  | 'accepted_reference_count'
+  | 'career_entry_count'
 > & {
   is_test_account?: boolean
   is_verified?: boolean | null
@@ -46,40 +49,10 @@ type PublicCoachProfileShape = PublicProfileBase & { role: 'coach' }
 
 type PublicProfile = PublicPlayerProfileShape | PublicCoachProfileShape
 
-const PUBLIC_PROFILE_FIELDS = [
-  'id',
-  'role',
-  'username',
-  'full_name',
-  'avatar_url',
-  'base_location',
-  'bio',
-  'highlight_video_url',
-  'highlight_visibility',
-  'nationality',
-  'nationality_country_id',
-  'nationality2_country_id',
-  'current_club',
-  'current_world_club_id',
-  'gender',
-  // Phase 3: hockey categories. Player has playing_category; coach uses
-  // coaching_categories. PublicPlayerProfile renders both shapes.
-  'playing_category',
-  'coaching_categories',
-  'date_of_birth',
-  'position',
-  'secondary_position',
-  'contact_email',
-  'contact_email_public',
-  'social_links',
-  'is_test_account',
-  'open_to_play',
-  'open_to_coach',
-  'coach_specialization',
-  'coach_specialization_custom',
-  'is_verified',
-  'verified_at'
-].join(',')
+// SELECT list moved to `client/src/lib/publicProfileFields.ts` so a
+// regression test can import the constant without dragging the .tsx page
+// into the test bundle (and to satisfy the react-refresh lint rule).
+import { PUBLIC_PROFILE_FIELDS } from '@/lib/publicProfileFields'
 
 export default function PublicPlayerProfile() {
   const { username, id } = useParams<{ username?: string; id?: string }>()
