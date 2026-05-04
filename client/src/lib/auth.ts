@@ -173,6 +173,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         set({ profile: data, profileStatus: 'loaded', profileFetchedAt: resolvedAt })
         // Set GA4 user properties for analytics tracking
         setUserProperties(userId, data.role)
+        // Fire-and-forget: stamp last_active_at on the server so the
+        // "Active recently" Snapshot signal turns ✓. The RPC is throttled
+        // to once per hour per user, so frequent profile re-fetches don't
+        // generate write traffic. Failure is non-fatal — the signal stays
+        // unchecked at worst.
+        void (async () => {
+          try {
+            await supabase.rpc('touch_profile_activity')
+          } catch (err) {
+            logger.debug('[AUTH_STORE] touch_profile_activity failed', { userId, err })
+          }
+        })()
       } else {
         logger.warn('[AUTH_STORE] Profile missing after fetch', { userId, duration })
         set({ profile: null, profileStatus: 'missing', profileFetchedAt: resolvedAt })

@@ -5714,6 +5714,7 @@ export type Database = {
       show_trgm: { Args: { "": string }; Returns: string[] }
       snapshot_product_health_score: { Args: never; Returns: undefined }
       toggle_post_like: { Args: { p_post_id: string }; Returns: Json }
+      touch_profile_activity: { Args: never; Returns: undefined }
       track_event: {
         Args: {
           p_entity_id?: string

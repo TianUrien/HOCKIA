@@ -3,6 +3,7 @@ import {
   CheckCircle2,
   Circle,
   ArrowRight,
+  ChevronRight,
 } from 'lucide-react'
 import type { Profile } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
@@ -53,6 +54,16 @@ interface ProfileSnapshotProps {
   onSignalAction?: (actionId: string) => void
   /** Optional className to align with the surrounding layout. */
   className?: string
+  /** Owner-mode visual emphasis for missing rows.
+   *  - 'cta'    (default): each missing row exposes a purple "Add →" pill.
+   *  - 'subtle': each missing row stays tappable but renders only a faint
+   *              chevron — used when the Snapshot is sitting beneath a
+   *              dedicated NextStepCard so it doesn't compete with the
+   *              primary action. */
+  missingStyle?: 'cta' | 'subtle'
+  /** Owner-mode header counter ("3 of 8"). Hide when another surface
+   *  (NextStepCard) is already showing a competing completion number. */
+  showCount?: boolean
 }
 
 export default function ProfileSnapshot({
@@ -64,6 +75,8 @@ export default function ProfileSnapshot({
   mode,
   onSignalAction,
   className,
+  missingStyle = 'cta',
+  showCount = true,
 }: ProfileSnapshotProps) {
   const allSignals = useMemo(
     () =>
@@ -96,7 +109,7 @@ export default function ProfileSnapshot({
       <header className="mb-4">
         <div className="flex items-center justify-between gap-2 mb-1">
           <h3 className="text-base font-semibold text-gray-900">Profile Snapshot</h3>
-          {mode === 'owner' && (
+          {mode === 'owner' && showCount && (
             <span className="text-xs font-medium text-gray-500 tabular-nums">
               {presentCount} of {totalCount}
             </span>
@@ -116,6 +129,7 @@ export default function ProfileSnapshot({
             signal={signal}
             mode={mode}
             onAction={onSignalAction}
+            missingStyle={missingStyle}
           />
         ))}
       </ul>
@@ -131,9 +145,10 @@ interface SignalRowProps {
   signal: ProfileSnapshotSignal
   mode: ProfileSnapshotMode
   onAction?: (actionId: string) => void
+  missingStyle: 'cta' | 'subtle'
 }
 
-function SignalRow({ signal, mode, onAction }: SignalRowProps) {
+function SignalRow({ signal, mode, onAction, missingStyle }: SignalRowProps) {
   const isMissing = !signal.present
   const canAct = mode === 'owner' && isMissing && Boolean(signal.ownerActionId) && Boolean(onAction)
 
@@ -159,11 +174,14 @@ function SignalRow({ signal, mode, onAction }: SignalRowProps) {
           <span className="ml-1.5 text-xs text-gray-400">({signal.detail})</span>
         )}
       </span>
-      {canAct && (
+      {canAct && missingStyle === 'cta' && (
         <span className="inline-flex items-center gap-0.5 text-xs font-medium text-[#8026FA]">
           Add
           <ArrowRight className="w-3 h-3" aria-hidden="true" />
         </span>
+      )}
+      {canAct && missingStyle === 'subtle' && (
+        <ChevronRight className="w-3.5 h-3.5 text-gray-300 flex-shrink-0" aria-hidden="true" />
       )}
     </>
   )

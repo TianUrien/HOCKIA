@@ -18,18 +18,15 @@ interface TrustBadgeProps {
 }
 
 /**
- * Phase 4 References UX Plan — Phase 1.1.
- *
  * Surfaces the trust signal in profile headers — the single highest-impact
- * placement for discoverability per the deep audit. Three render states:
+ * placement for discoverability per the deep audit. Two render states:
  *
  *   1. count > 0  → "Trusted by N" pill (emerald). Tappable; visitors and
  *                   owners both navigate to the references view.
- *   2. count = 0 + isOwner → "Get vouches →" CTA (HOCKIA primary purple).
- *                            Drives the owner toward the trust subarea
- *                            with explicit forward affordance.
- *   3. count = 0 + visitor → renders nothing. No need to advertise the
- *                            empty state to scouts.
+ *   2. count = 0  → renders nothing. The reference CTA lives in
+ *                   NextStepCard and RecentlyConnectedCard further down
+ *                   the dashboard; an empty-state pill in the header
+ *                   stacks redundantly on top of those.
  *
  * Visual treatment mirrors TierBadge / VerifiedBadge for consistency.
  * Always renders as a `<button>` when clickable so keyboard nav + a11y
@@ -42,7 +39,13 @@ export default function TrustBadge({
   size = 'md',
   className,
 }: TrustBadgeProps) {
-  if (count === 0 && !isOwner) return null
+  // Hide the empty-state CTA pill entirely. NextStepCard and
+  // RecentlyConnectedCard handle the "get your first reference" prompt
+  // with stronger visual treatment; this header pill was a third
+  // duplicate ask on the same screen. `isOwner` is kept on the props
+  // shape (call sites still pass it) but no longer changes behaviour.
+  void isOwner
+  if (count === 0) return null
 
   const hasReferences = count > 0
   const sizing =

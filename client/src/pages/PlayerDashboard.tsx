@@ -553,20 +553,16 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
           </div>
         </div>
 
-        {/* Profile Snapshot — Phase 1A.3 (v5 plan). Renders for both owners
-            (full signal list with ✓ + missing-action affordance) and visitors
-            (✓-only, hidden when nothing to show). The component handles the
-            mode switch internally, so this single mount serves both views. */}
-        <div className="mb-3">
-          <ProfileSnapshot
-            profile={profile as Profile | null}
-            mode={readOnly ? 'public' : 'owner'}
-            onSignalAction={handleSnapshotAction}
-          />
-        </div>
-
-        {/* Next-step prompt — visible on every tab while the profile is incomplete (owner only) */}
-        {!readOnly && (
+        {/* Owner-side primary nudge column. Order is:
+              1. NextStepCard          — single primary action (Get Started)
+              2. FreshnessCard         — secondary recency nudge
+              3. ProfileSnapshot       — supporting context (subtle missing rows)
+              4. RecentlyConnectedCard — only when the next step ISN'T already
+                                          a references / friends ask, so we
+                                          don't double up on the same nudge
+              5. SearchAppearancesCard — informational only
+            Visitor mode skips 1/2/4/5 and only sees the Snapshot. */}
+        {!readOnly ? (
           <>
             <NextStepCard
               percentage={profileStrength.percentage}
@@ -577,29 +573,45 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
             <div className="mt-3">
               <FreshnessCard nudge={freshnessNudge} onAction={handleFreshnessAction} />
             </div>
-            {/* Phase 4 References UX Plan — Phase 3.1 (post-friendship prompt).
-                Surfaces a single recent connection as a vouch candidate on the
-                Profile tab, the surface owners actually visit. Hidden once the
-                owner has any accepted OR pending reference. */}
-            {profile?.id && (
-              <div className="mt-3">
-                <RecentlyConnectedCard
-                  friendOptions={nudgeFriendOptions}
-                  ownerProfileId={profile.id}
-                  excludeIds={nudgeExcludeIds}
-                  acceptedReferenceCount={nudgeAcceptedFloor}
-                  profileRole={profile.role}
-                  onAsk={(friendId) => {
-                    setActiveTab('friends')
-                    const next = new URLSearchParams(searchParams)
-                    next.set('tab', 'friends')
-                    next.set('section', 'references')
-                    next.set('ask', friendId)
-                    setSearchParams(next, { replace: false })
-                  }}
-                />
-              </div>
-            )}
+            <div className="mt-3">
+              <ProfileSnapshot
+                profile={profile as Profile | null}
+                mode="owner"
+                onSignalAction={handleSnapshotAction}
+                missingStyle="subtle"
+                showCount={false}
+              />
+            </div>
+            {/* Recently-connected vouch nudge — gated on the next step NOT
+                already being a references ask. Without this gate the owner
+                sees a NextStepCard "Get your first reference" plus a
+                RecentlyConnectedCard "Ask Maria for a reference?" stacked
+                directly on top of each other. */}
+            {profile?.id && (() => {
+              const nextStepBucket = profileStrength.buckets.find((b) => !b.completed)
+              const nextStepIsReferences =
+                nextStepBucket?.id === 'references' || nextStepBucket?.id === 'friends'
+              if (nextStepIsReferences) return null
+              return (
+                <div className="mt-3">
+                  <RecentlyConnectedCard
+                    friendOptions={nudgeFriendOptions}
+                    ownerProfileId={profile.id}
+                    excludeIds={nudgeExcludeIds}
+                    acceptedReferenceCount={nudgeAcceptedFloor}
+                    profileRole={profile.role}
+                    onAsk={(friendId) => {
+                      setActiveTab('friends')
+                      const next = new URLSearchParams(searchParams)
+                      next.set('tab', 'friends')
+                      next.set('section', 'references')
+                      next.set('ask', friendId)
+                      setSearchParams(next, { replace: false })
+                    }}
+                  />
+                </div>
+              )
+            })()}
             {searchAppearances && searchAppearances.total > 0 && (
               <div className="mt-3">
                 <SearchAppearancesCard
@@ -610,6 +622,14 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
               </div>
             )}
           </>
+        ) : (
+          <div className="mb-3">
+            <ProfileSnapshot
+              profile={profile as Profile | null}
+              mode="public"
+              onSignalAction={handleSnapshotAction}
+            />
+          </div>
         )}
 
         {/* Tabs Card */}
