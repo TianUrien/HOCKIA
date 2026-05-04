@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { render } from '@testing-library/react'
-import { PulseCard } from '@/components/home/PulseCard'
+import { render, screen } from '@testing-library/react'
 import type { PulseItem } from '@/hooks/useMyPulse'
 
 // ── Sentry mock — captures every captureMessage call so we can assert
@@ -9,6 +8,19 @@ const sentryCaptureMessage = vi.fn()
 vi.mock('@sentry/react', () => ({
   captureMessage: (...args: unknown[]) => sentryCaptureMessage(...args),
 }))
+
+// ── react-router mock — SnapshotGainCelebrationCard pulls in useNavigate.
+vi.mock('react-router-dom', () => ({
+  useNavigate: () => vi.fn(),
+}))
+
+// ── auth-store mock — same path SnapshotGainCelebrationCard uses.
+vi.mock('@/lib/auth', () => ({
+  useAuthStore: (selector: (state: { profile: { role: string; username: string } | null }) => unknown) =>
+    selector({ profile: { role: 'player', username: 'tian' } }),
+}))
+
+import { PulseCard } from '@/components/home/PulseCard'
 
 beforeEach(() => {
   sentryCaptureMessage.mockClear()
@@ -33,11 +45,26 @@ const buildPulse = (overrides: Partial<PulseItem> = {}): PulseItem => ({
 })
 
 describe('PulseCard dispatcher', () => {
-  it('renders nothing for an unknown item_type (Phase 1B.2 default — no card types yet)', () => {
+  it('renders nothing for an unknown item_type', () => {
     const { container } = render(
       <PulseCard item={buildPulse()} onClick={() => {}} onDismiss={() => {}} />,
     )
     expect(container.firstChild).toBeNull()
+  })
+
+  it('routes snapshot_gain_celebration items to the celebration card', () => {
+    render(
+      <PulseCard
+        item={buildPulse({
+          item_type: 'snapshot_gain_celebration',
+          metadata: { signal: 'first_highlight_video' },
+        })}
+        onClick={() => {}}
+        onDismiss={() => {}}
+      />,
+    )
+    expect(screen.getByTestId('pulse-snapshot-gain-celebration')).toBeInTheDocument()
+    expect(screen.getByText('Highlight video added')).toBeInTheDocument()
   })
 
   it('reports an unknown item_type to Sentry with feature + item_type tags', () => {

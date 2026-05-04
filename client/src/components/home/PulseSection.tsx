@@ -1,4 +1,5 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { CheckCircle2 } from 'lucide-react'
 import { useMyPulse } from '@/hooks/useMyPulse'
 import { PulseCard } from './PulseCard'
 
@@ -10,16 +11,28 @@ import { PulseCard } from './PulseCard'
  * Renders the user's active pulse items as cards via the PulseCard
  * dispatcher. Marks all unseen items as seen on first render.
  *
- * Behavior in Phase 1B.2 (no card types registered yet):
- *   - PulseCard returns null for every item_type → nothing visible.
- *   - When card types ship in 1B.3+, this section lights up automatically.
- *   - When 0 active items exist, returns null (no "All caught up" empty
- *     state in 1B.2 — adding it before any card type would mislead users
- *     into thinking the feature is broken / dead. We add the empty state
- *     in 1B.3 alongside the first real card type).
+ * Phase 1B.3 ships the first card type (snapshot_gain_celebration) so the
+ * "All caught up" empty state is now safe — without any generators it
+ * would have implied the feature was broken. We still hide the entire
+ * section when isLoading to avoid a flash of empty content on mount.
  */
 export function PulseSection() {
   const { items, isLoading, markSeen, markClicked, markDismissed } = useMyPulse()
+
+  // Track whether this mount ever showed at least one item. Without this,
+  // a user who never has Pulse activity would see "All caught up" all the
+  // time — visual noise that implies a feature they don't use. We only
+  // surface the empty state once cards have been present and then cleared
+  // (dismissed / actioned) within the same session.
+  const hadItemsRef = useRef(false)
+  const [hadItemsThisMount, setHadItemsThisMount] = useState(false)
+
+  useEffect(() => {
+    if (items.length > 0 && !hadItemsRef.current) {
+      hadItemsRef.current = true
+      setHadItemsThisMount(true)
+    }
+  }, [items.length])
 
   // Mark all currently-unseen items as seen exactly once. We compute the
   // unseen ID set from items every render but only fire the RPC when the
@@ -41,23 +54,33 @@ export function PulseSection() {
   }, [isLoading, unseenIdsKey, markSeen])
 
   if (isLoading) return null
-  if (items.length === 0) return null
+  if (items.length === 0 && !hadItemsThisMount) return null
 
   return (
     <section className="mb-6" aria-label="Pulse — what changed since your last visit">
       <header className="mb-3">
         <h2 className="text-sm font-semibold text-gray-700">Since you last visited</h2>
       </header>
-      <div className="space-y-3">
-        {items.map((item) => (
-          <PulseCard
-            key={item.id}
-            item={item}
-            onClick={markClicked}
-            onDismiss={markDismissed}
-          />
-        ))}
-      </div>
+      {items.length === 0 ? (
+        <div
+          className="flex items-center gap-2 rounded-2xl border border-gray-100 bg-white px-4 py-3 text-sm text-gray-600 shadow-sm"
+          data-testid="pulse-empty-state"
+        >
+          <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" aria-hidden="true" />
+          <span>You're all caught up.</span>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {items.map((item) => (
+            <PulseCard
+              key={item.id}
+              item={item}
+              onClick={markClicked}
+              onDismiss={markDismissed}
+            />
+          ))}
+        </div>
+      )}
     </section>
   )
 }

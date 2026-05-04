@@ -1,22 +1,18 @@
 import { memo } from 'react'
 import * as Sentry from '@sentry/react'
 import type { PulseItem } from '@/hooks/useMyPulse'
+import { SnapshotGainCelebrationCard } from './SnapshotGainCelebrationCard'
 
 /**
  * PulseCard — type-aware dispatcher for the v5-plan Movement Layer.
  *
- * Each `item.item_type` value maps to a specific card component (added in
- * 1B.3+). Unknown types (e.g. backend ships a new card type before the
- * frontend) are reported once-per-session to Sentry and rendered as null,
- * matching the HomeFeedItemCard pattern.
+ * Each `item.item_type` value maps to a specific card component. Unknown
+ * types (e.g. backend ships a new card type before the frontend) are
+ * reported once-per-session to Sentry and rendered as null, matching the
+ * HomeFeedItemCard pattern.
  *
- * Phase 1B.2 ships the dispatcher with NO card types registered. Every
- * item flows through the default branch and renders nothing. The
- * PulseSection that mounts these cards therefore renders nothing for
- * everyone too — no surface visible to users until 1B.3 lights up the
- * first card type. This is intentional: building the empty pipeline
- * separately from the first card lets us validate the surface, hook,
- * RPCs, and analytics independently.
+ * Phase 1B.3 lights up the first card type: snapshot_gain_celebration.
+ * Subsequent phases register P1/P2/CL2 here.
  */
 
 interface PulseCardProps {
@@ -29,15 +25,10 @@ interface PulseCardProps {
 // Same rate-limit pattern as HomeFeedItemCard — Sentry budget is precious.
 const reportedUnknownTypes = new Set<string>()
 
-export const PulseCard = memo(function PulseCard({ item, onClick: _onClick, onDismiss: _onDismiss }: PulseCardProps) {
-  // Mark unused props as deliberately referenced — they'll wire up once
-  // card types start consuming them in 1B.3+.
-  void _onClick
-  void _onDismiss
-
+export const PulseCard = memo(function PulseCard({ item, onClick, onDismiss }: PulseCardProps) {
   switch (item.item_type) {
-    // No card types registered yet. The first one (Snapshot Gain
-    // Celebration — P6) ships in 1B.3.
+    case 'snapshot_gain_celebration':
+      return <SnapshotGainCelebrationCard item={item} onClick={onClick} onDismiss={onDismiss} />
 
     default: {
       const unknownType = item.item_type
