@@ -284,10 +284,16 @@ export default function TrustedReferencesSection({
                 Reframe from "they haven't added any" to a brief educational
                 line about what trust on HOCKIA means, so the visitor walks
                 away with a mental model of the feature even on profiles
-                that don't yet have it. */}
+                that don't yet have it. Role-aware so the copy matches the
+                profile being viewed (was hardcoded "player"). */}
             <p className="text-sm font-medium text-gray-700">No vouches yet</p>
             <p className="mt-1 text-xs text-gray-500">
-              Trusted references are how coaches, teammates, and clubs vouch for a player on HOCKIA.
+              Trusted references are how coaches, teammates, and clubs vouch for {
+                profileRole === 'coach' ? 'a coach' :
+                profileRole === 'umpire' ? 'an umpire' :
+                profileRole === 'player' ? 'a player' :
+                'HOCKIA members'
+              } on HOCKIA.
             </p>
           </div>
         ) : (

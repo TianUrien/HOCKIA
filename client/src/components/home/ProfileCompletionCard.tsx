@@ -194,6 +194,13 @@ export default function ProfileCompletionCard() {
   // Don't render for unauthenticated users, loading state, or completed profiles
   if (!user || !profile || profileStrength.loading) return null
   if (fullyDismissed) return null
+  // Player-only on the home feed. useProfileStrength is the player-bucket
+  // calculator; running it on coach/club/brand/umpire produces a wrong %
+  // (most player buckets fail for non-player roles), and the resulting
+  // progress bar at 0–25% is misleading. Non-player roles get NextStepCard
+  // + FreshnessCard on their own dashboards — a separate, role-correct
+  // surface — so we don't lose nudge coverage by gating this card to player.
+  if (role !== 'player') return null
   if (profileStrength.percentage >= 80) return null
   if (!currentStep) return null
 

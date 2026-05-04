@@ -13,6 +13,7 @@ export type FeedItemType =
 
 export type MilestoneType =
   | 'first_gallery_image'
+  | 'first_video'
   | 'profile_100_percent'
   | 'first_reference_received'
 

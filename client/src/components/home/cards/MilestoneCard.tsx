@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Image, CheckCircle, Shield } from 'lucide-react'
+import { Image, CheckCircle, Shield, Video } from 'lucide-react'
 import { Avatar, RoleBadge, StorageImage } from '@/components'
 import { getTimeAgo } from '@/lib/utils'
 import type { MilestoneAchievedFeedItem, MilestoneType } from '@/types/homeFeed'
@@ -20,6 +20,17 @@ const MILESTONE_CONFIG: Record<MilestoneType, {
     bgColor: 'bg-blue-100',
     iconColor: 'text-blue-600',
     label: 'added gallery images',
+  },
+  first_video: {
+    // Trigger fires in 202602091100_home_feed_triggers.sql when
+    // highlight_video_url goes NULL → value. Was recorded but rendered
+    // null because there was no MILESTONE_CONFIG entry — the trust signal
+    // (a player adding video evidence for the first time) is exactly the
+    // kind of moment the home feed should celebrate.
+    icon: Video,
+    bgColor: 'bg-purple-100',
+    iconColor: 'text-purple-600',
+    label: 'added their first highlight video',
   },
   profile_100_percent: {
     icon: CheckCircle,

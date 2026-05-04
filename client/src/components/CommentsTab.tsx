@@ -52,7 +52,10 @@ function emptyStateCopyFor(role: Profile['role'] | null | undefined): string {
 /** Role-aware section header subtitle for the Comments tab. */
 function commentsSubtitleFor(role: Profile['role'] | null | undefined): string {
   if (role === 'umpire') {
-    return 'References from HOCKIA members.'
+    // Avoid the word "References" — that's the dedicated profile_references
+    // system on its own UI surface. Calling comments "References" on umpire
+    // profiles makes both surfaces ambiguous.
+    return 'Peer notes from HOCKIA members.'
   }
   return 'Verified testimonials from HOCKIA members.'
 }
