@@ -8,6 +8,7 @@ import { usePersistedState } from '@/hooks/usePersistedState'
 import { HomeFeedItemCard } from './HomeFeedItemCard'
 import { FeedSkeleton } from './FeedSkeleton'
 import ProfileCompletionCard from './ProfileCompletionCard'
+import { PulseSection } from './PulseSection'
 import { HomeFilterChips } from './HomeFilterChips'
 import { EMPTY_FILTERS, isHomeFilters } from './homeFilters'
 import type { HomeFilters } from './homeFilters'
@@ -161,6 +162,13 @@ export function HomeFeed({ prependItemRef }: HomeFeedProps) {
           </button>
         </div>
       )}
+
+      {/* Pulse — "Since you last visited" surface (v5 plan Movement Layer).
+          Renders nothing today (no card types registered until 1B.3+);
+          lights up automatically when card generators ship. Mounted ABOVE
+          ProfileCompletionCard so the "what changed since you were here"
+          framing leads the page when there's something to show. */}
+      <PulseSection />
 
       {/* Profile completion nudge */}
       <ProfileCompletionCard />

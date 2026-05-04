@@ -3212,6 +3212,53 @@ export type Database = {
           },
         ]
       }
+      user_pulse_items: {
+        Row: {
+          action_completed_at: string | null
+          clicked_at: string | null
+          created_at: string
+          dismissed_at: string | null
+          id: string
+          item_type: string
+          metadata: Json
+          priority: number
+          seen_at: string | null
+          user_id: string
+        }
+        Insert: {
+          action_completed_at?: string | null
+          clicked_at?: string | null
+          created_at?: string
+          dismissed_at?: string | null
+          id?: string
+          item_type: string
+          metadata?: Json
+          priority?: number
+          seen_at?: string | null
+          user_id: string
+        }
+        Update: {
+          action_completed_at?: string | null
+          clicked_at?: string | null
+          created_at?: string
+          dismissed_at?: string | null
+          id?: string
+          item_type?: string
+          metadata?: Json
+          priority?: number
+          seen_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_pulse_items_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_reports: {
         Row: {
           category: string
@@ -5204,6 +5251,21 @@ export type Database = {
           status: Database["public"]["Enums"]["profile_reference_status"]
         }[]
       }
+      get_my_pulse: {
+        Args: { p_limit?: number }
+        Returns: {
+          action_completed_at: string | null
+          clicked_at: string | null
+          created_at: string
+          dismissed_at: string | null
+          id: string
+          item_type: string
+          metadata: Json
+          priority: number
+          seen_at: string | null
+          user_id: string
+        }[]
+      }
       get_my_references: {
         Args: never
         Returns: {
@@ -5364,6 +5426,55 @@ export type Database = {
       mark_opportunities_seen: {
         Args: { p_seen_at?: string }
         Returns: undefined
+      }
+      mark_pulse_action_completed: {
+        Args: { p_pulse_id: string }
+        Returns: {
+          action_completed_at: string | null
+          clicked_at: string | null
+          created_at: string
+          dismissed_at: string | null
+          id: string
+          item_type: string
+          metadata: Json
+          priority: number
+          seen_at: string | null
+          user_id: string
+        }
+      }
+      mark_pulse_clicked: {
+        Args: { p_pulse_id: string }
+        Returns: {
+          action_completed_at: string | null
+          clicked_at: string | null
+          created_at: string
+          dismissed_at: string | null
+          id: string
+          item_type: string
+          metadata: Json
+          priority: number
+          seen_at: string | null
+          user_id: string
+        }
+      }
+      mark_pulse_dismissed: {
+        Args: { p_pulse_id: string }
+        Returns: {
+          action_completed_at: string | null
+          clicked_at: string | null
+          created_at: string
+          dismissed_at: string | null
+          id: string
+          item_type: string
+          metadata: Json
+          priority: number
+          seen_at: string | null
+          user_id: string
+        }
+      }
+      mark_pulse_seen: {
+        Args: { p_pulse_ids: string[] }
+        Returns: number
       }
       match_text_to_country: {
         Args: { input_text: string }
