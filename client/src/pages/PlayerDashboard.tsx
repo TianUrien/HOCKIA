@@ -877,7 +877,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
 
             {activeTab === 'comments' && (
               <div className="animate-fade-in">
-                <CommentsTab profileId={profile.id} highlightedCommentIds={highlightedComments} />
+                <CommentsTab profileId={profile.id} highlightedCommentIds={highlightedComments} profileRole={profile.role} />
               </div>
             )}
 

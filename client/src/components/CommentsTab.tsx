@@ -46,6 +46,12 @@ function emptyStateCopyFor(role: Profile['role'] | null | undefined): string {
   if (role === 'umpire') {
     return 'Be the first to share a note about this umpire.'
   }
+  if (role === 'club') {
+    return 'Be the first to share your experience with this club.'
+  }
+  if (role === 'brand') {
+    return 'Be the first to share your experience with this brand.'
+  }
   return 'Be the first to share constructive feedback for this profile.'
 }
 
@@ -57,6 +63,12 @@ function commentsSubtitleFor(role: Profile['role'] | null | undefined): string {
     // profiles makes both surfaces ambiguous.
     return 'Peer notes from HOCKIA members.'
   }
+  if (role === 'club') {
+    return 'Notes from players, coaches, and visitors.'
+  }
+  if (role === 'brand') {
+    return 'Notes from the HOCKIA community.'
+  }
   return 'Verified testimonials from HOCKIA members.'
 }
 
@@ -65,6 +77,12 @@ function commentsSubtitleFor(role: Profile['role'] | null | undefined): string {
 function ownerInviteHintFor(role: Profile['role'] | null | undefined): string {
   if (role === 'umpire') {
     return "You can't leave a comment on your own profile, but other members can — ask a colleague, umpire manager, or coach to share one."
+  }
+  if (role === 'club') {
+    return "You can't leave a comment on your own club page, but members can — ask a player, coach, or visitor to share their experience."
+  }
+  if (role === 'brand') {
+    return "You can't leave a comment on your own brand page, but members can — ask an ambassador or partner to share their experience."
   }
   return "You can't leave a comment on your own profile, but other members can — ask a teammate or coach to share one."
 }

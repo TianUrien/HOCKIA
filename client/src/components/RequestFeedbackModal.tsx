@@ -19,6 +19,12 @@ function helperCopyFor(role: Profile['role'] | null | undefined): string {
   if (role === 'umpire') {
     return 'Send this to a colleague, umpire manager, coach, or club representative who can vouch for your officiating.'
   }
+  if (role === 'club') {
+    return 'Send this to a player, coach, or visitor who knows your club. Comments help prospects evaluate culture, facilities, and professionalism.'
+  }
+  if (role === 'brand') {
+    return 'Send this to an ambassador, partner, or customer who knows your brand. Comments help the community evaluate trust and product fit.'
+  }
   return 'Send this to a teammate, coach, or former club. Comments help clubs and coaches get a fuller picture of who you are on and off the pitch.'
 }
 
@@ -32,6 +38,20 @@ function messageTemplateFor(
     return (
       `${intro}I'm building out my HOCKIA officiating profile and would love a short note from you ` +
       `about working with me on the pitch — even a couple of sentences helps tournaments and clubs get a fuller picture. ` +
+      `It takes 30 seconds:\n\n${profileUrl}`
+    )
+  }
+  if (role === 'club') {
+    return (
+      `${intro}We're building out our HOCKIA club page and would love a short comment from you ` +
+      `about your experience with us — even a couple of sentences helps prospects get a fuller picture of our culture and setup. ` +
+      `It takes 30 seconds:\n\n${profileUrl}`
+    )
+  }
+  if (role === 'brand') {
+    return (
+      `${intro}We're building out our HOCKIA brand page and would love a short comment from you ` +
+      `about working with us — even a couple of sentences helps the community get a fuller picture of who we are. ` +
       `It takes 30 seconds:\n\n${profileUrl}`
     )
   }
