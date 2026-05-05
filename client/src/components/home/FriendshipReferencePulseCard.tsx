@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import Avatar from '@/components/Avatar'
 import { useAuthStore } from '@/lib/auth'
 import { recordReferenceNudgeDismiss } from '@/lib/referenceNudgeDismissal'
+import { profilePath } from '@/lib/profileNavigation'
 import type { PulseItem } from '@/hooks/useMyPulse'
 
 /**
@@ -39,20 +40,6 @@ function firstName(fullName: string | null): string {
   return trimmed.split(/\s+/)[0]
 }
 
-function buildSnapshotPath(role: string | null | undefined, username: string | null | undefined): string | null {
-  if (!username) return null
-  switch (role) {
-    case 'player':
-      return `/players/${username}`
-    case 'coach':
-      return `/coaches/${username}`
-    case 'umpire':
-      return `/umpires/${username}`
-    default:
-      return null
-  }
-}
-
 export function FriendshipReferencePulseCard({
   item,
   onClick,
@@ -79,7 +66,7 @@ export function FriendshipReferencePulseCard({
     // Deep-link to the owner's Friends tab → references section, with the
     // friend pre-selected. Same URL shape RecentlyConnectedCard's onAsk
     // uses on the dashboards.
-    const path = buildSnapshotPath(profile?.role, profile?.username)
+    const path = profilePath(profile?.role, profile?.username, profile?.id)
     if (!path) return
     const next = new URLSearchParams(searchParams)
     next.set('tab', 'friends')

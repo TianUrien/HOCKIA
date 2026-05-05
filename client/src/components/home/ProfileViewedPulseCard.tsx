@@ -1,6 +1,7 @@
 import { Eye, X } from 'lucide-react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuthStore } from '@/lib/auth'
+import { profilePath } from '@/lib/profileNavigation'
 import type { PulseItem } from '@/hooks/useMyPulse'
 
 /**
@@ -55,23 +56,6 @@ function buildHeadline(uniqueClubs: number, uniqueCoaches: number): string {
     : `${uniqueCoaches} coaches viewed your profile this week`
 }
 
-function dashboardPath(role: string | null | undefined, username: string | null | undefined): string | null {
-  if (!username) return null
-  switch (role) {
-    case 'player':
-      return `/players/${username}`
-    case 'coach':
-      return `/coaches/${username}`
-    case 'club':
-      return `/clubs/${username}`
-    case 'umpire':
-      return `/umpires/${username}`
-    case 'brand':
-      return `/brands/${username}`
-    default:
-      return null
-  }
-}
 
 export function ProfileViewedPulseCard({
   item,
@@ -97,7 +81,7 @@ export function ProfileViewedPulseCard({
 
   const handleSee = () => {
     onClick(item.id)
-    const path = dashboardPath(profile?.role, profile?.username)
+    const path = profilePath(profile?.role, profile?.username, profile?.id)
     if (!path) return
     const next = new URLSearchParams(searchParams)
     next.set('tab', 'profile')

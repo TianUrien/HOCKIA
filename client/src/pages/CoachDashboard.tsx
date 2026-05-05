@@ -122,6 +122,15 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
   const nudgeAcceptedFloor = nudgeAccepted.length + nudgePending.length
 
   // Shared handler for NextStepCard — routes a bucket to the right deep-link.
+  // Tab switcher that preserves any other search params (e.g. ?ref=…,
+  // ?ask=…). Object-form `setSearchParams({ tab })` would clobber them.
+  const switchTab = (tab: TabType) => {
+    setActiveTab(tab)
+    const next = new URLSearchParams(searchParams)
+    next.set('tab', tab)
+    setSearchParams(next, { replace: true })
+  }
+
   const handleStrengthBucketAction = (bucket: CoachStrengthBucket) => {
     const actionId = bucket.actionId
     if (!actionId) return
@@ -129,8 +138,7 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
     if (actionId === 'edit-profile') {
       setShowEditModal(true)
     } else if (actionId === 'journey-tab') {
-      setActiveTab('journey')
-      setSearchParams({ tab: 'journey' })
+      switchTab('journey')
     } else if (actionId === 'gallery-tab') {
       // Scroll to MediaTab section within profile tab
       const mediaSection = document.querySelector('[data-section="media"]')
@@ -138,8 +146,7 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
         mediaSection.scrollIntoView({ behavior: 'smooth' })
       }
     } else if (actionId === 'friends-tab') {
-      setActiveTab('friends')
-      setSearchParams({ tab: 'friends' })
+      switchTab('friends')
     }
   }
 
@@ -148,9 +155,7 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
     if (nudge.action.type === 'edit-profile') {
       setShowEditModal(true)
     } else if (nudge.action.type === 'tab') {
-      const tab = nudge.action.tab as TabType
-      setActiveTab(tab)
-      setSearchParams({ tab })
+      switchTab(nudge.action.tab as TabType)
     }
   }
 
@@ -165,9 +170,7 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
       return
     }
     if (actionId.startsWith('tab:')) {
-      const tab = actionId.slice(4) as TabType
-      setActiveTab(tab)
-      setSearchParams({ tab })
+      switchTab(actionId.slice(4) as TabType)
       return
     }
   }

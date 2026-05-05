@@ -4,6 +4,7 @@ import { CheckCircle2, Edit2, Sparkles, X, Zap } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
+import { ownProfileEditPath } from '@/lib/profileNavigation'
 import type { PulseItem } from '@/hooks/useMyPulse'
 
 /**
@@ -84,19 +85,9 @@ function buildCopy(role: Role, recruitsForTeam: boolean): CheckInCopy {
   }
 }
 
-function profileEditPath(role: string | null | undefined, username: string | null | undefined): string | null {
-  if (!username) return null
-  switch (role) {
-    case 'player':
-      return `/players/${username}?action=edit`
-    case 'coach':
-      return `/coaches/${username}?action=edit`
-    case 'umpire':
-      return `/umpires/${username}?action=edit`
-    default:
-      return null
-  }
-}
+// profileEditPath helper removed in favour of the shared
+// `ownProfileEditPath` from `@/lib/profileNavigation`, which falls back
+// to `/players/id/<uuid>` when username is null (every account today).
 
 export function AvailabilityCheckInCard({
   item,
@@ -153,7 +144,7 @@ export function AvailabilityCheckInCard({
 
   const handleNotNow = () => {
     onClick(item.id)
-    const path = profileEditPath(role, profile?.username)
+    const path = ownProfileEditPath(role, profile?.username, profile?.id)
     if (path) navigate(path)
   }
 

@@ -649,7 +649,14 @@ export default function OpportunitiesPage() {
                   Clear Filters
                 </Button>
               )}
-              {(profile?.role === 'club' || profile?.role === 'coach') && (
+              {/* Posting an opportunity is recruiter-only.
+                  - Clubs: always.
+                  - Coaches: only when coach_recruits_for_team is true.
+                  Without the coach gate, candidate-only coaches saw the
+                  CTA and got bounced by CoachDashboard's tab=vacancies
+                  redirect — confusing dead-end. */}
+              {(profile?.role === 'club' ||
+                (profile?.role === 'coach' && profile?.coach_recruits_for_team === true)) && (
                 <div className="mt-4 pt-4 border-t border-gray-100">
                   <p className="text-sm text-gray-500 mb-3">
                     {profile.role === 'coach'
