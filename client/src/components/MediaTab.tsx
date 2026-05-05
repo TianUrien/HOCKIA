@@ -12,6 +12,7 @@ import { useToastStore } from '@/lib/toast'
 import ConfirmActionModal from './ConfirmActionModal'
 import Skeleton from './Skeleton'
 import GalleryManager from './GalleryManager'
+import FullGameVideosSection from './FullGameVideosSection'
 
 interface MediaTabHeaderRenderProps {
   canManageVideo: boolean
@@ -251,6 +252,14 @@ export default function MediaTab({ profileId, readOnly = false, renderHeader, sh
           )}
         </div>
       ) : null}
+
+      {/* Full game videos — player-only feature, beneath the highlight
+          block so highlight stays the quick first impression and full
+          games sit as deeper evidence for clubs/coaches. v1 owner-side
+          only; visitor surface lands in PR 2 (RLS already filters rows). */}
+      {showVideo && isPlayerProfile && targetUserId && !readOnly && (
+        <FullGameVideosSection playerUserId={targetUserId} />
+      )}
 
       {showGallery && (
         <GalleryManager

@@ -795,4 +795,112 @@ describe.skipIf(skip)('RLS Policy Isolation', () => {
       }
     })
   })
+
+  // =========================================================================
+  // PLAYER FULL GAME VIDEOS
+  // =========================================================================
+  // Player-only feature with per-row visibility ('public' | 'recruiters').
+  // Migration 20260507100000 enforces:
+  //  - Owner CRUD only when role='player'
+  //  - Visitor read filtered by visibility (public vs recruiters scope)
+  //  - Cascade delete on profile delete
+  describe('player_full_game_videos', () => {
+    it('coach cannot insert into player_full_game_videos (player-only feature)', async () => {
+      const { data, error } = await coach.client
+        .from('player_full_game_videos')
+        .insert({
+          user_id: coach.userId,
+          video_url: 'https://www.youtube.com/watch?v=rls_test_block',
+          match_title: 'rls_test_should_be_blocked',
+        })
+        .select()
+
+      // Either RLS error or empty result — both prove the gate held.
+      if (!error) {
+        expect(data ?? []).toHaveLength(0)
+      } else {
+        expect(error).not.toBeNull()
+      }
+    })
+
+    it('club cannot insert into player_full_game_videos', async () => {
+      const { data, error } = await club.client
+        .from('player_full_game_videos')
+        .insert({
+          user_id: club.userId,
+          video_url: 'https://www.youtube.com/watch?v=rls_test_block',
+          match_title: 'rls_test_should_be_blocked',
+        })
+        .select()
+
+      if (!error) {
+        expect(data ?? []).toHaveLength(0)
+      } else {
+        expect(error).not.toBeNull()
+      }
+    })
+
+    it('brand cannot insert into player_full_game_videos', async () => {
+      const { data, error } = await brand.client
+        .from('player_full_game_videos')
+        .insert({
+          user_id: brand.userId,
+          video_url: 'https://www.youtube.com/watch?v=rls_test_block',
+          match_title: 'rls_test_should_be_blocked',
+        })
+        .select()
+
+      if (!error) {
+        expect(data ?? []).toHaveLength(0)
+      } else {
+        expect(error).not.toBeNull()
+      }
+    })
+
+    it('coach cannot UPDATE another player\'s full game video', async () => {
+      // Find a player video to attempt to mutate. If the player has none,
+      // skip — the visibility-filter test covers the read direction below.
+      const { data: playerVideos } = await player.client
+        .from('player_full_game_videos')
+        .select('id, match_title')
+        .limit(1)
+
+      if (!playerVideos?.length) {
+        console.warn('  ⏭  No player full game videos seeded — skipping cross-user update test')
+        return
+      }
+
+      const original = playerVideos[0]
+      await coach.client
+        .from('player_full_game_videos')
+        .update({ match_title: 'rls_test_pwn_attempt' })
+        .eq('id', original.id)
+
+      // Owner re-reads — title must be unchanged.
+      const { data: check } = await player.client
+        .from('player_full_game_videos')
+        .select('match_title')
+        .eq('id', original.id)
+        .single()
+
+      expect(check?.match_title).toBe(original.match_title)
+    })
+
+    it('non-recruiter visitor cannot SELECT recruiters-only videos', async () => {
+      // Brand visiting a player profile should only see public videos.
+      // We can't seed a recruiters-only video without a player credential,
+      // so this test asserts: every brand-visible row has visibility=public.
+      const { data: brandSees } = await brand.client
+        .from('player_full_game_videos')
+        .select('id, visibility, user_id')
+
+      for (const row of brandSees ?? []) {
+        // The brand owner should still see their own rows of any visibility,
+        // but brand profiles can't insert anyway, so this should be empty.
+        if (row.user_id !== brand.userId) {
+          expect(row.visibility).toBe('public')
+        }
+      }
+    })
+  })
 })

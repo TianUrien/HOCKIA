@@ -1923,6 +1923,71 @@ export type Database = {
           },
         ]
       }
+      player_full_game_videos: {
+        Row: {
+          competition: string | null
+          created_at: string
+          display_order: number
+          id: string
+          match_date: string | null
+          match_title: string
+          minutes_played: number | null
+          notes: string | null
+          opponent_team: string | null
+          player_team: string | null
+          position_played: string | null
+          shirt_number: number | null
+          updated_at: string
+          user_id: string
+          video_url: string
+          visibility: string
+        }
+        Insert: {
+          competition?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          match_date?: string | null
+          match_title: string
+          minutes_played?: number | null
+          notes?: string | null
+          opponent_team?: string | null
+          player_team?: string | null
+          position_played?: string | null
+          shirt_number?: number | null
+          updated_at?: string
+          user_id: string
+          video_url: string
+          visibility?: string
+        }
+        Update: {
+          competition?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          match_date?: string | null
+          match_title?: string
+          minutes_played?: number | null
+          notes?: string | null
+          opponent_team?: string | null
+          player_team?: string | null
+          position_played?: string | null
+          shirt_number?: number | null
+          updated_at?: string
+          user_id?: string
+          video_url?: string
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_full_game_videos_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_health_snapshots: {
         Row: {
           computed_at: string
@@ -2418,6 +2483,7 @@ export type Database = {
           brand_representation: string | null
           browse_anonymously: boolean
           career_entry_count: number
+          full_game_video_count: number
           category_confirmation_needed: boolean
           club_bio: string | null
           club_history: string | null
@@ -2507,6 +2573,7 @@ export type Database = {
           brand_representation?: string | null
           browse_anonymously?: boolean
           career_entry_count?: number
+          full_game_video_count?: number
           category_confirmation_needed?: boolean
           club_bio?: string | null
           club_history?: string | null
@@ -2595,6 +2662,7 @@ export type Database = {
           brand_representation?: string | null
           browse_anonymously?: boolean
           career_entry_count?: number
+          full_game_video_count?: number
           category_confirmation_needed?: boolean
           club_bio?: string | null
           club_history?: string | null
@@ -4700,6 +4768,7 @@ export type Database = {
           brand_representation: string | null
           browse_anonymously: boolean
           career_entry_count: number
+          full_game_video_count: number
           category_confirmation_needed: boolean
           club_bio: string | null
           club_history: string | null
@@ -4842,6 +4911,7 @@ export type Database = {
           brand_representation: string | null
           browse_anonymously: boolean
           career_entry_count: number
+          full_game_video_count: number
           category_confirmation_needed: boolean
           club_bio: string | null
           club_history: string | null
