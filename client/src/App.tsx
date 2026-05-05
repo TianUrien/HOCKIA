@@ -74,6 +74,8 @@ const DiscoverPage = lazyWithRetry(() => import('@/pages/DiscoverPage'))
 const WorldPage = lazyWithRetry(() => import('@/pages/WorldPage'))
 const WorldCountryPage = lazyWithRetry(() => import('@/pages/WorldCountryPage'))
 const WorldProvincePage = lazyWithRetry(() => import('@/pages/WorldProvincePage'))
+const WorldClubPage = lazyWithRetry(() => import('@/pages/WorldClubPage'))
+const PostPage = lazyWithRetry(() => import('@/pages/PostPage'))
 
 // Brand pages
 const BrandProfilePage = lazyWithRetry(() => import('@/pages/BrandProfilePage'))
@@ -350,8 +352,15 @@ function App() {
                 
                 {/* World Directory (public) */}
                 <Route path="/world" element={<WorldPage />} />
+                <Route path="/world/clubs/:id" element={<WorldClubPage />} />
                 <Route path="/world/:countrySlug" element={<WorldCountryPage />} />
                 <Route path="/world/:countrySlug/:provinceSlug" element={<WorldProvincePage />} />
+
+                {/* Single-post permalink. Public-readable (matches the
+                    user_posts RLS posture) so external share links work
+                    for unauthenticated visitors. Like/comment actions
+                    still require auth via the underlying RLS. */}
+                <Route path="/post/:postId" element={<PostPage />} />
 
                 {/* Marketplace (canonical brand discovery surface — products + brand directory) */}
                 <Route path="/marketplace" element={<ErrorBoundary fallback={<RouteErrorFallback />}><MarketplacePage /></ErrorBoundary>} />
