@@ -110,18 +110,28 @@ export default function FullGameVideosSection({
     }
   }
 
-  // Section header is rendered regardless so the owner sees the affordance
-  // even when the list is empty. Visitor mode (PR 2) will hide entirely
-  // when no videos exist.
+  // Visitor mode + zero videos → hide the entire section (no orphan
+  // header). Owner mode keeps the header so the empty-state nudge can
+  // motivate the first add. RLS filters which rows the visitor sees;
+  // an anonymous / player visitor sees only `visibility='public'` rows,
+  // a club / coach visitor sees public + recruiters.
+  if (readOnly && !isLoading && videos.length === 0) {
+    return null
+  }
+
+  // Subtitle differs by mode: owner gets the instructive prompt; visitor
+  // gets a neutral framing that names the artifact without framing it as
+  // a quality judgement.
+  const subtitle = readOnly
+    ? 'Unedited match videos for deeper context.'
+    : 'Unedited match videos so clubs can see you in real game conditions.'
 
   return (
     <section className="mt-6" data-testid="full-game-videos-section">
       <header className="mb-3 flex items-center justify-between gap-3">
         <div>
           <h3 className="text-base font-semibold text-gray-900">Full match footage</h3>
-          <p className="mt-0.5 text-xs text-gray-500">
-            Unedited match videos so clubs can see you in real game conditions.
-          </p>
+          <p className="mt-0.5 text-xs text-gray-500">{subtitle}</p>
         </div>
         {!readOnly && (
           <Button

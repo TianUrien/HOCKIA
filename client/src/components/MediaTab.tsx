@@ -255,10 +255,14 @@ export default function MediaTab({ profileId, readOnly = false, renderHeader, sh
 
       {/* Full game videos — player-only feature, beneath the highlight
           block so highlight stays the quick first impression and full
-          games sit as deeper evidence for clubs/coaches. v1 owner-side
-          only; visitor surface lands in PR 2 (RLS already filters rows). */}
-      {showVideo && isPlayerProfile && targetUserId && !readOnly && (
-        <FullGameVideosSection playerUserId={targetUserId} />
+          games sit as deeper evidence for clubs/coaches. RLS filters
+          which rows each visitor sees: anon/player → public only;
+          club/coach → public + recruiters; owner → all.
+          The section component hides itself entirely in readOnly mode
+          when zero videos pass the visitor's RLS scope, so visitors of
+          a player with no public videos see no orphan header. */}
+      {showVideo && isPlayerProfile && targetUserId && (
+        <FullGameVideosSection playerUserId={targetUserId} readOnly={readOnly} />
       )}
 
       {showGallery && (

@@ -67,7 +67,7 @@ describe('FullGameVideosSection', () => {
     expect(screen.getByRole('button', { name: /add video/i })).toBeInTheDocument()
   })
 
-  it('hides empty state in readOnly mode (visitor surface)', () => {
+  it('hides the entire section in readOnly mode when there are zero videos', () => {
     mockUseFullGameVideos.mockReturnValue({
       videos: [],
       isLoading: false,
@@ -78,10 +78,34 @@ describe('FullGameVideosSection', () => {
       deleteVideo: vi.fn(),
     })
 
+    const { container } = render(<FullGameVideosSection playerUserId="player-1" readOnly />)
+
+    // No header, no empty state, no add CTA — visitor sees nothing.
+    expect(container.firstChild).toBeNull()
+  })
+
+  it('renders the section with neutral subtitle in readOnly mode when videos exist', () => {
+    mockUseFullGameVideos.mockReturnValue({
+      videos: [baseVideo],
+      isLoading: false,
+      error: null,
+      refetch: vi.fn(),
+      addVideo: vi.fn(),
+      updateVideo: vi.fn(),
+      deleteVideo: vi.fn(),
+    })
+
     render(<FullGameVideosSection playerUserId="player-1" readOnly />)
 
-    expect(screen.queryByText('No match videos yet')).not.toBeInTheDocument()
+    // Header + neutral subtitle present
+    expect(screen.getByText('Full match footage')).toBeInTheDocument()
+    expect(screen.getByText(/Unedited match videos for deeper context/i)).toBeInTheDocument()
+    // Owner affordances absent
     expect(screen.queryByRole('button', { name: /add video/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /edit video/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /remove video/i })).not.toBeInTheDocument()
+    // Watch link still present so visitors can open the video
+    expect(screen.getByRole('link', { name: /watch video/i })).toBeInTheDocument()
   })
 
   it('renders match title, opponent line, context line, and player line for a complete row', async () => {
