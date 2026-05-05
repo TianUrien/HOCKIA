@@ -15,6 +15,7 @@ import { Search, Building2, MapPin, Trophy, Plus, CheckCircle, ChevronRight } fr
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { Button } from '@/components'
+import ClubClaimConfirmModal from './ClubClaimConfirmModal'
 
 interface Region {
   id: number
@@ -75,6 +76,11 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
   const [step, setStep] = useState<'country' | 'region' | 'club' | 'leagues'>('country')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  // Last-mile confirmation gate before the claim RPC fires. Prevents
+  // accidental impersonation and puts the user on notice that
+  // misrepresentation is a terms violation. The RPC itself does NOT
+  // validate authority — the modal is the deterrent.
+  const [showClaimConfirm, setShowClaimConfirm] = useState(false)
   
   // Data
   const [countries, setCountries] = useState<WorldCountry[]>([])
@@ -742,7 +748,7 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
               Back
             </button>
             <Button
-              onClick={handleConfirm}
+              onClick={() => setShowClaimConfirm(true)}
               disabled={loading || (isCreatingNew && !newClubName.trim())}
               className="flex-1 bg-gradient-to-r from-[#8026FA] to-[#924CEC]"
             >
@@ -751,6 +757,21 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
           </div>
         </div>
       )}
+
+      <ClubClaimConfirmModal
+        isOpen={showClaimConfirm}
+        onClose={() => { if (!loading) setShowClaimConfirm(false) }}
+        onConfirm={async () => {
+          await handleConfirm()
+          // handleConfirm closes the step on success via onComplete; if
+          // it errored the modal stays open so the user can read the
+          // inline error and retry/cancel.
+          setShowClaimConfirm(false)
+        }}
+        clubName={selectedClub?.club_name ?? newClubName.trim() ?? 'this club'}
+        isCreating={isCreatingNew}
+        loading={loading}
+      />
     </div>
   )
 }

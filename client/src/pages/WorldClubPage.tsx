@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, ExternalLink, Loader2, MapPin, Trophy } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
-import { Header, Layout, Avatar } from '@/components'
+import { Header, Layout, Avatar, VerifiedBadge, PendingVerificationBadge } from '@/components'
 
 /**
  * WorldClubPage — leaf-level page for a single world_clubs row.
@@ -33,7 +33,14 @@ type ClubRow = {
 type CountryRow = { id: number; code: string; name: string; flag_emoji: string | null }
 type ProvinceRow = { id: number; name: string; slug: string }
 type LeagueRow = { id: number; name: string; tier: string | null }
-type ClaimedProfileRow = { id: string; username: string | null; full_name: string | null; avatar_url: string | null }
+type ClaimedProfileRow = {
+  id: string
+  username: string | null
+  full_name: string | null
+  avatar_url: string | null
+  is_verified: boolean | null
+  verified_at: string | null
+}
 
 export default function WorldClubPage() {
   const { id } = useParams<{ id: string }>()
@@ -117,7 +124,7 @@ export default function WorldClubPage() {
         if (clubData.is_claimed && clubData.claimed_profile_id) {
           const { data } = await supabase
             .from('profiles')
-            .select('id, username, full_name, avatar_url')
+            .select('id, username, full_name, avatar_url, is_verified, verified_at')
             .eq('id', clubData.claimed_profile_id)
             .maybeSingle()
           if (cancelled) return
@@ -196,7 +203,18 @@ export default function WorldClubPage() {
                 role="club"
               />
               <div className="min-w-0 flex-1">
-                <h1 className="text-2xl font-bold text-gray-900 md:text-3xl">{club.club_name}</h1>
+                <h1 className="flex flex-wrap items-center gap-2 text-2xl font-bold text-gray-900 md:text-3xl">
+                  <span>{club.club_name}</span>
+                  {claimedProfile && (
+                    <>
+                      <VerifiedBadge
+                        verified={claimedProfile.is_verified}
+                        verifiedAt={claimedProfile.verified_at}
+                      />
+                      <PendingVerificationBadge verified={claimedProfile.is_verified} />
+                    </>
+                  )}
+                </h1>
                 <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-600">
                   {(country || province) && (
                     <span className="inline-flex items-center gap-1.5">
