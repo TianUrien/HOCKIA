@@ -47,8 +47,13 @@ import {
   VerifiedBadge,
   DualNationalityDisplay,
   RecentlyConnectedCard,
+  FreshnessCard,
+  SearchAppearancesCard,
 } from '@/components'
 import { PulseSection } from '@/components/home/PulseSection'
+import { useProfileFreshness } from '@/hooks/useProfileFreshness'
+import { useSearchAppearances } from '@/hooks/useSearchAppearances'
+import type { FreshnessNudge } from '@/lib/profileFreshness'
 import { categoriesToDisplay } from '@/lib/hockeyCategories'
 import UmpireAppointmentsSection from '@/components/UmpireAppointmentsSection'
 import ProfileActionMenu from '@/components/ProfileActionMenu'
@@ -157,6 +162,16 @@ export default function UmpireDashboard({
     }
   }
 
+  // Handler for FreshnessCard nudges — same dispatch shape as Player/Coach
+  // dashboards, routes to the relevant tab or edit modal.
+  const handleFreshnessAction = (nudge: FreshnessNudge) => {
+    if (nudge.action.type === 'edit-profile') {
+      setShowEditModal(true)
+    } else if (nudge.action.type === 'tab') {
+      handleTabChange(nudge.action.tab as TabType)
+    }
+  }
+
   const handleSendMessage = async () => {
     if (!user) {
       setShowSignInPrompt(true)
@@ -198,6 +213,19 @@ export default function UmpireDashboard({
   // `estimateMemberStrength(umpire)`, so community cards and dashboard agree.
   const { percentage } = useUmpireProfileStrength({ profile })
   const tier = profile ? calculateTier(percentage) : null
+
+  // Freshness nudges (owner only — no value in showing "your bio is stale" to
+  // visitors). Umpire surfaces 'bio-stale' today; more nudges land as
+  // umpire-specific freshness signals get added.
+  const { nudge: freshnessNudge } = useProfileFreshness({
+    role: 'umpire',
+    profileId: readOnly ? null : profile?.id ?? null,
+  })
+  // Search appearances (owner only) — last 7 days aggregate. Same data hook
+  // used by Player and Coach dashboards.
+  const { summary: searchAppearances } = useSearchAppearances({
+    profileId: readOnly ? null : profile?.id ?? null,
+  })
 
   // Phase 3 — RecentlyConnectedCard data (owner-only).
   const nudgeOwnerId = readOnly ? null : profile?.id ?? null
@@ -437,10 +465,12 @@ export default function UmpireDashboard({
                   surface; serves the same role as NextStepCard on other
                   dashboards
               3. ProfileSnapshot — chips of present signals
-              4. RecentlyConnectedCard — gated on next step NOT being a
+              4. FreshnessCard — recency nudge (matches Player/Coach order)
+              5. RecentlyConnectedCard — gated on next step NOT being a
                   references / friends ask. Umpire's "next step" is
                   effectively credentials when missing, so suppress this
                   card until credentials are set.
+              6. SearchAppearancesCard — informational only
             Visitor mode: just the public Snapshot (chips). */}
         {!readOnly ? (
           <>
@@ -483,6 +513,10 @@ export default function UmpireDashboard({
               />
             </div>
 
+            <div className="mt-6">
+              <FreshnessCard nudge={freshnessNudge} onAction={handleFreshnessAction} />
+            </div>
+
             {nudgeOwnerId && hasCertification && (
               <div className="mt-6">
                 <RecentlyConnectedCard
@@ -499,6 +533,16 @@ export default function UmpireDashboard({
                     next.set('ask', friendId)
                     setSearchParams(next, { replace: false })
                   }}
+                />
+              </div>
+            )}
+
+            {searchAppearances && searchAppearances.total > 0 && (
+              <div className="mt-6">
+                <SearchAppearancesCard
+                  days={searchAppearances.days}
+                  total={searchAppearances.total}
+                  windowDays={7}
                 />
               </div>
             )}
