@@ -12,12 +12,25 @@ vi.mock('@sentry/react', () => ({
 // ── react-router mock — SnapshotGainCelebrationCard pulls in useNavigate.
 vi.mock('react-router-dom', () => ({
   useNavigate: () => vi.fn(),
+  useSearchParams: () => [new URLSearchParams(), vi.fn()],
 }))
 
 // ── auth-store mock — same path SnapshotGainCelebrationCard uses.
 vi.mock('@/lib/auth', () => ({
-  useAuthStore: (selector: (state: { profile: { role: string; username: string } | null }) => unknown) =>
-    selector({ profile: { role: 'player', username: 'tian' } }),
+  useAuthStore: (selector: (state: { profile: { id: string; role: string; username: string } | null }) => unknown) =>
+    selector({ profile: { id: 'user-1', role: 'player', username: 'tian' } }),
+}))
+
+// ── supabase mock — AvailabilityCheckInCard imports supabase at module
+//    load (for confirm_availability + mark_pulse_action_completed). Without
+//    a mock, importing PulseCard transitively triggers supabase.ts's
+//    "Missing Supabase environment variables" throw in CI environments
+//    that don't ship .env.local. The dispatcher tests below never
+//    actually fire the buttons, so a no-op rpc stub is enough.
+vi.mock('@/lib/supabase', () => ({
+  supabase: {
+    rpc: vi.fn(() => Promise.resolve({ data: null, error: null })),
+  },
 }))
 
 import { PulseCard } from '@/components/home/PulseCard'
