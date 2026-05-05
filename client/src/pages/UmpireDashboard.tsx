@@ -42,11 +42,13 @@ import {
   RoleBadge,
   ScrollableTabs,
   TierBadge,
+  // PulseSection added below for the v5-plan dashboard hierarchy.
   TrustBadge,
   VerifiedBadge,
   DualNationalityDisplay,
   RecentlyConnectedCard,
 } from '@/components'
+import { PulseSection } from '@/components/home/PulseSection'
 import { categoriesToDisplay } from '@/lib/hockeyCategories'
 import UmpireAppointmentsSection from '@/components/UmpireAppointmentsSection'
 import ProfileActionMenu from '@/components/ProfileActionMenu'
@@ -429,67 +431,85 @@ export default function UmpireDashboard({
           </div>
         </div>
 
-        {/* Phase 4 References UX Plan — Phase 3.1 (post-friendship prompt). */}
-        {nudgeOwnerId && (
+        {/* Owner-side hierarchy on UmpireDashboard:
+              1. Pulse — "Since you last visited"
+              2. Credentials CTA (when missing) — Umpire's primary action
+                  surface; serves the same role as NextStepCard on other
+                  dashboards
+              3. ProfileSnapshot — chips of present signals
+              4. RecentlyConnectedCard — gated on next step NOT being a
+                  references / friends ask. Umpire's "next step" is
+                  effectively credentials when missing, so suppress this
+                  card until credentials are set.
+            Visitor mode: just the public Snapshot (chips). */}
+        {!readOnly ? (
+          <>
+            <div className="mt-6">
+              <PulseSection />
+            </div>
+
+            {!hasCertification && (
+              <section className="mt-6 bg-gradient-to-br from-amber-50 to-yellow-50 border border-amber-200 rounded-2xl p-5 md:p-6">
+                <div className="flex items-start gap-4">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
+                    <Shield className="w-5 h-5 text-amber-700" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-base font-semibold text-gray-900 mb-1">
+                      Add your officiating credentials
+                    </h3>
+                    <p className="text-sm text-gray-700 mb-3">
+                      Your level and federation are what clubs and fellow umpires look for first.
+                      Take a minute now — you can always refine it later.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setShowEditModal(true)}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white text-sm font-medium hover:opacity-90 transition-opacity"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                      Add credentials
+                    </button>
+                  </div>
+                </div>
+              </section>
+            )}
+
+            <div className="mt-6">
+              <ProfileSnapshot
+                profile={profile as unknown as Profile | null}
+                mode="owner"
+                onSignalAction={handleSnapshotAction}
+              />
+            </div>
+
+            {nudgeOwnerId && hasCertification && (
+              <div className="mt-6">
+                <RecentlyConnectedCard
+                  friendOptions={nudgeFriendOptions}
+                  ownerProfileId={nudgeOwnerId}
+                  excludeIds={nudgeExcludeIds}
+                  acceptedReferenceCount={nudgeAcceptedFloor}
+                  profileRole="umpire"
+                  onAsk={(friendId) => {
+                    setActiveTab('friends')
+                    const next = new URLSearchParams(searchParams)
+                    next.set('tab', 'friends')
+                    next.set('section', 'references')
+                    next.set('ask', friendId)
+                    setSearchParams(next, { replace: false })
+                  }}
+                />
+              </div>
+            )}
+          </>
+        ) : (
           <div className="mt-6">
-            <RecentlyConnectedCard
-              friendOptions={nudgeFriendOptions}
-              ownerProfileId={nudgeOwnerId}
-              excludeIds={nudgeExcludeIds}
-              acceptedReferenceCount={nudgeAcceptedFloor}
-              profileRole="umpire"
-              onAsk={(friendId) => {
-                setActiveTab('friends')
-                const next = new URLSearchParams(searchParams)
-                next.set('tab', 'friends')
-                next.set('section', 'references')
-                next.set('ask', friendId)
-                setSearchParams(next, { replace: false })
-              }}
+            <ProfileSnapshot
+              profile={profile as unknown as Profile | null}
+              mode="public"
             />
           </div>
-        )}
-
-        {/* Profile Snapshot — Phase 1A.3. Visible to both owner (full list)
-            and visitors (✓-only). Sits BELOW the credentials empty-state
-            CTA when present so the credentials nudge stays the strongest
-            owner-side signal for new umpires. UmpireProfileShape is a
-            partial Profile (matches the public-fetch field set), so we
-            cast — same pattern PlayerDashboard uses for PlayerProfileShape. */}
-        <div className="mt-6">
-          <ProfileSnapshot
-            profile={profile as unknown as Profile | null}
-            mode={readOnly ? 'public' : 'owner'}
-            onSignalAction={handleSnapshotAction}
-          />
-        </div>
-
-        {/* ── Always-visible empty-state CTA for owners missing credentials ── */}
-        {!readOnly && !hasCertification && (
-          <section className="mt-6 bg-gradient-to-br from-amber-50 to-yellow-50 border border-amber-200 rounded-2xl p-5 md:p-6">
-            <div className="flex items-start gap-4">
-              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
-                <Shield className="w-5 h-5 text-amber-700" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-base font-semibold text-gray-900 mb-1">
-                  Add your officiating credentials
-                </h3>
-                <p className="text-sm text-gray-700 mb-3">
-                  Your level and federation are what clubs and fellow umpires look for first.
-                  Take a minute now — you can always refine it later.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setShowEditModal(true)}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white text-sm font-medium hover:opacity-90 transition-opacity"
-                >
-                  <Edit2 className="w-3.5 h-3.5" />
-                  Add credentials
-                </button>
-              </div>
-            </div>
-          </section>
         )}
 
         {/* ── Tabs ── */}

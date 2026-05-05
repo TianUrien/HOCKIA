@@ -10,6 +10,7 @@ import { Globe, Instagram, ExternalLink, Eye, Edit, Store, Package, Users, Plus,
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import Header from '@/components/Header'
 import { Avatar, Button, DashboardMenu, NextStepCard, FreshnessCard, ProfileSnapshot, SearchAppearancesCard, RoleBadge, ScrollableTabs, TierBadge, VerifiedBadge } from '@/components'
+import { PulseSection } from '@/components/home/PulseSection'
 import { calculateTier } from '@/lib/profileTier'
 import { useProfileFreshness } from '@/hooks/useProfileFreshness'
 import type { FreshnessNudge } from '@/lib/profileFreshness'
@@ -539,12 +540,22 @@ export default function BrandDashboard() {
           </div>
         </div>
 
-        {/* Profile Snapshot — Phase 1A.3. Owner-only on BrandDashboard;
-            the public-side equivalent renders inside BrandProfilePage.
-            Brand-specific fields (logo, bio, website, instagram) live on
-            the brands table — passed in as `brand` rather than synthesized
-            onto the profile. */}
-        <div className="mb-3">
+        {/* Owner-side hierarchy on BrandDashboard:
+              1. Pulse — "Since you last visited"
+              2. NextStepCard — single gamified primary action
+              3. ProfileSnapshot — chips of present signals (brand fields
+                                    threaded from the brands table)
+              4. FreshnessCard
+              5. SearchAppearancesCard
+            Public-side brand snapshot lives in BrandProfilePage. */}
+        <PulseSection />
+        <NextStepCard
+          percentage={percentage}
+          buckets={buckets}
+          loading={strengthLoading}
+          onBucketAction={handleStrengthBucketAction}
+        />
+        <div className="mt-3">
           <ProfileSnapshot
             profile={profile}
             mode="owner"
@@ -560,15 +571,6 @@ export default function BrandDashboard() {
             brandPostCount={posts.length}
           />
         </div>
-
-        {/* Tabs */}
-        {/* Next-step prompt — visible on every tab while the brand profile is incomplete */}
-        <NextStepCard
-          percentage={percentage}
-          buckets={buckets}
-          loading={strengthLoading}
-          onBucketAction={handleStrengthBucketAction}
-        />
         <div className="mt-3">
           <FreshnessCard nudge={freshnessNudge} onAction={handleFreshnessAction} />
         </div>

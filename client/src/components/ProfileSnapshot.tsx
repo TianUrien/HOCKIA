@@ -1,10 +1,27 @@
 import { useMemo } from 'react'
 import {
-  CheckCircle2,
-  Circle,
   ArrowRight,
-  ChevronRight,
+  Award,
+  Briefcase,
+  Building2,
+  Calendar,
+  Camera,
+  FileText,
+  Flag,
+  Globe,
+  Languages,
+  Layers,
+  MapPin,
+  MessageSquare,
+  Package,
+  Shield,
+  Sparkles,
+  Trophy,
+  Users,
+  Video,
+  Zap,
 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import type { Profile } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
 import {
@@ -16,26 +33,21 @@ import {
 } from '@/lib/profileSnapshotSignals'
 
 /**
- * Profile Snapshot — the canonical "what people see" surface for every role.
+ * Profile Snapshot — the canonical "what visitors see" surface for every role.
  *
- * Owner mode (mode='owner'): full signal list with ✓ for present and a
- * neutral – for missing. Missing items expose a small action button that
- * dispatches an actionId to the parent (the parent owns the modal/tab
- * routing — same dispatcher pattern as NextStepCard).
+ * Both modes (owner + public) render PRESENT signals only as positive
+ * chips. Owner mode adds a subtle "Improve your public view →" link that
+ * dispatches an `edit-profile` action so the owner can add more without
+ * the surface ever feeling like a checklist of gaps.
  *
- * Public mode (mode='public'): only present (✓) signals are rendered —
- * never publicly draw negative attention to what's missing. If no signals
- * are present, the entire block hides (no zero state on a public profile).
- *
- * The component is intentionally NOT a score. It is a list of concrete
- * signals visible on the profile — references, video, club affiliation,
- * etc. The internal Tier % stays internal; this surface answers "what's
- * there" rather than "how complete." Per the v5 plan's reframe: the
- * Profile Snapshot is the Clarity-Layer artifact for every role.
+ * History note: earlier versions rendered missing rows with ✓/○ icons
+ * and "Add →" CTAs. That competed with NextStepCard above and turned the
+ * dashboard into a wall of checklists. The chip-based positive-evidence
+ * design replaces it: NextStepCard owns the "what to do next" energy,
+ * Snapshot owns the "what you have" energy, and they don't overlap.
  *
  * Signal-computation logic + types live in `@/lib/profileSnapshotSignals`
- * so this file stays a clean React-component module (Vite's react-refresh
- * disallows non-component named exports in TSX).
+ * so this file stays a clean React-component module.
  */
 
 interface ProfileSnapshotProps {
@@ -48,22 +60,52 @@ interface ProfileSnapshotProps {
   brandAmbassadorCount?: number
   /** Brand-only: posts count. */
   brandPostCount?: number
-  /** Drives ✓-only filtering + the missing-item action affordance. */
+  /** Drives ✓-only filtering + the owner-mode "Improve your public view →" link. */
   mode: ProfileSnapshotMode
-  /** Owner-mode: invoked when the owner taps a missing signal. */
+  /** Owner-mode: invoked when the owner taps the "Improve your public view"
+   *  link with `actionId='edit-profile'` (or `'edit-brand'` for brand). */
   onSignalAction?: (actionId: string) => void
   /** Optional className to align with the surrounding layout. */
   className?: string
-  /** Owner-mode visual emphasis for missing rows.
-   *  - 'cta'    (default): each missing row exposes a purple "Add →" pill.
-   *  - 'subtle': each missing row stays tappable but renders only a faint
-   *              chevron — used when the Snapshot is sitting beneath a
-   *              dedicated NextStepCard so it doesn't compete with the
-   *              primary action. */
-  missingStyle?: 'cta' | 'subtle'
-  /** Owner-mode header counter ("3 of 8"). Hide when another surface
-   *  (NextStepCard) is already showing a competing completion number. */
-  showCount?: boolean
+}
+
+// ============================================================================
+// Icon mapping per signal id — keeps the chips visually distinct without
+// requiring profileSnapshotSignals.ts to import React/lucide.
+// ============================================================================
+const SIGNAL_ICONS: Record<string, LucideIcon> = {
+  // Player + coach
+  photo: Camera,
+  position: MapPin,
+  club: Building2,
+  references: Shield,
+  video: Video,
+  journey: Briefcase,
+  availability: Zap,
+  activity: Sparkles,
+  // Coach
+  specialization: Award,
+  categories: Layers,
+  bio: FileText,
+  // Club
+  logo: Camera,
+  location: MapPin,
+  year_founded: Calendar,
+  leagues: Trophy,
+  contact: Globe,
+  // Brand
+  products: Package,
+  ambassadors: Users,
+  posts: MessageSquare,
+  // Umpire
+  level: Award,
+  federation: Flag,
+  languages: Languages,
+  appointments: Calendar,
+}
+
+function iconFor(signalId: string): LucideIcon {
+  return SIGNAL_ICONS[signalId] ?? Sparkles
 }
 
 export default function ProfileSnapshot({
@@ -75,8 +117,6 @@ export default function ProfileSnapshot({
   mode,
   onSignalAction,
   className,
-  missingStyle = 'cta',
-  showCount = true,
 }: ProfileSnapshotProps) {
   const allSignals = useMemo(
     () =>
@@ -89,14 +129,17 @@ export default function ProfileSnapshot({
   if (!profile) return null
   if (allSignals.length === 0) return null
 
-  // Public mode: drop missing signals entirely. Never publicly highlight gaps.
-  const visibleSignals = mode === 'public' ? allSignals.filter((s) => s.present) : allSignals
+  const presentSignals = allSignals.filter((s) => s.present)
 
-  // Public mode + nothing to show → render nothing (no empty state).
-  if (mode === 'public' && visibleSignals.length === 0) return null
+  // Public mode + zero present signals → render nothing (no empty state
+  // for visitors). Owner mode keeps rendering so the empty-state nudge
+  // ("Add a few details…") can guide a brand-new account.
+  if (mode === 'public' && presentSignals.length === 0) return null
 
-  const presentCount = allSignals.filter((s) => s.present).length
-  const totalCount = allSignals.length
+  // Brand owner uses 'edit-brand' to open the BrandDashboard edit modal;
+  // every other role uses 'edit-profile'. Keep this in sync with each
+  // dashboard's handleSnapshotAction switch.
+  const improveActionId = profile.role === 'brand' ? 'edit-brand' : 'edit-profile'
 
   return (
     <section
@@ -107,102 +150,61 @@ export default function ProfileSnapshot({
       aria-label="Profile Snapshot"
     >
       <header className="mb-4">
-        <div className="flex items-center justify-between gap-2 mb-1">
-          <h3 className="text-base font-semibold text-gray-900">Profile Snapshot</h3>
-          {mode === 'owner' && showCount && (
-            <span className="text-xs font-medium text-gray-500 tabular-nums">
-              {presentCount} of {totalCount}
-            </span>
-          )}
-        </div>
-        <p className="text-xs text-gray-500">
+        <h3 className="text-base font-semibold text-gray-900">Profile Snapshot</h3>
+        <p className="text-xs text-gray-500 mt-0.5">
           {mode === 'owner'
             ? getOwnerSubtitle(profile.role, profile.coach_recruits_for_team ?? false)
             : 'Highlights from this profile'}
         </p>
       </header>
 
-      <ul className="space-y-2">
-        {visibleSignals.map((signal) => (
-          <SignalRow
-            key={signal.id}
-            signal={signal}
-            mode={mode}
-            onAction={onSignalAction}
-            missingStyle={missingStyle}
-          />
-        ))}
-      </ul>
+      {presentSignals.length > 0 ? (
+        <div className="flex flex-wrap gap-2" aria-label="Present signals">
+          {presentSignals.map((signal) => (
+            <SignalChip key={signal.id} signal={signal} />
+          ))}
+        </div>
+      ) : (
+        // Owner-only empty state. Public mode short-circuited above.
+        <p className="text-sm text-gray-500">
+          Your profile is just starting. Add a few details to make it visible.
+        </p>
+      )}
+
+      {mode === 'owner' && onSignalAction && (
+        <button
+          type="button"
+          onClick={() => onSignalAction(improveActionId)}
+          className="mt-4 inline-flex items-center gap-1 text-xs font-medium text-[#8026FA] hover:text-[#6B20D4] transition-colors"
+        >
+          Improve your public view
+          <ArrowRight className="w-3 h-3" aria-hidden="true" />
+        </button>
+      )}
     </section>
   )
 }
 
 // ============================================================================
-// Single-row renderer
+// Single chip renderer
 // ============================================================================
 
-interface SignalRowProps {
+interface SignalChipProps {
   signal: ProfileSnapshotSignal
-  mode: ProfileSnapshotMode
-  onAction?: (actionId: string) => void
-  missingStyle: 'cta' | 'subtle'
 }
 
-function SignalRow({ signal, mode, onAction, missingStyle }: SignalRowProps) {
-  const isMissing = !signal.present
-  const canAct = mode === 'owner' && isMissing && Boolean(signal.ownerActionId) && Boolean(onAction)
-
-  const Icon = signal.present ? CheckCircle2 : Circle
-  const iconClass = signal.present ? 'text-emerald-500' : 'text-gray-300'
-
-  const handleClick = () => {
-    if (!canAct || !onAction || !signal.ownerActionId) return
-    onAction(signal.ownerActionId)
-  }
-
-  const content = (
-    <>
-      <Icon className={cn('w-4 h-4 flex-shrink-0', iconClass)} aria-hidden="true" />
-      <span
-        className={cn(
-          'flex-1 text-sm',
-          signal.present ? 'text-gray-800' : 'text-gray-500',
-        )}
-      >
-        {signal.label}
-        {signal.detail && (
-          <span className="ml-1.5 text-xs text-gray-400">({signal.detail})</span>
-        )}
-      </span>
-      {canAct && missingStyle === 'cta' && (
-        <span className="inline-flex items-center gap-0.5 text-xs font-medium text-[#8026FA]">
-          Add
-          <ArrowRight className="w-3 h-3" aria-hidden="true" />
-        </span>
-      )}
-      {canAct && missingStyle === 'subtle' && (
-        <ChevronRight className="w-3.5 h-3.5 text-gray-300 flex-shrink-0" aria-hidden="true" />
-      )}
-    </>
-  )
-
-  if (canAct) {
-    return (
-      <li>
-        <button
-          type="button"
-          onClick={handleClick}
-          className="w-full flex items-center gap-2 px-2 py-1.5 -mx-2 rounded-lg hover:bg-gray-50 transition-colors text-left"
-        >
-          {content}
-        </button>
-      </li>
-    )
-  }
-
+function SignalChip({ signal }: SignalChipProps) {
+  const Icon = iconFor(signal.id)
+  // Chip text: detail (e.g. "5 references") when present, else label.
+  // Detail carries more information when it's a count, so prefer it.
+  const text = signal.detail ?? signal.label
   return (
-    <li className="flex items-center gap-2 px-2 py-1.5 -mx-2">
-      {content}
-    </li>
+    <span
+      className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700"
+      title={signal.label}
+    >
+      <Icon className="w-3 h-3 flex-shrink-0" aria-hidden="true" />
+      <span>{text}</span>
+    </span>
   )
 }

@@ -3,6 +3,7 @@ import { ArrowLeft, MapPin, Calendar, Edit2, Eye, MessageCircle, Landmark, Mail,
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { Avatar, DashboardMenu, EditProfileModal, FriendsTab, FriendshipButton, ProfileSnapshot, PublicReferencesSection, PublicViewBanner, RoleBadge, ScrollableTabs, NextStepCard, FreshnessCard, RecentlyConnectedCard, SearchAppearancesCard, DualNationalityDisplay, AvailabilityPill, TierBadge, TrustBadge, VerifiedBadge, CategoryConfirmationBanner } from '@/components'
+import { PulseSection } from '@/components/home/PulseSection'
 import { calculateTier } from '@/lib/profileTier'
 import { useProfileFreshness } from '@/hooks/useProfileFreshness'
 import type { FreshnessNudge } from '@/lib/profileFreshness'
@@ -553,17 +554,17 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
           </div>
         </div>
 
-        {/* Owner-side primary nudge column. Order is:
-              1. NextStepCard          — single primary action (Get Started)
-              2. FreshnessCard         — secondary recency nudge
-              3. ProfileSnapshot       — supporting context (subtle missing rows)
-              4. RecentlyConnectedCard — only when the next step ISN'T already
-                                          a references / friends ask, so we
-                                          don't double up on the same nudge
-              5. SearchAppearancesCard — informational only
-            Visitor mode skips 1/2/4/5 and only sees the Snapshot. */}
+        {/* Owner-side hierarchy (matches the v5-plan dashboard guideline):
+              1. Pulse — "Since you last visited" (only when high-signal items exist)
+              2. NextStepCard — single gamified primary action (bar + % + Next Step)
+              3. ProfileSnapshot — positive evidence (chips of present signals)
+              4. FreshnessCard — secondary recency nudge
+              5. RecentlyConnectedCard — only when NextStep ISN'T a references ask
+              6. SearchAppearancesCard — informational only
+            Visitor mode skips 1/2/4/5/6 and only sees the Snapshot (chips). */}
         {!readOnly ? (
           <>
+            <PulseSection />
             <NextStepCard
               percentage={profileStrength.percentage}
               buckets={profileStrength.buckets}
@@ -571,16 +572,14 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
               onBucketAction={handleProfileStrengthAction}
             />
             <div className="mt-3">
-              <FreshnessCard nudge={freshnessNudge} onAction={handleFreshnessAction} />
-            </div>
-            <div className="mt-3">
               <ProfileSnapshot
                 profile={profile as Profile | null}
                 mode="owner"
                 onSignalAction={handleSnapshotAction}
-                missingStyle="subtle"
-                showCount={false}
               />
+            </div>
+            <div className="mt-3">
+              <FreshnessCard nudge={freshnessNudge} onAction={handleFreshnessAction} />
             </div>
             {/* Recently-connected vouch nudge — gated on the next step NOT
                 already being a references ask. Without this gate the owner
@@ -627,7 +626,6 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
             <ProfileSnapshot
               profile={profile as Profile | null}
               mode="public"
-              onSignalAction={handleSnapshotAction}
             />
           </div>
         )}

@@ -119,75 +119,8 @@ describe('NextStepCard', () => {
     ).not.toThrow()
   })
 
-  describe('expandable checklist', () => {
-    it('renders a "See all X steps" toggle labelled with the total bucket count', () => {
-      render(<NextStepCard percentage={40} buckets={mixedBuckets} />)
-      expect(
-        screen.getByRole('button', { name: /see all 3 steps/i })
-      ).toBeInTheDocument()
-    })
-
-    it('is collapsed by default — the toggle reports aria-expanded=false', () => {
-      render(<NextStepCard percentage={40} buckets={mixedBuckets} />)
-      const toggle = screen.getByRole('button', { name: /see all 3 steps/i })
-      expect(toggle).toHaveAttribute('aria-expanded', 'false')
-    })
-
-    it('expands and swaps the toggle label when clicked', () => {
-      render(<NextStepCard percentage={40} buckets={mixedBuckets} />)
-      const toggle = screen.getByRole('button', { name: /see all 3 steps/i })
-      fireEvent.click(toggle)
-
-      // Label swaps
-      expect(
-        screen.getByRole('button', { name: /hide all steps/i })
-      ).toBeInTheDocument()
-      // aria-expanded flips
-      expect(
-        screen.getByRole('button', { name: /hide all steps/i })
-      ).toHaveAttribute('aria-expanded', 'true')
-    })
-
-    it('renders every bucket in the expanded list (complete + incomplete)', () => {
-      render(<NextStepCard percentage={40} buckets={mixedBuckets} />)
-      fireEvent.click(screen.getByRole('button', { name: /see all 3 steps/i }))
-
-      // Completed bucket label appears
-      expect(screen.getByText('Add a profile photo')).toBeInTheDocument()
-      // Next-step bucket label already appears in the CTA body above, so it
-      // shows twice in the expanded layout — verify at least one occurrence.
-      expect(screen.getAllByText('Add your highlight video').length).toBeGreaterThan(0)
-      // Last incomplete bucket
-      expect(screen.getByText('Get a reference')).toBeInTheDocument()
-    })
-
-    it('clicking an incomplete bucket in the checklist fires onBucketAction with that bucket', () => {
-      const handler = vi.fn()
-      render(
-        <NextStepCard
-          percentage={40}
-          buckets={mixedBuckets}
-          onBucketAction={handler}
-        />
-      )
-      fireEvent.click(screen.getByRole('button', { name: /see all 3 steps/i }))
-
-      // Click the "Get a reference" row in the expanded list
-      fireEvent.click(screen.getByRole('button', { name: /get a reference/i }))
-
-      expect(handler).toHaveBeenCalledWith(
-        expect.objectContaining({ id: 'references', completed: false })
-      )
-    })
-
-    it('does not render clickable buttons for completed buckets in the checklist', () => {
-      render(<NextStepCard percentage={40} buckets={mixedBuckets} />)
-      fireEvent.click(screen.getByRole('button', { name: /see all 3 steps/i }))
-
-      // Completed buckets render as non-interactive rows, so no button with that name.
-      expect(
-        screen.queryByRole('button', { name: /add a profile photo/i })
-      ).not.toBeInTheDocument()
-    })
-  })
+  // The expandable "See all steps" checklist was removed — it duplicated the
+  // Profile Snapshot below it on the dashboard and turned the surface from
+  // "level up" energy into a homework list. NextStepCard now stays focused
+  // on a single primary action; tests for the expander are gone with it.
 })

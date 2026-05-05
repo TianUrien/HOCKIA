@@ -1,6 +1,4 @@
-import { useState } from 'react'
-import { ArrowRight, Sparkles, CheckCircle2, Circle, ChevronDown, ChevronUp, ChevronRight } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { ArrowRight, Sparkles } from 'lucide-react'
 
 type BucketLike = {
   id: string
@@ -17,16 +15,21 @@ interface NextStepCardProps<TBucket extends BucketLike = BucketLike> {
   buckets: TBucket[]
   /** Whether data is loading */
   loading?: boolean
-  /** Called when the CTA is tapped with the top incomplete bucket, or when a bucket is clicked in the expanded list */
+  /** Called when the CTA is tapped with the top incomplete bucket */
   onBucketAction?: (bucket: TBucket) => void
 }
 
 /**
  * NextStepCard — the single, canonical "your profile progress" module on
- * role dashboards. Merges the short-form Next Step CTA (top incomplete
- * bucket, deep-linked via `onBucketAction`) with an optional expandable
- * full-bucket checklist so users who want the overview can see it without
- * a second card competing for the same real estate.
+ * role dashboards. Gamified hero card: progress bar + percentage + steps
+ * remaining + ONE next action.
+ *
+ * Intentionally NOT a checklist. The expandable full-bucket list was
+ * removed because it duplicated the Profile Snapshot below it and turned
+ * the surface from "level up" energy into "homework list" energy. The
+ * Snapshot is now the canonical "what visitors see" surface (positive
+ * chips of present signals); this card stays focused on motivation +
+ * next action.
  *
  * Hidden automatically while loading, when the profile is already 100%,
  * or when there is no incomplete bucket (empty hook state).
@@ -37,8 +40,6 @@ export default function NextStepCard<TBucket extends BucketLike>({
   loading = false,
   onBucketAction,
 }: NextStepCardProps<TBucket>) {
-  const [isExpanded, setIsExpanded] = useState(false)
-
   if (loading) return null
   if (percentage >= 100) return null
 
@@ -57,7 +58,7 @@ export default function NextStepCard<TBucket extends BucketLike>({
       />
 
       <div className="relative">
-        {/* Progress summary */}
+        {/* Progress summary — gamified level-up framing */}
         <div className="mb-4">
           <div className="flex items-baseline justify-between mb-2">
             <p className="text-sm font-semibold text-gray-900">Your profile</p>
@@ -76,7 +77,7 @@ export default function NextStepCard<TBucket extends BucketLike>({
           </p>
         </div>
 
-        {/* Next step CTA body */}
+        {/* Next step CTA body — single focused action */}
         <div className="flex items-start gap-3 md:gap-4">
           <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-[#8026FA] to-[#ec4899] text-white shadow-sm">
             <Sparkles className="w-5 h-5" />
@@ -101,67 +102,6 @@ export default function NextStepCard<TBucket extends BucketLike>({
               Get started
               <ArrowRight className="w-4 h-4" />
             </button>
-          </div>
-        </div>
-
-        {/* Expandable full checklist — all buckets with check/circle markers */}
-        <div className="mt-4 border-t border-[#8026FA]/10 pt-3">
-          <button
-            type="button"
-            onClick={() => setIsExpanded(v => !v)}
-            aria-expanded={isExpanded}
-            className="flex items-center gap-1 text-xs font-medium text-[#8026FA] hover:text-[#6B20D4] transition-colors"
-          >
-            {isExpanded ? (
-              <>
-                Hide all steps
-                <ChevronUp className="w-3.5 h-3.5" />
-              </>
-            ) : (
-              <>
-                See all {buckets.length} steps
-                <ChevronDown className="w-3.5 h-3.5" />
-              </>
-            )}
-          </button>
-
-          <div
-            className={cn(
-              'grid transition-all duration-200 ease-out',
-              isExpanded ? 'grid-rows-[1fr] opacity-100 mt-2' : 'grid-rows-[0fr] opacity-0'
-            )}
-          >
-            <div className="overflow-hidden">
-              <ul className="space-y-1">
-                {buckets.map(bucket => (
-                  <li key={bucket.id}>
-                    {bucket.completed ? (
-                      <div className="flex items-center gap-2.5 py-1.5 text-sm text-emerald-600">
-                        <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
-                        <span className="truncate">{bucket.label}</span>
-                      </div>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => onBucketAction?.(bucket)}
-                        className="w-full flex items-start gap-2.5 py-1.5 text-sm text-gray-600 hover:text-gray-900 transition-colors group text-left"
-                      >
-                        <Circle className="w-4 h-4 flex-shrink-0 text-gray-300 mt-0.5" />
-                        <span className="flex-1 min-w-0">
-                          <span className="block truncate">{bucket.label}</span>
-                          {bucket.unlockCopy && (
-                            <span className="block text-xs text-gray-500 mt-0.5 leading-snug">
-                              {bucket.unlockCopy}
-                            </span>
-                          )}
-                        </span>
-                        <ChevronRight className="w-3.5 h-3.5 text-gray-400 group-hover:text-gray-600 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity mt-0.5" />
-                      </button>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </div>
           </div>
         </div>
       </div>

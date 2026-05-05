@@ -3,6 +3,7 @@ import { ArrowLeft, MapPin, Calendar, Plus, Eye, MessageCircle, Edit, Loader2, S
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import Header from '@/components/Header'
 import { Avatar, Button, CountryDisplay, DashboardMenu, EditProfileModal, CommentsTab, FriendsTab, FriendshipButton, NextStepCard, FreshnessCard, ProfileSnapshot, SearchAppearancesCard, PublicViewBanner, RoleBadge, ScrollableTabs, TierBadge, VerifiedBadge } from '@/components'
+import { PulseSection } from '@/components/home/PulseSection'
 import { calculateTier } from '@/lib/profileTier'
 import { useProfileFreshness } from '@/hooks/useProfileFreshness'
 import type { FreshnessNudge } from '@/lib/profileFreshness'
@@ -443,25 +444,24 @@ export default function ClubDashboard({ profileData, readOnly = false, isOwnProf
           </div>
         </div>
 
-        {/* Profile Snapshot — Phase 1A.3. Visible to both owner (full list)
-            and visitors (✓-only). */}
-        <div className="mb-3">
-          <ProfileSnapshot
-            profile={profile as Profile | null}
-            mode={readOnly ? 'public' : 'owner'}
-            onSignalAction={handleSnapshotAction}
-          />
-        </div>
-
-        {/* Next-step prompt — visible on every tab while the profile is incomplete (owner only) */}
-        {!readOnly && (
+        {/* Owner-side hierarchy: Pulse → NextStep → Snapshot → Freshness → Search.
+            Visitor mode: just the public Snapshot (chips). */}
+        {!readOnly ? (
           <>
+            <PulseSection />
             <NextStepCard
               percentage={percentage}
               buckets={buckets}
               loading={strengthLoading}
               onBucketAction={handleStrengthBucketAction}
             />
+            <div className="mt-3">
+              <ProfileSnapshot
+                profile={profile as Profile | null}
+                mode="owner"
+                onSignalAction={handleSnapshotAction}
+              />
+            </div>
             <div className="mt-3">
               <FreshnessCard nudge={freshnessNudge} onAction={handleFreshnessAction} />
             </div>
@@ -475,6 +475,13 @@ export default function ClubDashboard({ profileData, readOnly = false, isOwnProf
               </div>
             )}
           </>
+        ) : (
+          <div className="mb-3">
+            <ProfileSnapshot
+              profile={profile as Profile | null}
+              mode="public"
+            />
+          </div>
         )}
 
         <div className="bg-white rounded-2xl shadow-sm animate-slide-in-up">

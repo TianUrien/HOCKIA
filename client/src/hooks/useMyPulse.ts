@@ -60,7 +60,10 @@ export function useMyPulse(): UseMyPulseResult {
     try {
       const { data, error: rpcError } = await supabase.rpc('get_my_pulse', { p_limit: DEFAULT_LIMIT })
       if (rpcError) throw rpcError
-      setItems((data as PulseItem[]) ?? [])
+      // Defensive: only accept arrays. Test mocks or unexpected RPC
+      // shapes (null, object, string) all collapse to empty so callers
+      // that do `items.filter(...)` never crash.
+      setItems(Array.isArray(data) ? (data as PulseItem[]) : [])
     } catch (err) {
       // Supabase RPC errors are plain objects { message, code, … } — not
       // Error instances — so we duck-type for `.message` rather than

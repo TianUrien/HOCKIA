@@ -3,6 +3,7 @@ import { ArrowLeft, MapPin, Calendar, Edit2, Eye, MessageCircle, Landmark, Mail,
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { Avatar, DashboardMenu, EditProfileModal, JourneyTab, CommentsTab, FriendsTab, FriendshipButton, NextStepCard, FreshnessCard, ProfileSnapshot, RecentlyConnectedCard, SearchAppearancesCard, PublicReferencesSection, PublicViewBanner, RoleBadge, ScrollableTabs, DualNationalityDisplay, AvailabilityPill, TierBadge, TrustBadge, VerifiedBadge, CategoryConfirmationBanner } from '@/components'
+import { PulseSection } from '@/components/home/PulseSection'
 import { calculateTier } from '@/lib/profileTier'
 import { useProfileFreshness } from '@/hooks/useProfileFreshness'
 import type { FreshnessNudge } from '@/lib/profileFreshness'
@@ -523,19 +524,17 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
           </div>
         </div>
 
-        {/* Profile Snapshot — Phase 1A.3. Visible to both owner (full list
-            with missing-action affordance) and visitors (✓-only). */}
-        <div className="mb-3">
-          <ProfileSnapshot
-            profile={profile as Profile | null}
-            mode={readOnly ? 'public' : 'owner'}
-            onSignalAction={handleSnapshotAction}
-          />
-        </div>
-
-        {/* Next-step prompt — visible on every tab while the profile is incomplete (owner only) */}
-        {!readOnly && (
+        {/* Owner-side hierarchy (matches v5-plan dashboard guideline):
+              1. Pulse — "Since you last visited"
+              2. NextStepCard — single gamified primary action
+              3. ProfileSnapshot — positive evidence (chips, present-only)
+              4. FreshnessCard
+              5. RecentlyConnectedCard — gated on next step NOT being a references ask
+              6. SearchAppearancesCard
+            Visitor mode: just the public Snapshot (chips). */}
+        {!readOnly ? (
           <>
+            <PulseSection />
             <NextStepCard
               percentage={percentage}
               buckets={buckets}
@@ -543,28 +542,40 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
               onBucketAction={handleStrengthBucketAction}
             />
             <div className="mt-3">
+              <ProfileSnapshot
+                profile={profile as Profile | null}
+                mode="owner"
+                onSignalAction={handleSnapshotAction}
+              />
+            </div>
+            <div className="mt-3">
               <FreshnessCard nudge={freshnessNudge} onAction={handleFreshnessAction} />
             </div>
-            {/* Phase 4 References UX Plan — Phase 3.1 (post-friendship prompt). */}
-            {nudgeOwnerId && (
-              <div className="mt-3">
-                <RecentlyConnectedCard
-                  friendOptions={nudgeFriendOptions}
-                  ownerProfileId={nudgeOwnerId}
-                  excludeIds={nudgeExcludeIds}
-                  acceptedReferenceCount={nudgeAcceptedFloor}
-                  profileRole={profile.role}
-                  onAsk={(friendId) => {
-                    setActiveTab('friends')
-                    const next = new URLSearchParams(searchParams)
-                    next.set('tab', 'friends')
-                    next.set('section', 'references')
-                    next.set('ask', friendId)
-                    setSearchParams(next, { replace: false })
-                  }}
-                />
-              </div>
-            )}
+            {nudgeOwnerId && (() => {
+              const nextStepBucket = buckets.find((b) => !b.completed)
+              const nextStepIsReferences =
+                nextStepBucket?.id === 'references' || nextStepBucket?.id === 'friends'
+              if (nextStepIsReferences) return null
+              return (
+                <div className="mt-3">
+                  <RecentlyConnectedCard
+                    friendOptions={nudgeFriendOptions}
+                    ownerProfileId={nudgeOwnerId}
+                    excludeIds={nudgeExcludeIds}
+                    acceptedReferenceCount={nudgeAcceptedFloor}
+                    profileRole={profile.role}
+                    onAsk={(friendId) => {
+                      setActiveTab('friends')
+                      const next = new URLSearchParams(searchParams)
+                      next.set('tab', 'friends')
+                      next.set('section', 'references')
+                      next.set('ask', friendId)
+                      setSearchParams(next, { replace: false })
+                    }}
+                  />
+                </div>
+              )
+            })()}
             {searchAppearances && searchAppearances.total > 0 && (
               <div className="mt-3">
                 <SearchAppearancesCard
@@ -575,6 +586,13 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
               </div>
             )}
           </>
+        ) : (
+          <div className="mb-3">
+            <ProfileSnapshot
+              profile={profile as Profile | null}
+              mode="public"
+            />
+          </div>
         )}
 
         {/* Tabs */}
