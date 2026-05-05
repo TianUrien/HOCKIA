@@ -215,8 +215,17 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
       const status = getMetadataString(notification, 'status')
       return status ? `Application ${status}` : 'Application updated'
     },
-    getDescription: (notification) => getMetadataString(notification, 'vacancy_title'),
-    getRoute: opportunityApplicantsRoute,
+    getDescription: (notification) => {
+      const club = getMetadataString(notification, 'club_name')
+      const title = getMetadataString(notification, 'vacancy_title')
+      if (club && title) return `${club} — ${title}`
+      return club ?? title
+    },
+    // Recipient is the applicant, not the club, so route to the public
+    // opportunity detail page (the applicant's view) — not the club's
+    // applicants list. The previous opportunityApplicantsRoute would
+    // 404 / 403 the applicant since they don't own the opportunity.
+    getRoute: opportunityDetailRoute,
   },
   profile_completed: {
     icon: CheckCircle2,

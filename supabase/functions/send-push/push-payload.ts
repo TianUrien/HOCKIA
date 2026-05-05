@@ -159,10 +159,14 @@ export function buildPushPayload(
     case 'vacancy_application_status': {
       const status = getString(metadata, 'status')
       const vacancyTitle = getString(metadata, 'vacancy_title')
+      const opportunityId = getString(metadata, 'opportunity_id')
       return {
         title: 'Application Update',
         body: status ? `Application ${status}` : 'Your application was updated',
-        url: '/opportunities',
+        // Deep-link to the specific opportunity (applicant's view), not
+        // the listing page. Falls back to the listing if metadata is
+        // missing.
+        url: opportunityId ? `/opportunities/${opportunityId}` : '/opportunities',
         tag: vacancyTitle ? `app-${vacancyTitle}` : 'application-status',
       }
     }
