@@ -17,7 +17,9 @@ function makeProfile(role: Profile['role'], overrides: Partial<Profile> = {}): P
 }
 
 const TWENTY_DAYS_AGO = new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString()
+const FIFTY_DAYS_AGO = new Date(Date.now() - 50 * 24 * 60 * 60 * 1000).toISOString()
 const SIXTY_DAYS_AGO = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString()
+const SEVENTY_DAYS_AGO = new Date(Date.now() - 70 * 24 * 60 * 60 * 1000).toISOString()
 
 // Compact wrapper matching the new computeSignals signature
 // (profile, brand, productCount, ambassadorCount, postCount). Brand prop
@@ -85,13 +87,42 @@ describe('computeSignals — player', () => {
     expect(signals.find((s) => s.id === 'references')!.detail).toBe('2 references')
   })
 
-  it('availability is true when EITHER open_to_play OR open_to_opportunities is true', () => {
+  it('availability is true when EITHER open_to_play OR open_to_opportunities is true (legacy: never confirmed)', () => {
+    // Legacy users predating the L2 check-in have NULL availability_confirmed_at.
+    // The boolean alone wins — no retroactive decay.
     const onlyPlay = sigs(makeProfile('player', { open_to_play: true }))
     const onlyOpportunities = sigs(makeProfile('player', { open_to_opportunities: true }))
     const neither = sigs(makeProfile('player', { open_to_play: false, open_to_opportunities: false }))
     expect(onlyPlay.find((s) => s.id === 'availability')!.present).toBe(true)
     expect(onlyOpportunities.find((s) => s.id === 'availability')!.present).toBe(true)
     expect(neither.find((s) => s.id === 'availability')!.present).toBe(false)
+  })
+
+  it('availability decays 60 days after last confirmation', () => {
+    // L2 Loop Layer: once a user has confirmed at least once, availability
+    // requires re-confirmation within 60 days. Boolean true alone is no
+    // longer enough.
+    const justConfirmed = sigs(makeProfile('player', {
+      open_to_play: true,
+      availability_confirmed_at: TWENTY_DAYS_AGO,
+    }))
+    const stillFresh = sigs(makeProfile('player', {
+      open_to_play: true,
+      availability_confirmed_at: FIFTY_DAYS_AGO,
+    }))
+    const decayed = sigs(makeProfile('player', {
+      open_to_play: true,
+      availability_confirmed_at: SEVENTY_DAYS_AGO,
+    }))
+    const decayedButNotOpen = sigs(makeProfile('player', {
+      open_to_play: false,
+      availability_confirmed_at: TWENTY_DAYS_AGO,
+    }))
+    expect(justConfirmed.find((s) => s.id === 'availability')!.present).toBe(true)
+    expect(stillFresh.find((s) => s.id === 'availability')!.present).toBe(true)
+    expect(decayed.find((s) => s.id === 'availability')!.present).toBe(false)
+    // Boolean still gates first — confirmed but not open = not present
+    expect(decayedButNotOpen.find((s) => s.id === 'availability')!.present).toBe(false)
   })
 
   it('activity is true when last_active_at is within 30 days, false beyond', () => {
