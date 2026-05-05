@@ -343,31 +343,24 @@ function VideoEmbed({ url }: { url: string }) {
   }
 
   const embedUrl = getEmbedUrl(url)
-  const platform = url.includes('youtube') || url.includes('youtu.be')
-    ? 'YouTube'
-    : url.includes('vimeo')
-    ? 'Vimeo'
-    : isGoogleDrive
-    ? 'Google Drive'
-    : 'Video'
 
   return (
     <div className="relative w-full rounded-xl overflow-hidden bg-black aspect-video">
-      <div className="absolute top-4 left-4 z-10 flex items-center gap-2">
-        <span className="px-3 py-1 bg-red-600 text-white text-xs font-semibold rounded">
-          {platform}
-        </span>
-        {isGoogleDrive && (
-          <a
-            href={getDirectUrl(url)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-3 py-1 bg-white/90 text-gray-800 text-xs font-semibold rounded hover:bg-white transition-colors"
-          >
-            Open in Drive ↗
-          </a>
-        )}
-      </div>
+      {/* Drive's iframe doesn't reliably autoplay inline, so we surface a
+          small "Open in Drive" affordance for the case where the inline
+          play button does nothing. YouTube and Vimeo embeds play inline
+          fine and don't need an external-open shortcut from us — both
+          platforms expose their own. */}
+      {isGoogleDrive && (
+        <a
+          href={getDirectUrl(url)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="absolute top-4 left-4 z-10 px-3 py-1 bg-white/90 text-gray-800 text-xs font-semibold rounded hover:bg-white transition-colors"
+        >
+          Open in Drive ↗
+        </a>
+      )}
       <iframe
         src={embedUrl}
         className="absolute top-0 left-0 w-full h-full"

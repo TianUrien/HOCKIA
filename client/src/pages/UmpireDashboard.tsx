@@ -571,13 +571,15 @@ export default function UmpireDashboard({
                     credentials + peer vouching is the umpire's primary trust
                     spine. Matches Player's PublicReferencesSection placement. */}
                 {readOnly && (
-                  // Phase 4 References UX Plan #1.6 — anchor for visitor TrustBadge scroll.
-                  <div id="public-references" className="scroll-mt-[88px]">
-                    <PublicReferencesSection
-                      profileId={profile.id}
-                      profileName={profile.full_name ?? null}
-                    />
-                  </div>
+                  // Phase 4 References UX Plan #1.6 — TrustBadge scroll
+                  // target. id + scroll-mt live on the section's own root
+                  // so when PublicReferencesSection returns null (zero
+                  // references), no empty wrapper is left behind to
+                  // inflate the surrounding space-y gap.
+                  <PublicReferencesSection
+                    profileId={profile.id}
+                    profileName={profile.full_name ?? null}
+                  />
                 )}
 
                 {hasBio && (

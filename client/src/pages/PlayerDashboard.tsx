@@ -786,11 +786,12 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
                 )}
 
                 {readOnly && (
-                  // Phase 4 References UX Plan #1.6 — anchor for the
-                  // visitor-side TrustBadge scroll target.
-                  <div id="public-references" className="scroll-mt-[88px]">
-                    <PublicReferencesSection profileId={profile.id} profileName={profile.full_name ?? profile.username ?? null} />
-                  </div>
+                  // Phase 4 References UX Plan #1.6 — TrustBadge scroll
+                  // target. The id + scroll-mt live on the section's own
+                  // root so when PublicReferencesSection returns null (zero
+                  // references for a visitor), no empty wrapper is left
+                  // behind to inflate the surrounding space-y-10 gap.
+                  <PublicReferencesSection profileId={profile.id} profileName={profile.full_name ?? profile.username ?? null} />
                 )}
 
                 {/* Highlight Video - placed early for immediate visual context */}
