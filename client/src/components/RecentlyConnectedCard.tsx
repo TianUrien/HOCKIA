@@ -4,6 +4,12 @@ import Avatar from './Avatar'
 import RoleBadge from './RoleBadge'
 import { logger } from '@/lib/logger'
 import { trackReferenceNudgeDismiss, trackReferenceModalOpen } from '@/lib/analytics'
+// Dismissal helpers shared with FriendshipReferencePulseCard so dismissing
+// on either surface suppresses both.
+import {
+  isReferenceNudgeDismissed as isDismissed,
+  recordReferenceNudgeDismiss as recordDismiss,
+} from '@/lib/referenceNudgeDismissal'
 import type { ReferenceFriendOption } from './AddReferenceModal'
 
 interface RecentlyConnectedCardProps {
@@ -36,14 +42,7 @@ interface RecentlyConnectedCardProps {
 
 const DISMISS_KEY_PREFIX = 'hockia-recently-connected-dismiss:'
 const LEGACY_CLEANUP_FLAG = 'hockia-recently-connected-cleanup-v1'
-const DISMISS_COOLDOWN_MS = 14 * 24 * 60 * 60 * 1000
 const DEFAULT_WINDOW_DAYS = 14
-
-function getDismissKey(ownerId: string, friendId: string): string {
-  // Scope the key by owner — otherwise dismissals leak across sign-ins on
-  // shared browsers. Format: hockia-recently-connected-dismiss:<owner>:<friend>
-  return `${DISMISS_KEY_PREFIX}${ownerId}:${friendId}`
-}
 
 /**
  * One-shot cleanup of legacy unscoped dismiss keys from before the owner-id
@@ -72,28 +71,6 @@ function cleanupLegacyDismissKeys(): void {
     window.localStorage.setItem(LEGACY_CLEANUP_FLAG, '1')
   } catch (err) {
     logger.error('[RecentlyConnectedCard] legacy key cleanup failed', err)
-  }
-}
-
-function isDismissed(ownerId: string, friendId: string, now: number = Date.now()): boolean {
-  try {
-    if (typeof window === 'undefined' || !window.localStorage) return false
-    const raw = window.localStorage.getItem(getDismissKey(ownerId, friendId))
-    if (!raw) return false
-    const ts = Date.parse(raw)
-    if (Number.isNaN(ts)) return false
-    return now - ts < DISMISS_COOLDOWN_MS
-  } catch {
-    return false
-  }
-}
-
-function recordDismiss(ownerId: string, friendId: string): void {
-  try {
-    if (typeof window === 'undefined' || !window.localStorage) return
-    window.localStorage.setItem(getDismissKey(ownerId, friendId), new Date().toISOString())
-  } catch (err) {
-    logger.error('[RecentlyConnectedCard] failed to persist dismissal', err)
   }
 }
 

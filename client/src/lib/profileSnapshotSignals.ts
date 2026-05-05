@@ -40,11 +40,36 @@ export interface ProfileSnapshotBrandFields {
 }
 
 const ACTIVITY_RECENT_DAYS = 30
+const AVAILABILITY_DECAY_DAYS = 60
 
 function isRecentlyActive(lastActiveAt: string | null | undefined): boolean {
   if (!lastActiveAt) return false
   const ms = Date.now() - new Date(lastActiveAt).getTime()
   return ms <= ACTIVITY_RECENT_DAYS * 24 * 60 * 60 * 1000
+}
+
+/**
+ * Loop-Layer L2 — availability decay.
+ *
+ * The "Open to play" / "Open to coach" Snapshot signal used to be a pure
+ * boolean read of profiles.open_to_*. With the weekly check-in landed,
+ * the signal now also requires a recent confirmation: the user must have
+ * tapped "Yes, still open" within the last 60 days for the chip to show.
+ *
+ * For profiles whose availability_confirmed_at has never been set
+ * (existing accounts before the check-in shipped), we treat the boolean
+ * alone as sufficient — no retroactive decay. Decay only applies once
+ * the user has confirmed at least once and then let it lapse.
+ */
+function isAvailabilityFresh(
+  isOpen: boolean,
+  availabilityConfirmedAt: string | null | undefined,
+): boolean {
+  if (!isOpen) return false
+  // Never confirmed → treat the boolean as authoritative (legacy users).
+  if (!availabilityConfirmedAt) return true
+  const ms = Date.now() - new Date(availabilityConfirmedAt).getTime()
+  return ms <= AVAILABILITY_DECAY_DAYS * 24 * 60 * 60 * 1000
 }
 
 function hasText(value: string | null | undefined): boolean {
@@ -66,7 +91,10 @@ function pluralize(count: number, singular: string, plural?: string): string {
 function computePlayerSignals(p: Profile): ProfileSnapshotSignal[] {
   const refCount = p.accepted_reference_count ?? 0
   const careerCount = p.career_entry_count ?? 0
-  const availability = Boolean(p.open_to_play) || Boolean(p.open_to_opportunities)
+  const availability = isAvailabilityFresh(
+    Boolean(p.open_to_play) || Boolean(p.open_to_opportunities),
+    p.availability_confirmed_at,
+  )
   return [
     {
       id: 'photo',
@@ -125,7 +153,10 @@ function computeCoachSignals(p: Profile): ProfileSnapshotSignal[] {
   const refCount = p.accepted_reference_count ?? 0
   const careerCount = p.career_entry_count ?? 0
   const hasCategories = Array.isArray(p.coaching_categories) && p.coaching_categories.length > 0
-  const availability = Boolean(p.open_to_coach) || Boolean(p.open_to_opportunities)
+  const availability = isAvailabilityFresh(
+    Boolean(p.open_to_coach) || Boolean(p.open_to_opportunities),
+    p.availability_confirmed_at,
+  )
   return [
     {
       id: 'photo',

@@ -14,6 +14,9 @@
  */
 export const KNOWN_PULSE_ITEM_TYPES = new Set<string>([
   'snapshot_gain_celebration',
+  'friendship_reference_opportunity',
+  'availability_check_in',
+  'profile_viewed_by_recruiters',
 ])
 
 export function isKnownPulseItemType(itemType: string): boolean {

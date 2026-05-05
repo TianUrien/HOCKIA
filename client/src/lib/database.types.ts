@@ -2443,11 +2443,13 @@ export type Database = {
           is_verified: boolean
           languages: string[] | null
           last_active_at: string | null
+          last_check_in_prompt_at: string | null
           last_meaningful_update_at: string | null
           last_message_email_at: string | null
           last_officiated_at: string | null
           last_platform: string | null
           last_profile_view_email_at: string | null
+          last_profile_view_pulse_at: string | null
           league_division: string | null
           mens_league_division: string | null
           mens_league_id: number | null
@@ -2529,11 +2531,13 @@ export type Database = {
           is_verified?: boolean
           languages?: string[] | null
           last_active_at?: string | null
+          last_check_in_prompt_at?: string | null
           last_meaningful_update_at?: string | null
           last_message_email_at?: string | null
           last_officiated_at?: string | null
           last_platform?: string | null
           last_profile_view_email_at?: string | null
+          last_profile_view_pulse_at?: string | null
           league_division?: string | null
           mens_league_division?: string | null
           mens_league_id?: number | null
@@ -2615,11 +2619,13 @@ export type Database = {
           is_verified?: boolean
           languages?: string[] | null
           last_active_at?: string | null
+          last_check_in_prompt_at?: string | null
           last_meaningful_update_at?: string | null
           last_message_email_at?: string | null
           last_officiated_at?: string | null
           last_platform?: string | null
           last_profile_view_email_at?: string | null
+          last_profile_view_pulse_at?: string | null
           league_division?: string | null
           mens_league_division?: string | null
           mens_league_id?: number | null
@@ -4719,11 +4725,13 @@ export type Database = {
           is_verified: boolean
           languages: string[] | null
           last_active_at: string | null
+          last_check_in_prompt_at: string | null
           last_meaningful_update_at: string | null
           last_message_email_at: string | null
           last_officiated_at: string | null
           last_platform: string | null
           last_profile_view_email_at: string | null
+          last_profile_view_pulse_at: string | null
           league_division: string | null
           mens_league_division: string | null
           mens_league_id: number | null
@@ -4774,6 +4782,7 @@ export type Database = {
         }
       }
       compute_product_health_score: { Args: never; Returns: Json }
+      confirm_availability: { Args: never; Returns: undefined }
       content_check: { Args: { p_text: string }; Returns: string }
       create_and_claim_world_club: {
         Args: {
@@ -4858,11 +4867,13 @@ export type Database = {
           is_verified: boolean
           languages: string[] | null
           last_active_at: string | null
+          last_check_in_prompt_at: string | null
           last_meaningful_update_at: string | null
           last_message_email_at: string | null
           last_officiated_at: string | null
           last_platform: string | null
           last_profile_view_email_at: string | null
+          last_profile_view_pulse_at: string | null
           league_division: string | null
           mens_league_division: string | null
           mens_league_id: number | null

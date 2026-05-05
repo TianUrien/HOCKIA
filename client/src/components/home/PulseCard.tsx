@@ -2,6 +2,9 @@ import { memo } from 'react'
 import * as Sentry from '@sentry/react'
 import type { PulseItem } from '@/hooks/useMyPulse'
 import { SnapshotGainCelebrationCard } from './SnapshotGainCelebrationCard'
+import { FriendshipReferencePulseCard } from './FriendshipReferencePulseCard'
+import { AvailabilityCheckInCard } from './AvailabilityCheckInCard'
+import { ProfileViewedPulseCard } from './ProfileViewedPulseCard'
 
 /**
  * PulseCard — type-aware dispatcher for the v5-plan Movement Layer.
@@ -34,6 +37,15 @@ export const PulseCard = memo(function PulseCard({ item, onClick, onDismiss }: P
   switch (item.item_type) {
     case 'snapshot_gain_celebration':
       return <SnapshotGainCelebrationCard item={item} onClick={onClick} onDismiss={onDismiss} />
+
+    case 'friendship_reference_opportunity':
+      return <FriendshipReferencePulseCard item={item} onClick={onClick} onDismiss={onDismiss} />
+
+    case 'availability_check_in':
+      return <AvailabilityCheckInCard item={item} onClick={onClick} onDismiss={onDismiss} />
+
+    case 'profile_viewed_by_recruiters':
+      return <ProfileViewedPulseCard item={item} onClick={onClick} onDismiss={onDismiss} />
 
     default: {
       const unknownType = item.item_type
