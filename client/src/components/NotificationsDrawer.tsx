@@ -148,6 +148,7 @@ export default function NotificationsDrawer() {
     const role = actor.role?.toLowerCase()
     if (role === 'club') return `/clubs/id/${actor.id}`
     if (role === 'umpire') return `/umpires/id/${actor.id}`
+    if (role === 'brand') return `/brands/id/${actor.id}`
     return `/players/id/${actor.id}`
   }
 

@@ -77,6 +77,7 @@ const WorldProvincePage = lazyWithRetry(() => import('@/pages/WorldProvincePage'
 
 // Brand pages
 const BrandProfilePage = lazyWithRetry(() => import('@/pages/BrandProfilePage'))
+const BrandIdRedirect = lazyWithRetry(() => import('@/pages/BrandIdRedirect'))
 const BrandOnboardingPage = lazyWithRetry(() => import('@/pages/BrandOnboardingPage'))
 // BrandDashboardPage was the legacy /dashboard/brand page; replaced by the
 // rich BrandDashboard component used by DashboardRouter at /dashboard/profile.
@@ -199,10 +200,21 @@ function getFeatureFromPath(path: string): string {
   if (path.startsWith('/community')) return 'community'
   if (path.startsWith('/search')) return 'search'
   if (path.startsWith('/discover')) return 'discovery'
-  if (path.startsWith('/player/') || path.startsWith('/club/') || path.startsWith('/coach/') || path.startsWith('/brand/')) return 'profiles'
+  // Public profile routes use plural prefixes (matches App.tsx routes).
+  // Earlier this checked singular forms (/player/, /club/, /coach/, /brand/)
+  // which never match — every public-profile page-view was tagged 'other'.
+  if (
+    path.startsWith('/players/') ||
+    path.startsWith('/coaches/') ||
+    path.startsWith('/clubs/') ||
+    path.startsWith('/umpires/') ||
+    path.startsWith('/brands/') ||
+    path.startsWith('/members/')
+  ) return 'profiles'
   if (path.startsWith('/dashboard/profile')) return 'profiles'
   if (path.startsWith('/dashboard')) return 'dashboard'
   if (path.startsWith('/settings')) return 'settings'
+  if (path.startsWith('/world')) return 'world'
   if (path.startsWith('/admin')) return 'admin'
   return 'other'
 }
@@ -348,6 +360,11 @@ function App() {
                 <Route path="/brands" element={<Navigate to="/marketplace" replace />} />
                 <Route path="/community/brands" element={<Navigate to="/marketplace" replace />} />
                 <Route path="/brands/onboarding" element={<ErrorBoundary fallback={<RouteErrorFallback />}><BrandOnboardingPage /></ErrorBoundary>} />
+                {/* id-fallback for brands — mirrors /players/id/:id etc.
+                    Resolves brand profile_id → slug, then redirects to
+                    /brands/:slug. Used when notifications or friend lists
+                    only know the brand's auth user id. */}
+                <Route path="/brands/id/:id" element={<BrandIdRedirect />} />
                 <Route path="/brands/:slug" element={<BrandProfilePage />} />
                 {/* Legacy /dashboard/brand was a stripped-down edit-only page;
                     canonical brand UX now lives at /dashboard/profile (rich

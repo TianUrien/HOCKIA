@@ -242,6 +242,10 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole }:
     const slug = friend.username ? `${friend.username}` : `id/${friend.id}`
     if (friend.role === 'club') return `/clubs/${slug}`
     if (friend.role === 'umpire') return `/umpires/${slug}`
+    // Brands key on brand.slug (not profiles.username), so the username
+    // path won't resolve. Always go through the id-redirect, which looks
+    // up the canonical slug and redirects to /brands/:slug.
+    if (friend.role === 'brand') return `/brands/id/${friend.id}`
     return `/players/${slug}`
   }
 
