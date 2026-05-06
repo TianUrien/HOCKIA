@@ -32,16 +32,9 @@ import type {
 import { logger } from '@/lib/logger'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
 import { formatAdminDate } from '../utils/formatDate'
+import { getRoleBadgeClasses } from '@/lib/roleColors'
 
 type DaysFilter = 7 | 30 | 90
-
-const ROLE_BADGE_CLASSES: Record<string, string> = {
-  player: 'bg-[#EFF6FF] text-[#2563EB]',
-  coach: 'bg-[#F0FDFA] text-[#0D9488]',
-  club: 'bg-[#FFF7ED] text-[#EA580C]',
-  brand: 'bg-[#FFF1F2] text-[#E11D48]',
-  umpire: 'bg-[#FEFCE8] text-[#A16207]',
-}
 
 const INTENT_BADGE_CLASSES: Record<string, string> = {
   search: 'bg-purple-100 text-purple-700',
@@ -118,7 +111,7 @@ export function AdminDiscovery() {
         <div>
           <div className="font-medium text-gray-900 text-sm">{row.display_name || 'Unknown'}</div>
           <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${
-            ROLE_BADGE_CLASSES[row.role] || 'bg-gray-100 text-gray-600'
+            getRoleBadgeClasses(row.role)
           }`}>
             {row.role}
           </span>
@@ -204,7 +197,7 @@ export function AdminDiscovery() {
       label: 'Role',
       render: (_value, row) => (
         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-          ROLE_BADGE_CLASSES[row.role] || 'bg-gray-100 text-gray-600'
+          getRoleBadgeClasses(row.role)
         }`}>
           {row.role}
         </span>

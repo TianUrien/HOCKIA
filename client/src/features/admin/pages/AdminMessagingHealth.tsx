@@ -18,15 +18,9 @@ import {
 import { StatCard } from '../components/StatCard'
 import { getMessagingHealth } from '../api/analyticsApi'
 import { logger } from '@/lib/logger'
+import { getRoleColors } from '@/lib/roleColors'
 
 type DaysFilter = 7 | 30 | 90
-
-const ROLE_COLORS: Record<string, { bg: string; text: string }> = {
-  player: { bg: '#EFF6FF', text: '#2563EB' },
-  coach: { bg: '#F0FDFA', text: '#0D9488' },
-  club: { bg: '#FFF7ED', text: '#EA580C' },
-  brand: { bg: '#FFF1F2', text: '#E11D48' },
-}
 
 function formatMinutes(minutes: number): string {
   if (minutes < 60) return `${Math.round(minutes)} min`
@@ -288,10 +282,7 @@ export function AdminMessagingHealth() {
               </thead>
               <tbody>
                 {topMessengers.map((user, index) => {
-                  const colors = ROLE_COLORS[user.role] ?? {
-                    bg: '#F3F4F6',
-                    text: '#4B5563',
-                  }
+                  const colors = getRoleColors(user.role)
 
                   return (
                     <tr

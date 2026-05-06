@@ -37,17 +37,10 @@ import type {
   ConversationDetail,
 } from '../types'
 import { logger } from '@/lib/logger'
+import { getRoleBadgeClasses } from '@/lib/roleColors'
 
 type NetworkingTab = 'messaging' | 'friendships' | 'references'
 type DaysFilter = 7 | 30 | 90
-
-const ROLE_COLORS: Record<string, string> = {
-  player: 'bg-[#EFF6FF] text-[#2563EB]',
-  coach: 'bg-[#F0FDFA] text-[#0D9488]',
-  club: 'bg-[#FFF7ED] text-[#EA580C]',
-  brand: 'bg-[#FFF1F2] text-[#E11D48]',
-  umpire: 'bg-[#FEFCE8] text-[#A16207]',
-}
 
 export function AdminNetworking() {
   const [activeTab, setActiveTab] = useState<NetworkingTab>('messaging')
@@ -113,7 +106,7 @@ export function AdminNetworking() {
           </span>
           <span
             className={`inline-flex px-1.5 py-0.5 text-xs font-medium rounded-full capitalize ${
-              ROLE_COLORS[row.participant_one_role] || 'bg-gray-100 text-gray-600'
+              getRoleBadgeClasses(row.participant_one_role)
             }`}
           >
             {row.participant_one_role}
@@ -131,7 +124,7 @@ export function AdminNetworking() {
           </span>
           <span
             className={`inline-flex px-1.5 py-0.5 text-xs font-medium rounded-full capitalize ${
-              ROLE_COLORS[row.participant_two_role] || 'bg-gray-100 text-gray-600'
+              getRoleBadgeClasses(row.participant_two_role)
             }`}
           >
             {row.participant_two_role}
@@ -392,7 +385,7 @@ export function AdminNetworking() {
                       </span>
                       <span
                         className={`inline-flex px-1.5 py-0.5 text-xs font-medium rounded-full capitalize flex-shrink-0 ${
-                          ROLE_COLORS[user.role] || 'bg-gray-100 text-gray-600'
+                          getRoleBadgeClasses(user.role)
                         }`}
                       >
                         {user.role}
@@ -579,7 +572,7 @@ export function AdminNetworking() {
                         </span>
                         <span
                           className={`inline-flex px-1.5 py-0.5 text-xs font-medium rounded-full capitalize flex-shrink-0 ${
-                            ROLE_COLORS[user.role] || 'bg-gray-100 text-gray-600'
+                            getRoleBadgeClasses(user.role)
                           }`}
                         >
                           {user.role}

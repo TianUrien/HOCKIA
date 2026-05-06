@@ -16,22 +16,9 @@ import { StatCard } from '../components/StatCard'
 import { getCommunityAnalytics } from '../api/analyticsApi'
 import type { CommunityAnalytics } from '../types'
 import { logger } from '@/lib/logger'
+import { getRoleColors, getRoleSolidColor } from '@/lib/roleColors'
 
 type DaysFilter = 7 | 30 | 90
-
-const ROLE_COLORS: Record<string, { bg: string; text: string }> = {
-  player: { bg: '#EFF6FF', text: '#2563EB' },
-  coach: { bg: '#F0FDFA', text: '#0D9488' },
-  club: { bg: '#FFF7ED', text: '#EA580C' },
-  brand: { bg: '#FFF1F2', text: '#E11D48' },
-}
-
-const ROLE_BAR_COLORS: Record<string, string> = {
-  player: '#2563EB',
-  coach: '#0D9488',
-  club: '#EA580C',
-  brand: '#E11D48',
-}
 
 export function AdminCommunity() {
   const [data, setData] = useState<CommunityAnalytics | null>(null)
@@ -278,7 +265,7 @@ export function AdminCommunity() {
                         className="h-2.5 rounded-full"
                         style={{
                           width: `${(item.count / maxRoleCount) * 100}%`,
-                          backgroundColor: ROLE_BAR_COLORS[item.role] || '#9CA3AF',
+                          backgroundColor: getRoleSolidColor(item.role),
                         }}
                       />
                     </div>
@@ -327,7 +314,7 @@ export function AdminCommunity() {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {topContributors.map((contributor, index) => {
-                  const roleColor = ROLE_COLORS[contributor.role]
+                  const roleColor = getRoleColors(contributor.role)
                   return (
                     <tr key={contributor.id} className="hover:bg-gray-50">
                       <td className="py-3 pr-4 text-sm text-gray-500 font-mono">

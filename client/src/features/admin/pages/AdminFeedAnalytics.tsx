@@ -19,15 +19,9 @@ import { getFeedAnalytics } from '../api/analyticsApi'
 import type { FeedAnalytics } from '../types'
 import { formatAdminDate } from '../utils/formatDate'
 import { logger } from '@/lib/logger'
+import { getRoleColors } from '@/lib/roleColors'
 
 type DaysFilter = 7 | 30 | 90
-
-const ROLE_COLORS: Record<string, { bg: string; text: string }> = {
-  player: { bg: '#EFF6FF', text: '#2563EB' },
-  coach: { bg: '#F0FDFA', text: '#0D9488' },
-  club: { bg: '#FFF7ED', text: '#EA580C' },
-  brand: { bg: '#FFF1F2', text: '#E11D48' },
-}
 
 export function AdminFeedAnalytics() {
   const [data, setData] = useState<FeedAnalytics | null>(null)
@@ -273,10 +267,7 @@ export function AdminFeedAnalytics() {
             ) : (
               <div className="space-y-3">
                 {postsByRole.map((role) => {
-                  const colors = ROLE_COLORS[role.role] ?? {
-                    bg: '#F3F4F6',
-                    text: '#4B5563',
-                  }
+                  const colors = getRoleColors(role.role)
                   const widthPct = (role.count / maxRoleCount) * 100
 
                   return (
@@ -387,10 +378,7 @@ export function AdminFeedAnalytics() {
               </thead>
               <tbody>
                 {(data?.top_posts ?? []).map((post) => {
-                  const colors = ROLE_COLORS[post.author_role] ?? {
-                    bg: '#F3F4F6',
-                    text: '#4B5563',
-                  }
+                  const colors = getRoleColors(post.author_role)
 
                   return (
                     <tr

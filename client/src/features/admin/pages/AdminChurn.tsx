@@ -15,15 +15,9 @@ import {
 import { StatCard } from '../components/StatCard'
 import { getChurnAnalysis, getRetentionByRole } from '../api/analyticsApi'
 import { logger } from '@/lib/logger'
+import { getRoleColors } from '@/lib/roleColors'
 
 type DaysFilter = 7 | 30 | 90
-
-const ROLE_COLORS: Record<string, { bg: string; text: string }> = {
-  player: { bg: '#EFF6FF', text: '#2563EB' },
-  coach: { bg: '#F0FDFA', text: '#0D9488' },
-  club: { bg: '#FFF7ED', text: '#EA580C' },
-  brand: { bg: '#FFF1F2', text: '#E11D48' },
-}
 
 function formatEventName(name: string): string {
   return name
@@ -186,10 +180,7 @@ export function AdminChurn() {
           ) : (
             <div className="space-y-4">
               {churnByRole.map((role: { role: string; churned: number; active: number; churn_rate: number }) => {
-                const colors = ROLE_COLORS[role.role] ?? {
-                  bg: '#F3F4F6',
-                  text: '#4B5563',
-                }
+                const colors = getRoleColors(role.role)
                 const total = role.churned + role.active
                 const churnedPct = total > 0 ? (role.churned / total) * 100 : 0
                 const activePct = total > 0 ? (role.active / total) * 100 : 0
@@ -311,10 +302,7 @@ export function AdminChurn() {
               </thead>
               <tbody>
                 {retentionByRole.map((row: { role: string; total_users: number; day_1_pct: number; week_1_pct: number; week_2_pct: number; week_3_4_pct: number }) => {
-                  const colors = ROLE_COLORS[row.role] ?? {
-                    bg: '#F3F4F6',
-                    text: '#4B5563',
-                  }
+                  const colors = getRoleColors(row.role)
 
                   return (
                     <tr
@@ -386,10 +374,7 @@ export function AdminChurn() {
                 </thead>
                 <tbody>
                   {atRiskUsers.map((user: { display_name: string; role: string; sessions_this_week: number; sessions_prev_week: number }, index: number) => {
-                    const colors = ROLE_COLORS[user.role] ?? {
-                      bg: '#F3F4F6',
-                      text: '#4B5563',
-                    }
+                    const colors = getRoleColors(user.role)
 
                     return (
                       <tr

@@ -21,23 +21,9 @@ import { getFeatureUsageMetrics } from '../api/adminApi'
 import type { FeatureUsageMetrics, MostViewedProfile, EventSummaryItem } from '../types'
 import { logger } from '@/lib/logger'
 import { formatAdminDate } from '../utils/formatDate'
+import { getRoleBadgeClasses, getRoleSolidBgClass } from '@/lib/roleColors'
 
 type DaysFilter = 7 | 30 | 90
-
-const ROLE_COLORS: Record<string, string> = {
-  player: 'bg-[#2563EB]',
-  coach: 'bg-[#0D9488]',
-  club: 'bg-[#EA580C]',
-  brand: 'bg-[#E11D48]',
-}
-
-const ROLE_BADGE_CLASSES: Record<string, string> = {
-  player: 'bg-[#EFF6FF] text-[#2563EB]',
-  coach: 'bg-[#F0FDFA] text-[#0D9488]',
-  club: 'bg-[#FFF7ED] text-[#EA580C]',
-  brand: 'bg-[#FFF1F2] text-[#E11D48]',
-  umpire: 'bg-[#FEFCE8] text-[#A16207]',
-}
 
 const SOURCE_COLORS: Record<string, string> = {
   community: 'bg-purple-500',
@@ -105,7 +91,7 @@ export function AdminFeatureUsage() {
           <div>
             <div className="font-medium text-gray-900">{row.full_name || 'Unknown'}</div>
             <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-              ROLE_BADGE_CLASSES[row.role] || 'bg-gray-100 text-gray-600'
+              getRoleBadgeClasses(row.role)
             }`}>
               {row.role}
             </span>
@@ -291,7 +277,7 @@ export function AdminFeatureUsage() {
                     </div>
                     <div className="w-full bg-gray-100 rounded-full h-2.5">
                       <div
-                        className={`h-2.5 rounded-full ${ROLE_COLORS[role] || 'bg-gray-400'}`}
+                        className={`h-2.5 rounded-full ${getRoleSolidBgClass(role)}`}
                         style={{ width: `${(count / maxRoleCount) * 100}%` }}
                       />
                     </div>

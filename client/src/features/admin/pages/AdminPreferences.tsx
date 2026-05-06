@@ -20,6 +20,7 @@ import {
 import { getPreferenceSummary, getPreferenceUsers } from '../api/preferencesApi'
 import type { PreferenceSummary, PreferenceStat, PreferenceKey, PreferenceUser } from '../types'
 import { logger } from '@/lib/logger'
+import { getRoleBadgeClasses } from '@/lib/roleColors'
 
 // Preference metadata for display
 const PREFERENCE_CONFIG: Array<{
@@ -38,14 +39,6 @@ const PREFERENCE_CONFIG: Array<{
   { key: 'notify_profile_views', label: 'Profile View Emails', description: 'Weekly email summary of who viewed your profile', section: 'notification', defaultOn: true },
   { key: 'browse_anonymously', label: 'Anonymous Browsing', description: 'When enabled, user won\'t appear in others\' profile viewer lists', section: 'privacy', defaultOn: false },
 ]
-
-const ROLE_COLORS: Record<string, string> = {
-  player: 'bg-[#EFF6FF] text-[#2563EB]',
-  coach: 'bg-[#F0FDFA] text-[#0D9488]',
-  club: 'bg-[#FFF7ED] text-[#EA580C]',
-  brand: 'bg-[#FFF1F2] text-[#E11D48]',
-  umpire: 'bg-[#FEFCE8] text-[#A16207]',
-}
 
 const PAGE_SIZE = 50
 
@@ -242,7 +235,7 @@ function PreferenceRow({ prefKey, label, description, defaultOn, stat, totalUser
                 return (
                   <div key={role} className="bg-white rounded-lg border border-gray-100 p-3">
                     <div className="flex items-center gap-1.5 mb-1">
-                      <span className={`px-1.5 py-0.5 text-xs font-medium rounded ${ROLE_COLORS[role] || 'bg-gray-100 text-gray-600'}`}>
+                      <span className={`px-1.5 py-0.5 text-xs font-medium rounded ${getRoleBadgeClasses(role)}`}>
                         {role}
                       </span>
                     </div>
@@ -408,7 +401,7 @@ function UserDrillDown({ prefKey }: { prefKey: PreferenceKey }) {
                     </td>
                     <td className="px-3 py-2 text-gray-500 font-mono truncate max-w-[200px]">{user.email}</td>
                     <td className="px-3 py-2">
-                      <span className={`px-1.5 py-0.5 text-[10px] font-medium rounded ${ROLE_COLORS[user.role] || 'bg-gray-100 text-gray-600'}`}>
+                      <span className={`px-1.5 py-0.5 text-[10px] font-medium rounded ${getRoleBadgeClasses(user.role)}`}>
                         {user.role}
                       </span>
                     </td>
