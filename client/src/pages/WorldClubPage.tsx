@@ -53,6 +53,10 @@ export default function WorldClubPage() {
   const [claimedProfile, setClaimedProfile] = useState<ClaimedProfileRow | null>(null)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
+  // Distinguish "club genuinely doesn't exist" (notFound) from "we
+  // couldn't reach the database" (loadError). Lumping them together
+  // hides retry signal from the user when the issue is transient.
+  const [loadError, setLoadError] = useState(false)
 
   useEffect(() => {
     if (!id) {
@@ -132,7 +136,7 @@ export default function WorldClubPage() {
         }
       } catch (err) {
         logger.error('[WorldClubPage] failed to load', err)
-        if (!cancelled) setNotFound(true)
+        if (!cancelled) setLoadError(true)
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -148,6 +152,36 @@ export default function WorldClubPage() {
         <Header />
         <div className="flex flex-1 items-center justify-center">
           <Loader2 className="h-6 w-6 animate-spin text-gray-400" aria-label="Loading club" />
+        </div>
+      </Layout>
+    )
+  }
+
+  if (loadError) {
+    return (
+      <Layout>
+        <Header />
+        <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
+          <p className="text-lg font-semibold text-gray-900">Couldn’t load this club</p>
+          <p className="max-w-md text-sm text-gray-500">
+            Something went wrong reaching the directory. Check your connection and try again.
+          </p>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="rounded-lg bg-[#8026FA] px-4 py-2 text-sm font-medium text-white hover:bg-[#6B20D4]"
+            >
+              Try again
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/world')}
+              className="text-sm font-medium text-gray-600 hover:text-gray-900"
+            >
+              Back to World
+            </button>
+          </div>
         </div>
       </Layout>
     )

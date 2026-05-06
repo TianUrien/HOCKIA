@@ -62,6 +62,47 @@ export function buildPushPayload(
         url: '/dashboard/profile?tab=friends&section=references',
         tag: 'reference-updated',
       }
+    case 'reference_request_rejected':
+      return {
+        title: 'Reference Update',
+        body: `${actorName} declined your reference request`,
+        url: '/dashboard/profile?tab=friends&section=references',
+        tag: 'reference-rejected',
+      }
+
+    // ── Ambassador (brand role) ──
+    case 'ambassador_request_received': {
+      const brandName = getString(metadata, 'brand_name')
+      return {
+        title: 'Ambassador Invite',
+        body: brandName
+          ? `${brandName} invited you to become a brand ambassador`
+          : `${actorName} invited you to become a brand ambassador`,
+        url: '/dashboard/profile',
+        tag: 'ambassador-invite',
+      }
+    }
+    case 'ambassador_request_accepted':
+      return {
+        title: 'Ambassador Accepted',
+        body: `${actorName} accepted your ambassador invitation`,
+        url: '/dashboard/profile?tab=ambassadors',
+        tag: 'ambassador-accepted',
+      }
+
+    // ── Profile views (aggregated daily) ──
+    case 'profile_viewed': {
+      const uniqueViewers = typeof metadata?.unique_viewers === 'number' ? metadata.unique_viewers : 1
+      return {
+        title: 'Profile Views',
+        body: uniqueViewers === 1
+          ? `${actorName} viewed your profile`
+          : `${uniqueViewers} people viewed your profile today`,
+        url: '/dashboard/profile?tab=profile&section=viewers',
+        // Single tag — daily aggregate, replace prior day's push if any.
+        tag: 'profile-viewed',
+      }
+    }
 
     // ── Comments ──
     case 'profile_comment_created':

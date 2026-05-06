@@ -309,6 +309,116 @@ describe.skipIf(skip)('Trigger Correctness', () => {
   })
 
   // =========================================================================
+  // VACANCY_APPLICATION_STATUS TRIGGER
+  // =========================================================================
+  // The trigger added in 20260508200000 notifies an applicant when their
+  // application moves out of 'pending'. Re-actioning between non-pending
+  // statuses must NOT spam the applicant with conflicting updates.
+  describe('vacancy_application_status trigger', () => {
+    let opportunityId: string | null = null
+    let applicationId: string | null = null
+
+    afterAll(async () => {
+      // Deleting the opportunity cascades to opportunity_applications and
+      // its trigger clears the related notifications (see migration
+      // 202602190200), keeping the test environment clean.
+      if (opportunityId) {
+        await club.client.from('opportunities').delete().eq('id', opportunityId)
+      }
+    })
+
+    it('notifies applicant on pending → shortlisted; silent on shortlisted → rejected', async () => {
+      const tag = marker()
+
+      // Club publishes a throwaway opportunity. Status 'open' so the
+      // applicant's INSERT passes the publishers/applicants RLS check.
+      const { data: opp, error: oppError } = await club.client
+        .from('opportunities')
+        .insert({
+          club_id: club.userId,
+          title: `trigger_test ${tag}`,
+          opportunity_type: 'player',
+          description: 'vacancy_application_status trigger test',
+          status: 'open',
+        })
+        .select('id')
+        .single()
+
+      if (oppError || !opp?.id) {
+        console.warn('  ⏭  Could not create test opportunity — skipping', oppError?.message)
+        return
+      }
+      opportunityId = opp.id
+
+      // Player applies → row lands as 'pending'.
+      const { data: appRow, error: appError } = await player.client
+        .from('opportunity_applications')
+        .insert({
+          opportunity_id: opportunityId,
+          applicant_id: player.userId,
+        })
+        .select('id, status')
+        .single()
+
+      if (appError || !appRow?.id) {
+        console.warn('  ⏭  Could not create test application — skipping', appError?.message)
+        return
+      }
+      applicationId = appRow.id
+
+      // Count player's status notifications for this application before flipping.
+      const { data: before } = await player.client
+        .from('profile_notifications')
+        .select('id')
+        .eq('recipient_profile_id', player.userId)
+        .eq('kind', 'vacancy_application_status')
+        .eq('source_entity_id', applicationId)
+      const countBefore = before?.length ?? 0
+
+      // Club shortlists: pending → shortlisted. Trigger should fire.
+      const { error: updateError } = await club.client
+        .from('opportunity_applications')
+        .update({ status: 'shortlisted' })
+        .eq('id', applicationId)
+
+      expect(updateError).toBeNull()
+
+      // Allow trigger + enqueue_notification to land.
+      await new Promise((r) => setTimeout(r, 1000))
+
+      const { data: afterShortlist } = await player.client
+        .from('profile_notifications')
+        .select('id, metadata')
+        .eq('recipient_profile_id', player.userId)
+        .eq('kind', 'vacancy_application_status')
+        .eq('source_entity_id', applicationId)
+
+      const countAfterShortlist = afterShortlist?.length ?? 0
+      expect(countAfterShortlist).toBe(countBefore + 1)
+
+      // Re-action: shortlisted → rejected. Trigger must NOT fire again
+      // (intentional — keeps an iterating club from spamming applicants).
+      const { error: rejectError } = await club.client
+        .from('opportunity_applications')
+        .update({ status: 'rejected' })
+        .eq('id', applicationId)
+
+      expect(rejectError).toBeNull()
+
+      await new Promise((r) => setTimeout(r, 1000))
+
+      const { data: afterReject } = await player.client
+        .from('profile_notifications')
+        .select('id')
+        .eq('recipient_profile_id', player.userId)
+        .eq('kind', 'vacancy_application_status')
+        .eq('source_entity_id', applicationId)
+
+      expect(afterReject?.length ?? 0).toBe(countAfterShortlist)
+    })
+  })
+
+  // =========================================================================
   // UPDATED_AT TRIGGER
   // =========================================================================
   describe('updated_at auto-update', () => {
