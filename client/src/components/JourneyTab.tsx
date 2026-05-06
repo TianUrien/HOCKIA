@@ -165,9 +165,31 @@ const createEmptyJourneyEntry = (userId: string): EditableJourneyEntry => ({
 interface JourneyTabProps {
   profileId?: string
   readOnly?: boolean
+  /**
+   * Visual variant.
+   * - `tab` (default): full tab UI with description line + form panel (when
+   *   not readOnly) + empty state placeholder.
+   * - `inline`: stripped-down render for embedding in a public profile page
+   *   (between About Me and MediaTab). Drops the description line. Hides
+   *   the timeline entirely when there are no entries (instead of showing
+   *   the "no entries yet" placeholder) so anonymous viewers don't see an
+   *   empty section. Form panel is already gated by readOnly so it stays
+   *   hidden either way.
+   */
+  variant?: 'tab' | 'inline'
+  /**
+   * Heading shown above the timeline. Defaults to "Journey". Used by
+   * CoachDashboard to render "Coaching Journey" inline.
+   */
+  title?: string
 }
 
-export default function JourneyTab({ profileId, readOnly = false }: JourneyTabProps) {
+export default function JourneyTab({
+  profileId,
+  readOnly = false,
+  variant = 'tab',
+  title = 'Journey',
+}: JourneyTabProps) {
   const { user } = useAuthStore()
   const { addToast } = useToastStore()
   const targetUserId = profileId || user?.id
@@ -1333,12 +1355,23 @@ export default function JourneyTab({ profileId, readOnly = false }: JourneyTabPr
   }
 
 
+  // Inline variant on a public profile with no entries: render nothing
+  // so anonymous viewers don't see an "empty Journey" placeholder.
+  // Owner viewing their own profile (`!readOnly`) still gets the empty
+  // state with the Add CTA via the tab variant — they see this in the
+  // Journey tab on their dashboard.
+  if (variant === 'inline' && readOnly && !isLoading && journey.length === 0) {
+    return null
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Journey</h2>
-          <p className="text-sm text-gray-600">Showcase the clubs, teams, and milestones that shaped your path.</p>
+          <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
+          {variant === 'tab' && (
+            <p className="text-sm text-gray-600">Showcase the clubs, teams, and milestones that shaped your path.</p>
+          )}
         </div>
         {!readOnly && (
           <p className="text-sm text-gray-500">Updates save automatically.</p>

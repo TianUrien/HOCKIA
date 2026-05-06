@@ -777,6 +777,24 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
                   </div>
                 </section>
 
+                {/* Inline Coaching Journey — public/read-only viewers only.
+                    Surfaces career history directly in the scroll instead of
+                    requiring tab discovery. Hidden for owners on /dashboard
+                    (the existing Journey tab is unchanged for them). When
+                    the profile has no entries, JourneyTab renders nothing
+                    in inline+readOnly mode so visitors don't see an empty
+                    placeholder. */}
+                {readOnly && (
+                  <section className="space-y-3 pt-6 border-t border-gray-200">
+                    <JourneyTab
+                      profileId={profile.id}
+                      readOnly
+                      variant="inline"
+                      title="Coaching Journey"
+                    />
+                  </section>
+                )}
+
                 <section data-section="media" className="space-y-3 pt-6 border-t border-gray-200">
                   <MediaTab
                     profileId={profile.id}

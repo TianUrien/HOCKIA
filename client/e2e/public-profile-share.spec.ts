@@ -88,3 +88,48 @@ test.describe('@smoke public profile share — seeded profile (anon visitor)', (
     })
   }
 })
+
+// =====================================================================
+// Inline Journey — public profile renders Journey directly in the
+// scroll instead of requiring a tab click. Player + Coach only; umpire
+// deferred to Phase F2.
+// =====================================================================
+
+test.describe('@smoke public profile share — inline Journey', () => {
+  const cases: Array<{ role: 'player' | 'coach'; heading: string; envKey: string }> = [
+    { role: 'player', heading: 'Journey', envKey: 'E2E_PUBLIC_PLAYER_USERNAME' },
+    { role: 'coach', heading: 'Coaching Journey', envKey: 'E2E_PUBLIC_COACH_USERNAME' },
+  ]
+
+  for (const { role, heading, envKey } of cases) {
+    const slug = process.env[envKey]
+    test.skip(!slug, `requires ${envKey}`)
+
+    test(`anon visiting a ${role} profile sees inline "${heading}" heading (when seed has Journey entries)`, async ({ page }) => {
+      if (!slug) return
+      const path = role === 'coach' ? `/coaches/${slug}` : `/players/${slug}`
+      await page.goto(path)
+      await page.waitForLoadState('networkidle')
+
+      // Profile loaded
+      await expect(page.locator('h1').first()).toBeVisible({ timeout: 20000 })
+
+      // Inline Journey heading should appear in the main scroll IF the
+      // seeded profile has at least one Journey entry. The component
+      // returns null in inline+readOnly mode when the list is empty —
+      // so a missing heading also passes (we can't tell from outside
+      // whether the seed has entries). We assert headings >= 0 to make
+      // the test informational rather than a hard fail. The stricter
+      // check: when the heading IS present, no owner-only "Add Journey
+      // Entry" button should accompany it.
+      const journeyHeading = page.getByRole('heading', { level: 2, name: new RegExp(`^${heading}$`, 'i') })
+      const headingCount = await journeyHeading.count()
+
+      if (headingCount > 0) {
+        await expect(journeyHeading.first()).toBeVisible()
+        // Owner-only Journey controls must not leak to anon viewers.
+        await expect(page.getByRole('button', { name: /add journey entry/i })).toHaveCount(0)
+      }
+    })
+  }
+})

@@ -841,6 +841,24 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
                   </div>
                 </section>
 
+                {/* Inline Journey — public/read-only viewers only.
+                    Surfaces career history directly in the scroll instead of
+                    requiring tab discovery. Hidden for owners on /dashboard
+                    (the existing Journey tab is unchanged for them). When
+                    the profile has no entries, JourneyTab renders nothing
+                    in inline+readOnly mode so visitors don't see an empty
+                    placeholder. */}
+                {readOnly && (
+                  <section className="space-y-3">
+                    <JourneyTab
+                      profileId={profile.id}
+                      readOnly
+                      variant="inline"
+                      title="Journey"
+                    />
+                  </section>
+                )}
+
                 {/* Photo Gallery - placed after About Me for visual balance */}
                 <section className="space-y-3">
                   <MediaTab
