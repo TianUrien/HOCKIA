@@ -876,15 +876,16 @@ export default function MessagesPage() {
     }
   }, [combinedConversations, navigate, searchParams, selectedConversationId, user?.id, isPendingConversation, isValidConversationId])
 
-  // Desktop previously used `min-h-screen` which is a strict 100vh floor —
-  // inside <Layout>'s flex-col chain that can push the chat composer below
-  // the viewport (with `body { height: 100% }` + `overflow-hidden` higher
-  // up clipping it from being scrolled into view). Use the same flex-1
-  // min-h-0 pattern as mobile so the page integrates with Layout's flex
-  // layout and the composer sits inside the visible viewport on desktop.
+  // Desktop pins the page to exactly viewport height so the conversation
+  // list scrolls inside its sidebar (overflow-y-auto on the inner list)
+  // instead of growing the whole page. Without h-[100dvh], a long
+  // conversation list extends the page taller than viewport — Layout's
+  // `min-h-screen-dvh` is only a minimum, so the chain has no fixed
+  // height to constrain `flex-1 min-h-0` against, and the composer at
+  // the bottom of ChatWindowV2 ends up below the fold.
   const rootContainerClasses = isMobile
     ? 'flex flex-1 min-h-0 flex-col bg-white pt-[var(--app-header-offset)]'
-    : 'flex flex-1 min-h-0 flex-col bg-gray-100 pt-[var(--app-header-offset)]'
+    : 'flex h-[100dvh] flex-col bg-gray-100 pt-[var(--app-header-offset)]'
 
   const mainPaddingClasses = isMobile
     ? shouldHideGlobalHeader
