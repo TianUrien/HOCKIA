@@ -1,7 +1,13 @@
 import { useEffect } from 'react'
 
 interface UseTabDeepLinkScrollOptions {
-  /** The currently active tab id (drives the dependency). */
+  /**
+   * The currently active tab id. Used to gate the scroll: when the URL
+   * arrives with a different tab than the one currently rendered (e.g.
+   * notification opens ?tab=journey while the user was on Profile), we
+   * wait for the dashboard's own effect to catch `activeTab` up before
+   * scrolling — otherwise the section anchor might not yet be in the DOM.
+   */
   activeTab: string
   /** The `?tab=` query param value, or null. */
   tabParam: string | null
@@ -16,6 +22,11 @@ interface UseTabDeepLinkScrollOptions {
   /**
    * Map of `?section=` values to the DOM id of the matching anchor.
    * Only the keys here will be honoured. Pass undefined if no sections.
+   *
+   * IMPORTANT: pass a stable reference (module-level `const` or
+   * `useMemo`). Inline object literals would change every render and
+   * cause the effect to re-fire repeatedly. Not passing it (undefined)
+   * is the simplest stable form.
    */
   sectionAnchors?: Readonly<Record<string, string>>
   /**
@@ -33,9 +44,13 @@ interface UseTabDeepLinkScrollOptions {
  * from the URL. Without this, notifications and shareable URLs land at
  * the top of the dashboard instead of the section the user was sent to.
  *
- * Defensive against jsdom (where `scrollIntoView` is a stub or absent),
- * waits one rAF for the tab content to mount, and cleans up if the
- * component unmounts before the frame fires.
+ * Behaviour:
+ *   - Fires when params + activeTab agree, so a single scroll happens
+ *     per navigation.
+ *   - Defensive against jsdom (where `scrollIntoView` is a stub or
+ *     absent).
+ *   - Waits one rAF for the tab content to mount before scrolling.
+ *   - Cleans up if the component unmounts before the frame fires.
  */
 export function useTabDeepLinkScroll({
   activeTab,
@@ -46,6 +61,15 @@ export function useTabDeepLinkScroll({
 }: UseTabDeepLinkScrollOptions): void {
   useEffect(() => {
     if (!tabParam && !sectionParam) return
+
+    // If the URL says ?tab=X but the dashboard's own state hasn't caught
+    // up yet (the dashboard's tabParam→setActiveTab effect runs in the
+    // same commit as ours, before re-render), wait for the next pass.
+    // Without this guard, the effect would fire twice on cross-tab
+    // navigation: once before the new tab content is in the DOM (silent
+    // miss for section anchors) and once after (the visible scroll). The
+    // user would see a brief double-scroll.
+    if (tabParam && activeTab !== tabParam) return
 
     let targetId: string | null = null
     if (sectionParam && sectionAnchors && sectionAnchors[sectionParam]) {

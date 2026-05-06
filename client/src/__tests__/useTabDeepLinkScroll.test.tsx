@@ -89,6 +89,22 @@ describe('useTabDeepLinkScroll', () => {
     ).not.toThrow()
   })
 
+  it('waits for activeTab to match tabParam before scrolling (cross-tab navigation)', () => {
+    // Notification opens ?tab=journey while user is on Profile. The
+    // dashboard's own effect will set activeTab='journey' on the next
+    // render. The scroll must wait until then so we don't double-fire.
+    const { rerender } = renderHook(
+      ({ activeTab, tabParam }) => useTabDeepLinkScroll({ activeTab, tabParam }),
+      { initialProps: { activeTab: 'profile', tabParam: 'journey' } },
+    )
+    expect(scrollSpy).not.toHaveBeenCalled()
+
+    // Simulate the dashboard's tabParam→setActiveTab effect firing on
+    // the next render. Now activeTab matches tabParam and we scroll.
+    rerender({ activeTab: 'journey', tabParam: 'journey' })
+    expect(scrollSpy).toHaveBeenCalledTimes(1)
+  })
+
   it('cancels the pending rAF on unmount', () => {
     const cancelSpy = vi.spyOn(window, 'cancelAnimationFrame')
     // Defer the rAF so unmount runs before the callback.
