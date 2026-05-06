@@ -1,12 +1,14 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, afterEach } from 'vitest'
 import {
   buildProfileUrl,
+  getShareOrigin,
   shareMessage,
   shareEmail,
   whatsappShareUrl,
   mailtoShareUrl,
   type ShareableRole,
 } from '@/lib/profileShare'
+import { Capacitor } from '@capacitor/core'
 
 const ORIGIN = 'https://inhockia.com'
 
@@ -73,6 +75,35 @@ describe('whatsappShareUrl', () => {
     const decoded = decodeURIComponent(wa.split('text=')[1])
     expect(decoded).toContain('—')
     expect(decoded).toContain('https://x.test/c/1')
+  })
+})
+
+describe('getShareOrigin (Capacitor native vs web)', () => {
+  afterEach(() => vi.restoreAllMocks())
+
+  it('returns window.location.origin on web (non-native)', () => {
+    vi.spyOn(Capacitor, 'isNativePlatform').mockReturnValue(false)
+    // jsdom default origin is "http://localhost:3000" — what we use here
+    // is whatever the test runner reports; just assert it matches window.
+    expect(getShareOrigin()).toBe(window.location.origin)
+  })
+
+  it('returns the canonical https://inhockia.com when running inside Capacitor', () => {
+    // Without this, links shared from the iOS/Android app would be
+    // capacitor://localhost/... — broken for every external recipient.
+    vi.spyOn(Capacitor, 'isNativePlatform').mockReturnValue(true)
+    expect(getShareOrigin()).toBe('https://inhockia.com')
+  })
+
+  it('produces a valid HTTPS profile URL when called from native', () => {
+    vi.spyOn(Capacitor, 'isNativePlatform').mockReturnValue(true)
+    const url = buildProfileUrl(
+      { role: 'player', username: 'janed', id: 'uuid-1' },
+      getShareOrigin(),
+    )
+    expect(url).toBe('https://inhockia.com/players/janed')
+    expect(url.startsWith('capacitor://')).toBe(false)
+    expect(url.startsWith('http://localhost')).toBe(false)
   })
 })
 

@@ -4,6 +4,7 @@ import Modal from '@/components/Modal'
 import { useToastStore } from '@/lib/toast'
 import {
   buildProfileUrl,
+  getShareOrigin,
   shareMessage,
   whatsappShareUrl,
   mailtoShareUrl,
@@ -32,9 +33,11 @@ export default function ShareProfileButton({ profile, variant = 'full' }: ShareP
   const [open, setOpen] = useState(false)
   const addToast = useToastStore((s) => s.addToast)
 
-  const url = typeof window !== 'undefined'
-    ? buildProfileUrl(profile, window.location.origin)
-    : ''
+  // Always use the public web origin (inhockia.com) when running inside
+  // the iOS/Android Capacitor shell — `window.location.origin` would be
+  // `capacitor://localhost` / `http://localhost`, producing dead links
+  // for any external recipient.
+  const url = buildProfileUrl(profile, getShareOrigin())
   const supportsNativeShare = typeof navigator !== 'undefined'
     && typeof navigator.share === 'function'
 

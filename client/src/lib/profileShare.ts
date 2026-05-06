@@ -8,7 +8,29 @@
  * client/src/__tests__/profileShare.test.ts.
  */
 
+import { Capacitor } from '@capacitor/core'
+
 export type ShareableRole = 'player' | 'coach' | 'club' | 'brand' | 'umpire'
+
+/**
+ * Canonical public URL used when sharing from inside the iOS/Android app.
+ *
+ * The Capacitor shell loads the bundled web assets from a local scheme
+ * (`capacitor://localhost` on iOS, `http://localhost` on Android). Using
+ * `window.location.origin` for shareable URLs would generate dead links
+ * that no external recipient can open.
+ *
+ * On native, always pin to the production web origin. On web, keep using
+ * `window.location.origin` so staging/preview deploys produce links that
+ * point back to themselves (so QA links work).
+ */
+const PUBLIC_BASE_URL = 'https://inhockia.com'
+
+export function getShareOrigin(): string {
+  if (Capacitor.isNativePlatform()) return PUBLIC_BASE_URL
+  if (typeof window !== 'undefined') return window.location.origin
+  return PUBLIC_BASE_URL
+}
 
 export interface ShareableProfile {
   role: ShareableRole
