@@ -77,10 +77,17 @@ test.describe('@smoke club', () => {
       page.getByRole('heading', { level: 1, name: /e2e test fc/i })
     ).toBeVisible({ timeout: CLUB_H1_TIMEOUT_MS })
 
-    // Should show the Message action button (exact match avoids nav "Messages" icon)
+    // Owner viewing own public profile sees the Share button instead of
+    // Message (which is hidden because messaging yourself is a no-op).
+    await expect(
+      page.getByTestId('share-profile-button')
+    ).toBeVisible({ timeout: 10000 })
+
+    // Conversely, the Message button must NOT appear when viewing own profile
+    // — this guards the regression that prompted the fix.
     await expect(
       page.getByRole('button', { name: 'Message', exact: true })
-    ).toBeVisible({ timeout: 10000 })
+    ).toHaveCount(0)
   })
 
   test('club cannot access brand dashboard', async ({ page }) => {

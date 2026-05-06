@@ -399,7 +399,22 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
     const draft = loadProfileDraft<ProfileFormData>(profile.id, role)
 
     if (draft) {
-      setFormData({ ...baseState, ...draft })
+      // Strip empty / null draft fields before merging — older drafts may
+      // contain stale or empty values (e.g. an abandoned form where the
+      // user typed `base_location: 'Chatham, UK'` then left, while their
+      // live profile has been updated elsewhere to a real city), and
+      // spreading them blindly would clobber the live profile shown in
+      // every other surface. Only restore draft values that the user
+      // meaningfully filled in.
+      const cleanedDraft = Object.fromEntries(
+        Object.entries(draft).filter(([, value]) => {
+          if (value === null || value === undefined) return false
+          if (typeof value === 'string' && value.trim() === '') return false
+          if (Array.isArray(value) && value.length === 0) return false
+          return true
+        }),
+      )
+      setFormData({ ...baseState, ...cleanedDraft })
     } else {
       setFormData(baseState)
     }

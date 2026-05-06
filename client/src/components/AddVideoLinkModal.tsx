@@ -175,6 +175,11 @@ export default function AddVideoLinkModal({ isOpen, onClose, currentVideoUrl }: 
             {error && (
               <p className="mt-2 text-sm text-red-600">{error}</p>
             )}
+            {!error && videoUrl.trim() && !validateAndNormalizeUrl(videoUrl) && (
+              <p className="mt-2 text-sm text-amber-600">
+                We don’t recognise this link. Use a YouTube, Vimeo, or Google Drive URL.
+              </p>
+            )}
           </div>
 
           {videoUrl && validateAndNormalizeUrl(videoUrl) && (
@@ -204,7 +209,12 @@ export default function AddVideoLinkModal({ isOpen, onClose, currentVideoUrl }: 
           </Button>
           <Button
             onClick={handleSave}
-            disabled={isLoading}
+            // Disable Save until the URL is non-empty AND normalises to a
+            // recognised platform. Previously the button stayed enabled
+            // and validation only ran after click, which made the form
+            // feel broken. Inline error message in the input below
+            // surfaces the same validation as the user types.
+            disabled={isLoading || !videoUrl.trim() || !validateAndNormalizeUrl(videoUrl)}
           >
             {isLoading ? (
               <>

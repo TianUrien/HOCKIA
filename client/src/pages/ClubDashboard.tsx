@@ -359,7 +359,7 @@ export default function ClubDashboard({ profileData, readOnly = false, isOwnProf
                       Network View
                     </div>
                     <FriendshipButton profileId={profile.id} />
-                    {authProfile?.role !== 'brand' && (
+                    {!isOwnProfile && authProfile?.role !== 'brand' && (
                       <Button
                         variant="primary"
                         size="sm"

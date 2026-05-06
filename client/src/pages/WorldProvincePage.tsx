@@ -270,6 +270,11 @@ export default function WorldProvincePage() {
       navigate(`/clubs/${club.profile_username}`)
     } else if (club.is_claimed && club.claimed_profile_id) {
       navigate(`/clubs/id/${club.claimed_profile_id}`)
+    } else {
+      // Unclaimed clubs route to the world directory entry so the user
+      // sees the club's location/leagues/logo (still useful) rather
+      // than tapping a disabled button that does nothing.
+      navigate(`/world/clubs/${club.id}`)
     }
   }
 
@@ -488,13 +493,12 @@ export default function WorldProvincePage() {
                 key={club.id}
                 data-club-id={club.id}
                 onClick={() => handleClubClick(club)}
-                disabled={!club.is_claimed}
-                className={`w-full text-left p-4 rounded-xl border transition-all ${
+                className={`w-full text-left p-4 rounded-xl border transition-all cursor-pointer ${
                   highlightClubId === club.id
                     ? 'bg-white border-[#8026FA] ring-2 ring-[#8026FA] ring-offset-2 shadow-md'
                     : club.is_claimed
-                      ? 'bg-white border-gray-200 hover:border-[#8026FA] hover:shadow-md cursor-pointer'
-                      : 'bg-gray-50 border-gray-100 cursor-not-allowed opacity-60'
+                      ? 'bg-white border-gray-200 hover:border-[#8026FA] hover:shadow-md'
+                      : 'bg-gray-50 border-gray-100 hover:bg-white hover:border-gray-200'
                 }`}
               >
                 <div className="flex items-center justify-between">

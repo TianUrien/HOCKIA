@@ -132,6 +132,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
   const currentClubLogo = useWorldClubLogo(currentWorldClubId)
 
   const tabParam = searchParams.get('tab') as TabType | null
+  const sectionParam = searchParams.get('section')
 
   useEffect(() => {
     if (!tabParam) return
@@ -139,6 +140,36 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
       setActiveTab(tabParam)
     }
   }, [tabParam, activeTab])
+
+  // Tab + section deep-link scroll. Notifications and shareable URLs (e.g.
+  // ?tab=profile&section=viewers, ?tab=journey) used to land at the top
+  // of the profile, leaving the user staring at the header instead of the
+  // section they were sent to. Scroll to the right anchor after the DOM
+  // settles.
+  useEffect(() => {
+    if (!tabParam && !sectionParam) return
+    const targetId = sectionParam === 'viewers'
+      ? 'profile-viewers'
+      : tabParam
+        ? 'profile-tab-content'
+        : null
+    if (!targetId) return
+    // Wait one frame so the tab content is mounted before we measure.
+    // Guards: jsdom's scrollIntoView is a no-op stub that some test
+    // environments make throw; only call when it's a real function.
+    let cancelled = false
+    const id = window.requestAnimationFrame(() => {
+      if (cancelled) return
+      const el = document.getElementById(targetId)
+      if (el && typeof el.scrollIntoView === 'function') {
+        try { el.scrollIntoView({ behavior: 'smooth', block: 'start' }) } catch { /* noop */ }
+      }
+    })
+    return () => {
+      cancelled = true
+      window.cancelAnimationFrame(id)
+    }
+  }, [tabParam, sectionParam, activeTab])
 
   // Refresh profile strength when switching tabs (picks up gallery/journey changes)
   useEffect(() => {
@@ -354,7 +385,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
                 {readOnly ? (
                   <div className="flex flex-wrap items-center gap-2">
                     <FriendshipButton profileId={profile.id} />
-                    {authProfile?.role !== 'brand' && (
+                    {!isOwnProfile && authProfile?.role !== 'brand' && (
                       <button
                         type="button"
                         onClick={handleSendMessage}
@@ -385,7 +416,14 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => navigate(`/members/id/${profile.id}`)}
+                      onClick={() => {
+                        // Use the canonical role-specific URL so the owner's
+                        // Network View matches the URL the share button copies
+                        // (avoids two URL shapes for the same content).
+                        const base = profile.role === 'coach' ? '/coaches' : '/players'
+                        const slug = profile.username ? profile.username : `id/${profile.id}`
+                        navigate(`${base}/${slug}`)
+                      }}
                       className="gap-1.5 whitespace-nowrap text-xs sm:text-sm px-2.5 sm:px-4"
                     >
                       <Eye className="w-4 h-4 flex-shrink-0" />
@@ -637,10 +675,14 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
           </div>
 
           {/* Tab Content */}
-          <div className="p-6 md:p-8">
+          <div id="profile-tab-content" className="p-6 md:p-8 scroll-mt-20">
             {activeTab === 'profile' && (
               <div className="space-y-10 animate-fade-in">
-                {!readOnly && <ProfileViewersSection />}
+                {!readOnly && (
+                  <div id="profile-viewers" className="scroll-mt-20">
+                    <ProfileViewersSection />
+                  </div>
+                )}
                 {!readOnly && (
                   <AvailabilityToggleStrip role="player" />
                 )}

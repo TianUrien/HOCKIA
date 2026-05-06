@@ -437,6 +437,7 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
                 ) : (
                   <div className="flex flex-wrap items-center gap-2">
                     <FriendshipButton profileId={profile.id} />
+                    {!isOwnProfile && (
                     <button
                       type="button"
                       onClick={handleSendMessage}
@@ -455,6 +456,7 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
                         </>
                       )}
                     </button>
+                    )}
                     {isOwnProfile && (
                       <ShareProfileButton profile={{ role: 'coach', username: profile.username, id: profile.id }} />
                     )}
