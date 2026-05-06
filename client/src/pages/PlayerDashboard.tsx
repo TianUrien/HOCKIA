@@ -34,7 +34,7 @@ import { ProfileViewersSection } from '@/components/ProfileViewersSection'
 import AvailabilityToggleStrip from '@/components/AvailabilityToggleStrip'
 import ClubLinkPrompt from '@/components/ClubLinkPrompt'
 import { useWorldClubLogo } from '@/hooks/useWorldClubLogo'
-import { calculateAge, formatDateOfBirth } from '@/lib/utils'
+import { calculateAge, formatDateOfBirth, getInitials } from '@/lib/utils'
 
 type TabType = 'profile' | 'friends' | 'journey' | 'comments' | 'posts'
 
@@ -291,19 +291,6 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
     const next = new URLSearchParams(searchParams)
     next.set('tab', tab)
     setSearchParams(next, { replace: true })
-  }
-
-  const getInitials = (name: string | null) => {
-    if (!name) return '?'  // Return placeholder for null/undefined
-    
-    return name
-      .trim()
-      .split(' ')
-      .filter(n => n.length > 0)  // Handle multiple spaces
-      .map(n => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2)  // Limit to 2 characters
   }
 
   const age = calculateAge(profile.date_of_birth)

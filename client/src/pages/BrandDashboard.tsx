@@ -31,7 +31,7 @@ import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
-import { getTimeAgo } from '@/lib/utils'
+import { getTimeAgo, getInitials } from '@/lib/utils'
 import Skeleton from '@/components/Skeleton'
 
 type TabType = 'overview' | 'products' | 'posts' | 'ambassadors' | 'followers'
@@ -389,18 +389,6 @@ export default function BrandDashboard() {
     } finally {
       setIsSubmitting(false)
     }
-  }
-
-  const getInitials = (name: string | null) => {
-    if (!name) return '?'
-    return name
-      .trim()
-      .split(' ')
-      .filter(Boolean)
-      .map((part) => part[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2)
   }
 
   const getCategoryLabel = (category: string | null) => {

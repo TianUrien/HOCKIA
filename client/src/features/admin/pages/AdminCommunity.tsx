@@ -17,6 +17,7 @@ import { getCommunityAnalytics } from '../api/analyticsApi'
 import type { CommunityAnalytics } from '../types'
 import { logger } from '@/lib/logger'
 import { getRoleColors, getRoleSolidColor } from '@/lib/roleColors'
+import { getInitials } from '@/lib/utils'
 
 type DaysFilter = 7 | 30 | 90
 
@@ -64,15 +65,6 @@ export function AdminCommunity() {
   // Top contributors
   const topContributors = data?.top_contributors?.slice(0, 10) ?? []
 
-  const getInitials = (name: string | null): string => {
-    if (!name) return '?'
-    return name
-      .split(' ')
-      .map((n) => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2)
-  }
 
   if (error) {
     return (

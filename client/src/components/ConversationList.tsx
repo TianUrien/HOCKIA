@@ -4,6 +4,7 @@ import { useVirtualizer } from '@tanstack/react-virtual'
 import { SUPABASE_URL } from '@/lib/supabase'
 import Avatar from './Avatar'
 import RoleBadge from './RoleBadge'
+import { getInitials } from '@/lib/utils'
 
 interface Conversation {
   id: string
@@ -62,16 +63,6 @@ export default function ConversationList({
     return message.substring(0, maxLength) + '...'
   }
 
-  const getInitials = (value?: string | null) => {
-    if (!value) return '?'
-    return value
-      .trim()
-      .split(' ')
-      .filter(Boolean)
-      .slice(0, 2)
-      .map(part => part[0]!.toUpperCase())
-      .join('')
-  }
 
   const virtualItems = rowVirtualizer.getVirtualItems()
 

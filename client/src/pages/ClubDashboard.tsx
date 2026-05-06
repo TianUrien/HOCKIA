@@ -12,6 +12,7 @@ import ProfileActionMenu from '@/components/ProfileActionMenu'
 import { useClubProfileStrength, type ProfileStrengthBucket as ClubStrengthBucket } from '@/hooks/useClubProfileStrength'
 import { ProfileViewersSection } from '@/components/ProfileViewersSection'
 import { logger } from '@/lib/logger'
+import { getInitials } from '@/lib/utils'
 import OpportunitiesTab from '@/components/OpportunitiesTab'
 import ProfilePostsTab from '@/components/ProfilePostsTab'
 import ClubMediaTab from '@/components/ClubMediaTab'
@@ -260,17 +261,6 @@ export default function ClubDashboard({ profileData, readOnly = false, isOwnProf
     }
   }
 
-  const getInitials = (name: string | null) => {
-    if (!name) return '?'
-    return name
-      .trim()
-      .split(' ')
-      .filter(Boolean)
-      .map((part) => part[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2)
-  }
 
   if (!profile) {
     return (

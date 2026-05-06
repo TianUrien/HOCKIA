@@ -10,7 +10,7 @@ import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
 import Avatar from './Avatar'
 import RoleBadge from './RoleBadge'
-import { cn } from '@/lib/utils'
+import { cn, getInitials } from '@/lib/utils'
 import ConfirmActionModal from './ConfirmActionModal'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
 import { checkContent } from '@/lib/contentFilter'
@@ -433,16 +433,6 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
     return comments.filter((comment) => comment.id !== existingComment.id)
   }, [comments, existingComment])
 
-  const getInitials = (name?: string | null) => {
-    if (!name) return '?'
-    return name
-      .trim()
-      .split(' ')
-      .filter(Boolean)
-      .map((part) => part[0]?.toUpperCase())
-      .slice(0, 2)
-      .join('') || '?'
-  }
 
   const renderRatingBadge = (value?: CommentRating | null) => {
     if (!value) return null

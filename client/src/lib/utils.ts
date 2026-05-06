@@ -9,6 +9,27 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
+ * Build 1–2 letter initials from a person/club/brand name. Handles
+ * null/undefined and all-whitespace input by returning '?'.
+ *
+ * Centralized from 9 near-identical inline implementations across
+ * dashboards, admin pages, FriendsTab, CommentsTab, ConversationList,
+ * and ApplicantCard. All produced the same 2-letter uppercase initials;
+ * minor variations (filter Boolean vs length>0) merged into one.
+ */
+export function getInitials(name: string | null | undefined): string {
+  if (!name) return '?'
+  const initials = name
+    .trim()
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? '')
+    .join('')
+  return initials || '?'
+}
+
+/**
  * Parse a date-only string (YYYY-MM-DD) without timezone conversion.
  * 
  * JavaScript's `new Date("YYYY-MM-DD")` interprets the string as UTC midnight,

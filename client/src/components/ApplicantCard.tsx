@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import Avatar from './Avatar'
 import type { OpportunityApplicationWithApplicant } from '@/lib/supabase'
 import type { Database } from '@/lib/database.types'
+import { getInitials } from '@/lib/utils'
 
 type ApplicationStatus = Database['public']['Enums']['application_status']
 
@@ -72,14 +73,6 @@ export default function ApplicantCard({ application, onStatusChange, isUpdating,
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
   }
 
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2)
-  }
 
   const handleViewProfile = () => {
     if (applicant.username) {

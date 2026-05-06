@@ -14,6 +14,7 @@ import TrustedReferencesSection from './TrustedReferencesSection'
 import type { ReferenceFriendOption } from './AddReferenceModal'
 import { Link, useSearchParams } from 'react-router-dom'
 import { trackReferenceModalOpen } from '@/lib/analytics'
+import { getInitials } from '@/lib/utils'
 
 interface FriendsTabProps {
   profileId: string
@@ -221,16 +222,6 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole }:
 
   const isActionLoading = (friendshipId: string | null) => actionTarget === friendshipId
 
-  const getInitials = (name?: string | null) => {
-    if (!name) return '?'
-    return name
-      .trim()
-      .split(' ')
-      .filter(Boolean)
-      .map((part) => part[0]!.toUpperCase())
-      .slice(0, 2)
-      .join('')
-  }
 
   const humanizeDate = (isoString?: string | null) => {
     if (!isoString) return 'just now'
