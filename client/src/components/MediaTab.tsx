@@ -122,14 +122,21 @@ export default function MediaTab({ profileId, readOnly = false, renderHeader, sh
       setIsLoadingProfile(true)
 
       try {
+        // Specific columns only — `select('*')` would expand to include
+        // the auth `email` column, which anon has no GRANT on after
+        // 20260506040423_public_profile_share_hardening.sql, breaking
+        // public-profile rendering for logged-out viewers.
         const { data, error } = await supabase
           .from('profiles')
-          .select('*')
+          .select('id, role, username, full_name, avatar_url, highlight_video_url, highlight_visibility')
           .eq('id', targetUserId)
           .single()
 
         if (error) throw error
-        setTargetProfile(data)
+        // Cast to Profile — we only render `displayProfile.highlight_video_url`,
+        // so the missing fields are unused at this call site. Full Profile
+        // shape is preserved when targetProfile === authProfile (own view).
+        setTargetProfile(data as unknown as Profile)
       } catch (error) {
         logger.error('Error fetching target profile:', error)
         setTargetProfile(null)

@@ -7,7 +7,7 @@ interface ProtectedRouteProps {
   children: React.ReactNode
 }
 
-const PUBLIC_ROUTES = ['/', '/signup', '/signin', '/verify-email', '/auth/callback', '/forgot-password', '/reset-password', '/privacy-policy', '/terms', '/developers', '/offline', '/opportunities', '/community', '/world', '/investors', '/brands', '/marketplace', '/post']
+const PUBLIC_ROUTES = ['/', '/signup', '/signin', '/verify-email', '/auth/callback', '/forgot-password', '/reset-password', '/privacy-policy', '/terms', '/developers', '/offline', '/opportunities', '/community', '/world', '/investors', '/brands', '/marketplace', '/post', '/players', '/coaches', '/clubs', '/umpires', '/members']
 
 /**
  * ProtectedRoute - Centralized auth guard
@@ -31,14 +31,17 @@ const PUBLIC_ROUTES = ['/', '/signup', '/signin', '/verify-email', '/auth/callba
  * - /community/*         Public Q&A (read-only)
  * - /world/*             Country/league/club directory (read-only)
  * - /brands/*            Brand directory, profiles, and feed (read-only)
+ * - /players/*           Public player profiles (shareable externally)
+ * - /coaches/*           Public coach profiles (shareable externally)
+ * - /clubs/*             Public club profiles (shareable externally)
+ * - /umpires/*           Public umpire profiles (shareable externally)
+ * - /members/*           Public member profiles (alias, shareable externally)
  *
  * PROTECTED ROUTES (require authentication):
  * - /dashboard/*         User dashboard & profile
  * - /messages/*          Messaging
  * - /settings            User settings
  * - /complete-profile    Onboarding
- * - /members/*           Network profiles (for logged-in users)
- * - /clubs/*             Club profiles (for logged-in users)
  * - /admin/*             Admin portal
  * 
  * IMPORTANT: Never redirect from /auth/callback or /verify-email

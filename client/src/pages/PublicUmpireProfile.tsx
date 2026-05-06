@@ -16,7 +16,9 @@ import type { Profile } from '../lib/supabase'
 import UmpireDashboard, { type UmpireProfileShape } from './UmpireDashboard'
 import { useAuthStore } from '../lib/auth'
 import { trackDbEvent } from '../lib/trackDbEvent'
-import { trackProfileView } from '../lib/analytics'
+import { trackProfileView, trackPublicProfileViewed } from '../lib/analytics'
+import { usePublicProfileMeta } from '@/hooks/usePublicProfileMeta'
+import PublicProfileFooterCTA from '@/components/profile/PublicProfileFooterCTA'
 
 type PublicUmpireShape = Partial<Profile> &
   Pick<
@@ -138,8 +140,18 @@ export default function PublicUmpireProfile() {
     const ref = new URLSearchParams(window.location.search).get('ref') || 'direct'
     trackDbEvent('profile_view', 'profile', profile.id, { viewed_role: 'umpire', source: ref })
     trackProfileView('umpire', profile.id)
+    if (!currentUserProfile) trackPublicProfileViewed('umpire')
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.id])
+
+  usePublicProfileMeta({
+    displayName: profile?.full_name ?? null,
+    roleLabel: 'umpire',
+    description: profile?.bio ?? null,
+    canonicalUrl: profile
+      ? `https://inhockia.com/umpires/${profile.username || `id/${profile.id}`}`
+      : undefined,
+  })
 
   if (isLoading) {
     return (
@@ -178,10 +190,13 @@ export default function PublicUmpireProfile() {
   // narrow-casts them again internally. Safe: we fetched them above and the
   // dashboard treats missing fields as "not set" rather than crashing.
   return (
-    <UmpireDashboard
-      profileData={profile as UmpireProfileShape}
-      readOnly={true}
-      isOwnProfile={isOwnProfile}
-    />
+    <>
+      <UmpireDashboard
+        profileData={profile as UmpireProfileShape}
+        readOnly={true}
+        isOwnProfile={isOwnProfile}
+      />
+      <PublicProfileFooterCTA />
+    </>
   )
 }

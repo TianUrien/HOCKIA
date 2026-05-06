@@ -18,6 +18,7 @@ import OpportunitiesTab from '@/components/OpportunitiesTab'
 import ProfilePostsTab from '@/components/ProfilePostsTab'
 import Button from '@/components/Button'
 import { DashboardSkeleton } from '@/components/Skeleton'
+import ShareProfileButton from '@/components/profile/ShareProfileButton'
 import SignInPromptModal from '@/components/SignInPromptModal'
 import SocialLinksDisplay from '@/components/SocialLinksDisplay'
 import type { Profile } from '@/lib/supabase'
@@ -410,6 +411,7 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
                 {/* Action Buttons */}
                 {!readOnly ? (
                   <div className="flex items-center gap-2">
+                    <ShareProfileButton profile={{ role: 'coach', username: profile.username, id: profile.id }} />
                     <Button
                       variant="outline"
                       size="sm"
@@ -453,6 +455,9 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
                         </>
                       )}
                     </button>
+                    {isOwnProfile && (
+                      <ShareProfileButton profile={{ role: 'coach', username: profile.username, id: profile.id }} />
+                    )}
                     {!isOwnProfile && <ProfileActionMenu targetId={profile.id} targetName={profile.full_name ?? 'this user'} />}
                   </div>
                 )}

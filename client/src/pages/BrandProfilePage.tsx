@@ -20,7 +20,10 @@ import { useBrandAmbassadorsPublic } from '@/hooks/useBrandAmbassadorsPublic'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { useAuthStore } from '@/lib/auth'
 import { trackDbEvent } from '@/lib/trackDbEvent'
-import { trackProfileView } from '@/lib/analytics'
+import { trackProfileView, trackPublicProfileViewed } from '@/lib/analytics'
+import PublicProfileFooterCTA from '@/components/profile/PublicProfileFooterCTA'
+import { usePublicProfileMeta } from '@/hooks/usePublicProfileMeta'
+import ShareProfileButton from '@/components/profile/ShareProfileButton'
 import Skeleton from '@/components/Skeleton'
 import ProfileActionMenu from '@/components/ProfileActionMenu'
 
@@ -55,8 +58,16 @@ export default function BrandProfilePage() {
     const ref = new URLSearchParams(window.location.search).get('ref') || 'direct'
     trackDbEvent('profile_view', 'profile', brand.profile_id, { viewed_role: 'brand', source: ref })
     trackProfileView('brand', brand.profile_id)
+    if (!user) trackPublicProfileViewed('brand')
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [brand?.id])
+
+  usePublicProfileMeta({
+    displayName: brand?.name ?? null,
+    roleLabel: 'brand',
+    description: brand?.bio ?? null,
+    canonicalUrl: brand?.slug ? `https://inhockia.com/brands/${brand.slug}` : undefined,
+  })
 
   return (
     <Layout>
@@ -138,6 +149,14 @@ export default function BrandProfilePage() {
 
             {/* Content */}
             <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+              {/* Owner share — brand profiles use slug, not username */}
+              {isOwnBrand && brand?.slug && (
+                <div className="flex flex-wrap gap-3 mb-6">
+                  <ShareProfileButton
+                    profile={{ role: 'brand', username: brand.slug, id: brand.profile_id }}
+                  />
+                </div>
+              )}
               {/* Action Buttons */}
               {user && profile?.role !== 'brand' && (
                 <div className="flex flex-wrap gap-3 mb-6">
@@ -324,6 +343,7 @@ export default function BrandProfilePage() {
             </div>
           </>
         )}
+        <PublicProfileFooterCTA />
       </div>
     </Layout>
   )

@@ -234,6 +234,47 @@ export function trackCtaClick(buttonName: string, page: string): void {
   })
 }
 
+/**
+ * Track external profile-share intent (user opened the share modal).
+ * Role only — no profile_id / username / email goes to GA.
+ */
+export function trackProfileShareInitiated(role: string): void {
+  trackEvent({
+    action: 'profile_share_initiated',
+    category: 'sharing',
+    label: role,
+  })
+}
+
+/**
+ * Track that a specific share channel was used.
+ * Channel + role only — no identifiers.
+ */
+export function trackProfileShareCompleted(
+  role: string,
+  channel: 'copy_link' | 'native_share' | 'whatsapp' | 'email'
+): void {
+  trackEvent({
+    action: 'profile_share_completed',
+    category: 'sharing',
+    label: role,
+    channel,
+  })
+}
+
+/**
+ * Track a logged-out viewer landing on a public profile.
+ * Role only — never profile_id / username (would let GA join sessions
+ * to identities, which we explicitly don't want).
+ */
+export function trackPublicProfileViewed(role: string): void {
+  trackEvent({
+    action: 'public_profile_viewed',
+    category: 'sharing',
+    label: role,
+  })
+}
+
 /** Track gallery/media upload */
 export function trackMediaUpload(mediaType: 'photo' | 'video'): void {
   trackEvent({

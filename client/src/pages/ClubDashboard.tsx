@@ -27,6 +27,7 @@ import { useToastStore } from '@/lib/toast'
 import { useNotificationStore } from '@/lib/notifications'
 import { derivePublicContactEmail } from '@/lib/profile'
 import type { SocialLinks } from '@/lib/socialLinks'
+import ShareProfileButton from '@/components/profile/ShareProfileButton'
 
 type TabType = 'overview' | 'vacancies' | 'friends' | 'members' | 'comments' | 'posts'
 
@@ -374,10 +375,14 @@ export default function ClubDashboard({ profileData, readOnly = false, isOwnProf
                         {sendingMessage ? 'Starting...' : 'Message'}
                       </Button>
                     )}
+                    {isOwnProfile && (
+                      <ShareProfileButton profile={{ role: 'club', username: profile.username, id: profile.id }} />
+                    )}
                     {!isOwnProfile && <ProfileActionMenu targetId={profile.id} targetName={profile.full_name ?? 'this club'} />}
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
+                    <ShareProfileButton profile={{ role: 'club', username: profile.username, id: profile.id }} />
                     <Button
                       variant="outline"
                       size="sm"

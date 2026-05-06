@@ -33,6 +33,7 @@ import { trackReferenceBadgeClick } from '@/lib/analytics'
 import { ProfileViewersSection } from '@/components/ProfileViewersSection'
 import AvailabilityToggleStrip from '@/components/AvailabilityToggleStrip'
 import ClubLinkPrompt from '@/components/ClubLinkPrompt'
+import ShareProfileButton from '@/components/profile/ShareProfileButton'
 import { useWorldClubLogo } from '@/hooks/useWorldClubLogo'
 import { calculateAge, formatDateOfBirth, getInitials } from '@/lib/utils'
 
@@ -373,10 +374,14 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
                         )}
                       </button>
                     )}
+                    {isOwnProfile && (
+                      <ShareProfileButton profile={{ role: profile.role as 'player' | 'coach', username: profile.username, id: profile.id }} />
+                    )}
                     {!isOwnProfile && <ProfileActionMenu targetId={profile.id} targetName={profile.full_name ?? 'this user'} />}
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
+                    <ShareProfileButton profile={{ role: profile.role as 'player' | 'coach', username: profile.username, id: profile.id }} />
                     <Button
                       variant="outline"
                       size="sm"

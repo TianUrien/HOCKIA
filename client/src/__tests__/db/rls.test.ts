@@ -151,6 +151,89 @@ describe.skipIf(skip)('RLS Policy Isolation', () => {
         expect(p.onboarding_completed).toBe(true)
       }
     })
+
+    // =====================================================================
+    // ANON HARDENING — see migration 20260506040423
+    // =====================================================================
+    // The "share my profile externally" feature opens public profile
+    // routes to logged-out viewers. These tests pin the anon-side
+    // contract: anon CAN read safe columns, anon CANNOT read email or
+    // any test-account profile.
+    describe('anon access (public profile share hardening)', () => {
+      // Build an unauthenticated client (no Authorization header) to
+      // exercise the anon Postgres role end-to-end.
+      const supabaseUrl =
+        process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || ''
+      const supabaseAnonKey =
+        process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || ''
+      // Lazy import so the test file still compiles when env is missing.
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { createClient } = require('@supabase/supabase-js') as typeof import('@supabase/supabase-js')
+      const anon = createClient(supabaseUrl, supabaseAnonKey, {
+        auth: { autoRefreshToken: false, persistSession: false },
+      })
+
+      it('anon CAN read safe columns (id, username, full_name)', async () => {
+        const { data, error } = await anon
+          .from('profiles')
+          .select('id, username, full_name, role')
+          .eq('id', player.userId)
+          .maybeSingle()
+
+        expect(error).toBeNull()
+        expect(data).not.toBeNull()
+        expect(data?.id).toBe(player.userId)
+      })
+
+      it('anon CANNOT SELECT the email column (column-level GRANT enforced)', async () => {
+        // Postgres returns an error when a role lacks SELECT on a column
+        // mentioned in the SELECT list. PostgREST surfaces it as a 401/403
+        // with code 42501 (insufficient_privilege).
+        const { data, error } = await anon
+          .from('profiles')
+          .select('id, email')
+          .eq('id', player.userId)
+          .maybeSingle()
+
+        expect(data).toBeNull()
+        expect(error).not.toBeNull()
+        // Either Postgres permission denied OR PostgREST surfaces a
+        // generic 4xx — both are acceptable, just NOT a successful read.
+        const msg = (error?.message ?? '').toLowerCase()
+        const code = error?.code ?? ''
+        expect(
+          msg.includes('permission denied') ||
+          msg.includes('insufficient') ||
+          code === '42501' ||
+          code === 'PGRST301',
+        ).toBe(true)
+      })
+
+      it('anon CANNOT see test accounts even via safe columns', async () => {
+        // Find a known test-account profile (test infra creates these).
+        // If none exist in the env, skip — we don't want to false-positive.
+        const { data: tests } = await player.client
+          .from('profiles')
+          .select('id, is_test_account')
+          .eq('is_test_account', true)
+          .limit(1)
+
+        const testProfile = tests?.[0]
+        if (!testProfile) {
+          console.warn('  ⏭  No test-account profile present — skipping')
+          return
+        }
+
+        const { data } = await anon
+          .from('profiles')
+          .select('id')
+          .eq('id', testProfile.id)
+          .maybeSingle()
+
+        // Row must be invisible to anon under the new policy.
+        expect(data).toBeNull()
+      })
+    })
   })
 
   // =========================================================================

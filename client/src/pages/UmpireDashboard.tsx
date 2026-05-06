@@ -72,6 +72,7 @@ import { useReferenceFriendOptions } from '@/hooks/useReferenceFriendOptions'
 import { useTrustedReferences } from '@/hooks/useTrustedReferences'
 import { getUmpireActivity } from '@/lib/umpireActivity'
 import { trackReferenceBadgeClick } from '@/lib/analytics'
+import ShareProfileButton from '@/components/profile/ShareProfileButton'
 
 export type UmpireProfileShape =
   Partial<Profile> &
@@ -318,6 +319,7 @@ export default function UmpireDashboard({
                 </h1>
                 {!readOnly ? (
                   <div className="flex items-center gap-2">
+                    <ShareProfileButton profile={{ role: 'umpire', username: profile.username, id: profile.id }} />
                     <Button
                       variant="outline"
                       size="sm"
@@ -340,6 +342,10 @@ export default function UmpireDashboard({
                       <span className="xs:hidden">Edit</span>
                     </Button>
                     <DashboardMenu />
+                  </div>
+                ) : isOwnProfile ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <ShareProfileButton profile={{ role: 'umpire', username: profile.username, id: profile.id }} />
                   </div>
                 ) : !isOwnProfile ? (
                   <div className="flex flex-wrap items-center gap-2">

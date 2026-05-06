@@ -8,7 +8,9 @@ import PlayerDashboard, { type PlayerProfileShape } from './PlayerDashboard'
 import CoachDashboard from './CoachDashboard'
 import { useAuthStore } from '../lib/auth'
 import { trackDbEvent } from '../lib/trackDbEvent'
-import { trackProfileView } from '../lib/analytics'
+import { trackProfileView, trackPublicProfileViewed } from '../lib/analytics'
+import { usePublicProfileMeta } from '@/hooks/usePublicProfileMeta'
+import PublicProfileFooterCTA from '@/components/profile/PublicProfileFooterCTA'
 
 type PublicProfileBase = Pick<
   Profile,
@@ -163,8 +165,22 @@ export default function PublicPlayerProfile() {
     const ref = new URLSearchParams(window.location.search).get('ref') || 'direct'
     trackDbEvent('profile_view', 'profile', profile.id, { viewed_role: profile.role, source: ref })
     trackProfileView(profile.role, profile.id)
+    // Anon-only counterpart — fires for external/share-link visitors so we
+    // can measure the share funnel without logging identifying info.
+    if (!currentUserProfile) trackPublicProfileViewed(profile.role)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.id])
+
+  // Per-profile <title> + OG meta description for WhatsApp/Slack/iMessage previews.
+  // Per-profile OG image deferred to v2 — link previews still use the site default.
+  usePublicProfileMeta({
+    displayName: profile?.full_name ?? null,
+    roleLabel: profile?.role ?? 'player',
+    description: profile?.bio ?? null,
+    canonicalUrl: profile
+      ? `https://inhockia.com/${profile.role === 'coach' ? 'coaches' : 'players'}/${profile.username || `id/${profile.id}`}`
+      : undefined,
+  })
 
   if (isLoading) {
     return (
@@ -206,17 +222,20 @@ export default function PublicPlayerProfile() {
 
   if (profile.role === 'coach') {
     return (
-      <CoachDashboard
-        profileData={{
-          ...profile,
-          email: '',
-          contact_email_public: profile.contact_email_public ?? false,
-          is_verified: verifiedBoolean,
-          verified_at: verifiedAtString,
-        }}
-        readOnly={true}
-        isOwnProfile={isOwnProfile}
-      />
+      <>
+        <CoachDashboard
+          profileData={{
+            ...profile,
+            email: '',
+            contact_email_public: profile.contact_email_public ?? false,
+            is_verified: verifiedBoolean,
+            verified_at: verifiedAtString,
+          }}
+          readOnly={true}
+          isOwnProfile={isOwnProfile}
+        />
+        <PublicProfileFooterCTA />
+      </>
     )
   }
 
@@ -228,5 +247,10 @@ export default function PublicPlayerProfile() {
     verified_at: verifiedAtString,
   }
 
-  return <PlayerDashboard profileData={playerProfileData} readOnly={true} isOwnProfile={isOwnProfile} viewerRole={currentUserProfile?.role ?? null} />
+  return (
+    <>
+      <PlayerDashboard profileData={playerProfileData} readOnly={true} isOwnProfile={isOwnProfile} viewerRole={currentUserProfile?.role ?? null} />
+      <PublicProfileFooterCTA />
+    </>
+  )
 }

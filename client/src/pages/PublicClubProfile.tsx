@@ -7,7 +7,9 @@ import type { Profile } from '../lib/supabase'
 import ClubDashboard from './ClubDashboard'
 import { useAuthStore } from '../lib/auth'
 import { trackDbEvent } from '../lib/trackDbEvent'
-import { trackProfileView } from '../lib/analytics'
+import { trackProfileView, trackPublicProfileViewed } from '../lib/analytics'
+import { usePublicProfileMeta } from '@/hooks/usePublicProfileMeta'
+import PublicProfileFooterCTA from '@/components/profile/PublicProfileFooterCTA'
 
 type PublicClubProfile = Partial<Profile> &
   Pick<
@@ -144,8 +146,18 @@ export default function PublicClubProfile() {
     const ref = new URLSearchParams(window.location.search).get('ref') || 'direct'
     trackDbEvent('profile_view', 'profile', profile.id, { viewed_role: 'club', source: ref })
     trackProfileView('club', profile.id)
+    if (!currentUserProfile) trackPublicProfileViewed('club')
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.id])
+
+  usePublicProfileMeta({
+    displayName: profile?.full_name ?? null,
+    roleLabel: 'club',
+    description: profile?.club_bio ?? null,
+    canonicalUrl: profile
+      ? `https://inhockia.com/clubs/${profile.username || `id/${profile.id}`}`
+      : undefined,
+  })
 
   if (isLoading) {
     return (
@@ -180,15 +192,18 @@ export default function PublicClubProfile() {
   }
 
   return (
-    <ClubDashboard
-      profileData={{
-        ...profile,
-        email: '',
-        contact_email_public: profile.contact_email_public ?? false,
-        nationality_country_id: profile.nationality_country_id ?? null,
-      }}
-      readOnly={true}
-      isOwnProfile={isOwnProfile}
-    />
+    <>
+      <ClubDashboard
+        profileData={{
+          ...profile,
+          email: '',
+          contact_email_public: profile.contact_email_public ?? false,
+          nationality_country_id: profile.nationality_country_id ?? null,
+        }}
+        readOnly={true}
+        isOwnProfile={isOwnProfile}
+      />
+      <PublicProfileFooterCTA />
+    </>
   )
 }

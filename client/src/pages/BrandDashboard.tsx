@@ -10,6 +10,7 @@ import { Globe, Instagram, ExternalLink, Eye, Edit, Store, Package, Users, Plus,
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import Header from '@/components/Header'
 import { Avatar, Button, DashboardMenu, NextStepCard, FreshnessCard, ProfileSnapshot, SearchAppearancesCard, RoleBadge, ScrollableTabs, TierBadge, VerifiedBadge } from '@/components'
+import ShareProfileButton from '@/components/profile/ShareProfileButton'
 import { PulseSection } from '@/components/home/PulseSection'
 import { calculateTier } from '@/lib/profileTier'
 import { useProfileFreshness } from '@/hooks/useProfileFreshness'
@@ -461,6 +462,11 @@ export default function BrandDashboard() {
                   <VerifiedBadge verified={brand.is_verified} />
                 </h1>
                 <div className="flex items-center gap-2">
+                  {brand.slug && (
+                    <ShareProfileButton
+                      profile={{ role: 'brand', username: brand.slug, id: brand.profile_id }}
+                    />
+                  )}
                   <Button
                     variant="outline"
                     size="sm"
