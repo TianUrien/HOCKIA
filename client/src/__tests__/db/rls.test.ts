@@ -173,16 +173,19 @@ describe.skipIf(skip)('RLS Policy Isolation', () => {
         auth: { autoRefreshToken: false, persistSession: false },
       })
 
-      it('anon CAN read safe columns (id, username, full_name)', async () => {
-        const { data, error } = await anon
+      it('anon CAN read safe columns (no permission-denied error)', async () => {
+        // The contract is "anon does NOT get a permission_denied error when
+        // selecting safe columns". The test-account player profile is itself
+        // hidden from anon by the new policy (is_test_account=true filter),
+        // so we can't assert that *that specific row* is returned. Instead
+        // we just confirm a list query against safe columns runs without
+        // a column-grant error — that's what the GRANT statement protects.
+        const { error } = await anon
           .from('profiles')
           .select('id, username, full_name, role')
-          .eq('id', player.userId)
-          .maybeSingle()
+          .limit(1)
 
         expect(error).toBeNull()
-        expect(data).not.toBeNull()
-        expect(data?.id).toBe(player.userId)
       })
 
       it('anon CANNOT SELECT the email column (column-level GRANT enforced)', async () => {
