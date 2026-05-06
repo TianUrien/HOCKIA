@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import * as Sentry from '@sentry/react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
@@ -7,6 +8,11 @@ import CoachDashboard from './CoachDashboard'
 import ClubDashboard from './ClubDashboard'
 import BrandDashboard from './BrandDashboard'
 import UmpireDashboard from './UmpireDashboard'
+
+// Module-level set so we only report each unrecognised role once per session.
+// The component re-renders on auth-store updates; without dedup we'd capture
+// the same role value many times. Pattern mirrors HomeFeedItemCard.
+const reportedUnknownRoles = new Set<string>()
 
 /**
  * DashboardRouter - Single source of truth for profile-based routing
@@ -160,7 +166,20 @@ export default function DashboardRouter() {
   // ClubDashboard. This shouldn't happen in normal flow (the role enum on
   // profiles is constrained), but if DB drift or a future role lands
   // without a dashboard, an explicit error beats a misleading UI.
-  logger.error('[DashboardRouter] unknown profile.role', { role: profile.role, userId: profile.id })
+  // logger.error alone only adds a Sentry breadcrumb (and summarises object
+  // args to "[object]"), so the structured payload never reaches monitoring.
+  // Use captureMessage with tags/extra so this surfaces as a real Sentry
+  // issue with the role value attached.
+  const unknownRole = profile.role ?? '<missing>'
+  if (!reportedUnknownRoles.has(unknownRole)) {
+    reportedUnknownRoles.add(unknownRole)
+    Sentry.captureMessage('dashboard_router.unknown_role', {
+      level: 'error',
+      tags: { feature: 'dashboard_router', role: unknownRole },
+      extra: { user_id: profile.id },
+    })
+  }
+  logger.error('[DashboardRouter] unknown profile.role:', unknownRole, 'userId:', profile.id)
   return (
     <div data-testid="dashboard-unknown-role" className="min-h-screen flex items-center justify-center bg-gray-50 px-6">
       <div className="max-w-md text-center">
