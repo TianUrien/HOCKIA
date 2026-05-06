@@ -10,6 +10,7 @@ import type { FreshnessNudge } from '@/lib/profileFreshness'
 import { useSearchAppearances } from '@/hooks/useSearchAppearances'
 import { useReferenceFriendOptions } from '@/hooks/useReferenceFriendOptions'
 import { useTrustedReferences } from '@/hooks/useTrustedReferences'
+import { useTabDeepLinkScroll } from '@/hooks/useTabDeepLinkScroll'
 import { trackReferenceBadgeClick } from '@/lib/analytics'
 import ProfileActionMenu from '@/components/ProfileActionMenu'
 import Header from '@/components/Header'
@@ -185,6 +186,10 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
       setActiveTab(tabParam)
     }
   }, [tabParam, activeTab])
+
+  // Deep-link scroll: notification URLs like ?tab=journey used to land
+  // at the top of the dashboard. Mirrors PlayerDashboard.
+  useTabDeepLinkScroll({ activeTab, tabParam })
 
   // If a candidate-only coach lands on ?tab=vacancies (e.g. via stale link
   // from when the tab was visible), bounce them to Profile rather than show
@@ -415,7 +420,13 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => navigate(`/members/id/${profile.id}`)}
+                      onClick={() => {
+                        // Canonical role URL with username slug fallback to id
+                        // — matches what ShareProfileButton copies, so the
+                        // owner sees the same URL the share recipient sees.
+                        const slug = profile.username ? profile.username : `id/${profile.id}`
+                        navigate(`/coaches/${slug}`)
+                      }}
                       className="gap-1.5 whitespace-nowrap text-xs sm:text-sm px-2.5 sm:px-4"
                     >
                       <Eye className="w-4 h-4 flex-shrink-0" />
@@ -605,7 +616,7 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
             />
           </div>
 
-          <div className="p-6 md:p-8">
+          <div id="profile-tab-content" className="p-6 md:p-8 scroll-mt-20">
             {/* Profile Tab */}
             {activeTab === 'profile' && (
               <div className="space-y-6 animate-fade-in">

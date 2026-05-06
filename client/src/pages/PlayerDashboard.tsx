@@ -35,6 +35,12 @@ import AvailabilityToggleStrip from '@/components/AvailabilityToggleStrip'
 import ClubLinkPrompt from '@/components/ClubLinkPrompt'
 import ShareProfileButton from '@/components/profile/ShareProfileButton'
 import { useWorldClubLogo } from '@/hooks/useWorldClubLogo'
+import { useTabDeepLinkScroll } from '@/hooks/useTabDeepLinkScroll'
+
+// `?section=` query param → DOM anchor id. Used by the deep-link scroll
+// hook so notifications like ?tab=profile&section=viewers land on the
+// right card instead of the top of the page.
+const PLAYER_SECTION_ANCHORS = { viewers: 'profile-viewers' } as const
 import { calculateAge, formatDateOfBirth, getInitials } from '@/lib/utils'
 
 type TabType = 'profile' | 'friends' | 'journey' | 'comments' | 'posts'
@@ -144,32 +150,13 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
   // Tab + section deep-link scroll. Notifications and shareable URLs (e.g.
   // ?tab=profile&section=viewers, ?tab=journey) used to land at the top
   // of the profile, leaving the user staring at the header instead of the
-  // section they were sent to. Scroll to the right anchor after the DOM
-  // settles.
-  useEffect(() => {
-    if (!tabParam && !sectionParam) return
-    const targetId = sectionParam === 'viewers'
-      ? 'profile-viewers'
-      : tabParam
-        ? 'profile-tab-content'
-        : null
-    if (!targetId) return
-    // Wait one frame so the tab content is mounted before we measure.
-    // Guards: jsdom's scrollIntoView is a no-op stub that some test
-    // environments make throw; only call when it's a real function.
-    let cancelled = false
-    const id = window.requestAnimationFrame(() => {
-      if (cancelled) return
-      const el = document.getElementById(targetId)
-      if (el && typeof el.scrollIntoView === 'function') {
-        try { el.scrollIntoView({ behavior: 'smooth', block: 'start' }) } catch { /* noop */ }
-      }
-    })
-    return () => {
-      cancelled = true
-      window.cancelAnimationFrame(id)
-    }
-  }, [tabParam, sectionParam, activeTab])
+  // section they were sent to.
+  useTabDeepLinkScroll({
+    activeTab,
+    tabParam,
+    sectionParam,
+    sectionAnchors: PLAYER_SECTION_ANCHORS,
+  })
 
   // Refresh profile strength when switching tabs (picks up gallery/journey changes)
   useEffect(() => {

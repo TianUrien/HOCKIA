@@ -25,6 +25,7 @@ import type { Profile } from '@/lib/supabase'
 import { supabase } from '@/lib/supabase'
 import { useToastStore } from '@/lib/toast'
 import { useNotificationStore } from '@/lib/notifications'
+import { useTabDeepLinkScroll } from '@/hooks/useTabDeepLinkScroll'
 import { derivePublicContactEmail } from '@/lib/profile'
 import type { SocialLinks } from '@/lib/socialLinks'
 import ShareProfileButton from '@/components/profile/ShareProfileButton'
@@ -156,6 +157,9 @@ export default function ClubDashboard({ profileData, readOnly = false, isOwnProf
       setActiveTab(tabParam)
     }
   }, [tabParam, allowedTabs, activeTab])
+
+  // Deep-link scroll for ?tab=X notification URLs.
+  useTabDeepLinkScroll({ activeTab, tabParam })
 
   // Refresh profile strength when switching to overview tab (to pick up gallery changes)
   useEffect(() => {
@@ -386,7 +390,12 @@ export default function ClubDashboard({ profileData, readOnly = false, isOwnProf
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => navigate(`/clubs/id/${profile.id}`)}
+                      onClick={() => {
+                        // Use username slug when available so Network View
+                        // matches the URL ShareProfileButton copies.
+                        const slug = profile.username ? profile.username : `id/${profile.id}`
+                        navigate(`/clubs/${slug}`)
+                      }}
                       className="gap-1.5 whitespace-nowrap text-xs sm:text-sm px-2.5 sm:px-4"
                     >
                       <Eye className="w-4 h-4 flex-shrink-0" />
@@ -494,7 +503,7 @@ export default function ClubDashboard({ profileData, readOnly = false, isOwnProf
             />
           </div>
 
-          <div className="p-6 md:p-8">
+          <div id="profile-tab-content" className="p-6 md:p-8 scroll-mt-20">
             {activeTab === 'overview' && (
               <div className="space-y-8 animate-fade-in">
                 {!readOnly && <ProfileViewersSection />}

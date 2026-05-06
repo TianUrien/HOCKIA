@@ -70,6 +70,7 @@ import { calculateTier } from '@/lib/profileTier'
 import { useUmpireProfileStrength } from '@/hooks/useUmpireProfileStrength'
 import { useReferenceFriendOptions } from '@/hooks/useReferenceFriendOptions'
 import { useTrustedReferences } from '@/hooks/useTrustedReferences'
+import { useTabDeepLinkScroll } from '@/hooks/useTabDeepLinkScroll'
 import { getUmpireActivity } from '@/lib/umpireActivity'
 import { trackReferenceBadgeClick } from '@/lib/analytics'
 import ShareProfileButton from '@/components/profile/ShareProfileButton'
@@ -140,6 +141,9 @@ export default function UmpireDashboard({
       setActiveTab(tabParam)
     }
   }, [tabParam, activeTab])
+
+  // Deep-link scroll for ?tab=X notification URLs.
+  useTabDeepLinkScroll({ activeTab, tabParam })
 
   const handleTabChange = (tab: TabType) => {
     setActiveTab(tab)
@@ -575,7 +579,7 @@ export default function UmpireDashboard({
             />
           </div>
 
-          <div className="p-5 md:p-7">
+          <div id="profile-tab-content" className="p-5 md:p-7 scroll-mt-20">
             {activeTab === 'profile' && (
               <div className="space-y-10 animate-fade-in">
                 {hasCertification ? (
