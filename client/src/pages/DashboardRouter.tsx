@@ -152,5 +152,23 @@ export default function DashboardRouter() {
     return <div data-testid="dashboard-umpire"><UmpireDashboard /></div>
   }
 
-  return <div data-testid="dashboard-club"><ClubDashboard /></div>
+  if (profile.role === 'club') {
+    return <div data-testid="dashboard-club"><ClubDashboard /></div>
+  }
+
+  // Unrecognised role — surface explicitly instead of silently rendering
+  // ClubDashboard. This shouldn't happen in normal flow (the role enum on
+  // profiles is constrained), but if DB drift or a future role lands
+  // without a dashboard, an explicit error beats a misleading UI.
+  logger.error('[DashboardRouter] unknown profile.role', { role: profile.role, userId: profile.id })
+  return (
+    <div data-testid="dashboard-unknown-role" className="min-h-screen flex items-center justify-center bg-gray-50 px-6">
+      <div className="max-w-md text-center">
+        <p className="text-lg font-semibold text-gray-900">Something went wrong</p>
+        <p className="mt-2 text-sm text-gray-600">
+          We couldn’t load your dashboard. Please refresh the page or contact support.
+        </p>
+      </div>
+    </div>
+  )
 }
