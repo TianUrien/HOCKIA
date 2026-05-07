@@ -4,7 +4,7 @@
  * Onboarding flow for new brand users to create their brand profile.
  */
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
 import * as Sentry from '@sentry/react'
@@ -67,7 +67,12 @@ export default function BrandOnboardingPage() {
   //       try again — an infinite bounce loop on persistent RLS / network
   //       failure. Now we surface a real error UI so the user can retry
   //       manually instead of being silently stuck.
-  const healAttemptedRef = useRef(false)
+  // healAttempt is bumped to force the heal effect to re-fire on retry.
+  // Using a counter (not a boolean) so each retry is a distinct dep change
+  // that React's effect-dep equality picks up. setHealError(null) alone
+  // does NOT re-fire the effect — healError isn't in the dep array, and
+  // none of the existing deps (brand/profile/user) change on retry.
+  const [healAttempt, setHealAttempt] = useState(0)
   const [healError, setHealError] = useState<string | null>(null)
   useEffect(() => {
     if (brandLoading || !brand || !user) return
@@ -75,14 +80,14 @@ export default function BrandOnboardingPage() {
       navigate('/dashboard/profile', { replace: true })
       return
     }
-    if (healAttemptedRef.current) return
-    healAttemptedRef.current = true
+    let cancelled = false
     void (async () => {
       try {
         const { error: healErr } = await supabase
           .from('profiles')
           .update({ onboarding_completed: true })
           .eq('id', user.id)
+        if (cancelled) return
         if (healErr) {
           logger.error('[BrandOnboarding] Failed to heal half-state', healErr)
           Sentry.captureException(toSentryError(healErr), {
@@ -94,8 +99,10 @@ export default function BrandOnboardingPage() {
           return
         }
         await fetchProfile(user.id, { force: true })
+        if (cancelled) return
         navigate('/dashboard/profile', { replace: true })
       } catch (err) {
+        if (cancelled) return
         logger.error('[BrandOnboarding] Heal threw unexpected error', err)
         Sentry.captureException(toSentryError(err), {
           tags: { feature: 'brand_onboarding', operation: 'heal_half_state' },
@@ -105,15 +112,17 @@ export default function BrandOnboardingPage() {
         )
       }
     })()
-  }, [brand, brandLoading, navigate, profile?.onboarding_completed, user, fetchProfile])
+    return () => {
+      cancelled = true
+    }
+  }, [brand, brandLoading, navigate, profile?.onboarding_completed, user, fetchProfile, healAttempt])
 
   const retryHeal = () => {
     setHealError(null)
-    healAttemptedRef.current = false
-    // Re-trigger the heal effect by toggling a state that's referenced
-    // in the dep array. Since `brand` is the actual gate, simplest is to
-    // refetch the profile which causes the effect to re-evaluate.
-    if (user) void fetchProfile(user.id, { force: true })
+    // Bump the attempt counter — this IS in the effect's dep array,
+    // so the effect re-fires synchronously on the next render and
+    // re-runs the heal logic.
+    setHealAttempt((n) => n + 1)
   }
 
   const handleSubmit = async (data: BrandFormData) => {
