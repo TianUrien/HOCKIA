@@ -30,30 +30,45 @@ interface AvatarMenuProps {
   /** True when the active route is /dashboard/* — drives the focus ring on the avatar. */
   isOnDashboard: boolean
   className?: string
+  /**
+   * Where the dropdown should anchor relative to the avatar. Defaults to
+   * `bottom` for the desktop header (drops down). Use `top` for the
+   * mobile bottom nav so the dropdown opens above the avatar instead of
+   * spilling off the bottom of the viewport.
+   */
+  placement?: 'bottom' | 'top'
+  /** Render a label below the avatar (used by mobile bottom nav). */
+  showLabel?: boolean
 }
 
-export default function AvatarMenu({ isOnDashboard, className = '' }: AvatarMenuProps) {
+export default function AvatarMenu({ isOnDashboard, className = '', placement = 'bottom', showLabel = false }: AvatarMenuProps) {
   const navigate = useNavigate()
   const { profile, signOut } = useAuthStore()
   const { addToast } = useToastStore()
   const closeNotificationsDrawer = useNotificationStore((state) => state.toggleDrawer)
   const [isOpen, setIsOpen] = useState(false)
-  const [pos, setPos] = useState<{ top: number; right: number } | null>(null)
+  // `top` and `bottom` are mutually exclusive — only one is set per render
+  // depending on placement. Right-alignment is shared by both modes so the
+  // dropdown never spills past the viewport edge.
+  const [pos, setPos] = useState<{ top?: number; bottom?: number; right: number } | null>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   const canUseDOM = typeof window !== 'undefined' && typeof document !== 'undefined'
 
-  // Position the dropdown right-aligned to the avatar so it never spills
-  // past the viewport edge.
+  // Position the dropdown relative to the avatar. `placement="bottom"`
+  // anchors below the avatar (desktop header). `placement="top"` anchors
+  // above (mobile bottom nav, where dropping down would spill off-screen).
   const updatePos = useCallback(() => {
     if (!buttonRef.current) return
     const rect = buttonRef.current.getBoundingClientRect()
-    setPos({
-      top: rect.bottom + 8,
-      right: window.innerWidth - rect.right,
-    })
-  }, [])
+    const right = Math.max(8, window.innerWidth - rect.right)
+    if (placement === 'top') {
+      setPos({ bottom: window.innerHeight - rect.top + 8, right })
+    } else {
+      setPos({ top: rect.bottom + 8, right })
+    }
+  }, [placement])
 
   useEffect(() => {
     if (!isOpen) return
@@ -122,20 +137,41 @@ export default function AvatarMenu({ isOnDashboard, className = '' }: AvatarMenu
         ref={buttonRef}
         type="button"
         onClick={() => setIsOpen((v) => !v)}
-        className={`flex items-center rounded-full transition-all ${
-          isOnDashboard ? 'ring-2 ring-[#8026FA] ring-offset-2' : 'hover:opacity-80'
-        } ${className}`}
+        className={
+          showLabel
+            // Bottom-nav variant: column layout matching the rest of the
+            // mobile nav items (icon + label below).
+            ? `flex flex-col items-center justify-center min-w-[48px] min-h-[44px] py-1 px-2 rounded-xl transition-all duration-200 ${
+                isOnDashboard ? 'text-[#8026FA]' : 'text-gray-600 active:bg-gray-100'
+              } ${className}`
+            // Header variant: just the avatar with focus ring on dashboard.
+            : `flex items-center rounded-full transition-all ${
+                isOnDashboard ? 'ring-2 ring-[#8026FA] ring-offset-2' : 'hover:opacity-80'
+              } ${className}`
+        }
         aria-label="Open account menu"
         aria-haspopup="menu"
-        aria-expanded={isOpen ? 'true' : 'false'}
+        aria-expanded={isOpen}
       >
-        <Avatar
-          src={profile.avatar_url}
-          initials={profileInitials}
-          size="sm"
-          loading="eager"
-          role={profile.role}
-        />
+        <div className={showLabel ? `relative mb-0.5 transition-transform duration-200 ${isOnDashboard ? 'scale-110' : 'scale-100'}` : ''}>
+          <Avatar
+            src={profile.avatar_url}
+            initials={profileInitials}
+            size="sm"
+            loading="eager"
+            role={profile.role}
+            className={showLabel && isOnDashboard ? 'ring-2 ring-[#8026FA] ring-offset-2' : undefined}
+          />
+        </div>
+        {showLabel && (
+          <span
+            className={`text-[10px] font-medium transition-all duration-200 ${
+              isOnDashboard ? 'opacity-100' : 'opacity-60'
+            }`}
+          >
+            Dashboard
+          </span>
+        )}
       </button>
 
       {isOpen && canUseDOM && pos &&
@@ -144,7 +180,11 @@ export default function AvatarMenu({ isOnDashboard, className = '' }: AvatarMenu
             ref={dropdownRef}
             role="menu"
             aria-orientation="vertical"
-            style={{ top: pos.top, right: pos.right }}
+            style={{
+              top: pos.top,
+              bottom: pos.bottom,
+              right: pos.right,
+            }}
             className="fixed z-[9999] w-56 rounded-xl border border-gray-200/60 bg-white py-2 shadow-2xl animate-fade-in"
           >
             {/* Identity row — gives the menu visual context. */}

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Home, Users, Briefcase, Globe, Sparkles } from 'lucide-react'
-import { Avatar, NotificationBadge } from '@/components'
+import { AvatarMenu, NotificationBadge } from '@/components'
 import { useNavigation } from '@/hooks/useNavigation'
 
 interface NavItem {
@@ -18,7 +18,6 @@ export default function MobileBottomNav() {
     isActive,
     handleNavigate,
     opportunityCount,
-    profileInitials,
   } = useNavigation()
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false)
   const [isHidden, setIsHidden] = useState(false)
@@ -172,43 +171,18 @@ export default function MobileBottomNav() {
               </span>
             </button>
 
-            {/* Profile Avatar - Direct Dashboard Navigation */}
-            <button
-              type="button"
-              onClick={() => handleNavigate('/dashboard/profile')}
-              className={`flex flex-col items-center justify-center min-w-[48px] min-h-[44px] py-1 px-2 rounded-xl transition-all duration-200 ${
-                location.pathname.startsWith('/dashboard')
-                  ? 'text-[#8026FA]'
-                  : 'text-gray-600 active:bg-gray-100'
-              }`}
-              aria-label="Go to Dashboard"
-            >
-              <div className={`relative mb-0.5 transition-transform duration-200 ${
-                location.pathname.startsWith('/dashboard') ? 'scale-110' : 'scale-100'
-              }`}>
-                <Avatar
-                  src={profile.avatar_url}
-                  initials={profileInitials}
-                  size="sm"
-                  role={profile.role}
-                  className={`transition-all duration-200 ${
-                    location.pathname.startsWith('/dashboard')
-                      ? 'ring-2 ring-[#8026FA] ring-offset-2'
-                      : ''
-                  }`}
-                />
-                {location.pathname.startsWith('/dashboard') && (
-                  <div className="absolute inset-0 bg-gradient-to-r from-[#8026FA] to-[#924CEC] opacity-20 rounded-full blur-md" />
-                )}
-              </div>
-              <span
-                className={`text-[10px] font-medium transition-all duration-200 ${
-                  location.pathname.startsWith('/dashboard') ? 'opacity-100' : 'opacity-60'
-                }`}
-              >
-                Dashboard
-              </span>
-            </button>
+            {/* Avatar dropdown — tap opens a menu with Your dashboard /
+                Settings / Sign out. Replaces the previous direct-navigate
+                avatar so mobile users can reach Settings + Sign Out (the
+                hamburger ≡ that used to expose those was removed when
+                AvatarMenu replaced it on desktop, but the desktop menu
+                is hidden on mobile via `hidden lg:flex` in Header).
+                placement="top" so the dropdown opens above the nav bar. */}
+            <AvatarMenu
+              isOnDashboard={location.pathname.startsWith('/dashboard')}
+              placement="top"
+              showLabel
+            />
           </div>
         </div>
       </nav>
