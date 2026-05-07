@@ -8,8 +8,18 @@ interface DualNationalityDisplayProps {
   secondaryCountryId?: number | null
   /** Fallback text for primary nationality if no country ID */
   fallbackText?: string | null
-  /** Display mode: 'full' for profile pages, 'compact' for inline cards, 'card' for vertical card display */
-  mode?: 'full' | 'compact' | 'card'
+  /**
+   * Display mode:
+   *   - 'full' — profile pages (vertical, with EU pill)
+   *   - 'compact' — inline rendering with full nationality names
+   *   - 'card' — vertical with bullets
+   *   - 'tile' — narrow community/member tiles. Single nationality shows
+   *     flag + name; dual nationality drops the names entirely and shows
+   *     just two flags + EU pill, since two long nationality names on a
+   *     ~150px tile width truncate to "Aus, Engli EU" which reads worse
+   *     than "🇦🇺🇬🇧 EU".
+   */
+  mode?: 'full' | 'compact' | 'card' | 'tile'
   /** Additional CSS classes */
   className?: string
 }
@@ -49,6 +59,17 @@ export default function DualNationalityDisplay({
   if (mode === 'compact') {
     return (
       <CompactDisplay
+        primaryCountry={primaryCountry}
+        secondaryCountry={secondaryCountry}
+        hasEuNationality={hasEuNationality}
+        className={className}
+      />
+    )
+  }
+
+  if (mode === 'tile') {
+    return (
+      <TileDisplay
         primaryCountry={primaryCountry}
         secondaryCountry={secondaryCountry}
         hasEuNationality={hasEuNationality}
@@ -106,6 +127,45 @@ function CompactDisplay({ primaryCountry, secondaryCountry, hasEuNationality, cl
       ))}
       {hasEuNationality && (
         <span className="ml-0.5 text-xs text-blue-600 font-medium">EU</span>
+      )}
+    </span>
+  )
+}
+
+/**
+ * Narrow-tile display. Single nationality shows the full name next to
+ * the flag (just like compact mode). Dual nationality drops the names
+ * entirely — two flags + a small EU pill is more recognizable on a
+ * 150-180px tile than truncated nationality strings.
+ */
+function TileDisplay({ primaryCountry, secondaryCountry, hasEuNationality, className }: CompactDisplayProps) {
+  const nationalities: Country[] = []
+  if (primaryCountry) nationalities.push(primaryCountry)
+  if (secondaryCountry) nationalities.push(secondaryCountry)
+  if (nationalities.length === 0) return null
+
+  const isDual = nationalities.length > 1
+
+  return (
+    <span className={`inline-flex items-center gap-1.5 ${className}`}>
+      <span className="inline-flex items-center gap-0.5">
+        {nationalities.map((country) => (
+          <Flag
+            key={country.id}
+            code={country.code}
+            countryName={country.name}
+            fallbackEmoji={country.flag_emoji}
+            size="sm"
+          />
+        ))}
+      </span>
+      {!isDual && primaryCountry && (
+        <span className="truncate">{primaryCountry.nationality_name}</span>
+      )}
+      {hasEuNationality && (
+        <span className="inline-flex items-center rounded bg-blue-50 px-1 py-px text-[10px] font-semibold text-blue-700">
+          EU
+        </span>
       )}
     </span>
   )

@@ -162,8 +162,13 @@ export default function MemberTile(props: MemberTileProps) {
           )}
         </div>
 
-        {/* Info */}
-        <div className="p-2.5 sm:p-3 space-y-1.5">
+        {/* Info — vertical stack with consistent breathing room. The
+            tighter `space-y-1.5` previously crammed dual-nationality
+            into a truncated mess; `space-y-2` gives each row its own
+            breathing room. The tile-mode nationality display drops the
+            secondary name on dual-nat profiles to avoid overflow. */}
+        <div className="p-3 space-y-2">
+          {/* Row 1: name + verified */}
           <div className="flex items-center gap-1 min-w-0">
             <h3 className="text-sm font-semibold text-gray-900 truncate min-w-0 flex-1 leading-tight">
               {props.full_name}
@@ -171,23 +176,27 @@ export default function MemberTile(props: MemberTileProps) {
             <VerifiedBadge verified={props.isVerified} verifiedAt={props.verifiedAt} size="sm" />
           </div>
 
-          <div className="flex items-center gap-1 flex-wrap">
+          {/* Row 2: role + tier (one line; wraps gracefully on single nat) */}
+          <div className="flex items-center gap-1.5 flex-wrap">
             <RoleBadge role={props.role} />
             {modifierPill}
           </div>
 
+          {/* Row 3: nationality (tile mode — flags-only when dual, full
+              name when single, EU pill as a small chip on its own). */}
           {(props.nationality_country_id || props.nationality) && (
-            <div className="text-xs text-gray-600 truncate">
+            <div className="text-xs text-gray-600">
               <DualNationalityDisplay
                 primaryCountryId={props.nationality_country_id}
                 secondaryCountryId={props.nationality2_country_id}
                 fallbackText={props.nationality}
-                mode="compact"
+                mode="tile"
                 className="text-gray-600"
               />
             </div>
           )}
 
+          {/* Row 4: club / location / federation / category (truncated) */}
           {roleNative && (
             <div className="flex items-center gap-1.5 text-xs text-gray-500 min-w-0">
               {roleNative.kind === 'team' && clubLogo ? (
