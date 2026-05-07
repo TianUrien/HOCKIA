@@ -563,7 +563,11 @@ export default function UmpireDashboard({
             />
           </div>
 
-          <div className="p-5 md:p-7">
+          {/* min-h-screen guarantees the document is tall enough for
+              useTabDeepLinkScroll's scrollIntoView({block:'start'}) to
+              land the tab strip at the viewport top regardless of tab
+              content length. 70vh wasn't enough on Friends. */}
+          <div className="p-5 md:p-7 min-h-screen">
             {activeTab === 'profile' && (
               <div className="space-y-10 animate-fade-in">
                 {hasCertification ? (

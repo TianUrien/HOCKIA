@@ -645,8 +645,15 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
               />
           </div>
 
-          {/* Tab Content */}
-          <div className="p-6 md:p-8">
+          {/* Tab Content. min-h-screen guarantees the document is always
+              tall enough for useTabDeepLinkScroll's scrollIntoView({block:
+              'start'}) to land the tab strip at the viewport top — even on
+              Friends/Journey where the rendered content can be shorter than
+              the viewport. With less padding (e.g. 70vh) the document caps
+              before reaching the needed scroll Y, leaving the strip
+              partway down. Empty space below short content is acceptable;
+              broken scroll-to-top is not. Verified by qa-tabs-scroll spec. */}
+          <div className="p-6 md:p-8 min-h-screen">
             {activeTab === 'profile' && (
               <div className="space-y-10 animate-fade-in">
                 {!readOnly && (

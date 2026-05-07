@@ -49,8 +49,13 @@ interface UseTabDeepLinkScrollOptions {
  *     per navigation.
  *   - Defensive against jsdom (where `scrollIntoView` is a stub or
  *     absent).
- *   - Waits one rAF for the tab content to mount before scrolling.
- *   - Cleans up if the component unmounts before the frame fires.
+ *   - Fires the scroll TWICE: once on the next rAF (immediate visual
+ *     feedback) and once at 400ms (after async tab content like
+ *     FriendsTab's fetchConnections has settled). Without the late
+ *     re-scroll, the smooth-scroll target computed during the skeleton
+ *     phase is stale by the time content swaps in — the strip ends up
+ *     mid-viewport instead of at the top.
+ *   - Cleans up if the component unmounts before the frame/timeout fires.
  */
 export function useTabDeepLinkScroll({
   activeTab,
@@ -80,16 +85,25 @@ export function useTabDeepLinkScroll({
     if (!targetId) return
 
     let cancelled = false
-    const id = window.requestAnimationFrame(() => {
+    const performScroll = () => {
       if (cancelled) return
       const el = document.getElementById(targetId!)
       if (el && typeof el.scrollIntoView === 'function') {
         try { el.scrollIntoView({ behavior: 'smooth', block: 'start' }) } catch { /* noop */ }
       }
-    })
+    }
+    // First scroll: rAF after current render commit.
+    const rafId = window.requestAnimationFrame(performScroll)
+    // Second scroll: re-fire after async tab content (e.g. FriendsTab
+    // connections fetch) has had time to load and shift the layout.
+    // 400ms covers a typical fetch round-trip + render. Cheap enough that
+    // it's also fine when the tab loaded synchronously — the second
+    // scroll is a no-op when the first already landed correctly.
+    const settleTimeoutId = window.setTimeout(performScroll, 400)
     return () => {
       cancelled = true
-      window.cancelAnimationFrame(id)
+      window.cancelAnimationFrame(rafId)
+      window.clearTimeout(settleTimeoutId)
     }
   }, [tabParam, sectionParam, activeTab, sectionAnchors, tabContentAnchorId])
 }

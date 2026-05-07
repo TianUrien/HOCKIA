@@ -186,6 +186,7 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
     }
     if (member.role === 'club') return `/clubs/id/${member.id}?ref=community_preview`
     if (member.role === 'umpire') return `/umpires/id/${member.id}?ref=community_preview`
+    if (member.role === 'coach') return `/coaches/id/${member.id}?ref=community_preview`
     return `/players/id/${member.id}?ref=community_preview`
   })()
 

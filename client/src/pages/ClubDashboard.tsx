@@ -484,7 +484,11 @@ export default function ClubDashboard({ profileData, readOnly = false, isOwnProf
             />
           </div>
 
-          <div className="p-6 md:p-8">
+          {/* min-h-screen guarantees the document is tall enough for
+              useTabDeepLinkScroll's scrollIntoView({block:'start'}) to
+              land the tab strip at the viewport top regardless of tab
+              content length. 70vh wasn't enough on Friends. */}
+          <div className="p-6 md:p-8 min-h-screen">
             {activeTab === 'overview' && (
               <div className="space-y-8 animate-fade-in">
                 {!readOnly && <ProfileViewersSection />}

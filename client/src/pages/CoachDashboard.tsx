@@ -599,7 +599,12 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
             />
           </div>
 
-          <div className="p-6 md:p-8">
+          {/* min-h-screen guarantees the document is tall enough for
+              useTabDeepLinkScroll's scrollIntoView({block:'start'}) to
+              land the tab strip at the viewport top regardless of tab
+              content length. 70vh wasn't enough on Friends/Journey —
+              docHeight capped before reaching the needed scrollY. */}
+          <div className="p-6 md:p-8 min-h-screen">
             {/* Profile Tab */}
             {activeTab === 'profile' && (
               <div className="space-y-6 animate-fade-in">

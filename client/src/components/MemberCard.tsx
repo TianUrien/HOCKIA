@@ -149,8 +149,9 @@ export default function MemberCard({
       navigate(`/clubs/id/${id}?ref=community`)
     } else if (role === 'umpire') {
       navigate(`/umpires/id/${id}?ref=community`)
+    } else if (role === 'coach') {
+      navigate(`/coaches/id/${id}?ref=community`)
     } else {
-      // Players and Coaches share the player profile route
       navigate(`/players/id/${id}?ref=community`)
     }
   }
