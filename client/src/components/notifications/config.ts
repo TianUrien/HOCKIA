@@ -129,7 +129,11 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
     accentClassName: 'bg-emerald-50 text-emerald-700',
     getTitle: (notification) => `${getActorName(notification)} requested a reference`,
     getDescription: (notification) => formatRelationshipType(getMetadataString(notification, 'relationship_type')) || null,
-    getRoute: () => friendRequestsRoute,
+    // Reference requests are accepted/declined inside TrustedReferencesSection
+    // which now lives on the dedicated /references tab (split from /friends
+    // 2026-05-08). Was routing to friendRequestsRoute previously, which was
+    // for friend-list incoming requests — same noun, different feature.
+    getRoute: () => referencesRoute,
   },
   reference_request_accepted: {
     icon: ShieldCheck,

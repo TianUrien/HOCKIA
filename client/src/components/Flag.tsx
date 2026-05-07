@@ -1,3 +1,5 @@
+import { useState } from 'react'
+
 /**
  * Flag — single source of truth for country flag rendering.
  *
@@ -8,7 +10,10 @@
  *
  * Falls back to the emoji (or an unknown-flag glyph) when the country
  * code is missing — keeps existing data without country_code from
- * silently rendering nothing.
+ * silently rendering nothing. Also handles network/404 errors on the
+ * PNG by swapping to the emoji fallback at render time, so a flagcdn
+ * outage or an invalid 2-letter code never shows the browser's
+ * broken-image icon to users.
  *
  * Usage:
  *   <Flag code="ar" />              // Argentina, default 16px height
@@ -58,8 +63,12 @@ export default function Flag({
   className = '',
 }: FlagProps) {
   const heightClass = SIZE_TO_HEIGHT[size]
+  // Track image-load failure (network error / 404 / invalid code) so we
+  // can swap to the emoji fallback instead of leaving a broken-image
+  // icon on the page.
+  const [imgFailed, setImgFailed] = useState(false)
 
-  if (code) {
+  if (code && !imgFailed) {
     const lowerCode = code.toLowerCase()
     const widthVariant = SIZE_TO_FLAGCDN_WIDTH[size]
     return (
@@ -72,11 +81,13 @@ export default function Flag({
         className={`inline-block ${heightClass} w-auto rounded-[2px] object-contain ${className}`}
         loading="lazy"
         decoding="async"
+        onError={() => setImgFailed(true)}
       />
     )
   }
 
-  // No code → fallback to emoji or unknown glyph. Span keeps inline flow.
+  // No code, or image load failed → fallback to emoji or unknown glyph.
+  // Span keeps inline flow.
   return (
     <span className={`inline-block ${className}`} aria-label={countryName ?? 'Country'}>
       {fallbackEmoji || '🏳️'}

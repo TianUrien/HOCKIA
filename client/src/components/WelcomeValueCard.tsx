@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { X, Sparkles } from 'lucide-react'
+import { useAuthStore } from '@/lib/auth'
 
-const STORAGE_KEY = 'hockia-welcome-card-dismissed-v1'
+const STORAGE_KEY_PREFIX = 'hockia-welcome-card-dismissed-v1'
 
 /**
  * One-line dashboard value-prop card. Renders for owners who haven't
@@ -10,22 +11,33 @@ const STORAGE_KEY = 'hockia-welcome-card-dismissed-v1'
  * re-introduce the card with new copy by bumping the version without
  * surfacing it again to users who already saw the previous version.
  *
+ * Storage key is scoped by user id — without that, a dismissal in one
+ * account would carry over when a different account signs in on the
+ * same browser (shared family devices, public computers, account
+ * switching). Renders nothing until we know who the viewer is so we
+ * never apply the wrong user's dismissal state on first paint.
+ *
  * Copy comes directly from the product brief — single-sentence value
  * prop without a CTA, so it feels like a tagline, not another nudge in
  * a stack of nudges.
  */
 export default function WelcomeValueCard() {
+  const userId = useAuthStore((s) => s.user?.id)
+  const storageKey = userId ? `${STORAGE_KEY_PREFIX}:${userId}` : null
+
   const [dismissed, setDismissed] = useState(() => {
-    if (typeof window === 'undefined') return true
-    return window.localStorage.getItem(STORAGE_KEY) === 'true'
+    if (typeof window === 'undefined' || !storageKey) return true
+    return window.localStorage.getItem(storageKey) === 'true'
   })
 
-  if (dismissed) return null
+  // Don't render until we know the user id — avoids a flash of "welcome"
+  // before the store hydrates, and avoids using the wrong user's key.
+  if (!storageKey || dismissed) return null
 
   const handleDismiss = () => {
     setDismissed(true)
     try {
-      window.localStorage.setItem(STORAGE_KEY, 'true')
+      window.localStorage.setItem(storageKey, 'true')
     } catch {
       // localStorage can throw in private mode / quota — silent fallback.
     }

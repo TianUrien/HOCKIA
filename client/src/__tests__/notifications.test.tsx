@@ -153,7 +153,12 @@ describe('NotificationsDrawer', () => {
     expect(addToast).toHaveBeenCalledWith('Friend request accepted.', 'success')
   })
 
-  it('navigates to the friends tab for reference requests', async () => {
+  it('navigates to the References tab for incoming reference requests', async () => {
+    // Reference requests are accepted/declined inside TrustedReferencesSection
+    // which now lives on the dedicated /references tab (split from /friends
+    // 2026-05-08). The previous routing to friends&section=requests sent
+    // the user to the friend-list incoming-requests view, which doesn't
+    // surface reference requests at all.
     setNotificationStoreState({
       isDrawerOpen: true,
       notifications: [
@@ -173,7 +178,7 @@ describe('NotificationsDrawer', () => {
 
     await user.click(screen.getByRole('button', { name: /requested a reference/i }))
 
-    expect(mockNavigate).toHaveBeenCalledWith('/dashboard/profile?tab=friends&section=requests')
+    expect(mockNavigate).toHaveBeenCalledWith('/dashboard/profile?tab=references')
   })
 
   it('opens the comments tab when a comment notification is clicked', async () => {

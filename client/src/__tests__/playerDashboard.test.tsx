@@ -31,6 +31,7 @@ vi.mock('@/components', () => ({
   FriendsTab: () => <div data-testid="friends-tab">Friends tab</div>,
   FriendshipButton: () => <button data-testid="friendship-button" type="button">Friendship</button>,
   PublicReferencesSection: () => <div data-testid="public-references">Public references</div>,
+  ReferencesTab: () => <div data-testid="references-tab">References tab</div>,
   PublicViewBanner: () => <div data-testid="public-view-banner" />,
   RoleBadge: () => <span data-testid="role-badge">Role badge</span>,
   TierBadge: () => <span data-testid="tier-badge">Tier</span>,

@@ -14,8 +14,8 @@ import type { PulseItem } from '@/hooks/useMyPulse'
  * to ask the new friend for a vouch. Trigger-driven (server-side), 7-day
  * per-user frequency cap.
  *
- * Tap "Ask to vouch" → navigates to the owner's own Friends tab with
- * `?section=references&ask=<friend_id>`, the same deep-link
+ * Tap "Ask to vouch" → navigates to the owner's own References tab with
+ * `?tab=references&ask=<friend_id>`, the same deep-link
  * RecentlyConnectedCard uses. Action_completed is stamped optimistically
  * here; the actual reference-request submission lives in the references
  * flow downstream.
