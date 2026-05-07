@@ -63,15 +63,15 @@ export function FriendshipReferencePulseCard({
     // Suppress the same friend on RecentlyConnectedCard so the user
     // doesn't see the prompt twice once they've actioned it from Pulse.
     if (profile?.id) recordReferenceNudgeDismiss(profile.id, friendId)
-    // Deep-link to the owner's Friends tab → references section, with the
-    // friend pre-selected. Same URL shape RecentlyConnectedCard's onAsk
-    // uses on the dashboards.
+    // Deep-link to the owner's References tab with the friend pre-selected.
+    // References was split out of Friends 2026-05-08; this matches the URL
+    // shape RecentlyConnectedCard's onAsk uses on the dashboards.
     const path = profilePath(profile?.role, profile?.username, profile?.id)
     if (!path) return
     const next = new URLSearchParams(searchParams)
-    next.set('tab', 'friends')
-    next.set('section', 'references')
+    next.set('tab', 'references')
     next.set('ask', friendId)
+    next.delete('section')
     navigate(`${path}?${next.toString()}`)
   }
 

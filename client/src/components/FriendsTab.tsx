@@ -20,6 +20,16 @@ interface FriendsTabProps {
   profileId: string
   readOnly?: boolean
   profileRole?: Profile['role'] | null
+  /**
+   * When true, the inline TrustedReferencesSection block is suppressed.
+   * Set by dashboards that mount a separate "References" tab so the
+   * references content lives in one place instead of being duplicated
+   * at the top of the Friends tab.
+   *
+   * Default false preserves the legacy single-tab layout for any
+   * caller that hasn't been migrated yet.
+   */
+  hideReferences?: boolean
 }
 
 type FriendStatus = Database['public']['Enums']['friendship_status']
@@ -30,7 +40,7 @@ type FriendConnection = FriendEdge & {
   friend: FriendProfile | null
 }
 
-export default function FriendsTab({ profileId, readOnly = false, profileRole }: FriendsTabProps) {
+export default function FriendsTab({ profileId, readOnly = false, profileRole, hideReferences = false }: FriendsTabProps) {
   const { profile: authProfile } = useAuthStore()
   const { addToast } = useToastStore()
   // In readOnly mode, treat as non-owner even if viewing own profile
@@ -282,7 +292,18 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole }:
                 type="button"
                 onClick={() => {
                   trackReferenceModalOpen('friend_row')
-                  setAskVouchFor(connection.friend_id)
+                  if (hideReferences) {
+                    // Tab-split layout: references live on a separate tab,
+                    // so cross-navigate via URL. The references tab reads
+                    // ?ask=<id> and auto-opens the modal pre-filled.
+                    const next = new URLSearchParams(searchParams)
+                    next.set('tab', 'references')
+                    next.set('ask', connection.friend_id ?? '')
+                    next.delete('section')
+                    setSearchParams(next, { replace: false })
+                  } else {
+                    setAskVouchFor(connection.friend_id)
+                  }
                 }}
                 className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors"
                 title={`Ask ${connection.friend?.full_name ?? 'them'} to vouch for you on HOCKIA`}
@@ -402,7 +423,7 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole }:
 
   return (
     <div className="space-y-8">
-      {canShowTrustedReferences && (
+      {!hideReferences && canShowTrustedReferences && (
         <div
           ref={trustedReferencesRef}
           data-deeplink-section="trusted-references"

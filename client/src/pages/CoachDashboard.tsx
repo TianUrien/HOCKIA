@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, useRef } from 'react'
 import { ArrowLeft, MapPin, Calendar, Edit2, Eye, MessageCircle, Landmark, Mail, Plus } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
-import { Avatar, EditProfileModal, JourneyTab, CommentsTab, FriendsTab, FriendshipButton, NextStepCard, WelcomeValueCard, FreshnessCard, ProfileSnapshot, RecentlyConnectedCard, SearchAppearancesCard, PublicReferencesSection, PublicViewBanner, RoleBadge, ScrollableTabs, DualNationalityDisplay, AvailabilityPill, TierBadge, TrustBadge, VerifiedBadge, CategoryConfirmationBanner } from '@/components'
+import { Avatar, EditProfileModal, JourneyTab, CommentsTab, FriendsTab, ReferencesTab, FriendshipButton, NextStepCard, WelcomeValueCard, FreshnessCard, ProfileSnapshot, RecentlyConnectedCard, SearchAppearancesCard, PublicReferencesSection, PublicViewBanner, RoleBadge, ScrollableTabs, DualNationalityDisplay, AvailabilityPill, TierBadge, TrustBadge, VerifiedBadge, CategoryConfirmationBanner } from '@/components'
 import { PulseSection } from '@/components/home/PulseSection'
 import { calculateTier } from '@/lib/profileTier'
 import { useProfileFreshness } from '@/hooks/useProfileFreshness'
@@ -38,7 +38,7 @@ import { useWorldClubLogo } from '@/hooks/useWorldClubLogo'
 import { calculateAge, formatDateOfBirth, getInitials } from '@/lib/utils'
 import { getSpecializationLabel } from '@/lib/coachSpecializations'
 
-type TabType = 'profile' | 'vacancies' | 'journey' | 'friends' | 'comments' | 'posts'
+type TabType = 'profile' | 'vacancies' | 'journey' | 'references' | 'friends' | 'comments' | 'posts'
 
 export type CoachProfileShape =
   Partial<Profile> &
@@ -75,7 +75,7 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
   const [searchParams, setSearchParams] = useSearchParams()
   const [activeTab, setActiveTab] = useState<TabType>(() => {
     const param = searchParams.get('tab') as TabType | null
-    return param && ['profile', 'vacancies', 'journey', 'friends', 'comments', 'posts'].includes(param) ? param : 'profile'
+    return param && ['profile', 'vacancies', 'journey', 'references', 'friends', 'comments', 'posts'].includes(param) ? param : 'profile'
   })
   const [showEditModal, setShowEditModal] = useState(false)
   const [showSignInPrompt, setShowSignInPrompt] = useState(false)
@@ -167,7 +167,7 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
 
   useEffect(() => {
     if (!tabParam) return
-    if (tabParam !== activeTab && ['profile', 'vacancies', 'journey', 'friends', 'comments', 'posts'].includes(tabParam)) {
+    if (tabParam !== activeTab && ['profile', 'vacancies', 'journey', 'references', 'friends', 'comments', 'posts'].includes(tabParam)) {
       setActiveTab(tabParam)
     }
   }, [tabParam, activeTab])
@@ -292,6 +292,7 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
     { id: 'profile', label: 'Profile' },
     ...(showOpportunitiesTab ? [{ id: 'vacancies' as TabType, label: 'Opportunities' }] : []),
     { id: 'journey', label: 'Journey' },
+    { id: 'references', label: 'References' },
     { id: 'friends', label: 'Friends' },
     { id: 'comments', label: 'Comments' },
     { id: 'posts', label: 'Posts' },
@@ -372,10 +373,10 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
                       onClick={() => {
                         trackReferenceBadgeClick('coach', (profile as Partial<Profile>).accepted_reference_count ?? 0)
                         if (!readOnly) {
-                          setActiveTab('friends')
+                          setActiveTab('references')
                           const next = new URLSearchParams(searchParams)
-                          next.set('tab', 'friends')
-                          next.set('section', 'references')
+                          next.set('tab', 'references')
+                          next.delete('section')
                           setSearchParams(next, { replace: false })
                         } else {
                           document.getElementById('public-references')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -554,11 +555,11 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
                     acceptedReferenceCount={nudgeAcceptedFloor}
                     profileRole={profile.role}
                     onAsk={(friendId) => {
-                      setActiveTab('friends')
+                      setActiveTab('references')
                       const next = new URLSearchParams(searchParams)
-                      next.set('tab', 'friends')
-                      next.set('section', 'references')
+                      next.set('tab', 'references')
                       next.set('ask', friendId)
+                      next.delete('section')
                       setSearchParams(next, { replace: false })
                     }}
                   />
@@ -834,9 +835,15 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
               </div>
             )}
 
+            {activeTab === 'references' && (
+              <div className="animate-fade-in">
+                <ReferencesTab profileId={profile.id} readOnly={readOnly} profileRole={profile.role} />
+              </div>
+            )}
+
             {activeTab === 'friends' && (
               <div className="animate-fade-in">
-                <FriendsTab profileId={profile.id} readOnly={readOnly} profileRole={profile.role} />
+                <FriendsTab profileId={profile.id} readOnly={readOnly} profileRole={profile.role} hideReferences />
               </div>
             )}
 

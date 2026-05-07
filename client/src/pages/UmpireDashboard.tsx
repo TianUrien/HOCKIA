@@ -49,6 +49,7 @@ import {
   FreshnessCard,
   SearchAppearancesCard,
   WelcomeValueCard,
+  ReferencesTab,
 } from '@/components'
 import { PulseSection } from '@/components/home/PulseSection'
 import { useProfileFreshness } from '@/hooks/useProfileFreshness'
@@ -101,9 +102,9 @@ interface UmpireDashboardProps {
   isOwnProfile?: boolean
 }
 
-type TabType = 'profile' | 'officiating' | 'gallery' | 'friends' | 'comments' | 'posts'
+type TabType = 'profile' | 'officiating' | 'gallery' | 'references' | 'friends' | 'comments' | 'posts'
 
-const TAB_IDS: TabType[] = ['profile', 'officiating', 'gallery', 'friends', 'comments', 'posts']
+const TAB_IDS: TabType[] = ['profile', 'officiating', 'gallery', 'references', 'friends', 'comments', 'posts']
 
 function isTabType(value: string | null): value is TabType {
   return !!value && (TAB_IDS as string[]).includes(value)
@@ -258,6 +259,7 @@ export default function UmpireDashboard({
     { id: 'profile', label: 'Profile' },
     { id: 'officiating', label: 'Journey' },
     { id: 'gallery', label: 'Gallery' },
+    { id: 'references', label: 'References' },
     { id: 'friends', label: 'Friends' },
     { id: 'comments', label: 'Comments' },
     { id: 'posts', label: 'Posts' },
@@ -380,10 +382,10 @@ export default function UmpireDashboard({
                   onClick={() => {
                     trackReferenceBadgeClick('umpire', profile.accepted_reference_count ?? 0)
                     if (!readOnly) {
-                      setActiveTab('friends')
+                      setActiveTab('references')
                       const next = new URLSearchParams(searchParams)
-                      next.set('tab', 'friends')
-                      next.set('section', 'references')
+                      next.set('tab', 'references')
+                      next.delete('section')
                       setSearchParams(next, { replace: false })
                     } else {
                       document.getElementById('public-references')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -517,11 +519,11 @@ export default function UmpireDashboard({
                   acceptedReferenceCount={nudgeAcceptedFloor}
                   profileRole="umpire"
                   onAsk={(friendId) => {
-                    setActiveTab('friends')
+                    setActiveTab('references')
                     const next = new URLSearchParams(searchParams)
-                    next.set('tab', 'friends')
-                    next.set('section', 'references')
+                    next.set('tab', 'references')
                     next.set('ask', friendId)
+                    next.delete('section')
                     setSearchParams(next, { replace: false })
                   }}
                 />
@@ -694,12 +696,23 @@ export default function UmpireDashboard({
               </div>
             )}
 
+            {activeTab === 'references' && (
+              <div className="animate-fade-in">
+                <ReferencesTab
+                  profileId={profile.id}
+                  readOnly={readOnly}
+                  profileRole="umpire"
+                />
+              </div>
+            )}
+
             {activeTab === 'friends' && (
               <div className="animate-fade-in">
                 <FriendsTab
                   profileId={profile.id}
                   readOnly={readOnly}
                   profileRole="umpire"
+                  hideReferences
                 />
               </div>
             )}

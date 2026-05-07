@@ -41,8 +41,11 @@ const getMetadataString = (notification: NotificationRecord, key: string): strin
 const commentRoute = '/dashboard/profile?tab=comments'
 const friendsRoute = '/dashboard/profile?tab=friends'
 const friendRequestsRoute = `${friendsRoute}&section=requests`
-const referenceAcceptedRoute = `${friendsRoute}&section=accepted`
-const referencesRoute = `${friendsRoute}&section=references`
+// Reference notifications now route to the dedicated /references tab
+// (split out of /friends 2026-05-08). Sub-section preserved as `?section=`
+// in case ReferencesTab grows internal anchors later.
+const referencesRoute = '/dashboard/profile?tab=references'
+const referenceAcceptedRoute = `${referencesRoute}&section=accepted`
 
 const conversationRoute = (notification: NotificationRecord) => {
   const conversationId = getMetadataString(notification, 'conversation_id')

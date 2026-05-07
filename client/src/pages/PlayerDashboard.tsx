@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, useRef } from 'react'
 import { ArrowLeft, MapPin, Calendar, Edit2, Eye, MessageCircle, Landmark, Mail, Award } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
-import { Avatar, EditProfileModal, FriendsTab, FriendshipButton, ProfileSnapshot, PublicReferencesSection, PublicViewBanner, RoleBadge, ScrollableTabs, NextStepCard, WelcomeValueCard, FreshnessCard, RecentlyConnectedCard, SearchAppearancesCard, DualNationalityDisplay, AvailabilityPill, TierBadge, TrustBadge, VerifiedBadge, CategoryConfirmationBanner } from '@/components'
+import { Avatar, EditProfileModal, FriendsTab, ReferencesTab, FriendshipButton, ProfileSnapshot, PublicReferencesSection, PublicViewBanner, RoleBadge, ScrollableTabs, NextStepCard, WelcomeValueCard, FreshnessCard, RecentlyConnectedCard, SearchAppearancesCard, DualNationalityDisplay, AvailabilityPill, TierBadge, TrustBadge, VerifiedBadge, CategoryConfirmationBanner } from '@/components'
 import { PulseSection } from '@/components/home/PulseSection'
 import { calculateTier } from '@/lib/profileTier'
 import { useProfileFreshness } from '@/hooks/useProfileFreshness'
@@ -43,7 +43,7 @@ import { useTabDeepLinkScroll } from '@/hooks/useTabDeepLinkScroll'
 const PLAYER_SECTION_ANCHORS = { viewers: 'profile-viewers' } as const
 import { calculateAge, formatDateOfBirth, getInitials } from '@/lib/utils'
 
-type TabType = 'profile' | 'friends' | 'journey' | 'comments' | 'posts'
+type TabType = 'profile' | 'journey' | 'references' | 'friends' | 'comments' | 'posts'
 
 export type PlayerProfileShape =
   Partial<Profile> &
@@ -85,7 +85,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
   const { addToast } = useToastStore()
   const [activeTab, setActiveTab] = useState<TabType>(() => {
     const tabParam = searchParams.get('tab') as TabType | null
-    return tabParam && ['profile', 'friends', 'journey', 'comments', 'posts'].includes(tabParam) ? tabParam : 'profile'
+    return tabParam && ['profile', 'journey', 'references', 'friends', 'comments', 'posts'].includes(tabParam) ? tabParam : 'profile'
   })
   const [showEditModal, setShowEditModal] = useState(false)
   const [showAddVideoModal, setShowAddVideoModal] = useState(false)
@@ -142,7 +142,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
 
   useEffect(() => {
     if (!tabParam) return
-    if (tabParam !== activeTab && ['profile', 'friends', 'journey', 'comments', 'posts'].includes(tabParam)) {
+    if (tabParam !== activeTab && ['profile', 'journey', 'references', 'friends', 'comments', 'posts'].includes(tabParam)) {
       setActiveTab(tabParam)
     }
   }, [tabParam, activeTab])
@@ -279,6 +279,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
   const tabs: { id: TabType; label: string }[] = [
     { id: 'profile', label: 'Profile' },
     { id: 'journey', label: 'Journey' },
+    { id: 'references', label: 'References' },
     { id: 'friends', label: 'Friends' },
     { id: 'comments', label: 'Comments' },
     { id: 'posts', label: 'Posts' },
@@ -527,11 +528,11 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
                   onClick={() => {
                     trackReferenceBadgeClick('player', profile.accepted_reference_count ?? 0)
                     if (!readOnly) {
-                      // Owner — go to friends tab, scroll references into view.
-                      setActiveTab('friends')
+                      // Owner — go to the dedicated References tab.
+                      setActiveTab('references')
                       const next = new URLSearchParams(searchParams)
-                      next.set('tab', 'friends')
-                      next.set('section', 'references')
+                      next.set('tab', 'references')
+                      next.delete('section')
                       setSearchParams(next, { replace: false })
                     } else {
                       // Visitor — anchor scroll to public references.
@@ -597,11 +598,11 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
                     acceptedReferenceCount={nudgeAcceptedFloor}
                     profileRole={profile.role}
                     onAsk={(friendId) => {
-                      setActiveTab('friends')
+                      setActiveTab('references')
                       const next = new URLSearchParams(searchParams)
-                      next.set('tab', 'friends')
-                      next.set('section', 'references')
+                      next.set('tab', 'references')
                       next.set('ask', friendId)
+                      next.delete('section')
                       setSearchParams(next, { replace: false })
                     }}
                   />
@@ -900,9 +901,15 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
               </div>
             )}
 
+            {activeTab === 'references' && (
+              <div className="animate-fade-in">
+                <ReferencesTab profileId={profile.id} readOnly={readOnly} profileRole={profile.role} />
+              </div>
+            )}
+
             {activeTab === 'friends' && (
               <div className="animate-fade-in">
-                <FriendsTab profileId={profile.id} readOnly={readOnly} profileRole={profile.role} />
+                <FriendsTab profileId={profile.id} readOnly={readOnly} profileRole={profile.role} hideReferences />
               </div>
             )}
 
