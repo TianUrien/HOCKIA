@@ -199,23 +199,23 @@ export default function MemberTile(props: MemberTileProps) {
 
           {/* Row 4: club / location / federation / category (truncated) */}
           {roleNative && (
-            <div className="flex items-center gap-1.5 text-xs text-gray-500 min-w-0 pt-0.5 border-t border-gray-100">
+            <div className="flex items-center gap-1.5 text-xs text-gray-500 min-w-0 pt-2 border-t border-gray-100">
               {roleNative.kind === 'team' && clubLogo ? (
                 <img
                   src={clubLogo}
                   alt=""
-                  className="w-3.5 h-3.5 rounded-sm object-cover flex-shrink-0 mt-1"
+                  className="w-3.5 h-3.5 rounded-sm object-cover flex-shrink-0"
                 />
               ) : roleNative.kind === 'federation' ? (
-                <Shield className="w-3 h-3 flex-shrink-0 text-gray-400 mt-1" />
+                <Shield className="w-3 h-3 flex-shrink-0 text-gray-400" />
               ) : roleNative.kind === 'team' ? (
-                <Building2 className="w-3 h-3 flex-shrink-0 text-gray-400 mt-1" />
+                <Building2 className="w-3 h-3 flex-shrink-0 text-gray-400" />
               ) : roleNative.kind === 'category' ? (
-                <Building2 className="w-3 h-3 flex-shrink-0 text-gray-400 mt-1" />
+                <Building2 className="w-3 h-3 flex-shrink-0 text-gray-400" />
               ) : (
-                <MapPin className="w-3 h-3 flex-shrink-0 text-gray-400 mt-1" />
+                <MapPin className="w-3 h-3 flex-shrink-0 text-gray-400" />
               )}
-              <span className="truncate pt-1">{roleNative.label}</span>
+              <span className="truncate">{roleNative.label}</span>
             </div>
           )}
         </div>
