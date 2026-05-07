@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { ArrowLeft, MapPin, Calendar, Plus, Eye, MessageCircle, Edit, Loader2, Sparkles } from 'lucide-react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import Header from '@/components/Header'
-import { Avatar, Button, CountryDisplay, DashboardMenu, EditProfileModal, CommentsTab, FriendsTab, FriendshipButton, NextStepCard, FreshnessCard, ProfileSnapshot, SearchAppearancesCard, PublicViewBanner, RoleBadge, ScrollableTabs, TierBadge, VerifiedBadge, PendingVerificationBadge } from '@/components'
+import { Avatar, Button, CountryDisplay, EditProfileModal, CommentsTab, FriendsTab, FriendshipButton, NextStepCard, WelcomeValueCard, FreshnessCard, ProfileSnapshot, SearchAppearancesCard, PublicViewBanner, RoleBadge, ScrollableTabs, TierBadge, VerifiedBadge, PendingVerificationBadge } from '@/components'
 import { PulseSection } from '@/components/home/PulseSection'
 import { calculateTier } from '@/lib/profileTier'
 import { useProfileFreshness } from '@/hooks/useProfileFreshness'
@@ -125,21 +125,6 @@ export default function ClubDashboard({ profileData, readOnly = false, isOwnProf
     }
   }
 
-  // Handler for ProfileSnapshot missing-signal taps. Club snapshot only
-  // emits 'edit-profile' actions today (no tab actions in the club signal
-  // list), so the dispatcher is small.
-  const handleSnapshotAction = (actionId: string) => {
-    if (actionId === 'edit-profile') {
-      setShowEditModal(true)
-      return
-    }
-    if (actionId.startsWith('tab:')) {
-      const tab = actionId.slice(4) as TabType
-      setActiveTab(tab)
-      setSearchParams({ tab })
-      return
-    }
-  }
 
   // Track previous percentage to show toast on improvement
   const prevPercentageRef = useRef<number | null>(null)
@@ -412,7 +397,6 @@ export default function ClubDashboard({ profileData, readOnly = false, isOwnProf
                       <span className="hidden xs:inline">Edit Profile</span>
                       <span className="xs:hidden">Edit</span>
                     </Button>
-                    <DashboardMenu />
                   </div>
                 )}
               </div>
@@ -455,6 +439,8 @@ export default function ClubDashboard({ profileData, readOnly = false, isOwnProf
             Visitor mode: just the public Snapshot (chips). */}
         {!readOnly ? (
           <>
+            <WelcomeValueCard />
+            <div className="mt-3" />
             <PulseSection />
             <NextStepCard
               percentage={percentage}
@@ -462,13 +448,8 @@ export default function ClubDashboard({ profileData, readOnly = false, isOwnProf
               loading={strengthLoading}
               onBucketAction={handleStrengthBucketAction}
             />
-            <div className="mt-3">
-              <ProfileSnapshot
-                profile={profile as Profile | null}
-                mode="owner"
-                onSignalAction={handleSnapshotAction}
-              />
-            </div>
+            {/* Owner-mode ProfileSnapshot removed 2026-05-08 — duplicate of
+                NextStepCard's progress story. Public-mode preserved below. */}
             <div className="mt-3">
               <FreshnessCard nudge={freshnessNudge} onAction={handleFreshnessAction} />
             </div>

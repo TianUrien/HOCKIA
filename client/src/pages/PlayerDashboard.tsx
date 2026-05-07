@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, useRef } from 'react'
 import { ArrowLeft, MapPin, Calendar, Edit2, Eye, MessageCircle, Landmark, Mail, Award } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
-import { Avatar, DashboardMenu, EditProfileModal, FriendsTab, FriendshipButton, ProfileSnapshot, PublicReferencesSection, PublicViewBanner, RoleBadge, ScrollableTabs, NextStepCard, FreshnessCard, RecentlyConnectedCard, SearchAppearancesCard, DualNationalityDisplay, AvailabilityPill, TierBadge, TrustBadge, VerifiedBadge, CategoryConfirmationBanner } from '@/components'
+import { Avatar, EditProfileModal, FriendsTab, FriendshipButton, ProfileSnapshot, PublicReferencesSection, PublicViewBanner, RoleBadge, ScrollableTabs, NextStepCard, WelcomeValueCard, FreshnessCard, RecentlyConnectedCard, SearchAppearancesCard, DualNationalityDisplay, AvailabilityPill, TierBadge, TrustBadge, VerifiedBadge, CategoryConfirmationBanner } from '@/components'
 import { PulseSection } from '@/components/home/PulseSection'
 import { calculateTier } from '@/lib/profileTier'
 import { useProfileFreshness } from '@/hooks/useProfileFreshness'
@@ -238,27 +238,6 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
     }
   }
 
-  // Handler for ProfileSnapshot missing-signal taps. Action ids are plain
-  // strings emitted by the snapshot per-role (e.g. 'edit-profile',
-  // 'add-video', 'tab:friends'). The dispatcher mirrors the existing
-  // NextStepCard pattern so all owner-side nudges route consistently.
-  const handleSnapshotAction = (actionId: string) => {
-    if (actionId === 'edit-profile') {
-      setShowEditModal(true)
-      return
-    }
-    if (actionId === 'add-video') {
-      if (activeTab !== 'profile') handleTabChange('profile')
-      setShowAddVideoModal(true)
-      return
-    }
-    if (actionId.startsWith('tab:')) {
-      const tabName = actionId.slice(4) as TabType
-      handleTabChange(tabName)
-      return
-    }
-  }
-
   if (!profile) return null
 
   const handleSendMessage = async () => {
@@ -427,7 +406,6 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
                       <span className="hidden xs:inline">Edit Profile</span>
                       <span className="xs:hidden">Edit</span>
                     </Button>
-                    <DashboardMenu />
                   </div>
                 )}
               </div>
@@ -581,6 +559,8 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
             Visitor mode skips 1/2/4/5/6 and only sees the Snapshot (chips). */}
         {!readOnly ? (
           <>
+            <WelcomeValueCard />
+            <div className="mt-3" />
             <PulseSection />
             <NextStepCard
               percentage={profileStrength.percentage}
@@ -588,13 +568,13 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
               loading={profileStrength.loading}
               onBucketAction={handleProfileStrengthAction}
             />
-            <div className="mt-3">
-              <ProfileSnapshot
-                profile={profile as Profile | null}
-                mode="owner"
-                onSignalAction={handleSnapshotAction}
-              />
-            </div>
+            {/* ProfileSnapshot owner-mode removed 2026-05-08: NextStepCard
+                above already drives the "what's next to complete" story
+                with the same data source (per-role profile-strength
+                buckets), and the snapshot's positive-evidence chips
+                duplicated signal a viewer doesn't see. Public mode
+                (rendered in the visitor branch below) still shows the
+                "what clubs see" surface — that one is unique. */}
             <div className="mt-3">
               <FreshnessCard nudge={freshnessNudge} onAction={handleFreshnessAction} />
             </div>

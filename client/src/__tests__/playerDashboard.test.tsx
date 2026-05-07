@@ -37,6 +37,7 @@ vi.mock('@/components', () => ({
   TrustBadge: () => <span data-testid="trust-badge" />,
   VerifiedBadge: () => <span data-testid="verified-badge" />,
   NextStepCard: () => <div data-testid="next-step-card">Next Step</div>,
+  WelcomeValueCard: () => <div data-testid="welcome-value-card" />,
   FreshnessCard: () => <div data-testid="freshness-card" />,
   RecentlyConnectedCard: () => <div data-testid="recently-connected-card" />,
   ProfileSnapshot: () => <div data-testid="profile-snapshot" />,

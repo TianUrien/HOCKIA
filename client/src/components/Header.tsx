@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { MessageCircle, Home, Users, Briefcase, Bell, Globe, Sparkles, Store } from 'lucide-react'
-import { Avatar, NotificationBadge } from '@/components'
+import { AvatarMenu, NotificationBadge } from '@/components'
 import { useNavigation } from '@/hooks/useNavigation'
 
 export default function Header() {
@@ -13,7 +13,6 @@ export default function Header() {
     unreadCount,
     opportunityCount,
     notificationCount,
-    profileInitials,
   } = useNavigation()
   const headerRef = useRef<HTMLElement>(null)
 
@@ -159,6 +158,7 @@ export default function Header() {
                       : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                   }`}
                   aria-label="Marketplace"
+                  title="Marketplace"
                   aria-current={isActive('/marketplace') ? 'page' : undefined}
                 >
                   <Store className="w-5 h-5" />
@@ -171,6 +171,7 @@ export default function Header() {
                       : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                   }`}
                   aria-label="HOCKIA AI"
+                  title="HOCKIA AI — ask anything about clubs, players, opportunities"
                   aria-current={isActive('/discover') ? 'page' : undefined}
                 >
                   <Sparkles className="w-5 h-5" />
@@ -183,6 +184,7 @@ export default function Header() {
                       : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                   }`}
                   aria-label="Messages"
+                  title="Messages"
                   aria-current={isActive('/messages') ? 'page' : undefined}
                 >
                   <MessageCircle className="w-5 h-5" />
@@ -192,30 +194,17 @@ export default function Header() {
                   onClick={() => toggleNotificationDrawer()}
                   className="relative p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors"
                   aria-label="Notifications"
+                  title="Notifications"
                 >
                   <Bell className="w-5 h-5" />
                   <NotificationBadge count={notificationCount} className="-right-0.5 -top-0.5" />
                 </button>
 
-                {/* Profile Avatar */}
-                <button
-                  onClick={() => handleNavigate('/dashboard/profile')}
-                  className={`ml-1 flex items-center rounded-full transition-all ${
-                    isActive('/dashboard')
-                      ? 'ring-2 ring-[#8026FA] ring-offset-2'
-                      : 'hover:opacity-80'
-                  }`}
-                  aria-label="Go to Dashboard"
-                  aria-current={isActive('/dashboard') ? 'page' : undefined}
-                >
-                  <Avatar
-                    src={profile.avatar_url}
-                    initials={profileInitials}
-                    size="sm"
-                    loading="eager"
-                    role={profile.role}
-                  />
-                </button>
+                {/* Avatar dropdown — Settings + Sign out moved off the
+                    hamburger so users discover them in the conventional
+                    place. Click the avatar opens a menu with Dashboard,
+                    Settings, Sign out. */}
+                <AvatarMenu isOnDashboard={isActive('/dashboard')} className="ml-1" />
               </>
             ) : (
               <>

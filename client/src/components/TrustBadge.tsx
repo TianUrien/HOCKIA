@@ -1,4 +1,5 @@
-import { Shield, ArrowRight } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { Shield, ArrowRight, Info } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface TrustBadgeProps {
@@ -91,22 +92,82 @@ export default function TrustBadge({
   }
 
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      title={tooltip}
-      aria-label={tooltip}
-      className={cn(
-        'inline-flex items-center rounded-full font-medium transition-colors',
-        'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8026FA]/40',
-        sizing,
-        variantClasses,
-        className,
+    <span className={cn('inline-flex items-center gap-1', className)}>
+      <button
+        type="button"
+        onClick={onClick}
+        title={tooltip}
+        aria-label={tooltip}
+        className={cn(
+          'inline-flex items-center rounded-full font-medium transition-colors',
+          'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8026FA]/40',
+          sizing,
+          variantClasses,
+        )}
+      >
+        <Shield className={iconSize} aria-hidden="true" />
+        {label}
+        {!hasReferences && <ArrowRight className={iconSize} aria-hidden="true" />}
+      </button>
+      {hasReferences && <TrustBadgeInfoButton tooltip={tooltip} size={size} />}
+    </span>
+  )
+}
+
+/**
+ * Companion "?" info button for the "Trusted by N" badge. Native HTML
+ * `title=` doesn't render on tap on iOS Safari / Capacitor WKWebView, so
+ * mobile users have no way to learn what the badge means. This sibling
+ * button toggles a small popover on tap (and on hover via the same `title`).
+ */
+function TrustBadgeInfoButton({ tooltip, size }: { tooltip: string; size: 'sm' | 'md' }) {
+  const [open, setOpen] = useState(false)
+  const containerRef = useRef<HTMLSpanElement | null>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
+      if (!containerRef.current?.contains(e.target as Node)) setOpen(false)
+    }
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('touchstart', handleClickOutside)
+    document.addEventListener('keydown', handleEscape)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('touchstart', handleClickOutside)
+      document.removeEventListener('keydown', handleEscape)
+    }
+  }, [open])
+
+  const iconSize = size === 'sm' ? 'w-3 h-3' : 'w-3.5 h-3.5'
+
+  return (
+    <span ref={containerRef} className="relative inline-flex">
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation()
+          setOpen((v) => !v)
+        }}
+        aria-label="What does this mean?"
+        aria-expanded={open ? 'true' : 'false'}
+        title="What does Trusted mean?"
+        className="inline-flex items-center justify-center rounded-full p-0.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8026FA]/40"
+      >
+        <Info className={iconSize} aria-hidden="true" />
+      </button>
+      {open && (
+        <span
+          role="tooltip"
+          className="absolute left-1/2 top-full z-30 mt-1.5 w-64 -translate-x-1/2 rounded-lg bg-gray-900 px-3 py-2 text-xs leading-relaxed text-white shadow-lg"
+        >
+          {tooltip}
+          <span className="absolute -top-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 bg-gray-900" aria-hidden="true" />
+        </span>
       )}
-    >
-      <Shield className={iconSize} aria-hidden="true" />
-      {label}
-      {!hasReferences && <ArrowRight className={iconSize} aria-hidden="true" />}
-    </button>
+    </span>
   )
 }

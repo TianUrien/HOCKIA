@@ -3,6 +3,7 @@ import { Building2, Check, Globe2, Loader2, Plus, Search, X } from 'lucide-react
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import StorageImage from './StorageImage'
+import Flag from './Flag'
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -402,11 +403,13 @@ export default function WorldClubSearch({
                       {/* Club info */}
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium text-gray-900">{club.club_name}</p>
-                        <p className="truncate text-xs text-gray-500">
-                          {club.flag_emoji && <span className="mr-1">{club.flag_emoji}</span>}
-                          {club.country_name}
-                          {club.province_name && ` · ${club.province_name}`}
-                          {leagueName && ` · ${leagueName}`}
+                        <p className="truncate text-xs text-gray-500 inline-flex items-center gap-1">
+                          <Flag code={club.country_code} countryName={club.country_name} fallbackEmoji={club.flag_emoji} size="sm" />
+                          <span className="truncate">
+                            {club.country_name}
+                            {club.province_name && ` · ${club.province_name}`}
+                            {leagueName && ` · ${leagueName}`}
+                          </span>
                         </p>
                       </div>
 

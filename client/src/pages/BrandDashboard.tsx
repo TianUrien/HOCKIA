@@ -9,7 +9,7 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import { Globe, Instagram, ExternalLink, Eye, Edit, Store, Package, Users, Plus, FileText, Loader2, Award, X } from 'lucide-react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import Header from '@/components/Header'
-import { Avatar, Button, DashboardMenu, NextStepCard, FreshnessCard, ProfileSnapshot, SearchAppearancesCard, RoleBadge, ScrollableTabs, TierBadge, VerifiedBadge } from '@/components'
+import { Avatar, Button, NextStepCard, WelcomeValueCard, FreshnessCard, SearchAppearancesCard, RoleBadge, ScrollableTabs, TierBadge, VerifiedBadge } from '@/components'
 import ShareProfileButton from '@/components/profile/ShareProfileButton'
 import { PulseSection } from '@/components/home/PulseSection'
 import { calculateTier } from '@/lib/profileTier'
@@ -175,20 +175,6 @@ export default function BrandDashboard() {
     }
   }
 
-  // Handler for ProfileSnapshot missing-signal taps. Brand snapshot emits
-  // 'edit-brand' (opens edit modal) and 'tab:<name>' (products / ambassadors
-  // / posts) — wired here to the existing tab + modal triggers.
-  const handleSnapshotAction = (actionId: string) => {
-    if (actionId === 'edit-brand') {
-      setShowEditModal(true)
-      return
-    }
-    if (actionId.startsWith('tab:')) {
-      const tab = actionId.slice(4) as TabType
-      handleTabChange(tab)
-      return
-    }
-  }
 
   // Handler for freshness nudges.
   const handleFreshnessAction = (nudge: FreshnessNudge) => {
@@ -487,7 +473,6 @@ export default function BrandDashboard() {
                     <span className="hidden xs:inline">Edit Brand</span>
                     <span className="xs:hidden">Edit</span>
                   </Button>
-                  <DashboardMenu />
                 </div>
               </div>
 
@@ -542,6 +527,8 @@ export default function BrandDashboard() {
               4. FreshnessCard
               5. SearchAppearancesCard
             Public-side brand snapshot lives in BrandProfilePage. */}
+        <WelcomeValueCard />
+        <div className="mt-3" />
         <PulseSection />
         <NextStepCard
           percentage={percentage}
@@ -549,22 +536,8 @@ export default function BrandDashboard() {
           loading={strengthLoading}
           onBucketAction={handleStrengthBucketAction}
         />
-        <div className="mt-3">
-          <ProfileSnapshot
-            profile={profile}
-            mode="owner"
-            onSignalAction={handleSnapshotAction}
-            brand={brand ? {
-              logo_url: brand.logo_url,
-              bio: brand.bio,
-              website_url: brand.website_url,
-              instagram_url: brand.instagram_url,
-            } : null}
-            brandProductCount={products.length}
-            brandAmbassadorCount={acceptedAmbassadors.length}
-            brandPostCount={posts.length}
-          />
-        </div>
+        {/* Owner-mode ProfileSnapshot removed 2026-05-08 — duplicate of
+            NextStepCard's progress story. */}
         <div className="mt-3">
           <FreshnessCard nudge={freshnessNudge} onAction={handleFreshnessAction} />
         </div>

@@ -32,7 +32,12 @@ const tierStyles: Record<ProfileTier, { label: string; icon: typeof Sparkles; cl
     classes: 'bg-amber-50 text-amber-700',
   },
   elite: {
-    label: 'All set',
+    // Renamed from "All set" — that label implied the profile was 100%
+    // complete, but the underlying tier fires at >=90% strength and the
+    // references bucket gives full credit at count >= 1, so a player
+    // with 1/5 references could already see "All set". "Strong profile"
+    // describes the state without claiming everything is done.
+    label: 'Strong profile',
     icon: CheckCircle2,
     classes: 'bg-emerald-50 text-emerald-700',
   },

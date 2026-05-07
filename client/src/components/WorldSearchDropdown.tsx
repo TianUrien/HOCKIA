@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Search, Building2, Loader2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import Flag from './Flag'
 import type { WorldClubSearchResult } from './WorldClubSearch'
 
 interface CountryItem {
@@ -254,10 +255,13 @@ export default function WorldSearchDropdown({
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="font-medium text-gray-900 text-sm truncate">{club.club_name}</p>
-                        <p className="text-xs text-gray-400 truncate">
-                          {club.flag_emoji || ''} {club.country_name}
-                          {club.province_name && ` · ${club.province_name}`}
-                          {leagueName && ` · ${leagueName}`}
+                        <p className="text-xs text-gray-400 truncate inline-flex items-center gap-1">
+                          <Flag code={club.country_code} countryName={club.country_name} fallbackEmoji={club.flag_emoji} size="sm" />
+                          <span className="truncate">
+                            {club.country_name}
+                            {club.province_name && ` · ${club.province_name}`}
+                            {leagueName && ` · ${leagueName}`}
+                          </span>
                         </p>
                       </div>
                     </button>

@@ -32,7 +32,6 @@ import {
   Button,
   CategoryConfirmationBanner,
   CommentsTab,
-  DashboardMenu,
   EditProfileModal,
   FriendsTab,
   FriendshipButton,
@@ -49,6 +48,7 @@ import {
   RecentlyConnectedCard,
   FreshnessCard,
   SearchAppearancesCard,
+  WelcomeValueCard,
 } from '@/components'
 import { PulseSection } from '@/components/home/PulseSection'
 import { useProfileFreshness } from '@/hooks/useProfileFreshness'
@@ -152,20 +152,6 @@ export default function UmpireDashboard({
     setSearchParams(next, { replace: true })
   }
 
-  // Handler for ProfileSnapshot missing-signal taps. Umpire snapshot emits
-  // 'edit-profile' (level / federation / specialization / languages / photo
-  // / bio fields) and 'tab:officiating' / 'tab:friends' (appointments + refs).
-  const handleSnapshotAction = (actionId: string) => {
-    if (actionId === 'edit-profile') {
-      setShowEditModal(true)
-      return
-    }
-    if (actionId.startsWith('tab:')) {
-      const tab = actionId.slice(4) as TabType
-      handleTabChange(tab)
-      return
-    }
-  }
 
   // Handler for FreshnessCard nudges — same dispatch shape as Player/Coach
   // dashboards, routes to the relevant tab or edit modal.
@@ -345,7 +331,6 @@ export default function UmpireDashboard({
                       <span className="hidden xs:inline">Edit Profile</span>
                       <span className="xs:hidden">Edit</span>
                     </Button>
-                    <DashboardMenu />
                   </div>
                 ) : isOwnProfile ? (
                   <div className="flex flex-wrap items-center gap-2">
@@ -484,6 +469,7 @@ export default function UmpireDashboard({
             Visitor mode: just the public Snapshot (chips). */}
         {!readOnly ? (
           <>
+            <WelcomeValueCard />
             <div className="mt-6">
               <PulseSection />
             </div>
@@ -515,13 +501,8 @@ export default function UmpireDashboard({
               </section>
             )}
 
-            <div className="mt-6">
-              <ProfileSnapshot
-                profile={profile as unknown as Profile | null}
-                mode="owner"
-                onSignalAction={handleSnapshotAction}
-              />
-            </div>
+            {/* Owner-mode ProfileSnapshot removed 2026-05-08 — duplicate of
+                NextStepCard's progress story. Public-mode preserved below. */}
 
             <div className="mt-6">
               <FreshnessCard nudge={freshnessNudge} onAction={handleFreshnessAction} />

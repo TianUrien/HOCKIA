@@ -1,4 +1,5 @@
 import { useCountries, type Country } from '@/hooks/useCountries'
+import Flag from '@/components/Flag'
 
 interface DualNationalityDisplayProps {
   /** Primary nationality country ID */
@@ -85,26 +86,20 @@ interface CompactDisplayProps {
 }
 
 function CompactDisplay({ primaryCountry, secondaryCountry, hasEuNationality, className }: CompactDisplayProps) {
-  const nationalities: { flag: string; name: string }[] = []
+  const nationalities: { country: Country; name: string }[] = []
 
   if (primaryCountry) {
-    nationalities.push({
-      flag: primaryCountry.flag_emoji || '🏳️',
-      name: primaryCountry.nationality_name,
-    })
+    nationalities.push({ country: primaryCountry, name: primaryCountry.nationality_name })
   }
   if (secondaryCountry) {
-    nationalities.push({
-      flag: secondaryCountry.flag_emoji || '🏳️',
-      name: secondaryCountry.nationality_name,
-    })
+    nationalities.push({ country: secondaryCountry, name: secondaryCountry.nationality_name })
   }
 
   return (
     <span className={`inline-flex items-center gap-1 ${className}`}>
       {nationalities.map((nat, i) => (
-        <span key={i} className="inline-flex items-center">
-          <span className="text-base mr-1">{nat.flag}</span>
+        <span key={i} className="inline-flex items-center gap-1">
+          <Flag code={nat.country.code} countryName={nat.country.name} fallbackEmoji={nat.country.flag_emoji} />
           <span>{nat.name}</span>
           {i < nationalities.length - 1 && <span className="mx-1">,</span>}
         </span>
@@ -144,7 +139,7 @@ function CardDisplay({
   if (!hasDualNationality && primaryCountry) {
     return (
       <span className={`inline-flex items-center gap-1.5 ${className}`}>
-        <span className="text-base">{primaryCountry.flag_emoji}</span>
+        <Flag code={primaryCountry.code} countryName={primaryCountry.name} fallbackEmoji={primaryCountry.flag_emoji} />
         <span>{primaryCountry.name}</span>
         {primaryIsEu && (
           <span className="text-xs text-blue-600 font-medium">(EU)</span>
@@ -158,7 +153,7 @@ function CardDisplay({
       {primaryCountry && (
         <div className="flex items-center gap-1.5">
           <span className="text-gray-400">•</span>
-          <span className="text-base">{primaryCountry.flag_emoji}</span>
+          <Flag code={primaryCountry.code} countryName={primaryCountry.name} fallbackEmoji={primaryCountry.flag_emoji} />
           <span>{primaryCountry.name}</span>
           {primaryIsEu && (
             <span className="text-xs text-blue-600 font-medium">(EU)</span>
@@ -168,7 +163,7 @@ function CardDisplay({
       {secondaryCountry && (
         <div className="flex items-center gap-1.5">
           <span className="text-gray-400">•</span>
-          <span className="text-base">{secondaryCountry.flag_emoji}</span>
+          <Flag code={secondaryCountry.code} countryName={secondaryCountry.name} fallbackEmoji={secondaryCountry.flag_emoji} />
           <span>{secondaryCountry.name}</span>
           {secondaryIsEu && (
             <span className="text-xs text-blue-600 font-medium">(EU)</span>
@@ -201,7 +196,7 @@ function FullDisplay({
       {/* Primary nationality */}
       {primaryCountry && (
         <div className="flex items-center gap-1.5">
-          <span>{primaryCountry.flag_emoji}</span>
+          <Flag code={primaryCountry.code} countryName={primaryCountry.name} fallbackEmoji={primaryCountry.flag_emoji} />
           <span className="font-medium">{primaryCountry.nationality_name}</span>
           {primaryIsEu && (
             <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-medium">
@@ -214,7 +209,7 @@ function FullDisplay({
       {/* Secondary nationality */}
       {secondaryCountry && (
         <div className="flex items-center gap-1.5">
-          <span>{secondaryCountry.flag_emoji}</span>
+          <Flag code={secondaryCountry.code} countryName={secondaryCountry.name} fallbackEmoji={secondaryCountry.flag_emoji} />
           <span className="font-medium">{secondaryCountry.nationality_name}</span>
           {secondaryIsEu && (
             <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-medium">

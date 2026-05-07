@@ -3,6 +3,7 @@ import { ChevronDown, Search, X, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useCountries, type Country } from '@/hooks/useCountries'
 import { searchCountries } from '@/lib/countrySearch'
+import Flag from '@/components/Flag'
 
 interface CountrySelectProps {
   label?: string
@@ -143,12 +144,6 @@ export default function CountrySelect({
     [isOpen, filteredCountries, highlightedIndex, handleSelect]
   )
 
-  const getDisplayText = (country: Country) => {
-    const flag = country.flag_emoji ?? ''
-    const text = showNationality ? country.nationality_name : country.name
-    return `${flag} ${text}`.trim()
-  }
-
   return (
     <div className={cn('space-y-2', className)} ref={containerRef}>
       {label && (
@@ -184,10 +179,23 @@ export default function CountrySelect({
           )}
         >
           <span className={cn(
-            'flex-1 truncate',
+            'flex-1 truncate inline-flex items-center gap-2',
             selectedCountry ? 'text-gray-900' : 'text-gray-400'
           )}>
-            {selectedCountry ? getDisplayText(selectedCountry) : placeholder}
+            {selectedCountry ? (
+              <>
+                <Flag
+                  code={selectedCountry.code}
+                  countryName={selectedCountry.name}
+                  fallbackEmoji={selectedCountry.flag_emoji}
+                />
+                <span className="truncate">
+                  {showNationality ? selectedCountry.nationality_name : selectedCountry.name}
+                </span>
+              </>
+            ) : (
+              placeholder
+            )}
           </span>
 
           <div className="flex items-center gap-1">
@@ -295,9 +303,12 @@ export default function CountrySelect({
                     )}
                   >
                     <span className="flex items-center gap-2">
-                      {country.flag_emoji && (
-                        <span className="text-lg">{country.flag_emoji}</span>
-                      )}
+                      <Flag
+                        code={country.code}
+                        countryName={country.name}
+                        fallbackEmoji={country.flag_emoji}
+                        size="lg"
+                      />
                       <span className="text-sm text-gray-900">
                         {showNationality ? country.nationality_name : country.name}
                       </span>

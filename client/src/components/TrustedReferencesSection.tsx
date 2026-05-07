@@ -570,8 +570,14 @@ export default function TrustedReferencesSection({
                   className="min-w-[260px] flex-shrink-0 snap-center rounded-3xl border-2 border-dashed border-emerald-200 bg-emerald-50/40 p-5 text-center text-emerald-700"
                 >
                   <Plus className="mx-auto mb-2 h-6 w-6" />
-                  <p className="font-semibold">Add Reference</p>
-                  <p className="text-sm">{maxReferences - acceptedCount} spots left</p>
+                  <p className="font-semibold">Add reference</p>
+                  <p className="mt-1 text-sm">{maxReferences - acceptedCount} of {maxReferences} spots left</p>
+                  {/* One-line "why" so a partial-profile owner sees the
+                      motivation alongside the count, not just an
+                      unexplained "X spots left" number. */}
+                  <p className="mt-2 text-xs text-emerald-600/80 leading-relaxed">
+                    Vouches from coaches, teammates, and clubs make your profile recruitable.
+                  </p>
                 </button>
               )}
             </>

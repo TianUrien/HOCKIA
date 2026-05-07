@@ -1,3 +1,4 @@
+import Flag from '@/components/Flag'
 import { useCountries } from '@/hooks/useCountries'
 
 interface CountryDisplayProps {
@@ -14,9 +15,11 @@ interface CountryDisplayProps {
 }
 
 /**
- * Displays a country with its flag emoji.
+ * Displays a country with its flag.
  * Prioritizes the structured country_id over legacy text fields.
- * 
+ * Renders flagcdn PNGs (consistent across OS) with emoji fallback when
+ * the ISO code is missing — see <Flag /> for the rendering policy.
+ *
  * Usage:
  * <CountryDisplay countryId={profile.nationality_country_id} fallbackText={profile.nationality} showNationality />
  */
@@ -32,26 +35,26 @@ export default function CountryDisplay({
   // If we have a country ID, use the structured data
   if (countryId) {
     const country = getCountryById(countryId)
-    
+
     if (loading) {
       return <span className={className}>...</span>
     }
 
     if (country) {
       const displayText = showNationality ? country.nationality_name : country.name
-      
+
       if (flagOnly) {
         return (
           <span className={className} title={displayText}>
-            {country.flag_emoji || '🏳️'}
+            <Flag code={country.code} countryName={country.name} fallbackEmoji={country.flag_emoji} />
           </span>
         )
       }
 
       return (
-        <span className={className}>
-          {country.flag_emoji && <span className="mr-1.5">{country.flag_emoji}</span>}
-          {displayText}
+        <span className={`inline-flex items-center gap-1.5 ${className}`}>
+          <Flag code={country.code} countryName={country.name} fallbackEmoji={country.flag_emoji} />
+          <span>{displayText}</span>
         </span>
       )
     }

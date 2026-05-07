@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, useRef } from 'react'
 import { ArrowLeft, MapPin, Calendar, Edit2, Eye, MessageCircle, Landmark, Mail, Plus } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
-import { Avatar, DashboardMenu, EditProfileModal, JourneyTab, CommentsTab, FriendsTab, FriendshipButton, NextStepCard, FreshnessCard, ProfileSnapshot, RecentlyConnectedCard, SearchAppearancesCard, PublicReferencesSection, PublicViewBanner, RoleBadge, ScrollableTabs, DualNationalityDisplay, AvailabilityPill, TierBadge, TrustBadge, VerifiedBadge, CategoryConfirmationBanner } from '@/components'
+import { Avatar, EditProfileModal, JourneyTab, CommentsTab, FriendsTab, FriendshipButton, NextStepCard, WelcomeValueCard, FreshnessCard, ProfileSnapshot, RecentlyConnectedCard, SearchAppearancesCard, PublicReferencesSection, PublicViewBanner, RoleBadge, ScrollableTabs, DualNationalityDisplay, AvailabilityPill, TierBadge, TrustBadge, VerifiedBadge, CategoryConfirmationBanner } from '@/components'
 import { PulseSection } from '@/components/home/PulseSection'
 import { calculateTier } from '@/lib/profileTier'
 import { useProfileFreshness } from '@/hooks/useProfileFreshness'
@@ -161,21 +161,6 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
     }
   }
 
-  // Handler for ProfileSnapshot missing-signal taps. Snapshot emits action
-  // ids in the standard form ('edit-profile' | 'add-video' | 'tab:<name>')
-  // — coach has no add-video flow, so video signal is omitted from coach
-  // signals upstream, and the dispatcher only handles the cases the coach
-  // snapshot actually emits.
-  const handleSnapshotAction = (actionId: string) => {
-    if (actionId === 'edit-profile') {
-      setShowEditModal(true)
-      return
-    }
-    if (actionId.startsWith('tab:')) {
-      switchTab(actionId.slice(4) as TabType)
-      return
-    }
-  }
 
   // Track previous percentage to show toast on improvement
   const prevPercentageRef = useRef<number | null>(null)
@@ -443,7 +428,6 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
                       <span className="hidden xs:inline">Edit Profile</span>
                       <span className="xs:hidden">Edit</span>
                     </Button>
-                    <DashboardMenu />
                   </div>
                 ) : (
                   <div className="flex flex-wrap items-center gap-2">
@@ -542,6 +526,8 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
             Visitor mode: just the public Snapshot (chips). */}
         {!readOnly ? (
           <>
+            <WelcomeValueCard />
+            <div className="mt-3" />
             <PulseSection />
             <NextStepCard
               percentage={percentage}
@@ -549,13 +535,8 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
               loading={strengthLoading}
               onBucketAction={handleStrengthBucketAction}
             />
-            <div className="mt-3">
-              <ProfileSnapshot
-                profile={profile as Profile | null}
-                mode="owner"
-                onSignalAction={handleSnapshotAction}
-              />
-            </div>
+            {/* Owner-mode ProfileSnapshot removed 2026-05-08 — duplicate of
+                NextStepCard's progress story. Public-mode preserved below. */}
             <div className="mt-3">
               <FreshnessCard nudge={freshnessNudge} onAction={handleFreshnessAction} />
             </div>

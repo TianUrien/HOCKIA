@@ -3,12 +3,14 @@ import { Link2, X, ChevronRight } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import Avatar from '@/components/Avatar'
+import Flag from '@/components/Flag'
 
 interface WorldClubMatch {
   id: string
   club_name: string
   avatar_url: string | null
   country_name: string
+  country_code: string | null
   flag_emoji: string | null
   men_league_name: string | null
   women_league_name: string | null
@@ -124,9 +126,9 @@ export default function ClubLinkPrompt() {
               role="club"
             />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">
-                {club.flag_emoji && <span className="mr-1">{club.flag_emoji}</span>}
-                {club.club_name}
+              <p className="text-sm font-medium text-gray-900 truncate inline-flex items-center gap-1">
+                <Flag code={club.country_code} countryName={club.country_name} fallbackEmoji={club.flag_emoji} size="sm" />
+                <span className="truncate">{club.club_name}</span>
               </p>
               <p className="text-xs text-gray-500 truncate">
                 {[club.country_name, club.men_league_name || club.women_league_name].filter(Boolean).join(' · ')}
