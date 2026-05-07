@@ -313,6 +313,53 @@ describe('getNotificationConfig', () => {
     const config = getNotificationConfig(notification)
     expect(config.getTitle(notification)).toBe('Application accepted')
   })
+
+  // Routing contracts for the post-References/Friends-split notification
+  // surface (2026-05-09 audit). These guard against regressions where:
+  //   - friend requests get sent to the trusted-references area
+  //   - reference requests get sent back to the friend incoming list
+  it('friend_request_received routes to /friends with section=incoming', () => {
+    const notification = createNotification({
+      kind: 'friend_request_received',
+    })
+    const config = getNotificationConfig(notification)
+    // section=incoming targets the deep-link anchor on the Friends tab's
+    // Incoming Requests block. Was previously section=requests, which
+    // collided with the trusted-references deep-link convention.
+    expect(config.getRoute?.(notification)).toBe('/dashboard/profile?tab=friends&section=incoming')
+  })
+
+  it('friend_request_accepted routes to /friends without a section', () => {
+    const notification = createNotification({
+      kind: 'friend_request_accepted',
+    })
+    const config = getNotificationConfig(notification)
+    expect(config.getRoute?.(notification)).toBe('/dashboard/profile?tab=friends')
+  })
+
+  it('reference_request_received routes to /references (NOT /friends)', () => {
+    const notification = createNotification({
+      kind: 'reference_request_received',
+    })
+    const config = getNotificationConfig(notification)
+    expect(config.getRoute?.(notification)).toBe('/dashboard/profile?tab=references')
+  })
+
+  it('reference_request_accepted routes to /references with section=accepted', () => {
+    const notification = createNotification({
+      kind: 'reference_request_accepted',
+    })
+    const config = getNotificationConfig(notification)
+    expect(config.getRoute?.(notification)).toBe('/dashboard/profile?tab=references&section=accepted')
+  })
+
+  it('reference_request_rejected routes to /references', () => {
+    const notification = createNotification({
+      kind: 'reference_request_rejected',
+    })
+    const config = getNotificationConfig(notification)
+    expect(config.getRoute?.(notification)).toBe('/dashboard/profile?tab=references')
+  })
 })
 
 describe('resolveNotificationRoute', () => {

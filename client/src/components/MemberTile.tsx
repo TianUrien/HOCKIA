@@ -83,6 +83,10 @@ export default function MemberTile(props: MemberTileProps) {
       navigate(`/clubs/id/${props.id}?ref=community`)
     } else if (props.role === 'umpire') {
       navigate(`/umpires/id/${props.id}?ref=community`)
+    } else if (props.role === 'coach') {
+      // Coach has its own public route (PublicPlayerProfile is the
+      // shared component, but the URL prefix matters for SEO + share).
+      navigate(`/coaches/id/${props.id}?ref=community`)
     } else {
       navigate(`/players/id/${props.id}?ref=community`)
     }

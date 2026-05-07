@@ -15,6 +15,7 @@ import type { ReferenceFriendOption } from './AddReferenceModal'
 import { Link, useSearchParams } from 'react-router-dom'
 import { trackReferenceModalOpen } from '@/lib/analytics'
 import { getInitials } from '@/lib/utils'
+import { profilePath } from '@/lib/profileNavigation'
 
 interface FriendsTabProps {
   profileId: string
@@ -49,18 +50,20 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole, h
   const [loading, setLoading] = useState(true)
   const [actionTarget, setActionTarget] = useState<string | null>(null)
 
-  // Phase 4 audit B2 fix — read ?section= deep-link query param so notification
-  // taps land at the right sub-area instead of dumping the user at the top of
-  // the Friends tab. Recognised values: "requests" (incoming reference
-  // requests), "accepted" (newly-accepted reference), "references" (the
-  // TrustedReferencesSection top). All three resolve to the trusted-references
-  // wrapper today; the section is shown by TrustedReferencesSection itself,
-  // which already orders pending requests above accepted ones, so a user
-  // tapping a "your reference was accepted" notification lands above the
-  // accepted carousel and the requested-area both.
+  // ?section= deep-link handler. Two recognised values today:
+  //   - "incoming"   → scroll to Incoming Friend Requests (used by the
+  //                    friend_request_received notification)
+  //   - "references" → scroll to the inline TrustedReferencesSection
+  //                    (legacy; only meaningful when hideReferences=false,
+  //                    e.g. ClubDashboard which doesn't have a separate
+  //                    ReferencesTab)
+  // Reference notifications now route to ?tab=references directly and
+  // never land on this tab, so the old "requests" / "accepted" mappings
+  // were removed.
   const [searchParams, setSearchParams] = useSearchParams()
   const requestedSection = searchParams.get('section')
   const trustedReferencesRef = useRef<HTMLDivElement | null>(null)
+  const incomingRequestsRef = useRef<HTMLElement | null>(null)
 
   // Phase 4 References UX Plan #1.4 — per-friend "Ask to vouch" CTA. The
   // friend-row button sets this state to the target friend.id; the
@@ -125,23 +128,23 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole, h
     void fetchConnections()
   }, [fetchConnections])
 
-  // Phase 4 audit B2 — when ?section= deep-links into the trust subarea,
-  // scroll the references wrapper into view AFTER the connections fetch
-  // has settled. The 'requests' / 'accepted' / 'references' values all
-  // resolve to the same TrustedReferencesSection wrapper today; if we
-  // later add per-subsection anchors we can branch by value here.
+  // Scroll the right section into view AFTER the connections fetch settles.
+  // requestAnimationFrame so we scroll AFTER the new layout is committed
+  // (avoids a flicker where the page briefly shows the top before scrolling).
   useEffect(() => {
     if (loading) return
     const section = requestedSection
-    const KNOWN = ['requests', 'accepted', 'references']
-    if (section && KNOWN.includes(section) && trustedReferencesRef.current) {
-      // requestAnimationFrame so we scroll AFTER the new layout is committed
-      // (avoids a flicker where the page briefly shows the top before scrolling).
-      const id = requestAnimationFrame(() => {
-        trustedReferencesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      })
-      return () => cancelAnimationFrame(id)
+    let target: HTMLElement | null = null
+    if (section === 'incoming') {
+      target = incomingRequestsRef.current
+    } else if (section === 'references') {
+      target = trustedReferencesRef.current
     }
+    if (!target) return
+    const id = requestAnimationFrame(() => {
+      target?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+    return () => cancelAnimationFrame(id)
   }, [loading, requestedSection])
 
   const acceptedConnections = useMemo(
@@ -240,14 +243,14 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole, h
 
   const buildProfileLink = (friend: FriendProfile | null) => {
     if (!friend) return '#'
-    const slug = friend.username ? `${friend.username}` : `id/${friend.id}`
-    if (friend.role === 'club') return `/clubs/${slug}`
-    if (friend.role === 'umpire') return `/umpires/${slug}`
     // Brands key on brand.slug (not profiles.username), so the username
     // path won't resolve. Always go through the id-redirect, which looks
     // up the canonical slug and redirects to /brands/:slug.
     if (friend.role === 'brand') return `/brands/id/${friend.id}`
-    return `/players/${slug}`
+    // profilePath emits the right /<role>/... URL per role and falls back
+    // to /<role>/id/<uuid> when username is missing. Prevents the
+    // pre-fix bug where coach friends routed to /players/<slug>.
+    return profilePath(friend.role, friend.username, friend.id) ?? '#'
   }
 
   const canShowTrustedReferences =
@@ -455,7 +458,11 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole, h
       </section>
 
       {isOwner && (
-        <section className="space-y-6">
+        <section
+          ref={incomingRequestsRef}
+          data-deeplink-section="incoming-requests"
+          className="space-y-6 scroll-mt-[88px]"
+        >
           <div>
             <h3 className="text-lg font-semibold text-gray-900">Incoming Requests</h3>
             <p className="text-sm text-gray-500">Approve or decline pending requests from other members.</p>

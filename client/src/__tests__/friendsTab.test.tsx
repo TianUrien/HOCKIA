@@ -198,4 +198,103 @@ describe('FriendsTab', () => {
       )
     })
   })
+
+  // ── Profile link routing — role-aware (regression guard) ─────────
+  // Pre-fix bug: every non-club/umpire/brand role routed to /players/<slug>,
+  // so coach friends incorrectly opened the player URL prefix instead of
+  // their own /coaches/<slug>.
+
+  const renderWithFriend = (role: string, override: Partial<ProfileRow> = {}) => {
+    supabaseState.edgesResult = {
+      data: [
+        { ...baseEdge, id: 'edge-x', status: 'accepted', requester_id: 'user-1', accepted_at: '2024-02-01T00:00:00Z' },
+      ],
+      error: null,
+    }
+    supabaseState.profilesResult = {
+      data: [{ ...baseProfile, role, ...override }],
+      error: null,
+    }
+    renderFriendsTab()
+  }
+
+  const expectLinkToHaveHref = async (linkText: string | RegExp, hrefPattern: string | RegExp) => {
+    const link = (await screen.findAllByRole('link'))[0]
+    expect(link).toBeTruthy()
+    const href = link.getAttribute('href')
+    expect(href).toBeTruthy()
+    if (typeof hrefPattern === 'string') {
+      expect(href).toBe(hrefPattern)
+    } else {
+      expect(href).toMatch(hrefPattern)
+    }
+    void linkText
+  }
+
+  it('player friend link routes to /players/:username', async () => {
+    renderWithFriend('player', { username: 'alex-p' })
+    await expectLinkToHaveHref('Jamie Lee', '/players/alex-p')
+  })
+
+  it('coach friend link routes to /coaches/:username (regression: was /players/)', async () => {
+    renderWithFriend('coach', { username: 'maria-c' })
+    await expectLinkToHaveHref('Jamie Lee', '/coaches/maria-c')
+  })
+
+  it('umpire friend link routes to /umpires/:username', async () => {
+    renderWithFriend('umpire', { username: 'sara-u' })
+    await expectLinkToHaveHref('Jamie Lee', '/umpires/sara-u')
+  })
+
+  it('club friend link routes to /clubs/:username', async () => {
+    renderWithFriend('club', { username: 'hc-rotterdam' })
+    await expectLinkToHaveHref('Jamie Lee', '/clubs/hc-rotterdam')
+  })
+
+  it('brand friend link uses /brands/id/:id (slug-redirect path)', async () => {
+    renderWithFriend('brand', { username: 'wont-be-used' })
+    // brands key on brand.slug, not profiles.username, so we always
+    // route through the id-redirect.
+    await expectLinkToHaveHref('Jamie Lee', '/brands/id/friend-1')
+  })
+
+  it('falls back to /<role>/id/<uuid> when username is missing — coach', async () => {
+    renderWithFriend('coach', { username: '' as unknown as string })
+    await expectLinkToHaveHref('Jamie Lee', '/coaches/id/friend-1')
+  })
+
+  it('falls back to /players/id/<uuid> when username is missing — player', async () => {
+    renderWithFriend('player', { username: '' as unknown as string })
+    await expectLinkToHaveHref('Jamie Lee', '/players/id/friend-1')
+  })
+
+  // ── Empty / loading / role-gate states ───────────────────────────
+
+  it('shows empty state when no connections and user is owner', async () => {
+    supabaseState.edgesResult = { data: [], error: null }
+    renderFriendsTab()
+    expect(await screen.findByText(/No friends yet/i)).toBeInTheDocument()
+    // Owner gets a "Find friends" CTA
+    expect(screen.getByRole('button', { name: /Find friends/i })).toBeInTheDocument()
+  })
+
+  it('shows skeleton placeholders before fetch resolves', async () => {
+    supabaseState.edgesResult = { data: [], error: null }
+    const { container } = renderFriendsTab()
+    // Synchronous: the loading=true initial state renders 3 pulse skeletons.
+    expect(container.querySelectorAll('.animate-pulse').length).toBeGreaterThan(0)
+    // Then wait for the empty state so the test doesn't leave pending state
+    // updates and trip act() warnings under React strict-mode tests.
+    expect(await screen.findByText(/No friends yet/i)).toBeInTheDocument()
+  })
+
+  it('renders Incoming Requests section with deep-link anchor when isOwner', async () => {
+    supabaseState.edgesResult = { data: [], error: null }
+    const { container } = renderFriendsTab()
+    // Wait for fetch to settle (data is empty so component renders the
+    // "no incoming requests" state under the anchor).
+    await screen.findByText('Incoming Requests')
+    const anchor = container.querySelector('[data-deeplink-section="incoming-requests"]')
+    expect(anchor).not.toBeNull()
+  })
 })

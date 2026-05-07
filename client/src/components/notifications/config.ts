@@ -40,8 +40,14 @@ const getMetadataString = (notification: NotificationRecord, key: string): strin
 
 const commentRoute = '/dashboard/profile?tab=comments'
 const friendsRoute = '/dashboard/profile?tab=friends'
-const friendRequestsRoute = `${friendsRoute}&section=requests`
-// Reference notifications now route to the dedicated /references tab
+// `section=incoming` deep-links to the Incoming Requests block on the
+// Friends tab. Renamed from `section=requests` (2026-05-09) which
+// collided with the trusted-references deep-link convention used inside
+// FriendsTab — taps from a friend-request notification used to scroll
+// to the references block (for clubs) or no-op (for player/coach/umpire
+// with hideReferences) instead of landing on the actual incoming list.
+const friendRequestsRoute = `${friendsRoute}&section=incoming`
+// Reference notifications route to the dedicated /references tab
 // (split out of /friends 2026-05-08). Sub-section preserved as `?section=`
 // in case ReferencesTab grows internal anchors later.
 const referencesRoute = '/dashboard/profile?tab=references'

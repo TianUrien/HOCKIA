@@ -560,6 +560,8 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
       navigate(`/clubs/id/${member.id}?ref=community`)
     } else if (member.role === 'umpire') {
       navigate(`/umpires/id/${member.id}?ref=community`)
+    } else if (member.role === 'coach') {
+      navigate(`/coaches/id/${member.id}?ref=community`)
     } else {
       navigate(`/players/id/${member.id}?ref=community`)
     }
