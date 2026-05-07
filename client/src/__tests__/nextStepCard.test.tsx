@@ -33,11 +33,23 @@ describe('NextStepCard', () => {
     expect(container).toBeEmptyDOMElement()
   })
 
-  it('renders nothing when profile is 100% complete', () => {
-    const { container } = render(
-      <NextStepCard percentage={100} buckets={allCompleteBuckets} />
-    )
-    expect(container).toBeEmptyDOMElement()
+  it('renders the celebratory "profile complete" state when profile is 100%', () => {
+    // Behaviour change 2026-05-08: the card no longer unmounts at 100%.
+    // Players need a persistent progress signal so they can tell when
+    // something later moves them off 100% (a new bucket, lapsed reference,
+    // etc.). The progress bar stays visible and the next-step CTA is
+    // replaced with a celebratory "Profile complete" copy block.
+    render(<NextStepCard percentage={100} buckets={allCompleteBuckets} />)
+
+    expect(screen.getByText('Profile complete')).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { level: 3, name: /your profile is fully built/i }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('100%')).toBeInTheDocument()
+    // No "Get started" CTA in the complete state.
+    expect(screen.queryByRole('button', { name: /get started/i })).not.toBeInTheDocument()
+    // Step counter copy reflects completion.
+    expect(screen.getByText(/All 2 steps complete/)).toBeInTheDocument()
   })
 
   it('renders nothing when buckets array is empty', () => {
@@ -47,12 +59,14 @@ describe('NextStepCard', () => {
     expect(container).toBeEmptyDOMElement()
   })
 
-  it('renders nothing when every bucket is already completed even if percentage is below 100', () => {
-    // Edge case: weights might not sum to 100 but all buckets could be marked completed.
-    const { container } = render(
-      <NextStepCard percentage={95} buckets={allCompleteBuckets} />
-    )
-    expect(container).toBeEmptyDOMElement()
+  it('renders the celebratory state when every bucket is completed even if percentage is below 100', () => {
+    // Edge case: weights might not sum to 100 but all buckets are marked
+    // completed — same celebratory state, since there is no next step.
+    render(<NextStepCard percentage={95} buckets={allCompleteBuckets} />)
+
+    expect(screen.getByText('Profile complete')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /get started/i })).not.toBeInTheDocument()
+    expect(screen.getByText('95%')).toBeInTheDocument()
   })
 
   it('surfaces the first incomplete bucket with its label, unlock copy, and CTA', () => {

@@ -60,14 +60,24 @@ function hasHighlightVideo(profile: Profile): boolean {
 /**
  * Hook to calculate profile strength/completion for Player profiles.
  *
- * The strength is calculated from 7 weighted buckets:
- * - Basic Info (15%): nationality, base_location, position
- * - Profile Photo (15%): avatar_url
+ * The strength is calculated from 8 weighted buckets, biased toward
+ * recruitment-grade content (highlight + full-match video, references)
+ * over identity basics:
+ *
+ * - Basic Info (10%): nationality, base_location, position
+ * - Profile Photo (10%): avatar_url
  * - Highlight Video (20%): highlight_video_url
- * - Journey (15%): at least one career_history entry
+ * - Full Match Footage (15%): at least one player_full_game_videos row
+ *   (added 2026-05-08 — full game footage is high-signal recruiter content
+ *   and was previously missing from the calculation entirely)
+ * - Journey (10%): at least one career_history entry
  * - Media Gallery (10%): at least one gallery_photos entry
  * - Friends (10%): at least one accepted friend connection
  * - References (15%): at least one approved reference
+ *
+ * Total = 100%. Weights of Basic Info / Profile Photo / Journey were each
+ * reduced by 5% to make room for the new Full Match Footage bucket while
+ * keeping the heavier emphasis on video + references intact.
  */
 export function useProfileStrength(profile: Profile | null): ProfileStrengthResult {
   const [loading, setLoading] = useState(true)
@@ -78,6 +88,9 @@ export function useProfileStrength(profile: Profile | null): ProfileStrengthResu
   const journeyCount: number = profile?.career_entry_count ?? 0
   const friendCount: number = profile?.accepted_friend_count ?? 0
   const referenceCount: number = profile?.accepted_reference_count ?? 0
+  // full_game_video_count is denormalized on profiles, same trigger pattern
+  // as the others — no extra query needed.
+  const fullGameVideoCount: number = profile?.full_game_video_count ?? 0
 
   const fetchCounts = useCallback(async () => {
     if (!profile?.id) {
@@ -119,7 +132,7 @@ export function useProfileStrength(profile: Profile | null): ProfileStrengthResu
         label: 'Basic info completed',
         description: 'Add your nationality, location, and playing position',
         unlockCopy: 'Clubs filter by position and location when they search for players.',
-        weight: 15,
+        weight: 10,
         completed: isBasicInfoComplete(profile),
         action: { type: 'edit-profile' },
       },
@@ -128,7 +141,7 @@ export function useProfileStrength(profile: Profile | null): ProfileStrengthResu
         label: 'Add a profile photo',
         description: 'Help clubs recognize you with a profile picture',
         unlockCopy: 'Helps clubs put a face to your name.',
-        weight: 15,
+        weight: 10,
         completed: hasProfilePhoto(profile),
         action: { type: 'edit-profile' },
       },
@@ -142,11 +155,24 @@ export function useProfileStrength(profile: Profile | null): ProfileStrengthResu
         action: { type: 'add-video' },
       },
       {
+        // Recruiters consistently rate full-match footage as the single
+        // strongest signal of how a player actually performs over 60+ min
+        // — beyond a curated reel. Tabs anchor opens the Profile tab where
+        // the FullGameVideosSection lives.
+        id: 'full-match-footage',
+        label: 'Upload full match footage',
+        description: 'Add at least one full game video so recruiters can see you play across a whole match',
+        unlockCopy: 'Recruiters value full match footage above curated reels — it shows your work over a real game.',
+        weight: 15,
+        completed: fullGameVideoCount > 0,
+        action: { type: 'tab', tab: 'profile' },
+      },
+      {
         id: 'journey',
         label: 'Share a moment in your Journey',
         description: 'Add your career history, milestones, or achievements',
         unlockCopy: 'Shows where you have played and what you have achieved.',
-        weight: 15,
+        weight: 10,
         completed: journeyCount > 0,
         action: { type: 'tab', tab: 'journey' },
       },
@@ -178,7 +204,7 @@ export function useProfileStrength(profile: Profile | null): ProfileStrengthResu
         action: { type: 'tab', tab: 'friends' },
       },
     ]
-  }, [profile, journeyCount, galleryCount, friendCount, referenceCount])
+  }, [profile, journeyCount, galleryCount, friendCount, referenceCount, fullGameVideoCount])
 
   const percentage = useMemo(() => {
     if (buckets.length === 0) return 0

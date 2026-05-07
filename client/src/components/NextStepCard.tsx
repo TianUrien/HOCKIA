@@ -1,4 +1,4 @@
-import { ArrowRight, Sparkles } from 'lucide-react'
+import { ArrowRight, Sparkles, CheckCircle2 } from 'lucide-react'
 
 type BucketLike = {
   id: string
@@ -26,13 +26,19 @@ interface NextStepCardProps<TBucket extends BucketLike = BucketLike> {
  *
  * Intentionally NOT a checklist. The expandable full-bucket list was
  * removed because it duplicated the Profile Snapshot below it and turned
- * the surface from "level up" energy into "homework list" energy. The
- * Snapshot is now the canonical "what visitors see" surface (positive
- * chips of present signals); this card stays focused on motivation +
- * next action.
+ * the surface from "level up" energy into "homework list" energy.
  *
- * Hidden automatically while loading, when the profile is already 100%,
- * or when there is no incomplete bucket (empty hook state).
+ * Two render states:
+ *   1. Incomplete (`percentage < 100`) — progress bar + "Next step" CTA
+ *      pointing at the highest-impact incomplete bucket.
+ *   2. Complete (`percentage === 100`) — progress bar at 100% with a
+ *      celebratory copy block instead of a next-step CTA. Previously the
+ *      whole card unmounted at 100%, leaving completed users with no
+ *      visible progress signal at all (so they couldn't tell whether
+ *      something had moved them off 100% later).
+ *
+ * Hidden only while loading or when there are no buckets to display
+ * (empty hook state — should not happen in practice).
  */
 export default function NextStepCard<TBucket extends BucketLike>({
   percentage,
@@ -41,13 +47,12 @@ export default function NextStepCard<TBucket extends BucketLike>({
   onBucketAction,
 }: NextStepCardProps<TBucket>) {
   if (loading) return null
-  if (percentage >= 100) return null
-
-  const nextBucket = buckets.find(b => !b.completed)
-  if (!nextBucket) return null
+  if (buckets.length === 0) return null
 
   const completedCount = buckets.filter(b => b.completed).length
   const remaining = buckets.length - completedCount
+  const nextBucket = buckets.find(b => !b.completed)
+  const isComplete = !nextBucket
 
   return (
     <div className="relative overflow-hidden rounded-2xl border border-[#8026FA]/15 bg-gradient-to-br from-[#8026FA]/[0.06] via-white to-[#ec4899]/[0.05] p-5 md:p-6 shadow-sm">
@@ -73,37 +78,58 @@ export default function NextStepCard<TBucket extends BucketLike>({
             />
           </div>
           <p className="text-xs text-gray-500 mt-1.5">
-            {remaining} step{remaining === 1 ? '' : 's'} left to complete
+            {isComplete
+              ? `All ${buckets.length} steps complete`
+              : `${remaining} step${remaining === 1 ? '' : 's'} left to complete`}
           </p>
         </div>
 
-        {/* Next step CTA body — single focused action */}
-        <div className="flex items-start gap-3 md:gap-4">
-          <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-[#8026FA] to-[#ec4899] text-white shadow-sm">
-            <Sparkles className="w-5 h-5" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-[#8026FA] mb-0.5">
-              Next step
-            </p>
-            <h3 className="text-base font-semibold text-gray-900 leading-snug">
-              {nextBucket.label}
-            </h3>
-            {nextBucket.unlockCopy && (
-              <p className="text-sm text-gray-600 leading-relaxed mt-1">
-                {nextBucket.unlockCopy}
+        {/* Body — celebratory state when complete, next-step CTA otherwise */}
+        {isComplete ? (
+          <div className="flex items-start gap-3 md:gap-4">
+            <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-sm">
+              <CheckCircle2 className="w-5 h-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-600 mb-0.5">
+                Profile complete
               </p>
-            )}
-            <button
-              type="button"
-              onClick={() => onBucketAction?.(nextBucket)}
-              className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white px-4 py-2 text-sm font-semibold shadow-sm hover:opacity-90 transition-opacity"
-            >
-              Get started
-              <ArrowRight className="w-4 h-4" />
-            </button>
+              <h3 className="text-base font-semibold text-gray-900 leading-snug">
+                Your profile is fully built
+              </h3>
+              <p className="text-sm text-gray-600 leading-relaxed mt-1">
+                Keep it fresh — clubs and coaches see updated profiles first.
+              </p>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="flex items-start gap-3 md:gap-4">
+            <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-[#8026FA] to-[#ec4899] text-white shadow-sm">
+              <Sparkles className="w-5 h-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-[#8026FA] mb-0.5">
+                Next step
+              </p>
+              <h3 className="text-base font-semibold text-gray-900 leading-snug">
+                {nextBucket.label}
+              </h3>
+              {nextBucket.unlockCopy && (
+                <p className="text-sm text-gray-600 leading-relaxed mt-1">
+                  {nextBucket.unlockCopy}
+                </p>
+              )}
+              <button
+                type="button"
+                onClick={() => onBucketAction?.(nextBucket)}
+                className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white px-4 py-2 text-sm font-semibold shadow-sm hover:opacity-90 transition-opacity"
+              >
+                Get started
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
