@@ -191,7 +191,11 @@ export default function ClubMembersTab({ profileId }: ClubMembersTabProps) {
             <button
               key={member.id}
               type="button"
-              onClick={() => navigate(`/players/id/${member.id}?ref=club-members`)}
+              onClick={() => navigate(
+                member.role === 'coach'
+                  ? `/coaches/id/${member.id}?ref=club-members`
+                  : `/players/id/${member.id}?ref=club-members`,
+              )}
               className="w-full flex items-center gap-3 py-3 px-1 text-left hover:bg-gray-50 rounded-lg transition-colors"
               data-testid="member-row"
             >

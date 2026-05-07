@@ -69,9 +69,11 @@ export default function DiscoverResultCard({ result }: DiscoverResultCardProps) 
       navigate(`/clubs/id/${result.id}?ref=discover`)
     } else if (result.role === 'umpire') {
       navigate(`/umpires/id/${result.id}?ref=discover`)
+    } else if (result.role === 'coach') {
+      // Coach has its own URL prefix even though the page component
+      // (PublicPlayerProfile) is shared with players.
+      navigate(`/coaches/id/${result.id}?ref=discover`)
     } else {
-      // Both player and coach land on the shared /players/... route which
-      // PublicPlayerProfile filters by role IN ('player','coach').
       navigate(`/players/id/${result.id}?ref=discover`)
     }
   }

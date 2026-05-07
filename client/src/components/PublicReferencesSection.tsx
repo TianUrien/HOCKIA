@@ -198,13 +198,11 @@ export default function PublicReferencesSection({ profileId, profileName }: Publ
             className="snap-center"
             onOpenProfile={(id, role) => {
               if (!id) return
-              if (role === 'club') {
-                navigate(`/clubs/id/${id}`)
-              } else if (role === 'umpire') {
-                navigate(`/umpires/id/${id}`)
-              } else {
-                navigate(`/players/id/${id}`)
-              }
+              if (role === 'club') navigate(`/clubs/id/${id}`)
+              else if (role === 'umpire') navigate(`/umpires/id/${id}`)
+              else if (role === 'coach') navigate(`/coaches/id/${id}`)
+              else if (role === 'brand') navigate(`/brands/id/${id}`)
+              else navigate(`/players/id/${id}`)
             }}
           />
         ))}

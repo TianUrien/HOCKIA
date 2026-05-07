@@ -4,6 +4,15 @@ import { vi } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
 import ClubMembersTab from '@/components/ClubMembersTab'
 
+const navigateMock = vi.hoisted(() => vi.fn())
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom')
+  return {
+    ...actual,
+    useNavigate: () => navigateMock,
+  }
+})
+
 const user = userEvent.setup()
 
 // ── Hoisted mocks ──────────────────────────────────────────────────
@@ -352,5 +361,43 @@ describe('ClubMembersTab', () => {
         })
       )
     })
+  })
+
+  // ── Role-aware profile routing (regression for coach members) ────
+  // Pre-fix bug: every member row routed to /players/id/<uuid>, so a
+  // coach member of a club opened the player URL prefix. Fixed to use
+  // /coaches/id/<uuid> when role==='coach'.
+
+  it('player member click routes to /players/id/<uuid>', async () => {
+    rpcMock.mockResolvedValue({
+      data: [makeMember({ id: 'player-x', role: 'player' })],
+      error: null,
+    })
+
+    renderTab()
+    const row = await screen.findByTestId('member-row')
+    await user.click(row)
+
+    expect(navigateMock).toHaveBeenCalledWith(
+      expect.stringMatching(/^\/players\/id\/player-x\?ref=club-members$/),
+    )
+  })
+
+  it('coach member click routes to /coaches/id/<uuid> (not /players/)', async () => {
+    rpcMock.mockResolvedValue({
+      data: [makeMember({ id: 'coach-y', role: 'coach' })],
+      error: null,
+    })
+
+    renderTab()
+    const row = await screen.findByTestId('member-row')
+    await user.click(row)
+
+    expect(navigateMock).toHaveBeenCalledWith(
+      expect.stringMatching(/^\/coaches\/id\/coach-y\?ref=club-members$/),
+    )
+    // Defensive: the url must NOT contain the legacy /players/ prefix
+    const lastCall = navigateMock.mock.calls.at(-1)?.[0]
+    expect(lastCall).not.toContain('/players/')
   })
 })

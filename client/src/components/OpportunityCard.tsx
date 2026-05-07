@@ -4,6 +4,7 @@ import type { Vacancy } from '../lib/supabase'
 import { Avatar } from './index'
 import StorageImage from './StorageImage'
 import { opportunityGenderToTeamLabel } from '@/lib/hockeyCategories'
+import { getShareOrigin } from '@/lib/profileShare'
 import Button from './Button'
 
 export interface WorldClubInfo {
@@ -112,7 +113,9 @@ export default function OpportunityCard({
 
   const handleShareClick = (e: React.MouseEvent) => {
     e.stopPropagation()
-    const url = `${window.location.origin}/opportunities/${vacancy.id}`
+    // getShareOrigin pins https://inhockia.com on the iOS/Android app so
+    // shared opportunity links don't emit dead capacitor://localhost URLs.
+    const url = `${getShareOrigin()}/opportunities/${vacancy.id}`
     if (navigator.share) {
       navigator.share({ title: vacancy.title, url }).catch(() => {})
     } else {
@@ -122,7 +125,8 @@ export default function OpportunityCard({
 
   const handlePublisherClick = (e: React.MouseEvent) => {
     e.stopPropagation()
-    navigate(publisherRole === 'coach' ? `/players/id/${clubId}` : `/clubs/id/${clubId}`)
+    if (publisherRole === 'coach') navigate(`/coaches/id/${clubId}`)
+    else navigate(`/clubs/id/${clubId}`)
   }
 
   const handleWorldClubClick = (e: React.MouseEvent) => {

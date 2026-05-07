@@ -44,11 +44,13 @@ export function ProfileViewersSection() {
     if (viewer.role === 'club') {
       navigate(`/clubs/id/${viewer.viewer_id}`)
     } else if (viewer.role === 'brand') {
-      if (viewer.brand_slug) {
-        navigate(`/brands/${viewer.brand_slug}`)
-      }
+      // Prefer canonical slug; otherwise the id-redirect resolves it
+      // server-side (no broken-link fallback required).
+      navigate(viewer.brand_slug ? `/brands/${viewer.brand_slug}` : `/brands/id/${viewer.viewer_id}`)
     } else if (viewer.role === 'umpire') {
       navigate(`/umpires/id/${viewer.viewer_id}`)
+    } else if (viewer.role === 'coach') {
+      navigate(`/coaches/id/${viewer.viewer_id}`)
     } else {
       navigate(`/players/id/${viewer.viewer_id}`)
     }

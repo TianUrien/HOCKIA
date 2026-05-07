@@ -175,13 +175,11 @@ export default function TrustedReferencesSection({
 
   const handleOpenReferenceProfile = (targetId: string | null, role?: string | null) => {
     if (!targetId) return
-    if (role === 'club') {
-      navigate(`/clubs/id/${targetId}`)
-    } else if (role === 'umpire') {
-      navigate(`/umpires/id/${targetId}`)
-    } else {
-      navigate(`/players/id/${targetId}`)
-    }
+    if (role === 'club') navigate(`/clubs/id/${targetId}`)
+    else if (role === 'umpire') navigate(`/umpires/id/${targetId}`)
+    else if (role === 'coach') navigate(`/coaches/id/${targetId}`)
+    else if (role === 'brand') navigate(`/brands/id/${targetId}`)
+    else navigate(`/players/id/${targetId}`)
   }
 
   const handleAcceptRequest = async (endorsement: string | null) => {

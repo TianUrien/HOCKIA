@@ -15,6 +15,7 @@ import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
 import { extractErrorMessage } from '@/lib/utils'
 import { sendSharedPostMessage } from '@/lib/sharePost'
+import { getShareOrigin } from '@/lib/profileShare'
 import { logger } from '@/lib/logger'
 import { cn } from '@/lib/utils'
 import type { SharedPostMetadata } from '@/types/chat'
@@ -182,7 +183,9 @@ export function SharePostSheet({
   )
 
   const handleCopyLink = useCallback(async () => {
-    const url = `${window.location.origin}/post/${postId}`
+    // getShareOrigin pins the production origin on the native iOS/Android
+    // shell so copied post links are not capacitor://localhost/post/<id>.
+    const url = `${getShareOrigin()}/post/${postId}`
     try {
       await navigator.clipboard.writeText(url)
       addToast('Link copied to clipboard', 'success')

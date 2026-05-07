@@ -6,6 +6,7 @@ import { Avatar, StorageImage } from './index'
 import Button from './Button'
 import type { WorldClubInfo } from './OpportunityCard'
 import { opportunityGenderToTeamLabel } from '@/lib/hockeyCategories'
+import { getShareOrigin } from '@/lib/profileShare'
 
 interface VacancyDetailViewProps {
   vacancy: Vacancy
@@ -87,7 +88,8 @@ export default function VacancyDetailView({
 
   const handleClubClick = () => {
     onClose()
-    navigate(publisherRole === 'coach' ? `/players/id/${clubId}` : `/clubs/id/${clubId}`)
+    if (publisherRole === 'coach') navigate(`/coaches/id/${clubId}`)
+    else navigate(`/clubs/id/${clubId}`)
   }
 
   const handleWorldClubClick = () => {
@@ -95,7 +97,9 @@ export default function VacancyDetailView({
   }
 
   const handleShareClick = () => {
-    const url = `${window.location.origin}/opportunities/${vacancy.id}`
+    // getShareOrigin pins https://inhockia.com on native so the shared
+    // opportunity link is not capacitor://localhost/opportunities/<id>.
+    const url = `${getShareOrigin()}/opportunities/${vacancy.id}`
     if (navigator.share) {
       navigator.share({ title: vacancy.title, url }).catch(() => {})
     } else {
