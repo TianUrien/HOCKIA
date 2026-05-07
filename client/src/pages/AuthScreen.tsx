@@ -90,7 +90,12 @@ export default function AuthScreen({ mode, role, onBack }: AuthScreenProps) {
   // Single source of truth for the email field — shared by magic link
   // and password paths (the whole point of the redesign).
   const [email, setEmail] = useState('')
-  const [passwordMode, setPasswordMode] = useState(false)
+  // Sign-in defaults to password mode (the dominant UX expectation —
+  // returning users mostly remember their password and want a familiar
+  // form). Sign-up still defaults to magic-link mode so a brand-new user
+  // doesn't have to invent a password before they've decided to commit.
+  // Either way the secondary toggle below the submit button switches modes.
+  const [passwordMode, setPasswordMode] = useState(mode === 'signin')
   const [password, setPassword] = useState('')
   const [pwVisibility, setPwVisibility] = useState<PasswordVisibility>('hidden')
 
