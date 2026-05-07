@@ -26,6 +26,19 @@ function breadcrumb(message: string, data?: Record<string, unknown>) {
 export const isNativePlatform = (): boolean => Capacitor.isNativePlatform()
 
 /**
+ * Module-level cancellation handle for the in-flight OAuth attempt.
+ * If a user starts OAuth, navigates away mid-flow, then starts a new
+ * OAuth before the 5-minute timeout, the previous attempt's appUrlOpen
+ * listener would still be registered — the next callback URL would be
+ * processed by BOTH listeners, and the older one would fail to exchange
+ * an already-consumed code (or worse, race the newer one).
+ *
+ * cancelInFlight() is invoked at the top of each new signInWithOAuthNative
+ * call so only the most recent attempt's listener is live.
+ */
+let cancelInFlight: (() => void) | null = null
+
+/**
  * Start OAuth sign-in for native apps.
  *
  * @param provider - OAuth provider ('apple' | 'google')
@@ -34,6 +47,14 @@ export const isNativePlatform = (): boolean => Capacitor.isNativePlatform()
 export async function signInWithOAuthNative(provider: 'apple' | 'google'): Promise<void> {
   if (!isNativePlatform()) {
     throw new Error('signInWithOAuthNative should only be called on native platforms')
+  }
+
+  // Cancel any prior in-flight OAuth attempt so its listener doesn't
+  // also process the next callback (see cancelInFlight comment above).
+  if (cancelInFlight) {
+    breadcrumb('cancel_prior_in_flight', { provider })
+    cancelInFlight()
+    cancelInFlight = null
   }
 
   breadcrumb('request_oauth_url', { provider })
@@ -61,15 +82,33 @@ export async function signInWithOAuthNative(provider: 'apple' | 'google'): Promi
   // Set up a listener for when the app receives the callback URL
   const authPromise = new Promise<void>((resolve, reject) => {
     let resolved = false
+    const cleanup = () => {
+      resolved = true
+      clearTimeout(timeoutId)
+      listenerHandle.then(h => h.remove())
+      // Clear the module-level handle if we're still the current attempt.
+      // Guarded so a later attempt that already replaced cancelInFlight
+      // doesn't get its handle wiped by ours.
+      if (cancelInFlight === cleanup) cancelInFlight = null
+    }
     const timeoutId = setTimeout(() => {
       if (!resolved) {
-        resolved = true
-        listenerHandle.then(h => h.remove())
+        cleanup()
         const timeoutErr = new Error('OAuth timed out after 5 minutes')
         reportAuthFlowError('native_oauth.timeout', timeoutErr, { provider })
         reject(timeoutErr)
       }
     }, 5 * 60 * 1000) // 5 minute timeout
+
+    // Expose this attempt's cleanup to the module so a fresh
+    // signInWithOAuthNative() can cancel us before adding its own listener.
+    cancelInFlight = () => {
+      if (resolved) return
+      cleanup()
+      const cancelErr = new Error('OAuth cancelled — superseded by a newer sign-in attempt')
+      cancelErr.name = 'OAuthCancelled'
+      reject(cancelErr)
+    }
 
     const listenerHandle = App.addListener('appUrlOpen', async (event: URLOpenListenerEvent) => {
       const url = event.url
@@ -77,10 +116,10 @@ export async function signInWithOAuthNative(provider: 'apple' | 'google'): Promi
 
       // Check if this is our auth callback
       if (!url.includes('auth/callback')) return
+      // Don't double-process if a newer attempt already cancelled us.
+      if (resolved) return
 
-      resolved = true
-      clearTimeout(timeoutId)
-      listenerHandle.then(h => h.remove())
+      cleanup()
 
       try {
         // Close the in-app browser

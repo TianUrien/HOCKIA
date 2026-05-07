@@ -13,6 +13,7 @@ import Avatar from './Avatar'
 import RoleBadge from './RoleBadge'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
+import { useToastStore } from '@/lib/toast'
 import { logger } from '@/lib/logger'
 import { cn } from '@/lib/utils'
 
@@ -38,6 +39,7 @@ interface NewMessageModalProps {
 export default function NewMessageModal({ isOpen, onClose }: NewMessageModalProps) {
   const navigate = useNavigate()
   const { user } = useAuthStore()
+  const { addToast } = useToastStore()
   const [searchTerm, setSearchTerm] = useState('')
   const [results, setResults] = useState<SearchResult[]>([])
   const [recentContacts, setRecentContacts] = useState<SearchResult[]>([])
@@ -74,13 +76,17 @@ export default function NewMessageModal({ isOpen, onClose }: NewMessageModalProp
         setRecentContacts(contacts)
       } catch (err) {
         logger.error('[NewMessageModal] Error fetching recent contacts:', err)
+        // Surface the failure so the empty state isn't confused with
+        // "no recent contacts" — user gets a one-shot toast and can still
+        // search by name (search is a separate, independent code path).
+        addToast('Could not load recent contacts. You can still search by name.', 'error')
       } finally {
         setIsLoadingRecent(false)
       }
     }
 
     fetchRecentContacts()
-  }, [isOpen, user?.id])
+  }, [isOpen, user?.id, addToast])
 
   // Search users with debounce
   const searchUsers = useCallback(async (query: string) => {

@@ -59,7 +59,16 @@ export default function BrandOnboardingPage() {
   //       to re-finish).
   //
   //   (c) ref guard so we don't hammer the heal-update on every re-render.
+  //
+  //   (d) heal-failure path: the prior implementation logged the error and
+  //       fell through to navigate('/dashboard/profile'). DashboardRouter
+  //       sees onboarding_completed=false and bounces back to
+  //       /complete-profile → /brands/onboarding → re-mount → reset ref →
+  //       try again — an infinite bounce loop on persistent RLS / network
+  //       failure. Now we surface a real error UI so the user can retry
+  //       manually instead of being silently stuck.
   const healAttemptedRef = useRef(false)
+  const [healError, setHealError] = useState<string | null>(null)
   useEffect(() => {
     if (brandLoading || !brand || !user) return
     if (profile?.onboarding_completed) {
@@ -70,21 +79,42 @@ export default function BrandOnboardingPage() {
     healAttemptedRef.current = true
     void (async () => {
       try {
-        const { error: healError } = await supabase
+        const { error: healErr } = await supabase
           .from('profiles')
           .update({ onboarding_completed: true })
           .eq('id', user.id)
-        if (healError) {
-          logger.error('[BrandOnboarding] Failed to heal half-state', healError)
-          // Fall through — dashboard router will surface the issue rather
-          // than us trapping the user here. Better than a silent loop.
+        if (healErr) {
+          logger.error('[BrandOnboarding] Failed to heal half-state', healErr)
+          Sentry.captureException(toSentryError(healErr), {
+            tags: { feature: 'brand_onboarding', operation: 'heal_half_state' },
+          })
+          setHealError(
+            'Something went wrong restoring your brand onboarding. Please try again or contact support.',
+          )
+          return
         }
         await fetchProfile(user.id, { force: true })
-      } finally {
         navigate('/dashboard/profile', { replace: true })
+      } catch (err) {
+        logger.error('[BrandOnboarding] Heal threw unexpected error', err)
+        Sentry.captureException(toSentryError(err), {
+          tags: { feature: 'brand_onboarding', operation: 'heal_half_state' },
+        })
+        setHealError(
+          'Something went wrong restoring your brand onboarding. Please try again or contact support.',
+        )
       }
     })()
   }, [brand, brandLoading, navigate, profile?.onboarding_completed, user, fetchProfile])
+
+  const retryHeal = () => {
+    setHealError(null)
+    healAttemptedRef.current = false
+    // Re-trigger the heal effect by toggling a state that's referenced
+    // in the dep array. Since `brand` is the actual gate, simplest is to
+    // refetch the profile which causes the effect to re-evaluate.
+    if (user) void fetchProfile(user.id, { force: true })
+  }
 
   const handleSubmit = async (data: BrandFormData) => {
     setIsSubmitting(true)
@@ -154,6 +184,30 @@ export default function BrandOnboardingPage() {
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  // Heal-failure recovery UI. Replaces the previous "log + bounce to
+  // dashboard" path which would loop infinitely against persistent RLS
+  // / network errors. User can retry manually here.
+  if (healError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+        <div className="max-w-md w-full bg-white rounded-2xl shadow-sm border border-gray-200 p-6 text-center">
+          <h2 className="text-lg font-semibold text-gray-900 mb-2">Something went wrong</h2>
+          <p className="text-sm text-gray-600 mb-4">{healError}</p>
+          <button
+            type="button"
+            onClick={retryHeal}
+            className="w-full px-4 py-2 bg-[#8026FA] text-white font-semibold rounded-lg hover:bg-[#6b1fd4] transition-colors"
+          >
+            Try again
+          </button>
+          <p className="text-xs text-gray-500 mt-3">
+            If this keeps happening, contact support.
+          </p>
+        </div>
+      </div>
+    )
   }
 
   // Loading state

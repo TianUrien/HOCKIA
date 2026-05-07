@@ -85,6 +85,14 @@ export default function DiscoverPage() {
   const seededQueryConsumedRef = useRef(false)
 
   const hasMessages = messages.length > 0
+  // When DiscoverPage mounts with a ?q= deep-link, we briefly need to
+  // suppress the empty-state UI between initial render and the seeded
+  // useEffect calling sendMessage. Without this, the user sees the
+  // "Try asking" examples for a frame and could click one — kicking off
+  // a second parallel chat with the wrong query. The flag flips off as
+  // soon as the seeded query is consumed (and messages start populating).
+  const hasUnconsumedSeed = !!searchParams.get('q') && !seededQueryConsumedRef.current
+  const isSeeding = hasUnconsumedSeed && !hasMessages
 
   // Greeting + example set are derived from the auth-store profile. When the
   // profile hasn't loaded yet we fall back to the generic example set so the
@@ -231,7 +239,15 @@ export default function DiscoverPage() {
       {/* ── Scrollable chat area ─────────────────────────────────── */}
       <div ref={scrollAreaRef} className="flex-1 overflow-y-auto overscroll-contain">
         <div className="max-w-2xl mx-auto px-4 py-4">
-          {!hasMessages ? (
+          {isSeeding ? (
+            // Seeded query in flight — show a small loading state instead of
+            // the example buttons so a slow first-frame doesn't let the user
+            // click an unrelated example mid-seed.
+            <div className="flex flex-col items-center justify-center min-h-[60vh]">
+              <Loader2 className="w-8 h-8 text-[#8026FA] animate-spin mb-3" />
+              <p className="text-sm text-gray-500">Working on your question…</p>
+            </div>
+          ) : !hasMessages ? (
             <div className="flex flex-col items-center justify-center min-h-[60vh]">
               <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#8026FA] to-[#924CEC] flex items-center justify-center mb-4 shadow-lg shadow-[#8026FA]/20">
                 <Sparkles className="w-7 h-7 text-white" />

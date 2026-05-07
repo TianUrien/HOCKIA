@@ -375,6 +375,20 @@ export default function AuthCallback() {
 
           if (session) {
             logger.debug('[AUTH_CALLBACK] Session created from implicit flow')
+            // Strip the access_token / refresh_token from the URL hash
+            // immediately after consumption. React Router's navigate(...,
+            // {replace: true}) does eventually clear the hash, but there's
+            // a window between setSession completing and the eventual
+            // navigate where the tokens are still readable from
+            // window.location.hash and visible in the browser address bar.
+            // Defensive replaceState closes that window.
+            if (typeof window !== 'undefined' && window.history?.replaceState) {
+              window.history.replaceState(
+                {},
+                document.title,
+                window.location.pathname + window.location.search,
+              )
+            }
             handleSessionDetected('implicit-flow')
             return
           }

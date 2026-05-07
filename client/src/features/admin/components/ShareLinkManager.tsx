@@ -8,6 +8,7 @@ import { useState } from 'react'
 import { formatAdminDate } from '../utils/formatDate'
 import { Link2, Copy, Trash2, Plus, Check, ExternalLink } from 'lucide-react'
 import type { InvestorShareToken } from '../types'
+import { getShareOrigin } from '@/lib/profileShare'
 
 interface ShareLinkManagerProps {
   tokens: InvestorShareToken[]
@@ -45,7 +46,10 @@ export function ShareLinkManager({
   }
 
   const handleCopyLink = async (token: string) => {
-    const url = `${window.location.origin}/investors/${token}`
+    // Pin to the canonical https origin on native so admins copying
+    // investor links from the iOS app don't paste capacitor://localhost
+    // dead URLs into emails.
+    const url = `${getShareOrigin()}/investors/${token}`
     await navigator.clipboard.writeText(url)
     setCopiedTokenId(token)
     setTimeout(() => setCopiedTokenId(null), 2000)
