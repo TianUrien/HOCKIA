@@ -472,7 +472,7 @@ export default function ClubDashboard({ profileData, readOnly = false, isOwnProf
           </div>
         )}
 
-        <div className="bg-white rounded-2xl shadow-sm animate-slide-in-up">
+        <div id="profile-tab-content" className="bg-white rounded-2xl shadow-sm animate-slide-in-up scroll-mt-4">
           <div className="sticky top-[68px] z-40 border-b border-gray-200 bg-white/90 backdrop-blur">
             <ScrollableTabs
               tabs={tabs}
@@ -484,7 +484,7 @@ export default function ClubDashboard({ profileData, readOnly = false, isOwnProf
             />
           </div>
 
-          <div id="profile-tab-content" className="p-6 md:p-8 scroll-mt-20">
+          <div className="p-6 md:p-8">
             {activeTab === 'overview' && (
               <div className="space-y-8 animate-fade-in">
                 {!readOnly && <ProfileViewersSection />}

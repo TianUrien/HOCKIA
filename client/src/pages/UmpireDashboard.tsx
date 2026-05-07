@@ -549,8 +549,9 @@ export default function UmpireDashboard({
           </div>
         )}
 
-        {/* ── Tabs ── */}
-        <div className="mt-6 bg-white rounded-2xl shadow-sm animate-slide-in-up">
+        {/* ── Tabs ── anchor on outer wrapper so deep-link scroll lands
+             with the tab strip at the top of the viewport. */}
+        <div id="profile-tab-content" className="mt-6 bg-white rounded-2xl shadow-sm animate-slide-in-up scroll-mt-4">
           <div className="border-b border-gray-200 overflow-x-auto">
             <ScrollableTabs
               tabs={tabs}
@@ -562,7 +563,7 @@ export default function UmpireDashboard({
             />
           </div>
 
-          <div id="profile-tab-content" className="p-5 md:p-7 scroll-mt-20">
+          <div className="p-5 md:p-7">
             {activeTab === 'profile' && (
               <div className="space-y-10 animate-fade-in">
                 {hasCertification ? (

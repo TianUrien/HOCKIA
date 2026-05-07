@@ -585,8 +585,9 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
           </div>
         )}
 
-        {/* Tabs */}
-        <div className="bg-white rounded-2xl shadow-sm animate-slide-in-up">
+        {/* Tabs — anchor on the outer wrapper so deep-link scroll lands
+            with the tab strip at the top of the viewport. */}
+        <div id="profile-tab-content" className="bg-white rounded-2xl shadow-sm animate-slide-in-up scroll-mt-4">
           <div className="border-b border-gray-200 overflow-x-auto">
             <ScrollableTabs
               tabs={tabs}
@@ -598,7 +599,7 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
             />
           </div>
 
-          <div id="profile-tab-content" className="p-6 md:p-8 scroll-mt-20">
+          <div className="p-6 md:p-8">
             {/* Profile Tab */}
             {activeTab === 'profile' && (
               <div className="space-y-6 animate-fade-in">

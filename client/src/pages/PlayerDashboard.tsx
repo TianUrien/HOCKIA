@@ -628,8 +628,11 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
           </div>
         )}
 
-        {/* Tabs Card */}
-        <div className="bg-white rounded-2xl shadow-sm animate-slide-in-up">
+        {/* Tabs Card — anchor lives on the outer wrapper so the deep-link
+            scroll lands with the tab strip at the top of the viewport
+            (otherwise the strip is pushed off-screen and the user only
+            sees tab content with no indication of which tab is active). */}
+        <div id="profile-tab-content" className="bg-white rounded-2xl shadow-sm animate-slide-in-up scroll-mt-4">
           {/* Tab Navigation */}
           <div className="border-b border-gray-200 overflow-x-auto">
               <ScrollableTabs
@@ -643,7 +646,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
           </div>
 
           {/* Tab Content */}
-          <div id="profile-tab-content" className="p-6 md:p-8 scroll-mt-20">
+          <div className="p-6 md:p-8">
             {activeTab === 'profile' && (
               <div className="space-y-10 animate-fade-in">
                 {!readOnly && (
