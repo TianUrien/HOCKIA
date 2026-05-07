@@ -133,10 +133,11 @@ function CompactDisplay({ primaryCountry, secondaryCountry, hasEuNationality, cl
 }
 
 /**
- * Narrow-tile display. Single nationality shows the full name next to
- * the flag (just like compact mode). Dual nationality drops the names
- * entirely — two flags + a small EU pill is more recognizable on a
- * 150-180px tile than truncated nationality strings.
+ * Tile-friendly display for community member cards. Each nationality is
+ * a tight flag-name unit (`<flag> <name>`) and the row uses flex-wrap so
+ * a long second nationality drops to a new line cleanly instead of
+ * truncating mid-word. EU indicator renders as a small chip aligned to
+ * the row, consistent with the role / tier pills above.
  */
 function TileDisplay({ primaryCountry, secondaryCountry, hasEuNationality, className }: CompactDisplayProps) {
   const nationalities: Country[] = []
@@ -144,30 +145,25 @@ function TileDisplay({ primaryCountry, secondaryCountry, hasEuNationality, class
   if (secondaryCountry) nationalities.push(secondaryCountry)
   if (nationalities.length === 0) return null
 
-  const isDual = nationalities.length > 1
-
   return (
-    <span className={`inline-flex items-center gap-1.5 ${className}`}>
-      <span className="inline-flex items-center gap-0.5">
-        {nationalities.map((country) => (
+    <div className={`flex flex-wrap items-center gap-x-2 gap-y-1 ${className}`}>
+      {nationalities.map((country) => (
+        <span key={country.id} className="inline-flex items-center gap-1 min-w-0">
           <Flag
-            key={country.id}
             code={country.code}
             countryName={country.name}
             fallbackEmoji={country.flag_emoji}
             size="sm"
           />
-        ))}
-      </span>
-      {!isDual && primaryCountry && (
-        <span className="truncate">{primaryCountry.nationality_name}</span>
-      )}
+          <span className="truncate">{country.nationality_name}</span>
+        </span>
+      ))}
       {hasEuNationality && (
-        <span className="inline-flex items-center rounded bg-blue-50 px-1 py-px text-[10px] font-semibold text-blue-700">
+        <span className="inline-flex items-center rounded bg-blue-50 px-1.5 py-px text-[10px] font-semibold text-blue-700">
           EU
         </span>
       )}
-    </span>
+    </div>
   )
 }
 

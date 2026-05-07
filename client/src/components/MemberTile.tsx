@@ -131,59 +131,60 @@ export default function MemberTile(props: MemberTileProps) {
       <button
         type="button"
         onClick={handleClick}
-        className="group block w-full text-left bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md hover:border-gray-300 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8026FA] focus-visible:ring-offset-2"
+        className="group block w-full text-left bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-md hover:border-gray-300 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8026FA] focus-visible:ring-offset-2"
         aria-label={`View ${props.full_name}'s profile`}
       >
-        {/* Hero image */}
-        <div className={`relative aspect-square ${isBrand ? 'bg-gradient-to-br from-gray-50 to-gray-100' : 'bg-gray-100'}`}>
-          {heroImageUrl ? (
-            <img
-              src={heroImageUrl}
-              alt=""
-              className={`absolute inset-0 w-full h-full ${isBrand ? 'object-contain p-4' : 'object-cover'} group-hover:scale-[1.02] transition-transform duration-200`}
-              loading="lazy"
-              decoding="async"
-            />
-          ) : (
-            // Role-tinted placeholder. Replaces the previous purple
-            // "initials block" — same role-color family as RoleBadge, soft
-            // gradient + person silhouette. Profile is still flagged as
-            // photo-missing in the DB (this is purely visual).
-            <div className="absolute inset-0">
-              <RolePlaceholder role={props.role} label="" />
+        {/* Avatar — centered circle inside top padding. Replaces the
+            previous full-width square hero. The role-tinted placeholder
+            still appears for users without a photo; brands keep their
+            logo-on-light-bg treatment. Green "open to opportunities"
+            dot anchors to the avatar's bottom-right. */}
+        <div className="pt-5 pb-4 px-4 flex items-center justify-center">
+          <div className="relative w-24 h-24 sm:w-28 sm:h-28">
+            <div className={`absolute inset-0 rounded-full overflow-hidden ${isBrand ? 'bg-gradient-to-br from-gray-50 to-gray-100' : 'bg-gray-100'}`}>
+              {heroImageUrl ? (
+                <img
+                  src={heroImageUrl}
+                  alt=""
+                  className={`absolute inset-0 w-full h-full ${isBrand ? 'object-contain p-3' : 'object-cover'} group-hover:scale-[1.03] transition-transform duration-200`}
+                  loading="lazy"
+                  decoding="async"
+                />
+              ) : (
+                <div className="absolute inset-0">
+                  <RolePlaceholder role={props.role} label="" />
+                </div>
+              )}
             </div>
-          )}
-          {showGreenDot && (
-            <span
-              className="absolute top-2 right-2 w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-white"
-              aria-label="Open to opportunities"
-              title="Open to opportunities"
-            />
-          )}
+            {showGreenDot && (
+              <span
+                className="absolute bottom-1 right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 ring-2 ring-white"
+                aria-label="Open to opportunities"
+                title="Open to opportunities"
+              />
+            )}
+          </div>
         </div>
 
-        {/* Info — vertical stack with consistent breathing room. The
-            tighter `space-y-1.5` previously crammed dual-nationality
-            into a truncated mess; `space-y-2` gives each row its own
-            breathing room. The tile-mode nationality display drops the
-            secondary name on dual-nat profiles to avoid overflow. */}
-        <div className="p-3 space-y-2">
+        {/* Info — vertical stack, generous breathing room. Each row is
+            its own concept: name → role/tier → nationality → club. */}
+        <div className="px-4 pb-4 space-y-2.5">
           {/* Row 1: name + verified */}
           <div className="flex items-center gap-1 min-w-0">
-            <h3 className="text-sm font-semibold text-gray-900 truncate min-w-0 flex-1 leading-tight">
+            <h3 className="text-base font-semibold text-gray-900 truncate min-w-0 flex-1 leading-tight">
               {props.full_name}
             </h3>
             <VerifiedBadge verified={props.isVerified} verifiedAt={props.verifiedAt} size="sm" />
           </div>
 
-          {/* Row 2: role + tier (one line; wraps gracefully on single nat) */}
+          {/* Row 2: role pill + tier/level pill */}
           <div className="flex items-center gap-1.5 flex-wrap">
             <RoleBadge role={props.role} />
             {modifierPill}
           </div>
 
-          {/* Row 3: nationality (tile mode — flags-only when dual, full
-              name when single, EU pill as a small chip on its own). */}
+          {/* Row 3: nationality (tile mode — full names + flags, EU pill
+              as a small chip; flex-wrap so dual-nat doesn't truncate). */}
           {(props.nationality_country_id || props.nationality) && (
             <div className="text-xs text-gray-600">
               <DualNationalityDisplay
@@ -198,23 +199,23 @@ export default function MemberTile(props: MemberTileProps) {
 
           {/* Row 4: club / location / federation / category (truncated) */}
           {roleNative && (
-            <div className="flex items-center gap-1.5 text-xs text-gray-500 min-w-0">
+            <div className="flex items-center gap-1.5 text-xs text-gray-500 min-w-0 pt-0.5 border-t border-gray-100">
               {roleNative.kind === 'team' && clubLogo ? (
                 <img
                   src={clubLogo}
                   alt=""
-                  className="w-3.5 h-3.5 rounded-sm object-cover flex-shrink-0"
+                  className="w-3.5 h-3.5 rounded-sm object-cover flex-shrink-0 mt-1"
                 />
               ) : roleNative.kind === 'federation' ? (
-                <Shield className="w-3 h-3 flex-shrink-0 text-gray-400" />
+                <Shield className="w-3 h-3 flex-shrink-0 text-gray-400 mt-1" />
               ) : roleNative.kind === 'team' ? (
-                <Building2 className="w-3 h-3 flex-shrink-0 text-gray-400" />
+                <Building2 className="w-3 h-3 flex-shrink-0 text-gray-400 mt-1" />
               ) : roleNative.kind === 'category' ? (
-                <Building2 className="w-3 h-3 flex-shrink-0 text-gray-400" />
+                <Building2 className="w-3 h-3 flex-shrink-0 text-gray-400 mt-1" />
               ) : (
-                <MapPin className="w-3 h-3 flex-shrink-0 text-gray-400" />
+                <MapPin className="w-3 h-3 flex-shrink-0 text-gray-400 mt-1" />
               )}
-              <span className="truncate">{roleNative.label}</span>
+              <span className="truncate pt-1">{roleNative.label}</span>
             </div>
           )}
         </div>
