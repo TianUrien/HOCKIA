@@ -17,6 +17,37 @@ import { MemoryRouter } from 'react-router-dom'
 
 // ── Hoisted mocks ──────────────────────────────────────────────────
 
+// MemberTile imports `{ RoleBadge, TierBadge, ... }` from the @/components
+// barrel, which transitively loads modules that import @/lib/supabase.
+// In CI (no .env.local) the supabase module throws at load-time on missing
+// env vars, taking the whole test file with it. This stub lets the module
+// load without exercising any real Supabase API. MemberTile itself doesn't
+// call supabase, so an inert builder is enough.
+vi.mock('@/lib/supabase', () => {
+  const builder: Record<string, unknown> = {}
+  const chain = vi.fn(() => builder)
+  builder.select = chain
+  builder.eq = chain
+  builder.order = chain
+  builder.in = chain
+  builder.single = vi.fn(() => Promise.resolve({ data: null, error: null }))
+  return {
+    supabase: {
+      from: vi.fn(() => builder),
+      rpc: vi.fn(() => Promise.resolve({ data: null, error: null })),
+      auth: {
+        getSession: vi.fn(() => Promise.resolve({ data: { session: null }, error: null })),
+        onAuthStateChange: vi.fn(() => ({ data: { subscription: { unsubscribe: vi.fn() } } })),
+      },
+      channel: vi.fn(() => ({ on: vi.fn().mockReturnThis(), subscribe: vi.fn() })),
+      removeChannel: vi.fn(),
+    },
+    AUTH_STORAGE_KEY: 'hockia-auth',
+    SUPABASE_URL: 'https://test.supabase.local',
+    SUPABASE_ANON_KEY: 'test-anon-key',
+  }
+})
+
 const navigateMock = vi.hoisted(() => vi.fn())
 const authState = vi.hoisted(() => ({
   user: { id: 'viewer-1' } as { id: string } | null,
