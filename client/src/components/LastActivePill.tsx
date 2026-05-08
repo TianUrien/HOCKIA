@@ -3,6 +3,14 @@ import { useAuthStore } from '@/lib/auth'
 interface LastActivePillProps {
   /** ISO timestamp of profiles.last_active_at, or null/undefined if never seen. */
   lastActiveAt: string | null | undefined
+  /**
+   * Per-user opt-out. When `false`, the pill never renders regardless of
+   * viewer auth or last_active_at recency. Defaults to `true` (show) when
+   * undefined/null so profiles fetched before the column was added (or
+   * fetched by code paths that didn't request it) degrade gracefully —
+   * matches the column's NOT NULL DEFAULT true on the DB side.
+   */
+  showLastActive?: boolean | null | undefined
   /** Optional className for layout integration. */
   className?: string
 }
@@ -36,11 +44,17 @@ const DAY_MS = 24 * HOUR_MS
  * This component is intentionally small and self-contained — drop it
  * into any profile header next to TierBadge / VerifiedBadge.
  */
-export default function LastActivePill({ lastActiveAt, className }: LastActivePillProps) {
+export default function LastActivePill({ lastActiveAt, showLastActive, className }: LastActivePillProps) {
   const viewer = useAuthStore((s) => s.user)
 
   // Anon-gate: never expose presence to logged-out viewers.
   if (!viewer) return null
+  // Per-user opt-out gate: when the profile owner has set
+  // show_last_active = false in Settings, the pill is hidden for ALL
+  // viewers. The DB column is NOT NULL DEFAULT true; the explicit
+  // `=== false` check means undefined/null fall through to "show" so
+  // queries that don't include the column don't accidentally hide.
+  if (showLastActive === false) return null
   if (!lastActiveAt) return null
 
   const ms = Date.now() - new Date(lastActiveAt).getTime()

@@ -60,6 +60,9 @@ export default function SettingsPage() {
   const [notifyMessages, setNotifyMessages] = useState(true)
   const [notifyProfileViews, setNotifyProfileViews] = useState(true)
   const [browseAnonymously, setBrowseAnonymously] = useState(false)
+  // Defaults true so the UI never flickers "hidden" before the profile
+  // loads — matches the column's NOT NULL DEFAULT true on the DB side.
+  const [showLastActive, setShowLastActive] = useState(true)
   const [loadingToggles, setLoadingToggles] = useState<Set<string>>(new Set())
   const [notificationSuccess, setNotificationSuccess] = useState(false)
 
@@ -88,6 +91,11 @@ export default function SettingsPage() {
       setNotifyMessages(profile.notify_messages ?? true)
       setNotifyProfileViews(profile.notify_profile_views ?? true)
       setBrowseAnonymously(profile.browse_anonymously ?? false)
+      // Profile may not have show_last_active yet on first load (column
+      // added 2026-05-08); default to true matches the DB default and
+      // avoids a brief "hidden" UI flash before the column populates.
+      const profileWithLastActive = profile as typeof profile & { show_last_active?: boolean | null }
+      setShowLastActive(profileWithLastActive.show_last_active ?? true)
     }
   }, [profile])
 
@@ -298,6 +306,35 @@ export default function SettingsPage() {
       setBrowseAnonymously(!newValue)
     } finally {
       setToggleLoading('anonymous', false)
+    }
+  }
+
+  const handleShowLastActiveToggle = async () => {
+    if (!user) return
+
+    const newValue = !showLastActive
+    setToggleLoading('last-active', true)
+
+    try {
+      // Cast the update payload because show_last_active was added in
+      // migration 20260508800000 and the generated database.types.ts
+      // doesn't yet include it on the client until `npx supabase gen
+      // types` runs after the migration is applied. Behaviour is
+      // correct either way — the column exists on the row.
+      const { error } = await supabase
+        .from('profiles')
+        .update({ show_last_active: newValue } as Record<string, unknown>)
+        .eq('id', user.id)
+
+      if (error) throw error
+
+      setShowLastActive(newValue)
+      await refreshProfile()
+    } catch (error) {
+      logger.error('Failed to update last-active visibility:', error)
+      setShowLastActive(!newValue)
+    } finally {
+      setToggleLoading('last-active', false)
     }
   }
 
@@ -880,8 +917,10 @@ export default function SettingsPage() {
                     </p>
                   </div>
                   <button
+                    type="button"
                     onClick={handleAnonymousBrowsingToggle}
                     disabled={loadingToggles.has('anonymous')}
+                    aria-label={`Anonymous browsing: ${browseAnonymously ? 'on' : 'off'}`}
                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
                       browseAnonymously ? 'bg-indigo-600' : 'bg-gray-300'
                     } ${loadingToggles.has('anonymous') ? 'opacity-50' : ''}`}
@@ -892,6 +931,38 @@ export default function SettingsPage() {
                       <span
                         className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
                           browseAnonymously ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    )}
+                  </button>
+                </div>
+
+                {/* Show Last Active — opt-out for the LastActivePill on
+                    profile headers. When off, no viewer sees an "Active
+                    today / this week / this month" indicator on the user's
+                    public profile, regardless of viewer auth. */}
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div className="flex-1 pr-4">
+                    <p className="text-gray-900 font-medium text-sm">Show Last Active</p>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      When enabled, signed-in members see a small pill showing roughly when you were last active ("Active today / this week / this month"). Turn off to hide this from your public profile.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleShowLastActiveToggle}
+                    disabled={loadingToggles.has('last-active')}
+                    aria-label={`Show last active: ${showLastActive ? 'on' : 'off'}`}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
+                      showLastActive ? 'bg-indigo-600' : 'bg-gray-300'
+                    } ${loadingToggles.has('last-active') ? 'opacity-50' : ''}`}
+                  >
+                    {loadingToggles.has('last-active') ? (
+                      <Loader2 className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 text-white animate-spin" />
+                    ) : (
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          showLastActive ? 'translate-x-6' : 'translate-x-1'
                         }`}
                       />
                     )}

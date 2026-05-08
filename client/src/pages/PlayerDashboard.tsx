@@ -521,6 +521,15 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
                     when the profile is >30 days inactive. */}
                 <LastActivePill
                   lastActiveAt={(profile as Partial<Profile> | null)?.last_active_at ?? null}
+                  // show_last_active was added in migration 20260508800000
+                  // and isn't in database.types.ts yet (re-gen happens after
+                  // the migration is applied). Loose-cast read so the
+                  // TypeScript build stays green; LastActivePill defaults
+                  // to "show" when the value is undefined/null so the
+                  // ordering of code-vs-migration deploys is forgiving.
+                  showLastActive={
+                    (profile as { show_last_active?: boolean | null } | null)?.show_last_active ?? null
+                  }
                 />
                 {/* Phase 4 References UX Plan #1.5 — TrustBadge in the metadata
                     pills row. Owner with 0 references sees a "Get vouches →"

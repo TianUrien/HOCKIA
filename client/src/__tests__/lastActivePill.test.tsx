@@ -61,6 +61,39 @@ describe('LastActivePill — privacy gate', () => {
     )
     expect(container).toBeEmptyDOMElement()
   })
+
+  it('renders nothing when the profile owner has opted out (showLastActive=false)', () => {
+    // Per-user opt-out gate. Profile owner who toggles off the
+    // "Show Last Active" Settings switch hides the pill for ALL viewers
+    // regardless of how recent their last_active_at is.
+    const { container } = render(
+      <LastActivePill lastActiveAt={nowMinus(2 * HOUR)} showLastActive={false} />,
+    )
+    expect(container).toBeEmptyDOMElement()
+  })
+
+  it('still renders when showLastActive is undefined (graceful default)', () => {
+    // Older code paths or queries that don't fetch the new column should
+    // degrade to "show" — matches the DB column's NOT NULL DEFAULT true.
+    render(
+      <LastActivePill lastActiveAt={nowMinus(2 * HOUR)} showLastActive={undefined} />,
+    )
+    expect(screen.getByText('Active today')).toBeInTheDocument()
+  })
+
+  it('still renders when showLastActive is null (graceful default)', () => {
+    render(
+      <LastActivePill lastActiveAt={nowMinus(2 * HOUR)} showLastActive={null} />,
+    )
+    expect(screen.getByText('Active today')).toBeInTheDocument()
+  })
+
+  it('renders when showLastActive is explicitly true', () => {
+    render(
+      <LastActivePill lastActiveAt={nowMinus(2 * HOUR)} showLastActive={true} />,
+    )
+    expect(screen.getByText('Active today')).toBeInTheDocument()
+  })
 })
 
 describe('LastActivePill — bucket selection', () => {
