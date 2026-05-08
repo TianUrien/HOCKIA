@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Settings, LogOut } from 'lucide-react'
+import { LayoutDashboard, Settings, LogOut, ChevronDown } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { useToastStore } from '@/lib/toast'
@@ -144,8 +144,11 @@ export default function AvatarMenu({ isOnDashboard, className = '', placement = 
             ? `flex flex-col items-center justify-center min-w-[48px] min-h-[44px] py-1 px-2 rounded-xl transition-all duration-200 ${
                 isOnDashboard ? 'text-[#8026FA]' : 'text-gray-600 active:bg-gray-100'
               } ${className}`
-            // Header variant: just the avatar with focus ring on dashboard.
-            : `flex items-center rounded-full transition-all ${
+            // Header variant: avatar + chevron-down indicator. The chevron
+            // signals "this is a dropdown" — without it the bare avatar
+            // reads as a profile-picture-only element and users miss that
+            // it opens Settings + Sign Out (real complaint from prod audit).
+            : `flex items-center gap-1 rounded-full pr-1.5 transition-all ${
                 isOnDashboard ? 'ring-2 ring-[#8026FA] ring-offset-2' : 'hover:opacity-80'
               } ${className}`
         }
@@ -163,14 +166,28 @@ export default function AvatarMenu({ isOnDashboard, className = '', placement = 
             className={showLabel && isOnDashboard ? 'ring-2 ring-[#8026FA] ring-offset-2' : undefined}
           />
         </div>
-        {showLabel && (
+        {showLabel ? (
+          // Bottom-nav variant: chevron sits next to the "Dashboard" label
+          // so the affordance is visible without taking extra vertical space.
+          // Label + chevron hidden below 360px to match the rest of
+          // MobileBottomNav (icons-only on iPhone SE 1st-gen and narrower).
           <span
-            className={`text-[10px] font-medium transition-all duration-200 ${
+            className={`hidden min-[360px]:flex items-center gap-0.5 text-[10px] font-medium transition-all duration-200 ${
               isOnDashboard ? 'opacity-100' : 'opacity-60'
             }`}
           >
             Dashboard
+            <ChevronDown className="w-2.5 h-2.5" aria-hidden="true" strokeWidth={2.5} />
           </span>
+        ) : (
+          // Header variant: small chevron next to the avatar, rotates when open.
+          <ChevronDown
+            className={`w-3.5 h-3.5 text-gray-500 transition-transform duration-150 ${
+              isOpen ? 'rotate-180' : 'rotate-0'
+            }`}
+            aria-hidden="true"
+            strokeWidth={2.5}
+          />
         )}
       </button>
 

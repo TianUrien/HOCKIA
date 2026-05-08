@@ -3,7 +3,6 @@ import { formatDistanceToNow } from 'date-fns'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { SUPABASE_URL } from '@/lib/supabase'
 import Avatar from './Avatar'
-import RoleBadge from './RoleBadge'
 import { getInitials } from '@/lib/utils'
 
 interface Conversation {
@@ -128,17 +127,20 @@ export default function ConversationList({
                 </div>
 
                 <div className="flex-1 min-w-0 text-left">
+                  {/* Role badge removed from this row 2026-05-08 — it was
+                      flex-shrink-0 and ate ~50px next to a flex-shrink h3,
+                      which is why long names like "Reagan ..." truncated
+                      after only ~16 chars. The avatar already encodes role
+                      via its tinted placeholder + border, and the chat
+                      thread header still shows the full role chip. */}
                   <div className="mb-0.5 flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      <h3
-                        className={`truncate text-sm text-gray-900 ${
-                          isUnread ? 'font-semibold' : 'font-medium'
-                        }`}
-                      >
-                        {participantName}
-                      </h3>
-                      <RoleBadge role={conversation.otherParticipant?.role ?? 'member'} className="text-[10px] flex-shrink-0" />
-                    </div>
+                    <h3
+                      className={`min-w-0 flex-1 truncate text-sm text-gray-900 ${
+                        isUnread ? 'font-semibold' : 'font-medium'
+                      }`}
+                    >
+                      {participantName}
+                    </h3>
                     {conversation.last_message_at && (
                       <span className="flex-shrink-0 text-[11px] text-gray-400">
                         {formatDistanceToNow(new Date(conversation.last_message_at), { addSuffix: false })}

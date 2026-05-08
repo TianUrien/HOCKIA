@@ -961,14 +961,20 @@ export default function MessagesPage() {
             <div className="flex-shrink-0 p-4 border-b border-gray-200">
               <div className="flex items-center justify-between mb-3">
                 <h1 className="text-xl font-bold text-gray-900">Messages</h1>
+                {/* Pill button replaces the previous icon-only round button.
+                    User feedback: "+ button has no label/tooltip" — aria-label
+                    and title were already set, but on touch (iOS Safari) title
+                    doesn't render and the bare "+" icon left users guessing.
+                    Visible "New" label removes the discoverability gap and
+                    bumps the tap target above iOS HIG's 44px minimum. */}
                 <button
                   type="button"
                   onClick={() => setIsNewMessageModalOpen(true)}
-                  className="flex items-center justify-center w-9 h-9 rounded-full bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white hover:opacity-90 transition-opacity shadow-md"
+                  className="inline-flex items-center gap-1.5 h-10 pl-3 pr-3.5 rounded-full bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white text-sm font-semibold hover:opacity-90 transition-opacity shadow-md"
                   aria-label="New message"
-                  title="New message"
                 >
-                  <Plus className="w-5 h-5" />
+                  <Plus className="w-4 h-4" />
+                  New
                 </button>
               </div>
               

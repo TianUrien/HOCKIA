@@ -136,8 +136,13 @@ export default function MobileBottomNav() {
                     <div className="absolute inset-0 bg-gradient-to-r from-[#8026FA] to-[#924CEC] opacity-20 rounded-full blur-md" />
                   )}
                 </div>
+                {/* Labels hidden below 360px (iPhone SE 1st-gen and narrower)
+                    where 5 items × 10px-font would crowd into each other —
+                    "Opportunities" alone is ~78px wide which doesn't fit a
+                    60px slot. aria-label on the parent button (line 121)
+                    keeps the nav fully accessible to screen readers. */}
                 <span
-                  className={`text-[10px] font-medium transition-all duration-200 ${
+                  className={`hidden min-[360px]:inline text-[10px] font-medium transition-all duration-200 ${
                     active ? 'opacity-100' : 'opacity-60'
                   }`}
                 >
