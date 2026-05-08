@@ -662,17 +662,25 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
             (otherwise the strip is pushed off-screen and the user only
             sees tab content with no indication of which tab is active). */}
         <div id="profile-tab-content" className="bg-white rounded-2xl shadow-sm animate-slide-in-up scroll-mt-4">
-          {/* Tab Navigation */}
-          <div className="border-b border-gray-200 overflow-x-auto">
-              <ScrollableTabs
-                tabs={tabs}
-                activeTab={activeTab}
-                onTabChange={handleTabChange}
-                className="gap-8 px-6"
-                activeClassName="border-[#8026FA] text-[#8026FA]"
-                inactiveClassName="border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300"
-              />
-          </div>
+          {/* Tab Navigation — owner only.
+              Network View v0 (2026-05-08): visitors get a single scrollable
+              narrative instead of tabbed navigation. Recruiters scan
+              profiles end-to-end rather than tab-clicking through them, so
+              a tab strip with hidden content adds friction; the same
+              underlying components render inline below. Owner mode keeps
+              the tabs to manage each surface independently. */}
+          {!readOnly && (
+            <div className="border-b border-gray-200 overflow-x-auto">
+                <ScrollableTabs
+                  tabs={tabs}
+                  activeTab={activeTab}
+                  onTabChange={handleTabChange}
+                  className="gap-8 px-6"
+                  activeClassName="border-[#8026FA] text-[#8026FA]"
+                  inactiveClassName="border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300"
+                />
+            </div>
+          )}
 
           {/* Tab Content. min-h-screen guarantees the document is always
               tall enough for useTabDeepLinkScroll's scrollIntoView({block:
@@ -683,7 +691,9 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
               partway down. Empty space below short content is acceptable;
               broken scroll-to-top is not. Verified by qa-tabs-scroll spec. */}
           <div className="p-6 md:p-8 min-h-screen">
-            {activeTab === 'profile' && (
+            {/* Profile section — always rendered for visitors (top of the
+                Network View scroll narrative); activeTab gate for owners. */}
+            {(activeTab === 'profile' || readOnly) && (
               <div className="space-y-10 animate-fade-in">
                 {!readOnly && (
                   <div id="profile-viewers" className="scroll-mt-20">
@@ -928,31 +938,54 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
               </div>
             )}
 
-            {activeTab === 'journey' && (
+            {/* Journey — owner only as a separate tab. Visitors get
+                Journey rendered inline within the Profile section above
+                (see the `readOnly && <JourneyTab variant="inline" />`
+                block ~line 910). Rendering it here too would double up
+                the career-history surface. */}
+            {activeTab === 'journey' && !readOnly && (
               <div className="animate-fade-in">
                 <JourneyTab profileId={profile.id} readOnly={readOnly} />
               </div>
             )}
 
-            {activeTab === 'comments' && (
-              <div className="animate-fade-in">
+            {/* Friends/Connections — always for visitors. The internal
+                FriendsTab heading is "Connections", which provides the
+                section label naturally without a duplicate outer heading. */}
+            {(activeTab === 'friends' || readOnly) && (
+              <div
+                id="visitor-section-friends"
+                className={readOnly ? 'mt-12 pt-10 border-t border-gray-200 animate-fade-in' : 'animate-fade-in'}
+              >
+                <FriendsTab profileId={profile.id} readOnly={readOnly} profileRole={profile.role} hideReferences />
+              </div>
+            )}
+
+            {/* Comments — always for visitors. CommentsTab has its own
+                section heading internally. */}
+            {(activeTab === 'comments' || readOnly) && (
+              <div
+                id="visitor-section-comments"
+                className={readOnly ? 'mt-12 pt-10 border-t border-gray-200 animate-fade-in' : 'animate-fade-in'}
+              >
                 <CommentsTab profileId={profile.id} highlightedCommentIds={highlightedComments} profileRole={profile.role} />
               </div>
             )}
 
-            {activeTab === 'references' && (
+            {/* References — owner only as a separate tab. Visitors see
+                PublicReferencesSection inline within the Profile section
+                above; rendering ReferencesTab here too would double up the
+                trust-references surface. */}
+            {activeTab === 'references' && !readOnly && (
               <div className="animate-fade-in">
                 <ReferencesTab profileId={profile.id} readOnly={readOnly} profileRole={profile.role} />
               </div>
             )}
 
-            {activeTab === 'friends' && (
-              <div className="animate-fade-in">
-                <FriendsTab profileId={profile.id} readOnly={readOnly} profileRole={profile.role} hideReferences />
-              </div>
-            )}
-
-            {activeTab === 'posts' && (
+            {/* Posts — owner only as a separate tab. Visitors get Posts
+                rendered inline at the bottom of the Profile section above
+                (existing behaviour, line ~922). */}
+            {activeTab === 'posts' && !readOnly && (
               <div className="animate-fade-in">
                 <ProfilePostsTab profileId={profile.id} readOnly={readOnly} />
               </div>

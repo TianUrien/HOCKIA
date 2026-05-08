@@ -249,8 +249,11 @@ beforeEach(() => {
 })
 
 describe('PlayerDashboard', () => {
-  it('syncs the active tab with the URL and updates query params on change', async () => {
-    const { locationHistory } = renderDashboard({ initialPath: '/dashboard/profile?tab=friends', readOnly: true })
+  it('syncs the active tab with the URL and updates query params on change (owner mode)', async () => {
+    // Tab navigation is owner-only after the Network View v0 restructure
+    // (2026-05-08). Visitors get a single scrollable narrative; this test
+    // exercises the tab strip + URL sync that owners still rely on.
+    const { locationHistory } = renderDashboard({ initialPath: '/dashboard/profile?tab=friends', readOnly: false })
 
     expect(screen.getByTestId('friends-tab')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Comments' }))
@@ -258,6 +261,62 @@ describe('PlayerDashboard', () => {
 
     const lastLocation = locationHistory.at(-1)
     expect(lastLocation).toBe('/dashboard/profile?tab=comments')
+  })
+
+  // ── Network View v0 restructure (2026-05-08) ──────────────────────
+  // Visitors no longer get a tab strip. All sections render inline as
+  // a single scrollable narrative. These tests pin that contract so
+  // a future refactor doesn't accidentally hide content from
+  // recruiter-side viewers.
+
+  it('hides the tab strip for visitors (Network View)', () => {
+    renderDashboard({ readOnly: true })
+    expect(screen.queryByRole('button', { name: 'Profile' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Journey' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Comments' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Friends' })).not.toBeInTheDocument()
+  })
+
+  it('renders Friends + Comments as separate inline sections for visitors', () => {
+    renderDashboard({ readOnly: true })
+    // Friends + Comments are NOT in the Profile content, so they appear
+    // as their own sections in the visitor scroll narrative.
+    expect(screen.getByTestId('friends-tab')).toBeInTheDocument()
+    expect(screen.getByTestId('comments-tab')).toBeInTheDocument()
+    // Anchor IDs are present for future deep-link targeting.
+    expect(document.querySelector('#visitor-section-friends')).not.toBeNull()
+    expect(document.querySelector('#visitor-section-comments')).not.toBeNull()
+  })
+
+  it('renders Journey + Posts inline within the Profile section (not as duplicate top-level sections)', () => {
+    renderDashboard({ readOnly: true })
+    // Profile content includes JourneyTab (inline variant) + ProfilePostsTab
+    // for visitors. They render exactly once — duplicating them as separate
+    // top-level sections would double up the career-history + posts surfaces.
+    expect(screen.getAllByTestId('journey-tab')).toHaveLength(1)
+    expect(screen.getAllByTestId('profile-posts-tab')).toHaveLength(1)
+    // Belt-and-suspenders: the per-tab anchor IDs for these are NOT created
+    // (they live inline within the Profile section instead).
+    expect(document.querySelector('#visitor-section-journey')).toBeNull()
+    expect(document.querySelector('#visitor-section-posts')).toBeNull()
+  })
+
+  it('does NOT render ReferencesTab as a separate visitor section', () => {
+    // PublicReferencesSection is already inline in the Profile section
+    // for visitors. ReferencesTab (TrustedReferencesSection wrapper) is
+    // an owner-only management surface.
+    renderDashboard({ readOnly: true })
+    expect(screen.queryByTestId('references-tab')).not.toBeInTheDocument()
+  })
+
+  it('owner mode still renders only the active tab content (one at a time)', () => {
+    renderDashboard({ initialPath: '/dashboard/profile?tab=friends', readOnly: false })
+    // Friends tab is active → its content renders.
+    expect(screen.getByTestId('friends-tab')).toBeInTheDocument()
+    // Other tabs are NOT rendered (owner mode preserves the
+    // one-tab-at-a-time behaviour).
+    expect(screen.queryByTestId('journey-tab')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('comments-tab')).not.toBeInTheDocument()
   })
 
   it('claims comment highlights when entering the comments tab', async () => {
