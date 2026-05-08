@@ -35,6 +35,12 @@ const playerCoachRequired = [
   'open_to_coach',
   'nationality',
   'nationality_country_id',
+  // LastActivePill per-user opt-out (added 2026-05-08). Without
+  // show_last_active in the SELECT, LastActivePill receives undefined
+  // and falls through to its graceful "show" default — making the
+  // Settings toggle visually present but functionally a no-op for any
+  // visitor (the read-path bug Batch 8 staging QA caught).
+  'show_last_active',
 ]
 
 const clubRequired = [
@@ -49,6 +55,7 @@ const clubRequired = [
   'womens_league_division',
   'contact_email',
   'last_active_at',
+  'show_last_active',
 ]
 
 const umpireRequired = [
@@ -60,6 +67,8 @@ const umpireRequired = [
   'umpire_appointment_count',
   'accepted_reference_count',
   'bio',
+  'last_active_at',
+  'show_last_active',
 ]
 
 describe('Public profile SELECT lists keep ProfileSnapshot source columns', () => {

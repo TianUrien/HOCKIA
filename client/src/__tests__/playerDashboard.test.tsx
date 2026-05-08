@@ -39,7 +39,24 @@ vi.mock('@/components', () => ({
   VerifiedBadge: () => <span data-testid="verified-badge" />,
   NextStepCard: () => <div data-testid="next-step-card">Next Step</div>,
   ProfileHealthCard: () => <div data-testid="profile-health-card">Profile Health</div>,
-  LastActivePill: () => <span data-testid="last-active-pill" />,
+  // Spy stub: surfaces showLastActive + lastActiveAt as data attributes
+  // so the integration test below can assert the value flows through
+  // from the fetched profile → PlayerDashboard → LastActivePill props.
+  // Catches the "select clause forgets show_last_active" regression
+  // that Batch 8 staging QA caught.
+  LastActivePill: ({
+    lastActiveAt,
+    showLastActive,
+  }: {
+    lastActiveAt?: string | null
+    showLastActive?: boolean | null
+  }) => (
+    <span
+      data-testid="last-active-pill"
+      data-show-last-active={String(showLastActive)}
+      data-last-active-at={String(lastActiveAt)}
+    />
+  ),
   WelcomeValueCard: () => <div data-testid="welcome-value-card" />,
   FreshnessCard: () => <div data-testid="freshness-card" />,
   RecentlyConnectedCard: () => <div data-testid="recently-connected-card" />,
@@ -286,5 +303,55 @@ describe('PlayerDashboard', () => {
 
     expect(screen.getByText(/Private contact email:/i)).toBeInTheDocument()
     expect(screen.getByText(privateEmail)).toBeInTheDocument()
+  })
+
+  // ── LastActivePill prop-flow regression guard ──────────────────────
+  // Batch 8 staging QA caught that `show_last_active` wasn't in the
+  // public-profile SELECT clause, so PlayerDashboard never received
+  // the value and LastActivePill defaulted to "show". The fix added
+  // the column to PUBLIC_PROFILE_FIELDS and is enforced at the
+  // SELECT-list level by publicProfileSnapshotFields.test.ts; this
+  // test enforces the second half of the chain — that PlayerDashboard
+  // PASSES the value through to LastActivePill's props.
+
+  it('passes show_last_active=false from the profile through to LastActivePill', () => {
+    renderDashboard({
+      readOnly: true,
+      profileOverrides: {
+        // Cast: show_last_active was added in migration 20260508800000
+        // and isn't in the generated PlayerProfileShape type yet.
+        ...({ show_last_active: false, last_active_at: '2026-05-08T12:00:00Z' } as Record<string, unknown>),
+      },
+    })
+
+    const pill = screen.getByTestId('last-active-pill')
+    expect(pill.getAttribute('data-show-last-active')).toBe('false')
+    expect(pill.getAttribute('data-last-active-at')).toBe('2026-05-08T12:00:00Z')
+  })
+
+  it('passes show_last_active=true through to LastActivePill', () => {
+    renderDashboard({
+      readOnly: true,
+      profileOverrides: {
+        ...({ show_last_active: true, last_active_at: '2026-05-08T12:00:00Z' } as Record<string, unknown>),
+      },
+    })
+
+    const pill = screen.getByTestId('last-active-pill')
+    expect(pill.getAttribute('data-show-last-active')).toBe('true')
+  })
+
+  it('falls through to null (graceful default) when show_last_active is missing from the profile', () => {
+    // Pre-migration / forgotten-select case. PlayerDashboard's read
+    // uses `?? null`; LastActivePill treats null as "show".
+    renderDashboard({
+      readOnly: true,
+      profileOverrides: {
+        ...({ last_active_at: '2026-05-08T12:00:00Z' } as Record<string, unknown>),
+      },
+    })
+
+    const pill = screen.getByTestId('last-active-pill')
+    expect(pill.getAttribute('data-show-last-active')).toBe('null')
   })
 })

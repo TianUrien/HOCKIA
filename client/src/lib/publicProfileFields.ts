@@ -49,6 +49,11 @@ export const PUBLIC_PROFILE_FIELDS_LIST = [
   'last_active_at',
   'accepted_reference_count',
   'career_entry_count',
+  // LastActivePill reads show_last_active to honour the per-user opt-out.
+  // Without this in the select, the pill falls through to its
+  // graceful-default-show path and the toggle is purely cosmetic — no
+  // visitor-side effect (caught in staging QA on Batch 8).
+  'show_last_active',
 ] as const
 
 export const PUBLIC_PROFILE_FIELDS = PUBLIC_PROFILE_FIELDS_LIST.join(',')
@@ -76,6 +81,10 @@ export const PUBLIC_CLUB_FIELDS_LIST = [
   'verified_at',
   // ProfileSnapshot reads last_active_at for the "Active recently" public ✓.
   'last_active_at',
+  // For when LastActivePill ships on Club profile headers (queued for a
+  // later batch). Including it now keeps the field lists consistent and
+  // means the per-user opt-out works the moment the pill mounts.
+  'show_last_active',
 ] as const
 
 export const PUBLIC_CLUB_FIELDS = PUBLIC_CLUB_FIELDS_LIST.join(',')
@@ -106,6 +115,10 @@ export const PUBLIC_UMPIRE_FIELDS_LIST = [
   'last_officiated_at',
   'umpire_appointment_count',
   'accepted_reference_count',
+  // LastActivePill / Snapshot read these. last_active_at + show_last_active
+  // both required for the per-user opt-out to work on umpire profiles.
+  'last_active_at',
+  'show_last_active',
 ] as const
 
 export const PUBLIC_UMPIRE_FIELDS = PUBLIC_UMPIRE_FIELDS_LIST.join(',')
