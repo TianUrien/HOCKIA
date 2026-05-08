@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, useRef } from 'react'
 import { ArrowLeft, MapPin, Calendar, Edit2, Eye, MessageCircle, Landmark, Mail, Award } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
-import { Avatar, EditProfileModal, FriendsTab, ReferencesTab, FriendshipButton, ProfileSnapshot, PublicReferencesSection, PublicViewBanner, RoleBadge, ScrollableTabs, NextStepCard, WelcomeValueCard, FreshnessCard, RecentlyConnectedCard, SearchAppearancesCard, DualNationalityDisplay, AvailabilityPill, TierBadge, TrustBadge, VerifiedBadge, CategoryConfirmationBanner } from '@/components'
+import { Avatar, EditProfileModal, FriendsTab, ReferencesTab, FriendshipButton, ProfileSnapshot, PublicReferencesSection, PublicViewBanner, RoleBadge, ScrollableTabs, NextStepCard, ProfileHealthCard, WelcomeValueCard, FreshnessCard, RecentlyConnectedCard, SearchAppearancesCard, DualNationalityDisplay, AvailabilityPill, TierBadge, TrustBadge, VerifiedBadge, CategoryConfirmationBanner } from '@/components'
 import { PulseSection } from '@/components/home/PulseSection'
 import { calculateTier } from '@/lib/profileTier'
 import { useProfileFreshness } from '@/hooks/useProfileFreshness'
@@ -569,13 +569,21 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
               loading={profileStrength.loading}
               onBucketAction={handleProfileStrengthAction}
             />
-            {/* ProfileSnapshot owner-mode removed 2026-05-08: NextStepCard
-                above already drives the "what's next to complete" story
-                with the same data source (per-role profile-strength
-                buckets), and the snapshot's positive-evidence chips
-                duplicated signal a viewer doesn't see. Public mode
-                (rendered in the visitor branch below) still shows the
-                "what clubs see" surface — that one is unique. */}
+            {/* ProfileHealthCard — diagnostic counterpart to NextStepCard.
+                Sits in the slot ProfileSnapshot used to occupy. Distinct
+                role from NextStepCard above:
+                  - NextStepCard answers "what should I do next?" (single
+                    gamified CTA, motivational tone)
+                  - ProfileHealthCard answers "what's the full picture?"
+                    (every bucket with ✓ / ○, neutral comparative copy)
+                Reuses the same useProfileStrength data — no extra queries. */}
+            <div className="mt-3">
+              <ProfileHealthCard
+                percentage={profileStrength.percentage}
+                buckets={profileStrength.buckets}
+                loading={profileStrength.loading}
+              />
+            </div>
             <div className="mt-3">
               <FreshnessCard nudge={freshnessNudge} onAction={handleFreshnessAction} />
             </div>
