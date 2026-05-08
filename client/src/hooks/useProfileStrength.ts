@@ -5,7 +5,16 @@ import type { Profile } from '@/lib/supabase'
 
 export type ProfileStrengthBucket = {
   id: string
+  /** Imperative CTA label, e.g. "Get a trusted reference". Used by
+   *  NextStepCard's "Next step" heading. */
   label: string
+  /** Optional noun-phrase form of the bucket name, e.g. "trusted references"
+   *  for the references bucket. Used by ProfileHealthCard's comparative
+   *  copy where the imperative `label` would read awkwardly
+   *  ("Profiles with get a trusted reference tend to..."). Only the
+   *  high-recruiter-signal buckets need to provide this; others fall
+   *  back to label.toLowerCase() in the comparative line. */
+  noun?: string
   description: string
   /** Honest, conservative line describing what completing this step unlocks for the user */
   unlockCopy: string
@@ -148,6 +157,7 @@ export function useProfileStrength(profile: Profile | null): ProfileStrengthResu
       {
         id: 'highlight-video',
         label: 'Add your highlight video',
+        noun: 'a highlight video',
         description: 'Show clubs what you can do on the pitch',
         unlockCopy: 'Clubs see how you play, not just read about it.',
         weight: 20,
@@ -161,6 +171,7 @@ export function useProfileStrength(profile: Profile | null): ProfileStrengthResu
         // the FullGameVideosSection lives.
         id: 'full-match-footage',
         label: 'Upload full match footage',
+        noun: 'full match footage',
         description: 'Add at least one full game video so recruiters can see you play across a whole match',
         unlockCopy: 'Recruiters value full match footage above curated reels — it shows your work over a real game.',
         weight: 15,
@@ -197,6 +208,10 @@ export function useProfileStrength(profile: Profile | null): ProfileStrengthResu
       {
         id: 'references',
         label: 'Get a trusted reference',
+        // Plural noun reads naturally in "Profiles with trusted references
+        // tend to..." — the imperative label would render as "Profiles with
+        // get a trusted reference tend to..." which is ungrammatical.
+        noun: 'trusted references',
         description: 'Ask a coach or teammate to vouch for you',
         unlockCopy: 'A coach or teammate vouching for you carries weight with clubs.',
         weight: 15,

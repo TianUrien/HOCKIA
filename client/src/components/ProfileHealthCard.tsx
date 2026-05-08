@@ -5,6 +5,11 @@ import { calculateTier, type ProfileTier } from '@/lib/profileTier'
 type BucketLike = {
   id: string
   label: string
+  /** Optional noun-phrase form of the bucket name (e.g. "trusted
+   *  references"). Used in the comparative copy where the imperative
+   *  `label` ("Get a trusted reference") would read awkwardly. Falls
+   *  back to label.toLowerCase() when not provided. */
+  noun?: string
   completed: boolean
 }
 
@@ -61,7 +66,12 @@ export default function ProfileHealthCard<TBucket extends BucketLike>({
       return 'You have the high-impact signals recruiters look for. Filling the remaining items rounds out your profile.'
     }
     if (missingHighSignal.length === 1) {
-      return `Profiles with ${missingHighSignal[0].label.toLowerCase()} tend to get more recruiter contact.`
+      // Prefer the bucket's `noun` (e.g. "trusted references") over the
+      // imperative `label` ("Get a trusted reference"). Without the noun
+      // fallback the line reads "Profiles with get a trusted reference
+      // tend to..." — caught in staging QA on Batch 4.
+      const phrase = missingHighSignal[0].noun ?? missingHighSignal[0].label.toLowerCase()
+      return `Profiles with ${phrase} tend to get more recruiter contact.`
     }
     // Multiple high-signal items missing — keep it general rather than naming all.
     return 'Profiles with full match footage, highlight video, and trusted references tend to get more recruiter contact.'
