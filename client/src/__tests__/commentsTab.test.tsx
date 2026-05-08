@@ -226,6 +226,44 @@ describe('CommentsTab', () => {
     expect(screen.queryByRole('button', { name: /post comment/i })).not.toBeInTheDocument()
   })
 
+  // ── Viewer-state contract for the Network View v0 visitor scroll ─
+  // The Comments section is now rendered inline at the bottom of every
+  // visitor's player profile (no longer behind a tab). Locking down the
+  // three viewer states so a future PR can't leak owner-only copy to
+  // recruiter-side viewers (the case Batch 9 staging QA flagged).
+
+  it('shows the comment composer to an authenticated visitor (NOT the owner copy)', async () => {
+    // Different account viewing baseProfileId — the most common visitor
+    // case (recruiter viewing a player profile).
+    authState.profile = { id: 'visitor-99', full_name: 'Recruiter', username: 'recruiter' }
+    authState.user = { id: 'visitor-99' }
+
+    renderCommentsTab()
+
+    // Composer renders.
+    expect(await screen.findByRole('button', { name: /post comment/i })).toBeInTheDocument()
+    expect(screen.getByPlaceholderText(/./)).toBeInTheDocument() // any composer placeholder
+    // Owner-only copy must NOT appear.
+    expect(screen.queryByText(/You can't leave a comment on your own/i)).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /ask for feedback/i })).not.toBeInTheDocument()
+    // Anonymous-visitor sign-in prompt must NOT appear either.
+    expect(screen.queryByText(/Sign in with a HOCKIA profile/i)).not.toBeInTheDocument()
+  })
+
+  it('shows the sign-in prompt to an anonymous visitor (no auth)', async () => {
+    authState.profile = null as unknown as typeof authState.profile
+    authState.user = null as unknown as typeof authState.user
+
+    renderCommentsTab()
+
+    // Anonymous visitor sees the sign-in prompt, not the composer or owner copy.
+    expect(
+      await screen.findByText(/Sign in with a HOCKIA profile to leave a public, attributed comment/i)
+    ).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /post comment/i })).not.toBeInTheDocument()
+    expect(screen.queryByText(/You can't leave a comment on your own/i)).not.toBeInTheDocument()
+  })
+
   it('saves edits to an existing comment', async () => {
     const existingComment = buildComment()
     supabaseState.commentsFetchResult = { data: [existingComment], error: null }
