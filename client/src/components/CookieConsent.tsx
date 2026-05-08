@@ -38,34 +38,44 @@ export default function CookieConsent() {
 
   if (!visible) return null
 
-  // Banner sits above the mobile bottom nav (lg:hidden, ~80px tall + safe
-  // area) so it doesn't blanket the avatar / Community / Opportunities
-  // buttons and intercept taps. Desktop has no bottom nav, so we drop back
-  // to bottom:0 at lg+. Verified by Playwright (qa-avatar-menu-debug spec)
-  // — the previous bottom-0 banner sat at z-9999 over the z-40 nav and
-  // killed every tap in the bottom 158px.
+  // Slim single-row bar. Previous version was a 158px tall card that
+  // blanketed the bottom of the viewport — at z-9999 it intercepted
+  // taps on the bottom nav (avatar, Community, Opportunities) AND on
+  // the home feed's per-post action buttons (share, like, comment).
+  // Two production-audit findings (and one CI flake) traced back to it.
+  //
+  // New shape: a compact single-row bar (~64px tall on mobile, ~56px
+  // desktop) anchored above the mobile bottom nav so it doesn't sit
+  // over any interactive content. Clipboard-style: short copy, two
+  // small buttons, dismissable. Desktop drops back to bottom:0 since
+  // there's no bottom nav at lg+.
   return (
-    <div className="fixed inset-x-0 z-[9999] p-4 sm:p-6 pointer-events-none bottom-[calc(env(safe-area-inset-bottom)+80px)] lg:bottom-0">
-      <div className="max-w-lg mx-auto bg-white border border-gray-200 rounded-2xl shadow-xl p-5 pointer-events-auto">
-        <p className="text-sm text-gray-700 mb-4">
-          We use cookies and analytics to improve your experience. You can read our{' '}
-          <a href="/privacy-policy" className="text-[#8026FA] underline hover:opacity-80">
+    <div
+      className="fixed inset-x-0 z-[9999] px-3 pb-3 sm:px-6 sm:pb-4 pointer-events-none bottom-[calc(env(safe-area-inset-bottom)+80px)] lg:bottom-0"
+      role="region"
+      aria-label="Cookie consent"
+    >
+      <div className="max-w-3xl mx-auto bg-white/95 backdrop-blur border border-gray-200 rounded-xl shadow-lg pointer-events-auto px-3 py-2.5 sm:px-4 sm:py-3 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+        <p className="text-xs sm:text-sm text-gray-700 flex-1 leading-snug">
+          We use cookies and analytics to improve your experience.{' '}
+          <a href="/privacy-policy" className="text-[#8026FA] underline hover:opacity-80 whitespace-nowrap">
             Privacy Policy
-          </a>{' '}
-          for details.
+          </a>
         </p>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 flex-shrink-0">
           <button
-            onClick={handleAccept}
-            className="flex-1 px-4 py-2.5 bg-[#8026FA] text-white text-sm font-medium rounded-lg hover:bg-[#6b1fd4] transition-colors"
-          >
-            Accept
-          </button>
-          <button
+            type="button"
             onClick={handleDecline}
-            className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors"
+            className="px-3 py-1.5 text-xs sm:text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
           >
             Decline
+          </button>
+          <button
+            type="button"
+            onClick={handleAccept}
+            className="px-4 py-1.5 bg-[#8026FA] text-white text-xs sm:text-sm font-semibold rounded-lg hover:bg-[#6b1fd4] transition-colors"
+          >
+            Accept
           </button>
         </div>
       </div>

@@ -475,6 +475,12 @@ async function authenticateUser(
       localStorage.setItem(`hockia-terms-${userId}-1.0`, 'accepted')
       // Keep legacy key for backwards compat with any old checks
       localStorage.setItem('hockia-terms-1.0', 'accepted')
+      // Pre-accept the GDPR cookie banner so its bottom-anchored card
+      // doesn't intercept taps in the home feed / dashboard during E2E
+      // runs. Required for tests that click feed-card buttons (share,
+      // like, comment) — those land inside the banner's footprint on
+      // mobile viewports. CookieConsent reads this exact key on mount.
+      localStorage.setItem('hockia-cookie-consent', 'accepted')
     },
     { userId: data.user?.id ?? '' }
   )
