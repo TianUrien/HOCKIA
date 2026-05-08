@@ -133,19 +133,31 @@ export default function ClubMembersTab({ profileId }: ClubMembersTabProps) {
 
   const hasMore = members.length < totalCount
 
+  // Section heading is rendered for every state — without it the empty
+  // state ("No members yet") lands without a section title, leaving the
+  // visitor scrolling past a divider into uncontextualized copy.
+  // Mirrors how OpportunitiesTab keeps "Open Opportunities" present
+  // across loading / empty / list states.
+  const heading = (
+    <h2 className="text-xl font-bold text-gray-900 mb-4">Members</h2>
+  )
+
   // ── Loading skeleton (list rows) ──────────────────────────────────
   if (loading) {
     return (
-      <div className="divide-y divide-gray-100">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="flex items-center gap-3 py-3 px-1 animate-pulse">
-            <div className="w-10 h-10 rounded-full bg-gray-200 flex-shrink-0" />
-            <div className="flex-1 space-y-2">
-              <div className="h-4 bg-gray-200 rounded w-32" />
-              <div className="h-3 bg-gray-100 rounded w-48" />
+      <div>
+        {heading}
+        <div className="divide-y divide-gray-100">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-3 py-3 px-1 animate-pulse">
+              <div className="w-10 h-10 rounded-full bg-gray-200 flex-shrink-0" />
+              <div className="flex-1 space-y-2">
+                <div className="h-4 bg-gray-200 rounded w-32" />
+                <div className="h-3 bg-gray-100 rounded w-48" />
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     )
   }
@@ -153,15 +165,18 @@ export default function ClubMembersTab({ profileId }: ClubMembersTabProps) {
   // ── Error state ───────────────────────────────────────────────────
   if (error) {
     return (
-      <div className="p-4 mb-6 bg-red-50 border border-red-200 rounded-lg text-red-600">
-        <p>{error}</p>
-        <button
-          type="button"
-          onClick={handleRetry}
-          className="mt-2 px-4 py-1.5 text-sm bg-red-100 hover:bg-red-200 text-red-700 rounded-md transition-colors"
-        >
-          Try again
-        </button>
+      <div>
+        {heading}
+        <div className="p-4 mb-6 bg-red-50 border border-red-200 rounded-lg text-red-600">
+          <p>{error}</p>
+          <button
+            type="button"
+            onClick={handleRetry}
+            className="mt-2 px-4 py-1.5 text-sm bg-red-100 hover:bg-red-200 text-red-700 rounded-md transition-colors"
+          >
+            Try again
+          </button>
+        </div>
       </div>
     )
   }
@@ -169,21 +184,25 @@ export default function ClubMembersTab({ profileId }: ClubMembersTabProps) {
   // ── Empty state ───────────────────────────────────────────────────
   if (displayedMembers.length === 0) {
     return (
-      <div className="text-center py-12">
-        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Users className="w-8 h-8 text-gray-400" />
+      <div>
+        {heading}
+        <div className="text-center py-12">
+          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Users className="w-8 h-8 text-gray-400" />
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">No members yet</h3>
+          <p className="text-gray-500 text-sm max-w-sm mx-auto">
+            Players and coaches who assign this club in their profile will appear here.
+          </p>
         </div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">No members yet</h3>
-        <p className="text-gray-500 text-sm max-w-sm mx-auto">
-          Players and coaches who assign this club in their profile will appear here.
-        </p>
       </div>
     )
   }
 
   // ── Members list ──────────────────────────────────────────────────
   return (
-    <>
+    <div>
+      {heading}
       <div className="divide-y divide-gray-100">
         {displayedMembers.map((member) => {
           const meta = buildMeta(member)
@@ -235,6 +254,6 @@ export default function ClubMembersTab({ profileId }: ClubMembersTabProps) {
           </button>
         </div>
       )}
-    </>
+    </div>
   )
 }

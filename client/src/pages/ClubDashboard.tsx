@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { ArrowLeft, MapPin, Calendar, Plus, Eye, MessageCircle, Edit, Loader2, Sparkles } from 'lucide-react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import Header from '@/components/Header'
-import { Avatar, Button, CountryDisplay, EditProfileModal, CommentsTab, FriendsTab, FriendshipButton, NextStepCard, WelcomeValueCard, FreshnessCard, ProfileSnapshot, SearchAppearancesCard, PublicViewBanner, RoleBadge, ScrollableTabs, TierBadge, VerifiedBadge, PendingVerificationBadge } from '@/components'
+import { Avatar, Button, CountryDisplay, EditProfileModal, CommentsTab, FriendsTab, FriendshipButton, NextStepCard, WelcomeValueCard, FreshnessCard, SearchAppearancesCard, PublicViewBanner, RoleBadge, ScrollableTabs, TierBadge, VerifiedBadge, PendingVerificationBadge } from '@/components'
 import { PulseSection } from '@/components/home/PulseSection'
 import { calculateTier } from '@/lib/profileTier'
 import { useProfileFreshness } from '@/hooks/useProfileFreshness'
@@ -464,12 +464,12 @@ export default function ClubDashboard({ profileData, readOnly = false, isOwnProf
             )}
           </>
         ) : (
-          <div className="mb-3">
-            <ProfileSnapshot
-              profile={profile as Profile | null}
-              mode="public"
-            />
-          </div>
+          // Visitor view: ProfileSnapshot removed — Network View v0 already
+          // surfaces every signal it carried (Location & country, Year
+          // founded, Club bio, Contact details) in canonical locations:
+          // the header card and Club Information block below. Mirrors the
+          // Player cleanup shipped 2026-05-08.
+          null
         )}
 
         <div id="profile-tab-content" className="bg-white rounded-2xl shadow-sm animate-slide-in-up scroll-mt-4">

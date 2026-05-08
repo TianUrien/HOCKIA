@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, useRef } from 'react'
 import { ArrowLeft, MapPin, Calendar, Edit2, Eye, MessageCircle, Landmark, Mail, Plus } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
-import { Avatar, EditProfileModal, JourneyTab, CommentsTab, FriendsTab, ReferencesTab, FriendshipButton, NextStepCard, WelcomeValueCard, FreshnessCard, ProfileSnapshot, RecentlyConnectedCard, SearchAppearancesCard, PublicReferencesSection, PublicViewBanner, RoleBadge, ScrollableTabs, DualNationalityDisplay, AvailabilityPill, TierBadge, TrustBadge, VerifiedBadge, CategoryConfirmationBanner } from '@/components'
+import { Avatar, EditProfileModal, JourneyTab, CommentsTab, FriendsTab, ReferencesTab, FriendshipButton, NextStepCard, WelcomeValueCard, FreshnessCard, RecentlyConnectedCard, SearchAppearancesCard, PublicReferencesSection, PublicViewBanner, RoleBadge, ScrollableTabs, DualNationalityDisplay, AvailabilityPill, TierBadge, TrustBadge, VerifiedBadge, CategoryConfirmationBanner } from '@/components'
 import { PulseSection } from '@/components/home/PulseSection'
 import { calculateTier } from '@/lib/profileTier'
 import { useProfileFreshness } from '@/hooks/useProfileFreshness'
@@ -577,12 +577,13 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
             )}
           </>
         ) : (
-          <div className="mb-3">
-            <ProfileSnapshot
-              profile={profile as Profile | null}
-              mode="public"
-            />
-          </div>
+          // Visitor view: ProfileSnapshot removed — Network View v0 already
+          // surfaces every signal it carried (Specialization, Coaching
+          // categories, Photo) in canonical locations: header card, About,
+          // and the inline Profile content below. Showing both was duplicate
+          // signal in two visual treatments. Mirrors the Player cleanup
+          // shipped 2026-05-08.
+          null
         )}
 
         {/* Tabs — anchor on the outer wrapper so deep-link scroll lands

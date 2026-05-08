@@ -35,7 +35,6 @@ import {
   EditProfileModal,
   FriendsTab,
   FriendshipButton,
-  ProfileSnapshot,
   PublicReferencesSection,
   PublicViewBanner,
   RoleBadge,
@@ -541,12 +540,13 @@ export default function UmpireDashboard({
             )}
           </>
         ) : (
-          <div className="mt-6">
-            <ProfileSnapshot
-              profile={profile as unknown as Profile | null}
-              mode="public"
-            />
-          </div>
+          // Visitor view: ProfileSnapshot removed — Network View v0 already
+          // surfaces every signal it carried (Umpire level, Federation,
+          // Specialization, Languages, References) in canonical locations:
+          // the Certification & Level section, the inline Languages chips,
+          // and PublicReferencesSection below. Mirrors the Player cleanup
+          // shipped 2026-05-08.
+          null
         )}
 
         {/* ── Tabs ── anchor on outer wrapper so deep-link scroll lands
