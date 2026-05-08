@@ -219,7 +219,11 @@ export default function MemberTile(props: MemberTileProps) {
               ) : (
                 <MapPin className="w-3 h-3 flex-shrink-0 text-gray-400" />
               )}
-              <span className="truncate">{roleNative.label}</span>
+              {/* flex-1 + min-w-0 so the truncate actually engages — without
+                  flex-1 the span sizes to its full intrinsic width and pushes
+                  the row wider than the parent (caught by qa-mid-width-overflow:
+                  "Bayside Powerhouse Saints Hockey Club" overflowed by 65px). */}
+              <span className="truncate flex-1 min-w-0">{roleNative.label}</span>
             </div>
           )}
         </div>

@@ -21,6 +21,22 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Prevent any descendant from forcing horizontal page scroll. Several
+   layout patterns intentionally extend to viewport edges via negative
+   margins (`-mx-4 px-4` on chip-strips like CommunityRoleChips and
+   HomeFilterChips), and even with `overflow-x-auto` on the strip itself
+   the wrapper element sits 16-32px wider than its parent. Without this
+   guard, pages that include those strips show a small horizontal scroll
+   on the body — the qa-mid-width-overflow audit caught 16px of bleed
+   on /home and /community at every tested viewport.
+
+   `overflow-x: clip` (vs hidden) is preferred — it clips overflow without
+   establishing a scroll context, so child sticky/scroll behaviour is
+   unchanged. */
+html {
+  overflow-x: clip;
+}
+
 /* HOCKIA Brand Colors & Custom Properties */
 :root {
   /* Primary Brand Colors */
