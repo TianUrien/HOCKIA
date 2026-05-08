@@ -18,8 +18,10 @@ function makeProfile(role: Profile['role'], overrides: Partial<Profile> = {}): P
 
 const TWENTY_DAYS_AGO = new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString()
 const FIFTY_DAYS_AGO = new Date(Date.now() - 50 * 24 * 60 * 60 * 1000).toISOString()
-const SIXTY_DAYS_AGO = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString()
 const SEVENTY_DAYS_AGO = new Date(Date.now() - 70 * 24 * 60 * 60 * 1000).toISOString()
+// SIXTY_DAYS_AGO removed 2026-05-08 — was only used by the activity
+// signal test, which moved out of this suite into lastActivePill.test.tsx
+// when the activity signal was extracted from ProfileSnapshot.
 
 // Compact wrapper matching the new computeSignals signature
 // (profile, brand, productCount, ambassadorCount, postCount). Brand prop
