@@ -7,6 +7,7 @@ import type { Profile } from '../lib/supabase'
 import PlayerDashboard, { type PlayerProfileShape } from './PlayerDashboard'
 import CoachDashboard from './CoachDashboard'
 import { useAuthStore } from '../lib/auth'
+import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { trackDbEvent } from '../lib/trackDbEvent'
 import { trackProfileView, trackPublicProfileViewed } from '../lib/analytics'
 import { usePublicProfileMeta } from '@/hooks/usePublicProfileMeta'
@@ -64,6 +65,12 @@ export default function PublicPlayerProfile() {
   const [profile, setProfile] = useState<PublicProfile | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  // Tab title resolves to the player/coach name once loaded; falls back
+  // to a neutral "Player" / "Coach" while the fetch resolves so the tab
+  // doesn't flash the static index.html title.
+  const profileRoleLabel = profile?.role === 'coach' ? 'Coach' : 'Player'
+  useDocumentTitle(profile?.full_name ? `${profile.full_name} • ${profileRoleLabel}` : profileRoleLabel)
 
   const checkBlocked = async (myId: string, otherId: string): Promise<boolean> => {
     try {

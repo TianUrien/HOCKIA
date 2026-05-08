@@ -38,8 +38,14 @@ export default function CookieConsent() {
 
   if (!visible) return null
 
+  // Banner sits above the mobile bottom nav (lg:hidden, ~80px tall + safe
+  // area) so it doesn't blanket the avatar / Community / Opportunities
+  // buttons and intercept taps. Desktop has no bottom nav, so we drop back
+  // to bottom:0 at lg+. Verified by Playwright (qa-avatar-menu-debug spec)
+  // — the previous bottom-0 banner sat at z-9999 over the z-40 nav and
+  // killed every tap in the bottom 158px.
   return (
-    <div className="fixed bottom-0 inset-x-0 z-[9999] p-4 sm:p-6 pointer-events-none">
+    <div className="fixed inset-x-0 z-[9999] p-4 sm:p-6 pointer-events-none bottom-[calc(env(safe-area-inset-bottom)+80px)] lg:bottom-0">
       <div className="max-w-lg mx-auto bg-white border border-gray-200 rounded-2xl shadow-xl p-5 pointer-events-auto">
         <p className="text-sm text-gray-700 mb-4">
           We use cookies and analytics to improve your experience. You can read our{' '}

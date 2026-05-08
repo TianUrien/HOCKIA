@@ -7,10 +7,12 @@ import { SearchOverlay } from '@/components/search/SearchOverlay'
 import { PullToRefresh } from '@/components/PullToRefresh'
 import { useScrollRestore } from '@/hooks/useScrollRestore'
 import { useScrollDirection } from '@/hooks/useScrollDirection'
+import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import type { HomeFeedItem } from '@/types/homeFeed'
 
 export default function HomePage() {
   useScrollRestore()
+  useDocumentTitle('Home')
   const scrollDirection = useScrollDirection()
   const prependItemRef = useRef<((item: HomeFeedItem) => void) | null>(null)
   const queryClient = useQueryClient()

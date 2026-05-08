@@ -18,6 +18,7 @@ import { useSearchParams } from 'react-router-dom'
 import { Header, Layout } from '@/components'
 import { BrandCard, BrandCategoryFilter, GlobalBrandFeed } from '@/components/brands'
 import { useBrands, type BrandCategory } from '@/hooks/useBrands'
+import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 
 type PageTab = 'feed' | 'directory'
 
@@ -28,6 +29,8 @@ export default function BrandsPage() {
     const param = searchParams.get('view')
     return param === 'directory' ? 'directory' : 'feed'
   })
+
+  useDocumentTitle('Marketplace')
 
   const handleTabChange = (tab: PageTab) => {
     setActiveTab(tab)

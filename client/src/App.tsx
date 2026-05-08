@@ -389,6 +389,10 @@ function App() {
                 <Route path="/home" element={<ErrorBoundary fallback={<RouteErrorFallback />}><HomePage /></ErrorBoundary>} />
                 <Route path="/search" element={<ErrorBoundary fallback={<RouteErrorFallback />}><SearchPage /></ErrorBoundary>} />
                 <Route path="/discover" element={<ErrorBoundary fallback={<RouteErrorFallback />}><DiscoverPage /></ErrorBoundary>} />
+                {/* Alias: /discovery → /discover. Some users (and external
+                    links) have used the longer name; keep them out of 404. */}
+                <Route path="/discovery" element={<Navigate to="/discover" replace />} />
+                <Route path="/discovery/:rest" element={<Navigate to="/discover" replace />} />
                 <Route path="/community" element={<ErrorBoundary fallback={<RouteErrorFallback />}><CommunityPage /></ErrorBoundary>} />
                 <Route path="/community/:tab" element={<ErrorBoundary fallback={<RouteErrorFallback />}><CommunityPage /></ErrorBoundary>} />
                 <Route path="/community/questions/:questionId" element={<ErrorBoundary fallback={<RouteErrorFallback />}><QuestionDetailPage /></ErrorBoundary>} />
@@ -397,6 +401,10 @@ function App() {
                 <Route path="/messages" element={<ErrorBoundary fallback={<RouteErrorFallback />}><MessagesPage /></ErrorBoundary>} />
                 <Route path="/messages/:conversationId" element={<ErrorBoundary fallback={<RouteErrorFallback />}><MessagesPage /></ErrorBoundary>} />
                 <Route path="/settings" element={<ErrorBoundary fallback={<RouteErrorFallback />}><SettingsPage /></ErrorBoundary>} />
+                {/* Bare /dashboard 404'd in production — the bottom-nav
+                    label is "Dashboard" and users typed it directly. Redirect
+                    to the canonical /dashboard/profile. */}
+                <Route path="/dashboard" element={<Navigate to="/dashboard/profile" replace />} />
                 <Route path="/dashboard/profile" element={<ErrorBoundary fallback={<RouteErrorFallback />}><DashboardRouter /></ErrorBoundary>} />
                 <Route path="/dashboard/opportunities/:opportunityId/applicants" element={<ErrorBoundary fallback={<RouteErrorFallback />}><ApplicantsList /></ErrorBoundary>} />
 

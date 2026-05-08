@@ -323,7 +323,16 @@ describe('MediaTab — highlight visibility toggle', () => {
     expect(screen.queryByText('Highlight Video Restricted')).not.toBeInTheDocument()
   })
 
-  it('always shows video on own public profile even when restricted', async () => {
+  it('Network View honours the privacy toggle for the owner — restricted shows when recruiters-only is set', async () => {
+    // Behaviour change 2026-05-08: Network View (readOnly && isOwnProfile)
+    // used to short-circuit the canViewVideo gate via `if (isOwnProfile)
+    // return true`, which meant the owner always saw their own video even
+    // when they had set "Recruiters only". That defeated Network View's
+    // purpose (preview what a non-recruiter visitor sees) and read as a
+    // privacy regression to anyone testing the toggle.
+    //
+    // Now: Network View falls through to the visibility check. A non-
+    // recruiter viewerRole ('player' here) sees the restricted state.
     render(
       <MediaTab
         readOnly
@@ -335,9 +344,9 @@ describe('MediaTab — highlight visibility toggle', () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByTitle('Highlight video player')).toBeInTheDocument()
+      expect(screen.getByText('Highlight Video Restricted')).toBeInTheDocument()
     })
 
-    expect(screen.queryByText('Highlight Video Restricted')).not.toBeInTheDocument()
+    expect(screen.queryByTitle('Highlight video player')).not.toBeInTheDocument()
   })
 })

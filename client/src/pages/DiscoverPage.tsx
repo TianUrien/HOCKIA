@@ -4,6 +4,7 @@ import { Sparkles, Send, Loader2, RotateCcw, ChevronLeft } from 'lucide-react'
 import { useDiscoverChat } from '@/hooks/useDiscover'
 import DiscoverChat from '@/components/DiscoverChat'
 import { useAuthStore } from '@/lib/auth'
+import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { getFirstName } from '@/lib/profile'
 
 /** Default examples for unauthenticated visits + the universal fallback set.
@@ -68,6 +69,7 @@ function buildCoachExamples(coachRecruitsForTeam: boolean): string[] {
 }
 
 export default function DiscoverPage() {
+  useDocumentTitle('Discover')
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const { messages, sendMessage, clearChat, isPending } = useDiscoverChat()

@@ -41,8 +41,18 @@ function composerPlaceholderFor(role: Profile['role'] | null | undefined): strin
   return 'Tell clubs, coaches, and players why this profile stands out...'
 }
 
-/** Role-aware empty-state body copy. */
-function emptyStateCopyFor(role: Profile['role'] | null | undefined): string {
+/** Role-aware empty-state body copy.
+ *  When the viewer is the owner the "be the first to share" framing is
+ *  wrong — owners can't comment on their own profile (the alert above this
+ *  state explicitly tells them so). Owner-mode copy nudges them to ask
+ *  someone in their network instead. */
+function emptyStateCopyFor(
+  role: Profile['role'] | null | undefined,
+  isOwner: boolean,
+): string {
+  if (isOwner) {
+    return 'No comments yet — ask a teammate, coach, or club to leave one.'
+  }
   if (role === 'umpire') {
     return 'Be the first to share a note about this umpire.'
   }
@@ -727,7 +737,7 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
         ) : comments.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-gray-200 bg-white p-10 text-center text-gray-500">
             <p className="text-base font-semibold text-gray-900 mb-2">No comments yet</p>
-            <p className="text-sm">{emptyStateCopyFor(profileRole)}</p>
+            <p className="text-sm">{emptyStateCopyFor(profileRole, isOwner)}</p>
           </div>
         ) : (
           <div className="space-y-4">

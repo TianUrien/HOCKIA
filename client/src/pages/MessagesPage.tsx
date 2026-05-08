@@ -16,6 +16,7 @@ import { monitor } from '@/lib/monitor'
 import { logger } from '@/lib/logger'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
+import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
 
 interface ConversationDBRow {
@@ -536,6 +537,16 @@ export default function MessagesPage() {
 
   const selectedConversation = combinedConversations.find((conv) => conv.id === selectedConversationId)
   const hasActiveConversation = Boolean(selectedConversationId)
+
+  // Title: chat thread shows the other participant's name when known so
+  // the browser tab + history reflects which conversation is open.
+  // Falls back to "Messages" for the list view or while a thread is
+  // resolving its participant data.
+  useDocumentTitle(
+    selectedConversation?.otherParticipant?.full_name
+      ? `${selectedConversation.otherParticipant.full_name} • Messages`
+      : 'Messages',
+  )
   const shouldHideGlobalHeader = Boolean(isMobile && hasActiveConversation)
   const conversationListKey = shouldHideGlobalHeader ? 'immersive-hidden' : 'list-visible'
   const shouldLockBodyScroll = shouldHideGlobalHeader

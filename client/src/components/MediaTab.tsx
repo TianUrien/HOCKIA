@@ -37,6 +37,11 @@ interface MediaTabProps {
 }
 
 export default function MediaTab({ profileId, readOnly = false, renderHeader, showVideo = true, showGallery = true, viewerRole, isOwnProfile, highlightVisibility }: MediaTabProps) {
+  // isOwnProfile is no longer consumed for the canViewVideo gate (Network
+  // View now honours the privacy toggle so the owner can preview what
+  // visitors see). Prop kept on the type so existing callers don't have
+  // to change. void marker keeps TS quiet about the unused destructure.
+  void isOwnProfile
   const { user, profile: authProfile } = useAuthStore()
   const targetUserId = profileId || user?.id
   const { addToast } = useToastStore()
@@ -61,8 +66,13 @@ export default function MediaTab({ profileId, readOnly = false, renderHeader, sh
   const canManageHighlightVideo = Boolean(!readOnly && displayProfile?.highlight_video_url)
 
   const canViewVideo = (() => {
+    // Owner managing their own profile (non-readOnly) always sees their video.
     if (!readOnly) return true
-    if (isOwnProfile) return true
+    // Network View (readOnly && isOwnProfile) deliberately falls through to
+    // the visibility check below so the owner can preview what a non-recruiter
+    // visitor would actually see. Previously short-circuited with
+    // `if (isOwnProfile) return true`, which silently bypassed the privacy
+    // toggle in Network View — owner thought "Recruiters only" was ignored.
     if (visibility === 'public') return true
     return viewerRole === 'club' || viewerRole === 'coach'
   })()

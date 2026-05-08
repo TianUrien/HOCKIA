@@ -17,6 +17,7 @@ import { monitor } from '@/lib/monitor'
 import { logger } from '@/lib/logger'
 import { useOpportunityNotifications } from '@/hooks/useOpportunityNotifications'
 import { useCountries, type Country } from '@/hooks/useCountries'
+import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -128,6 +129,7 @@ function CountryGroupHeader({ countryName, flagEmoji }: { countryName: string; f
 // ─── Main Page ───────────────────────────────────────────────────────────────
 
 export default function OpportunitiesPage() {
+  useDocumentTitle('Opportunities')
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const { user, profile } = useAuthStore()

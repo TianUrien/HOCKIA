@@ -18,8 +18,18 @@ import {
   QuestionsListView,
 } from '@/components/community'
 import type { CommunityTab } from '@/components/community'
+import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 
 const VALID_TABS: CommunityTab[] = ['all', 'players', 'coaches', 'clubs', 'umpires', 'questions']
+
+const TITLE_BY_TAB: Record<CommunityTab, string> = {
+  all: 'Community',
+  players: 'Players',
+  coaches: 'Coaches',
+  clubs: 'Clubs',
+  umpires: 'Umpires',
+  questions: 'Questions',
+}
 
 export default function CommunityPage() {
   const { tab } = useParams<{ tab?: string }>()
@@ -30,6 +40,8 @@ export default function CommunityPage() {
     tab && VALID_TABS.includes(tab as CommunityTab)
       ? (tab as CommunityTab)
       : 'all'
+
+  useDocumentTitle(TITLE_BY_TAB[activeTab])
 
   const handleRefresh = useCallback(async () => {
     setRefreshKey(k => k + 1)

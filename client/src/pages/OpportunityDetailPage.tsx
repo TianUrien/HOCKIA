@@ -12,6 +12,7 @@ import ApplyToOpportunityModal from '../components/ApplyToOpportunityModal'
 import SignInPromptModal from '../components/SignInPromptModal'
 import OpportunityJsonLd from '../components/OpportunityJsonLd'
 import Breadcrumbs from '../components/Breadcrumbs'
+import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 
 export default function OpportunityDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -28,6 +29,11 @@ export default function OpportunityDetailPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
   const [isClosed, setIsClosed] = useState(false)
+
+  // Title resolves to the opportunity name once loaded; stays neutral
+  // ("Opportunity") while fetching so the tab doesn't flash the static
+  // "HOCKIA – The Home of Field Hockey" suffix during the load.
+  useDocumentTitle(opportunity?.title ? `${opportunity.title} • Opportunities` : 'Opportunity')
 
   const fetchVacancyDetails = useCallback(async () => {
     if (!id) return

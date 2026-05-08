@@ -25,12 +25,14 @@ import Header from '@/components/Header'
 import DeleteAccountModal from '@/components/DeleteAccountModal'
 import BlockedAccountsList from '@/components/BlockedAccountsList'
 import { usePushSubscription } from '@/hooks/usePushSubscription'
+import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { trackPushSubscribe, trackPushUnsubscribe } from '@/lib/analytics'
 
 // App version - could be pulled from package.json in the future
 const APP_VERSION = '1.0.0'
 
 export default function SettingsPage() {
+  useDocumentTitle('Settings')
   const navigate = useNavigate()
   const { user, profile, refreshProfile, signOut } = useAuthStore()
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
