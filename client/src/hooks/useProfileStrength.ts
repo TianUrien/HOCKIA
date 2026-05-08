@@ -69,24 +69,27 @@ function hasHighlightVideo(profile: Profile): boolean {
 /**
  * Hook to calculate profile strength/completion for Player profiles.
  *
- * The strength is calculated from 8 weighted buckets, biased toward
- * recruitment-grade content (highlight + full-match video, references)
- * over identity basics:
+ * The strength is calculated from 9 weighted buckets, biased toward
+ * recruitment-grade content (highlight + full-match video, references,
+ * availability) over identity basics:
  *
  * - Basic Info (10%): nationality, base_location, position
  * - Profile Photo (10%): avatar_url
  * - Highlight Video (20%): highlight_video_url
  * - Full Match Footage (15%): at least one player_full_game_videos row
- *   (added 2026-05-08 — full game footage is high-signal recruiter content
- *   and was previously missing from the calculation entirely)
  * - Journey (10%): at least one career_history entry
- * - Media Gallery (10%): at least one gallery_photos entry
+ * - Media Gallery (5%): at least one gallery_photos entry
+ *   (was 10%, reduced 2026-05-08 to make room for Availability — gallery
+ *   is lower-impact than the other buckets as a recruiter signal)
  * - Friends (10%): at least one accepted friend connection
  * - References (15%): at least one approved reference
+ * - Availability (5%): open_to_play === true
+ *   (added 2026-05-08 — recruiters filter directly on this boolean. A
+ *   player marked Open is actively recruitable; one not marked might
+ *   not even be visible to a "show me available defenders" query.
+ *   Lower weight than content buckets because it's a single toggle.)
  *
- * Total = 100%. Weights of Basic Info / Profile Photo / Journey were each
- * reduced by 5% to make room for the new Full Match Footage bucket while
- * keeping the heavier emphasis on video + references intact.
+ * Total = 100%.
  */
 export function useProfileStrength(profile: Profile | null): ProfileStrengthResult {
   const [loading, setLoading] = useState(true)
@@ -192,7 +195,7 @@ export function useProfileStrength(profile: Profile | null): ProfileStrengthResu
         label: 'Add a photo or video to your Gallery',
         description: 'Build your visual portfolio for clubs to see',
         unlockCopy: 'A visual portfolio beyond a single highlight clip.',
-        weight: 10,
+        weight: 5,
         completed: galleryCount > 0,
         action: { type: 'tab', tab: 'profile' },
       },
@@ -217,6 +220,22 @@ export function useProfileStrength(profile: Profile | null): ProfileStrengthResu
         weight: 15,
         completed: referenceCount > 0,
         action: { type: 'tab', tab: 'friends' },
+      },
+      {
+        // Open-to-Play is the single most-filtered boolean for recruiter
+        // searches. A player not marked Open may never appear in a
+        // "show me available defenders" query at all. Lighter weight (5%)
+        // than content buckets because it's a single toggle, but earning
+        // a visible bucket nudges the player to set it explicitly instead
+        // of leaving it as the default false. Action routes to the
+        // Profile tab where AvailabilityToggleStrip lives.
+        id: 'availability',
+        label: 'Mark yourself open to opportunities',
+        description: 'Let clubs and coaches know you\'re open to play',
+        unlockCopy: 'Recruiters filter for "Open to Play" — without it, you may not appear in their searches.',
+        weight: 5,
+        completed: profile.open_to_play === true,
+        action: { type: 'tab', tab: 'profile' },
       },
     ]
   }, [profile, journeyCount, galleryCount, friendCount, referenceCount, fullGameVideoCount])
