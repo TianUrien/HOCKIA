@@ -39,14 +39,11 @@ export interface ProfileSnapshotBrandFields {
   instagram_url: string | null
 }
 
-const ACTIVITY_RECENT_DAYS = 30
+// ACTIVITY_RECENT_DAYS / isRecentlyActive removed 2026-05-08 — the
+// activity signal moved out of ProfileSnapshot into the dedicated
+// LastActivePill component (auth-gated, bucketed labels). The pill
+// owns its own bucket logic; this helper is no longer referenced.
 const AVAILABILITY_DECAY_DAYS = 60
-
-function isRecentlyActive(lastActiveAt: string | null | undefined): boolean {
-  if (!lastActiveAt) return false
-  const ms = Date.now() - new Date(lastActiveAt).getTime()
-  return ms <= ACTIVITY_RECENT_DAYS * 24 * 60 * 60 * 1000
-}
 
 /**
  * Loop-Layer L2 — availability decay.
@@ -140,12 +137,11 @@ function computePlayerSignals(p: Profile): ProfileSnapshotSignal[] {
       present: availability,
       ownerActionId: 'edit-profile',
     },
-    {
-      id: 'activity',
-      label: 'Active recently',
-      present: isRecentlyActive(p.last_active_at),
-      // Activity is a derived signal — no direct edit action.
-    },
+    // Activity signal removed 2026-05-08 — superseded by LastActivePill in
+    // the profile header. The pill renders bucketed labels ("Active today
+    // / this week / this month") which carry more useful information than
+    // the snapshot's binary "Active recently" boolean. Keeping both showed
+    // duplicated signal in two visual treatments on the same page.
   ]
 }
 
@@ -202,11 +198,7 @@ function computeCoachSignals(p: Profile): ProfileSnapshotSignal[] {
       present: availability,
       ownerActionId: 'edit-profile',
     },
-    {
-      id: 'activity',
-      label: 'Active recently',
-      present: isRecentlyActive(p.last_active_at),
-    },
+    // Activity signal removed 2026-05-08 — superseded by LastActivePill.
   ]
 }
 
@@ -255,11 +247,7 @@ function computeClubSignals(p: Profile): ProfileSnapshotSignal[] {
       present: hasContact,
       ownerActionId: 'edit-profile',
     },
-    {
-      id: 'activity',
-      label: 'Active recently',
-      present: isRecentlyActive(p.last_active_at),
-    },
+    // Activity signal removed 2026-05-08 — superseded by LastActivePill.
   ]
 }
 

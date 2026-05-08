@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, useRef } from 'react'
 import { ArrowLeft, MapPin, Calendar, Edit2, Eye, MessageCircle, Landmark, Mail, Award } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
-import { Avatar, EditProfileModal, FriendsTab, ReferencesTab, FriendshipButton, ProfileSnapshot, PublicReferencesSection, PublicViewBanner, RoleBadge, ScrollableTabs, NextStepCard, ProfileHealthCard, LastActivePill, WelcomeValueCard, FreshnessCard, RecentlyConnectedCard, SearchAppearancesCard, DualNationalityDisplay, AvailabilityPill, TierBadge, TrustBadge, VerifiedBadge, CategoryConfirmationBanner } from '@/components'
+import { Avatar, EditProfileModal, FriendsTab, ReferencesTab, FriendshipButton, PublicReferencesSection, PublicViewBanner, RoleBadge, ScrollableTabs, NextStepCard, ProfileHealthCard, LastActivePill, WelcomeValueCard, FreshnessCard, RecentlyConnectedCard, SearchAppearancesCard, DualNationalityDisplay, AvailabilityPill, TierBadge, TrustBadge, VerifiedBadge, CategoryConfirmationBanner } from '@/components'
 import { PulseSection } from '@/components/home/PulseSection'
 import { calculateTier } from '@/lib/profileTier'
 import { useProfileFreshness } from '@/hooks/useProfileFreshness'
@@ -636,12 +636,16 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
             )}
           </>
         ) : (
-          <div className="mb-3">
-            <ProfileSnapshot
-              profile={profile as Profile | null}
-              mode="public"
-            />
-          </div>
+          // Visitor view 2026-05-08: ProfileSnapshot card removed — the
+          // per-tab content sections (Highlight Video, References,
+          // Journey, etc.) already surface the same signals in their
+          // canonical locations, and the LastActivePill in the profile
+          // header now owns the activity signal that was the snapshot's
+          // unique contribution. Showing both was duplicate signal in
+          // two visual treatments. Tabs Card below still renders for
+          // visitors — the full tab→scroll restructure is queued as a
+          // dedicated follow-up batch.
+          null
         )}
 
         {/* Tabs Card — anchor lives on the outer wrapper so the deep-link

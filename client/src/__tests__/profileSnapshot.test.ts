@@ -28,9 +28,11 @@ const SEVENTY_DAYS_AGO = new Date(Date.now() - 70 * 24 * 60 * 60 * 1000).toISOSt
 const sigs = (profile: Profile) => computeSignals(profile, null, 0, 0, 0)
 
 describe('computeSignals — player', () => {
-  it('returns 8 signals in a fixed order', () => {
+  it('returns 7 signals in a fixed order', () => {
+    // Activity signal removed 2026-05-08 — superseded by LastActivePill
+    // in the profile header. Snapshot now has 7 signals (was 8).
     const signals = sigs(makeProfile('player'))
-    expect(signals).toHaveLength(8)
+    expect(signals).toHaveLength(7)
     expect(signals.map((s) => s.id)).toEqual([
       'photo',
       'position',
@@ -39,7 +41,6 @@ describe('computeSignals — player', () => {
       'video',
       'journey',
       'availability',
-      'activity',
     ])
   })
 
@@ -125,18 +126,15 @@ describe('computeSignals — player', () => {
     expect(decayedButNotOpen.find((s) => s.id === 'availability')!.present).toBe(false)
   })
 
-  it('activity is true when last_active_at is within 30 days, false beyond', () => {
-    const recent = sigs(makeProfile('player', { last_active_at: TWENTY_DAYS_AGO }))
-    const stale = sigs(makeProfile('player', { last_active_at: SIXTY_DAYS_AGO }))
-    const never = sigs(makeProfile('player', { last_active_at: null }))
-    expect(recent.find((s) => s.id === 'activity')!.present).toBe(true)
-    expect(stale.find((s) => s.id === 'activity')!.present).toBe(false)
-    expect(never.find((s) => s.id === 'activity')!.present).toBe(false)
-  })
+  // The activity signal test was removed 2026-05-08. Activity moved out
+  // of ProfileSnapshot into the LastActivePill component, which has its
+  // own dedicated test file (lastActivePill.test.tsx) covering the
+  // 24h/7d/30d bucket boundaries + the auth-only privacy gate.
 })
 
 describe('computeSignals — coach', () => {
-  it('returns 8 signals with coach-specific ids', () => {
+  it('returns 7 signals with coach-specific ids', () => {
+    // Activity signal removed 2026-05-08 — superseded by LastActivePill.
     const signals = sigs(makeProfile('coach'))
     expect(signals.map((s) => s.id)).toEqual([
       'photo',
@@ -146,7 +144,6 @@ describe('computeSignals — coach', () => {
       'journey',
       'references',
       'availability',
-      'activity',
     ])
   })
 
@@ -168,7 +165,8 @@ describe('computeSignals — coach', () => {
 })
 
 describe('computeSignals — club', () => {
-  it('returns 7 signals with club-specific ids', () => {
+  it('returns 6 signals with club-specific ids', () => {
+    // Activity signal removed 2026-05-08 — superseded by LastActivePill.
     const signals = sigs(makeProfile('club'))
     expect(signals.map((s) => s.id)).toEqual([
       'logo',
@@ -177,7 +175,6 @@ describe('computeSignals — club', () => {
       'bio',
       'leagues',
       'contact',
-      'activity',
     ])
   })
 
