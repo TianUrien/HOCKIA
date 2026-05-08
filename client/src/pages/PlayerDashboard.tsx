@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, useRef } from 'react'
 import { ArrowLeft, MapPin, Calendar, Edit2, Eye, MessageCircle, Landmark, Mail, Award } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
-import { Avatar, EditProfileModal, FriendsTab, ReferencesTab, FriendshipButton, ProfileSnapshot, PublicReferencesSection, PublicViewBanner, RoleBadge, ScrollableTabs, NextStepCard, ProfileHealthCard, WelcomeValueCard, FreshnessCard, RecentlyConnectedCard, SearchAppearancesCard, DualNationalityDisplay, AvailabilityPill, TierBadge, TrustBadge, VerifiedBadge, CategoryConfirmationBanner } from '@/components'
+import { Avatar, EditProfileModal, FriendsTab, ReferencesTab, FriendshipButton, ProfileSnapshot, PublicReferencesSection, PublicViewBanner, RoleBadge, ScrollableTabs, NextStepCard, ProfileHealthCard, LastActivePill, WelcomeValueCard, FreshnessCard, RecentlyConnectedCard, SearchAppearancesCard, DualNationalityDisplay, AvailabilityPill, TierBadge, TrustBadge, VerifiedBadge, CategoryConfirmationBanner } from '@/components'
 import { PulseSection } from '@/components/home/PulseSection'
 import { calculateTier } from '@/lib/profileTier'
 import { useProfileFreshness } from '@/hooks/useProfileFreshness'
@@ -514,6 +514,14 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
                 {!readOnly && !profileStrength.loading && (
                   <TierBadge tier={calculateTier(profileStrength.percentage)} />
                 )}
+                {/* LastActivePill — auth-only "Active today / this week /
+                    this month" indicator. Self-gates on viewer auth and
+                    on whether last_active_at is recent enough. Renders
+                    nothing for anonymous visitors and silently absent
+                    when the profile is >30 days inactive. */}
+                <LastActivePill
+                  lastActiveAt={(profile as Partial<Profile> | null)?.last_active_at ?? null}
+                />
                 {/* Phase 4 References UX Plan #1.5 — TrustBadge in the metadata
                     pills row. Owner with 0 references sees a "Get vouches →"
                     CTA that switches to the friends tab and scrolls to the
