@@ -473,23 +473,32 @@ export default function ClubDashboard({ profileData, readOnly = false, isOwnProf
         )}
 
         <div id="profile-tab-content" className="bg-white rounded-2xl shadow-sm animate-slide-in-up scroll-mt-4">
-          <div className="sticky top-[68px] z-40 border-b border-gray-200 bg-white/90 backdrop-blur">
-            <ScrollableTabs
-              tabs={tabs}
-              activeTab={activeTab}
-              onTabChange={handleTabChange}
-              className="gap-8 px-6"
-              activeClassName="border-[#924CEC] text-[#924CEC]"
-              inactiveClassName="border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300"
-            />
-          </div>
+          {/* Tab Navigation — owner only.
+              Network View v0: visitors get a single scrollable narrative
+              instead of tabbed navigation. Owner mode keeps the tabs to
+              manage each surface independently. */}
+          {!readOnly && (
+            <div className="sticky top-[68px] z-40 border-b border-gray-200 bg-white/90 backdrop-blur">
+              <ScrollableTabs
+                tabs={tabs}
+                activeTab={activeTab}
+                onTabChange={handleTabChange}
+                className="gap-8 px-6"
+                activeClassName="border-[#924CEC] text-[#924CEC]"
+                inactiveClassName="border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300"
+              />
+            </div>
+          )}
 
           {/* min-h-screen guarantees the document is tall enough for
               useTabDeepLinkScroll's scrollIntoView({block:'start'}) to
               land the tab strip at the viewport top regardless of tab
               content length. 70vh wasn't enough on Friends. */}
           <div className="p-6 md:p-8 min-h-screen">
-            {activeTab === 'overview' && (
+            {/* Overview section — always rendered for visitors (top of the
+                Network View scroll); activeTab gate for owners. The Overview
+                block already renders Gallery and Posts inline for visitors. */}
+            {(activeTab === 'overview' || readOnly) && (
               <div className="space-y-8 animate-fade-in">
                 {!readOnly && <ProfileViewersSection />}
 
@@ -657,8 +666,14 @@ export default function ClubDashboard({ profileData, readOnly = false, isOwnProf
               </div>
             )}
 
-            {activeTab === 'vacancies' && (
-              <div className="animate-fade-in">
+            {/* Opportunities — always for visitors. Vacancies are core
+                club value: recruiters/players scanning a club profile want
+                to see what's open. */}
+            {(activeTab === 'vacancies' || readOnly) && (
+              <div
+                id="visitor-section-vacancies"
+                className={readOnly ? 'mt-12 pt-10 border-t border-gray-200 animate-fade-in' : 'animate-fade-in'}
+              >
                 <OpportunitiesTab
                   profileId={profile.id}
                   readOnly={readOnly}
@@ -668,27 +683,42 @@ export default function ClubDashboard({ profileData, readOnly = false, isOwnProf
               </div>
             )}
 
-            {activeTab === 'friends' && (
-              <div className="animate-fade-in">
+            {/* Members — always for visitors. Roster context is core to
+                understanding the club. */}
+            {(activeTab === 'members' || readOnly) && (
+              <div
+                id="visitor-section-members"
+                className={readOnly ? 'mt-12 pt-10 border-t border-gray-200 animate-fade-in' : 'animate-fade-in'}
+              >
+                <ClubMembersTab profileId={profile.id} />
+              </div>
+            )}
+
+            {/* Friends/Connections — always for visitors. */}
+            {(activeTab === 'friends' || readOnly) && (
+              <div
+                id="visitor-section-friends"
+                className={readOnly ? 'mt-12 pt-10 border-t border-gray-200 animate-fade-in' : 'animate-fade-in'}
+              >
                 <FriendsTab profileId={profile.id} readOnly={readOnly} profileRole={profile.role} />
               </div>
             )}
 
-            {activeTab === 'comments' && (
-              <div className="animate-fade-in">
+            {/* Comments — always for visitors. */}
+            {(activeTab === 'comments' || readOnly) && (
+              <div
+                id="visitor-section-comments"
+                className={readOnly ? 'mt-12 pt-10 border-t border-gray-200 animate-fade-in' : 'animate-fade-in'}
+              >
                 <CommentsTab profileId={profile.id} highlightedCommentIds={highlightedComments} profileRole={profile.role} />
               </div>
             )}
 
-            {activeTab === 'posts' && (
+            {/* Posts — owner only as a separate tab. Visitors get Posts
+                inline at the bottom of the Overview section above. */}
+            {activeTab === 'posts' && !readOnly && (
               <div className="animate-fade-in">
                 <ProfilePostsTab profileId={profile.id} readOnly={readOnly} />
-              </div>
-            )}
-
-            {activeTab === 'members' && (
-              <div className="animate-fade-in">
-                <ClubMembersTab profileId={profile.id} />
               </div>
             )}
           </div>

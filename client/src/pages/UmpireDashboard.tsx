@@ -552,23 +552,33 @@ export default function UmpireDashboard({
         {/* ── Tabs ── anchor on outer wrapper so deep-link scroll lands
              with the tab strip at the top of the viewport. */}
         <div id="profile-tab-content" className="mt-6 bg-white rounded-2xl shadow-sm animate-slide-in-up scroll-mt-4">
-          <div className="border-b border-gray-200 overflow-x-auto">
-            <ScrollableTabs
-              tabs={tabs}
-              activeTab={activeTab}
-              onTabChange={handleTabChange}
-              className="gap-8 px-6"
-              activeClassName="border-[#8026FA] text-[#8026FA]"
-              inactiveClassName="border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300"
-            />
-          </div>
+          {/* Tab Navigation — owner only.
+              Network View v0: visitors get a single scrollable narrative
+              instead of tabbed navigation. Owner mode keeps the tabs to
+              manage each surface independently. */}
+          {!readOnly && (
+            <div className="border-b border-gray-200 overflow-x-auto">
+              <ScrollableTabs
+                tabs={tabs}
+                activeTab={activeTab}
+                onTabChange={handleTabChange}
+                className="gap-8 px-6"
+                activeClassName="border-[#8026FA] text-[#8026FA]"
+                inactiveClassName="border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300"
+              />
+            </div>
+          )}
 
           {/* min-h-screen guarantees the document is tall enough for
               useTabDeepLinkScroll's scrollIntoView({block:'start'}) to
               land the tab strip at the viewport top regardless of tab
               content length. 70vh wasn't enough on Friends. */}
           <div className="p-5 md:p-7 min-h-screen">
-            {activeTab === 'profile' && (
+            {/* Profile section — always rendered for visitors (top of the
+                Network View scroll); activeTab gate for owners. The Profile
+                block already renders References, Gallery, and Posts inline
+                for visitors, so those don't need separate sections. */}
+            {(activeTab === 'profile' || readOnly) && (
               <div className="space-y-10 animate-fade-in">
                 {hasCertification ? (
                   <section>
@@ -674,8 +684,14 @@ export default function UmpireDashboard({
               </div>
             )}
 
-            {activeTab === 'officiating' && (
-              <div className="animate-fade-in">
+            {/* Officiating — always for visitors. Appointments / record
+                are core to the umpire's trust spine, distinct from any
+                content rendered inline in the Profile section. */}
+            {(activeTab === 'officiating' || readOnly) && (
+              <div
+                id="visitor-section-officiating"
+                className={readOnly ? 'mt-12 pt-10 border-t border-gray-200 animate-fade-in' : 'animate-fade-in'}
+              >
                 {/* UmpireAppointmentsSection already renders its own card styling
                     (mt-6 bg-white rounded-2xl shadow-sm). Wrapping here would
                     double the chrome, so we let it stand on its own. The
@@ -688,7 +704,11 @@ export default function UmpireDashboard({
               </div>
             )}
 
-            {activeTab === 'gallery' && (
+            {/* Gallery — owner only as a separate tab. Visitors get
+                Gallery rendered inline within the Profile section above
+                (the `readOnly && <MediaTab showGallery />` block).
+                Rendering here too would double up the gallery surface. */}
+            {activeTab === 'gallery' && !readOnly && (
               <div className="animate-fade-in">
                 <MediaTab
                   profileId={profile.id}
@@ -701,7 +721,9 @@ export default function UmpireDashboard({
               </div>
             )}
 
-            {activeTab === 'references' && (
+            {/* References — owner only. Visitors see PublicReferencesSection
+                inline within the Profile section above. */}
+            {activeTab === 'references' && !readOnly && (
               <div className="animate-fade-in">
                 <ReferencesTab
                   profileId={profile.id}
@@ -711,8 +733,12 @@ export default function UmpireDashboard({
               </div>
             )}
 
-            {activeTab === 'friends' && (
-              <div className="animate-fade-in">
+            {/* Friends/Connections — always for visitors. */}
+            {(activeTab === 'friends' || readOnly) && (
+              <div
+                id="visitor-section-friends"
+                className={readOnly ? 'mt-12 pt-10 border-t border-gray-200 animate-fade-in' : 'animate-fade-in'}
+              >
                 <FriendsTab
                   profileId={profile.id}
                   readOnly={readOnly}
@@ -722,13 +748,19 @@ export default function UmpireDashboard({
               </div>
             )}
 
-            {activeTab === 'comments' && (
-              <div className="animate-fade-in">
+            {/* Comments — always for visitors. */}
+            {(activeTab === 'comments' || readOnly) && (
+              <div
+                id="visitor-section-comments"
+                className={readOnly ? 'mt-12 pt-10 border-t border-gray-200 animate-fade-in' : 'animate-fade-in'}
+              >
                 <CommentsTab profileId={profile.id} profileRole="umpire" />
               </div>
             )}
 
-            {activeTab === 'posts' && (
+            {/* Posts — owner only. Visitors get Posts inline at the
+                bottom of the Profile section above. */}
+            {activeTab === 'posts' && !readOnly && (
               <div className="animate-fade-in">
                 <ProfilePostsTab profileId={profile.id} readOnly={readOnly} />
               </div>
