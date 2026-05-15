@@ -1069,9 +1069,9 @@ export default function CompleteProfile() {
   if (!userRole) {
     // Show role selection for OAuth users who don't have a role yet
     return (
-      <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4">
-        <div className="absolute inset-0">
-          <img 
+      <div className="min-h-screen relative flex items-start md:items-center justify-center p-4">
+        <div className="absolute inset-0 overflow-hidden">
+          <img
             src="/hero-desktop.webp"
             alt="Field Hockey"
             className="w-full h-full object-cover"
@@ -1211,9 +1211,14 @@ export default function CompleteProfile() {
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4">
-      <div className="absolute inset-0">
-        <img 
+    // overflow-hidden removed + items-start on mobile so a tall onboarding
+    // card (Samsung S24, soft-keyboard open, etc.) can grow the wrapper and
+    // let the page scroll, instead of clipping the Next button at the bottom
+    // and the heading at the top. Background image stays contained because
+    // its absolute container fills the wrapper's natural bounds.
+    <div className="min-h-screen relative flex items-start md:items-center justify-center p-4">
+      <div className="absolute inset-0 overflow-hidden">
+        <img
           src="/hero-desktop.webp"
           alt="Field Hockey"
           className="w-full h-full object-cover"
@@ -1263,7 +1268,7 @@ export default function CompleteProfile() {
 
           {/* Main Profile Form (shown after claim step for clubs, or immediately for others) */}
           {(userRole !== 'club' || !showClubClaimStep) && (
-          <form onSubmit={handleSubmit} className="p-8 max-h-[80vh] overflow-y-auto">
+          <form onSubmit={handleSubmit} className="p-8 md:max-h-[80vh] md:overflow-y-auto">
             <h3 className="text-2xl font-bold text-gray-900 mb-2">
               {userRole === 'player' && 'Complete Player Profile'}
               {userRole === 'coach' && 'Complete Coach Profile'}
