@@ -193,7 +193,7 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
     }
   }
 
-  // Handle region skip - "My region is not listed"
+  // Handle region skip - "My region isn't listed" (dashed card at bottom of region list)
   const handleRegionSkip = async () => {
     if (!selectedCountry?.country_id) return
     setRegionSkipped(true)
@@ -515,12 +515,18 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
             </div>
           )}
 
-          <div className="pt-4 border-t border-gray-200">
+          <div className="pt-2">
             <button
               onClick={handleRegionSkip}
-              className="w-full py-3 text-gray-600 hover:text-gray-900 text-sm"
+              className="flex items-center gap-3 w-full p-4 bg-white border-2 border-dashed border-gray-300 rounded-xl hover:border-[#8026FA] hover:bg-[#8026FA]/5 transition-all text-left"
             >
-              My region is not listed – create a new club
+              <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <Plus className="w-5 h-5 text-gray-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="font-medium text-gray-900">My region isn't listed</div>
+                <div className="text-sm text-gray-500">Create a new club</div>
+              </div>
             </button>
           </div>
 

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { User, MapPin, Calendar, Building2, Camera, UserRound, Briefcase, Users, Store, Flag, X, ChevronRight, Check } from 'lucide-react'
 import * as Sentry from '@sentry/react'
-import { Input, Button, CountrySelect, LocationAutocomplete, PlayingCategorySelector, MultiCategorySelector } from '@/components'
+import { Input, Button, CountrySelect, LocationAutocomplete, PlayingCategorySelector, MultiCategorySelector, DateOfBirthPicker } from '@/components'
 import type { LocationSelection } from '@/components/LocationAutocomplete'
 import { useCountries } from '@/hooks/useCountries'
 import ClubClaimStep, { type ClubClaimResult } from '@/components/ClubClaimStep'
@@ -63,8 +63,30 @@ export default function CompleteProfile() {
   const [error, setError] = useState('')
   const [avatarUrl, setAvatarUrl] = useState<string>(profile?.avatar_url || '')
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
-  const [fallbackRole, setFallbackRole] = useState<UserRole | null>(null)
-  const [fallbackEmail, setFallbackEmail] = useState<string>('')
+  // Hydrate from localStorage synchronously on first render. Reading these in
+  // a useEffect (as we did before) caused a 1-frame flash of the inline
+  // role-picker UI on the path: OAuth signup → /complete-profile mounts with
+  // profile=null, user_metadata.role=null, fallbackRole=null → renders the
+  // role picker → useEffect fires → fallbackRole='player' → re-renders the
+  // real flow. Lazy initializer eliminates the flash. The post-mount useEffect
+  // below remains as a safety net for late-arriving stashes (e.g., another
+  // tab writing pending_role mid-render).
+  const [fallbackRole, setFallbackRole] = useState<UserRole | null>(() => {
+    if (typeof window === 'undefined') return null
+    try {
+      return (window.localStorage.getItem('pending_role') as UserRole | null) ?? null
+    } catch {
+      return null
+    }
+  })
+  const [fallbackEmail, setFallbackEmail] = useState<string>(() => {
+    if (typeof window === 'undefined') return ''
+    try {
+      return window.localStorage.getItem('pending_email') ?? ''
+    } catch {
+      return ''
+    }
+  })
   const [creatingProfile, setCreatingProfile] = useState(false)
   
   // Club claim step state (for clubs only)
@@ -1410,12 +1432,11 @@ export default function CompleteProfile() {
                         required
                       />
 
-                      <Input
+                      <DateOfBirthPicker
                         label="Date of Birth (Optional)"
-                        type="date"
                         icon={<Calendar className="w-5 h-5" />}
                         value={formData.dateOfBirth}
-                        onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
+                        onChange={(next) => setFormData({ ...formData, dateOfBirth: next })}
                       />
                     </>
                   )}
@@ -1539,12 +1560,11 @@ export default function CompleteProfile() {
                         required
                       />
 
-                      <Input
+                      <DateOfBirthPicker
                         label="Date of Birth"
-                        type="date"
                         icon={<Calendar className="w-5 h-5" />}
                         value={formData.dateOfBirth}
-                        onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
+                        onChange={(next) => setFormData({ ...formData, dateOfBirth: next })}
                       />
                     </>
                   )}
@@ -1740,12 +1760,11 @@ export default function CompleteProfile() {
                         required
                       />
 
-                      <Input
+                      <DateOfBirthPicker
                         label="Date of Birth"
-                        type="date"
                         icon={<Calendar className="w-5 h-5" />}
                         value={formData.dateOfBirth}
-                        onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
+                        onChange={(next) => setFormData({ ...formData, dateOfBirth: next })}
                       />
                     </>
                   )}

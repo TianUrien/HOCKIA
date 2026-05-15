@@ -1,15 +1,17 @@
 /**
  * In-App Browser Detection
- * 
+ *
  * Detects when users are viewing HOCKIA in restricted browser environments
  * like Instagram, Facebook, WhatsApp, TikTok, Snapchat, Line, etc.
- * 
+ *
  * These browsers have limitations:
  * - OAuth popups may be blocked
  * - localStorage/sessionStorage may not persist
  * - Verification email links may open in a different browser
  * - Cookies may be restricted
  */
+
+import { Capacitor } from '@capacitor/core'
 
 export interface InAppBrowserInfo {
   isInAppBrowser: boolean
@@ -56,8 +58,21 @@ export function detectInAppBrowser(): InAppBrowserInfo {
     }
   }
 
+  // The Capacitor native shell (iOS/Android) hosts the app inside a WebView
+  // whose UA matches our generic "; wv)" / WKWebView signatures — telling the
+  // user to "open in a real browser" inside our own app would be nonsense and
+  // makes us look unprofessional. Treat native as trusted, same as a PWA.
+  if (Capacitor.isNativePlatform()) {
+    return {
+      isInAppBrowser: false,
+      browserName: null,
+      canOpenInExternalBrowser: false,
+      suggestedAction: null,
+    }
+  }
+
   // PWA standalone mode is NOT an in-app browser - it's a trusted environment
-  const isStandalonePWA = 
+  const isStandalonePWA =
     window.matchMedia('(display-mode: standalone)').matches ||
     (window.navigator as Navigator & { standalone?: boolean }).standalone === true
 

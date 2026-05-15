@@ -4,7 +4,7 @@ import * as Sentry from '@sentry/react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import type { Profile } from '@/lib/supabase'
-import { Button, Input, CountrySelect, StorageImage, LocationAutocomplete, PlayingCategorySelector, MultiCategorySelector } from '@/components'
+import { Button, Input, CountrySelect, StorageImage, LocationAutocomplete, PlayingCategorySelector, MultiCategorySelector, DateOfBirthPicker } from '@/components'
 import type { LocationSelection } from '@/components/LocationAutocomplete'
 import { logger } from '@/lib/logger'
 import { optimizeAvatarImage, validateImage } from '@/lib/imageOptimization'
@@ -944,11 +944,10 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                   <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">Personal</p>
                 </div>
 
-                <Input
+                <DateOfBirthPicker
                   label="Date of Birth (Optional)"
-                  type="date"
                   value={formData.date_of_birth}
-                  onChange={(e) => setFormData({ ...formData, date_of_birth: e.target.value })}
+                  onChange={(next) => setFormData({ ...formData, date_of_birth: next })}
                 />
 
                 <WorldClubSearch
@@ -1106,11 +1105,10 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                   </div>
                 </div>
 
-                <Input
+                <DateOfBirthPicker
                   label="Date of Birth (Optional)"
-                  type="date"
                   value={formData.date_of_birth}
-                  onChange={(e) => setFormData({ ...formData, date_of_birth: e.target.value })}
+                  onChange={(next) => setFormData({ ...formData, date_of_birth: next })}
                 />
 
                 <WorldClubSearch

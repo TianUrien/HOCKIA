@@ -145,6 +145,21 @@ export default function AuthScreen({ mode, role, onBack }: AuthScreenProps) {
     }
     setOauthWarning(null)
     stashRedirectIntent()
+    // Signup-flow OAuth round-trips through Google/Apple and a Chrome Custom
+    // Tab on Android — the SignUp.tsx component unmounts and its in-memory
+    // `selectedRole` is gone by the time we return. Persist it (and the
+    // typed email, if any) the same way the password path does at the bottom
+    // of this file, so CompleteProfile's role-fallback chain can recover it.
+    // Without this, Google signups land on the inline role re-picker — the
+    // exact loop Vincent hit on the Android Closed Testing build.
+    if (mode === 'signup' && role) {
+      try {
+        localStorage.setItem('pending_role', role)
+        if (email) localStorage.setItem('pending_email', email)
+      } catch {
+        /* noop — incognito / storage-disabled */
+      }
+    }
     if (mode === 'signin') {
       trackLogin(provider)
     } else {

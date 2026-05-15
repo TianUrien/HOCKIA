@@ -43,12 +43,16 @@ export default function PendingVerificationBadge({
       aria-label="Pending verification"
       title={tooltip}
       className={cn(
-        'inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 text-amber-700',
-        variant === 'compact' ? 'px-1.5 py-0.5' : 'px-2 py-0.5 text-[11px] font-medium',
+        // leading-none + whitespace-nowrap matter when the badge lives inside
+        // a large heading (e.g., the club dashboard h1): without them, the
+        // badge inherits the heading's tall line-height and its text wraps
+        // when the row is space-constrained, producing a fat oval.
+        'inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 text-amber-700 leading-none whitespace-nowrap',
+        variant === 'compact' ? 'px-1.5 py-1' : 'px-2 py-1 text-[11px] font-medium',
         className,
       )}
     >
-      <ShieldAlert className={variant === 'compact' ? 'h-3 w-3' : 'h-3 w-3'} aria-hidden="true" />
+      <ShieldAlert className="h-3 w-3 flex-shrink-0" aria-hidden="true" />
       {variant === 'full' && <span>Pending verification</span>}
     </span>
   )

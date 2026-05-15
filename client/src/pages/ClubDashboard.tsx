@@ -331,7 +331,7 @@ export default function ClubDashboard({ profileData, readOnly = false, isOwnProf
 
             <div className="flex-1">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-3">
-                <h1 className="text-3xl md:text-4xl font-bold text-gray-900 flex items-center gap-2">
+                <h1 className="text-3xl md:text-4xl font-bold text-gray-900 flex flex-wrap items-center gap-x-2 gap-y-1">
                   <span>{profile.full_name}</span>
                   <VerifiedBadge
                     verified={(profile as unknown as { is_verified?: boolean; verified_at?: string | null } | null)?.is_verified}
