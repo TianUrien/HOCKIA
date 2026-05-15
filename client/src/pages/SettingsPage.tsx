@@ -24,6 +24,7 @@ import { logger } from '@/lib/logger'
 import Header from '@/components/Header'
 import DeleteAccountModal from '@/components/DeleteAccountModal'
 import BlockedAccountsList from '@/components/BlockedAccountsList'
+import StagingQaResetCard from '@/components/StagingQaResetCard'
 import { usePushSubscription } from '@/hooks/usePushSubscription'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { trackPushSubscribe, trackPushUnsubscribe } from '@/lib/analytics'
@@ -1040,6 +1041,9 @@ export default function SettingsPage() {
               </div>
             )}
           </div>
+
+          {/* STAGING-ONLY QA TOOLS — renders null in production */}
+          <StagingQaResetCard />
 
           {/* SIGN OUT BUTTON */}
           <button
