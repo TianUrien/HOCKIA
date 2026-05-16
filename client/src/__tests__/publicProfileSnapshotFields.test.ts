@@ -41,6 +41,12 @@ const playerCoachRequired = [
   // Settings toggle visually present but functionally a no-op for any
   // visitor (the read-path bug Batch 8 staging QA caught).
   'show_last_active',
+  // Bento Grid visitor cards read these denormalized counts on the
+  // public profile. Missing any of them silently shows "0" while the
+  // owner dashboard shows the real count (PR1 QA regression).
+  'accepted_friend_count',
+  'post_count',
+  'full_game_video_count',
 ]
 
 const clubRequired = [

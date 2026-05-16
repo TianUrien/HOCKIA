@@ -47,13 +47,34 @@ export default function InfoTooltip({
       }
     }
 
+    // Cross-overlay coordination: when another dismissible surface
+    // (e.g. SettingsSheet) opens, close the tooltip explicitly. The
+    // outside-pointerdown handler above already covers most cases, but
+    // QA caught an environment where both stayed visible — this is the
+    // belt-and-suspenders guarantee that mutual-exclusion holds.
+    const handleOverlayOpened = (event: Event) => {
+      const detail = (event as CustomEvent<{ source?: string }>).detail
+      if (detail?.source === 'info-tooltip') return
+      setOpen(false)
+    }
+
     document.addEventListener('pointerdown', handlePointerDown)
     document.addEventListener('keydown', handleKeyDown)
+    document.addEventListener('hockia:overlay-opened', handleOverlayOpened)
 
     return () => {
       document.removeEventListener('pointerdown', handlePointerDown)
       document.removeEventListener('keydown', handleKeyDown)
+      document.removeEventListener('hockia:overlay-opened', handleOverlayOpened)
     }
+  }, [open])
+
+  // Broadcast when opening so other overlays close themselves.
+  useEffect(() => {
+    if (!open) return
+    document.dispatchEvent(
+      new CustomEvent('hockia:overlay-opened', { detail: { source: 'info-tooltip' } }),
+    )
   }, [open])
 
   return (

@@ -54,6 +54,13 @@ export const PUBLIC_PROFILE_FIELDS_LIST = [
   // graceful-default-show path and the toggle is purely cosmetic — no
   // visitor-side effect (caught in staging QA on Batch 8).
   'show_last_active',
+  // Bento Grid visitor cards read these denormalized counts. Missing
+  // them silently shows 0 on the public profile while the same counts
+  // render correctly on the owner dashboard — caught in PR1 QA when
+  // visitor Hero Friends tile showed 0 while ?tab=friends showed 1.
+  'accepted_friend_count',
+  'post_count',
+  'full_game_video_count',
 ] as const
 
 export const PUBLIC_PROFILE_FIELDS = PUBLIC_PROFILE_FIELDS_LIST.join(',')

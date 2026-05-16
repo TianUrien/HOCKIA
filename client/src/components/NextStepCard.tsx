@@ -63,14 +63,12 @@ export default function NextStepCard<TBucket extends BucketLike>({
       />
 
       <div className="relative">
-        {/* Progress summary — gamified level-up framing */}
+        {/* Progress summary — gamified level-up framing.
+            The percentage label is owned by the Hero CompletionArc on the
+            Bento landing; this card keeps only the bar + steps-left line so
+            the two surfaces don't repeat the same number side-by-side. */}
         <div className="mb-4">
-          <div className="flex items-baseline justify-between mb-2">
-            <p className="text-sm font-semibold text-gray-900">Your profile</p>
-            <p className="text-sm font-bold text-[#8026FA] tabular-nums">
-              {percentage}%
-            </p>
-          </div>
+          <p className="text-sm font-semibold text-gray-900 mb-2">Your profile</p>
           <div className="h-1.5 overflow-hidden rounded-full bg-white/70 ring-1 ring-inset ring-[#8026FA]/10">
             <div
               className="h-full rounded-full bg-gradient-to-r from-[#8026FA] to-[#ec4899] transition-all duration-500 ease-out"

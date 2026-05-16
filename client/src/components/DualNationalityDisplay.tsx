@@ -44,10 +44,6 @@ export default function DualNationalityDisplay({
   const primaryCountry = getCountryById(primaryCountryId ?? null)
   const secondaryCountry = getCountryById(secondaryCountryId ?? null)
 
-  const hasEuNationality =
-    (primaryCountry?.id ? isEuCountry(primaryCountry.id) : false) ||
-    (secondaryCountry?.id ? isEuCountry(secondaryCountry.id) : false)
-
   // Fallback to legacy text if no structured data
   if (!primaryCountry && !secondaryCountry) {
     if (fallbackText) {
@@ -61,7 +57,7 @@ export default function DualNationalityDisplay({
       <CompactDisplay
         primaryCountry={primaryCountry}
         secondaryCountry={secondaryCountry}
-        hasEuNationality={hasEuNationality}
+        isEuCountry={isEuCountry}
         className={className}
       />
     )
@@ -72,7 +68,7 @@ export default function DualNationalityDisplay({
       <TileDisplay
         primaryCountry={primaryCountry}
         secondaryCountry={secondaryCountry}
-        hasEuNationality={hasEuNationality}
+        isEuCountry={isEuCountry}
         className={className}
       />
     )
@@ -102,44 +98,54 @@ export default function DualNationalityDisplay({
 interface CompactDisplayProps {
   primaryCountry: Country | undefined
   secondaryCountry: Country | undefined
-  hasEuNationality: boolean
+  isEuCountry: (id: number | null) => boolean
   className: string
 }
 
-function CompactDisplay({ primaryCountry, secondaryCountry, hasEuNationality, className }: CompactDisplayProps) {
-  const nationalities: { country: Country; name: string }[] = []
-
-  if (primaryCountry) {
-    nationalities.push({ country: primaryCountry, name: primaryCountry.nationality_name })
-  }
-  if (secondaryCountry) {
-    nationalities.push({ country: secondaryCountry, name: secondaryCountry.nationality_name })
-  }
+/**
+ * Inline display with full nationality names. The EU indicator is
+ * attached to its OWN nationality (e.g. Dutch + Argentine renders as
+ * "🇳🇱 Dutch EU · 🇦🇷 Argentine") — not appended at the end of the row,
+ * which previously implied Argentina was EU.
+ *
+ * Layout uses flex-wrap so a long second nationality drops cleanly to a
+ * new line in a narrow grid cell instead of overlapping siblings (the
+ * "EU on top of Argentine" bug). Each flag+name+EU unit is
+ * whitespace-nowrap so it never breaks mid-flag.
+ */
+function CompactDisplay({ primaryCountry, secondaryCountry, isEuCountry, className }: CompactDisplayProps) {
+  const nationalities: Country[] = []
+  if (primaryCountry) nationalities.push(primaryCountry)
+  if (secondaryCountry) nationalities.push(secondaryCountry)
+  if (nationalities.length === 0) return null
 
   return (
-    <span className={`inline-flex items-center gap-1 ${className}`}>
-      {nationalities.map((nat, i) => (
-        <span key={i} className="inline-flex items-center gap-1">
-          <Flag code={nat.country.code} countryName={nat.country.name} fallbackEmoji={nat.country.flag_emoji} />
-          <span>{nat.name}</span>
-          {i < nationalities.length - 1 && <span className="mx-1">,</span>}
-        </span>
-      ))}
-      {hasEuNationality && (
-        <span className="ml-0.5 text-xs text-blue-600 font-medium">EU</span>
-      )}
+    <span className={`inline-flex flex-wrap items-center gap-x-2 gap-y-1 ${className}`}>
+      {nationalities.map((country, i) => {
+        const isEu = isEuCountry(country.id)
+        return (
+          <span key={country.id} className="inline-flex items-center gap-1 whitespace-nowrap min-w-0">
+            <Flag code={country.code} countryName={country.name} fallbackEmoji={country.flag_emoji} />
+            <span>{country.nationality_name}</span>
+            {isEu && (
+              <span className="ml-0.5 text-[10px] font-semibold text-blue-600 uppercase tracking-wide">
+                EU
+              </span>
+            )}
+            {i < nationalities.length - 1 && <span className="text-gray-300 ml-1">·</span>}
+          </span>
+        )
+      })}
     </span>
   )
 }
 
 /**
- * Tile-friendly display for community member cards. Each nationality is
- * a tight flag-name unit (`<flag> <name>`) and the row uses flex-wrap so
- * a long second nationality drops to a new line cleanly instead of
- * truncating mid-word. EU indicator renders as a small chip aligned to
- * the row, consistent with the role / tier pills above.
+ * Tile-friendly display for community member cards. Same per-country EU
+ * attachment logic as CompactDisplay — the EU chip lives inside its own
+ * nationality unit so it never visually attaches to a non-EU country.
  */
-function TileDisplay({ primaryCountry, secondaryCountry, hasEuNationality, className }: CompactDisplayProps) {
+function TileDisplay({ primaryCountry, secondaryCountry, isEuCountry, className }: CompactDisplayProps) {
   const nationalities: Country[] = []
   if (primaryCountry) nationalities.push(primaryCountry)
   if (secondaryCountry) nationalities.push(secondaryCountry)
@@ -147,22 +153,25 @@ function TileDisplay({ primaryCountry, secondaryCountry, hasEuNationality, class
 
   return (
     <div className={`flex flex-wrap items-center gap-x-2 gap-y-1 ${className}`}>
-      {nationalities.map((country) => (
-        <span key={country.id} className="inline-flex items-center gap-1 min-w-0">
-          <Flag
-            code={country.code}
-            countryName={country.name}
-            fallbackEmoji={country.flag_emoji}
-            size="sm"
-          />
-          <span className="truncate">{country.nationality_name}</span>
-        </span>
-      ))}
-      {hasEuNationality && (
-        <span className="inline-flex items-center rounded bg-blue-50 px-1.5 py-px text-[10px] font-semibold text-blue-700">
-          EU
-        </span>
-      )}
+      {nationalities.map((country) => {
+        const isEu = isEuCountry(country.id)
+        return (
+          <span key={country.id} className="inline-flex items-center gap-1 whitespace-nowrap min-w-0">
+            <Flag
+              code={country.code}
+              countryName={country.name}
+              fallbackEmoji={country.flag_emoji}
+              size="sm"
+            />
+            <span className="truncate">{country.nationality_name}</span>
+            {isEu && (
+              <span className="inline-flex items-center rounded bg-blue-50 px-1.5 py-px text-[10px] font-semibold text-blue-700">
+                EU
+              </span>
+            )}
+          </span>
+        )
+      })}
     </div>
   )
 }

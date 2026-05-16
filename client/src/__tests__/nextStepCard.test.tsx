@@ -45,7 +45,10 @@ describe('NextStepCard', () => {
     expect(
       screen.getByRole('heading', { level: 3, name: /your profile is fully built/i }),
     ).toBeInTheDocument()
-    expect(screen.getByText('100%')).toBeInTheDocument()
+    // The standalone % label was removed from this card — the Hero arc on
+    // the Bento landing now owns the canonical % display. The progress bar
+    // here stays, but no duplicate "100%" text is rendered.
+    expect(screen.queryByText('100%')).not.toBeInTheDocument()
     // No "Get started" CTA in the complete state.
     expect(screen.queryByRole('button', { name: /get started/i })).not.toBeInTheDocument()
     // Step counter copy reflects completion.
@@ -66,7 +69,8 @@ describe('NextStepCard', () => {
 
     expect(screen.getByText('Profile complete')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /get started/i })).not.toBeInTheDocument()
-    expect(screen.getByText('95%')).toBeInTheDocument()
+    // % label removed from this card — see note above.
+    expect(screen.queryByText('95%')).not.toBeInTheDocument()
   })
 
   it('surfaces the first incomplete bucket with its label, unlock copy, and CTA', () => {
@@ -82,8 +86,8 @@ describe('NextStepCard', () => {
     // checklist row — confirm at least one exists, no duplicates are broken.
     expect(screen.getAllByText('Clubs see how you play.').length).toBeGreaterThan(0)
     expect(screen.getByRole('button', { name: /get started/i })).toBeInTheDocument()
-    // Progress summary
-    expect(screen.getByText('40%')).toBeInTheDocument()
+    // The standalone % label was removed; only the progress bar remains.
+    expect(screen.queryByText('40%')).not.toBeInTheDocument()
     // 2 of 3 buckets incomplete in this fixture → "2 steps left"
     expect(screen.getByText(/2 steps left/)).toBeInTheDocument()
   })

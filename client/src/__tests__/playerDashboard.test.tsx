@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, useLocation } from 'react-router-dom'
-import { vi } from 'vitest'
+import { vi, describe, it, expect, beforeEach } from 'vitest'
 import PlayerDashboard, { type PlayerProfileShape } from '@/pages/PlayerDashboard'
 
 type LocationObserverProps = {
@@ -26,8 +26,10 @@ vi.mock('@/lib/toast', () => ({
 
 vi.mock('@/components', () => ({
   Avatar: ({ initials }: { initials?: string }) => <div data-testid="avatar">{initials}</div>,
+  AvatarMenu: () => null,
+  AvailabilityPill: () => <span data-testid="availability-pill" />,
   DashboardMenu: () => <div data-testid="dashboard-menu" />,
-  EditProfileModal: () => <div data-testid="edit-profile-modal" />, 
+  EditProfileModal: () => <div data-testid="edit-profile-modal" />,
   FriendsTab: () => <div data-testid="friends-tab">Friends tab</div>,
   FriendshipButton: () => <button data-testid="friendship-button" type="button">Friendship</button>,
   PublicReferencesSection: () => <div data-testid="public-references">Public references</div>,
@@ -39,11 +41,10 @@ vi.mock('@/components', () => ({
   VerifiedBadge: () => <span data-testid="verified-badge" />,
   NextStepCard: () => <div data-testid="next-step-card">Next Step</div>,
   ProfileHealthCard: () => <div data-testid="profile-health-card">Profile Health</div>,
+  SocialLinksDisplay: () => <div data-testid="social-links-display" />,
   // Spy stub: surfaces showLastActive + lastActiveAt as data attributes
-  // so the integration test below can assert the value flows through
-  // from the fetched profile → PlayerDashboard → LastActivePill props.
-  // Catches the "select clause forgets show_last_active" regression
-  // that Batch 8 staging QA caught.
+  // so integration tests can assert the value flows through from the
+  // fetched profile → PlayerDashboard → HeroIdentityCard → LastActivePill.
   LastActivePill: ({
     lastActiveAt,
     showLastActive,
@@ -90,11 +91,19 @@ vi.mock('@/components/Header', () => ({
 }))
 
 vi.mock('@/components/Button', () => ({
-  default: ({ children, ...props }: { children: React.ReactNode }) => (
-    <button type="button" {...props}>
+  default: ({ children, onClick, type = 'button', ...props }: { children: React.ReactNode; onClick?: () => void; type?: 'button' | 'submit' | 'reset' }) => (
+    <button type={type} onClick={onClick} {...props}>
       {children}
     </button>
   ),
+}))
+
+vi.mock('@/components/ProfileActionMenu', () => ({
+  default: () => <div data-testid="profile-action-menu" />,
+}))
+
+vi.mock('@/components/profile/ShareProfileButton', () => ({
+  default: () => <button type="button" data-testid="share-profile-button">Share</button>,
 }))
 
 vi.mock('@/components/MediaTab', () => ({
@@ -117,20 +126,21 @@ vi.mock('@/components/ProfilePostsTab', () => ({
   default: () => <div data-testid="profile-posts-tab">Profile Posts</div>,
 }))
 
-vi.mock('@/hooks/useProfileFreshness', () => ({
-  useProfileFreshness: () => ({ nudge: null, loading: false, refresh: vi.fn() }),
+vi.mock('@/components/SignInPromptModal', () => ({
+  default: () => null,
 }))
 
-vi.mock('@/hooks/useReferenceFriendOptions', () => ({
-  useReferenceFriendOptions: () => ({ friendOptions: [], loading: false, refresh: vi.fn() }),
-}))
-
-vi.mock('@/hooks/useTrustedReferences', () => ({
-  useTrustedReferences: () => ({
-    acceptedReferences: [],
-    pendingReferences: [],
-    loading: false,
-  }),
+// PlayerBentoGrid is stubbed in this test — it has its own dedicated
+// tests (playerBentoGrid.test.tsx) for owner/visitor card composition.
+// Stubbing here keeps PlayerDashboard tests focused on the dashboard
+// shell (Hero + Bento Grid vs tab content routing) without dragging
+// in Supabase fetches from every child card.
+vi.mock('@/components/dashboard/bento/PlayerBentoGrid', () => ({
+  default: ({ readOnly }: { readOnly: boolean }) => (
+    <div data-testid={readOnly ? 'player-bento-grid-visitor' : 'player-bento-grid-owner'}>
+      Bento Grid ({readOnly ? 'visitor' : 'owner'})
+    </div>
+  ),
 }))
 
 vi.mock('@/hooks/useProfileStrength', () => ({
@@ -138,14 +148,23 @@ vi.mock('@/hooks/useProfileStrength', () => ({
     percentage: 60,
     buckets: [
       { id: 'basic-info', label: 'Basic info completed', completed: true, weight: 25, action: { type: 'edit-profile' } },
-      { id: 'profile-photo', label: 'Add a profile photo', completed: true, weight: 20, action: { type: 'edit-profile' } },
       { id: 'highlight-video', label: 'Add your highlight video', completed: false, weight: 25, action: { type: 'add-video' } },
-      { id: 'journey', label: 'Share a moment in your Journey', completed: true, weight: 15, action: { type: 'tab', tab: 'journey' } },
-      { id: 'media-gallery', label: 'Add a photo or video to your Gallery', completed: false, weight: 15, action: { type: 'tab', tab: 'profile' } },
     ],
     loading: false,
     refresh: vi.fn(),
   }),
+}))
+
+vi.mock('@/hooks/useWorldClubLogo', () => ({
+  useWorldClubLogo: () => null,
+}))
+
+vi.mock('@/hooks/useTabDeepLinkScroll', () => ({
+  useTabDeepLinkScroll: () => undefined,
+}))
+
+vi.mock('@/lib/analytics', () => ({
+  trackReferenceBadgeClick: vi.fn(),
 }))
 
 type NotificationStoreSlice = {
@@ -248,75 +267,75 @@ beforeEach(() => {
   setNotificationStoreState()
 })
 
-describe('PlayerDashboard', () => {
-  it('syncs the active tab with the URL and updates query params on change (owner mode)', async () => {
-    // Tab navigation is owner-only after the Network View v0 restructure
-    // (2026-05-08). Visitors get a single scrollable narrative; this test
-    // exercises the tab strip + URL sync that owners still rely on.
-    const { locationHistory } = renderDashboard({ initialPath: '/dashboard/profile?tab=friends', readOnly: false })
+describe('PlayerDashboard (Bento Grid)', () => {
+  it('renders the owner Bento Grid on the default /dashboard/profile route', () => {
+    renderDashboard()
+    expect(screen.getByTestId('player-bento-grid-owner')).toBeInTheDocument()
+    expect(screen.queryByTestId('player-bento-grid-visitor')).not.toBeInTheDocument()
+  })
 
+  it('renders the visitor Bento Grid on the public profile route', () => {
+    renderDashboard({ readOnly: true })
+    expect(screen.getByTestId('player-bento-grid-visitor')).toBeInTheDocument()
+    expect(screen.queryByTestId('player-bento-grid-owner')).not.toBeInTheDocument()
+  })
+
+  it('does not render the standalone NextStepCard (its content moved into Hero progress section)', () => {
+    // NextStepCard used to sit above the Bento Grid as a separate
+    // gamification spine. It was removed because the Hero's Profile
+    // Complete section + "Full checklist" accordion now own that role —
+    // the per-bucket actions live inside the Hero, not as a sibling card.
+    renderDashboard()
+    expect(screen.queryByTestId('next-step-card')).not.toBeInTheDocument()
+  })
+
+  it('does not render the standalone NextStepCard for visitors either', () => {
+    renderDashboard({ readOnly: true })
+    expect(screen.queryByTestId('next-step-card')).not.toBeInTheDocument()
+  })
+
+  it('shows the tab strip + tab content when the owner deep-links into a tab', async () => {
+    const { locationHistory } = renderDashboard({ initialPath: '/dashboard/profile?tab=friends' })
+    // Bento Grid hides; tab content shows
+    expect(screen.queryByTestId('player-bento-grid-owner')).not.toBeInTheDocument()
     expect(screen.getByTestId('friends-tab')).toBeInTheDocument()
+
+    // Tab strip is interactive
     await user.click(screen.getByRole('button', { name: 'Comments' }))
     expect(await screen.findByTestId('comments-tab')).toBeInTheDocument()
-
-    const lastLocation = locationHistory.at(-1)
-    expect(lastLocation).toBe('/dashboard/profile?tab=comments')
+    expect(locationHistory.at(-1)).toBe('/dashboard/profile?tab=comments')
   })
 
-  // ── Network View v0 restructure (2026-05-08) ──────────────────────
-  // Visitors no longer get a tab strip. All sections render inline as
-  // a single scrollable narrative. These tests pin that contract so
-  // a future refactor doesn't accidentally hide content from
-  // recruiter-side viewers.
+  it('takes the owner back to the Bento Grid when the Profile tab is selected', async () => {
+    renderDashboard({ initialPath: '/dashboard/profile?tab=journey' })
+    expect(screen.getByTestId('journey-tab')).toBeInTheDocument()
 
-  it('hides the tab strip for visitors (Network View)', () => {
-    renderDashboard({ readOnly: true })
-    expect(screen.queryByRole('button', { name: 'Profile' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Journey' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Comments' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Friends' })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Profile' }))
+    expect(await screen.findByTestId('player-bento-grid-owner')).toBeInTheDocument()
+    expect(screen.queryByTestId('journey-tab')).not.toBeInTheDocument()
   })
 
-  it('renders Friends + Comments as separate inline sections for visitors', () => {
-    renderDashboard({ readOnly: true })
-    // Friends + Comments are NOT in the Profile content, so they appear
-    // as their own sections in the visitor scroll narrative.
-    expect(screen.getByTestId('friends-tab')).toBeInTheDocument()
-    expect(screen.getByTestId('comments-tab')).toBeInTheDocument()
-    // Anchor IDs are present for future deep-link targeting.
-    expect(document.querySelector('#visitor-section-friends')).not.toBeNull()
-    expect(document.querySelector('#visitor-section-comments')).not.toBeNull()
-  })
-
-  it('renders Journey + Posts inline within the Profile section (not as duplicate top-level sections)', () => {
-    renderDashboard({ readOnly: true })
-    // Profile content includes JourneyTab (inline variant) + ProfilePostsTab
-    // for visitors. They render exactly once — duplicating them as separate
-    // top-level sections would double up the career-history + posts surfaces.
-    expect(screen.getAllByTestId('journey-tab')).toHaveLength(1)
-    expect(screen.getAllByTestId('profile-posts-tab')).toHaveLength(1)
-    // Belt-and-suspenders: the per-tab anchor IDs for these are NOT created
-    // (they live inline within the Profile section instead).
-    expect(document.querySelector('#visitor-section-journey')).toBeNull()
-    expect(document.querySelector('#visitor-section-posts')).toBeNull()
-  })
-
-  it('does NOT render ReferencesTab as a separate visitor section', () => {
-    // PublicReferencesSection is already inline in the Profile section
-    // for visitors. ReferencesTab (TrustedReferencesSection wrapper) is
-    // an owner-only management surface.
-    renderDashboard({ readOnly: true })
-    expect(screen.queryByTestId('references-tab')).not.toBeInTheDocument()
-  })
-
-  it('owner mode still renders only the active tab content (one at a time)', () => {
+  it('renders only the active tab content (one at a time) in owner mode', () => {
     renderDashboard({ initialPath: '/dashboard/profile?tab=friends', readOnly: false })
-    // Friends tab is active → its content renders.
     expect(screen.getByTestId('friends-tab')).toBeInTheDocument()
-    // Other tabs are NOT rendered (owner mode preserves the
-    // one-tab-at-a-time behaviour).
     expect(screen.queryByTestId('journey-tab')).not.toBeInTheDocument()
     expect(screen.queryByTestId('comments-tab')).not.toBeInTheDocument()
+  })
+
+  it('hides the tab strip for visitors but allows tab deep links to render their content', () => {
+    renderDashboard({ initialPath: '/players/jordan?tab=journey', readOnly: true })
+    // No tab strip
+    expect(screen.queryByRole('button', { name: 'Profile' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Journey' })).not.toBeInTheDocument()
+    // Visitor sees a Back-to-profile shortcut + the tab's content
+    expect(screen.getByRole('button', { name: /back to profile/i })).toBeInTheDocument()
+    expect(screen.getByTestId('journey-tab')).toBeInTheDocument()
+  })
+
+  it('visitor "Back to profile" button returns to the Bento Grid', async () => {
+    renderDashboard({ initialPath: '/players/jordan?tab=friends', readOnly: true })
+    await user.click(screen.getByRole('button', { name: /back to profile/i }))
+    expect(await screen.findByTestId('player-bento-grid-visitor')).toBeInTheDocument()
   })
 
   it('claims comment highlights when entering the comments tab', async () => {
@@ -348,37 +367,15 @@ describe('PlayerDashboard', () => {
     })
   })
 
-  // Basic Information section is hidden in public view (readOnly mode)
-  // Contact email visibility tests now only apply to the owner's view
-  it('hides Basic Information section in public view', () => {
-    renderDashboard({ readOnly: true })
-
-    expect(screen.queryByText('Basic Information')).not.toBeInTheDocument()
-  })
-
-  it('shows a private contact email note to the owner when hidden', () => {
-    const privateEmail = 'private@example.com'
-    renderDashboard({ readOnly: false, profileOverrides: { contact_email_public: false, contact_email: privateEmail } })
-
-    expect(screen.getByText(/Private contact email:/i)).toBeInTheDocument()
-    expect(screen.getByText(privateEmail)).toBeInTheDocument()
-  })
-
   // ── LastActivePill prop-flow regression guard ──────────────────────
-  // Batch 8 staging QA caught that `show_last_active` wasn't in the
-  // public-profile SELECT clause, so PlayerDashboard never received
-  // the value and LastActivePill defaulted to "show". The fix added
-  // the column to PUBLIC_PROFILE_FIELDS and is enforced at the
-  // SELECT-list level by publicProfileSnapshotFields.test.ts; this
-  // test enforces the second half of the chain — that PlayerDashboard
-  // PASSES the value through to LastActivePill's props.
+  // Catches the "select clause forgets show_last_active" regression
+  // (Batch 8 staging QA) — verifies the value flows through PlayerDashboard
+  // and HeroIdentityCard into the LastActivePill props.
 
-  it('passes show_last_active=false from the profile through to LastActivePill', () => {
+  it('passes show_last_active=false through to LastActivePill', () => {
     renderDashboard({
       readOnly: true,
       profileOverrides: {
-        // Cast: show_last_active was added in migration 20260508800000
-        // and isn't in the generated PlayerProfileShape type yet.
         ...({ show_last_active: false, last_active_at: '2026-05-08T12:00:00Z' } as Record<string, unknown>),
       },
     })
@@ -401,8 +398,6 @@ describe('PlayerDashboard', () => {
   })
 
   it('falls through to null (graceful default) when show_last_active is missing from the profile', () => {
-    // Pre-migration / forgotten-select case. PlayerDashboard's read
-    // uses `?? null`; LastActivePill treats null as "show".
     renderDashboard({
       readOnly: true,
       profileOverrides: {

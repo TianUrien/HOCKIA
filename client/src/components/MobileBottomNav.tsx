@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Home, Users, Briefcase, Globe, Sparkles } from 'lucide-react'
-import { AvatarMenu, NotificationBadge } from '@/components'
+import Avatar from './Avatar'
+import { NotificationBadge } from '@/components'
 import { useNavigation } from '@/hooks/useNavigation'
 
 interface NavItem {
@@ -176,18 +177,61 @@ export default function MobileBottomNav() {
               </span>
             </button>
 
-            {/* Avatar dropdown — tap opens a menu with Your dashboard /
-                Settings / Sign out. Replaces the previous direct-navigate
-                avatar so mobile users can reach Settings + Sign Out (the
-                hamburger ≡ that used to expose those was removed when
-                AvatarMenu replaced it on desktop, but the desktop menu
-                is hidden on mobile via `hidden lg:flex` in Header).
-                placement="top" so the dropdown opens above the nav bar. */}
-            <AvatarMenu
-              isOnDashboard={location.pathname.startsWith('/dashboard')}
-              placement="top"
-              showLabel
-            />
+            {/* Avatar = Dashboard nav item. Tap navigates directly to
+                /dashboard/profile (mock convention). Settings + Sign out
+                used to live in a dropdown anchored here; those moved to
+                the SettingsSheet (gear icon) in the header so the avatar
+                becomes a single-purpose nav tap. Purple ring on the avatar
+                + label opacity bump mark the active state when on the
+                dashboard. */}
+            <button
+              type="button"
+              onClick={() => handleNavigate('/dashboard/profile')}
+              aria-label="Dashboard"
+              aria-current={location.pathname.startsWith('/dashboard') ? 'page' : undefined}
+              className={`flex flex-col items-center justify-center min-w-[48px] min-h-[44px] py-1 px-2 rounded-xl transition-all duration-200 ${
+                location.pathname.startsWith('/dashboard')
+                  ? 'text-[#8026FA]'
+                  : 'text-gray-600 active:bg-gray-100'
+              }`}
+            >
+              <div
+                className={`relative mb-0.5 transition-transform duration-200 ${
+                  location.pathname.startsWith('/dashboard') ? 'scale-110' : 'scale-100'
+                }`}
+              >
+                <Avatar
+                  src={profile?.avatar_url}
+                  initials={
+                    (profile?.full_name ?? '')
+                      .trim()
+                      .split(' ')
+                      .filter(Boolean)
+                      .map((p) => p[0])
+                      .join('')
+                      .slice(0, 2)
+                      .toUpperCase() || '?'
+                  }
+                  size="sm"
+                  loading="eager"
+                  role={profile?.role}
+                  className={
+                    location.pathname.startsWith('/dashboard')
+                      ? 'ring-2 ring-[#8026FA] ring-offset-2'
+                      : undefined
+                  }
+                />
+              </div>
+              {/* Label matches sibling nav items — hidden under 360px to
+                  match MobileBottomNav's existing icon-only fallback. */}
+              <span
+                className={`hidden min-[360px]:inline text-[10px] font-medium transition-all duration-200 ${
+                  location.pathname.startsWith('/dashboard') ? 'opacity-100' : 'opacity-60'
+                }`}
+              >
+                Dashboard
+              </span>
+            </button>
           </div>
         </div>
       </nav>

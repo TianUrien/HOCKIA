@@ -170,8 +170,8 @@ export function useProfileStrength(profile: Profile | null): ProfileStrengthResu
       {
         // Recruiters consistently rate full-match footage as the single
         // strongest signal of how a player actually performs over 60+ min
-        // — beyond a curated reel. Tabs anchor opens the Profile tab where
-        // the FullGameVideosSection lives.
+        // — beyond a curated reel. Action routes to the Media tab where
+        // FullGameVideosSection lives (inside MediaTab).
         id: 'full-match-footage',
         label: 'Upload full match footage',
         noun: 'full match footage',
@@ -179,7 +179,7 @@ export function useProfileStrength(profile: Profile | null): ProfileStrengthResu
         unlockCopy: 'Recruiters value full match footage above curated reels — it shows your work over a real game.',
         weight: 15,
         completed: fullGameVideoCount > 0,
-        action: { type: 'tab', tab: 'profile' },
+        action: { type: 'tab', tab: 'media' },
       },
       {
         id: 'journey',
@@ -197,7 +197,9 @@ export function useProfileStrength(profile: Profile | null): ProfileStrengthResu
         unlockCopy: 'A visual portfolio beyond a single highlight clip.',
         weight: 5,
         completed: galleryCount > 0,
-        action: { type: 'tab', tab: 'profile' },
+        // Gallery lives in MediaTab now (was inline in the old Profile
+        // tab before the Bento Grid restructure).
+        action: { type: 'tab', tab: 'media' },
       },
       {
         id: 'friends',
@@ -219,7 +221,12 @@ export function useProfileStrength(profile: Profile | null): ProfileStrengthResu
         unlockCopy: 'A coach or teammate vouching for you carries weight with clubs.',
         weight: 15,
         completed: referenceCount > 0,
-        action: { type: 'tab', tab: 'friends' },
+        // Routes to the dedicated References tab. Previously pointed to
+        // Friends tab (where references used to render inline), but that
+        // surface was split out — Friends tab now hides references and
+        // shows only the per-friend "Ask to vouch" buttons, while
+        // ReferencesTab owns the full management surface.
+        action: { type: 'tab', tab: 'references' },
       },
       {
         // Open-to-Play is the single most-filtered boolean for recruiter

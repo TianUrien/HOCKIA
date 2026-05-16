@@ -15,7 +15,13 @@ test.describe('@smoke player', () => {
     // Profile name heading should render
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 20000 })
 
-    // Should show player-specific tabs — Journey is stable regardless of profile-completion state
+    // The Bento Grid is the landing view (no tab strip). Verify the
+    // owner variant renders + at least one of its cards.
+    await expect(page.getByTestId('player-bento-grid-owner')).toBeVisible({ timeout: 10000 })
+    await expect(page.getByTestId('journey-card')).toBeVisible({ timeout: 10000 })
+
+    // Tab strip is visible when the user deep-links into a tab view.
+    await page.goto('/dashboard/profile?tab=journey')
     await expect(page.getByRole('tab', { name: 'Journey', exact: true })).toBeVisible({ timeout: 10000 })
   })
 

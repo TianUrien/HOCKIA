@@ -14,8 +14,10 @@ import { test, expect, Page } from './fixtures'
  * each tab's settled position and compare.
  */
 
+// The Profile tab is the Bento Grid landing — no tab strip there, so
+// it's not part of the strip-scroll behaviour we measure here. Cards on
+// the Bento Grid navigate to these other tabs via ?tab=.
 const TABS: Array<{ id: string; label: string }> = [
-  { id: 'profile', label: 'Profile' },
   { id: 'journey', label: 'Journey' },
   { id: 'references', label: 'References' },
   { id: 'friends', label: 'Friends' },
@@ -76,11 +78,12 @@ test.describe('Profile tab strip scroll behavior (mobile)', () => {
   test.use({ viewport: MOBILE_VIEWPORT })
 
   test.beforeEach(async ({ page }) => {
-    // Make sure each test starts fresh on the dashboard
-    await page.goto('/dashboard/profile')
+    // Bento Grid is the dashboard landing — tab strip only renders on
+    // tab views. Navigate straight into a tab view so the strip is
+    // present when each test runs.
+    await page.goto('/dashboard/profile?tab=journey')
     await page.waitForSelector('.animate-spin', { state: 'hidden', timeout: 30000 }).catch(() => {})
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 20000 })
-    // Ensure the tab strip is rendered
     await expect(page.locator('nav[role="tablist"]').first()).toBeVisible({ timeout: 10000 })
   })
 

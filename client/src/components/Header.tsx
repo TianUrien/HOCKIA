@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { MessageCircle, Home, Users, Briefcase, Bell, Globe, Sparkles, Store } from 'lucide-react'
 import { AvatarMenu, NotificationBadge } from '@/components'
+import SettingsSheet from './SettingsSheet'
 import { useNavigation } from '@/hooks/useNavigation'
 
 export default function Header() {
@@ -112,6 +113,11 @@ export default function Header() {
                 <Bell className="w-5 h-5" />
                 <NotificationBadge count={notificationCount} className="-right-0.5 -top-0.5" />
               </button>
+              {/* Settings sheet — gear icon dropdown. Replaces the avatar-
+                  menu Settings/Sign out entries that used to live in the
+                  bottom nav (the avatar there now navigates directly to
+                  the dashboard). Mobile-only; desktop keeps AvatarMenu. */}
+              <SettingsSheet />
             </div>
           )}
 
