@@ -14,8 +14,8 @@ import type { PlayerProfileShape } from '@/pages/PlayerDashboard'
  * conversion CTA.
  *
  * Hero is rendered OUTSIDE this grid by PlayerDashboard so it stays at
- * the top of every view (including tab deep links). The grid only owns
- * the secondary cards.
+ * the top of every view (including section deep links). The grid only
+ * owns the secondary cards.
  *
  * Owner (private dashboard, readOnly=false):
  *   Basic info (+ About me) | Media
@@ -31,9 +31,12 @@ import type { PlayerProfileShape } from '@/pages/PlayerDashboard'
  * a standalone card because they don't see BasicInfoCard — those facts
  * are already on their Hero.
  *
- * Tap behaviour: each card's CTA navigates via `?tab=…` so the existing
- * tab UIs (JourneyTab, ReferencesTab, etc.) remain the destinations.
- * PR2 will promote those to dedicated routes and remove the tab strip.
+ * Tap behaviour: each card's CTA navigates to its own section route
+ * (e.g. /dashboard/profile/journey, /dashboard/profile/community). The
+ * old tab strip is gone — PR2 promoted every section to a dedicated
+ * route. PlayerDashboard's handler decides whether the URL is the
+ * owner shape (/dashboard/profile/:section) or the visitor shape
+ * (/players/:username/:section).
  */
 interface PlayerBentoGridProps {
   profile: PlayerProfileShape

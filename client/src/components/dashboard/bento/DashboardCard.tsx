@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils'
  *   - icon tile (purple-50 background, purple-600 icon)
  *   - title + optional completion line
  *   - children (whatever the card wants to show)
- *   - optional CTA row that links to the legacy tab via ?tab=
+ *   - optional CTA row that navigates to the section's dedicated route
  *
  * The CTA is a plain anchor-styled button so the card itself stays a
  * div (no nested-interactive issues); the surrounding card is NOT
