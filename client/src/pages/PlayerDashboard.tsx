@@ -20,6 +20,7 @@ import ProfilePostsTab from '@/components/ProfilePostsTab'
 import SignInPromptModal from '@/components/SignInPromptModal'
 import HeroIdentityCard from '@/components/dashboard/bento/HeroIdentityCard'
 import PlayerBentoGrid from '@/components/dashboard/bento/PlayerBentoGrid'
+import { ProfileViewersSection } from '@/components/ProfileViewersSection'
 import type { Profile } from '@/lib/supabase'
 import { supabase } from '@/lib/supabase'
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -397,6 +398,18 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
           onFriendsClick={handleFriendsClick}
           onReferencesClick={handleReferencesClick}
         />
+
+        {/* "Who viewed your profile" — owner-only engagement nudge that
+            sits between the Hero and the Bento Grid. Same placement
+            pattern as Coach/Club/Brand dashboards. The `profile-viewers`
+            anchor + scroll-mt are required for the existing notification
+            deep-link `?tab=profile&section=viewers` to land correctly
+            (wired via useTabDeepLinkScroll + PLAYER_SECTION_ANCHORS). */}
+        {!readOnly && isLanding && (
+          <div id="profile-viewers" className="scroll-mt-20">
+            <ProfileViewersSection />
+          </div>
+        )}
 
         {isLanding ? (
           // Landing view — the Bento Grid. Each card lives in its own

@@ -130,6 +130,10 @@ vi.mock('@/components/SignInPromptModal', () => ({
   default: () => null,
 }))
 
+vi.mock('@/components/ProfileViewersSection', () => ({
+  ProfileViewersSection: () => <div data-testid="profile-viewers-section">Profile Viewers</div>,
+}))
+
 // PlayerBentoGrid is stubbed in this test — it has its own dedicated
 // tests (playerBentoGrid.test.tsx) for owner/visitor card composition.
 // Stubbing here keeps PlayerDashboard tests focused on the dashboard
