@@ -8,7 +8,9 @@ import DashboardCard from './DashboardCard'
  * JourneyCard — career-history summary tile. Counts grouped by
  * `career_history.entry_type`:
  *   - club            → "Clubs"
- *   - national_team   → "International selections"
+ *   - national_team   → "Representative selections" (covers regional,
+ *                       provincial, state, national — not just
+ *                       international; the DB enum value is a legacy name)
  *   - achievement     → "Achievements"
  *   - tournament      → folds into "Achievements"
  *   - milestone       → "Milestones"
@@ -27,7 +29,7 @@ interface JourneyCardProps {
 
 interface GroupedCounts {
   clubs: number
-  international: number
+  representative: number
   achievements: number
   milestones: number
   total: number
@@ -35,7 +37,7 @@ interface GroupedCounts {
 
 const EMPTY: GroupedCounts = {
   clubs: 0,
-  international: 0,
+  representative: 0,
   achievements: 0,
   milestones: 0,
   total: 0,
@@ -67,7 +69,11 @@ export default function JourneyCard({ profileId, readOnly, onViewJourney }: Jour
             grouped.clubs += 1
             break
           case 'national_team':
-            grouped.international += 1
+            // DB enum value is legacy ('national_team') but the bucket
+            // now covers any representative-team experience: regional,
+            // provincial, state, or national. JourneyTab uses
+            // "Representative Team" as the entry-type label.
+            grouped.representative += 1
             break
           case 'achievement':
           case 'tournament':
@@ -113,7 +119,7 @@ export default function JourneyCard({ profileId, readOnly, onViewJourney }: Jour
       ) : (
         <ul className="space-y-2.5">
           <Row icon={Landmark} label="Clubs" count={counts.clubs} />
-          <Row icon={Globe2} label="International selections" count={counts.international} />
+          <Row icon={Globe2} label="Representative selections" count={counts.representative} />
           <Row icon={Award} label="Achievements" count={counts.achievements} />
           <Row icon={Calendar} label="Milestones" count={counts.milestones} />
         </ul>
