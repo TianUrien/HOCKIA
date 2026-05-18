@@ -93,11 +93,35 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           data: { userId },
           level: 'info'
         })
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', userId)
-          .single()
+
+        const runQuery = () =>
+          supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', userId)
+            .single()
+
+        let { data, error } = await runQuery()
+
+        // 42501 (insufficient_privilege) during /auth/callback is the
+        // JWT-attachment race: supabase-js fires fetchProfile before the
+        // freshly-issued session lands on the client, so the request
+        // falls through to the `anon` role which lacks table-level
+        // SELECT on profiles. Wait briefly and retry once — the session
+        // typically attaches within a frame. If it still fails, fall
+        // through to the existing report-and-throw path.
+        if (error && (error as PostgrestError).code === '42501') {
+          Sentry.addBreadcrumb({
+            category: 'supabase',
+            message: 'profiles.fetch.retry_after_42501',
+            data: { userId },
+            level: 'warning',
+          })
+          await new Promise((resolve) => setTimeout(resolve, 150))
+          const retry = await runQuery()
+          data = retry.data
+          error = retry.error
+        }
 
         if (error) {
           const pgError = error as PostgrestError
