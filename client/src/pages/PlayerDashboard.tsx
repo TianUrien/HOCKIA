@@ -35,13 +35,17 @@ import { useTabDeepLinkScroll } from '@/hooks/useTabDeepLinkScroll'
 // right card instead of the top of the page.
 const PLAYER_SECTION_ANCHORS = { viewers: 'profile-viewers' } as const
 
-type TabType = 'profile' | 'media' | 'journey' | 'references' | 'friends' | 'comments' | 'posts'
+type TabType = 'profile' | 'media' | 'journey' | 'references' | 'friends' | 'comments' | 'posts' | 'community'
 
 // Centralised whitelist so URL parsing + push handlers stay in sync.
 // 'media' is new in the Bento redesign — MediaCard CTAs land here so the
 // existing MediaTab + FullGameVideosSection surface keeps working
 // without re-implementing CRUD inside a card.
-const VALID_TABS: TabType[] = ['profile', 'media', 'journey', 'references', 'friends', 'comments', 'posts']
+// 'community' renders the full social bundle (Friends + References +
+// Comments + Posts stacked vertically). It's the "Go to community" CTA
+// target from the CommunityCard — individual tile clicks still deep-link
+// to the dedicated section pages.
+const VALID_TABS: TabType[] = ['profile', 'media', 'journey', 'references', 'friends', 'comments', 'posts', 'community']
 
 export type PlayerProfileShape =
   Partial<Profile> &
@@ -517,6 +521,52 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
               {activeTab === 'references' && readOnly && (
                 <div className="animate-fade-in">
                   <PublicReferencesSection profileId={profile.id} profileName={profile.full_name ?? profile.username ?? null} />
+                </div>
+              )}
+
+              {activeTab === 'community' && (
+                // Unified Community view — opened from the Community
+                // card's "Go to community" CTA. Stacks all four social
+                // surfaces vertically. Individual tile clicks on the
+                // CommunityCard still deep-link to their dedicated
+                // section routes (e.g. /dashboard/profile/friends) so
+                // users have both: a hub view AND focused views.
+                <div className="animate-fade-in space-y-10">
+                  <section id="community-friends" className="scroll-mt-20">
+                    <FriendsTab
+                      profileId={profile.id}
+                      readOnly={readOnly}
+                      profileRole={profile.role}
+                      hideReferences
+                    />
+                  </section>
+
+                  <section id="community-references" className="scroll-mt-20 pt-8 border-t border-gray-100">
+                    {readOnly ? (
+                      <PublicReferencesSection
+                        profileId={profile.id}
+                        profileName={profile.full_name ?? profile.username ?? null}
+                      />
+                    ) : (
+                      <ReferencesTab
+                        profileId={profile.id}
+                        readOnly={readOnly}
+                        profileRole={profile.role}
+                      />
+                    )}
+                  </section>
+
+                  <section id="community-comments" className="scroll-mt-20 pt-8 border-t border-gray-100">
+                    <CommentsTab
+                      profileId={profile.id}
+                      highlightedCommentIds={highlightedComments}
+                      profileRole={profile.role}
+                    />
+                  </section>
+
+                  <section id="community-posts" className="scroll-mt-20 pt-8 border-t border-gray-100">
+                    <ProfilePostsTab profileId={profile.id} readOnly={readOnly} />
+                  </section>
                 </div>
               )}
 

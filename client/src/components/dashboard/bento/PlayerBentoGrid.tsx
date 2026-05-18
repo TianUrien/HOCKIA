@@ -39,7 +39,7 @@ interface PlayerBentoGridProps {
   profile: PlayerProfileShape
   readOnly: boolean
   /** Tab handler — used by cards as their CTA navigation. */
-  onOpenTab: (tab: 'profile' | 'media' | 'journey' | 'references' | 'friends' | 'comments' | 'posts') => void
+  onOpenTab: (tab: 'profile' | 'media' | 'journey' | 'references' | 'friends' | 'comments' | 'posts' | 'community') => void
   /** Owner CTAs. */
   onEdit: () => void
   onViewOpportunities: () => void

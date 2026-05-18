@@ -366,6 +366,32 @@ describe('PlayerDashboard (Bento Grid)', () => {
     expect(locationHistory.at(-1)).toBe('/players/jordan')
   })
 
+  it('the /community section page stacks all four sub-sections (Friends, References, Comments, Posts)', () => {
+    // "Go to community" on the CommunityCard navigates to /community,
+    // which renders the full social bundle in one view. Individual tile
+    // clicks still deep-link to dedicated section pages.
+    renderDashboard({ initialPath: '/dashboard/profile/community' })
+
+    expect(screen.getByTestId('friends-tab')).toBeInTheDocument()
+    // Owner gets ReferencesTab; visitor would get PublicReferencesSection
+    // (covered by a separate readOnly test below).
+    expect(screen.getByTestId('references-tab')).toBeInTheDocument()
+    expect(screen.getByTestId('comments-tab')).toBeInTheDocument()
+    expect(screen.getByTestId('profile-posts-tab')).toBeInTheDocument()
+    // Bento Grid is hidden on section pages.
+    expect(screen.queryByTestId('player-bento-grid-owner')).not.toBeInTheDocument()
+  })
+
+  it('the visitor /community page uses PublicReferencesSection instead of ReferencesTab', () => {
+    renderDashboard({ initialPath: '/players/jordan/community', readOnly: true })
+
+    expect(screen.getByTestId('friends-tab')).toBeInTheDocument()
+    expect(screen.getByTestId('public-references')).toBeInTheDocument()
+    expect(screen.queryByTestId('references-tab')).not.toBeInTheDocument()
+    expect(screen.getByTestId('comments-tab')).toBeInTheDocument()
+    expect(screen.getByTestId('profile-posts-tab')).toBeInTheDocument()
+  })
+
   it('claims comment highlights when entering the comments section', async () => {
     const claimCommentHighlights = vi.fn(() => ['comment-99']) as () => string[]
     const clearCommentNotifications = vi.fn()

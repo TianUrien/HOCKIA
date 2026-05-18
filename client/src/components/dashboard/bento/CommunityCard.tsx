@@ -18,7 +18,9 @@ import type { Profile } from '@/lib/supabase'
  */
 interface CommunityCardProps {
   profile: Pick<Profile, 'id' | 'accepted_friend_count' | 'accepted_reference_count' | 'post_count'>
-  onOpenTab: (tab: 'friends' | 'references' | 'comments' | 'posts') => void
+  /** Tile clicks deep-link to specific sections; the card's "Go to
+   *  community" CTA opens the unified bundle view that stacks all four. */
+  onOpenTab: (tab: 'friends' | 'references' | 'comments' | 'posts' | 'community') => void
 }
 
 export default function CommunityCard({ profile, onOpenTab }: CommunityCardProps) {
@@ -58,7 +60,11 @@ export default function CommunityCard({ profile, onOpenTab }: CommunityCardProps
       title="Community"
       subtitle="Friends, references, comments and posts"
       ctaLabel="Go to community"
-      onCtaClick={() => onOpenTab('friends')}
+      // Opens the unified Community page (all four sections stacked).
+      // The individual tile clicks below still deep-link to their own
+      // dedicated section pages so users have both: a hub view AND
+      // focused views.
+      onCtaClick={() => onOpenTab('community')}
       testId="community-card"
     >
       <div className="grid grid-cols-2 gap-2.5">
