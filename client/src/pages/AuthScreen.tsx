@@ -92,10 +92,13 @@ export default function AuthScreen({ mode, role, onBack }: AuthScreenProps) {
   const [email, setEmail] = useState('')
   // Sign-in defaults to password mode (the dominant UX expectation —
   // returning users mostly remember their password and want a familiar
-  // form). Sign-up still defaults to magic-link mode so a brand-new user
-  // doesn't have to invent a password before they've decided to commit.
-  // Either way the secondary toggle below the submit button switches modes.
-  const [passwordMode, setPasswordMode] = useState(mode === 'signin')
+  // Sign-up now also defaults to password mode — the form feels more
+  // like a "real account" creation (email + password + Create Account)
+  // than a one-click magic link. Users who prefer the link path still
+  // have the "Email me a link instead" toggle below the submit button.
+  // Applies uniformly across Player / Coach / Club / Brand / Umpire
+  // since role is a separate state value, not a form-shape modifier.
+  const [passwordMode, setPasswordMode] = useState(true)
   const [password, setPassword] = useState('')
   const [pwVisibility, setPwVisibility] = useState<PasswordVisibility>('hidden')
 
