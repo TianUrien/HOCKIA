@@ -8,7 +8,6 @@ import {
   ReferencesTab,
   PublicReferencesSection,
   PublicViewBanner,
-  ScrollableTabs,
   CategoryConfirmationBanner,
 } from '@/components'
 import Header from '@/components/Header'
@@ -23,7 +22,7 @@ import PlayerBentoGrid from '@/components/dashboard/bento/PlayerBentoGrid'
 import { ProfileViewersSection } from '@/components/ProfileViewersSection'
 import type { Profile } from '@/lib/supabase'
 import { supabase } from '@/lib/supabase'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useToastStore } from '@/lib/toast'
 import { useNotificationStore } from '@/lib/notifications'
 import { useProfileStrength, type ProfileStrengthBucket } from '@/hooks/useProfileStrength'
@@ -80,12 +79,23 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
   const { profile: authProfile, user } = useAuthStore()
   const profile = (profileData ?? authProfile) as PlayerProfileShape | null
   const navigate = useNavigate()
-  const [searchParams, setSearchParams] = useSearchParams()
+  const [searchParams] = useSearchParams()
   const { addToast } = useToastStore()
-  const [activeTab, setActiveTab] = useState<TabType>(() => {
-    const tabParam = searchParams.get('tab') as TabType | null
-    return tabParam && (VALID_TABS as string[]).includes(tabParam) ? tabParam : 'profile'
-  })
+
+  // PR2 — section comes from the URL route segment, not a ?tab= param.
+  // - Owner: /dashboard/profile/:section  (DashboardRouter dispatches here)
+  // - Visitor: /players/:username/:section, /players/id/:id/:section,
+  //   /members/:username/:section, /members/id/:id/:section
+  // The bare /dashboard/profile or /players/:username (no /:section) is
+  // the Bento Grid landing — activeTab falls through to 'profile'. The
+  // legacy ?tab=X URL shape from notifications/config.ts is migrated on
+  // mount by the redirect effect below.
+  const routeParams = useParams<{ section?: string; username?: string; id?: string }>()
+  const sectionFromRoute = routeParams.section as TabType | undefined
+  const activeTab: TabType =
+    sectionFromRoute && (VALID_TABS as string[]).includes(sectionFromRoute)
+      ? sectionFromRoute
+      : 'profile'
   const [showEditModal, setShowEditModal] = useState(false)
   const [showAddVideoModal, setShowAddVideoModal] = useState(false)
   const [showSignInPrompt, setShowSignInPrompt] = useState(false)
@@ -101,23 +111,45 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
   const currentWorldClubId = (profile as Partial<Profile> | null)?.current_world_club_id ?? null
   const currentClubLogo = useWorldClubLogo(currentWorldClubId)
 
-  const tabParam = searchParams.get('tab') as TabType | null
   const sectionParam = searchParams.get('section')
 
+  // Legacy ?tab=X migration. Notifications/config.ts still emits the old
+  // URL shape (`/dashboard/profile?tab=journey&section=incoming`); rather
+  // than touch the 30+ notification templates, this effect rewrites those
+  // URLs to the new route format (`/dashboard/profile/journey?section=incoming`)
+  // on mount. ?section= and ?ask= and every other param survive.
   useEffect(() => {
-    if (!tabParam) return
-    if (tabParam !== activeTab && (VALID_TABS as string[]).includes(tabParam)) {
-      setActiveTab(tabParam)
-    }
-  }, [tabParam, activeTab])
+    const legacyTab = searchParams.get('tab') as TabType | null
+    if (!legacyTab || !(VALID_TABS as string[]).includes(legacyTab)) return
 
-  // Tab + section deep-link scroll. Notifications and shareable URLs (e.g.
-  // ?tab=profile&section=viewers, ?tab=journey) used to land at the top
-  // of the profile, leaving the user staring at the header instead of the
-  // section they were sent to.
+    const next = new URLSearchParams(searchParams)
+    next.delete('tab')
+    const qs = next.toString()
+    const qsSuffix = qs ? `?${qs}` : ''
+
+    let path: string
+    if (readOnly) {
+      const base = routeParams.username
+        ? `/players/${routeParams.username}`
+        : routeParams.id
+          ? `/players/id/${routeParams.id}`
+          : null
+      if (!base) return
+      path = legacyTab === 'profile' ? base : `${base}/${legacyTab}`
+    } else {
+      path = legacyTab === 'profile' ? '/dashboard/profile' : `/dashboard/profile/${legacyTab}`
+    }
+
+    navigate(`${path}${qsSuffix}`, { replace: true })
+  }, [searchParams, routeParams.username, routeParams.id, readOnly, navigate])
+
+  // Section + sub-section deep-link scroll. Notifications and shareable
+  // URLs (e.g. /dashboard/profile?section=viewers, /dashboard/profile/journey)
+  // used to land at the top of the page; the hook anchors them. With PR2
+  // the section URL segment plays the role the `?tab=` param used to.
   useTabDeepLinkScroll({
     activeTab,
-    tabParam,
+    tabParam: sectionFromRoute ?? null,
     sectionParam,
     sectionAnchors: PLAYER_SECTION_ANCHORS,
   })
@@ -176,30 +208,50 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
   const handleTabChange = useMemo(
     () => (tab: TabType) => {
       const wasSameTab = activeTab === tab
-      setActiveTab(tab)
-      const next = new URLSearchParams(searchParams)
-      next.set('tab', tab)
-      setSearchParams(next, { replace: true })
 
-      // useTabDeepLinkScroll fires when tabParam changes — but a click on
-      // the currently-active tab leaves params unchanged, so it skips the
-      // scroll. Users tapping their already-selected tab from a scrolled
-      // position rightfully expect the strip to scroll back to top, same
-      // as a tab change. Replay the scroll directly for that case. Fire
-      // both rAF and a setTimeout so it survives async tab content that
-      // shifts layout late (mirrors useTabDeepLinkScroll's pattern).
+      // Preserve query params that callers depend on (?ask=<friendId>,
+      // ?section=incoming, etc.). Never re-emit ?tab=X — that's now the
+      // route segment.
+      const preserved = new URLSearchParams(searchParams)
+      preserved.delete('tab')
+      const qs = preserved.toString()
+      const qsSuffix = qs ? `?${qs}` : ''
+
+      let path: string
+      if (readOnly) {
+        const base = routeParams.username
+          ? `/players/${routeParams.username}`
+          : routeParams.id
+            ? `/players/id/${routeParams.id}`
+            : null
+        if (!base) {
+          // Shouldn't happen — visitor routes always carry username or id.
+          return
+        }
+        path = tab === 'profile' ? base : `${base}/${tab}`
+      } else {
+        path = tab === 'profile' ? '/dashboard/profile' : `/dashboard/profile/${tab}`
+      }
+
+      navigate(`${path}${qsSuffix}`, { replace: true })
+
+      // useTabDeepLinkScroll fires on section/tab changes. Tapping the
+      // section the user is already on leaves params unchanged, so the
+      // hook skips the scroll. Replay it directly for that case — same
+      // UX as before PR2's route promotion. Fire both rAF and a settle
+      // timeout so it survives async tab content shifting layout late.
       if (wasSameTab && tab !== 'profile') {
-        const performTabStripScroll = () => {
+        const performTabContentScroll = () => {
           const el = document.getElementById('profile-tab-content')
           if (el && typeof el.scrollIntoView === 'function') {
             try { el.scrollIntoView({ behavior: 'smooth', block: 'start' }) } catch { /* noop */ }
           }
         }
-        window.requestAnimationFrame(performTabStripScroll)
-        window.setTimeout(performTabStripScroll, 400)
+        window.requestAnimationFrame(performTabContentScroll)
+        window.setTimeout(performTabContentScroll, 400)
       }
     },
-    [activeTab, searchParams, setSearchParams],
+    [activeTab, navigate, readOnly, routeParams.id, routeParams.username, searchParams],
   )
 
   // Scroll-and-flash request from a bucket action. The actual scroll
@@ -324,17 +376,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
 
   const handleViewOpportunities = () => navigate('/opportunities')
 
-  const tabs: { id: TabType; label: string }[] = [
-    { id: 'profile', label: 'Profile' },
-    { id: 'media', label: 'Media' },
-    { id: 'journey', label: 'Journey' },
-    { id: 'references', label: 'References' },
-    { id: 'friends', label: 'Friends' },
-    { id: 'comments', label: 'Comments' },
-    { id: 'posts', label: 'Posts' },
-  ]
-
-  // The Profile tab IS the new Bento Grid landing page. Other tabs keep
+  // The Profile tab IS the Bento Grid landing page. Section pages keep
   // their existing UIs as deep-link destinations from card CTAs. PR2 will
   // promote each tab to its own route and delete the tab strip.
   const isLanding = activeTab === 'profile'
@@ -358,16 +400,19 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
           </button>
         )}
 
-        {/* Visitor on a non-Profile tab — quick back-to-profile shortcut
-            since visitors don't have a tab strip to navigate with. */}
-        {readOnly && !isLanding && (
+        {/* On a section page — back-shortcut. The tab strip is gone in
+            PR2, so this is now the primary way users navigate from a
+            section back to the Bento Grid (browser back also works). */}
+        {!isLanding && (
           <button
             type="button"
             onClick={() => handleTabChange('profile')}
             className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span className="text-sm font-medium">Back to profile</span>
+            <span className="text-sm font-medium">
+              {readOnly ? 'Back to profile' : 'Back to dashboard'}
+            </span>
           </button>
         )}
 
@@ -422,23 +467,10 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
             onViewOpportunities={handleViewOpportunities}
           />
         ) : (
-          // Tab views — existing UIs preserved verbatim. Owner gets the
-          // ScrollableTabs strip; visitor navigates back via the Back-to-
-          // profile button at the top of the page.
+          // Section page — content surface with no tab strip. PR2 removed
+          // the strip; users navigate via card CTAs from /dashboard/profile
+          // and the "Back to dashboard / profile" shortcut above.
           <div id="profile-tab-content" className="bg-white rounded-2xl shadow-sm scroll-mt-4">
-            {!readOnly && (
-              <div className="border-b border-gray-200 overflow-x-auto">
-                <ScrollableTabs
-                  tabs={tabs}
-                  activeTab={activeTab}
-                  onTabChange={handleTabChange}
-                  className="gap-8 px-6"
-                  activeClassName="border-[#8026FA] text-[#8026FA]"
-                  inactiveClassName="border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300"
-                />
-              </div>
-            )}
-
             <div className="p-6 md:p-8 min-h-screen">
               {activeTab === 'journey' && (
                 <div className="animate-fade-in">

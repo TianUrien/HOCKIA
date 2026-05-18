@@ -20,9 +20,14 @@ test.describe('@smoke player', () => {
     await expect(page.getByTestId('player-bento-grid-owner')).toBeVisible({ timeout: 10000 })
     await expect(page.getByTestId('journey-card')).toBeVisible({ timeout: 10000 })
 
-    // Tab strip is visible when the user deep-links into a tab view.
+    // PR2 — section pages are now their own routes; legacy ?tab=X URLs
+    // redirect on mount. Both should land on the journey section page.
     await page.goto('/dashboard/profile?tab=journey')
-    await expect(page.getByRole('tab', { name: 'Journey', exact: true })).toBeVisible({ timeout: 10000 })
+    await page.waitForFunction(
+      () => window.location.pathname === '/dashboard/profile/journey',
+      { timeout: 10000 },
+    )
+    await expect(page.getByRole('button', { name: /back to dashboard/i })).toBeVisible({ timeout: 10000 })
   })
 
   test('player can open seeded vacancy details', async ({ page, opportunitiesPage }) => {

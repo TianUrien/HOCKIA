@@ -1,185 +1,33 @@
-import { test, expect, Page } from './fixtures'
+import { test, expect } from './fixtures'
 
 /**
  * @smoke
  *
- * Diagnostic spec for the Friends-tab scroll bug. Reproduces the user's
- * report: on mobile viewport, after the page is scrolled down so the tab
- * strip is at the bottom edge of the viewport, clicking each tab in
- * sequence should bring the tab strip back to the top of the viewport
- * (via `useTabDeepLinkScroll` -> `scrollIntoView({block:'start'})` on
- * `#profile-tab-content`).
+ * Diagnostic specs that originally tracked the player tab-strip scroll
+ * behaviour. PR2 promoted the tab `?tab=X` URLs to dedicated section
+ * routes (`/dashboard/profile/:section`) and DELETED the tab strip
+ * entirely. The "each tab click should bring the strip near the top"
+ * test is gone with the strip; the remaining specs verify the
+ * still-relevant deep-link scroll behaviour and adjacent flows.
  *
- * The user reports Friends doesn't scroll like the others. We measure
- * each tab's settled position and compare.
+ * Kept here (rather than split into separate files) to preserve git
+ * history. Filename stays for the same reason; the contents now span
+ * section deep-links, Community routing, and Discover seed UX.
  */
-
-// The Profile tab is the Bento Grid landing — no tab strip there, so
-// it's not part of the strip-scroll behaviour we measure here. Cards on
-// the Bento Grid navigate to these other tabs via ?tab=.
-const TABS: Array<{ id: string; label: string }> = [
-  { id: 'journey', label: 'Journey' },
-  { id: 'references', label: 'References' },
-  { id: 'friends', label: 'Friends' },
-  { id: 'comments', label: 'Comments' },
-  { id: 'posts', label: 'Posts' },
-]
 
 const MOBILE_VIEWPORT = { width: 390, height: 844 } // iPhone 13/14
 
-type TabMeasurement = {
-  tabId: string
-  url: string
-  scrollY: number
-  docHeight: number
-  maxScrollY: number
-  tabStripTop: number
-  tabContentTop: number | null
-  firstHeadingText: string | null
-  firstHeadingTop: number | null
-  withinTopThreshold: boolean
-}
-
-async function measureTab(page: Page, tabId: string): Promise<TabMeasurement> {
-  return await page.evaluate((id) => {
-    const stripContainer = document.querySelector('#profile-tab-content')
-    const tabButton = document.querySelector<HTMLButtonElement>(`[data-tab-id="${id}"]`)
-    const tabContentRect = stripContainer?.getBoundingClientRect() ?? null
-
-    // Tab strip = the nav element inside profile-tab-content
-    const navEl = stripContainer?.querySelector<HTMLElement>('nav[role="tablist"]') ?? null
-    const stripRect = navEl?.getBoundingClientRect() ?? tabButton?.getBoundingClientRect() ?? null
-
-    // Find the first heading within the tab content panel
-    const contentPanel = stripContainer?.querySelector<HTMLElement>('.p-6, .md\\:p-8') ?? null
-    const firstHeading =
-      contentPanel?.querySelector<HTMLElement>('h1, h2, h3') ??
-      stripContainer?.querySelector<HTMLElement>('h1, h2, h3') ??
-      null
-    const headingRect = firstHeading?.getBoundingClientRect() ?? null
-
-    return {
-      tabId: id,
-      url: window.location.href,
-      scrollY: window.scrollY,
-      docHeight: Math.round(document.documentElement.scrollHeight),
-      maxScrollY: Math.round(document.documentElement.scrollHeight - window.innerHeight),
-      tabStripTop: stripRect ? Math.round(stripRect.top) : Number.NaN,
-      tabContentTop: tabContentRect ? Math.round(tabContentRect.top) : null,
-      firstHeadingText: firstHeading?.textContent?.trim().slice(0, 80) ?? null,
-      firstHeadingTop: headingRect ? Math.round(headingRect.top) : null,
-      withinTopThreshold:
-        stripRect != null && Math.abs(stripRect.top) <= 50,
-    }
-  }, tabId)
-}
-
-test.describe('Profile tab strip scroll behavior (mobile)', () => {
+test.describe('Profile section deep-links + adjacent flows (mobile)', () => {
   test.use({ viewport: MOBILE_VIEWPORT })
 
-  test.beforeEach(async ({ page }) => {
-    // Bento Grid is the dashboard landing — tab strip only renders on
-    // tab views. Navigate straight into a tab view so the strip is
-    // present when each test runs.
-    await page.goto('/dashboard/profile?tab=journey')
-    await page.waitForSelector('.animate-spin', { state: 'hidden', timeout: 30000 }).catch(() => {})
-    await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 20000 })
-    await expect(page.locator('nav[role="tablist"]').first()).toBeVisible({ timeout: 10000 })
-  })
-
-  test('@smoke each tab click should bring the tab strip near the top of the viewport', async ({ page }) => {
-    // Capture console errors during the run for the report
-    const consoleErrors: string[] = []
-    page.on('console', (msg) => {
-      if (msg.type() === 'error') {
-        consoleErrors.push(msg.text())
-      }
-    })
-    page.on('pageerror', (err) => {
-      consoleErrors.push(`pageerror: ${err.message}`)
-    })
-
-    const measurements: TabMeasurement[] = []
-
-    for (const tab of TABS) {
-      // Step 1: scroll page to its bottom so the tab strip is below
-      // the upper viewport — this matches the user's reported context.
-      await page.evaluate(() => {
-        window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' as ScrollBehavior })
-      })
-      // Brief settle — give layout time to stabilize after the scroll-to-bottom
-      await page.waitForTimeout(150)
-
-      // Step 2: click the tab
-      const button = page.locator(`[data-tab-id="${tab.id}"]`).first()
-      await expect(button).toBeVisible()
-      await button.click()
-
-      // Step 3: wait for the URL to reflect the click and for any
-      // smooth-scroll to fully settle.
-      await page.waitForURL((url) => url.searchParams.get('tab') === tab.id, { timeout: 10000 }).catch(() => {})
-      await page.waitForTimeout(800) // smooth scroll settle
-
-      // Step 4: capture measurements
-      const measurement = await measureTab(page, tab.id)
-      measurements.push(measurement)
-
-      // For Friends specifically, also grab a screenshot for visual evidence
-      if (tab.id === 'friends') {
-        await page.screenshot({
-          path: `test-results/qa-tabs-scroll-friends-${Date.now()}.png`,
-          fullPage: false,
-        })
-      }
-    }
-
-    // Print to test output for the report
-    console.log('\n=== Tab Strip Scroll Measurements (mobile 390x844) ===')
-    for (const m of measurements) {
-      console.log(
-        `tab=${m.tabId.padEnd(11)} stripTop=${String(m.tabStripTop).padStart(5)} ` +
-          `scrollY=${String(m.scrollY).padStart(5)} ` +
-          `maxScrollY=${String(m.maxScrollY).padStart(5)} ` +
-          `docH=${String(m.docHeight).padStart(5)} ` +
-          `firstHeadingTop=${String(m.firstHeadingTop ?? 'null').padStart(5)} ` +
-          `nearTop=${m.withinTopThreshold ? 'YES' : 'NO '} ` +
-          `heading="${m.firstHeadingText ?? ''}" url=${m.url.replace(/^.*?\/dashboard/, '/dashboard')}`,
-      )
-    }
-    if (consoleErrors.length > 0) {
-      console.log('\nConsole errors during run:')
-      consoleErrors.forEach((e) => console.log('  ' + e))
-    }
-
-    // URL assertions — every tab click must end with ?tab=<id> and no
-    // stale ?section= carrying over from a prior deep-link.
-    for (const m of measurements) {
-      const u = new URL(m.url)
-      expect(u.searchParams.get('tab'), `tab param for ${m.tabId}`).toBe(m.tabId)
-      expect(u.searchParams.get('section'), `section param for ${m.tabId}`).toBeNull()
-    }
-
-    // Behaviour comparison — find the worst tab by tab-strip Y, and the best.
-    const sorted = [...measurements].sort((a, b) => a.tabStripTop - b.tabStripTop)
-    const minTop = sorted[0].tabStripTop
-    const maxTop = sorted[sorted.length - 1].tabStripTop
-    const friends = measurements.find((m) => m.tabId === 'friends')!
-    const references = measurements.find((m) => m.tabId === 'references')!
-    console.log(`\nspread: minTop=${minTop} maxTop=${maxTop} delta=${maxTop - minTop}`)
-    console.log(`friends.stripTop - references.stripTop = ${friends.tabStripTop - references.tabStripTop}`)
-
-    // We don't fail the test on a delta — this is diagnostic. We DO fail if
-    // *any* tab leaves the strip dramatically off-screen (>200px below the
-    // top), because that would be an obvious regression.
-    for (const m of measurements) {
-      expect.soft(m.tabStripTop, `${m.tabId} tab strip should be near viewport top`).toBeLessThanOrEqual(200)
-    }
-  })
-
   test('?section=incoming deep-link scrolls Incoming Requests heading near top', async ({ page }) => {
-    await page.goto('/dashboard/profile?tab=friends&section=incoming')
+    // PR2 route shape: /dashboard/profile/friends?section=incoming. The
+    // legacy `/dashboard/profile?tab=friends&section=incoming` URL still
+    // works via the redirect in PlayerDashboard.tsx but we test the
+    // canonical shape directly here.
+    await page.goto('/dashboard/profile/friends?section=incoming')
     await page.waitForSelector('.animate-spin', { state: 'hidden', timeout: 30000 }).catch(() => {})
-    // Wait for the friends tab content to render
+    // Wait for the friends section content to render
     await expect(page.getByRole('heading', { level: 2, name: /^Friends$/i })).toBeVisible({ timeout: 15000 })
     // The deep-link scroll runs after fetchConnections settles. Give it a
     // generous beat — connections fetch + smooth scroll.
@@ -205,7 +53,7 @@ test.describe('Profile tab strip scroll behavior (mobile)', () => {
     const pageErrors: string[] = []
     page.on('pageerror', (err) => pageErrors.push(err.message))
 
-    await page.goto('/dashboard/profile?tab=friends&section=requests')
+    await page.goto('/dashboard/profile/friends?section=requests')
     await page.waitForSelector('.animate-spin', { state: 'hidden', timeout: 30000 }).catch(() => {})
     await expect(page.getByRole('heading', { level: 2, name: /^Friends$/i })).toBeVisible({ timeout: 15000 })
     await page.waitForTimeout(800)
@@ -214,6 +62,24 @@ test.describe('Profile tab strip scroll behavior (mobile)', () => {
     const trustedRefs = await page.locator('[data-deeplink-section="trusted-references"]').count()
     expect(trustedRefs, 'TrustedReferences should NOT render for player').toBe(0)
     expect(pageErrors).toEqual([])
+  })
+
+  test('@smoke legacy /dashboard/profile?tab=X redirects to /dashboard/profile/:section', async ({ page }) => {
+    // Notifications/config.ts still emits the old URL shape. The
+    // PlayerDashboard mount effect migrates them so the rendered
+    // experience is identical. URL settles on the new route.
+    await page.goto('/dashboard/profile?tab=friends')
+    await page.waitForSelector('.animate-spin', { state: 'hidden', timeout: 30000 }).catch(() => {})
+    await expect(page.getByRole('heading', { level: 2, name: /^Friends$/i })).toBeVisible({ timeout: 15000 })
+
+    await page.waitForFunction(
+      () => window.location.pathname === '/dashboard/profile/friends',
+      { timeout: 5000 },
+    )
+
+    const finalUrl = new URL(page.url())
+    expect(finalUrl.pathname).toBe('/dashboard/profile/friends')
+    expect(finalUrl.searchParams.get('tab')).toBeNull()
   })
 
   test('Community: clicking "View Profile" on a coach member routes to /coaches/...', async ({ page }) => {

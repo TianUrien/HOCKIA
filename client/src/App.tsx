@@ -406,14 +406,25 @@ function App() {
                     to the canonical /dashboard/profile. */}
                 <Route path="/dashboard" element={<Navigate to="/dashboard/profile" replace />} />
                 <Route path="/dashboard/profile" element={<ErrorBoundary fallback={<RouteErrorFallback />}><DashboardRouter /></ErrorBoundary>} />
+                {/* PR2 — promote the player Bento Grid card CTAs from
+                    ?tab=X to /:section route segments. Coach/Club/Umpire/
+                    Brand dashboards stay on ?tab= until their own Bento
+                    conversion lands; if a non-player role mounts under
+                    /:section, their dashboard renders its landing
+                    (section param is silently ignored, no crash). */}
+                <Route path="/dashboard/profile/:section" element={<ErrorBoundary fallback={<RouteErrorFallback />}><DashboardRouter /></ErrorBoundary>} />
                 <Route path="/dashboard/opportunities/:opportunityId/applicants" element={<ErrorBoundary fallback={<RouteErrorFallback />}><ApplicantsList /></ErrorBoundary>} />
 
                 {/* Network-only profile routes (alias for clarity; still behind auth) */}
                 <Route path="/members/:username" element={<PublicPlayerProfile />} />
                 <Route path="/members/id/:id" element={<PublicPlayerProfile />} />
+                <Route path="/members/:username/:section" element={<PublicPlayerProfile />} />
+                <Route path="/members/id/:id/:section" element={<PublicPlayerProfile />} />
 
                 <Route path="/players/:username" element={<PublicPlayerProfile />} />
                 <Route path="/players/id/:id" element={<PublicPlayerProfile />} />
+                <Route path="/players/:username/:section" element={<PublicPlayerProfile />} />
+                <Route path="/players/id/:id/:section" element={<PublicPlayerProfile />} />
                 {/* Coaches share PublicPlayerProfile (multi-role union per
                     PublicPlayerProfile.tsx) but several call sites build
                     /coaches/<...> URLs directly (BrandDashboard followers,

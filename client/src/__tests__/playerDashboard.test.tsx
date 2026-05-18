@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter, useLocation } from 'react-router-dom'
+import { MemoryRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { vi, describe, it, expect, beforeEach } from 'vitest'
 import PlayerDashboard, { type PlayerProfileShape } from '@/pages/PlayerDashboard'
 
@@ -253,11 +253,25 @@ const renderDashboard = (options?: RenderOptions) => {
   const locationHistory: string[] = []
   const initialEntries = [options?.initialPath ?? '/dashboard/profile']
   const profile = { ...baseProfile, ...(options?.profileOverrides ?? {}) }
+  const dashboardEl = (
+    <PlayerDashboard profileData={profile} readOnly={options?.readOnly ?? false} />
+  )
 
+  // PR2 routes are section-segmented; useParams() needs the matching
+  // Route pattern to return params.section, etc. We declare each shape
+  // here so any test-initialPath works (Bento landing, section page,
+  // visitor URL, visitor section URL, legacy ?tab= via redirect).
   const utils = render(
     <MemoryRouter initialEntries={initialEntries}>
       <LocationObserver onChange={(value) => locationHistory.push(value)} />
-      <PlayerDashboard profileData={profile} readOnly={options?.readOnly ?? false} />
+      <Routes>
+        <Route path="/dashboard/profile" element={dashboardEl} />
+        <Route path="/dashboard/profile/:section" element={dashboardEl} />
+        <Route path="/players/:username" element={dashboardEl} />
+        <Route path="/players/:username/:section" element={dashboardEl} />
+        <Route path="/players/id/:id" element={dashboardEl} />
+        <Route path="/players/id/:id/:section" element={dashboardEl} />
+      </Routes>
     </MemoryRouter>
   )
 
@@ -298,51 +312,61 @@ describe('PlayerDashboard (Bento Grid)', () => {
     expect(screen.queryByTestId('next-step-card')).not.toBeInTheDocument()
   })
 
-  it('shows the tab strip + tab content when the owner deep-links into a tab', async () => {
-    const { locationHistory } = renderDashboard({ initialPath: '/dashboard/profile?tab=friends' })
-    // Bento Grid hides; tab content shows
+  it('renders section content when the owner deep-links to a section route', async () => {
+    renderDashboard({ initialPath: '/dashboard/profile/friends' })
+    // Bento Grid hides; section content shows
     expect(screen.queryByTestId('player-bento-grid-owner')).not.toBeInTheDocument()
     expect(screen.getByTestId('friends-tab')).toBeInTheDocument()
-
-    // Tab strip is interactive
-    await user.click(screen.getByRole('button', { name: 'Comments' }))
-    expect(await screen.findByTestId('comments-tab')).toBeInTheDocument()
-    expect(locationHistory.at(-1)).toBe('/dashboard/profile?tab=comments')
+    // The PR2-deleted tab strip is fully gone — section navigation now
+    // happens via card CTAs from the Bento landing.
+    expect(screen.queryByRole('button', { name: 'Comments' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Profile' })).not.toBeInTheDocument()
   })
 
-  it('takes the owner back to the Bento Grid when the Profile tab is selected', async () => {
-    renderDashboard({ initialPath: '/dashboard/profile?tab=journey' })
+  it('redirects legacy ?tab=X URLs to the new /:section route shape', async () => {
+    const { locationHistory } = renderDashboard({ initialPath: '/dashboard/profile?tab=friends' })
+    // Notifications/config.ts still emits ?tab= URLs; PlayerDashboard
+    // migrates them on mount. The rendered content is the same.
+    expect(screen.getByTestId('friends-tab')).toBeInTheDocument()
+    await waitFor(() => {
+      expect(locationHistory.at(-1)).toBe('/dashboard/profile/friends')
+    })
+  })
+
+  it('owner "Back to dashboard" button on a section page returns to the Bento Grid', async () => {
+    const { locationHistory } = renderDashboard({ initialPath: '/dashboard/profile/journey' })
     expect(screen.getByTestId('journey-tab')).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: 'Profile' }))
+    await user.click(screen.getByRole('button', { name: /back to dashboard/i }))
     expect(await screen.findByTestId('player-bento-grid-owner')).toBeInTheDocument()
     expect(screen.queryByTestId('journey-tab')).not.toBeInTheDocument()
+    expect(locationHistory.at(-1)).toBe('/dashboard/profile')
   })
 
-  it('renders only the active tab content (one at a time) in owner mode', () => {
-    renderDashboard({ initialPath: '/dashboard/profile?tab=friends', readOnly: false })
+  it('renders only the active section content (one at a time) in owner mode', () => {
+    renderDashboard({ initialPath: '/dashboard/profile/friends', readOnly: false })
     expect(screen.getByTestId('friends-tab')).toBeInTheDocument()
     expect(screen.queryByTestId('journey-tab')).not.toBeInTheDocument()
     expect(screen.queryByTestId('comments-tab')).not.toBeInTheDocument()
   })
 
-  it('hides the tab strip for visitors but allows tab deep links to render their content', () => {
-    renderDashboard({ initialPath: '/players/jordan?tab=journey', readOnly: true })
-    // No tab strip
-    expect(screen.queryByRole('button', { name: 'Profile' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Journey' })).not.toBeInTheDocument()
-    // Visitor sees a Back-to-profile shortcut + the tab's content
+  it('visitor section URL renders the section content with a Back-to-profile shortcut', () => {
+    renderDashboard({ initialPath: '/players/jordan/journey', readOnly: true })
     expect(screen.getByRole('button', { name: /back to profile/i })).toBeInTheDocument()
     expect(screen.getByTestId('journey-tab')).toBeInTheDocument()
+    // No tab strip anywhere
+    expect(screen.queryByRole('button', { name: 'Profile' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Journey' })).not.toBeInTheDocument()
   })
 
-  it('visitor "Back to profile" button returns to the Bento Grid', async () => {
-    renderDashboard({ initialPath: '/players/jordan?tab=friends', readOnly: true })
+  it('visitor "Back to profile" button on a section page returns to the visitor Bento Grid', async () => {
+    const { locationHistory } = renderDashboard({ initialPath: '/players/jordan/friends', readOnly: true })
     await user.click(screen.getByRole('button', { name: /back to profile/i }))
     expect(await screen.findByTestId('player-bento-grid-visitor')).toBeInTheDocument()
+    expect(locationHistory.at(-1)).toBe('/players/jordan')
   })
 
-  it('claims comment highlights when entering the comments tab', async () => {
+  it('claims comment highlights when entering the comments section', async () => {
     const claimCommentHighlights = vi.fn(() => ['comment-99']) as () => string[]
     const clearCommentNotifications = vi.fn()
     setNotificationStoreState({
@@ -350,7 +374,7 @@ describe('PlayerDashboard (Bento Grid)', () => {
       clearCommentNotifications,
     })
 
-    renderDashboard({ initialPath: '/dashboard/profile?tab=comments' })
+    renderDashboard({ initialPath: '/dashboard/profile/comments' })
 
     await waitFor(() => {
       expect(claimCommentHighlights).toHaveBeenCalled()
