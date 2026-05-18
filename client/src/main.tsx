@@ -121,6 +121,17 @@ Sentry.init({
   tracesSampleRate: sentryEnvironment === 'production' ? 0.3 : 1.0,
   replaysSessionSampleRate: isNativePlatform ? 0 : (sentryEnvironment === 'production' ? 0.05 : 1.0),
   replaysOnErrorSampleRate: isNativePlatform ? 0 : 1.0,
+  // Substring-matched against the error message. These are expected
+  // user-input errors from Supabase Auth — not application bugs — and
+  // should not page anyone or clutter the dashboard.
+  ignoreErrors: [
+    // Wrong password / wrong email entry on /signin
+    'Invalid login credentials',
+    // /signup or /signin hammered too quickly — Supabase rate limit
+    'Email rate limit exceeded',
+    // Duplicate signup attempt — UI should already guide them to /signin
+    'User already registered',
+  ],
   beforeSend(event) {
     // Scrub PII from error events before sending to Sentry
     if (event.user) {
