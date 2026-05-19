@@ -655,7 +655,7 @@ export default function OpportunitiesPage() {
                   - Clubs: always.
                   - Coaches: only when coach_recruits_for_team is true.
                   Without the coach gate, candidate-only coaches saw the
-                  CTA and got bounced by CoachDashboard's tab=vacancies
+                  CTA and got bounced by CoachDashboard's tab=opportunities
                   redirect — confusing dead-end. */}
               {(profile?.role === 'club' ||
                 (profile?.role === 'coach' && profile?.coach_recruits_for_team === true)) && (
@@ -666,7 +666,7 @@ export default function OpportunitiesPage() {
                       : 'As a club, you can post opportunities to attract players and coaches.'}
                   </p>
                   <Button
-                    onClick={() => navigate('/dashboard/profile?tab=vacancies')}
+                    onClick={() => navigate('/dashboard/profile?tab=opportunities')}
                     className="mx-auto bg-gradient-to-r from-[#8026FA] to-[#924CEC]"
                   >
                     Post an Opportunity

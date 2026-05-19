@@ -38,7 +38,24 @@ import { useWorldClubLogo } from '@/hooks/useWorldClubLogo'
 import { calculateAge, formatDateOfBirth, getInitials } from '@/lib/utils'
 import { getSpecializationLabel } from '@/lib/coachSpecializations'
 
-type TabType = 'profile' | 'vacancies' | 'journey' | 'references' | 'friends' | 'comments' | 'posts'
+type TabType = 'profile' | 'opportunities' | 'journey' | 'references' | 'friends' | 'comments' | 'posts'
+
+const ALL_TABS: TabType[] = ['profile', 'opportunities', 'journey', 'references', 'friends', 'comments', 'posts']
+
+// Legacy aliases — old URLs (?tab=vacancies) still in the wild from
+// notifications, bookmarks, the previous tab id, and links emailed in
+// digest notifications. Map them to the canonical 'opportunities' value
+// at parse time and rewrite the URL so the browser bar shows the new
+// slug.
+const LEGACY_TAB_ALIASES: Record<string, TabType> = {
+  vacancies: 'opportunities',
+}
+
+const resolveTabParam = (param: string | null): TabType | null => {
+  if (!param) return null
+  const aliased = LEGACY_TAB_ALIASES[param] ?? param
+  return (ALL_TABS as string[]).includes(aliased) ? (aliased as TabType) : null
+}
 
 export type CoachProfileShape =
   Partial<Profile> &
@@ -74,8 +91,7 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const [activeTab, setActiveTab] = useState<TabType>(() => {
-    const param = searchParams.get('tab') as TabType | null
-    return param && ['profile', 'vacancies', 'journey', 'references', 'friends', 'comments', 'posts'].includes(param) ? param : 'profile'
+    return resolveTabParam(searchParams.get('tab')) ?? 'profile'
   })
   const [showEditModal, setShowEditModal] = useState(false)
   const [showSignInPrompt, setShowSignInPrompt] = useState(false)
@@ -166,23 +182,36 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
   const prevPercentageRef = useRef<number | null>(null)
 
   useEffect(() => {
-    if (!tabParam) return
-    if (tabParam !== activeTab && ['profile', 'vacancies', 'journey', 'references', 'friends', 'comments', 'posts'].includes(tabParam)) {
-      setActiveTab(tabParam)
+    const resolved = resolveTabParam(tabParam)
+    if (!resolved) return
+    if (resolved !== activeTab) {
+      setActiveTab(resolved)
     }
   }, [tabParam, activeTab])
+
+  // Legacy ?tab=vacancies redirect — rewrites the URL bar to
+  // ?tab=opportunities so the canonical slug surfaces in browser
+  // history. Internal state already resolves through LEGACY_TAB_ALIASES,
+  // but the URL stays stale without this rewrite.
+  useEffect(() => {
+    if (searchParams.get('tab') === 'vacancies') {
+      const next = new URLSearchParams(searchParams)
+      next.set('tab', 'opportunities')
+      setSearchParams(next, { replace: true })
+    }
+  }, [searchParams, setSearchParams])
 
   // Deep-link scroll: notification URLs like ?tab=journey used to land
   // at the top of the dashboard. Mirrors PlayerDashboard.
   useTabDeepLinkScroll({ activeTab, tabParam })
 
-  // If a candidate-only coach lands on ?tab=vacancies (e.g. via stale link
-  // from when the tab was visible), bounce them to Profile rather than show
-  // a blank pane. Runs after profile loads since the gate depends on
-  // coach_recruits_for_team.
+  // If a candidate-only coach lands on ?tab=opportunities (e.g. via stale
+  // link from when the tab was visible), bounce them to Profile rather
+  // than show a blank pane. Runs after profile loads since the gate
+  // depends on coach_recruits_for_team.
   useEffect(() => {
     if (!profile) return
-    if (activeTab === 'vacancies' && !(profile.coach_recruits_for_team ?? false)) {
+    if (activeTab === 'opportunities' && !(profile.coach_recruits_for_team ?? false)) {
       setActiveTab('profile')
       const next = new URLSearchParams(searchParams)
       next.set('tab', 'profile')
@@ -241,7 +270,7 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
   const savedContactEmail = profile.contact_email?.trim() || ''
 
   const handleCreateVacancyClick = () => {
-    handleTabChange('vacancies')
+    handleTabChange('opportunities')
     setTriggerCreateVacancy(true)
   }
 
@@ -285,12 +314,12 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
   // `coach_recruits_for_team` flag — for the owner this means the tab only
   // appears once they've opted into recruiter mode; for visitors it means
   // they only see it on coaches who actually recruit. Without this gate, the
-  // flag was cosmetic only — any coach could navigate to ?tab=vacancies and
-  // create an opportunity from the empty-state CTA.
+  // flag was cosmetic only — any coach could navigate to ?tab=opportunities
+  // and create an opportunity from the empty-state CTA.
   const showOpportunitiesTab = profile?.coach_recruits_for_team ?? false
   const tabs: { id: TabType; label: string }[] = [
     { id: 'profile', label: 'Profile' },
-    ...(showOpportunitiesTab ? [{ id: 'vacancies' as TabType, label: 'Opportunities' }] : []),
+    ...(showOpportunitiesTab ? [{ id: 'opportunities' as TabType, label: 'Opportunities' }] : []),
     { id: 'journey', label: 'Journey' },
     { id: 'references', label: 'References' },
     { id: 'friends', label: 'Friends' },
@@ -835,8 +864,8 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
             )}
 
             {/* Opportunities — owner only. Visitors don't get this surface
-                inline; coach vacancies surface elsewhere via discovery. */}
-            {activeTab === 'vacancies' && showOpportunitiesTab && !readOnly && (
+                inline; coach opportunities surface elsewhere via discovery. */}
+            {activeTab === 'opportunities' && showOpportunitiesTab && !readOnly && (
               <div className="animate-fade-in">
                 <OpportunitiesTab
                   profileId={profile.id}

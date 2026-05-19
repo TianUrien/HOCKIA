@@ -60,7 +60,7 @@ const conversationRoute = (notification: NotificationRecord) => {
 
 const opportunityApplicantsRoute = (notification: NotificationRecord) => {
   const opportunityId = getMetadataString(notification, 'opportunity_id')
-  return opportunityId ? `/dashboard/opportunities/${opportunityId}/applicants` : '/dashboard/profile?tab=vacancies'
+  return opportunityId ? `/dashboard/opportunities/${opportunityId}/applicants` : '/dashboard/profile?tab=opportunities'
 }
 
 const opportunityDetailRoute = (notification: NotificationRecord) => {
