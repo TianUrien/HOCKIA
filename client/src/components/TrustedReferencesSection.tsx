@@ -668,6 +668,13 @@ export default function TrustedReferencesSection({
               <h3 className="text-lg font-semibold text-gray-900">References you gave</h3>
               <span className="text-sm text-gray-500">{givenReferences.length}</span>
             </div>
+            {/* Disambiguate the "you gave" count from the headline X/5
+                count above — these endorsements live on OTHER members'
+                profiles, not yours. QA flagged that "1 received + 1
+                given" could be read as "2 references on my profile". */}
+            <p className="mt-1 text-xs text-gray-500">
+              These endorsements appear on other members' profiles, not yours.
+            </p>
             {givenReferences.length === 0 ? (
               <p className="mt-4 text-sm text-gray-500">You haven’t endorsed anyone yet.</p>
             ) : (

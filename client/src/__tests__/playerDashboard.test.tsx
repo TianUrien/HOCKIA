@@ -147,6 +147,33 @@ vi.mock('@/components/dashboard/bento/PlayerBentoGrid', () => ({
   ),
 }))
 
+// May 2026 Community redesign — stub PlayerCommunityHub / PublicCommunityView
+// to surface the testids the redesign exposes, without dragging in the
+// useTrustedReferences + useReferenceFriendOptions fetch graphs. Detailed
+// behaviour for these is tested in their own component tests.
+vi.mock('@/components/community/PlayerCommunityHub', () => ({
+  default: () => (
+    <div data-testid="player-community-hub">
+      <div data-testid="credibility-network-card">Credibility</div>
+      <div data-testid="community-references-selected">Selected references</div>
+      <div data-testid="connections-section">Connections</div>
+      <div data-testid="comments-tab">Comments Tab</div>
+      <div data-testid="profile-posts-tab">Profile Posts</div>
+    </div>
+  ),
+}))
+
+vi.mock('@/components/community/PublicCommunityView', () => ({
+  default: () => (
+    <div data-testid="public-community-view">
+      <div data-testid="public-community-stats">Stats strip</div>
+      <div data-testid="public-references">Public references</div>
+      <div data-testid="comments-tab">Comments Tab</div>
+      <div data-testid="profile-posts-tab">Profile Posts</div>
+    </div>
+  ),
+}))
+
 vi.mock('@/hooks/useProfileStrength', () => ({
   useProfileStrength: () => ({
     percentage: 60,
@@ -366,28 +393,31 @@ describe('PlayerDashboard (Bento Grid)', () => {
     expect(locationHistory.at(-1)).toBe('/players/jordan')
   })
 
-  it('the /community section page stacks all four sub-sections (Friends, References, Comments, Posts)', () => {
-    // "Go to community" on the CommunityCard navigates to /community,
-    // which renders the full social bundle in one view. Individual tile
-    // clicks still deep-link to dedicated section pages.
+  it('the owner /community page renders the PlayerCommunityHub redesign (credibility card, references, connections, comments, posts)', () => {
+    // May 2026 Community redesign — the old stacked FriendsTab +
+    // ReferencesTab + CommentsTab + ProfilePostsTab block was replaced
+    // by the PlayerCommunityHub. The individual focused routes
+    // (/friends, /references, /comments, /posts) still render the
+    // legacy surfaces, but /community is now the curated hub view.
     renderDashboard({ initialPath: '/dashboard/profile/community' })
 
-    expect(screen.getByTestId('friends-tab')).toBeInTheDocument()
-    // Owner gets ReferencesTab; visitor would get PublicReferencesSection
-    // (covered by a separate readOnly test below).
-    expect(screen.getByTestId('references-tab')).toBeInTheDocument()
+    expect(screen.getByTestId('credibility-network-card')).toBeInTheDocument()
+    expect(screen.getByTestId('community-references-selected')).toBeInTheDocument()
+    expect(screen.getByTestId('connections-section')).toBeInTheDocument()
     expect(screen.getByTestId('comments-tab')).toBeInTheDocument()
     expect(screen.getByTestId('profile-posts-tab')).toBeInTheDocument()
     // Bento Grid is hidden on section pages.
     expect(screen.queryByTestId('player-bento-grid-owner')).not.toBeInTheDocument()
   })
 
-  it('the visitor /community page uses PublicReferencesSection instead of ReferencesTab', () => {
+  it('the visitor /community page renders the slimmer PublicCommunityView', () => {
     renderDashboard({ initialPath: '/players/jordan/community', readOnly: true })
 
-    expect(screen.getByTestId('friends-tab')).toBeInTheDocument()
+    expect(screen.getByTestId('public-community-stats')).toBeInTheDocument()
     expect(screen.getByTestId('public-references')).toBeInTheDocument()
-    expect(screen.queryByTestId('references-tab')).not.toBeInTheDocument()
+    // Visitor view does not expose the owner-only references list.
+    expect(screen.queryByTestId('community-references-selected')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('connections-section')).not.toBeInTheDocument()
     expect(screen.getByTestId('comments-tab')).toBeInTheDocument()
     expect(screen.getByTestId('profile-posts-tab')).toBeInTheDocument()
   })

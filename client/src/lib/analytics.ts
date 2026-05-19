@@ -348,6 +348,9 @@ export type ReferenceModalSource =
   | 'friend_row'
   | 'recently_connected'
   | 'empty_state'
+  // Sources added with the May 2026 Community redesign.
+  | 'credibility_card'
+  | 'list_cta'
 
 /** TrustBadge clicked (header pill on dashboards). */
 export function trackReferenceBadgeClick(role: string, count: number): void {

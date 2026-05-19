@@ -20,7 +20,7 @@ const MOBILE_VIEWPORT = { width: 390, height: 844 } // iPhone 13/14
 test.describe('Profile section deep-links + adjacent flows (mobile)', () => {
   test.use({ viewport: MOBILE_VIEWPORT })
 
-  test('?section=incoming deep-link scrolls Incoming Requests heading near top', async ({ page }) => {
+  test('?section=incoming deep-link scrolls Requests heading near top', async ({ page }) => {
     // PR2 route shape: /dashboard/profile/friends?section=incoming. The
     // legacy `/dashboard/profile?tab=friends&section=incoming` URL still
     // works via the redirect in PlayerDashboard.tsx but we test the
@@ -28,7 +28,7 @@ test.describe('Profile section deep-links + adjacent flows (mobile)', () => {
     await page.goto('/dashboard/profile/friends?section=incoming')
     await page.waitForSelector('.animate-spin', { state: 'hidden', timeout: 30000 }).catch(() => {})
     // Wait for the friends section content to render
-    await expect(page.getByRole('heading', { level: 2, name: /^Friends$/i })).toBeVisible({ timeout: 15000 })
+    await expect(page.getByRole('heading', { level: 2, name: /^Connections$/i })).toBeVisible({ timeout: 15000 })
     // The deep-link scroll runs after fetchConnections settles. Give it a
     // generous beat — connections fetch + smooth scroll.
     await page.waitForTimeout(1500)
@@ -55,7 +55,7 @@ test.describe('Profile section deep-links + adjacent flows (mobile)', () => {
 
     await page.goto('/dashboard/profile/friends?section=requests')
     await page.waitForSelector('.animate-spin', { state: 'hidden', timeout: 30000 }).catch(() => {})
-    await expect(page.getByRole('heading', { level: 2, name: /^Friends$/i })).toBeVisible({ timeout: 15000 })
+    await expect(page.getByRole('heading', { level: 2, name: /^Connections$/i })).toBeVisible({ timeout: 15000 })
     await page.waitForTimeout(800)
 
     // The TrustedReferences section should NOT exist (hideReferences=true)
@@ -70,7 +70,7 @@ test.describe('Profile section deep-links + adjacent flows (mobile)', () => {
     // experience is identical. URL settles on the new route.
     await page.goto('/dashboard/profile?tab=friends')
     await page.waitForSelector('.animate-spin', { state: 'hidden', timeout: 30000 }).catch(() => {})
-    await expect(page.getByRole('heading', { level: 2, name: /^Friends$/i })).toBeVisible({ timeout: 15000 })
+    await expect(page.getByRole('heading', { level: 2, name: /^Connections$/i })).toBeVisible({ timeout: 15000 })
 
     await page.waitForFunction(
       () => window.location.pathname === '/dashboard/profile/friends',

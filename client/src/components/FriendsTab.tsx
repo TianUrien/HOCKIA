@@ -10,6 +10,7 @@ import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
 import Avatar from './Avatar'
 import RoleBadge from './RoleBadge'
+import ConfirmActionModal from './ConfirmActionModal'
 import TrustedReferencesSection from './TrustedReferencesSection'
 import type { ReferenceFriendOption } from './AddReferenceModal'
 import { Link, useSearchParams } from 'react-router-dom'
@@ -49,6 +50,7 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole, h
   const [connections, setConnections] = useState<FriendConnection[]>([])
   const [loading, setLoading] = useState(true)
   const [actionTarget, setActionTarget] = useState<string | null>(null)
+  const [removeTarget, setRemoveTarget] = useState<{ id: string; name: string } | null>(null)
 
   // ?section= deep-link handler. Two recognised values today:
   //   - "incoming"   → scroll to Incoming Friend Requests (used by the
@@ -233,6 +235,33 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole, h
     [addToast, fetchConnections]
   )
 
+  // Remove an accepted connection. We use DELETE here, not UPDATE, because
+  // the friendships RLS only lets the recipient set 'accepted/rejected/blocked',
+  // not 'cancelled' — so an UPDATE with status='cancelled' silently affects
+  // 0 rows when the current user is the recipient. The delete policy allows
+  // both user_one and user_two, so DELETE works for both sides symmetrically.
+  const removeFriendship = useCallback(
+    async (friendshipId: string | null) => {
+      if (!friendshipId) return
+      setActionTarget(friendshipId)
+      try {
+        const { error } = await supabase
+          .from('profile_friendships')
+          .delete()
+          .eq('id', friendshipId)
+        if (error) throw error
+        addToast('Connection removed.', 'success')
+        await fetchConnections()
+      } catch (error) {
+        logger.error('Failed to remove friendship', error)
+        addToast('Could not remove connection. Please try again.', 'error')
+      } finally {
+        setActionTarget(null)
+      }
+    },
+    [addToast, fetchConnections]
+  )
+
   const isActionLoading = (friendshipId: string | null) => actionTarget === friendshipId
 
 
@@ -280,7 +309,7 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole, h
         </Link>
 
         <div className="flex flex-col items-start gap-2 text-xs text-gray-500">
-          {connection.accepted_at && <span>Friends since {humanizeDate(connection.accepted_at)}</span>}
+          {connection.accepted_at && <span>Connected {humanizeDate(connection.accepted_at)}</span>}
           {!connection.accepted_at && <span>Requested {humanizeDate(connection.created_at)}</span>}
 
           <div className="flex flex-wrap items-center gap-2">
@@ -320,7 +349,15 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole, h
               <button
                 type="button"
                 disabled={isActionLoading(connection.id)}
-                onClick={() => void updateFriendship(connection.id, 'cancelled', 'Friend removed.')}
+                onClick={() =>
+                  setRemoveTarget({
+                    id: connection.id ?? '',
+                    name:
+                      connection.friend?.full_name ||
+                      connection.friend?.username ||
+                      'this connection',
+                  })
+                }
                 className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
               >
                 {isActionLoading(connection.id) ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UserMinus className="h-3.5 w-3.5" />}
@@ -363,7 +400,7 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole, h
               <button
                 type="button"
                 disabled={isActionLoading(connection.id)}
-                onClick={() => void updateFriendship(connection.id, 'accepted', 'Friend request accepted.')}
+                onClick={() => void updateFriendship(connection.id, 'accepted', 'Connection request accepted.')}
                 className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
               >
                 {isActionLoading(connection.id) ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
@@ -372,7 +409,7 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole, h
               <button
                 type="button"
                 disabled={isActionLoading(connection.id)}
-                onClick={() => void updateFriendship(connection.id, 'rejected', 'Friend request declined.')}
+                onClick={() => void updateFriendship(connection.id, 'rejected', 'Connection request declined.')}
                 className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-60"
               >
                 {isActionLoading(connection.id) ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
@@ -383,7 +420,7 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole, h
             <button
               type="button"
               disabled={isActionLoading(connection.id)}
-              onClick={() => void updateFriendship(connection.id, 'cancelled', 'Friend request cancelled.')}
+              onClick={() => void updateFriendship(connection.id, 'cancelled', 'Connection request cancelled.')}
               className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-60"
             >
               {isActionLoading(connection.id) ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
@@ -447,12 +484,12 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole, h
       <section className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Friends</h2>
-            <p className="text-sm text-gray-600">Trusted connections build credibility on HOCKIA.</p>
+            <h2 className="text-2xl font-bold text-gray-900">Connections</h2>
+            <p className="text-sm text-gray-600">People in your HOCKIA network build credibility.</p>
           </div>
           <div className="inline-flex items-center gap-2 rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-700">
             <Users className="h-4 w-4 text-[#8026FA]" />
-            {acceptedConnections.length} {acceptedConnections.length === 1 ? 'friend' : 'friends'}
+            {acceptedConnections.length} {acceptedConnections.length === 1 ? 'connection' : 'connections'}
           </div>
         </div>
       </section>
@@ -464,11 +501,11 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole, h
           className="space-y-6 scroll-mt-[88px]"
         >
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">Incoming Requests</h3>
+            <h3 className="text-lg font-semibold text-gray-900">Requests</h3>
             <p className="text-sm text-gray-500">Approve or decline pending requests from other members.</p>
           </div>
           {incomingRequests.length === 0
-            ? renderEmptyState('No incoming requests', 'New friend requests will show up here.')
+            ? renderEmptyState('No new requests right now', 'Pending requests will show up here.')
             : (
               <div className="space-y-4">
                 {incomingRequests.map((connection) => renderRequestCard(connection, 'incoming'))}
@@ -480,11 +517,11 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole, h
       {isOwner && (
         <section className="space-y-6">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">Outgoing Requests</h3>
-            <p className="text-sm text-gray-500">Track friend requests you&apos;ve sent.</p>
+            <h3 className="text-lg font-semibold text-gray-900">Sent</h3>
+            <p className="text-sm text-gray-500">Track connection requests you&apos;ve sent.</p>
           </div>
           {outgoingRequests.length === 0
-            ? renderEmptyState('No pending requests', 'You haven\'t sent any friend requests yet.')
+            ? renderEmptyState('No pending requests', 'You haven\'t sent any connection requests yet.')
             : (
               <div className="space-y-4">
                 {outgoingRequests.map((connection) => renderRequestCard(connection, 'outgoing'))}
@@ -501,20 +538,20 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole, h
 
         {acceptedConnections.length === 0
           ? renderEmptyState(
-              readOnly ? 'No friends listed yet' : 'No friends yet',
+              readOnly ? 'No connections listed yet' : 'No connections yet',
               readOnly
-                ? 'This member hasn\'t added any friends yet.'
+                ? 'This member hasn\'t added any connections yet.'
                 : 'Build your network by connecting with players, coaches, and clubs.',
               readOnly
                 ? undefined
                 : (
                     <button
                       type="button"
-                      onClick={() => addToast('Visit another profile to send a friend request.', 'info')}
+                      onClick={() => addToast('Visit another profile to send a connection request.', 'info')}
                       className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
                     >
                       <UserPlus className="h-4 w-4" />
-                      Find friends
+                      Find people
                     </button>
                   )
             )
@@ -524,6 +561,26 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole, h
             </div>
           )}
       </section>
+
+      <ConfirmActionModal
+        isOpen={Boolean(removeTarget)}
+        onClose={() => setRemoveTarget(null)}
+        onConfirm={async () => {
+          if (!removeTarget) return
+          await removeFriendship(removeTarget.id)
+          setRemoveTarget(null)
+        }}
+        title="Remove connection"
+        description={
+          removeTarget
+            ? `${removeTarget.name} will be removed from your connections. You can always reconnect later.`
+            : ''
+        }
+        confirmLabel="Remove connection"
+        confirmTone="danger"
+        confirmLoading={Boolean(removeTarget && actionTarget === removeTarget.id)}
+        loadingLabel="Removing..."
+      />
     </div>
   )
 }
