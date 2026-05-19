@@ -40,9 +40,11 @@ test.describe('@smoke coach', () => {
   test('coach can view community page', async ({ page }) => {
     await page.goto('/community')
 
-    // Community page should load with tab navigation
+    // Community page title (h1) should load. Disambiguates from the
+    // carousel's "Top community members" h2 added in the May 2026
+    // Top Members redesign.
     await expect(
-      page.getByRole('heading', { name: /community/i })
+      page.getByRole('heading', { level: 1, name: /community/i })
     ).toBeVisible({ timeout: 20000 })
   })
 

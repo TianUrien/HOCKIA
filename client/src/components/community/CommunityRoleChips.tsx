@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import type { CommunityTab } from './CommunityTabSwitcher'
 
 interface RoleChip {
-  id: Extract<CommunityTab, 'all' | 'players' | 'coaches' | 'clubs' | 'umpires'>
+  id: Extract<CommunityTab, 'all' | 'players' | 'coaches' | 'clubs' | 'umpires' | 'brands'>
   label: string
   path: string
 }
@@ -14,6 +14,11 @@ const CHIPS: RoleChip[] = [
   { id: 'coaches', label: 'Coaches', path: '/community/coaches' },
   { id: 'clubs', label: 'Clubs', path: '/community/clubs' },
   { id: 'umpires', label: 'Umpires', path: '/community/umpires' },
+  // QA May 2026: previously routed to /marketplace which masqueraded as
+  // a filter; now Brands is a real role filter inside /community.
+  // /marketplace still exists for marketplace-specific UX (e.g. featured
+  // brand campaigns) but the directory filter view lives here.
+  { id: 'brands', label: 'Brands', path: '/community/brands' },
 ]
 
 interface CommunityRoleChipsProps {
@@ -45,7 +50,7 @@ export function CommunityRoleChips({ activeTab }: CommunityRoleChipsProps) {
             key={chip.id}
             ref={isActive ? activeChipRef : undefined}
             onClick={() => navigate(chip.path)}
-            aria-pressed={isActive}
+            aria-pressed={isActive ? 'true' : 'false'}
             className={`flex-shrink-0 inline-flex items-center px-3.5 py-1.5 rounded-full text-sm font-medium transition-colors border ${
               isActive
                 ? 'bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white border-transparent shadow-sm'
