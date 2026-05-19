@@ -123,8 +123,22 @@ export default function PublicCommunityView({ profile }: PublicCommunityViewProp
           <button
             type="button"
             onClick={() => {
-              // Visitor route is /players/:username/comments OR /players/id/:id/comments.
-              const base = profile.username ? `/players/${profile.username}` : `/players/id/${profile.id}`
+              // Visitor route is /<role-prefix>/:username/comments OR
+              // /<role-prefix>/id/:id/comments — role-aware so coach
+              // visitors land on /coaches/...:
+              const rolePrefix =
+                profile.role === 'coach'
+                  ? '/coaches'
+                  : profile.role === 'club'
+                    ? '/clubs'
+                    : profile.role === 'umpire'
+                      ? '/umpires'
+                      : profile.role === 'brand'
+                        ? '/brands'
+                        : '/players'
+              const base = profile.username
+                ? `${rolePrefix}/${profile.username}`
+                : `${rolePrefix}/id/${profile.id}`
               navigate(`${base}/comments`)
             }}
             className="ml-auto text-sm font-medium text-[#8026FA] hover:text-[#6B20D4]"

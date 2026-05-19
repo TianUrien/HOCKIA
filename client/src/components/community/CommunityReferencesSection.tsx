@@ -525,9 +525,17 @@ export default function CommunityReferencesSection({
       >
         <header className="flex items-start justify-between gap-3 mb-4">
           <div>
-            <h2 className="text-base font-semibold text-gray-900">References you gave</h2>
+            {/* Coach framing — for coaches this section IS the
+                "recommended by" social-proof signal that matters for
+                recruitment. Players see the generic "References you
+                gave" framing. */}
+            <h2 className="text-base font-semibold text-gray-900">
+              {profileRole === 'coach' ? 'Players you recommend' : 'References you gave'}
+            </h2>
             <p className="mt-0.5 text-xs text-gray-500">
-              Endorsements you wrote that appear on other members' profiles — not counted toward your {maxReferences} above.
+              {profileRole === 'coach'
+                ? `Endorsements you wrote that appear on the players' profiles — your coaching social proof. Not counted toward your ${maxReferences} above.`
+                : `Endorsements you wrote that appear on other members' profiles — not counted toward your ${maxReferences} above.`}
             </p>
           </div>
           {givenReferences.length > 0 && (

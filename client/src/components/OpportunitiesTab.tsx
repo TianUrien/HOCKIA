@@ -25,6 +25,10 @@ interface VacanciesTabProps {
   readOnly?: boolean
   triggerCreate?: boolean
   onCreateTriggered?: () => void
+  /** When the tab is opened from a role-specific dashboard (e.g. the
+   *  Coach dashboard), this seeds the Create modal's opportunity_type
+   *  so users don't land on a player-position form. */
+  initialOpportunityType?: 'player' | 'coach'
 }
 
 interface VacancyActionMenuProps {
@@ -168,7 +172,7 @@ function VacancyActionMenu({ vacancy, disabled, onEdit, onDuplicate, onPublish, 
   )
 }
 
-export default function VacanciesTab({ profileId, readOnly = false, triggerCreate, onCreateTriggered }: VacanciesTabProps) {
+export default function VacanciesTab({ profileId, readOnly = false, triggerCreate, onCreateTriggered, initialOpportunityType }: VacanciesTabProps) {
   const { user, profile } = useAuthStore()
   const targetUserId = profileId || user?.id
   const navigate = useNavigate()
@@ -634,7 +638,9 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
           </div>
           <h3 className="mb-2 text-lg font-semibold text-gray-900">No Opportunities Yet</h3>
           <p className="mb-6 text-gray-600">
-            Create your first opportunity to start attracting talent to your club
+            {profile?.role === 'coach'
+              ? 'Create your first opportunity to start attracting talent to your team'
+              : 'Create your first opportunity to start attracting talent to your club'}
           </p>
           <Button
             onClick={handleCreateNew}
@@ -655,7 +661,7 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
           </div>
           <h3 className="mb-2 text-lg font-semibold text-gray-900">No Open Opportunities</h3>
           <p className="text-sm text-gray-600">
-            This club hasn’t posted any openings yet. Check back soon or follow them to stay updated.
+            This profile hasn’t posted any openings yet. Check back soon or follow them to stay updated.
           </p>
         </div>
       )}
@@ -816,6 +822,7 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
           if (!editingVacancy) setStatusFilter('draft')
         }}
         editingVacancy={editingVacancy}
+        initialOpportunityType={initialOpportunityType}
       />
 
       {/* Apply Modal */}

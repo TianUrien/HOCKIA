@@ -142,14 +142,17 @@ export default function OpportunityCard({
   // Build tag pills. Phase 3d — opportunityGenderToTeamLabel handles all
   // five enum values (Men/Women/Girls/Boys/Mixed) with possessive labels
   // ("Men's Team", "Girls' Team", etc.).
+  // Gender + position are player-only concepts; suppress them on coach
+  // opportunities even if legacy rows happen to carry stale values.
   const tags: string[] = []
-  if (vacancy.opportunity_type === 'player') tags.push('Player')
+  const isPlayerOpportunity = vacancy.opportunity_type === 'player'
+  if (isPlayerOpportunity) tags.push('Player')
   if (vacancy.opportunity_type === 'coach') tags.push('Coach')
-  if (vacancy.gender) {
+  if (isPlayerOpportunity && vacancy.gender) {
     const teamLabel = opportunityGenderToTeamLabel(vacancy.gender)
     if (teamLabel) tags.push(teamLabel.replace(' Team', ''))
   }
-  if (vacancy.position) {
+  if (isPlayerOpportunity && vacancy.position) {
     tags.push(vacancy.position.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()))
   }
 

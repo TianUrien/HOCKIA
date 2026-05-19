@@ -20,7 +20,9 @@ import ShareProfileButton from '@/components/profile/ShareProfileButton'
 import CompletionArc from './CompletionArc'
 import { calculateAge, getInitials } from '@/lib/utils'
 import { calculateTier } from '@/lib/profileTier'
-import { categoryToDisplay } from '@/lib/hockeyCategories'
+import { categoriesToDisplay, categoryToDisplay } from '@/lib/hockeyCategories'
+import { getSpecializationLabel } from '@/lib/coachSpecializations'
+import type { CoachSpecialization } from '@/lib/coachSpecializations'
 import { derivePublicContactEmail } from '@/lib/profile'
 import { cn } from '@/lib/utils'
 import type { Profile } from '@/lib/supabase'
@@ -86,6 +88,25 @@ export default function HeroIdentityCard({
     },
   )
   const publicContact = derivePublicContactEmail(profile)
+
+  // Role-aware Hero — same component renders for player and coach; the
+  // meta rows + pills swap per role so a coach sees coaching categories
+  // + specialization where a player sees playing category + position.
+  const role = (profile.role ?? 'player') as 'player' | 'coach' | 'club' | 'umpire' | 'brand'
+  const isCoach = role === 'coach'
+  const specializationLabel = isCoach
+    ? getSpecializationLabel(
+        (profile.coach_specialization ?? null) as CoachSpecialization | null,
+        profile.coach_specialization_custom ?? null,
+      )
+    : null
+  const coachingCategoriesLabel = isCoach
+    ? categoriesToDisplay(profile.coaching_categories ?? null)
+    : null
+  const isAvailable = isCoach
+    ? profile.open_to_coach === true
+    : profile.open_to_play === true
+  const isRecruiterMode = isCoach && profile.coach_recruits_for_team === true
 
   return (
     <section
@@ -278,23 +299,41 @@ export default function HeroIdentityCard({
               )}
             </MetaRow>
 
-            {(profile.playing_category || positions.length > 0) && (
-              <MetaRow>
-                {profile.playing_category && (
-                  <span className="inline-flex items-center gap-1.5">
-                    <Users className="w-4 h-4 text-gray-400" />
-                    <span>{categoryToDisplay(profile.playing_category)}</span>
-                  </span>
+            {isCoach
+              ? (coachingCategoriesLabel || specializationLabel) && (
+                  <MetaRow>
+                    {coachingCategoriesLabel && (
+                      <span className="inline-flex items-center gap-1.5">
+                        <Users className="w-4 h-4 text-gray-400" />
+                        <span>{coachingCategoriesLabel}</span>
+                      </span>
+                    )}
+                    {coachingCategoriesLabel && specializationLabel && <MetaBullet />}
+                    {specializationLabel && (
+                      <span className="inline-flex items-center gap-1.5">
+                        <Award className="w-4 h-4 text-gray-400" />
+                        <span>{specializationLabel}</span>
+                      </span>
+                    )}
+                  </MetaRow>
+                )
+              : (profile.playing_category || positions.length > 0) && (
+                  <MetaRow>
+                    {profile.playing_category && (
+                      <span className="inline-flex items-center gap-1.5">
+                        <Users className="w-4 h-4 text-gray-400" />
+                        <span>{categoryToDisplay(profile.playing_category)}</span>
+                      </span>
+                    )}
+                    {profile.playing_category && positions.length > 0 && <MetaBullet />}
+                    {positions.length > 0 && (
+                      <span className="inline-flex items-center gap-1.5">
+                        <span aria-hidden="true">🏑</span>
+                        <span className="capitalize">{positions.join(' • ')}</span>
+                      </span>
+                    )}
+                  </MetaRow>
                 )}
-                {profile.playing_category && positions.length > 0 && <MetaBullet />}
-                {positions.length > 0 && (
-                  <span className="inline-flex items-center gap-1.5">
-                    <span aria-hidden="true">🏑</span>
-                    <span className="capitalize">{positions.join(' • ')}</span>
-                  </span>
-                )}
-              </MetaRow>
-            )}
 
             {profile.current_club && (
               <MetaRow>
@@ -335,11 +374,13 @@ export default function HeroIdentityCard({
             )}
           </div>
 
-          {/* Pills row — TrustBadge moved out (it lived as "Trusted by N"
-              and duplicated the count now shown in the References tile
-              above). */}
+          {/* Pills row — role-aware. RoleBadge follows profile.role so
+              coach profiles show "Coach"; AvailabilityPill swaps to the
+              "coach" variant when the user is open_to_coach.
+              Recruiter mode adds a small badge so clubs/players can
+              instantly see this coach actively recruits. */}
           <div className="flex flex-wrap items-center gap-2.5">
-            <RoleBadge role="player" />
+            <RoleBadge role={role} />
             {!readOnly && !completionLoading && (
               <TierBadge tier={calculateTier(completionPercentage)} />
             )}
@@ -349,7 +390,15 @@ export default function HeroIdentityCard({
                 (profile as { show_last_active?: boolean | null } | null)?.show_last_active ?? null
               }
             />
-            {profile.open_to_play && <AvailabilityPill variant="play" />}
+            {isAvailable && (
+              <AvailabilityPill variant={isCoach ? 'coach' : 'play'} />
+            )}
+            {isRecruiterMode && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-[#8026FA]/10 px-2.5 py-1 text-[11px] font-semibold text-[#8026FA]">
+                <Users className="h-3 w-3" />
+                Recruiting players
+              </span>
+            )}
             <SocialLinksDisplay
               links={profile.social_links as SocialLinks | null | undefined}
               iconSize="sm"
@@ -520,12 +569,16 @@ interface CredibilityStatProps {
  * line only when the viewport is genuinely too narrow.
  */
 function CredibilityStat({ icon: Icon, label, count, onClick, testId }: CredibilityStatProps) {
+  const ariaLabel = onClick
+    ? `View ${count} ${label.toLowerCase()}`
+    : `${count} ${label.toLowerCase()}`
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={!onClick}
       data-testid={testId}
+      aria-label={ariaLabel}
       className={cn(
         'group inline-flex items-center gap-1.5 whitespace-nowrap text-sm transition-colors',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8026FA]/30 rounded',

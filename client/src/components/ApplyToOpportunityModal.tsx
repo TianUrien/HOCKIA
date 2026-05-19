@@ -185,7 +185,7 @@ export default function ApplyToVacancyModal({
           </div>
 
           <p id={descriptionId} className="text-sm text-gray-600 mb-6">
-            Your profile will be shared with the club for review.
+            Your profile will be shared with the recruiter for review.
           </p>
 
           {error && (

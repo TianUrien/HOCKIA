@@ -18,6 +18,10 @@ interface CreateVacancyModalProps {
   onClose: () => void
   onSuccess: () => void
   editingVacancy?: Vacancy | null
+  /** Initial opportunity_type when creating a new opportunity. Lets
+   *  the coach dashboard launch the modal pre-set to 'coach' so users
+   *  don't land on a "Player Position" form. Ignored when editing. */
+  initialOpportunityType?: 'player' | 'coach'
 }
 
 const BENEFIT_OPTIONS = [
@@ -34,8 +38,8 @@ const BENEFIT_OPTIONS = [
 ]
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const buildInitialFormData = (vacancy?: Vacancy | null): Record<string, any> => ({
-  opportunity_type: vacancy?.opportunity_type || 'player',
+const buildInitialFormData = (vacancy?: Vacancy | null, initialOpportunityType?: 'player' | 'coach'): Record<string, any> => ({
+  opportunity_type: vacancy?.opportunity_type || initialOpportunityType || 'player',
   title: vacancy?.title || '',
   position: vacancy?.position || undefined,
   gender: vacancy?.gender || undefined,
@@ -67,13 +71,18 @@ type VacancyDraftStorage = {
   newCustomBenefit: string
 }
 
-export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editingVacancy }: CreateVacancyModalProps) {
+export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editingVacancy, initialOpportunityType }: CreateVacancyModalProps) {
   const { user, profile } = useAuthStore()
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  /** Inline submit-error banner. The toast container lives in the
+   *  top-right corner of the viewport, which scrolls out of view once
+   *  the modal content is scrolled. The inline banner anchors the
+   *  error to where the user is actually looking. */
+  const [submitError, setSubmitError] = useState<string | null>(null)
   const { addToast } = useToastStore()
 
-  const [formData, setFormData] = useState<OpportunityFormData>(buildInitialFormData(editingVacancy))
+  const [formData, setFormData] = useState<OpportunityFormData>(buildInitialFormData(editingVacancy, initialOpportunityType))
   const { getCountryById } = useCountries()
 
   // Location autocomplete state
@@ -87,6 +96,11 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
   const [newRequirement, setNewRequirement] = useState('')
   const [newCustomBenefit, setNewCustomBenefit] = useState('')
   const dialogRef = useRef<HTMLDivElement>(null)
+  /** Ref to the modal's scrollable content area. Used to scroll the
+   *  inline submit-error banner into view when a save fails — without
+   *  this, errors land at the top of the modal while the user is
+   *  still scrolled near the Submit button at the bottom. */
+  const scrollContentRef = useRef<HTMLDivElement>(null)
   const closeButtonRef = useRef<HTMLButtonElement | null>(null)
   const opportunityTypeRef = useRef<HTMLSelectElement | null>(null)
   const titleId = useId()
@@ -131,6 +145,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
     }
 
     setErrors({})
+    setSubmitError(null)
     setNewRequirement('')
     setNewCustomBenefit('')
 
@@ -140,7 +155,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
       if (rawDraft) {
         try {
           const parsed = JSON.parse(rawDraft) as VacancyDraftStorage
-          const base = buildInitialFormData(null)
+          const base = buildInitialFormData(null, initialOpportunityType)
           const restored = { ...base, ...(parsed.formData || {}) }
           setFormData(restored)
           setNewRequirement(parsed.newRequirement ?? '')
@@ -160,13 +175,13 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
       }
     }
 
-    const initial = buildInitialFormData(editingVacancy)
+    const initial = buildInitialFormData(editingVacancy, initialOpportunityType)
     // Pre-fill organization name from coach's current club for new opportunities
     if (!editingVacancy && profile?.role === 'coach' && profile.current_club && !initial.organization_name) {
       initial.organization_name = profile.current_club
     }
     setFormData(initial)
-  }, [addToast, editingVacancy, isOpen, profile, user])
+  }, [addToast, editingVacancy, initialOpportunityType, isOpen, profile, user])
 
   useEffect(() => {
     if (!isOpen) {
@@ -239,6 +254,16 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
       }
     }
   }, [])
+
+  // When a submit error appears, scroll the modal back to the top so
+  // the inline banner is visible. Without this, the banner renders at
+  // the top of a long form while the user is still focused on the
+  // Submit button at the bottom — they'd only see the toast.
+  useEffect(() => {
+    if (submitError && scrollContentRef.current) {
+      scrollContentRef.current.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }, [submitError])
 
   if (!isOpen) return null
 
@@ -322,13 +347,16 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
   }
 
   const handleSave = async () => {
+    setSubmitError(null)
     if (!user) {
       addToast('You need to be signed in to manage opportunities.', 'error')
+      setSubmitError('You need to be signed in to manage opportunities.')
       return
     }
 
     if (!validate()) {
       addToast('Please fix the highlighted fields before saving.', 'error')
+      setSubmitError('Please fix the highlighted fields before saving.')
       return
     }
 
@@ -390,7 +418,11 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
       onClose()
     } catch (error) {
       logger.error('Error saving vacancy:', error)
-      addToast('Failed to save opportunity. Please try again.', 'error')
+      const message = error instanceof Error && error.message
+        ? `Failed to save opportunity: ${error.message}`
+        : 'Failed to save opportunity. Please try again.'
+      addToast(message, 'error')
+      setSubmitError(message)
     } finally {
       setIsLoading(false)
     }
@@ -442,7 +474,16 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
         </div>
 
         {/* Content - Scrollable */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        <div ref={scrollContentRef} className="flex-1 overflow-y-auto p-6 space-y-6">
+          {submitError && (
+            <div
+              role="alert"
+              className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800"
+            >
+              <X className="mt-0.5 h-4 w-4 flex-shrink-0 text-red-600" aria-hidden="true" />
+              <span>{submitError}</span>
+            </div>
+          )}
           {/* Basic Information */}
           <section>
             <div className="flex items-center gap-2 mb-4">

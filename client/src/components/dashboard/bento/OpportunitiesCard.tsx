@@ -23,6 +23,9 @@ interface OpportunitiesCardProps {
    *  Used when Opportunities sits in a trailing row alone so it doesn't
    *  leave a visual gap on desktop. */
   fullWidth?: boolean
+  /** Owner's role — drives the AvailabilityToggleStrip variant and
+   *  the subtitle copy. Defaults to 'player' for backwards compat. */
+  role?: 'player' | 'coach'
 }
 
 // "Active" = anything not declined. We treat pending / shortlisted /
@@ -30,7 +33,7 @@ interface OpportunitiesCardProps {
 // excluded so the count doesn't dwell on closed loops.
 const ACTIVE_STATUSES = ['pending', 'shortlisted', 'maybe'] as const
 
-export default function OpportunitiesCard({ ownerProfileId, onViewOpportunities, fullWidth = false }: OpportunitiesCardProps) {
+export default function OpportunitiesCard({ ownerProfileId, onViewOpportunities, fullWidth = false, role = 'player' }: OpportunitiesCardProps) {
   const [activeCount, setActiveCount] = useState<number | null>(null)
 
   useEffect(() => {
@@ -66,7 +69,7 @@ export default function OpportunitiesCard({ ownerProfileId, onViewOpportunities,
     <DashboardCard
       icon={Briefcase}
       title="Opportunities"
-      subtitle="Get found by clubs and recruiters"
+      subtitle={role === 'coach' ? 'Get found by clubs and players' : 'Get found by clubs and recruiters'}
       ctaLabel="View opportunities"
       onCtaClick={onViewOpportunities}
       testId="opportunities-card"
@@ -75,7 +78,7 @@ export default function OpportunitiesCard({ ownerProfileId, onViewOpportunities,
       <div className="space-y-4">
         {/* Availability toggles. The existing component owns its own
             persistence + toast — no extra wiring needed here. */}
-        <AvailabilityToggleStrip role="player" />
+        <AvailabilityToggleStrip role={role} />
 
         {/* Applications stat row. Single line; tap-to-navigate handled
             by the CTA at the bottom of the card. */}

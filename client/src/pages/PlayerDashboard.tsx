@@ -31,6 +31,7 @@ import { useProfileStrength, type ProfileStrengthBucket } from '@/hooks/useProfi
 import { trackReferenceBadgeClick } from '@/lib/analytics'
 import { useWorldClubLogo } from '@/hooks/useWorldClubLogo'
 import { useTabDeepLinkScroll } from '@/hooks/useTabDeepLinkScroll'
+import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 
 // `?section=` query param → DOM anchor id. Used by the deep-link scroll
 // hook so notifications like ?tab=profile&section=viewers land on the
@@ -116,6 +117,39 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
     sectionFromRoute && (VALID_TABS as string[]).includes(sectionFromRoute)
       ? sectionFromRoute
       : 'profile'
+
+  // Document title reflects the dashboard sub-route so tab strips +
+  // browser history make sense at a glance. For visitor (readOnly)
+  // views, prefix with the viewed player's name so the tab is
+  // identifiable in history. 'community' on the owner side maps to
+  // "My Network" to disambiguate from the global /community route.
+  const visitedName = readOnly ? profile?.full_name : null
+  const ownerTabTitle: Record<TabType, string> = {
+    profile: 'Player dashboard',
+    media: 'Media',
+    journey: 'Journey',
+    references: 'References',
+    friends: 'Connections',
+    comments: 'Comments',
+    posts: 'Posts',
+    community: 'My Network',
+  }
+  const visitorTabSuffix: Record<TabType, string | null> = {
+    profile: null,
+    media: 'Media',
+    journey: 'Journey',
+    references: 'References',
+    friends: 'Connections',
+    comments: 'Comments',
+    posts: 'Posts',
+    community: 'Community',
+  }
+  const computedTitle = visitedName
+    ? visitorTabSuffix[activeTab]
+      ? `${visitedName} — ${visitorTabSuffix[activeTab]}`
+      : visitedName
+    : ownerTabTitle[activeTab]
+  useDocumentTitle(computedTitle)
 
   // /dashboard/profile/<unknown> used to silently render the Bento Grid,
   // which meant typos and stale notification links landed on the wrong

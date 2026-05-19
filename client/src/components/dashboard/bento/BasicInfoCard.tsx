@@ -4,7 +4,9 @@ import {
 } from '@/components'
 import DashboardCard from './DashboardCard'
 import { calculateAge, formatDateOfBirth } from '@/lib/utils'
-import { categoryToDisplay } from '@/lib/hockeyCategories'
+import { categoriesToDisplay, categoryToDisplay } from '@/lib/hockeyCategories'
+import { getSpecializationLabel } from '@/lib/coachSpecializations'
+import type { CoachSpecialization } from '@/lib/coachSpecializations'
 import type { PlayerProfileShape } from '@/pages/PlayerDashboard'
 
 interface BasicInfoCardProps {
@@ -44,11 +46,26 @@ export default function BasicInfoCard({ profile, readOnly, onEdit }: BasicInfoCa
   const bio = profile.bio?.trim()
   const hasBio = Boolean(bio)
 
+  // Role-aware Basic Info — Player and Coach share the same card shape,
+  // but the Category + Position rows become Coaching categories +
+  // Specialization for coaches. The rest (nationality, age, location,
+  // current club, bio) is identical across both roles.
+  const isCoach = profile.role === 'coach'
+  const coachingCategoriesLabel = isCoach
+    ? categoriesToDisplay(profile.coaching_categories ?? null)
+    : null
+  const specializationLabel = isCoach
+    ? getSpecializationLabel(
+        (profile.coach_specialization ?? null) as CoachSpecialization | null,
+        profile.coach_specialization_custom ?? null,
+      )
+    : null
+
   return (
     <DashboardCard
       icon={IdCard}
       title="Basic information"
-      subtitle="The facts clubs filter by"
+      subtitle={isCoach ? 'The facts clubs and players filter by' : 'The facts clubs filter by'}
       ctaLabel={!readOnly ? 'Edit' : undefined}
       onCtaClick={!readOnly ? onEdit : undefined}
       testId="basic-info-card"
@@ -82,16 +99,28 @@ export default function BasicInfoCard({ profile, readOnly, onEdit }: BasicInfoCa
           )}
         </Row>
 
-        <Row label="Category">
-          {profile.playing_category ? (
+        <Row label={isCoach ? 'Coaching categories' : 'Category'}>
+          {isCoach ? (
+            coachingCategoriesLabel ? (
+              <span>{coachingCategoriesLabel}</span>
+            ) : (
+              <span className="text-gray-400 italic text-xs">—</span>
+            )
+          ) : profile.playing_category ? (
             <span>{categoryToDisplay(profile.playing_category)}</span>
           ) : (
             <span className="text-gray-400 italic text-xs">—</span>
           )}
         </Row>
 
-        <Row label="Position">
-          {positions.length > 0 ? (
+        <Row label={isCoach ? 'Specialization' : 'Position'}>
+          {isCoach ? (
+            specializationLabel ? (
+              <span>{specializationLabel}</span>
+            ) : (
+              <span className="text-gray-400 italic text-xs">—</span>
+            )
+          ) : positions.length > 0 ? (
             <span className="capitalize">{positions.join(' • ')}</span>
           ) : (
             <span className="text-gray-400 italic text-xs">—</span>
@@ -126,7 +155,9 @@ export default function BasicInfoCard({ profile, readOnly, onEdit }: BasicInfoCa
             </p>
           ) : (
             <p className="text-sm text-gray-400 italic">
-              Share your playing style, ambitions, and what you&apos;re looking for in a club.
+              {isCoach
+                ? 'Share your coaching philosophy, achievements, and what kind of role you’re looking for.'
+                : 'Share your playing style, ambitions, and what you’re looking for in a club.'}
             </p>
           )}
         </div>
