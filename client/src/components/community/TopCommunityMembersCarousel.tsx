@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronRight, ShieldCheck } from 'lucide-react'
+import { Building2, ChevronRight, ShieldCheck } from 'lucide-react'
 import Avatar from '../Avatar'
 import RoleBadge from '../RoleBadge'
-import CountryDisplay from '../CountryDisplay'
+import DualNationalityDisplay from '../DualNationalityDisplay'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 
@@ -49,21 +49,21 @@ interface TopMemberRow {
 interface TopCommunityMembersCarouselProps {
   /** Optional role filter. When set, the carousel returns only that
    *  role's top members. When undefined, returns top members across
-   *  all roles except brand (per /community IA). */
-  roleFilter?: 'player' | 'coach' | 'club' | 'umpire'
-  /** Anchor id on the page to scroll to when "View all" is tapped.
-   *  Defaults to 'community-all-members'. */
-  viewAllAnchorId?: string
+   *  all member-discovery roles (excludes brand — pass 'brand'
+   *  explicitly to get the brand leaderboard). */
+  roleFilter?: 'player' | 'coach' | 'club' | 'umpire' | 'brand'
+  /** Optional "View all" handler. The page wires this to scroll to
+   *  the All members section. Omit to hide the CTA. */
+  onViewAll?: () => void
 }
 
 const LIMIT = 20
 
 export function TopCommunityMembersCarousel({
   roleFilter,
-  viewAllAnchorId = 'community-all-members',
+  onViewAll,
 }: TopCommunityMembersCarouselProps) {
   const navigate = useNavigate()
-  const scrollRef = useRef<HTMLDivElement>(null)
   const [members, setMembers] = useState<TopMemberRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -94,11 +94,6 @@ export function TopCommunityMembersCarousel({
     }
   }, [roleFilter])
 
-  const handleViewAll = () => {
-    const el = document.getElementById(viewAllAnchorId)
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }
-
   const openMember = (m: TopMemberRow) => {
     const base =
       m.role === 'club'
@@ -107,7 +102,9 @@ export function TopCommunityMembersCarousel({
           ? '/umpires'
           : m.role === 'coach'
             ? '/coaches'
-            : '/players'
+            : m.role === 'brand'
+              ? '/brands'
+              : '/players'
     const slug = m.username ? m.username : `id/${m.id}`
     navigate(`${base}/${slug}?ref=community-top`)
   }
@@ -122,7 +119,7 @@ export function TopCommunityMembersCarousel({
       className="mb-6"
       aria-labelledby="top-members-heading"
     >
-      <header className="flex items-end justify-between gap-3 mb-3 px-1">
+      <header className="mb-3 px-1 flex items-end justify-between gap-3">
         <div className="min-w-0">
           <h2
             id="top-members-heading"
@@ -131,13 +128,13 @@ export function TopCommunityMembersCarousel({
             Top community members
           </h2>
           <p className="mt-0.5 text-xs text-gray-500">
-            Discover members with the most complete profiles
+            Most complete profiles on HOCKIA
           </p>
         </div>
-        {!loading && !error && members.length > 0 && (
+        {onViewAll && !loading && !error && members.length > 0 && (
           <button
             type="button"
-            onClick={handleViewAll}
+            onClick={onViewAll}
             className="flex items-center gap-0.5 text-sm font-semibold text-[#8026FA] hover:text-[#6B20D4] flex-shrink-0"
           >
             View all
@@ -154,7 +151,8 @@ export function TopCommunityMembersCarousel({
         </div>
       ) : (
         <div
-          ref={scrollRef}
+          role="region"
+          aria-label="Top community members carousel"
           className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-2 snap-x snap-mandatory scrollbar-hide [scrollbar-width:none] md:mx-0 md:px-0"
         >
           {members.map((m) => (
@@ -176,7 +174,11 @@ interface MemberCardProps {
 }
 
 function MemberCard({ member, onClick }: MemberCardProps) {
-  const fullName = member.full_name || member.username || 'HOCKIA Member'
+  // .trim() guards against legacy rows with trailing whitespace in
+  // full_name — the value leaks into both the visible label and the
+  // aria-label (which then produces "Open Maria 's profile" with an
+  // ugly stray space). Display-time fix only; not a data migration.
+  const fullName = (member.full_name?.trim() || member.username?.trim() || 'HOCKIA Member')
   const initials = useMemo(
     () =>
       fullName
@@ -194,15 +196,40 @@ function MemberCard({ member, onClick }: MemberCardProps) {
     Boolean(member.open_to_coach) ||
     Boolean(member.open_to_opportunities)
 
+  const hasNationality = Boolean(member.nationality_country_id || member.nationality)
+  const currentClub = member.current_club?.trim()
+
+  // Fixed-structure card with NO hardcoded card height — every slot
+  // has a min-height so the card sizes naturally to the same content
+  // shape across members, and no excess empty space appears under the
+  // shorter cards. (Previously had h-[360px] + mt-auto which produced
+  // ~70px of dead space when a member had fewer fields. QA-flagged.)
+  //
+  // Slot reservations:
+  //   - Avatar:  72px (the ring + Avatar size="lg")
+  //   - % line:  1 line
+  //   - Name:    2 lines (line-clamp-2)
+  //   - Role:    badge height
+  //   - Nat'ty:  2 lines so dual-nationality + EU pill fits without
+  //              shifting the divider up
+  //   - Divider: 1px line
+  //   - Club:    1 line (always reserved, even empty)
+  //   - Pill:    min-h matches pill itself; reserved even when the
+  //              member isn't open so all cards still end at the
+  //              same Y
+  //
+  // Total natural height settles around ~290px — same for every
+  // member; no fixed `h-[…]` needed.
   return (
     <button
       type="button"
       onClick={onClick}
-      className="snap-center flex-shrink-0 w-44 rounded-2xl border border-gray-200/80 bg-white shadow-sm p-4 text-left hover:shadow-md transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8026FA]/40"
+      className="snap-center flex-shrink-0 w-52 rounded-2xl border border-gray-200/80 bg-white shadow-sm p-4 hover:shadow-md transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8026FA]/40 flex flex-col text-center"
       data-testid={`top-member-card-${member.id}`}
       aria-label={`${fullName}, ${member.profile_completeness_pct}% profile complete. Tap to open profile.`}
     >
-      <div className="flex flex-col items-center text-center">
+      {/* Avatar slot — fixed centered */}
+      <div className="flex justify-center">
         <CompletenessRing pct={member.profile_completeness_pct}>
           <Avatar
             src={member.avatar_url}
@@ -212,36 +239,60 @@ function MemberCard({ member, onClick }: MemberCardProps) {
             role={member.role}
           />
         </CompletenessRing>
-        <p className="mt-1 text-[10px] font-semibold text-[#8026FA] tabular-nums tracking-wide">
-          {member.profile_completeness_pct}% Complete
-        </p>
+      </div>
 
-        <p className="mt-2 text-sm font-semibold text-gray-900 line-clamp-1 w-full">
-          {fullName}
-        </p>
-        <div className="mt-1">
-          <RoleBadge role={member.role} />
-        </div>
+      {/* % complete */}
+      <p className="mt-1 text-xs font-semibold text-[#8026FA] tabular-nums">
+        {member.profile_completeness_pct}% Complete
+      </p>
 
-        {(member.nationality_country_id || member.nationality) && (
-          <div className="mt-1.5 text-[11px] text-gray-600 line-clamp-1">
-            <CountryDisplay
-              countryId={member.nationality_country_id}
-              fallbackText={member.nationality}
-              showNationality
-            />
-          </div>
+      {/* Name — up to 2 lines */}
+      <p
+        className="mt-1 text-sm font-semibold text-gray-900 line-clamp-2 leading-tight min-h-[2.5em]"
+        title={fullName}
+      >
+        {fullName}
+      </p>
+
+      {/* Role badge */}
+      <div className="mt-1 flex justify-center min-h-[22px]">
+        <RoleBadge role={member.role} />
+      </div>
+
+      {/* Nationality slot — reserves 2 lines so single + dual
+          nationality cards align identically. Subtle blank line for
+          single-nationality members. */}
+      <div className="mt-1.5 text-[11px] text-gray-700 min-h-[2.5em] flex flex-col items-center justify-start">
+        {hasNationality && (
+          <DualNationalityDisplay
+            primaryCountryId={member.nationality_country_id}
+            secondaryCountryId={member.role === 'club' ? null : member.nationality2_country_id}
+            fallbackText={member.nationality}
+            mode="tile"
+            className="justify-center"
+          />
         )}
+      </div>
 
-        {member.current_club && (
-          <p className="mt-0.5 text-[11px] text-gray-500 line-clamp-1 w-full">
-            {member.current_club}
-          </p>
+      {/* Divider */}
+      <div className="my-1.5 border-t border-gray-100" />
+
+      {/* Club — 1 line with ellipsis, slot reserved when empty */}
+      <div className="text-[11px] text-gray-600 min-h-[1.25em] inline-flex items-center justify-center gap-1 truncate">
+        {currentClub && (
+          <>
+            <Building2 className="h-3 w-3 text-gray-400 flex-shrink-0" aria-hidden="true" />
+            <span className="truncate" title={currentClub}>{currentClub}</span>
+          </>
         )}
+      </div>
 
+      {/* Open to opportunities pill. Reserved slot height ensures
+          cards without the pill still align at the same Y. */}
+      <div className="mt-2 min-h-[28px] flex items-end justify-center">
         {isOpen && (
-          <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
-            <ShieldCheck className="h-2.5 w-2.5" />
+          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
+            <ShieldCheck className="h-3 w-3" />
             Open to opportunities
           </span>
         )}
@@ -311,15 +362,16 @@ function CarouselSkeleton() {
       {[1, 2, 3, 4].map((i) => (
         <div
           key={i}
-          className="flex-shrink-0 w-44 rounded-2xl border border-gray-200/80 bg-white shadow-sm p-4 animate-pulse"
+          className="flex-shrink-0 w-52 rounded-2xl border border-gray-200/80 bg-white shadow-sm p-4 animate-pulse flex flex-col items-center"
         >
-          <div className="flex flex-col items-center">
-            <div className="h-16 w-16 rounded-full bg-gray-200" />
-            <div className="mt-2 h-3 w-16 rounded bg-gray-200" />
-            <div className="mt-2 h-3 w-24 rounded bg-gray-200" />
-            <div className="mt-2 h-3 w-12 rounded bg-gray-100" />
-            <div className="mt-2 h-3 w-20 rounded bg-gray-100" />
-          </div>
+          <div className="h-16 w-16 rounded-full bg-gray-200" />
+          <div className="mt-2 h-3 w-20 rounded bg-gray-200" />
+          <div className="mt-2 h-3 w-28 rounded bg-gray-200" />
+          <div className="mt-2 h-3 w-16 rounded bg-gray-100" />
+          <div className="mt-2 h-3 w-24 rounded bg-gray-100" />
+          <div className="mt-1.5 border-t border-gray-100 w-full" />
+          <div className="mt-1.5 h-3 w-20 rounded bg-gray-100" />
+          <div className="mt-2 h-6 w-28 rounded-full bg-gray-100" />
         </div>
       ))}
     </div>

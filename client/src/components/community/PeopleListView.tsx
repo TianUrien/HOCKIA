@@ -6,16 +6,11 @@
  */
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
-import { Search, Filter, Loader2 } from 'lucide-react'
-import { useNavigate, useNavigationType } from 'react-router-dom'
-import { Avatar, RoleBadge, MemberTile } from '@/components'
+import { Loader2 } from 'lucide-react'
+import { useNavigationType } from 'react-router-dom'
+import { MemberTile } from '@/components'
 import { logger } from '@/lib/logger'
-import {
-  CATEGORY_LABELS,
-  PLAYING_CATEGORIES,
-  isOpenToAny,
-  type PlayingCategory,
-} from '@/lib/hockeyCategories'
+import { isOpenToAny } from '@/lib/hockeyCategories'
 import { MemberTileSkeleton } from '@/components/Skeleton'
 import { MemberPreviewModal } from './MemberPreviewModal'
 import { supabase } from '@/lib/supabase'
@@ -28,6 +23,7 @@ import { useScrollRestore } from '@/hooks/useScrollRestore'
 import { prefetchWorldClubLogos } from '@/hooks/useWorldClubLogo'
 import { getMemberTier } from '@/lib/profileTier'
 import { logSearchAppearances } from '@/lib/searchAppearances'
+import type { CommunityFiltersState } from './communityFilters'
 
 export interface Profile {
   id: string
@@ -65,6 +61,9 @@ export interface Profile {
   contact_email?: string | null
   career_entry_count?: number | null
   accepted_friend_count?: number | null
+  // Server-computed completeness 0-100. Drives both the Top Members
+  // ranking and the per-card badge on the grid.
+  profile_completeness_pct?: number | null
   brand_bio?: string | null
   brand_website_url?: string | null
   brand_instagram_url?: string | null
@@ -83,68 +82,51 @@ export interface Profile {
 }
 
 const PROFILES_SELECT =
-  'id, avatar_url, full_name, role, nationality, nationality_country_id, nationality2_country_id, base_location, position, secondary_position, current_club, current_world_club_id, gender, playing_category, coaching_categories, umpiring_categories, created_at, is_test_account, open_to_play, open_to_coach, accepted_reference_count, coach_specialization, coach_specialization_custom, highlight_video_url, bio, club_bio, year_founded, website, contact_email, career_entry_count, accepted_friend_count, is_verified, verified_at, umpire_level, federation, umpire_since, officiating_specialization, languages, last_officiated_at, umpire_appointment_count'
+  'id, avatar_url, full_name, role, nationality, nationality_country_id, nationality2_country_id, base_location, position, secondary_position, current_club, current_world_club_id, gender, playing_category, coaching_categories, umpiring_categories, created_at, is_test_account, open_to_play, open_to_coach, accepted_reference_count, coach_specialization, coach_specialization_custom, highlight_video_url, bio, club_bio, year_founded, website, contact_email, career_entry_count, accepted_friend_count, is_verified, verified_at, umpire_level, federation, umpire_since, officiating_specialization, languages, last_officiated_at, umpire_appointment_count, profile_completeness_pct'
 
-interface CommunityFilters {
-  role: 'all' | 'player' | 'coach' | 'club' | 'brand' | 'umpire'
-  position: string[]
-  /** Phase 3 hockey category filter. Replaces the old Men/Women gender radio.
-   * Routed to playing_category for player rows, and array-overlap (or 'any'
-   * sentinel) for coach + umpire rows. Skipped entirely for club + brand. */
-  category: 'all' | PlayingCategory
-  location: string
-  nationality: string
-  availability: 'all' | 'open'
-  brandCategory: string | null
-}
-
-const PLAYER_POSITIONS = ['goalkeeper', 'defender', 'midfielder', 'forward']
-const COACH_POSITIONS = ['head coach', 'assistant coach', 'youth coach']
-
-const BRAND_CATEGORIES: { value: string; label: string }[] = [
-  { value: 'equipment', label: 'Equipment' },
-  { value: 'apparel', label: 'Apparel' },
-  { value: 'accessories', label: 'Accessories' },
-  { value: 'nutrition', label: 'Nutrition' },
-  { value: 'technology', label: 'Technology' },
-  { value: 'coaching', label: 'Coaching & Training' },
-  { value: 'recruiting', label: 'Recruiting' },
-  { value: 'media', label: 'Media' },
-  { value: 'services', label: 'Services' },
-  { value: 'other', label: 'Other' },
-]
+// CommunityFilters type moved to ./communityFilters.ts so the lifted
+// search bar / quick filters / drawer (now rendered by CommunityPage)
+// and this grid can share one source of truth via a single hook
+// instance passed in via the `state` prop.
+//
+// Brand categories + position constants live in CommunityFiltersDrawer
+// alongside the UI that uses them.
 
 interface PeopleListViewProps {
   roleFilter?: 'player' | 'coach' | 'club' | 'brand' | 'umpire'
+  /** Filter state lifted to CommunityPage (May 2026 redesign) so the
+   *  search bar, quick filters, and drawer can live ABOVE the Top
+   *  Community Members carousel. This component is now a presentational
+   *  grid that reads state from props — it no longer owns search,
+   *  filters, sort, or shows-filters-drawer state. */
+  state: CommunityFiltersState
+  /** Fires once after the initial fetch with the total members count
+   *  (scoped to role + test-account visibility). CommunityPage uses
+   *  this to render "12,458 members" under the All members heading. */
+  onTotalCountChange?: (n: number) => void
+  /** Fires whenever the filtered list size changes (search + drawer
+   *  filters applied). The parent shows this count under the All
+   *  members heading WHEN the user is narrowing — otherwise it shows
+   *  the total. Fixes the QA-flagged 'badge says 13 but grid shows 1'
+   *  desync. */
+  onFilteredCountChange?: (n: number) => void
 }
 
-export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
-  const navigate = useNavigate()
+export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilteredCountChange }: PeopleListViewProps) {
   const navigationType = useNavigationType()
   const { profile: currentUserProfile } = useAuthStore()
   const isCurrentUserTestAccount = currentUserProfile?.is_test_account ?? false
+
+  const { searchQuery, filters, sort, clearFilters, isNarrowed } = state
 
   const [baseMembers, setBaseMembers] = useState<Profile[]>([])
   const [allMembers, setAllMembers] = useState<Profile[]>([])
   const [displayedMembers, setDisplayedMembers] = useState<Profile[]>([])
   const [previewMember, setPreviewMember] = useState<Profile | null>(null)
-  const [searchQuery, setSearchQuery] = usePageState('community-search', '')
-  const [filters, setFilters] = usePageState<CommunityFilters>('community-filters', {
-    role: roleFilter || 'all',
-    brandCategory: null,
-    position: [],
-    category: 'all',
-    location: '',
-    nationality: '',
-    availability: 'all',
-  })
-  const [showFilters, setShowFilters] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [isSearching, setIsSearching] = useState(false)
   const [page, setPage] = usePageState('community-page', 1)
   const [hasMore, setHasMore] = useState(true)
-  const [showSuggestions, setShowSuggestions] = useState(false)
-  const searchContainerRef = useRef<HTMLDivElement>(null)
   const sentinelRef = useRef<HTMLDivElement>(null)
 
   // Track whether this is a restored (back/forward) navigation
@@ -157,10 +139,38 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
   const isMobile = useMediaQuery('(max-width: 767px)')
   const pageSize = isMobile ? 12 : 24
 
+  // Total count for the current role + test-visibility scope. Runs
+  // once per scope change (cheap head query). Drives the "N members"
+  // line under the All members heading in CommunityPage.
+  useEffect(() => {
+    let cancelled = false
+    const run = async () => {
+      try {
+        let q = supabase
+          .from('profiles')
+          .select('id', { count: 'exact', head: true })
+          .eq('onboarding_completed', true)
+        if (roleFilter) q = q.eq('role', roleFilter)
+        if (!isCurrentUserTestAccount) {
+          q = q.or('is_test_account.is.null,is_test_account.eq.false')
+        }
+        const { count, error } = await q
+        if (cancelled || error) return
+        onTotalCountChange?.(count ?? 0)
+      } catch (err) {
+        logger.error('Error fetching total community count:', err)
+      }
+    }
+    void run()
+    return () => {
+      cancelled = true
+    }
+  }, [roleFilter, isCurrentUserTestAccount, onTotalCountChange])
+
   // Fetch members from Supabase
   const fetchMembers = useCallback(async () => {
     setIsLoading(true)
-    
+
     await monitor.measure('fetch_community_members', async () => {
       try {
         // Cache key includes test-account status AND roleFilter so:
@@ -243,12 +253,18 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
         }
 
         setBaseMembers(members)
-        setAllMembers(members)
-        // displayedMembers + hasMore are derived from filteredMembers via the
-        // useEffect below. Setting them here with unfiltered data would clobber
-        // the filtered list any time fetchMembers re-runs (StrictMode double
-        // invoke, pageSize change on resize, auth resolution, etc.) and leak
-        // non-matching roles into a role-filtered grid.
+        // INTENTIONAL: do NOT setAllMembers(members) here. The post-
+        // render effect below ([searchQuery, clientFilteredMembers, …])
+        // is the single writer for allMembers. Setting it from
+        // fetchMembers caused a race on hard-load with ?q= deep links:
+        // fetchMembers' setAllMembers([13]) won the race against the
+        // effect's setAllMembers([1 match]), and the grid stayed
+        // unfiltered until the user typed something to re-trigger the
+        // chain. (QA "13 members match" + grid shows 13.) The flow
+        // is now deterministic: baseMembers is the raw fetch, allMembers
+        // is always the search-filtered view derived from it.
+        // displayedMembers + hasMore are derived from filteredMembers
+        // via the useEffect below.
       } catch (error) {
         logger.error('Error fetching members:', error)
       } finally {
@@ -257,15 +273,7 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
     })
   }, [isCurrentUserTestAccount, roleFilter])
 
-  // Sync role filter when roleFilter prop changes
-  useEffect(() => {
-    setFilters(prev => ({
-      ...prev,
-      role: roleFilter || 'all',
-      // Brand category only makes sense on the brand view — drop it when leaving.
-      brandCategory: (roleFilter || 'all') === 'brand' ? prev.brandCategory : null,
-    }))
-  }, [roleFilter]) // eslint-disable-line react-hooks/exhaustive-deps
+  // Role sync moved to CommunityPage (it owns the filter state now).
 
   // Initial load
   useEffect(() => {
@@ -368,7 +376,7 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
         setIsSearching(false)
       }
     }, { query })
-  }, [isCurrentUserTestAccount, roleFilter]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isCurrentUserTestAccount, roleFilter, setPage])
 
   // Client-side search filtering (instant, for both grid and suggestions)
   const clientFilteredMembers = useMemo(() => {
@@ -446,21 +454,44 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
       )
     }
 
-    return result
-  }, [allMembers, filters])
+    // Sort. 'newest' is the natural fetch order (created_at DESC); no
+    // re-sort needed — slicing keeps that order intact. 'completeness'
+    // sorts by profile_completeness_pct DESC with id tiebreaker for
+    // stable pagination across renders.
+    if (sort === 'completeness') {
+      result = [...result].sort((a, b) => {
+        const ap = a.profile_completeness_pct ?? 0
+        const bp = b.profile_completeness_pct ?? 0
+        if (bp !== ap) return bp - ap
+        return a.id.localeCompare(b.id)
+      })
+    }
 
-  // Update displayed members when filter changes
+    return result
+  }, [allMembers, filters, sort])
+
+  // Emit filtered count upward whenever it changes. Combined with the
+  // total-count effect this lets the parent choose: total when not
+  // narrowing, filtered when narrowing.
+  useEffect(() => {
+    onFilteredCountChange?.(filteredMembers.length)
+  }, [filteredMembers.length, onFilteredCountChange])
+
+  // Update displayed members when filter (or sort) changes. Sort
+  // changes shouldn't truncate to first page — QA flagged that
+  // flipping the sort dropdown momentarily hid the 13th card until
+  // the user scrolled. Preserve the loaded count across resorts by
+  // slicing to `page * pageSize` instead of `pageSize`.
   useEffect(() => {
     if (isRestoredRef.current) {
-      // On back navigation, show items up to the restored page
       const endIndex = page * pageSize
       setDisplayedMembers(filteredMembers.slice(0, endIndex))
       setHasMore(filteredMembers.length > endIndex)
       isRestoredRef.current = false
     } else {
-      setDisplayedMembers(filteredMembers.slice(0, pageSize))
-      setPage(1)
-      setHasMore(filteredMembers.length > pageSize)
+      const endIndex = Math.max(pageSize, page * pageSize)
+      setDisplayedMembers(filteredMembers.slice(0, endIndex))
+      setHasMore(filteredMembers.length > endIndex)
     }
   }, [filteredMembers, pageSize]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -472,30 +503,16 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
     if (!viewerId) return
     if (isLoading || isSearching) return
     if (displayedMembers.length === 0) return
-
-    const searchActive = searchQuery.trim().length > 0
-    const filtersNarrowed =
-      (filters.role !== (roleFilter || 'all')) ||
-      filters.brandCategory !== null ||
-      filters.position.length > 0 ||
-      filters.category !== 'all' ||
-      filters.location.trim() !== '' ||
-      filters.nationality.trim() !== '' ||
-      filters.availability !== 'all'
-
-    if (!searchActive && !filtersNarrowed) return
+    if (!isNarrowed) return
 
     const handle = setTimeout(() => {
       void logSearchAppearances({
         viewerId,
         profileIds: displayedMembers.map((m) => m.id),
         filters: {
-          search_query_present: searchActive,
+          search_query_present: searchQuery.trim().length > 0,
           role: filters.role !== 'all' ? filters.role : null,
           position: filters.position.length > 0 ? filters.position : null,
-          // Phase 3: gender filter retired in favor of category. Analytics
-          // schema kept the gender column for now; populate it from the
-          // category for backward-readability of historical rows.
           gender: filters.category !== 'all' ? filters.category : null,
           location: filters.location.trim() || null,
           nationality: filters.nationality.trim() || null,
@@ -504,7 +521,7 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
       })
     }, 800)
     return () => clearTimeout(handle)
-  }, [displayedMembers, filters, searchQuery, isLoading, isSearching, currentUserProfile?.id, roleFilter])
+  }, [displayedMembers, filters, searchQuery, isLoading, isSearching, currentUserProfile?.id, isNarrowed])
 
   // Load more handler
   const handleLoadMore = useCallback(() => {
@@ -534,361 +551,80 @@ export function PeopleListView({ roleFilter }: PeopleListViewProps = {}) {
     return () => observer.disconnect()
   }, [hasMore, handleLoadMore])
 
-  // Inline suggestions derived from client-filtered results
-  const suggestions = useMemo(() => {
-    if (!searchQuery.trim()) return []
-    return clientFilteredMembers.slice(0, 6)
-  }, [searchQuery, clientFilteredMembers])
-
-  // Show suggestions when input is focused and has content
-  useEffect(() => {
-    if (!showSuggestions) return
-    const handleClickOutside = (e: MouseEvent) => {
-      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
-        setShowSuggestions(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [showSuggestions])
-
-  const handleSuggestionClick = (member: Profile) => {
-    setShowSuggestions(false)
-    if (member.role === 'brand') {
-      navigate(member.brand_slug ? `/brands/${member.brand_slug}?ref=community` : '/marketplace')
-    } else if (member.role === 'club') {
-      navigate(`/clubs/id/${member.id}?ref=community`)
-    } else if (member.role === 'umpire') {
-      navigate(`/umpires/id/${member.id}?ref=community`)
-    } else if (member.role === 'coach') {
-      navigate(`/coaches/id/${member.id}?ref=community`)
-    } else {
-      navigate(`/players/id/${member.id}?ref=community`)
-    }
-  }
-
-  // Filter helpers
-  const updateFilter = <K extends keyof CommunityFilters>(key: K, value: CommunityFilters[K]) => {
-    setFilters(prev => {
-      const next = { ...prev, [key]: value }
-      if (key === 'role') {
-        next.position = []
-        next.category = 'all'
-        if (value !== 'brand') next.brandCategory = null
-      }
-      return next
-    })
-  }
-
-  const togglePosition = (pos: string) => {
-    setFilters(prev => ({
-      ...prev,
-      position: prev.position.includes(pos)
-        ? prev.position.filter(p => p !== pos)
-        : [...prev.position, pos]
-    }))
-  }
-
-  const clearFilters = () => {
-    setFilters({ role: roleFilter || 'all', brandCategory: null, position: [], category: 'all', location: '', nationality: '', availability: 'all' })
-  }
-
-  const hasActiveFilters = () => {
-    // When role is driven by the tab switcher (roleFilter prop), don't count it
-    const expectedRole = roleFilter || 'all'
-    return (
-      filters.role !== expectedRole ||
-      filters.brandCategory !== null ||
-      filters.position.length > 0 ||
-      filters.category !== 'all' ||
-      filters.location.trim() !== '' ||
-      filters.nationality.trim() !== '' ||
-      filters.availability !== 'all'
-    )
-  }
+  // Search suggestions, filter mutators, hasActiveFilters / isNarrowed
+  // all live in the lifted CommunityFiltersState now (state prop).
+  // The empty-state CTA below calls state.clearFilters directly.
 
   return (
     <div>
-      {/* Search Bar with Inline Suggestions */}
-      <div ref={searchContainerRef} className="max-w-2xl mx-auto relative mb-4">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 z-10" />
-        <input
-          type="search"
-          data-keyboard-shortcut="search"
-          value={searchQuery}
-          onChange={(e) => {
-            setSearchQuery(e.target.value)
-            setShowSuggestions(true)
-          }}
-          onFocus={() => { if (searchQuery.trim()) setShowSuggestions(true) }}
-          onKeyDown={(e) => { if (e.key === 'Enter') setShowSuggestions(false) }}
-          placeholder="Search by name, location, position, or club..."
-          className="w-full pl-12 pr-4 py-2.5 sm:py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base"
-          autoComplete="off"
-          enterKeyHint="search"
-          autoCapitalize="none"
-          autoCorrect="off"
-          spellCheck={false}
-        />
-        {isSearching && (
-          <div className="absolute right-4 top-1/2 -translate-y-1/2">
-            <div className="w-5 h-5 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+      {isLoading ? (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
+          {[...Array(15)].map((_, i) => (
+            <MemberTileSkeleton key={i} />
+          ))}
+        </div>
+      ) : displayedMembers.length === 0 ? (
+        <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
+          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span className="text-3xl">🔍</span>
           </div>
-        )}
-
-        {/* Inline suggestion dropdown */}
-        {showSuggestions && suggestions.length > 0 && (
-          <div className="absolute left-0 right-0 top-full mt-1 bg-white rounded-xl border border-gray-200 shadow-lg z-50 overflow-hidden">
-            {suggestions.map((member) => (
-              <button
-                key={member.id}
-                type="button"
-                onClick={() => handleSuggestionClick(member)}
-                className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 active:bg-gray-100 transition-colors text-left"
-              >
-                <Avatar
-                  src={member.avatar_url}
-                  alt={member.full_name}
-                  initials={member.full_name ? member.full_name.split(' ').map(n => n[0]).join('') : '?'}
-                  size="sm"
-                  role={member.role}
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-gray-900 truncate text-sm">
-                      {member.full_name}
-                    </span>
-                    <RoleBadge role={member.role} />
-                  </div>
-                  {(member.position || member.base_location) && (
-                    <p className="text-xs text-gray-500 truncate">
-                      {[member.position, member.base_location].filter(Boolean).join(' · ')}
-                    </p>
-                  )}
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Action Row: Availability toggle + Filters button */}
-      <div className="flex items-center justify-center gap-2 mb-4">
-        <button
-          type="button"
-          onClick={() => updateFilter('availability', filters.availability === 'open' ? 'all' : 'open')}
-          className={`whitespace-nowrap px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-1.5 flex-shrink-0 ${
-            filters.availability === 'open'
-              ? 'bg-emerald-500 text-white'
-              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-          }`}
-        >
-          <span className="w-1.5 h-1.5 rounded-full bg-current flex-shrink-0" />
-          Open to Opportunities
-        </button>
-        <button
-          type="button"
-          onClick={() => setShowFilters(!showFilters)}
-          className="md:hidden flex items-center gap-1.5 whitespace-nowrap px-3.5 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 rounded-full hover:bg-gray-200 active:bg-gray-300 transition-colors flex-shrink-0"
-        >
-          <Filter className="w-3.5 h-3.5" />
-          Filters
-          {hasActiveFilters() && (
-            <span className="w-2 h-2 bg-purple-600 rounded-full" />
-          )}
-        </button>
-      </div>
-
-      {/* Filtered results count — only when narrowing */}
-      {(searchQuery.trim() || hasActiveFilters()) && (
-        <p className="text-sm text-gray-500 mb-4">
-          Showing <span className="font-semibold text-gray-900">{filteredMembers.length}</span> members
-        </p>
-      )}
-
-      <div className="flex flex-col gap-6 lg:flex-row">
-        {/* Filters Panel */}
-        <aside className={`${showFilters ? 'block' : 'hidden'} md:block w-full lg:w-72 flex-shrink-0`}>
-          <div className="bg-white rounded-xl p-6 shadow-sm sticky top-24 space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-gray-900">Filters</h2>
-              {hasActiveFilters() && (
-                <button
-                  onClick={clearFilters}
-                  className="text-sm text-purple-600 hover:text-purple-700 font-medium"
-                >
-                  Clear all
-                </button>
-              )}
-            </div>
-
-            {/* Brand Category — only when role is brand (role itself is set via the chip subnav above). */}
-            {filters.role === 'brand' && (
-              <div>
-                <label htmlFor="brand-category-filter" className="block text-sm font-medium text-gray-700 mb-2">Category</label>
-                <select
-                  id="brand-category-filter"
-                  value={filters.brandCategory ?? ''}
-                  onChange={(e) => updateFilter('brandCategory', e.target.value || null)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
-                >
-                  <option value="">All categories</option>
-                  {BRAND_CATEGORIES.map((cat) => (
-                    <option key={cat.value} value={cat.value}>{cat.label}</option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            {/* Position — hidden when role is club, brand, or umpire
-                (umpires don't have field positions). */}
-            {filters.role !== 'club' && filters.role !== 'brand' && filters.role !== 'umpire' && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {filters.role === 'coach' ? 'Coaching Role' : 'Position'}
-                </label>
-                <div className="space-y-2">
-                  {(filters.role === 'coach' ? COACH_POSITIONS : PLAYER_POSITIONS).map((position) => (
-                    <label key={position} className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={filters.position.includes(position)}
-                        onChange={() => togglePosition(position)}
-                        className="w-4 h-4 text-purple-600 rounded"
-                      />
-                      <span className="text-sm text-gray-700 capitalize">{position}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Hockey category — hidden for club + brand (no category) */}
-            {filters.role !== 'club' && filters.role !== 'brand' && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
-                <div className="space-y-2">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      checked={filters.category === 'all'}
-                      onChange={() => updateFilter('category', 'all')}
-                      className="w-4 h-4 text-purple-600"
-                    />
-                    <span className="text-sm text-gray-700">All</span>
-                  </label>
-                  {PLAYING_CATEGORIES.map((cat) => (
-                    <label key={cat} className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        checked={filters.category === cat}
-                        onChange={() => updateFilter('category', cat)}
-                        className="w-4 h-4 text-purple-600"
-                      />
-                      <span className="text-sm text-gray-700">{CATEGORY_LABELS[cat]}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Location */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
-              <input
-                type="text"
-                value={filters.location}
-                onChange={(e) => updateFilter('location', e.target.value)}
-                placeholder="City or Country"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              />
-            </div>
-
-            {/* Nationality */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Nationality</label>
-              <input
-                type="text"
-                value={filters.nationality}
-                onChange={(e) => updateFilter('nationality', e.target.value)}
-                placeholder="e.g. Dutch, Australian"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              />
-            </div>
-          </div>
-        </aside>
-
-        {/* Main Content */}
-        <div className="flex-1">
-          {isLoading ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
-              {[...Array(15)].map((_, i) => (
-                <MemberTileSkeleton key={i} />
-              ))}
-            </div>
-          ) : displayedMembers.length === 0 ? (
-            <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-3xl">🔍</span>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No members found</h3>
-              <p className="text-gray-500 mb-4">
-                {searchQuery.trim() || hasActiveFilters()
-                  ? 'Try adjusting your search or filters to see more results.'
-                  : 'No members yet.'}
-              </p>
-              {hasActiveFilters() && (
-                <button
-                  type="button"
-                  onClick={clearFilters}
-                  className="px-6 py-2 rounded-lg bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white font-medium hover:opacity-90 transition-opacity"
-                >
-                  Clear Filters
-                </button>
-              )}
-            </div>
-          ) : (
-            <>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 mb-6 sm:mb-8">
-                {displayedMembers.map((member) => (
-                  <MemberTile
-                    key={member.id}
-                    id={member.id}
-                    avatar_url={member.avatar_url}
-                    full_name={member.full_name}
-                    role={member.role}
-                    brandSlug={member.brand_slug ?? undefined}
-                    brandCategory={member.brand_category ?? undefined}
-                    brandLogoUrl={member.brand_logo_url ?? null}
-                    nationality={member.nationality}
-                    nationality_country_id={member.nationality_country_id}
-                    nationality2_country_id={member.role === 'club' ? null : member.nationality2_country_id}
-                    base_location={member.base_location}
-                    current_team={member.current_club}
-                    current_world_club_id={member.current_world_club_id}
-                    open_to_play={member.open_to_play}
-                    open_to_coach={member.open_to_coach}
-                    tier={getMemberTier(member)}
-                    isVerified={Boolean(member.is_verified)}
-                    verifiedAt={member.verified_at ?? null}
-                    umpireLevel={member.umpire_level ?? null}
-                    federation={member.federation ?? null}
-                    onPreview={() => setPreviewMember(member)}
-                  />
-                ))}
-              </div>
-
-              {/* Infinite scroll sentinel */}
-              {hasMore && <div ref={sentinelRef} className="h-1" />}
-              {hasMore && (
-                <div className="flex justify-center py-6">
-                  <Loader2 className="w-6 h-6 text-[#8026FA] animate-spin" />
-                </div>
-              )}
-            </>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">No members found</h3>
+          <p className="text-gray-500 mb-4">
+            {isNarrowed
+              ? 'Try adjusting your search or filters to see more results.'
+              : 'No members yet.'}
+          </p>
+          {isNarrowed && (
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="px-6 py-2 rounded-lg bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white font-medium hover:opacity-90 transition-opacity"
+            >
+              Clear Filters
+            </button>
           )}
         </div>
-      </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 auto-rows-fr gap-3 sm:gap-4 mb-6 sm:mb-8">
+            {displayedMembers.map((member) => (
+              <MemberTile
+                key={member.id}
+                id={member.id}
+                avatar_url={member.avatar_url}
+                full_name={member.full_name}
+                role={member.role}
+                brandSlug={member.brand_slug ?? undefined}
+                brandCategory={member.brand_category ?? undefined}
+                brandLogoUrl={member.brand_logo_url ?? null}
+                nationality={member.nationality}
+                nationality_country_id={member.nationality_country_id}
+                nationality2_country_id={member.role === 'club' ? null : member.nationality2_country_id}
+                base_location={member.base_location}
+                current_team={member.current_club}
+                current_world_club_id={member.current_world_club_id}
+                open_to_play={member.open_to_play}
+                open_to_coach={member.open_to_coach}
+                tier={getMemberTier(member)}
+                isVerified={Boolean(member.is_verified)}
+                verifiedAt={member.verified_at ?? null}
+                umpireLevel={member.umpire_level ?? null}
+                federation={member.federation ?? null}
+                profileCompletenessPct={member.profile_completeness_pct ?? null}
+                onPreview={() => setPreviewMember(member)}
+              />
+            ))}
+          </div>
+
+          {/* Infinite scroll sentinel */}
+          {hasMore && <div ref={sentinelRef} className="h-1" />}
+          {hasMore && (
+            <div className="flex justify-center py-6">
+              <Loader2 className="w-6 h-6 text-[#8026FA] animate-spin" />
+            </div>
+          )}
+        </>
+      )}
 
       <MemberPreviewModal
         member={previewMember}

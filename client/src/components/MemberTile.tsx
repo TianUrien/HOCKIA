@@ -43,6 +43,11 @@ interface MemberTileProps {
   verifiedAt?: string | null
   umpireLevel?: string | null
   federation?: string | null
+  /** Profile completeness percentage (0-100). Renders as a small badge
+   *  on the avatar so users can see how complete each member's profile
+   *  is at a glance. Optional — older callers without the column may
+   *  omit, in which case nothing renders. */
+  profileCompletenessPct?: number | null
   /** When provided, overrides the default navigate-to-profile behavior.
    * Community passes this to open the preview modal instead — the preview
    * itself then handles the auth-gated CTAs. */
@@ -135,8 +140,15 @@ export default function MemberTile(props: MemberTileProps) {
       <button
         type="button"
         onClick={handleClick}
-        className="group block w-full text-left bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-md hover:border-gray-300 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8026FA] focus-visible:ring-offset-2"
-        aria-label={`View ${props.full_name}'s profile`}
+        className="group block w-full h-full text-left bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-md hover:border-gray-300 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8026FA] focus-visible:ring-offset-2"
+        aria-label={(() => {
+          const name = props.full_name?.trim() ?? ''
+          const pct = props.profileCompletenessPct
+          if (typeof pct === 'number' && pct > 0) {
+            return `${name}, ${pct}% profile complete. Tap to open profile.`
+          }
+          return `${name}. Tap to open profile.`
+        })()}
       >
         {/* Avatar — centered circle inside top padding. Replaces the
             previous full-width square hero. The role-tinted placeholder
@@ -162,10 +174,22 @@ export default function MemberTile(props: MemberTileProps) {
             </div>
             {showGreenDot && (
               <span
-                className="absolute bottom-1 right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 ring-2 ring-white"
+                className="absolute top-1 right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 ring-2 ring-white"
                 aria-label="Open to opportunities"
                 title="Open to opportunities"
               />
+            )}
+            {/* Profile completeness badge — sits at the bottom-right of
+                the avatar matching the reference image. Only shown when
+                a real numeric % is provided (not 0 from a default). */}
+            {typeof props.profileCompletenessPct === 'number' && props.profileCompletenessPct > 0 && (
+              <span
+                className="absolute -bottom-0.5 right-0 inline-flex items-center rounded-full bg-[#8026FA] px-1.5 py-0.5 text-[10px] font-bold text-white ring-2 ring-white tabular-nums"
+                aria-label={`Profile ${props.profileCompletenessPct}% complete`}
+                title={`Profile ${props.profileCompletenessPct}% complete`}
+              >
+                {props.profileCompletenessPct}%
+              </span>
             )}
           </div>
         </div>
@@ -175,8 +199,11 @@ export default function MemberTile(props: MemberTileProps) {
         <div className="px-4 pb-4 space-y-2.5">
           {/* Row 1: name + verified */}
           <div className="flex items-center gap-1 min-w-0">
-            <h3 className="text-base font-semibold text-gray-900 truncate min-w-0 flex-1 leading-tight">
-              {props.full_name}
+            <h3
+              className="text-base font-semibold text-gray-900 truncate min-w-0 flex-1 leading-tight"
+              title={props.full_name?.trim()}
+            >
+              {props.full_name?.trim()}
             </h3>
             <VerifiedBadge verified={props.isVerified} verifiedAt={props.verifiedAt} size="sm" />
           </div>

@@ -3,11 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import type { CommunityTab } from './CommunityTabSwitcher'
 
 interface RoleChip {
-  // Brands deliberately routes off this page to /marketplace (the
-  // canonical brand-discovery surface) — keeping the chip in the list
-  // for parity with the May 2026 spec without changing the IA. The chip
-  // visually renders but never lands as the activeTab.
-  id: Extract<CommunityTab, 'all' | 'players' | 'coaches' | 'clubs' | 'umpires'> | 'brands'
+  id: Extract<CommunityTab, 'all' | 'players' | 'coaches' | 'clubs' | 'umpires' | 'brands'>
   label: string
   path: string
 }
@@ -18,7 +14,11 @@ const CHIPS: RoleChip[] = [
   { id: 'coaches', label: 'Coaches', path: '/community/coaches' },
   { id: 'clubs', label: 'Clubs', path: '/community/clubs' },
   { id: 'umpires', label: 'Umpires', path: '/community/umpires' },
-  { id: 'brands', label: 'Brands', path: '/marketplace' },
+  // QA May 2026: previously routed to /marketplace which masqueraded as
+  // a filter; now Brands is a real role filter inside /community.
+  // /marketplace still exists for marketplace-specific UX (e.g. featured
+  // brand campaigns) but the directory filter view lives here.
+  { id: 'brands', label: 'Brands', path: '/community/brands' },
 ]
 
 interface CommunityRoleChipsProps {

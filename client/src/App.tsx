@@ -365,9 +365,12 @@ function App() {
                 {/* Marketplace (canonical brand discovery surface — products + brand directory) */}
                 <Route path="/marketplace" element={<ErrorBoundary fallback={<RouteErrorFallback />}><MarketplacePage /></ErrorBoundary>} />
 
-                {/* Legacy brand routes — redirect to canonical marketplace */}
+                {/* Legacy brand routes — redirect to canonical marketplace.
+                    Note: /community/brands is NOT redirected here — it's
+                    a real role filter inside the Community page now
+                    (May 2026 QA pass). Marketplace still exists for the
+                    products surface and featured brand discovery. */}
                 <Route path="/brands" element={<Navigate to="/marketplace" replace />} />
-                <Route path="/community/brands" element={<Navigate to="/marketplace" replace />} />
                 <Route path="/brands/onboarding" element={<ErrorBoundary fallback={<RouteErrorFallback />}><BrandOnboardingPage /></ErrorBoundary>} />
                 {/* id-fallback for brands — mirrors /players/id/:id etc.
                     Resolves brand profile_id → slug, then redirects to

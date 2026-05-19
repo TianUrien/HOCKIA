@@ -1,14 +1,14 @@
 import { useNavigate } from 'react-router-dom'
 import { Users, MessageCircleQuestion } from 'lucide-react'
 
-export type CommunityTab = 'all' | 'players' | 'coaches' | 'clubs' | 'umpires' | 'questions'
+export type CommunityTab = 'all' | 'players' | 'coaches' | 'clubs' | 'umpires' | 'brands' | 'questions'
 
 interface CommunityTabSwitcherProps {
   activeTab: CommunityTab
 }
 
 const TABS = [
-  { id: 'members' as const, label: 'Members', icon: Users, path: '/community', matchTabs: ['all', 'players', 'coaches', 'clubs', 'umpires'] as CommunityTab[] },
+  { id: 'members' as const, label: 'Members', icon: Users, path: '/community', matchTabs: ['all', 'players', 'coaches', 'clubs', 'umpires', 'brands'] as CommunityTab[] },
   { id: 'questions' as const, label: 'Questions', icon: MessageCircleQuestion, path: '/community/questions', matchTabs: ['questions'] as CommunityTab[] },
 ]
 
@@ -31,7 +31,7 @@ export function CommunityTabSwitcher({ activeTab }: CommunityTabSwitcherProps) {
                 ? 'bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white shadow-md'
                 : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
             }`}
-            aria-pressed={isActive}
+            aria-pressed={isActive ? 'true' : 'false'}
           >
             <Icon className="w-4 h-4" />
             <span>{tab.label}</span>

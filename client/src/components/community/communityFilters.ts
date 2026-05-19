@@ -1,0 +1,142 @@
+import { useCallback, useMemo, useState } from 'react'
+import { usePageState } from '@/hooks/usePageState'
+import type { PlayingCategory } from '@/lib/hockeyCategories'
+
+/**
+ * Shared community-filter state extracted from PeopleListView so the
+ * search bar, quick filters, and filters drawer can live ABOVE the
+ * Top Community Members carousel in CommunityPage (May 2026 redesign).
+ * Both surfaces consume the same hook return value via prop drilling,
+ * not by both calling the hook independently — that way there's one
+ * source of truth and React's render cycle stays clean.
+ */
+
+export type RoleFilter = 'all' | 'player' | 'coach' | 'club' | 'brand' | 'umpire'
+
+export type AvailabilityFilter = 'all' | 'open'
+
+export type SortOption = 'newest' | 'completeness'
+
+export interface CommunityFilters {
+  role: RoleFilter
+  position: string[]
+  /** Phase 3 hockey category filter. Replaces the old Men/Women gender radio.
+   * Routed to playing_category for player rows, and array-overlap (or 'any'
+   * sentinel) for coach + umpire rows. Skipped entirely for club + brand. */
+  category: 'all' | PlayingCategory
+  location: string
+  nationality: string
+  availability: AvailabilityFilter
+  brandCategory: string | null
+}
+
+export const defaultFilters = (role: RoleFilter = 'all'): CommunityFilters => ({
+  role,
+  position: [],
+  category: 'all',
+  location: '',
+  nationality: '',
+  availability: 'all',
+  brandCategory: null,
+})
+
+export interface CommunityFiltersState {
+  searchQuery: string
+  setSearchQuery: (value: string) => void
+  filters: CommunityFilters
+  updateFilter: <K extends keyof CommunityFilters>(key: K, value: CommunityFilters[K]) => void
+  clearFilters: () => void
+  togglePosition: (position: string) => void
+  showFilters: boolean
+  setShowFilters: (open: boolean) => void
+  sort: SortOption
+  setSort: (value: SortOption) => void
+  /** Has the user narrowed beyond the chip-driven role? */
+  hasActiveFilters: boolean
+  /** Search query OR any active filter — drives the carousel hide. */
+  isNarrowed: boolean
+}
+
+export function useCommunityFiltersState(
+  roleFilter: RoleFilter | undefined,
+  initialSearchQuery = '',
+): CommunityFiltersState {
+  // searchQuery uses plain useState (not usePageState) because the URL
+  // ?q= param is now the source of truth — CommunityPage wires the URL
+  // ↔ input sync. Two sources of truth (sessionStorage + URL) racing
+  // on first mount was the QA-flagged "?q= deep-link doesn't hydrate"
+  // bug. The initial value comes from the URL via the caller; later
+  // changes propagate to the URL via CommunityPage's sync effect.
+  const [searchQuery, setSearchQuery] = useState(initialSearchQuery)
+  const [filters, setFilters] = usePageState<CommunityFilters>(
+    'community-filters',
+    defaultFilters(roleFilter ?? 'all'),
+  )
+  // showFilters + sort use plain useState (not usePageState) so they
+  // persist across chip-driven route changes within the same Community
+  // session. usePageState is keyed by location.key — a user who picks
+  // "Profile completeness" sort would otherwise see it reset to
+  // "Newest" the moment they tap a chip. Both reset on full page
+  // reload, which is acceptable.
+  const [showFilters, setShowFilters] = useState(false)
+  const [sort, setSort] = useState<SortOption>('newest')
+
+  const updateFilter = useCallback(<K extends keyof CommunityFilters>(key: K, value: CommunityFilters[K]) => {
+    setFilters((prev) => {
+      const next = { ...prev, [key]: value }
+      if (key === 'role') {
+        next.position = []
+        next.category = 'all'
+        if (value !== 'brand') next.brandCategory = null
+      }
+      return next
+    })
+  }, [setFilters])
+
+  const togglePosition = useCallback((position: string) => {
+    setFilters((prev) => ({
+      ...prev,
+      position: prev.position.includes(position)
+        ? prev.position.filter((p) => p !== position)
+        : [...prev.position, position],
+    }))
+  }, [setFilters])
+
+  const clearFilters = useCallback(() => {
+    setFilters(defaultFilters(roleFilter ?? 'all'))
+    setSearchQuery('')
+  }, [roleFilter, setFilters, setSearchQuery])
+
+  const hasActiveFilters = useMemo(() => {
+    const expectedRole = roleFilter ?? 'all'
+    return (
+      filters.role !== expectedRole ||
+      filters.brandCategory !== null ||
+      filters.position.length > 0 ||
+      filters.category !== 'all' ||
+      filters.location.trim() !== '' ||
+      filters.nationality.trim() !== '' ||
+      filters.availability !== 'all'
+    )
+  }, [filters, roleFilter])
+
+  const isNarrowed = useMemo(
+    () => searchQuery.trim().length > 0 || hasActiveFilters,
+    [searchQuery, hasActiveFilters],
+  )
+
+  return {
+    searchQuery,
+    setSearchQuery,
+    filters,
+    updateFilter,
+    clearFilters,
+    togglePosition,
+    showFilters,
+    setShowFilters,
+    sort,
+    setSort,
+    hasActiveFilters,
+    isNarrowed,
+  }
+}
