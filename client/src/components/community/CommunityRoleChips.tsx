@@ -3,7 +3,11 @@ import { useNavigate } from 'react-router-dom'
 import type { CommunityTab } from './CommunityTabSwitcher'
 
 interface RoleChip {
-  id: Extract<CommunityTab, 'all' | 'players' | 'coaches' | 'clubs' | 'umpires'>
+  // Brands deliberately routes off this page to /marketplace (the
+  // canonical brand-discovery surface) — keeping the chip in the list
+  // for parity with the May 2026 spec without changing the IA. The chip
+  // visually renders but never lands as the activeTab.
+  id: Extract<CommunityTab, 'all' | 'players' | 'coaches' | 'clubs' | 'umpires'> | 'brands'
   label: string
   path: string
 }
@@ -14,6 +18,7 @@ const CHIPS: RoleChip[] = [
   { id: 'coaches', label: 'Coaches', path: '/community/coaches' },
   { id: 'clubs', label: 'Clubs', path: '/community/clubs' },
   { id: 'umpires', label: 'Umpires', path: '/community/umpires' },
+  { id: 'brands', label: 'Brands', path: '/marketplace' },
 ]
 
 interface CommunityRoleChipsProps {
@@ -45,7 +50,7 @@ export function CommunityRoleChips({ activeTab }: CommunityRoleChipsProps) {
             key={chip.id}
             ref={isActive ? activeChipRef : undefined}
             onClick={() => navigate(chip.path)}
-            aria-pressed={isActive}
+            aria-pressed={isActive ? 'true' : 'false'}
             className={`flex-shrink-0 inline-flex items-center px-3.5 py-1.5 rounded-full text-sm font-medium transition-colors border ${
               isActive
                 ? 'bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white border-transparent shadow-sm'

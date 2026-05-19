@@ -17,6 +17,7 @@ import {
   PeopleListView,
   QuestionsListView,
 } from '@/components/community'
+import { TopCommunityMembersCarousel } from '@/components/community/TopCommunityMembersCarousel'
 import type { CommunityTab } from '@/components/community'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 
@@ -49,6 +50,19 @@ export default function CommunityPage() {
 
   const isMembers = activeTab !== 'questions'
 
+  // Map the chip tab id to the RPC's role filter. 'all' → undefined so
+  // the carousel returns top across all roles (excludes brand per IA).
+  const carouselRoleFilter: 'player' | 'coach' | 'club' | 'umpire' | undefined =
+    activeTab === 'players'
+      ? 'player'
+      : activeTab === 'coaches'
+        ? 'coach'
+        : activeTab === 'clubs'
+          ? 'club'
+          : activeTab === 'umpires'
+            ? 'umpire'
+            : undefined
+
   return (
     <div className="min-h-screen bg-gray-50 overflow-x-hidden">
       <Header />
@@ -73,14 +87,33 @@ export default function CommunityPage() {
           </div>
         )}
 
+        {/* Top community members carousel — only on Members modes, not
+            Questions. Refreshes when role chip changes (key) so the
+            carousel re-fetches with the new role filter. */}
+        {isMembers && (
+          <TopCommunityMembersCarousel
+            key={`top-${activeTab}-${refreshKey}`}
+            roleFilter={carouselRoleFilter}
+            viewAllAnchorId="community-all-members"
+          />
+        )}
+
         {/* Content based on active tab */}
         <div key={`${activeTab}-${refreshKey}`} className="animate-fade-in">
-          {activeTab === 'all' && <PeopleListView />}
-          {activeTab === 'players' && <PeopleListView roleFilter="player" />}
-          {activeTab === 'coaches' && <PeopleListView roleFilter="coach" />}
-          {activeTab === 'clubs' && <PeopleListView roleFilter="club" />}
-          {activeTab === 'umpires' && <PeopleListView roleFilter="umpire" />}
-          {activeTab === 'questions' && <QuestionsListView />}
+          {isMembers ? (
+            // Anchor id picked up by the carousel's "View all" scroll.
+            // Wraps the list so the user lands on the All members
+            // section header rather than the search bar.
+            <div id="community-all-members" className="scroll-mt-20">
+              {activeTab === 'all' && <PeopleListView />}
+              {activeTab === 'players' && <PeopleListView roleFilter="player" />}
+              {activeTab === 'coaches' && <PeopleListView roleFilter="coach" />}
+              {activeTab === 'clubs' && <PeopleListView roleFilter="club" />}
+              {activeTab === 'umpires' && <PeopleListView roleFilter="umpire" />}
+            </div>
+          ) : (
+            <QuestionsListView />
+          )}
         </div>
       </main>
       </PullToRefresh>

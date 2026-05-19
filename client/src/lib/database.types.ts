@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.1"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       admin_audit_logs: {
@@ -1831,6 +1856,78 @@ export type Database = {
           },
         ]
       }
+      player_full_game_videos: {
+        Row: {
+          competition: string | null
+          created_at: string
+          display_order: number
+          id: string
+          match_date: string | null
+          match_title: string
+          minutes_played: number | null
+          notes: string | null
+          opponent_team: string | null
+          player_team: string | null
+          position_played: string | null
+          shirt_number: number | null
+          updated_at: string
+          user_id: string
+          video_url: string
+          visibility: string
+        }
+        Insert: {
+          competition?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          match_date?: string | null
+          match_title: string
+          minutes_played?: number | null
+          notes?: string | null
+          opponent_team?: string | null
+          player_team?: string | null
+          position_played?: string | null
+          shirt_number?: number | null
+          updated_at?: string
+          user_id: string
+          video_url: string
+          visibility?: string
+        }
+        Update: {
+          competition?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          match_date?: string | null
+          match_title?: string
+          minutes_played?: number | null
+          notes?: string | null
+          opponent_team?: string | null
+          player_team?: string | null
+          position_played?: string | null
+          shirt_number?: number | null
+          updated_at?: string
+          user_id?: string
+          video_url?: string
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_full_game_videos_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_full_game_videos_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       post_comments: {
         Row: {
           author_id: string
@@ -1919,71 +2016,6 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles_pending_country_review"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      player_full_game_videos: {
-        Row: {
-          competition: string | null
-          created_at: string
-          display_order: number
-          id: string
-          match_date: string | null
-          match_title: string
-          minutes_played: number | null
-          notes: string | null
-          opponent_team: string | null
-          player_team: string | null
-          position_played: string | null
-          shirt_number: number | null
-          updated_at: string
-          user_id: string
-          video_url: string
-          visibility: string
-        }
-        Insert: {
-          competition?: string | null
-          created_at?: string
-          display_order?: number
-          id?: string
-          match_date?: string | null
-          match_title: string
-          minutes_played?: number | null
-          notes?: string | null
-          opponent_team?: string | null
-          player_team?: string | null
-          position_played?: string | null
-          shirt_number?: number | null
-          updated_at?: string
-          user_id: string
-          video_url: string
-          visibility?: string
-        }
-        Update: {
-          competition?: string | null
-          created_at?: string
-          display_order?: number
-          id?: string
-          match_date?: string | null
-          match_title?: string
-          minutes_played?: number | null
-          notes?: string | null
-          opponent_team?: string | null
-          player_team?: string | null
-          position_played?: string | null
-          shirt_number?: number | null
-          updated_at?: string
-          user_id?: string
-          video_url?: string
-          visibility?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "player_full_game_videos_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -2483,7 +2515,6 @@ export type Database = {
           brand_representation: string | null
           browse_anonymously: boolean
           career_entry_count: number
-          full_game_video_count: number
           category_confirmation_needed: boolean
           club_bio: string | null
           club_history: string | null
@@ -2499,6 +2530,7 @@ export type Database = {
           date_of_birth: string | null
           email: string
           federation: string | null
+          full_game_video_count: number
           full_name: string | null
           gender: string | null
           highlight_video_url: string | null
@@ -2539,9 +2571,11 @@ export type Database = {
           playing_category: string | null
           position: string | null
           post_count: number
+          profile_completeness_pct: number
           role: string
           search_vector: unknown
           secondary_position: string | null
+          show_last_active: boolean
           social_links: Json | null
           umpire_appointment_count: number
           umpire_level: string | null
@@ -2573,10 +2607,10 @@ export type Database = {
           brand_representation?: string | null
           browse_anonymously?: boolean
           career_entry_count?: number
-          full_game_video_count?: number
           category_confirmation_needed?: boolean
           club_bio?: string | null
           club_history?: string | null
+          coach_recruits_for_team?: boolean
           coach_specialization?: string | null
           coach_specialization_custom?: string | null
           coaching_categories?: string[] | null
@@ -2588,6 +2622,7 @@ export type Database = {
           date_of_birth?: string | null
           email: string
           federation?: string | null
+          full_game_video_count?: number
           full_name?: string | null
           gender?: string | null
           highlight_video_url?: string | null
@@ -2628,9 +2663,11 @@ export type Database = {
           playing_category?: string | null
           position?: string | null
           post_count?: number
+          profile_completeness_pct?: number
           role: string
           search_vector?: unknown
           secondary_position?: string | null
+          show_last_active?: boolean
           social_links?: Json | null
           umpire_appointment_count?: number
           umpire_level?: string | null
@@ -2662,10 +2699,10 @@ export type Database = {
           brand_representation?: string | null
           browse_anonymously?: boolean
           career_entry_count?: number
-          full_game_video_count?: number
           category_confirmation_needed?: boolean
           club_bio?: string | null
           club_history?: string | null
+          coach_recruits_for_team?: boolean
           coach_specialization?: string | null
           coach_specialization_custom?: string | null
           coaching_categories?: string[] | null
@@ -2677,6 +2714,7 @@ export type Database = {
           date_of_birth?: string | null
           email?: string
           federation?: string | null
+          full_game_video_count?: number
           full_name?: string | null
           gender?: string | null
           highlight_video_url?: string | null
@@ -2717,9 +2755,11 @@ export type Database = {
           playing_category?: string | null
           position?: string | null
           post_count?: number
+          profile_completeness_pct?: number
           role?: string
           search_vector?: unknown
           secondary_position?: string | null
+          show_last_active?: boolean
           social_links?: Json | null
           umpire_appointment_count?: number
           umpire_level?: string | null
@@ -2943,6 +2983,59 @@ export type Database = {
           identifier?: string
         }
         Relationships: []
+      }
+      reference_reminder_queue: {
+        Row: {
+          created_at: string
+          id: string
+          processed_at: string | null
+          recipient_id: string
+          suggested_friend_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          processed_at?: string | null
+          recipient_id: string
+          suggested_friend_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          processed_at?: string | null
+          recipient_id?: string
+          suggested_friend_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reference_reminder_queue_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reference_reminder_queue_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: true
+            referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reference_reminder_queue_suggested_friend_id_fkey"
+            columns: ["suggested_friend_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reference_reminder_queue_suggested_friend_id_fkey"
+            columns: ["suggested_friend_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       storage_cleanup_queue: {
         Row: {
@@ -3329,6 +3422,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_pulse_items_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_pending_country_review"
             referencedColumns: ["id"]
           },
         ]
@@ -3928,6 +4028,20 @@ export type Database = {
     Functions: {
       _enqueue_user_post_media: {
         Args: { p_images: Json; p_post_id: string; p_reason: string }
+        Returns: undefined
+      }
+      _insert_pulse_item: {
+        Args: {
+          p_frequency_days?: number
+          p_item_type: string
+          p_metadata: Json
+          p_priority: number
+          p_user_id: string
+        }
+        Returns: boolean
+      }
+      _maybe_insert_snapshot_gain_celebration: {
+        Args: { p_metadata?: Json; p_signal: string; p_user_id: string }
         Returns: undefined
       }
       _phs_normalize: {
@@ -4690,6 +4804,7 @@ export type Database = {
         Returns: Json
       }
       check_brand_follow_status: { Args: { p_brand_id: string }; Returns: Json }
+      check_brand_slug_available: { Args: { p_slug: string }; Returns: boolean }
       check_login_rate_limit: { Args: { p_email: string }; Returns: Json }
       check_message_rate_limit: { Args: { p_user_id: string }; Returns: Json }
       check_password_reset_rate_limit: {
@@ -4768,7 +4883,6 @@ export type Database = {
           brand_representation: string | null
           browse_anonymously: boolean
           career_entry_count: number
-          full_game_video_count: number
           category_confirmation_needed: boolean
           club_bio: string | null
           club_history: string | null
@@ -4784,6 +4898,7 @@ export type Database = {
           date_of_birth: string | null
           email: string
           federation: string | null
+          full_game_video_count: number
           full_name: string | null
           gender: string | null
           highlight_video_url: string | null
@@ -4824,9 +4939,11 @@ export type Database = {
           playing_category: string | null
           position: string | null
           post_count: number
+          profile_completeness_pct: number
           role: string
           search_vector: unknown
           secondary_position: string | null
+          show_last_active: boolean
           social_links: Json | null
           umpire_appointment_count: number
           umpire_level: string | null
@@ -4851,6 +4968,10 @@ export type Database = {
         }
       }
       compute_product_health_score: { Args: never; Returns: Json }
+      compute_profile_completeness_pct: {
+        Args: { p: Database["public"]["Tables"]["profiles"]["Row"] }
+        Returns: number
+      }
       confirm_availability: { Args: never; Returns: undefined }
       content_check: { Args: { p_text: string }; Returns: string }
       create_and_claim_world_club: {
@@ -4871,6 +4992,8 @@ export type Database = {
           p_instagram_url?: string
           p_logo_url?: string
           p_name: string
+          p_profile_avatar_url?: string
+          p_profile_full_name?: string
           p_slug: string
           p_website_url?: string
         }
@@ -4911,7 +5034,6 @@ export type Database = {
           brand_representation: string | null
           browse_anonymously: boolean
           career_entry_count: number
-          full_game_video_count: number
           category_confirmation_needed: boolean
           club_bio: string | null
           club_history: string | null
@@ -4927,6 +5049,7 @@ export type Database = {
           date_of_birth: string | null
           email: string
           federation: string | null
+          full_game_video_count: number
           full_name: string | null
           gender: string | null
           highlight_video_url: string | null
@@ -4967,9 +5090,11 @@ export type Database = {
           playing_category: string | null
           position: string | null
           post_count: number
+          profile_completeness_pct: number
           role: string
           search_vector: unknown
           secondary_position: string | null
+          show_last_active: boolean
           social_links: Json | null
           umpire_appointment_count: number
           umpire_level: string | null
@@ -5038,54 +5163,31 @@ export type Database = {
         Returns: number
       }
       delete_user_post: { Args: { p_post_id: string }; Returns: Json }
-      discover_profiles:
-        | {
-            Args: {
-              p_availability?: string
-              p_base_country_ids?: number[]
-              p_base_location?: string
-              p_country_ids?: number[]
-              p_eu_passport?: boolean
-              p_gender?: string
-              p_league_ids?: number[]
-              p_limit?: number
-              p_max_age?: number
-              p_min_age?: number
-              p_min_career_entries?: number
-              p_min_references?: number
-              p_nationality_country_ids?: number[]
-              p_offset?: number
-              p_positions?: string[]
-              p_roles?: string[]
-              p_search_text?: string
-              p_sort_by?: string
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_availability?: string
-              p_base_country_ids?: number[]
-              p_base_location?: string
-              p_coach_specializations?: string[]
-              p_country_ids?: number[]
-              p_eu_passport?: boolean
-              p_gender?: string
-              p_league_ids?: number[]
-              p_limit?: number
-              p_max_age?: number
-              p_min_age?: number
-              p_min_career_entries?: number
-              p_min_references?: number
-              p_nationality_country_ids?: number[]
-              p_offset?: number
-              p_positions?: string[]
-              p_roles?: string[]
-              p_search_text?: string
-              p_sort_by?: string
-            }
-            Returns: Json
-          }
+      discover_profiles: {
+        Args: {
+          p_availability?: string
+          p_base_country_ids?: number[]
+          p_base_location?: string
+          p_coach_specializations?: string[]
+          p_country_ids?: number[]
+          p_eu_passport?: boolean
+          p_gender?: string
+          p_league_ids?: number[]
+          p_limit?: number
+          p_max_age?: number
+          p_min_age?: number
+          p_min_career_entries?: number
+          p_min_references?: number
+          p_nationality_country_ids?: number[]
+          p_offset?: number
+          p_positions?: string[]
+          p_roles?: string[]
+          p_search_text?: string
+          p_sort_by?: string
+          p_target_category?: string
+        }
+        Returns: Json
+      }
       edit_endorsement: {
         Args: { p_endorsement: string; p_reference_id: string }
         Returns: {
@@ -5111,6 +5213,7 @@ export type Database = {
         }
       }
       engagement_heartbeat_interval_seconds: { Args: never; Returns: number }
+      enqueue_availability_check_ins: { Args: never; Returns: number }
       enqueue_message_digests: { Args: never; Returns: undefined }
       enqueue_notification: {
         Args: {
@@ -5129,6 +5232,8 @@ export type Database = {
         Returns: number
       }
       enqueue_profile_view_emails: { Args: never; Returns: undefined }
+      enqueue_profile_view_pulse_items: { Args: never; Returns: number }
+      enqueue_reference_reminders: { Args: never; Returns: undefined }
       enqueue_storage_objects_for_prefix: {
         Args: { p_bucket: string; p_prefix: string; p_reason?: string }
         Returns: number
@@ -5319,19 +5424,6 @@ export type Database = {
           viewer_id: string
         }[]
       }
-      get_my_reference_requests: {
-        Args: never
-        Returns: {
-          created_at: string
-          id: string
-          reference_id: string
-          relationship_type: string
-          request_note: string
-          requester_id: string
-          requester_profile: Json
-          status: Database["public"]["Enums"]["profile_reference_status"]
-        }[]
-      }
       get_my_pulse: {
         Args: { p_limit?: number }
         Returns: {
@@ -5345,6 +5437,25 @@ export type Database = {
           priority: number
           seen_at: string | null
           user_id: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "user_pulse_items"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      get_my_reference_requests: {
+        Args: never
+        Returns: {
+          created_at: string
+          id: string
+          reference_id: string
+          relationship_type: string
+          request_note: string
+          requester_id: string
+          requester_profile: Json
+          status: Database["public"]["Enums"]["profile_reference_status"]
         }[]
       }
       get_my_references: {
@@ -5429,6 +5540,31 @@ export type Database = {
           requester_id: string
           requester_profile: Json
           status: Database["public"]["Enums"]["profile_reference_status"]
+        }[]
+      }
+      get_top_community_members: {
+        Args: { p_limit?: number; p_role?: string }
+        Returns: {
+          accepted_friend_count: number
+          accepted_reference_count: number
+          avatar_url: string
+          base_location: string
+          current_club: string
+          current_world_club_id: string
+          full_name: string
+          id: string
+          is_verified: boolean
+          last_active_at: string
+          nationality: string
+          nationality_country_id: number
+          nationality2_country_id: number
+          open_to_coach: boolean
+          open_to_opportunities: boolean
+          open_to_play: boolean
+          position: string
+          profile_completeness_pct: number
+          role: string
+          username: string
         }[]
       }
       get_user_conversations: {
@@ -5522,6 +5658,12 @@ export type Database = {
           seen_at: string | null
           user_id: string
         }
+        SetofOptions: {
+          from: "*"
+          to: "user_pulse_items"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       mark_pulse_clicked: {
         Args: { p_pulse_id: string }
@@ -5536,6 +5678,12 @@ export type Database = {
           priority: number
           seen_at: string | null
           user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "user_pulse_items"
+          isOneToOne: true
+          isSetofReturn: false
         }
       }
       mark_pulse_dismissed: {
@@ -5552,11 +5700,14 @@ export type Database = {
           seen_at: string | null
           user_id: string
         }
+        SetofOptions: {
+          from: "*"
+          to: "user_pulse_items"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
-      mark_pulse_seen: {
-        Args: { p_pulse_ids: string[] }
-        Returns: number
-      }
+      mark_pulse_seen: { Args: { p_pulse_ids: string[] }; Returns: number }
       match_text_to_country: {
         Args: { input_text: string }
         Returns: {
@@ -6074,6 +6225,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       application_status: ["pending", "shortlisted", "maybe", "rejected"],
