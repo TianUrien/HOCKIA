@@ -19,6 +19,8 @@ import ProfilePostsTab from '@/components/ProfilePostsTab'
 import SignInPromptModal from '@/components/SignInPromptModal'
 import HeroIdentityCard from '@/components/dashboard/bento/HeroIdentityCard'
 import PlayerBentoGrid from '@/components/dashboard/bento/PlayerBentoGrid'
+import PlayerCommunityHub from '@/components/community/PlayerCommunityHub'
+import PublicCommunityView from '@/components/community/PublicCommunityView'
 import { ProfileViewersSection } from '@/components/ProfileViewersSection'
 import type { Profile } from '@/lib/supabase'
 import { supabase } from '@/lib/supabase'
@@ -33,7 +35,18 @@ import { useTabDeepLinkScroll } from '@/hooks/useTabDeepLinkScroll'
 // `?section=` query param → DOM anchor id. Used by the deep-link scroll
 // hook so notifications like ?tab=profile&section=viewers land on the
 // right card instead of the top of the page.
-const PLAYER_SECTION_ANCHORS = { viewers: 'profile-viewers' } as const
+//
+// The May 2026 Community redesign added `connections` and `references` so
+// the Hero pills (Connections / References under the player's name) can
+// route to the unified /community hub and scroll to the relevant area
+// instead of bouncing the user to the old focused tabs.
+const PLAYER_SECTION_ANCHORS = {
+  viewers: 'profile-viewers',
+  connections: 'community-connections',
+  references: 'community-references',
+  comments: 'community-comments',
+  posts: 'community-posts',
+} as const
 
 type TabType = 'profile' | 'media' | 'journey' | 'references' | 'friends' | 'comments' | 'posts' | 'community'
 
@@ -96,10 +109,32 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
   // mount by the redirect effect below.
   const routeParams = useParams<{ section?: string; username?: string; id?: string }>()
   const sectionFromRoute = routeParams.section as TabType | undefined
+  const sectionIsValid = sectionFromRoute
+    ? (VALID_TABS as string[]).includes(sectionFromRoute)
+    : true
   const activeTab: TabType =
     sectionFromRoute && (VALID_TABS as string[]).includes(sectionFromRoute)
       ? sectionFromRoute
       : 'profile'
+
+  // /dashboard/profile/<unknown> used to silently render the Bento Grid,
+  // which meant typos and stale notification links landed on the wrong
+  // surface with no signal. Redirect unknown segments back to the
+  // dashboard landing so the URL state and rendered content agree.
+  useEffect(() => {
+    if (sectionFromRoute && !sectionIsValid) {
+      if (readOnly) {
+        const base = routeParams.username
+          ? `/players/${routeParams.username}`
+          : routeParams.id
+            ? `/players/id/${routeParams.id}`
+            : null
+        if (base) navigate(base, { replace: true })
+      } else {
+        navigate('/dashboard/profile', { replace: true })
+      }
+    }
+  }, [sectionFromRoute, sectionIsValid, readOnly, routeParams.username, routeParams.id, navigate])
   const [showEditModal, setShowEditModal] = useState(false)
   const [showAddVideoModal, setShowAddVideoModal] = useState(false)
   const [showSignInPrompt, setShowSignInPrompt] = useState(false)
@@ -371,12 +406,31 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
     navigate(`${base}/${slug}`)
   }
 
-  const handleReferencesClick = () => {
-    trackReferenceBadgeClick('player', profile.accepted_reference_count ?? 0)
-    handleTabChange('references')
+  // Hero pills route to the unified Community hub (May 2026 redesign).
+  // We bypass handleTabChange because we want to add a `?section=` param
+  // that the deep-link scroll hook reads to scroll to the right card.
+  // handleTabChange preserves existing params but doesn't know how to add
+  // a section param of its own.
+  const navigateToCommunitySection = (section: 'connections' | 'references') => {
+    if (readOnly) {
+      const base = routeParams.username
+        ? `/players/${routeParams.username}`
+        : routeParams.id
+          ? `/players/id/${routeParams.id}`
+          : null
+      if (!base) return
+      navigate(`${base}/community?section=${section}`, { replace: true })
+    } else {
+      navigate(`/dashboard/profile/community?section=${section}`, { replace: true })
+    }
   }
 
-  const handleFriendsClick = () => handleTabChange('friends')
+  const handleReferencesClick = () => {
+    trackReferenceBadgeClick('player', profile.accepted_reference_count ?? 0)
+    navigateToCommunitySection('references')
+  }
+
+  const handleFriendsClick = () => navigateToCommunitySection('connections')
 
   const handleViewOpportunities = () => navigate('/opportunities')
 
@@ -525,48 +579,24 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
               )}
 
               {activeTab === 'community' && (
-                // Unified Community view — opened from the Community
-                // card's "Go to community" CTA. Stacks all four social
-                // surfaces vertically. Individual tile clicks on the
-                // CommunityCard still deep-link to their dedicated
-                // section routes (e.g. /dashboard/profile/friends) so
-                // users have both: a hub view AND focused views.
-                <div className="animate-fade-in space-y-10">
-                  <section id="community-friends" className="scroll-mt-20">
-                    <FriendsTab
-                      profileId={profile.id}
-                      readOnly={readOnly}
-                      profileRole={profile.role}
-                      hideReferences
+                // Redesigned Community page (May 2026) — owner sees the
+                // PlayerCommunityHub (credibility stats card, references
+                // section, segmented connections section, comments,
+                // posts). Visitor sees the slimmer PublicCommunityView.
+                // The dedicated section routes (/friends, /references,
+                // /comments, /posts) still render the legacy focused
+                // surfaces — this hub is the unified view.
+                <div className="animate-fade-in">
+                  {readOnly ? (
+                    <PublicCommunityView
+                      profile={profile as Pick<Profile, 'id' | 'role' | 'full_name' | 'username' | 'accepted_friend_count' | 'accepted_reference_count' | 'post_count'>}
                     />
-                  </section>
-
-                  <section id="community-references" className="scroll-mt-20 pt-8 border-t border-gray-100">
-                    {readOnly ? (
-                      <PublicReferencesSection
-                        profileId={profile.id}
-                        profileName={profile.full_name ?? profile.username ?? null}
-                      />
-                    ) : (
-                      <ReferencesTab
-                        profileId={profile.id}
-                        readOnly={readOnly}
-                        profileRole={profile.role}
-                      />
-                    )}
-                  </section>
-
-                  <section id="community-comments" className="scroll-mt-20 pt-8 border-t border-gray-100">
-                    <CommentsTab
-                      profileId={profile.id}
+                  ) : (
+                    <PlayerCommunityHub
+                      profile={profile as Pick<Profile, 'id' | 'role' | 'full_name' | 'username' | 'accepted_friend_count' | 'accepted_reference_count' | 'post_count'>}
                       highlightedCommentIds={highlightedComments}
-                      profileRole={profile.role}
                     />
-                  </section>
-
-                  <section id="community-posts" className="scroll-mt-20 pt-8 border-t border-gray-100">
-                    <ProfilePostsTab profileId={profile.id} readOnly={readOnly} />
-                  </section>
+                  )}
                 </div>
               )}
 

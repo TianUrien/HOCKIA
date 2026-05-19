@@ -17,19 +17,19 @@ interface ReferencesTabProps {
  * button) so cross-tab navigation pre-fills the AddReferenceModal.
  */
 export default function ReferencesTab({ profileId, readOnly = false, profileRole }: ReferencesTabProps) {
-  const [searchParams, setSearchParams] = useSearchParams()
+  const [searchParams] = useSearchParams()
   const askParam = searchParams.get('ask')
   const [pendingAsk, setPendingAsk] = useState<string | null>(null)
 
-  // Pull the ask param into local state once and clear it from the URL
-  // so refreshing or copy-paste doesn't keep re-opening the modal.
+  // Pull the ask param into local state. We deliberately do NOT strip it
+  // from the URL so the link stays shareable / refreshable — paste it,
+  // get the same modal. Trade-off: refresh re-opens the modal, which the
+  // user can dismiss via the modal's close button. Re-fire if the param
+  // changes (e.g. switching friends from the same tab session).
   useEffect(() => {
     if (!askParam) return
     setPendingAsk(askParam)
-    const next = new URLSearchParams(searchParams)
-    next.delete('ask')
-    setSearchParams(next, { replace: true })
-  }, [askParam, searchParams, setSearchParams])
+  }, [askParam])
 
   const { friendOptions } = useReferenceFriendOptions(profileId)
   const safeFriendOptions = useMemo(() => friendOptions ?? [], [friendOptions])

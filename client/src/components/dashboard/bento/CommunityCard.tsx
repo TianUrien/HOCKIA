@@ -57,10 +57,14 @@ export default function CommunityCard({ profile, onOpenTab }: CommunityCardProps
   return (
     <DashboardCard
       icon={Users}
-      title="Community"
+      // "My Network" is the user's personal social hub (friends, refs,
+      // comments, posts on their own profile). The bottom-nav "Community"
+      // is the global HOCKIA directory — same word, different scope.
+      // Renaming this card resolves the label collision QA flagged.
+      title="My Network"
       subtitle="Friends, references, comments and posts"
-      ctaLabel="Go to community"
-      // Opens the unified Community page (all four sections stacked).
+      ctaLabel="Go to my network"
+      // Opens the unified My Network page (all four sections stacked).
       // The individual tile clicks below still deep-link to their own
       // dedicated section pages so users have both: a hub view AND
       // focused views.
@@ -70,7 +74,7 @@ export default function CommunityCard({ profile, onOpenTab }: CommunityCardProps
       <div className="grid grid-cols-2 gap-2.5">
         <Tile
           icon={Users}
-          label="Friends"
+          label="Connections"
           count={friends}
           onClick={() => onOpenTab('friends')}
         />

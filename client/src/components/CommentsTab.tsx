@@ -24,6 +24,12 @@ interface CommentsTabProps {
   /** Profile role being viewed — drives tone of composer placeholder
    * and empty-state copy. Optional; defaults to generic wording. */
   profileRole?: Profile['role'] | null
+  /** When true, force the visitor-mode UX even if the auth'd user owns
+   * this profile. Used by the "view as visitor" public-profile preview
+   * so the owner sees what other members actually see — the auth'd
+   * user's own profile id matches but they want the visitor experience.
+   * Defaults to false (auto-detect ownership). */
+  forceVisitorMode?: boolean
 }
 
 /** Role-aware composer placeholder — keeps tone appropriate to the
@@ -135,7 +141,7 @@ const COMMENT_COMPOSER_INFO = (
   </div>
 )
 
-export default function CommentsTab({ profileId, highlightedCommentIds, profileRole }: CommentsTabProps) {
+export default function CommentsTab({ profileId, highlightedCommentIds, profileRole, forceVisitorMode = false }: CommentsTabProps) {
   const { profile: authProfile, user } = useAuthStore()
   const { addToast } = useToastStore()
 
@@ -154,7 +160,11 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
   const [reportingComment, setReportingComment] = useState<{ id: string; authorId: string; authorName: string } | null>(null)
   const [showRequestFeedback, setShowRequestFeedback] = useState(false)
 
-  const isOwner = authProfile?.id === profileId
+  // Auto-detect ownership unless the parent forces visitor mode (used by
+  // the "view as visitor" public-profile preview so the owner can see
+  // exactly what other members see — auth id matches profileId but the
+  // owner-only CTAs must NOT appear).
+  const isOwner = !forceVisitorMode && authProfile?.id === profileId
 
   // Compute the owner's public profile URL for the "Ask for feedback" share link.
   const ownerProfileUrl = useMemo(() => {
@@ -570,6 +580,14 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
                 <Share2 className="h-4 w-4" />
                 Ask for feedback
               </button>
+            </div>
+          ) : forceVisitorMode && authProfile?.id === profileId ? (
+            // Owner is viewing their own public profile as a visitor —
+            // suppress both the composer (can't comment on yourself) and
+            // the owner-only "Ask for feedback" CTA. Neutral preview copy.
+            <div className="flex items-center gap-3">
+              <ShieldAlert className="h-5 w-5 text-gray-400" />
+              <p>This is how other members see your comments section. Switch back to your dashboard to ask for feedback.</p>
             </div>
           ) : (
             <div className="flex items-center gap-3">

@@ -172,7 +172,7 @@ describe('FriendsTab', () => {
     await waitFor(() => {
       expect(supabaseState.lastUpdatePayload).toEqual({ status: 'accepted' })
       expect(supabaseState.updateEqSpy).toHaveBeenCalledWith('id', 'edge-1')
-      expect(toastMocks.addToast).toHaveBeenCalledWith('Friend request accepted.', 'success')
+      expect(toastMocks.addToast).toHaveBeenCalledWith('Connection request accepted.', 'success')
     })
   })
 
@@ -190,8 +190,8 @@ describe('FriendsTab', () => {
 
     renderFriendsTab()
 
-    expect(await screen.findByText(/Friends since/i)).toBeInTheDocument()
-    expect(screen.getByText('1 friend')).toBeInTheDocument()
+    expect(await screen.findByText(/Connected/i)).toBeInTheDocument()
+    expect(screen.getByText('1 connection')).toBeInTheDocument()
     await waitFor(() => {
       expect(trustedReferencesCalls.at(-1)).toEqual(
         expect.objectContaining({ profileId: 'user-1', friendOptions: expect.arrayContaining([expect.objectContaining({ id: 'friend-1' })]) })
@@ -273,9 +273,10 @@ describe('FriendsTab', () => {
   it('shows empty state when no connections and user is owner', async () => {
     supabaseState.edgesResult = { data: [], error: null }
     renderFriendsTab()
-    expect(await screen.findByText(/No friends yet/i)).toBeInTheDocument()
-    // Owner gets a "Find friends" CTA
-    expect(screen.getByRole('button', { name: /Find friends/i })).toBeInTheDocument()
+    expect(await screen.findByText(/No connections yet/i)).toBeInTheDocument()
+    // Owner gets a "Find people" CTA (renamed from "Find friends" in the
+    // May 2026 Community redesign microcopy refresh).
+    expect(screen.getByRole('button', { name: /Find people/i })).toBeInTheDocument()
   })
 
   it('shows skeleton placeholders before fetch resolves', async () => {
@@ -285,15 +286,16 @@ describe('FriendsTab', () => {
     expect(container.querySelectorAll('.animate-pulse').length).toBeGreaterThan(0)
     // Then wait for the empty state so the test doesn't leave pending state
     // updates and trip act() warnings under React strict-mode tests.
-    expect(await screen.findByText(/No friends yet/i)).toBeInTheDocument()
+    expect(await screen.findByText(/No connections yet/i)).toBeInTheDocument()
   })
 
-  it('renders Incoming Requests section with deep-link anchor when isOwner', async () => {
+  it('renders Requests section with deep-link anchor when isOwner', async () => {
     supabaseState.edgesResult = { data: [], error: null }
     const { container } = renderFriendsTab()
     // Wait for fetch to settle (data is empty so component renders the
-    // "no incoming requests" state under the anchor).
-    await screen.findByText('Incoming Requests')
+    // "no new requests" state under the anchor). "Incoming Requests"
+    // heading was renamed to "Requests" in the Community redesign.
+    await screen.findByText('Requests')
     const anchor = container.querySelector('[data-deeplink-section="incoming-requests"]')
     expect(anchor).not.toBeNull()
   })

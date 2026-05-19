@@ -405,6 +405,10 @@ function App() {
                     label is "Dashboard" and users typed it directly. Redirect
                     to the canonical /dashboard/profile. */}
                 <Route path="/dashboard" element={<Navigate to="/dashboard/profile" replace />} />
+                {/* /dashboard/community was a stale link target that 404'd
+                    in the wild (QA found it in a notification path). Send
+                    it to the player Community hub instead of nowhere. */}
+                <Route path="/dashboard/community" element={<Navigate to="/dashboard/profile/community" replace />} />
                 <Route path="/dashboard/profile" element={<ErrorBoundary fallback={<RouteErrorFallback />}><DashboardRouter /></ErrorBoundary>} />
                 {/* PR2 — promote the player Bento Grid card CTAs from
                     ?tab=X to /:section route segments. Coach/Club/Umpire/

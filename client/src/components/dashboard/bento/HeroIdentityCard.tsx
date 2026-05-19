@@ -147,19 +147,20 @@ export default function HeroIdentityCard({
         </div>
       </div>
 
-      {/* STAT ROW — Friends + References, lightweight inline pattern.
+      {/* STAT ROW — Connections + References, lightweight inline pattern.
           Renders as a single horizontal row with whitespace-nowrap per
           stat so labels never get clipped on narrow widths. Wraps to a
           second line on very small screens instead of truncating. Both
-          taps navigate; the zero state for References stays clean (just
-          "0" with chevron) and reads as "tap to set up your first". */}
+          pills route to the unified Community hub (May 2026 redesign);
+          each one scrolls to the relevant section on arrival via the
+          ?section= query param the hub reads on mount. */}
       <div
         className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2"
         data-testid="hero-credibility-tiles"
       >
         <CredibilityStat
           icon={Users}
-          label="Friends"
+          label="Connections"
           count={friendCount}
           onClick={onFriendsClick}
           testId="hero-friends-tile"

@@ -359,6 +359,13 @@ export default function AddReferenceModal({ isOpen, onClose, friends, onSubmit, 
             {/* Relationship type */}
             <div>
               <label htmlFor={relationshipSelectId} className="text-sm font-medium text-gray-700">Relationship</label>
+              {/* Tell the user WHY the options here look different than they
+                  might expect — relationship choices are filtered by the
+                  selected friend's role (umpires get match/tournament
+                  context, players get team/coach context, etc.). */}
+              <p className="mt-1 text-xs text-gray-500">
+                Options reflect how {selectedFriend?.fullName?.split(' ')[0] || 'this person'} could vouch for you based on their role.
+              </p>
               <select
                 id={relationshipSelectId}
                 className={cn(
@@ -392,7 +399,7 @@ export default function AddReferenceModal({ isOpen, onClose, friends, onSubmit, 
               </label>
               <textarea
                 value={requestNote}
-                onChange={(event) => setRequestNote(event.target.value)}
+                onChange={(event) => setRequestNote(event.target.value.slice(0, MAX_NOTE_LENGTH))}
                 placeholder="Brief context for this request"
                 rows={3}
                 autoCapitalize="sentences"
@@ -400,7 +407,17 @@ export default function AddReferenceModal({ isOpen, onClose, friends, onSubmit, 
                 className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-hockia-primary focus:outline-none"
                 maxLength={MAX_NOTE_LENGTH}
               />
-              <p className="mt-1 text-right text-xs text-gray-400">{requestNote.length}/{MAX_NOTE_LENGTH}</p>
+              {/* Counter color flips to red past the limit so the UI can't
+                  silently look fine when a programmatic / paste path
+                  bypassed the maxLength attribute. We also slice in
+                  onChange above so the underlying value stays clamped. */}
+              <p
+                className={`mt-1 text-right text-xs ${
+                  requestNote.length > MAX_NOTE_LENGTH ? 'text-red-600 font-medium' : 'text-gray-400'
+                }`}
+              >
+                {requestNote.length}/{MAX_NOTE_LENGTH}
+              </p>
             </div>
 
             {/* Confirmation summary */}
@@ -435,15 +452,33 @@ export default function AddReferenceModal({ isOpen, onClose, friends, onSubmit, 
             </p>
 
             {/* Submit button */}
-            <button
-              type="button"
-              disabled={!selectedFriend || !relationshipType || isSubmitting}
-              onClick={handleSubmit}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/30 transition-opacity disabled:opacity-60"
-            >
-              <UserPlus className="h-4 w-4" />
-              {isSubmitting ? 'Sending...' : 'Send Request'}
-            </button>
+            <div>
+              <button
+                type="button"
+                disabled={
+                  !selectedFriend ||
+                  !relationshipType ||
+                  isSubmitting ||
+                  requestNote.length > MAX_NOTE_LENGTH
+                }
+                onClick={handleSubmit}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/30 transition-opacity disabled:opacity-60"
+              >
+                <UserPlus className="h-4 w-4" />
+                {isSubmitting ? 'Sending...' : 'Send Request'}
+              </button>
+              {/* Helper text explaining why the button is disabled, so a
+                  user staring at a greyed-out CTA knows what's missing. */}
+              {!isSubmitting && (!selectedFriend || !relationshipType || requestNote.length > MAX_NOTE_LENGTH) && (
+                <p className="mt-2 text-center text-xs text-gray-500">
+                  {!selectedFriend
+                    ? 'Select a connection to continue.'
+                    : !relationshipType
+                      ? 'Select a relationship to continue.'
+                      : 'Note exceeds the character limit.'}
+                </p>
+              )}
+            </div>
           </div>
         )}
       </div>
