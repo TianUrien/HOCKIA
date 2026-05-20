@@ -76,6 +76,15 @@ export default function ApplyToVacancyModal({
       return
     }
 
+    // Self-apply guard. The Apply CTA is hidden for publishers on every
+    // surface now, but if a deep link or stale UI path reaches here, an
+    // explicit message beats the generic role-mismatch text the RLS
+    // rejection would otherwise surface ("Only coaches can apply…").
+    if (vacancy.club_id === user.id) {
+      setError("You can't apply to your own opportunity.")
+      return
+    }
+
     setIsSubmitting(true)
     setError(null)
 
@@ -185,7 +194,7 @@ export default function ApplyToVacancyModal({
           </div>
 
           <p id={descriptionId} className="text-sm text-gray-600 mb-6">
-            Your profile will be shared with the club for review.
+            Your profile will be shared with the recruiter for review.
           </p>
 
           {error && (

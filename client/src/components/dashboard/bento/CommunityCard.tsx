@@ -111,10 +111,14 @@ interface TileProps {
 }
 
 function Tile({ icon: Icon, label, count, loading = false, onClick }: TileProps) {
+  const ariaLabel = loading
+    ? `View ${label.toLowerCase()}`
+    : `View ${count} ${label.toLowerCase()}`
   return (
     <button
       type="button"
       onClick={onClick}
+      aria-label={ariaLabel}
       className={cn(
         'flex items-center gap-3 rounded-xl border border-gray-100 bg-gray-50/60 p-3 text-left',
         'transition-colors hover:bg-[#8026FA]/[0.04] hover:border-[#8026FA]/30',

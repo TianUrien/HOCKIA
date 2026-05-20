@@ -9,8 +9,9 @@ test.describe('@smoke coach', () => {
     // Coach name heading should render
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 20000 })
 
-    // Should show coach-specific tabs — Journey is stable regardless of profile-completion state
-    await expect(page.getByRole('tab', { name: 'Journey', exact: true })).toBeVisible({ timeout: 10000 })
+    // Bento Grid landing (May 2026 Coach redesign) replaced the tab
+    // strip with cards. Coach owners see the owner-variant grid.
+    await expect(page.getByTestId('coach-bento-grid-owner')).toBeVisible({ timeout: 10000 })
   })
 
   test('coach public profile is accessible', async ({ page }) => {

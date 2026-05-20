@@ -5,6 +5,7 @@ import { logger } from '@/lib/logger'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
 import { withTimeout } from '@/lib/retry'
 import { trackDbEvent } from '@/lib/trackDbEvent'
+import { useAuthStore } from '@/lib/auth'
 
 export interface PostImage {
   url: string
@@ -29,6 +30,10 @@ interface SimpleResult {
 
 export function useUserPosts() {
   const queryClient = useQueryClient()
+  // Refresh the auth-store profile after create/delete so the Hero
+  // pill + My Network bento "Posts" counter reflect the new post_count
+  // without a full page reload. QA-flagged stale counters.
+  const refreshAuthProfile = useAuthStore((s) => s.refreshProfile)
 
   // Both Home (`['home-feed', filterKey]`) and Dashboard
   // (`['profile-posts', profileId]`) render user_posts from independent
@@ -77,6 +82,7 @@ export function useUserPosts() {
       if (result.success && result.post_id) {
         trackDbEvent('post_create', 'post', result.post_id, { type: 'user' })
         invalidatePostQueriesAfterCreate()
+        void refreshAuthProfile()
       }
       return result
     } catch (err) {
@@ -90,7 +96,7 @@ export function useUserPosts() {
         error: err instanceof Error ? err.message : 'Failed to create post',
       }
     }
-  }, [invalidatePostQueriesAfterCreate])
+  }, [invalidatePostQueriesAfterCreate, refreshAuthProfile])
 
   const updatePost = useCallback(async (
     postId: string,
@@ -144,6 +150,7 @@ export function useUserPosts() {
       if (result.success) {
         trackDbEvent('post_delete', 'post', postId, { type: 'user' })
         invalidatePostQueries()
+        void refreshAuthProfile()
       }
       return result
     } catch (err) {
@@ -156,7 +163,7 @@ export function useUserPosts() {
         error: err instanceof Error ? err.message : 'Failed to delete post',
       }
     }
-  }, [invalidatePostQueries])
+  }, [invalidatePostQueries, refreshAuthProfile])
 
   const createTransferPost = useCallback(async (
     clubName: string,

@@ -30,9 +30,23 @@ import { derivePublicContactEmail } from '@/lib/profile'
 import type { SocialLinks } from '@/lib/socialLinks'
 import ShareProfileButton from '@/components/profile/ShareProfileButton'
 
-type TabType = 'overview' | 'vacancies' | 'friends' | 'members' | 'comments' | 'posts'
+type TabType = 'overview' | 'opportunities' | 'friends' | 'members' | 'comments' | 'posts'
 
-const ALL_TABS: TabType[] = ['overview', 'vacancies', 'members', 'friends', 'comments', 'posts']
+const ALL_TABS: TabType[] = ['overview', 'opportunities', 'members', 'friends', 'comments', 'posts']
+
+// Legacy aliases — old URLs (?tab=vacancies) still in the wild from
+// notifications, bookmarks, and the previous tab id. Map them to the
+// canonical 'opportunities' value at parse time and rewrite the URL
+// so the browser bar shows the new slug.
+const LEGACY_TAB_ALIASES: Record<string, TabType> = {
+  vacancies: 'opportunities',
+}
+
+const resolveTabParam = (param: string | null): TabType | null => {
+  if (!param) return null
+  const aliased = LEGACY_TAB_ALIASES[param] ?? param
+  return (ALL_TABS as string[]).includes(aliased) ? (aliased as TabType) : null
+}
 
 type ClubProfileShape =
   Partial<Profile> &
@@ -70,10 +84,8 @@ export default function ClubDashboard({ profileData, readOnly = false, isOwnProf
   const navigate = useNavigate()
   const { addToast } = useToastStore()
   const [searchParams, setSearchParams] = useSearchParams()
-  const allowedTabs = ALL_TABS
   const [activeTab, setActiveTab] = useState<TabType>(() => {
-    const param = searchParams.get('tab') as TabType | null
-    return param && allowedTabs.includes(param) ? param : 'overview'
+    return resolveTabParam(searchParams.get('tab')) ?? 'overview'
   })
   const [showEditModal, setShowEditModal] = useState(false)
   const [showSignInPrompt, setShowSignInPrompt] = useState(false)
@@ -131,17 +143,18 @@ export default function ClubDashboard({ profileData, readOnly = false, isOwnProf
 
   useEffect(() => {
     if (!tabParam) return
-    if (!allowedTabs.includes(tabParam)) {
+    const resolved = resolveTabParam(tabParam)
+    if (!resolved) {
       if (activeTab !== 'overview') {
         setActiveTab('overview')
       }
       return
     }
 
-    if (tabParam !== activeTab) {
-      setActiveTab(tabParam)
+    if (resolved !== activeTab) {
+      setActiveTab(resolved)
     }
-  }, [tabParam, allowedTabs, activeTab])
+  }, [tabParam, activeTab])
 
   // Deep-link scroll for ?tab=X notification URLs.
   useTabDeepLinkScroll({ activeTab, tabParam })
@@ -192,7 +205,7 @@ export default function ClubDashboard({ profileData, readOnly = false, isOwnProf
   }, [activeTab, claimCommentHighlights, clearCommentNotifications, commentHighlightVersion, highlightedComments, readOnly])
 
   const handleCreateVacancyClick = () => {
-    handleTabChange('vacancies')
+    handleTabChange('opportunities')
     setTriggerCreateVacancy(true)
   }
 
@@ -234,7 +247,7 @@ export default function ClubDashboard({ profileData, readOnly = false, isOwnProf
 
   const tabs: { id: TabType; label: string }[] = [
     { id: 'overview', label: 'Overview' },
-    { id: 'vacancies', label: 'Opportunities' },
+    { id: 'opportunities', label: 'Opportunities' },
     { id: 'members', label: 'Members' },
     { id: 'friends', label: 'Friends' },
     { id: 'comments', label: 'Comments' },
@@ -246,10 +259,22 @@ export default function ClubDashboard({ profileData, readOnly = false, isOwnProf
     const next = new URLSearchParams(searchParams)
     next.set('tab', tab)
     setSearchParams(next, { replace: true })
-    if (tab !== 'vacancies' && triggerCreateVacancy) {
+    if (tab !== 'opportunities' && triggerCreateVacancy) {
       setTriggerCreateVacancy(false)
     }
   }
+
+  // Legacy ?tab=vacancies redirect — rewrites the URL bar to
+  // ?tab=opportunities so the canonical slug surfaces in browser
+  // history. Internal state already resolves through LEGACY_TAB_ALIASES,
+  // but the URL stays stale without this rewrite.
+  useEffect(() => {
+    if (searchParams.get('tab') === 'vacancies') {
+      const next = new URLSearchParams(searchParams)
+      next.set('tab', 'opportunities')
+      setSearchParams(next, { replace: true })
+    }
+  }, [searchParams, setSearchParams])
 
 
   if (!profile) {
@@ -666,12 +691,12 @@ export default function ClubDashboard({ profileData, readOnly = false, isOwnProf
               </div>
             )}
 
-            {/* Opportunities — always for visitors. Vacancies are core
-                club value: recruiters/players scanning a club profile want
-                to see what's open. */}
-            {(activeTab === 'vacancies' || readOnly) && (
+            {/* Opportunities — always for visitors. Opportunities are
+                core club value: recruiters/players scanning a club
+                profile want to see what's open. */}
+            {(activeTab === 'opportunities' || readOnly) && (
               <div
-                id="visitor-section-vacancies"
+                id="visitor-section-opportunities"
                 className={readOnly ? 'mt-12 pt-10 border-t border-gray-200 animate-fade-in' : 'animate-fade-in'}
               >
                 <OpportunitiesTab

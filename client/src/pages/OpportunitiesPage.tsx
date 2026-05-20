@@ -29,6 +29,10 @@ interface FiltersState {
   gender: 'all' | 'Men' | 'Women' | 'Girls' | 'Boys' | 'Mixed'
   position: string       // single position or '' for all
   euPassport: boolean    // only show opportunities requiring EU passport
+  /** "mine" restricts the list to opportunities the current user has
+   *  applied to. Deep-linked from the coach dashboard
+   *  ("View applications") and the player dashboard. */
+  applied: 'all' | 'mine'
 }
 
 const GENDER_FILTER_VALUES = ['Men', 'Women', 'Girls', 'Boys', 'Mixed'] as const
@@ -160,12 +164,14 @@ export default function OpportunitiesPage() {
   const [filters, setFilters] = useState<FiltersState>(() => {
     const roleParam = searchParams.get('role')
     const genderParam = searchParams.get('gender')
+    const appliedParam = searchParams.get('applied')
     return {
       country: searchParams.get('country') || '',
       role: (roleParam === 'player' || roleParam === 'coach') ? roleParam : 'all',
       gender: isGenderFilterValue(genderParam) ? genderParam : 'all',
       position: searchParams.get('position') || '',
       euPassport: searchParams.get('eu_passport') === 'true',
+      applied: appliedParam === 'mine' ? 'mine' : 'all',
     }
   })
 
@@ -177,6 +183,7 @@ export default function OpportunitiesPage() {
     if (filters.gender !== 'all') params.set('gender', filters.gender)
     if (filters.position) params.set('position', filters.position)
     if (filters.euPassport) params.set('eu_passport', 'true')
+    if (filters.applied !== 'all') params.set('applied', filters.applied)
     setSearchParams(params, { replace: true })
   }, [filters, setSearchParams])
 
@@ -356,12 +363,12 @@ export default function OpportunitiesPage() {
 
   // SEO meta tags
   useEffect(() => {
-    document.title = 'Field Hockey Opportunities | HOCKIA'
+    document.title = 'Field Hockey Opportunities • HOCKIA'
     const metaDescription = 'Browse field hockey opportunities for players and coaches. Find your next team, coaching position, or club role on HOCKIA.'
     const metaDescTag = document.querySelector('meta[name="description"]')
     if (metaDescTag) metaDescTag.setAttribute('content', metaDescription)
     const ogTitle = document.querySelector('meta[property="og:title"]')
-    if (ogTitle) ogTitle.setAttribute('content', 'Field Hockey Opportunities | HOCKIA')
+    if (ogTitle) ogTitle.setAttribute('content', 'Field Hockey Opportunities • HOCKIA')
     const ogDesc = document.querySelector('meta[property="og:description"]')
     if (ogDesc) ogDesc.setAttribute('content', metaDescription)
     const ogUrl = document.querySelector('meta[property="og:url"]')
@@ -395,13 +402,25 @@ export default function OpportunitiesPage() {
     setSelectedVacancy(vacancy)
     if (!user) {
       setShowSignInPrompt(true)
-    } else if ((profile?.role === 'player' || profile?.role === 'coach') && !userApplications.includes(vacancy.id)) {
+    } else if (
+      (profile?.role === 'player' || profile?.role === 'coach') &&
+      !userApplications.includes(vacancy.id) &&
+      // Self-apply guard: a publisher must never be able to open the
+      // Apply modal on their own opportunity. canShowApplyButton hides
+      // the CTA, but this guard prevents any future code path that
+      // bypasses the visible button (deep links, keyboard, etc.).
+      vacancy.club_id !== user.id
+    ) {
       setShowApplyModal(true)
     }
   }
 
   const canShowApplyButton = (vacancy: Vacancy) => {
     if (userApplications.includes(vacancy.id)) return false
+    // Self-apply guard — the publisher (coach in recruiter mode or club)
+    // would otherwise see Apply on their own listing. QA-flagged when a
+    // coach opened their own published opportunity from the public feed.
+    if (user && vacancy.club_id === user.id) return false
     if (!user) return true
     if (profile?.role === 'player' && vacancy.opportunity_type === 'player') return true
     if (profile?.role === 'coach' && vacancy.opportunity_type === 'coach') return true
@@ -419,6 +438,13 @@ export default function OpportunitiesPage() {
       filtered = filtered.filter(v =>
         v.location_country?.toLowerCase() === filters.country.toLowerCase()
       )
+    }
+
+    // "Applied: mine" — restrict to opportunities the current user has
+    // applied to. Deep-linked from dashboards via ?applied=mine.
+    if (filters.applied === 'mine') {
+      const appliedSet = new Set(userApplications)
+      filtered = filtered.filter(v => appliedSet.has(v.id))
     }
 
     // Sort by newest first (already sorted from DB, but ensure it after filtering)
@@ -455,14 +481,14 @@ export default function OpportunitiesPage() {
     groups.sort((a, b) => b.newestAt - a.newestAt)
 
     return groups
-  }, [vacancies, filters.country, getFlagEmoji])
+  }, [vacancies, filters.country, filters.applied, userApplications, getFlagEmoji])
 
   const totalFilteredCount = groupedOpportunities.reduce((sum, g) => sum + g.opportunities.length, 0)
 
-  const hasActiveFilters = filters.country !== '' || filters.role !== 'all' || filters.gender !== 'all' || filters.position !== '' || filters.euPassport
+  const hasActiveFilters = filters.country !== '' || filters.role !== 'all' || filters.gender !== 'all' || filters.position !== '' || filters.euPassport || filters.applied !== 'all'
 
   const clearFilters = () => {
-    setFilters({ country: '', role: 'all', gender: 'all', position: '', euPassport: false })
+    setFilters({ country: '', role: 'all', gender: 'all', position: '', euPassport: false, applied: 'all' })
   }
 
   // ─── Render ────────────────────────────────────────────────────────────────
@@ -583,6 +609,22 @@ export default function OpportunitiesPage() {
               )}
             </button>
 
+            {/* "Applied: mine" — chip shown only when the filter is
+                active. Users land here from the dashboard "View
+                applications" CTA, and the chip gives them a clear way
+                to drop the restriction. */}
+            {filters.applied === 'mine' && (
+              <button
+                type="button"
+                onClick={() => setFilters(prev => ({ ...prev, applied: 'all' }))}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium border bg-[#8026FA]/5 border-[#8026FA]/20 text-[#8026FA] whitespace-nowrap"
+                aria-label="Clear applied filter"
+              >
+                <span>My applications</span>
+                <X className="w-3 h-3" />
+              </button>
+            )}
+
             {/* Sort indicator */}
             <div className="ml-auto flex items-center gap-1.5 text-sm text-gray-500">
               <span className="text-base">↕</span>
@@ -640,11 +682,15 @@ export default function OpportunitiesPage() {
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-3xl">🔍</span>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No opportunities found</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                {filters.applied === 'mine' ? "You haven't applied yet" : 'No opportunities found'}
+              </h3>
               <p className="text-gray-600 mb-6">
-                {hasActiveFilters
-                  ? 'Try adjusting your filters to see more results'
-                  : 'No opportunities are currently available'}
+                {filters.applied === 'mine'
+                  ? 'Apply to opportunities and they\'ll show up here.'
+                  : hasActiveFilters
+                    ? 'Try adjusting your filters to see more results'
+                    : 'No opportunities are currently available'}
               </p>
               {hasActiveFilters && (
                 <Button onClick={clearFilters} className="mx-auto">
@@ -655,7 +701,7 @@ export default function OpportunitiesPage() {
                   - Clubs: always.
                   - Coaches: only when coach_recruits_for_team is true.
                   Without the coach gate, candidate-only coaches saw the
-                  CTA and got bounced by CoachDashboard's tab=vacancies
+                  CTA and got bounced by CoachDashboard's tab=opportunities
                   redirect — confusing dead-end. */}
               {(profile?.role === 'club' ||
                 (profile?.role === 'coach' && profile?.coach_recruits_for_team === true)) && (
@@ -666,7 +712,7 @@ export default function OpportunitiesPage() {
                       : 'As a club, you can post opportunities to attract players and coaches.'}
                   </p>
                   <Button
-                    onClick={() => navigate('/dashboard/profile?tab=vacancies')}
+                    onClick={() => navigate('/dashboard/profile?tab=opportunities')}
                     className="mx-auto bg-gradient-to-r from-[#8026FA] to-[#924CEC]"
                   >
                     Post an Opportunity

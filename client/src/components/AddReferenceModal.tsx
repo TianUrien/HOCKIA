@@ -28,9 +28,15 @@ const RELATIONSHIP_MAP: Record<string, Record<string, string[]>> = {
     umpire: ['Match Umpire', 'Tournament Official'],
   },
   coach: {
-    player: ['Player', 'Former Player', 'Team Captain', 'Mentor'],
-    coach:  ['Colleague', 'Fellow Coach', 'Former Colleague'],
-    club:   ['Club', 'Former Club'],
+    // Coach-context relationships. The earlier 'Player / Former Player /
+    // Team Captain / Mentor' list mirrored what a player would say about
+    // a coach, which read backwards on a coach's profile. Reworked to
+    // describe how the coach knows the player.
+    player: ['Athlete I Coached', 'Former Athlete', 'Mentee', 'Team Captain', 'Player'],
+    // Add 'Assistant Coach I Worked With' to cover the common scenario
+    // of head-coach / assistant-coach pairings without forcing 'Colleague'.
+    coach:  ['Assistant Coach I Worked With', 'Head Coach', 'Colleague', 'Fellow Coach', 'Former Colleague'],
+    club:   ['Club Director', 'Club', 'Former Club'],
     umpire: ['Match Umpire', 'Tournament Official'],
   },
   club: {

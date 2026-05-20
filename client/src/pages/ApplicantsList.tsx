@@ -10,6 +10,7 @@ import ApplicantCard from '@/components/ApplicantCard'
 import type { ApplicantReferenceInfo } from '@/components/ApplicantCard'
 import { logger } from '@/lib/logger'
 import { trackDbEvent } from '@/lib/trackDbEvent'
+import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 
 type ApplicationStatus = Database['public']['Enums']['application_status']
 
@@ -34,6 +35,10 @@ export default function ApplicantsList() {
   const { user } = useAuthStore()
   const { addToast } = useToastStore()
   const [opportunity, setOpportunity] = useState<Opportunity | null>(null)
+  // QA-flagged: the applicants route was leaving the default index.html
+  // title in the browser tab, making back-button context + pinned tabs
+  // useless. Reflect the opportunity title once it loads.
+  useDocumentTitle(opportunity?.title ? `Applicants — ${opportunity.title}` : 'Applicants')
   const [applications, setApplications] = useState<OpportunityApplicationWithApplicant[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -412,7 +417,7 @@ export default function ApplicantsList() {
             <div className="mb-4 text-5xl">📭</div>
             <h3 className="mb-2 text-lg font-semibold text-gray-900 sm:text-xl">No Applicants Yet</h3>
             <p className="text-sm text-gray-600 sm:text-base">
-              Applications will appear here once players start applying to this opportunity.
+              Applications will appear here once candidates start applying to this opportunity.
             </p>
           </div>
         ) : filteredApplications.length === 0 ? (

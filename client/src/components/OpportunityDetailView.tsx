@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { X, MapPin, Calendar, Clock, Home, Car, Globe as GlobeIcon, Plane, Utensils, Briefcase, Shield, GraduationCap, Mail, Phone, CheckCircle, AlertTriangle, DollarSign, Dumbbell, Award, Share2, Flag } from 'lucide-react'
+import { X, MapPin, Calendar, Clock, Home, Car, Globe as GlobeIcon, Plane, Utensils, Briefcase, Shield, GraduationCap, Mail, Phone, CheckCircle, AlertTriangle, DollarSign, Dumbbell, Award, Share2, Flag, Users } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import type { Vacancy } from '../lib/supabase'
 import { Avatar, StorageImage } from './index'
@@ -7,6 +7,7 @@ import Button from './Button'
 import type { WorldClubInfo } from './OpportunityCard'
 import { opportunityGenderToTeamLabel } from '@/lib/hockeyCategories'
 import { getShareOrigin } from '@/lib/profileShare'
+import { useAuthStore } from '@/lib/auth'
 
 interface VacancyDetailViewProps {
   vacancy: Vacancy
@@ -75,7 +76,13 @@ export default function VacancyDetailView({
   hideClubProfileButton = false,
 }: VacancyDetailViewProps) {
   const navigate = useNavigate()
+  const { user } = useAuthStore()
   const [isVisible, setIsVisible] = useState(false)
+  // Publisher viewing their own listing — used to swap the dead-end
+  // "Close" CTA for a "View applicants" deep link. QA-flagged the
+  // detail sheet's only action being a literal Close button when the
+  // publisher opened their own opportunity.
+  const isPublisher = Boolean(user && user.id === vacancy.club_id)
 
   const cardType = getCardType(publisherRole, worldClub, publisherOrganization)
   const watermarkName = cardType === 'club' ? (worldClub?.clubName || clubName) : clubName
@@ -121,14 +128,17 @@ export default function VacancyDetailView({
 
   // Build tag pills. Phase 3d — opportunityGenderToTeamLabel covers all
   // five enum values (Men/Women/Girls/Boys/Mixed) with possessive labels.
+  // Gender + position are player-only concepts; suppress them on coach
+  // opportunities even if legacy rows happen to carry stale values.
   const tags: string[] = []
-  if (vacancy.opportunity_type === 'player') tags.push('Player')
+  const isPlayerOpportunity = vacancy.opportunity_type === 'player'
+  if (isPlayerOpportunity) tags.push('Player')
   if (vacancy.opportunity_type === 'coach') tags.push('Coach')
-  if (vacancy.gender) {
+  if (isPlayerOpportunity && vacancy.gender) {
     const teamLabel = opportunityGenderToTeamLabel(vacancy.gender)
     if (teamLabel) tags.push(teamLabel.replace(' Team', ''))
   }
-  if (vacancy.position) {
+  if (isPlayerOpportunity && vacancy.position) {
     tags.push(vacancy.position.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()))
   }
 
@@ -388,9 +398,33 @@ export default function VacancyDetailView({
             {/* Divider before actions */}
             <div className="border-t border-gray-100 my-5" />
 
-            {/* Action Buttons */}
+            {/* Action Buttons.
+                isPublisher is checked FIRST and unconditionally — a
+                publisher must never see Apply on their own listing,
+                regardless of whether the calling surface passed an
+                onApply handler. OpportunitiesTab (Manage Opportunities)
+                passes onApply unconditionally, so without this ordering
+                the publisher saw "Apply Now" on their own opportunity
+                and the View-applicants branch was dead code. */}
             <div className="flex items-center gap-3">
-              {hasApplied ? (
+              {isPublisher ? (
+                // QA-flagged: when a publisher opens their own
+                // opportunity from the detail sheet, the only CTA was
+                // a literal "Close" button — there was no path to
+                // applicants without backing out to the list and
+                // hunting for the small applicants pill. Now we route
+                // straight to the applicants page.
+                <Button
+                  onClick={() => {
+                    onClose()
+                    navigate(`/dashboard/opportunities/${vacancy.id}/applicants`)
+                  }}
+                  className="flex-1 rounded-xl py-3.5 bg-gradient-to-r from-[#8026FA] to-[#924CEC] hover:opacity-90 text-base font-semibold inline-flex items-center justify-center gap-2"
+                >
+                  <Users className="w-4 h-4" />
+                  View applicants
+                </Button>
+              ) : hasApplied ? (
                 <div className="flex-1 flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl font-semibold text-sm border border-[#8026FA]/15 bg-[#8026FA]/5 text-[#8026FA]">
                   <CheckCircle className="w-4 h-4" />
                   Application Submitted
@@ -404,7 +438,7 @@ export default function VacancyDetailView({
                   Close
                 </Button>
               )}
-              {!hideClubProfileButton && (
+              {!hideClubProfileButton && !isPublisher && (
                 <Button onClick={handleClubClick} variant="outline" className="rounded-xl py-3.5 px-5 flex-shrink-0">
                   {publisherRole === 'coach' ? 'View Profile' : 'View Club'}
                 </Button>

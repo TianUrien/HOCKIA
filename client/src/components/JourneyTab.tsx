@@ -16,7 +16,7 @@ import {
   Upload,
   X,
 } from 'lucide-react'
-import { differenceInMonths, format } from 'date-fns'
+import { differenceInMonths } from 'date-fns'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
@@ -25,6 +25,7 @@ import type { CareerHistory } from '@/lib/supabase'
 import { deleteStorageObject, extractStoragePath } from '@/lib/storage'
 import { logger } from '@/lib/logger'
 import Button from './Button'
+import ConfirmDialog from './ConfirmDialog'
 import Skeleton from './Skeleton'
 import StorageImage from './StorageImage'
 import WorldClubSearch, { type WorldClubSearchResult } from './WorldClubSearch'
@@ -104,10 +105,15 @@ const entryTypeMeta: Record<JourneyType, EntryTypeMeta> = {
   },
 }
 
+// Categories surfaced in the Create / Edit form. 'milestone' was
+// missing here even though the dashboard's JourneyCard counts and
+// renders it, so users were told a category existed they couldn't
+// create. Adding it closes the loop.
 const ENTRY_TYPES: { id: JourneyType; label: string }[] = [
   { id: 'club', label: entryTypeMeta.club.label },
   { id: 'national_team', label: entryTypeMeta.national_team.label },
   { id: 'achievement', label: entryTypeMeta.achievement.label },
+  { id: 'milestone', label: entryTypeMeta.milestone.label },
 ]
 
 const MONTH_OPTIONS = [
@@ -202,6 +208,9 @@ export default function JourneyTab({
   const [savingEntryId, setSavingEntryId] = useState<string | 'new-entry' | null>(null)
   const [uploadingImageId, setUploadingImageId] = useState<string | null>(null)
   const [activeDraftContext, setActiveDraftContext] = useState<JourneyDraftContext | null>(null)
+  // Target for the in-app delete confirmation. Replaces window.confirm
+  // (unreliable inside iOS PWAs / mobile-emulated Chrome).
+  const [entryToDelete, setEntryToDelete] = useState<EditableJourneyEntry | null>(null)
   const journeyDraftSaveTimeoutRef = useRef<number | null>(null)
   const journeyDraftRestoredRef = useRef(false)
 
@@ -276,13 +285,25 @@ export default function JourneyTab({
     return parsed.toISOString().split('T')[0]
   }
 
+  // QA-flagged month off-by-one. start_date is persisted as a plain
+  // ISO date string "YYYY-MM-DD"; round-tripping through `new Date()`
+  // drifts across the day boundary in any browser/timezone combo
+  // where the UTC midnight maps to a different local day (Safari
+  // and Chrome also disagree on whether date-only strings are local
+  // or UTC). Parsing the string directly eliminates the drift
+  // regardless of engine and timezone.
   const seedDrafts = (dateValue: string | null) => {
     if (!dateValue) return { month: '', year: '' }
-    const parsed = new Date(dateValue)
-    if (Number.isNaN(parsed.valueOf())) return { month: '', year: '' }
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateValue)
+    if (!match) return { month: '', year: '' }
+    // Month draft uses 0-indexed values (Jan=0) to match Date.UTC's
+    // argument convention — the WRITE path saves Date.UTC(year, month, 1)
+    // and the READ path must use the same indexing.
+    const monthNumber = Number(match[2]) - 1
+    if (Number.isNaN(monthNumber)) return { month: '', year: '' }
     return {
-      month: String(parsed.getUTCMonth()),
-      year: String(parsed.getUTCFullYear()),
+      month: String(monthNumber),
+      year: match[1],
     }
   }
 
@@ -660,8 +681,12 @@ export default function JourneyTab({
     const entryType = activeEntryDraft.entry_type
     if (!entryType) return
 
+    // Build the persisted `years` summary directly from the ISO strings
+    // — see formatMonthLabel for the same reasoning. Going through
+    // `new Date(YYYY-MM-DD)` + `format(local)` drifts the month for any
+    // user west of UTC and disagrees across browser engines.
     const yearsText = startDate
-      ? `${format(new Date(startDate), 'MMM yyyy')} - ${endDate ? format(new Date(endDate), 'MMM yyyy') : 'Present'}`
+      ? `${formatMonthLabel(startDate) ?? ''} - ${endDate ? formatMonthLabel(endDate) ?? '' : 'Present'}`
       : activeEntryDraft.years
 
     const payload = {
@@ -707,14 +732,12 @@ export default function JourneyTab({
     }
   }
 
+  // QA-flagged: window.confirm gets suppressed inside iOS PWAs and some
+  // mobile-emulation Chrome contexts, so the destructive delete fired
+  // with no visible prompt. Routed through ConfirmDialog instead — same
+  // pattern as Media + Opportunity delete now.
   const handleDeleteEntry = async (entryId: string) => {
     if (!canManage || !entryId) return
-    if (typeof window !== 'undefined') {
-      const confirmDelete = window.confirm('Delete this Journey entry?')
-      if (!confirmDelete) {
-        return
-      }
-    }
 
     const entryToDelete = journey.find(entry => entry.id === entryId)
     const entryImagePath = entryToDelete?.image_url ? extractStoragePath(entryToDelete.image_url, JOURNEY_BUCKET) : null
@@ -740,11 +763,19 @@ export default function JourneyTab({
     }
   }
 
+  // Direct string-parsed formatter — paired with seedDrafts to avoid
+  // the timezone drift `new Date('YYYY-MM-DD')` introduces (the parsed
+  // Date is UTC midnight, but `format` reads local components, so for
+  // any user west of UTC the rendered month is one earlier; engines
+  // differ on date-only ISO parsing on top of that).
+  const MONTH_NAMES_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
   const formatMonthLabel = (value: string | null) => {
     if (!value) return null
-    const parsed = new Date(value)
-    if (Number.isNaN(parsed.valueOf())) return null
-    return format(parsed, 'MMM yyyy')
+    const match = /^(\d{4})-(\d{2})-\d{2}$/.exec(value)
+    if (!match) return null
+    const monthIndex = Number(match[2]) - 1
+    if (monthIndex < 0 || monthIndex > 11) return null
+    return `${MONTH_NAMES_SHORT[monthIndex]} ${match[1]}`
   }
 
   const formatDuration = (start: string | null, end: string | null) => {
@@ -1237,9 +1268,10 @@ export default function JourneyTab({
                               </button>
                               <button
                                 type="button"
-                                onClick={() => handleDeleteEntry(entry.id)}
+                                onClick={() => setEntryToDelete(entry)}
                                 className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500"
                                 title="Delete entry"
+                                aria-label="Delete journey entry"
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
                               </button>
@@ -1379,6 +1411,24 @@ export default function JourneyTab({
       </div>
 
       {renderTimeline()}
+
+      <ConfirmDialog
+        isOpen={Boolean(entryToDelete)}
+        onClose={() => setEntryToDelete(null)}
+        onConfirm={async () => {
+          if (!entryToDelete) return
+          await handleDeleteEntry(entryToDelete.id)
+        }}
+        title="Delete this journey entry?"
+        message={
+          entryToDelete
+            ? `"${entryToDelete.club_name || 'Untitled entry'}" will be removed from your career history. This can't be undone.`
+            : ''
+        }
+        confirmLabel="Delete entry"
+        variant="danger"
+        testId="journey-delete-confirm"
+      />
     </div>
   )
 }

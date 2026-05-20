@@ -461,7 +461,7 @@ export default function TrustedReferencesSection({
                     <div className="space-y-3">
                       <ShieldCheck className="mx-auto h-8 w-8 text-emerald-500" aria-hidden="true" />
                       <p className="text-sm font-semibold text-gray-900">
-                        References are how clubs verify your hockey
+                        References are how clubs verify your hockey background
                       </p>
                       <p className="text-sm text-gray-600">
                         Coaches, teammates, and clubs can vouch for you on HOCKIA — but you need to be connected with them first.
@@ -507,7 +507,7 @@ export default function TrustedReferencesSection({
                 // someone to vouch" empty state with strong value prop.
                 const headlineCopy = profileRole === 'umpire'
                   ? 'References are how peers and assigners verify your officiating'
-                  : 'References are how clubs verify your hockey'
+                  : 'References are how clubs verify your hockey background'
                 const subCopyTrailing = profileRole === 'umpire'
                   ? 'Assigners and clubs see your references on your profile.'
                   : 'Clubs scouting on HOCKIA see your references on your profile.'
@@ -518,7 +518,9 @@ export default function TrustedReferencesSection({
                       {headlineCopy}
                     </p>
                     <p className="text-sm text-gray-600">
-                      Ask 1-2 of your {friendOptions.length} {friendOptions.length === 1 ? 'connection' : 'connections'} to vouch for you. {subCopyTrailing}
+                      {friendOptions.length === 1
+                        ? `Ask your connection to vouch for you. ${subCopyTrailing}`
+                        : `Ask 1–2 of your ${friendOptions.length} connections to vouch for you. ${subCopyTrailing}`}
                     </p>
                     <button
                       type="button"

@@ -1,44 +1,93 @@
 import { useEffect, useMemo, useState, useRef } from 'react'
-import { ArrowLeft, MapPin, Calendar, Edit2, Eye, MessageCircle, Landmark, Mail, Plus } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
-import { Avatar, EditProfileModal, JourneyTab, CommentsTab, FriendsTab, ReferencesTab, FriendshipButton, NextStepCard, WelcomeValueCard, FreshnessCard, RecentlyConnectedCard, SearchAppearancesCard, PublicReferencesSection, PublicViewBanner, RoleBadge, ScrollableTabs, DualNationalityDisplay, AvailabilityPill, TierBadge, TrustBadge, VerifiedBadge, CategoryConfirmationBanner } from '@/components'
-import { PulseSection } from '@/components/home/PulseSection'
-import { calculateTier } from '@/lib/profileTier'
-import { useProfileFreshness } from '@/hooks/useProfileFreshness'
-import type { FreshnessNudge } from '@/lib/profileFreshness'
-import { useSearchAppearances } from '@/hooks/useSearchAppearances'
-import { useReferenceFriendOptions } from '@/hooks/useReferenceFriendOptions'
-import { useTrustedReferences } from '@/hooks/useTrustedReferences'
-import { useTabDeepLinkScroll } from '@/hooks/useTabDeepLinkScroll'
-import { trackReferenceBadgeClick } from '@/lib/analytics'
-import ProfileActionMenu from '@/components/ProfileActionMenu'
+import {
+  EditProfileModal,
+  FriendsTab,
+  ReferencesTab,
+  PublicReferencesSection,
+  PublicViewBanner,
+  CategoryConfirmationBanner,
+} from '@/components'
 import Header from '@/components/Header'
+import JourneyTab from '@/components/JourneyTab'
 import MediaTab from '@/components/MediaTab'
+import CommentsTab from '@/components/CommentsTab'
 import OpportunitiesTab from '@/components/OpportunitiesTab'
 import ProfilePostsTab from '@/components/ProfilePostsTab'
-import Button from '@/components/Button'
-import { DashboardSkeleton } from '@/components/Skeleton'
-import ShareProfileButton from '@/components/profile/ShareProfileButton'
 import SignInPromptModal from '@/components/SignInPromptModal'
-import SocialLinksDisplay from '@/components/SocialLinksDisplay'
+import ClubLinkPrompt from '@/components/ClubLinkPrompt'
+import HeroIdentityCard from '@/components/dashboard/bento/HeroIdentityCard'
+import CoachBentoGrid from '@/components/dashboard/bento/CoachBentoGrid'
+import CoachCommunityHub from '@/components/community/CoachCommunityHub'
+import PublicCommunityView from '@/components/community/PublicCommunityView'
+import { ProfileViewersSection } from '@/components/ProfileViewersSection'
 import type { Profile } from '@/lib/supabase'
-import { categoriesToDisplay } from '@/lib/hockeyCategories'
 import { supabase } from '@/lib/supabase'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useToastStore } from '@/lib/toast'
 import { useNotificationStore } from '@/lib/notifications'
-import { derivePublicContactEmail } from '@/lib/profile'
-import type { SocialLinks } from '@/lib/socialLinks'
-import { useCoachProfileStrength, type ProfileBucket as CoachStrengthBucket } from '@/hooks/useCoachProfileStrength'
-import { ProfileViewersSection } from '@/components/ProfileViewersSection'
-import AvailabilityToggleStrip from '@/components/AvailabilityToggleStrip'
-import ClubLinkPrompt from '@/components/ClubLinkPrompt'
+import { useCoachProfileStrength } from '@/hooks/useCoachProfileStrength'
+import type { ProfileStrengthBucket } from '@/hooks/useProfileStrength'
+import { trackReferenceBadgeClick } from '@/lib/analytics'
 import { useWorldClubLogo } from '@/hooks/useWorldClubLogo'
-import { calculateAge, formatDateOfBirth, getInitials } from '@/lib/utils'
-import { getSpecializationLabel } from '@/lib/coachSpecializations'
+import { useTabDeepLinkScroll } from '@/hooks/useTabDeepLinkScroll'
+import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 
-type TabType = 'profile' | 'vacancies' | 'journey' | 'references' | 'friends' | 'comments' | 'posts'
+// `?section=` query param → DOM anchor id. Drives the deep-link scroll
+// for notifications and shareable URLs. Mirrors PlayerDashboard so
+// /coaches/:username?section=connections lands on the Connections
+// section inside the Community hub.
+const COACH_SECTION_ANCHORS = {
+  viewers: 'profile-viewers',
+  connections: 'community-connections',
+  references: 'community-references',
+  comments: 'community-comments',
+  posts: 'community-posts',
+} as const
+
+type TabType =
+  | 'profile'
+  | 'media'
+  | 'journey'
+  | 'references'
+  | 'friends'
+  | 'comments'
+  | 'posts'
+  | 'community'
+  | 'opportunities'
+
+// Centralised whitelist so URL parsing + push handlers stay in sync.
+// 'community' renders the CoachCommunityHub. 'opportunities' is recruiter-
+// only and unlocks an OpportunitiesTab surface for posting/managing
+// opportunities (Coach uses the same `coach_recruits_for_team` gate the
+// Bento RecruitingCard uses).
+const VALID_TABS: TabType[] = [
+  'profile',
+  'media',
+  'journey',
+  'references',
+  'friends',
+  'comments',
+  'posts',
+  'community',
+  'opportunities',
+]
+
+// Legacy aliases — the 'vacancies' section id was renamed to
+// 'opportunities' in PR #101 (?tab=vacancies → ?tab=opportunities).
+// The redesigned dashboard uses route segments instead of query params,
+// so this also covers `/dashboard/profile/vacancies` →
+// `/dashboard/profile/opportunities`. Maps stale notification + bookmark
+// URLs to the canonical section at parse time; the redirect effect
+// below rewrites the URL bar so browser history shows the new slug.
+const LEGACY_SECTION_ALIASES: Record<string, TabType> = {
+  vacancies: 'opportunities',
+}
+
+const resolveLegacySection = (section: string | undefined): TabType | null =>
+  section && LEGACY_SECTION_ALIASES[section] ? LEGACY_SECTION_ALIASES[section] : null
 
 export type CoachProfileShape =
   Partial<Profile> &
@@ -64,157 +113,184 @@ export type CoachProfileShape =
 interface CoachDashboardProps {
   profileData?: CoachProfileShape
   readOnly?: boolean
-  /** When true and readOnly is true, shows a banner indicating user is viewing their own public profile */
+  /** When true and readOnly is true, shows a banner indicating user is
+   *  viewing their own public profile */
   isOwnProfile?: boolean
 }
 
-export default function CoachDashboard({ profileData, readOnly = false, isOwnProfile = false }: CoachDashboardProps) {
+export default function CoachDashboard({
+  profileData,
+  readOnly = false,
+  isOwnProfile = false,
+}: CoachDashboardProps) {
   const { profile: authProfile, user } = useAuthStore()
+  const refreshAuthProfile = useAuthStore((s) => s.refreshProfile)
   const profile = (profileData ?? authProfile) as CoachProfileShape | null
   const navigate = useNavigate()
-  const [searchParams, setSearchParams] = useSearchParams()
-  const [activeTab, setActiveTab] = useState<TabType>(() => {
-    const param = searchParams.get('tab') as TabType | null
-    return param && ['profile', 'vacancies', 'journey', 'references', 'friends', 'comments', 'posts'].includes(param) ? param : 'profile'
-  })
+  const [searchParams] = useSearchParams()
+  const { addToast } = useToastStore()
+
+  // Section comes from the URL route segment, not a ?tab= param. Same
+  // pattern as PlayerDashboard's PR2 route promotion.
+  //  - Owner:  /dashboard/profile/:section  (DashboardRouter dispatches)
+  //  - Visitor: /coaches/:username/:section, /coaches/id/:id/:section
+  const routeParams = useParams<{ section?: string; username?: string; id?: string }>()
+  const sectionFromRoute = routeParams.section as TabType | undefined
+  // Legacy 'vacancies' segment resolves to 'opportunities' silently so
+  // old notification links / saved bookmarks still land on the right
+  // surface while the URL-rewrite effect below fixes the address bar.
+  const aliasedSection = resolveLegacySection(sectionFromRoute) ?? sectionFromRoute
+  const sectionIsValid = aliasedSection
+    ? (VALID_TABS as string[]).includes(aliasedSection)
+    : true
+  const activeTab: TabType =
+    aliasedSection && (VALID_TABS as string[]).includes(aliasedSection)
+      ? aliasedSection
+      : 'profile'
+
+  // Document title reflects the dashboard sub-route so tab strips +
+  // browser history make sense at a glance. Labels mirror the UI
+  // section names. For visitor (readOnly) views, prefix with the
+  // viewed coach's name so the tab is identifiable in browser history
+  // — otherwise every coach's profile would read "Coach dashboard".
+  // 'community' on the owner side maps to "My Network" to disambiguate
+  // from the global /community marketplace route.
+  const visitedName = readOnly ? profile?.full_name : null
+  const ownerTabTitle: Record<TabType, string> = {
+    profile: 'Coach dashboard',
+    media: 'Media',
+    journey: 'Journey',
+    references: 'References',
+    friends: 'Connections',
+    comments: 'Comments',
+    posts: 'Posts',
+    community: 'My Network',
+    opportunities: 'Opportunities',
+  }
+  const visitorTabSuffix: Record<TabType, string | null> = {
+    profile: null,
+    media: 'Media',
+    journey: 'Journey',
+    references: 'References',
+    friends: 'Connections',
+    comments: 'Comments',
+    posts: 'Posts',
+    community: 'Community',
+    opportunities: 'Opportunities',
+  }
+  const computedTitle = visitedName
+    ? visitorTabSuffix[activeTab]
+      ? `${visitedName} — ${visitorTabSuffix[activeTab]}`
+      : visitedName
+    : ownerTabTitle[activeTab]
+  useDocumentTitle(computedTitle)
+
+  // Legacy route-segment redirect — old links to
+  // /dashboard/profile/vacancies (and the visitor equivalents) rewrite
+  // to /opportunities so the URL bar reflects the new canonical slug.
+  // Companion to LEGACY_SECTION_ALIASES, which already mapped the
+  // section internally; this effect updates browser history.
+  useEffect(() => {
+    if (!sectionFromRoute) return
+    const aliased = resolveLegacySection(sectionFromRoute)
+    if (!aliased) return
+    if (readOnly) {
+      const base = routeParams.username
+        ? `/coaches/${routeParams.username}`
+        : routeParams.id
+          ? `/coaches/id/${routeParams.id}`
+          : null
+      if (base) navigate(`${base}/${aliased}`, { replace: true })
+    } else {
+      navigate(`/dashboard/profile/${aliased}`, { replace: true })
+    }
+  }, [sectionFromRoute, readOnly, routeParams.username, routeParams.id, navigate])
+
+  // /dashboard/profile/<unknown> redirects to /dashboard/profile so
+  // typos and stale notification links don't silently render the
+  // wrong surface. Mirrors PlayerDashboard.
+  useEffect(() => {
+    if (sectionFromRoute && !sectionIsValid) {
+      if (readOnly) {
+        const base = routeParams.username
+          ? `/coaches/${routeParams.username}`
+          : routeParams.id
+            ? `/coaches/id/${routeParams.id}`
+            : null
+        if (base) navigate(base, { replace: true })
+      } else {
+        navigate('/dashboard/profile', { replace: true })
+      }
+    }
+  }, [sectionFromRoute, sectionIsValid, readOnly, routeParams.username, routeParams.id, navigate])
+
   const [showEditModal, setShowEditModal] = useState(false)
   const [showSignInPrompt, setShowSignInPrompt] = useState(false)
   const [sendingMessage, setSendingMessage] = useState(false)
   const [triggerCreateVacancy, setTriggerCreateVacancy] = useState(false)
-  const { addToast } = useToastStore()
   const claimCommentHighlights = useNotificationStore((state) => state.claimCommentHighlights)
   const clearCommentNotifications = useNotificationStore((state) => state.clearCommentNotifications)
   const commentHighlightVersion = useNotificationStore((state) => state.commentHighlightVersion)
   const [highlightedComments, setHighlightedComments] = useState<Set<string>>(new Set())
+
+  // Profile strength for coaches (only compute for own profile).
+  const strength = useCoachProfileStrength({
+    profile: readOnly ? null : (profileData ?? authProfile) as CoachProfileShape | null,
+  })
+  const prevPercentageRef = useRef<number | null>(null)
+
   const currentWorldClubId = (profile as Partial<Profile> | null)?.current_world_club_id ?? null
   const currentClubLogo = useWorldClubLogo(currentWorldClubId)
 
-  const tabParam = searchParams.get('tab') as TabType | null
+  const sectionParam = searchParams.get('section')
 
-  // Profile strength for coaches (only compute for own profile)
-  // Must be called before any early returns to satisfy React hooks rules
-  const { percentage, buckets, loading: strengthLoading, refresh: refreshStrength } = useCoachProfileStrength({
-    profile: readOnly ? null : (profileData ?? authProfile) as CoachProfileShape | null,
-  })
+  // Legacy ?tab=X migration. Mirrors PlayerDashboard's effect — the
+  // coach version of the same migration so old notification links
+  // (/dashboard/profile?tab=journey) still land on the right section
+  // without touching the notification templates.
+  useEffect(() => {
+    const legacyTab = searchParams.get('tab') as TabType | null
+    if (!legacyTab || !(VALID_TABS as string[]).includes(legacyTab)) return
 
-  // Freshness nudges (owner only)
-  const { nudge: freshnessNudge } = useProfileFreshness({
-    role: 'coach',
-    profileId: readOnly ? null : (profileData?.id ?? authProfile?.id ?? null),
-    profileUpdatedAt: readOnly ? null : (profile as Partial<Profile> | null)?.updated_at ?? null,
-  })
-  // Search appearances (owner only) — last 7 days aggregate.
-  const { summary: searchAppearances } = useSearchAppearances({
-    profileId: readOnly ? null : (profileData?.id ?? authProfile?.id ?? null),
-  })
-  // Phase 3 — RecentlyConnectedCard data (owner-only).
-  const nudgeOwnerId = readOnly ? null : (profileData?.id ?? authProfile?.id ?? null)
-  const { friendOptions: nudgeFriendOptions } = useReferenceFriendOptions(nudgeOwnerId)
-  const { acceptedReferences: nudgeAccepted, pendingReferences: nudgePending } = useTrustedReferences(
-    nudgeOwnerId ?? '',
-  )
-  const nudgeExcludeIds = useMemo(
-    () =>
-      new Set([
-        ...nudgeAccepted.map((r) => r.profile?.id).filter((id): id is string => Boolean(id)),
-        ...nudgePending.map((r) => r.profile?.id).filter((id): id is string => Boolean(id)),
-      ]),
-    [nudgeAccepted, nudgePending],
-  )
-  const nudgeAcceptedFloor = nudgeAccepted.length + nudgePending.length
-
-  // Shared handler for NextStepCard — routes a bucket to the right deep-link.
-  // Tab switcher that preserves any other search params (e.g. ?ref=…,
-  // ?ask=…). Object-form `setSearchParams({ tab })` would clobber them.
-  const switchTab = (tab: TabType) => {
-    setActiveTab(tab)
     const next = new URLSearchParams(searchParams)
-    next.set('tab', tab)
-    setSearchParams(next, { replace: true })
-  }
+    next.delete('tab')
+    const qs = next.toString()
+    const qsSuffix = qs ? `?${qs}` : ''
 
-  const handleStrengthBucketAction = (bucket: CoachStrengthBucket) => {
-    const actionId = bucket.actionId
-    if (!actionId) return
-
-    if (actionId === 'edit-profile') {
-      setShowEditModal(true)
-    } else if (actionId === 'journey-tab') {
-      switchTab('journey')
-    } else if (actionId === 'gallery-tab') {
-      // Scroll to MediaTab section within profile tab
-      const mediaSection = document.querySelector('[data-section="media"]')
-      if (mediaSection) {
-        mediaSection.scrollIntoView({ behavior: 'smooth' })
-      }
-    } else if (actionId === 'friends-tab') {
-      switchTab('friends')
-    }
-  }
-
-  // Handler for freshness nudges.
-  const handleFreshnessAction = (nudge: FreshnessNudge) => {
-    if (nudge.action.type === 'edit-profile') {
-      setShowEditModal(true)
-    } else if (nudge.action.type === 'tab') {
-      switchTab(nudge.action.tab as TabType)
-    }
-  }
-
-
-  // Track previous percentage to show toast on improvement
-  const prevPercentageRef = useRef<number | null>(null)
-
-  useEffect(() => {
-    if (!tabParam) return
-    if (tabParam !== activeTab && ['profile', 'vacancies', 'journey', 'references', 'friends', 'comments', 'posts'].includes(tabParam)) {
-      setActiveTab(tabParam)
-    }
-  }, [tabParam, activeTab])
-
-  // Deep-link scroll: notification URLs like ?tab=journey used to land
-  // at the top of the dashboard. Mirrors PlayerDashboard.
-  useTabDeepLinkScroll({ activeTab, tabParam })
-
-  // If a candidate-only coach lands on ?tab=vacancies (e.g. via stale link
-  // from when the tab was visible), bounce them to Profile rather than show
-  // a blank pane. Runs after profile loads since the gate depends on
-  // coach_recruits_for_team.
-  useEffect(() => {
-    if (!profile) return
-    if (activeTab === 'vacancies' && !(profile.coach_recruits_for_team ?? false)) {
-      setActiveTab('profile')
-      const next = new URLSearchParams(searchParams)
-      next.set('tab', 'profile')
-      setSearchParams(next, { replace: true })
-    }
-  }, [profile, activeTab, searchParams, setSearchParams])
-
-  // Refresh profile strength when switching to profile tab (to pick up gallery/journey changes)
-  useEffect(() => {
-    if (!readOnly && activeTab === 'profile') {
-      void refreshStrength()
-    }
-  }, [activeTab, readOnly, refreshStrength])
-
-  // Show toast when profile strength improves
-  useEffect(() => {
-    if (readOnly || strengthLoading) return
-    if (prevPercentageRef.current !== null && percentage > prevPercentageRef.current) {
-      const increase = percentage - prevPercentageRef.current
-      if (percentage >= 100) {
-        addToast("Your profile is now complete! You're fully visible to clubs.", 'success')
-      } else {
-        addToast(`Profile strength +${increase}%. Keep going!`, 'success')
-      }
-    }
-    prevPercentageRef.current = percentage
-  }, [percentage, readOnly, strengthLoading, addToast])
-
-  useEffect(() => {
+    let path: string
     if (readOnly) {
-      return
+      const base = routeParams.username
+        ? `/coaches/${routeParams.username}`
+        : routeParams.id
+          ? `/coaches/id/${routeParams.id}`
+          : null
+      if (!base) return
+      path = legacyTab === 'profile' ? base : `${base}/${legacyTab}`
+    } else {
+      path = legacyTab === 'profile' ? '/dashboard/profile' : `/dashboard/profile/${legacyTab}`
     }
+
+    navigate(`${path}${qsSuffix}`, { replace: true })
+  }, [searchParams, routeParams.username, routeParams.id, readOnly, navigate])
+
+  useTabDeepLinkScroll({
+    activeTab,
+    tabParam: sectionFromRoute ?? null,
+    sectionParam,
+    sectionAnchors: COACH_SECTION_ANCHORS,
+  })
+
+  // Refresh profile strength when switching tabs.
+  useEffect(() => {
+    if (!readOnly) {
+      void strength.refresh()
+    }
+  }, [activeTab, readOnly]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Comment notifications — claim highlights when entering the
+  // comments tab so the UI flashes the freshly-arrived comments.
+  useEffect(() => {
+    if (readOnly) return
 
     if (activeTab !== 'comments') {
       if (highlightedComments.size > 0) {
@@ -224,7 +300,8 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
     }
 
     const ids = claimCommentHighlights()
-    if (ids.length > 0) {
+    const hasNewHighlights = ids.some((id) => !highlightedComments.has(id))
+    if (hasNewHighlights) {
       setHighlightedComments((prev) => {
         const next = new Set(prev)
         ids.forEach((id) => next.add(id))
@@ -233,17 +310,105 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
     }
 
     void clearCommentNotifications()
-  }, [activeTab, claimCommentHighlights, clearCommentNotifications, commentHighlightVersion, highlightedComments, readOnly])
+  }, [activeTab, claimCommentHighlights, clearCommentNotifications, commentHighlightVersion, readOnly, highlightedComments])
 
-  if (!profile) return <DashboardSkeleton />
+  // Toast when profile strength increases.
+  useEffect(() => {
+    if (readOnly || strength.loading) return
+    const currentPercentage = strength.percentage
+    const prevPercentage = prevPercentageRef.current
 
-  const publicContact = derivePublicContactEmail(profile)
-  const savedContactEmail = profile.contact_email?.trim() || ''
+    if (prevPercentage !== null && currentPercentage > prevPercentage) {
+      const increase = currentPercentage - prevPercentage
+      if (currentPercentage >= 100) {
+        addToast('Your coach profile is now complete! Clubs can fully evaluate you.', 'success')
+      } else {
+        addToast(`Profile strength +${increase}%. Keep going!`, 'success')
+      }
+    }
+    prevPercentageRef.current = currentPercentage
+  }, [strength.percentage, strength.loading, readOnly, addToast])
 
-  const handleCreateVacancyClick = () => {
-    handleTabChange('vacancies')
-    setTriggerCreateVacancy(true)
+  // Coach buckets have a slightly different shape than player buckets
+  // (actionId string vs action object). Adapt them to the Hero's
+  // ProfileStrengthBucket shape so the same checklist UI renders.
+  const adaptedBuckets: ProfileStrengthBucket[] = useMemo(
+    () =>
+      strength.buckets.map((b) => ({
+        id: b.id,
+        label: b.label,
+        description: b.hint,
+        unlockCopy: b.unlockCopy,
+        weight: b.weight,
+        completed: b.completed,
+        action:
+          b.actionId === 'journey-tab'
+            ? { type: 'tab' as const, tab: 'journey' }
+            : b.actionId === 'gallery-tab'
+              ? { type: 'tab' as const, tab: 'media' }
+              : b.actionId === 'friends-tab'
+                ? { type: 'tab' as const, tab: 'community' }
+                : { type: 'edit-profile' as const },
+      })),
+    [strength.buckets],
+  )
+
+  const handleTabChange = useMemo(
+    () => (tab: TabType) => {
+      const wasSameTab = activeTab === tab
+
+      const preserved = new URLSearchParams(searchParams)
+      preserved.delete('tab')
+      const qs = preserved.toString()
+      const qsSuffix = qs ? `?${qs}` : ''
+
+      let path: string
+      if (readOnly) {
+        const base = routeParams.username
+          ? `/coaches/${routeParams.username}`
+          : routeParams.id
+            ? `/coaches/id/${routeParams.id}`
+            : null
+        if (!base) return
+        path = tab === 'profile' ? base : `${base}/${tab}`
+      } else {
+        path = tab === 'profile' ? '/dashboard/profile' : `/dashboard/profile/${tab}`
+      }
+
+      navigate(`${path}${qsSuffix}`, { replace: true })
+
+      // Tap on the same tab → replay scroll (mirrors Player).
+      if (wasSameTab && tab !== 'profile') {
+        const performTabContentScroll = () => {
+          const el = document.getElementById('profile-tab-content')
+          if (el && typeof el.scrollIntoView === 'function') {
+            try { el.scrollIntoView({ behavior: 'smooth', block: 'start' }) } catch { /* noop */ }
+          }
+        }
+        window.requestAnimationFrame(performTabContentScroll)
+        window.setTimeout(performTabContentScroll, 400)
+      }
+    },
+    [activeTab, navigate, readOnly, routeParams.id, routeParams.username, searchParams],
+  )
+
+  const handleProfileStrengthAction = (bucket: ProfileStrengthBucket) => {
+    switch (bucket.action.type) {
+      case 'edit-profile':
+        setShowEditModal(true)
+        break
+      case 'tab': {
+        const targetTab = bucket.action.tab as TabType
+        handleTabChange(targetTab)
+        break
+      }
+      // Coach buckets don't have add-video; fall through.
+      default:
+        setShowEditModal(true)
+    }
   }
+
+  if (!profile) return null
 
   const handleSendMessage = async () => {
     if (!user) {
@@ -262,7 +427,7 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
         .from('conversations')
         .select('id')
         .or(
-          `and(participant_one_id.eq.${user.id},participant_two_id.eq.${profileData.id}),and(participant_one_id.eq.${profileData.id},participant_two_id.eq.${user.id})`
+          `and(participant_one_id.eq.${user.id},participant_two_id.eq.${profileData.id}),and(participant_one_id.eq.${profileData.id},participant_two_id.eq.${user.id})`,
         )
         .maybeSingle()
 
@@ -281,48 +446,110 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
     }
   }
 
-  // Opportunities tab is recruiter-mode only. Gated on the *visited* coach's
-  // `coach_recruits_for_team` flag — for the owner this means the tab only
-  // appears once they've opted into recruiter mode; for visitors it means
-  // they only see it on coaches who actually recruit. Without this gate, the
-  // flag was cosmetic only — any coach could navigate to ?tab=vacancies and
-  // create an opportunity from the empty-state CTA.
-  const showOpportunitiesTab = profile?.coach_recruits_for_team ?? false
-  const tabs: { id: TabType; label: string }[] = [
-    { id: 'profile', label: 'Profile' },
-    ...(showOpportunitiesTab ? [{ id: 'vacancies' as TabType, label: 'Opportunities' }] : []),
-    { id: 'journey', label: 'Journey' },
-    { id: 'references', label: 'References' },
-    { id: 'friends', label: 'Friends' },
-    { id: 'comments', label: 'Comments' },
-    { id: 'posts', label: 'Posts' },
-  ]
-
-  const handleTabChange = (tab: TabType) => {
-    setActiveTab(tab)
-    const next = new URLSearchParams(searchParams)
-    next.set('tab', tab)
-    setSearchParams(next, { replace: true })
+  const handleViewPublic = () => {
+    const slug = profile.username ? profile.username : `id/${profile.id}`
+    navigate(`/coaches/${slug}`)
   }
 
-  const age = calculateAge(profile.date_of_birth)
+  // Hero pills route to the Community hub.
+  const navigateToCommunitySection = (section: 'connections' | 'references') => {
+    if (readOnly) {
+      const base = routeParams.username
+        ? `/coaches/${routeParams.username}`
+        : routeParams.id
+          ? `/coaches/id/${routeParams.id}`
+          : null
+      if (!base) return
+      navigate(`${base}/community?section=${section}`, { replace: true })
+    } else {
+      navigate(`/dashboard/profile/community?section=${section}`, { replace: true })
+    }
+  }
+
+  const handleReferencesClick = () => {
+    trackReferenceBadgeClick('coach', profile.accepted_reference_count ?? 0)
+    navigateToCommunitySection('references')
+  }
+
+  const handleFriendsClick = () => navigateToCommunitySection('connections')
+
+  const handleManageOpportunities = () => handleTabChange('opportunities')
+
+  // Primary CTA for the CoachPostedOpportunitiesCard. Two responsibilities:
+  //
+  //   1. Auto-enable recruiter mode for the coach.
+  //      The opportunities INSERT policy gates coach writes on
+  //      coach_recruits_for_team=true (migration 20260505000000).
+  //      The dashboard exposes the Create CTA to ALL coaches now, so
+  //      we implicitly opt the coach into recruiter mode by flipping
+  //      the flag on first Create click. QA-flagged 403 on POST
+  //      /opportunities was caused by this mismatch.
+  //
+  //   2. Trigger the create modal + route to the vacancies surface.
+  //      OpportunitiesTab.triggerCreate opens the modal on mount;
+  //      we navigate AFTER the flag update so the RLS check reads
+  //      the fresh profile state.
+  const handleCreateOpportunity = async () => {
+    if (profile?.role === 'coach' && profile.coach_recruits_for_team !== true) {
+      try {
+        const { error } = await supabase
+          .from('profiles')
+          .update({ coach_recruits_for_team: true })
+          .eq('id', profile.id)
+        if (error) throw error
+        // Refresh the auth store so the dashboard hero immediately
+        // shows the "Recruiting players" badge.
+        await refreshAuthProfile()
+      } catch (err) {
+        logger.error('[CoachDashboard] failed to enable recruiter mode', err)
+        addToast(
+          'Unable to enable recruiter mode. Please try again.',
+          'error',
+        )
+        return
+      }
+    }
+    setTriggerCreateVacancy(true)
+    handleTabChange('opportunities')
+  }
+
+  // CoachApplicationsCard CTAs — both land on /opportunities (the
+  // marketplace). "View applications" appends ?applied=mine so the
+  // page can filter to only the coach's own applications; the
+  // marketplace also shows "you applied" badges inline.
+  const handleBrowseOpportunities = () => navigate('/opportunities')
+  const handleViewApplications = () => navigate('/opportunities?applied=mine')
+
+  const isLanding = activeTab === 'profile'
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      
-      {/* Public View Banner - shown when user views their own profile in public mode */}
+
       {readOnly && isOwnProfile && <PublicViewBanner />}
 
-      <main className="max-w-7xl mx-auto px-4 md:px-6 pt-24 pb-12">
+      <main className="max-w-7xl mx-auto px-4 md:px-6 pt-24 pb-12 space-y-5 md:space-y-6">
         {readOnly && !isOwnProfile && (
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition-colors"
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             <span className="text-sm font-medium">Back</span>
+          </button>
+        )}
+
+        {!isLanding && (
+          <button
+            type="button"
+            onClick={() => handleTabChange('profile')}
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span className="text-sm font-medium">
+              {readOnly ? 'Back to profile' : 'Back to dashboard'}
+            </span>
           </button>
         )}
 
@@ -333,579 +560,166 @@ export default function CoachDashboard({ profileData, readOnly = false, isOwnPro
           />
         )}
 
-        {/* Profile Header */}
-        <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm mb-6 animate-fade-in overflow-visible">
-          <div className="flex flex-col md:flex-row gap-6">
-            {/* Avatar */}
-            <div className="flex-shrink-0">
-              <Avatar
-                src={profile.avatar_url}
-                alt={profile.full_name ?? undefined}
-                initials={getInitials(profile.full_name)}
-                size="xl"
-                enablePreview
-                previewTitle={profile.full_name ?? undefined}
-                role="coach"
-              />
-            </div>
+        {/* Coaches without a current world club id get a one-time
+            nudge to link their club. Owner-only; doesn't appear on
+            visitor views. ClubLinkPrompt reads auth/profile state
+            internally — no props needed. */}
+        {!readOnly && isLanding && <ClubLinkPrompt />}
 
-            {/* Info */}
-            <div className="flex-1">
-              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
-                <div>
-                  <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2 flex items-center gap-2">
-                    <span>{profile.full_name}</span>
-                    <VerifiedBadge
-                      verified={(profile as unknown as { is_verified?: boolean; verified_at?: string | null } | null)?.is_verified}
-                      verifiedAt={(profile as unknown as { is_verified?: boolean; verified_at?: string | null } | null)?.verified_at ?? null}
-                    />
-                  </h1>
-                  <div className="mb-3 flex flex-wrap items-center gap-3">
-                    <RoleBadge role="coach" />
-                    {!readOnly && !strengthLoading && (
-                      <TierBadge tier={calculateTier(percentage)} />
-                    )}
-                    {/* Phase 4 References UX Plan #1.5 — TrustBadge in coach
-                        header. Same click semantics as PlayerDashboard. */}
-                    <TrustBadge
-                      count={(profile as Partial<Profile>).accepted_reference_count ?? 0}
-                      isOwner={!readOnly}
-                      onClick={() => {
-                        trackReferenceBadgeClick('coach', (profile as Partial<Profile>).accepted_reference_count ?? 0)
-                        if (!readOnly) {
-                          setActiveTab('references')
-                          const next = new URLSearchParams(searchParams)
-                          next.set('tab', 'references')
-                          next.delete('section')
-                          setSearchParams(next, { replace: false })
-                        } else {
-                          document.getElementById('public-references')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                        }
-                      }}
-                    />
-                    {(profile as Partial<Profile>).coach_specialization && (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-50 text-teal-700">
-                        {getSpecializationLabel(
-                          (profile as Partial<Profile>).coach_specialization,
-                          (profile as Partial<Profile>).coach_specialization_custom
-                        )}
-                      </span>
-                    )}
-                    {profile.open_to_coach && <AvailabilityPill variant="coach" />}
-                    <SocialLinksDisplay
-                      links={profile.social_links as SocialLinks | null | undefined}
-                      iconSize="sm"
-                    />
-                  </div>
-                </div>
+        <HeroIdentityCard
+          // PlayerProfileShape requires position: string | null but
+          // CoachProfileShape leaves it optional via Partial<Profile>.
+          // The Hero never reads position for coaches (the role check
+          // bypasses the player position render). Cast is safe.
+          profile={profile as unknown as import('@/pages/PlayerDashboard').PlayerProfileShape}
+          readOnly={readOnly}
+          isOwnProfile={isOwnProfile}
+          authProfileRole={authProfile?.role}
+          completionPercentage={strength.percentage}
+          completionLoading={strength.loading}
+          completionBuckets={!readOnly ? adaptedBuckets : undefined}
+          onBucketAction={handleProfileStrengthAction}
+          currentClubLogo={currentClubLogo}
+          onEdit={() => setShowEditModal(true)}
+          onViewPublic={handleViewPublic}
+          onMessage={handleSendMessage}
+          sendingMessage={sendingMessage}
+          onFriendsClick={handleFriendsClick}
+          onReferencesClick={handleReferencesClick}
+        />
 
-                {/* Action Buttons */}
-                {!readOnly ? (
-                  <div className="flex items-center gap-2">
-                    <ShareProfileButton profile={{ role: 'coach', username: profile.username, id: profile.id }} />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        // Canonical role URL with username slug fallback to id
-                        // — matches what ShareProfileButton copies, so the
-                        // owner sees the same URL the share recipient sees.
-                        const slug = profile.username ? profile.username : `id/${profile.id}`
-                        navigate(`/coaches/${slug}`)
-                      }}
-                      className="gap-1.5 whitespace-nowrap text-xs sm:text-sm px-2.5 sm:px-4"
-                    >
-                      <Eye className="w-4 h-4 flex-shrink-0" />
-                      <span className="hidden xs:inline">Network View</span>
-                      <span className="xs:hidden">View</span>
-                    </Button>
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={() => setShowEditModal(true)}
-                      className="gap-1.5 whitespace-nowrap text-xs sm:text-sm px-2.5 sm:px-4"
-                    >
-                      <Edit2 className="w-4 h-4 flex-shrink-0" />
-                      <span className="hidden xs:inline">Edit Profile</span>
-                      <span className="xs:hidden">Edit</span>
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="flex flex-wrap items-center gap-2">
-                    <FriendshipButton profileId={profile.id} />
-                    {!isOwnProfile && (
-                    <button
-                      type="button"
-                      onClick={handleSendMessage}
-                      disabled={sendingMessage}
-                      className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-[#8026FA] to-[#924CEC] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-90 disabled:opacity-60"
-                    >
-                      {sendingMessage ? (
-                        <>
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          Sending...
-                        </>
-                      ) : (
-                        <>
-                          <MessageCircle className="w-4 h-4" />
-                          Message
-                        </>
-                      )}
-                    </button>
-                    )}
-                    {isOwnProfile && (
-                      <ShareProfileButton profile={{ role: 'coach', username: profile.username, id: profile.id }} />
-                    )}
-                    {!isOwnProfile && <ProfileActionMenu targetId={profile.id} targetName={profile.full_name ?? 'this user'} />}
-                  </div>
-                )}
-              </div>
-
-              <div className="flex flex-wrap items-center gap-4 text-gray-600 mb-4">
-                <div className="flex items-center gap-2">
-                  <DualNationalityDisplay
-                    primaryCountryId={profile.nationality_country_id}
-                    secondaryCountryId={profile.nationality2_country_id}
-                    fallbackText={profile.nationality}
-                    mode="compact"
-                  />
-                </div>
-                <div className="flex items-center gap-2">
-                  <MapPin className="w-5 h-5" />
-                  <span>{profile.base_location}</span>
-                </div>
-                {age && (
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-5 h-5" />
-                    <span>{age} years old</span>
-                  </div>
-                )}
-                {/* Coaching categories (if any). Phase 3 — neutral chip,
-                    no per-gender color coding. */}
-                {profile.coaching_categories && profile.coaching_categories.length > 0 && (
-                  <div className="flex items-center gap-2 text-gray-700">
-                    <span>{categoriesToDisplay(profile.coaching_categories)}</span>
-                  </div>
-                )}
-                {/* Current Club (if specified) */}
-                {profile.current_club && (
-                  <div className="flex items-center gap-2">
-                    {currentClubLogo ? (
-                      <img
-                        src={currentClubLogo}
-                        alt=""
-                        className="w-5 h-5 rounded-full object-cover flex-shrink-0"
-                      />
-                    ) : (
-                      <Landmark className="w-5 h-5" />
-                    )}
-                    <span>{profile.current_club}</span>
-                  </div>
-                )}
-                {/* Public contact email - visible when enabled */}
-                {publicContact.shouldShow && publicContact.displayEmail && (
-                  <a
-                    href={`mailto:${publicContact.displayEmail}`}
-                    className="flex items-center gap-2 hover:text-[#8026FA] transition-colors"
-                  >
-                    <Mail className="w-5 h-5" />
-                    <span>{publicContact.displayEmail}</span>
-                  </a>
-                )}
-              </div>
-            </div>
+        {!readOnly && isLanding && (
+          <div id="profile-viewers" className="scroll-mt-20">
+            <ProfileViewersSection />
           </div>
-        </div>
-
-        {/* Owner-side hierarchy (matches v5-plan dashboard guideline):
-              1. Pulse — "Since you last visited"
-              2. NextStepCard — single gamified primary action
-              3. ProfileSnapshot — positive evidence (chips, present-only)
-              4. FreshnessCard
-              5. RecentlyConnectedCard — gated on next step NOT being a references ask
-              6. SearchAppearancesCard
-            Visitor mode: just the public Snapshot (chips). */}
-        {!readOnly ? (
-          <>
-            <WelcomeValueCard />
-            <div className="mt-3" />
-            <PulseSection />
-            <NextStepCard
-              percentage={percentage}
-              buckets={buckets}
-              loading={strengthLoading}
-              onBucketAction={handleStrengthBucketAction}
-            />
-            {/* Owner-mode ProfileSnapshot removed 2026-05-08 — duplicate of
-                NextStepCard's progress story. Public-mode preserved below. */}
-            <div className="mt-3">
-              <FreshnessCard nudge={freshnessNudge} onAction={handleFreshnessAction} />
-            </div>
-            {nudgeOwnerId && (() => {
-              const nextStepBucket = buckets.find((b) => !b.completed)
-              const nextStepIsReferences =
-                nextStepBucket?.id === 'references' || nextStepBucket?.id === 'friends'
-              if (nextStepIsReferences) return null
-              return (
-                <div className="mt-3">
-                  <RecentlyConnectedCard
-                    friendOptions={nudgeFriendOptions}
-                    ownerProfileId={nudgeOwnerId}
-                    excludeIds={nudgeExcludeIds}
-                    acceptedReferenceCount={nudgeAcceptedFloor}
-                    profileRole={profile.role}
-                    onAsk={(friendId) => {
-                      setActiveTab('references')
-                      const next = new URLSearchParams(searchParams)
-                      next.set('tab', 'references')
-                      next.set('ask', friendId)
-                      next.delete('section')
-                      setSearchParams(next, { replace: false })
-                    }}
-                  />
-                </div>
-              )
-            })()}
-            {searchAppearances && searchAppearances.total > 0 && (
-              <div className="mt-3">
-                <SearchAppearancesCard
-                  days={searchAppearances.days}
-                  total={searchAppearances.total}
-                  windowDays={7}
-                />
-              </div>
-            )}
-          </>
-        ) : (
-          // Visitor view: ProfileSnapshot removed — Network View v0 already
-          // surfaces every signal it carried (Specialization, Coaching
-          // categories, Photo) in canonical locations: header card, About,
-          // and the inline Profile content below. Showing both was duplicate
-          // signal in two visual treatments. Mirrors the Player cleanup
-          // shipped 2026-05-08.
-          null
         )}
 
-        {/* Tabs — anchor on the outer wrapper so deep-link scroll lands
-            with the tab strip at the top of the viewport. */}
-        <div id="profile-tab-content" className="bg-white rounded-2xl shadow-sm animate-slide-in-up scroll-mt-4">
-          {/* Tab Navigation — owner only.
-              Network View v0: visitors get a single scrollable narrative
-              instead of tabbed navigation. Same components, different
-              composition. Owner mode keeps tabs to manage each surface
-              independently. */}
-          {!readOnly && (
-            <div className="border-b border-gray-200 overflow-x-auto">
-              <ScrollableTabs
-                tabs={tabs}
-                activeTab={activeTab}
-                onTabChange={handleTabChange}
-                className="gap-8 px-6"
-                activeClassName="border-[#8026FA] text-[#8026FA]"
-                inactiveClassName="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              />
-            </div>
-          )}
-
-          {/* min-h-screen guarantees the document is tall enough for
-              useTabDeepLinkScroll's scrollIntoView({block:'start'}) to
-              land the tab strip at the viewport top regardless of tab
-              content length. 70vh wasn't enough on Friends/Journey —
-              docHeight capped before reaching the needed scrollY. */}
-          <div className="p-6 md:p-8 min-h-screen">
-            {/* Profile section — always rendered for visitors (top of the
-                Network View scroll); activeTab gate for owners. The Profile
-                block already renders Journey, References, Media, and Posts
-                inline for visitors, so those don't need separate sections. */}
-            {(activeTab === 'profile' || readOnly) && (
-              <div className="space-y-6 animate-fade-in">
-                {!readOnly && <ProfileViewersSection />}
-                {!readOnly && (
-                  <AvailabilityToggleStrip role="coach" />
-                )}
-                {!readOnly && <ClubLinkPrompt />}
-
-                {/* Phase 1A.4 (v5 plan): coach dual-mode Quick Actions split.
-                    Card A (always shown): build the candidate-side profile.
-                    Card B (only when coach_recruits_for_team=true): post a
-                    vacancy to recruit. Both render side-by-side on wide
-                    screens, stacked on mobile. The split keeps the
-                    candidate-side coach unaware of recruiter affordances by
-                    default (opt-in via onboarding step 3 or Settings). */}
-                {!readOnly && (
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="bg-gradient-to-br from-[#8026FA] to-[#924CEC] rounded-xl p-6 text-white">
-                      <h3 className="text-lg font-semibold mb-2">Build your coaching profile</h3>
-                      <p className="text-purple-100 mb-4 text-sm">A complete profile gets you found and contacted by clubs.</p>
-                      <button
-                        type="button"
-                        onClick={() => setShowEditModal(true)}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-white text-[#8026FA] rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm"
-                      >
-                        <Edit2 className="w-4 h-4" />
-                        Edit profile
-                      </button>
-                    </div>
-                    {(profile?.coach_recruits_for_team ?? false) && (
-                      <div className="bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-xl p-6 text-white">
-                        <h3 className="text-lg font-semibold mb-2">Recruit players for your team</h3>
-                        <p className="text-emerald-100 mb-4 text-sm">Post an opportunity and review applicants with full context.</p>
-                        <button
-                          type="button"
-                          onClick={handleCreateVacancyClick}
-                          className="inline-flex items-center gap-2 px-4 py-2 bg-white text-emerald-700 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm"
-                        >
-                          <Plus className="w-4 h-4" />
-                          Post an opportunity
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Basic Information - Only shown in private view (not readOnly) to avoid duplication with header card */}
-                {!readOnly && (
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Full Name
-                      </label>
-                      <p className="text-gray-900 font-medium">{profile.full_name}</p>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Nationality
-                      </label>
-                      <DualNationalityDisplay
-                        primaryCountryId={profile.nationality_country_id}
-                        secondaryCountryId={profile.nationality2_country_id}
-                        fallbackText={profile.nationality}
-                        mode="full"
-                        className="text-gray-900"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Base Location (City)
-                      </label>
-                      <p className="text-gray-900">{profile.base_location}</p>
-                    </div>
-
-                    {profile.coaching_categories && profile.coaching_categories.length > 0 && (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Coaching Categories
-                        </label>
-                        <p className="text-gray-900">{categoriesToDisplay(profile.coaching_categories)}</p>
-                      </div>
-                    )}
-
-                    {profile.date_of_birth && (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Date of Birth
-                        </label>
-                        <p className="text-gray-900">
-                          {formatDateOfBirth(profile.date_of_birth)}
-                          {age && <span className="text-gray-500 ml-2">({age} years old)</span>}
-                        </p>
-                      </div>
-                    )}
-                  </div>
+        {isLanding ? (
+          <CoachBentoGrid
+            // Same cast rationale as the Hero — Coach and Player share
+            // shape but TypeScript's structural check on the optional
+            // 'position' field needs an explicit acknowledgement.
+            profile={profile as unknown as import('@/pages/PlayerDashboard').PlayerProfileShape}
+            readOnly={readOnly}
+            onOpenTab={handleTabChange}
+            onEdit={() => setShowEditModal(true)}
+            onCreateOpportunity={handleCreateOpportunity}
+            onManageOpportunities={handleManageOpportunities}
+            onBrowseOpportunities={handleBrowseOpportunities}
+            onViewApplications={handleViewApplications}
+          />
+        ) : (
+          <div id="profile-tab-content" className="bg-white rounded-2xl shadow-sm scroll-mt-4">
+            <div className="p-6 md:p-8 min-h-screen">
+              {activeTab === 'journey' && (
+                <div className="animate-fade-in">
+                  <JourneyTab
+                    profileId={profile.id}
+                    readOnly={readOnly}
+                    {...(readOnly ? { variant: 'inline' as const, title: 'Journey' } : {})}
+                  />
                 </div>
-                )}
+              )}
 
-                {/* Contact Information - Only shown in private view */}
-                {!readOnly && (
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Contact</h3>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Contact Email</label>
-                      {publicContact.shouldShow && publicContact.displayEmail ? (
-                        <a href={`mailto:${publicContact.displayEmail}`} className="text-[#8026FA] hover:underline">
-                          {publicContact.displayEmail}
-                        </a>
-                      ) : (
-                        <p className="text-gray-500 italic">Not shared with other HOCKIA members</p>
-                      )}
-                      <p className="text-xs text-gray-500 mt-1">
-                        {profile.contact_email_public
-                          ? publicContact.source === 'contact'
-                            ? 'Other HOCKIA members see your contact email.'
-                            : 'Add a contact email to be reachable.'
-                          : savedContactEmail
-                            ? 'Saved contact email is private.'
-                            : 'No contact email saved; only private channels apply.'}
-                      </p>
-                      {!profile.contact_email_public && savedContactEmail && (
-                        <p className="text-xs text-gray-500 break-words">
-                          Private contact email: <span className="text-gray-700 font-medium">{savedContactEmail}</span>
-                        </p>
-                      )}
-                  </div>
-                </div>
-                )}
-
-                {readOnly && (
-                  // Phase 4 References UX Plan #1.6 — TrustBadge scroll
-                  // target. id + scroll-mt live on the section's own root
-                  // so when PublicReferencesSection returns null (zero
-                  // references), no empty wrapper is left behind to
-                  // inflate the surrounding space-y gap.
-                  <PublicReferencesSection profileId={profile.id} profileName={profile.full_name} />
-                )}
-
-                <section className="space-y-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <h3 className="text-2xl font-bold text-gray-900">About</h3>
-                    {!readOnly && (
-                      <button
-                        onClick={() => setShowEditModal(true)}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
-                      >
-                        <Edit2 className="w-4 h-4" />
-                        Edit
-                      </button>
-                    )}
-                  </div>
-
-                  <div className="bg-gray-50 border border-gray-200 rounded-xl p-6">
-                    {profile.bio?.trim() ? (
-                      <p className="text-gray-700 leading-relaxed whitespace-pre-line break-words">
-                        {profile.bio}
-                      </p>
-                    ) : (
-                      <div className="text-gray-500 italic space-y-2">
-                        <p>No bio yet.</p>
-                        {!readOnly && (
-                          <p>Use the edit option to share your coaching background, philosophy, and achievements.</p>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </section>
-
-                {/* Inline Coaching Journey — public/read-only viewers only.
-                    Surfaces career history directly in the scroll instead of
-                    requiring tab discovery. Hidden for owners on /dashboard
-                    (the existing Journey tab is unchanged for them). When
-                    the profile has no entries, JourneyTab renders nothing
-                    in inline+readOnly mode so visitors don't see an empty
-                    placeholder. */}
-                {readOnly && (
-                  <section className="space-y-3 pt-6 border-t border-gray-200">
-                    <JourneyTab
-                      profileId={profile.id}
-                      readOnly
-                      variant="inline"
-                      title="Coaching Journey"
-                    />
-                  </section>
-                )}
-
-                <section data-section="media" className="space-y-3 pt-6 border-t border-gray-200">
+              {activeTab === 'media' && (
+                <div className="animate-fade-in">
                   <MediaTab
                     profileId={profile.id}
                     readOnly={readOnly}
-                    renderHeader={({ canManageVideo, openManageModal }) => (
-                      <div className="flex items-center justify-between gap-3">
-                        <h2 className="text-2xl font-bold text-gray-900">Highlight Video</h2>
-                        {canManageVideo && (
-                          <Button variant="outline" size="sm" onClick={openManageModal}>
-                            Manage
-                          </Button>
-                        )}
-                      </div>
-                    )}
+                    showVideo={false}
+                    showGallery={true}
+                    viewerRole={authProfile?.role ?? null}
+                    isOwnProfile={!readOnly || isOwnProfile}
+                    highlightVisibility={(profile as Profile)?.highlight_visibility ?? 'public'}
                   />
-                </section>
+                </div>
+              )}
 
-                {/* Posts — shown inline on public profile below media */}
-                {readOnly && (
-                  <section className="space-y-3 pt-6 border-t border-gray-200">
-                    <h2 className="text-2xl font-bold text-gray-900">Posts</h2>
-                    <ProfilePostsTab profileId={profile.id} readOnly />
-                  </section>
-                )}
-              </div>
-            )}
+              {activeTab === 'friends' && (
+                <div id="visitor-section-friends" className="animate-fade-in">
+                  <FriendsTab
+                    profileId={profile.id}
+                    readOnly={readOnly}
+                    profileRole={profile.role}
+                    hideReferences
+                  />
+                </div>
+              )}
 
-            {/* Opportunities — owner only. Visitors don't get this surface
-                inline; coach vacancies surface elsewhere via discovery. */}
-            {activeTab === 'vacancies' && showOpportunitiesTab && !readOnly && (
-              <div className="animate-fade-in">
-                <OpportunitiesTab
-                  profileId={profile.id}
-                  readOnly={readOnly}
-                  triggerCreate={triggerCreateVacancy}
-                  onCreateTriggered={() => setTriggerCreateVacancy(false)}
-                />
-              </div>
-            )}
+              {activeTab === 'comments' && (
+                <div id="visitor-section-comments" className="animate-fade-in">
+                  <CommentsTab
+                    profileId={profile.id}
+                    highlightedCommentIds={highlightedComments}
+                    profileRole={profile.role}
+                  />
+                </div>
+              )}
 
-            {/* Journey — owner only as a separate tab. Visitors get
-                Journey rendered inline within the Profile section above
-                (the `readOnly && <JourneyTab variant="inline" />` block).
-                Rendering it here too would double up the career history. */}
-            {activeTab === 'journey' && !readOnly && (
-              <div className="animate-fade-in">
-                <JourneyTab profileId={profile.id} readOnly={readOnly} />
-              </div>
-            )}
+              {activeTab === 'references' && !readOnly && (
+                <div className="animate-fade-in">
+                  <ReferencesTab
+                    profileId={profile.id}
+                    readOnly={readOnly}
+                    profileRole={profile.role}
+                  />
+                </div>
+              )}
 
-            {/* References — owner only. Visitors see PublicReferencesSection
-                inline within the Profile section above. */}
-            {activeTab === 'references' && !readOnly && (
-              <div className="animate-fade-in">
-                <ReferencesTab profileId={profile.id} readOnly={readOnly} profileRole={profile.role} />
-              </div>
-            )}
+              {activeTab === 'references' && readOnly && (
+                <div className="animate-fade-in">
+                  <PublicReferencesSection
+                    profileId={profile.id}
+                    profileName={profile.full_name ?? profile.username ?? null}
+                  />
+                </div>
+              )}
 
-            {/* Friends/Connections — always for visitors (Network View v0).
-                FriendsTab's internal heading provides the section label. */}
-            {(activeTab === 'friends' || readOnly) && (
-              <div
-                id="visitor-section-friends"
-                className={readOnly ? 'mt-12 pt-10 border-t border-gray-200 animate-fade-in' : 'animate-fade-in'}
-              >
-                <FriendsTab profileId={profile.id} readOnly={readOnly} profileRole={profile.role} hideReferences />
-              </div>
-            )}
+              {activeTab === 'community' && (
+                // Coach Community Hub for owners; Public view for
+                // visitors. Same surface shape as Player.
+                <div className="animate-fade-in">
+                  {readOnly ? (
+                    <PublicCommunityView
+                      profile={profile as Pick<Profile, 'id' | 'role' | 'full_name' | 'username' | 'accepted_friend_count' | 'accepted_reference_count' | 'post_count'>}
+                    />
+                  ) : (
+                    <CoachCommunityHub
+                      profile={profile as Pick<Profile, 'id' | 'role' | 'full_name' | 'username' | 'accepted_friend_count' | 'accepted_reference_count' | 'post_count'>}
+                      highlightedCommentIds={highlightedComments}
+                    />
+                  )}
+                </div>
+              )}
 
-            {/* Comments — always for visitors (Network View v0).
-                CommentsTab has its own section heading internally. */}
-            {(activeTab === 'comments' || readOnly) && (
-              <div
-                id="visitor-section-comments"
-                className={readOnly ? 'mt-12 pt-10 border-t border-gray-200 animate-fade-in' : 'animate-fade-in'}
-              >
-                <CommentsTab profileId={profile.id} highlightedCommentIds={highlightedComments} profileRole={profile.role} />
-              </div>
-            )}
+              {activeTab === 'posts' && (
+                <div className="animate-fade-in">
+                  <ProfilePostsTab profileId={profile.id} readOnly={readOnly} />
+                </div>
+              )}
 
-            {/* Posts — owner only. Visitors get Posts inline at the bottom
-                of the Profile section above. */}
-            {activeTab === 'posts' && !readOnly && (
-              <div className="animate-fade-in">
-                <ProfilePostsTab profileId={profile.id} readOnly={readOnly} />
-              </div>
-            )}
+              {activeTab === 'opportunities' && (
+                <div className="animate-fade-in">
+                  <OpportunitiesTab
+                    profileId={profile.id}
+                    readOnly={readOnly}
+                    triggerCreate={triggerCreateVacancy}
+                    onCreateTriggered={() => setTriggerCreateVacancy(false)}
+                    initialOpportunityType="coach"
+                  />
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </main>
 
-      {/* Edit Profile Modal */}
       <EditProfileModal
         isOpen={showEditModal}
         onClose={() => setShowEditModal(false)}
-        role={profile.role as 'coach'}
+        role={profile.role as 'player' | 'coach'}
       />
 
-      {/* Sign In Prompt Modal */}
       <SignInPromptModal
         isOpen={showSignInPrompt}
         onClose={() => setShowSignInPrompt(false)}

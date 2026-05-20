@@ -18,6 +18,10 @@ interface CreateVacancyModalProps {
   onClose: () => void
   onSuccess: () => void
   editingVacancy?: Vacancy | null
+  /** Initial opportunity_type when creating a new opportunity. Lets
+   *  the coach dashboard launch the modal pre-set to 'coach' so users
+   *  don't land on a "Player Position" form. Ignored when editing. */
+  initialOpportunityType?: 'player' | 'coach'
 }
 
 const BENEFIT_OPTIONS = [
@@ -34,8 +38,8 @@ const BENEFIT_OPTIONS = [
 ]
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const buildInitialFormData = (vacancy?: Vacancy | null): Record<string, any> => ({
-  opportunity_type: vacancy?.opportunity_type || 'player',
+const buildInitialFormData = (vacancy?: Vacancy | null, initialOpportunityType?: 'player' | 'coach'): Record<string, any> => ({
+  opportunity_type: vacancy?.opportunity_type || initialOpportunityType || 'player',
   title: vacancy?.title || '',
   position: vacancy?.position || undefined,
   gender: vacancy?.gender || undefined,
@@ -67,13 +71,18 @@ type VacancyDraftStorage = {
   newCustomBenefit: string
 }
 
-export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editingVacancy }: CreateVacancyModalProps) {
+export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editingVacancy, initialOpportunityType }: CreateVacancyModalProps) {
   const { user, profile } = useAuthStore()
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  /** Inline submit-error banner. The toast container lives in the
+   *  top-right corner of the viewport, which scrolls out of view once
+   *  the modal content is scrolled. The inline banner anchors the
+   *  error to where the user is actually looking. */
+  const [submitError, setSubmitError] = useState<string | null>(null)
   const { addToast } = useToastStore()
 
-  const [formData, setFormData] = useState<OpportunityFormData>(buildInitialFormData(editingVacancy))
+  const [formData, setFormData] = useState<OpportunityFormData>(buildInitialFormData(editingVacancy, initialOpportunityType))
   const { getCountryById } = useCountries()
 
   // Location autocomplete state
@@ -87,6 +96,11 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
   const [newRequirement, setNewRequirement] = useState('')
   const [newCustomBenefit, setNewCustomBenefit] = useState('')
   const dialogRef = useRef<HTMLDivElement>(null)
+  /** Ref to the modal's scrollable content area. Used to scroll the
+   *  inline submit-error banner into view when a save fails — without
+   *  this, errors land at the top of the modal while the user is
+   *  still scrolled near the Submit button at the bottom. */
+  const scrollContentRef = useRef<HTMLDivElement>(null)
   const closeButtonRef = useRef<HTMLButtonElement | null>(null)
   const opportunityTypeRef = useRef<HTMLSelectElement | null>(null)
   const titleId = useId()
@@ -131,6 +145,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
     }
 
     setErrors({})
+    setSubmitError(null)
     setNewRequirement('')
     setNewCustomBenefit('')
 
@@ -140,7 +155,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
       if (rawDraft) {
         try {
           const parsed = JSON.parse(rawDraft) as VacancyDraftStorage
-          const base = buildInitialFormData(null)
+          const base = buildInitialFormData(null, initialOpportunityType)
           const restored = { ...base, ...(parsed.formData || {}) }
           setFormData(restored)
           setNewRequirement(parsed.newRequirement ?? '')
@@ -160,13 +175,13 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
       }
     }
 
-    const initial = buildInitialFormData(editingVacancy)
+    const initial = buildInitialFormData(editingVacancy, initialOpportunityType)
     // Pre-fill organization name from coach's current club for new opportunities
     if (!editingVacancy && profile?.role === 'coach' && profile.current_club && !initial.organization_name) {
       initial.organization_name = profile.current_club
     }
     setFormData(initial)
-  }, [addToast, editingVacancy, isOpen, profile, user])
+  }, [addToast, editingVacancy, initialOpportunityType, isOpen, profile, user])
 
   useEffect(() => {
     if (!isOpen) {
@@ -239,6 +254,16 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
       }
     }
   }, [])
+
+  // When a submit error appears, scroll the modal back to the top so
+  // the inline banner is visible. Without this, the banner renders at
+  // the top of a long form while the user is still focused on the
+  // Submit button at the bottom — they'd only see the toast.
+  useEffect(() => {
+    if (submitError && scrollContentRef.current) {
+      scrollContentRef.current.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }, [submitError])
 
   if (!isOpen) return null
 
@@ -321,19 +346,34 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSave = async () => {
+  // QA-flagged: a single "Create Opportunity" button silently saved as
+  // a draft, so users who expected to publish hit a confusing dead-end.
+  // Split into two CTAs — "Save as draft" and "Publish now" — and let
+  // each one set the intended status explicitly. `targetStatus` is
+  // optional to preserve the editing-existing-row path (which keeps
+  // whatever status was set inside the form, e.g. via the status
+  // select inside the modal).
+  const handleSave = async (targetStatus?: 'draft' | 'open') => {
+    setSubmitError(null)
     if (!user) {
       addToast('You need to be signed in to manage opportunities.', 'error')
+      setSubmitError('You need to be signed in to manage opportunities.')
       return
     }
 
     if (!validate()) {
       addToast('Please fix the highlighted fields before saving.', 'error')
+      setSubmitError('Please fix the highlighted fields before saving.')
       return
     }
 
     setIsLoading(true)
     try {
+      // For new opportunities the caller picks the target status via
+      // which button they pressed; for edits we keep the form's own
+      // status field intact so toggling fields in an edit doesn't
+      // accidentally re-publish.
+      const resolvedStatus = targetStatus ?? formData.status ?? 'draft'
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const vacancyData: Record<string, any> = {
         club_id: user.id,
@@ -350,13 +390,19 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
         benefits: formData.benefits || [],
         custom_benefits: formData.custom_benefits || [],
         priority: formData.priority || 'medium',
-        status: formData.status || 'draft',
+        status: resolvedStatus,
         application_deadline: formData.application_deadline || null,
         contact_email: formData.contact_email || null,
         contact_phone: formData.contact_phone || null,
         organization_name: formData.organization_name?.trim() || null,
         world_club_id: profile?.role === 'coach' ? profile.current_world_club_id ?? null : null,
         eu_passport_required: formData.eu_passport_required || false,
+      }
+      // published_at is set on the row when the opportunity first goes
+      // open — preserves the existing publish-from-draft analytics
+      // signal.
+      if (resolvedStatus === 'open' && !editingVacancy?.published_at) {
+        vacancyData.published_at = new Date().toISOString()
       }
 
       if (editingVacancy) {
@@ -367,7 +413,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
           .eq('id', editingVacancy.id)
 
         if (error) throw error
-        const isStillDraft = (vacancyData.status || editingVacancy.status) === 'draft'
+        const isStillDraft = resolvedStatus === 'draft'
         if (isStillDraft) {
           addToast('Draft updated — publish when you\'re ready to go live.', 'info')
         } else {
@@ -382,7 +428,11 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
         if (error) throw error
         trackDbEvent('opportunity_create', 'vacancy', undefined, { type: vacancyData.opportunity_type })
         trackVacancyCreate(vacancyData.position || vacancyData.opportunity_type || 'unknown')
-        addToast('Draft saved — publish when you\'re ready to go live.', 'info')
+        if (resolvedStatus === 'open') {
+          addToast('Opportunity published — candidates can apply now.', 'success')
+        } else {
+          addToast('Draft saved — publish when you\'re ready to go live.', 'info')
+        }
         clearVacancyDraft()
       }
 
@@ -390,7 +440,11 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
       onClose()
     } catch (error) {
       logger.error('Error saving vacancy:', error)
-      addToast('Failed to save opportunity. Please try again.', 'error')
+      const message = error instanceof Error && error.message
+        ? `Failed to save opportunity: ${error.message}`
+        : 'Failed to save opportunity. Please try again.'
+      addToast(message, 'error')
+      setSubmitError(message)
     } finally {
       setIsLoading(false)
     }
@@ -442,7 +496,16 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
         </div>
 
         {/* Content - Scrollable */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        <div ref={scrollContentRef} className="flex-1 overflow-y-auto p-6 space-y-6">
+          {submitError && (
+            <div
+              role="alert"
+              className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800"
+            >
+              <X className="mt-0.5 h-4 w-4 flex-shrink-0 text-red-600" aria-hidden="true" />
+              <span>{submitError}</span>
+            </div>
+          )}
           {/* Basic Information */}
           <section>
             <div className="flex items-center gap-2 mb-4">
@@ -920,22 +983,49 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
           </section>
         </div>
 
-        {/* Footer */}
+        {/* Footer.
+            For new opportunities, two explicit CTAs: "Save as draft"
+            and "Publish now". The single button used to save silently
+            as a draft, which read as "Create" to most users and was
+            QA-flagged as a confusing dead-end. Editing an existing row
+            keeps the single update CTA — the form's status select
+            inside the modal controls the destination state there. */}
         <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50">
           <button
             onClick={handleClose}
             disabled={isLoading}
             className="px-6 py-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors font-medium disabled:opacity-50"
+            type="button"
           >
             Cancel
           </button>
-          <Button
-            onClick={handleSave}
-            disabled={isLoading}
-            className="flex items-center gap-2 bg-[#10b981] hover:bg-[#059669]"
-          >
-            {isLoading ? 'Saving...' : editingVacancy ? 'Update Opportunity' : 'Create Opportunity'}
-          </Button>
+          {editingVacancy ? (
+            <Button
+              onClick={() => handleSave()}
+              disabled={isLoading}
+              className="flex items-center gap-2 bg-[#10b981] hover:bg-[#059669]"
+            >
+              {isLoading ? 'Saving…' : 'Update Opportunity'}
+            </Button>
+          ) : (
+            <>
+              <Button
+                variant="outline"
+                onClick={() => handleSave('draft')}
+                disabled={isLoading}
+                className="flex items-center gap-2"
+              >
+                {isLoading ? 'Saving…' : 'Save as draft'}
+              </Button>
+              <Button
+                onClick={() => handleSave('open')}
+                disabled={isLoading}
+                className="flex items-center gap-2 bg-[#10b981] hover:bg-[#059669]"
+              >
+                {isLoading ? 'Publishing…' : 'Publish now'}
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </div>

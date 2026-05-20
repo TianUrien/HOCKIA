@@ -7,10 +7,16 @@ import DashboardCard from './DashboardCard'
 import type { Profile } from '@/lib/supabase'
 
 /**
- * MediaCard — 3 tiles:
- *   - Highlights      → profiles.highlight_video_url (0 or 1)
- *   - Full Matches    → profiles.full_game_video_count (denormalized)
- *   - Gallery         → gallery_photos count (one extra query)
+ * MediaCard — up to 3 tiles depending on role:
+ *   Player:
+ *     - Highlights      → profiles.highlight_video_url (0 or 1)
+ *     - Full Matches    → profiles.full_game_video_count (denormalized)
+ *     - Gallery         → gallery_photos count (one extra query)
+ *   Coach (or any non-player role):
+ *     - Gallery only — coaches don't have highlight reels or
+ *       full-match footage as concepts, so a 3-tile layout with two
+ *       hard-coded zeros wastes space. The card collapses to a single
+ *       full-width gallery tile.
  *
  * Highlight + full-game counts come from the profile row already in
  * memory, so only gallery requires a network round-trip.
@@ -20,9 +26,14 @@ interface MediaCardProps {
   profile: Pick<Profile, 'id' | 'highlight_video_url' | 'full_game_video_count'>
   readOnly: boolean
   onManageMedia: () => void
+  /** Owner role — drives which tiles are rendered. Defaults to
+   *  'player' for backwards compat. */
+  role?: 'player' | 'coach'
+  /** When true, the card spans both columns of the Bento grid on md+. */
+  fullWidth?: boolean
 }
 
-export default function MediaCard({ profile, readOnly, onManageMedia }: MediaCardProps) {
+export default function MediaCard({ profile, readOnly, onManageMedia, role = 'player', fullWidth = false }: MediaCardProps) {
   const [galleryCount, setGalleryCount] = useState<number | null>(null)
 
   useEffect(() => {
@@ -49,20 +60,34 @@ export default function MediaCard({ profile, readOnly, onManageMedia }: MediaCar
 
   const highlightCount = profile.highlight_video_url?.trim() ? 1 : 0
   const fullMatchCount = profile.full_game_video_count ?? 0
-  const totalItems = highlightCount + fullMatchCount + (galleryCount ?? 0)
+  const isCoach = role === 'coach'
+  const totalItems = isCoach
+    ? galleryCount ?? 0
+    : highlightCount + fullMatchCount + (galleryCount ?? 0)
   const isEmpty = totalItems === 0 && galleryCount !== null
 
   return (
     <DashboardCard
       icon={Play}
       title="Media"
-      subtitle="Highlights, match footage and gallery"
+      subtitle={isCoach ? 'Photos from matches, training and your career' : 'Highlights, match footage and gallery'}
       ctaLabel={readOnly && isEmpty ? undefined : readOnly ? 'View media' : 'Manage media'}
       onCtaClick={onManageMedia}
       testId="media-card"
+      fullWidth={fullWidth}
     >
       {isEmpty && readOnly ? (
         <p className="text-sm text-gray-500">No media shared yet.</p>
+      ) : isCoach ? (
+        // Coach: single Gallery tile, full width. Cleaner than a
+        // 3-tile grid with two hard-coded zeros.
+        <Tile
+          icon={ImageIcon}
+          label="Gallery"
+          count={galleryCount ?? 0}
+          loading={galleryCount === null}
+          isEmpty={galleryCount === 0}
+        />
       ) : (
         <div className="grid grid-cols-3 gap-2.5">
           <Tile

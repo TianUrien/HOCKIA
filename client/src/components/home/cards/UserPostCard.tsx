@@ -12,6 +12,7 @@ import { PostInteractionBar } from '../PostInteractionBar'
 import { PostCommentsSection } from '../PostCommentsSection'
 import { PostComposerModal } from '../PostComposerModal'
 import ReportUserModal from '@/components/ReportUserModal'
+import ConfirmDialog from '@/components/ConfirmDialog'
 import type { UserPostFeedItem } from '@/types/homeFeed'
 
 interface UserPostCardProps {
@@ -96,10 +97,16 @@ export function UserPostCard({ item, onLikeUpdate, onDelete }: UserPostCardProps
     }
   }, [item.has_liked, item.like_count, item.post_id, onLikeUpdate, toggleLike])
 
-  const handleDelete = useCallback(async () => {
-    if (!confirm('Are you sure you want to delete this post?')) return
+  // QA-flagged: window.confirm (called via the bare `confirm()` global)
+  // gets suppressed inside iOS PWAs / mobile-emulated Chrome, so the
+  // post was being deleted with no prompt at all. Routed through
+  // ConfirmDialog instead, matching the new Journey + Opportunity flow.
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const handleDeleteClick = useCallback(() => {
     setShowMenu(false)
-
+    setShowDeleteConfirm(true)
+  }, [])
+  const handleDelete = useCallback(async () => {
     const result = await deletePost(item.post_id)
     if (result.success) {
       onDelete?.(item.feed_item_id)
@@ -181,7 +188,7 @@ export function UserPostCard({ item, onLikeUpdate, onDelete }: UserPostCardProps
                         </button>
                         <button
                           type="button"
-                          onClick={handleDelete}
+                          onClick={handleDeleteClick}
                           className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -291,6 +298,17 @@ export function UserPostCard({ item, onLikeUpdate, onDelete }: UserPostCardProps
           onClose={() => setShowReport(false)}
         />
       )}
+
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={handleDelete}
+        title="Delete this post?"
+        message="The post and its comments and likes will be removed permanently. This can't be undone."
+        confirmLabel="Delete post"
+        variant="danger"
+        testId="user-post-delete-confirm"
+      />
     </>
   )
 }

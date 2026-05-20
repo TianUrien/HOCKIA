@@ -439,6 +439,12 @@ function App() {
                     clicks 404. Cheap fix; same component renders coach view. */}
                 <Route path="/coaches/:username" element={<PublicPlayerProfile />} />
                 <Route path="/coaches/id/:id" element={<PublicPlayerProfile />} />
+                {/* Coach Bento Grid (May 2026) promoted each section to
+                    its own URL segment, mirroring the Player redesign.
+                    PublicPlayerProfile dispatches coach profiles to
+                    CoachDashboard which reads :section from the route. */}
+                <Route path="/coaches/:username/:section" element={<PublicPlayerProfile />} />
+                <Route path="/coaches/id/:id/:section" element={<PublicPlayerProfile />} />
                 <Route path="/clubs/:username" element={<PublicClubProfile />} />
                 <Route path="/clubs/id/:id" element={<PublicClubProfile />} />
                 <Route path="/umpires/:username" element={<PublicUmpireProfile />} />

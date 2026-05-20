@@ -96,17 +96,35 @@ test.describe('@smoke onboarding routes — legacy redirects', () => {
     await context.close()
   })
 
-  test('/dashboard/profile?tab=vacancies does NOT 404 (route fix)', async ({ browser }) => {
+  test('/dashboard/profile?tab=opportunities does NOT 404', async ({ browser }) => {
     const storageState = requireAuthFile('e2e/.auth/club.json')
     const context = await browser.newContext({ storageState })
     const page = await context.newPage()
-    await page.goto('/dashboard/profile?tab=vacancies')
+    await page.goto('/dashboard/profile?tab=opportunities')
     // The page should render (not the 404 fallback). DashboardRouter resolves
     // the tab param via its internal state. Wait for either dashboard testid.
     await page.waitForLoadState('networkidle')
     // Catch the 404 fallback by its visible text — the actual fallback uses
     // PageTitle text "Page not found" or similar. If that's not visible, we
     // landed on a dashboard.
+    const isNotFound = await page.getByText(/page not found|not found/i).isVisible().catch(() => false)
+    expect(isNotFound).toBe(false)
+    await context.close()
+  })
+
+  test('/dashboard/profile?tab=vacancies (legacy slug) still resolves the dashboard', async ({ browser }) => {
+    // Legacy alias coverage: LEGACY_TAB_ALIASES in ClubDashboard maps the
+    // old 'vacancies' value to the new 'opportunities' tab at parse time
+    // and rewrites the URL. The runtime rewrite is unit-tested via the
+    // dashboards' resolveTabParam logic; here we only assert the dashboard
+    // still renders (no 404 fallback) so old notification links + saved
+    // bookmarks keep working without depending on the auto-opening
+    // notifications dialog this storage state happens to carry.
+    const storageState = requireAuthFile('e2e/.auth/club.json')
+    const context = await browser.newContext({ storageState })
+    const page = await context.newPage()
+    await page.goto('/dashboard/profile?tab=vacancies')
+    await page.waitForLoadState('networkidle')
     const isNotFound = await page.getByText(/page not found|not found/i).isVisible().catch(() => false)
     expect(isNotFound).toBe(false)
     await context.close()

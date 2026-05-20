@@ -13,7 +13,7 @@ import RoleBadge from './RoleBadge'
 import ConfirmActionModal from './ConfirmActionModal'
 import TrustedReferencesSection from './TrustedReferencesSection'
 import type { ReferenceFriendOption } from './AddReferenceModal'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { trackReferenceModalOpen } from '@/lib/analytics'
 import { getInitials } from '@/lib/utils'
 import { profilePath } from '@/lib/profileNavigation'
@@ -44,6 +44,13 @@ type FriendConnection = FriendEdge & {
 
 export default function FriendsTab({ profileId, readOnly = false, profileRole, hideReferences = false }: FriendsTabProps) {
   const { profile: authProfile } = useAuthStore()
+  // Refresh the auth-store profile after friendship mutations so the
+  // Hero credibility pills + Bento "My Network" counters reflect the
+  // new accepted_friend_count without forcing a full page reload.
+  // QA-flagged: accept/decline left the dashboard header reading
+  // "Connections 0" until reload.
+  const refreshAuthProfile = useAuthStore((s) => s.refreshProfile)
+  const navigate = useNavigate()
   const { addToast } = useToastStore()
   // In readOnly mode, treat as non-owner even if viewing own profile
   const isOwner = !readOnly && authProfile?.id === profileId
@@ -225,6 +232,11 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole, h
         if (error) throw error
         addToast(successMessage, 'success')
         await fetchConnections()
+        // Refresh the auth profile so accepted_friend_count flows back
+        // into the Hero pills + My Network bento counters immediately.
+        if (isOwner) {
+          void refreshAuthProfile()
+        }
       } catch (error) {
         logger.error('Failed to update friendship', error)
         addToast('Unable to update friendship. Please try again.', 'error')
@@ -232,7 +244,7 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole, h
         setActionTarget(null)
       }
     },
-    [addToast, fetchConnections]
+    [addToast, fetchConnections, isOwner, refreshAuthProfile]
   )
 
   // Remove an accepted connection. We use DELETE here, not UPDATE, because
@@ -252,6 +264,11 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole, h
         if (error) throw error
         addToast('Connection removed.', 'success')
         await fetchConnections()
+        // accepted_friend_count drops by one — refresh the auth profile
+        // so the Hero pill / My Network bento counters track.
+        if (isOwner) {
+          void refreshAuthProfile()
+        }
       } catch (error) {
         logger.error('Failed to remove friendship', error)
         addToast('Could not remove connection. Please try again.', 'error')
@@ -259,7 +276,7 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole, h
         setActionTarget(null)
       }
     },
-    [addToast, fetchConnections]
+    [addToast, fetchConnections, isOwner, refreshAuthProfile]
   )
 
   const isActionLoading = (friendshipId: string | null) => actionTarget === friendshipId
@@ -487,9 +504,26 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole, h
             <h2 className="text-2xl font-bold text-gray-900">Connections</h2>
             <p className="text-sm text-gray-600">People in your HOCKIA network build credibility.</p>
           </div>
-          <div className="inline-flex items-center gap-2 rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-700">
-            <Users className="h-4 w-4 text-[#8026FA]" />
-            {acceptedConnections.length} {acceptedConnections.length === 1 ? 'connection' : 'connections'}
+          <div className="flex items-center gap-2">
+            <div className="inline-flex items-center gap-2 rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-700">
+              <Users className="h-4 w-4 text-[#8026FA]" />
+              {acceptedConnections.length} {acceptedConnections.length === 1 ? 'connection' : 'connections'}
+            </div>
+            {/* Find people — header entry point for the owner once
+                they already have connections. QA-flagged that there was
+                no way to discover more coaches/clubs from a non-empty
+                My Network. Gated on length > 0 so it doesn't duplicate
+                the empty-state CTA below. */}
+            {isOwner && acceptedConnections.length > 0 && (
+              <button
+                type="button"
+                onClick={() => navigate('/community')}
+                className="inline-flex items-center gap-1.5 rounded-full border border-[#8026FA]/20 bg-white px-3 py-1 text-sm font-semibold text-[#8026FA] hover:bg-[#8026FA]/5 transition-colors"
+              >
+                <UserPlus className="h-4 w-4" />
+                Find people
+              </button>
+            )}
           </div>
         </div>
       </section>
@@ -547,7 +581,7 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole, h
                 : (
                     <button
                       type="button"
-                      onClick={() => addToast('Visit another profile to send a connection request.', 'info')}
+                      onClick={() => navigate('/community')}
                       className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
                     >
                       <UserPlus className="h-4 w-4" />
