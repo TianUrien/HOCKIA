@@ -233,8 +233,8 @@ describe('Messages flows', () => {
     expect(messageList).toHaveClass('chat-scroll-container')
   })
 
-  it('has context-aware positioning (relative on desktop, fixed on mobile immersive)', () => {
-    // Desktop: should use relative positioning
+  it('anchors the window with a viewport-sized fixed overlay on mobile immersive, keeping header and composer in flex flow', () => {
+    // Desktop: window, header and composer all in normal relative flow.
     mockUseMediaQuery.mockReturnValue(false)
     const { container: desktopContainer, rerender } = renderChatWindow()
 
@@ -247,7 +247,9 @@ describe('Messages flows', () => {
     expect(composer).toHaveClass('relative')
     expect(composer).not.toHaveClass('fixed')
 
-    // Mobile immersive: should use fixed positioning
+    // Mobile immersive: only the window container is fixed (sized to the
+    // visual viewport). Header and composer stay relative flex children
+    // so the keyboard simply shrinks the container.
     mockUseMediaQuery.mockReturnValue(true)
     rerender(
       <MemoryRouter>
@@ -262,13 +264,17 @@ describe('Messages flows', () => {
     )
 
     header = screen.getByRole('banner')
-    expect(header).toHaveClass('fixed')
-    expect(header).toHaveClass('chat-fixed-header')
+    const windowRoot = header.parentElement
+    expect(windowRoot).not.toBeNull()
+    expect(windowRoot).toHaveClass('fixed')
+
+    expect(header).toHaveClass('relative')
+    expect(header).not.toHaveClass('fixed')
 
     composer = desktopContainer.querySelector('form')
     expect(composer).not.toBeNull()
-    expect(composer).toHaveClass('fixed')
-    expect(composer).toHaveClass('chat-fixed-composer')
+    expect(composer).toHaveClass('relative')
+    expect(composer).not.toHaveClass('fixed')
   })
 
   it('only auto-scrolls when near bottom for new incoming messages', async () => {

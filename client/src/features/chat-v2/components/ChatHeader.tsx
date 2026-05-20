@@ -43,21 +43,20 @@ export function ChatHeader({ participant, onBack, profilePath, isMobile, immersi
     </div>
   )
 
-  const headerPositionClass = isMobile && immersiveMobile
-    ? 'chat-fixed-header fixed top-0 left-0 right-0 z-50'
-    : 'relative'
-
   return (
     <header
       className={cn(
-        headerPositionClass,
-        'flex h-16 flex-shrink-0 items-center gap-3 border-b border-gray-200 bg-white text-left',
+        // The window container owns positioning; the header is a normal
+        // flex child, so it stays pinned to the top without fixed
+        // positioning fighting the keyboard.
+        'relative flex h-16 flex-shrink-0 items-center gap-3 border-b border-gray-200 bg-white text-left',
         paddingClass,
         layoutClass
       )}
     >
       {isMobile && (
         <button
+          type="button"
           onClick={onBack}
           className="-ml-1 rounded-full p-2 transition-colors hover:bg-gray-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-500"
           aria-label="Back to conversations"
