@@ -25,9 +25,12 @@ interface CommunityCardProps {
    *  signal — clubs don't request or receive them — so the club
    *  dashboard renders a 3-tile grid (Connections, Comments, Posts). */
   hideReferences?: boolean
+  /** Visitor view. Relabels the main CTA from "Go to my network" to
+   *  "View network" — a visitor isn't looking at *their* network. */
+  readOnly?: boolean
 }
 
-export default function CommunityCard({ profile, onOpenTab, hideReferences = false }: CommunityCardProps) {
+export default function CommunityCard({ profile, onOpenTab, hideReferences = false, readOnly = false }: CommunityCardProps) {
   const [commentCount, setCommentCount] = useState<number | null>(null)
 
   useEffect(() => {
@@ -67,7 +70,7 @@ export default function CommunityCard({ profile, onOpenTab, hideReferences = fal
       // Renaming this card resolves the label collision QA flagged.
       title="My Network"
       subtitle={hideReferences ? 'Connections, comments and posts' : 'Friends, references, comments and posts'}
-      ctaLabel="Go to my network"
+      ctaLabel={readOnly ? 'View network' : 'Go to my network'}
       // Opens the unified My Network page (all sections stacked).
       // The individual tile clicks below still deep-link to their own
       // dedicated section pages so users have both: a hub view AND

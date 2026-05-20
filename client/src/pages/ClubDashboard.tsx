@@ -495,7 +495,15 @@ export default function ClubDashboard({
 
               {activeTab === 'friends' && (
                 <div id="visitor-section-friends" className="animate-fade-in">
-                  <FriendsTab profileId={profile.id} readOnly={readOnly} profileRole={profile.role} />
+                  {/* hideReferences — clubs don't carry trust references,
+                      and the dashboard drops the References tile, so the
+                      Connections section stays references-free too. */}
+                  <FriendsTab
+                    profileId={profile.id}
+                    readOnly={readOnly}
+                    profileRole={profile.role}
+                    hideReferences
+                  />
                 </div>
               )}
 

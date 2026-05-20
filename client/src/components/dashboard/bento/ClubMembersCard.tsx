@@ -63,8 +63,11 @@ export default function ClubMembersCard({ ownerProfileId, onViewMembers }: ClubM
       icon={Users}
       title="Club Members"
       subtitle="Players and coaches on your roster"
-      ctaLabel={hasMembers ? 'View members' : undefined}
-      onCtaClick={hasMembers ? onViewMembers : undefined}
+      // CTA is always present — even with an empty roster the section
+      // is worth opening (it explains how members get linked). Gating
+      // it on hasMembers left a brand-new club with a dead-end card.
+      ctaLabel="View members"
+      onCtaClick={onViewMembers}
       testId="club-members-card"
     >
       <div className="space-y-3.5">

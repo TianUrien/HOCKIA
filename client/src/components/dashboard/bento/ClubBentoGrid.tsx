@@ -105,6 +105,7 @@ export default function ClubBentoGrid({
               if (tab !== 'references') onOpenTab(tab)
             }}
             hideReferences
+            readOnly={readOnly}
           />
           <MediaCard
             profile={profile}
@@ -137,6 +138,7 @@ export default function ClubBentoGrid({
               if (tab !== 'references') onOpenTab(tab)
             }}
             hideReferences
+            readOnly={readOnly}
           />
           <MediaCard
             profile={profile}
