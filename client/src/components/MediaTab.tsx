@@ -288,7 +288,7 @@ export default function MediaTab({ profileId, readOnly = false, renderHeader, sh
           entityId={targetUserId}
           readOnly={!canManageGallery}
           title="Gallery"
-          description="Share your best field hockey moments in Instagram-style"
+          description="Share photos from matches, training, and your career"
           emptyStateDescription={galleryEmptyCopy}
           addButtonLabel="Add Photo"
         />

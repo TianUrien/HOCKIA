@@ -87,7 +87,7 @@ const MODE_CONFIG: Record<GalleryMode, ModeConfig> = {
     ownerColumn: 'user_id',
     urlField: 'photo_url',
     title: 'Gallery',
-    description: 'Share your best field hockey moments in Instagram-style',
+    description: 'Share photos from matches, training, and your career',
     emptyStateDescription: 'No photos yet. Start building your gallery!',
     addButtonLabel: 'Add Photo',
     optimizeUploads: true,

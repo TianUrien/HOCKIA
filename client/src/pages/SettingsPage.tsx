@@ -693,7 +693,7 @@ export default function SettingsPage() {
                     <div className="flex-1 pr-4">
                       <p className="text-gray-900 font-medium text-sm">Opportunity Notifications</p>
                       <p className="text-xs text-gray-500 mt-0.5">
-                        Email when clubs publish new opportunities
+                        Email when new opportunities are published
                       </p>
                     </div>
                     <button

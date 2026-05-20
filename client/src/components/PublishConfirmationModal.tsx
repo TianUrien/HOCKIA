@@ -80,7 +80,7 @@ export default function PublishConfirmationModal({
                 Ready to Publish?
               </h2>
               <p className="text-sm text-gray-600">
-                Make this opportunity visible to all players
+                Make this opportunity visible to candidates
               </p>
             </div>
           </div>
@@ -105,8 +105,8 @@ export default function PublishConfirmationModal({
                   Before you publish:
                 </h3>
                 <ul className="text-sm text-amber-800 space-y-1">
-                  <li>• This opportunity will be visible to all players globally</li>
-                  <li>• Players will be able to apply immediately</li>
+                  <li>• This opportunity will be visible to candidates globally</li>
+                  <li>• Candidates will be able to apply immediately</li>
                   <li>• You can edit or close it anytime after publishing</li>
                 </ul>
               </div>

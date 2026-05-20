@@ -112,7 +112,7 @@ export default function CoachPostedOpportunitiesCard({
     >
       <div className="space-y-3.5">
         <p className="text-sm text-gray-600 leading-relaxed">
-          Publish coaching roles and recruit players. Review applications and shortlist candidates in one place.
+          Publish coaching roles and recruit candidates. Review applications and shortlist in one place.
         </p>
 
         {/* Two metric tiles side-by-side. tabular-nums keeps the
