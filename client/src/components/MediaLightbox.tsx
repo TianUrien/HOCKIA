@@ -54,16 +54,28 @@ export default function MediaLightbox({ media, onClose }: MediaLightboxProps) {
       >
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 z-10 rounded-full bg-black/70 p-2 text-white transition hover:bg-black"
+          className="absolute right-4 top-4 z-10 inline-flex items-center gap-1.5 rounded-full bg-black/70 px-3 py-2 text-sm font-medium text-white transition hover:bg-black"
           aria-label="Close preview"
         >
           <X className="h-5 w-5" />
+          <span>Close</span>
         </button>
         <img
           src={media.url}
           alt={media.alt || 'Media preview'}
           className="h-full w-full rounded-xl object-contain"
         />
+        {/* Caption + dismiss hint. QA-flagged the overlay as feeling
+            like the page had navigated away — no caption, no metadata,
+            and the only visible exit was a bare icon. The caption gives
+            context; the hint makes the tap-to-close affordance explicit
+            (the backdrop is already an onClose target). */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 rounded-b-xl bg-gradient-to-t from-black/80 to-transparent px-4 pb-4 pt-10 text-center">
+          {media.alt && (
+            <p className="text-sm font-medium text-white">{media.alt}</p>
+          )}
+          <p className="mt-0.5 text-xs text-white/60">Tap anywhere to close</p>
+        </div>
       </div>
     </div>
   )

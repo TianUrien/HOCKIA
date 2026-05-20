@@ -346,7 +346,14 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSave = async () => {
+  // QA-flagged: a single "Create Opportunity" button silently saved as
+  // a draft, so users who expected to publish hit a confusing dead-end.
+  // Split into two CTAs — "Save as draft" and "Publish now" — and let
+  // each one set the intended status explicitly. `targetStatus` is
+  // optional to preserve the editing-existing-row path (which keeps
+  // whatever status was set inside the form, e.g. via the status
+  // select inside the modal).
+  const handleSave = async (targetStatus?: 'draft' | 'open') => {
     setSubmitError(null)
     if (!user) {
       addToast('You need to be signed in to manage opportunities.', 'error')
@@ -362,6 +369,11 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
 
     setIsLoading(true)
     try {
+      // For new opportunities the caller picks the target status via
+      // which button they pressed; for edits we keep the form's own
+      // status field intact so toggling fields in an edit doesn't
+      // accidentally re-publish.
+      const resolvedStatus = targetStatus ?? formData.status ?? 'draft'
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const vacancyData: Record<string, any> = {
         club_id: user.id,
@@ -378,13 +390,19 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
         benefits: formData.benefits || [],
         custom_benefits: formData.custom_benefits || [],
         priority: formData.priority || 'medium',
-        status: formData.status || 'draft',
+        status: resolvedStatus,
         application_deadline: formData.application_deadline || null,
         contact_email: formData.contact_email || null,
         contact_phone: formData.contact_phone || null,
         organization_name: formData.organization_name?.trim() || null,
         world_club_id: profile?.role === 'coach' ? profile.current_world_club_id ?? null : null,
         eu_passport_required: formData.eu_passport_required || false,
+      }
+      // published_at is set on the row when the opportunity first goes
+      // open — preserves the existing publish-from-draft analytics
+      // signal.
+      if (resolvedStatus === 'open' && !editingVacancy?.published_at) {
+        vacancyData.published_at = new Date().toISOString()
       }
 
       if (editingVacancy) {
@@ -395,7 +413,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
           .eq('id', editingVacancy.id)
 
         if (error) throw error
-        const isStillDraft = (vacancyData.status || editingVacancy.status) === 'draft'
+        const isStillDraft = resolvedStatus === 'draft'
         if (isStillDraft) {
           addToast('Draft updated — publish when you\'re ready to go live.', 'info')
         } else {
@@ -410,7 +428,11 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
         if (error) throw error
         trackDbEvent('opportunity_create', 'vacancy', undefined, { type: vacancyData.opportunity_type })
         trackVacancyCreate(vacancyData.position || vacancyData.opportunity_type || 'unknown')
-        addToast('Draft saved — publish when you\'re ready to go live.', 'info')
+        if (resolvedStatus === 'open') {
+          addToast('Opportunity published — candidates can apply now.', 'success')
+        } else {
+          addToast('Draft saved — publish when you\'re ready to go live.', 'info')
+        }
         clearVacancyDraft()
       }
 
@@ -961,22 +983,49 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
           </section>
         </div>
 
-        {/* Footer */}
+        {/* Footer.
+            For new opportunities, two explicit CTAs: "Save as draft"
+            and "Publish now". The single button used to save silently
+            as a draft, which read as "Create" to most users and was
+            QA-flagged as a confusing dead-end. Editing an existing row
+            keeps the single update CTA — the form's status select
+            inside the modal controls the destination state there. */}
         <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50">
           <button
             onClick={handleClose}
             disabled={isLoading}
             className="px-6 py-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors font-medium disabled:opacity-50"
+            type="button"
           >
             Cancel
           </button>
-          <Button
-            onClick={handleSave}
-            disabled={isLoading}
-            className="flex items-center gap-2 bg-[#10b981] hover:bg-[#059669]"
-          >
-            {isLoading ? 'Saving...' : editingVacancy ? 'Update Opportunity' : 'Create Opportunity'}
-          </Button>
+          {editingVacancy ? (
+            <Button
+              onClick={() => handleSave()}
+              disabled={isLoading}
+              className="flex items-center gap-2 bg-[#10b981] hover:bg-[#059669]"
+            >
+              {isLoading ? 'Saving…' : 'Update Opportunity'}
+            </Button>
+          ) : (
+            <>
+              <Button
+                variant="outline"
+                onClick={() => handleSave('draft')}
+                disabled={isLoading}
+                className="flex items-center gap-2"
+              >
+                {isLoading ? 'Saving…' : 'Save as draft'}
+              </Button>
+              <Button
+                onClick={() => handleSave('open')}
+                disabled={isLoading}
+                className="flex items-center gap-2 bg-[#10b981] hover:bg-[#059669]"
+              >
+                {isLoading ? 'Publishing…' : 'Publish now'}
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </div>
