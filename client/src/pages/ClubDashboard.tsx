@@ -483,7 +483,13 @@ export default function ClubDashboard({
             <div className="p-6 md:p-8 min-h-screen">
               {activeTab === 'media' && (
                 <div className="animate-fade-in">
-                  <ClubMediaTab clubId={profile.id} readOnly={readOnly} />
+                  <ClubMediaTab
+                    clubId={profile.id}
+                    readOnly={readOnly}
+                    // Keep the Hero completion arc in sync when photos
+                    // are added/removed without a route change.
+                    onCountChange={readOnly ? undefined : () => { void strength.refresh() }}
+                  />
                 </div>
               )}
 

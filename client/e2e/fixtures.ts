@@ -409,7 +409,7 @@ export class HomeFeedPage extends HockiaPage {
 
   async submitPost() {
     // Target the full-width submit button (not the mode toggle "Post" tab)
-    await this.page.locator('button.w-full', { hasText: /^post$/i }).click()
+    await this.page.locator('button.w-full', { hasText: /^publish post$/i }).click()
   }
 
   async expectPostInFeed(content: string) {

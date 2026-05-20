@@ -24,8 +24,9 @@ test.describe('@smoke home feed player', () => {
     const composerTextarea = page.locator('[role="dialog"] textarea').first()
     await expect(composerTextarea).toBeVisible({ timeout: 10000 })
 
-    // Submit button should be visible but disabled (no content yet)
-    const postBtn = page.locator('button.w-full', { hasText: /^post$/i })
+    // Submit button should be visible but disabled (no content yet).
+    // Labelled "Publish post" — distinct from the "Post" mode tab.
+    const postBtn = page.locator('button.w-full', { hasText: /^publish post$/i })
     await expect(postBtn).toBeVisible()
 
     // Close the modal (exact match avoids "Close notifications" button)

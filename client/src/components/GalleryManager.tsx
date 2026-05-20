@@ -25,6 +25,10 @@ interface GalleryManagerProps {
   description?: string
   emptyStateDescription?: string
   addButtonLabel?: string
+  /** Fired with the current photo count whenever the gallery changes
+   *  (load, upload, delete). Lets a parent dashboard recompute profile
+   *  completeness without waiting for a route change. */
+  onCountChange?: (count: number) => void
 }
 
 interface UploadProgress {
@@ -104,6 +108,7 @@ export default function GalleryManager({
   description,
   emptyStateDescription,
   addButtonLabel,
+  onCountChange,
 }: GalleryManagerProps) {
   const config = MODE_CONFIG[mode]
   const { user } = useAuthStore()
@@ -122,6 +127,12 @@ export default function GalleryManager({
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [previewMedia, setPreviewMedia] = useState<NormalizedMedia | null>(null)
   const [isUploadDragActive, setIsUploadDragActive] = useState(false)
+
+  // Surface the photo count to the parent on every change (load,
+  // upload, delete) so dashboards can keep profile completeness fresh.
+  useEffect(() => {
+    if (!isLoading) onCountChange?.(media.length)
+  }, [media.length, isLoading, onCountChange])
   const [savingCaptionId, setSavingCaptionId] = useState<string | null>(null)
 
   const fetchMedia = useCallback(async () => {

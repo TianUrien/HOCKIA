@@ -16,7 +16,11 @@ import { trackVacancyCreate } from '@/lib/analytics'
 interface CreateVacancyModalProps {
   isOpen: boolean
   onClose: () => void
-  onSuccess: () => void
+  /** Fired after a successful save. `status` is the resolved status of
+   *  the saved opportunity ('draft' | 'open') so the caller can sync
+   *  its list filter — without it a just-published opportunity is
+   *  hidden behind a stale 'draft' filter. */
+  onSuccess: (status?: 'draft' | 'open') => void
   editingVacancy?: Vacancy | null
   /** Initial opportunity_type when creating a new opportunity. Lets
    *  the coach dashboard launch the modal pre-set to 'coach' so users
@@ -436,7 +440,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
         clearVacancyDraft()
       }
 
-      onSuccess()
+      onSuccess(resolvedStatus === 'open' ? 'open' : 'draft')
       onClose()
     } catch (error) {
       logger.error('Error saving vacancy:', error)
