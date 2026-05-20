@@ -12,11 +12,15 @@ import type { Profile } from '@/lib/supabase'
  *     - Highlights      → profiles.highlight_video_url (0 or 1)
  *     - Full Matches    → profiles.full_game_video_count (denormalized)
  *     - Gallery         → gallery_photos count (one extra query)
- *   Coach (or any non-player role):
- *     - Gallery only — coaches don't have highlight reels or
+ *   Coach / Club (any non-player role):
+ *     - Gallery only — coaches and clubs don't have highlight reels or
  *       full-match footage as concepts, so a 3-tile layout with two
  *       hard-coded zeros wastes space. The card collapses to a single
  *       full-width gallery tile.
+ *
+ * Gallery data source differs by role: players/coaches use the
+ * `gallery_photos` table keyed by `user_id`; clubs use the separate
+ * `club_media` table keyed by `club_id`.
  *
  * Highlight + full-game counts come from the profile row already in
  * memory, so only gallery requires a network round-trip.
@@ -26,23 +30,33 @@ interface MediaCardProps {
   profile: Pick<Profile, 'id' | 'highlight_video_url' | 'full_game_video_count'>
   readOnly: boolean
   onManageMedia: () => void
-  /** Owner role — drives which tiles are rendered. Defaults to
-   *  'player' for backwards compat. */
-  role?: 'player' | 'coach'
+  /** Owner role — drives which tiles are rendered and which gallery
+   *  table is queried. Defaults to 'player' for backwards compat. */
+  role?: 'player' | 'coach' | 'club'
   /** When true, the card spans both columns of the Bento grid on md+. */
   fullWidth?: boolean
 }
 
 export default function MediaCard({ profile, readOnly, onManageMedia, role = 'player', fullWidth = false }: MediaCardProps) {
   const [galleryCount, setGalleryCount] = useState<number | null>(null)
+  const isClub = role === 'club'
+  // Coach and Club both render the single-tile gallery-only layout.
+  const isGalleryOnly = role === 'coach' || role === 'club'
 
   useEffect(() => {
     let cancelled = false
     async function fetchCount() {
-      const { count, error } = await supabase
-        .from('gallery_photos')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', profile.id)
+      // Clubs store gallery photos in club_media (keyed by club_id);
+      // players/coaches use gallery_photos (keyed by user_id).
+      const { count, error } = isClub
+        ? await supabase
+            .from('club_media')
+            .select('id', { count: 'exact', head: true })
+            .eq('club_id', profile.id)
+        : await supabase
+            .from('gallery_photos')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', profile.id)
 
       if (cancelled) return
       if (error) {
@@ -56,12 +70,11 @@ export default function MediaCard({ profile, readOnly, onManageMedia, role = 'pl
     return () => {
       cancelled = true
     }
-  }, [profile.id])
+  }, [profile.id, isClub])
 
   const highlightCount = profile.highlight_video_url?.trim() ? 1 : 0
   const fullMatchCount = profile.full_game_video_count ?? 0
-  const isCoach = role === 'coach'
-  const totalItems = isCoach
+  const totalItems = isGalleryOnly
     ? galleryCount ?? 0
     : highlightCount + fullMatchCount + (galleryCount ?? 0)
   const isEmpty = totalItems === 0 && galleryCount !== null
@@ -70,7 +83,13 @@ export default function MediaCard({ profile, readOnly, onManageMedia, role = 'pl
     <DashboardCard
       icon={Play}
       title="Media"
-      subtitle={isCoach ? 'Photos from matches, training and your career' : 'Highlights, match footage and gallery'}
+      subtitle={
+        isClub
+          ? 'Photos from matches, training and club life'
+          : isGalleryOnly
+            ? 'Photos from matches, training and your career'
+            : 'Highlights, match footage and gallery'
+      }
       ctaLabel={readOnly && isEmpty ? undefined : readOnly ? 'View media' : 'Manage media'}
       onCtaClick={onManageMedia}
       testId="media-card"
@@ -78,8 +97,8 @@ export default function MediaCard({ profile, readOnly, onManageMedia, role = 'pl
     >
       {isEmpty && readOnly ? (
         <p className="text-sm text-gray-500">No media shared yet.</p>
-      ) : isCoach ? (
-        // Coach: single Gallery tile, full width. Cleaner than a
+      ) : isGalleryOnly ? (
+        // Coach / Club: single Gallery tile, full width. Cleaner than a
         // 3-tile grid with two hard-coded zeros.
         <Tile
           icon={ImageIcon}

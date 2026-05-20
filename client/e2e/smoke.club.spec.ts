@@ -42,11 +42,9 @@ test.describe('@smoke club', () => {
     // Club name should render as H1
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: CLUB_H1_TIMEOUT_MS })
 
-    // Should show club-specific tabs
-    await expect(
-      page.getByRole('button', { name: /overview/i })
-        .or(page.getByRole('button', { name: /opportunities/i }))
-    ).toBeVisible({ timeout: 10_000 })
+    // Bento Grid landing (May 2026 Club redesign) replaced the tab strip
+    // with cards. Club owners see the owner-variant grid.
+    await expect(page.getByTestId('club-bento-grid-owner')).toBeVisible({ timeout: 10_000 })
   })
 
   test('club can open applicants page for seeded vacancy', async ({ page }) => {

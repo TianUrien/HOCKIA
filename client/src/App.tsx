@@ -447,6 +447,12 @@ function App() {
                 <Route path="/coaches/id/:id/:section" element={<PublicPlayerProfile />} />
                 <Route path="/clubs/:username" element={<PublicClubProfile />} />
                 <Route path="/clubs/id/:id" element={<PublicClubProfile />} />
+                {/* Club Bento Grid (May 2026) promoted each section to
+                    its own URL segment, mirroring the Coach redesign.
+                    PublicClubProfile dispatches to ClubDashboard which
+                    reads :section from the route. */}
+                <Route path="/clubs/:username/:section" element={<PublicClubProfile />} />
+                <Route path="/clubs/id/:id/:section" element={<PublicClubProfile />} />
                 <Route path="/umpires/:username" element={<PublicUmpireProfile />} />
                 <Route path="/umpires/id/:id" element={<PublicUmpireProfile />} />
                 
