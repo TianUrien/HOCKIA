@@ -398,18 +398,16 @@ export default function VacancyDetailView({
             {/* Divider before actions */}
             <div className="border-t border-gray-100 my-5" />
 
-            {/* Action Buttons */}
+            {/* Action Buttons.
+                isPublisher is checked FIRST and unconditionally — a
+                publisher must never see Apply on their own listing,
+                regardless of whether the calling surface passed an
+                onApply handler. OpportunitiesTab (Manage Opportunities)
+                passes onApply unconditionally, so without this ordering
+                the publisher saw "Apply Now" on their own opportunity
+                and the View-applicants branch was dead code. */}
             <div className="flex items-center gap-3">
-              {hasApplied ? (
-                <div className="flex-1 flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl font-semibold text-sm border border-[#8026FA]/15 bg-[#8026FA]/5 text-[#8026FA]">
-                  <CheckCircle className="w-4 h-4" />
-                  Application Submitted
-                </div>
-              ) : onApply ? (
-                <Button onClick={onApply} className="flex-1 rounded-xl py-3.5 bg-gradient-to-r from-[#8026FA] to-[#924CEC] hover:opacity-90 text-base font-semibold">
-                  Apply Now &rsaquo;
-                </Button>
-              ) : isPublisher ? (
+              {isPublisher ? (
                 // QA-flagged: when a publisher opens their own
                 // opportunity from the detail sheet, the only CTA was
                 // a literal "Close" button — there was no path to
@@ -425,6 +423,15 @@ export default function VacancyDetailView({
                 >
                   <Users className="w-4 h-4" />
                   View applicants
+                </Button>
+              ) : hasApplied ? (
+                <div className="flex-1 flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl font-semibold text-sm border border-[#8026FA]/15 bg-[#8026FA]/5 text-[#8026FA]">
+                  <CheckCircle className="w-4 h-4" />
+                  Application Submitted
+                </div>
+              ) : onApply ? (
+                <Button onClick={onApply} className="flex-1 rounded-xl py-3.5 bg-gradient-to-r from-[#8026FA] to-[#924CEC] hover:opacity-90 text-base font-semibold">
+                  Apply Now &rsaquo;
                 </Button>
               ) : (
                 <Button onClick={onClose} className="flex-1 rounded-xl py-3.5 bg-gradient-to-r from-[#8026FA] to-[#924CEC] hover:opacity-90 text-base font-semibold">

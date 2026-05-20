@@ -320,14 +320,20 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
 
   const canUserApply = (vacancy: Vacancy): boolean => {
     if (!user || !profile) return false
-    
+
+    // Self-apply guard — a publisher must never be offered Apply on
+    // their own opportunity. This surface (Manage Opportunities) shows
+    // the coach their *own* listings, so without this the detail sheet
+    // rendered a live "Apply Now" on every row.
+    if (vacancy.club_id === user.id) return false
+
     // Check if user role matches vacancy type
     if (vacancy.opportunity_type === 'player' && profile.role !== 'player') return false
     if (vacancy.opportunity_type === 'coach' && profile.role !== 'coach') return false
-    
+
     // Clubs cannot apply
     if (profile.role === 'club') return false
-    
+
     return true
   }
 
