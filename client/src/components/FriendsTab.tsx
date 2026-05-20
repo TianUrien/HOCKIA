@@ -44,6 +44,12 @@ type FriendConnection = FriendEdge & {
 
 export default function FriendsTab({ profileId, readOnly = false, profileRole, hideReferences = false }: FriendsTabProps) {
   const { profile: authProfile } = useAuthStore()
+  // Refresh the auth-store profile after friendship mutations so the
+  // Hero credibility pills + Bento "My Network" counters reflect the
+  // new accepted_friend_count without forcing a full page reload.
+  // QA-flagged: accept/decline left the dashboard header reading
+  // "Connections 0" until reload.
+  const refreshAuthProfile = useAuthStore((s) => s.refreshProfile)
   const { addToast } = useToastStore()
   // In readOnly mode, treat as non-owner even if viewing own profile
   const isOwner = !readOnly && authProfile?.id === profileId
@@ -225,6 +231,11 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole, h
         if (error) throw error
         addToast(successMessage, 'success')
         await fetchConnections()
+        // Refresh the auth profile so accepted_friend_count flows back
+        // into the Hero pills + My Network bento counters immediately.
+        if (isOwner) {
+          void refreshAuthProfile()
+        }
       } catch (error) {
         logger.error('Failed to update friendship', error)
         addToast('Unable to update friendship. Please try again.', 'error')
@@ -232,7 +243,7 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole, h
         setActionTarget(null)
       }
     },
-    [addToast, fetchConnections]
+    [addToast, fetchConnections, isOwner, refreshAuthProfile]
   )
 
   // Remove an accepted connection. We use DELETE here, not UPDATE, because
@@ -252,6 +263,11 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole, h
         if (error) throw error
         addToast('Connection removed.', 'success')
         await fetchConnections()
+        // accepted_friend_count drops by one — refresh the auth profile
+        // so the Hero pill / My Network bento counters track.
+        if (isOwner) {
+          void refreshAuthProfile()
+        }
       } catch (error) {
         logger.error('Failed to remove friendship', error)
         addToast('Could not remove connection. Please try again.', 'error')
@@ -259,7 +275,7 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole, h
         setActionTarget(null)
       }
     },
-    [addToast, fetchConnections]
+    [addToast, fetchConnections, isOwner, refreshAuthProfile]
   )
 
   const isActionLoading = (friendshipId: string | null) => actionTarget === friendshipId

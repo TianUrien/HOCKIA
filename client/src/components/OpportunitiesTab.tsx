@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import type { ReactNode } from 'react'
-import { Plus, Edit2, Copy, Archive, MapPin, Calendar, Users, Eye, Rocket, Trash2, Loader2, MoreHorizontal, CheckCircle, AlertCircle, XCircle, Briefcase } from 'lucide-react'
+import { Plus, Edit2, Copy, Archive, MapPin, Calendar, Users, Eye, Rocket, RotateCcw, Trash2, Loader2, MoreHorizontal, CheckCircle, AlertCircle, XCircle, Briefcase } from 'lucide-react'
 import * as Sentry from '@sentry/react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
@@ -15,6 +15,7 @@ import ApplyToOpportunityModal from './ApplyToOpportunityModal'
 import OpportunityDetailView from './OpportunityDetailView'
 import PublishConfirmationModal from './PublishConfirmationModal'
 import DeleteOpportunityModal from './DeleteOpportunityModal'
+import ConfirmDialog from './ConfirmDialog'
 import Skeleton, { OpportunityCardSkeleton } from './Skeleton'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
 
@@ -37,11 +38,12 @@ interface VacancyActionMenuProps {
   onEdit: (vacancy: Vacancy) => void
   onDuplicate: (vacancy: Vacancy) => void
   onPublish: (vacancy: Vacancy) => void
-  onClose: (id: string) => void
+  onClose: (vacancy: Vacancy) => void
+  onReopen: (vacancy: Vacancy) => void
   onDelete: (vacancy: Vacancy) => void
 }
 
-function VacancyActionMenu({ vacancy, disabled, onEdit, onDuplicate, onPublish, onClose, onDelete }: VacancyActionMenuProps) {
+function VacancyActionMenu({ vacancy, disabled, onEdit, onDuplicate, onPublish, onClose, onReopen, onDelete }: VacancyActionMenuProps) {
   const [open, setOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -96,9 +98,27 @@ function VacancyActionMenu({ vacancy, disabled, onEdit, onDuplicate, onPublish, 
       icon: <Archive className="w-4 h-4 text-amber-600" />,
       onClick: () => {
         closeMenu()
-        onClose(vacancy.id)
+        onClose(vacancy)
       },
       tone: 'danger'
+    })
+  }
+
+  // Reopen — flips status back to 'open'. The old kebab menu offered
+  // only Edit / Duplicate / Delete on closed rows, so the only path
+  // back to live was Duplicate, which created a new draft and lost the
+  // original applicant history. QA-flagged. Reopen reinstates the same
+  // row so applicant history stays attached.
+  if (vacancy.status === 'closed') {
+    menuItems.push({
+      key: 'reopen',
+      label: 'Reopen opportunity',
+      icon: <RotateCcw className="w-4 h-4 text-green-600" />,
+      onClick: () => {
+        closeMenu()
+        onReopen(vacancy)
+      },
+      tone: 'primary'
     })
   }
 
@@ -201,6 +221,7 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
   // Publish confirmation modal state
   const [showPublishModal, setShowPublishModal] = useState(false)
   const [vacancyToPublish, setVacancyToPublish] = useState<Vacancy | null>(null)
+  const [vacancyToClose, setVacancyToClose] = useState<Vacancy | null>(null)
   // Delete confirmation modal state
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [vacancyToDelete, setVacancyToDelete] = useState<Vacancy | null>(null)
@@ -401,9 +422,20 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
     }
   }
 
-  const handleClose = async (vacancyId: string) => {
-    if (actionLoading) return
-    
+  // Close opens a confirmation dialog. QA-flagged that close fired with
+  // no confirmation AND swept the row out of the visible filter ("Open"),
+  // which read as a navigation away. The dialog gives the user a chance
+  // to cancel; after a successful close we flip the status filter to
+  // 'closed' so the just-closed row stays visible (mirrors the post-
+  // create flow that flips to 'draft').
+  const handleCloseClick = (vacancy: Vacancy) => {
+    setVacancyToClose(vacancy)
+  }
+
+  const handleClose = async () => {
+    if (actionLoading || !vacancyToClose) return
+    const vacancyId = vacancyToClose.id
+
     setActionLoading({ id: vacancyId, action: 'close' })
     try {
       Sentry.addBreadcrumb({
@@ -418,8 +450,13 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
         .eq('id', vacancyId)
 
       if (error) throw error
-      
+
       await fetchVacancies()
+      // Keep the row visible after close — without this the user is
+      // typically on the "Open" filter and the just-closed row vanishes,
+      // which reads as the page navigating away.
+      setStatusFilter('closed')
+      setVacancyToClose(null)
       addToast('Opportunity closed.', 'success')
     } catch (error) {
       logger.error('Error closing vacancy:', error)
@@ -430,6 +467,42 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
         operation: 'close_vacancy'
       })
       addToast('Failed to close opportunity. Please try again.', 'error')
+    } finally {
+      setActionLoading(null)
+    }
+  }
+
+  // Reopen — flips a closed opportunity back to 'open' so the publisher
+  // doesn't have to Duplicate (and lose the applicant history). Uses
+  // the same publish breadcrumb category for telemetry grouping.
+  const handleReopen = async (vacancy: Vacancy) => {
+    if (actionLoading) return
+    setActionLoading({ id: vacancy.id, action: 'publish' })
+    try {
+      Sentry.addBreadcrumb({
+        category: 'supabase',
+        message: 'vacancies.reopen',
+        data: { vacancyId: vacancy.id },
+        level: 'info'
+      })
+      const { error } = await supabase
+        .from('opportunities')
+        .update({ status: 'open' } as never)
+        .eq('id', vacancy.id)
+
+      if (error) throw error
+      await fetchVacancies()
+      setStatusFilter('open')
+      addToast('Opportunity reopened.', 'success')
+    } catch (error) {
+      logger.error('Error reopening vacancy:', error)
+      reportSupabaseError('vacancies.reopen', error, {
+        vacancyId: vacancy.id
+      }, {
+        feature: 'vacancies',
+        operation: 'reopen_vacancy'
+      })
+      addToast('Failed to reopen opportunity. Please try again.', 'error')
     } finally {
       setActionLoading(null)
     }
@@ -710,7 +783,8 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
                         onEdit={handleEdit}
                         onDuplicate={handleDuplicate}
                         onPublish={handlePublishClick}
-                        onClose={handleClose}
+                        onClose={handleCloseClick}
+                        onReopen={handleReopen}
                         onDelete={handleDeleteClick}
                       />
                     )}
@@ -885,6 +959,23 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
           isLoading={actionLoading?.id === vacancyToPublish.id && actionLoading.action === 'publish'}
         />
       )}
+
+      {/* Close Confirmation — guards an easy-to-misclick destructive
+          action and keeps applicant history attached (vs Duplicate). */}
+      <ConfirmDialog
+        isOpen={Boolean(vacancyToClose)}
+        onClose={() => setVacancyToClose(null)}
+        onConfirm={handleClose}
+        title="Close this opportunity?"
+        message={
+          vacancyToClose
+            ? `"${vacancyToClose.title}" will stop accepting new applications. Existing applicants stay attached — you can reopen the opportunity from the menu any time.`
+            : ''
+        }
+        confirmLabel="Close opportunity"
+        variant="danger"
+        testId="close-opportunity-confirm"
+      />
 
       {/* Delete Confirmation Modal */}
       {vacancyToDelete && (

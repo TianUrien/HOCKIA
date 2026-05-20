@@ -402,13 +402,25 @@ export default function OpportunitiesPage() {
     setSelectedVacancy(vacancy)
     if (!user) {
       setShowSignInPrompt(true)
-    } else if ((profile?.role === 'player' || profile?.role === 'coach') && !userApplications.includes(vacancy.id)) {
+    } else if (
+      (profile?.role === 'player' || profile?.role === 'coach') &&
+      !userApplications.includes(vacancy.id) &&
+      // Self-apply guard: a publisher must never be able to open the
+      // Apply modal on their own opportunity. canShowApplyButton hides
+      // the CTA, but this guard prevents any future code path that
+      // bypasses the visible button (deep links, keyboard, etc.).
+      vacancy.club_id !== user.id
+    ) {
       setShowApplyModal(true)
     }
   }
 
   const canShowApplyButton = (vacancy: Vacancy) => {
     if (userApplications.includes(vacancy.id)) return false
+    // Self-apply guard — the publisher (coach in recruiter mode or club)
+    // would otherwise see Apply on their own listing. QA-flagged when a
+    // coach opened their own published opportunity from the public feed.
+    if (user && vacancy.club_id === user.id) return false
     if (!user) return true
     if (profile?.role === 'player' && vacancy.opportunity_type === 'player') return true
     if (profile?.role === 'coach' && vacancy.opportunity_type === 'coach') return true
