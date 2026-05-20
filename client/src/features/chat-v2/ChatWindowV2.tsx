@@ -228,19 +228,21 @@ export default function ChatWindowV2({
 
   // Immersive mobile: pin the window to the *layout* viewport with
   // `position: fixed; inset: 0`. That frame is rock-stable on iOS even
-  // while the keyboard animates — unlike the visual viewport, whose
-  // offsetTop gets stuck after an iOS focus auto-scroll. The keyboard is
-  // handled purely with padding:
-  //   - padding-top    = env(safe-area-inset-top)  → clears the notch
-  //   - padding-bottom = --chat-keyboard-inset      → lifts the composer
-  //     above the keyboard (kept current by useSafeArea via VisualViewport)
-  // Header, message list and composer stay in normal flex flow, so the
-  // composer always rests directly above the keyboard. Desktop keeps the
+  // while the keyboard animates. The visible area is then bracketed with
+  // padding (kept current by useSafeArea via VisualViewport) so the
+  // content box exactly overlays what the user can see:
+  //   - padding-top    = max(notch inset, visual-viewport offset-top)
+  //     → header clears the notch (PWA) or the Safari URL bar (browser),
+  //       so it stays pinned at the top of the visible area
+  //   - padding-bottom = --chat-keyboard-inset
+  //     → composer rests directly above the keyboard
+  // Header, message list and composer stay in normal flex flow; only the
+  // padding changes, never the element's position. Desktop keeps the
   // in-parent flex layout.
   const isImmersive = isMobile && isImmersiveMobile
 
   const containerClasses = isImmersive
-    ? 'fixed inset-0 z-50 flex flex-col bg-white overflow-hidden pt-[env(safe-area-inset-top)] pb-[var(--chat-keyboard-inset,0px)]'
+    ? 'fixed inset-0 z-50 flex flex-col bg-white overflow-hidden pt-[max(env(safe-area-inset-top),var(--chat-viewport-offset-top,0px))] pb-[var(--chat-keyboard-inset,0px)]'
     : 'flex flex-1 flex-col min-h-0 bg-white overflow-hidden'
 
   const scrollPaddingClasses = isImmersive ? 'px-4 py-3 md:px-6' : 'px-4 py-4 md:px-5'

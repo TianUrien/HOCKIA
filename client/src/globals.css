@@ -54,9 +54,11 @@ html {
   --app-header-height: 0px;
   --app-header-offset: 0px;
   --chat-safe-area-bottom: 0px;
-  /* Software-keyboard height, kept current by useSafeArea. The chat
-     window pads its bottom by this so the composer rides the keyboard. */
+  /* Kept current by useSafeArea. The chat window pads its bottom by the
+     keyboard inset (composer rides the keyboard) and its top by the
+     visual-viewport offset (header clears the Safari URL bar). */
   --chat-keyboard-inset: 0px;
+  --chat-viewport-offset-top: 0px;
 
   /* Dark Mode Palette */
   --color-dark-bg: #0a0a0a;
