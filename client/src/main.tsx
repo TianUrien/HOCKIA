@@ -47,7 +47,19 @@ function showUpdatePrompt(updateSW: (reloadPage?: boolean) => Promise<void>) {
 }
 
 // Register Service Worker for PWA
+//
+// Update strategy (registerType: 'prompt'): a freshly deployed build
+// installs as a "waiting" service worker and does NOT take over until
+// it is applied. We apply it two ways:
+//   1. A banner ("A new version is available") for an immediate update.
+//   2. Auto-apply when the app is backgrounded — the reload runs while
+//      the app is hidden, so the user never sees it mid-session and the
+//      next launch is already on the latest build. Mobile users
+//      background the app constantly, so a stale version cannot persist
+//      across app switches even if the banner is missed.
 if ('serviceWorker' in navigator) {
+  let updatePending = false
+
   const updateSW = registerSW({
     immediate: true,
     onRegisteredSW(swScriptUrl, registration) {
@@ -77,6 +89,13 @@ if ('serviceWorker' in navigator) {
         const handleVisibilityChange = () => {
           if (document.hidden) {
             stopUpdateLoop()
+            // App going to background with an update waiting — apply it
+            // now. The reload runs while the app is hidden, so it is
+            // invisible to the user and the next launch is already fresh.
+            if (updatePending) {
+              logger.info('[PWA] Applying pending update while backgrounded')
+              void updateSW(true)
+            }
           } else {
             // Check immediately when tab becomes visible, then resume loop
             registration.update().catch((err) => logger.error('[PWA] Update check failed:', err))
@@ -92,7 +111,8 @@ if ('serviceWorker' in navigator) {
       logger.info('[PWA] App is ready for offline use')
     },
     onNeedRefresh() {
-      logger.info('[PWA] New content available, showing update prompt')
+      logger.info('[PWA] New content available — banner shown; will auto-apply on background')
+      updatePending = true
       showUpdatePrompt(updateSW)
     },
     onRegisterError(error) {
