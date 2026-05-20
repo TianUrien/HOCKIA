@@ -118,10 +118,24 @@ const getInitialContactEmail = (profile?: Profile | null): string => profile?.co
  * Validates form data before submission.
  * Returns an error message string if invalid, or null if valid.
  */
+// Length limits — chosen to keep hero/header layouts from breaking and
+// to discourage a Bio that's so long it overwhelms profile completeness
+// signals. QA found a 526-char Full Name overflowed the hero card and a
+// 10,000-char Bio still counted toward profile completeness without any
+// warning.
+const FULL_NAME_MAX_LENGTH = 80
+const BIO_MAX_LENGTH = 1500
+
 function validateFormData(formData: ProfileFormData, role: string): string | null {
   // Universal required field
   if (!formData.full_name.trim()) {
     return 'Full name is required.'
+  }
+  if (formData.full_name.length > FULL_NAME_MAX_LENGTH) {
+    return `Full name must be ${FULL_NAME_MAX_LENGTH} characters or fewer.`
+  }
+  if (formData.bio && formData.bio.length > BIO_MAX_LENGTH) {
+    return `Bio must be ${BIO_MAX_LENGTH} characters or fewer.`
   }
 
   // Role-specific validation
@@ -802,12 +816,24 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
             </div>
 
             {/* Common Fields */}
-            <Input
-              label={role === 'club' ? 'Club Name' : 'Full Name'}
-              value={formData.full_name}
-              onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-              required
-            />
+            <div>
+              <Input
+                label={role === 'club' ? 'Club Name' : 'Full Name'}
+                value={formData.full_name}
+                onChange={(e) => setFormData({ ...formData, full_name: e.target.value.slice(0, FULL_NAME_MAX_LENGTH) })}
+                required
+                maxLength={FULL_NAME_MAX_LENGTH}
+              />
+              {formData.full_name.length > FULL_NAME_MAX_LENGTH * 0.8 && (
+                <p
+                  className={`mt-1 text-xs text-right ${
+                    formData.full_name.length >= FULL_NAME_MAX_LENGTH ? 'text-red-600' : 'text-gray-500'
+                  }`}
+                >
+                  {formData.full_name.length}/{FULL_NAME_MAX_LENGTH}
+                </p>
+              )}
+            </div>
 
             <LocationAutocomplete
               label="Base Location (City, State/Province)"
@@ -980,12 +1006,20 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                   <textarea
                     id="player-bio"
                     value={formData.bio || ''}
-                    onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, bio: e.target.value.slice(0, BIO_MAX_LENGTH) })}
                     rows={4}
+                    maxLength={BIO_MAX_LENGTH}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8026FA] focus:border-transparent resize-none"
                     placeholder="Share your playing background, strengths, and goals"
                     aria-label="About me"
                   />
+                  <p
+                    className={`mt-1 text-xs text-right ${
+                      (formData.bio?.length ?? 0) >= BIO_MAX_LENGTH ? 'text-red-600' : 'text-gray-500'
+                    }`}
+                  >
+                    {formData.bio?.length ?? 0}/{BIO_MAX_LENGTH}
+                  </p>
                 </div>
 
                 {/* Availability Status */}
@@ -1131,11 +1165,19 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                   </label>
                   <textarea
                     value={formData.bio || ''}
-                    onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, bio: e.target.value.slice(0, BIO_MAX_LENGTH) })}
                     rows={4}
+                    maxLength={BIO_MAX_LENGTH}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8026FA] focus:border-transparent resize-none"
                     placeholder="Tell us about your coaching experience..."
                   />
+                  <p
+                    className={`mt-1 text-xs text-right ${
+                      (formData.bio?.length ?? 0) >= BIO_MAX_LENGTH ? 'text-red-600' : 'text-gray-500'
+                    }`}
+                  >
+                    {formData.bio?.length ?? 0}/{BIO_MAX_LENGTH}
+                  </p>
                 </div>
 
                 {/* Availability Status */}
@@ -1374,11 +1416,19 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                   <textarea
                     id="edit-umpire-bio"
                     value={formData.bio || ''}
-                    onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, bio: e.target.value.slice(0, BIO_MAX_LENGTH) })}
                     rows={4}
+                    maxLength={BIO_MAX_LENGTH}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8026FA] focus:border-transparent resize-none"
                     placeholder="Share a short professional summary — career highlights, officiating philosophy, tournaments you've worked."
                   />
+                  <p
+                    className={`mt-1 text-xs text-right ${
+                      (formData.bio?.length ?? 0) >= BIO_MAX_LENGTH ? 'text-red-600' : 'text-gray-500'
+                    }`}
+                  >
+                    {formData.bio?.length ?? 0}/{BIO_MAX_LENGTH}
+                  </p>
                 </div>
               </>
             )}

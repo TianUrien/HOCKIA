@@ -104,10 +104,15 @@ const entryTypeMeta: Record<JourneyType, EntryTypeMeta> = {
   },
 }
 
+// Categories surfaced in the Create / Edit form. 'milestone' was
+// missing here even though the dashboard's JourneyCard counts and
+// renders it, so users were told a category existed they couldn't
+// create. Adding it closes the loop.
 const ENTRY_TYPES: { id: JourneyType; label: string }[] = [
   { id: 'club', label: entryTypeMeta.club.label },
   { id: 'national_team', label: entryTypeMeta.national_team.label },
   { id: 'achievement', label: entryTypeMeta.achievement.label },
+  { id: 'milestone', label: entryTypeMeta.milestone.label },
 ]
 
 const MONTH_OPTIONS = [
