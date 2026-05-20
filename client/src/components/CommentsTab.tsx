@@ -57,7 +57,7 @@ function emptyStateCopyFor(
   isOwner: boolean,
 ): string {
   if (isOwner) {
-    return 'No comments yet — ask a teammate, coach, or club to leave one.'
+    return 'No comments yet — ask a player, coach, or visitor to leave one.'
   }
   if (role === 'umpire') {
     return 'Be the first to share a note about this umpire.'

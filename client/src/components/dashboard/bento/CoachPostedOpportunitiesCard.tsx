@@ -33,12 +33,19 @@ interface CoachPostedOpportunitiesCardProps {
   onCreateOpportunity: () => void
   /** Secondary CTA — routes to the vacancies management surface. */
   onManageOpportunities: () => void
+  /** Intro sentence. Defaults to coach wording; the Club dashboard
+   *  passes club-appropriate copy ("player and coach roles"). */
+  bodyCopy?: string
 }
+
+const DEFAULT_BODY_COPY =
+  'Publish coaching roles and recruit candidates. Review applications and shortlist in one place.'
 
 export default function CoachPostedOpportunitiesCard({
   ownerProfileId,
   onCreateOpportunity,
   onManageOpportunities,
+  bodyCopy = DEFAULT_BODY_COPY,
 }: CoachPostedOpportunitiesCardProps) {
   const [openCount, setOpenCount] = useState<number | null>(null)
   const [applicants, setApplicants] = useState<number | null>(null)
@@ -112,7 +119,7 @@ export default function CoachPostedOpportunitiesCard({
     >
       <div className="space-y-3.5">
         <p className="text-sm text-gray-600 leading-relaxed">
-          Publish coaching roles and recruit candidates. Review applications and shortlist in one place.
+          {bodyCopy}
         </p>
 
         {/* Two metric tiles side-by-side. tabular-nums keeps the

@@ -21,9 +21,16 @@ interface CommunityCardProps {
   /** Tile clicks deep-link to specific sections; the card's "Go to
    *  community" CTA opens the unified bundle view that stacks all four. */
   onOpenTab: (tab: 'friends' | 'references' | 'comments' | 'posts' | 'community') => void
+  /** Hide the References tile. References are a player/coach trust
+   *  signal — clubs don't request or receive them — so the club
+   *  dashboard renders a 3-tile grid (Connections, Comments, Posts). */
+  hideReferences?: boolean
+  /** Visitor view. Relabels the main CTA from "Go to my network" to
+   *  "View network" — a visitor isn't looking at *their* network. */
+  readOnly?: boolean
 }
 
-export default function CommunityCard({ profile, onOpenTab }: CommunityCardProps) {
+export default function CommunityCard({ profile, onOpenTab, hideReferences = false, readOnly = false }: CommunityCardProps) {
   const [commentCount, setCommentCount] = useState<number | null>(null)
 
   useEffect(() => {
@@ -62,9 +69,9 @@ export default function CommunityCard({ profile, onOpenTab }: CommunityCardProps
       // is the global HOCKIA directory — same word, different scope.
       // Renaming this card resolves the label collision QA flagged.
       title="My Network"
-      subtitle="Friends, references, comments and posts"
-      ctaLabel="Go to my network"
-      // Opens the unified My Network page (all four sections stacked).
+      subtitle={hideReferences ? 'Connections, comments and posts' : 'Friends, references, comments and posts'}
+      ctaLabel={readOnly ? 'View network' : 'Go to my network'}
+      // Opens the unified My Network page (all sections stacked).
       // The individual tile clicks below still deep-link to their own
       // dedicated section pages so users have both: a hub view AND
       // focused views.
@@ -78,12 +85,14 @@ export default function CommunityCard({ profile, onOpenTab }: CommunityCardProps
           count={friends}
           onClick={() => onOpenTab('friends')}
         />
-        <Tile
-          icon={Shield}
-          label="References"
-          count={references}
-          onClick={() => onOpenTab('references')}
-        />
+        {!hideReferences && (
+          <Tile
+            icon={Shield}
+            label="References"
+            count={references}
+            onClick={() => onOpenTab('references')}
+          />
+        )}
         <Tile
           icon={MessageSquare}
           label="Comments"

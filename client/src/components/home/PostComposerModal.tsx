@@ -1278,7 +1278,11 @@ export function PostComposerModal({
                   ? 'Save Changes'
                   : mode === 'transfer'
                     ? (isClubRole ? 'Announce Signing' : 'Announce Transfer')
-                    : 'Post'
+                    // "Publish post" — distinct from the "Post" mode tab
+                    // above so the dialog has no two same-named controls.
+                    // (Avoids "Share post", which is already the share-
+                    // sheet heading elsewhere.)
+                    : 'Publish post'
               }
             </button>
           </div>

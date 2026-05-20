@@ -897,9 +897,12 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
           setShowModal(false)
           setEditingVacancy(null)
         }}
-        onSuccess={() => {
+        onSuccess={(status) => {
           fetchVacancies()
-          if (!editingVacancy) setStatusFilter('draft')
+          // Sync the status filter to whatever was just created so the
+          // new card is visible — publishing produces an 'open' row, and
+          // a hard-coded 'draft' filter would hide it.
+          if (!editingVacancy && status) setStatusFilter(status)
         }}
         editingVacancy={editingVacancy}
         initialOpportunityType={initialOpportunityType}

@@ -1,52 +1,68 @@
-import { useEffect, useState, useRef } from 'react'
-import { ArrowLeft, MapPin, Calendar, Plus, Eye, MessageCircle, Edit, Loader2, Sparkles } from 'lucide-react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useEffect, useMemo, useState, useRef } from 'react'
+import { ArrowLeft } from 'lucide-react'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import Header from '@/components/Header'
-import { Avatar, Button, CountryDisplay, EditProfileModal, CommentsTab, FriendsTab, FriendshipButton, NextStepCard, WelcomeValueCard, FreshnessCard, SearchAppearancesCard, PublicViewBanner, RoleBadge, ScrollableTabs, TierBadge, VerifiedBadge, PendingVerificationBadge } from '@/components'
-import { PulseSection } from '@/components/home/PulseSection'
-import { calculateTier } from '@/lib/profileTier'
-import { useProfileFreshness } from '@/hooks/useProfileFreshness'
-import type { FreshnessNudge } from '@/lib/profileFreshness'
-import { useSearchAppearances } from '@/hooks/useSearchAppearances'
-import ProfileActionMenu from '@/components/ProfileActionMenu'
-import { useClubProfileStrength, type ProfileStrengthBucket as ClubStrengthBucket } from '@/hooks/useClubProfileStrength'
-import { ProfileViewersSection } from '@/components/ProfileViewersSection'
-import { logger } from '@/lib/logger'
-import { getInitials } from '@/lib/utils'
-import OpportunitiesTab from '@/components/OpportunitiesTab'
-import ProfilePostsTab from '@/components/ProfilePostsTab'
+import {
+  EditProfileModal,
+  FriendsTab,
+  CommentsTab,
+  PublicViewBanner,
+} from '@/components'
 import ClubMediaTab from '@/components/ClubMediaTab'
 import ClubMembersTab from '@/components/ClubMembersTab'
-import Skeleton from '@/components/Skeleton'
+import OpportunitiesTab from '@/components/OpportunitiesTab'
+import ProfilePostsTab from '@/components/ProfilePostsTab'
 import SignInPromptModal from '@/components/SignInPromptModal'
-import SocialLinksDisplay from '@/components/SocialLinksDisplay'
-import { useAuthStore } from '@/lib/auth'
+import ClubHeroCard from '@/components/dashboard/bento/ClubHeroCard'
+import ClubBentoGrid from '@/components/dashboard/bento/ClubBentoGrid'
+import { ProfileViewersSection } from '@/components/ProfileViewersSection'
 import type { Profile } from '@/lib/supabase'
 import { supabase } from '@/lib/supabase'
+import { logger } from '@/lib/logger'
+import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
 import { useNotificationStore } from '@/lib/notifications'
+import { useClubProfileStrength } from '@/hooks/useClubProfileStrength'
+import type { ProfileStrengthBucket } from '@/hooks/useProfileStrength'
+import { useSearchAppearances } from '@/hooks/useSearchAppearances'
 import { useTabDeepLinkScroll } from '@/hooks/useTabDeepLinkScroll'
-import { derivePublicContactEmail } from '@/lib/profile'
-import type { SocialLinks } from '@/lib/socialLinks'
-import ShareProfileButton from '@/components/profile/ShareProfileButton'
+import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 
-type TabType = 'overview' | 'opportunities' | 'friends' | 'members' | 'comments' | 'posts'
+// `?section=` query param → DOM anchor id. Drives the deep-link scroll
+// for notifications + shareable URLs (e.g. ?section=viewers).
+const CLUB_SECTION_ANCHORS = {
+  viewers: 'profile-viewers',
+} as const
 
-const ALL_TABS: TabType[] = ['overview', 'opportunities', 'members', 'friends', 'comments', 'posts']
+type TabType =
+  | 'profile'
+  | 'media'
+  | 'members'
+  | 'friends'
+  | 'comments'
+  | 'posts'
+  | 'opportunities'
 
-// Legacy aliases — old URLs (?tab=vacancies) still in the wild from
-// notifications, bookmarks, and the previous tab id. Map them to the
-// canonical 'opportunities' value at parse time and rewrite the URL
-// so the browser bar shows the new slug.
-const LEGACY_TAB_ALIASES: Record<string, TabType> = {
+const VALID_TABS: TabType[] = [
+  'profile',
+  'media',
+  'members',
+  'friends',
+  'comments',
+  'posts',
+  'opportunities',
+]
+
+// Legacy section aliases. 'vacancies' → 'opportunities' (PR #101);
+// 'overview' was the old landing tab id — it maps to the bare
+// /dashboard/profile landing (no section segment).
+const LEGACY_SECTION_ALIASES: Record<string, TabType> = {
   vacancies: 'opportunities',
+  overview: 'profile',
 }
 
-const resolveTabParam = (param: string | null): TabType | null => {
-  if (!param) return null
-  const aliased = LEGACY_TAB_ALIASES[param] ?? param
-  return (ALL_TABS as string[]).includes(aliased) ? (aliased as TabType) : null
-}
+const resolveLegacySection = (section: string | undefined): TabType | null =>
+  section && LEGACY_SECTION_ALIASES[section] ? LEGACY_SECTION_ALIASES[section] : null
 
 type ClubProfileShape =
   Partial<Profile> &
@@ -74,140 +90,284 @@ type ClubProfileShape =
 interface ClubDashboardProps {
   profileData?: ClubProfileShape
   readOnly?: boolean
-  /** When true and readOnly is true, shows a banner indicating user is viewing their own public profile */
+  /** When true and readOnly is true, shows a banner indicating the user
+   *  is viewing their own public profile. */
   isOwnProfile?: boolean
 }
 
-export default function ClubDashboard({ profileData, readOnly = false, isOwnProfile = false }: ClubDashboardProps) {
+export default function ClubDashboard({
+  profileData,
+  readOnly = false,
+  isOwnProfile = false,
+}: ClubDashboardProps) {
   const { profile: authProfile, user } = useAuthStore()
   const profile = (profileData ?? authProfile) as ClubProfileShape | null
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { addToast } = useToastStore()
-  const [searchParams, setSearchParams] = useSearchParams()
-  const [activeTab, setActiveTab] = useState<TabType>(() => {
-    return resolveTabParam(searchParams.get('tab')) ?? 'overview'
-  })
+
+  // Section comes from the URL route segment (PR2-style route promotion),
+  // not a ?tab= param.
+  //  - Owner:  /dashboard/profile/:section  (DashboardRouter dispatches)
+  //  - Visitor: /clubs/:username/:section, /clubs/id/:id/:section
+  const routeParams = useParams<{ section?: string; username?: string; id?: string }>()
+  const sectionFromRoute = routeParams.section as TabType | undefined
+  const aliasedSection = resolveLegacySection(sectionFromRoute) ?? sectionFromRoute
+  const sectionIsValid = aliasedSection
+    ? (VALID_TABS as string[]).includes(aliasedSection)
+    : true
+  const activeTab: TabType =
+    aliasedSection && (VALID_TABS as string[]).includes(aliasedSection)
+      ? aliasedSection
+      : 'profile'
+
+  // Document title reflects the dashboard sub-route. For visitor views,
+  // prefix with the club name so browser history is identifiable.
+  const visitedName = readOnly ? profile?.full_name : null
+  const ownerTabTitle: Record<TabType, string> = {
+    profile: 'Club dashboard',
+    media: 'Media',
+    members: 'Members',
+    friends: 'Connections',
+    comments: 'Comments',
+    posts: 'Posts',
+    opportunities: 'Opportunities',
+  }
+  const visitorTabSuffix: Record<TabType, string | null> = {
+    profile: null,
+    media: 'Media',
+    members: 'Members',
+    friends: 'Connections',
+    comments: 'Comments',
+    posts: 'Posts',
+    opportunities: 'Opportunities',
+  }
+  const computedTitle = visitedName
+    ? visitorTabSuffix[activeTab]
+      ? `${visitedName} — ${visitorTabSuffix[activeTab]}`
+      : visitedName
+    : ownerTabTitle[activeTab]
+  useDocumentTitle(computedTitle)
+
+  const visitorBasePath = useMemo(() => {
+    if (!readOnly) return null
+    if (routeParams.username) return `/clubs/${routeParams.username}`
+    if (routeParams.id) return `/clubs/id/${routeParams.id}`
+    return null
+  }, [readOnly, routeParams.username, routeParams.id])
+
+  // Legacy route-segment redirect — old /dashboard/profile/vacancies
+  // (and visitor equivalents) rewrite to /opportunities so the URL bar
+  // shows the canonical slug.
+  useEffect(() => {
+    if (!sectionFromRoute) return
+    const aliased = resolveLegacySection(sectionFromRoute)
+    if (!aliased) return
+    if (readOnly) {
+      if (visitorBasePath) {
+        navigate(aliased === 'profile' ? visitorBasePath : `${visitorBasePath}/${aliased}`, { replace: true })
+      }
+    } else {
+      navigate(aliased === 'profile' ? '/dashboard/profile' : `/dashboard/profile/${aliased}`, { replace: true })
+    }
+  }, [sectionFromRoute, readOnly, visitorBasePath, navigate])
+
+  // Unknown section → redirect back to the landing.
+  useEffect(() => {
+    if (sectionFromRoute && !sectionIsValid) {
+      if (readOnly) {
+        if (visitorBasePath) navigate(visitorBasePath, { replace: true })
+      } else {
+        navigate('/dashboard/profile', { replace: true })
+      }
+    }
+  }, [sectionFromRoute, sectionIsValid, readOnly, visitorBasePath, navigate])
+
   const [showEditModal, setShowEditModal] = useState(false)
   const [showSignInPrompt, setShowSignInPrompt] = useState(false)
   const [sendingMessage, setSendingMessage] = useState(false)
   const [triggerCreateVacancy, setTriggerCreateVacancy] = useState(false)
+  const [memberCount, setMemberCount] = useState<number | null>(null)
   const claimCommentHighlights = useNotificationStore((state) => state.claimCommentHighlights)
   const clearCommentNotifications = useNotificationStore((state) => state.clearCommentNotifications)
   const commentHighlightVersion = useNotificationStore((state) => state.commentHighlightVersion)
   const [highlightedComments, setHighlightedComments] = useState<Set<string>>(new Set())
 
-  const tabParam = searchParams.get('tab') as TabType | null
-
-  // Profile strength for clubs (only compute for own profile)
-  const { percentage, buckets, loading: strengthLoading, refresh: refreshStrength } = useClubProfileStrength({
+  // Profile strength — owner only.
+  const strength = useClubProfileStrength({
     profile: readOnly ? null : (profileData ?? authProfile) as ClubProfileShape | null,
   })
-
-  // Freshness nudges (owner only)
-  const { nudge: freshnessNudge } = useProfileFreshness({
-    role: 'club',
-    profileId: readOnly ? null : (profileData?.id ?? authProfile?.id ?? null),
-  })
-  // Search appearances (owner only) — last 7 days aggregate.
-  const { summary: searchAppearances } = useSearchAppearances({
-    profileId: readOnly ? null : (profileData?.id ?? authProfile?.id ?? null),
-  })
-
-  // Shared handler for NextStepCard — routes a bucket to the right deep-link.
-  const handleStrengthBucketAction = (bucket: ClubStrengthBucket) => {
-    if (bucket.actionId === 'edit-profile') {
-      setShowEditModal(true)
-    } else if (bucket.actionId === 'gallery-section') {
-      // Scroll to gallery section
-      const gallerySection = document.querySelector('[data-section="gallery"]')
-      if (gallerySection) {
-        gallerySection.scrollIntoView({ behavior: 'smooth' })
-      }
-    }
-  }
-
-  // Handler for freshness nudges.
-  const handleFreshnessAction = (nudge: FreshnessNudge) => {
-    if (nudge.action.type === 'edit-profile') {
-      setShowEditModal(true)
-    } else if (nudge.action.type === 'tab') {
-      const tab = nudge.action.tab as TabType
-      setActiveTab(tab)
-      setSearchParams({ tab })
-    }
-  }
-
-
-  // Track previous percentage to show toast on improvement
   const prevPercentageRef = useRef<number | null>(null)
 
+  // Search appearances — owner only, last 7 days. Kept warm for parity
+  // with the coach/player dashboards' freshness signals.
+  useSearchAppearances({
+    profileId: readOnly ? null : (profileData?.id ?? authProfile?.id ?? null),
+  })
+
+  const sectionParam = searchParams.get('section')
+  const profileId = profile?.id ?? null
+
+  // Hero roster count — single-row probe of get_club_members.
   useEffect(() => {
-    if (!tabParam) return
-    const resolved = resolveTabParam(tabParam)
-    if (!resolved) {
-      if (activeTab !== 'overview') {
-        setActiveTab('overview')
-      }
-      return
-    }
-
-    if (resolved !== activeTab) {
-      setActiveTab(resolved)
-    }
-  }, [tabParam, activeTab])
-
-  // Deep-link scroll for ?tab=X notification URLs.
-  useTabDeepLinkScroll({ activeTab, tabParam })
-
-  // Refresh profile strength when switching to overview tab (to pick up gallery changes)
-  useEffect(() => {
-    if (!readOnly && activeTab === 'overview') {
-      void refreshStrength()
-    }
-  }, [activeTab, readOnly, refreshStrength])
-
-  // Show toast when profile strength improves
-  useEffect(() => {
-    if (readOnly || strengthLoading) return
-    if (prevPercentageRef.current !== null && percentage > prevPercentageRef.current) {
-      const increase = percentage - prevPercentageRef.current
-      if (percentage >= 100) {
-        addToast("Your club profile is now complete!", 'success')
-      } else {
-        addToast(`Profile strength +${increase}%. Keep going!`, 'success')
+    if (!profileId) return
+    let cancelled = false
+    const fetchMemberCount = async () => {
+      try {
+        const { data, error } = await supabase.rpc('get_club_members', {
+          p_profile_id: profileId,
+          p_limit: 1,
+          p_offset: 0,
+        })
+        if (cancelled) return
+        if (error) throw error
+        setMemberCount(data && data.length > 0 ? data[0].total_count : 0)
+      } catch (err) {
+        logger.error('[ClubDashboard] member count fetch failed', err)
+        if (!cancelled) setMemberCount(0)
       }
     }
-    prevPercentageRef.current = percentage
-  }, [percentage, readOnly, strengthLoading, addToast])
+    void fetchMemberCount()
+    return () => {
+      cancelled = true
+    }
+  }, [profileId])
 
+  // Legacy ?tab=X migration — old notification links / bookmarks.
   useEffect(() => {
+    const legacyTab = searchParams.get('tab')
+    if (!legacyTab) return
+    const resolved = resolveLegacySection(legacyTab) ?? (legacyTab as TabType)
+    if (!(VALID_TABS as string[]).includes(resolved)) return
+
+    const next = new URLSearchParams(searchParams)
+    next.delete('tab')
+    const qs = next.toString()
+    const qsSuffix = qs ? `?${qs}` : ''
+
+    let path: string
     if (readOnly) {
-      return
+      if (!visitorBasePath) return
+      path = resolved === 'profile' ? visitorBasePath : `${visitorBasePath}/${resolved}`
+    } else {
+      path = resolved === 'profile' ? '/dashboard/profile' : `/dashboard/profile/${resolved}`
     }
+    navigate(`${path}${qsSuffix}`, { replace: true })
+  }, [searchParams, readOnly, visitorBasePath, navigate])
 
+  useTabDeepLinkScroll({
+    activeTab,
+    tabParam: sectionFromRoute ?? null,
+    sectionParam,
+    sectionAnchors: CLUB_SECTION_ANCHORS,
+  })
+
+  // Refresh profile strength when switching tabs.
+  useEffect(() => {
+    if (!readOnly) {
+      void strength.refresh()
+    }
+  }, [activeTab, readOnly]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Comment highlight claiming when entering the comments section.
+  useEffect(() => {
+    if (readOnly) return
     if (activeTab !== 'comments') {
-      if (highlightedComments.size > 0) {
-        setHighlightedComments(new Set())
-      }
+      if (highlightedComments.size > 0) setHighlightedComments(new Set())
       return
     }
-
     const ids = claimCommentHighlights()
-    if (ids.length > 0) {
+    const hasNew = ids.some((id) => !highlightedComments.has(id))
+    if (hasNew) {
       setHighlightedComments((prev) => {
         const next = new Set(prev)
         ids.forEach((id) => next.add(id))
         return next
       })
     }
-
     void clearCommentNotifications()
-  }, [activeTab, claimCommentHighlights, clearCommentNotifications, commentHighlightVersion, highlightedComments, readOnly])
+  }, [activeTab, claimCommentHighlights, clearCommentNotifications, commentHighlightVersion, readOnly, highlightedComments])
 
-  const handleCreateVacancyClick = () => {
-    handleTabChange('opportunities')
-    setTriggerCreateVacancy(true)
+  // Toast when profile strength increases.
+  useEffect(() => {
+    if (readOnly || strength.loading) return
+    const current = strength.percentage
+    const prev = prevPercentageRef.current
+    if (prev !== null && current > prev) {
+      const increase = current - prev
+      if (current >= 100) {
+        addToast('Your club profile is now complete! Players and coaches see complete clubs first.', 'success')
+      } else {
+        addToast(`Profile strength +${increase}%. Keep going!`, 'success')
+      }
+    }
+    prevPercentageRef.current = current
+  }, [strength.percentage, strength.loading, readOnly, addToast])
+
+  // Adapt club buckets (actionId strings) to the Hero's
+  // ProfileStrengthBucket shape (action objects). 'gallery-section'
+  // routes to the Media section; everything else opens the edit modal.
+  const adaptedBuckets: ProfileStrengthBucket[] = useMemo(
+    () =>
+      strength.buckets.map((b) => ({
+        id: b.id,
+        label: b.label,
+        description: b.hint,
+        unlockCopy: b.unlockCopy,
+        weight: b.weight,
+        completed: b.completed,
+        action:
+          b.actionId === 'gallery-section'
+            ? { type: 'tab' as const, tab: 'media' }
+            : { type: 'edit-profile' as const },
+      })),
+    [strength.buckets],
+  )
+
+  const handleTabChange = useMemo(
+    () => (tab: TabType | 'community') => {
+      // CommunityCard's main CTA emits 'community'; clubs have no unified
+      // community hub, so it resolves to the Connections section.
+      const target: TabType = tab === 'community' ? 'friends' : tab
+      const wasSameTab = activeTab === target
+
+      const preserved = new URLSearchParams(searchParams)
+      preserved.delete('tab')
+      const qs = preserved.toString()
+      const qsSuffix = qs ? `?${qs}` : ''
+
+      let path: string
+      if (readOnly) {
+        if (!visitorBasePath) return
+        path = target === 'profile' ? visitorBasePath : `${visitorBasePath}/${target}`
+      } else {
+        path = target === 'profile' ? '/dashboard/profile' : `/dashboard/profile/${target}`
+      }
+      navigate(`${path}${qsSuffix}`, { replace: true })
+
+      if (wasSameTab && target !== 'profile') {
+        const performScroll = () => {
+          const el = document.getElementById('profile-tab-content')
+          if (el && typeof el.scrollIntoView === 'function') {
+            try { el.scrollIntoView({ behavior: 'smooth', block: 'start' }) } catch { /* noop */ }
+          }
+        }
+        window.requestAnimationFrame(performScroll)
+        window.setTimeout(performScroll, 400)
+      }
+    },
+    [activeTab, navigate, readOnly, visitorBasePath, searchParams],
+  )
+
+  const handleProfileStrengthAction = (bucket: ProfileStrengthBucket) => {
+    if (bucket.action.type === 'tab') {
+      handleTabChange(bucket.action.tab as TabType)
+    } else {
+      setShowEditModal(true)
+    }
   }
+
+  if (!profile) return null
 
   const handleSendMessage = async () => {
     if (!user) {
@@ -219,19 +379,16 @@ export default function ClubDashboard({ profileData, readOnly = false, isOwnProf
       addToast('You cannot message yourself.', 'error')
       return
     }
-
     setSendingMessage(true)
     try {
       const { data: existingConv, error: fetchError } = await supabase
         .from('conversations')
         .select('id')
         .or(
-          `and(participant_one_id.eq.${user.id},participant_two_id.eq.${profileData.id}),and(participant_one_id.eq.${profileData.id},participant_two_id.eq.${user.id})`
+          `and(participant_one_id.eq.${user.id},participant_two_id.eq.${profileData.id}),and(participant_one_id.eq.${profileData.id},participant_two_id.eq.${user.id})`,
         )
         .maybeSingle()
-
       if (fetchError) throw fetchError
-
       if (existingConv?.id) {
         navigate(`/messages?conversation=${existingConv.id}`)
       } else {
@@ -245,514 +402,150 @@ export default function ClubDashboard({ profileData, readOnly = false, isOwnProf
     }
   }
 
-  const tabs: { id: TabType; label: string }[] = [
-    { id: 'overview', label: 'Overview' },
-    { id: 'opportunities', label: 'Opportunities' },
-    { id: 'members', label: 'Members' },
-    { id: 'friends', label: 'Friends' },
-    { id: 'comments', label: 'Comments' },
-    { id: 'posts', label: 'Posts' },
-  ]
-
-  const handleTabChange = (tab: TabType) => {
-    setActiveTab(tab)
-    const next = new URLSearchParams(searchParams)
-    next.set('tab', tab)
-    setSearchParams(next, { replace: true })
-    if (tab !== 'opportunities' && triggerCreateVacancy) {
-      setTriggerCreateVacancy(false)
-    }
+  const handleViewPublic = () => {
+    const slug = profile.username ? profile.username : `id/${profile.id}`
+    navigate(`/clubs/${slug}`)
   }
 
-  // Legacy ?tab=vacancies redirect — rewrites the URL bar to
-  // ?tab=opportunities so the canonical slug surfaces in browser
-  // history. Internal state already resolves through LEGACY_TAB_ALIASES,
-  // but the URL stays stale without this rewrite.
-  useEffect(() => {
-    if (searchParams.get('tab') === 'vacancies') {
-      const next = new URLSearchParams(searchParams)
-      next.set('tab', 'opportunities')
-      setSearchParams(next, { replace: true })
-    }
-  }, [searchParams, setSearchParams])
-
-
-  if (!profile) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-
-        <main className="mx-auto max-w-7xl px-4 pt-24 pb-12 md:px-6">
-          <div className="mb-6 rounded-2xl bg-white p-6 shadow-sm md:p-8">
-            <div className="flex flex-col gap-6 md:flex-row md:items-center">
-              <Skeleton variant="circular" width={96} height={96} className="flex-shrink-0" />
-              <div className="flex-1 space-y-4">
-                <Skeleton width="60%" height={40} />
-                <div className="flex flex-wrap gap-4">
-                  <Skeleton width={160} height={24} />
-                  <Skeleton width={140} height={24} />
-                  <Skeleton width={120} height={24} />
-                </div>
-                <Skeleton width={90} height={28} className="rounded-full" />
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-2xl bg-white shadow-sm">
-            <div className="sticky top-[68px] z-40 border-b border-gray-200 bg-white/90 backdrop-blur">
-              <div className="flex gap-6 overflow-x-auto px-6 py-4">
-                {tabs.map((tab) => (
-                  <div key={tab.id} className="flex flex-col items-start space-y-2">
-                    <Skeleton width={80} height={24} />
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="space-y-6 p-6 md:p-8">
-              <Skeleton width="40%" height={28} />
-              <Skeleton width="100%" height={120} />
-              <Skeleton width="100%" height={120} />
-            </div>
-          </div>
-        </main>
-      </div>
-    )
+  const handleCreateOpportunity = () => {
+    setTriggerCreateVacancy(true)
+    handleTabChange('opportunities')
   }
 
-  const publicContact = derivePublicContactEmail(profile)
-  const savedContactEmail = profile.contact_email?.trim() || ''
+  const isLanding = activeTab === 'profile'
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      
-      {/* Public View Banner - shown when user views their own profile in public mode */}
+
       {readOnly && isOwnProfile && <PublicViewBanner />}
 
-      <main className="max-w-7xl mx-auto px-4 md:px-6 pt-24 pb-12">
+      <main className="max-w-7xl mx-auto px-4 md:px-6 pt-24 pb-12 space-y-5 md:space-y-6">
         {readOnly && !isOwnProfile && (
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition-colors"
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             <span className="text-sm font-medium">Back</span>
           </button>
         )}
 
-        <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm mb-6 animate-fade-in overflow-visible">
-          <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-            <Avatar
-              src={profile.avatar_url}
-              initials={getInitials(profile.full_name)}
-              size="xl"
-              className="flex-shrink-0"
-              alt={profile.full_name ?? undefined}
-              enablePreview
-              previewTitle={profile.full_name ?? undefined}
-              role="club"
-            />
-
-            <div className="flex-1">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-3">
-                <h1 className="text-3xl md:text-4xl font-bold text-gray-900 flex flex-wrap items-center gap-x-2 gap-y-1">
-                  <span>{profile.full_name}</span>
-                  <VerifiedBadge
-                    verified={(profile as unknown as { is_verified?: boolean; verified_at?: string | null } | null)?.is_verified}
-                    verifiedAt={(profile as unknown as { is_verified?: boolean; verified_at?: string | null } | null)?.verified_at ?? null}
-                  />
-                  <PendingVerificationBadge
-                    verified={(profile as unknown as { is_verified?: boolean } | null)?.is_verified}
-                  />
-                </h1>
-                {readOnly ? (
-                  <div className="flex flex-wrap items-center gap-2">
-                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium">
-                      <Eye className="w-4 h-4" />
-                      Network View
-                    </div>
-                    <FriendshipButton profileId={profile.id} />
-                    {!isOwnProfile && authProfile?.role !== 'brand' && (
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={handleSendMessage}
-                        disabled={sendingMessage}
-                        className="gap-2"
-                      >
-                        {sendingMessage ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <MessageCircle className="w-4 h-4" />
-                        )}
-                        {sendingMessage ? 'Starting...' : 'Message'}
-                      </Button>
-                    )}
-                    {isOwnProfile && (
-                      <ShareProfileButton profile={{ role: 'club', username: profile.username, id: profile.id }} />
-                    )}
-                    {!isOwnProfile && <ProfileActionMenu targetId={profile.id} targetName={profile.full_name ?? 'this club'} />}
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <ShareProfileButton profile={{ role: 'club', username: profile.username, id: profile.id }} />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        // Use username slug when available so Network View
-                        // matches the URL ShareProfileButton copies.
-                        const slug = profile.username ? profile.username : `id/${profile.id}`
-                        navigate(`/clubs/${slug}`)
-                      }}
-                      className="gap-1.5 whitespace-nowrap text-xs sm:text-sm px-2.5 sm:px-4"
-                    >
-                      <Eye className="w-4 h-4 flex-shrink-0" />
-                      <span className="hidden xs:inline">Network View</span>
-                      <span className="xs:hidden">View</span>
-                    </Button>
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={() => setShowEditModal(true)}
-                      className="gap-1.5 whitespace-nowrap text-xs sm:text-sm px-2.5 sm:px-4"
-                    >
-                      <Edit className="w-4 h-4 flex-shrink-0" />
-                      <span className="hidden xs:inline">Edit Profile</span>
-                      <span className="xs:hidden">Edit</span>
-                    </Button>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex flex-wrap items-center gap-4 text-gray-600 mb-4">
-                <div className="flex items-center gap-2">
-                  <CountryDisplay
-                    countryId={profile.nationality_country_id}
-                    fallbackText={profile.nationality}
-                    className="font-medium"
-                  />
-                </div>
-                <div className="flex items-center gap-2">
-                  <MapPin className="w-5 h-5" />
-                  <span>{profile.base_location}</span>
-                </div>
-                {profile.year_founded && (
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-5 h-5" />
-                    <span>Founded {profile.year_founded}</span>
-                  </div>
-                )}
-              </div>
-
-              <div className="mt-2 flex flex-wrap items-center gap-3">
-                <RoleBadge role="club" />
-                {!readOnly && !strengthLoading && (
-                  <TierBadge tier={calculateTier(percentage)} />
-                )}
-                <SocialLinksDisplay
-                  links={profile.social_links as SocialLinks | null | undefined} 
-                  iconSize="sm" 
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Owner-side hierarchy: Pulse → NextStep → Snapshot → Freshness → Search.
-            Visitor mode: just the public Snapshot (chips). */}
-        {!readOnly ? (
-          <>
-            <WelcomeValueCard />
-            <div className="mt-3" />
-            <PulseSection />
-            <NextStepCard
-              percentage={percentage}
-              buckets={buckets}
-              loading={strengthLoading}
-              onBucketAction={handleStrengthBucketAction}
-            />
-            {/* Owner-mode ProfileSnapshot removed 2026-05-08 — duplicate of
-                NextStepCard's progress story. Public-mode preserved below. */}
-            <div className="mt-3">
-              <FreshnessCard nudge={freshnessNudge} onAction={handleFreshnessAction} />
-            </div>
-            {searchAppearances && searchAppearances.total > 0 && (
-              <div className="mt-3">
-                <SearchAppearancesCard
-                  days={searchAppearances.days}
-                  total={searchAppearances.total}
-                  windowDays={7}
-                />
-              </div>
-            )}
-          </>
-        ) : (
-          // Visitor view: ProfileSnapshot removed — Network View v0 already
-          // surfaces every signal it carried (Location & country, Year
-          // founded, Club bio, Contact details) in canonical locations:
-          // the header card and Club Information block below. Mirrors the
-          // Player cleanup shipped 2026-05-08.
-          null
+        {!isLanding && (
+          <button
+            type="button"
+            onClick={() => handleTabChange('profile')}
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span className="text-sm font-medium">
+              {readOnly ? 'Back to profile' : 'Back to dashboard'}
+            </span>
+          </button>
         )}
 
-        <div id="profile-tab-content" className="bg-white rounded-2xl shadow-sm animate-slide-in-up scroll-mt-4">
-          {/* Tab Navigation — owner only.
-              Network View v0: visitors get a single scrollable narrative
-              instead of tabbed navigation. Owner mode keeps the tabs to
-              manage each surface independently. */}
-          {!readOnly && (
-            <div className="sticky top-[68px] z-40 border-b border-gray-200 bg-white/90 backdrop-blur">
-              <ScrollableTabs
-                tabs={tabs}
-                activeTab={activeTab}
-                onTabChange={handleTabChange}
-                className="gap-8 px-6"
-                activeClassName="border-[#924CEC] text-[#924CEC]"
-                inactiveClassName="border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300"
-              />
-            </div>
-          )}
+        <ClubHeroCard
+          profile={profile as Parameters<typeof ClubHeroCard>[0]['profile']}
+          readOnly={readOnly}
+          isOwnProfile={isOwnProfile}
+          memberCount={memberCount}
+          completionPercentage={strength.percentage}
+          completionLoading={strength.loading}
+          completionBuckets={!readOnly ? adaptedBuckets : undefined}
+          onBucketAction={handleProfileStrengthAction}
+          onEdit={() => setShowEditModal(true)}
+          onViewPublic={handleViewPublic}
+          onMessage={handleSendMessage}
+          sendingMessage={sendingMessage}
+          onConnectionsClick={() => handleTabChange('friends')}
+          onMembersClick={() => handleTabChange('members')}
+          authProfileRole={authProfile?.role}
+        />
 
-          {/* min-h-screen guarantees the document is tall enough for
-              useTabDeepLinkScroll's scrollIntoView({block:'start'}) to
-              land the tab strip at the viewport top regardless of tab
-              content length. 70vh wasn't enough on Friends. */}
-          <div className="p-6 md:p-8 min-h-screen">
-            {/* Overview section — always rendered for visitors (top of the
-                Network View scroll); activeTab gate for owners. The Overview
-                block already renders Gallery and Posts inline for visitors. */}
-            {(activeTab === 'overview' || readOnly) && (
-              <div className="space-y-8 animate-fade-in">
-                {!readOnly && <ProfileViewersSection />}
-
-                {/* Phase 1A.4 (v5 plan): Quick Actions split into two cards.
-                    Card A: post a vacancy (existing recruitment funnel).
-                    Card B: jump straight into AI Discovery seeded with a
-                    generic candidate search — clubs land in Discovery and
-                    can refine. Phase 4 will enhance the seed to derive
-                    from the most-recent open vacancy. */}
-                {!readOnly && (
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="bg-gradient-to-br from-[#8026FA] to-[#924CEC] rounded-xl p-6 text-white">
-                      <h3 className="text-lg font-semibold mb-2">Post an opportunity</h3>
-                      <p className="text-purple-100 mb-4 text-sm">Recruit your next player or coach with full context.</p>
-                      <button
-                        type="button"
-                        onClick={handleCreateVacancyClick}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-white text-[#8026FA] rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm"
-                      >
-                        <Plus className="w-4 h-4" />
-                        Post an opportunity
-                      </button>
-                    </div>
-                    <div className="bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-xl p-6 text-white">
-                      <h3 className="text-lg font-semibold mb-2">Find candidates</h3>
-                      <p className="text-emerald-100 mb-4 text-sm">Open Scout View in AI Discovery to find players and coaches who could fit.</p>
-                      <button
-                        type="button"
-                        onClick={() => navigate('/discover?q=' + encodeURIComponent('Show me available players I could recruit'))}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-white text-emerald-700 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm"
-                      >
-                        <Sparkles className="w-4 h-4" />
-                        Open Scout View
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-6">Club Information</h2>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Club Name</label>
-                      <p className="text-gray-900 font-medium">{profile.full_name}</p>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
-                      <p className="text-gray-900">{profile.base_location}</p>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
-                      <CountryDisplay
-                        countryId={profile.nationality_country_id}
-                        fallbackText={profile.nationality}
-                        className="text-gray-900"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Year Founded</label>
-                      <p className={profile.year_founded ? 'text-gray-900' : 'text-gray-500 italic'}>
-                        {profile.year_founded || 'Not specified'}
-                      </p>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Leagues</label>
-                      {profile.womens_league_division || profile.mens_league_division ? (
-                        <div className="text-gray-900 space-y-1">
-                          {profile.womens_league_division ? <div>Women: {profile.womens_league_division}</div> : null}
-                          {profile.mens_league_division ? <div>Men: {profile.mens_league_division}</div> : null}
-                        </div>
-                      ) : (
-                        <p className="text-gray-500 italic">Not specified</p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Website</label>
-                      {profile.website ? (
-                        <a
-                          href={profile.website.startsWith('http') ? profile.website : `https://${profile.website}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-[#8026FA] hover:text-[#6B20D4] underline"
-                        >
-                          {profile.website}
-                        </a>
-                      ) : (
-                        <p className="text-gray-500 italic">Not specified</p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Contact Email</label>
-                      {publicContact.shouldShow && publicContact.displayEmail ? (
-                        <a
-                          href={`mailto:${publicContact.displayEmail}`}
-                          className="text-[#8026FA] hover:text-[#6B20D4] underline"
-                        >
-                          {publicContact.displayEmail}
-                        </a>
-                      ) : (
-                        <p className="text-gray-500 italic">Not shared with other HOCKIA members</p>
-                      )}
-                      {!readOnly && (
-                        <p className="text-xs text-gray-500 mt-1">
-                          {profile.contact_email_public
-                            ? publicContact.source === 'contact'
-                              ? 'Other HOCKIA members see your contact email.'
-                              : 'Add a contact email to be reachable.'
-                            : savedContactEmail
-                              ? 'Saved contact email is private.'
-                              : 'No contact email saved; only private channels apply.'}
-                        </p>
-                      )}
-                      {!readOnly && !profile.contact_email_public && savedContactEmail && (
-                        <p className="text-xs text-gray-500 break-words">
-                          Private contact email: <span className="text-gray-700 font-medium">{savedContactEmail}</span>
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="mt-8">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">About the Club</label>
-                    <p className={profile.club_bio ? 'text-gray-700 leading-relaxed' : 'text-gray-500 italic'}>
-                      {profile.club_bio || 'No description provided'}
-                    </p>
-                  </div>
-
-                  <div className="mt-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Club History</label>
-                    <p className={profile.club_history ? 'text-gray-700 leading-relaxed' : 'text-gray-500 italic'}>
-                      {profile.club_history || 'No history provided'}
-                    </p>
-                  </div>
-                </div>
-
-                <section data-section="gallery" className="pt-6 border-t border-gray-200">
-                  <ClubMediaTab clubId={profile.id} readOnly={readOnly} />
-                </section>
-
-                {/* Posts — shown inline on public profile below gallery */}
-                {readOnly && (
-                  <section className="space-y-3 pt-6 border-t border-gray-200">
-                    <h2 className="text-2xl font-bold text-gray-900">Posts</h2>
-                    <ProfilePostsTab profileId={profile.id} readOnly />
-                  </section>
-                )}
-
-                {!readOnly && (
-                  <div className="pt-6 border-t border-gray-200">
-                    <button
-                      onClick={() => setShowEditModal(true)}
-                      className="px-6 py-3 bg-[#8026FA] text-white rounded-lg hover:bg-[#6B20D4] transition-colors font-medium"
-                    >
-                      Update Club Information
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Opportunities — always for visitors. Opportunities are
-                core club value: recruiters/players scanning a club
-                profile want to see what's open. */}
-            {(activeTab === 'opportunities' || readOnly) && (
-              <div
-                id="visitor-section-opportunities"
-                className={readOnly ? 'mt-12 pt-10 border-t border-gray-200 animate-fade-in' : 'animate-fade-in'}
-              >
-                <OpportunitiesTab
-                  profileId={profile.id}
-                  readOnly={readOnly}
-                  triggerCreate={triggerCreateVacancy}
-                  onCreateTriggered={() => setTriggerCreateVacancy(false)}
-                />
-              </div>
-            )}
-
-            {/* Members — always for visitors. Roster context is core to
-                understanding the club. */}
-            {(activeTab === 'members' || readOnly) && (
-              <div
-                id="visitor-section-members"
-                className={readOnly ? 'mt-12 pt-10 border-t border-gray-200 animate-fade-in' : 'animate-fade-in'}
-              >
-                <ClubMembersTab profileId={profile.id} />
-              </div>
-            )}
-
-            {/* Friends/Connections — always for visitors. */}
-            {(activeTab === 'friends' || readOnly) && (
-              <div
-                id="visitor-section-friends"
-                className={readOnly ? 'mt-12 pt-10 border-t border-gray-200 animate-fade-in' : 'animate-fade-in'}
-              >
-                <FriendsTab profileId={profile.id} readOnly={readOnly} profileRole={profile.role} />
-              </div>
-            )}
-
-            {/* Comments — always for visitors. */}
-            {(activeTab === 'comments' || readOnly) && (
-              <div
-                id="visitor-section-comments"
-                className={readOnly ? 'mt-12 pt-10 border-t border-gray-200 animate-fade-in' : 'animate-fade-in'}
-              >
-                <CommentsTab profileId={profile.id} highlightedCommentIds={highlightedComments} profileRole={profile.role} />
-              </div>
-            )}
-
-            {/* Posts — owner only as a separate tab. Visitors get Posts
-                inline at the bottom of the Overview section above. */}
-            {activeTab === 'posts' && !readOnly && (
-              <div className="animate-fade-in">
-                <ProfilePostsTab profileId={profile.id} readOnly={readOnly} />
-              </div>
-            )}
+        {!readOnly && isLanding && (
+          <div id="profile-viewers" className="scroll-mt-20">
+            <ProfileViewersSection />
           </div>
-        </div>
+        )}
+
+        {isLanding ? (
+          <ClubBentoGrid
+            profile={profile as Parameters<typeof ClubBentoGrid>[0]['profile']}
+            readOnly={readOnly}
+            onOpenTab={handleTabChange}
+            onEdit={() => setShowEditModal(true)}
+            onCreateOpportunity={handleCreateOpportunity}
+            onManageOpportunities={() => handleTabChange('opportunities')}
+          />
+        ) : (
+          <div id="profile-tab-content" className="bg-white rounded-2xl shadow-sm scroll-mt-4">
+            <div className="p-6 md:p-8 min-h-screen">
+              {activeTab === 'media' && (
+                <div className="animate-fade-in">
+                  <ClubMediaTab
+                    clubId={profile.id}
+                    readOnly={readOnly}
+                    // Keep the Hero completion arc in sync when photos
+                    // are added/removed without a route change.
+                    onCountChange={readOnly ? undefined : () => { void strength.refresh() }}
+                  />
+                </div>
+              )}
+
+              {activeTab === 'members' && (
+                <div className="animate-fade-in">
+                  <ClubMembersTab profileId={profile.id} />
+                </div>
+              )}
+
+              {activeTab === 'friends' && (
+                <div id="visitor-section-friends" className="animate-fade-in">
+                  {/* hideReferences — clubs don't carry trust references,
+                      and the dashboard drops the References tile, so the
+                      Connections section stays references-free too. */}
+                  <FriendsTab
+                    profileId={profile.id}
+                    readOnly={readOnly}
+                    profileRole={profile.role}
+                    hideReferences
+                  />
+                </div>
+              )}
+
+              {activeTab === 'comments' && (
+                <div id="visitor-section-comments" className="animate-fade-in">
+                  <CommentsTab
+                    profileId={profile.id}
+                    highlightedCommentIds={highlightedComments}
+                    profileRole={profile.role}
+                  />
+                </div>
+              )}
+
+              {activeTab === 'posts' && (
+                <div className="animate-fade-in">
+                  <ProfilePostsTab profileId={profile.id} readOnly={readOnly} />
+                </div>
+              )}
+
+              {activeTab === 'opportunities' && (
+                <div className="animate-fade-in">
+                  <OpportunitiesTab
+                    profileId={profile.id}
+                    readOnly={readOnly}
+                    triggerCreate={triggerCreateVacancy}
+                    onCreateTriggered={() => setTriggerCreateVacancy(false)}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </main>
 
       <EditProfileModal isOpen={showEditModal} onClose={() => setShowEditModal(false)} role="club" />
 
-      {/* Sign In Prompt Modal */}
       <SignInPromptModal
         isOpen={showSignInPrompt}
         onClose={() => setShowSignInPrompt(false)}

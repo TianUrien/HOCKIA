@@ -125,14 +125,37 @@ const getInitialContactEmail = (profile?: Profile | null): string => profile?.co
 // warning.
 const FULL_NAME_MAX_LENGTH = 80
 const BIO_MAX_LENGTH = 1500
+// Year-founded bounds for clubs. 1850 predates organised field hockey
+// clubs comfortably; the upper bound is the current year (no future
+// founding dates). QA found "99999" saved + rendered as "Founded 99999".
+const CLUB_YEAR_MIN = 1850
+
+/**
+ * Lenient website validator. Users routinely omit the scheme
+ * ("example.com"), so we prepend https:// before parsing. `new URL`
+ * alone is too permissive — "https://not-a-url" parses fine with host
+ * "not-a-url" — so we additionally require a dotted hostname (a TLD).
+ */
+function isValidWebsite(value: string): boolean {
+  const trimmed = value.trim()
+  if (!trimmed) return true // empty is allowed — the field is optional
+  const candidate = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`
+  try {
+    const url = new URL(candidate)
+    return url.hostname.includes('.') && !url.hostname.startsWith('.') && !url.hostname.endsWith('.')
+  } catch {
+    return false
+  }
+}
 
 function validateFormData(formData: ProfileFormData, role: string): string | null {
-  // Universal required field
+  // Universal required field. The name input is labelled "Club Name"
+  // for clubs, so the error wording follows the role.
   if (!formData.full_name.trim()) {
-    return 'Full name is required.'
+    return role === 'club' ? 'Club name is required.' : 'Full name is required.'
   }
   if (formData.full_name.length > FULL_NAME_MAX_LENGTH) {
-    return `Full name must be ${FULL_NAME_MAX_LENGTH} characters or fewer.`
+    return `${role === 'club' ? 'Club name' : 'Full name'} must be ${FULL_NAME_MAX_LENGTH} characters or fewer.`
   }
   if (formData.bio && formData.bio.length > BIO_MAX_LENGTH) {
     return `Bio must be ${BIO_MAX_LENGTH} characters or fewer.`
@@ -149,6 +172,27 @@ function validateFormData(formData: ProfileFormData, role: string): string | nul
 
   if (role === 'club' && !formData.base_location.trim()) {
     return 'Club location is required.'
+  }
+
+  if (role === 'club') {
+    // Year founded — optional, but if present must be a plausible year.
+    const yearText = formData.year_founded.trim()
+    if (yearText) {
+      const currentYear = new Date().getFullYear()
+      const year = Number(yearText)
+      if (!Number.isInteger(year) || year < CLUB_YEAR_MIN || year > currentYear) {
+        return `Year founded must be a year between ${CLUB_YEAR_MIN} and ${currentYear}.`
+      }
+    }
+    if (!isValidWebsite(formData.website)) {
+      return 'Please enter a valid website URL (e.g. example.com).'
+    }
+    if (formData.club_bio && formData.club_bio.length > BIO_MAX_LENGTH) {
+      return `Club bio must be ${BIO_MAX_LENGTH} characters or fewer.`
+    }
+    if (formData.club_history && formData.club_history.length > BIO_MAX_LENGTH) {
+      return `Club history must be ${BIO_MAX_LENGTH} characters or fewer.`
+    }
   }
 
   if (role === 'umpire') {
@@ -886,7 +930,9 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                 onChange={(e) => setFormData({ ...formData, contact_email: e.target.value })}
               />
               <p className="text-xs text-gray-500 mt-1">
-                So clubs can reach you directly when they are interested. Your login email is never shown.
+                {role === 'club'
+                  ? 'So players, coaches, and recruiters can reach the club directly. Your login email is never shown.'
+                  : 'So clubs can reach you directly when they are interested. Your login email is never shown.'}
               </p>
             </div>
 
@@ -900,7 +946,9 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
               <span>
                 Share my contact email with other HOCKIA members
                 <span className="block text-xs text-gray-500 mt-1">
-                  Tick this so coaches and clubs can contact you after viewing your profile.
+                  {role === 'club'
+                    ? 'Tick this so players and coaches can contact the club after viewing the profile.'
+                    : 'Tick this so coaches and clubs can contact you after viewing your profile.'}
                 </span>
               </span>
             </label>
@@ -1444,6 +1492,10 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                 <Input
                   label="Year Founded (Optional)"
                   type="number"
+                  min={CLUB_YEAR_MIN}
+                  max={new Date().getFullYear()}
+                  step={1}
+                  placeholder={`e.g. ${new Date().getFullYear() - 20}`}
                   value={formData.year_founded}
                   onChange={(e) => setFormData({ ...formData, year_founded: e.target.value })}
                 />
@@ -1567,6 +1619,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                 <Input
                   label="Website (Optional)"
                   type="url"
+                  placeholder="e.g. example.com"
                   value={formData.website}
                   onChange={(e) => setFormData({ ...formData, website: e.target.value })}
                 />
@@ -1578,12 +1631,20 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                   <textarea
                     id="club-bio"
                     value={formData.club_bio || ''}
-                    onChange={(e) => setFormData({ ...formData, club_bio: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, club_bio: e.target.value.slice(0, BIO_MAX_LENGTH) })}
                     rows={4}
+                    maxLength={BIO_MAX_LENGTH}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8026FA] focus:border-transparent resize-none"
                     placeholder="Tell us about your club..."
                     aria-label="Club bio"
                   />
+                  <p
+                    className={`mt-1 text-xs text-right ${
+                      (formData.club_bio?.length ?? 0) >= BIO_MAX_LENGTH ? 'text-red-600' : 'text-gray-500'
+                    }`}
+                  >
+                    {formData.club_bio?.length ?? 0}/{BIO_MAX_LENGTH}
+                  </p>
                 </div>
 
                 <div>
@@ -1593,12 +1654,20 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                   <textarea
                     id="club-history"
                     value={formData.club_history}
-                    onChange={(e) => setFormData({ ...formData, club_history: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, club_history: e.target.value.slice(0, BIO_MAX_LENGTH) })}
+                    maxLength={BIO_MAX_LENGTH}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#924CEC] focus:border-transparent"
                     rows={3}
                     placeholder="Tell us about your club's history..."
                     aria-label="Club history"
                   />
+                  <p
+                    className={`mt-1 text-xs text-right ${
+                      formData.club_history.length >= BIO_MAX_LENGTH ? 'text-red-600' : 'text-gray-500'
+                    }`}
+                  >
+                    {formData.club_history.length}/{BIO_MAX_LENGTH}
+                  </p>
                 </div>
               </>
             )}
