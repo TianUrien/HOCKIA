@@ -604,6 +604,7 @@ export default function GalleryManager({
                     disabled={deletingId === item.id}
                     className="absolute right-2 top-2 rounded-lg bg-red-500 p-2 text-white shadow-lg transition-colors hover:bg-red-600 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-red-600 disabled:cursor-not-allowed disabled:opacity-50"
                     title="Delete photo"
+                    aria-label="Delete photo"
                     type="button"
                   >
                     <Trash2 className="h-4 w-4" />
