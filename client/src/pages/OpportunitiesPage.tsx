@@ -119,17 +119,6 @@ function FilterDropdown({ label, value, options, onChange, icon }: FilterDropdow
   )
 }
 
-// ─── Country Group Header ────────────────────────────────────────────────────
-
-function CountryGroupHeader({ countryName, flagEmoji }: { countryName: string; flagEmoji: string | null }) {
-  return (
-    <div className="flex items-center gap-2.5 mb-4 pt-10">
-      {flagEmoji && <span className="text-2xl">{flagEmoji}</span>}
-      <h2 className="text-xl font-bold text-gray-900">{countryName}</h2>
-    </div>
-  )
-}
-
 // ─── Main Page ───────────────────────────────────────────────────────────────
 
 export default function OpportunitiesPage() {
@@ -427,10 +416,11 @@ export default function OpportunitiesPage() {
     return false
   }
 
-  // ─── Filtering & Grouping ──────────────────────────────────────────────────
+  // ─── Filtering & Sorting ───────────────────────────────────────────────────
 
-  // Apply client-side country filter + sort, then group by country
-  const groupedOpportunities = useMemo(() => {
+  // Flat newest-first feed. Country is per-card metadata + a filter, not a
+  // page-level grouping — so users always see the latest opportunities first.
+  const filteredOpportunities = useMemo(() => {
     let filtered = [...vacancies]
 
     // Country filter (client-side since it's from location_country free text)
@@ -447,43 +437,18 @@ export default function OpportunitiesPage() {
       filtered = filtered.filter(v => appliedSet.has(v.id))
     }
 
-    // Sort by newest first (already sorted from DB, but ensure it after filtering)
+    // Newest first. The DB query already orders by created_at desc, but
+    // re-sort defensively after client-side filtering.
     filtered.sort((a, b) => {
       const dateA = a.created_at ? new Date(a.created_at).getTime() : 0
       const dateB = b.created_at ? new Date(b.created_at).getTime() : 0
       return dateB - dateA
     })
 
-    // Group by country
-    const groups: { country: string; flagEmoji: string | null; newestAt: number; opportunities: Vacancy[] }[] = []
-    const countryGroupMap = new Map<string, typeof groups[0]>()
+    return filtered
+  }, [vacancies, filters.country, filters.applied, userApplications])
 
-    filtered.forEach(v => {
-      const country = v.location_country || 'Other'
-      let group = countryGroupMap.get(country)
-      if (!group) {
-        group = {
-          country,
-          flagEmoji: getFlagEmoji(country),
-          newestAt: v.created_at ? new Date(v.created_at).getTime() : 0,
-          opportunities: [],
-        }
-        countryGroupMap.set(country, group)
-        groups.push(group)
-      }
-      group.opportunities.push(v)
-      // Track the newest opportunity in this country group
-      const ts = v.created_at ? new Date(v.created_at).getTime() : 0
-      if (ts > group.newestAt) group.newestAt = ts
-    })
-
-    // Sort country groups by most recent opportunity in that country
-    groups.sort((a, b) => b.newestAt - a.newestAt)
-
-    return groups
-  }, [vacancies, filters.country, filters.applied, userApplications, getFlagEmoji])
-
-  const totalFilteredCount = groupedOpportunities.reduce((sum, g) => sum + g.opportunities.length, 0)
+  const totalFilteredCount = filteredOpportunities.length
 
   const hasActiveFilters = filters.country !== '' || filters.role !== 'all' || filters.gender !== 'all' || filters.position !== '' || filters.euPassport || filters.applied !== 'all'
 
@@ -497,7 +462,7 @@ export default function OpportunitiesPage() {
     <>
       {!isLoading && totalFilteredCount > 0 && (
         <OpportunitiesListJsonLd
-          opportunities={groupedOpportunities.flatMap(g => g.opportunities)}
+          opportunities={filteredOpportunities}
           totalCount={totalFilteredCount}
         />
       )}
@@ -721,48 +686,38 @@ export default function OpportunitiesPage() {
               )}
             </div>
           ) : (
-            /* Grouped opportunity cards by country */
-            <div className="space-y-2">
-              {groupedOpportunities.map((group) => (
-                <div key={group.country}>
-                  <CountryGroupHeader
-                    countryName={group.country}
-                    flagEmoji={group.flagEmoji}
-                  />
-                  <div className="space-y-5">
-                    {group.opportunities.map((vacancy) => {
-                      const club = clubs[vacancy.club_id]
-                      const isApplied = userApplications.includes(vacancy.id)
-                      const org = vacancy.organization_name || club?.current_club || null
-                      // Phase 3d — Women + Girls map to women's league;
-                      // Men + Boys to men's; Mixed defaults to first available.
-                      const leagueDivision = (vacancy.gender === 'Women' || vacancy.gender === 'Girls')
-                        ? club?.womens_league_division ?? club?.mens_league_division ?? null
-                        : club?.mens_league_division ?? club?.womens_league_division ?? null
+            /* Flat newest-first opportunity feed */
+            <div className="space-y-5">
+              {filteredOpportunities.map((vacancy) => {
+                const club = clubs[vacancy.club_id]
+                const isApplied = userApplications.includes(vacancy.id)
+                const org = vacancy.organization_name || club?.current_club || null
+                // Phase 3d — Women + Girls map to women's league;
+                // Men + Boys to men's; Mixed defaults to first available.
+                const leagueDivision = (vacancy.gender === 'Women' || vacancy.gender === 'Girls')
+                  ? club?.womens_league_division ?? club?.mens_league_division ?? null
+                  : club?.mens_league_division ?? club?.womens_league_division ?? null
 
-                      return (
-                        <OpportunityCard
-                          key={vacancy.id}
-                          vacancy={vacancy}
-                          clubName={club?.full_name || 'Unknown Club'}
-                          clubLogo={club?.avatar_url || null}
-                          clubId={vacancy.club_id}
-                          publisherRole={club?.role}
-                          publisherOrganization={org}
-                          leagueDivision={leagueDivision}
-                          worldClub={vacancy.world_club_id ? worldClubsMap[vacancy.world_club_id] ?? null : null}
-                          onViewDetails={() => {
-                            setSelectedVacancy(vacancy)
-                            setShowDetailView(true)
-                          }}
-                          onApply={canShowApplyButton(vacancy) ? () => handleApplyClick(vacancy) : undefined}
-                          hasApplied={isApplied}
-                        />
-                      )
-                    })}
-                  </div>
-                </div>
-              ))}
+                return (
+                  <OpportunityCard
+                    key={vacancy.id}
+                    vacancy={vacancy}
+                    clubName={club?.full_name || 'Unknown Club'}
+                    clubLogo={club?.avatar_url || null}
+                    clubId={vacancy.club_id}
+                    publisherRole={club?.role}
+                    publisherOrganization={org}
+                    leagueDivision={leagueDivision}
+                    worldClub={vacancy.world_club_id ? worldClubsMap[vacancy.world_club_id] ?? null : null}
+                    onViewDetails={() => {
+                      setSelectedVacancy(vacancy)
+                      setShowDetailView(true)
+                    }}
+                    onApply={canShowApplyButton(vacancy) ? () => handleApplyClick(vacancy) : undefined}
+                    hasApplied={isApplied}
+                  />
+                )
+              })}
             </div>
           )}
         </main>

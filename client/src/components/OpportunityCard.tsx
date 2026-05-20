@@ -373,7 +373,9 @@ export default function OpportunityCard({
           <div className="flex items-center gap-x-5 flex-wrap">
             <div className="flex items-center gap-2">
               <MapPin className="w-4 h-4 flex-shrink-0" />
-              <span>{vacancy.location_city}</span>
+              <span>
+                {[vacancy.location_city, vacancy.location_country].filter(Boolean).join(', ')}
+              </span>
             </div>
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 flex-shrink-0" />
