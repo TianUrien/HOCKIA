@@ -128,8 +128,21 @@ export default function ChatWindowV2({
     lastMessageIdRef.current = null
   }, [conversation.id])
 
-
-  // Removed keyboard viewport handling - fixed positioning handles it naturally
+  // Keep the newest messages visible across keyboard open/close. The
+  // visual-viewport resize shrinks (or restores) the message list; if the
+  // user was already near the bottom, follow the viewport down to the
+  // latest message so the keyboard never ends up covering it.
+  useEffect(() => {
+    const viewport = window.visualViewport
+    if (!viewport) return
+    const handleViewportResize = () => {
+      if (getDistanceFromBottom() <= 120) {
+        scrollToBottom('auto')
+      }
+    }
+    viewport.addEventListener('resize', handleViewportResize)
+    return () => viewport.removeEventListener('resize', handleViewportResize)
+  }, [getDistanceFromBottom, scrollToBottom])
 
   useEffect(() => {
     if (!messages.length) return
@@ -213,16 +226,20 @@ export default function ChatWindowV2({
     return <ChatWindowSkeleton />
   }
 
-  // On mobile with immersive mode, use fixed positioning to take over viewport
-  // On desktop or mobile without immersive, use flex layout within parent container
-  const containerClasses = isMobile && isImmersiveMobile
-    ? "fixed inset-0 flex flex-col bg-white overflow-hidden"
-    : "flex flex-1 flex-col min-h-0 bg-white overflow-hidden"
+  // Immersive mobile: render the window as a fixed overlay sized to the
+  // *visual* viewport (--chat-viewport-height, kept current by
+  // useSafeArea). Because the container tracks the visual viewport, the
+  // keyboard simply shrinks it — header, message list and composer all
+  // stay in normal flex flow, so the composer rests directly above the
+  // keyboard with no fixed-positioning jank. Desktop keeps the in-parent
+  // flex layout.
+  const isImmersive = isMobile && isImmersiveMobile
 
-  // Adjust padding based on whether header/composer are fixed or not
-  const scrollPaddingClasses = isMobile && isImmersiveMobile
-    ? "px-4 pt-[calc(4.5rem+1rem)] pb-[calc(7rem+var(--chat-safe-area-bottom,0px))] md:px-6"
-    : "px-4 py-4 md:px-5"
+  const containerClasses = isImmersive
+    ? 'fixed inset-x-0 z-50 top-[var(--chat-safe-area-top,0px)] h-[var(--chat-viewport-height,100dvh)] flex flex-col bg-white overflow-hidden'
+    : 'flex flex-1 flex-col min-h-0 bg-white overflow-hidden'
+
+  const scrollPaddingClasses = isImmersive ? 'px-4 py-3 md:px-6' : 'px-4 py-4 md:px-5'
 
   return (
     <div className={containerClasses}>
@@ -272,8 +289,6 @@ export default function ChatWindowV2({
         onFocus={handleComposerFocus}
         maxLength={1000}
         textareaId={textareaId}
-        isMobile={isMobile}
-        immersiveMobile={isImmersiveMobile}
       />
     </div>
   )

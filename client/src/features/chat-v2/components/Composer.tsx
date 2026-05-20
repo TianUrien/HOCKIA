@@ -10,18 +10,12 @@ interface ComposerProps {
   onFocus: () => void
   maxLength?: number
   textareaId: string
-  isMobile?: boolean
-  immersiveMobile?: boolean
 }
 
 const WARNING_THRESHOLD = 0.9 // Show warning color at 90% of limit
 
-export function Composer({ value, sending, disabled, onChange, onSubmit, onFocus, maxLength = 1000, textareaId, isMobile = false, immersiveMobile = false }: ComposerProps) {
+export function Composer({ value, sending, disabled, onChange, onSubmit, onFocus, maxLength = 1000, textareaId }: ComposerProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  
-  const composerPositionClass = isMobile && immersiveMobile
-    ? 'chat-fixed-composer fixed bottom-0 left-0 right-0 z-40'
-    : 'relative'
 
   const characterCountState = useMemo(() => {
     const count = value.length
@@ -43,10 +37,14 @@ export function Composer({ value, sending, disabled, onChange, onSubmit, onFocus
     const textarea = textareaRef.current
     if (!textarea) return
     textarea.style.height = 'auto'
-    const nextHeight = Math.min(160, Math.max(44, textarea.scrollHeight))
+    // Single line ≈ 44px; grows with content up to ~120px (≈4 lines),
+    // then the textarea scrolls internally instead of pushing layout.
+    const nextHeight = Math.min(120, Math.max(44, textarea.scrollHeight))
     textarea.style.height = `${nextHeight}px`
-    textarea.style.overflowY = textarea.scrollHeight > 160 ? 'auto' : 'hidden'
+    textarea.style.overflowY = textarea.scrollHeight > 120 ? 'auto' : 'hidden'
   }, [])
+
+  const showCounter = characterCountState !== 'normal'
 
   useEffect(() => {
     syncHeight()
@@ -61,7 +59,7 @@ export function Composer({ value, sending, disabled, onChange, onSubmit, onFocus
 
   return (
     <form
-      className={`${composerPositionClass} flex-shrink-0 border-t border-gray-200 bg-white px-4 py-3 md:px-5`}
+      className="relative flex-shrink-0 border-t border-gray-200 bg-white px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:px-5"
       onSubmit={event => {
         event.preventDefault()
         void onSubmit()
@@ -88,16 +86,20 @@ export function Composer({ value, sending, disabled, onChange, onSubmit, onFocus
             onFocus={onFocus}
             onKeyDown={handleKeyDown}
             onChange={event => onChange(event.target.value)}
-            className="chat-textarea w-full resize-none rounded-full border border-gray-200 bg-gray-50 px-4 py-2.5 pr-16 text-[15px] leading-snug outline-none transition placeholder:text-gray-400 focus:border-purple-300 focus:bg-white focus:ring-2 focus:ring-purple-100"
+            className={`chat-textarea w-full resize-none rounded-3xl border border-gray-200 bg-gray-100 py-2.5 text-[15px] leading-snug text-gray-900 outline-none transition-colors placeholder:text-gray-400 focus:border-[#8026FA]/40 focus:bg-white ${showCounter ? 'pl-4 pr-14' : 'px-4'}`}
           />
-          <div className={`pointer-events-none absolute bottom-2.5 right-4 text-[11px] font-medium transition-colors ${counterColorClass}`}>
-            {value.length}/{maxLength}
-          </div>
+          {/* Counter only appears near the limit — a clean, native-feeling
+              input the rest of the time instead of an always-on form field. */}
+          {showCounter && (
+            <div className={`pointer-events-none absolute bottom-2 right-3.5 text-[11px] font-medium ${counterColorClass}`}>
+              {value.length}/{maxLength}
+            </div>
+          )}
         </div>
         <button
           type="submit"
           disabled={disabled}
-          className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-md transition-all hover:shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-400 disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#8026FA] to-[#924CEC] text-white shadow-sm transition-all hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8026FA] disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
           aria-label="Send message"
         >
           {sending ? (

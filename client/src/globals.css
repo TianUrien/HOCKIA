@@ -292,15 +292,6 @@ html {
   .chat-message-wrapper {
     contain: layout style paint;
   }
-
-  /* Fixed header/composer optimization */
-  .chat-fixed-header,
-  .chat-fixed-composer {
-    position: fixed;
-    transform: translateZ(0);
-    backface-visibility: hidden;
-    will-change: transform;
-  }
 }
 
 @layer utilities {
