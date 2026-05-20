@@ -3,7 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="google" content="notranslate" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover" />
+    <!-- interactive-widget=resizes-content: on browsers that support it
+         (Chrome/Android) the software keyboard shrinks the layout
+         viewport instead of just the visual viewport. iOS ignores it
+         and is handled via VisualViewport in useSafeArea. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content" />
 
     <!-- GA4 loaded dynamically after cookie consent (see CookieConsent.tsx) -->
 

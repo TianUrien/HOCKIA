@@ -226,17 +226,21 @@ export default function ChatWindowV2({
     return <ChatWindowSkeleton />
   }
 
-  // Immersive mobile: render the window as a fixed overlay sized to the
-  // *visual* viewport (--chat-viewport-height, kept current by
-  // useSafeArea). Because the container tracks the visual viewport, the
-  // keyboard simply shrinks it — header, message list and composer all
-  // stay in normal flex flow, so the composer rests directly above the
-  // keyboard with no fixed-positioning jank. Desktop keeps the in-parent
-  // flex layout.
+  // Immersive mobile: pin the window to the *layout* viewport with
+  // `position: fixed; inset: 0`. That frame is rock-stable on iOS even
+  // while the keyboard animates — unlike the visual viewport, whose
+  // offsetTop gets stuck after an iOS focus auto-scroll. The keyboard is
+  // handled purely with padding:
+  //   - padding-top    = env(safe-area-inset-top)  → clears the notch
+  //   - padding-bottom = --chat-keyboard-inset      → lifts the composer
+  //     above the keyboard (kept current by useSafeArea via VisualViewport)
+  // Header, message list and composer stay in normal flex flow, so the
+  // composer always rests directly above the keyboard. Desktop keeps the
+  // in-parent flex layout.
   const isImmersive = isMobile && isImmersiveMobile
 
   const containerClasses = isImmersive
-    ? 'fixed inset-x-0 z-50 top-[var(--chat-safe-area-top,0px)] h-[var(--chat-viewport-height,100dvh)] flex flex-col bg-white overflow-hidden'
+    ? 'fixed inset-0 z-50 flex flex-col bg-white overflow-hidden pt-[env(safe-area-inset-top)] pb-[var(--chat-keyboard-inset,0px)]'
     : 'flex flex-1 flex-col min-h-0 bg-white overflow-hidden'
 
   const scrollPaddingClasses = isImmersive ? 'px-4 py-3 md:px-6' : 'px-4 py-4 md:px-5'
@@ -248,7 +252,6 @@ export default function ChatWindowV2({
         onBack={onBack}
         profilePath={profilePath}
         isMobile={isMobile}
-        immersiveMobile={isImmersiveMobile}
       />
       <div className="relative flex-1 min-h-0 overflow-hidden">
         <div

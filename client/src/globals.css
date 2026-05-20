@@ -53,9 +53,10 @@ html {
   --app-safe-area-bottom: 0px;
   --app-header-height: 0px;
   --app-header-offset: 0px;
-  --chat-safe-area-right: 0px;
   --chat-safe-area-bottom: 0px;
-  --chat-viewport-height: 100vh;
+  /* Software-keyboard height, kept current by useSafeArea. The chat
+     window pads its bottom by this so the composer rides the keyboard. */
+  --chat-keyboard-inset: 0px;
 
   /* Dark Mode Palette */
   --color-dark-bg: #0a0a0a;

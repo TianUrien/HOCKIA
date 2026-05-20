@@ -10,19 +10,15 @@ interface ChatHeaderProps {
   onBack: () => void
   profilePath: string | null
   isMobile: boolean
-  immersiveMobile?: boolean
 }
 
 const fallbackName = 'HOCKIA Member'
 
-export function ChatHeader({ participant, onBack, profilePath, isMobile, immersiveMobile = false }: ChatHeaderProps) {
+export function ChatHeader({ participant, onBack, profilePath, isMobile }: ChatHeaderProps) {
   const participantName = participant?.full_name || participant?.username || fallbackName
   const initials = participant?.full_name?.charAt(0).toUpperCase() || 'P'
-  const paddingClass = isMobile
-    ? immersiveMobile
-      ? 'pt-[calc(var(--chat-safe-area-top,0px)+0.75rem)] pb-3'
-      : 'py-3'
-    : 'py-3'
+  // The window container owns the notch inset (padding-top), so the
+  // header just needs its own vertical rhythm.
   const layoutClass = 'px-4 md:px-5'
 
   const headerContents = (
@@ -49,8 +45,7 @@ export function ChatHeader({ participant, onBack, profilePath, isMobile, immersi
         // The window container owns positioning; the header is a normal
         // flex child, so it stays pinned to the top without fixed
         // positioning fighting the keyboard.
-        'relative flex h-16 flex-shrink-0 items-center gap-3 border-b border-gray-200 bg-white text-left',
-        paddingClass,
+        'relative flex h-16 flex-shrink-0 items-center gap-3 border-b border-gray-200 bg-white py-3 text-left',
         layoutClass
       )}
     >
