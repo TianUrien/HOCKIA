@@ -363,7 +363,24 @@ const resolvePendingRole = (user: User | null): string | null => {
   return null
 }
 
-const ensureUserRoleMetadata = async (user: User | null): Promise<string | null> => {
+/**
+ * Resolves the user's role and, when it's missing from the auth
+ * `user_metadata`, backfills it. Resolution order:
+ *   1. `user_metadata.role` (already set — nothing to do)
+ *   2. `pendingRole` from localStorage (fresh-signup fallback)
+ *   3. the loaded profile record's `role` (existing-user self-heal)
+ *
+ * Branch 3 needs the profile to be in the store, which only happens
+ * after `fetchProfile`. The caller therefore runs this twice: once
+ * before `fetchProfile` (so a signup has metadata for placeholder
+ * creation) and once after. `profileLoaded` marks the post-fetch pass
+ * — only then is an unresolved role a genuine error worth logging;
+ * before that, a null result is expected and silently retried.
+ */
+const ensureUserRoleMetadata = async (
+  user: User | null,
+  options?: { profileLoaded?: boolean },
+): Promise<string | null> => {
   if (!user) return null
 
   const currentRole = typeof user.user_metadata?.role === 'string' && user.user_metadata.role
@@ -421,7 +438,9 @@ const ensureUserRoleMetadata = async (user: User | null): Promise<string | null>
     }
   }
 
-  logger.error('[AUTH_STORE] Unable to determine role metadata for user', { userId: user.id })
+  if (options?.profileLoaded) {
+    logger.error('[AUTH_STORE] Unable to determine role metadata for user', { userId: user.id })
+  }
   return null
 }
 
@@ -431,10 +450,19 @@ const runSessionEffects = async (session: Session | null) => {
   setUser(user)
 
   if (user) {
-    const resolvedRole = await ensureUserRoleMetadata(user)
+    // First pass — resolves from auth metadata or the localStorage
+    // pendingRole fallback. Runs before fetchProfile so a fresh signup
+    // has role metadata in place for placeholder-profile creation.
+    let resolvedRole = await ensureUserRoleMetadata(user)
+    await fetchProfile(user.id)
+    // Second pass — for an existing user whose auth metadata lacks a
+    // role, the first pass can't reach the profile-role backfill branch
+    // because the profile wasn't loaded yet. Retry now that it is.
+    if (!resolvedRole) {
+      resolvedRole = await ensureUserRoleMetadata(user, { profileLoaded: true })
+    }
     const role = resolvedRole ?? (typeof user.user_metadata?.role === 'string' ? (user.user_metadata.role as string) : null)
     Sentry.setUser({ id: user.id, role: role ?? undefined })
-    await fetchProfile(user.id)
     trackUserDevice()
   } else {
     useAuthStore.setState({ profile: null, profileStatus: 'idle', profileFetchedAt: null })
