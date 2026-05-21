@@ -1,11 +1,9 @@
-import { MapPin, Calendar, Clock, Home, Car, Globe as GlobeIcon, Plane, Utensils, Briefcase, Shield, GraduationCap, AlertTriangle, Share2, Award, DollarSign, Dumbbell, Eye, Flag } from 'lucide-react'
+import { MapPin, Calendar, Clock, Home, Car, Globe as GlobeIcon, Plane, Utensils, Briefcase, Shield, GraduationCap, AlertTriangle, Share2, Award, DollarSign, Dumbbell } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import type { Vacancy } from '../lib/supabase'
-import { Avatar } from './index'
 import StorageImage from './StorageImage'
 import { opportunityGenderToTeamLabel } from '@/lib/hockeyCategories'
 import { getShareOrigin } from '@/lib/profileShare'
-import Button from './Button'
 
 export interface WorldClubInfo {
   id: string
@@ -54,31 +52,38 @@ function getDeadlineInfo(deadline: string | null | undefined): { text: string; u
   return { text: `${daysLeft} days left`, urgent: daysLeft <= 7 }
 }
 
-/** Generate a short abbreviation from a club name for the watermark */
-function getClubAbbreviation(name: string): string {
-  const words = name.split(/\s+/).filter(Boolean)
-  if (words.length === 1) return words[0].slice(0, 3).toUpperCase()
-  return words.map(w => w[0]).join('').slice(0, 4).toUpperCase()
-}
+// Curated accent palette — a deterministic pick per club gives each card a
+// subtle brand identity (thin top bar + logo-fallback tint) without the old
+// full-height watermark hero. Static class strings so Tailwind JIT keeps them.
+const ACCENTS = [
+  { bar: 'bg-rose-500', chipBg: 'bg-rose-100', chipText: 'text-rose-700' },
+  { bar: 'bg-orange-500', chipBg: 'bg-orange-100', chipText: 'text-orange-700' },
+  { bar: 'bg-emerald-500', chipBg: 'bg-emerald-100', chipText: 'text-emerald-700' },
+  { bar: 'bg-teal-500', chipBg: 'bg-teal-100', chipText: 'text-teal-700' },
+  { bar: 'bg-sky-500', chipBg: 'bg-sky-100', chipText: 'text-sky-700' },
+  { bar: 'bg-blue-500', chipBg: 'bg-blue-100', chipText: 'text-blue-700' },
+  { bar: 'bg-indigo-500', chipBg: 'bg-indigo-100', chipText: 'text-indigo-700' },
+  { bar: 'bg-fuchsia-500', chipBg: 'bg-fuchsia-100', chipText: 'text-fuchsia-700' },
+]
 
-/** Deterministic brand colors from a club name — background tint + watermark text */
-function getClubBrandColors(name: string): { bgTint: string; watermarkColor: string } {
+/** Deterministic brand accent (from the curated palette) for a name. */
+function getClubAccent(name: string): typeof ACCENTS[number] {
   let hash = 0
   for (let i = 0; i < name.length; i++) {
     hash = name.charCodeAt(i) + ((hash << 5) - hash)
   }
-  const hue = Math.abs(hash) % 360
-  return {
-    bgTint: `hsla(${hue}, 20%, 80%, 0.10)`,         // subtle colored background
-    watermarkColor: `hsla(${hue}, 25%, 55%, 0.06)`,  // text visible but subtle
-  }
+  return ACCENTS[Math.abs(hash) % ACCENTS.length]
+}
+
+function getInitials(name: string): string {
+  return name.split(/\s+/).filter(Boolean).map(w => w[0]).join('').slice(0, 2).toUpperCase()
 }
 
 /**
- * Determines the card type:
- * - "club"  → club posting directly (publisherRole is 'club' or null/undefined)
- * - "coach_club" → coach posting for a club (has worldClub or organization_name)
- * - "coach_independent" → coach posting independently
+ * Card type:
+ * - "club"             → club posting directly
+ * - "coach_club"       → coach posting, recruiting for a (world) club
+ * - "coach_independent"→ coach posting independently
  */
 function getCardType(publisherRole: string | null | undefined, worldClub: WorldClubInfo | null | undefined, organizationName: string | null | undefined): 'club' | 'coach_club' | 'coach_independent' {
   if (publisherRole !== 'coach') return 'club'
@@ -86,6 +91,13 @@ function getCardType(publisherRole: string | null | undefined, worldClub: WorldC
   return 'coach_independent'
 }
 
+/**
+ * OpportunityCard — compact, scannable card. One horizontal header row
+ * (logo + publisher + location + country), a pill row, the title, a
+ * one-line meta row, compact benefit pills, and a footer row (deadline +
+ * View / Apply). Stretches to fill its grid cell so footers align across
+ * a row; the full description / benefits live on the detail view.
+ */
 export default function OpportunityCard({
   vacancy,
   clubName,
@@ -102,6 +114,7 @@ export default function OpportunityCard({
   const navigate = useNavigate()
 
   const cardType = getCardType(publisherRole, worldClub, publisherOrganization)
+  const isCoach = cardType !== 'club'
   const isUrgent = vacancy.priority === 'high'
   const deadlineInfo = getDeadlineInfo(vacancy.application_deadline)
   const isImmediate = !vacancy.start_date
@@ -113,8 +126,6 @@ export default function OpportunityCard({
 
   const handleShareClick = (e: React.MouseEvent) => {
     e.stopPropagation()
-    // getShareOrigin pins https://inhockia.com on the iOS/Android app so
-    // shared opportunity links don't emit dead capacitor://localhost URLs.
     const url = `${getShareOrigin()}/opportunities/${vacancy.id}`
     if (navigator.share) {
       navigator.share({ title: vacancy.title, url }).catch(() => {})
@@ -139,15 +150,11 @@ export default function OpportunityCard({
     return new Date(dateString).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
   }
 
-  // Build tag pills. Phase 3d — opportunityGenderToTeamLabel handles all
-  // five enum values (Men/Women/Girls/Boys/Mixed) with possessive labels
-  // ("Men's Team", "Girls' Team", etc.).
-  // Gender + position are player-only concepts; suppress them on coach
-  // opportunities even if legacy rows happen to carry stale values.
+  // Pills — "Looking for X" + (player only) team category + position.
   const tags: string[] = []
   const isPlayerOpportunity = vacancy.opportunity_type === 'player'
-  if (isPlayerOpportunity) tags.push('Player')
-  if (vacancy.opportunity_type === 'coach') tags.push('Coach')
+  if (isPlayerOpportunity) tags.push('Looking for Player')
+  else if (vacancy.opportunity_type === 'coach') tags.push('Looking for Coach')
   if (isPlayerOpportunity && vacancy.gender) {
     const teamLabel = opportunityGenderToTeamLabel(vacancy.gender)
     if (teamLabel) tags.push(teamLabel.replace(' Team', ''))
@@ -156,321 +163,223 @@ export default function OpportunityCard({
     tags.push(vacancy.position.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()))
   }
 
-  const benefits = vacancy.benefits?.slice(0, 4) || []
+  const benefits = vacancy.benefits || []
+  const visibleBenefits = benefits.slice(0, 3)
+  const extraBenefits = benefits.length - visibleBenefits.length
 
-  // Watermark data — used on all card types
-  const watermarkName = cardType === 'club' ? (worldClub?.clubName || clubName) : clubName
-  const clubAbbr = getClubAbbreviation(watermarkName)
-  const { bgTint, watermarkColor } = getClubBrandColors(watermarkName)
-  const displayClubName = worldClub?.clubName || clubName
-  const displayClubLogo = worldClub?.avatarUrl || clubLogo
+  // Identity — club cards lead with the club; coach cards lead with the coach.
+  const headerName = cardType === 'club' ? (worldClub?.clubName || clubName) : clubName
+  const headerLogo = cardType === 'club' ? (worldClub?.avatarUrl || clubLogo) : clubLogo
   const displayLeague = worldClub?.leagueName || leagueDivision
+  const accent = getClubAccent(headerName)
+  const locationLine = [vacancy.location_city, displayLeague].filter(Boolean).join(' · ')
 
   return (
     <div
       onClick={onViewDetails}
-      className="bg-white border border-gray-200 rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 group"
+      className="group flex flex-col bg-white border border-gray-200 rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 hover:shadow-md hover:border-gray-300"
     >
-      {/* ─── CARD TYPE A: CLUB OPPORTUNITY ─── */}
-      {cardType === 'club' && (
-        <>
-          {/* Club Hero Section with watermark */}
-          <div className="relative overflow-hidden pt-8 pb-5 px-5 border-b border-gray-100" style={{ backgroundColor: bgTint }}>
-            {/* Watermark */}
-            <div
-              className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden"
-              aria-hidden="true"
-            >
-              <span
-                className="text-[180px] font-black leading-none tracking-tighter"
-                style={{ color: watermarkColor }}
-              >
-                {clubAbbr}
-              </span>
-            </div>
+      {/* Subtle brand accent — replaces the old full-height watermark hero. */}
+      <div className={`h-[3px] flex-shrink-0 ${accent.bar}`} aria-hidden="true" />
 
-            {/* Club logo + info */}
-            <div className="relative flex flex-col items-center text-center">
+      <div className="flex flex-1 flex-col p-4">
+        {/* ── Header row ── */}
+        <div className="flex items-start gap-3">
+          <button
+            type="button"
+            onClick={handlePublisherClick}
+            className="flex-shrink-0 rounded-lg transition-opacity hover:opacity-80"
+            aria-label={`View ${headerName}`}
+          >
+            {headerLogo ? (
+              <StorageImage
+                src={headerLogo}
+                alt={headerName}
+                className="w-11 h-11 rounded-lg object-cover ring-1 ring-gray-200"
+              />
+            ) : (
+              <div
+                className={`w-11 h-11 rounded-lg flex items-center justify-center text-sm font-bold ${accent.chipBg} ${accent.chipText}`}
+              >
+                {getInitials(headerName)}
+              </div>
+            )}
+          </button>
+
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5">
               <button
                 type="button"
                 onClick={handlePublisherClick}
-                className="flex flex-col items-center hover:opacity-80 transition-opacity"
+                className="truncate text-[15px] font-bold text-gray-900 transition-colors group-hover:text-[#8026FA]"
               >
-                {displayClubLogo ? (
+                {headerName}
+              </button>
+              <span
+                className={`flex-shrink-0 inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
+                  isCoach
+                    ? 'bg-[#F0FDFA] text-[#0D9488] border border-teal-100'
+                    : 'bg-[#8026FA]/10 text-[#8026FA]'
+                }`}
+              >
+                {isCoach ? 'Coach' : 'Club'}
+              </span>
+            </div>
+
+            {/* Coach → club relationship, inline. */}
+            {cardType === 'coach_club' && worldClub && (
+              <button
+                type="button"
+                onClick={handleWorldClubClick}
+                className="mt-0.5 flex items-center gap-1 min-w-0 text-xs text-gray-500 hover:text-gray-700"
+              >
+                <span className="flex-shrink-0">Recruiting for</span>
+                {worldClub.avatarUrl ? (
                   <StorageImage
-                    src={displayClubLogo}
-                    alt={displayClubName}
-                    className="w-20 h-20 rounded-xl object-cover shadow-sm"
+                    src={worldClub.avatarUrl}
+                    alt={worldClub.clubName}
+                    className="w-4 h-4 rounded-full object-cover flex-shrink-0"
                   />
                 ) : (
-                  <Avatar
-                    initials={displayClubName.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                    size="xl"
-                    className="rounded-xl"
-                    role="club"
-                  />
+                  <Award className="w-3.5 h-3.5 flex-shrink-0 text-gray-400" />
                 )}
-                <h3 className="mt-3 text-base font-bold text-gray-900 group-hover:text-[#8026FA] transition-colors">
-                  {displayClubName}
-                </h3>
+                <span className="truncate font-medium">{worldClub.clubName}</span>
               </button>
-              {displayLeague && (
-                <p className="text-sm text-gray-500 mt-0.5">{displayLeague}</p>
-              )}
-            </div>
-          </div>
-        </>
-      )}
+            )}
+            {cardType === 'coach_club' && !worldClub && publisherOrganization && (
+              <p className="mt-0.5 truncate text-xs text-gray-500">
+                Recruiting for <span className="font-medium">{publisherOrganization}</span>
+              </p>
+            )}
 
-      {/* ─── CARD TYPE B: COACH + CLUB ─── */}
-      {cardType === 'coach_club' && (
-        <div className="relative overflow-hidden pt-6 pb-4 px-5 border-b border-gray-100" style={{ backgroundColor: bgTint }}>
-          {/* Watermark */}
-          <div
-            className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden"
-            aria-hidden="true"
-          >
-            <span
-              className="text-[180px] font-black leading-none tracking-tighter"
-              style={{ color: watermarkColor }}
-            >
-              {clubAbbr}
-            </span>
+            {locationLine && (
+              <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-gray-500">
+                <MapPin className="w-3 h-3 flex-shrink-0" />
+                <span className="truncate">{locationLine}</span>
+              </p>
+            )}
           </div>
-          {/* Coach hero */}
-          <div className="relative flex flex-col items-center text-center mb-3">
+
+          <div className="flex flex-shrink-0 flex-col items-end gap-1.5">
             <button
               type="button"
-              onClick={handlePublisherClick}
-              className="flex flex-col items-center hover:opacity-80 transition-opacity"
+              onClick={handleShareClick}
+              className="-mr-1 -mt-1 rounded-full p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+              aria-label="Share opportunity"
             >
-              <Avatar
-                src={clubLogo}
-                initials={clubName.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                size="lg"
-                role="club"
-              />
-              <div className="mt-2 flex items-center gap-1.5">
-                <span className="text-base font-bold text-gray-900 group-hover:text-[#8026FA] transition-colors">
-                  {clubName}
-                </span>
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide bg-[#F0FDFA] text-[#0D9488] border border-teal-100">
-                  Coach
-                </span>
-              </div>
+              <Share2 className="w-4 h-4" />
             </button>
-
-            {/* Club association — arrow shows "coach → club" relationship */}
-            {worldClub ? (
-              <div className="mt-1.5 flex flex-col items-center">
-                <div className="flex items-center gap-1">
-                  <span className="text-gray-400 text-sm">↳</span>
-                  <button
-                    type="button"
-                    onClick={handleWorldClubClick}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/60 border border-gray-200 hover:bg-white transition-colors"
-                  >
-                    {worldClub.avatarUrl ? (
-                      <StorageImage
-                        src={worldClub.avatarUrl}
-                        alt={worldClub.clubName}
-                        className="w-4 h-4 rounded-full object-cover"
-                      />
-                    ) : (
-                      <Award className="w-3.5 h-3.5 text-gray-400" />
-                    )}
-                    <span className="text-xs font-medium text-gray-700">{worldClub.clubName}</span>
-                  </button>
-                </div>
-                {displayLeague && (
-                  <p className="text-sm text-gray-500 mt-0.5">{displayLeague}</p>
-                )}
-              </div>
-            ) : publisherOrganization ? (
-              <div className="mt-1.5 flex items-center gap-1">
-                <span className="text-gray-400 text-sm">↳</span>
-                <span className="text-sm text-gray-600">{publisherOrganization}</span>
-              </div>
-            ) : null}
+            {vacancy.location_country && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[11px] text-gray-600">
+                {worldClub?.flagEmoji && <span aria-hidden="true">{worldClub.flagEmoji}</span>}
+                <span className="max-w-[90px] truncate">{vacancy.location_country}</span>
+              </span>
+            )}
           </div>
         </div>
-      )}
 
-      {/* ─── CARD TYPE C: COACH INDEPENDENT ─── */}
-      {cardType === 'coach_independent' && (
-        <div className="relative overflow-hidden pt-6 pb-4 px-5 border-b border-gray-100" style={{ backgroundColor: bgTint }}>
-          {/* Watermark */}
-          <div
-            className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden"
-            aria-hidden="true"
-          >
-            <span
-              className="text-[180px] font-black leading-none tracking-tighter"
-              style={{ color: watermarkColor }}
-            >
-              {clubAbbr}
-            </span>
-          </div>
-          <div className="relative flex flex-col items-center text-center mb-3">
-            <button
-              type="button"
-              onClick={handlePublisherClick}
-              className="flex flex-col items-center hover:opacity-80 transition-opacity"
-            >
-              <Avatar
-                src={clubLogo}
-                initials={clubName.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                size="lg"
-                role="club"
-              />
-              <div className="mt-2 flex items-center gap-1.5">
-                <span className="text-base font-bold text-gray-900 group-hover:text-[#8026FA] transition-colors">
-                  {clubName}
-                </span>
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide bg-[#F0FDFA] text-[#0D9488] border border-teal-100">
-                  Coach
-                </span>
-              </div>
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ─── SHARED BODY (all card types) ─── */}
-      <div className="px-6 pt-5 pb-6">
-        {/* Top row: badges left + share icon right */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
+        {/* ── Pills ── */}
+        {(tags.length > 0 || isUrgent) && (
+          <div className="mt-3 flex flex-wrap gap-1.5">
             {isUrgent && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-orange-50 text-orange-600 border border-orange-100">
+              <span className="inline-flex items-center gap-1 rounded-full border border-orange-100 bg-orange-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-orange-600">
                 <AlertTriangle className="w-3 h-3" />
-                URGENT
+                Urgent
               </span>
             )}
-            {cardType !== 'club' && (
-              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-[#F0FDFA] text-[#0D9488] border border-teal-100">
-                COACH LISTED
+            {tags.map((tag) => (
+              <span
+                key={tag}
+                className="inline-flex items-center rounded-full border border-[#8026FA]/10 bg-[#8026FA]/[0.06] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#8026FA]"
+              >
+                {tag}
               </span>
-            )}
+            ))}
           </div>
-          <button
-            type="button"
-            onClick={handleShareClick}
-            className="p-2 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
-            aria-label="Share opportunity"
-          >
-            <Share2 className="w-[18px] h-[18px]" />
-          </button>
-        </div>
+        )}
 
-        {/* Title */}
-        <h2 className="text-xl font-bold text-gray-900 mb-4 leading-tight group-hover:text-[#8026FA] transition-colors">
+        {/* ── Title ── */}
+        <h2 className="mt-2.5 line-clamp-2 text-base font-bold leading-snug text-gray-900 transition-colors group-hover:text-[#8026FA]">
           {vacancy.title}
         </h2>
 
-        {/* Meta info */}
-        <div className="space-y-1.5 text-[15px] text-gray-500 mb-5">
-          <div className="flex items-center gap-x-5 flex-wrap">
-            <div className="flex items-center gap-2">
-              <MapPin className="w-4 h-4 flex-shrink-0" />
-              <span>
-                {[vacancy.location_city, vacancy.location_country].filter(Boolean).join(', ')}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 flex-shrink-0" />
-              <span>{isImmediate ? 'Starts Immediately' : `Starts ${formatDate(vacancy.start_date)}`}</span>
-            </div>
-          </div>
+        {/* ── Meta line ── */}
+        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-gray-500">
+          <span className="flex items-center gap-1">
+            <Calendar className="w-3.5 h-3.5 flex-shrink-0" />
+            {isImmediate ? 'Starts immediately' : `Starts ${formatDate(vacancy.start_date)}`}
+          </span>
           {vacancy.duration_text && (
-            <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 flex-shrink-0" />
-              <span>{vacancy.duration_text}</span>
-            </div>
+            <span className="flex items-center gap-1">
+              <Clock className="w-3.5 h-3.5 flex-shrink-0" />
+              {vacancy.duration_text}
+            </span>
           )}
         </div>
 
-        {/* Tags */}
-        <div className="flex items-center flex-wrap gap-2 mb-6">
-          {tags.map((tag) => (
+        {/* ── Benefits (compact) ── */}
+        {visibleBenefits.length > 0 && (
+          <div className="mt-3 flex flex-wrap items-center gap-1.5">
+            {visibleBenefits.map((benefit) => {
+              const config = BENEFIT_CONFIG[benefit.toLowerCase()]
+              if (!config) return null
+              const Icon = config.icon
+              return (
+                <span
+                  key={benefit}
+                  className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-2 py-1 text-[11px] font-medium text-gray-600"
+                >
+                  <Icon className={`w-3.5 h-3.5 ${config.iconColor}`} />
+                  {config.label}
+                </span>
+              )
+            })}
+            {extraBenefits > 0 && (
+              <span className="text-[11px] font-medium text-gray-400">+{extraBenefits} more</span>
+            )}
+          </div>
+        )}
+
+        {/* ── Footer — pinned to the bottom so rows align ── */}
+        <div className="mt-auto flex items-center justify-between gap-2 border-t border-gray-100 pt-3">
+          {deadlineInfo ? (
             <span
-              key={tag}
-              className="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium bg-gray-100 text-gray-700 border border-gray-200"
+              className={`flex items-center gap-1 text-xs ${
+                deadlineInfo.urgent ? 'font-semibold text-orange-600' : 'text-gray-500'
+              }`}
             >
-              {tag}
+              <Clock className="w-3.5 h-3.5" />
+              {deadlineInfo.text}
             </span>
-          ))}
-        </div>
+          ) : (
+            <span aria-hidden="true" />
+          )}
 
-        {/* Benefits section */}
-        {benefits.length > 0 && (
-          <div className="mb-6">
-            <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-3">
-              Benefits Included
-            </p>
-            <div className="flex items-center flex-wrap gap-2.5">
-              {benefits.map((benefit) => {
-                const config = BENEFIT_CONFIG[benefit.toLowerCase()]
-                if (!config) return null
-                const Icon = config.icon
-                return (
-                  <span
-                    key={benefit}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-gray-50 text-gray-700 border border-gray-200"
-                  >
-                    <Icon className={`w-4 h-4 ${config.iconColor}`} />
-                    {config.label}
-                  </span>
-                )
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* EU Passport Requirement */}
-        {(vacancy as Record<string, unknown>).eu_passport_required === true && (
-          <div className="mb-4">
-            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-blue-50 text-blue-700 border border-blue-200">
-              <Flag className="w-4 h-4 text-blue-500" />
-              EU Passport Required
-            </span>
-          </div>
-        )}
-
-        {/* Deadline */}
-        {deadlineInfo && (
-          <div className="flex items-center justify-center gap-2 text-sm text-gray-500 mb-4">
-            <Clock className="w-4 h-4" />
-            <span>{deadlineInfo.text}</span>
-          </div>
-        )}
-
-        {/* Action buttons */}
-        <div className="flex items-center gap-2.5" onClick={(e) => e.stopPropagation()}>
-          {hasApplied ? (
-            <div className="flex-1 flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl font-semibold text-sm border border-[#8026FA]/15 bg-[#8026FA]/5 text-[#8026FA]">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-              </svg>
-              Applied
-            </div>
-          ) : onApply ? (
-            <Button
-              onClick={handleApplyClick}
-              className="flex-1 rounded-xl py-3.5 bg-gradient-to-r from-[#8026FA] to-[#924CEC] hover:opacity-90 text-base font-semibold"
+          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              onClick={onViewDetails}
+              className="rounded-lg border border-gray-200 px-3.5 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
             >
-              Apply Now &rsaquo;
-            </Button>
-          ) : null}
-          {/* View details button */}
-          <button
-            type="button"
-            onClick={onViewDetails}
-            className="flex items-center justify-center w-12 h-12 rounded-xl border border-gray-200 bg-gray-50 text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors flex-shrink-0"
-            aria-label="View full details"
-          >
-            <Eye className="w-5 h-5" />
-          </button>
+              View
+            </button>
+            {hasApplied ? (
+              <span className="inline-flex items-center gap-1 rounded-lg border border-[#8026FA]/15 bg-[#8026FA]/5 px-3.5 py-2 text-sm font-semibold text-[#8026FA]">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                </svg>
+                Applied
+              </span>
+            ) : onApply ? (
+              <button
+                type="button"
+                onClick={handleApplyClick}
+                className="rounded-lg bg-gradient-to-r from-[#8026FA] to-[#924CEC] px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+              >
+                Apply
+              </button>
+            ) : null}
+          </div>
         </div>
       </div>
     </div>

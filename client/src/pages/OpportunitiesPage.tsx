@@ -470,7 +470,7 @@ export default function OpportunitiesPage() {
       <div className="min-h-screen bg-gray-50">
         <Header />
 
-        <main className="max-w-[600px] mx-auto px-4 pt-24 pb-12">
+        <main className="max-w-[640px] md:max-w-5xl mx-auto px-4 pt-24 pb-12">
           {/* Page Header */}
           <div className="mb-6">
             <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">
@@ -621,8 +621,8 @@ export default function OpportunitiesPage() {
 
           {/* Content */}
           {isLoading ? (
-            <div className="space-y-6">
-              {[1, 2, 3].map(i => (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {[1, 2, 3, 4].map(i => (
                 <OpportunityCardSkeleton key={i} />
               ))}
             </div>
@@ -686,8 +686,8 @@ export default function OpportunitiesPage() {
               )}
             </div>
           ) : (
-            /* Flat newest-first opportunity feed */
-            <div className="space-y-5">
+            /* Flat newest-first opportunity feed — 2-up grid on desktop */
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {filteredOpportunities.map((vacancy) => {
                 const club = clubs[vacancy.club_id]
                 const isApplied = userApplications.includes(vacancy.id)
