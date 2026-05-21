@@ -492,8 +492,12 @@ export default function VacancyDetailView({
                 </Button>
               )}
               {isPublisher && (
+                // "Done" — dismisses the detail view. NOT "Close": on a
+                // publisher's own opportunity that reads as closing the
+                // listing, which is a separate action (dashboard → Manage
+                // Opportunities → Close).
                 <Button onClick={onClose} variant="outline" className="rounded-xl py-3.5 px-5 flex-shrink-0">
-                  Close
+                  Done
                 </Button>
               )}
             </div>
