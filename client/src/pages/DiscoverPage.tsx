@@ -278,6 +278,7 @@ export default function DiscoverPage() {
                   <button
                     type="button"
                     key={example}
+                    data-testid="discover-example-query"
                     onClick={() => handleExampleClick(example)}
                     className="w-full text-left p-3 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 hover:border-[#8026FA] hover:bg-[#8026FA]/5 transition-colors"
                   >

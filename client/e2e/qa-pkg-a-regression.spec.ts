@@ -102,7 +102,7 @@ test.describe('@qa Package A regression', () => {
     // Back to /home, tap floating AI button
     await page.goto('/home')
     await page.waitForLoadState('domcontentloaded')
-    const aiBtn = page.getByRole('button', { name: 'Open HOCKIA AI' })
+    const aiBtn = page.getByRole('button', { name: 'Open Hockia AI' })
     await expect(aiBtn).toBeVisible({ timeout: 10_000 })
     await aiBtn.click()
     await page.waitForURL('**/discover', { timeout: 10_000 })
