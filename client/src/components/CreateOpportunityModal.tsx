@@ -28,6 +28,11 @@ interface CreateVacancyModalProps {
   initialOpportunityType?: 'player' | 'coach'
 }
 
+// Field limits — also enforced as `maxLength` on the inputs so the
+// counter and the hard cap never disagree.
+const TITLE_MAX = 120
+const DESCRIPTION_MAX = 2000
+
 const BENEFIT_OPTIONS = [
   { id: 'housing', label: 'Housing', icon: Home },
   { id: 'car', label: 'Car', icon: Car },
@@ -78,6 +83,9 @@ type VacancyDraftStorage = {
 export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editingVacancy, initialOpportunityType }: CreateVacancyModalProps) {
   const { user, profile } = useAuthStore()
   const [isLoading, setIsLoading] = useState(false)
+  // Tracks whether the user has changed anything this session, so closing
+  // the modal can warn before discarding unsaved work.
+  const [isDirty, setIsDirty] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   /** Inline submit-error banner. The toast container lives in the
    *  top-right corner of the viewport, which scrolls out of view once
@@ -135,11 +143,15 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
     if (isLoading) {
       return
     }
+    // Guard against losing unsaved work on an accidental Cancel / Escape.
+    if (isDirty && !window.confirm('Discard this opportunity? Your unsaved changes will be lost.')) {
+      return
+    }
     if (!editingVacancy) {
       clearVacancyDraft()
     }
     onClose()
-  }, [clearVacancyDraft, editingVacancy, isLoading, onClose])
+  }, [clearVacancyDraft, editingVacancy, isLoading, isDirty, onClose])
 
   useFocusTrap({ containerRef: dialogRef, isActive: isOpen, initialFocusRef: opportunityTypeRef })
 
@@ -273,6 +285,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleInputChange = (field: string, value: any) => {
+    setIsDirty(true)
     setFormData(prev => {
       const next = { ...prev, [field]: value }
       if (field === 'opportunity_type' && value === 'coach') {
@@ -455,7 +468,6 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
   }
 
   const benefitsCount = (formData.benefits || []).length
-  const benefitsPercentage = Math.round((benefitsCount / BENEFIT_OPTIONS.length) * 100)
   const titleErrorId = errors.title ? `${opportunityTitleFieldId}-error` : undefined
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" role="presentation">
@@ -566,6 +578,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                   type="text"
                   value={formData.title}
                   onChange={(e) => handleInputChange('title', e.target.value)}
+                  maxLength={TITLE_MAX}
                   className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#10b981] focus:border-transparent ${
                     errors.title ? 'border-red-500' : 'border-gray-300'
                   }`}
@@ -579,7 +592,14 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                   autoCapitalize="words"
                   inputMode="text"
                 />
-                {errors.title && <p id={titleErrorId} className="mt-1 text-sm text-red-600">{errors.title}</p>}
+                <div className="mt-1 flex items-start justify-between gap-3">
+                  {errors.title
+                    ? <p id={titleErrorId} className="text-sm text-red-600">{errors.title}</p>
+                    : <span />}
+                  <span className="flex-shrink-0 text-xs text-gray-400">
+                    {(formData.title || '').length}/{TITLE_MAX}
+                  </span>
+                </div>
               </div>
 
               {/* Organization Name - shown for coaches, optional for clubs */}
@@ -679,6 +699,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                   value={formData.description || ''}
                   onChange={(e) => handleInputChange('description', e.target.value)}
                   rows={4}
+                  maxLength={DESCRIPTION_MAX}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#10b981] focus:border-transparent resize-none"
                   placeholder={
                     formData.opportunity_type === 'player'
@@ -686,6 +707,9 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                       : "Describe the coaching role, responsibilities, and team environment..."
                   }
                 />
+                <div className="mt-1 text-right text-xs text-gray-400">
+                  {(formData.description || '').length}/{DESCRIPTION_MAX}
+                </div>
               </div>
             </div>
           </section>
@@ -858,19 +882,19 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
               })}
             </div>
 
-            {/* Benefits Summary */}
+            {/* Benefits Summary — a count, not a percentage: there is no
+                "required" number of benefits, so a % reads as misleading. */}
             <div className="bg-blue-50 rounded-lg p-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium text-gray-700">
-                  • {benefitsCount} benefits included
+                  {benefitsCount} of {BENEFIT_OPTIONS.length} benefits added
                 </span>
-                <span className="text-sm font-medium text-gray-700">{benefitsPercentage}%</span>
               </div>
               <progress
                 value={benefitsCount}
                 max={BENEFIT_OPTIONS.length}
                 className="w-full h-2 appearance-none rounded-full bg-gray-200 overflow-hidden [&::-webkit-progress-bar]:rounded-full [&::-webkit-progress-bar]:bg-gray-200 [&::-webkit-progress-value]:rounded-full [&::-webkit-progress-value]:bg-[#10b981] [&::-moz-progress-bar]:bg-[#10b981]"
-                aria-valuetext={`${benefitsPercentage}% of benefits included`}
+                aria-valuetext={`${benefitsCount} of ${BENEFIT_OPTIONS.length} benefits added`}
               />
             </div>
           </section>

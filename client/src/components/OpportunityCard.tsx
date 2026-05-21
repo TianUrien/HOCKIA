@@ -92,8 +92,8 @@ export default function OpportunityCard({
   // Coded opening type — matches HOCKIA's app-wide role colours
   // (RoleBadge): player = blue (#2563EB), coach = teal-green (#0D9488).
   const accent = isPlayerOpening
-    ? { dot: 'bg-blue-600', text: 'text-blue-600', ring: 'bg-blue-600' }
-    : { dot: 'bg-teal-600', text: 'text-teal-600', ring: 'bg-teal-600' }
+    ? { dot: 'bg-blue-600', text: 'text-blue-600' }
+    : { dot: 'bg-teal-600', text: 'text-teal-600' }
   const openingLabel = isPlayerOpening ? 'Player opening' : 'Coach opening'
 
   const handlePublisherClick = (e: React.MouseEvent) => {
@@ -123,6 +123,9 @@ export default function OpportunityCard({
   if (isPlayerOpening && vacancy.position) {
     pills.push(vacancy.position.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()))
   }
+  // Parity — coach openings carry no structured category/position, so
+  // fall back to a single role pill rather than leaving the row empty.
+  if (pills.length === 0) pills.push(isPlayerOpening ? 'Player' : 'Coach')
 
   const benefits = vacancy.benefits || []
   const visibleBenefits = benefits.slice(0, MAX_VISIBLE_PERKS)
@@ -160,20 +163,15 @@ export default function OpportunityCard({
 
         {/* ── Identity: logo · title · creator ── */}
         <div className="mt-4 flex items-start gap-3.5">
-          <div className="relative flex-shrink-0">
-            <Avatar
-              src={publisherLogo}
-              initials={getInitials(publisherName)}
-              alt={publisherName}
-              size="lg"
-              role={publisherRole}
-              className="ring-1 ring-black/5"
-            />
-            <span
-              className={`absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full ring-2 ring-white ${accent.ring}`}
-              aria-hidden="true"
-            />
-          </div>
+          {/* No `role` prop → a publisher with no logo gets a brand-purple
+              monogram (initials), not the generic role silhouette. */}
+          <Avatar
+            src={publisherLogo}
+            initials={getInitials(publisherName)}
+            alt={publisherName}
+            size="lg"
+            className="ring-1 ring-black/5"
+          />
 
           <div className="min-w-0 flex-1">
             {/* The title is the keyboard-/screen-reader-operable activator
@@ -218,7 +216,6 @@ export default function OpportunityCard({
               initials={getInitials(worldClub.clubName)}
               alt={worldClub.clubName}
               size="sm"
-              role="club"
             />
             <span className="min-w-0 flex-1">
               <span className="block text-[10px] font-semibold uppercase tracking-wider text-gray-400">
