@@ -15,8 +15,9 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { getServiceClient } from '../_shared/supabase-client.ts'
 import { getCorsHeaders } from '../_shared/cors.ts'
 import { captureException } from '../_shared/sentry.ts'
-import { parseSearchQuery, synthesizeQualitativeInsights, composeShortlist, composeNoResults, PROMPT_VERSION, type LLMCallMeta, type ParsedFilters, type HistoryTurn, type ProfileQualitativeData, type ShortlistCandidate, type ShortlistRow, type UserContext } from '../_shared/llm-client.ts'
+import { parseSearchQuery, synthesizeQualitativeInsights, composeShortlist, composeNoResults, answerPlatformHelp, PROMPT_VERSION, type LLMCallMeta, type ParsedFilters, type HistoryTurn, type ProfileQualitativeData, type ShortlistCandidate, type ShortlistRow, type UserContext } from '../_shared/llm-client.ts'
 import { classifyEntityType, entityTypeToRole, type RoutedIntent } from '../_shared/intent-router.ts'
+import { resolveFeatureCta } from '../_shared/hockia-features.ts'
 import {
   type AppliedSearch,
   buildRoleSummary,
@@ -1009,8 +1010,8 @@ Deno.serve(async (req) => {
         ? ' — and add your own products from the brand dashboard.'
         : '.'
       const cannedMessage = intent.entity_type === 'opportunities'
-        ? `Searching opportunities through HOCKIA AI is rolling out next. For now you can browse all open opportunities at /opportunities${oppSuffix}`
-        : `Browsing products through HOCKIA AI is rolling out next. For now visit the Marketplace at /marketplace to see what brands have posted${productSuffix}`
+        ? `Searching opportunities through Hockia AI is rolling out next. For now you can browse all open opportunities at /opportunities${oppSuffix}`
+        : `Browsing products through Hockia AI is rolling out next. For now visit the Marketplace at /marketplace to see what brands have posted${productSuffix}`
       fireAndForget(logDiscoveryEvent(adminClient, {
         user_id: user.id,
         role: userContext?.role ?? null,
@@ -1045,6 +1046,74 @@ Deno.serve(async (req) => {
         }),
         { status: 200, headers: { ...headers, 'Content-Type': 'application/json' } }
       )
+    }
+
+    // ── Platform help ("how do I use HOCKIA?") ─────────────────────────
+    // Feature / how-to questions route here via the platform_help intent.
+    // We answer with a short role-aware explanation + one CTA, instead of
+    // sending the query down the profile-search path (which would either
+    // return mixed profiles or a canned redirect). Needs userContext for
+    // role-awareness; without it we fall through to the normal LLM flow.
+    if (intent.entity_type === 'platform_help' && userContext) {
+      try {
+        const { result: helpResult, meta: helpMeta } = await answerPlatformHelp({
+          userQuery: query,
+          userContext,
+        })
+        const cta = resolveFeatureCta(helpResult.feature_key, userContext.role)
+        fireAndForget(logDiscoveryEvent(adminClient, {
+          user_id: user.id,
+          role: userContext.role,
+          query_text: query,
+          intent: 'platform_help',
+          parsed_filters: { _meta: {
+            entity_type: 'platform_help',
+            confidence: intent.confidence,
+            filter_source: 'keyword',
+            signals: intent.matched_signals,
+            feature_key: helpResult.feature_key,
+            has_cta: !!cta,
+            kind: 'canned_redirect',
+          } } as any,
+          result_count: 0,
+          has_qualitative: false,
+          llm_provider: llmProvider,
+          response_time_ms: Date.now() - startTime,
+          error_message: null,
+          prompt_tokens: helpMeta.usage?.prompt_tokens ?? null,
+          completion_tokens: helpMeta.usage?.completion_tokens ?? null,
+          cached_tokens: helpMeta.usage?.cached_tokens ?? null,
+          prompt_version: PROMPT_VERSION,
+          fallback_used: false,
+          retry_count: helpMeta.retry_count,
+        }))
+        return new Response(
+          JSON.stringify({
+            success: true,
+            data: [],
+            total: 0,
+            has_more: false,
+            parsed_filters: null,
+            summary: null,
+            ai_message: helpResult.answer,
+            // Reuses the canned_redirect kind — CannedRedirectCard renders
+            // the message + the explicit `cta` button.
+            kind: 'canned_redirect' as ResponseKind,
+            applied: null,
+            suggested_actions: [] as SuggestedAction[],
+            cta,
+          }),
+          { status: 200, headers: { ...headers, 'Content-Type': 'application/json' } }
+        )
+      } catch (err) {
+        // LLM failure on the help path — don't hard-fail; fall through to
+        // the normal flow so the user still gets an answer.
+        captureException(err, {
+          functionName: 'nl-search',
+          correlationId,
+          extra: { phase: 'platform_help' },
+        })
+      }
     }
 
     // ── LLM parsing ─────────────────────────────────────────────────────

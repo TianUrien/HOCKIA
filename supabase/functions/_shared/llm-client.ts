@@ -13,6 +13,8 @@
  * so discovery_events comparisons are apples-to-apples.
  */
 
+import { renderFeatureKnowledge } from './hockia-features.ts'
+
 export interface ParsedFilters {
   roles?: string[]
   positions?: string[]
@@ -1823,5 +1825,194 @@ export async function composeNoResults(ctx: NoResultsContext): Promise<{ result:
     case 'claude':  return composeNoResultsWithClaude(ctx)
     case 'openai':  return { result: await composeNoResultsWithOpenAI(ctx), meta: EMPTY_META }
     default:        return composeNoResultsWithGemini(ctx)
+  }
+}
+
+// ── Platform help ("how do I use HOCKIA?") ──────────────────────────────
+// Answers feature/how-to questions. Routed here by the `platform_help`
+// intent. The LLM reads the HOCKIA FEATURE MAP + the user's role and
+// returns a short role-aware answer plus the single best feature_key; the
+// caller maps that key → a CTA via resolveFeatureCta().
+
+export interface PlatformHelpContext {
+  userQuery: string
+  userContext: UserContext
+}
+
+export interface PlatformHelpResult {
+  answer: string
+  /** Exact key from the HOCKIA FEATURE MAP, or null when none applies. */
+  feature_key: string | null
+}
+
+const PLATFORM_HELP_SYSTEM_PROMPT = `You are HOCKIA's in-app guide. HOCKIA is a field-hockey network where players, coaches, clubs, brands and umpires build profiles, connect, recruit, and post opportunities.
+
+The user asked a question about HOW TO USE HOCKIA — this is NOT a search. Answer it using ONLY the HOCKIA FEATURE MAP in the user message, tailored to the user's role (given in the user context block).
+
+Return two things:
+1. answer — 2 to 4 short sentences, plain text. Explain what the user can do and the concrete next step. Be ROLE-AWARE: if the user's role cannot do the thing they asked about, say so plainly and point them to what they CAN do instead. For example, a player asking how to create an opportunity → explain that players apply to opportunities rather than post them, and tell them how to browse and apply.
+2. feature_key — the ONE key from the FEATURE MAP that best matches the next step you are pointing them to. It must be copied exactly from the map. If no destination genuinely helps, return an empty string.
+
+Rules:
+- Plain text only. No markdown — no asterisks, no headers, no bullet symbols.
+- The FEATURE MAP is the ONLY source of truth. Never invent features, routes, buttons or pages that are not in it.
+- Keep it short, warm and practical. No motivational filler.
+- Do not mention "feature_key", "feature map", routes or URLs in the answer text — the next-step button is added separately.
+- Tone: a knowledgeable teammate giving a quick, clear pointer.`
+
+const ANSWER_PLATFORM_HELP_TOOL = {
+  name: 'answer_platform_help',
+  description: 'Answer a how-do-I-use-HOCKIA question with a short role-aware explanation and the single best feature to point the user to.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      answer: {
+        type: 'string',
+        description: '2-4 short sentences, plain text, role-aware. No markdown. No routes or URLs.',
+      },
+      feature_key: {
+        type: 'string',
+        description: 'Exact key copied from the HOCKIA FEATURE MAP for the next step, or an empty string if none applies.',
+      },
+    },
+    required: ['answer'],
+  },
+}
+
+function buildPlatformHelpUserMessage(ctx: PlatformHelpContext): string {
+  return `USER QUESTION: "${ctx.userQuery.replace(/"/g, "'")}"
+
+${renderFeatureKnowledge()}
+
+${buildUserContextBlock(ctx.userContext)}
+
+Answer the user's how-to question per the system prompt. Tailor it to their role, and pick the single best feature_key for the next step.`
+}
+
+function emptyPlatformHelpResult(reason: string): PlatformHelpResult {
+  return { answer: reason, feature_key: null }
+}
+
+function normalizePlatformHelpResult(raw: { answer?: unknown; feature_key?: unknown }): PlatformHelpResult {
+  const answer = typeof raw.answer === 'string' && raw.answer.trim()
+    ? raw.answer.trim()
+    : 'You can explore that from your HOCKIA dashboard.'
+  const key = typeof raw.feature_key === 'string' && raw.feature_key.trim()
+    ? raw.feature_key.trim()
+    : null
+  return { answer, feature_key: key }
+}
+
+async function answerPlatformHelpWithGemini(ctx: PlatformHelpContext): Promise<{ result: PlatformHelpResult; meta: LLMCallMeta }> {
+  const apiKey = Deno.env.get('GOOGLE_AI_API_KEY')
+  if (!apiKey) throw new Error('GOOGLE_AI_API_KEY not configured')
+
+  const { response, retryCount } = await retryableFetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: PLATFORM_HELP_SYSTEM_PROMPT }] },
+        contents: [{ role: 'user', parts: [{ text: buildPlatformHelpUserMessage(ctx) }] }],
+        tools: [{
+          function_declarations: [
+            { name: ANSWER_PLATFORM_HELP_TOOL.name, description: ANSWER_PLATFORM_HELP_TOOL.description, parameters: ANSWER_PLATFORM_HELP_TOOL.input_schema },
+          ],
+        }],
+        tool_config: { function_calling_config: { mode: 'ANY' } },
+      }),
+    },
+    { timeoutMs: 9000, maxRetries: 0 }
+  )
+
+  if (!response.ok) {
+    const errorBody = await response.text()
+    if (response.status === 429 || response.status === 503) throw new LLMRateLimitError()
+    throw new Error(`Gemini platform-help error (${response.status}): ${errorBody}`)
+  }
+
+  const data = await response.json()
+  const usage: LLMUsage = {
+    prompt_tokens: data.usageMetadata?.promptTokenCount ?? null,
+    completion_tokens: data.usageMetadata?.candidatesTokenCount ?? null,
+    cached_tokens: data.usageMetadata?.cachedContentTokenCount ?? null,
+  }
+  const meta: LLMCallMeta = { retry_count: retryCount, usage }
+
+  const fnCall = data.candidates?.[0]?.content?.parts?.find((p: any) => p.functionCall)
+  const args = fnCall?.functionCall?.args
+  if (!args?.answer) {
+    return { result: emptyPlatformHelpResult('You can manage that from your HOCKIA dashboard.'), meta }
+  }
+  return { result: normalizePlatformHelpResult(args), meta }
+}
+
+async function answerPlatformHelpWithClaude(ctx: PlatformHelpContext): Promise<{ result: PlatformHelpResult; meta: LLMCallMeta }> {
+  const apiKey = Deno.env.get('ANTHROPIC_API_KEY')
+  if (!apiKey) throw new Error('ANTHROPIC_API_KEY not configured')
+
+  // PLATFORM_HELP_SYSTEM_PROMPT is well over Sonnet's 1024-token cache
+  // minimum once the feature map is appended downstream — but the map
+  // lives in the per-call user message, so only the static system prompt
+  // is cached. Still worth it for back-to-back help questions.
+  const { response, retryCount } = await retryableFetch(
+    'https://api.anthropic.com/v1/messages',
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1024,
+        system: [
+          { type: 'text', text: PLATFORM_HELP_SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } },
+        ],
+        tools: [
+          { name: ANSWER_PLATFORM_HELP_TOOL.name, description: ANSWER_PLATFORM_HELP_TOOL.description, input_schema: ANSWER_PLATFORM_HELP_TOOL.input_schema },
+        ],
+        tool_choice: { type: 'tool', name: ANSWER_PLATFORM_HELP_TOOL.name },
+        messages: [{ role: 'user', content: buildPlatformHelpUserMessage(ctx) }],
+      }),
+    },
+    { timeoutMs: 12000, maxRetries: 0 }
+  )
+
+  if (!response.ok) {
+    const errorBody = await response.text()
+    if (response.status === 429 || response.status === 529) throw new LLMRateLimitError()
+    throw new Error(`Claude platform-help error (${response.status}): ${errorBody}`)
+  }
+
+  const data = await response.json()
+  const usage: LLMUsage = {
+    prompt_tokens: (data.usage?.input_tokens ?? 0) + (data.usage?.cache_creation_input_tokens ?? 0),
+    completion_tokens: data.usage?.output_tokens ?? null,
+    cached_tokens: data.usage?.cache_read_input_tokens ?? null,
+  }
+  const meta: LLMCallMeta = { retry_count: retryCount, usage }
+
+  const toolUse = data.content?.find((c: any) => c.type === 'tool_use' && c.name === ANSWER_PLATFORM_HELP_TOOL.name)
+  if (!toolUse?.input?.answer) {
+    return { result: emptyPlatformHelpResult('You can manage that from your HOCKIA dashboard.'), meta }
+  }
+  return { result: normalizePlatformHelpResult(toolUse.input), meta }
+}
+
+/**
+ * Answer a "how do I use HOCKIA" question. Mirrors the provider dispatch of
+ * the other LLM helpers. `openai` falls through to Gemini — it is not a
+ * live provider for nl-search, and Gemini is the safe default.
+ */
+export async function answerPlatformHelp(ctx: PlatformHelpContext): Promise<{ result: PlatformHelpResult; meta: LLMCallMeta }> {
+  const provider = Deno.env.get('LLM_PROVIDER') || 'gemini'
+
+  switch (provider) {
+    case 'claude':  return answerPlatformHelpWithClaude(ctx)
+    case 'gemini':  return answerPlatformHelpWithGemini(ctx)
+    default:        return answerPlatformHelpWithGemini(ctx)
   }
 }

@@ -123,6 +123,14 @@ export interface ClarifyingOption {
   routed_query: string
 }
 
+/** Platform-help CTA — an explicit in-app destination the assistant
+ *  resolved from the HOCKIA feature map. Rendered as a navigation button
+ *  by CannedRedirectCard. */
+export interface DiscoverCta {
+  label: string
+  route: string
+}
+
 export interface DiscoverResponse {
   success: boolean
   data: DiscoverResult[]
@@ -138,6 +146,8 @@ export interface DiscoverResponse {
   applied?: AppliedSearch | null
   suggested_actions?: SuggestedAction[]
   clarifying_options?: ClarifyingOption[]
+  /** Platform-help — explicit navigation CTA (canned_redirect responses). */
+  cta?: DiscoverCta | null
 }
 
 // ── Chat message types ──────────────────────────────────────────────────
@@ -158,6 +168,7 @@ export interface DiscoverChatMessage {
   applied?: AppliedSearch | null
   suggested_actions?: SuggestedAction[]
   clarifying_options?: ClarifyingOption[]
+  cta?: DiscoverCta | null
 }
 
 interface HistoryTurn {
@@ -277,6 +288,7 @@ export const useDiscoverChat = create<DiscoverChatStore>((set, get) => ({
                 applied: result.applied,
                 suggested_actions: result.suggested_actions,
                 clarifying_options: result.clarifying_options,
+                cta: result.cta,
               }
             : m
         ),

@@ -125,7 +125,7 @@ export default function AssistantMessage({ msg }: AssistantMessageProps) {
       }
 
       case 'canned_redirect':
-        return <CannedRedirectCard message={msg.content} />
+        return <CannedRedirectCard message={msg.content} cta={msg.cta} />
 
       case 'results':
         return (

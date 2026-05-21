@@ -26,6 +26,7 @@ export type EntityType =
   | 'products'
   | 'self_profile'
   | 'self_advice'
+  | 'platform_help'
   | 'knowledge'
   | 'greeting'
   | 'unknown'
@@ -93,6 +94,44 @@ const SELF_ADVICE = [
   // doesn't dead-end after the AI prints its capability list. Routing
   // through self_advice gives this for free.
   /\bwhat can you (do|help)/i,
+]
+
+// ── Platform / feature help ("how do I use HOCKIA?") ──
+// Detected as a pair: a help-question FORM plus a HOCKIA feature NOUN. Both
+// must match. This keeps "how do I find defenders" (a search) out — only
+// questions about HOCKIA's own features route here. Checked after
+// self_advice / self_profile (those own "improve MY profile") but before
+// entity search, so "how do I post an opportunity" is treated as a how-to,
+// not an opportunity search.
+const HELP_QUESTION_FORM = [
+  /\bhow (do|can|would|should|to)\b/i,
+  /\bwhere (do|can|is|are|should)\b/i,
+  /\bcan i (create|post|publish|add|make|manage|edit|upload|apply|write|leave|send|request)\b/i,
+  /\bwhat'?s the (way|process|steps?|best way) (to|for)\b/i,
+]
+const FEATURE_NOUNS = [
+  /\bopportunit(y|ies)\b/i,
+  /\bvacanc(y|ies)\b/i,
+  /\bposts?\b/i,
+  /\bapplications?\b/i,
+  /\bapplicants?\b/i,
+  /\bcandidates?\b/i,
+  /\bcomments?\b/i,
+  /\breferences?\b/i,
+  /\bfriends?\b/i,
+  /\bconnections?\b/i,
+  /\bnetwork\b/i,
+  /\bjourney\b/i,
+  /\bmilestones?\b/i,
+  /\bmedia\b/i,
+  /\bgaller(y|ies)\b/i,
+  /\bphotos?\b/i,
+  /\b(highlight )?videos?\b/i,
+  /\bprofile\b/i,
+  /\bbio\b/i,
+  /\baccount\b/i,
+  /\bsettings?\b/i,
+  /\bdiscover(y)?\b/i,
 ]
 
 // ── Hockey knowledge (rules / explanations / how-to) ──
@@ -236,6 +275,20 @@ export function classifyEntityType(query: string): RoutedIntent {
   const selfProfile = anyMatch(SELF_PROFILE, q)
   if (selfProfile.length > 0) {
     return { entity_type: 'self_profile', confidence: 'high', matched_signals: selfProfile }
+  }
+
+  // 3b. Platform / feature help — a help-question form AND a HOCKIA feature
+  //     noun. Beats entity search ("how do I post an opportunity" is a
+  //     how-to, not an opportunity search) but loses to self_advice /
+  //     self_profile above (which own "improve / what's in my profile").
+  const helpForm = anyMatch(HELP_QUESTION_FORM, q)
+  const featureNoun = anyMatch(FEATURE_NOUNS, q)
+  if (helpForm.length > 0 && featureNoun.length > 0) {
+    return {
+      entity_type: 'platform_help',
+      confidence: 'high',
+      matched_signals: [...helpForm, ...featureNoun],
+    }
   }
 
   // 4. Hockey knowledge (rules / how does X work)

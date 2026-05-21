@@ -171,7 +171,7 @@ for (const [role, scenarios] of Object.entries(SCENARIOS_BY_ROLE)) {
         // On desktop the floating button isn't shown, so fall back to /discover.
         await page.goto('/home')
         await page.waitForLoadState('domcontentloaded')
-        const aiBtn = page.getByRole('button', { name: 'Open HOCKIA AI' })
+        const aiBtn = page.getByRole('button', { name: 'Open Hockia AI' })
         if (await aiBtn.isVisible({ timeout: 3_000 }).catch(() => false)) {
           await aiBtn.click()
           await page.waitForURL('**/discover', { timeout: 10_000 })
@@ -254,7 +254,7 @@ test.describe.serial('@qa Phase 0 staging UI — regression', () => {
 
     await page.goto('/home')
     await page.waitForLoadState('domcontentloaded')
-    const aiBtn = page.getByRole('button', { name: 'Open HOCKIA AI' })
+    const aiBtn = page.getByRole('button', { name: 'Open Hockia AI' })
     await expect(aiBtn).toBeVisible({ timeout: 10_000 })
     await aiBtn.click()
     await page.waitForURL('**/discover', { timeout: 10_000 })

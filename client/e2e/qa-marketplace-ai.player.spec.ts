@@ -62,7 +62,7 @@ test.describe('@qa marketplace + AI floating button', () => {
     await page.goto('/home')
     await page.waitForLoadState('networkidle', { timeout: 20_000 }).catch(() => {})
     await page.getByRole('button', { name: /^accept$/i }).click({ timeout: 5_000 }).catch(() => {})
-    await expect(page.getByRole('button', { name: 'Open HOCKIA AI' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Open Hockia AI' })).toBeVisible()
     await page.screenshot({ path: 'test-results/qa-home-clean.png', fullPage: false })
   })
 
@@ -80,7 +80,7 @@ test.describe('@qa marketplace + AI floating button', () => {
     // a logged-in profile — the AI floating button is a deterministic signal
     // for that since both the AI button and the header cluster gate on
     // `user && profile`.
-    await expect(page.getByRole('button', { name: 'Open HOCKIA AI' })).toBeVisible({ timeout: 10_000 })
+    await expect(page.getByRole('button', { name: 'Open Hockia AI' })).toBeVisible({ timeout: 10_000 })
 
     // Marketplace button — exact aria-label match. Desktop has its own
     // Marketplace button at lg+, but at the mobile-player viewport the
@@ -89,9 +89,9 @@ test.describe('@qa marketplace + AI floating button', () => {
     await expect(page.getByRole('button', { name: 'Marketplace', exact: true })).toBeVisible()
 
     // Legacy header Discover (Sparkles) button is gone on mobile. Desktop
-    // keeps it under aria-label="HOCKIA AI"; both names absent on mobile.
+    // keeps it under aria-label="Hockia AI"; both names absent on mobile.
     await expect(page.getByRole('button', { name: 'Discover', exact: true })).toHaveCount(0)
-    await expect(page.locator('header').getByRole('button', { name: 'HOCKIA AI', exact: true })).toHaveCount(0)
+    await expect(page.locator('header').getByRole('button', { name: 'Hockia AI', exact: true })).toHaveCount(0)
   })
 
   test('Marketplace renders correctly', async ({ page }) => {
