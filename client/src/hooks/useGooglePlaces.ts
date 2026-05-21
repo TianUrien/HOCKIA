@@ -34,7 +34,12 @@ export function useGooglePlaces() {
     }
 
     if (!optionsSet) {
-      setOptions({ key: apiKey, v: 'weekly' })
+      // Pin place names to English. Without an explicit language, Google
+      // localises results to the browser locale — e.g. a Spanish-locale
+      // browser returns "Londres"/"Amberes" instead of "London"/"Antwerp",
+      // which then gets stored verbatim in location_city. English also
+      // keeps resolved country names aligned with the `countries` table.
+      setOptions({ key: apiKey, v: 'weekly', language: 'en' })
       optionsSet = true
     }
 

@@ -131,7 +131,10 @@ export default function OpportunityCard({
   // Identity — club cards lead with the club; coach cards lead with the coach.
   const publisherName = cardType === 'club' ? (worldClub?.clubName || clubName) : clubName
   const publisherLogo = cardType === 'club' ? (worldClub?.avatarUrl || clubLogo) : clubLogo
-  const locationText = [vacancy.location_city, vacancy.location_country].filter(Boolean).join(', ')
+  const locationText = [vacancy.location_city, vacancy.location_country]
+    .map((part) => part?.trim())
+    .filter(Boolean)
+    .join(', ')
   const descriptionExcerpt = vacancy.description?.trim() || ''
 
   return (
@@ -173,8 +176,18 @@ export default function OpportunityCard({
           </div>
 
           <div className="min-w-0 flex-1">
-            <h2 className="line-clamp-2 text-[17px] font-bold leading-snug text-gray-900 transition-colors group-hover:text-[#8026FA]">
-              {vacancy.title}
+            {/* The title is the keyboard-/screen-reader-operable activator
+                for the tile: it opens the same detail view as a pointer
+                tap anywhere on the card. Kept as a real <button> so the
+                tile is reachable without a mouse. */}
+            <h2 className="text-[17px] font-bold leading-snug">
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onViewDetails() }}
+                className="line-clamp-2 w-full text-left text-gray-900 transition-colors hover:text-[#8026FA] group-hover:text-[#8026FA] rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8026FA] focus-visible:ring-offset-2"
+              >
+                {vacancy.title}
+              </button>
             </h2>
             <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
               <button
