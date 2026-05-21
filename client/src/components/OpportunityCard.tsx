@@ -1,9 +1,8 @@
-import { MapPin, Calendar, Home, Car, Globe as GlobeIcon, Plane, Utensils, Briefcase, Shield, GraduationCap, Share2, Award, DollarSign, Dumbbell } from 'lucide-react'
+import { MapPin, Calendar, Home, Car, Globe as GlobeIcon, Plane, Utensils, Briefcase, Shield, GraduationCap, Award, DollarSign, Dumbbell, ChevronRight } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import type { Vacancy } from '../lib/supabase'
-import StorageImage from './StorageImage'
+import Avatar from './Avatar'
 import { opportunityGenderToTeamLabel } from '@/lib/hockeyCategories'
-import { getShareOrigin } from '@/lib/profileShare'
 
 export interface WorldClubInfo {
   id: string
@@ -41,7 +40,7 @@ const BENEFIT_CONFIG: Record<string, { icon: React.ComponentType<{ className?: s
   equipment: { icon: Dumbbell, label: 'Equipment', iconColor: 'text-teal-500' },
 }
 
-const MAX_VISIBLE_PERKS = 4
+const MAX_VISIBLE_PERKS = 3
 
 function getInitials(name: string): string {
   return name.split(/\s+/).filter(Boolean).map(w => w[0]).join('').slice(0, 2).toUpperCase()
@@ -60,12 +59,17 @@ function getCardType(publisherRole: string | null | undefined, worldClub: WorldC
 }
 
 /**
- * OpportunityCard — compact, scannable list card. The whole card is one
- * tap target → the opportunity detail page (where Apply lives). No Apply
- * or View buttons here: the list is for browsing and comparing.
+ * OpportunityCard — an App Store-style editorial bento tile. The whole
+ * tile is one tap target → the opportunity detail view (where Apply
+ * lives); no Apply/View buttons in the feed.
  *
- * The 3px top accent is a coded signal — emerald = player opening, blue =
- * coach opening (legend on the page); mirrored by a visually-hidden label.
+ * Tiles are intentionally NOT uniform height: a richly-completed
+ * opportunity (description, recruiting-for, benefits) renders a taller
+ * tile than a sparse one. The page lays them out in a masonry grid so
+ * the feed reads as a dynamic bento, not a repetitive list.
+ *
+ * Opening type is coded — emerald = player opening, blue = coach
+ * opening — and stated in words in the eyebrow label.
  */
 export default function OpportunityCard({
   vacancy,
@@ -85,18 +89,12 @@ export default function OpportunityCard({
   const isPlayerOpening = vacancy.opportunity_type === 'player'
   const isImmediate = !vacancy.start_date
 
-  const accentBar = isPlayerOpening ? 'bg-emerald-500' : 'bg-blue-500'
+  // Coded opening type — matches HOCKIA's app-wide role colours
+  // (RoleBadge): player = blue (#2563EB), coach = teal-green (#0D9488).
+  const accent = isPlayerOpening
+    ? { dot: 'bg-blue-600', text: 'text-blue-600', ring: 'bg-blue-600' }
+    : { dot: 'bg-teal-600', text: 'text-teal-600', ring: 'bg-teal-600' }
   const openingLabel = isPlayerOpening ? 'Player opening' : 'Coach opening'
-
-  const handleShareClick = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    const url = `${getShareOrigin()}/opportunities/${vacancy.id}`
-    if (navigator.share) {
-      navigator.share({ title: vacancy.title, url }).catch(() => {})
-    } else {
-      navigator.clipboard.writeText(url).catch(() => {})
-    }
-  }
 
   const handlePublisherClick = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -114,16 +112,17 @@ export default function OpportunityCard({
     return new Date(dateString).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
   }
 
-  // Key pills — team category + position.
+  // Key pills — team category + position. Both are player-only concepts,
+  // so they are suppressed on coach openings even if a legacy row carries
+  // stale values (mirrors OpportunityDetailView).
   const pills: string[] = []
   if (isPlayerOpening && vacancy.gender) {
     const teamLabel = opportunityGenderToTeamLabel(vacancy.gender)
     if (teamLabel) pills.push(teamLabel.replace(' Team', ''))
   }
-  if (vacancy.position) {
+  if (isPlayerOpening && vacancy.position) {
     pills.push(vacancy.position.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()))
   }
-  if (pills.length === 0) pills.push(isPlayerOpening ? 'Player' : 'Coach')
 
   const benefits = vacancy.benefits || []
   const visibleBenefits = benefits.slice(0, MAX_VISIBLE_PERKS)
@@ -133,150 +132,168 @@ export default function OpportunityCard({
   const publisherName = cardType === 'club' ? (worldClub?.clubName || clubName) : clubName
   const publisherLogo = cardType === 'club' ? (worldClub?.avatarUrl || clubLogo) : clubLogo
   const locationText = [vacancy.location_city, vacancy.location_country].filter(Boolean).join(', ')
+  const descriptionExcerpt = vacancy.description?.trim() || ''
 
   return (
-    <div
-      onClick={onViewDetails}
-      className="group flex flex-col bg-white border border-gray-200 rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 hover:shadow-md hover:border-gray-300"
-    >
-      {/* Coded accent — emerald = player opening, blue = coach opening. */}
-      <div className={`h-[3px] flex-shrink-0 ${accentBar}`} aria-hidden="true" />
-      <span className="sr-only">{openingLabel}</span>
+    <div className="animate-fadeSlideIn break-inside-avoid mb-4">
+      <div
+        onClick={onViewDetails}
+        className="group relative flex flex-col cursor-pointer rounded-2xl border border-gray-100 bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_10px_28px_-14px_rgba(0,0,0,0.12)] transition-all duration-200 ease-out hover:-translate-y-1 hover:border-gray-200 hover:shadow-[0_4px_10px_rgba(0,0,0,0.05),0_22px_44px_-16px_rgba(0,0,0,0.22)] active:translate-y-0 active:scale-[0.985]"
+      >
+        {/* ── Header: opening type · country ── */}
+        <div className="flex items-center justify-between gap-2">
+          <span className={`inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider ${accent.text}`}>
+            <span className={`h-2 w-2 rounded-full ${accent.dot}`} aria-hidden="true" />
+            {openingLabel}
+          </span>
+          {vacancy.location_country && (
+            <span className="inline-flex flex-shrink-0 items-center gap-1 rounded-full border border-gray-100 bg-gray-50 py-1 pl-2 pr-1 text-[12px] font-medium text-gray-600">
+              {countryFlag && <span aria-hidden="true">{countryFlag}</span>}
+              <span className="max-w-[110px] truncate">{vacancy.location_country}</span>
+              <ChevronRight className="h-3.5 w-3.5 text-gray-400" />
+            </span>
+          )}
+        </div>
 
-      <div className="p-4">
-        {/* ── Identity strip: poster · country · share ── */}
-        <div className="flex items-start gap-2">
-          <button
-            type="button"
-            onClick={handlePublisherClick}
-            className="flex min-w-0 flex-1 items-center gap-2 text-left"
-          >
-            {publisherLogo ? (
-              <StorageImage
-                src={publisherLogo}
-                alt={publisherName}
-                className="w-10 h-10 flex-shrink-0 rounded-lg object-cover ring-1 ring-gray-200"
-              />
-            ) : (
-              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-gray-100 text-xs font-bold text-gray-500">
-                {getInitials(publisherName)}
-              </div>
-            )}
-            <span className="flex min-w-0 items-center gap-1.5">
-              <span className="truncate text-[13px] font-semibold text-gray-900 transition-colors group-hover:text-[#8026FA]">
+        {/* ── Identity: logo · title · creator ── */}
+        <div className="mt-4 flex items-start gap-3.5">
+          <div className="relative flex-shrink-0">
+            <Avatar
+              src={publisherLogo}
+              initials={getInitials(publisherName)}
+              alt={publisherName}
+              size="lg"
+              role={publisherRole}
+              className="ring-1 ring-black/5"
+            />
+            <span
+              className={`absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full ring-2 ring-white ${accent.ring}`}
+              aria-hidden="true"
+            />
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <h2 className="line-clamp-2 text-[17px] font-bold leading-snug text-gray-900 transition-colors group-hover:text-[#8026FA]">
+              {vacancy.title}
+            </h2>
+            <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
+              <button
+                type="button"
+                onClick={handlePublisherClick}
+                className="max-w-full truncate text-[13px] font-semibold text-gray-700 hover:text-[#8026FA]"
+              >
                 {publisherName}
-              </span>
+              </button>
               <span className="flex-shrink-0 rounded border border-gray-200 bg-gray-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-gray-500">
                 {isCoachPublisher ? 'Coach' : 'Club'}
               </span>
-            </span>
-          </button>
-
-          <div className="flex flex-shrink-0 items-center gap-1">
-            {vacancy.location_country && (
-              <span className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[11px] text-gray-600">
-                {countryFlag && <span aria-hidden="true">{countryFlag}</span>}
-                <span className="max-w-[88px] truncate">{vacancy.location_country}</span>
-              </span>
-            )}
-            <button
-              type="button"
-              onClick={handleShareClick}
-              className="-mr-1 flex h-9 w-9 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
-              aria-label="Share opportunity"
-            >
-              <Share2 className="w-[18px] h-[18px]" />
-            </button>
+            </div>
           </div>
         </div>
 
-        {/* ── Title ── */}
-        <h2 className="mt-3 line-clamp-2 text-base font-bold leading-snug text-gray-900 transition-colors group-hover:text-[#8026FA]">
-          {vacancy.title}
-        </h2>
+        {/* ── Recruiting-for — its own full-width row so the club name is
+             always readable (no aggressive truncation). Coach-posted
+             listings only; a club posts for itself. ── */}
+        {cardType === 'coach_club' && worldClub && (
+          <button
+            type="button"
+            onClick={handleWorldClubClick}
+            className="mt-3 flex w-full items-center gap-2.5 rounded-xl border border-gray-100 bg-gray-50 px-3 py-2 text-left transition-colors hover:border-[#8026FA]/30 hover:bg-[#8026FA]/[0.04]"
+          >
+            <Avatar
+              src={worldClub.avatarUrl}
+              initials={getInitials(worldClub.clubName)}
+              alt={worldClub.clubName}
+              size="sm"
+              role="club"
+            />
+            <span className="min-w-0 flex-1">
+              <span className="block text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+                Recruiting for
+              </span>
+              <span className="block text-[13.5px] font-semibold leading-snug text-gray-800 group-hover:text-gray-900">
+                {worldClub.clubName}
+              </span>
+            </span>
+            <ChevronRight className="h-4 w-4 flex-shrink-0 text-gray-400" />
+          </button>
+        )}
+        {cardType === 'coach_club' && !worldClub && publisherOrganization && (
+          <div className="mt-3 flex w-full items-center gap-2.5 rounded-xl border border-gray-100 bg-gray-50 px-3 py-2">
+            <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gray-200 text-gray-500">
+              <Award className="h-4 w-4" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+                Recruiting for
+              </span>
+              <span className="block text-[13.5px] font-semibold leading-snug text-gray-800">
+                {publisherOrganization}
+              </span>
+            </span>
+          </div>
+        )}
 
         {/* ── Key pills ── */}
-        <div className="mt-2 flex flex-wrap gap-1.5">
-          {pills.map((pill) => (
-            <span
-              key={pill}
-              className="inline-flex items-center rounded-full border border-[#8026FA]/10 bg-[#8026FA]/[0.06] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#8026FA]"
-            >
-              {pill}
-            </span>
-          ))}
-        </div>
-
-        <div className="my-3 border-t border-gray-100" />
-
-        {/* ── Recruiting-for + location + start ── */}
-        <div className="space-y-1.5 text-[13px] text-gray-500">
-          {cardType === 'coach_club' && worldClub && (
-            <p className="flex items-center gap-1">
-              <span className="flex-shrink-0 text-gray-400">↳</span>
-              <span className="flex-shrink-0">Recruiting for:</span>
-              <button
-                type="button"
-                onClick={handleWorldClubClick}
-                className="flex min-w-0 items-center gap-1 font-medium text-gray-700 hover:text-[#8026FA]"
+        {pills.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {pills.map((pill) => (
+              <span
+                key={pill}
+                className="inline-flex items-center rounded-full border border-[#8026FA]/10 bg-[#8026FA]/[0.06] px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#8026FA]"
               >
-                {worldClub.avatarUrl ? (
-                  <StorageImage
-                    src={worldClub.avatarUrl}
-                    alt={worldClub.clubName}
-                    className="w-4 h-4 flex-shrink-0 rounded-full object-cover"
-                  />
-                ) : (
-                  <Award className="w-3.5 h-3.5 flex-shrink-0 text-gray-400" />
-                )}
-                <span className="truncate">{worldClub.clubName}</span>
-              </button>
-            </p>
-          )}
-          {cardType === 'coach_club' && !worldClub && publisherOrganization && (
-            <p className="truncate">
-              <span className="text-gray-400">↳</span> Recruiting for:{' '}
-              <span className="font-medium text-gray-700">{publisherOrganization}</span>
-            </p>
-          )}
-          {locationText && (
-            <p className="flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
-              <span className="truncate">{locationText}</span>
-            </p>
-          )}
-          <p className="flex items-center gap-1.5">
-            <Calendar className="w-3.5 h-3.5 flex-shrink-0" />
-            {isImmediate ? 'Starts immediately' : `Starts ${formatDate(vacancy.start_date)}`}
+                {pill}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* ── Description excerpt — only on opportunities that have one,
+             so richer listings naturally produce taller tiles. ── */}
+        {descriptionExcerpt && (
+          <p className="mt-3 line-clamp-2 text-[13px] leading-relaxed text-gray-500">
+            {descriptionExcerpt}
           </p>
+        )}
+
+        {/* ── Meta: location · start (always present) ── */}
+        <div className="my-3.5 border-t border-gray-100" />
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[13px] text-gray-500">
+          {locationText && (
+            <span className="flex min-w-0 items-center gap-1.5">
+              <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
+              <span className="truncate">{locationText}</span>
+            </span>
+          )}
+          <span className="flex items-center gap-1.5">
+            <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
+            {isImmediate ? 'Starts immediately' : `Starts ${formatDate(vacancy.start_date)}`}
+          </span>
         </div>
 
         {/* ── Benefits ── */}
         {benefits.length > 0 && (
-          <>
-            <div className="my-3 border-t border-gray-100" />
-            <div className="flex flex-wrap items-center gap-1.5">
-              {visibleBenefits.map((benefit) => {
-                const config = BENEFIT_CONFIG[benefit.toLowerCase()]
-                if (!config) return null
-                const Icon = config.icon
-                return (
-                  <span
-                    key={benefit}
-                    className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-2 py-1 text-[11px] font-medium text-gray-600"
-                  >
-                    <Icon className={`w-3.5 h-3.5 ${config.iconColor}`} />
-                    {config.label}
-                  </span>
-                )
-              })}
-              {extraBenefits > 0 && (
-                <span className="rounded-full border border-gray-200 bg-gray-50 px-2 py-1 text-[11px] font-medium text-gray-500">
-                  +{extraBenefits} more
+          <div className="mt-3 flex flex-wrap items-center gap-1.5">
+            {visibleBenefits.map((benefit) => {
+              const config = BENEFIT_CONFIG[benefit.toLowerCase()]
+              if (!config) return null
+              const Icon = config.icon
+              return (
+                <span
+                  key={benefit}
+                  className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-[11px] font-medium text-gray-600"
+                >
+                  <Icon className={`h-3.5 w-3.5 ${config.iconColor}`} />
+                  {config.label}
                 </span>
-              )}
-            </div>
-          </>
+              )
+            })}
+            {extraBenefits > 0 && (
+              <span className="rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-[11px] font-medium text-gray-500">
+                +{extraBenefits} more
+              </span>
+            )}
+          </div>
         )}
       </div>
     </div>

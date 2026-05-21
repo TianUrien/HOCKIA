@@ -616,7 +616,7 @@ export default function OpportunitiesPage() {
 
           {/* Content */}
           {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="columns-1 md:columns-2 gap-4">
               {[1, 2, 3, 4].map(i => (
                 <OpportunityCardSkeleton key={i} />
               ))}
@@ -681,21 +681,12 @@ export default function OpportunitiesPage() {
               )}
             </div>
           ) : (
-            /* Flat newest-first opportunity feed — 2-up grid on desktop */
-            <>
-              {/* Legend — the card's top accent strip is a coded signal. */}
-              <div className="flex items-center gap-4 mb-3 text-xs text-gray-500">
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" aria-hidden="true" />
-                  Player opening
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-blue-500" aria-hidden="true" />
-                  Coach opening
-                </span>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {filteredOpportunities.map((vacancy) => {
+            /* Flat newest-first feed — App Store-style masonry bento.
+               Tiles flow into columns at their natural height, so a
+               richly-completed opportunity reads taller than a sparse
+               one and the feed never looks like a repetitive list. */
+            <div className="columns-1 md:columns-2 gap-4">
+              {filteredOpportunities.map((vacancy) => {
                 const club = clubs[vacancy.club_id]
                 const org = vacancy.organization_name || club?.current_club || null
 
@@ -717,8 +708,7 @@ export default function OpportunitiesPage() {
                   />
                 )
               })}
-              </div>
-            </>
+            </div>
           )}
         </main>
 
