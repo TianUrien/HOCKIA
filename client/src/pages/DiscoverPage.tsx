@@ -259,14 +259,9 @@ export default function DiscoverPage() {
               <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#8026FA] to-[#924CEC] flex items-center justify-center mb-4 shadow-lg shadow-[#8026FA]/20">
                 <Sparkles className="w-7 h-7 text-white" />
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-1">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">
                 {firstName ? `Hi ${firstName}!` : 'Discover'}
               </h2>
-              <p className="text-sm text-gray-500 text-center mb-4 max-w-xs">
-                {firstName
-                  ? 'What can I help you with today? I know your HOCKIA profile, so I can give answers tailored to you.'
-                  : 'Ask me anything — search for players, coaches, clubs, and brands using natural language.'}
-              </p>
               {/* Beta signal — lightweight, honest, not alarming. */}
               <div className="flex items-start gap-2 mb-8 max-w-xs px-3 py-2 rounded-xl bg-gray-100/80">
                 <Info className="w-3.5 h-3.5 text-gray-400 flex-shrink-0 mt-px" aria-hidden="true" />
