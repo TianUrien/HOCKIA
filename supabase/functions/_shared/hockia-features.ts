@@ -109,8 +109,11 @@ export const HOCKIA_FEATURES: HockiaFeature[] = [
     key: 'my_network',
     label: 'My Network',
     summary:
-      'My Network is your social hub — connections, references, comments and posts on your own profile — inside your dashboard.',
-    route: '/dashboard/profile/community',
+      'My Network is your social hub — connections, comments and posts on your own profile (plus references for players and coaches) — inside your dashboard.',
+    // Routes to the Connections section: it is a valid dashboard section
+    // for every role (the unified "community" section does not exist on the
+    // club dashboard, so it cannot be the shared destination).
+    route: '/dashboard/profile/friends',
     roles: [],
   },
   {
