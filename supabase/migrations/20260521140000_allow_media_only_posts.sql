@@ -154,3 +154,15 @@ BEGIN
   RETURN jsonb_build_object('success', true);
 END;
 $function$;
+
+-- The user_posts table also enforced non-empty content with a CHECK
+-- constraint (user_posts_content_not_empty: char_length(trim(content)) > 0).
+-- Replace it so a row is valid with text OR at least one media item —
+-- otherwise the RPC's media-only INSERT/UPDATE is rejected at the table.
+ALTER TABLE public.user_posts DROP CONSTRAINT IF EXISTS user_posts_content_not_empty;
+ALTER TABLE public.user_posts DROP CONSTRAINT IF EXISTS user_posts_content_or_media;
+ALTER TABLE public.user_posts ADD CONSTRAINT user_posts_content_or_media
+  CHECK (
+    char_length(trim(both from content)) > 0
+    OR (images IS NOT NULL AND jsonb_typeof(images) = 'array' AND jsonb_array_length(images) > 0)
+  );
