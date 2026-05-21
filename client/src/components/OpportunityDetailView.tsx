@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { X, MapPin, Calendar, Clock, Home, Car, Globe as GlobeIcon, Plane, Utensils, Briefcase, Shield, GraduationCap, Mail, Phone, CheckCircle, AlertTriangle, DollarSign, Dumbbell, Award, Share2, Flag, Users } from 'lucide-react'
+import { X, MapPin, Calendar, Clock, Home, Car, Globe as GlobeIcon, Plane, Utensils, Briefcase, Shield, GraduationCap, Mail, Phone, CheckCircle, AlertTriangle, DollarSign, Dumbbell, Award, Share2, Flag, Users, Info } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import type { Vacancy } from '../lib/supabase'
 import { Avatar, StorageImage } from './index'
@@ -8,6 +8,8 @@ import type { WorldClubInfo } from './OpportunityCard'
 import { opportunityGenderToTeamLabel } from '@/lib/hockeyCategories'
 import { getShareOrigin } from '@/lib/profileShare'
 import { useAuthStore } from '@/lib/auth'
+import { useCountries } from '@/hooks/useCountries'
+import { checkOpportunityEligibility } from '@/lib/opportunityEligibility'
 
 interface VacancyDetailViewProps {
   vacancy: Vacancy
@@ -76,8 +78,15 @@ export default function VacancyDetailView({
   hideClubProfileButton = false,
 }: VacancyDetailViewProps) {
   const navigate = useNavigate()
-  const { user } = useAuthStore()
+  const { user, profile } = useAuthStore()
+  const { countries } = useCountries()
   const [isVisible, setIsVisible] = useState(false)
+
+  // Application eligibility — EU passport + gender/team category. Checked
+  // here so an ineligible user still reads the full opportunity but can't
+  // submit; the server trigger is the hard backstop. Missing profile data
+  // never blocks — it surfaces a "complete your profile" nudge instead.
+  const eligibility = checkOpportunityEligibility(vacancy, profile, countries)
   // Publisher viewing their own listing — used to swap the dead-end
   // "Close" CTA for a "View applicants" deep link. QA-flagged the
   // detail sheet's only action being a literal Close button when the
@@ -429,6 +438,16 @@ export default function VacancyDetailView({
                   <CheckCircle className="w-4 h-4" />
                   Application Submitted
                 </div>
+              ) : onApply && !eligibility.eligible ? (
+                // Ineligible — the opportunity stays fully readable, but
+                // Apply is replaced by a short, non-judgmental reason.
+                <div className="flex-1 flex items-start gap-2.5 px-4 py-3 rounded-xl border border-amber-200 bg-amber-50">
+                  <Info className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                  <div className="text-sm">
+                    <p className="font-semibold text-amber-900">You can&rsquo;t apply to this opportunity</p>
+                    <p className="text-amber-800 mt-0.5">{eligibility.reason}</p>
+                  </div>
+                </div>
               ) : onApply ? (
                 <Button onClick={onApply} className="flex-1 rounded-xl py-3.5 bg-gradient-to-r from-[#8026FA] to-[#924CEC] hover:opacity-90 text-base font-semibold">
                   Apply Now &rsaquo;
@@ -444,6 +463,25 @@ export default function VacancyDetailView({
                 </Button>
               )}
             </div>
+
+            {/* Eligibility nudge — shown when the user CAN apply but their
+                profile is missing data we'd use to confirm a fit. Never
+                blocks; just points them at the gap. */}
+            {onApply && !hasApplied && !isPublisher && eligibility.eligible && eligibility.incompleteProfile && (
+              <div className="mt-3 flex items-start gap-2.5 px-4 py-3 rounded-xl border border-blue-100 bg-blue-50">
+                <Info className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
+                <div className="text-sm text-blue-900">
+                  <span>{eligibility.incompleteProfile} </span>
+                  <button
+                    type="button"
+                    onClick={() => { onClose(); navigate('/dashboard/profile') }}
+                    className="font-semibold underline underline-offset-2 hover:text-blue-700"
+                  >
+                    Complete profile
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Timestamp */}
             <p className="mt-5 text-xs text-gray-400 text-center">

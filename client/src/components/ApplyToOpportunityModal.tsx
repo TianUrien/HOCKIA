@@ -126,6 +126,17 @@ export default function ApplyToVacancyModal({
           } else {
             addToast('You cannot apply to this opportunity due to role restrictions.', 'error')
           }
+        } else if (insertError.code === 'P0001') {
+          // The check_application_eligibility trigger rejected this
+          // application (EU passport / gender mismatch). The raised
+          // message is already user-facing — surface it as-is. This is
+          // an expected rejection, not a fault, so it is not reported
+          // to Sentry. The UI normally blocks ineligible users before
+          // they reach here; this is the server-side backstop.
+          onError?.(vacancy.id)
+          const msg = insertError.message || 'You are not eligible to apply to this opportunity.'
+          setError(msg)
+          addToast(msg, 'error')
         } else {
           logger.error('Error applying to vacancy:', insertError)
           reportSupabaseError('vacancies.apply_error', insertError, {

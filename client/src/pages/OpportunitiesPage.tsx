@@ -77,7 +77,7 @@ function FilterDropdown({ label, value, options, onChange, icon }: FilterDropdow
         onClick={() => setOpen(!open)}
         className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium border transition-colors whitespace-nowrap ${
           isActive
-            ? 'bg-[#8026FA]/5 border-[#8026FA]/20 text-[#8026FA]'
+            ? 'bg-[#8026FA]/10 border-[#8026FA] text-[#8026FA] font-semibold'
             : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
         }`}
       >
@@ -387,23 +387,6 @@ export default function OpportunitiesPage() {
     }
   }, [fetchVacancies, fetchUserApplications, isSyncingNewVacancies, markSeen, refreshOpportunityNotifications])
 
-  const handleApplyClick = (vacancy: Vacancy) => {
-    setSelectedVacancy(vacancy)
-    if (!user) {
-      setShowSignInPrompt(true)
-    } else if (
-      (profile?.role === 'player' || profile?.role === 'coach') &&
-      !userApplications.includes(vacancy.id) &&
-      // Self-apply guard: a publisher must never be able to open the
-      // Apply modal on their own opportunity. canShowApplyButton hides
-      // the CTA, but this guard prevents any future code path that
-      // bypasses the visible button (deep links, keyboard, etc.).
-      vacancy.club_id !== user.id
-    ) {
-      setShowApplyModal(true)
-    }
-  }
-
   const canShowApplyButton = (vacancy: Vacancy) => {
     if (userApplications.includes(vacancy.id)) return false
     // Self-apply guard — the publisher (coach in recruiter mode or club)
@@ -590,6 +573,18 @@ export default function OpportunitiesPage() {
               </button>
             )}
 
+            {/* Clear all — shown once any filter is applied. */}
+            {hasActiveFilters && (
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="inline-flex items-center gap-1 px-2.5 py-2 rounded-lg text-sm font-medium text-gray-500 hover:text-[#8026FA] hover:bg-[#8026FA]/5 transition-colors whitespace-nowrap"
+              >
+                <X className="w-3.5 h-3.5" />
+                Clear all
+              </button>
+            )}
+
             {/* Sort indicator */}
             <div className="ml-auto flex items-center gap-1.5 text-sm text-gray-500">
               <span className="text-base">↕</span>
@@ -687,16 +682,22 @@ export default function OpportunitiesPage() {
             </div>
           ) : (
             /* Flat newest-first opportunity feed — 2-up grid on desktop */
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredOpportunities.map((vacancy) => {
+            <>
+              {/* Legend — the card's top accent strip is a coded signal. */}
+              <div className="flex items-center gap-4 mb-3 text-xs text-gray-500">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" aria-hidden="true" />
+                  Player opening
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-blue-500" aria-hidden="true" />
+                  Coach opening
+                </span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {filteredOpportunities.map((vacancy) => {
                 const club = clubs[vacancy.club_id]
-                const isApplied = userApplications.includes(vacancy.id)
                 const org = vacancy.organization_name || club?.current_club || null
-                // Phase 3d — Women + Girls map to women's league;
-                // Men + Boys to men's; Mixed defaults to first available.
-                const leagueDivision = (vacancy.gender === 'Women' || vacancy.gender === 'Girls')
-                  ? club?.womens_league_division ?? club?.mens_league_division ?? null
-                  : club?.mens_league_division ?? club?.womens_league_division ?? null
 
                 return (
                   <OpportunityCard
@@ -707,18 +708,17 @@ export default function OpportunitiesPage() {
                     clubId={vacancy.club_id}
                     publisherRole={club?.role}
                     publisherOrganization={org}
-                    leagueDivision={leagueDivision}
                     worldClub={vacancy.world_club_id ? worldClubsMap[vacancy.world_club_id] ?? null : null}
+                    countryFlag={getFlagEmoji(vacancy.location_country)}
                     onViewDetails={() => {
                       setSelectedVacancy(vacancy)
                       setShowDetailView(true)
                     }}
-                    onApply={canShowApplyButton(vacancy) ? () => handleApplyClick(vacancy) : undefined}
-                    hasApplied={isApplied}
                   />
                 )
               })}
-            </div>
+              </div>
+            </>
           )}
         </main>
 

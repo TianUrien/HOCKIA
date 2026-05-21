@@ -65,47 +65,36 @@ export function ConversationSkeleton() {
 }
 
 // Opportunity Card Skeleton (formerly VacancyCardSkeleton)
+/** Matches the compact OpportunityCard: accent strip, title, recruiter
+ *  row, meta, perk pills, footer actions. */
 export function OpportunityCardSkeleton() {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-4">
-      {/* Header */}
-      <div className="flex items-start justify-between">
-        <div className="flex-1 space-y-3">
-          <Skeleton width="60%" height={24} />
-          <div className="flex items-center gap-2">
-            <Skeleton variant="circular" width={40} height={40} />
-            <Skeleton width="30%" height={16} />
+    <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+      <Skeleton width="100%" height={3} className="rounded-none" />
+      <div className="p-4 space-y-3">
+        {/* Title */}
+        <Skeleton width="75%" height={20} />
+        {/* Recruiter row */}
+        <div className="flex items-center gap-2.5">
+          <Skeleton width={36} height={36} className="rounded-lg" />
+          <div className="flex-1 space-y-1.5">
+            <Skeleton width="55%" height={13} />
+            <Skeleton width="40%" height={11} />
           </div>
         </div>
-        <Skeleton width={80} height={24} className="rounded-full" />
-      </div>
-
-      {/* Details */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-2">
-          <Skeleton variant="circular" width={16} height={16} />
-          <Skeleton width="50%" height={14} />
+        {/* Descriptor + meta */}
+        <Skeleton width="50%" height={13} />
+        <Skeleton width="65%" height={12} />
+        {/* Perk pills */}
+        <div className="flex gap-1.5">
+          <Skeleton width={72} height={24} className="rounded-full" />
+          <Skeleton width={60} height={24} className="rounded-full" />
         </div>
-        <div className="flex items-center gap-2">
-          <Skeleton variant="circular" width={16} height={16} />
-          <Skeleton width="40%" height={14} />
+        {/* Footer */}
+        <div className="flex items-center gap-2 pt-3 border-t border-gray-100">
+          <Skeleton width="100%" height={40} className="rounded-lg" />
+          <Skeleton width="100%" height={40} className="rounded-lg" />
         </div>
-        <div className="flex items-center gap-2">
-          <Skeleton variant="circular" width={16} height={16} />
-          <Skeleton width="45%" height={14} />
-        </div>
-      </div>
-
-      {/* Benefits */}
-      <div className="flex gap-2">
-        <Skeleton width={100} height={28} className="rounded-full" />
-        <Skeleton width={120} height={28} className="rounded-full" />
-      </div>
-
-      {/* Footer */}
-      <div className="flex items-center justify-between pt-4 border-t">
-        <Skeleton width="30%" height={14} />
-        <Skeleton width={100} height={36} className="rounded-lg" />
       </div>
     </div>
   )
