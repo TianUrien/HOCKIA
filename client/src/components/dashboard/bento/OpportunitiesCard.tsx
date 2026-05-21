@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Briefcase, FileText, Zap } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Briefcase, FileText, Zap, ChevronRight } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { cn } from '@/lib/utils'
@@ -34,6 +35,7 @@ interface OpportunitiesCardProps {
 const ACTIVE_STATUSES = ['pending', 'shortlisted', 'maybe'] as const
 
 export default function OpportunitiesCard({ ownerProfileId, onViewOpportunities, fullWidth = false, role = 'player' }: OpportunitiesCardProps) {
+  const navigate = useNavigate()
   const [activeCount, setActiveCount] = useState<number | null>(null)
 
   useEffect(() => {
@@ -80,14 +82,19 @@ export default function OpportunitiesCard({ ownerProfileId, onViewOpportunities,
             persistence + toast — no extra wiring needed here. */}
         <AvailabilityToggleStrip role={role} />
 
-        {/* Applications stat row. Single line; tap-to-navigate handled
-            by the CTA at the bottom of the card. */}
-        <div className="flex items-center gap-3 rounded-xl border border-gray-100 bg-gray-50/60 px-3 py-2.5">
+        {/* Applications row — taps through to the feed filtered to the
+            user's own applications (?applied=mine). The bottom CTA browses
+            all opportunities; this row is the "my applications" path. */}
+        <button
+          type="button"
+          onClick={() => navigate('/opportunities?applied=mine')}
+          className="flex w-full items-center gap-3 rounded-xl border border-gray-100 bg-gray-50/60 px-3 py-2.5 text-left transition-colors hover:border-gray-200 hover:bg-gray-100"
+        >
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white shadow-sm">
             <FileText className="h-4 w-4 text-[#8026FA]" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-xs text-gray-500">Applications</p>
+            <p className="text-xs text-gray-500">My applications</p>
             <p className={cn(
               'text-sm font-semibold tabular-nums',
               activeCount && activeCount > 0 ? 'text-gray-900' : 'text-gray-500',
@@ -95,10 +102,12 @@ export default function OpportunitiesCard({ ownerProfileId, onViewOpportunities,
               {activeLabel}
             </p>
           </div>
-          {activeCount === 0 && (
+          {activeCount === 0 ? (
             <Zap className="h-4 w-4 text-amber-400" aria-hidden="true" />
+          ) : (
+            <ChevronRight className="h-4 w-4 text-gray-400" aria-hidden="true" />
           )}
-        </div>
+        </button>
       </div>
     </DashboardCard>
   )
