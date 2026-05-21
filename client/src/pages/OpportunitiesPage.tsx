@@ -618,7 +618,9 @@ export default function OpportunitiesPage() {
           {isLoading ? (
             <div className="columns-1 md:columns-2 gap-4">
               {[1, 2, 3, 4].map(i => (
-                <OpportunityCardSkeleton key={i} />
+                <div key={i} className="break-inside-avoid mb-4">
+                  <OpportunityCardSkeleton />
+                </div>
               ))}
             </div>
           ) : fetchError ? (

@@ -67,10 +67,11 @@ export function ConversationSkeleton() {
 // Opportunity Card Skeleton (formerly VacancyCardSkeleton)
 /** Matches the App Store-style OpportunityCard bento tile: header row,
  *  logo + title + creator identity block, meta line, perk pills.
- *  Carries break-inside-avoid + mb-4 so it sits in the masonry feed. */
+ *  Layout-neutral — the caller owns spacing (the masonry feed wraps it
+ *  with break-inside-avoid + mb-4; OpportunitiesTab uses a gap grid). */
 export function OpportunityCardSkeleton() {
   return (
-    <div className="break-inside-avoid mb-4 bg-white rounded-2xl border border-gray-100 p-5">
+    <div className="bg-white rounded-2xl border border-gray-100 p-5">
       {/* Header: opening type · country */}
       <div className="flex items-center justify-between">
         <Skeleton width={110} height={12} />
