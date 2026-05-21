@@ -62,6 +62,8 @@ export default function PublicPlayerProfile() {
   const navigate = useNavigate()
   const { profile: currentUserProfile } = useAuthStore()
   const isCurrentUserTestAccount = currentUserProfile?.is_test_account ?? false
+  // Staging shows test accounts to everyone for QA.
+  const isStaging = import.meta.env.VITE_SUPABASE_URL?.includes('ivjkdaylalhsteyyclvl')
   const [profile, setProfile] = useState<PublicProfile | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -111,7 +113,7 @@ export default function PublicPlayerProfile() {
           const typed = data as unknown as PublicProfile
 
           // Check if this is a test profile and current user is not a test account
-          if (typed.is_test_account && !isCurrentUserTestAccount) {
+          if (typed.is_test_account && !isCurrentUserTestAccount && !isStaging) {
             setError('Profile not found.')
             return
           }
@@ -140,7 +142,7 @@ export default function PublicPlayerProfile() {
           const typed = data as unknown as PublicProfile
 
           // Check if this is a test profile and current user is not a test account
-          if (typed.is_test_account && !isCurrentUserTestAccount) {
+          if (typed.is_test_account && !isCurrentUserTestAccount && !isStaging) {
             setError('Profile not found.')
             return
           }
