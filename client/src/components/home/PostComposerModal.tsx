@@ -719,8 +719,9 @@ export function PostComposerModal({
     // Regular post submit
     const trimmed = content.trim()
 
-    if (!trimmed) {
-      setError('Post content is required')
+    // A post is valid with text OR media — a media-only post is allowed.
+    if (!trimmed && media.length === 0) {
+      setError('Add text, a photo, or a video to publish.')
       return
     }
 
@@ -729,11 +730,14 @@ export function PostComposerModal({
       return
     }
 
-    // Content filter — block objectionable text (Apple Guideline 1.2)
-    const filterResult = checkContent(trimmed)
-    if (!filterResult.allowed) {
-      setError(filterResult.reason || 'Content violates community guidelines.')
-      return
+    // Content filter — block objectionable text (Apple Guideline 1.2).
+    // Skipped for media-only posts: there is no text to screen.
+    if (trimmed) {
+      const filterResult = checkContent(trimmed)
+      if (!filterResult.allowed) {
+        setError(filterResult.reason || 'Content violates community guidelines.')
+        return
+      }
     }
 
     setIsSubmitting(true)
@@ -814,7 +818,8 @@ export function PostComposerModal({
       ? Boolean(selectedPerson)
       : Boolean(hasClub) && !isUploadingLogo
   )
-  const canSubmitPost = content.trim().length > 0
+  // A post can be published with text OR at least one media attachment.
+  const canSubmitPost = content.trim().length > 0 || media.length > 0
   const canSubmit = mode === 'transfer' ? canSubmitTransfer : canSubmitPost
 
   // Render through a portal so the modal's `position: fixed` is anchored to

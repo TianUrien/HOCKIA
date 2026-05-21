@@ -212,21 +212,24 @@ export function UserPostCard({ item, onLikeUpdate, onDelete }: UserPostCardProps
           )}
         </div>
 
-        {/* Content */}
-        <div className="px-4 pb-3">
-          <p className="text-gray-800 whitespace-pre-wrap text-sm leading-relaxed">
-            {displayContent}
-          </p>
-          {isLongContent && !isExpanded && (
-            <button
-              type="button"
-              onClick={() => setIsExpanded(true)}
-              className="text-sm font-medium text-gray-500 hover:text-gray-700 mt-1"
-            >
-              ...see more
-            </button>
-          )}
-        </div>
+        {/* Content — omitted entirely for media-only posts so the card
+            doesn't render an empty paragraph with stray padding. */}
+        {item.content.trim() && (
+          <div className="px-4 pb-3">
+            <p className="text-gray-800 whitespace-pre-wrap text-sm leading-relaxed">
+              {displayContent}
+            </p>
+            {isLongContent && !isExpanded && (
+              <button
+                type="button"
+                onClick={() => setIsExpanded(true)}
+                className="text-sm font-medium text-gray-500 hover:text-gray-700 mt-1"
+              >
+                ...see more
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Media grid */}
         {sortedImages.length > 0 && (
