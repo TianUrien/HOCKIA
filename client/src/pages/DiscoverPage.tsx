@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Sparkles, Send, Loader2, RotateCcw, ChevronLeft } from 'lucide-react'
+import { Sparkles, Send, Loader2, RotateCcw, ChevronLeft, Info } from 'lucide-react'
 import { useDiscoverChat } from '@/hooks/useDiscover'
 import DiscoverChat from '@/components/DiscoverChat'
 import { useAuthStore } from '@/lib/auth'
@@ -223,7 +223,12 @@ export default function DiscoverPage() {
           <Sparkles className="w-4 h-4 text-white" />
         </div>
         <div className="flex-1 min-w-0">
-          <h1 className="text-[15px] font-semibold text-gray-900 leading-tight">Discover</h1>
+          <div className="flex items-center gap-1.5">
+            <h1 className="text-[15px] font-semibold text-gray-900 leading-tight">Discover</h1>
+            <span className="px-1.5 py-px rounded-full bg-[#8026FA]/10 text-[#8026FA] text-[9px] font-bold uppercase tracking-wide leading-tight">
+              Beta
+            </span>
+          </div>
           <p className="text-[11px] text-gray-500 leading-tight">AI-powered search</p>
         </div>
         {hasMessages && (
@@ -257,11 +262,19 @@ export default function DiscoverPage() {
               <h2 className="text-2xl font-bold text-gray-900 mb-1">
                 {firstName ? `Hi ${firstName}!` : 'Discover'}
               </h2>
-              <p className="text-sm text-gray-500 text-center mb-8 max-w-xs">
+              <p className="text-sm text-gray-500 text-center mb-4 max-w-xs">
                 {firstName
                   ? 'What can I help you with today? I know your HOCKIA profile, so I can give answers tailored to you.'
                   : 'Ask me anything — search for players, coaches, clubs, and brands using natural language.'}
               </p>
+              {/* Beta signal — lightweight, honest, not alarming. */}
+              <div className="flex items-start gap-2 mb-8 max-w-xs px-3 py-2 rounded-xl bg-gray-100/80">
+                <Info className="w-3.5 h-3.5 text-gray-400 flex-shrink-0 mt-px" aria-hidden="true" />
+                <p className="text-[11px] text-gray-500 leading-snug text-left">
+                  Discovery AI is in beta — it can help you explore HOCKIA, but
+                  answers may sometimes be incomplete or inaccurate.
+                </p>
+              </div>
               <div className="w-full max-w-sm space-y-2">
                 <p className="text-xs font-medium text-gray-400 uppercase tracking-wide text-center mb-2">
                   Try asking
