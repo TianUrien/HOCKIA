@@ -28,12 +28,15 @@ function buildMeta(member: ClubMember): string {
 
 export default function ClubMembersTab({ profileId }: ClubMembersTabProps) {
   const navigate = useNavigate()
-  const { profile: currentUserProfile } = useAuthStore()
+  const { user, profile: currentUserProfile } = useAuthStore()
   const { addToast } = useToastStore()
   const isCurrentUserTestAccount = currentUserProfile?.is_test_account ?? false
-  // On staging, test accounts are visible to everyone for QA.
-  const showTestAccounts = isCurrentUserTestAccount
-    || import.meta.env.VITE_SUPABASE_URL?.includes('ivjkdaylalhsteyyclvl')
+  // On staging, test accounts are visible to QA — but only to signed-in
+  // users. get_club_members is SECURITY DEFINER (bypasses RLS), so
+  // without the Boolean(user) gate a logged-out visitor would see test
+  // members. This mirrors the RPC layer's auth.role() <> 'anon' check.
+  const showTestAccounts = Boolean(user) && (isCurrentUserTestAccount
+    || Boolean(import.meta.env.VITE_SUPABASE_URL?.includes('ivjkdaylalhsteyyclvl')))
 
   const [members, setMembers] = useState<ClubMember[]>([])
   const [totalCount, setTotalCount] = useState(0)
