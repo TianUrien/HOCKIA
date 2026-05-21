@@ -165,7 +165,7 @@ export default function MobileBottomNav() {
             <button
               type="button"
               onClick={() => handleNavigate('/discover')}
-              aria-label="Open HOCKIA AI"
+              aria-label="Open Hockia AI"
               className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4
                          w-12 h-12 rounded-full
                          bg-gradient-to-br from-[#8026FA] to-[#924CEC]

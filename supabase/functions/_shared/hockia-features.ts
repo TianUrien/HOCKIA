@@ -1,5 +1,5 @@
 /**
- * HOCKIA feature knowledge base — the source of truth for Discovery AI's
+ * HOCKIA feature knowledge base — the source of truth for Hockia AI's
  * "how do I use HOCKIA" answers (the `platform_help` intent).
  *
  * Each entry describes one feature: a short summary, the canonical in-app

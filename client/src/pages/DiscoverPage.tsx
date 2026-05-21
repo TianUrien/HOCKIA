@@ -69,7 +69,7 @@ function buildCoachExamples(coachRecruitsForTeam: boolean): string[] {
 }
 
 export default function DiscoverPage() {
-  useDocumentTitle('Discover')
+  useDocumentTitle('Hockia AI')
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const { messages, sendMessage, clearChat, isPending } = useDiscoverChat()
@@ -224,7 +224,7 @@ export default function DiscoverPage() {
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
-            <h1 className="text-[15px] font-semibold text-gray-900 leading-tight">Discover</h1>
+            <h1 className="text-[15px] font-semibold text-gray-900 leading-tight">Hockia AI</h1>
             <span className="px-1.5 py-px rounded-full bg-[#8026FA]/10 text-[#8026FA] text-[9px] font-bold uppercase tracking-wide leading-tight">
               Beta
             </span>
@@ -260,13 +260,13 @@ export default function DiscoverPage() {
                 <Sparkles className="w-7 h-7 text-white" />
               </div>
               <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                {firstName ? `Hi ${firstName}!` : 'Discover'}
+                {firstName ? `Hi ${firstName}!` : 'Hockia AI'}
               </h2>
               {/* Beta signal — lightweight, honest, not alarming. */}
               <div className="flex items-start gap-2 mb-8 max-w-xs px-3 py-2 rounded-xl bg-gray-100/80">
                 <Info className="w-3.5 h-3.5 text-gray-400 flex-shrink-0 mt-px" aria-hidden="true" />
                 <p className="text-[11px] text-gray-500 leading-snug text-left">
-                  Discovery AI is in beta — it can help you explore HOCKIA, but
+                  Hockia AI is in beta — it can help you explore HOCKIA, but
                   answers may sometimes be incomplete or inaccurate.
                 </p>
               </div>

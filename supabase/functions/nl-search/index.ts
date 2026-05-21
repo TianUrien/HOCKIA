@@ -1010,8 +1010,8 @@ Deno.serve(async (req) => {
         ? ' — and add your own products from the brand dashboard.'
         : '.'
       const cannedMessage = intent.entity_type === 'opportunities'
-        ? `Searching opportunities through HOCKIA AI is rolling out next. For now you can browse all open opportunities at /opportunities${oppSuffix}`
-        : `Browsing products through HOCKIA AI is rolling out next. For now visit the Marketplace at /marketplace to see what brands have posted${productSuffix}`
+        ? `Searching opportunities through Hockia AI is rolling out next. For now you can browse all open opportunities at /opportunities${oppSuffix}`
+        : `Browsing products through Hockia AI is rolling out next. For now visit the Marketplace at /marketplace to see what brands have posted${productSuffix}`
       fireAndForget(logDiscoveryEvent(adminClient, {
         user_id: user.id,
         role: userContext?.role ?? null,

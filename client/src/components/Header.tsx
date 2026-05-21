@@ -176,8 +176,8 @@ export default function Header() {
                       ? 'text-[#8026FA] bg-[#8026FA]/10'
                       : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                   }`}
-                  aria-label="HOCKIA AI"
-                  title="HOCKIA AI — ask anything about clubs, players, opportunities"
+                  aria-label="Hockia AI"
+                  title="Hockia AI — ask anything about clubs, players, opportunities"
                   aria-current={isActive('/discover') ? 'page' : undefined}
                 >
                   <Sparkles className="w-5 h-5" />
