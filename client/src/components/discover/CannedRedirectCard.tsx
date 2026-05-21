@@ -1,24 +1,42 @@
-import { ArrowRight, Briefcase, ShoppingBag } from 'lucide-react'
+import { ArrowRight, Briefcase, ShoppingBag, LayoutDashboard, Home, Users, Sparkles } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import type { DiscoverCta } from '@/hooks/useDiscover'
 
 interface CannedRedirectCardProps {
   message: string
+  /** Explicit CTA from a platform_help response — takes precedence over
+   *  inferring the destination from the message text. */
+  cta?: DiscoverCta | null
+}
+
+/** Pick a leading icon for the CTA button from its route. */
+function iconForRoute(route: string): typeof Briefcase {
+  if (route.startsWith('/opportunities')) return Briefcase
+  if (route.startsWith('/marketplace')) return ShoppingBag
+  if (route.startsWith('/dashboard')) return LayoutDashboard
+  if (route.startsWith('/home')) return Home
+  if (route.startsWith('/community')) return Users
+  if (route.startsWith('/discover')) return Sparkles
+  return ArrowRight
 }
 
 /**
- * Phase 1A canned-redirect renderer. The backend's message text contains a
- * path like `/opportunities` or `/marketplace`; we detect it and render a
- * clear CTA button instead of leaving the user to find an inline link.
+ * Canned-redirect / platform-help renderer. Renders the assistant message
+ * plus a CTA button:
+ *   - platform_help responses pass an explicit `cta` ({ label, route }) —
+ *     used as-is, with an icon picked from the route.
+ *   - legacy Phase-0 opportunity / product redirects embed the path in the
+ *     message text; we infer the CTA from it.
  *
- * Falls back to plain-text rendering if no recognized path is in the message
- * (defensive — the canned-redirect set is fixed in nl-search/index.ts).
+ * Falls back to plain-text rendering when neither yields a destination.
  */
-export default function CannedRedirectCard({ message }: CannedRedirectCardProps) {
+export default function CannedRedirectCard({ message, cta: explicitCta }: CannedRedirectCardProps) {
   const navigate = useNavigate()
 
-  // Match the canned redirect paths in nl-search/index.ts.
   let cta: { label: string; path: string; icon: typeof Briefcase } | null = null
-  if (message.includes('/opportunities')) {
+  if (explicitCta?.route) {
+    cta = { label: explicitCta.label, path: explicitCta.route, icon: iconForRoute(explicitCta.route) }
+  } else if (message.includes('/opportunities')) {
     cta = { label: 'Browse opportunities', path: '/opportunities', icon: Briefcase }
   } else if (message.includes('/marketplace')) {
     cta = { label: 'Open Marketplace', path: '/marketplace', icon: ShoppingBag }
