@@ -39,6 +39,17 @@ export default function OpportunityDetailPage() {
     if (!id) return
 
     try {
+      // Guard malformed IDs. opportunities.id is a uuid — querying it with a
+      // non-uuid (e.g. /opportunities/12345) makes PostgREST throw an
+      // "invalid input syntax for uuid" error; catch it here and render the
+      // friendly not-found screen instead of letting the route crash.
+      const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+      if (!UUID_RE.test(id)) {
+        logger.debug('Opportunity id is not a valid uuid:', id)
+        setNotFound(true)
+        return
+      }
+
       // Fetch opportunity with club details including is_test_account
       const { data: opportunityData, error: opportunityError } = await supabase
         .from('opportunities')
