@@ -48,7 +48,10 @@ export function SearchPostResult({ result }: SearchPostResultProps) {
         </div>
       </div>
 
-      <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{preview}</p>
+      {/* Omitted for media-only posts (no text to preview). */}
+      {result.content.trim() && (
+        <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{preview}</p>
+      )}
 
       <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
         {result.like_count > 0 && (
