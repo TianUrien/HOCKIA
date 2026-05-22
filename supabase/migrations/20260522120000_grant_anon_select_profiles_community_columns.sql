@@ -1,0 +1,26 @@
+-- Grant anon SELECT on the two profiles columns the community directory
+-- reads but was never granted.
+--
+-- The community directory (/community, /community/players,
+-- /community/coaches, …) is a public route. PeopleListView fetches
+-- profiles with a fixed ~40-column PROFILES_SELECT and orders the result
+-- by created_at ("Newest members"). anon has column-scoped privileges on
+-- public.profiles, but SELECT was never granted on two of those columns:
+--   * created_at              — the list query's ORDER BY key
+--   * profile_completeness_pct
+-- (anon already holds INSERT/UPDATE/REFERENCES on both — only SELECT was
+-- missing; authenticated already has SELECT on both, which is why the
+-- directory renders correctly for logged-in viewers.)
+--
+-- Effect of the gap: a logged-out visitor's list query fails with
+-- 42501 "permission denied for table profiles" (HTTP 401) and renders
+-- zero cards, while the directory's separate count query — which selects
+-- only id — still succeeds. That is the QA-flagged "N members / 0 cards"
+-- mismatch, and it affects staging and production identically.
+--
+-- RLS is untouched: the Anon policy on profiles still decides WHICH rows
+-- a logged-out visitor sees (public, non-test profiles only). This
+-- migration only widens the readable COLUMN set for anon to match what
+-- the directory already serves to authenticated visitors.
+
+GRANT SELECT (created_at, profile_completeness_pct) ON public.profiles TO anon;
