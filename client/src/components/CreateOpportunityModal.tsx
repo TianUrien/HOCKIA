@@ -5,6 +5,7 @@ import { logger } from '../lib/logger'
 import { useAuthStore } from '../lib/auth'
 import type { Vacancy } from '../lib/supabase'
 import Button from './Button'
+import ConfirmDialog from './ConfirmDialog'
 import LocationAutocomplete from './LocationAutocomplete'
 import type { LocationSelection } from './LocationAutocomplete'
 import { useCountries } from '@/hooks/useCountries'
@@ -86,6 +87,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
   // Tracks whether the user has changed anything this session, so closing
   // the modal can warn before discarding unsaved work.
   const [isDirty, setIsDirty] = useState(false)
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   /** Inline submit-error banner. The toast container lives in the
    *  top-right corner of the viewport, which scrolls out of view once
@@ -139,21 +141,30 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
     window.localStorage.removeItem(draftKey)
   }, [user])
 
-  const handleClose = useCallback(() => {
-    if (isLoading) {
-      return
-    }
-    // Guard against losing unsaved work on an accidental Cancel / Escape.
-    if (isDirty && !window.confirm('Discard this opportunity? Your unsaved changes will be lost.')) {
-      return
-    }
+  // Actually dismiss the modal. On a fresh create, clear the autosaved
+  // draft so it doesn't resurrect on the next open.
+  const performClose = useCallback(() => {
     if (!editingVacancy) {
       clearVacancyDraft()
     }
     onClose()
-  }, [clearVacancyDraft, editingVacancy, isLoading, isDirty, onClose])
+  }, [clearVacancyDraft, editingVacancy, onClose])
 
-  useFocusTrap({ containerRef: dialogRef, isActive: isOpen, initialFocusRef: opportunityTypeRef })
+  const handleClose = useCallback(() => {
+    if (isLoading) {
+      return
+    }
+    // Unsaved work — confirm before discarding, via the in-app dialog
+    // (not the off-brand native window.confirm).
+    if (isDirty) {
+      setShowDiscardConfirm(true)
+      return
+    }
+    performClose()
+  }, [isLoading, isDirty, performClose])
+
+  // Hand focus to the discard-confirm dialog while it's open.
+  useFocusTrap({ containerRef: dialogRef, isActive: isOpen && !showDiscardConfirm, initialFocusRef: opportunityTypeRef })
 
   useEffect(() => {
     if (!isOpen) {
@@ -209,19 +220,20 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
     document.body.style.overflow = 'hidden'
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      // While the discard-confirm dialog is open, it owns Escape.
+      if (event.key === 'Escape' && !showDiscardConfirm) {
         event.preventDefault()
         handleClose()
       }
     }
 
     document.addEventListener('keydown', handleKeyDown)
-    
+
     return () => {
       document.removeEventListener('keydown', handleKeyDown)
       document.body.style.overflow = originalOverflow
     }
-  }, [handleClose, isOpen])
+  }, [handleClose, isOpen, showDiscardConfirm])
 
   useEffect(() => {
     if (!isOpen || editingVacancy || !user) {
@@ -371,15 +383,16 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
   // whatever status was set inside the form, e.g. via the status
   // select inside the modal).
   const handleSave = async (targetStatus?: 'draft' | 'open') => {
+    // Errors surface via the inline submitError banner only — it's
+    // anchored to where the user is in the modal. A parallel error toast
+    // would just repeat the same message at the top of the viewport.
     setSubmitError(null)
     if (!user) {
-      addToast('You need to be signed in to manage opportunities.', 'error')
       setSubmitError('You need to be signed in to manage opportunities.')
       return
     }
 
     if (!validate()) {
-      addToast('Please fix the highlighted fields before saving.', 'error')
       setSubmitError('Please fix the highlighted fields before saving.')
       return
     }
@@ -460,7 +473,6 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
       const message = error instanceof Error && error.message
         ? `Failed to save opportunity: ${error.message}`
         : 'Failed to save opportunity. Please try again.'
-      addToast(message, 'error')
       setSubmitError(message)
     } finally {
       setIsLoading(false)
@@ -1056,6 +1068,17 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={showDiscardConfirm}
+        onClose={() => setShowDiscardConfirm(false)}
+        onConfirm={() => { setShowDiscardConfirm(false); performClose() }}
+        title="Discard this opportunity?"
+        message="Your unsaved changes will be lost."
+        confirmLabel="Discard"
+        cancelLabel="Keep editing"
+        variant="danger"
+      />
     </div>
   )
 }

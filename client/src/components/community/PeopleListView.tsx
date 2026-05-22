@@ -120,6 +120,13 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
   // the test-account filter below is skipped entirely.
   const hideTestAccounts = !isCurrentUserTestAccount
     && !import.meta.env.VITE_SUPABASE_URL?.includes('ivjkdaylalhsteyyclvl')
+  // Cache scope — anon, logged-in test, and logged-in standard viewers
+  // each see a different RLS-filtered result set. Keying the request
+  // cache on this keeps a logged-in count from leaking into a
+  // logged-out view (and vice versa).
+  const viewerScope = !currentUserProfile
+    ? 'anon'
+    : isCurrentUserTestAccount ? 'test' : 'std'
 
   const { searchQuery, filters, sort, clearFilters, isNarrowed } = state
 
@@ -184,9 +191,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
         // which loses roles that aren't among the newest 200 once the community
         // grows past ~200 members.
         const roleKey = roleFilter ?? 'all'
-        const cacheKey = hideTestAccounts
-          ? `community-members-${roleKey}`
-          : `community-members-test-${roleKey}`
+        const cacheKey = `community-members-${viewerScope}-${roleKey}`
 
         const members = await requestCache.dedupe(
           cacheKey,
@@ -275,7 +280,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
         setIsLoading(false)
       }
     })
-  }, [hideTestAccounts, roleFilter])
+  }, [hideTestAccounts, viewerScope, roleFilter])
 
   // Role sync moved to CommunityPage (it owns the filter state now).
 
@@ -294,9 +299,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
       // /community/players) doesn't accidentally surface profiles from
       // other roles.
       const roleKey = roleFilter ?? 'all'
-      const cacheKey = hideTestAccounts
-        ? `community-search-${roleKey}-${query}`
-        : `community-search-test-${roleKey}-${query}`
+      const cacheKey = `community-search-${viewerScope}-${roleKey}-${query}`
 
       try {
         const members = await requestCache.dedupe(
@@ -380,7 +383,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
         setIsSearching(false)
       }
     }, { query })
-  }, [hideTestAccounts, roleFilter, setPage])
+  }, [hideTestAccounts, viewerScope, roleFilter, setPage])
 
   // Client-side search filtering (instant, for both grid and suggestions)
   const clientFilteredMembers = useMemo(() => {
