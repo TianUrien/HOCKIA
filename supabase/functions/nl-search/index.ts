@@ -156,20 +156,26 @@ function parseCountToken(token: string): number | null {
   return NUMBER_WORDS[t] ?? null
 }
 
+/** Hockey position nouns Hockia AI counts by ("10 defenders") — a
+ *  defender is a player, but the user names them by position. Singular
+ *  and plural both accepted. */
+const POSITION_NOUNS = 'goalkeepers?|defenders?|midfielders?|forwards?|strikers?|attackers?'
+
 /**
- * Resolve how many results a search should return.
+ * Try to extract an explicit result count from the raw query.
  *
- * When the user names an explicit count — "show me 10 players", "top five
- * clubs", "find three coaches" — honour it, clamped to MAX_RESULT_LIMIT.
- * Both digits and number words are understood. With no number, return
- * DEFAULT_RESULT_LIMIT ("the best 5 first") rather than a long default list.
+ * Returns the parsed number (clamped to MAX_RESULT_LIMIT) when the user
+ * named one — digits or number words, sitting next to a recognised role
+ * *or* position noun ("show me 10 defenders", "find five clubs", "top 3
+ * coaches"). Returns null when no count was given so the caller can apply
+ * its own default (general searches default to 5; the world-club path
+ * keeps a larger directory window).
  *
- * The number must sit next to a result noun (within 3 words), and a number
- * immediately followed by an age word is ignored — so "25 year old
- * players", "U25 defenders" and "2+ references" never read as a count.
+ * A number immediately followed by an age word is ignored — so "25 year
+ * old players", "U25 defenders" and "2+ references" never read as a count.
  */
-function resolveResultLimit(rawQuery: string): number {
-  const noun = 'players?|coaches?|clubs?|brands?|umpires?|profiles?|results?|people|users?|options?|matches'
+function tryExtractCount(rawQuery: string): number | null {
+  const noun = `players?|coaches?|clubs?|brands?|umpires?|profiles?|results?|people|users?|options?|matches|${POSITION_NOUNS}`
   const m =
     rawQuery.match(
       new RegExp(`\\b(${NUMBER_TOKEN})\\s+(?!years?\\b|yo\\b|yr\\b)${COUNT_FILLER}(?:${noun})\\b`, 'i'),
@@ -179,7 +185,14 @@ function resolveResultLimit(rawQuery: string): number {
     const n = parseCountToken(m[1])
     if (n != null && n > 0) return Math.min(n, MAX_RESULT_LIMIT)
   }
-  return DEFAULT_RESULT_LIMIT
+  return null
+}
+
+/** Resolve how many results a search should return — explicit count when
+ *  named, otherwise DEFAULT_RESULT_LIMIT ("the best 5 first"). The world-
+ *  club path uses tryExtractCount directly with its own default. */
+function resolveResultLimit(rawQuery: string): number {
+  return tryExtractCount(rawQuery) ?? DEFAULT_RESULT_LIMIT
 }
 
 /** Result-noun → canonical role. Drives compound multi-role detection. */
@@ -1504,7 +1517,10 @@ Deno.serve(async (req) => {
         `)
         .order('is_claimed', { ascending: false })
         .order('club_name', { ascending: true })
-        .limit(20)
+        // Respect an explicit count ("find me 5 clubs") — fall back to a
+        // larger directory window when none is named, so the UI can still
+        // show 3 + "Show all N".
+        .limit(tryExtractCount(query) ?? 20)
 
       if (wcCountryIds) wcQuery = wcQuery.in('country_id', wcCountryIds)
       if (wcProvinceIds) wcQuery = wcQuery.in('province_id', wcProvinceIds)
