@@ -116,7 +116,9 @@ export default function JourneyCard({ profileId, readOnly, role = 'player', onVi
         <p className="text-sm text-gray-500">
           {readOnly
             ? `This ${role} hasn't added career history yet.`
-            : "Add clubs, selections, and achievements so clubs see where you've played."}
+            : role === 'coach'
+              ? "Add clubs, selections, and achievements so clubs see where you've coached."
+              : "Add clubs, selections, and achievements so clubs see where you've played."}
         </p>
       ) : (
         <ul className="space-y-2.5">
