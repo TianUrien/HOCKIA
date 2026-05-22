@@ -19,6 +19,11 @@ export default function OpportunityDetailPage() {
   const navigate = useNavigate()
   const { user, profile } = useAuthStore()
   const isCurrentUserTestAccount = profile?.is_test_account ?? false
+  // On staging the opportunities list shows test-account postings to
+  // everyone (OpportunitiesPage skips the test filter when isStaging).
+  // The detail route must match — otherwise a listed opportunity 404s
+  // the moment a non-test user clicks through to it.
+  const isStaging = import.meta.env.VITE_SUPABASE_URL?.includes('ivjkdaylalhsteyyclvl')
   
   const [opportunity, setOpportunity] = useState<Opportunity | null>(null)
   const [club, setClub] = useState<{ id: string; full_name: string | null; avatar_url: string | null; role: string | null; current_club: string | null; womens_league_division: string | null; mens_league_division: string | null } | null>(null)
@@ -39,6 +44,17 @@ export default function OpportunityDetailPage() {
     if (!id) return
 
     try {
+      // Guard malformed IDs. opportunities.id is a uuid — querying it with a
+      // non-uuid (e.g. /opportunities/12345) makes PostgREST throw an
+      // "invalid input syntax for uuid" error; catch it here and render the
+      // friendly not-found screen instead of letting the route crash.
+      const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+      if (!UUID_RE.test(id)) {
+        logger.debug('Opportunity id is not a valid uuid:', id)
+        setNotFound(true)
+        return
+      }
+
       // Fetch opportunity with club details including is_test_account
       const { data: opportunityData, error: opportunityError } = await supabase
         .from('opportunities')
@@ -95,8 +111,9 @@ export default function OpportunityDetailPage() {
         club?: { id: string; full_name: string | null; avatar_url: string | null; is_test_account?: boolean; role?: string | null; current_club?: string | null; womens_league_division?: string | null; mens_league_division?: string | null }
         world_club?: WorldClubJoin
       }
-      if (opportunityWithClub.club?.is_test_account && !isCurrentUserTestAccount) {
-        // Real users cannot view test opportunities
+      if (opportunityWithClub.club?.is_test_account && !isCurrentUserTestAccount && !isStaging) {
+        // Real users cannot view test opportunities — but on staging the
+        // list shows them, so the detail route allows them there too.
         logger.debug('Test opportunity not accessible to non-test user')
         setNotFound(true)
         return
@@ -149,7 +166,7 @@ export default function OpportunityDetailPage() {
     } finally {
       setIsLoading(false)
     }
-  }, [id, user, profile, isCurrentUserTestAccount])
+  }, [id, user, profile, isCurrentUserTestAccount, isStaging])
 
   useEffect(() => {
     if (!id) {

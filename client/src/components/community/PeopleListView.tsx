@@ -116,6 +116,17 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
   const navigationType = useNavigationType()
   const { profile: currentUserProfile } = useAuthStore()
   const isCurrentUserTestAccount = currentUserProfile?.is_test_account ?? false
+  // On staging, test accounts are visible to everyone for QA. When true,
+  // the test-account filter below is skipped entirely.
+  const hideTestAccounts = !isCurrentUserTestAccount
+    && !import.meta.env.VITE_SUPABASE_URL?.includes('ivjkdaylalhsteyyclvl')
+  // Cache scope — anon, logged-in test, and logged-in standard viewers
+  // each see a different RLS-filtered result set. Keying the request
+  // cache on this keeps a logged-in count from leaking into a
+  // logged-out view (and vice versa).
+  const viewerScope = !currentUserProfile
+    ? 'anon'
+    : isCurrentUserTestAccount ? 'test' : 'std'
 
   const { searchQuery, filters, sort, clearFilters, isNarrowed } = state
 
@@ -151,7 +162,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
           .select('id', { count: 'exact', head: true })
           .eq('onboarding_completed', true)
         if (roleFilter) q = q.eq('role', roleFilter)
-        if (!isCurrentUserTestAccount) {
+        if (hideTestAccounts) {
           q = q.or('is_test_account.is.null,is_test_account.eq.false')
         }
         const { count, error } = await q
@@ -165,7 +176,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     return () => {
       cancelled = true
     }
-  }, [roleFilter, isCurrentUserTestAccount, onTotalCountChange])
+  }, [roleFilter, hideTestAccounts, onTotalCountChange])
 
   // Fetch members from Supabase
   const fetchMembers = useCallback(async () => {
@@ -180,9 +191,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
         // which loses roles that aren't among the newest 200 once the community
         // grows past ~200 members.
         const roleKey = roleFilter ?? 'all'
-        const cacheKey = isCurrentUserTestAccount
-          ? `community-members-test-${roleKey}`
-          : `community-members-${roleKey}`
+        const cacheKey = `community-members-${viewerScope}-${roleKey}`
 
         const members = await requestCache.dedupe(
           cacheKey,
@@ -199,7 +208,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
             }
 
             // If current user is NOT a test account, exclude test accounts from results
-            if (!isCurrentUserTestAccount) {
+            if (hideTestAccounts) {
               query = query.or('is_test_account.is.null,is_test_account.eq.false')
             }
 
@@ -271,7 +280,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
         setIsLoading(false)
       }
     })
-  }, [isCurrentUserTestAccount, roleFilter])
+  }, [hideTestAccounts, viewerScope, roleFilter])
 
   // Role sync moved to CommunityPage (it owns the filter state now).
 
@@ -290,9 +299,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
       // /community/players) doesn't accidentally surface profiles from
       // other roles.
       const roleKey = roleFilter ?? 'all'
-      const cacheKey = isCurrentUserTestAccount
-        ? `community-search-test-${roleKey}-${query}`
-        : `community-search-${roleKey}-${query}`
+      const cacheKey = `community-search-${viewerScope}-${roleKey}-${query}`
 
       try {
         const members = await requestCache.dedupe(
@@ -314,7 +321,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
             }
 
             // If current user is NOT a test account, exclude test accounts from results
-            if (!isCurrentUserTestAccount) {
+            if (hideTestAccounts) {
               dbQuery = dbQuery.or('is_test_account.is.null,is_test_account.eq.false')
             }
 
@@ -376,7 +383,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
         setIsSearching(false)
       }
     }, { query })
-  }, [isCurrentUserTestAccount, roleFilter, setPage])
+  }, [hideTestAccounts, viewerScope, roleFilter, setPage])
 
   // Client-side search filtering (instant, for both grid and suggestions)
   const clientFilteredMembers = useMemo(() => {

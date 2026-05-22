@@ -65,47 +65,35 @@ export function ConversationSkeleton() {
 }
 
 // Opportunity Card Skeleton (formerly VacancyCardSkeleton)
+/** Matches the App Store-style OpportunityCard bento tile: header row,
+ *  logo + title + creator identity block, meta line, perk pills.
+ *  Layout-neutral — the caller owns spacing (the masonry feed wraps it
+ *  with break-inside-avoid + mb-4; OpportunitiesTab uses a gap grid). */
 export function OpportunityCardSkeleton() {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-4">
-      {/* Header */}
-      <div className="flex items-start justify-between">
-        <div className="flex-1 space-y-3">
-          <Skeleton width="60%" height={24} />
-          <div className="flex items-center gap-2">
-            <Skeleton variant="circular" width={40} height={40} />
-            <Skeleton width="30%" height={16} />
-          </div>
-        </div>
-        <Skeleton width={80} height={24} className="rounded-full" />
+    <div className="bg-white rounded-2xl border border-gray-100 p-5">
+      {/* Header: opening type · country */}
+      <div className="flex items-center justify-between">
+        <Skeleton width={110} height={12} />
+        <Skeleton width={72} height={24} className="rounded-full" />
       </div>
-
-      {/* Details */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-2">
-          <Skeleton variant="circular" width={16} height={16} />
-          <Skeleton width="50%" height={14} />
-        </div>
-        <div className="flex items-center gap-2">
-          <Skeleton variant="circular" width={16} height={16} />
-          <Skeleton width="40%" height={14} />
-        </div>
-        <div className="flex items-center gap-2">
-          <Skeleton variant="circular" width={16} height={16} />
-          <Skeleton width="45%" height={14} />
+      {/* Identity: logo + title + creator */}
+      <div className="mt-4 flex items-start gap-3.5">
+        <Skeleton width={56} height={56} className="rounded-2xl" />
+        <div className="flex-1 space-y-2">
+          <Skeleton width="85%" height={18} />
+          <Skeleton width="55%" height={18} />
+          <Skeleton width="45%" height={13} />
         </div>
       </div>
-
-      {/* Benefits */}
-      <div className="flex gap-2">
-        <Skeleton width={100} height={28} className="rounded-full" />
-        <Skeleton width={120} height={28} className="rounded-full" />
-      </div>
-
-      {/* Footer */}
-      <div className="flex items-center justify-between pt-4 border-t">
-        <Skeleton width="30%" height={14} />
-        <Skeleton width={100} height={36} className="rounded-lg" />
+      {/* Meta */}
+      <div className="my-3.5 border-t border-gray-100" />
+      <Skeleton width="65%" height={13} />
+      {/* Perk pills */}
+      <div className="flex gap-1.5 mt-3">
+        <Skeleton width={72} height={26} className="rounded-full" />
+        <Skeleton width={60} height={26} className="rounded-full" />
+        <Skeleton width={66} height={26} className="rounded-full" />
       </div>
     </div>
   )

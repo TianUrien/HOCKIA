@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 
 // EU member state country codes (ISO 3166-1 alpha-2)
-const EU_COUNTRY_CODES = new Set([
+export const EU_COUNTRY_CODES = new Set([
   'AT', // Austria
   'BE', // Belgium
   'BG', // Bulgaria
@@ -31,6 +31,15 @@ const EU_COUNTRY_CODES = new Set([
   'ES', // Spain
   'SE', // Sweden
 ])
+
+/**
+ * True when an ISO 3166-1 country code (alpha-2) belongs to an EU member
+ * state. Accepts any case. Used for opportunity EU-passport eligibility.
+ */
+export function isEuCountryCode(code: string | null | undefined): boolean {
+  if (!code) return false
+  return EU_COUNTRY_CODES.has(code.toUpperCase())
+}
 
 export interface Country {
   id: number

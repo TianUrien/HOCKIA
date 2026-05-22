@@ -1,11 +1,8 @@
-import { MapPin, Calendar, Clock, Home, Car, Globe as GlobeIcon, Plane, Utensils, Briefcase, Shield, GraduationCap, AlertTriangle, Share2, Award, DollarSign, Dumbbell, Eye, Flag } from 'lucide-react'
+import { MapPin, Calendar, Home, Car, Globe as GlobeIcon, Plane, Utensils, Briefcase, Shield, GraduationCap, Award, DollarSign, Dumbbell, ChevronRight } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import type { Vacancy } from '../lib/supabase'
-import { Avatar } from './index'
-import StorageImage from './StorageImage'
+import Avatar from './Avatar'
 import { opportunityGenderToTeamLabel } from '@/lib/hockeyCategories'
-import { getShareOrigin } from '@/lib/profileShare'
-import Button from './Button'
 
 export interface WorldClubInfo {
   id: string
@@ -23,11 +20,11 @@ interface OpportunityCardProps {
   clubId: string
   publisherRole?: string | null
   publisherOrganization?: string | null
-  leagueDivision?: string | null
   worldClub?: WorldClubInfo | null
+  /** Flag emoji for vacancy.location_country (resolved from the countries
+   *  table by the page — the canonical flag, not a denormalised one). */
+  countryFlag?: string | null
   onViewDetails: () => void
-  onApply?: () => void
-  hasApplied?: boolean
 }
 
 const BENEFIT_CONFIG: Record<string, { icon: React.ComponentType<{ className?: string }>; label: string; iconColor: string }> = {
@@ -43,42 +40,17 @@ const BENEFIT_CONFIG: Record<string, { icon: React.ComponentType<{ className?: s
   equipment: { icon: Dumbbell, label: 'Equipment', iconColor: 'text-teal-500' },
 }
 
-function getDeadlineInfo(deadline: string | null | undefined): { text: string; urgent: boolean } | null {
-  if (!deadline) return null
-  const now = new Date()
-  const dl = new Date(deadline)
-  const daysLeft = Math.ceil((dl.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-  if (daysLeft < 0) return null
-  if (daysLeft === 0) return { text: 'Closes today', urgent: true }
-  if (daysLeft === 1) return { text: 'Closes tomorrow', urgent: true }
-  return { text: `${daysLeft} days left`, urgent: daysLeft <= 7 }
-}
+const MAX_VISIBLE_PERKS = 3
 
-/** Generate a short abbreviation from a club name for the watermark */
-function getClubAbbreviation(name: string): string {
-  const words = name.split(/\s+/).filter(Boolean)
-  if (words.length === 1) return words[0].slice(0, 3).toUpperCase()
-  return words.map(w => w[0]).join('').slice(0, 4).toUpperCase()
-}
-
-/** Deterministic brand colors from a club name — background tint + watermark text */
-function getClubBrandColors(name: string): { bgTint: string; watermarkColor: string } {
-  let hash = 0
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash)
-  }
-  const hue = Math.abs(hash) % 360
-  return {
-    bgTint: `hsla(${hue}, 20%, 80%, 0.10)`,         // subtle colored background
-    watermarkColor: `hsla(${hue}, 25%, 55%, 0.06)`,  // text visible but subtle
-  }
+function getInitials(name: string): string {
+  return name.split(/\s+/).filter(Boolean).map(w => w[0]).join('').slice(0, 2).toUpperCase()
 }
 
 /**
- * Determines the card type:
- * - "club"  → club posting directly (publisherRole is 'club' or null/undefined)
- * - "coach_club" → coach posting for a club (has worldClub or organization_name)
- * - "coach_independent" → coach posting independently
+ * Card type:
+ * - "club"             → club posting directly
+ * - "coach_club"       → coach posting, recruiting for a (world) club
+ * - "coach_independent"→ coach posting independently
  */
 function getCardType(publisherRole: string | null | undefined, worldClub: WorldClubInfo | null | undefined, organizationName: string | null | undefined): 'club' | 'coach_club' | 'coach_independent' {
   if (publisherRole !== 'coach') return 'club'
@@ -86,6 +58,19 @@ function getCardType(publisherRole: string | null | undefined, worldClub: WorldC
   return 'coach_independent'
 }
 
+/**
+ * OpportunityCard — an App Store-style editorial bento tile. The whole
+ * tile is one tap target → the opportunity detail view (where Apply
+ * lives); no Apply/View buttons in the feed.
+ *
+ * Tiles are intentionally NOT uniform height: a richly-completed
+ * opportunity (description, recruiting-for, benefits) renders a taller
+ * tile than a sparse one. The page lays them out in a masonry grid so
+ * the feed reads as a dynamic bento, not a repetitive list.
+ *
+ * Opening type is coded — emerald = player opening, blue = coach
+ * opening — and stated in words in the eyebrow label.
+ */
 export default function OpportunityCard({
   vacancy,
   clubName,
@@ -93,35 +78,23 @@ export default function OpportunityCard({
   clubId,
   publisherRole,
   publisherOrganization,
-  leagueDivision,
   worldClub,
+  countryFlag,
   onViewDetails,
-  onApply,
-  hasApplied = false,
 }: OpportunityCardProps) {
   const navigate = useNavigate()
 
   const cardType = getCardType(publisherRole, worldClub, publisherOrganization)
-  const isUrgent = vacancy.priority === 'high'
-  const deadlineInfo = getDeadlineInfo(vacancy.application_deadline)
+  const isCoachPublisher = cardType !== 'club'
+  const isPlayerOpening = vacancy.opportunity_type === 'player'
   const isImmediate = !vacancy.start_date
 
-  const handleApplyClick = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    onApply?.()
-  }
-
-  const handleShareClick = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    // getShareOrigin pins https://inhockia.com on the iOS/Android app so
-    // shared opportunity links don't emit dead capacitor://localhost URLs.
-    const url = `${getShareOrigin()}/opportunities/${vacancy.id}`
-    if (navigator.share) {
-      navigator.share({ title: vacancy.title, url }).catch(() => {})
-    } else {
-      navigator.clipboard.writeText(url).catch(() => {})
-    }
-  }
+  // Coded opening type — matches HOCKIA's app-wide role colours
+  // (RoleBadge): player = blue (#2563EB), coach = teal-green (#0D9488).
+  const accent = isPlayerOpening
+    ? { dot: 'bg-blue-600', text: 'text-blue-600' }
+    : { dot: 'bg-teal-600', text: 'text-teal-600' }
+  const openingLabel = isPlayerOpening ? 'Player opening' : 'Coach opening'
 
   const handlePublisherClick = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -139,339 +112,199 @@ export default function OpportunityCard({
     return new Date(dateString).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
   }
 
-  // Build tag pills. Phase 3d — opportunityGenderToTeamLabel handles all
-  // five enum values (Men/Women/Girls/Boys/Mixed) with possessive labels
-  // ("Men's Team", "Girls' Team", etc.).
-  // Gender + position are player-only concepts; suppress them on coach
-  // opportunities even if legacy rows happen to carry stale values.
-  const tags: string[] = []
-  const isPlayerOpportunity = vacancy.opportunity_type === 'player'
-  if (isPlayerOpportunity) tags.push('Player')
-  if (vacancy.opportunity_type === 'coach') tags.push('Coach')
-  if (isPlayerOpportunity && vacancy.gender) {
+  // Key pills — team category + position. Both are player-only concepts,
+  // so they are suppressed on coach openings even if a legacy row carries
+  // stale values (mirrors OpportunityDetailView).
+  const pills: string[] = []
+  if (isPlayerOpening && vacancy.gender) {
     const teamLabel = opportunityGenderToTeamLabel(vacancy.gender)
-    if (teamLabel) tags.push(teamLabel.replace(' Team', ''))
+    if (teamLabel) pills.push(teamLabel.replace(' Team', ''))
   }
-  if (isPlayerOpportunity && vacancy.position) {
-    tags.push(vacancy.position.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()))
+  if (isPlayerOpening && vacancy.position) {
+    pills.push(vacancy.position.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()))
   }
+  // Parity — coach openings carry no structured category/position, so
+  // fall back to a single role pill rather than leaving the row empty.
+  if (pills.length === 0) pills.push(isPlayerOpening ? 'Player' : 'Coach')
 
-  const benefits = vacancy.benefits?.slice(0, 4) || []
+  const benefits = vacancy.benefits || []
+  const visibleBenefits = benefits.slice(0, MAX_VISIBLE_PERKS)
+  const extraBenefits = benefits.length - visibleBenefits.length
 
-  // Watermark data — used on all card types
-  const watermarkName = cardType === 'club' ? (worldClub?.clubName || clubName) : clubName
-  const clubAbbr = getClubAbbreviation(watermarkName)
-  const { bgTint, watermarkColor } = getClubBrandColors(watermarkName)
-  const displayClubName = worldClub?.clubName || clubName
-  const displayClubLogo = worldClub?.avatarUrl || clubLogo
-  const displayLeague = worldClub?.leagueName || leagueDivision
+  // Identity — club cards lead with the club; coach cards lead with the coach.
+  const publisherName = cardType === 'club' ? (worldClub?.clubName || clubName) : clubName
+  const publisherLogo = cardType === 'club' ? (worldClub?.avatarUrl || clubLogo) : clubLogo
+  const locationText = [vacancy.location_city, vacancy.location_country]
+    .map((part) => part?.trim())
+    .filter(Boolean)
+    .join(', ')
+  const descriptionExcerpt = vacancy.description?.trim() || ''
 
   return (
-    <div
-      onClick={onViewDetails}
-      className="bg-white border border-gray-200 rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 group"
-    >
-      {/* ─── CARD TYPE A: CLUB OPPORTUNITY ─── */}
-      {cardType === 'club' && (
-        <>
-          {/* Club Hero Section with watermark */}
-          <div className="relative overflow-hidden pt-8 pb-5 px-5 border-b border-gray-100" style={{ backgroundColor: bgTint }}>
-            {/* Watermark */}
-            <div
-              className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden"
-              aria-hidden="true"
-            >
-              <span
-                className="text-[180px] font-black leading-none tracking-tighter"
-                style={{ color: watermarkColor }}
-              >
-                {clubAbbr}
-              </span>
-            </div>
-
-            {/* Club logo + info */}
-            <div className="relative flex flex-col items-center text-center">
-              <button
-                type="button"
-                onClick={handlePublisherClick}
-                className="flex flex-col items-center hover:opacity-80 transition-opacity"
-              >
-                {displayClubLogo ? (
-                  <StorageImage
-                    src={displayClubLogo}
-                    alt={displayClubName}
-                    className="w-20 h-20 rounded-xl object-cover shadow-sm"
-                  />
-                ) : (
-                  <Avatar
-                    initials={displayClubName.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                    size="xl"
-                    className="rounded-xl"
-                    role="club"
-                  />
-                )}
-                <h3 className="mt-3 text-base font-bold text-gray-900 group-hover:text-[#8026FA] transition-colors">
-                  {displayClubName}
-                </h3>
-              </button>
-              {displayLeague && (
-                <p className="text-sm text-gray-500 mt-0.5">{displayLeague}</p>
-              )}
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* ─── CARD TYPE B: COACH + CLUB ─── */}
-      {cardType === 'coach_club' && (
-        <div className="relative overflow-hidden pt-6 pb-4 px-5 border-b border-gray-100" style={{ backgroundColor: bgTint }}>
-          {/* Watermark */}
-          <div
-            className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden"
-            aria-hidden="true"
-          >
-            <span
-              className="text-[180px] font-black leading-none tracking-tighter"
-              style={{ color: watermarkColor }}
-            >
-              {clubAbbr}
+    <div className="animate-fadeSlideIn break-inside-avoid mb-4">
+      <div
+        onClick={onViewDetails}
+        className="group relative flex flex-col cursor-pointer rounded-2xl border border-gray-100 bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_10px_28px_-14px_rgba(0,0,0,0.12)] transition-all duration-200 ease-out hover:-translate-y-1 hover:border-gray-200 hover:shadow-[0_4px_10px_rgba(0,0,0,0.05),0_22px_44px_-16px_rgba(0,0,0,0.22)] active:translate-y-0 active:scale-[0.985]"
+      >
+        {/* ── Header: opening type · country ── */}
+        <div className="flex items-center justify-between gap-2">
+          <span className={`inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider ${accent.text}`}>
+            <span className={`h-2 w-2 rounded-full ${accent.dot}`} aria-hidden="true" />
+            {openingLabel}
+          </span>
+          {vacancy.location_country && (
+            <span className="inline-flex flex-shrink-0 items-center gap-1 rounded-full border border-gray-100 bg-gray-50 py-1 pl-2 pr-1 text-[12px] font-medium text-gray-600">
+              {countryFlag && <span aria-hidden="true">{countryFlag}</span>}
+              <span className="max-w-[110px] truncate">{vacancy.location_country}</span>
+              <ChevronRight className="h-3.5 w-3.5 text-gray-400" />
             </span>
-          </div>
-          {/* Coach hero */}
-          <div className="relative flex flex-col items-center text-center mb-3">
-            <button
-              type="button"
-              onClick={handlePublisherClick}
-              className="flex flex-col items-center hover:opacity-80 transition-opacity"
-            >
-              <Avatar
-                src={clubLogo}
-                initials={clubName.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                size="lg"
-                role="club"
-              />
-              <div className="mt-2 flex items-center gap-1.5">
-                <span className="text-base font-bold text-gray-900 group-hover:text-[#8026FA] transition-colors">
-                  {clubName}
-                </span>
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide bg-[#F0FDFA] text-[#0D9488] border border-teal-100">
-                  Coach
-                </span>
-              </div>
-            </button>
-
-            {/* Club association — arrow shows "coach → club" relationship */}
-            {worldClub ? (
-              <div className="mt-1.5 flex flex-col items-center">
-                <div className="flex items-center gap-1">
-                  <span className="text-gray-400 text-sm">↳</span>
-                  <button
-                    type="button"
-                    onClick={handleWorldClubClick}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/60 border border-gray-200 hover:bg-white transition-colors"
-                  >
-                    {worldClub.avatarUrl ? (
-                      <StorageImage
-                        src={worldClub.avatarUrl}
-                        alt={worldClub.clubName}
-                        className="w-4 h-4 rounded-full object-cover"
-                      />
-                    ) : (
-                      <Award className="w-3.5 h-3.5 text-gray-400" />
-                    )}
-                    <span className="text-xs font-medium text-gray-700">{worldClub.clubName}</span>
-                  </button>
-                </div>
-                {displayLeague && (
-                  <p className="text-sm text-gray-500 mt-0.5">{displayLeague}</p>
-                )}
-              </div>
-            ) : publisherOrganization ? (
-              <div className="mt-1.5 flex items-center gap-1">
-                <span className="text-gray-400 text-sm">↳</span>
-                <span className="text-sm text-gray-600">{publisherOrganization}</span>
-              </div>
-            ) : null}
-          </div>
-        </div>
-      )}
-
-      {/* ─── CARD TYPE C: COACH INDEPENDENT ─── */}
-      {cardType === 'coach_independent' && (
-        <div className="relative overflow-hidden pt-6 pb-4 px-5 border-b border-gray-100" style={{ backgroundColor: bgTint }}>
-          {/* Watermark */}
-          <div
-            className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden"
-            aria-hidden="true"
-          >
-            <span
-              className="text-[180px] font-black leading-none tracking-tighter"
-              style={{ color: watermarkColor }}
-            >
-              {clubAbbr}
-            </span>
-          </div>
-          <div className="relative flex flex-col items-center text-center mb-3">
-            <button
-              type="button"
-              onClick={handlePublisherClick}
-              className="flex flex-col items-center hover:opacity-80 transition-opacity"
-            >
-              <Avatar
-                src={clubLogo}
-                initials={clubName.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                size="lg"
-                role="club"
-              />
-              <div className="mt-2 flex items-center gap-1.5">
-                <span className="text-base font-bold text-gray-900 group-hover:text-[#8026FA] transition-colors">
-                  {clubName}
-                </span>
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide bg-[#F0FDFA] text-[#0D9488] border border-teal-100">
-                  Coach
-                </span>
-              </div>
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ─── SHARED BODY (all card types) ─── */}
-      <div className="px-6 pt-5 pb-6">
-        {/* Top row: badges left + share icon right */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            {isUrgent && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-orange-50 text-orange-600 border border-orange-100">
-                <AlertTriangle className="w-3 h-3" />
-                URGENT
-              </span>
-            )}
-            {cardType !== 'club' && (
-              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-[#F0FDFA] text-[#0D9488] border border-teal-100">
-                COACH LISTED
-              </span>
-            )}
-          </div>
-          <button
-            type="button"
-            onClick={handleShareClick}
-            className="p-2 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
-            aria-label="Share opportunity"
-          >
-            <Share2 className="w-[18px] h-[18px]" />
-          </button>
-        </div>
-
-        {/* Title */}
-        <h2 className="text-xl font-bold text-gray-900 mb-4 leading-tight group-hover:text-[#8026FA] transition-colors">
-          {vacancy.title}
-        </h2>
-
-        {/* Meta info */}
-        <div className="space-y-1.5 text-[15px] text-gray-500 mb-5">
-          <div className="flex items-center gap-x-5 flex-wrap">
-            <div className="flex items-center gap-2">
-              <MapPin className="w-4 h-4 flex-shrink-0" />
-              <span>
-                {[vacancy.location_city, vacancy.location_country].filter(Boolean).join(', ')}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 flex-shrink-0" />
-              <span>{isImmediate ? 'Starts Immediately' : `Starts ${formatDate(vacancy.start_date)}`}</span>
-            </div>
-          </div>
-          {vacancy.duration_text && (
-            <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 flex-shrink-0" />
-              <span>{vacancy.duration_text}</span>
-            </div>
           )}
         </div>
 
-        {/* Tags */}
-        <div className="flex items-center flex-wrap gap-2 mb-6">
-          {tags.map((tag) => (
-            <span
-              key={tag}
-              className="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium bg-gray-100 text-gray-700 border border-gray-200"
-            >
-              {tag}
-            </span>
-          ))}
+        {/* ── Identity: logo · title · creator ── */}
+        <div className="mt-4 flex items-start gap-3.5">
+          {/* No `role` prop → a publisher with no logo gets a brand-purple
+              monogram (initials), not the generic role silhouette. */}
+          <Avatar
+            src={publisherLogo}
+            initials={getInitials(publisherName)}
+            alt={publisherName}
+            size="lg"
+            className="ring-1 ring-black/5"
+          />
+
+          <div className="min-w-0 flex-1">
+            {/* The title is the keyboard-/screen-reader-operable activator
+                for the tile: it opens the same detail view as a pointer
+                tap anywhere on the card. Kept as a real <button> so the
+                tile is reachable without a mouse. */}
+            <h2 className="text-[17px] font-bold leading-snug">
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onViewDetails() }}
+                className="line-clamp-2 w-full text-left text-gray-900 transition-colors hover:text-[#8026FA] group-hover:text-[#8026FA] rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8026FA] focus-visible:ring-offset-2"
+              >
+                {vacancy.title}
+              </button>
+            </h2>
+            <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
+              <button
+                type="button"
+                onClick={handlePublisherClick}
+                className="max-w-full truncate text-[13px] font-semibold text-gray-700 hover:text-[#8026FA]"
+              >
+                {publisherName}
+              </button>
+              <span className="flex-shrink-0 rounded border border-gray-200 bg-gray-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-gray-500">
+                {isCoachPublisher ? 'Coach' : 'Club'}
+              </span>
+            </div>
+          </div>
         </div>
 
-        {/* Benefits section */}
-        {benefits.length > 0 && (
-          <div className="mb-6">
-            <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-3">
-              Benefits Included
-            </p>
-            <div className="flex items-center flex-wrap gap-2.5">
-              {benefits.map((benefit) => {
-                const config = BENEFIT_CONFIG[benefit.toLowerCase()]
-                if (!config) return null
-                const Icon = config.icon
-                return (
-                  <span
-                    key={benefit}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-gray-50 text-gray-700 border border-gray-200"
-                  >
-                    <Icon className={`w-4 h-4 ${config.iconColor}`} />
-                    {config.label}
-                  </span>
-                )
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* EU Passport Requirement */}
-        {(vacancy as Record<string, unknown>).eu_passport_required === true && (
-          <div className="mb-4">
-            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-blue-50 text-blue-700 border border-blue-200">
-              <Flag className="w-4 h-4 text-blue-500" />
-              EU Passport Required
-            </span>
-          </div>
-        )}
-
-        {/* Deadline */}
-        {deadlineInfo && (
-          <div className="flex items-center justify-center gap-2 text-sm text-gray-500 mb-4">
-            <Clock className="w-4 h-4" />
-            <span>{deadlineInfo.text}</span>
-          </div>
-        )}
-
-        {/* Action buttons */}
-        <div className="flex items-center gap-2.5" onClick={(e) => e.stopPropagation()}>
-          {hasApplied ? (
-            <div className="flex-1 flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl font-semibold text-sm border border-[#8026FA]/15 bg-[#8026FA]/5 text-[#8026FA]">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-              </svg>
-              Applied
-            </div>
-          ) : onApply ? (
-            <Button
-              onClick={handleApplyClick}
-              className="flex-1 rounded-xl py-3.5 bg-gradient-to-r from-[#8026FA] to-[#924CEC] hover:opacity-90 text-base font-semibold"
-            >
-              Apply Now &rsaquo;
-            </Button>
-          ) : null}
-          {/* View details button */}
+        {/* ── Recruiting-for — its own full-width row so the club name is
+             always readable (no aggressive truncation). Coach-posted
+             listings only; a club posts for itself. ── */}
+        {cardType === 'coach_club' && worldClub && (
           <button
             type="button"
-            onClick={onViewDetails}
-            className="flex items-center justify-center w-12 h-12 rounded-xl border border-gray-200 bg-gray-50 text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors flex-shrink-0"
-            aria-label="View full details"
+            onClick={handleWorldClubClick}
+            className="mt-3 flex w-full items-center gap-2.5 rounded-xl border border-gray-100 bg-gray-50 px-3 py-2 text-left transition-colors hover:border-[#8026FA]/30 hover:bg-[#8026FA]/[0.04]"
           >
-            <Eye className="w-5 h-5" />
+            <Avatar
+              src={worldClub.avatarUrl}
+              initials={getInitials(worldClub.clubName)}
+              alt={worldClub.clubName}
+              size="sm"
+            />
+            <span className="min-w-0 flex-1">
+              <span className="block text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+                Recruiting for
+              </span>
+              <span className="block text-[13.5px] font-semibold leading-snug text-gray-800 group-hover:text-gray-900">
+                {worldClub.clubName}
+              </span>
+            </span>
+            <ChevronRight className="h-4 w-4 flex-shrink-0 text-gray-400" />
           </button>
+        )}
+        {cardType === 'coach_club' && !worldClub && publisherOrganization && (
+          <div className="mt-3 flex w-full items-center gap-2.5 rounded-xl border border-gray-100 bg-gray-50 px-3 py-2">
+            <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gray-200 text-gray-500">
+              <Award className="h-4 w-4" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+                Recruiting for
+              </span>
+              <span className="block text-[13.5px] font-semibold leading-snug text-gray-800">
+                {publisherOrganization}
+              </span>
+            </span>
+          </div>
+        )}
+
+        {/* ── Key pills ── */}
+        {pills.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {pills.map((pill) => (
+              <span
+                key={pill}
+                className="inline-flex items-center rounded-full border border-[#8026FA]/10 bg-[#8026FA]/[0.06] px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#8026FA]"
+              >
+                {pill}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* ── Description excerpt — only on opportunities that have one,
+             so richer listings naturally produce taller tiles. ── */}
+        {descriptionExcerpt && (
+          <p className="mt-3 line-clamp-2 text-[13px] leading-relaxed text-gray-500">
+            {descriptionExcerpt}
+          </p>
+        )}
+
+        {/* ── Meta: location · start (always present) ── */}
+        <div className="my-3.5 border-t border-gray-100" />
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[13px] text-gray-500">
+          {locationText && (
+            <span className="flex min-w-0 items-center gap-1.5">
+              <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
+              <span className="truncate">{locationText}</span>
+            </span>
+          )}
+          <span className="flex items-center gap-1.5">
+            <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
+            {isImmediate ? 'Starts immediately' : `Starts ${formatDate(vacancy.start_date)}`}
+          </span>
         </div>
+
+        {/* ── Benefits ── */}
+        {benefits.length > 0 && (
+          <div className="mt-3 flex flex-wrap items-center gap-1.5">
+            {visibleBenefits.map((benefit) => {
+              const config = BENEFIT_CONFIG[benefit.toLowerCase()]
+              if (!config) return null
+              const Icon = config.icon
+              return (
+                <span
+                  key={benefit}
+                  className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-[11px] font-medium text-gray-600"
+                >
+                  <Icon className={`h-3.5 w-3.5 ${config.iconColor}`} />
+                  {config.label}
+                </span>
+              )
+            })}
+            {extraBenefits > 0 && (
+              <span className="rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-[11px] font-medium text-gray-500">
+                +{extraBenefits} more
+              </span>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )

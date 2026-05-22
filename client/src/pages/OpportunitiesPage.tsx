@@ -1,14 +1,12 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { ChevronDown, Shield, X } from 'lucide-react'
+import { ChevronDown, Shield, X, Check, ArrowUpDown, Plus } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuthStore } from '../lib/auth'
 import type { Vacancy } from '../lib/supabase'
 import Header from '../components/Header'
 import OpportunityCard from '../components/OpportunityCard'
-import OpportunityDetailView from '../components/OpportunityDetailView'
-import ApplyToOpportunityModal from '../components/ApplyToOpportunityModal'
-import SignInPromptModal from '../components/SignInPromptModal'
+import CreateOpportunityModal from '../components/CreateOpportunityModal'
 import Button from '../components/Button'
 import { OpportunityCardSkeleton } from '../components/Skeleton'
 import { OpportunitiesListJsonLd } from '../components/OpportunityJsonLd'
@@ -42,6 +40,16 @@ const isGenderFilterValue = (v: string | null): v is GenderFilterValue =>
 
 const POSITIONS = ['goalkeeper', 'defender', 'midfielder', 'forward'] as const
 
+const SORT_VALUES = ['newest', 'oldest', 'deadline'] as const
+type SortValue = typeof SORT_VALUES[number]
+const isSortValue = (v: string | null): v is SortValue =>
+  v !== null && (SORT_VALUES as readonly string[]).includes(v)
+const SORT_OPTIONS: { value: SortValue; label: string }[] = [
+  { value: 'newest', label: 'Newest' },
+  { value: 'oldest', label: 'Oldest' },
+  { value: 'deadline', label: 'Closing soon' },
+]
+
 // ─── Filter Dropdown Component ───────────────────────────────────────────────
 
 interface FilterDropdownProps {
@@ -50,9 +58,12 @@ interface FilterDropdownProps {
   options: { value: string; label: string }[]
   onChange: (value: string) => void
   icon?: React.ReactNode
+  /** Filters are clearable (active state + an X to reset). A non-clearable
+   *  dropdown — e.g. Sort — always has a value and shows a plain chevron. */
+  clearable?: boolean
 }
 
-function FilterDropdown({ label, value, options, onChange, icon }: FilterDropdownProps) {
+function FilterDropdown({ label, value, options, onChange, icon, clearable = true }: FilterDropdownProps) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -67,8 +78,12 @@ function FilterDropdown({ label, value, options, onChange, icon }: FilterDropdow
   }, [open])
 
   const selectedOption = options.find(o => o.value === value)
-  const isActive = value !== '' && value !== 'all'
-  const displayLabel = isActive ? selectedOption?.label || label : label
+  const isActive = clearable && value !== '' && value !== 'all'
+  // Fall back to the raw value when no option matches — e.g. a country
+  // filtered out of the loaded results still shows "Belgium", not "Country".
+  const displayLabel = clearable
+    ? (isActive ? (selectedOption?.label || value || label) : label)
+    : (selectedOption?.label || label)
 
   return (
     <div ref={ref} className="relative">
@@ -77,7 +92,7 @@ function FilterDropdown({ label, value, options, onChange, icon }: FilterDropdow
         onClick={() => setOpen(!open)}
         className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium border transition-colors whitespace-nowrap ${
           isActive
-            ? 'bg-[#8026FA]/5 border-[#8026FA]/20 text-[#8026FA]'
+            ? 'bg-[#8026FA]/10 border-[#8026FA] text-[#8026FA] font-semibold'
             : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
         }`}
       >
@@ -137,14 +152,16 @@ export default function OpportunitiesPage() {
   // filter + umpire-specific vacancy types.
   const isUmpire = profile?.role === 'umpire'
 
+  // Who may post an opportunity: clubs always, coaches only in recruiter
+  // mode. Mirrors the gate on the dashboard "Post an Opportunity" CTA.
+  const canPostOpportunity = profile?.role === 'club'
+    || (profile?.role === 'coach' && profile?.coach_recruits_for_team === true)
+
   const [vacancies, setVacancies] = useState<Vacancy[]>([])
   const [clubs, setClubs] = useState<Record<string, { id: string; full_name: string; avatar_url: string | null; role: string | null; current_club: string | null; womens_league_division: string | null; mens_league_division: string | null }>>({})
   const [worldClubsMap, setWorldClubsMap] = useState<Record<string, { id: string; clubName: string; avatarUrl: string | null; countryName: string | null; flagEmoji: string | null; leagueName: string | null }>>({})
   const [userApplications, setUserApplications] = useState<string[]>([])
-  const [selectedVacancy, setSelectedVacancy] = useState<Vacancy | null>(null)
-  const [showApplyModal, setShowApplyModal] = useState(false)
-  const [showSignInPrompt, setShowSignInPrompt] = useState(false)
-  const [showDetailView, setShowDetailView] = useState(false)
+  const [showCreateModal, setShowCreateModal] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [fetchError, setFetchError] = useState<string | null>(null)
   const [isSyncingNewVacancies, setIsSyncingNewVacancies] = useState(false)
@@ -152,7 +169,10 @@ export default function OpportunitiesPage() {
   // Filters — initialized from URL params
   const [filters, setFilters] = useState<FiltersState>(() => {
     const roleParam = searchParams.get('role')
-    const genderParam = searchParams.get('gender')
+    // The dropdown is labelled "Category"; the canonical param stays
+    // `gender` for backward compatibility, but `?category=` is accepted
+    // as an alias so the label and the shareable URL agree.
+    const genderParam = searchParams.get('gender') ?? searchParams.get('category')
     const appliedParam = searchParams.get('applied')
     return {
       country: searchParams.get('country') || '',
@@ -164,7 +184,13 @@ export default function OpportunitiesPage() {
     }
   })
 
-  // Sync filter state to URL (replaceState)
+  // Sort — newest first by default. Persisted to ?sort= when non-default.
+  const [sort, setSort] = useState<SortValue>(() => {
+    const s = searchParams.get('sort')
+    return isSortValue(s) ? s : 'newest'
+  })
+
+  // Sync filter + sort state to URL (replaceState)
   useEffect(() => {
     const params = new URLSearchParams()
     if (filters.country) params.set('country', filters.country)
@@ -173,8 +199,9 @@ export default function OpportunitiesPage() {
     if (filters.position) params.set('position', filters.position)
     if (filters.euPassport) params.set('eu_passport', 'true')
     if (filters.applied !== 'all') params.set('applied', filters.applied)
+    if (sort !== 'newest') params.set('sort', sort)
     setSearchParams(params, { replace: true })
-  }, [filters, setSearchParams])
+  }, [filters, sort, setSearchParams])
 
   const { count: opportunityCount, markSeen, refresh: refreshOpportunityNotifications } = useOpportunityNotifications()
 
@@ -387,35 +414,6 @@ export default function OpportunitiesPage() {
     }
   }, [fetchVacancies, fetchUserApplications, isSyncingNewVacancies, markSeen, refreshOpportunityNotifications])
 
-  const handleApplyClick = (vacancy: Vacancy) => {
-    setSelectedVacancy(vacancy)
-    if (!user) {
-      setShowSignInPrompt(true)
-    } else if (
-      (profile?.role === 'player' || profile?.role === 'coach') &&
-      !userApplications.includes(vacancy.id) &&
-      // Self-apply guard: a publisher must never be able to open the
-      // Apply modal on their own opportunity. canShowApplyButton hides
-      // the CTA, but this guard prevents any future code path that
-      // bypasses the visible button (deep links, keyboard, etc.).
-      vacancy.club_id !== user.id
-    ) {
-      setShowApplyModal(true)
-    }
-  }
-
-  const canShowApplyButton = (vacancy: Vacancy) => {
-    if (userApplications.includes(vacancy.id)) return false
-    // Self-apply guard — the publisher (coach in recruiter mode or club)
-    // would otherwise see Apply on their own listing. QA-flagged when a
-    // coach opened their own published opportunity from the public feed.
-    if (user && vacancy.club_id === user.id) return false
-    if (!user) return true
-    if (profile?.role === 'player' && vacancy.opportunity_type === 'player') return true
-    if (profile?.role === 'coach' && vacancy.opportunity_type === 'coach') return true
-    return false
-  }
-
   // ─── Filtering & Sorting ───────────────────────────────────────────────────
 
   // Flat newest-first feed. Country is per-card metadata + a filter, not a
@@ -437,16 +435,22 @@ export default function OpportunitiesPage() {
       filtered = filtered.filter(v => appliedSet.has(v.id))
     }
 
-    // Newest first. The DB query already orders by created_at desc, but
-    // re-sort defensively after client-side filtering.
+    const time = (d: string | null | undefined) => (d ? new Date(d).getTime() : 0)
     filtered.sort((a, b) => {
-      const dateA = a.created_at ? new Date(a.created_at).getTime() : 0
-      const dateB = b.created_at ? new Date(b.created_at).getTime() : 0
-      return dateB - dateA
+      if (sort === 'oldest') return time(a.created_at) - time(b.created_at)
+      if (sort === 'deadline') {
+        // Soonest deadline first; opportunities with no deadline go last.
+        const da = a.application_deadline ? time(a.application_deadline) : Infinity
+        const db = b.application_deadline ? time(b.application_deadline) : Infinity
+        if (da !== db) return da - db
+        return time(b.created_at) - time(a.created_at)
+      }
+      // newest (default)
+      return time(b.created_at) - time(a.created_at)
     })
 
     return filtered
-  }, [vacancies, filters.country, filters.applied, userApplications])
+  }, [vacancies, filters.country, filters.applied, userApplications, sort])
 
   const totalFilteredCount = filteredOpportunities.length
 
@@ -470,17 +474,29 @@ export default function OpportunitiesPage() {
       <div className="min-h-screen bg-gray-50">
         <Header />
 
-        <main className="max-w-[600px] mx-auto px-4 pt-24 pb-12">
+        <main className="max-w-[640px] md:max-w-5xl mx-auto px-4 pt-24 pb-12">
           {/* Page Header */}
-          <div className="mb-6">
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">
-              Opportunities
-            </h1>
-            <p className="text-sm text-gray-500">
-              {isUmpire
-                ? 'See what clubs are looking for — roster openings across the HOCKIA network.'
-                : 'Find your next career move in field hockey'}
-            </p>
+          <div className="mb-6 flex items-start justify-between gap-4">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">
+                Opportunities
+              </h1>
+              <p className="text-sm text-gray-500">
+                {isUmpire
+                  ? 'See what clubs are looking for — roster openings across the HOCKIA network.'
+                  : 'Find your next career move in field hockey'}
+              </p>
+            </div>
+            {canPostOpportunity && (
+              <Button
+                onClick={() => setShowCreateModal(true)}
+                className="flex-shrink-0 inline-flex items-center gap-1.5 bg-gradient-to-r from-[#8026FA] to-[#924CEC] hover:opacity-90"
+              >
+                <Plus className="w-4 h-4" />
+                <span className="hidden sm:inline">Post Opportunity</span>
+                <span className="sm:hidden">Post</span>
+              </Button>
+            )}
           </div>
 
           {/* Umpire read-only notice — opportunities are player/coach roster
@@ -550,28 +566,26 @@ export default function OpportunitiesPage() {
               ]}
               onChange={(v) => setFilters(prev => ({ ...prev, position: v }))}
             />
+            {/* EU Passport — a toggle, not a dropdown. The checkbox box
+                makes the on/off nature unambiguous next to the dropdowns. */}
             <button
               type="button"
               onClick={() => setFilters(prev => ({ ...prev, euPassport: !prev.euPassport }))}
-              className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium border transition-colors whitespace-nowrap ${
+              className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border transition-colors whitespace-nowrap ${
                 filters.euPassport
-                  ? 'bg-blue-50 border-blue-200 text-blue-700'
+                  ? 'bg-blue-50 border-blue-300 text-blue-700'
                   : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
               }`}
             >
-              <span>EU Passport</span>
-              {filters.euPassport && (
-                <span
-                  role="button"
-                  tabIndex={0}
-                  onClick={(e) => { e.stopPropagation(); setFilters(prev => ({ ...prev, euPassport: false })) }}
-                  onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); setFilters(prev => ({ ...prev, euPassport: false })) } }}
-                  className="ml-0.5 p-0.5 rounded-full hover:bg-blue-100 cursor-pointer"
-                  aria-label="Clear EU passport filter"
-                >
-                  <X className="w-3 h-3" />
-                </span>
-              )}
+              <span
+                className={`flex h-4 w-4 items-center justify-center rounded border ${
+                  filters.euPassport ? 'border-blue-600 bg-blue-600' : 'border-gray-300'
+                }`}
+                aria-hidden="true"
+              >
+                {filters.euPassport && <Check className="h-3 w-3 text-white" />}
+              </span>
+              EU Passport
             </button>
 
             {/* "Applied: mine" — chip shown only when the filter is
@@ -590,10 +604,28 @@ export default function OpportunitiesPage() {
               </button>
             )}
 
-            {/* Sort indicator */}
-            <div className="ml-auto flex items-center gap-1.5 text-sm text-gray-500">
-              <span className="text-base">↕</span>
-              <span className="font-medium">Sort: Newest</span>
+            {/* Clear all — shown once any filter is applied. */}
+            {hasActiveFilters && (
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="inline-flex items-center gap-1 px-2.5 py-2 rounded-lg text-sm font-medium text-gray-500 hover:text-[#8026FA] hover:bg-[#8026FA]/5 transition-colors whitespace-nowrap"
+              >
+                <X className="w-3.5 h-3.5" />
+                Clear all
+              </button>
+            )}
+
+            {/* Sort — a real menu (Newest / Oldest / Closing soon). */}
+            <div className="ml-auto">
+              <FilterDropdown
+                label="Sort"
+                clearable={false}
+                value={sort}
+                options={SORT_OPTIONS}
+                onChange={(v) => setSort(v as SortValue)}
+                icon={<ArrowUpDown className="w-3.5 h-3.5" />}
+              />
             </div>
           </div>
 
@@ -621,9 +653,11 @@ export default function OpportunitiesPage() {
 
           {/* Content */}
           {isLoading ? (
-            <div className="space-y-6">
-              {[1, 2, 3].map(i => (
-                <OpportunityCardSkeleton key={i} />
+            <div className="columns-1 md:columns-2 gap-4">
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} className="break-inside-avoid mb-4">
+                  <OpportunityCardSkeleton />
+                </div>
               ))}
             </div>
           ) : fetchError ? (
@@ -668,35 +702,32 @@ export default function OpportunitiesPage() {
                   Without the coach gate, candidate-only coaches saw the
                   CTA and got bounced by CoachDashboard's tab=opportunities
                   redirect — confusing dead-end. */}
-              {(profile?.role === 'club' ||
-                (profile?.role === 'coach' && profile?.coach_recruits_for_team === true)) && (
+              {canPostOpportunity && (
                 <div className="mt-4 pt-4 border-t border-gray-100">
                   <p className="text-sm text-gray-500 mb-3">
-                    {profile.role === 'coach'
+                    {profile?.role === 'coach'
                       ? 'As a coach, you can post opportunities to find players and staff.'
                       : 'As a club, you can post opportunities to attract players and coaches.'}
                   </p>
                   <Button
-                    onClick={() => navigate('/dashboard/profile?tab=opportunities')}
-                    className="mx-auto bg-gradient-to-r from-[#8026FA] to-[#924CEC]"
+                    onClick={() => setShowCreateModal(true)}
+                    className="mx-auto inline-flex items-center gap-1.5 bg-gradient-to-r from-[#8026FA] to-[#924CEC]"
                   >
+                    <Plus className="w-4 h-4" />
                     Post an Opportunity
                   </Button>
                 </div>
               )}
             </div>
           ) : (
-            /* Flat newest-first opportunity feed */
-            <div className="space-y-5">
+            /* Flat newest-first feed — App Store-style masonry bento.
+               Tiles flow into columns at their natural height, so a
+               richly-completed opportunity reads taller than a sparse
+               one and the feed never looks like a repetitive list. */
+            <div className="columns-1 md:columns-2 gap-4">
               {filteredOpportunities.map((vacancy) => {
                 const club = clubs[vacancy.club_id]
-                const isApplied = userApplications.includes(vacancy.id)
                 const org = vacancy.organization_name || club?.current_club || null
-                // Phase 3d — Women + Girls map to women's league;
-                // Men + Boys to men's; Mixed defaults to first available.
-                const leagueDivision = (vacancy.gender === 'Women' || vacancy.gender === 'Girls')
-                  ? club?.womens_league_division ?? club?.mens_league_division ?? null
-                  : club?.mens_league_division ?? club?.womens_league_division ?? null
 
                 return (
                   <OpportunityCard
@@ -707,76 +738,31 @@ export default function OpportunitiesPage() {
                     clubId={vacancy.club_id}
                     publisherRole={club?.role}
                     publisherOrganization={org}
-                    leagueDivision={leagueDivision}
                     worldClub={vacancy.world_club_id ? worldClubsMap[vacancy.world_club_id] ?? null : null}
-                    onViewDetails={() => {
-                      setSelectedVacancy(vacancy)
-                      setShowDetailView(true)
-                    }}
-                    onApply={canShowApplyButton(vacancy) ? () => handleApplyClick(vacancy) : undefined}
-                    hasApplied={isApplied}
+                    countryFlag={getFlagEmoji(vacancy.location_country)}
+                    onViewDetails={() => navigate(`/opportunities/${vacancy.id}`)}
                   />
                 )
               })}
             </div>
           )}
         </main>
-
-        {/* Detail View Modal */}
-        {selectedVacancy && showDetailView && (
-          <OpportunityDetailView
-            vacancy={selectedVacancy}
-            clubName={clubs[selectedVacancy.club_id]?.full_name || 'Unknown Club'}
-            clubLogo={clubs[selectedVacancy.club_id]?.avatar_url || null}
-            clubId={selectedVacancy.club_id}
-            publisherRole={clubs[selectedVacancy.club_id]?.role}
-            publisherOrganization={selectedVacancy.organization_name || clubs[selectedVacancy.club_id]?.current_club || null}
-            leagueDivision={(() => {
-              const c = clubs[selectedVacancy.club_id]
-              const womensFamily = selectedVacancy.gender === 'Women' || selectedVacancy.gender === 'Girls'
-              return womensFamily
-                ? c?.womens_league_division ?? c?.mens_league_division ?? null
-                : c?.mens_league_division ?? c?.womens_league_division ?? null
-            })()}
-            worldClub={selectedVacancy.world_club_id ? worldClubsMap[selectedVacancy.world_club_id] ?? null : null}
-            onClose={() => { setShowDetailView(false); setSelectedVacancy(null) }}
-            onApply={
-              canShowApplyButton(selectedVacancy)
-                ? () => { if (!user) setShowSignInPrompt(true); else setShowApplyModal(true) }
-                : undefined
-            }
-            hasApplied={userApplications.includes(selectedVacancy.id)}
-          />
-        )}
-
-        {/* Sign In Prompt */}
-        <SignInPromptModal
-          isOpen={showSignInPrompt}
-          onClose={() => setShowSignInPrompt(false)}
-          title="Sign in to apply"
-          message="Sign in or create a free HOCKIA account to apply to this opportunity."
-        />
-
-        {/* Apply Modal */}
-        {selectedVacancy && (
-          <ApplyToOpportunityModal
-            isOpen={showApplyModal}
-            onClose={() => setShowApplyModal(false)}
-            vacancy={selectedVacancy}
-            onSuccess={(vacancyId) => {
-              setShowApplyModal(false)
-              setShowDetailView(false)
-              setSelectedVacancy(null)
-              setUserApplications(prev => prev.includes(vacancyId) ? prev : [...prev, vacancyId])
-              fetchUserApplications({ skipCache: true })
-            }}
-            onError={(vacancyId) => {
-              setUserApplications(prev => prev.filter(id => id !== vacancyId))
-              fetchUserApplications({ skipCache: true })
-            }}
-          />
-        )}
       </div>
+
+      {/* Create Opportunity — launched directly from the feed for clubs
+          and recruiter-coaches, so posting doesn't require a dashboard
+          detour. Refetches the feed on success so the new opportunity
+          appears immediately. */}
+      {showCreateModal && (
+        <CreateOpportunityModal
+          isOpen={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+          onSuccess={() => {
+            setShowCreateModal(false)
+            fetchVacancies({ skipCache: true })
+          }}
+        />
+      )}
     </>
   )
 }

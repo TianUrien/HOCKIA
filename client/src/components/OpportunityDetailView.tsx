@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { X, MapPin, Calendar, Clock, Home, Car, Globe as GlobeIcon, Plane, Utensils, Briefcase, Shield, GraduationCap, Mail, Phone, CheckCircle, AlertTriangle, DollarSign, Dumbbell, Award, Share2, Flag, Users } from 'lucide-react'
+import { X, MapPin, Calendar, Clock, Home, Car, Globe as GlobeIcon, Plane, Utensils, Briefcase, Shield, GraduationCap, Mail, Phone, CheckCircle, AlertTriangle, DollarSign, Dumbbell, Award, Share2, Flag, Users, Info } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import type { Vacancy } from '../lib/supabase'
 import { Avatar, StorageImage } from './index'
@@ -8,6 +8,8 @@ import type { WorldClubInfo } from './OpportunityCard'
 import { opportunityGenderToTeamLabel } from '@/lib/hockeyCategories'
 import { getShareOrigin } from '@/lib/profileShare'
 import { useAuthStore } from '@/lib/auth'
+import { useCountries } from '@/hooks/useCountries'
+import { checkOpportunityEligibility } from '@/lib/opportunityEligibility'
 
 interface VacancyDetailViewProps {
   vacancy: Vacancy
@@ -76,8 +78,15 @@ export default function VacancyDetailView({
   hideClubProfileButton = false,
 }: VacancyDetailViewProps) {
   const navigate = useNavigate()
-  const { user } = useAuthStore()
+  const { user, profile } = useAuthStore()
+  const { countries } = useCountries()
   const [isVisible, setIsVisible] = useState(false)
+
+  // Application eligibility — EU passport + gender/team category. Checked
+  // here so an ineligible user still reads the full opportunity but can't
+  // submit; the server trigger is the hard backstop. Missing profile data
+  // never blocks — it surfaces a "complete your profile" nudge instead.
+  const eligibility = checkOpportunityEligibility(vacancy, profile, countries)
   // Publisher viewing their own listing — used to swap the dead-end
   // "Close" CTA for a "View applicants" deep link. QA-flagged the
   // detail sheet's only action being a literal Close button when the
@@ -160,12 +169,28 @@ export default function VacancyDetailView({
     return () => { document.body.style.overflow = originalOverflow }
   }, [])
 
+  // Escape closes the view — standard dialog affordance, and the only
+  // keyboard exit. Kept in its own effect so it always sees the current
+  // onClose without re-running the body-overflow lock.
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [onClose])
+
   return (
     <div
       className={`fixed inset-0 z-50 overflow-y-auto transition-opacity duration-200 ease-out ${isVisible ? 'bg-black/50' : 'bg-black/0'}`}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div className="min-h-screen px-4 py-8 flex items-start sm:items-center justify-center">
+      {/* The padded wrapper is what visually fills the dimmed area, so the
+          click-to-close test lives here — a click on the outer element
+          never lands because this layer covers it. */}
+      <div
+        className="min-h-screen px-4 py-8 flex items-start sm:items-center justify-center"
+        onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
+      >
         <div
           className={`bg-white rounded-2xl shadow-2xl max-w-[600px] w-full relative overflow-hidden transition-all duration-200 ease-out ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
         >
@@ -245,9 +270,13 @@ export default function VacancyDetailView({
                     URGENT
                   </span>
                 )}
-                {cardType !== 'club' && (
+                {cardType !== 'club' ? (
                   <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-[#F0FDFA] text-[#0D9488] border border-teal-100">
                     COACH LISTED
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 border border-gray-200">
+                    CLUB LISTED
                   </span>
                 )}
               </div>
@@ -337,7 +366,7 @@ export default function VacancyDetailView({
             )}
 
             {/* EU Passport Requirement */}
-            {(vacancy as Record<string, unknown>).eu_passport_required === true && (
+            {vacancy.eu_passport_required === true && (
               <div className="mb-5">
                 <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-3">Requirements</p>
                 <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-blue-50 text-blue-700 border border-blue-200">
@@ -429,21 +458,68 @@ export default function VacancyDetailView({
                   <CheckCircle className="w-4 h-4" />
                   Application Submitted
                 </div>
+              ) : onApply && !eligibility.eligible ? (
+                // Ineligible — the opportunity stays fully readable, but
+                // Apply is replaced by a short, non-judgmental reason.
+                <div className="flex-1 flex items-start gap-2.5 px-4 py-3 rounded-xl border border-amber-200 bg-amber-50">
+                  <Info className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                  <div className="text-sm">
+                    <p className="font-semibold text-amber-900">You can&rsquo;t apply to this opportunity</p>
+                    <p className="text-amber-800 mt-0.5">{eligibility.reason}</p>
+                  </div>
+                </div>
               ) : onApply ? (
                 <Button onClick={onApply} className="flex-1 rounded-xl py-3.5 bg-gradient-to-r from-[#8026FA] to-[#924CEC] hover:opacity-90 text-base font-semibold">
                   Apply Now &rsaquo;
                 </Button>
               ) : (
-                <Button onClick={onClose} className="flex-1 rounded-xl py-3.5 bg-gradient-to-r from-[#8026FA] to-[#924CEC] hover:opacity-90 text-base font-semibold">
-                  Close
-                </Button>
+                // No Apply path for this viewer (role doesn't match, or an
+                // umpire/club browsing). Say so plainly instead of showing
+                // a dead-end "Close" button — the opportunity stays fully
+                // readable; this just explains the missing CTA.
+                <div className="flex-1 flex items-start gap-2.5 px-4 py-3 rounded-xl border border-gray-200 bg-gray-50">
+                  <Info className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-gray-600">
+                    {vacancy.opportunity_type === 'coach'
+                      ? 'Only coaches can apply to this opportunity.'
+                      : 'Only players can apply to this opportunity.'}
+                  </p>
+                </div>
               )}
               {!hideClubProfileButton && !isPublisher && (
                 <Button onClick={handleClubClick} variant="outline" className="rounded-xl py-3.5 px-5 flex-shrink-0">
                   {publisherRole === 'coach' ? 'View Profile' : 'View Club'}
                 </Button>
               )}
+              {isPublisher && (
+                // "Done" — dismisses the detail view. NOT "Close": on a
+                // publisher's own opportunity that reads as closing the
+                // listing, which is a separate action (dashboard → Manage
+                // Opportunities → Close).
+                <Button onClick={onClose} variant="outline" className="rounded-xl py-3.5 px-5 flex-shrink-0">
+                  Done
+                </Button>
+              )}
             </div>
+
+            {/* Eligibility nudge — shown when the user CAN apply but their
+                profile is missing data we'd use to confirm a fit. Never
+                blocks; just points them at the gap. */}
+            {onApply && !hasApplied && !isPublisher && eligibility.eligible && eligibility.incompleteProfile && (
+              <div className="mt-3 flex items-start gap-2.5 px-4 py-3 rounded-xl border border-blue-100 bg-blue-50">
+                <Info className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
+                <div className="text-sm text-blue-900">
+                  <span>{eligibility.incompleteProfile} </span>
+                  <button
+                    type="button"
+                    onClick={() => { onClose(); navigate('/dashboard/profile') }}
+                    className="font-semibold underline underline-offset-2 hover:text-blue-700"
+                  >
+                    Complete profile
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Timestamp */}
             <p className="mt-5 text-xs text-gray-400 text-center">

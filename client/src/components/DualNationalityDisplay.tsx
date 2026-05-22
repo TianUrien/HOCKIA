@@ -38,7 +38,11 @@ export default function DualNationalityDisplay({
   const { getCountryById, isEuCountry, loading } = useCountries()
 
   if (loading) {
-    return <span className={className}>...</span>
+    // While the country list loads, fall back to the legacy nationality
+    // text rather than a bare "..." — the flag version replaces it once
+    // the list resolves. Without this, a fresh page load of a profile
+    // flashes (or, if the list is slow, sticks on) a meaningless "...".
+    return fallbackText ? <span className={className}>{fallbackText}</span> : null
   }
 
   const primaryCountry = getCountryById(primaryCountryId ?? null)

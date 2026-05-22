@@ -113,6 +113,14 @@ beforeEach(() => {
   vi.clearAllMocks()
   authState.profile = { id: 'club-1', role: 'club', is_test_account: false }
   authState.user = { id: 'club-1' }
+  // Default to a non-staging environment so the test-account filter
+  // tests below exercise the production code path deterministically.
+  // The dedicated staging test re-stubs this.
+  vi.stubEnv('VITE_SUPABASE_URL', 'https://xtertgftujnebubxgqit.supabase.co')
+})
+
+afterEach(() => {
+  vi.unstubAllEnvs()
 })
 
 describe('ClubMembersTab', () => {
@@ -286,6 +294,26 @@ describe('ClubMembersTab', () => {
     renderTab()
 
     expect(await screen.findByText('No members yet')).toBeInTheDocument()
+  })
+
+  it('shows test accounts to non-test users on staging', async () => {
+    // Staging exposes test accounts to everyone for QA.
+    vi.stubEnv('VITE_SUPABASE_URL', 'https://ivjkdaylalhsteyyclvl.supabase.co')
+
+    rpcMock.mockResolvedValue({
+      data: [
+        makeMember({ id: 'real-1', full_name: 'Real Player', is_test_account: false, total_count: 2 }),
+        makeMember({ id: 'test-1', full_name: 'Test Bot', is_test_account: true, total_count: 2 }),
+      ],
+      error: null,
+    })
+
+    renderTab()
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId('member-row')).toHaveLength(2)
+    })
+    expect(screen.getByText('Test Bot')).toBeInTheDocument()
   })
 
   // ── Pagination / Load More ───────────────────────────────────────
