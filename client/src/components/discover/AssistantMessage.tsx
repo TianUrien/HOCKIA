@@ -26,17 +26,39 @@ interface AssistantMessageProps {
   msg: DiscoverChatMessage
 }
 
-/** 3-dot typing indicator while the LLM call is in flight. */
-function TypingIndicator() {
+/**
+ * Compact search-status bubble shown while the LLM call is in flight.
+ * Sits inline in the chat flow — a calm, lightweight "thinking" state at
+ * roughly the height of a normal AI message, not a full card. The left
+ * indicator is three connected dots with a subtle green progress wave.
+ */
+function SearchingIndicator() {
   return (
-    <div className="flex items-center gap-1 px-1 py-1">
-      {[0, 1, 2].map(i => (
-        <span
-          key={i}
-          className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-          style={{ animationDelay: `${i * 150}ms` }}
-        />
-      ))}
+    <div
+      role="status"
+      aria-label="Searching"
+      className="inline-flex items-center gap-3 bg-white border border-gray-200 rounded-2xl rounded-tl-md px-3.5 py-2.5 shadow-sm"
+    >
+      {/* Connected dots — subtle grey track, green wave travelling across. */}
+      <div className="flex items-center flex-shrink-0" aria-hidden="true">
+        {[0, 1, 2].map(i => (
+          <span key={i} className="flex items-center">
+            <span
+              className="w-[7px] h-[7px] rounded-full bg-emerald-500 animate-dotWave"
+              style={{ animationDelay: `${i * 200}ms` }}
+            />
+            {i < 2 && <span className="w-3.5 h-px bg-gray-200" />}
+          </span>
+        ))}
+      </div>
+      {/* Status text — kept generic so the bubble is reusable across all
+          Hockia AI search types, not just profile lookups. */}
+      <div className="min-w-0">
+        <p className="text-sm font-medium text-gray-900 leading-tight">Searching…</p>
+        <p className="text-[12px] text-gray-500 leading-tight mt-0.5">
+          Finding the best results
+        </p>
+      </div>
     </div>
   )
 }
@@ -54,11 +76,7 @@ export default function AssistantMessage({ msg }: AssistantMessageProps) {
 
   const body = (() => {
     if (msg.status === 'sending') {
-      return (
-        <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-md px-4 py-3 shadow-sm">
-          <TypingIndicator />
-        </div>
-      )
+      return <SearchingIndicator />
     }
 
     if (msg.status === 'error') {
