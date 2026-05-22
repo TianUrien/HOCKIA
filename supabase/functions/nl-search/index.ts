@@ -617,6 +617,15 @@ Deno.serve(async (req) => {
     const requestedOffset = Number.isInteger(body?.offset) && body.offset > 0
       ? Math.min(body.offset, 500)
       : 0
+    // Phase 4 — IDs of profiles the user has already seen in this chat.
+    // Filtered out post-RPC so a follow-up like "show me different
+    // players" returns genuinely new faces, not a re-shuffle of the
+    // first answer. Capped to keep the request body small.
+    const excludedIds: string[] = Array.isArray(body?.excluded_ids)
+      ? (body.excluded_ids as unknown[])
+          .filter((x): x is string => typeof x === 'string')
+          .slice(0, 50)
+      : []
     const rawHistory = Array.isArray(body?.history) ? body.history : []
     const history: HistoryTurn[] = rawHistory
       .slice(-10)
@@ -1985,6 +1994,15 @@ Deno.serve(async (req) => {
 
     const result = rpcResult as { results: any[]; total: number; has_more: boolean }
 
+    // Phase 4 — drop profiles the user has already seen in this chat. The
+    // count message below uses result.results.length (post-filter), so the
+    // headline stays honest. result.total stays as the DB-level match
+    // count — has_more semantics are kept conservative.
+    if (excludedIds.length > 0) {
+      const excludedSet = new Set(excludedIds)
+      result.results = result.results.filter((r: any) => !excludedSet.has(r?.id))
+    }
+
     // ── Result-aware AI message ──────────────────────────────────────
     // When the keyword router enforced a specific entity type, phrase the
     // empty/match copy in those terms ("no clubs found") rather than the
@@ -2023,8 +2041,11 @@ Deno.serve(async (req) => {
       // headline message keeps pace with the growing list.
       const shown = requestedOffset + result.results.length
       const noun = shown === 1 ? (ENTITY_SINGULAR[entityNoun] ?? entityNoun) : entityNoun
-      const countPhrase = `I found ${shown} ${noun} for you.`
-      aiMessage = llmResult.message ? `${countPhrase} ${llmResult.message}` : countPhrase
+      // Headline is the deterministic count phrase only. We *don't* append
+      // llmResult.message here — the LLM phrases its own count at parse
+      // time, before knowing what was returned, so the two can disagree
+      // (audit found "I found 7" + "5 players found across..." stacked).
+      aiMessage = `I found ${shown} ${noun} for you.`
     }
 
     // ── Phase 4 — proactive no-results diagnosis ─────────────────────
@@ -2416,6 +2437,10 @@ Deno.serve(async (req) => {
         kind: responseKind,
         applied,
         suggested_actions: suggestedActions,
+        // Phase 4 audit — frontend uses this to skip the collapse-to-3
+        // when the user explicitly asked for mixed roles ("3 players and
+        // 1 coach"), so the headline count matches what's visible.
+        is_compound: isCompound,
       }),
       { status: 200, headers: { ...headers, 'Content-Type': 'application/json' } }
     )

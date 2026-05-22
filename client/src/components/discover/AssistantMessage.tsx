@@ -155,6 +155,7 @@ export default function AssistantMessage({ msg }: AssistantMessageProps) {
             hasMore={msg.has_more ?? false}
             loadingMore={msg.loading_more ?? false}
             onLoadMore={() => loadMore(msg.id)}
+            isCompound={msg.is_compound ?? false}
           />
         )
 

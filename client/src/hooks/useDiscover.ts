@@ -152,6 +152,10 @@ export interface DiscoverResponse {
   clarifying_options?: ClarifyingOption[]
   /** Platform-help — explicit navigation CTA (canned_redirect responses). */
   cta?: DiscoverCta | null
+  /** Compound multi-role search ("2 players and 1 coach") — the UI uses
+   *  this to skip the collapse-to-3, so the headline count matches what's
+   *  visible. */
+  is_compound?: boolean
 }
 
 // ── Chat message types ──────────────────────────────────────────────────
@@ -170,6 +174,9 @@ export interface DiscoverChatMessage {
   search_query?: string
   /** Phase 1b — a "Show more" fetch is currently in flight for this message. */
   loading_more?: boolean
+  /** Compound multi-role search — frontend suppresses the collapse-to-3
+   *  so every requested role is visible. */
+  is_compound?: boolean
   timestamp: number
   status: 'sending' | 'complete' | 'error'
   error?: string
@@ -185,6 +192,24 @@ export interface DiscoverChatMessage {
 interface HistoryTurn {
   role: 'user' | 'assistant'
   content: string
+}
+
+/**
+ * Collect IDs of every profile the user has already seen in this
+ * conversation. Passed to nl-search as `excluded_ids` so a follow-up
+ * search ("show me different players") returns genuinely new faces
+ * instead of re-surfacing the first answer. Capped at 30 to keep the
+ * request body small.
+ */
+function collectShownProfileIds(messages: DiscoverChatMessage[]): string[] {
+  const ids = new Set<string>()
+  for (const m of messages) {
+    if (m.role !== 'assistant' || m.kind !== 'results' || !m.results) continue
+    for (const r of m.results) {
+      if (typeof r.id === 'string') ids.add(r.id)
+    }
+  }
+  return Array.from(ids).slice(-30)
 }
 
 // ── Zustand store — persists across navigation ──────────────────────────
@@ -269,8 +294,9 @@ export const useDiscoverChat = create<DiscoverChatStore>((set, get) => ({
     }
 
     try {
+      const excludedIds = collectShownProfileIds(get().messages)
       const { data, error } = await supabase.functions.invoke('nl-search', {
-        body: { query: trimmed, history, recovery_context: recoveryContext },
+        body: { query: trimmed, history, recovery_context: recoveryContext, excluded_ids: excludedIds },
       })
 
       if (error) {
@@ -300,6 +326,7 @@ export const useDiscoverChat = create<DiscoverChatStore>((set, get) => ({
                 total: result.total,
                 has_more: result.has_more,
                 search_query: trimmed,
+                is_compound: result.is_compound,
                 status: 'complete' as const,
                 // Phase 1A — persist the structured envelope so the dispatcher
                 // can render the right component. All optional; old rows
@@ -380,6 +407,7 @@ export const useDiscoverChat = create<DiscoverChatStore>((set, get) => ({
       .slice(-10)
     const userRole = useAuthStore.getState().profile?.role ?? null
 
+    const excludedIds = collectShownProfileIds(get().messages)
     try {
       const { data, error } = await supabase.functions.invoke('nl-search', {
         body: {
@@ -387,6 +415,7 @@ export const useDiscoverChat = create<DiscoverChatStore>((set, get) => ({
           history,
           recovery_context: { user_role: userRole },
           offset,
+          excluded_ids: excludedIds,
         },
       })
       if (error) throw new Error(error.message || 'Failed to load more results')

@@ -14,6 +14,9 @@ interface SearchResultsResponseProps {
   loadingMore?: boolean
   /** Phase 1b — fetch + append the next batch. */
   onLoadMore?: () => void
+  /** Compound multi-role search — skip the collapse-to-3 so the headline
+   *  count matches what's visible ("3 players and 1 coach" → all 4). */
+  isCompound?: boolean
 }
 
 /** Results shown before the list is expanded. */
@@ -40,8 +43,11 @@ export default function SearchResultsResponse({
   hasMore = false,
   loadingMore = false,
   onLoadMore,
+  isCompound = false,
 }: SearchResultsResponseProps) {
-  const [expanded, setExpanded] = useState(false)
+  // Compound results auto-expand: every requested role must be visible so
+  // "3 players and 1 coach" doesn't hide the lone coach behind "Show all".
+  const [expanded, setExpanded] = useState(isCompound)
   const containerRef = useRef<HTMLDivElement>(null)
   const visible = expanded ? results : results.slice(0, COLLAPSED_COUNT)
   const hiddenCount = results.length - COLLAPSED_COUNT
@@ -49,6 +55,9 @@ export default function SearchResultsResponse({
   // more than COLLAPSED_COUNT to begin with.
   const allVisible = expanded || results.length <= COLLAPSED_COUNT
   const showLoadMore = hasMore && allVisible && !!onLoadMore
+  // Suppress the collapse toggle on compound queries — the curated default
+  // is "show every role you asked for", not "hide one behind a button".
+  const showCollapseToggle = !isCompound && hiddenCount > 0
 
   // "Show more results" pages in a new batch — expand first so the appended
   // rows are visible rather than collapsing back behind "Show all N".
@@ -88,7 +97,7 @@ export default function SearchResultsResponse({
             {visible.map(r => (
               <DiscoverResultCard key={r.id} result={r} />
             ))}
-            {hiddenCount > 0 && (
+            {showCollapseToggle && (
               <button
                 type="button"
                 onClick={toggle}
