@@ -106,8 +106,8 @@ export default function DiscoverFilterChips({ filters }: DiscoverFilterChipsProp
 
   return (
     <div className="flex items-center flex-wrap gap-x-2 gap-y-1">
-      <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">
-        Filters
+      <span className="text-xs font-medium text-gray-500">
+        Filters applied:
       </span>
       {chips.map((chip, i) => (
         <span

@@ -204,6 +204,19 @@ const ROLE_NOUNS: Record<string, string> = {
   umpire: 'umpire', umpires: 'umpire',
 }
 
+/** Position noun → canonical lowercase position (matches the values
+ *  stored in profiles.position / secondary_position). Positions always
+ *  belong to the 'player' role, so a compound entry with a position
+ *  becomes role='player' + a position filter on that sub-search. */
+const POSITION_TO_ROLE: Record<string, string> = {
+  goalkeeper: 'goalkeeper', goalkeepers: 'goalkeeper',
+  defender: 'defender', defenders: 'defender',
+  midfielder: 'midfielder', midfielders: 'midfielder',
+  forward: 'forward', forwards: 'forward',
+  striker: 'striker', strikers: 'striker',
+  attacker: 'attacker', attackers: 'attacker',
+}
+
 /** Canonical role → [singular, plural] label. */
 const ROLE_LABELS: Record<string, [string, string]> = {
   player: ['player', 'players'],
@@ -225,28 +238,41 @@ function joinList(parts: string[]): string {
 }
 
 /**
- * Phase 1c — extract every explicit "<count> <role>" pair from a query, in
- * order, de-duplicated by role: "Find me 2 players and 1 coach" →
- * [{role:'player',count:2},{role:'coach',count:1}]. Two or more pairs makes
- * it a compound multi-role search. Age phrases ("25 year old players") are
- * excluded the same way resolveResultLimit does.
+ * Phase 1c (+ audit round 3) — extract every explicit "<count> <noun>" pair
+ * from a query, in order, de-duped by (role, position):
+ *   "Find me 2 players and 1 coach"
+ *     → [{role:'player',count:2},{role:'coach',count:1}]
+ *   "Find me 1 goalkeeper and 1 midfielder"
+ *     → [{role:'player',position:'goalkeeper',count:1},
+ *        {role:'player',position:'midfielder',count:1}]
+ * Two or more pairs makes it a compound multi-role/position search. Age
+ * phrases ("25 year old players") are excluded the same way
+ * resolveResultLimit does.
  */
-function extractRoleCounts(rawQuery: string): { role: string; count: number }[] {
-  const nouns = Object.keys(ROLE_NOUNS).join('|')
+function extractRoleCounts(rawQuery: string): { role: string; position?: string; count: number }[] {
+  const nouns = [...Object.keys(ROLE_NOUNS), ...Object.keys(POSITION_TO_ROLE)].join('|')
   const re = new RegExp(
     `\\b(${NUMBER_TOKEN})\\s+(?!years?\\b|yo\\b|yr\\b)${COUNT_FILLER}(${nouns})\\b`,
     'gi',
   )
-  const out: { role: string; count: number }[] = []
+  const out: { role: string; position?: string; count: number }[] = []
   const seen = new Set<string>()
   let m: RegExpExecArray | null
   while ((m = re.exec(rawQuery)) !== null) {
     const count = parseCountToken(m[1])
-    const role = ROLE_NOUNS[m[2].toLowerCase()]
-    if (role && count != null && count > 0 && !seen.has(role)) {
-      seen.add(role)
-      out.push({ role, count: Math.min(count, MAX_RESULT_LIMIT) })
+    const noun = m[2].toLowerCase()
+    const position = POSITION_TO_ROLE[noun]
+    const role = position ? 'player' : ROLE_NOUNS[noun]
+    if (!role || count == null || count <= 0) continue
+    const key = position ? `${role}:${position}` : role
+    if (seen.has(key)) continue
+    seen.add(key)
+    const entry: { role: string; position?: string; count: number } = {
+      role,
+      count: Math.min(count, MAX_RESULT_LIMIT),
     }
+    if (position) entry.position = position
+    out.push(entry)
   }
   return out
 }
@@ -258,15 +284,25 @@ function extractRoleCounts(rawQuery: string): { role: string; count: number }[] 
  * dropped.
  */
 function buildCompoundMessage(
-  roleCounts: { role: string; count: number }[],
-  rows: { role?: string }[],
+  roleCounts: { role: string; position?: string; count: number }[],
+  rows: { role?: string; position?: string; secondary_position?: string }[],
 ): string {
+  // Position-aware label: a position entry counts in its own units
+  // ("1 goalkeeper and 1 midfielder"), not just by role ("2 players").
+  const entryLabel = (rc: { role: string; position?: string }, n: number) =>
+    rc.position ? (n === 1 ? rc.position : `${rc.position}s`) : roleLabel(rc.role, n)
   const present: string[] = []
   const absent: string[] = []
   for (const rc of roleCounts) {
-    const got = rows.filter(r => r.role === rc.role).length
-    if (got > 0) present.push(`${got} ${roleLabel(rc.role, got)}`)
-    else absent.push(roleLabel(rc.role, 2))
+    const matches = rc.position
+      ? rows.filter(r =>
+          r.role === rc.role &&
+          (r.position?.toLowerCase() === rc.position ||
+            r.secondary_position?.toLowerCase() === rc.position))
+      : rows.filter(r => r.role === rc.role)
+    const got = matches.length
+    if (got > 0) present.push(`${got} ${entryLabel(rc, got)}`)
+    else absent.push(entryLabel(rc, 2))
   }
   let msg = ''
   if (present.length > 0) {
@@ -1914,7 +1950,12 @@ Deno.serve(async (req) => {
         const { data, error } = await adminClient.rpc('discover_profiles', {
           ...baseDiscoverParams,
           p_roles: [rc.role],
-          p_positions: rc.role === 'player' ? baseDiscoverParams.p_positions : null,
+          // Position-aware compound: a sub-search with a specific position
+          // ("1 goalkeeper") narrows to that position; otherwise the player
+          // sub-search inherits any LLM-parsed positions from the query.
+          p_positions: rc.position
+            ? [rc.position]
+            : (rc.role === 'player' ? baseDiscoverParams.p_positions : null),
           p_coach_specializations: rc.role === 'coach' ? baseDiscoverParams.p_coach_specializations : null,
           p_league_ids: rc.role === 'player' || rc.role === 'club' ? baseDiscoverParams.p_league_ids : null,
           p_availability:
