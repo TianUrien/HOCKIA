@@ -71,6 +71,7 @@ function SearchingIndicator() {
  */
 export default function AssistantMessage({ msg }: AssistantMessageProps) {
   const submitAction = useDiscoverChat(s => s.submitAction)
+  const loadMore = useDiscoverChat(s => s.loadMore)
 
   const handleAction = (action: SuggestedAction) => submitAction(action.intent)
 
@@ -151,6 +152,9 @@ export default function AssistantMessage({ msg }: AssistantMessageProps) {
             message={msg.content}
             results={msg.results ?? []}
             parsedFilters={msg.parsed_filters ?? null}
+            hasMore={msg.has_more ?? false}
+            loadingMore={msg.loading_more ?? false}
+            onLoadMore={() => loadMore(msg.id)}
           />
         )
 
@@ -165,6 +169,13 @@ export default function AssistantMessage({ msg }: AssistantMessageProps) {
         )
     }
   })()
+
+  // A search-results message renders full-width: the flat, edge-to-edge
+  // result list needs the room — the chat avatar indent + 85% width cap
+  // would crush it on mobile. Other assistant messages keep avatar + bubble.
+  if (msg.kind === 'results') {
+    return <div className="w-full animate-fadeSlideIn">{body}</div>
+  }
 
   return (
     <div className="flex items-start gap-2.5 animate-fadeSlideIn">

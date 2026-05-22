@@ -45,6 +45,10 @@ export interface DiscoverResult {
   fit_reasons?: string[]
   missing_data?: string[]
   next_action?: string
+  // Phase 3 — rule-based Journey highlights (national-team selection, club
+  // experience, references, stated achievements). Up to 4, shown in the
+  // result card's expanded drawer. Absent when the profile has no Journey.
+  highlights?: string[]
   // Phase 4 MVP-B — World directory club row. When result_type is
   // 'world_club', the row represents an entry from the World directory
   // (a global field-hockey club registry) rather than a claimed HOCKIA
@@ -159,6 +163,13 @@ export interface DiscoverChatMessage {
   results?: DiscoverResult[]
   parsed_filters?: ParsedFilters | null
   total?: number
+  /** Phase 1b — backend has further results past what's currently loaded. */
+  has_more?: boolean
+  /** Phase 1b — the query that produced this results message; "Show more"
+   *  replays it with an offset to page in the next distinct batch. */
+  search_query?: string
+  /** Phase 1b — a "Show more" fetch is currently in flight for this message. */
+  loading_more?: boolean
   timestamp: number
   status: 'sending' | 'complete' | 'error'
   error?: string
@@ -188,6 +199,13 @@ interface DiscoverChatStore {
    * recent user query. `clear` empties the chat.
    */
   submitAction: (intent: SuggestedActionIntent) => void
+  /**
+   * Phase 1b — "Show more": append the next distinct batch of results to an
+   * existing results message via offset pagination. Does not touch the
+   * global `isPending` flag — it drives a per-message `loading_more` state
+   * so the composer and the main thread stay interactive.
+   */
+  loadMore: (messageId: string) => Promise<void>
   clearChat: () => void
 }
 
@@ -280,6 +298,8 @@ export const useDiscoverChat = create<DiscoverChatStore>((set, get) => ({
                 results: result.data,
                 parsed_filters: result.parsed_filters,
                 total: result.total,
+                has_more: result.has_more,
+                search_query: trimmed,
                 status: 'complete' as const,
                 // Phase 1A — persist the structured envelope so the dispatcher
                 // can render the right component. All optional; old rows
@@ -336,6 +356,77 @@ export const useDiscoverChat = create<DiscoverChatStore>((set, get) => ({
         logger.warn('[useDiscoverChat] unknown action intent — chip will no-op', { intent: exhaustive })
         return
       }
+    }
+  },
+
+  loadMore: async (messageId: string) => {
+    if (get().isPending) return
+    const msg = get().messages.find(m => m.id === messageId)
+    if (!msg || msg.role !== 'assistant' || !msg.search_query || msg.loading_more) return
+
+    // Offset = how many results are already loaded. nl-search pages past
+    // them and returns a default-sized batch.
+    const offset = (msg.results ?? []).length
+
+    set(s => ({
+      messages: s.messages.map(m =>
+        m.id === messageId ? { ...m, loading_more: true } : m,
+      ),
+    }))
+
+    const history: HistoryTurn[] = get()
+      .messages.filter(m => m.status === 'complete')
+      .map(m => ({ role: m.role, content: m.content }))
+      .slice(-10)
+    const userRole = useAuthStore.getState().profile?.role ?? null
+
+    try {
+      const { data, error } = await supabase.functions.invoke('nl-search', {
+        body: {
+          query: msg.search_query,
+          history,
+          recovery_context: { user_role: userRole },
+          offset,
+        },
+      })
+      if (error) throw new Error(error.message || 'Failed to load more results')
+
+      const result = data as DiscoverResponse
+      if (!result.success) throw new Error(result.error || 'Failed to load more results')
+
+      set(s => ({
+        messages: s.messages.map(m => {
+          if (m.id !== messageId) return m
+          // A load-more re-parse should return another results page. If it
+          // drifted (no_results / soft_error), keep the message intact and
+          // just stop offering more.
+          if (result.kind && result.kind !== 'results') {
+            return { ...m, has_more: false, loading_more: false }
+          }
+          // De-dupe by id — a re-parse drift must never surface a repeat.
+          const seen = new Set((m.results ?? []).map(r => r.id))
+          const fresh = (result.data ?? []).filter(r => !seen.has(r.id))
+          return {
+            ...m,
+            // Refresh the headline so its count keeps pace with the now-
+            // larger list ("I found 7 players" after expanding from 5).
+            content: result.ai_message || m.content,
+            results: [...(m.results ?? []), ...fresh],
+            total: result.total,
+            has_more: result.has_more,
+            loading_more: false,
+          }
+        }),
+      }))
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : 'Unknown error'
+      logger.error('[useDiscoverChat] loadMore error:', errMsg)
+      reportSupabaseError('discovery', err, { query: msg.search_query })
+      set(s => ({
+        messages: s.messages.map(m =>
+          m.id === messageId ? { ...m, loading_more: false } : m,
+        ),
+      }))
     }
   },
 

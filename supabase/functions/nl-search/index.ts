@@ -127,6 +127,227 @@ function sumNullable(a: number | null, b: number | null): number | null {
   return (a ?? 0) + (b ?? 0)
 }
 
+/** Result-count limits for Hockia AI search (Phase 1a). */
+const DEFAULT_RESULT_LIMIT = 5
+const MAX_RESULT_LIMIT = 25
+
+/** English number words Hockia AI understands as result counts. */
+const NUMBER_WORDS: Record<string, number> = {
+  one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8,
+  nine: 9, ten: 10, eleven: 11, twelve: 12, thirteen: 13, fourteen: 14,
+  fifteen: 15, sixteen: 16, seventeen: 17, eighteen: 18, nineteen: 19,
+  twenty: 20, thirty: 30, forty: 40, fifty: 50,
+}
+const NUMBER_WORD_KEYS = Object.keys(NUMBER_WORDS).join('|')
+// A count token is a 1–3 digit number OR an English number word.
+const NUMBER_TOKEN = `\\d{1,3}|${NUMBER_WORD_KEYS}`
+// Up to 3 filler words may sit between the count and the result noun
+// ("2 [great young] players") — but never a number word or "and", which
+// mark the *next* count in a compound query and must not be swallowed.
+const COUNT_FILLER = `(?:(?!(?:${NUMBER_WORD_KEYS}|and)\\b)[a-z'’-]+\\s+){0,3}`
+
+/** Parse a count token (digits or a number word) → positive integer | null. */
+function parseCountToken(token: string): number | null {
+  const t = token.toLowerCase()
+  if (/^\d+$/.test(t)) {
+    const n = parseInt(t, 10)
+    return Number.isFinite(n) && n > 0 ? n : null
+  }
+  return NUMBER_WORDS[t] ?? null
+}
+
+/**
+ * Resolve how many results a search should return.
+ *
+ * When the user names an explicit count — "show me 10 players", "top five
+ * clubs", "find three coaches" — honour it, clamped to MAX_RESULT_LIMIT.
+ * Both digits and number words are understood. With no number, return
+ * DEFAULT_RESULT_LIMIT ("the best 5 first") rather than a long default list.
+ *
+ * The number must sit next to a result noun (within 3 words), and a number
+ * immediately followed by an age word is ignored — so "25 year old
+ * players", "U25 defenders" and "2+ references" never read as a count.
+ */
+function resolveResultLimit(rawQuery: string): number {
+  const noun = 'players?|coaches?|clubs?|brands?|umpires?|profiles?|results?|people|users?|options?|matches'
+  const m =
+    rawQuery.match(
+      new RegExp(`\\b(${NUMBER_TOKEN})\\s+(?!years?\\b|yo\\b|yr\\b)${COUNT_FILLER}(?:${noun})\\b`, 'i'),
+    ) ||
+    rawQuery.match(new RegExp(`\\b(?:top|best|first)\\s+(${NUMBER_TOKEN})\\b`, 'i'))
+  if (m) {
+    const n = parseCountToken(m[1])
+    if (n != null && n > 0) return Math.min(n, MAX_RESULT_LIMIT)
+  }
+  return DEFAULT_RESULT_LIMIT
+}
+
+/** Result-noun → canonical role. Drives compound multi-role detection. */
+const ROLE_NOUNS: Record<string, string> = {
+  player: 'player', players: 'player',
+  coach: 'coach', coaches: 'coach',
+  club: 'club', clubs: 'club',
+  brand: 'brand', brands: 'brand',
+  umpire: 'umpire', umpires: 'umpire',
+}
+
+/** Canonical role → [singular, plural] label. */
+const ROLE_LABELS: Record<string, [string, string]> = {
+  player: ['player', 'players'],
+  coach: ['coach', 'coaches'],
+  club: ['club', 'clubs'],
+  brand: ['brand', 'brands'],
+  umpire: ['umpire', 'umpires'],
+}
+
+function roleLabel(role: string, n: number): string {
+  const pair = ROLE_LABELS[role]
+  return pair ? pair[n === 1 ? 0 : 1] : role
+}
+
+/** Join ["2 players","1 coach"] → "2 players and 1 coach". */
+function joinList(parts: string[]): string {
+  if (parts.length <= 1) return parts[0] ?? ''
+  return `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`
+}
+
+/**
+ * Phase 1c — extract every explicit "<count> <role>" pair from a query, in
+ * order, de-duplicated by role: "Find me 2 players and 1 coach" →
+ * [{role:'player',count:2},{role:'coach',count:1}]. Two or more pairs makes
+ * it a compound multi-role search. Age phrases ("25 year old players") are
+ * excluded the same way resolveResultLimit does.
+ */
+function extractRoleCounts(rawQuery: string): { role: string; count: number }[] {
+  const nouns = Object.keys(ROLE_NOUNS).join('|')
+  const re = new RegExp(
+    `\\b(${NUMBER_TOKEN})\\s+(?!years?\\b|yo\\b|yr\\b)${COUNT_FILLER}(${nouns})\\b`,
+    'gi',
+  )
+  const out: { role: string; count: number }[] = []
+  const seen = new Set<string>()
+  let m: RegExpExecArray | null
+  while ((m = re.exec(rawQuery)) !== null) {
+    const count = parseCountToken(m[1])
+    const role = ROLE_NOUNS[m[2].toLowerCase()]
+    if (role && count != null && count > 0 && !seen.has(role)) {
+      seen.add(role)
+      out.push({ role, count: Math.min(count, MAX_RESULT_LIMIT) })
+    }
+  }
+  return out
+}
+
+/**
+ * Compose the response message for a compound multi-role search from the
+ * rows actually returned — "Here are 2 players and 1 coach." A requested
+ * role that yielded nothing is called out honestly rather than silently
+ * dropped.
+ */
+function buildCompoundMessage(
+  roleCounts: { role: string; count: number }[],
+  rows: { role?: string }[],
+): string {
+  const present: string[] = []
+  const absent: string[] = []
+  for (const rc of roleCounts) {
+    const got = rows.filter(r => r.role === rc.role).length
+    if (got > 0) present.push(`${got} ${roleLabel(rc.role, got)}`)
+    else absent.push(roleLabel(rc.role, 2))
+  }
+  let msg = ''
+  if (present.length > 0) {
+    const verb = present.length === 1 && present[0].startsWith('1 ') ? 'is' : 'are'
+    msg = `Here ${verb} ${joinList(present)}, ranked by profile completeness.`
+  }
+  if (absent.length > 0) {
+    msg += `${msg ? ' ' : ''}I couldn't find any ${joinList(absent)} matching that.`
+  }
+  return msg || 'No matching profiles found.'
+}
+
+/** A Journey (career_history) row, narrowed to the fields highlights need. */
+interface CareerRow {
+  entry_type?: string | null
+  club_name?: string | null
+  location_country?: string | null
+  highlights?: string[] | null
+  start_date?: string | null
+  end_date?: string | null
+}
+
+/**
+ * Phase 3 — derive up to 4 concrete, recruiter-facing "Profile highlights"
+ * for one profile, purely rule-based (no LLM). Drawn from the player's
+ * Journey entries plus a couple of profile signals, in priority order:
+ *
+ *   1. national-team selection   — the strongest pedigree signal
+ *   2. club experience           — the two most-recent clubs
+ *   3. verified references       — accepted_reference_count
+ *   4. stated achievements       — the per-entry `highlights` the user wrote
+ *   5. Journey depth             — entry count, when substantial
+ *   6. open to new opportunities — soft availability signal
+ *
+ * Never emits debug-style reasons ("name matches query") — only concrete
+ * facts a recruiter can act on.
+ */
+function buildProfileHighlights(
+  career: CareerRow[],
+  result: { accepted_reference_count?: number; open_to_opportunities?: boolean },
+): string[] {
+  // Most-recent first: current roles (no end_date) lead, then by start_date.
+  const sorted = [...career].sort((a, b) => {
+    const aCurrent = !a.end_date
+    const bCurrent = !b.end_date
+    if (aCurrent !== bCurrent) return aCurrent ? -1 : 1
+    return (b.start_date ?? '').localeCompare(a.start_date ?? '')
+  })
+
+  const out: string[] = []
+  const seen = new Set<string>()
+  const add = (raw: string | null | undefined) => {
+    const t = (raw ?? '').trim()
+    if (!t || out.length >= 4) return
+    const key = t.toLowerCase()
+    if (seen.has(key)) return
+    seen.add(key)
+    out.push(t.length > 70 ? `${t.slice(0, 67).trimEnd()}…` : t)
+  }
+
+  // 1. National-team selection.
+  const natTeam = sorted.find(e => e.entry_type === 'national_team' && e.club_name)
+  if (natTeam) add(`Selected for ${natTeam.club_name}`)
+
+  // 2. Club experience — up to two most-recent clubs.
+  let clubs = 0
+  for (const e of sorted) {
+    if (clubs >= 2) break
+    if (e.entry_type === 'club' && e.club_name) {
+      add(e.location_country
+        ? `Played for ${e.club_name} in ${e.location_country}`
+        : `Played for ${e.club_name}`)
+      clubs++
+    }
+  }
+
+  // 3. Verified references.
+  const refs = result.accepted_reference_count ?? 0
+  if (refs > 0) add(`${refs} accepted reference${refs === 1 ? '' : 's'}`)
+
+  // 4. Stated achievements from Journey entries.
+  for (const e of sorted) {
+    for (const h of (e.highlights ?? [])) add(h)
+  }
+
+  // 5. Journey depth.
+  if (career.length >= 3) add(`${career.length} Journey entries`)
+
+  // 6. Open to new opportunities.
+  if (result.open_to_opportunities) add('Open to new opportunities')
+
+  return out.slice(0, 4)
+}
+
 /** Graceful degradation: the LLM parse failed (timeout, transient error, or
  *  provider quota). Re-use the user's raw query as full-text input to the
  *  existing discover_profiles RPC so the user still gets results. */
@@ -146,8 +367,10 @@ async function runKeywordFallback(params: {
    *  soft-error path uses alternate copy + chip set to avoid showing the
    *  same "I had trouble" message twice. */
   isRepeatSoftError: boolean
+  /** Phase 1b — "Show more" load-more offset; pages past results already shown. */
+  offset: number
 }): Promise<Response> {
-  const { adminClient, rawQuery, userId, userRole, startTime, llmProvider, originalError, parseRetryCount, headers, correlationId, isRepeatSoftError } = params
+  const { adminClient, rawQuery, userId, userRole, startTime, llmProvider, originalError, parseRetryCount, headers, correlationId, isRepeatSoftError, offset } = params
 
   try {
     const discoverableRoles = ['player', 'coach', 'club', 'brand']
@@ -160,8 +383,8 @@ async function runKeywordFallback(params: {
       p_roles: discoverableRoles,
       p_search_text: rawQuery,
       p_sort_by: 'relevance',
-      p_limit: 20,
-      p_offset: 0,
+      p_limit: offset > 0 ? DEFAULT_RESULT_LIMIT : resolveResultLimit(rawQuery),
+      p_offset: offset,
       p_coach_specializations: null,
     })
 
@@ -302,6 +525,8 @@ Deno.serve(async (req) => {
   let pendingUserId: string | null = null
   let pendingUserRole: string | null = null
   let pendingQuery: string | null = null
+  // Phase 1b — "Show more" offset, carried into the keyword-fallback path.
+  let pendingOffset = 0
   // PR-4: track whether the previous turn was already soft_error so the
   // catch-block fallback can emit alternate copy on a repeated failure.
   let pendingIsRepeatSoftError = false
@@ -374,6 +599,11 @@ Deno.serve(async (req) => {
     // ── Parse body ──────────────────────────────────────────────────────
     const body = await req.json()
     const query = body?.query?.trim()
+    // Phase 1b — "Show more": a load-more request carries an offset so the
+    // search pages past results already shown. Capped to a sane ceiling.
+    const requestedOffset = Number.isInteger(body?.offset) && body.offset > 0
+      ? Math.min(body.offset, 500)
+      : 0
     const rawHistory = Array.isArray(body?.history) ? body.history : []
     const history: HistoryTurn[] = rawHistory
       .slice(-10)
@@ -440,6 +670,7 @@ Deno.serve(async (req) => {
     pendingAdminClient = adminClient
     pendingUserId = user.id
     pendingQuery = query
+    pendingOffset = requestedOffset
     pendingIsRepeatSoftError = recoveryContext?.last_kind === 'soft_error'
 
     // ── Phase 1A force-soft-error debug (PR-4, staging-only) ───────────
@@ -1350,14 +1581,20 @@ Deno.serve(async (req) => {
       let wcNoResultsFollowUp: string | null = null
       let wcNoResultsMeta: LLMCallMeta | null = null
       if (mapped.length > 0) {
-        const noun = mapped.length === 1 ? 'club' : 'clubs'
+        const total = mapped.length
+        const noun = total === 1 ? 'club' : 'clubs'
         const where = locationLabel ? ` in ${locationLabel}` : wcFilters.text_query ? ` matching "${wcFilters.text_query}"` : ''
+        const isAre = (n: number) => (n === 1 ? 'is' : 'are')
+        // The UI shows the top 3 first (claimed clubs lead) with a "Show
+        // all" expander. Naming that turns the response into a curated
+        // recommendation rather than a directory dump the user must sift.
+        const topNote = total > 3 ? ' Here are the top 3 to start with.' : ''
         if (claimedCount > 0 && unclaimedCount > 0) {
-          wcAiMessage = `${mapped.length} ${noun}${where} — ${claimedCount} ${claimedCount === 1 ? 'is' : 'are'} active on HOCKIA (you can message ${claimedCount === 1 ? 'them' : 'them'} directly), and ${unclaimedCount} ${unclaimedCount === 1 ? 'is' : 'are'} in the directory but not yet claimed (you'll need to reach out externally).`
+          wcAiMessage = `I found ${total} ${noun}${where}. ${claimedCount} ${isAre(claimedCount)} active on HOCKIA, so you can message them directly, and ${unclaimedCount} ${isAre(unclaimedCount)} in the directory but not yet claimed, so you may need to reach out externally.${topNote}`
         } else if (claimedCount > 0) {
-          wcAiMessage = `${mapped.length} ${noun}${where} — all active on HOCKIA, you can message ${mapped.length === 1 ? 'them' : 'any of them'} directly.`
+          wcAiMessage = `I found ${total} ${noun}${where} — all active on HOCKIA, so you can message them directly.${topNote}`
         } else {
-          wcAiMessage = `${mapped.length} ${noun}${where} in HOCKIA's directory. None are claimed yet, so you'll need to reach out externally — but they're real clubs to explore.`
+          wcAiMessage = `I found ${total} ${noun}${where} in HOCKIA's directory. None are claimed yet, so you'll need to reach out externally — but they're real clubs worth exploring.${topNote}`
         }
         // Phase 4 audit P1-1 — DO NOT append llmResult.message here. The LLM
         // generates that field at parse-time before knowing the count, so it
@@ -1605,8 +1842,15 @@ Deno.serve(async (req) => {
       else if (effectiveCategory === 'adult_women') effectiveGender = 'Women'
     }
 
-    const { data: rpcResult, error: rpcError } = await adminClient.rpc('discover_profiles', {
-      p_roles: effectiveRoles,
+    // Phase 1c — compound multi-role search. When the query names explicit
+    // counts for 2+ different roles ("2 players and 1 coach"), a single
+    // discover_profiles call can't express per-role counts — so run one
+    // sub-search per role and merge, in the order asked. Load-more requests
+    // (offset > 0) never go compound; "Show more" stays single-role.
+    const roleCounts = requestedOffset > 0 ? [] : extractRoleCounts(query)
+    const isCompound = roleCounts.length >= 2
+
+    const baseDiscoverParams = {
       p_positions: parsed.positions || null,
       // Phase 3e: prefer the new category param. Legacy p_gender is also
       // passed for one cycle in case the RPC migration is rolled back.
@@ -1626,9 +1870,56 @@ Deno.serve(async (req) => {
       p_search_text: parsed.text_query || null,
       p_coach_specializations: parsed.coach_specializations || null,
       p_sort_by: parsed.sort_by || 'relevance',
-      p_limit: 20,
-      p_offset: 0,
-    })
+    }
+
+    let rpcResult: { results: any[]; total: number; has_more: boolean } | null = null
+    let rpcError: { message?: string } | null = null
+
+    if (isCompound) {
+      const merged: any[] = []
+      for (const rc of roleCounts) {
+        // A sub-search must not inherit filters that don't fit its role.
+        // A player-only filter (an "open to play" availability, a playing
+        // position, a league) zeroes out every coach; a coach-only filter
+        // (coach specialization) zeroes out every player. And a category
+        // seeded from the *searcher's own profile* (categorySource ===
+        // 'context') shouldn't silently narrow a multi-role search they
+        // never explicitly scoped. Apply each filter only where it belongs.
+        const avail = baseDiscoverParams.p_availability
+        const { data, error } = await adminClient.rpc('discover_profiles', {
+          ...baseDiscoverParams,
+          p_roles: [rc.role],
+          p_positions: rc.role === 'player' ? baseDiscoverParams.p_positions : null,
+          p_coach_specializations: rc.role === 'coach' ? baseDiscoverParams.p_coach_specializations : null,
+          p_league_ids: rc.role === 'player' || rc.role === 'club' ? baseDiscoverParams.p_league_ids : null,
+          p_availability:
+            avail === 'open_to_play' ? (rc.role === 'player' ? avail : null)
+              : avail === 'open_to_coach' ? (rc.role === 'coach' ? avail : null)
+                : avail,
+          p_target_category: categorySource === 'context' ? null : baseDiscoverParams.p_target_category,
+          p_gender: categorySource === 'context' ? null : baseDiscoverParams.p_gender,
+          p_limit: rc.count,
+          p_offset: 0,
+        })
+        if (error) { rpcError = error; break }
+        const rows = (data as { results: any[] } | null)?.results ?? []
+        merged.push(...rows)
+      }
+      // total/has_more reflect what was actually assembled — each role got
+      // its own requested count, so there is no single list to "show more".
+      if (!rpcError) rpcResult = { results: merged, total: merged.length, has_more: false }
+    } else {
+      const { data, error } = await adminClient.rpc('discover_profiles', {
+        ...baseDiscoverParams,
+        p_roles: effectiveRoles,
+        // Phase 1b — the explicit count governs the first page; "Show more"
+        // load-more requests (offset > 0) page in default-sized batches.
+        p_limit: requestedOffset > 0 ? DEFAULT_RESULT_LIMIT : resolveResultLimit(query),
+        p_offset: requestedOffset,
+      })
+      rpcResult = data
+      rpcError = error
+    }
 
     if (rpcError) {
       captureException(rpcError, { functionName: 'nl-search', correlationId })
@@ -1710,8 +2001,13 @@ Deno.serve(async (req) => {
         : ''
       aiMessage = `I couldn't find any ${entityNoun} matching that.${broadenHint}`
     } else {
-      const noun = result.total === 1 ? (ENTITY_SINGULAR[entityNoun] ?? entityNoun) : entityNoun
-      const countPhrase = `I found ${result.total} ${noun} for you.`
+      // Count the rows the user can actually see, not result.total (the
+      // full match count). On a "Show more" load-more request the count is
+      // cumulative — requestedOffset already-shown + this page — so the
+      // headline message keeps pace with the growing list.
+      const shown = requestedOffset + result.results.length
+      const noun = shown === 1 ? (ENTITY_SINGULAR[entityNoun] ?? entityNoun) : entityNoun
+      const countPhrase = `I found ${shown} ${noun} for you.`
       aiMessage = llmResult.message ? `${countPhrase} ${llmResult.message}` : countPhrase
     }
 
@@ -1927,17 +2223,60 @@ Deno.serve(async (req) => {
     // Augment each result row with its shortlist analysis (if present).
     // Additive — old frontends see the same shape with extra optional fields,
     // Phase 4 frontend renders them.
+    // Phase 3 — rule-based Journey highlights. Batch-fetch career_history
+    // for every result profile in one query and derive up to 4 concrete
+    // highlights each. Non-fatal: a failure just leaves highlights empty.
+    const highlightsByProfileId = new Map<string, string[]>()
+    try {
+      const profileIds = result.results
+        .map((r: any) => r?.id)
+        .filter((id: unknown): id is string => typeof id === 'string')
+      if (profileIds.length > 0) {
+        const { data: careerRows } = await adminClient
+          .from('career_history')
+          .select('user_id, entry_type, club_name, location_country, highlights, start_date, end_date')
+          .in('user_id', profileIds)
+        const careerByUser = new Map<string, CareerRow[]>()
+        for (const row of ((careerRows ?? []) as (CareerRow & { user_id: string })[])) {
+          const arr = careerByUser.get(row.user_id) ?? []
+          arr.push(row)
+          careerByUser.set(row.user_id, arr)
+        }
+        for (const r of result.results) {
+          if (r?.id) {
+            highlightsByProfileId.set(r.id, buildProfileHighlights(careerByUser.get(r.id) ?? [], r))
+          }
+        }
+      }
+    } catch (highlightsError) {
+      captureException(highlightsError, {
+        functionName: 'nl-search',
+        correlationId,
+        extra: { phase: 'profile_highlights' },
+      })
+    }
+
     const augmentedResults = result.results.map((r: any) => {
       const sl = r?.id ? shortlistByProfileId.get(r.id) : undefined
-      if (!sl) return r
+      const highlights = r?.id ? highlightsByProfileId.get(r.id) : undefined
+      const withHighlights = highlights && highlights.length > 0 ? { ...r, highlights } : r
+      if (!sl) return withHighlights
       return {
-        ...r,
+        ...withHighlights,
         fit_level: sl.fit_level,
         fit_reasons: sl.fit_reasons,
         missing_data: sl.missing_data,
         next_action: sl.next_action,
       }
     })
+
+    // Phase 1c — a compound multi-role search gets its own message: the
+    // per-role breakdown ("2 players and 1 coach") can't be expressed
+    // through enforcedRole's single noun. Set last so it also wins over any
+    // composeShortlist summary_message applied above.
+    if (isCompound && result.total > 0) {
+      aiMessage = buildCompoundMessage(roleCounts, result.results)
+    }
 
     // ── Phase 1A envelope: build applied + kind + suggested_actions ──────
     // The applied block summarizes what was actually searched in human-readable
@@ -2132,6 +2471,7 @@ Deno.serve(async (req) => {
         headers,
         correlationId,
         isRepeatSoftError: pendingIsRepeatSoftError,
+        offset: pendingOffset,
       })
     }
 
