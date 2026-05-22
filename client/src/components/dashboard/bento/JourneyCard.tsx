@@ -24,6 +24,8 @@ interface JourneyCardProps {
   profileId: string
   /** Used to hide the empty-state prompt for visitors (no edit affordance). */
   readOnly: boolean
+  /** Drives the read-only empty-state copy ("This {role} hasn't…"). */
+  role?: 'player' | 'coach'
   onViewJourney: () => void
 }
 
@@ -43,7 +45,7 @@ const EMPTY: GroupedCounts = {
   total: 0,
 }
 
-export default function JourneyCard({ profileId, readOnly, onViewJourney }: JourneyCardProps) {
+export default function JourneyCard({ profileId, readOnly, role = 'player', onViewJourney }: JourneyCardProps) {
   const [counts, setCounts] = useState<GroupedCounts | null>(null)
 
   useEffect(() => {
@@ -113,7 +115,7 @@ export default function JourneyCard({ profileId, readOnly, onViewJourney }: Jour
       ) : isEmpty ? (
         <p className="text-sm text-gray-500">
           {readOnly
-            ? "This player hasn't added career history yet."
+            ? `This ${role} hasn't added career history yet.`
             : "Add clubs, selections, and achievements so clubs see where you've played."}
         </p>
       ) : (

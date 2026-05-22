@@ -97,6 +97,7 @@ export default function CoachBentoGrid({
           <JourneyCard
             profileId={profile.id}
             readOnly
+            role="coach"
             onViewJourney={() => onOpenTab('journey')}
           />
           <MediaCard
@@ -123,6 +124,7 @@ export default function CoachBentoGrid({
           <JourneyCard
             profileId={profile.id}
             readOnly={false}
+            role="coach"
             onViewJourney={() => onOpenTab('journey')}
           />
           <MediaCard
