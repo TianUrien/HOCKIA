@@ -800,11 +800,17 @@ function findOpeningByQueryPosition(
 
 /** Extracts the most likely person-name fragment from a "tell me more about X" /
  *  "cuéntame sobre X" follow-up. Returns null when no name-shaped tail follows
- *  the trigger phrase. (B2) */
+ *  the trigger phrase. (B2)
+ *  - Capture group requires at least one non-whitespace char so empty tails
+ *    can't pass.
+ *  - 500-char query cap blocks pathological backtracking.
+ *  - Trailing Unicode punctuation stripped via \p{P} so "María—" or "José."
+ *    yield clean names. */
 function extractApplicantNameFromQuery(query: string): string | null {
-  const m = query.match(/\b(?:tell me|more|details|cu[eé]ntame|cuentame)\s+(?:more\s+|much more\s+|m[aá]s\s+(?:m[aá]s\s+|informaci[oó]n\s+)?)?(?:about|on|regarding|sobre|de|acerca de)\s+(.+?)[\s.?!,]*$/i)
+  if (!query || query.length > 500) return null
+  const m = query.match(/\b(?:tell me|more|details|cu[eé]ntame|cuentame)\s+(?:more\s+|much more\s+|m[aá]s\s+(?:m[aá]s\s+|informaci[oó]n\s+)?)?(?:about|on|regarding|sobre|de|acerca de)\s+(\S[^\n]{0,58})/i)
   if (!m) return null
-  const tail = m[1].trim().replace(/[.?!,]+$/, '')
+  const tail = m[1].trim().replace(/[\s\p{P}]+$/u, '')
   if (tail.length < 2 || tail.length > 60) return null
   return tail
 }
@@ -2984,7 +2990,16 @@ Deno.serve(async (req) => {
       // owner sees what scope they're inside and can broaden if needed.
       // The chip strip already lists this filter; the headline mirror is
       // the one that gets read first.
-      const geoLabel = baseLocationText ?? (parsed.locations?.[0] ?? null)
+      // geoLabel originates from the LLM parse of a user query; sanitize
+      // before embedding into the chat bubble. The bubble renders as plain
+      // text (no innerHTML) so HTML is already safe, but newlines and
+      // chat-confusing characters (•, ─, etc.) would still render literally.
+      // Restrict to letters / digits / spaces / common name punctuation
+      // (- . , ' ()) and cap at 40 chars.
+      const rawGeo = baseLocationText ?? (parsed.locations?.[0] ?? null)
+      const geoLabel = rawGeo
+        ? rawGeo.replace(/[^\p{L}\p{N}\s\-.,'()]/gu, '').trim().slice(0, 40) || null
+        : null
       aiMessage = geoLabel
         ? `I found ${shown} ${noun} based in ${geoLabel} — say "broaden the location" to widen this.`
         : `I found ${shown} ${noun} for you.`
@@ -3126,7 +3141,10 @@ Deno.serve(async (req) => {
         .map((r: any) => r?.id)
         .filter((id: unknown): id is string => typeof id === 'string')
       if (profileIds.length > 0) {
-        const [careerResp, bioResp] = await Promise.all([
+        // allSettled — one query failing must not poison the other. A
+        // career_history failure would otherwise leave bios un-fetched and
+        // collapse every row to "needs_more_info" silently.
+        const [careerSettled, bioSettled] = await Promise.allSettled([
           adminClient
             .from('career_history')
             .select('user_id, entry_type, club_name, location_country, highlights, start_date, end_date')
@@ -3136,14 +3154,22 @@ Deno.serve(async (req) => {
             .select('id, bio')
             .in('id', profileIds),
         ])
-        for (const row of ((careerResp.data ?? []) as (CareerRow & { user_id: string })[])) {
-          const arr = careerByUser.get(row.user_id) ?? []
-          arr.push(row)
-          careerByUser.set(row.user_id, arr)
+        if (careerSettled.status === 'fulfilled') {
+          for (const row of ((careerSettled.value.data ?? []) as (CareerRow & { user_id: string })[])) {
+            const arr = careerByUser.get(row.user_id) ?? []
+            arr.push(row)
+            careerByUser.set(row.user_id, arr)
+          }
+        } else {
+          captureException(careerSettled.reason, { functionName: 'nl-search', correlationId, extra: { phase: 'career_fetch' } })
         }
-        for (const row of ((bioResp.data ?? []) as { id: string; bio: string | null }[])) {
-          bioByUser.set(row.id, row.bio ?? null)
-          bioCredCountByUser.set(row.id, detectBioCredentials(row.bio).length)
+        if (bioSettled.status === 'fulfilled') {
+          for (const row of ((bioSettled.value.data ?? []) as { id: string; bio: string | null }[])) {
+            bioByUser.set(row.id, row.bio ?? null)
+            bioCredCountByUser.set(row.id, detectBioCredentials(row.bio).length)
+          }
+        } else {
+          captureException(bioSettled.reason, { functionName: 'nl-search', correlationId, extra: { phase: 'bio_fetch' } })
         }
         for (const r of result.results) {
           if (r?.id) {

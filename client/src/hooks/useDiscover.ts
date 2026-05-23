@@ -37,14 +37,10 @@ export interface DiscoverResult {
   last_active_at: string | null
   coach_specialization: string | null
   coach_specialization_custom: string | null
-  // Phase 4 MVP-A — per-row scouting shortlist fields. All optional: only
-  // populated when the backend's compose_shortlist pass succeeds for this
-  // row. Frontend renders a fit-card when present; falls back to the legacy
-  // flat row when absent.
+  // Phase 6 — rule-based per-row fit tier. Replaces the Phase 4 LLM
+  // compose_shortlist pass: deterministic, no LLM call, applied to every
+  // returned row. The card uses this to render the fit-level pill.
   fit_level?: 'strong_match' | 'possible_match' | 'needs_more_info'
-  fit_reasons?: string[]
-  missing_data?: string[]
-  next_action?: string
   // Phase 3 — rule-based Journey highlights (national-team selection, club
   // experience, references, stated achievements). Up to 4, shown in the
   // result card's expanded drawer. Absent when the profile has no Journey.
