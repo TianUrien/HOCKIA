@@ -624,6 +624,31 @@ function buildRecruitmentOrientation(opp: OwnerOpportunity): string {
   return `${headline} I'm recommending from the ${pool} you haven't ruled out.`
 }
 
+/**
+ * Try to find the opening the user is asking about from the query text —
+ * e.g. "best applicants for the coach opening" should target the coach
+ * opening even when the goalkeeper opening would otherwise rank first by
+ * best-applicant score. Substring match against each opening's position
+ * label paired with a context word ("opening", "applicants", "role").
+ */
+function findOpeningByQueryPosition(
+  query: string,
+  opps: OwnerOpportunity[],
+): OwnerOpportunity | null {
+  const lq = (query || '').toLowerCase()
+  for (const opp of opps) {
+    const positionLabel = opp.position.toLowerCase().replace(/_/g, ' ')
+    if (lq.includes(`${positionLabel} opening`)
+        || lq.includes(`${positionLabel} applicants`)
+        || lq.includes(`${positionLabel} role`)
+        || lq.includes(`for the ${positionLabel}`)
+        || lq.includes(`for my ${positionLabel}`)) {
+      return opp
+    }
+  }
+  return null
+}
+
 /** Per-role navigation target for the "Review applicant" CTA. */
 function applicantPublicProfilePath(role: string, id: string): string {
   if (role === 'coach') return `/coaches/id/${id}?ref=ai-recommendation`
@@ -824,7 +849,16 @@ async function handleOwnApplicantsIntent(params: {
       return aOld - bOld
     })
 
-    const primary = oppRanked[0]
+    // Allow the user to disambiguate explicitly — if the query mentions a
+    // specific opening's position ("best applicants for the coach
+    // opening"), that wins over the best-applicant ranking. Otherwise the
+    // highest-best-applicant opening is primary.
+    let primary = oppRanked[0]
+    const targeted = findOpeningByQueryPosition(query, allOpps)
+    if (targeted) {
+      const idx = oppRanked.findIndex(r => r.opp.opportunity_id === targeted.opportunity_id)
+      if (idx >= 0) primary = oppRanked[idx]
+    }
 
     // Edge: primary opening's pool is empty (everyone marked Not a fit).
     // The orientation already explains the situation; no cards.
@@ -860,19 +894,34 @@ async function handleOwnApplicantsIntent(params: {
       }
     })
 
-    // 8. Secondary openings with pending pool, if any.
+    // 8. Secondary openings — any opening that's NOT the primary AND has at
+    //    least one non-rejected applicant. The nudge text describes them in
+    //    aggregate; the chips below wire it to actual handler runs so a
+    //    "yes" reply has something to hook into (production audit: the
+    //    nudge used to be a "dead promise" the AI couldn't fulfil).
     const secondaryOpps = oppRanked
-      .slice(1)
-      .filter(o => o.opp.triage_breakdown.pending > 0)
+      .filter(o => o.opp.opportunity_id !== primary.opp.opportunity_id && o.pool.length > 0)
     let secondary_note: string | null = null
     if (secondaryOpps.length === 1) {
       const o = secondaryOpps[0].opp
-      const n = o.triage_breakdown.pending
-      secondary_note = `You also have ${n} pending ${n === 1 ? 'applicant' : 'applicants'} on your ${formatPosition(o.position)} opening — want me to surface those next?`
+      const n = secondaryOpps[0].pool.length
+      secondary_note = `You also have ${n} ${n === 1 ? 'applicant' : 'applicants'} on your ${formatPosition(o.position)} opening — want me to surface those next?`
     } else if (secondaryOpps.length > 1) {
-      const totalSec = secondaryOpps.reduce((s, o) => s + o.opp.triage_breakdown.pending, 0)
-      secondary_note = `You also have ${totalSec} pending applicants across ${secondaryOpps.length} other openings — want me to look at them too?`
+      const totalSec = secondaryOpps.reduce((s, o) => s + o.pool.length, 0)
+      secondary_note = `You also have ${totalSec} applicants across ${secondaryOpps.length} other openings — want me to look at them too?`
     }
+
+    // Explicit "Show {position} applicants" chips — one per secondary
+    // opening, capped at 3. Each chip's query is shaped so the
+    // findOpeningByQueryPosition lookup above re-fires the handler
+    // targeting that specific opening.
+    const secondaryChips: SuggestedAction[] = secondaryOpps.slice(0, 3).map(o => {
+      const posLabel = formatPosition(o.opp.position)
+      return {
+        label: `Show ${posLabel} applicants`,
+        intent: { type: 'free_text', query: `Show me applicants for my ${posLabel.toLowerCase()} opening` },
+      }
+    })
 
     // Honest about thin data on the recommendations.
     const thinData = primary.scored.slice(0, 2).some(s => (s.applicant.profile_completeness_pct ?? 0) < 30)
@@ -885,7 +934,7 @@ async function handleOwnApplicantsIntent(params: {
       ai_message: buildRecruitmentOrientation(primary.opp) + lowDataNote,
       recommendations,
       secondary_note,
-      suggested_actions: [] as SuggestedAction[],
+      suggested_actions: secondaryChips,
     })
   } catch (err) {
     captureException(err, { functionName: 'nl-search', correlationId, extra: { phase: 'own_applicants' } })
@@ -2104,6 +2153,12 @@ Deno.serve(async (req) => {
       if (wcFilters.claimed_only === true) {
         wcQuery = wcQuery.eq('is_claimed', true)
       }
+      // Production audit fix — a club searching "clubs in Argentina" shouldn't
+      // see itself in its own results. The world_club row that claims this
+      // user's profile is excluded for club-role searchers.
+      if (userContext?.role === 'club') {
+        wcQuery = wcQuery.or(`claimed_profile_id.is.null,claimed_profile_id.neq.${user.id}`)
+      }
 
       const { data: wcRows, error: wcErr } = await wcQuery
       if (wcErr) {
@@ -2877,6 +2932,14 @@ Deno.serve(async (req) => {
     // composeShortlist summary_message applied above.
     if (isCompound && result.total > 0) {
       aiMessage = buildCompoundMessage(roleCounts, result.results)
+    }
+
+    // Production audit fix — the LLM parse often emits only one role for
+    // a compound query ("3 players and 1 coach" → roles:['player']), so
+    // the "Filters applied" chip strip missed Coach. Overwrite parsed.roles
+    // with the actual roles searched so the chips match the results.
+    if (isCompound) {
+      parsed.roles = Array.from(new Set(roleCounts.map(rc => rc.role)))
     }
 
     // ── Phase 1A envelope: build applied + kind + suggested_actions ──────

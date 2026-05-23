@@ -149,7 +149,12 @@ const OWN_APPLICANTS = [
   /\bwho applied\b/i,
   /\b(best|top|strongest) applicants?\b/i,
   /\b(strongest|best|top) match(es)?\b/i,
-  /\bwho should i (review|look at|see|consider|shortlist|pick) (first|now|next)?\b/i,
+  // Bare forms like "Who should I shortlist?" need the whole "first|now|next"
+  // tail to be optional INCLUDING the leading space — without (?:\s+...)? the
+  // trailing literal space made the bare form fail to match. (Production
+  // audit: this was item 3 — "Who should I shortlist?" fell through to the
+  // generic LLM advice essay.)
+  /\bwho should i (review|look at|see|consider|shortlist|pick)(?:\s+(first|now|next))?\b/i,
   /\breview first\b/i,
   /\b(my|our) (recruitment|pipeline|inbox|shortlist)\b/i,
   /\b(my|our) opening(s)?\b/i,

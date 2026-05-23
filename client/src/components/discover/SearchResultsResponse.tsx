@@ -19,8 +19,11 @@ interface SearchResultsResponseProps {
   isCompound?: boolean
 }
 
-/** Results shown before the list is expanded. */
-const COLLAPSED_COUNT = 3
+/** Results shown before the list is expanded. Matches the default people-
+ *  search return size — a 5-result default search now shows all 5 without
+ *  the user needing to tap "Show all" (production audit #6). Longer lists
+ *  still collapse to 5 with a "Show all N" expander. */
+const COLLAPSED_COUNT = 5
 
 /**
  * Renders a successful search: short message + result list + read-only filter
