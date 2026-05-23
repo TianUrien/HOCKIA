@@ -1205,11 +1205,23 @@ async function handleOwnApplicantsIntent(params: {
     //    nudge used to be a "dead promise" the AI couldn't fulfil).
     const secondaryOpps = oppRanked
       .filter(o => o.opp.opportunity_id !== primary.opp.opportunity_id && o.pool.length > 0)
+    // Title-case the opportunity_type for fallback labels: "coach" → "Coach".
+    // Used whenever an opportunity row has a null `position` (CASI's Coach
+    // opening is the canonical case — same null that triggered B0).
+    const oppTypeLabel = (t: string): string => t.charAt(0).toUpperCase() + t.slice(1)
+    // Resolve the routing label for a chip's query + nudge text. Prefer
+    // `position` (specific), fall back to `opportunity_type` (player/coach)
+    // when position is null. Empty string would generate "for my  opening"
+    // — the exact bug that caused the scenario 8 chip → primary-opening
+    // infinite loop. Never return empty.
+    const oppRouteLabel = (opp: OwnerOpportunity): string =>
+      formatPosition(opp.position) || oppTypeLabel(opp.opportunity_type)
+
     let secondary_note: string | null = null
     if (secondaryOpps.length === 1) {
       const o = secondaryOpps[0].opp
       const n = secondaryOpps[0].pool.length
-      secondary_note = `You also have ${n} ${n === 1 ? 'applicant' : 'applicants'} on your ${formatPosition(o.position)} opening — want me to surface those next?`
+      secondary_note = `You also have ${n} ${n === 1 ? 'applicant' : 'applicants'} on your ${oppRouteLabel(o)} opening — want me to surface those next?`
     } else if (secondaryOpps.length > 1) {
       const totalSec = secondaryOpps.reduce((s, o) => s + o.pool.length, 0)
       secondary_note = `You also have ${totalSec} applicants across ${secondaryOpps.length} other openings — want me to look at them too?`
@@ -1218,12 +1230,14 @@ async function handleOwnApplicantsIntent(params: {
     // Explicit "Show {position} applicants" chips — one per secondary
     // opening, capped at 3. Each chip's query is shaped so the
     // findOpeningByQueryPosition lookup above re-fires the handler
-    // targeting that specific opening.
+    // targeting that specific opening. When `position` is null we use the
+    // opportunity_type fallback (e.g. "coach opening") — findOpeningByQueryPosition's
+    // second loop matches that path, so routing still works.
     const secondaryChips: SuggestedAction[] = secondaryOpps.slice(0, 3).map(o => {
-      const posLabel = formatPosition(o.opp.position)
+      const label = oppRouteLabel(o.opp)
       return {
-        label: `Show ${posLabel} applicants`,
-        intent: { type: 'free_text', query: `Show me applicants for my ${posLabel.toLowerCase()} opening` },
+        label: `Show ${label} applicants`,
+        intent: { type: 'free_text', query: `Show me applicants for my ${label.toLowerCase()} opening` },
       }
     })
 
