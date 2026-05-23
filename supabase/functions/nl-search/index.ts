@@ -1238,17 +1238,10 @@ async function handleOwnApplicantsIntent(params: {
       suggested_actions: secondaryChips,
     })
   } catch (err) {
-    // B0 diagnostic instrumentation — capture the real error message + stack so
-    // the next prod failure shows up in Supabase function logs (stderr capture)
-    // and the correlationId can be correlated with Sentry. Remove once B0 is
-    // root-caused and fixed.
-    const errMessage = err instanceof Error ? err.message : String(err)
-    const errStack = err instanceof Error ? err.stack : undefined
-    console.error(`[nl-search][own_applicants][${correlationId}] ${errMessage}\n${errStack ?? ''}`)
-    captureException(err, { functionName: 'nl-search', correlationId, extra: { phase: 'own_applicants', error_message: errMessage } })
+    captureException(err, { functionName: 'nl-search', correlationId, extra: { phase: 'own_applicants' } })
     return respond({
       kind: 'soft_error' as ResponseKind,
-      ai_message: `I had trouble pulling your recruitment data just now. Try again in a moment. (ref ${correlationId})`,
+      ai_message: "I had trouble pulling your recruitment data just now. Try again in a moment.",
       recommendations: [],
       suggested_actions: [{ label: 'Try again', intent: { type: 'retry' } }] as SuggestedAction[],
     })
