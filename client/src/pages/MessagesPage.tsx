@@ -786,7 +786,12 @@ export default function MessagesPage() {
             ? conversationRow.participant_two_id
             : conversationRow.participant_one_id
 
-        const [profileResult, lastMessageResult, unreadCountResult] = await Promise.all([
+        // allSettled — a single failing query (last-message returns no rows,
+        // unread-count throws on a transient network blip, etc.) used to take
+        // the whole conversation hydration down with `Promise.all`, dropping
+        // the conversation card from the inbox view silently. Each branch
+        // now degrades to a safe default and the card still renders.
+        const [profileResult, lastMessageResult, unreadCountResult] = await Promise.allSettled([
           (async () => {
             Sentry.addBreadcrumb({
               category: 'supabase',
@@ -832,9 +837,25 @@ export default function MessagesPage() {
 
         if (cancelled) return
 
-        const profileData = profileResult.data
-        const lastMessageData = (lastMessageResult.data && lastMessageResult.data[0]) || null
-        const unreadCount = unreadCountResult.count ?? 0
+        // Profile: a failed lookup leaves otherParticipant undefined, which
+        // the JSX below already handles. Log + continue.
+        const profileData = profileResult.status === 'fulfilled'
+          ? profileResult.value.data
+          : (Sentry.captureException(profileResult.reason, { tags: { phase: 'hydrate_conversation.profile' } }), null)
+
+        // Last message: missing data → no preview. Common (brand-new
+        // conversation with no messages yet).
+        const lastMessageRows = lastMessageResult.status === 'fulfilled'
+          ? lastMessageResult.value.data
+          : (Sentry.captureException(lastMessageResult.reason, { tags: { phase: 'hydrate_conversation.last_message' } }), null)
+        const lastMessageData = (lastMessageRows && lastMessageRows[0]) || null
+
+        // Unread count: failure → assume 0 unread (don't bubble red dot
+        // based on noisy data). Worst case: user opens the conversation
+        // and the count updates on the realtime refetch.
+        const unreadCount = unreadCountResult.status === 'fulfilled'
+          ? (unreadCountResult.value.count ?? 0)
+          : (Sentry.captureException(unreadCountResult.reason, { tags: { phase: 'hydrate_conversation.unread_count' } }), 0)
 
         const hydratedConversation: Conversation = {
           id: conversationRow.id,
