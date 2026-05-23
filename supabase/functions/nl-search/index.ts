@@ -543,6 +543,17 @@ function formatPosition(pos: string | null | undefined): string {
   return pos.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
 }
 
+/** Human label for an opportunity in copy / chips. Prefers the position
+ *  noun ("Goalkeeper"); falls back to title-cased opportunity_type when
+ *  position is null. Never returns empty — empty produces the "for your
+ *  opening" / "Show  applicants" double-space class of bug (B0, scenario 8,
+ *  Coach-orientation echo). Used everywhere user-facing copy interpolates
+ *  the opportunity's identity. */
+function opportunityLabel(opp: { position: string | null; opportunity_type: string }): string {
+  return formatPosition(opp.position)
+    || (opp.opportunity_type.charAt(0).toUpperCase() + opp.opportunity_type.slice(1))
+}
+
 interface OwnerApplicant {
   applicant_id: string
   full_name: string | null
@@ -642,11 +653,16 @@ function buildRecommendationBullets(
   if (a.triage_status === 'shortlisted') push('You marked this candidate Good fit')
   else if (a.triage_status === 'maybe') push('Worth a second look — you marked this Maybe')
 
-  // 2. Position match against the opening.
-  if (a.position === opp.position) {
-    push(`Plays ${formatPosition(a.position)} — matches your ${formatPosition(opp.position)} opening`)
-  } else if (a.secondary_position === opp.position) {
-    push(`Plays ${formatPosition(a.position)}, can also cover ${formatPosition(opp.position)}`)
+  // 2. Position match against the opening. Player opps only — coach opps
+  //    don't have a structured position (CASI's Coach opening has null
+  //    position; comparing null === null would push the empty-middle
+  //    "Plays  — matches your  opening" bullet flagged in CASI verification).
+  if (opp.opportunity_type === 'player' && a.position) {
+    if (a.position === opp.position) {
+      push(`Plays ${formatPosition(a.position)} — matches your ${formatPosition(opp.position)} opening`)
+    } else if (a.secondary_position === opp.position) {
+      push(`Plays ${formatPosition(a.position)}, can also cover ${formatPosition(opp.position)}`)
+    }
   }
 
   // 3. EU passport when the opening requires it.
@@ -710,6 +726,7 @@ function buildRecommendationCaveats(
   // needs to know immediately why this card looks weak.
   if (opp.opportunity_type === 'player'
       && a.position
+      && opp.position
       && a.position !== opp.position
       && a.secondary_position !== opp.position) {
     return [`Position mismatch — applied to your ${formatPosition(opp.position)} opening but plays ${formatPosition(a.position)}`]
@@ -747,7 +764,7 @@ function buildRecruitmentOrientation(opp: OwnerOpportunity): string {
   if (b.pending > 0) parts.push(`${b.pending} Unsorted`)
   if (b.rejected > 0) parts.push(`${b.rejected} Not a fit`)
   const breakdown = parts.join(', ')
-  const headline = `For your ${formatPosition(opp.position)} opening, ${total} ${total === 1 ? 'person' : 'people'} applied — ${breakdown}.`
+  const headline = `For your ${opportunityLabel(opp)} opening, ${total} ${total === 1 ? 'person' : 'people'} applied — ${breakdown}.`
   if (pool === 0) {
     if (b.rejected > 0) {
       return `${headline} All have been marked Not a fit; I won't override that — want me to look outside your pipeline?`
@@ -1205,23 +1222,11 @@ async function handleOwnApplicantsIntent(params: {
     //    nudge used to be a "dead promise" the AI couldn't fulfil).
     const secondaryOpps = oppRanked
       .filter(o => o.opp.opportunity_id !== primary.opp.opportunity_id && o.pool.length > 0)
-    // Title-case the opportunity_type for fallback labels: "coach" → "Coach".
-    // Used whenever an opportunity row has a null `position` (CASI's Coach
-    // opening is the canonical case — same null that triggered B0).
-    const oppTypeLabel = (t: string): string => t.charAt(0).toUpperCase() + t.slice(1)
-    // Resolve the routing label for a chip's query + nudge text. Prefer
-    // `position` (specific), fall back to `opportunity_type` (player/coach)
-    // when position is null. Empty string would generate "for my  opening"
-    // — the exact bug that caused the scenario 8 chip → primary-opening
-    // infinite loop. Never return empty.
-    const oppRouteLabel = (opp: OwnerOpportunity): string =>
-      formatPosition(opp.position) || oppTypeLabel(opp.opportunity_type)
-
     let secondary_note: string | null = null
     if (secondaryOpps.length === 1) {
       const o = secondaryOpps[0].opp
       const n = secondaryOpps[0].pool.length
-      secondary_note = `You also have ${n} ${n === 1 ? 'applicant' : 'applicants'} on your ${oppRouteLabel(o)} opening — want me to surface those next?`
+      secondary_note = `You also have ${n} ${n === 1 ? 'applicant' : 'applicants'} on your ${opportunityLabel(o)} opening — want me to surface those next?`
     } else if (secondaryOpps.length > 1) {
       const totalSec = secondaryOpps.reduce((s, o) => s + o.pool.length, 0)
       secondary_note = `You also have ${totalSec} applicants across ${secondaryOpps.length} other openings — want me to look at them too?`
@@ -1230,11 +1235,12 @@ async function handleOwnApplicantsIntent(params: {
     // Explicit "Show {position} applicants" chips — one per secondary
     // opening, capped at 3. Each chip's query is shaped so the
     // findOpeningByQueryPosition lookup above re-fires the handler
-    // targeting that specific opening. When `position` is null we use the
-    // opportunity_type fallback (e.g. "coach opening") — findOpeningByQueryPosition's
-    // second loop matches that path, so routing still works.
+    // targeting that specific opening. opportunityLabel() falls back to
+    // opportunity_type when position is null (CASI's Coach opening) — so
+    // the chip emits e.g. "Show me applicants for my coach opening", which
+    // findOpeningByQueryPosition's second loop matches.
     const secondaryChips: SuggestedAction[] = secondaryOpps.slice(0, 3).map(o => {
-      const label = oppRouteLabel(o.opp)
+      const label = opportunityLabel(o.opp)
       return {
         label: `Show ${label} applicants`,
         intent: { type: 'free_text', query: `Show me applicants for my ${label.toLowerCase()} opening` },
