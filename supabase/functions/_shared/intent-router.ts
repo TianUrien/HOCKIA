@@ -149,12 +149,48 @@ const OWN_APPLICANTS = [
   /\bwho applied\b/i,
   /\b(best|top|strongest) applicants?\b/i,
   /\b(strongest|best|top) match(es)?\b/i,
-  /\bwho should i (review|look at|see|consider|shortlist|pick) (first|now|next)?\b/i,
+  // Bare forms like "Who should I shortlist?" need the whole "first|now|next"
+  // tail to be optional INCLUDING the leading space — without (?:\s+...)? the
+  // trailing literal space made the bare form fail to match.
+  /\bwho should i (review|look at|see|consider|shortlist|pick)(?:\s+(first|now|next))?\b/i,
   /\breview first\b/i,
   /\b(my|our) (recruitment|pipeline|inbox|shortlist)\b/i,
   /\b(my|our) opening(s)?\b/i,
   /\b(best|top) (for|fit for) (my|our) (opportunit(y|ies)|opening|role)\b/i,
   /\b(applicants?|candidates?) (for|on) (my|our) (opportunit(y|ies)|opening)\b/i,
+  // Production audit B9 — also accept "best candidate(s) for the/my X
+  // opening", "rank my applicants", "show me all my applicants" and
+  // ranking variants that previously fell through to generic search.
+  /\bbest (candidate|applicant)s? for\b/i,
+  /\brank (all |every |my )?(applicants?|candidates?)\b/i,
+  /\bshow (me )?(all|every|the rest of)?\s*(my )?(applicants?|candidates?)\b/i,
+  // Spanish — CASI is Argentine; the real user base needs Spanish triggers.
+  // Cover the common shapes: "who is/are my best …", "my applicants",
+  // "who should I review", "show me my applicants", "rank my applicants".
+  /\b(qui[eé]n|qui[eé]nes) (es|son) (mi|mis) mejor(es)? (candidato|aplicante|jugador|opci[oó]n)/i,
+  /\b(qui[eé]n|qui[eé]nes) (deber[ií]a|debo|tengo que) (revisar|considerar|elegir)/i,
+  /\b(mis|nuestros) (aplicantes|candidatos)\b/i,
+  /\b(mejor(es)?|top) (candidato|aplicante)s? para (mi|el|la|tu)/i,
+  /\b(mu[eé]strame|muestrame|mostrar) (mis|todos los) (aplicantes|candidatos)/i,
+
+  // Phase 6 (B2) — conversational follow-up about a specific applicant
+  // already in the pipeline ("tell me more about Marcia", "more on
+  // Lautaro"). The handler looks the name up across the owner's pool;
+  // unmatched names just fall through to the standard recommendation
+  // response so the user still gets useful output.
+  /\b(tell me|more|details) (more |much more )?(about|on|regarding) [a-zíéáóúñ]/i,
+  /\b(cu[eé]ntame|cuentame|m[aá]s) (m[aá]s |informaci[oó]n )?(sobre|de|acerca de) [a-zíéáóúñ]/i,
+
+  // Phase 6 (B7) — negative-intent variants asking specifically about
+  // weak / mismatched applicants ("who applied but doesn't match", "who
+  // shouldn't I review", "weak applicants"). Routed into the owner
+  // handler which applies a position-mismatch / weak-strength filter.
+  /\bwho applied (but|and) (do(es)?n'?t|doesn't|don'?t) (match|fit)/i,
+  /\b(who|which) (applicants? )?(do(es)?n'?t|don'?t) (match|fit)/i,
+  /\b(weak|poor|mismatched|bad fit) applicants?\b/i,
+  /\bwho (should|shouldn'?t) i (not |skip|ignore|pass)/i,
+  /\b(qui[eé]n|qui[eé]nes) (no )?(coincide|encaja|sirve)/i,
+  /\baplicantes? (d[eé]biles|que no encajan|mal[oa]s)/i,
 ]
 
 // ── Hockey knowledge (rules / explanations / how-to) ──

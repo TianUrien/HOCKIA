@@ -15,7 +15,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { getServiceClient } from '../_shared/supabase-client.ts'
 import { getCorsHeaders } from '../_shared/cors.ts'
 import { captureException } from '../_shared/sentry.ts'
-import { parseSearchQuery, synthesizeQualitativeInsights, composeShortlist, composeNoResults, answerPlatformHelp, PROMPT_VERSION, type LLMCallMeta, type ParsedFilters, type HistoryTurn, type ProfileQualitativeData, type ShortlistCandidate, type ShortlistRow, type UserContext } from '../_shared/llm-client.ts'
+import { parseSearchQuery, synthesizeQualitativeInsights, composeNoResults, answerPlatformHelp, PROMPT_VERSION, type LLMCallMeta, type ParsedFilters, type HistoryTurn, type ProfileQualitativeData, type UserContext } from '../_shared/llm-client.ts'
 import { classifyEntityType, entityTypeToRole, type RoutedIntent } from '../_shared/intent-router.ts'
 import { resolveFeatureCta } from '../_shared/hockia-features.ts'
 import {
@@ -146,6 +146,21 @@ const NUMBER_TOKEN = `\\d{1,3}|${NUMBER_WORD_KEYS}`
 // mark the *next* count in a compound query and must not be swallowed.
 const COUNT_FILLER = `(?:(?!(?:${NUMBER_WORD_KEYS}|and)\\b)[a-z'’-]+\\s+){0,3}`
 
+/**
+ * Normalise colloquial English count phrases ("a couple of players",
+ * "a few clubs") into digit form so tryExtractCount / extractRoleCounts
+ * see them as ordinary counts. Production audit B10: "a couple of"
+ * silently became the default 5 instead of 2.
+ */
+function normalizeColloquialCounts(q: string): string {
+  return q
+    .replace(/\ba couple of\b/gi, '2 ')
+    .replace(/\ba couple\b/gi, '2 ')
+    .replace(/\ba pair of\b/gi, '2 ')
+    .replace(/\ba few\b/gi, '3 ')
+    .replace(/\ba handful of\b/gi, '5 ')
+}
+
 /** Parse a count token (digits or a number word) → positive integer | null. */
 function parseCountToken(token: string): number | null {
   const t = token.toLowerCase()
@@ -175,12 +190,13 @@ const POSITION_NOUNS = 'goalkeepers?|defenders?|midfielders?|forwards?|strikers?
  * old players", "U25 defenders" and "2+ references" never read as a count.
  */
 function tryExtractCount(rawQuery: string): number | null {
+  const q = normalizeColloquialCounts(rawQuery)
   const noun = `players?|coaches?|clubs?|brands?|umpires?|profiles?|results?|people|users?|options?|matches|${POSITION_NOUNS}`
   const m =
-    rawQuery.match(
+    q.match(
       new RegExp(`\\b(${NUMBER_TOKEN})\\s+(?!years?\\b|yo\\b|yr\\b)${COUNT_FILLER}(?:${noun})\\b`, 'i'),
     ) ||
-    rawQuery.match(new RegExp(`\\b(?:top|best|first)\\s+(${NUMBER_TOKEN})\\b`, 'i'))
+    q.match(new RegExp(`\\b(?:top|best|first)\\s+(${NUMBER_TOKEN})\\b`, 'i'))
   if (m) {
     const n = parseCountToken(m[1])
     if (n != null && n > 0) return Math.min(n, MAX_RESULT_LIMIT)
@@ -250,6 +266,7 @@ function joinList(parts: string[]): string {
  * resolveResultLimit does.
  */
 function extractRoleCounts(rawQuery: string): { role: string; position?: string; count: number }[] {
+  const q = normalizeColloquialCounts(rawQuery)
   const nouns = [...Object.keys(ROLE_NOUNS), ...Object.keys(POSITION_TO_ROLE)].join('|')
   const re = new RegExp(
     `\\b(${NUMBER_TOKEN})\\s+(?!years?\\b|yo\\b|yr\\b)${COUNT_FILLER}(${nouns})\\b`,
@@ -258,7 +275,7 @@ function extractRoleCounts(rawQuery: string): { role: string; position?: string;
   const out: { role: string; position?: string; count: number }[] = []
   const seen = new Set<string>()
   let m: RegExpExecArray | null
-  while ((m = re.exec(rawQuery)) !== null) {
+  while ((m = re.exec(q)) !== null) {
     const count = parseCountToken(m[1])
     const noun = m[2].toLowerCase()
     const position = POSITION_TO_ROLE[noun]
@@ -315,6 +332,89 @@ function buildCompoundMessage(
   return msg || 'No matching profiles found.'
 }
 
+// ─────────────────────────────────────────────────────────────────────────
+// Bio credentials — keyword scan of about-me prose (Phase 6, B14)
+// ─────────────────────────────────────────────────────────────────────────
+//
+// The ranker historically only read structured fields (Journey, references,
+// current_club, media) — so a Marcia LaPlante with World Cup / Pan Am /
+// NCAA credentials in her bio prose ranked as "Good match" with thin
+// bullets while less-decorated profiles outscored her. Scan the bio for
+// high-signal terms and treat each hit as a strength signal AND a card
+// bullet. Cheap (regex) and zero LLM cost.
+
+const BIO_CREDENTIAL_PATTERNS: { pattern: RegExp; label: string }[] = [
+  { pattern: /\bworld cup\b/i, label: 'World Cup experience' },
+  { pattern: /\bolympic[s]?\b/i, label: 'Olympic experience' },
+  { pattern: /\bcommonwealth games?\b/i, label: 'Commonwealth Games' },
+  { pattern: /\bpan ?am(?:erican)?(?:\s+games?)?\b/i, label: 'Pan American competition' },
+  { pattern: /\bchampions trophy\b/i, label: 'Champions Trophy' },
+  { pattern: /\bfih (?:level|world|pro|champion|hockey)/i, label: 'FIH credential' },
+  { pattern: /\bnational team\b/i, label: 'National team' },
+  { pattern: /\bncaa( division)?\b/i, label: 'NCAA experience' },
+  { pattern: /\bpremier(?:ship| league)\b/i, label: 'Premier League / Premiership' },
+  { pattern: /\beuro(?:pean| ?hockey) (?:league|cup)\b/i, label: 'European hockey competition' },
+  { pattern: /\beuro hockey league\b/i, label: 'Euro Hockey League' },
+  { pattern: /\bcaptain(?:ed)?\b/i, label: 'Captain' },
+  { pattern: /\bgold medal\b/i, label: 'Gold medal' },
+  { pattern: /\bsilver medal\b/i, label: 'Silver medal' },
+  { pattern: /\bbronze medal\b/i, label: 'Bronze medal' },
+]
+
+/** Returns the de-duped credential labels found in the bio. Order matches
+ *  the BIO_CREDENTIAL_PATTERNS list (so World Cup beats Pan Am beats NCAA). */
+function detectBioCredentials(bio: string | null | undefined): string[] {
+  if (!bio) return []
+  const out: string[] = []
+  const seen = new Set<string>()
+  for (const { pattern, label } of BIO_CREDENTIAL_PATTERNS) {
+    if (pattern.test(bio) && !seen.has(label)) {
+      out.push(label)
+      seen.add(label)
+    }
+  }
+  return out
+}
+
+/** Free-text Journey-entry highlights ("Top Scorer 2025 top max high") are
+ *  user-entered and can be noisy — filter the obvious junk before promoting
+ *  to a recruiter-facing bullet (Phase 6, B19). */
+function isCleanHighlightText(s: string): boolean {
+  const t = s.trim()
+  if (t.length < 4 || t.length > 70) return false
+  const words = t.split(/\s+/)
+  // Any single word > 18 chars likely a typo or run-on string.
+  if (words.some(w => w.length > 18)) return false
+  // Three consecutive identical words = repetition glitch ("top top top").
+  for (let i = 0; i < words.length - 2; i++) {
+    const w = words[i].toLowerCase()
+    if (w === words[i + 1].toLowerCase() && w === words[i + 2].toLowerCase()) return false
+  }
+  return true
+}
+
+/** Rule-based fit_level for a discover result. All returned rows already
+ *  match the search criteria (hard filters in discover_profiles), so this
+ *  reflects PROFILE STRENGTH — the deterministic replacement for the LLM
+ *  composeShortlist pass that used to produce non-deterministic tiers. */
+function fitLevelForDiscoverResult(
+  r: { accepted_reference_count?: number; current_club?: string | null; career_entry_count?: number; highlight_video_url?: string | null; profile_completeness_pct?: number | null },
+  career: { entry_type?: string | null }[],
+  bioCredCount: number,
+): 'strong_match' | 'possible_match' | 'needs_more_info' {
+  let strength = 0
+  strength += Math.min((r.accepted_reference_count ?? 0) * 2, 6)
+  if (career.some(c => c.entry_type === 'national_team')) strength += 3
+  if (r.current_club) strength += 1
+  if ((r.career_entry_count ?? 0) >= 3) strength += 1
+  if (r.highlight_video_url) strength += 1
+  strength += Math.min(bioCredCount * 2, 4)
+  const completeness = r.profile_completeness_pct ?? 0
+  if (strength >= 5 && completeness >= 60) return 'strong_match'
+  if (strength >= 2 || completeness >= 40) return 'possible_match'
+  return 'needs_more_info'
+}
+
 /** A Journey (career_history) row, narrowed to the fields highlights need. */
 interface CareerRow {
   entry_type?: string | null
@@ -342,7 +442,7 @@ interface CareerRow {
  */
 function buildProfileHighlights(
   career: CareerRow[],
-  result: { accepted_reference_count?: number; open_to_opportunities?: boolean },
+  result: { accepted_reference_count?: number; open_to_opportunities?: boolean; bio?: string | null },
 ): string[] {
   // Most-recent first: current roles (no end_date) lead, then by start_date.
   const sorted = [...career].sort((a, b) => {
@@ -367,7 +467,12 @@ function buildProfileHighlights(
   const natTeam = sorted.find(e => e.entry_type === 'national_team' && e.club_name)
   if (natTeam) add(`Selected for ${natTeam.club_name}`)
 
-  // 2. Club experience — up to two most-recent clubs.
+  // 2. Bio credentials (Phase 6, B14). Surfaces the World Cup / Olympic /
+  //    NCAA / Premier League mentions buried in profile bio prose so the
+  //    recruiter sees them in the bullets — not just in the score.
+  for (const cred of detectBioCredentials(result.bio)) add(cred)
+
+  // 3. Club experience — up to two most-recent clubs.
   let clubs = 0
   for (const e of sorted) {
     if (clubs >= 2) break
@@ -379,19 +484,22 @@ function buildProfileHighlights(
     }
   }
 
-  // 3. Verified references.
+  // 4. Verified references.
   const refs = result.accepted_reference_count ?? 0
   if (refs > 0) add(`${refs} accepted reference${refs === 1 ? '' : 's'}`)
 
-  // 4. Stated achievements from Journey entries.
+  // 5. Stated achievements from Journey entries — free-text, so gate on
+  //    isCleanHighlightText to skip typo / repetition glitches (B19).
   for (const e of sorted) {
-    for (const h of (e.highlights ?? [])) add(h)
+    for (const h of (e.highlights ?? [])) {
+      if (isCleanHighlightText(h)) add(h)
+    }
   }
 
-  // 5. Journey depth.
+  // 6. Journey depth.
   if (career.length >= 3) add(`${career.length} Journey entries`)
 
-  // 6. Open to new opportunities.
+  // 7. Open to new opportunities.
   if (result.open_to_opportunities) add('Open to new opportunities')
 
   return out.slice(0, 4)
@@ -453,6 +561,11 @@ interface OwnerApplicant {
   nationality2_country_id: number | null
   triage_status: 'pending' | 'shortlisted' | 'maybe' | 'rejected'
   applied_at: string
+  /** Phase 6 (B14) — bio prose scanned for high-signal credentials
+   *  (World Cup, NCAA, Pan Am…) that don't surface from structured
+   *  career_history alone. */
+  bio: string | null
+  bio_credentials: string[]
 }
 
 interface OwnerOpportunity {
@@ -495,6 +608,10 @@ function scoreOwnerApplicant(
   if (a.current_club) strength += 1
   if (a.career_entry_count >= 3) strength += 1
   if (a.highlight_video_url) strength += 1
+  // Phase 6 (B14) — credit bio prose credentials capped at +4, so a
+  // decorated bio can lift a thin profile out of "Needs more info" but
+  // can't fake a strong score on its own.
+  strength += Math.min(a.bio_credentials.length * 2, 4)
 
   const completeness = a.profile_completeness_pct ?? 0
   // fit dominates (× 1000), then strength (× 10), then completeness — so
@@ -547,6 +664,11 @@ function buildRecommendationBullets(
   const natTeam = career.find(c => c.entry_type === 'national_team' && c.club_name)
   if (natTeam?.club_name) push(`Selected for ${natTeam.club_name}`)
 
+  // 5b. Bio credentials (Phase 6, B14) — World Cup / NCAA / Pan Am
+  //     mentions buried in bio prose. Bumps Marcia-style decorated
+  //     profiles out of "thin bullets" territory.
+  for (const cred of a.bio_credentials) push(cred)
+
   // 6. Concrete club experience.
   const clubEntry = career.find(c => c.entry_type === 'club' && c.club_name)
   if (clubEntry?.club_name) {
@@ -580,7 +702,18 @@ function buildRecommendationCaveats(
   a: OwnerApplicant,
   fitLevel: 'strong_match' | 'possible_match' | 'needs_more_info',
   career: CareerHistRow[],
+  opp: OwnerOpportunity,
 ): string[] {
+  // Production audit B6 — when a position-mismatched applicant surfaces
+  // (e.g. a midfielder who applied to a Goalkeeper opening), name it
+  // explicitly. This is the first caveat we emit because the owner
+  // needs to know immediately why this card looks weak.
+  if (opp.opportunity_type === 'player'
+      && a.position
+      && a.position !== opp.position
+      && a.secondary_position !== opp.position) {
+    return [`Position mismatch — applied to your ${formatPosition(opp.position)} opening but plays ${formatPosition(a.position)}`]
+  }
   if (fitLevel === 'needs_more_info') return []
   if (a.accepted_reference_count === 0) {
     return ['No accepted references on file yet']
@@ -622,6 +755,97 @@ function buildRecruitmentOrientation(opp: OwnerOpportunity): string {
     return headline
   }
   return `${headline} I'm recommending from the ${pool} you haven't ruled out.`
+}
+
+/**
+ * Try to find the opening the user is asking about from the query text —
+ * e.g. "best applicants for the coach opening" should target the coach
+ * opening even when the goalkeeper opening would otherwise rank first by
+ * best-applicant score. Substring match against each opening's position
+ * label paired with a context word ("opening", "applicants", "role").
+ */
+function findOpeningByQueryPosition(
+  query: string,
+  opps: OwnerOpportunity[],
+): OwnerOpportunity | null {
+  const lq = (query || '').toLowerCase()
+  // 1. Specific position label first ("head coach opening" beats a plain
+  //    "coach opening" if both could match).
+  for (const opp of opps) {
+    const positionLabel = opp.position.toLowerCase().replace(/_/g, ' ')
+    if (lq.includes(`${positionLabel} opening`)
+        || lq.includes(`${positionLabel} applicants`)
+        || lq.includes(`${positionLabel} role`)
+        || lq.includes(`for the ${positionLabel}`)
+        || lq.includes(`for my ${positionLabel}`)) {
+      return opp
+    }
+  }
+  // 2. Generic opportunity_type fallback — "coach opening" routes to the
+  //    first coach-type opp even when its specific position is head_coach
+  //    or assistant_coach. ("Player opening" similarly catches any
+  //    player-type opp.)
+  for (const opp of opps) {
+    const t = opp.opportunity_type.toLowerCase()
+    if (lq.includes(`${t} opening`)
+        || lq.includes(`${t} applicants`)
+        || lq.includes(`${t} role`)
+        || lq.includes(`for the ${t}`)
+        || lq.includes(`for my ${t}`)) {
+      return opp
+    }
+  }
+  return null
+}
+
+/** Extracts the most likely person-name fragment from a "tell me more about X" /
+ *  "cuéntame sobre X" follow-up. Returns null when no name-shaped tail follows
+ *  the trigger phrase. (B2)
+ *  - Capture group requires at least one non-whitespace char so empty tails
+ *    can't pass.
+ *  - 500-char query cap blocks pathological backtracking.
+ *  - Trailing Unicode punctuation stripped via \p{P} so "María—" or "José."
+ *    yield clean names. */
+function extractApplicantNameFromQuery(query: string): string | null {
+  if (!query || query.length > 500) return null
+  const m = query.match(/\b(?:tell me|more|details|cu[eé]ntame|cuentame)\s+(?:more\s+|much more\s+|m[aá]s\s+(?:m[aá]s\s+|informaci[oó]n\s+)?)?(?:about|on|regarding|sobre|de|acerca de)\s+(\S[^\n]{0,58})/i)
+  if (!m) return null
+  const tail = m[1].trim().replace(/[\s\p{P}]+$/u, '')
+  if (tail.length < 2 || tail.length > 60) return null
+  return tail
+}
+
+/** Returns the applicants whose full_name best matches `name`. Match modes,
+ *  in order: exact (case-insensitive), full-name contains, single-token
+ *  starts-with. Returns [] when no candidate is plausible enough — caller
+ *  falls back to the normal recommendation flow. (B2) */
+function findApplicantsByName(pool: OwnerApplicant[], name: string): OwnerApplicant[] {
+  const n = name.toLowerCase()
+  const exact = pool.filter(a => (a.full_name ?? '').toLowerCase() === n)
+  if (exact.length) return exact
+  const contains = pool.filter(a => (a.full_name ?? '').toLowerCase().includes(n))
+  if (contains.length) return contains
+  // Single-token starts-with on first or last name.
+  if (!n.includes(' ')) {
+    const starts = pool.filter(a => {
+      const parts = (a.full_name ?? '').toLowerCase().split(/\s+/)
+      return parts.some(p => p.startsWith(n))
+    })
+    if (starts.length) return starts
+  }
+  return []
+}
+
+/** Negative-intent triggers ("who applied but doesn't match", "weak
+ *  applicants"). When this fires, the owner handler flips its selection
+ *  from strongest-first to mismatched/thin-first. (B7) */
+function isNegativeApplicantIntent(query: string): boolean {
+  return /\bwho applied (but|and) (do(es)?n'?t|doesn't|don'?t) (match|fit)/i.test(query)
+    || /\b(who|which) (applicants? )?(do(es)?n'?t|don'?t) (match|fit)/i.test(query)
+    || /\b(weak|poor|mismatched|bad fit) applicants?\b/i.test(query)
+    || /\bwho (should|shouldn'?t) i (not |skip|ignore|pass)/i.test(query)
+    || /\b(qui[eé]n|qui[eé]nes) (no )?(coincide|encaja|sirve)/i.test(query)
+    || /\baplicantes? (d[eé]biles|que no encajan|mal[oa]s)/i.test(query)
 }
 
 /** Per-role navigation target for the "Review applicant" CTA. */
@@ -711,7 +935,7 @@ async function handleOwnApplicantsIntent(params: {
           id, full_name, role, avatar_url, position, secondary_position,
           open_to_play, open_to_coach, accepted_reference_count,
           career_entry_count, profile_completeness_pct, highlight_video_url,
-          current_club, nationality_country_id, nationality2_country_id
+          current_club, nationality_country_id, nationality2_country_id, bio
         )
       `)
       .in('opportunity_id', oppIds)
@@ -759,6 +983,7 @@ async function handleOwnApplicantsIntent(params: {
       if (!ap?.id) continue
       const status = (a.status ?? 'pending') as 'pending' | 'shortlisted' | 'maybe' | 'rejected'
       opp.triage_breakdown[status] = (opp.triage_breakdown[status] ?? 0) + 1
+      const bioText = (ap.bio as string | null | undefined) ?? null
       opp.applicants.push({
         applicant_id: ap.id,
         full_name: ap.full_name ?? null,
@@ -777,6 +1002,8 @@ async function handleOwnApplicantsIntent(params: {
         nationality2_country_id: ap.nationality2_country_id ?? null,
         triage_status: status,
         applied_at: a.applied_at,
+        bio: bioText,
+        bio_credentials: detectBioCredentials(bioText),
       })
     }
 
@@ -824,7 +1051,22 @@ async function handleOwnApplicantsIntent(params: {
       return aOld - bOld
     })
 
-    const primary = oppRanked[0]
+    // Allow the user to disambiguate explicitly — if the query mentions a
+    // specific opening's position ("best applicants for the coach
+    // opening"), that wins over the best-applicant ranking. Otherwise the
+    // highest-best-applicant opening is primary.
+    let primary = oppRanked[0]
+    const targeted = findOpeningByQueryPosition(query, allOpps)
+    if (targeted) {
+      const idx = oppRanked.findIndex(r => r.opp.opportunity_id === targeted.opportunity_id)
+      if (idx >= 0) primary = oppRanked[idx]
+    } else if (oppRanked.length > 1
+        && /\b(other|second|next)\s+(opening|one|role)\b/i.test(query)) {
+      // Production audit B1 — natural-language follow-up ("show me the
+      // other opening") that didn't click a chip. With 2+ openings,
+      // "other / second / next opening" routes to the second-best opp.
+      primary = oppRanked[1]
+    }
 
     // Edge: primary opening's pool is empty (everyone marked Not a fit).
     // The orientation already explains the situation; no cards.
@@ -840,8 +1082,87 @@ async function handleOwnApplicantsIntent(params: {
       })
     }
 
-    // 7. Up to 2 cards from the primary opening.
-    const recommendations = primary.scored.slice(0, 2).map(s => {
+    // Phase 6 (B2) — conversational "tell me more about <name>" follow-up.
+    // Look the name up across every opening's pool (the user may be asking
+    // about someone outside the current primary). If we find a single
+    // match, render that one applicant's card. If 2-3 plausible matches,
+    // render all of them so the user can disambiguate. Unmatched names
+    // fall through to the normal ranked-recommendations flow below.
+    const nameFromQuery = extractApplicantNameFromQuery(query)
+    if (nameFromQuery) {
+      const allPool: { applicant: OwnerApplicant; opp: OwnerOpportunity }[] = []
+      for (const r of oppRanked) {
+        for (const a of r.pool) allPool.push({ applicant: a, opp: r.opp })
+      }
+      const matched = findApplicantsByName(allPool.map(x => x.applicant), nameFromQuery)
+      if (matched.length > 0 && matched.length <= 3) {
+        const matchedCards = matched.map(applicant => {
+          const oppForApp = allPool.find(x => x.applicant.applicant_id === applicant.applicant_id)!.opp
+          const career = careerByUser.get(applicant.applicant_id) ?? []
+          const score = scoreOwnerApplicant(applicant, oppForApp, euCountryIds, career)
+          const fit_level = fitLevelForScore(score)
+          return {
+            applicant_id: applicant.applicant_id,
+            applicant_name: applicant.full_name,
+            applicant_role: applicant.role,
+            applicant_avatar_url: applicant.avatar_url,
+            opening_id: oppForApp.opportunity_id,
+            opening_title: oppForApp.title,
+            opening_position: oppForApp.position,
+            triage: applicant.triage_status,
+            triage_label: TRIAGE_LABEL[applicant.triage_status] ?? applicant.triage_status,
+            fit_level,
+            bullets: buildRecommendationBullets(applicant, oppForApp, euCountryIds, career),
+            caveats: buildRecommendationCaveats(applicant, fit_level, career, oppForApp),
+            navigate_to: applicantPublicProfilePath(applicant.role, applicant.applicant_id),
+          }
+        })
+        const headline = matched.length === 1
+          ? `Here's what I have on ${matched[0].full_name ?? nameFromQuery} for your ${formatPosition(matchedCards[0].opening_position)} opening.`
+          : `I found ${matched.length} applicants matching "${nameFromQuery}" — open any to see the full profile.`
+        return respond({
+          kind: 'recommendation' as ResponseKind,
+          ai_message: headline,
+          recommendations: matchedCards,
+          suggested_actions: [
+            { label: 'Back to top applicants', intent: { type: 'free_text', query: 'show my best applicants' } },
+          ] as SuggestedAction[],
+        })
+      }
+      // No plausible match — keep going; the normal flow will hand back the
+      // ranked recommendations and the user can rephrase.
+    }
+
+    // Phase 6 (B7) — negative-intent ("who applied but doesn't match",
+    // "weak applicants"). Flip selection inside primary.pool to the
+    // mismatched / thin candidates: position mismatch first, then
+    // strength = 0 / "needs_more_info" tier. Caveats already explain the
+    // mismatch, so the existing card render is enough.
+    const negativeIntent = isNegativeApplicantIntent(query)
+
+    // 7. Cards from the primary opening. Default cap is 2 ("show me the
+    //    best"); lifted to 10 when the user explicitly asks for all/every/
+    //    rank-all (production audit B3 — bare cap of 2 hid the long tail).
+    const wantAll = /\b(all|every|each)\s+(my\s+)?(applicants?|candidates?|aplicantes|candidatos)\b/i.test(query)
+      || /\brank\b/i.test(query)
+      || /\b(show|surface) (me )?(all|every|the rest)\b/i.test(query)
+      || /\bm[aá]s (aplicantes|candidatos|opciones)\b/i.test(query)
+    const cap = wantAll ? 10 : 2
+
+    // Negative-intent re-sort: mismatched-position first (highest "wrong"
+    // signal), then weakest fit/strength. Default path stays composite-desc.
+    const sortedScored = negativeIntent
+      ? [...primary.scored].sort((x, y) => {
+          const xMismatch = x.applicant.position !== primary.opp.position
+            && x.applicant.secondary_position !== primary.opp.position ? 1 : 0
+          const yMismatch = y.applicant.position !== primary.opp.position
+            && y.applicant.secondary_position !== primary.opp.position ? 1 : 0
+          if (xMismatch !== yMismatch) return yMismatch - xMismatch
+          return x.score.composite - y.score.composite
+        })
+      : primary.scored
+
+    const recommendations = sortedScored.slice(0, cap).map(s => {
       const career = careerByUser.get(s.applicant.applicant_id) ?? []
       return {
         applicant_id: s.applicant.applicant_id,
@@ -855,24 +1176,39 @@ async function handleOwnApplicantsIntent(params: {
         triage_label: TRIAGE_LABEL[s.applicant.triage_status] ?? s.applicant.triage_status,
         fit_level: s.fit_level,
         bullets: s.bullets,
-        caveats: buildRecommendationCaveats(s.applicant, s.fit_level, career),
+        caveats: buildRecommendationCaveats(s.applicant, s.fit_level, career, primary.opp),
         navigate_to: applicantPublicProfilePath(s.applicant.role, s.applicant.applicant_id),
       }
     })
 
-    // 8. Secondary openings with pending pool, if any.
+    // 8. Secondary openings — any opening that's NOT the primary AND has at
+    //    least one non-rejected applicant. The nudge text describes them in
+    //    aggregate; the chips below wire it to actual handler runs so a
+    //    "yes" reply has something to hook into (production audit: the
+    //    nudge used to be a "dead promise" the AI couldn't fulfil).
     const secondaryOpps = oppRanked
-      .slice(1)
-      .filter(o => o.opp.triage_breakdown.pending > 0)
+      .filter(o => o.opp.opportunity_id !== primary.opp.opportunity_id && o.pool.length > 0)
     let secondary_note: string | null = null
     if (secondaryOpps.length === 1) {
       const o = secondaryOpps[0].opp
-      const n = o.triage_breakdown.pending
-      secondary_note = `You also have ${n} pending ${n === 1 ? 'applicant' : 'applicants'} on your ${formatPosition(o.position)} opening — want me to surface those next?`
+      const n = secondaryOpps[0].pool.length
+      secondary_note = `You also have ${n} ${n === 1 ? 'applicant' : 'applicants'} on your ${formatPosition(o.position)} opening — want me to surface those next?`
     } else if (secondaryOpps.length > 1) {
-      const totalSec = secondaryOpps.reduce((s, o) => s + o.opp.triage_breakdown.pending, 0)
-      secondary_note = `You also have ${totalSec} pending applicants across ${secondaryOpps.length} other openings — want me to look at them too?`
+      const totalSec = secondaryOpps.reduce((s, o) => s + o.pool.length, 0)
+      secondary_note = `You also have ${totalSec} applicants across ${secondaryOpps.length} other openings — want me to look at them too?`
     }
+
+    // Explicit "Show {position} applicants" chips — one per secondary
+    // opening, capped at 3. Each chip's query is shaped so the
+    // findOpeningByQueryPosition lookup above re-fires the handler
+    // targeting that specific opening.
+    const secondaryChips: SuggestedAction[] = secondaryOpps.slice(0, 3).map(o => {
+      const posLabel = formatPosition(o.opp.position)
+      return {
+        label: `Show ${posLabel} applicants`,
+        intent: { type: 'free_text', query: `Show me applicants for my ${posLabel.toLowerCase()} opening` },
+      }
+    })
 
     // Honest about thin data on the recommendations.
     const thinData = primary.scored.slice(0, 2).some(s => (s.applicant.profile_completeness_pct ?? 0) < 30)
@@ -880,12 +1216,19 @@ async function handleOwnApplicantsIntent(params: {
       ? ` Some of these profiles are still thin — I've called out what's there, not what's missing.`
       : ''
 
+    // B7 — when the user asked for the negative cut, lead with the reverse
+    // framing so the cards aren't misread as "top picks". Owner sees both
+    // the headline (pool view) and what they're now looking at.
+    const aiMessage = negativeIntent
+      ? `${buildRecruitmentOrientation(primary.opp)} You asked who doesn't fit — leading with the position mismatches and weakest profiles.${lowDataNote}`
+      : buildRecruitmentOrientation(primary.opp) + lowDataNote
+
     return respond({
       kind: 'recommendation' as ResponseKind,
-      ai_message: buildRecruitmentOrientation(primary.opp) + lowDataNote,
+      ai_message: aiMessage,
       recommendations,
       secondary_note,
-      suggested_actions: [] as SuggestedAction[],
+      suggested_actions: secondaryChips,
     })
   } catch (err) {
     captureException(err, { functionName: 'nl-search', correlationId, extra: { phase: 'own_applicants' } })
@@ -2104,6 +2447,12 @@ Deno.serve(async (req) => {
       if (wcFilters.claimed_only === true) {
         wcQuery = wcQuery.eq('is_claimed', true)
       }
+      // Production audit fix — a club searching "clubs in Argentina" shouldn't
+      // see itself in its own results. The world_club row that claims this
+      // user's profile is excluded for club-role searchers.
+      if (userContext?.role === 'club') {
+        wcQuery = wcQuery.or(`claimed_profile_id.is.null,claimed_profile_id.neq.${user.id}`)
+      }
 
       const { data: wcRows, error: wcErr } = await wcQuery
       if (wcErr) {
@@ -2567,6 +2916,32 @@ Deno.serve(async (req) => {
       result.results = result.results.filter((r: any) => !excludedSet.has(r?.id))
     }
 
+    // Production audit B5 — two profiles with the same name + nationality
+    // are almost always duplicate accounts of the same person (the platform
+    // has a few in the wild). Keep one per (name + nationality), preferring
+    // the richer profile by completeness. Defensive about missing fields:
+    // rows without a usable name+nationality signature are kept as-is.
+    {
+      const seenIdentity = new Map<string, { idx: number; pct: number }>()
+      const deduped: any[] = []
+      for (const r of result.results as any[]) {
+        const name = (r?.full_name ?? '').toString().toLowerCase().trim()
+        const nat = r?.nationality_country_id
+        if (!name || nat == null) { deduped.push(r); continue }
+        const key = `${name}|${nat}`
+        const pct = r?.profile_completeness_pct ?? 0
+        const existing = seenIdentity.get(key)
+        if (!existing) {
+          seenIdentity.set(key, { idx: deduped.length, pct })
+          deduped.push(r)
+        } else if (pct > existing.pct) {
+          deduped[existing.idx] = r
+          seenIdentity.set(key, { idx: existing.idx, pct })
+        }
+      }
+      result.results = deduped
+    }
+
     // ── Result-aware AI message ──────────────────────────────────────
     // When the keyword router enforced a specific entity type, phrase the
     // empty/match copy in those terms ("no clubs found") rather than the
@@ -2609,7 +2984,25 @@ Deno.serve(async (req) => {
       // llmResult.message here — the LLM phrases its own count at parse
       // time, before knowing what was returned, so the two can disagree
       // (audit found "I found 7" + "5 players found across..." stacked).
-      aiMessage = `I found ${shown} ${noun} for you.`
+      //
+      // Phase 6 (B11) — geographic narration. When the search constrained
+      // by base-location (city or country), name it in the headline so the
+      // owner sees what scope they're inside and can broaden if needed.
+      // The chip strip already lists this filter; the headline mirror is
+      // the one that gets read first.
+      // geoLabel originates from the LLM parse of a user query; sanitize
+      // before embedding into the chat bubble. The bubble renders as plain
+      // text (no innerHTML) so HTML is already safe, but newlines and
+      // chat-confusing characters (•, ─, etc.) would still render literally.
+      // Restrict to letters / digits / spaces / common name punctuation
+      // (- . , ' ()) and cap at 40 chars.
+      const rawGeo = baseLocationText ?? (parsed.locations?.[0] ?? null)
+      const geoLabel = rawGeo
+        ? rawGeo.replace(/[^\p{L}\p{N}\s\-.,'()]/gu, '').trim().slice(0, 40) || null
+        : null
+      aiMessage = geoLabel
+        ? `I found ${shown} ${noun} based in ${geoLabel} — say "broaden the location" to widen this.`
+        : `I found ${shown} ${noun} for you.`
     }
 
     // ── Phase 4 — proactive no-results diagnosis ─────────────────────
@@ -2715,137 +3108,73 @@ Deno.serve(async (req) => {
       }
     }
 
-    // ── Phase 4 MVP-A: compose per-row shortlist ─────────────────────
-    // For any non-empty result set, run a 2nd LLM pass that scores each
-    // row's fit against the search criteria and surfaces concrete missing
-    // data + a next action per row. The output rides on `data[i]` as
-    // additive fields — old frontends ignore them, the Phase 4 frontend
-    // renders them. Failure is non-fatal: we keep the original results.
-    let shortlistMeta: LLMCallMeta | null = null
-    let shortlistMalformed = false
-    const shortlistByProfileId = new Map<string, ShortlistRow>()
-    if (result.results.length > 0) {
-      try {
-        const top = result.results.slice(0, 5)
+    // ── Phase 6 — rule-based per-row fit_level (replaces composeShortlist) ─
+    // The Phase 4 LLM shortlist pass produced non-deterministic tiers (same
+    // candidate scored Strong / Good / Needs-info across re-runs) and a
+    // summary_message that overrode the deterministic count phrase. Both
+    // root-caused the production count-mismatch + tier-flip bugs (B13/B16).
+    //
+    // Replacement: a deterministic scorer + bio-credential scan (B14). All
+    // returned rows already match the search criteria (hard filters in
+    // discover_profiles), so this reflects PROFILE STRENGTH only. Same
+    // input → same tier, every time. Zero LLM cost. Bio prose (World Cup /
+    // NCAA / Pan Am) flows into both bullets and score, closing the
+    // "real ceiling" gap where decorated profiles ranked behind weaker ones.
+    //
+    // Telemetry vars retained at zero — the next clean-up pass can drop the
+    // shortlist_* columns from discovery_events once nothing reads them.
+    const shortlistMeta: LLMCallMeta | null = null
+    const shortlistMalformed = false
+    const shortlistByProfileId = new Map<string, unknown>()
 
-        // F1 fix: eu_passport is NOT projected by discover_profiles. Compute
-        // it per-row by looking up nationality codes from the countries
-        // table and matching against EU_PASSPORT_CODES. Without this, every
-        // candidate is told to the LLM as eu_passport=false, which silently
-        // wrecks fit reasoning on EU-passport-targeted searches.
-        const nationalityIds = new Set<number>()
-        for (const r of top) {
-          if (typeof r.nationality_country_id === 'number') nationalityIds.add(r.nationality_country_id)
-          if (typeof r.nationality2_country_id === 'number') nationalityIds.add(r.nationality2_country_id)
-        }
-        const codeByCountryId = new Map<number, string>()
-        if (nationalityIds.size > 0) {
-          const { data: nationalityRows } = await adminClient
-            .from('countries')
-            .select('id, code')
-            .in('id', Array.from(nationalityIds))
-          for (const c of (nationalityRows || []) as Array<{ id: number; code: string }>) {
-            codeByCountryId.set(c.id, c.code)
-          }
-        }
-        const rowHasEuPassport = (r: any): boolean => {
-          const code1 = typeof r.nationality_country_id === 'number' ? codeByCountryId.get(r.nationality_country_id) : undefined
-          const code2 = typeof r.nationality2_country_id === 'number' ? codeByCountryId.get(r.nationality2_country_id) : undefined
-          return (code1 != null && EU_PASSPORT_CODES.has(code1)) || (code2 != null && EU_PASSPORT_CODES.has(code2))
-        }
-
-        const candidates: ShortlistCandidate[] = top.map((r: any) => {
-          // F5 fix: render coach_specialization as a human label, not the
-          // raw enum value. Custom value (free text) takes precedence.
-          const customSpec = (r.coach_specialization_custom as string | null)?.trim() || null
-          const enumSpec = r.coach_specialization as string | null
-          const coachSpec = customSpec
-            || (enumSpec ? (COACH_SPECIALIZATION_LABEL[enumSpec] ?? enumSpec) : null)
-
-          return {
-            profile_id: r.id,
-            full_name: r.full_name ?? null,
-            role: r.role ?? 'unknown',
-            position: r.position ?? null,
-            secondary_position: r.secondary_position ?? null,
-            // Phase 3e — playing_category is primary; coach/umpire use
-            // their respective arrays. We send a single representative
-            // category string to keep the shortlist prompt compact.
-            category: (r.playing_category
-              ?? (Array.isArray(r.coaching_categories) && r.coaching_categories.length > 0 ? r.coaching_categories.join(', ') : null)
-              ?? (Array.isArray(r.umpiring_categories) && r.umpiring_categories.length > 0 ? r.umpiring_categories.join(', ') : null)
-              ?? null) as string | null,
-            age: r.age ?? null,
-            base_country: r.base_country_name ?? null,
-            nationality: r.nationality_name ?? null,
-            nationality2: r.nationality2_name ?? null,
-            eu_passport: rowHasEuPassport(r),
-            current_club: r.current_club ?? null,
-            open_to_play: !!r.open_to_play,
-            open_to_coach: !!r.open_to_coach,
-            open_to_opportunities: !!r.open_to_opportunities,
-            reference_count: r.accepted_reference_count ?? 0,
-            career_entry_count: r.career_entry_count ?? 0,
-            coach_specialization: coachSpec,
-          }
-        })
-
-        const { result: shortlistResult, meta: smeta } = await composeShortlist(candidates, parsed, query)
-        shortlistMeta = smeta
-
-        // Validate + index the shortlist by profile_id. If the LLM omitted
-        // rows or returned IDs that don't match, log it and degrade
-        // gracefully — the empty Map below means rows just don't get
-        // augmented (existing behavior), no breakage.
-        if (Array.isArray(shortlistResult.shortlist) && shortlistResult.shortlist.length === candidates.length) {
-          for (const row of shortlistResult.shortlist) {
-            if (row?.profile_id) shortlistByProfileId.set(row.profile_id, row)
-          }
-          if (shortlistByProfileId.size !== candidates.length) {
-            shortlistMalformed = true
-          }
-        } else {
-          shortlistMalformed = true
-        }
-
-        // Replace the templated aiMessage with the LLM's summary_message
-        // when present and non-empty. This is the brief's hero behavior:
-        // "I found 8 possible matches — the strongest 3 are listed first..."
-        if (shortlistResult.summary_message?.trim()) {
-          aiMessage = shortlistResult.summary_message.trim()
-        }
-      } catch (shortlistError) {
-        // Compose pass is non-fatal. Log and continue with current behavior.
-        captureException(shortlistError, { functionName: 'nl-search', correlationId, extra: { phase: 'compose_shortlist' } })
-        shortlistMalformed = true
-      }
-    }
-
-    // Augment each result row with its shortlist analysis (if present).
-    // Additive — old frontends see the same shape with extra optional fields,
-    // Phase 4 frontend renders them.
-    // Phase 3 — rule-based Journey highlights. Batch-fetch career_history
-    // for every result profile in one query and derive up to 4 concrete
-    // highlights each. Non-fatal: a failure just leaves highlights empty.
+    // Phase 3 / Phase 6 — batch-fetch career_history + bios for every
+    // result profile (one query each). Highlights + fit_level both consume
+    // them, so we share the maps. Non-fatal: a failure just leaves
+    // highlights empty and fit_level at "needs_more_info" — never breaks
+    // the response.
     const highlightsByProfileId = new Map<string, string[]>()
+    const careerByUser = new Map<string, CareerRow[]>()
+    const bioByUser = new Map<string, string | null>()
+    const bioCredCountByUser = new Map<string, number>()
     try {
       const profileIds = result.results
         .map((r: any) => r?.id)
         .filter((id: unknown): id is string => typeof id === 'string')
       if (profileIds.length > 0) {
-        const { data: careerRows } = await adminClient
-          .from('career_history')
-          .select('user_id, entry_type, club_name, location_country, highlights, start_date, end_date')
-          .in('user_id', profileIds)
-        const careerByUser = new Map<string, CareerRow[]>()
-        for (const row of ((careerRows ?? []) as (CareerRow & { user_id: string })[])) {
-          const arr = careerByUser.get(row.user_id) ?? []
-          arr.push(row)
-          careerByUser.set(row.user_id, arr)
+        // allSettled — one query failing must not poison the other. A
+        // career_history failure would otherwise leave bios un-fetched and
+        // collapse every row to "needs_more_info" silently.
+        const [careerSettled, bioSettled] = await Promise.allSettled([
+          adminClient
+            .from('career_history')
+            .select('user_id, entry_type, club_name, location_country, highlights, start_date, end_date')
+            .in('user_id', profileIds),
+          adminClient
+            .from('profiles')
+            .select('id, bio')
+            .in('id', profileIds),
+        ])
+        if (careerSettled.status === 'fulfilled') {
+          for (const row of ((careerSettled.value.data ?? []) as (CareerRow & { user_id: string })[])) {
+            const arr = careerByUser.get(row.user_id) ?? []
+            arr.push(row)
+            careerByUser.set(row.user_id, arr)
+          }
+        } else {
+          captureException(careerSettled.reason, { functionName: 'nl-search', correlationId, extra: { phase: 'career_fetch' } })
+        }
+        if (bioSettled.status === 'fulfilled') {
+          for (const row of ((bioSettled.value.data ?? []) as { id: string; bio: string | null }[])) {
+            bioByUser.set(row.id, row.bio ?? null)
+            bioCredCountByUser.set(row.id, detectBioCredentials(row.bio).length)
+          }
+        } else {
+          captureException(bioSettled.reason, { functionName: 'nl-search', correlationId, extra: { phase: 'bio_fetch' } })
         }
         for (const r of result.results) {
           if (r?.id) {
-            highlightsByProfileId.set(r.id, buildProfileHighlights(careerByUser.get(r.id) ?? [], r))
+            const enriched = { ...r, bio: bioByUser.get(r.id) ?? null }
+            highlightsByProfileId.set(r.id, buildProfileHighlights(careerByUser.get(r.id) ?? [], enriched))
           }
         }
       }
@@ -2858,17 +3187,12 @@ Deno.serve(async (req) => {
     }
 
     const augmentedResults = result.results.map((r: any) => {
-      const sl = r?.id ? shortlistByProfileId.get(r.id) : undefined
       const highlights = r?.id ? highlightsByProfileId.get(r.id) : undefined
+      const career = r?.id ? (careerByUser.get(r.id) ?? []) : []
+      const bioCredCount = r?.id ? (bioCredCountByUser.get(r.id) ?? 0) : 0
+      const fit_level = fitLevelForDiscoverResult(r, career, bioCredCount)
       const withHighlights = highlights && highlights.length > 0 ? { ...r, highlights } : r
-      if (!sl) return withHighlights
-      return {
-        ...withHighlights,
-        fit_level: sl.fit_level,
-        fit_reasons: sl.fit_reasons,
-        missing_data: sl.missing_data,
-        next_action: sl.next_action,
-      }
+      return { ...withHighlights, fit_level }
     })
 
     // Phase 1c — a compound multi-role search gets its own message: the
@@ -2877,6 +3201,14 @@ Deno.serve(async (req) => {
     // composeShortlist summary_message applied above.
     if (isCompound && result.total > 0) {
       aiMessage = buildCompoundMessage(roleCounts, result.results)
+    }
+
+    // Production audit fix — the LLM parse often emits only one role for
+    // a compound query ("3 players and 1 coach" → roles:['player']), so
+    // the "Filters applied" chip strip missed Coach. Overwrite parsed.roles
+    // with the actual roles searched so the chips match the results.
+    if (isCompound) {
+      parsed.roles = Array.from(new Set(roleCounts.map(rc => rc.role)))
     }
 
     // ── Phase 1A envelope: build applied + kind + suggested_actions ──────
