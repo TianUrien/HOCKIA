@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Flag, Landmark, Globe2, Award, Calendar } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { detectBioCredentials } from '@/lib/bioCredentials'
 import DashboardCard from './DashboardCard'
 
 /**
@@ -26,6 +27,13 @@ interface JourneyCardProps {
   readOnly: boolean
   /** Drives the read-only empty-state copy ("This {role} hasn't…"). */
   role?: 'player' | 'coach'
+  /** Free-text bio. When present, high-signal credentials (World Cup,
+   *  Olympic, NCAA, Pan Am, Premier League, FIH, captain, medals) are
+   *  extracted and rendered as a "From bio" footer. Closes the QA-reported
+   *  trust gap where Hockia AI surfaces bio-extracted credentials in
+   *  recommendation bullets but the profile's Journey section showed
+   *  nothing to verify against. */
+  bio?: string | null
   onViewJourney: () => void
 }
 
@@ -45,8 +53,13 @@ const EMPTY: GroupedCounts = {
   total: 0,
 }
 
-export default function JourneyCard({ profileId, readOnly, role = 'player', onViewJourney }: JourneyCardProps) {
+export default function JourneyCard({ profileId, readOnly, role = 'player', bio, onViewJourney }: JourneyCardProps) {
   const [counts, setCounts] = useState<GroupedCounts | null>(null)
+
+  // Pure regex scan; same patterns as the Hockia AI owner-handler
+  // (supabase/functions/nl-search/index.ts). Empty array when no bio
+  // or no credentials match — section renders nothing in that case.
+  const bioCredentials = useMemo(() => detectBioCredentials(bio), [bio])
 
   useEffect(() => {
     let cancelled = false
@@ -127,6 +140,29 @@ export default function JourneyCard({ profileId, readOnly, role = 'player', onVi
           <Row icon={Award} label="Achievements" count={counts.achievements} />
           <Row icon={Calendar} label="Milestones" count={counts.milestones} />
         </ul>
+      )}
+
+      {/* "From bio" credentials — labeled as bio-extracted so a club
+          reviewing the AI's bullets sees the same source of truth on
+          the player's profile, without conflating it with verified
+          career_history entries. Renders regardless of whether the
+          structured Journey is empty or populated. */}
+      {bioCredentials.length > 0 && (
+        <div className="mt-4 pt-3 border-t border-gray-100">
+          <p className="text-[11px] font-medium uppercase tracking-wide text-gray-400 mb-2">
+            From bio
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {bioCredentials.map(cred => (
+              <span
+                key={cred}
+                className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-50 text-[#8026FA]"
+              >
+                {cred}
+              </span>
+            ))}
+          </div>
+        </div>
       )}
     </DashboardCard>
   )

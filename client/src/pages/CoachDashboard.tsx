@@ -84,6 +84,12 @@ const VALID_TABS: TabType[] = [
 // below rewrites the URL bar so browser history shows the new slug.
 const LEGACY_SECTION_ALIASES: Record<string, TabType> = {
   vacancies: 'opportunities',
+  // CASI production QA: ?tab=connections silently routed to overview
+  // because 'connections' is a sub-section inside the community tab
+  // (see navigateToCommunitySection below), not a top-level dashboard
+  // tab. Map the legacy ?tab=connections to 'community' so deep links
+  // from notifications / bookmarks land on the right surface.
+  connections: 'community',
 }
 
 const resolveLegacySection = (section: string | undefined): TabType | null =>
@@ -249,8 +255,13 @@ export default function CoachDashboard({
   // (/dashboard/profile?tab=journey) still land on the right section
   // without touching the notification templates.
   useEffect(() => {
-    const legacyTab = searchParams.get('tab') as TabType | null
-    if (!legacyTab || !(VALID_TABS as string[]).includes(legacyTab)) return
+    const rawTab = searchParams.get('tab')
+    if (!rawTab) return
+    // Apply legacy alias first (e.g. connections → community), then check
+    // VALID_TABS so an unknown alias no longer silently falls through to
+    // the default Overview tab — it lands on the mapped target instead.
+    const resolved = (resolveLegacySection(rawTab) ?? rawTab) as TabType
+    if (!(VALID_TABS as string[]).includes(resolved)) return
 
     const next = new URLSearchParams(searchParams)
     next.delete('tab')
@@ -265,9 +276,9 @@ export default function CoachDashboard({
           ? `/coaches/id/${routeParams.id}`
           : null
       if (!base) return
-      path = legacyTab === 'profile' ? base : `${base}/${legacyTab}`
+      path = resolved === 'profile' ? base : `${base}/${resolved}`
     } else {
-      path = legacyTab === 'profile' ? '/dashboard/profile' : `/dashboard/profile/${legacyTab}`
+      path = resolved === 'profile' ? '/dashboard/profile' : `/dashboard/profile/${resolved}`
     }
 
     navigate(`${path}${qsSuffix}`, { replace: true })

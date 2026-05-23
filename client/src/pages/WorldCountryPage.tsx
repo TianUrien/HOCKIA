@@ -127,14 +127,45 @@ export default function WorldCountryPage() {
         setError(false)
         setLoading(true)
 
-        // Single query: country info + has_regions + counts from the view
+        // Resolve the slug in two passes so natural URLs (/world/argentina,
+        // /world/kenya) still work even though canonical URLs are ISO-2
+        // (/world/ar, /world/ke). Production QA report flagged shared social
+        // links using the country name returning a hard error.
+        //
+        // Pass 1: treat the slug as an ISO-2 code (uppercase). This is the
+        // hot path — every link the app generates itself uses ISO-2.
+        // Pass 2: if the ISO lookup returned no row, fall back to a name
+        // lookup (ilike, exact-name-no-diacritics). If found, redirect to
+        // the canonical ISO-2 URL via { replace: true } so back-button
+        // returns to the previous page (not the broken-name URL).
+        const slug = countrySlug.trim()
         const { data, error: fetchErr } = await supabase
           .from('world_countries_with_directory')
           .select('*')
-          .eq('country_code', countrySlug.toUpperCase())
-          .single()
+          .eq('country_code', slug.toUpperCase())
+          .maybeSingle()
 
-        if (fetchErr) throw fetchErr
+        // Pass 2 — name fallback. Match the country_name case-insensitively;
+        // accept both space-separated ("united kingdom") and exact forms.
+        if (!fetchErr && !data && slug.length > 2) {
+          const friendly = slug.replace(/-/g, ' ')
+          const { data: nameMatch, error: nameErr } = await supabase
+            .from('world_countries_with_directory')
+            .select('*')
+            .ilike('country_name', friendly)
+            .maybeSingle()
+          if (!nameErr && nameMatch?.country_code) {
+            // Canonical URL is ISO-2 lowercase. Replace so the broken-name
+            // URL doesn't sit in history.
+            navigate(`/world/${nameMatch.country_code.toLowerCase()}${window.location.search}`, { replace: true })
+            return
+          }
+        }
+
+        // Surface the original error if both passes failed.
+        if (!data) {
+          throw fetchErr ?? new Error('country_not_found')
+        }
 
         const cid = data.country_id ?? 0
         const countryData: Country = {
@@ -170,7 +201,7 @@ export default function WorldCountryPage() {
     }
 
     fetchCountryData()
-  }, [countrySlug, retryCount])
+  }, [countrySlug, retryCount, navigate])
 
   // Fetch clubs when selected league changes
   useEffect(() => {

@@ -55,10 +55,15 @@ const VALID_TABS: TabType[] = [
 
 // Legacy section aliases. 'vacancies' → 'opportunities' (PR #101);
 // 'overview' was the old landing tab id — it maps to the bare
-// /dashboard/profile landing (no section segment).
+// /dashboard/profile landing (no section segment); 'connections' was
+// flagged in the CASI production QA report — ?tab=connections silently
+// fell through to overview because the section never existed for clubs.
+// Map it to 'friends', which is the closest equivalent (club's people-
+// graph view).
 const LEGACY_SECTION_ALIASES: Record<string, TabType> = {
   vacancies: 'opportunities',
   overview: 'profile',
+  connections: 'friends',
 }
 
 const resolveLegacySection = (section: string | undefined): TabType | null =>
