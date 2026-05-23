@@ -128,6 +128,17 @@ export default function WorldCountryPage() {
   useEffect(() => {
     if (!countrySlug) return
 
+    // Optimistic document.title before the fetch — the name lookup +
+    // redirect path can take 400ms+, and during that window the title was
+    // stuck at the default "HOCKIA – The Home of Field Hockey" (bad for
+    // shares, tab labels, and SEO crawlers). Title-case the slug as a
+    // best-guess; the real country name overwrites it below once the row
+    // arrives.
+    const friendlySlug = countrySlug
+      .replace(/-/g, ' ')
+      .replace(/\b\p{L}/gu, c => c.toUpperCase())
+    document.title = `${friendlySlug} | World | HOCKIA`
+
     const fetchCountryData = async () => {
       try {
         setError(false)

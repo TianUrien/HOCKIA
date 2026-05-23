@@ -50,19 +50,27 @@ export function PostInteractionBar({
 
   return (
     <div>
-      {/* Counts row */}
+      {/* Counts row — hide each side independently when its count is 0 so
+          we never render an unlabeled clickable button (was an a11y bug:
+          screen readers announced a nameless button on posts with likes
+          but no comments). */}
       {(likeCount > 0 || commentCount > 0) && (
         <div className="flex items-center justify-between px-4 py-1.5 text-xs text-gray-500">
-          <span>
-            {likeCount > 0 && `${likeCount} like${likeCount !== 1 ? 's' : ''}`}
-          </span>
-          <button
-            type="button"
-            onClick={onToggleComments}
-            className="hover:text-gray-700 hover:underline"
-          >
-            {commentCount > 0 && `${commentCount} comment${commentCount !== 1 ? 's' : ''}`}
-          </button>
+          {likeCount > 0 ? (
+            <span>{likeCount} like{likeCount !== 1 ? 's' : ''}</span>
+          ) : (
+            <span />
+          )}
+          {commentCount > 0 && (
+            <button
+              type="button"
+              onClick={onToggleComments}
+              aria-label={`Show ${commentCount} comment${commentCount !== 1 ? 's' : ''}`}
+              className="hover:text-gray-700 hover:underline"
+            >
+              {commentCount} comment{commentCount !== 1 ? 's' : ''}
+            </button>
+          )}
         </div>
       )}
 

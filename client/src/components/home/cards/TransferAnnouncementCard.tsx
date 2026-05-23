@@ -236,7 +236,11 @@ export function TransferAnnouncementCard({ item, onLikeUpdate, onDelete }: Trans
       {/* Media grid — flush to card edges (Facebook style). */}
       {sortedImages.length > 0 && (
         <div className="pb-2">
-          <FeedMediaGrid media={sortedImages} onImageClick={handleImageClick} />
+          <FeedMediaGrid
+            media={sortedImages}
+            altPrefix={item.author_name ? `Transfer announcement by ${item.author_name}` : 'Transfer announcement'}
+            onImageClick={handleImageClick}
+          />
         </div>
       )}
 

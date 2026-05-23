@@ -216,7 +216,11 @@ export function SigningAnnouncementCard({ item, onLikeUpdate, onDelete }: Signin
       {/* Media grid — flush to card edges (Facebook style). */}
       {sortedImages.length > 0 && (
         <div className="pb-2">
-          <FeedMediaGrid media={sortedImages} onImageClick={handleImageClick} />
+          <FeedMediaGrid
+            media={sortedImages}
+            altPrefix={item.author_name ? `Signing announcement by ${item.author_name}` : 'Signing announcement'}
+            onImageClick={handleImageClick}
+          />
         </div>
       )}
 
