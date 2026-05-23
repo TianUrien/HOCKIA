@@ -146,6 +146,21 @@ const NUMBER_TOKEN = `\\d{1,3}|${NUMBER_WORD_KEYS}`
 // mark the *next* count in a compound query and must not be swallowed.
 const COUNT_FILLER = `(?:(?!(?:${NUMBER_WORD_KEYS}|and)\\b)[a-z'’-]+\\s+){0,3}`
 
+/**
+ * Normalise colloquial English count phrases ("a couple of players",
+ * "a few clubs") into digit form so tryExtractCount / extractRoleCounts
+ * see them as ordinary counts. Production audit B10: "a couple of"
+ * silently became the default 5 instead of 2.
+ */
+function normalizeColloquialCounts(q: string): string {
+  return q
+    .replace(/\ba couple of\b/gi, '2 ')
+    .replace(/\ba couple\b/gi, '2 ')
+    .replace(/\ba pair of\b/gi, '2 ')
+    .replace(/\ba few\b/gi, '3 ')
+    .replace(/\ba handful of\b/gi, '5 ')
+}
+
 /** Parse a count token (digits or a number word) → positive integer | null. */
 function parseCountToken(token: string): number | null {
   const t = token.toLowerCase()
@@ -175,12 +190,13 @@ const POSITION_NOUNS = 'goalkeepers?|defenders?|midfielders?|forwards?|strikers?
  * old players", "U25 defenders" and "2+ references" never read as a count.
  */
 function tryExtractCount(rawQuery: string): number | null {
+  const q = normalizeColloquialCounts(rawQuery)
   const noun = `players?|coaches?|clubs?|brands?|umpires?|profiles?|results?|people|users?|options?|matches|${POSITION_NOUNS}`
   const m =
-    rawQuery.match(
+    q.match(
       new RegExp(`\\b(${NUMBER_TOKEN})\\s+(?!years?\\b|yo\\b|yr\\b)${COUNT_FILLER}(?:${noun})\\b`, 'i'),
     ) ||
-    rawQuery.match(new RegExp(`\\b(?:top|best|first)\\s+(${NUMBER_TOKEN})\\b`, 'i'))
+    q.match(new RegExp(`\\b(?:top|best|first)\\s+(${NUMBER_TOKEN})\\b`, 'i'))
   if (m) {
     const n = parseCountToken(m[1])
     if (n != null && n > 0) return Math.min(n, MAX_RESULT_LIMIT)
@@ -250,6 +266,7 @@ function joinList(parts: string[]): string {
  * resolveResultLimit does.
  */
 function extractRoleCounts(rawQuery: string): { role: string; position?: string; count: number }[] {
+  const q = normalizeColloquialCounts(rawQuery)
   const nouns = [...Object.keys(ROLE_NOUNS), ...Object.keys(POSITION_TO_ROLE)].join('|')
   const re = new RegExp(
     `\\b(${NUMBER_TOKEN})\\s+(?!years?\\b|yo\\b|yr\\b)${COUNT_FILLER}(${nouns})\\b`,
@@ -258,7 +275,7 @@ function extractRoleCounts(rawQuery: string): { role: string; position?: string;
   const out: { role: string; position?: string; count: number }[] = []
   const seen = new Set<string>()
   let m: RegExpExecArray | null
-  while ((m = re.exec(rawQuery)) !== null) {
+  while ((m = re.exec(q)) !== null) {
     const count = parseCountToken(m[1])
     const noun = m[2].toLowerCase()
     const position = POSITION_TO_ROLE[noun]
@@ -580,7 +597,18 @@ function buildRecommendationCaveats(
   a: OwnerApplicant,
   fitLevel: 'strong_match' | 'possible_match' | 'needs_more_info',
   career: CareerHistRow[],
+  opp: OwnerOpportunity,
 ): string[] {
+  // Production audit B6 — when a position-mismatched applicant surfaces
+  // (e.g. a midfielder who applied to a Goalkeeper opening), name it
+  // explicitly. This is the first caveat we emit because the owner
+  // needs to know immediately why this card looks weak.
+  if (opp.opportunity_type === 'player'
+      && a.position
+      && a.position !== opp.position
+      && a.secondary_position !== opp.position) {
+    return [`Position mismatch — applied to your ${formatPosition(opp.position)} opening but plays ${formatPosition(a.position)}`]
+  }
   if (fitLevel === 'needs_more_info') return []
   if (a.accepted_reference_count === 0) {
     return ['No accepted references on file yet']
@@ -874,6 +902,12 @@ async function handleOwnApplicantsIntent(params: {
     if (targeted) {
       const idx = oppRanked.findIndex(r => r.opp.opportunity_id === targeted.opportunity_id)
       if (idx >= 0) primary = oppRanked[idx]
+    } else if (oppRanked.length > 1
+        && /\b(other|second|next)\s+(opening|one|role)\b/i.test(query)) {
+      // Production audit B1 — natural-language follow-up ("show me the
+      // other opening") that didn't click a chip. With 2+ openings,
+      // "other / second / next opening" routes to the second-best opp.
+      primary = oppRanked[1]
     }
 
     // Edge: primary opening's pool is empty (everyone marked Not a fit).
@@ -890,8 +924,15 @@ async function handleOwnApplicantsIntent(params: {
       })
     }
 
-    // 7. Up to 2 cards from the primary opening.
-    const recommendations = primary.scored.slice(0, 2).map(s => {
+    // 7. Cards from the primary opening. Default cap is 2 ("show me the
+    //    best"); lifted to 10 when the user explicitly asks for all/every/
+    //    rank-all (production audit B3 — bare cap of 2 hid the long tail).
+    const wantAll = /\b(all|every|each)\s+(my\s+)?(applicants?|candidates?|aplicantes|candidatos)\b/i.test(query)
+      || /\brank\b/i.test(query)
+      || /\b(show|surface) (me )?(all|every|the rest)\b/i.test(query)
+      || /\bm[aá]s (aplicantes|candidatos|opciones)\b/i.test(query)
+    const cap = wantAll ? 10 : 2
+    const recommendations = primary.scored.slice(0, cap).map(s => {
       const career = careerByUser.get(s.applicant.applicant_id) ?? []
       return {
         applicant_id: s.applicant.applicant_id,
@@ -905,7 +946,7 @@ async function handleOwnApplicantsIntent(params: {
         triage_label: TRIAGE_LABEL[s.applicant.triage_status] ?? s.applicant.triage_status,
         fit_level: s.fit_level,
         bullets: s.bullets,
-        caveats: buildRecommendationCaveats(s.applicant, s.fit_level, career),
+        caveats: buildRecommendationCaveats(s.applicant, s.fit_level, career, primary.opp),
         navigate_to: applicantPublicProfilePath(s.applicant.role, s.applicant.applicant_id),
       }
     })
@@ -2636,6 +2677,32 @@ Deno.serve(async (req) => {
     if (excludedIds.length > 0) {
       const excludedSet = new Set(excludedIds)
       result.results = result.results.filter((r: any) => !excludedSet.has(r?.id))
+    }
+
+    // Production audit B5 — two profiles with the same name + nationality
+    // are almost always duplicate accounts of the same person (the platform
+    // has a few in the wild). Keep one per (name + nationality), preferring
+    // the richer profile by completeness. Defensive about missing fields:
+    // rows without a usable name+nationality signature are kept as-is.
+    {
+      const seenIdentity = new Map<string, { idx: number; pct: number }>()
+      const deduped: any[] = []
+      for (const r of result.results as any[]) {
+        const name = (r?.full_name ?? '').toString().toLowerCase().trim()
+        const nat = r?.nationality_country_id
+        if (!name || nat == null) { deduped.push(r); continue }
+        const key = `${name}|${nat}`
+        const pct = r?.profile_completeness_pct ?? 0
+        const existing = seenIdentity.get(key)
+        if (!existing) {
+          seenIdentity.set(key, { idx: deduped.length, pct })
+          deduped.push(r)
+        } else if (pct > existing.pct) {
+          deduped[existing.idx] = r
+          seenIdentity.set(key, { idx: existing.idx, pct })
+        }
+      }
+      result.results = deduped
     }
 
     // ── Result-aware AI message ──────────────────────────────────────

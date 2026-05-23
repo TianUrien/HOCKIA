@@ -127,7 +127,12 @@ export default function DiscoverResultCard({ result }: DiscoverResultCardProps) 
   const isPersonRole = !isWorldClub && (result.role === 'player' || result.role === 'coach')
   const metaItems: { flag?: string | null; text: string }[] = []
   if (nationality) metaItems.push({ flag: result.flag_emoji, text: nationality })
-  if (nationality2) metaItems.push({ flag: result.flag_emoji2, text: nationality2 })
+  // Production audit B22 — some profiles have the same nationality stored
+  // twice (e.g. Argentine + Argentine). Skip the duplicate display rather
+  // than render the same flag and label back-to-back.
+  if (nationality2 && nationality2.toLowerCase() !== (nationality ?? '').toLowerCase()) {
+    metaItems.push({ flag: result.flag_emoji2, text: nationality2 })
+  }
 
   // Expanded drawer "Key info" — facts NOT on the compact row. Nationality
   // and availability appear above and are never repeated; current club
