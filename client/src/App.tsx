@@ -127,6 +127,9 @@ const PublicInvestorDashboard = lazyWithRetry(() => import('@/pages/PublicInvest
 // 404 page
 const NotFoundPage = lazyWithRetry(() => import('@/pages/NotFoundPage'))
 
+// /notifications deep-link handler — opens the global drawer + redirects to home.
+const NotificationsRedirect = lazyWithRetry(() => import('@/pages/NotificationsRedirect'))
+
 // Route-level error fallback — keeps nav alive so user can recover
 const RouteErrorFallback = () => (
   <div className="min-h-[60vh] flex items-center justify-center px-4">
@@ -403,6 +406,11 @@ function App() {
                 <Route path="/opportunities/:id" element={<ErrorBoundary fallback={<RouteErrorFallback />}><OpportunityDetailPage /></ErrorBoundary>} />
                 <Route path="/messages" element={<ErrorBoundary fallback={<RouteErrorFallback />}><MessagesPage /></ErrorBoundary>} />
                 <Route path="/messages/:conversationId" element={<ErrorBoundary fallback={<RouteErrorFallback />}><MessagesPage /></ErrorBoundary>} />
+                {/* /notifications was an unrouted dead-link (the UI lives in
+                    a global drawer, not a page). Email/bookmark deep-links
+                    used to hit the 404. Handler opens the drawer + redirects
+                    to /home so the URL has a real destination. */}
+                <Route path="/notifications" element={<ErrorBoundary fallback={<RouteErrorFallback />}><NotificationsRedirect /></ErrorBoundary>} />
                 <Route path="/settings" element={<ErrorBoundary fallback={<RouteErrorFallback />}><SettingsPage /></ErrorBoundary>} />
                 {/* Bare /dashboard 404'd in production — the bottom-nav
                     label is "Dashboard" and users typed it directly. Redirect

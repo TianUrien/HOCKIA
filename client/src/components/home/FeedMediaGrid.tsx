@@ -7,6 +7,12 @@ import type { PostMediaItem } from '@/types/homeFeed'
 interface FeedMediaGridProps {
   media: PostMediaItem[]
   onImageClick?: (index: number) => void
+  /** Prefix for image / video alt text. Defaults to "Post" — pass the
+   *  author or post context (e.g. `Post by ${author_name}`) so screen
+   *  readers don't skip the media silently. We don't collect per-image
+   *  captions on the composer, so a contextual prefix is the best alt
+   *  we can produce. */
+  altPrefix?: string
 }
 
 function MediaItem({
@@ -14,11 +20,13 @@ function MediaItem({
   className = '',
   onClick,
   imageSize = 'feed-thumb',
+  alt,
 }: {
   item: PostMediaItem
   className?: string
   onClick?: () => void
   imageSize?: ImageSize
+  alt: string
 }) {
   const mediaType = item.media_type ?? 'image'
 
@@ -26,12 +34,12 @@ function MediaItem({
     return (
       <button
         type="button"
-        aria-label="Play video"
+        aria-label={`Play video — ${alt}`}
         className={`relative overflow-hidden cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8026FA] ${className}`}
         onClick={onClick}
       >
         {item.thumb_url ? (
-          <img src={getImageUrl(item.thumb_url, imageSize) ?? undefined} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
+          <img src={getImageUrl(item.thumb_url, imageSize) ?? undefined} alt={alt} loading="lazy" decoding="async" className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full bg-gray-900" />
         )}
@@ -47,13 +55,13 @@ function MediaItem({
   return (
     <button
       type="button"
-      aria-label="View image"
+      aria-label={`View image — ${alt}`}
       className={`overflow-hidden cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8026FA] ${className}`}
       onClick={onClick}
     >
       <img
         src={getImageUrl(item.url, imageSize) ?? undefined}
-        alt=""
+        alt={alt}
         loading="lazy"
         decoding="async"
         className="w-full h-full object-cover transition-transform duration-200 hover:scale-[1.02]"
@@ -62,7 +70,7 @@ function MediaItem({
   )
 }
 
-export function FeedMediaGrid({ media, onImageClick }: FeedMediaGridProps) {
+export function FeedMediaGrid({ media, onImageClick, altPrefix = 'Post' }: FeedMediaGridProps) {
   const [overflowExpanded, setOverflowExpanded] = useState(false)
 
   const handleImageClick = useCallback(
@@ -71,6 +79,10 @@ export function FeedMediaGrid({ media, onImageClick }: FeedMediaGridProps) {
     },
     [onImageClick]
   )
+
+  // Per-item alt: "Post by Author Name — image 2 of 5".
+  const altFor = (i: number, total: number) =>
+    total > 1 ? `${altPrefix} — image ${i + 1} of ${total}` : altPrefix
 
   if (!media || media.length === 0) return null
 
@@ -91,6 +103,7 @@ export function FeedMediaGrid({ media, onImageClick }: FeedMediaGridProps) {
           item={item}
           className={aspectClass}
           imageSize="feed-full"
+          alt={altFor(0, count)}
           onClick={() => handleImageClick(0)}
         />
       </div>
@@ -106,6 +119,7 @@ export function FeedMediaGrid({ media, onImageClick }: FeedMediaGridProps) {
             key={item.url}
             item={item}
             className="aspect-square"
+            alt={altFor(i, count)}
             onClick={() => handleImageClick(i)}
           />
         ))}
@@ -121,6 +135,7 @@ export function FeedMediaGrid({ media, onImageClick }: FeedMediaGridProps) {
           <MediaItem
             item={displayItems[0]}
             className="w-full h-full"
+            alt={altFor(0, count)}
             onClick={() => handleImageClick(0)}
           />
         </div>
@@ -128,6 +143,7 @@ export function FeedMediaGrid({ media, onImageClick }: FeedMediaGridProps) {
           <MediaItem
             item={displayItems[1]}
             className="w-full h-full"
+            alt={altFor(1, count)}
             onClick={() => handleImageClick(1)}
           />
         </div>
@@ -135,6 +151,7 @@ export function FeedMediaGrid({ media, onImageClick }: FeedMediaGridProps) {
           <MediaItem
             item={displayItems[2]}
             className="w-full h-full"
+            alt={altFor(2, count)}
             onClick={() => handleImageClick(2)}
           />
         </div>
@@ -151,6 +168,7 @@ export function FeedMediaGrid({ media, onImageClick }: FeedMediaGridProps) {
             key={item.url}
             item={item}
             className="aspect-square"
+            alt={altFor(i, count)}
             onClick={() => handleImageClick(i)}
           />
         ))}
@@ -168,6 +186,7 @@ export function FeedMediaGrid({ media, onImageClick }: FeedMediaGridProps) {
             key={item.url}
             item={item}
             className="aspect-[4/3]"
+            alt={altFor(i, sorted.length)}
             onClick={() => handleImageClick(i)}
           />
         ))}
@@ -183,6 +202,7 @@ export function FeedMediaGrid({ media, onImageClick }: FeedMediaGridProps) {
               <MediaItem
                 item={item}
                 className="aspect-square"
+                alt={altFor(actualIndex, sorted.length)}
                 onClick={() => {
                   if (isLast) {
                     setOverflowExpanded(true)

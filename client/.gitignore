@@ -16,6 +16,7 @@ dist-ssr
 .env
 .env.local
 .env.staging
+.env.production
 .env.*.local
 
 # Editor directories and files
@@ -36,4 +37,3 @@ dist-ssr
 /playwright/.cache/
 /e2e/.auth/
 /e2e/.data/
-client/.env.production

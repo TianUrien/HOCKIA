@@ -1,10 +1,12 @@
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Home } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
+import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 
 export default function NotFoundPage() {
   const navigate = useNavigate()
   const { user } = useAuthStore()
+  useDocumentTitle('Page not found')
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6">

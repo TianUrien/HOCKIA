@@ -234,7 +234,11 @@ export function UserPostCard({ item, onLikeUpdate, onDelete }: UserPostCardProps
         {/* Media grid — flush to card edges (Facebook style). */}
         {sortedImages.length > 0 && (
           <div className="pb-2">
-            <FeedMediaGrid media={sortedImages} onImageClick={handleMediaClick} />
+            <FeedMediaGrid
+              media={sortedImages}
+              altPrefix={item.author_name ? `Post by ${item.author_name}` : 'Post image'}
+              onImageClick={handleMediaClick}
+            />
           </div>
         )}
 
