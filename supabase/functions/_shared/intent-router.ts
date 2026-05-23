@@ -172,6 +172,25 @@ const OWN_APPLICANTS = [
   /\b(mis|nuestros) (aplicantes|candidatos)\b/i,
   /\b(mejor(es)?|top) (candidato|aplicante)s? para (mi|el|la|tu)/i,
   /\b(mu[eé]strame|muestrame|mostrar) (mis|todos los) (aplicantes|candidatos)/i,
+
+  // Phase 6 (B2) — conversational follow-up about a specific applicant
+  // already in the pipeline ("tell me more about Marcia", "more on
+  // Lautaro"). The handler looks the name up across the owner's pool;
+  // unmatched names just fall through to the standard recommendation
+  // response so the user still gets useful output.
+  /\b(tell me|more|details) (more |much more )?(about|on|regarding) [a-zíéáóúñ]/i,
+  /\b(cu[eé]ntame|cuentame|m[aá]s) (m[aá]s |informaci[oó]n )?(sobre|de|acerca de) [a-zíéáóúñ]/i,
+
+  // Phase 6 (B7) — negative-intent variants asking specifically about
+  // weak / mismatched applicants ("who applied but doesn't match", "who
+  // shouldn't I review", "weak applicants"). Routed into the owner
+  // handler which applies a position-mismatch / weak-strength filter.
+  /\bwho applied (but|and) (do(es)?n'?t|doesn't|don'?t) (match|fit)/i,
+  /\b(who|which) (applicants? )?(do(es)?n'?t|don'?t) (match|fit)/i,
+  /\b(weak|poor|mismatched|bad fit) applicants?\b/i,
+  /\bwho (should|shouldn'?t) i (not |skip|ignore|pass)/i,
+  /\b(qui[eé]n|qui[eé]nes) (no )?(coincide|encaja|sirve)/i,
+  /\baplicantes? (d[eé]biles|que no encajan|mal[oa]s)/i,
 ]
 
 // ── Hockey knowledge (rules / explanations / how-to) ──
