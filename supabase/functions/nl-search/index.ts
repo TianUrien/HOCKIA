@@ -1103,38 +1103,44 @@ async function handleOwnApplicantsIntent(params: {
       }
       const matched = findApplicantsByName(allPool.map(x => x.applicant), nameFromQuery)
       if (matched.length > 0 && matched.length <= 3) {
-        const matchedCards = matched.map(applicant => {
-          const oppForApp = allPool.find(x => x.applicant.applicant_id === applicant.applicant_id)!.opp
-          const career = careerByUser.get(applicant.applicant_id) ?? []
-          const score = scoreOwnerApplicant(applicant, oppForApp, euCountryIds, career)
-          const fit_level = fitLevelForScore(score)
-          return {
-            applicant_id: applicant.applicant_id,
-            applicant_name: applicant.full_name,
-            applicant_role: applicant.role,
-            applicant_avatar_url: applicant.avatar_url,
-            opening_id: oppForApp.opportunity_id,
-            opening_title: oppForApp.title,
-            opening_position: oppForApp.position,
-            triage: applicant.triage_status,
-            triage_label: TRIAGE_LABEL[applicant.triage_status] ?? applicant.triage_status,
-            fit_level,
-            bullets: buildRecommendationBullets(applicant, oppForApp, euCountryIds, career),
-            caveats: buildRecommendationCaveats(applicant, fit_level, career, oppForApp),
-            navigate_to: applicantPublicProfilePath(applicant.role, applicant.applicant_id),
-          }
-        })
-        const headline = matched.length === 1
-          ? `Here's what I have on ${matched[0].full_name ?? nameFromQuery} for your ${formatPosition(matchedCards[0].opening_position)} opening.`
-          : `I found ${matched.length} applicants matching "${nameFromQuery}" — open any to see the full profile.`
-        return respond({
-          kind: 'recommendation' as ResponseKind,
-          ai_message: headline,
-          recommendations: matchedCards,
-          suggested_actions: [
-            { label: 'Back to top applicants', intent: { type: 'free_text', query: 'show my best applicants' } },
-          ] as SuggestedAction[],
-        })
+        const matchedCards = matched
+          .map(applicant => {
+            const poolEntry = allPool.find(x => x.applicant.applicant_id === applicant.applicant_id)
+            if (!poolEntry) return null
+            const oppForApp = poolEntry.opp
+            const career = careerByUser.get(applicant.applicant_id) ?? []
+            const score = scoreOwnerApplicant(applicant, oppForApp, euCountryIds, career)
+            const fit_level = fitLevelForScore(score)
+            return {
+              applicant_id: applicant.applicant_id,
+              applicant_name: applicant.full_name,
+              applicant_role: applicant.role,
+              applicant_avatar_url: applicant.avatar_url,
+              opening_id: oppForApp.opportunity_id,
+              opening_title: oppForApp.title,
+              opening_position: oppForApp.position,
+              triage: applicant.triage_status,
+              triage_label: TRIAGE_LABEL[applicant.triage_status] ?? applicant.triage_status,
+              fit_level,
+              bullets: buildRecommendationBullets(applicant, oppForApp, euCountryIds, career),
+              caveats: buildRecommendationCaveats(applicant, fit_level, career, oppForApp),
+              navigate_to: applicantPublicProfilePath(applicant.role, applicant.applicant_id),
+            }
+          })
+          .filter((c): c is NonNullable<typeof c> => c !== null)
+        if (matchedCards.length > 0) {
+          const headline = matchedCards.length === 1
+            ? `Here's what I have on ${matchedCards[0].applicant_name ?? nameFromQuery} for your ${formatPosition(matchedCards[0].opening_position)} opening.`
+            : `I found ${matchedCards.length} applicants matching "${nameFromQuery}" — open any to see the full profile.`
+          return respond({
+            kind: 'recommendation' as ResponseKind,
+            ai_message: headline,
+            recommendations: matchedCards,
+            suggested_actions: [
+              { label: 'Back to top applicants', intent: { type: 'free_text', query: 'show my best applicants' } },
+            ] as SuggestedAction[],
+          })
+        }
       }
       // No plausible match — keep going; the normal flow will hand back the
       // ranked recommendations and the user can rephrase.
