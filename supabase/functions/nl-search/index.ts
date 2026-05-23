@@ -397,6 +397,472 @@ function buildProfileHighlights(
   return out.slice(0, 4)
 }
 
+// ─────────────────────────────────────────────────────────────────────────
+// Phase 5 — Opportunity-owner recruitment recommendations
+// ─────────────────────────────────────────────────────────────────────────
+//
+// When a club or coach asks Hockia AI "who is my strongest match", "best
+// applicants for my opportunity", "who should I review first" — this
+// handler answers from their own applicant pipeline. Fit first, profile
+// strength second, completeness only as a tiebreaker. Respects the
+// owner's triage labels (rejected is never recommended). Bullets are
+// rule-based — every claim is traceable to data on the applicant's
+// profile, never invented.
+
+const EU_PASSPORT_CODES_OWN = [
+  'AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR',
+  'DE','GR','HU','IE','IT','LV','LT','LU','MT','NL',
+  'PL','PT','RO','SK','SI','ES','SE',
+] as const
+
+// DB enum → user-facing label shown on the Applicants screen.
+//
+// IMPORTANT: `shortlisted` here means "the owner clicked Good fit" on the
+// Applicants screen — it is NOT the ATS-conventional "moved to next round"
+// semantic. Future engineers reading the enum: treat shortlisted = Good
+// fit owner-action throughout this feature. Owners must never see the
+// raw enum string anywhere in the UI.
+const TRIAGE_LABEL: Record<string, string> = {
+  pending: 'Unsorted',
+  shortlisted: 'Good fit',
+  maybe: 'Maybe',
+  rejected: 'Not a fit',
+}
+
+/** Format an opportunity_position enum value for display: head_coach → "Head Coach". */
+function formatPosition(pos: string | null | undefined): string {
+  if (!pos) return ''
+  return pos.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+}
+
+interface OwnerApplicant {
+  applicant_id: string
+  full_name: string | null
+  role: string
+  avatar_url: string | null
+  position: string | null
+  secondary_position: string | null
+  open_to_play: boolean
+  open_to_coach: boolean
+  accepted_reference_count: number
+  career_entry_count: number
+  profile_completeness_pct: number | null
+  highlight_video_url: string | null
+  current_club: string | null
+  nationality_country_id: number | null
+  nationality2_country_id: number | null
+  triage_status: 'pending' | 'shortlisted' | 'maybe' | 'rejected'
+  applied_at: string
+}
+
+interface OwnerOpportunity {
+  opportunity_id: string
+  title: string
+  position: string
+  opportunity_type: 'player' | 'coach'
+  gender: string | null
+  eu_passport_required: boolean
+  applicants: OwnerApplicant[]
+  triage_breakdown: { pending: number; shortlisted: number; maybe: number; rejected: number }
+}
+
+interface CareerHistRow {
+  entry_type?: string | null
+  club_name?: string | null
+  location_country?: string | null
+}
+
+/** Fit + strength + completeness — composite is scaled so the higher
+ *  signal always dominates the lower (completeness can never flip a
+ *  fit/strength ordering, only break a tie). */
+function scoreOwnerApplicant(
+  a: OwnerApplicant,
+  opp: OwnerOpportunity,
+  euCountryIds: Set<number>,
+  career: CareerHistRow[],
+): { fit: number; strength: number; composite: number } {
+  let fit = 0
+  if (a.position === opp.position || a.secondary_position === opp.position) fit += 3
+  if (opp.opportunity_type === 'player' && a.open_to_play) fit += 2
+  else if (opp.opportunity_type === 'coach' && a.open_to_coach) fit += 2
+  const hasEu = (a.nationality_country_id != null && euCountryIds.has(a.nationality_country_id))
+    || (a.nationality2_country_id != null && euCountryIds.has(a.nationality2_country_id))
+  if (opp.eu_passport_required && hasEu) fit += 3
+
+  let strength = 0
+  strength += Math.min(a.accepted_reference_count * 2, 6)
+  if (career.some(c => c.entry_type === 'national_team')) strength += 3
+  if (a.current_club) strength += 1
+  if (a.career_entry_count >= 3) strength += 1
+  if (a.highlight_video_url) strength += 1
+
+  const completeness = a.profile_completeness_pct ?? 0
+  // fit dominates (× 1000), then strength (× 10), then completeness — so
+  // completeness can break a tie but never flip a fit/strength ordering.
+  const composite = fit * 1000 + strength * 10 + completeness / 100
+  return { fit, strength, composite }
+}
+
+function fitLevelForScore(s: { fit: number; strength: number }): 'strong_match' | 'possible_match' | 'needs_more_info' {
+  if (s.fit >= 5 && s.strength >= 3) return 'strong_match'
+  if (s.fit >= 3) return 'possible_match'
+  return 'needs_more_info'
+}
+
+/** Up to 4 bullets per applicant, priority-ordered. Every line is anchored
+ *  to a specific data point so the owner can click through and verify. */
+function buildRecommendationBullets(
+  a: OwnerApplicant,
+  opp: OwnerOpportunity,
+  euCountryIds: Set<number>,
+  career: CareerHistRow[],
+): string[] {
+  const out: string[] = []
+  const push = (s: string) => { if (out.length < 4) out.push(s) }
+
+  // 1. Triage acknowledgment first when not Unsorted — the owner needs to
+  //    see we know what they've already labelled.
+  if (a.triage_status === 'shortlisted') push('You marked this candidate Good fit')
+  else if (a.triage_status === 'maybe') push('Worth a second look — you marked this Maybe')
+
+  // 2. Position match against the opening.
+  if (a.position === opp.position) {
+    push(`Plays ${formatPosition(a.position)} — matches your ${formatPosition(opp.position)} opening`)
+  } else if (a.secondary_position === opp.position) {
+    push(`Plays ${formatPosition(a.position)}, can also cover ${formatPosition(opp.position)}`)
+  }
+
+  // 3. EU passport when the opening requires it.
+  if (opp.eu_passport_required) {
+    const hasEu = (a.nationality_country_id != null && euCountryIds.has(a.nationality_country_id))
+      || (a.nationality2_country_id != null && euCountryIds.has(a.nationality2_country_id))
+    if (hasEu) push('EU passport confirmed — your opening requires one')
+  }
+
+  // 4. Availability.
+  if (opp.opportunity_type === 'player' && a.open_to_play) push('Open to play')
+  else if (opp.opportunity_type === 'coach' && a.open_to_coach) push('Open to coach')
+
+  // 5. National-team selection — strongest pedigree signal.
+  const natTeam = career.find(c => c.entry_type === 'national_team' && c.club_name)
+  if (natTeam?.club_name) push(`Selected for ${natTeam.club_name}`)
+
+  // 6. Concrete club experience.
+  const clubEntry = career.find(c => c.entry_type === 'club' && c.club_name)
+  if (clubEntry?.club_name) {
+    push(clubEntry.location_country
+      ? `Played for ${clubEntry.club_name} in ${clubEntry.location_country}`
+      : `Played for ${clubEntry.club_name}`)
+  }
+
+  // 7. Verified references.
+  if (a.accepted_reference_count > 0) {
+    const n = a.accepted_reference_count
+    push(`${n} accepted reference${n === 1 ? '' : 's'}`)
+  }
+
+  // 8. Current club.
+  if (a.current_club) push(`Current club: ${a.current_club}`)
+
+  // 9. Highlight video.
+  if (a.highlight_video_url) push('Has a highlight video on profile')
+
+  return out.slice(0, 4)
+}
+
+/** Honest orientation sentence — always includes the full triage breakdown
+ *  (Not a fit included even though the ranker excludes them) so the owner
+ *  sees what the AI looked at and what it ignored. */
+function buildRecruitmentOrientation(opp: OwnerOpportunity): string {
+  const b = opp.triage_breakdown
+  const total = b.pending + b.shortlisted + b.maybe + b.rejected
+  const pool = b.pending + b.shortlisted + b.maybe
+  const parts: string[] = []
+  if (b.shortlisted > 0) parts.push(`${b.shortlisted} Good fit`)
+  if (b.maybe > 0) parts.push(`${b.maybe} Maybe`)
+  if (b.pending > 0) parts.push(`${b.pending} Unsorted`)
+  if (b.rejected > 0) parts.push(`${b.rejected} Not a fit`)
+  const breakdown = parts.join(', ')
+  const headline = `For your ${formatPosition(opp.position)} opening, ${total} ${total === 1 ? 'person' : 'people'} applied — ${breakdown}.`
+  if (pool === 0) {
+    if (b.rejected > 0) {
+      return `${headline} All have been marked Not a fit; I won't override that — want me to look outside your pipeline?`
+    }
+    return headline
+  }
+  return `${headline} I'm recommending from the ${pool} you haven't ruled out.`
+}
+
+/** Per-role navigation target for the "Review applicant" CTA. */
+function applicantPublicProfilePath(role: string, id: string): string {
+  if (role === 'coach') return `/coaches/id/${id}?ref=ai-recommendation`
+  if (role === 'umpire') return `/umpires/id/${id}?ref=ai-recommendation`
+  if (role === 'club') return `/clubs/id/${id}?ref=ai-recommendation`
+  if (role === 'brand') return `/marketplace`
+  return `/players/id/${id}?ref=ai-recommendation`
+}
+
+/**
+ * Phase 5 — recommends top applicants from the owner's own pipeline.
+ * Fires only for clubs and coaches that own at least one open opportunity.
+ * Edge cases (no opps, no applicants, all rejected, thin data) each get
+ * their own honest message rather than a one-size-fits-all fallback.
+ */
+async function handleOwnApplicantsIntent(params: {
+  // deno-lint-ignore no-explicit-any
+  adminClient: any
+  userId: string
+  query: string
+  userContext: UserContext | undefined
+  llmProvider: string
+  startTime: number
+  correlationId: string
+  headers: Record<string, string>
+}): Promise<Response> {
+  const { adminClient, userId, query, userContext, llmProvider, startTime, correlationId, headers } = params
+
+  const respond = (envelope: Record<string, unknown>) => {
+    fireAndForget(logDiscoveryEvent(adminClient, {
+      user_id: userId,
+      role: userContext?.role ?? null,
+      query_text: query,
+      intent: 'search',
+      parsed_filters: { _meta: { kind: 'recommendation', handler: 'own_applicants' } } as any,
+      result_count: ((envelope.recommendations as unknown[]) ?? []).length,
+      has_qualitative: false,
+      llm_provider: llmProvider,
+      response_time_ms: Date.now() - startTime,
+      error_message: null,
+      prompt_tokens: 0, completion_tokens: 0, cached_tokens: 0,
+      prompt_version: PROMPT_VERSION,
+      fallback_used: false, retry_count: 0,
+    }))
+    return new Response(JSON.stringify({
+      success: true,
+      data: [],
+      total: 0,
+      has_more: false,
+      parsed_filters: null,
+      summary: null,
+      applied: null,
+      ...envelope,
+    }), { status: 200, headers: { ...headers, 'Content-Type': 'application/json' } })
+  }
+
+  try {
+    // 1. Owner's open opportunities.
+    const { data: oppRows } = await adminClient
+      .from('opportunities')
+      .select('id, title, position, opportunity_type, gender, eu_passport_required')
+      .eq('club_id', userId)
+      .eq('status', 'open')
+      .order('created_at', { ascending: false })
+
+    if (!oppRows || oppRows.length === 0) {
+      return respond({
+        kind: 'recommendation' as ResponseKind,
+        ai_message: "You don't have any open opportunities yet. Post one and applicants will start coming in.",
+        recommendations: [],
+        suggested_actions: [
+          { label: 'Post an opportunity', intent: { type: 'free_text', query: 'how do I post an opportunity' } },
+        ] as SuggestedAction[],
+      })
+    }
+
+    const oppIds = oppRows.map((o: any) => o.id)
+
+    // 2. Applications + applicant profile data (one batched join).
+    const { data: appRows } = await adminClient
+      .from('opportunity_applications')
+      .select(`
+        id, opportunity_id, applicant_id, status, applied_at,
+        applicant:profiles!opportunity_applications_applicant_id_fkey(
+          id, full_name, role, avatar_url, position, secondary_position,
+          open_to_play, open_to_coach, accepted_reference_count,
+          career_entry_count, profile_completeness_pct, highlight_video_url,
+          current_club, nationality_country_id, nationality2_country_id
+        )
+      `)
+      .in('opportunity_id', oppIds)
+
+    // 3. EU country IDs for the EU-passport bullet/score.
+    const { data: euCountries } = await adminClient
+      .from('countries').select('id').in('code', EU_PASSPORT_CODES_OWN)
+    const euCountryIds = new Set<number>((euCountries ?? []).map((c: any) => c.id))
+
+    // 4. career_history for every applicant — bullets need it.
+    const applicantIds = Array.from(new Set(
+      ((appRows ?? []) as any[]).map(r => r.applicant_id).filter(Boolean)
+    ))
+    const careerByUser = new Map<string, CareerHistRow[]>()
+    if (applicantIds.length > 0) {
+      const { data: careerRows } = await adminClient
+        .from('career_history')
+        .select('user_id, entry_type, club_name, location_country')
+        .in('user_id', applicantIds)
+      for (const row of (careerRows ?? []) as Array<CareerHistRow & { user_id: string }>) {
+        const arr = careerByUser.get(row.user_id) ?? []
+        arr.push(row)
+        careerByUser.set(row.user_id, arr)
+      }
+    }
+
+    // 5. Group applications by opportunity with triage breakdown.
+    const oppMap = new Map<string, OwnerOpportunity>()
+    for (const o of oppRows as any[]) {
+      oppMap.set(o.id, {
+        opportunity_id: o.id,
+        title: o.title ?? formatPosition(o.position),
+        position: o.position,
+        opportunity_type: o.opportunity_type,
+        gender: o.gender ?? null,
+        eu_passport_required: !!o.eu_passport_required,
+        applicants: [],
+        triage_breakdown: { pending: 0, shortlisted: 0, maybe: 0, rejected: 0 },
+      })
+    }
+    for (const a of (appRows ?? []) as any[]) {
+      const opp = oppMap.get(a.opportunity_id)
+      if (!opp) continue
+      const ap = a.applicant
+      if (!ap?.id) continue
+      const status = (a.status ?? 'pending') as 'pending' | 'shortlisted' | 'maybe' | 'rejected'
+      opp.triage_breakdown[status] = (opp.triage_breakdown[status] ?? 0) + 1
+      opp.applicants.push({
+        applicant_id: ap.id,
+        full_name: ap.full_name ?? null,
+        role: ap.role,
+        avatar_url: ap.avatar_url ?? null,
+        position: ap.position ?? null,
+        secondary_position: ap.secondary_position ?? null,
+        open_to_play: !!ap.open_to_play,
+        open_to_coach: !!ap.open_to_coach,
+        accepted_reference_count: ap.accepted_reference_count ?? 0,
+        career_entry_count: ap.career_entry_count ?? 0,
+        profile_completeness_pct: ap.profile_completeness_pct ?? null,
+        highlight_video_url: ap.highlight_video_url ?? null,
+        current_club: ap.current_club ?? null,
+        nationality_country_id: ap.nationality_country_id ?? null,
+        nationality2_country_id: ap.nationality2_country_id ?? null,
+        triage_status: status,
+        applied_at: a.applied_at,
+      })
+    }
+
+    const allOpps = Array.from(oppMap.values())
+    const totalApplicantsAcrossAll = allOpps.reduce((s, o) => s + o.applicants.length, 0)
+
+    // Edge: no one has applied to anything yet.
+    if (totalApplicantsAcrossAll === 0) {
+      const first = allOpps[0]
+      const noun = formatPosition(first.position).toLowerCase()
+      return respond({
+        kind: 'recommendation' as ResponseKind,
+        ai_message: `No one has applied to your ${formatPosition(first.position)} opening yet. Want me to suggest strong ${noun}s you could invite?`,
+        recommendations: [],
+        suggested_actions: [
+          { label: `Find ${noun}s to invite`, intent: { type: 'free_text', query: `find me ${noun}s` } },
+        ] as SuggestedAction[],
+      })
+    }
+
+    // 6. Per-opening ranking. Pool = pending + shortlisted + maybe.
+    const oppRanked = allOpps.map(opp => {
+      const pool = opp.applicants.filter(a => a.triage_status !== 'rejected')
+      const scored = pool.map(a => {
+        const career = careerByUser.get(a.applicant_id) ?? []
+        const score = scoreOwnerApplicant(a, opp, euCountryIds, career)
+        const bullets = buildRecommendationBullets(a, opp, euCountryIds, career)
+        return { applicant: a, score, bullets, fit_level: fitLevelForScore(score) }
+      }).sort((x, y) => y.score.composite - x.score.composite)
+      return { opp, scored, bestScore: scored[0]?.score.composite ?? 0, pool }
+    })
+
+    // Sort openings by BEST APPLICANT QUALITY first (not pending volume — an
+    // opening with 20 weak applicants must not outrank one with 3 strong
+    // ones). Tiebreaks: pending volume, then longest-waiting pending date.
+    oppRanked.sort((a, b) => {
+      if (b.bestScore !== a.bestScore) return b.bestScore - a.bestScore
+      const aPend = a.opp.triage_breakdown.pending
+      const bPend = b.opp.triage_breakdown.pending
+      if (bPend !== aPend) return bPend - aPend
+      const aOld = a.opp.applicants.filter(x => x.triage_status === 'pending')
+        .reduce((min, x) => Math.min(min, new Date(x.applied_at).getTime()), Infinity)
+      const bOld = b.opp.applicants.filter(x => x.triage_status === 'pending')
+        .reduce((min, x) => Math.min(min, new Date(x.applied_at).getTime()), Infinity)
+      return aOld - bOld
+    })
+
+    const primary = oppRanked[0]
+
+    // Edge: primary opening's pool is empty (everyone marked Not a fit).
+    // The orientation already explains the situation; no cards.
+    if (primary.pool.length === 0) {
+      const noun = formatPosition(primary.opp.position).toLowerCase()
+      return respond({
+        kind: 'recommendation' as ResponseKind,
+        ai_message: buildRecruitmentOrientation(primary.opp),
+        recommendations: [],
+        suggested_actions: [
+          { label: `Find ${noun}s outside this pipeline`, intent: { type: 'free_text', query: `find ${noun}s` } },
+        ] as SuggestedAction[],
+      })
+    }
+
+    // 7. Up to 2 cards from the primary opening.
+    const recommendations = primary.scored.slice(0, 2).map(s => ({
+      applicant_id: s.applicant.applicant_id,
+      applicant_name: s.applicant.full_name,
+      applicant_role: s.applicant.role,
+      applicant_avatar_url: s.applicant.avatar_url,
+      opening_id: primary.opp.opportunity_id,
+      opening_title: primary.opp.title,
+      opening_position: primary.opp.position,
+      triage: s.applicant.triage_status,
+      triage_label: TRIAGE_LABEL[s.applicant.triage_status] ?? s.applicant.triage_status,
+      fit_level: s.fit_level,
+      bullets: s.bullets,
+      navigate_to: applicantPublicProfilePath(s.applicant.role, s.applicant.applicant_id),
+    }))
+
+    // 8. Secondary openings with pending pool, if any.
+    const secondaryOpps = oppRanked
+      .slice(1)
+      .filter(o => o.opp.triage_breakdown.pending > 0)
+    let secondary_note: string | null = null
+    if (secondaryOpps.length === 1) {
+      const o = secondaryOpps[0].opp
+      const n = o.triage_breakdown.pending
+      secondary_note = `You also have ${n} pending ${n === 1 ? 'applicant' : 'applicants'} on your ${formatPosition(o.position)} opening — want me to surface those next?`
+    } else if (secondaryOpps.length > 1) {
+      const totalSec = secondaryOpps.reduce((s, o) => s + o.opp.triage_breakdown.pending, 0)
+      secondary_note = `You also have ${totalSec} pending applicants across ${secondaryOpps.length} other openings — want me to look at them too?`
+    }
+
+    // Honest about thin data on the recommendations.
+    const thinData = primary.scored.slice(0, 2).some(s => (s.applicant.profile_completeness_pct ?? 0) < 30)
+    const lowDataNote = thinData
+      ? ` Some of these profiles are still thin — I've called out what's there, not what's missing.`
+      : ''
+
+    return respond({
+      kind: 'recommendation' as ResponseKind,
+      ai_message: buildRecruitmentOrientation(primary.opp) + lowDataNote,
+      recommendations,
+      secondary_note,
+      suggested_actions: [] as SuggestedAction[],
+    })
+  } catch (err) {
+    captureException(err, { functionName: 'nl-search', correlationId, extra: { phase: 'own_applicants' } })
+    return respond({
+      kind: 'soft_error' as ResponseKind,
+      ai_message: "I had trouble pulling your recruitment data just now. Try again in a moment.",
+      recommendations: [],
+      suggested_actions: [{ label: 'Try again', intent: { type: 'retry' } }] as SuggestedAction[],
+    })
+  }
+}
+
 /** Graceful degradation: the LLM parse failed (timeout, transient error, or
  *  provider quota). Re-use the user's raw query as full-text input to the
  *  existing discover_profiles RPC so the user still gets results. */
@@ -1335,6 +1801,28 @@ Deno.serve(async (req) => {
         }),
         { status: 200, headers: { ...headers, 'Content-Type': 'application/json' } }
       )
+    }
+
+    // ── Phase 5 — opportunity-owner recommendations ────────────────────
+    // Clubs and coaches asking about their own pipeline get a real
+    // recommendation from their applicants, not a generic deflection.
+    // Non-owners (or queries with no actual owned opportunities) fall
+    // through to normal search.
+    if (intent.confidence === 'high' && intent.entity_type === 'own_applicants') {
+      const ownerRole = userContext?.role
+      if (ownerRole === 'club' || ownerRole === 'coach') {
+        return handleOwnApplicantsIntent({
+          adminClient,
+          userId: user.id,
+          query,
+          userContext,
+          llmProvider,
+          startTime,
+          correlationId,
+          headers,
+        })
+      }
+      // else: fall through to normal LLM search.
     }
 
     // ── Platform help ("how do I use HOCKIA?") ─────────────────────────

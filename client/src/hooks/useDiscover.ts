@@ -97,6 +97,7 @@ export type ResponseKind =
   | 'soft_error'            // transient failure — calm UI (wired in PR-3)
   | 'clarifying_question'   // medium-confidence intent (wired in PR-4)
   | 'canned_redirect'       // opportunity / product redirects
+  | 'recommendation'        // Phase 5 — owner recruitment recommendations
 
 export interface AppliedSearch {
   entity: 'clubs' | 'players' | 'coaches' | 'brands' | 'umpires' | null
@@ -135,6 +136,32 @@ export interface DiscoverCta {
   route: string
 }
 
+/**
+ * Phase 5 — one recommended applicant from the owner's own pipeline. The
+ * bullets are rule-based on the backend; every line is traceable to a
+ * specific data point on the applicant's profile.
+ */
+export interface RecommendationRow {
+  applicant_id: string
+  applicant_name: string | null
+  applicant_role: string
+  applicant_avatar_url: string | null
+  opening_id: string
+  opening_title: string
+  opening_position: string
+  /** DB triage value: pending | shortlisted | maybe. Never 'rejected' here
+   *  — the ranker excludes those. */
+  triage: 'pending' | 'shortlisted' | 'maybe'
+  /** User-facing label shown on the Applicants screen
+   *  (Unsorted / Good fit / Maybe). */
+  triage_label: string
+  fit_level: 'strong_match' | 'possible_match' | 'needs_more_info'
+  bullets: string[]
+  /** Path to the applicant's public profile — wired to the "Review
+   *  applicant" CTA. */
+  navigate_to: string
+}
+
 export interface DiscoverResponse {
   success: boolean
   data: DiscoverResult[]
@@ -156,6 +183,10 @@ export interface DiscoverResponse {
    *  this to skip the collapse-to-3, so the headline count matches what's
    *  visible. */
   is_compound?: boolean
+  /** Phase 5 — recommendation cards for the recruitment intent. */
+  recommendations?: RecommendationRow[]
+  /** Phase 5 — single-line nudge about other openings worth visiting. */
+  secondary_note?: string | null
 }
 
 // ── Chat message types ──────────────────────────────────────────────────
@@ -177,6 +208,11 @@ export interface DiscoverChatMessage {
   /** Compound multi-role search — frontend suppresses the collapse-to-3
    *  so every requested role is visible. */
   is_compound?: boolean
+  /** Phase 5 — recommendation cards for an owner-recruitment response. */
+  recommendations?: RecommendationRow[]
+  /** Phase 5 — optional nudge below the cards ("you also have N pending
+   *  applicants on your Midfielder opening — want me to surface those?"). */
+  secondary_note?: string | null
   timestamp: number
   status: 'sending' | 'complete' | 'error'
   error?: string
@@ -327,6 +363,8 @@ export const useDiscoverChat = create<DiscoverChatStore>((set, get) => ({
                 has_more: result.has_more,
                 search_query: trimmed,
                 is_compound: result.is_compound,
+                recommendations: result.recommendations,
+                secondary_note: result.secondary_note,
                 status: 'complete' as const,
                 // Phase 1A — persist the structured envelope so the dispatcher
                 // can render the right component. All optional; old rows

@@ -29,6 +29,11 @@ export type EntityType =
   | 'platform_help'
   | 'knowledge'
   | 'greeting'
+  // Phase 5 — opportunity-owner recruitment intent ("who applied", "best
+  // applicants", "strongest match", "who should I review"). Only fires
+  // when the asker actually owns at least one open opportunity; otherwise
+  // nl-search falls back to normal search.
+  | 'own_applicants'
   | 'unknown'
 
 export type Confidence = 'high' | 'medium' | 'low' | 'none'
@@ -132,6 +137,24 @@ const FEATURE_NOUNS = [
   /\baccount\b/i,
   /\bsettings?\b/i,
   /\bdiscover(y)?\b/i,
+]
+
+// ── Opportunity-owner recruitment intent (Phase 5) ──
+// Fires when a club or coach asks Hockia AI about THEIR OWN recruitment:
+// "who applied", "best applicants", "strongest match", "who should I
+// review first", etc. nl-search verifies the asker is an owner before
+// honouring this routing — otherwise it falls back to normal search.
+const OWN_APPLICANTS = [
+  /\b(my|our) applicants?\b/i,
+  /\bwho applied\b/i,
+  /\b(best|top|strongest) applicants?\b/i,
+  /\b(strongest|best|top) match(es)?\b/i,
+  /\bwho should i (review|look at|see|consider|shortlist|pick) (first|now|next)?\b/i,
+  /\breview first\b/i,
+  /\b(my|our) (recruitment|pipeline|inbox|shortlist)\b/i,
+  /\b(my|our) opening(s)?\b/i,
+  /\b(best|top) (for|fit for) (my|our) (opportunit(y|ies)|opening|role)\b/i,
+  /\b(applicants?|candidates?) (for|on) (my|our) (opportunit(y|ies)|opening)\b/i,
 ]
 
 // ── Hockey knowledge (rules / explanations / how-to) ──
@@ -294,6 +317,16 @@ export function classifyEntityType(query: string): RoutedIntent {
       confidence: 'high',
       matched_signals: [...helpForm, ...featureNoun],
     }
+  }
+
+  // 3c. Opportunity-owner recruitment intent (Phase 5). Detected BEFORE
+  //     entity search so "who applied to my opportunity" doesn't get
+  //     scored as players/opportunities and dropped. Confidence is high
+  //     here; nl-search still gates on whether the user actually owns
+  //     any opportunities — non-owners fall through to normal search.
+  const ownApplicants = anyMatch(OWN_APPLICANTS, q)
+  if (ownApplicants.length > 0) {
+    return { entity_type: 'own_applicants', confidence: 'high', matched_signals: ownApplicants }
   }
 
   // 4. Hockey knowledge (rules / how does X work)

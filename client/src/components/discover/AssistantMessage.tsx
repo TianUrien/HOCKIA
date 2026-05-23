@@ -4,6 +4,7 @@ import { useDiscoverChat } from '@/hooks/useDiscover'
 import CannedRedirectCard from './CannedRedirectCard'
 import ClarifyingQuestionCard from './ClarifyingQuestionCard'
 import NoResultsCard from './NoResultsCard'
+import RecommendationResponse from './RecommendationResponse'
 import SearchResultsResponse from './SearchResultsResponse'
 import SoftErrorCard from './SoftErrorCard'
 import TextResponse from './TextResponse'
@@ -156,6 +157,17 @@ export default function AssistantMessage({ msg }: AssistantMessageProps) {
             loadingMore={msg.loading_more ?? false}
             onLoadMore={() => loadMore(msg.id)}
             isCompound={msg.is_compound ?? false}
+          />
+        )
+
+      case 'recommendation':
+        return (
+          <RecommendationResponse
+            message={msg.content}
+            recommendations={msg.recommendations ?? []}
+            secondaryNote={msg.secondary_note ?? null}
+            suggestedActions={msg.suggested_actions}
+            onAction={handleAction}
           />
         )
 
