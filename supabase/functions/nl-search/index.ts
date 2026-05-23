@@ -770,8 +770,14 @@ function findOpeningByQueryPosition(
 ): OwnerOpportunity | null {
   const lq = (query || '').toLowerCase()
   // 1. Specific position label first ("head coach opening" beats a plain
-  //    "coach opening" if both could match).
+  //    "coach opening" if both could match). Skip rows with null position —
+  //    Sentry SUPABASE-EDGE-FUNCTIONS-A: every owner query was crashing
+  //    here when an opportunity had a null position column (kept happening
+  //    even though no rows with status='open' had null at query time —
+  //    likely transient or test-seed state). Defensive null guard so the
+  //    handler degrades to "no targeted opening" instead of throwing.
   for (const opp of opps) {
+    if (!opp.position) continue
     const positionLabel = opp.position.toLowerCase().replace(/_/g, ' ')
     if (lq.includes(`${positionLabel} opening`)
         || lq.includes(`${positionLabel} applicants`)
@@ -786,6 +792,7 @@ function findOpeningByQueryPosition(
   //    or assistant_coach. ("Player opening" similarly catches any
   //    player-type opp.)
   for (const opp of opps) {
+    if (!opp.opportunity_type) continue
     const t = opp.opportunity_type.toLowerCase()
     if (lq.includes(`${t} opening`)
         || lq.includes(`${t} applicants`)
@@ -1231,10 +1238,17 @@ async function handleOwnApplicantsIntent(params: {
       suggested_actions: secondaryChips,
     })
   } catch (err) {
-    captureException(err, { functionName: 'nl-search', correlationId, extra: { phase: 'own_applicants' } })
+    // B0 diagnostic instrumentation — capture the real error message + stack so
+    // the next prod failure shows up in Supabase function logs (stderr capture)
+    // and the correlationId can be correlated with Sentry. Remove once B0 is
+    // root-caused and fixed.
+    const errMessage = err instanceof Error ? err.message : String(err)
+    const errStack = err instanceof Error ? err.stack : undefined
+    console.error(`[nl-search][own_applicants][${correlationId}] ${errMessage}\n${errStack ?? ''}`)
+    captureException(err, { functionName: 'nl-search', correlationId, extra: { phase: 'own_applicants', error_message: errMessage } })
     return respond({
       kind: 'soft_error' as ResponseKind,
-      ai_message: "I had trouble pulling your recruitment data just now. Try again in a moment.",
+      ai_message: `I had trouble pulling your recruitment data just now. Try again in a moment. (ref ${correlationId})`,
       recommendations: [],
       suggested_actions: [{ label: 'Try again', intent: { type: 'retry' } }] as SuggestedAction[],
     })
