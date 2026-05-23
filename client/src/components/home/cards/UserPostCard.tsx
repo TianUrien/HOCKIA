@@ -119,7 +119,7 @@ export function UserPostCard({ item, onLikeUpdate, onDelete }: UserPostCardProps
 
   return (
     <>
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+      <div className="bg-white">
         {/* Header */}
         <div className="flex items-center gap-3 p-4 pb-2">
           {profilePath ? (
@@ -231,9 +231,9 @@ export function UserPostCard({ item, onLikeUpdate, onDelete }: UserPostCardProps
           </div>
         )}
 
-        {/* Media grid */}
+        {/* Media grid — flush to card edges (Facebook style). */}
         {sortedImages.length > 0 && (
-          <div className="px-4 pb-2">
+          <div className="pb-2">
             <FeedMediaGrid media={sortedImages} onImageClick={handleMediaClick} />
           </div>
         )}

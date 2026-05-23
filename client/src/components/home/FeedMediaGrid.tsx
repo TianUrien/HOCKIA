@@ -86,7 +86,7 @@ export function FeedMediaGrid({ media, onImageClick }: FeedMediaGridProps) {
     const aspectClass = isVideo ? 'aspect-video' : 'aspect-[4/3] max-h-[500px]'
 
     return (
-      <div className="rounded-lg overflow-hidden">
+      <div className="overflow-hidden">
         <MediaItem
           item={item}
           className={aspectClass}
@@ -100,7 +100,7 @@ export function FeedMediaGrid({ media, onImageClick }: FeedMediaGridProps) {
   // 2 items — side by side
   if (count === 2) {
     return (
-      <div className="grid grid-cols-2 gap-1 rounded-lg overflow-hidden">
+      <div className="grid grid-cols-2 gap-1 overflow-hidden">
         {displayItems.map((item, i) => (
           <MediaItem
             key={item.url}
@@ -116,7 +116,7 @@ export function FeedMediaGrid({ media, onImageClick }: FeedMediaGridProps) {
   // 3 items — 1 large left + 2 small right
   if (count === 3) {
     return (
-      <div className="grid grid-cols-3 grid-rows-2 gap-1 rounded-lg overflow-hidden" style={{ height: '320px' }}>
+      <div className="grid grid-cols-3 grid-rows-2 gap-1 overflow-hidden" style={{ height: '320px' }}>
         <div className="col-span-2 row-span-2">
           <MediaItem
             item={displayItems[0]}
@@ -145,7 +145,7 @@ export function FeedMediaGrid({ media, onImageClick }: FeedMediaGridProps) {
   // 4 items — 2x2 grid
   if (count === 4) {
     return (
-      <div className="grid grid-cols-2 grid-rows-2 gap-1 rounded-lg overflow-hidden">
+      <div className="grid grid-cols-2 grid-rows-2 gap-1 overflow-hidden">
         {displayItems.map((item, i) => (
           <MediaItem
             key={item.url}
@@ -160,7 +160,7 @@ export function FeedMediaGrid({ media, onImageClick }: FeedMediaGridProps) {
 
   // 5+ items — 2 top + 3 bottom
   return (
-    <div className="rounded-lg overflow-hidden space-y-1">
+    <div className="overflow-hidden space-y-1">
       {/* Top row: 2 items */}
       <div className="grid grid-cols-2 gap-1">
         {displayItems.slice(0, 2).map((item, i) => (

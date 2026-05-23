@@ -14,7 +14,7 @@ export function OpportunityPostedCard({ item }: OpportunityPostedCardProps) {
   const timeAgo = getTimeAgo(item.created_at, true)
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 border-t-4 border-t-orange-500 overflow-hidden shadow-sm">
+    <div className="bg-white border-t-4 border-t-orange-500">
       <div className="p-5">
         {/* Header */}
         <div className="flex items-center gap-2 mb-4">
