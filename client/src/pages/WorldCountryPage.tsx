@@ -77,6 +77,12 @@ export default function WorldCountryPage() {
   const [clubsLoading, setClubsLoading] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
+  // Real country that exists in the canonical `countries` table but has
+  // no row in the `world_countries_with_directory` view yet (the directory
+  // is curated — only ~9 countries today). Render a friendly empty state
+  // instead of the generic error page so shared social links to
+  // /world/kenya (and similar) don't look broken.
+  const [notInDirectory, setNotInDirectory] = useState<{ code: string; name: string } | null>(null)
   const [retryCount, setRetryCount] = useState(0)
   const [searchParams] = useSearchParams()
   const highlightClubId = searchParams.get('club')
@@ -125,19 +131,25 @@ export default function WorldCountryPage() {
     const fetchCountryData = async () => {
       try {
         setError(false)
+        setNotInDirectory(null)
         setLoading(true)
 
-        // Resolve the slug in two passes so natural URLs (/world/argentina,
-        // /world/kenya) still work even though canonical URLs are ISO-2
-        // (/world/ar, /world/ke). Production QA report flagged shared social
-        // links using the country name returning a hard error.
+        // Resolve the slug in three passes so natural URLs (/world/argentina,
+        // /world/kenya, /world/united-kingdom) all do something sensible —
+        // even though canonical URLs are ISO-2 (/world/ar, /world/ke).
         //
-        // Pass 1: treat the slug as an ISO-2 code (uppercase). This is the
-        // hot path — every link the app generates itself uses ISO-2.
-        // Pass 2: if the ISO lookup returned no row, fall back to a name
-        // lookup (ilike, exact-name-no-diacritics). If found, redirect to
-        // the canonical ISO-2 URL via { replace: true } so back-button
-        // returns to the previous page (not the broken-name URL).
+        // Pass 1: treat the slug as an ISO-2 code AGAINST THE DIRECTORY view.
+        //   This is the hot path — every link the app generates uses ISO-2,
+        //   and the directory is the source of provinces/leagues/clubs.
+        // Pass 2: if ISO-2 in directory fails, try resolving the slug as a
+        //   country NAME against the broader `countries` table. If found,
+        //   redirect to the canonical ISO-2 URL (re-runs pass 1, which will
+        //   succeed for curated countries and fall to pass 3 for the rest).
+        // Pass 3: if the slug is a valid ISO-2 (or pass 2 just redirected to
+        //   one) but the directory has no row, the country is real but
+        //   uncurated. Render a friendly "not in our directory yet" state
+        //   instead of throwing — that's what the CASI QA report flagged
+        //   for /world/kenya and /world/united-kingdom (GB).
         const slug = countrySlug.trim()
         const { data, error: fetchErr } = await supabase
           .from('world_countries_with_directory')
@@ -145,26 +157,44 @@ export default function WorldCountryPage() {
           .eq('country_code', slug.toUpperCase())
           .maybeSingle()
 
-        // Pass 2 — name fallback. Match the country_name case-insensitively;
-        // accept both space-separated ("united kingdom") and exact forms.
+        // Pass 2 — name lookup in the canonical countries table (not the
+        // curated directory view). Handles /world/argentina → /world/ar
+        // and also /world/kenya → /world/ke (then pass 3 below renders the
+        // empty state). Skip on 1-2 char slugs which can't be names.
         if (!fetchErr && !data && slug.length > 2) {
           const friendly = slug.replace(/-/g, ' ')
-          const { data: nameMatch, error: nameErr } = await supabase
-            .from('world_countries_with_directory')
-            .select('*')
-            .ilike('country_name', friendly)
+          const { data: nameMatch } = await supabase
+            .from('countries')
+            .select('code, name')
+            .ilike('name', friendly)
             .maybeSingle()
-          if (!nameErr && nameMatch?.country_code) {
+          if (nameMatch?.code) {
             // Canonical URL is ISO-2 lowercase. Replace so the broken-name
             // URL doesn't sit in history.
-            navigate(`/world/${nameMatch.country_code.toLowerCase()}${window.location.search}`, { replace: true })
+            navigate(`/world/${nameMatch.code.toLowerCase()}${window.location.search}`, { replace: true })
             return
           }
         }
 
-        // Surface the original error if both passes failed.
+        // Pass 3 — slug is a real ISO-2 (or now matches one after a
+        // pass-2 redirect) but the directory hasn't curated it yet. Show
+        // the friendly empty state.
+        if (!fetchErr && !data) {
+          const { data: canonical } = await supabase
+            .from('countries')
+            .select('code, name')
+            .eq('code', slug.toUpperCase())
+            .maybeSingle()
+          if (canonical?.code) {
+            setNotInDirectory({ code: canonical.code, name: canonical.name })
+            return
+          }
+        }
+
+        // Truly unknown slug — surface the error (slug included for
+        // debugging in console / breadcrumbs).
         if (!data) {
-          throw fetchErr ?? new Error('country_not_found')
+          throw fetchErr ?? new Error(`country_not_found: ${slug}`)
         }
 
         const cid = data.country_id ?? 0
@@ -358,6 +388,40 @@ export default function WorldCountryPage() {
                 Retry
               </button>
             </div>
+          </div>
+        </main>
+      </div>
+    )
+  }
+
+  // Real country, but no directory rows yet (Kenya, UK, etc. as of today).
+  // Friendly empty state — shared social links land here instead of the
+  // generic error page. Surfaces other countries you CAN explore.
+  if (notInDirectory) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <main className="mx-auto max-w-7xl px-4 pt-24 pb-12 md:px-6">
+          <div className="text-center py-12 max-w-md mx-auto">
+            <img
+              src={`https://flagcdn.com/w160/${notInDirectory.code.toLowerCase()}.png`}
+              alt=""
+              className="mx-auto mb-4 rounded shadow-sm w-16 h-auto"
+              loading="lazy"
+            />
+            <h1 className="text-lg font-semibold text-gray-900 mb-1">
+              {notInDirectory.name} isn't in our directory yet
+            </h1>
+            <p className="text-sm text-gray-500 mb-5">
+              We're still curating club directories country by country. Browse the ones we do have so far:
+            </p>
+            <Link
+              to="/world"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to World
+            </Link>
           </div>
         </main>
       </div>
