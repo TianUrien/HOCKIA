@@ -127,6 +127,777 @@ function sumNullable(a: number | null, b: number | null): number | null {
   return (a ?? 0) + (b ?? 0)
 }
 
+/** Result-count limits for Hockia AI search (Phase 1a). */
+const DEFAULT_RESULT_LIMIT = 5
+const MAX_RESULT_LIMIT = 25
+
+/** English number words Hockia AI understands as result counts. */
+const NUMBER_WORDS: Record<string, number> = {
+  one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8,
+  nine: 9, ten: 10, eleven: 11, twelve: 12, thirteen: 13, fourteen: 14,
+  fifteen: 15, sixteen: 16, seventeen: 17, eighteen: 18, nineteen: 19,
+  twenty: 20, thirty: 30, forty: 40, fifty: 50,
+}
+const NUMBER_WORD_KEYS = Object.keys(NUMBER_WORDS).join('|')
+// A count token is a 1–3 digit number OR an English number word.
+const NUMBER_TOKEN = `\\d{1,3}|${NUMBER_WORD_KEYS}`
+// Up to 3 filler words may sit between the count and the result noun
+// ("2 [great young] players") — but never a number word or "and", which
+// mark the *next* count in a compound query and must not be swallowed.
+const COUNT_FILLER = `(?:(?!(?:${NUMBER_WORD_KEYS}|and)\\b)[a-z'’-]+\\s+){0,3}`
+
+/** Parse a count token (digits or a number word) → positive integer | null. */
+function parseCountToken(token: string): number | null {
+  const t = token.toLowerCase()
+  if (/^\d+$/.test(t)) {
+    const n = parseInt(t, 10)
+    return Number.isFinite(n) && n > 0 ? n : null
+  }
+  return NUMBER_WORDS[t] ?? null
+}
+
+/** Hockey position nouns Hockia AI counts by ("10 defenders") — a
+ *  defender is a player, but the user names them by position. Singular
+ *  and plural both accepted. */
+const POSITION_NOUNS = 'goalkeepers?|defenders?|midfielders?|forwards?|strikers?|attackers?'
+
+/**
+ * Try to extract an explicit result count from the raw query.
+ *
+ * Returns the parsed number (clamped to MAX_RESULT_LIMIT) when the user
+ * named one — digits or number words, sitting next to a recognised role
+ * *or* position noun ("show me 10 defenders", "find five clubs", "top 3
+ * coaches"). Returns null when no count was given so the caller can apply
+ * its own default (general searches default to 5; the world-club path
+ * keeps a larger directory window).
+ *
+ * A number immediately followed by an age word is ignored — so "25 year
+ * old players", "U25 defenders" and "2+ references" never read as a count.
+ */
+function tryExtractCount(rawQuery: string): number | null {
+  const noun = `players?|coaches?|clubs?|brands?|umpires?|profiles?|results?|people|users?|options?|matches|${POSITION_NOUNS}`
+  const m =
+    rawQuery.match(
+      new RegExp(`\\b(${NUMBER_TOKEN})\\s+(?!years?\\b|yo\\b|yr\\b)${COUNT_FILLER}(?:${noun})\\b`, 'i'),
+    ) ||
+    rawQuery.match(new RegExp(`\\b(?:top|best|first)\\s+(${NUMBER_TOKEN})\\b`, 'i'))
+  if (m) {
+    const n = parseCountToken(m[1])
+    if (n != null && n > 0) return Math.min(n, MAX_RESULT_LIMIT)
+  }
+  return null
+}
+
+/** Resolve how many results a search should return — explicit count when
+ *  named, otherwise DEFAULT_RESULT_LIMIT ("the best 5 first"). The world-
+ *  club path uses tryExtractCount directly with its own default. */
+function resolveResultLimit(rawQuery: string): number {
+  return tryExtractCount(rawQuery) ?? DEFAULT_RESULT_LIMIT
+}
+
+/** Result-noun → canonical role. Drives compound multi-role detection. */
+const ROLE_NOUNS: Record<string, string> = {
+  player: 'player', players: 'player',
+  coach: 'coach', coaches: 'coach',
+  club: 'club', clubs: 'club',
+  brand: 'brand', brands: 'brand',
+  umpire: 'umpire', umpires: 'umpire',
+}
+
+/** Position noun → canonical lowercase position (matches the values
+ *  stored in profiles.position / secondary_position). Positions always
+ *  belong to the 'player' role, so a compound entry with a position
+ *  becomes role='player' + a position filter on that sub-search. */
+const POSITION_TO_ROLE: Record<string, string> = {
+  goalkeeper: 'goalkeeper', goalkeepers: 'goalkeeper',
+  defender: 'defender', defenders: 'defender',
+  midfielder: 'midfielder', midfielders: 'midfielder',
+  forward: 'forward', forwards: 'forward',
+  striker: 'striker', strikers: 'striker',
+  attacker: 'attacker', attackers: 'attacker',
+}
+
+/** Canonical role → [singular, plural] label. */
+const ROLE_LABELS: Record<string, [string, string]> = {
+  player: ['player', 'players'],
+  coach: ['coach', 'coaches'],
+  club: ['club', 'clubs'],
+  brand: ['brand', 'brands'],
+  umpire: ['umpire', 'umpires'],
+}
+
+function roleLabel(role: string, n: number): string {
+  const pair = ROLE_LABELS[role]
+  return pair ? pair[n === 1 ? 0 : 1] : role
+}
+
+/** Join ["2 players","1 coach"] → "2 players and 1 coach". */
+function joinList(parts: string[]): string {
+  if (parts.length <= 1) return parts[0] ?? ''
+  return `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`
+}
+
+/**
+ * Phase 1c (+ audit round 3) — extract every explicit "<count> <noun>" pair
+ * from a query, in order, de-duped by (role, position):
+ *   "Find me 2 players and 1 coach"
+ *     → [{role:'player',count:2},{role:'coach',count:1}]
+ *   "Find me 1 goalkeeper and 1 midfielder"
+ *     → [{role:'player',position:'goalkeeper',count:1},
+ *        {role:'player',position:'midfielder',count:1}]
+ * Two or more pairs makes it a compound multi-role/position search. Age
+ * phrases ("25 year old players") are excluded the same way
+ * resolveResultLimit does.
+ */
+function extractRoleCounts(rawQuery: string): { role: string; position?: string; count: number }[] {
+  const nouns = [...Object.keys(ROLE_NOUNS), ...Object.keys(POSITION_TO_ROLE)].join('|')
+  const re = new RegExp(
+    `\\b(${NUMBER_TOKEN})\\s+(?!years?\\b|yo\\b|yr\\b)${COUNT_FILLER}(${nouns})\\b`,
+    'gi',
+  )
+  const out: { role: string; position?: string; count: number }[] = []
+  const seen = new Set<string>()
+  let m: RegExpExecArray | null
+  while ((m = re.exec(rawQuery)) !== null) {
+    const count = parseCountToken(m[1])
+    const noun = m[2].toLowerCase()
+    const position = POSITION_TO_ROLE[noun]
+    const role = position ? 'player' : ROLE_NOUNS[noun]
+    if (!role || count == null || count <= 0) continue
+    const key = position ? `${role}:${position}` : role
+    if (seen.has(key)) continue
+    seen.add(key)
+    const entry: { role: string; position?: string; count: number } = {
+      role,
+      count: Math.min(count, MAX_RESULT_LIMIT),
+    }
+    if (position) entry.position = position
+    out.push(entry)
+  }
+  return out
+}
+
+/**
+ * Compose the response message for a compound multi-role search from the
+ * rows actually returned — "Here are 2 players and 1 coach." A requested
+ * role that yielded nothing is called out honestly rather than silently
+ * dropped.
+ */
+function buildCompoundMessage(
+  roleCounts: { role: string; position?: string; count: number }[],
+  rows: { role?: string; position?: string; secondary_position?: string }[],
+): string {
+  // Position-aware label: a position entry counts in its own units
+  // ("1 goalkeeper and 1 midfielder"), not just by role ("2 players").
+  const entryLabel = (rc: { role: string; position?: string }, n: number) =>
+    rc.position ? (n === 1 ? rc.position : `${rc.position}s`) : roleLabel(rc.role, n)
+  const present: string[] = []
+  const absent: string[] = []
+  for (const rc of roleCounts) {
+    const matches = rc.position
+      ? rows.filter(r =>
+          r.role === rc.role &&
+          (r.position?.toLowerCase() === rc.position ||
+            r.secondary_position?.toLowerCase() === rc.position))
+      : rows.filter(r => r.role === rc.role)
+    const got = matches.length
+    if (got > 0) present.push(`${got} ${entryLabel(rc, got)}`)
+    else absent.push(entryLabel(rc, 2))
+  }
+  let msg = ''
+  if (present.length > 0) {
+    const verb = present.length === 1 && present[0].startsWith('1 ') ? 'is' : 'are'
+    msg = `Here ${verb} ${joinList(present)}, ranked by profile completeness.`
+  }
+  if (absent.length > 0) {
+    msg += `${msg ? ' ' : ''}I couldn't find any ${joinList(absent)} matching that.`
+  }
+  return msg || 'No matching profiles found.'
+}
+
+/** A Journey (career_history) row, narrowed to the fields highlights need. */
+interface CareerRow {
+  entry_type?: string | null
+  club_name?: string | null
+  location_country?: string | null
+  highlights?: string[] | null
+  start_date?: string | null
+  end_date?: string | null
+}
+
+/**
+ * Phase 3 — derive up to 4 concrete, recruiter-facing "Profile highlights"
+ * for one profile, purely rule-based (no LLM). Drawn from the player's
+ * Journey entries plus a couple of profile signals, in priority order:
+ *
+ *   1. national-team selection   — the strongest pedigree signal
+ *   2. club experience           — the two most-recent clubs
+ *   3. verified references       — accepted_reference_count
+ *   4. stated achievements       — the per-entry `highlights` the user wrote
+ *   5. Journey depth             — entry count, when substantial
+ *   6. open to new opportunities — soft availability signal
+ *
+ * Never emits debug-style reasons ("name matches query") — only concrete
+ * facts a recruiter can act on.
+ */
+function buildProfileHighlights(
+  career: CareerRow[],
+  result: { accepted_reference_count?: number; open_to_opportunities?: boolean },
+): string[] {
+  // Most-recent first: current roles (no end_date) lead, then by start_date.
+  const sorted = [...career].sort((a, b) => {
+    const aCurrent = !a.end_date
+    const bCurrent = !b.end_date
+    if (aCurrent !== bCurrent) return aCurrent ? -1 : 1
+    return (b.start_date ?? '').localeCompare(a.start_date ?? '')
+  })
+
+  const out: string[] = []
+  const seen = new Set<string>()
+  const add = (raw: string | null | undefined) => {
+    const t = (raw ?? '').trim()
+    if (!t || out.length >= 4) return
+    const key = t.toLowerCase()
+    if (seen.has(key)) return
+    seen.add(key)
+    out.push(t.length > 70 ? `${t.slice(0, 67).trimEnd()}…` : t)
+  }
+
+  // 1. National-team selection.
+  const natTeam = sorted.find(e => e.entry_type === 'national_team' && e.club_name)
+  if (natTeam) add(`Selected for ${natTeam.club_name}`)
+
+  // 2. Club experience — up to two most-recent clubs.
+  let clubs = 0
+  for (const e of sorted) {
+    if (clubs >= 2) break
+    if (e.entry_type === 'club' && e.club_name) {
+      add(e.location_country
+        ? `Played for ${e.club_name} in ${e.location_country}`
+        : `Played for ${e.club_name}`)
+      clubs++
+    }
+  }
+
+  // 3. Verified references.
+  const refs = result.accepted_reference_count ?? 0
+  if (refs > 0) add(`${refs} accepted reference${refs === 1 ? '' : 's'}`)
+
+  // 4. Stated achievements from Journey entries.
+  for (const e of sorted) {
+    for (const h of (e.highlights ?? [])) add(h)
+  }
+
+  // 5. Journey depth.
+  if (career.length >= 3) add(`${career.length} Journey entries`)
+
+  // 6. Open to new opportunities.
+  if (result.open_to_opportunities) add('Open to new opportunities')
+
+  return out.slice(0, 4)
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Phase 5 — Opportunity-owner recruitment recommendations
+// ─────────────────────────────────────────────────────────────────────────
+//
+// When a club or coach asks Hockia AI "who is my strongest match", "best
+// applicants for my opportunity", "who should I review first" — this
+// handler answers from their own applicant pipeline. Fit first, profile
+// strength second, completeness only as a tiebreaker. Respects the
+// owner's triage labels (rejected is never recommended). Bullets are
+// rule-based — every claim is traceable to data on the applicant's
+// profile, never invented.
+
+const EU_PASSPORT_CODES_OWN = [
+  'AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR',
+  'DE','GR','HU','IE','IT','LV','LT','LU','MT','NL',
+  'PL','PT','RO','SK','SI','ES','SE',
+] as const
+
+// DB enum → user-facing label shown on the Applicants screen.
+//
+// IMPORTANT: `shortlisted` here means "the owner clicked Good fit" on the
+// Applicants screen — it is NOT the ATS-conventional "moved to next round"
+// semantic. Future engineers reading the enum: treat shortlisted = Good
+// fit owner-action throughout this feature. Owners must never see the
+// raw enum string anywhere in the UI.
+const TRIAGE_LABEL: Record<string, string> = {
+  pending: 'Unsorted',
+  shortlisted: 'Good fit',
+  maybe: 'Maybe',
+  rejected: 'Not a fit',
+}
+
+/** Format an opportunity_position enum value for display: head_coach → "Head Coach". */
+function formatPosition(pos: string | null | undefined): string {
+  if (!pos) return ''
+  return pos.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+}
+
+interface OwnerApplicant {
+  applicant_id: string
+  full_name: string | null
+  role: string
+  avatar_url: string | null
+  position: string | null
+  secondary_position: string | null
+  open_to_play: boolean
+  open_to_coach: boolean
+  accepted_reference_count: number
+  career_entry_count: number
+  profile_completeness_pct: number | null
+  highlight_video_url: string | null
+  current_club: string | null
+  nationality_country_id: number | null
+  nationality2_country_id: number | null
+  triage_status: 'pending' | 'shortlisted' | 'maybe' | 'rejected'
+  applied_at: string
+}
+
+interface OwnerOpportunity {
+  opportunity_id: string
+  title: string
+  position: string
+  opportunity_type: 'player' | 'coach'
+  gender: string | null
+  eu_passport_required: boolean
+  applicants: OwnerApplicant[]
+  triage_breakdown: { pending: number; shortlisted: number; maybe: number; rejected: number }
+}
+
+interface CareerHistRow {
+  entry_type?: string | null
+  club_name?: string | null
+  location_country?: string | null
+}
+
+/** Fit + strength + completeness — composite is scaled so the higher
+ *  signal always dominates the lower (completeness can never flip a
+ *  fit/strength ordering, only break a tie). */
+function scoreOwnerApplicant(
+  a: OwnerApplicant,
+  opp: OwnerOpportunity,
+  euCountryIds: Set<number>,
+  career: CareerHistRow[],
+): { fit: number; strength: number; composite: number } {
+  let fit = 0
+  if (a.position === opp.position || a.secondary_position === opp.position) fit += 3
+  if (opp.opportunity_type === 'player' && a.open_to_play) fit += 2
+  else if (opp.opportunity_type === 'coach' && a.open_to_coach) fit += 2
+  const hasEu = (a.nationality_country_id != null && euCountryIds.has(a.nationality_country_id))
+    || (a.nationality2_country_id != null && euCountryIds.has(a.nationality2_country_id))
+  if (opp.eu_passport_required && hasEu) fit += 3
+
+  let strength = 0
+  strength += Math.min(a.accepted_reference_count * 2, 6)
+  if (career.some(c => c.entry_type === 'national_team')) strength += 3
+  if (a.current_club) strength += 1
+  if (a.career_entry_count >= 3) strength += 1
+  if (a.highlight_video_url) strength += 1
+
+  const completeness = a.profile_completeness_pct ?? 0
+  // fit dominates (× 1000), then strength (× 10), then completeness — so
+  // completeness can break a tie but never flip a fit/strength ordering.
+  const composite = fit * 1000 + strength * 10 + completeness / 100
+  return { fit, strength, composite }
+}
+
+function fitLevelForScore(s: { fit: number; strength: number }): 'strong_match' | 'possible_match' | 'needs_more_info' {
+  if (s.fit >= 5 && s.strength >= 3) return 'strong_match'
+  if (s.fit >= 3) return 'possible_match'
+  return 'needs_more_info'
+}
+
+/** Up to 4 bullets per applicant, priority-ordered. Every line is anchored
+ *  to a specific data point so the owner can click through and verify. */
+function buildRecommendationBullets(
+  a: OwnerApplicant,
+  opp: OwnerOpportunity,
+  euCountryIds: Set<number>,
+  career: CareerHistRow[],
+): string[] {
+  const out: string[] = []
+  const push = (s: string) => { if (out.length < 4) out.push(s) }
+
+  // 1. Triage acknowledgment first when not Unsorted — the owner needs to
+  //    see we know what they've already labelled.
+  if (a.triage_status === 'shortlisted') push('You marked this candidate Good fit')
+  else if (a.triage_status === 'maybe') push('Worth a second look — you marked this Maybe')
+
+  // 2. Position match against the opening.
+  if (a.position === opp.position) {
+    push(`Plays ${formatPosition(a.position)} — matches your ${formatPosition(opp.position)} opening`)
+  } else if (a.secondary_position === opp.position) {
+    push(`Plays ${formatPosition(a.position)}, can also cover ${formatPosition(opp.position)}`)
+  }
+
+  // 3. EU passport when the opening requires it.
+  if (opp.eu_passport_required) {
+    const hasEu = (a.nationality_country_id != null && euCountryIds.has(a.nationality_country_id))
+      || (a.nationality2_country_id != null && euCountryIds.has(a.nationality2_country_id))
+    if (hasEu) push('EU passport confirmed — your opening requires one')
+  }
+
+  // 4. Availability.
+  if (opp.opportunity_type === 'player' && a.open_to_play) push('Open to play')
+  else if (opp.opportunity_type === 'coach' && a.open_to_coach) push('Open to coach')
+
+  // 5. National-team selection — strongest pedigree signal.
+  const natTeam = career.find(c => c.entry_type === 'national_team' && c.club_name)
+  if (natTeam?.club_name) push(`Selected for ${natTeam.club_name}`)
+
+  // 6. Concrete club experience.
+  const clubEntry = career.find(c => c.entry_type === 'club' && c.club_name)
+  if (clubEntry?.club_name) {
+    push(clubEntry.location_country
+      ? `Played for ${clubEntry.club_name} in ${clubEntry.location_country}`
+      : `Played for ${clubEntry.club_name}`)
+  }
+
+  // 7. Verified references.
+  if (a.accepted_reference_count > 0) {
+    const n = a.accepted_reference_count
+    push(`${n} accepted reference${n === 1 ? '' : 's'}`)
+  }
+
+  // 8. Current club.
+  if (a.current_club) push(`Current club: ${a.current_club}`)
+
+  // 9. Highlight video.
+  if (a.highlight_video_url) push('Has a highlight video on profile')
+
+  return out.slice(0, 4)
+}
+
+/**
+ * One neutral caveat bullet — calls out the most notable signal MISSING on
+ * a recommended applicant, so the owner sees what the AI weighed against
+ * and what it didn't. Only fires on strong/good matches (a "needs more
+ * info" pill already implies gaps). At most one caveat per card.
+ */
+function buildRecommendationCaveats(
+  a: OwnerApplicant,
+  fitLevel: 'strong_match' | 'possible_match' | 'needs_more_info',
+  career: CareerHistRow[],
+): string[] {
+  if (fitLevel === 'needs_more_info') return []
+  if (a.accepted_reference_count === 0) {
+    return ['No accepted references on file yet']
+  }
+  if (!a.highlight_video_url) {
+    return ['No highlight video on their profile']
+  }
+  if (!career.some(c => c.entry_type === 'national_team')) {
+    return ['No national-team experience listed']
+  }
+  if (!a.current_club) {
+    return ['No current club listed']
+  }
+  const pct = a.profile_completeness_pct ?? 100
+  if (pct < 40) {
+    return [`Profile is ${pct}% complete — still thin overall`]
+  }
+  return []
+}
+
+/** Honest orientation sentence — always includes the full triage breakdown
+ *  (Not a fit included even though the ranker excludes them) so the owner
+ *  sees what the AI looked at and what it ignored. */
+function buildRecruitmentOrientation(opp: OwnerOpportunity): string {
+  const b = opp.triage_breakdown
+  const total = b.pending + b.shortlisted + b.maybe + b.rejected
+  const pool = b.pending + b.shortlisted + b.maybe
+  const parts: string[] = []
+  if (b.shortlisted > 0) parts.push(`${b.shortlisted} Good fit`)
+  if (b.maybe > 0) parts.push(`${b.maybe} Maybe`)
+  if (b.pending > 0) parts.push(`${b.pending} Unsorted`)
+  if (b.rejected > 0) parts.push(`${b.rejected} Not a fit`)
+  const breakdown = parts.join(', ')
+  const headline = `For your ${formatPosition(opp.position)} opening, ${total} ${total === 1 ? 'person' : 'people'} applied — ${breakdown}.`
+  if (pool === 0) {
+    if (b.rejected > 0) {
+      return `${headline} All have been marked Not a fit; I won't override that — want me to look outside your pipeline?`
+    }
+    return headline
+  }
+  return `${headline} I'm recommending from the ${pool} you haven't ruled out.`
+}
+
+/** Per-role navigation target for the "Review applicant" CTA. */
+function applicantPublicProfilePath(role: string, id: string): string {
+  if (role === 'coach') return `/coaches/id/${id}?ref=ai-recommendation`
+  if (role === 'umpire') return `/umpires/id/${id}?ref=ai-recommendation`
+  if (role === 'club') return `/clubs/id/${id}?ref=ai-recommendation`
+  if (role === 'brand') return `/marketplace`
+  return `/players/id/${id}?ref=ai-recommendation`
+}
+
+/**
+ * Phase 5 — recommends top applicants from the owner's own pipeline.
+ * Fires only for clubs and coaches that own at least one open opportunity.
+ * Edge cases (no opps, no applicants, all rejected, thin data) each get
+ * their own honest message rather than a one-size-fits-all fallback.
+ */
+async function handleOwnApplicantsIntent(params: {
+  // deno-lint-ignore no-explicit-any
+  adminClient: any
+  userId: string
+  query: string
+  userContext: UserContext | undefined
+  llmProvider: string
+  startTime: number
+  correlationId: string
+  headers: Record<string, string>
+}): Promise<Response> {
+  const { adminClient, userId, query, userContext, llmProvider, startTime, correlationId, headers } = params
+
+  const respond = (envelope: Record<string, unknown>) => {
+    fireAndForget(logDiscoveryEvent(adminClient, {
+      user_id: userId,
+      role: userContext?.role ?? null,
+      query_text: query,
+      intent: 'search',
+      parsed_filters: { _meta: { kind: 'recommendation', handler: 'own_applicants' } } as any,
+      result_count: ((envelope.recommendations as unknown[]) ?? []).length,
+      has_qualitative: false,
+      llm_provider: llmProvider,
+      response_time_ms: Date.now() - startTime,
+      error_message: null,
+      prompt_tokens: 0, completion_tokens: 0, cached_tokens: 0,
+      prompt_version: PROMPT_VERSION,
+      fallback_used: false, retry_count: 0,
+    }))
+    return new Response(JSON.stringify({
+      success: true,
+      data: [],
+      total: 0,
+      has_more: false,
+      parsed_filters: null,
+      summary: null,
+      applied: null,
+      ...envelope,
+    }), { status: 200, headers: { ...headers, 'Content-Type': 'application/json' } })
+  }
+
+  try {
+    // 1. Owner's open opportunities.
+    const { data: oppRows } = await adminClient
+      .from('opportunities')
+      .select('id, title, position, opportunity_type, gender, eu_passport_required')
+      .eq('club_id', userId)
+      .eq('status', 'open')
+      .order('created_at', { ascending: false })
+
+    if (!oppRows || oppRows.length === 0) {
+      return respond({
+        kind: 'recommendation' as ResponseKind,
+        ai_message: "You don't have any open opportunities yet. Post one and applicants will start coming in.",
+        recommendations: [],
+        suggested_actions: [
+          { label: 'Post an opportunity', intent: { type: 'free_text', query: 'how do I post an opportunity' } },
+        ] as SuggestedAction[],
+      })
+    }
+
+    const oppIds = oppRows.map((o: any) => o.id)
+
+    // 2. Applications + applicant profile data (one batched join).
+    const { data: appRows } = await adminClient
+      .from('opportunity_applications')
+      .select(`
+        id, opportunity_id, applicant_id, status, applied_at,
+        applicant:profiles!opportunity_applications_applicant_id_fkey(
+          id, full_name, role, avatar_url, position, secondary_position,
+          open_to_play, open_to_coach, accepted_reference_count,
+          career_entry_count, profile_completeness_pct, highlight_video_url,
+          current_club, nationality_country_id, nationality2_country_id
+        )
+      `)
+      .in('opportunity_id', oppIds)
+
+    // 3. EU country IDs for the EU-passport bullet/score.
+    const { data: euCountries } = await adminClient
+      .from('countries').select('id').in('code', EU_PASSPORT_CODES_OWN)
+    const euCountryIds = new Set<number>((euCountries ?? []).map((c: any) => c.id))
+
+    // 4. career_history for every applicant — bullets need it.
+    const applicantIds = Array.from(new Set(
+      ((appRows ?? []) as any[]).map(r => r.applicant_id).filter(Boolean)
+    ))
+    const careerByUser = new Map<string, CareerHistRow[]>()
+    if (applicantIds.length > 0) {
+      const { data: careerRows } = await adminClient
+        .from('career_history')
+        .select('user_id, entry_type, club_name, location_country')
+        .in('user_id', applicantIds)
+      for (const row of (careerRows ?? []) as Array<CareerHistRow & { user_id: string }>) {
+        const arr = careerByUser.get(row.user_id) ?? []
+        arr.push(row)
+        careerByUser.set(row.user_id, arr)
+      }
+    }
+
+    // 5. Group applications by opportunity with triage breakdown.
+    const oppMap = new Map<string, OwnerOpportunity>()
+    for (const o of oppRows as any[]) {
+      oppMap.set(o.id, {
+        opportunity_id: o.id,
+        title: o.title ?? formatPosition(o.position),
+        position: o.position,
+        opportunity_type: o.opportunity_type,
+        gender: o.gender ?? null,
+        eu_passport_required: !!o.eu_passport_required,
+        applicants: [],
+        triage_breakdown: { pending: 0, shortlisted: 0, maybe: 0, rejected: 0 },
+      })
+    }
+    for (const a of (appRows ?? []) as any[]) {
+      const opp = oppMap.get(a.opportunity_id)
+      if (!opp) continue
+      const ap = a.applicant
+      if (!ap?.id) continue
+      const status = (a.status ?? 'pending') as 'pending' | 'shortlisted' | 'maybe' | 'rejected'
+      opp.triage_breakdown[status] = (opp.triage_breakdown[status] ?? 0) + 1
+      opp.applicants.push({
+        applicant_id: ap.id,
+        full_name: ap.full_name ?? null,
+        role: ap.role,
+        avatar_url: ap.avatar_url ?? null,
+        position: ap.position ?? null,
+        secondary_position: ap.secondary_position ?? null,
+        open_to_play: !!ap.open_to_play,
+        open_to_coach: !!ap.open_to_coach,
+        accepted_reference_count: ap.accepted_reference_count ?? 0,
+        career_entry_count: ap.career_entry_count ?? 0,
+        profile_completeness_pct: ap.profile_completeness_pct ?? null,
+        highlight_video_url: ap.highlight_video_url ?? null,
+        current_club: ap.current_club ?? null,
+        nationality_country_id: ap.nationality_country_id ?? null,
+        nationality2_country_id: ap.nationality2_country_id ?? null,
+        triage_status: status,
+        applied_at: a.applied_at,
+      })
+    }
+
+    const allOpps = Array.from(oppMap.values())
+    const totalApplicantsAcrossAll = allOpps.reduce((s, o) => s + o.applicants.length, 0)
+
+    // Edge: no one has applied to anything yet.
+    if (totalApplicantsAcrossAll === 0) {
+      const first = allOpps[0]
+      const noun = formatPosition(first.position).toLowerCase()
+      return respond({
+        kind: 'recommendation' as ResponseKind,
+        ai_message: `No one has applied to your ${formatPosition(first.position)} opening yet. Want me to suggest strong ${noun}s you could invite?`,
+        recommendations: [],
+        suggested_actions: [
+          { label: `Find ${noun}s to invite`, intent: { type: 'free_text', query: `find me ${noun}s` } },
+        ] as SuggestedAction[],
+      })
+    }
+
+    // 6. Per-opening ranking. Pool = pending + shortlisted + maybe.
+    const oppRanked = allOpps.map(opp => {
+      const pool = opp.applicants.filter(a => a.triage_status !== 'rejected')
+      const scored = pool.map(a => {
+        const career = careerByUser.get(a.applicant_id) ?? []
+        const score = scoreOwnerApplicant(a, opp, euCountryIds, career)
+        const bullets = buildRecommendationBullets(a, opp, euCountryIds, career)
+        return { applicant: a, score, bullets, fit_level: fitLevelForScore(score) }
+      }).sort((x, y) => y.score.composite - x.score.composite)
+      return { opp, scored, bestScore: scored[0]?.score.composite ?? 0, pool }
+    })
+
+    // Sort openings by BEST APPLICANT QUALITY first (not pending volume — an
+    // opening with 20 weak applicants must not outrank one with 3 strong
+    // ones). Tiebreaks: pending volume, then longest-waiting pending date.
+    oppRanked.sort((a, b) => {
+      if (b.bestScore !== a.bestScore) return b.bestScore - a.bestScore
+      const aPend = a.opp.triage_breakdown.pending
+      const bPend = b.opp.triage_breakdown.pending
+      if (bPend !== aPend) return bPend - aPend
+      const aOld = a.opp.applicants.filter(x => x.triage_status === 'pending')
+        .reduce((min, x) => Math.min(min, new Date(x.applied_at).getTime()), Infinity)
+      const bOld = b.opp.applicants.filter(x => x.triage_status === 'pending')
+        .reduce((min, x) => Math.min(min, new Date(x.applied_at).getTime()), Infinity)
+      return aOld - bOld
+    })
+
+    const primary = oppRanked[0]
+
+    // Edge: primary opening's pool is empty (everyone marked Not a fit).
+    // The orientation already explains the situation; no cards.
+    if (primary.pool.length === 0) {
+      const noun = formatPosition(primary.opp.position).toLowerCase()
+      return respond({
+        kind: 'recommendation' as ResponseKind,
+        ai_message: buildRecruitmentOrientation(primary.opp),
+        recommendations: [],
+        suggested_actions: [
+          { label: `Find ${noun}s outside this pipeline`, intent: { type: 'free_text', query: `find ${noun}s` } },
+        ] as SuggestedAction[],
+      })
+    }
+
+    // 7. Up to 2 cards from the primary opening.
+    const recommendations = primary.scored.slice(0, 2).map(s => {
+      const career = careerByUser.get(s.applicant.applicant_id) ?? []
+      return {
+        applicant_id: s.applicant.applicant_id,
+        applicant_name: s.applicant.full_name,
+        applicant_role: s.applicant.role,
+        applicant_avatar_url: s.applicant.avatar_url,
+        opening_id: primary.opp.opportunity_id,
+        opening_title: primary.opp.title,
+        opening_position: primary.opp.position,
+        triage: s.applicant.triage_status,
+        triage_label: TRIAGE_LABEL[s.applicant.triage_status] ?? s.applicant.triage_status,
+        fit_level: s.fit_level,
+        bullets: s.bullets,
+        caveats: buildRecommendationCaveats(s.applicant, s.fit_level, career),
+        navigate_to: applicantPublicProfilePath(s.applicant.role, s.applicant.applicant_id),
+      }
+    })
+
+    // 8. Secondary openings with pending pool, if any.
+    const secondaryOpps = oppRanked
+      .slice(1)
+      .filter(o => o.opp.triage_breakdown.pending > 0)
+    let secondary_note: string | null = null
+    if (secondaryOpps.length === 1) {
+      const o = secondaryOpps[0].opp
+      const n = o.triage_breakdown.pending
+      secondary_note = `You also have ${n} pending ${n === 1 ? 'applicant' : 'applicants'} on your ${formatPosition(o.position)} opening — want me to surface those next?`
+    } else if (secondaryOpps.length > 1) {
+      const totalSec = secondaryOpps.reduce((s, o) => s + o.opp.triage_breakdown.pending, 0)
+      secondary_note = `You also have ${totalSec} pending applicants across ${secondaryOpps.length} other openings — want me to look at them too?`
+    }
+
+    // Honest about thin data on the recommendations.
+    const thinData = primary.scored.slice(0, 2).some(s => (s.applicant.profile_completeness_pct ?? 0) < 30)
+    const lowDataNote = thinData
+      ? ` Some of these profiles are still thin — I've called out what's there, not what's missing.`
+      : ''
+
+    return respond({
+      kind: 'recommendation' as ResponseKind,
+      ai_message: buildRecruitmentOrientation(primary.opp) + lowDataNote,
+      recommendations,
+      secondary_note,
+      suggested_actions: [] as SuggestedAction[],
+    })
+  } catch (err) {
+    captureException(err, { functionName: 'nl-search', correlationId, extra: { phase: 'own_applicants' } })
+    return respond({
+      kind: 'soft_error' as ResponseKind,
+      ai_message: "I had trouble pulling your recruitment data just now. Try again in a moment.",
+      recommendations: [],
+      suggested_actions: [{ label: 'Try again', intent: { type: 'retry' } }] as SuggestedAction[],
+    })
+  }
+}
+
 /** Graceful degradation: the LLM parse failed (timeout, transient error, or
  *  provider quota). Re-use the user's raw query as full-text input to the
  *  existing discover_profiles RPC so the user still gets results. */
@@ -146,8 +917,10 @@ async function runKeywordFallback(params: {
    *  soft-error path uses alternate copy + chip set to avoid showing the
    *  same "I had trouble" message twice. */
   isRepeatSoftError: boolean
+  /** Phase 1b — "Show more" load-more offset; pages past results already shown. */
+  offset: number
 }): Promise<Response> {
-  const { adminClient, rawQuery, userId, userRole, startTime, llmProvider, originalError, parseRetryCount, headers, correlationId, isRepeatSoftError } = params
+  const { adminClient, rawQuery, userId, userRole, startTime, llmProvider, originalError, parseRetryCount, headers, correlationId, isRepeatSoftError, offset } = params
 
   try {
     const discoverableRoles = ['player', 'coach', 'club', 'brand']
@@ -160,8 +933,8 @@ async function runKeywordFallback(params: {
       p_roles: discoverableRoles,
       p_search_text: rawQuery,
       p_sort_by: 'relevance',
-      p_limit: 20,
-      p_offset: 0,
+      p_limit: offset > 0 ? DEFAULT_RESULT_LIMIT : resolveResultLimit(rawQuery),
+      p_offset: offset,
       p_coach_specializations: null,
     })
 
@@ -302,6 +1075,8 @@ Deno.serve(async (req) => {
   let pendingUserId: string | null = null
   let pendingUserRole: string | null = null
   let pendingQuery: string | null = null
+  // Phase 1b — "Show more" offset, carried into the keyword-fallback path.
+  let pendingOffset = 0
   // PR-4: track whether the previous turn was already soft_error so the
   // catch-block fallback can emit alternate copy on a repeated failure.
   let pendingIsRepeatSoftError = false
@@ -374,6 +1149,20 @@ Deno.serve(async (req) => {
     // ── Parse body ──────────────────────────────────────────────────────
     const body = await req.json()
     const query = body?.query?.trim()
+    // Phase 1b — "Show more": a load-more request carries an offset so the
+    // search pages past results already shown. Capped to a sane ceiling.
+    const requestedOffset = Number.isInteger(body?.offset) && body.offset > 0
+      ? Math.min(body.offset, 500)
+      : 0
+    // Phase 4 — IDs of profiles the user has already seen in this chat.
+    // Filtered out post-RPC so a follow-up like "show me different
+    // players" returns genuinely new faces, not a re-shuffle of the
+    // first answer. Capped to keep the request body small.
+    const excludedIds: string[] = Array.isArray(body?.excluded_ids)
+      ? (body.excluded_ids as unknown[])
+          .filter((x): x is string => typeof x === 'string')
+          .slice(0, 50)
+      : []
     const rawHistory = Array.isArray(body?.history) ? body.history : []
     const history: HistoryTurn[] = rawHistory
       .slice(-10)
@@ -440,6 +1229,7 @@ Deno.serve(async (req) => {
     pendingAdminClient = adminClient
     pendingUserId = user.id
     pendingQuery = query
+    pendingOffset = requestedOffset
     pendingIsRepeatSoftError = recoveryContext?.last_kind === 'soft_error'
 
     // ── Phase 1A force-soft-error debug (PR-4, staging-only) ───────────
@@ -1048,6 +1838,28 @@ Deno.serve(async (req) => {
       )
     }
 
+    // ── Phase 5 — opportunity-owner recommendations ────────────────────
+    // Clubs and coaches asking about their own pipeline get a real
+    // recommendation from their applicants, not a generic deflection.
+    // Non-owners (or queries with no actual owned opportunities) fall
+    // through to normal search.
+    if (intent.confidence === 'high' && intent.entity_type === 'own_applicants') {
+      const ownerRole = userContext?.role
+      if (ownerRole === 'club' || ownerRole === 'coach') {
+        return handleOwnApplicantsIntent({
+          adminClient,
+          userId: user.id,
+          query,
+          userContext,
+          llmProvider,
+          startTime,
+          correlationId,
+          headers,
+        })
+      }
+      // else: fall through to normal LLM search.
+    }
+
     // ── Platform help ("how do I use HOCKIA?") ─────────────────────────
     // Feature / how-to questions route here via the platform_help intent.
     // We answer with a short role-aware explanation + one CTA, instead of
@@ -1273,7 +2085,10 @@ Deno.serve(async (req) => {
         `)
         .order('is_claimed', { ascending: false })
         .order('club_name', { ascending: true })
-        .limit(20)
+        // Respect an explicit count ("find me 5 clubs") — fall back to a
+        // larger directory window when none is named, so the UI can still
+        // show 3 + "Show all N".
+        .limit(tryExtractCount(query) ?? 20)
 
       if (wcCountryIds) wcQuery = wcQuery.in('country_id', wcCountryIds)
       if (wcProvinceIds) wcQuery = wcQuery.in('province_id', wcProvinceIds)
@@ -1350,14 +2165,20 @@ Deno.serve(async (req) => {
       let wcNoResultsFollowUp: string | null = null
       let wcNoResultsMeta: LLMCallMeta | null = null
       if (mapped.length > 0) {
-        const noun = mapped.length === 1 ? 'club' : 'clubs'
+        const total = mapped.length
+        const noun = total === 1 ? 'club' : 'clubs'
         const where = locationLabel ? ` in ${locationLabel}` : wcFilters.text_query ? ` matching "${wcFilters.text_query}"` : ''
+        const isAre = (n: number) => (n === 1 ? 'is' : 'are')
+        // The UI shows the top 3 first (claimed clubs lead) with a "Show
+        // all" expander. Naming that turns the response into a curated
+        // recommendation rather than a directory dump the user must sift.
+        const topNote = total > 3 ? ' Here are the top 3 to start with.' : ''
         if (claimedCount > 0 && unclaimedCount > 0) {
-          wcAiMessage = `${mapped.length} ${noun}${where} — ${claimedCount} ${claimedCount === 1 ? 'is' : 'are'} active on HOCKIA (you can message ${claimedCount === 1 ? 'them' : 'them'} directly), and ${unclaimedCount} ${unclaimedCount === 1 ? 'is' : 'are'} in the directory but not yet claimed (you'll need to reach out externally).`
+          wcAiMessage = `I found ${total} ${noun}${where}. ${claimedCount} ${isAre(claimedCount)} active on HOCKIA, so you can message them directly, and ${unclaimedCount} ${isAre(unclaimedCount)} in the directory but not yet claimed, so you may need to reach out externally.${topNote}`
         } else if (claimedCount > 0) {
-          wcAiMessage = `${mapped.length} ${noun}${where} — all active on HOCKIA, you can message ${mapped.length === 1 ? 'them' : 'any of them'} directly.`
+          wcAiMessage = `I found ${total} ${noun}${where} — all active on HOCKIA, so you can message them directly.${topNote}`
         } else {
-          wcAiMessage = `${mapped.length} ${noun}${where} in HOCKIA's directory. None are claimed yet, so you'll need to reach out externally — but they're real clubs to explore.`
+          wcAiMessage = `I found ${total} ${noun}${where} in HOCKIA's directory. None are claimed yet, so you'll need to reach out externally — but they're real clubs worth exploring.${topNote}`
         }
         // Phase 4 audit P1-1 — DO NOT append llmResult.message here. The LLM
         // generates that field at parse-time before knowing the count, so it
@@ -1605,8 +2426,15 @@ Deno.serve(async (req) => {
       else if (effectiveCategory === 'adult_women') effectiveGender = 'Women'
     }
 
-    const { data: rpcResult, error: rpcError } = await adminClient.rpc('discover_profiles', {
-      p_roles: effectiveRoles,
+    // Phase 1c — compound multi-role search. When the query names explicit
+    // counts for 2+ different roles ("2 players and 1 coach"), a single
+    // discover_profiles call can't express per-role counts — so run one
+    // sub-search per role and merge, in the order asked. Load-more requests
+    // (offset > 0) never go compound; "Show more" stays single-role.
+    const roleCounts = requestedOffset > 0 ? [] : extractRoleCounts(query)
+    const isCompound = roleCounts.length >= 2
+
+    const baseDiscoverParams = {
       p_positions: parsed.positions || null,
       // Phase 3e: prefer the new category param. Legacy p_gender is also
       // passed for one cycle in case the RPC migration is rolled back.
@@ -1626,9 +2454,61 @@ Deno.serve(async (req) => {
       p_search_text: parsed.text_query || null,
       p_coach_specializations: parsed.coach_specializations || null,
       p_sort_by: parsed.sort_by || 'relevance',
-      p_limit: 20,
-      p_offset: 0,
-    })
+    }
+
+    let rpcResult: { results: any[]; total: number; has_more: boolean } | null = null
+    let rpcError: { message?: string } | null = null
+
+    if (isCompound) {
+      const merged: any[] = []
+      for (const rc of roleCounts) {
+        // A sub-search must not inherit filters that don't fit its role.
+        // A player-only filter (an "open to play" availability, a playing
+        // position, a league) zeroes out every coach; a coach-only filter
+        // (coach specialization) zeroes out every player. And a category
+        // seeded from the *searcher's own profile* (categorySource ===
+        // 'context') shouldn't silently narrow a multi-role search they
+        // never explicitly scoped. Apply each filter only where it belongs.
+        const avail = baseDiscoverParams.p_availability
+        const { data, error } = await adminClient.rpc('discover_profiles', {
+          ...baseDiscoverParams,
+          p_roles: [rc.role],
+          // Position-aware compound: a sub-search with a specific position
+          // ("1 goalkeeper") narrows to that position; otherwise the player
+          // sub-search inherits any LLM-parsed positions from the query.
+          p_positions: rc.position
+            ? [rc.position]
+            : (rc.role === 'player' ? baseDiscoverParams.p_positions : null),
+          p_coach_specializations: rc.role === 'coach' ? baseDiscoverParams.p_coach_specializations : null,
+          p_league_ids: rc.role === 'player' || rc.role === 'club' ? baseDiscoverParams.p_league_ids : null,
+          p_availability:
+            avail === 'open_to_play' ? (rc.role === 'player' ? avail : null)
+              : avail === 'open_to_coach' ? (rc.role === 'coach' ? avail : null)
+                : avail,
+          p_target_category: categorySource === 'context' ? null : baseDiscoverParams.p_target_category,
+          p_gender: categorySource === 'context' ? null : baseDiscoverParams.p_gender,
+          p_limit: rc.count,
+          p_offset: 0,
+        })
+        if (error) { rpcError = error; break }
+        const rows = (data as { results: any[] } | null)?.results ?? []
+        merged.push(...rows)
+      }
+      // total/has_more reflect what was actually assembled — each role got
+      // its own requested count, so there is no single list to "show more".
+      if (!rpcError) rpcResult = { results: merged, total: merged.length, has_more: false }
+    } else {
+      const { data, error } = await adminClient.rpc('discover_profiles', {
+        ...baseDiscoverParams,
+        p_roles: effectiveRoles,
+        // Phase 1b — the explicit count governs the first page; "Show more"
+        // load-more requests (offset > 0) page in default-sized batches.
+        p_limit: requestedOffset > 0 ? DEFAULT_RESULT_LIMIT : resolveResultLimit(query),
+        p_offset: requestedOffset,
+      })
+      rpcResult = data
+      rpcError = error
+    }
 
     if (rpcError) {
       captureException(rpcError, { functionName: 'nl-search', correlationId })
@@ -1678,6 +2558,15 @@ Deno.serve(async (req) => {
 
     const result = rpcResult as { results: any[]; total: number; has_more: boolean }
 
+    // Phase 4 — drop profiles the user has already seen in this chat. The
+    // count message below uses result.results.length (post-filter), so the
+    // headline stays honest. result.total stays as the DB-level match
+    // count — has_more semantics are kept conservative.
+    if (excludedIds.length > 0) {
+      const excludedSet = new Set(excludedIds)
+      result.results = result.results.filter((r: any) => !excludedSet.has(r?.id))
+    }
+
     // ── Result-aware AI message ──────────────────────────────────────
     // When the keyword router enforced a specific entity type, phrase the
     // empty/match copy in those terms ("no clubs found") rather than the
@@ -1710,9 +2599,17 @@ Deno.serve(async (req) => {
         : ''
       aiMessage = `I couldn't find any ${entityNoun} matching that.${broadenHint}`
     } else {
-      const noun = result.total === 1 ? (ENTITY_SINGULAR[entityNoun] ?? entityNoun) : entityNoun
-      const countPhrase = `I found ${result.total} ${noun} for you.`
-      aiMessage = llmResult.message ? `${countPhrase} ${llmResult.message}` : countPhrase
+      // Count the rows the user can actually see, not result.total (the
+      // full match count). On a "Show more" load-more request the count is
+      // cumulative — requestedOffset already-shown + this page — so the
+      // headline message keeps pace with the growing list.
+      const shown = requestedOffset + result.results.length
+      const noun = shown === 1 ? (ENTITY_SINGULAR[entityNoun] ?? entityNoun) : entityNoun
+      // Headline is the deterministic count phrase only. We *don't* append
+      // llmResult.message here — the LLM phrases its own count at parse
+      // time, before knowing what was returned, so the two can disagree
+      // (audit found "I found 7" + "5 players found across..." stacked).
+      aiMessage = `I found ${shown} ${noun} for you.`
     }
 
     // ── Phase 4 — proactive no-results diagnosis ─────────────────────
@@ -1927,17 +2824,60 @@ Deno.serve(async (req) => {
     // Augment each result row with its shortlist analysis (if present).
     // Additive — old frontends see the same shape with extra optional fields,
     // Phase 4 frontend renders them.
+    // Phase 3 — rule-based Journey highlights. Batch-fetch career_history
+    // for every result profile in one query and derive up to 4 concrete
+    // highlights each. Non-fatal: a failure just leaves highlights empty.
+    const highlightsByProfileId = new Map<string, string[]>()
+    try {
+      const profileIds = result.results
+        .map((r: any) => r?.id)
+        .filter((id: unknown): id is string => typeof id === 'string')
+      if (profileIds.length > 0) {
+        const { data: careerRows } = await adminClient
+          .from('career_history')
+          .select('user_id, entry_type, club_name, location_country, highlights, start_date, end_date')
+          .in('user_id', profileIds)
+        const careerByUser = new Map<string, CareerRow[]>()
+        for (const row of ((careerRows ?? []) as (CareerRow & { user_id: string })[])) {
+          const arr = careerByUser.get(row.user_id) ?? []
+          arr.push(row)
+          careerByUser.set(row.user_id, arr)
+        }
+        for (const r of result.results) {
+          if (r?.id) {
+            highlightsByProfileId.set(r.id, buildProfileHighlights(careerByUser.get(r.id) ?? [], r))
+          }
+        }
+      }
+    } catch (highlightsError) {
+      captureException(highlightsError, {
+        functionName: 'nl-search',
+        correlationId,
+        extra: { phase: 'profile_highlights' },
+      })
+    }
+
     const augmentedResults = result.results.map((r: any) => {
       const sl = r?.id ? shortlistByProfileId.get(r.id) : undefined
-      if (!sl) return r
+      const highlights = r?.id ? highlightsByProfileId.get(r.id) : undefined
+      const withHighlights = highlights && highlights.length > 0 ? { ...r, highlights } : r
+      if (!sl) return withHighlights
       return {
-        ...r,
+        ...withHighlights,
         fit_level: sl.fit_level,
         fit_reasons: sl.fit_reasons,
         missing_data: sl.missing_data,
         next_action: sl.next_action,
       }
     })
+
+    // Phase 1c — a compound multi-role search gets its own message: the
+    // per-role breakdown ("2 players and 1 coach") can't be expressed
+    // through enforcedRole's single noun. Set last so it also wins over any
+    // composeShortlist summary_message applied above.
+    if (isCompound && result.total > 0) {
+      aiMessage = buildCompoundMessage(roleCounts, result.results)
+    }
 
     // ── Phase 1A envelope: build applied + kind + suggested_actions ──────
     // The applied block summarizes what was actually searched in human-readable
@@ -2061,6 +3001,10 @@ Deno.serve(async (req) => {
         kind: responseKind,
         applied,
         suggested_actions: suggestedActions,
+        // Phase 4 audit — frontend uses this to skip the collapse-to-3
+        // when the user explicitly asked for mixed roles ("3 players and
+        // 1 coach"), so the headline count matches what's visible.
+        is_compound: isCompound,
       }),
       { status: 200, headers: { ...headers, 'Content-Type': 'application/json' } }
     )
@@ -2132,6 +3076,7 @@ Deno.serve(async (req) => {
         headers,
         correlationId,
         isRepeatSoftError: pendingIsRepeatSoftError,
+        offset: pendingOffset,
       })
     }
 

@@ -45,6 +45,10 @@ export interface DiscoverResult {
   fit_reasons?: string[]
   missing_data?: string[]
   next_action?: string
+  // Phase 3 — rule-based Journey highlights (national-team selection, club
+  // experience, references, stated achievements). Up to 4, shown in the
+  // result card's expanded drawer. Absent when the profile has no Journey.
+  highlights?: string[]
   // Phase 4 MVP-B — World directory club row. When result_type is
   // 'world_club', the row represents an entry from the World directory
   // (a global field-hockey club registry) rather than a claimed HOCKIA
@@ -93,6 +97,7 @@ export type ResponseKind =
   | 'soft_error'            // transient failure — calm UI (wired in PR-3)
   | 'clarifying_question'   // medium-confidence intent (wired in PR-4)
   | 'canned_redirect'       // opportunity / product redirects
+  | 'recommendation'        // Phase 5 — owner recruitment recommendations
 
 export interface AppliedSearch {
   entity: 'clubs' | 'players' | 'coaches' | 'brands' | 'umpires' | null
@@ -131,6 +136,36 @@ export interface DiscoverCta {
   route: string
 }
 
+/**
+ * Phase 5 — one recommended applicant from the owner's own pipeline. The
+ * bullets are rule-based on the backend; every line is traceable to a
+ * specific data point on the applicant's profile.
+ */
+export interface RecommendationRow {
+  applicant_id: string
+  applicant_name: string | null
+  applicant_role: string
+  applicant_avatar_url: string | null
+  opening_id: string
+  opening_title: string
+  opening_position: string
+  /** DB triage value: pending | shortlisted | maybe. Never 'rejected' here
+   *  — the ranker excludes those. */
+  triage: 'pending' | 'shortlisted' | 'maybe'
+  /** User-facing label shown on the Applicants screen
+   *  (Unsorted / Good fit / Maybe). */
+  triage_label: string
+  fit_level: 'strong_match' | 'possible_match' | 'needs_more_info'
+  bullets: string[]
+  /** Up to one neutral caveat — the most notable signal MISSING on a
+   *  recommended applicant. Shown after the positive bullets so the owner
+   *  sees what the AI weighed and what it didn't. */
+  caveats?: string[]
+  /** Path to the applicant's public profile — wired to the "Review
+   *  applicant" CTA. */
+  navigate_to: string
+}
+
 export interface DiscoverResponse {
   success: boolean
   data: DiscoverResult[]
@@ -148,6 +183,14 @@ export interface DiscoverResponse {
   clarifying_options?: ClarifyingOption[]
   /** Platform-help — explicit navigation CTA (canned_redirect responses). */
   cta?: DiscoverCta | null
+  /** Compound multi-role search ("2 players and 1 coach") — the UI uses
+   *  this to skip the collapse-to-3, so the headline count matches what's
+   *  visible. */
+  is_compound?: boolean
+  /** Phase 5 — recommendation cards for the recruitment intent. */
+  recommendations?: RecommendationRow[]
+  /** Phase 5 — single-line nudge about other openings worth visiting. */
+  secondary_note?: string | null
 }
 
 // ── Chat message types ──────────────────────────────────────────────────
@@ -159,6 +202,21 @@ export interface DiscoverChatMessage {
   results?: DiscoverResult[]
   parsed_filters?: ParsedFilters | null
   total?: number
+  /** Phase 1b — backend has further results past what's currently loaded. */
+  has_more?: boolean
+  /** Phase 1b — the query that produced this results message; "Show more"
+   *  replays it with an offset to page in the next distinct batch. */
+  search_query?: string
+  /** Phase 1b — a "Show more" fetch is currently in flight for this message. */
+  loading_more?: boolean
+  /** Compound multi-role search — frontend suppresses the collapse-to-3
+   *  so every requested role is visible. */
+  is_compound?: boolean
+  /** Phase 5 — recommendation cards for an owner-recruitment response. */
+  recommendations?: RecommendationRow[]
+  /** Phase 5 — optional nudge below the cards ("you also have N pending
+   *  applicants on your Midfielder opening — want me to surface those?"). */
+  secondary_note?: string | null
   timestamp: number
   status: 'sending' | 'complete' | 'error'
   error?: string
@@ -176,6 +234,24 @@ interface HistoryTurn {
   content: string
 }
 
+/**
+ * Collect IDs of every profile the user has already seen in this
+ * conversation. Passed to nl-search as `excluded_ids` so a follow-up
+ * search ("show me different players") returns genuinely new faces
+ * instead of re-surfacing the first answer. Capped at 30 to keep the
+ * request body small.
+ */
+function collectShownProfileIds(messages: DiscoverChatMessage[]): string[] {
+  const ids = new Set<string>()
+  for (const m of messages) {
+    if (m.role !== 'assistant' || m.kind !== 'results' || !m.results) continue
+    for (const r of m.results) {
+      if (typeof r.id === 'string') ids.add(r.id)
+    }
+  }
+  return Array.from(ids).slice(-30)
+}
+
 // ── Zustand store — persists across navigation ──────────────────────────
 
 interface DiscoverChatStore {
@@ -188,6 +264,13 @@ interface DiscoverChatStore {
    * recent user query. `clear` empties the chat.
    */
   submitAction: (intent: SuggestedActionIntent) => void
+  /**
+   * Phase 1b — "Show more": append the next distinct batch of results to an
+   * existing results message via offset pagination. Does not touch the
+   * global `isPending` flag — it drives a per-message `loading_more` state
+   * so the composer and the main thread stay interactive.
+   */
+  loadMore: (messageId: string) => Promise<void>
   clearChat: () => void
 }
 
@@ -251,8 +334,9 @@ export const useDiscoverChat = create<DiscoverChatStore>((set, get) => ({
     }
 
     try {
+      const excludedIds = collectShownProfileIds(get().messages)
       const { data, error } = await supabase.functions.invoke('nl-search', {
-        body: { query: trimmed, history, recovery_context: recoveryContext },
+        body: { query: trimmed, history, recovery_context: recoveryContext, excluded_ids: excludedIds },
       })
 
       if (error) {
@@ -280,6 +364,11 @@ export const useDiscoverChat = create<DiscoverChatStore>((set, get) => ({
                 results: result.data,
                 parsed_filters: result.parsed_filters,
                 total: result.total,
+                has_more: result.has_more,
+                search_query: trimmed,
+                is_compound: result.is_compound,
+                recommendations: result.recommendations,
+                secondary_note: result.secondary_note,
                 status: 'complete' as const,
                 // Phase 1A — persist the structured envelope so the dispatcher
                 // can render the right component. All optional; old rows
@@ -336,6 +425,79 @@ export const useDiscoverChat = create<DiscoverChatStore>((set, get) => ({
         logger.warn('[useDiscoverChat] unknown action intent — chip will no-op', { intent: exhaustive })
         return
       }
+    }
+  },
+
+  loadMore: async (messageId: string) => {
+    if (get().isPending) return
+    const msg = get().messages.find(m => m.id === messageId)
+    if (!msg || msg.role !== 'assistant' || !msg.search_query || msg.loading_more) return
+
+    // Offset = how many results are already loaded. nl-search pages past
+    // them and returns a default-sized batch.
+    const offset = (msg.results ?? []).length
+
+    set(s => ({
+      messages: s.messages.map(m =>
+        m.id === messageId ? { ...m, loading_more: true } : m,
+      ),
+    }))
+
+    const history: HistoryTurn[] = get()
+      .messages.filter(m => m.status === 'complete')
+      .map(m => ({ role: m.role, content: m.content }))
+      .slice(-10)
+    const userRole = useAuthStore.getState().profile?.role ?? null
+
+    const excludedIds = collectShownProfileIds(get().messages)
+    try {
+      const { data, error } = await supabase.functions.invoke('nl-search', {
+        body: {
+          query: msg.search_query,
+          history,
+          recovery_context: { user_role: userRole },
+          offset,
+          excluded_ids: excludedIds,
+        },
+      })
+      if (error) throw new Error(error.message || 'Failed to load more results')
+
+      const result = data as DiscoverResponse
+      if (!result.success) throw new Error(result.error || 'Failed to load more results')
+
+      set(s => ({
+        messages: s.messages.map(m => {
+          if (m.id !== messageId) return m
+          // A load-more re-parse should return another results page. If it
+          // drifted (no_results / soft_error), keep the message intact and
+          // just stop offering more.
+          if (result.kind && result.kind !== 'results') {
+            return { ...m, has_more: false, loading_more: false }
+          }
+          // De-dupe by id — a re-parse drift must never surface a repeat.
+          const seen = new Set((m.results ?? []).map(r => r.id))
+          const fresh = (result.data ?? []).filter(r => !seen.has(r.id))
+          return {
+            ...m,
+            // Refresh the headline so its count keeps pace with the now-
+            // larger list ("I found 7 players" after expanding from 5).
+            content: result.ai_message || m.content,
+            results: [...(m.results ?? []), ...fresh],
+            total: result.total,
+            has_more: result.has_more,
+            loading_more: false,
+          }
+        }),
+      }))
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : 'Unknown error'
+      logger.error('[useDiscoverChat] loadMore error:', errMsg)
+      reportSupabaseError('discovery', err, { query: msg.search_query })
+      set(s => ({
+        messages: s.messages.map(m =>
+          m.id === messageId ? { ...m, loading_more: false } : m,
+        ),
+      }))
     }
   },
 

@@ -45,11 +45,16 @@ export default {
           '0%': { opacity: '0', transform: 'translateY(-12px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
+        dotWave: {
+          '0%, 100%': { opacity: '0.25', transform: 'scale(0.8)' },
+          '40%': { opacity: '1', transform: 'scale(1)' },
+        },
       },
       animation: {
         shimmer: 'shimmer 2s ease-in-out infinite',
         fadeSlideIn: 'fadeSlideIn 400ms ease-out forwards',
         slideDown: 'slideDown 0.3s ease-out',
+        dotWave: 'dotWave 1.4s ease-in-out infinite',
       },
     },
   },

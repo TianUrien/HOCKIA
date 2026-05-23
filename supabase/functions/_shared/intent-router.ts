@@ -29,6 +29,11 @@ export type EntityType =
   | 'platform_help'
   | 'knowledge'
   | 'greeting'
+  // Phase 5 — opportunity-owner recruitment intent ("who applied", "best
+  // applicants", "strongest match", "who should I review"). Only fires
+  // when the asker actually owns at least one open opportunity; otherwise
+  // nl-search falls back to normal search.
+  | 'own_applicants'
   | 'unknown'
 
 export type Confidence = 'high' | 'medium' | 'low' | 'none'
@@ -134,6 +139,24 @@ const FEATURE_NOUNS = [
   /\bdiscover(y)?\b/i,
 ]
 
+// ── Opportunity-owner recruitment intent (Phase 5) ──
+// Fires when a club or coach asks Hockia AI about THEIR OWN recruitment:
+// "who applied", "best applicants", "strongest match", "who should I
+// review first", etc. nl-search verifies the asker is an owner before
+// honouring this routing — otherwise it falls back to normal search.
+const OWN_APPLICANTS = [
+  /\b(my|our) applicants?\b/i,
+  /\bwho applied\b/i,
+  /\b(best|top|strongest) applicants?\b/i,
+  /\b(strongest|best|top) match(es)?\b/i,
+  /\bwho should i (review|look at|see|consider|shortlist|pick) (first|now|next)?\b/i,
+  /\breview first\b/i,
+  /\b(my|our) (recruitment|pipeline|inbox|shortlist)\b/i,
+  /\b(my|our) opening(s)?\b/i,
+  /\b(best|top) (for|fit for) (my|our) (opportunit(y|ies)|opening|role)\b/i,
+  /\b(applicants?|candidates?) (for|on) (my|our) (opportunit(y|ies)|opening)\b/i,
+]
+
 // ── Hockey knowledge (rules / explanations / how-to) ──
 const KNOWLEDGE = [
   /\bwhat (is|does|are) (a |the )?(penalty corner|drag flick|aerial|jab|tackle|goalkeeper kit|turf)/i,
@@ -194,7 +217,12 @@ const OPPORTUNITIES = [
   /\bopen (positions?|roles?)\b/i,
   /\btr(y|ial)outs?\b/i,
   /\b(hiring|recruiting)\b(?! (a |for )?(coach|player))/i, // "hiring coaches" handled separately
-  /\bopen to (play|coach|opportunities)\b/i,
+  // NOTE — "open to play" / "open to coach" are the platform's own
+  // availability LABELS on player/coach profiles. Routing them to the
+  // opportunities entity collides with what clubs naturally type
+  // ("find me 5 defenders open to play") and sends them to /opportunities
+  // instead of a people search. Availability is a profile filter, not an
+  // opportunities intent.
 ]
 
 // ── Products / marketplace ──
@@ -291,6 +319,16 @@ export function classifyEntityType(query: string): RoutedIntent {
     }
   }
 
+  // 3c. Opportunity-owner recruitment intent (Phase 5). Detected BEFORE
+  //     entity search so "who applied to my opportunity" doesn't get
+  //     scored as players/opportunities and dropped. Confidence is high
+  //     here; nl-search still gates on whether the user actually owns
+  //     any opportunities — non-owners fall through to normal search.
+  const ownApplicants = anyMatch(OWN_APPLICANTS, q)
+  if (ownApplicants.length > 0) {
+    return { entity_type: 'own_applicants', confidence: 'high', matched_signals: ownApplicants }
+  }
+
   // 4. Hockey knowledge (rules / how does X work)
   const knowledge = anyMatch(KNOWLEDGE, q)
   if (knowledge.length > 0) {
@@ -345,22 +383,14 @@ export function classifyEntityType(query: string): RoutedIntent {
     }
   }
 
-  // Multiple matches — opportunities is more specific than role search
-  // ("find coaching opportunities" → opportunities, not coaches).
-  if (scores.find(s => s.type === 'opportunities')) {
-    return {
-      entity_type: 'opportunities',
-      confidence: 'high',
-      matched_signals: scores.flatMap(s => s.hits),
-    }
-  }
-
-  // Imperative-verb anchoring: when the user says "find/show me/look for X",
-  // the entity word that follows the imperative wins, even if other entity
-  // words appear later as context. "Find players for my team" → players
-  // (even though "team" was already stripped, this catches cases the strip
-  // missed, like "find players from my country's clubs").
-  const verbMatch = q.match(/\b(?:find|show( me)?|look(ing)? for|recommend|search)\s+(?:me\s+)?(\w+)/i)
+  // Imperative-verb anchoring runs BEFORE the opportunities tiebreak —
+  // when the user says "find/show me/look for X", the entity word right
+  // after the verb wins, even if other entity words appear later as
+  // context. Without this, "find coaches available for club opportunities"
+  // would route to opportunities (because "opportunities" appears) instead
+  // of coaches. A leading count is skipped so "find me 5 defenders" still
+  // anchors on "defenders".
+  const verbMatch = q.match(/\b(?:find|show( me)?|look(ing)? for|recommend|search)\s+(?:me\s+)?(?:\d+\s+)?(\w+)/i)
   if (verbMatch) {
     const objectWord = verbMatch[3]?.toLowerCase()
     const objectScore = scores.find(s =>
@@ -372,6 +402,16 @@ export function classifyEntityType(query: string): RoutedIntent {
         confidence: 'high',
         matched_signals: objectScore.hits,
       }
+    }
+  }
+
+  // Multiple matches — opportunities is more specific than role search
+  // ("find coaching opportunities" → opportunities, not coaches).
+  if (scores.find(s => s.type === 'opportunities')) {
+    return {
+      entity_type: 'opportunities',
+      confidence: 'high',
+      matched_signals: scores.flatMap(s => s.hits),
     }
   }
 

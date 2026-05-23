@@ -4,6 +4,7 @@ import { useDiscoverChat } from '@/hooks/useDiscover'
 import CannedRedirectCard from './CannedRedirectCard'
 import ClarifyingQuestionCard from './ClarifyingQuestionCard'
 import NoResultsCard from './NoResultsCard'
+import RecommendationResponse from './RecommendationResponse'
 import SearchResultsResponse from './SearchResultsResponse'
 import SoftErrorCard from './SoftErrorCard'
 import TextResponse from './TextResponse'
@@ -26,17 +27,39 @@ interface AssistantMessageProps {
   msg: DiscoverChatMessage
 }
 
-/** 3-dot typing indicator while the LLM call is in flight. */
-function TypingIndicator() {
+/**
+ * Compact search-status bubble shown while the LLM call is in flight.
+ * Sits inline in the chat flow — a calm, lightweight "thinking" state at
+ * roughly the height of a normal AI message, not a full card. The left
+ * indicator is three connected dots with a subtle green progress wave.
+ */
+function SearchingIndicator() {
   return (
-    <div className="flex items-center gap-1 px-1 py-1">
-      {[0, 1, 2].map(i => (
-        <span
-          key={i}
-          className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-          style={{ animationDelay: `${i * 150}ms` }}
-        />
-      ))}
+    <div
+      role="status"
+      aria-label="Searching"
+      className="inline-flex items-center gap-3 bg-white border border-gray-200 rounded-2xl rounded-tl-md px-3.5 py-2.5 shadow-sm"
+    >
+      {/* Connected dots — subtle grey track, green wave travelling across. */}
+      <div className="flex items-center flex-shrink-0" aria-hidden="true">
+        {[0, 1, 2].map(i => (
+          <span key={i} className="flex items-center">
+            <span
+              className="w-[7px] h-[7px] rounded-full bg-emerald-500 animate-dotWave"
+              style={{ animationDelay: `${i * 200}ms` }}
+            />
+            {i < 2 && <span className="w-3.5 h-px bg-gray-200" />}
+          </span>
+        ))}
+      </div>
+      {/* Status text — kept generic so the bubble is reusable across all
+          Hockia AI search types, not just profile lookups. */}
+      <div className="min-w-0">
+        <p className="text-sm font-medium text-gray-900 leading-tight">Searching…</p>
+        <p className="text-[12px] text-gray-500 leading-tight mt-0.5">
+          Finding the best results
+        </p>
+      </div>
     </div>
   )
 }
@@ -49,16 +72,13 @@ function TypingIndicator() {
  */
 export default function AssistantMessage({ msg }: AssistantMessageProps) {
   const submitAction = useDiscoverChat(s => s.submitAction)
+  const loadMore = useDiscoverChat(s => s.loadMore)
 
   const handleAction = (action: SuggestedAction) => submitAction(action.intent)
 
   const body = (() => {
     if (msg.status === 'sending') {
-      return (
-        <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-md px-4 py-3 shadow-sm">
-          <TypingIndicator />
-        </div>
-      )
+      return <SearchingIndicator />
     }
 
     if (msg.status === 'error') {
@@ -133,6 +153,21 @@ export default function AssistantMessage({ msg }: AssistantMessageProps) {
             message={msg.content}
             results={msg.results ?? []}
             parsedFilters={msg.parsed_filters ?? null}
+            hasMore={msg.has_more ?? false}
+            loadingMore={msg.loading_more ?? false}
+            onLoadMore={() => loadMore(msg.id)}
+            isCompound={msg.is_compound ?? false}
+          />
+        )
+
+      case 'recommendation':
+        return (
+          <RecommendationResponse
+            message={msg.content}
+            recommendations={msg.recommendations ?? []}
+            secondaryNote={msg.secondary_note ?? null}
+            suggestedActions={msg.suggested_actions}
+            onAction={handleAction}
           />
         )
 
@@ -147,6 +182,13 @@ export default function AssistantMessage({ msg }: AssistantMessageProps) {
         )
     }
   })()
+
+  // A search-results message renders full-width: the flat, edge-to-edge
+  // result list needs the room — the chat avatar indent + 85% width cap
+  // would crush it on mobile. Other assistant messages keep avatar + bubble.
+  if (msg.kind === 'results') {
+    return <div className="w-full animate-fadeSlideIn">{body}</div>
+  }
 
   return (
     <div className="flex items-start gap-2.5 animate-fadeSlideIn">
