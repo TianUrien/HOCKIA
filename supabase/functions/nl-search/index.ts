@@ -851,8 +851,12 @@ function isNegativeApplicantIntent(query: string): boolean {
     || /\b(who|which) (applicants? )?(do(es)?n'?t|don'?t) (match|fit)/i.test(query)
     || /\b(weak|poor|mismatched|bad fit) applicants?\b/i.test(query)
     || /\bwho (should|shouldn'?t) i (not |skip|ignore|pass)/i.test(query)
-    || /\b(qui[eé]n|qui[eé]nes) (no )?(coincide|encaja|sirve)/i.test(query)
-    || /\baplicantes? (d[eé]biles|que no encajan|mal[oa]s)/i.test(query)
+    // Spanish — kept in sync with OWN_APPLICANTS router. "no" mandatory so
+    // "quién encaja" stays positive; "que" optional between aplicantes and
+    // the verb so all real Spanish phrasings catch (see router comments).
+    || /\b(qui[eé]n|qui[eé]nes) no (coincide|encaja|sirve)/i.test(query)
+    || /\b(qu[eé]|cu[aá]les?) aplicantes? (no |son )(coinciden|encajan|sirven|d[eé]biles|mal[oa]s)/i.test(query)
+    || /\baplicantes? (d[eé]biles|(que )?no (coinciden|encajan|sirven)|mal[oa]s)/i.test(query)
 }
 
 /** Per-role navigation target for the "Review applicant" CTA. */

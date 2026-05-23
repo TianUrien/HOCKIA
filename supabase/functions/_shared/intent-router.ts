@@ -189,8 +189,17 @@ const OWN_APPLICANTS = [
   /\b(who|which) (applicants? )?(do(es)?n'?t|don'?t) (match|fit)/i,
   /\b(weak|poor|mismatched|bad fit) applicants?\b/i,
   /\bwho (should|shouldn'?t) i (not |skip|ignore|pass)/i,
-  /\b(qui[eé]n|qui[eé]nes) (no )?(coincide|encaja|sirve)/i,
-  /\baplicantes? (d[eé]biles|que no encajan|mal[oa]s)/i,
+  // Spanish negative-intent — "no" is REQUIRED so "quién encaja" (positive)
+  // doesn't accidentally route to B7. "que" is OPTIONAL between aplicantes
+  // and the verb so all the real-world phrasings catch:
+  //   "quién no encaja"        → who doesn't fit
+  //   "qué aplicantes no encajan" / "cuáles aplicantes no encajan"
+  //   "aplicantes que no encajan" / "aplicantes no encajan"
+  //   "aplicantes que no coinciden" / "aplicantes no sirven"
+  //   "aplicantes débiles" / "aplicantes malos"
+  /\b(qui[eé]n|qui[eé]nes) no (coincide|encaja|sirve)/i,
+  /\b(qu[eé]|cu[aá]les?) aplicantes? (no |son )(coinciden|encajan|sirven|d[eé]biles|mal[oa]s)/i,
+  /\baplicantes? (d[eé]biles|(que )?no (coinciden|encajan|sirven)|mal[oa]s)/i,
 ]
 
 // ── Hockey knowledge (rules / explanations / how-to) ──
