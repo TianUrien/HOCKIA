@@ -1,4 +1,4 @@
-import { Component, useCallback, useEffect, useRef } from 'react'
+import { Component, Fragment, useCallback, useEffect, useRef } from 'react'
 import type { ReactNode, ErrorInfo } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowUp, Loader2, Rss, Search, Globe, Briefcase, MessageSquare } from 'lucide-react'
@@ -203,29 +203,40 @@ export function HomeFeed({ prependItemRef }: HomeFeedProps) {
         )}
       </div>
 
-      {/* Loading state — skeleton cards run edge-to-edge like the real cards. */}
+      {/* Loading state — skeleton cards run edge-to-edge like the real cards.
+          Explicit gray-100 spacers between cards so the divider matches the
+          live-feed divider exactly (the page bg is gray-50 which was too
+          subtle to read as a post boundary). */}
       {isLoading && items.length === 0 && (
-        <div className="space-y-2">
-          {[1, 2, 3].map(i => (
-            <FeedSkeleton key={i} />
+        <>
+          {[1, 2, 3].map((i, idx) => (
+            <Fragment key={i}>
+              {idx > 0 && <div aria-hidden="true" className="h-2 bg-gray-100" />}
+              <FeedSkeleton />
+            </Fragment>
           ))}
-        </div>
+        </>
       )}
 
-      {/* Feed items — flush, edge-to-edge. `space-y-2` lets the page bg
-          (gray-50) show through as the Facebook-style ~8px gap between posts. */}
+      {/* Feed items — flush, edge-to-edge. Explicit gray-100 spacer between
+          cards (Facebook-style): visibly darker than the page bg so the
+          end of one post and start of the next reads clearly. 8px tall,
+          full-width, no border line — keeps the surface clean. */}
       {items.length > 0 && (
-        <div className="space-y-2">
-          {items.map(item => (
-            <FeedItemErrorBoundary key={item.feed_item_id}>
-              <HomeFeedItemCard
-                item={item}
-                onLikeUpdate={updateItemLike}
-                onDelete={removeItem}
-              />
-            </FeedItemErrorBoundary>
+        <>
+          {items.map((item, idx) => (
+            <Fragment key={item.feed_item_id}>
+              {idx > 0 && <div aria-hidden="true" className="h-2 bg-gray-100" />}
+              <FeedItemErrorBoundary>
+                <HomeFeedItemCard
+                  item={item}
+                  onLikeUpdate={updateItemLike}
+                  onDelete={removeItem}
+                />
+              </FeedItemErrorBoundary>
+            </Fragment>
           ))}
-        </div>
+        </>
       )}
 
       {/* Infinite scroll sentinel */}
