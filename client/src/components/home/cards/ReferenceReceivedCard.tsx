@@ -22,7 +22,7 @@ export function ReferenceReceivedCard({ item }: ReferenceReceivedCardProps) {
     : null
 
   return (
-    <div className="bg-white border-t-4 border-t-indigo-500">
+    <div className="bg-white">
       <div className="p-5">
         {/* Header */}
         <div className="flex items-center gap-2 mb-4">
