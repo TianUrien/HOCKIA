@@ -636,6 +636,8 @@ function findOpeningByQueryPosition(
   opps: OwnerOpportunity[],
 ): OwnerOpportunity | null {
   const lq = (query || '').toLowerCase()
+  // 1. Specific position label first ("head coach opening" beats a plain
+  //    "coach opening" if both could match).
   for (const opp of opps) {
     const positionLabel = opp.position.toLowerCase().replace(/_/g, ' ')
     if (lq.includes(`${positionLabel} opening`)
@@ -643,6 +645,20 @@ function findOpeningByQueryPosition(
         || lq.includes(`${positionLabel} role`)
         || lq.includes(`for the ${positionLabel}`)
         || lq.includes(`for my ${positionLabel}`)) {
+      return opp
+    }
+  }
+  // 2. Generic opportunity_type fallback — "coach opening" routes to the
+  //    first coach-type opp even when its specific position is head_coach
+  //    or assistant_coach. ("Player opening" similarly catches any
+  //    player-type opp.)
+  for (const opp of opps) {
+    const t = opp.opportunity_type.toLowerCase()
+    if (lq.includes(`${t} opening`)
+        || lq.includes(`${t} applicants`)
+        || lq.includes(`${t} role`)
+        || lq.includes(`for the ${t}`)
+        || lq.includes(`for my ${t}`)) {
       return opp
     }
   }
