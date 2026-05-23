@@ -12,8 +12,8 @@ export function BrandPostCard({ item }: BrandPostCardProps) {
   const timeAgo = getTimeAgo(item.created_at, true)
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 border-t-4 border-t-rose-500 overflow-hidden shadow-sm">
-      <div className="p-5">
+    <div className="bg-white">
+      <div className="p-5 pb-0">
         {/* Brand Header */}
         <Link
           to={`/brands/${item.brand_slug}`}
@@ -53,20 +53,18 @@ export function BrandPostCard({ item }: BrandPostCardProps) {
             {item.post_content}
           </p>
         )}
-
-        {/* Post Image */}
-        {item.post_image_url && (
-          <div className="rounded-lg overflow-hidden -mx-1">
-            <img
-              src={getImageUrl(item.post_image_url, 'feed-full') ?? undefined}
-              alt=""
-              className="w-full h-auto max-h-96 object-cover"
-              loading="lazy"
-              decoding="async"
-            />
-          </div>
-        )}
       </div>
+
+      {/* Post Image — full-width / flush to card edges (Facebook style) */}
+      {item.post_image_url && (
+        <img
+          src={getImageUrl(item.post_image_url, 'feed-full') ?? undefined}
+          alt=""
+          className="w-full h-auto max-h-96 object-cover"
+          loading="lazy"
+          decoding="async"
+        />
+      )}
     </div>
   )
 }

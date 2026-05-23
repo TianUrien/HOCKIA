@@ -61,6 +61,15 @@ type TabType = 'profile' | 'media' | 'journey' | 'references' | 'friends' | 'com
 // to the dedicated section pages.
 const VALID_TABS: TabType[] = ['profile', 'media', 'journey', 'references', 'friends', 'comments', 'posts', 'community']
 
+// Legacy ?tab=X aliases — mirror of CoachDashboard's map. CASI production
+// QA flagged ?tab=connections silently routing to overview because
+// 'connections' is a sub-section inside the community tab (see
+// navigateToCommunitySection below), not a top-level dashboard tab. Map
+// it to 'community' so notification + bookmark deep links land correctly.
+const LEGACY_TAB_ALIASES: Record<string, TabType> = {
+  connections: 'community',
+}
+
 export type PlayerProfileShape =
   Partial<Profile> &
   Pick<
@@ -192,8 +201,13 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
   // URLs to the new route format (`/dashboard/profile/journey?section=incoming`)
   // on mount. ?section= and ?ask= and every other param survive.
   useEffect(() => {
-    const legacyTab = searchParams.get('tab') as TabType | null
-    if (!legacyTab || !(VALID_TABS as string[]).includes(legacyTab)) return
+    const rawTab = searchParams.get('tab')
+    if (!rawTab) return
+    // Apply legacy alias first (e.g. connections → community), then check
+    // VALID_TABS so an unknown alias no longer silently falls through to
+    // the default Overview tab — it lands on the mapped target instead.
+    const resolved = (LEGACY_TAB_ALIASES[rawTab] ?? rawTab) as TabType
+    if (!(VALID_TABS as string[]).includes(resolved)) return
 
     const next = new URLSearchParams(searchParams)
     next.delete('tab')
@@ -208,9 +222,9 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
           ? `/players/id/${routeParams.id}`
           : null
       if (!base) return
-      path = legacyTab === 'profile' ? base : `${base}/${legacyTab}`
+      path = resolved === 'profile' ? base : `${base}/${resolved}`
     } else {
-      path = legacyTab === 'profile' ? '/dashboard/profile' : `/dashboard/profile/${legacyTab}`
+      path = resolved === 'profile' ? '/dashboard/profile' : `/dashboard/profile/${resolved}`
     }
 
     navigate(`${path}${qsSuffix}`, { replace: true })

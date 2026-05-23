@@ -17,7 +17,7 @@ export function MemberJoinedCard({ item }: MemberJoinedCardProps) {
       : `/players/id/${item.profile_id}?ref=feed`
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+    <div className="bg-white">
       <div className="p-5">
         {/* Header */}
         <div className="flex items-center gap-2 mb-4">

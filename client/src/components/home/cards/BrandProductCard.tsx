@@ -16,7 +16,7 @@ export function BrandProductCard({ item }: BrandProductCardProps) {
     : []
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 border-t-4 border-t-rose-500 overflow-hidden shadow-sm">
+    <div className="bg-white">
       <div className="p-5 pb-0">
         {/* Brand Header */}
         <Link

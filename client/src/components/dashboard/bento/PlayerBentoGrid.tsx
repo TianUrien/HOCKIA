@@ -73,6 +73,7 @@ export default function PlayerBentoGrid({
           <JourneyCard
             profileId={profile.id}
             readOnly
+            bio={profile.bio ?? null}
             onViewJourney={() => onOpenTab('journey')}
           />
           <CommunityCard
@@ -96,6 +97,7 @@ export default function PlayerBentoGrid({
           <JourneyCard
             profileId={profile.id}
             readOnly={false}
+            bio={profile.bio ?? null}
             onViewJourney={() => onOpenTab('journey')}
           />
           <CommunityCard
