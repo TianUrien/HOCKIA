@@ -570,6 +570,37 @@ function buildRecommendationBullets(
   return out.slice(0, 4)
 }
 
+/**
+ * One neutral caveat bullet — calls out the most notable signal MISSING on
+ * a recommended applicant, so the owner sees what the AI weighed against
+ * and what it didn't. Only fires on strong/good matches (a "needs more
+ * info" pill already implies gaps). At most one caveat per card.
+ */
+function buildRecommendationCaveats(
+  a: OwnerApplicant,
+  fitLevel: 'strong_match' | 'possible_match' | 'needs_more_info',
+  career: CareerHistRow[],
+): string[] {
+  if (fitLevel === 'needs_more_info') return []
+  if (a.accepted_reference_count === 0) {
+    return ['No accepted references on file yet']
+  }
+  if (!a.highlight_video_url) {
+    return ['No highlight video on their profile']
+  }
+  if (!career.some(c => c.entry_type === 'national_team')) {
+    return ['No national-team experience listed']
+  }
+  if (!a.current_club) {
+    return ['No current club listed']
+  }
+  const pct = a.profile_completeness_pct ?? 100
+  if (pct < 40) {
+    return [`Profile is ${pct}% complete — still thin overall`]
+  }
+  return []
+}
+
 /** Honest orientation sentence — always includes the full triage breakdown
  *  (Not a fit included even though the ranker excludes them) so the owner
  *  sees what the AI looked at and what it ignored. */
@@ -810,20 +841,24 @@ async function handleOwnApplicantsIntent(params: {
     }
 
     // 7. Up to 2 cards from the primary opening.
-    const recommendations = primary.scored.slice(0, 2).map(s => ({
-      applicant_id: s.applicant.applicant_id,
-      applicant_name: s.applicant.full_name,
-      applicant_role: s.applicant.role,
-      applicant_avatar_url: s.applicant.avatar_url,
-      opening_id: primary.opp.opportunity_id,
-      opening_title: primary.opp.title,
-      opening_position: primary.opp.position,
-      triage: s.applicant.triage_status,
-      triage_label: TRIAGE_LABEL[s.applicant.triage_status] ?? s.applicant.triage_status,
-      fit_level: s.fit_level,
-      bullets: s.bullets,
-      navigate_to: applicantPublicProfilePath(s.applicant.role, s.applicant.applicant_id),
-    }))
+    const recommendations = primary.scored.slice(0, 2).map(s => {
+      const career = careerByUser.get(s.applicant.applicant_id) ?? []
+      return {
+        applicant_id: s.applicant.applicant_id,
+        applicant_name: s.applicant.full_name,
+        applicant_role: s.applicant.role,
+        applicant_avatar_url: s.applicant.avatar_url,
+        opening_id: primary.opp.opportunity_id,
+        opening_title: primary.opp.title,
+        opening_position: primary.opp.position,
+        triage: s.applicant.triage_status,
+        triage_label: TRIAGE_LABEL[s.applicant.triage_status] ?? s.applicant.triage_status,
+        fit_level: s.fit_level,
+        bullets: s.bullets,
+        caveats: buildRecommendationCaveats(s.applicant, s.fit_level, career),
+        navigate_to: applicantPublicProfilePath(s.applicant.role, s.applicant.applicant_id),
+      }
+    })
 
     // 8. Secondary openings with pending pool, if any.
     const secondaryOpps = oppRanked

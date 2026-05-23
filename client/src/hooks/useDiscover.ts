@@ -157,6 +157,10 @@ export interface RecommendationRow {
   triage_label: string
   fit_level: 'strong_match' | 'possible_match' | 'needs_more_info'
   bullets: string[]
+  /** Up to one neutral caveat — the most notable signal MISSING on a
+   *  recommended applicant. Shown after the positive bullets so the owner
+   *  sees what the AI weighed and what it didn't. */
+  caveats?: string[]
   /** Path to the applicant's public profile — wired to the "Review
    *  applicant" CTA. */
   navigate_to: string

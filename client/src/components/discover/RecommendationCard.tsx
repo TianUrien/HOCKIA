@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { Check, ArrowRight } from 'lucide-react'
+import { Check, ArrowRight, Info } from 'lucide-react'
 import Avatar from '@/components/Avatar'
 import RoleBadge from '@/components/RoleBadge'
 import type { RecommendationRow } from '@/hooks/useDiscover'
@@ -80,6 +80,19 @@ export default function RecommendationCard({ rec }: RecommendationCardProps) {
             <li key={i} className="flex items-start gap-1.5 text-xs text-gray-700 leading-snug">
               <Check className="w-3.5 h-3.5 text-emerald-600 mt-px flex-shrink-0" aria-hidden="true" />
               <span>{b}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {/* Caveats — neutral acknowledgement of a notable missing signal, so
+          the owner sees what the AI weighed and what it didn't. */}
+      {rec.caveats && rec.caveats.length > 0 && (
+        <ul className="mt-1.5 space-y-1">
+          {rec.caveats.map((c, i) => (
+            <li key={i} className="flex items-start gap-1.5 text-xs text-gray-500 leading-snug">
+              <Info className="w-3.5 h-3.5 text-gray-400 mt-px flex-shrink-0" aria-hidden="true" />
+              <span>{c}</span>
             </li>
           ))}
         </ul>
