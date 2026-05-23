@@ -770,8 +770,14 @@ function findOpeningByQueryPosition(
 ): OwnerOpportunity | null {
   const lq = (query || '').toLowerCase()
   // 1. Specific position label first ("head coach opening" beats a plain
-  //    "coach opening" if both could match).
+  //    "coach opening" if both could match). Skip rows with null position —
+  //    Sentry SUPABASE-EDGE-FUNCTIONS-A: every owner query was crashing
+  //    here when an opportunity had a null position column (kept happening
+  //    even though no rows with status='open' had null at query time —
+  //    likely transient or test-seed state). Defensive null guard so the
+  //    handler degrades to "no targeted opening" instead of throwing.
   for (const opp of opps) {
+    if (!opp.position) continue
     const positionLabel = opp.position.toLowerCase().replace(/_/g, ' ')
     if (lq.includes(`${positionLabel} opening`)
         || lq.includes(`${positionLabel} applicants`)
@@ -786,6 +792,7 @@ function findOpeningByQueryPosition(
   //    or assistant_coach. ("Player opening" similarly catches any
   //    player-type opp.)
   for (const opp of opps) {
+    if (!opp.opportunity_type) continue
     const t = opp.opportunity_type.toLowerCase()
     if (lq.includes(`${t} opening`)
         || lq.includes(`${t} applicants`)
