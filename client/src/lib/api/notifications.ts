@@ -88,7 +88,7 @@ export const fetchNotificationsPage = async (
   const limit = params.limit ?? 30
   const offset = params.offset ?? 0
 
-  return await monitor.measure('notifications:get_page', async () => {
+  const rows = await monitor.measure('notifications:get_page', async () => {
     const { data, error } = await supabase.rpc('get_notifications', {
       p_filter: filter,
       p_kind: params.kind ?? undefined,
@@ -101,14 +101,40 @@ export const fetchNotificationsPage = async (
       throw error
     }
 
-    const rows = (data ?? []) as unknown as RpcNotificationRow[]
-    return rows.map(normalizeNotification)
+    return (data ?? []) as unknown as RpcNotificationRow[]
   }, {
     filter,
     kind: params.kind ?? 'any',
     limit: limit.toString(),
     offset: offset.toString(),
   })
+
+  // Fire-and-forget seen_at stamp. The previous get_notifications RPC ran
+  // this UPDATE inline, which caused row-lock contention under concurrent
+  // reads for the same user (tail latency spiked to 20s in production
+  // telemetry). Splitting the write off the read returns immediately and
+  // lets the seen_at timestamp land moments later without blocking anyone.
+  //
+  // Migration 20260525024500 added the mark_notifications_seen RPC. The
+  // `as never` cast keeps TypeScript happy until the generated
+  // database.types.ts is regenerated post-deploy — the runtime call is
+  // valid as soon as the migration applies. PromiseLike → Promise via
+  // Promise.resolve so we can attach .then/.catch consistently.
+  const unseenIds = rows
+    .filter(r => r.seen_at === null)
+    .map(r => r.id)
+  if (unseenIds.length > 0) {
+    void Promise.resolve(
+      supabase.rpc('mark_notifications_seen' as never, { p_ids: unseenIds } as never)
+    )
+      .then((res) => {
+        const err = (res as { error?: unknown }).error
+        if (err) logger.warn('[NOTIFICATIONS] mark_notifications_seen failed', err)
+      })
+      .catch((err: unknown) => logger.warn('[NOTIFICATIONS] mark_notifications_seen threw', err))
+  }
+
+  return rows.map(normalizeNotification)
 }
 
 export const fetchNotificationCounts = async (): Promise<NotificationCounts> => {
