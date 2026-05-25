@@ -9,6 +9,26 @@ vi.mock('@/lib/auth', () => ({
   useAuthStore: () => ({ user: { id: 'user-1' } }),
 }))
 
+// CountrySelect calls useCountries which hits supabase.from('countries').
+// Stub it as a minimal HTML select so these tests stay focused on form
+// validation, not the country picker's data path.
+vi.mock('@/components/CountrySelect', () => ({
+  default: ({ value, onChange, label }: {
+    value: number | null
+    onChange: (id: number | null) => void
+    label?: string
+  }) => (
+    <select
+      aria-label={label || 'Country'}
+      value={value ?? ''}
+      onChange={(e) => onChange(e.target.value ? Number(e.target.value) : null)}
+    >
+      <option value="">Choose…</option>
+      <option value="1">Test Country</option>
+    </select>
+  ),
+}))
+
 vi.mock('@/lib/supabase', () => ({
   supabase: {
     storage: {
@@ -126,6 +146,13 @@ describe('BrandForm', () => {
       const select = screen.getByLabelText(/category/i) as HTMLSelectElement
       await user.selectOptions(select, 'equipment')
     }
+    // Country is required as of migration 20260525120000. Same pattern as
+    // selectAnyCategory — tests that don't care about country selection
+    // call this to clear the gate and reach later validations.
+    const selectAnyCountry = async () => {
+      const select = screen.getByLabelText(/country/i) as HTMLSelectElement
+      await user.selectOptions(select, '1')
+    }
 
     it('blocks submit and shows an error when name is empty', async () => {
       const onSubmit = vi.fn()
@@ -168,6 +195,7 @@ describe('BrandForm', () => {
 
       await user.type(screen.getByLabelText(/brand name/i), 'My Brand')
       await selectAnyCategory()
+      await selectAnyCountry()
 
       const slugInput = screen.getByLabelText(/url slug/i) as HTMLInputElement
       await user.clear(slugInput)
@@ -184,6 +212,7 @@ describe('BrandForm', () => {
 
       await user.type(screen.getByLabelText(/brand name/i), 'Admin')
       await selectAnyCategory()
+      await selectAnyCountry()
 
       // 'admin' is a reserved slug per the server allowlist
       await user.click(screen.getByRole('button', { name: /create/i }))
@@ -198,6 +227,7 @@ describe('BrandForm', () => {
 
       await user.type(screen.getByLabelText(/brand name/i), 'My Brand')
       await selectAnyCategory()
+      await selectAnyCountry()
 
       // Force an invalid slug (leading hyphen) — the onChange filter strips
       // most bad chars but a leading hyphen can slip through paste or
@@ -221,6 +251,7 @@ describe('BrandForm', () => {
 
       const select = screen.getByLabelText(/category/i) as HTMLSelectElement
       await user.selectOptions(select, 'coaching')
+      await selectAnyCountry()
 
       await user.click(screen.getByRole('button', { name: /create/i }))
 
@@ -229,6 +260,7 @@ describe('BrandForm', () => {
       expect(payload.name).toBe('Coaching Co')
       expect(payload.slug).toBe('coaching-co')
       expect(payload.category).toBe('coaching')
+      expect(payload.country_id).toBe(1)
     })
 
     it('skips slug validation when editing an existing brand (slug is locked)', async () => {
@@ -243,6 +275,7 @@ describe('BrandForm', () => {
             logo_url: null,
             bio: null,
             category: 'services',
+            country_id: 1,
             website_url: null,
             instagram_url: null,
             is_verified: false,
@@ -285,8 +318,9 @@ describe('BrandForm', () => {
       render(<BrandForm onSubmit={onSubmit} persistKey="test-clear" submitLabel="Create" />)
 
       await user.type(screen.getByLabelText(/brand name/i), 'Finished')
-      // Category required as of 2026-05-01.
+      // Category + country both required as of 2026-05-25.
       await user.selectOptions(screen.getByLabelText(/category/i), 'equipment')
+      await user.selectOptions(screen.getByLabelText(/country/i), '1')
       await user.click(screen.getByRole('button', { name: /create/i }))
 
       expect(localStorage.getItem('hockia_brand_draft_test-clear')).toBeNull()
@@ -298,6 +332,7 @@ describe('BrandForm', () => {
 
       await user.type(screen.getByLabelText(/brand name/i), 'Will Fail')
       await user.selectOptions(screen.getByLabelText(/category/i), 'equipment')
+      await user.selectOptions(screen.getByLabelText(/country/i), '1')
       await user.click(screen.getByRole('button', { name: /create/i }))
 
       expect(await screen.findByText(/brand slug already taken/i)).toBeInTheDocument()

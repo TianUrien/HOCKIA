@@ -25,6 +25,10 @@ export interface CreateBrandInput {
   name: string
   slug: string
   category: string
+  /** Country the brand operates from. Required as of migration
+   *  20260525120000 — the RPC rejects null. Used for country-filtered
+   *  brand discovery (search, marketplace). */
+  country_id: number
   bio?: string
   logo_url?: string
   website_url?: string
@@ -79,6 +83,12 @@ export function useMyBrand(): UseMyBrandResult {
         p_name: data.name,
         p_slug: data.slug,
         p_category: data.category,
+        // p_country_id added in migration 20260525120000 — required.
+        // Generated database.types.ts may still type the previous 9-arg
+        // signature until regenerated post-deploy, so cast through `as never`
+        // (mirrors the existing check_brand_slug_available pattern earlier
+        // in this file).
+        p_country_id: data.country_id as never,
         p_bio: (data.bio ?? null) as string | undefined,
         p_logo_url: (data.logo_url ?? null) as string | undefined,
         p_website_url: (data.website_url ?? null) as string | undefined,

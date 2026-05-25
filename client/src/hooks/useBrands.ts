@@ -28,6 +28,10 @@ export interface Brand {
   logo_url: string | null
   bio: string | null
   category: BrandCategory
+  /** Country the brand operates from (FK → countries.id). Required for
+   *  new brands; nullable for historical rows that pre-date migration
+   *  20260525120000 and didn't have a country signal to backfill from. */
+  country_id: number | null
   website_url: string | null
   instagram_url: string | null
   is_verified: boolean

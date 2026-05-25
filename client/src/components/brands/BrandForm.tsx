@@ -7,6 +7,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Camera, Loader2 } from 'lucide-react'
 import { Input, Button } from '@/components'
+import CountrySelect from '@/components/CountrySelect'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { optimizeAvatarImage, validateImage } from '@/lib/imageOptimization'
@@ -32,6 +33,11 @@ export interface BrandFormData {
   // to 'equipment' which silently mis-categorised brands that didn't notice
   // the dropdown.
   category: BrandCategory | ''
+  // null = no country selected (placeholder shown). Required at submit
+  // (server-side rejects null in create_brand). Migration 20260525120000
+  // added the column + backfilled existing brands; this collects it
+  // going forward so 100% of new brands are discoverable by country.
+  country_id: number | null
   bio: string
   logo_url: string
   website_url: string
@@ -146,6 +152,7 @@ export function BrandForm({
             name: parsed.name || brand?.name || '',
             slug: parsed.slug || brand?.slug || '',
             category: parsed.category || brand?.category || '',
+            country_id: parsed.country_id ?? brand?.country_id ?? null,
             bio: parsed.bio || brand?.bio || '',
             logo_url: parsed.logo_url || brand?.logo_url || '',
             website_url: parsed.website_url || brand?.website_url || '',
@@ -160,6 +167,7 @@ export function BrandForm({
       name: brand?.name || '',
       slug: brand?.slug || '',
       category: brand?.category || '',
+      country_id: brand?.country_id ?? null,
       bio: brand?.bio || '',
       logo_url: brand?.logo_url || '',
       website_url: brand?.website_url || '',
@@ -335,6 +343,11 @@ export function BrandForm({
 
     if (!formData.category) {
       setError('Please choose a category for your brand.')
+      return
+    }
+
+    if (!formData.country_id) {
+      setError('Please choose a country for your brand.')
       return
     }
 
@@ -522,6 +535,18 @@ export function BrandForm({
           ))}
         </select>
       </div>
+
+      {/* Country — required so the brand is discoverable in country-filtered
+          surfaces (Hockia AI search, marketplace, etc.). Migration 20260525120000
+          added the column + backfilled 8 existing brands. Without this field
+          set, the brand would be invisible to every country filter. */}
+      <CountrySelect
+        label="Country *"
+        value={formData.country_id}
+        onChange={(country_id) => setFormData(prev => ({ ...prev, country_id }))}
+        placeholder="Where is your brand based?"
+        required
+      />
 
       {/* Bio */}
       <div>

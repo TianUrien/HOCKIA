@@ -138,14 +138,24 @@ export default function BrandOnboardingPage() {
       category: 'onboarding',
       level: 'info',
       message: 'brand_onboarding.submit',
-      data: { userId: user?.id ?? null, category: data.category, hasLogo: !!data.logo_url },
+      data: { userId: user?.id ?? null, category: data.category, country_id: data.country_id, hasLogo: !!data.logo_url },
     })
+
+    // country_id is required by both the form (validated on submit) and the
+    // create_brand RPC (rejects null). This guard keeps TypeScript happy
+    // since data.country_id is nullable in BrandFormData; the form layer
+    // already prevents reaching here with null, but defense-in-depth.
+    if (data.country_id === null) {
+      setError('Please choose a country for your brand.')
+      return
+    }
 
     try {
       const result = await createBrand({
         name: data.name,
         slug: data.slug,
         category: data.category,
+        country_id: data.country_id,
         bio: data.bio || undefined,
         logo_url: data.logo_url || undefined,
         website_url: data.website_url || undefined,

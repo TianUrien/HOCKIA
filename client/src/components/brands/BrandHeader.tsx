@@ -6,8 +6,10 @@
 
 import { Store, Globe, Instagram } from 'lucide-react'
 import { getImageUrl } from '@/lib/imageUrl'
+import { useCountries } from '@/hooks/useCountries'
 import type { BrandDetail } from '@/hooks/useBrand'
 import VerifiedBadge from '@/components/VerifiedBadge'
+import Flag from '@/components/Flag'
 
 interface BrandHeaderProps {
   brand: BrandDetail
@@ -27,6 +29,9 @@ const CATEGORY_LABELS: Record<string, string> = {
 }
 
 export function BrandHeader({ brand }: BrandHeaderProps) {
+  const { getCountryById } = useCountries()
+  const country = brand.country_id ? getCountryById(brand.country_id) : null
+
   return (
     <div className="relative">
       {/* Cover */}
@@ -59,6 +64,15 @@ export function BrandHeader({ brand }: BrandHeaderProps) {
             </div>
             <p className="text-gray-500 mt-1">
               {CATEGORY_LABELS[brand.category] || brand.category}
+              {country && (
+                <>
+                  <span className="mx-2 text-gray-300" aria-hidden="true">·</span>
+                  <span className="inline-flex items-center gap-1.5 align-middle">
+                    <Flag code={country.code} countryName={country.name} fallbackEmoji={country.flag_emoji} />
+                    <span>{country.name}</span>
+                  </span>
+                </>
+              )}
             </p>
 
             {/* Links */}
