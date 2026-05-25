@@ -33,6 +33,8 @@ import { CommandCenterKPICard } from '../components/CommandCenterKPICard'
 import { CommandCenterGrowthChart } from '../components/CommandCenterGrowthChart'
 import { RetentionCurveChart } from '../components/RetentionCurveChart'
 import { ActivationFunnel } from '../components/ActivationFunnel'
+import { ActivationByRoleCard } from '../components/ActivationByRoleCard'
+import { NotificationCtrCard } from '../components/NotificationCtrCard'
 import { HealthSignals } from '../components/HealthSignals'
 import { ProductHealthHero } from '../components/ProductHealthHero'
 import { useAdminStats } from '../hooks/useAdminStats'
@@ -225,6 +227,14 @@ export function AdminOverview() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <RetentionCurveChart cohorts={cohorts} loading={ccLoading} />
         <ActivationFunnel data={funnel} loading={ccLoading} />
+      </div>
+
+      {/* ============================================================= */}
+      {/* PHASE 3E — Activation by role + Notification CTR (2-column)    */}
+      {/* ============================================================= */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <ActivationByRoleCard days={90} />
+        <NotificationCtrCard days={daysFilter} />
       </div>
 
       {/* ============================================================= */}

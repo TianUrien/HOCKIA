@@ -19,6 +19,7 @@ import { UserCheck, Building2, Store } from 'lucide-react'
 import { AdminPlayers } from './AdminPlayers'
 import { AdminClubs } from './AdminClubs'
 import { AdminBrands } from './AdminBrands'
+import { RoleHealthCard } from '../components/RoleHealthCard'
 
 type RoleTab = 'players' | 'clubs' | 'brands'
 
@@ -90,6 +91,11 @@ export function AdminUsers() {
           ))}
         </nav>
       </div>
+
+      {/* Phase 3B + 3C: role-health summary at the top of every tab.
+          Independent of the underlying page's own state — gives admins
+          a "biggest onboarding gap for this role" read at a glance. */}
+      <RoleHealthCard role={activeKey === 'players' ? 'player' : activeKey === 'clubs' ? 'club' : 'brand'} />
 
       {/* Render the underlying role page. These are the existing pages
           unchanged — they keep their own filters, RPC calls, internal

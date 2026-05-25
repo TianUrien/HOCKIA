@@ -1912,6 +1912,69 @@ export async function getZeroActivityUsers(days = 7): Promise<ZeroActivityUsersR
   return rows[0] ?? { total_signups: 0, zero_activity_count: 0 }
 }
 
+/** Phase 3C — per-role missing-field breakdown. Returns top fields by
+ *  null_count for the given role, so each Users & Roles tab can show
+ *  "78% of coaches are missing experience" without re-querying. */
+export interface RoleMissingField {
+  field_name: string
+  null_count: number
+  total_role_users: number
+  null_pct: number
+}
+
+export async function getRoleMissingFields(role: string): Promise<RoleMissingField[]> {
+  const { data, error } = await adminRpc('admin_get_role_missing_fields', { p_role: role })
+  if (error) throw new Error(`Failed to get role missing fields: ${error.message}`)
+  return (data ?? []) as RoleMissingField[]
+}
+
+/** Phase 3D — Feature adoption matrix. One row per (feature, role)
+ *  showing what % of active users of that role used the feature in
+ *  the last `days` days. */
+export interface FeatureAdoptionRow {
+  feature_key: string
+  feature_label: string
+  role: string
+  user_count: number
+  active_users_in_role: number
+  adoption_pct: number
+}
+
+export async function getFeatureAdoption(days = 30): Promise<FeatureAdoptionRow[]> {
+  const { data, error } = await adminRpc('admin_get_feature_adoption', { p_days: days })
+  if (error) throw new Error(`Failed to get feature adoption: ${error.message}`)
+  return (data ?? []) as FeatureAdoptionRow[]
+}
+
+/** Phase 3E — median time from signup to first value-action, per role.
+ *  Plus the activation rate (activated_count / cohort_size). */
+export interface TimeToFirstValueRow {
+  role: string
+  cohort_size: number
+  activated_count: number
+  median_minutes_to_first_action: number | null
+}
+
+export async function getTimeToFirstValue(days = 90): Promise<TimeToFirstValueRow[]> {
+  const { data, error } = await adminRpc('admin_get_time_to_first_value', { p_days: days })
+  if (error) throw new Error(`Failed to get time-to-first-value: ${error.message}`)
+  return (data ?? []) as TimeToFirstValueRow[]
+}
+
+/** Phase 3E — Notification CTR per notification kind. */
+export interface NotificationCtrRow {
+  kind: string
+  sent_count: number
+  click_count: number
+  ctr_pct: number
+}
+
+export async function getNotificationCtr(days = 30): Promise<NotificationCtrRow[]> {
+  const { data, error } = await adminRpc('admin_get_notification_ctr', { p_days: days })
+  if (error) throw new Error(`Failed to get notification CTR: ${error.message}`)
+  return (data ?? []) as NotificationCtrRow[]
+}
+
 // ============================================================================
 // MONTHLY REPORT
 // ============================================================================

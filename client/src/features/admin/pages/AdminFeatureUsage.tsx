@@ -17,6 +17,7 @@ import {
 import { StatCard } from '../components/StatCard'
 import { DataTable } from '../components/DataTable'
 import type { Column } from '../components/DataTable'
+import { FeatureAdoptionMatrix } from '../components/FeatureAdoptionMatrix'
 import { getFeatureUsageMetrics } from '../api/adminApi'
 import type { FeatureUsageMetrics, MostViewedProfile, EventSummaryItem } from '../types'
 import { logger } from '@/lib/logger'
@@ -181,6 +182,7 @@ export function AdminFeatureUsage() {
             <option value="90">Last 90 days</option>
           </select>
           <button
+            type="button"
             onClick={fetchData}
             disabled={isLoading}
             className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
@@ -190,6 +192,10 @@ export function AdminFeatureUsage() {
           </button>
         </div>
       </div>
+
+      {/* Phase 3D: Feature Adoption matrix — feature × role × %. The
+          period filter above drives this too via the daysFilter prop. */}
+      <FeatureAdoptionMatrix days={daysFilter} />
 
       {/* Summary Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
