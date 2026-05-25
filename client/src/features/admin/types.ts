@@ -326,6 +326,10 @@ export interface VacancyListItem {
   status: 'draft' | 'open' | 'closed'
   opportunity_type: 'player' | 'coach'
   position: string | null
+  /** "Women" / "Men" / null — exposed by admin_get_opportunities since
+   *  migration 20260525170000 (Phase 3A) for the gender filter dropdown
+   *  and the in-row gender chip. */
+  gender: string | null
   location_city: string | null
   location_country: string | null
   application_count: number
@@ -415,6 +419,16 @@ export interface VacancySearchParams {
   days?: number
   limit?: number
   offset?: number
+  // Phase 3A filters — see migration 20260525170000.
+  /** ISO-2 country code, e.g. "AR", "AU", "GB". */
+  country?: string
+  /** 'player' or 'coach' — matches opportunity_type enum. */
+  opportunity_type?: 'player' | 'coach'
+  /** Case-sensitive — matches opportunities.gender values ("Women" / "Men"). */
+  gender?: string
+  /** true → only opps with applications; false → only zero-app opps;
+   *  undefined → no filter. */
+  has_apps?: boolean
 }
 
 // ============================================================================

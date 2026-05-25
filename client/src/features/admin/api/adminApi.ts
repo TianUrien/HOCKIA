@@ -366,6 +366,13 @@ export async function getVacancies(params: VacancySearchParams = {}): Promise<{
     p_days: params.days || null,
     p_limit: params.limit || 50,
     p_offset: params.offset || 0,
+    // Phase 3A filters. `undefined` (no filter) needs to map to NULL on
+    // the server. `has_apps: false` is meaningful (zero-app opps) so the
+    // explicit `=== undefined` check matters — don't fold to falsy.
+    p_country: params.country || null,
+    p_opportunity_type: params.opportunity_type || null,
+    p_gender: params.gender || null,
+    p_has_apps: params.has_apps === undefined ? null : params.has_apps,
   })
   if (error) throw new Error(`Failed to get opportunities: ${error.message}`)
   
@@ -1886,6 +1893,23 @@ export async function getUserGrowthChart(days = 30): Promise<UserGrowthPoint[]> 
   const { data, error } = await adminRpc('admin_get_user_growth_chart', { p_days: days })
   if (error) throw new Error(`Failed to get user growth chart: ${error.message}`)
   return (data ?? []) as UserGrowthPoint[]
+}
+
+/** Phase 3A — Zero-Activity Users metric. Returns one row with the
+ *  total signups older than `days` AND the subset who've done zero
+ *  value-actions (apply / message / post / friend request / reference /
+ *  profile update). Powers the Overview Zero-Activity tile. */
+export interface ZeroActivityUsersResult {
+  total_signups: number
+  zero_activity_count: number
+}
+
+export async function getZeroActivityUsers(days = 7): Promise<ZeroActivityUsersResult> {
+  const { data, error } = await adminRpc('admin_get_zero_activity_users', { p_days_threshold: days })
+  if (error) throw new Error(`Failed to get zero-activity users: ${error.message}`)
+  // TABLE-returning RPC → array of one row.
+  const rows = (data ?? []) as ZeroActivityUsersResult[]
+  return rows[0] ?? { total_signups: 0, zero_activity_count: 0 }
 }
 
 // ============================================================================

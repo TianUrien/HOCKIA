@@ -39,6 +39,7 @@ import { useAdminStats } from '../hooks/useAdminStats'
 import { useCommandCenter } from '../hooks/useCommandCenter'
 import { getErrorBudgetStatus } from '@/lib/errorBudget'
 import type { ErrorBudgetStatus } from '@/lib/errorBudget'
+import { getZeroActivityUsers, type ZeroActivityUsersResult } from '../api/adminApi'
 
 type DaysFilter = 7 | 30 | 90
 
@@ -55,12 +56,29 @@ export function AdminOverview() {
     refetch: ccRefetch,
   } = useCommandCenter(daysFilter)
   const [errorBudget, setErrorBudget] = useState<ErrorBudgetStatus | null>(null)
+  // Phase 3A — Zero-Activity Users tile. 7-day threshold matches the
+  // audit's definition: signed up ≥7d ago AND has done zero value-
+  // actions (apply, message, post, friend request, reference, profile
+  // update). On prod 2026-05-25 this surfaced 189/231 (82%) of signups
+  // as zero-activity — biggest readiness signal we have.
+  const [zeroActivity, setZeroActivity] = useState<ZeroActivityUsersResult | null>(null)
+  const [zeroActivityLoading, setZeroActivityLoading] = useState(true)
 
   useEffect(() => {
     document.title = 'Overview | HOCKIA Admin'
     setErrorBudget(getErrorBudgetStatus())
     const interval = setInterval(() => setErrorBudget(getErrorBudgetStatus()), 60000)
     return () => clearInterval(interval)
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    setZeroActivityLoading(true)
+    getZeroActivityUsers(7)
+      .then((res) => { if (!cancelled) setZeroActivity(res) })
+      .catch(() => { if (!cancelled) setZeroActivity({ total_signups: 0, zero_activity_count: 0 }) })
+      .finally(() => { if (!cancelled) setZeroActivityLoading(false) })
+    return () => { cancelled = true }
   }, [])
 
   const handleRefresh = () => {
@@ -269,10 +287,15 @@ export function AdminOverview() {
             </div>
           </section>
 
-          {/* Signups */}
+          {/* Signups + activation health. The "Zero-Activity Users"
+              tile is the most important number on this section — it
+              answers "of the people who signed up, how many ghosted?".
+              Linked to the Directory pre-filtered for the same cohort
+              (Phase 3 work to make that filter actually wire up; for
+              now it lands on the unfiltered Directory). */}
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Signups</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
               <StatCard
                 label="Last 7 Days"
                 value={stats?.signups_7d ?? 0}
@@ -301,6 +324,30 @@ export function AdminOverview() {
                 color="amber"
                 loading={isLoading}
               />
+              <Link
+                to="/admin/directory?zero_activity=1"
+                className="block hover:opacity-90 transition-opacity"
+                title="Signed up ≥7 days ago and have done zero value-actions (apply, message, post, friend request, reference, profile update)."
+              >
+                <StatCard
+                  label="Zero-Activity (7d+)"
+                  value={zeroActivity?.zero_activity_count ?? 0}
+                  icon={UserX}
+                  color="red"
+                  loading={zeroActivityLoading}
+                  trend={
+                    zeroActivity && zeroActivity.total_signups > 0
+                      ? {
+                          value: Math.round(
+                            (zeroActivity.zero_activity_count / zeroActivity.total_signups) * 100,
+                          ),
+                          label: `% of ${zeroActivity.total_signups} signups`,
+                          direction: 'neutral',
+                        }
+                      : undefined
+                  }
+                />
+              </Link>
             </div>
           </section>
 
