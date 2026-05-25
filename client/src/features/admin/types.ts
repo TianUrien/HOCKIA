@@ -13,8 +13,14 @@ export interface DashboardStats {
   blocked_users: number
   test_accounts: number
 
-  // Brand metrics
+  // Brand metrics. `total_brands` was realigned in migration
+  // 20260525230000 to count brand-role profiles (matches how
+  // Players/Coaches/Clubs are counted). The previous entity-row
+  // count moved to `total_brand_entities` — only meaningful in
+  // sections that explicitly track brand activity, not in role-
+  // based summaries.
   total_brands: number
+  total_brand_entities: number
   brands_7d: number
   total_brand_products: number
   total_brand_posts: number

@@ -257,17 +257,15 @@ export function AdminOverview() {
                 color="purple"
                 loading={isLoading}
                 trend={
-                  // signupTrend is a percentage. StatCard renders trend.value
-                  // as a raw number, so the previous label "vs last 7d"
-                  // displayed as "-100 vs last 7d" — looked like "lost 100
-                  // users" on a Total Users tile showing 15 (QA pass 2
-                  // finding). Label now reads "% in signups vs prior 7d"
-                  // to make the metric's meaning unambiguous: week-over-
-                  // week signup velocity, not a change in cumulative users.
+                  // Pass value as a preformatted string with the %
+                  // glued to the number — keeps "-100%" from visually
+                  // splitting across the value/label wrap (QA pass 3
+                  // finding: "-100" alone read as "lost 100 users"
+                  // even with the relabelled context).
                   signupTrend !== 0
                     ? {
-                        value: Number(signupTrend),
-                        label: '% in signups vs prior 7d',
+                        value: `${Number(signupTrend) > 0 ? '+' : ''}${signupTrend}%`,
+                        label: 'in signups vs prior 7d',
                         direction: Number(signupTrend) > 0 ? 'up' : 'down',
                       }
                     : undefined
@@ -403,19 +401,27 @@ export function AdminOverview() {
             </div>
           </section>
 
-          {/* Brands */}
+          {/* Brand Entities — sub-strip tracking actual brand-row activity
+              (logo / bio / products / posts published). Distinct from
+              the "Brands" tile in the Users section above, which counts
+              role=brand profile accounts. QA pass 3 caught users
+              conflating the two; the section heading and the "Brand
+              Entities" tile label make the distinction explicit. */}
           <section>
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Brands</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Brand Entities</h2>
+            <p className="text-xs text-gray-500 -mt-3 mb-4">
+              Published brand rows + their activity (separate from the Brands account count in the Users section).
+            </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <StatCard
-                label="Total Brands"
-                value={stats?.total_brands ?? 0}
+                label="Brand Entities"
+                value={stats?.total_brand_entities ?? 0}
                 icon={Store}
                 color="purple"
                 loading={isLoading}
               />
               <StatCard
-                label="New Brands (7d)"
+                label="New Brand Entities (7d)"
                 value={stats?.brands_7d ?? 0}
                 icon={TrendingUp}
                 color="blue"

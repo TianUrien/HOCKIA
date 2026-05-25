@@ -12,7 +12,10 @@ interface StatCardProps {
   value: number | string
   icon?: LucideIcon
   trend?: {
-    value: number
+    /** number for raw counts (auto-locale-formatted), or string for
+     *  preformatted values like "-100%" where the unit must be glued
+     *  to the number so it doesn't visually split across line wraps. */
+    value: number | string
     label: string
     direction: 'up' | 'down' | 'neutral'
   }
@@ -115,9 +118,12 @@ export function StatCard({
           >
             {/* '+' only on direction='up' (a positive delta). For
                 neutral (a raw count like "% of users" or "signups in
-                last 30d") the prefix would mislead — audit Bug 7. */}
-            {trend.direction === 'up' && trend.value > 0 ? '+' : ''}
-            {trend.value}
+                last 30d") the prefix would mislead — audit Bug 7.
+                The number-vs-string guard keeps preformatted values
+                like "-100%" intact (QA pass 3 finding: trends without
+                a unit suffix glued to the number read as raw counts). */}
+            {trend.direction === 'up' && typeof trend.value === 'number' && trend.value > 0 ? '+' : ''}
+            {typeof trend.value === 'number' ? trend.value.toLocaleString() : trend.value}
           </span>
           <span className="text-gray-400">{trend.label}</span>
         </div>
