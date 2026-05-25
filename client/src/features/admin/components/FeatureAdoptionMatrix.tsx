@@ -10,7 +10,8 @@
  * "post_create is dead for clubs" without scanning a wall of numbers.
  */
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { AlertTriangle, RefreshCw } from 'lucide-react'
 import { getFeatureAdoption, type FeatureAdoptionRow } from '../api/adminApi'
 import { logger } from '@/lib/logger'
 
@@ -36,19 +37,29 @@ function pctToBg(pct: number): string {
 export function FeatureAdoptionMatrix({ days = 30 }: FeatureAdoptionMatrixProps) {
   const [rows, setRows] = useState<FeatureAdoptionRow[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
+  const fetchData = useCallback(() => {
     let cancelled = false
     setIsLoading(true)
+    setError(null)
     getFeatureAdoption(days)
       .then((data) => { if (!cancelled) setRows(data) })
       .catch((err) => {
         logger.error('[FeatureAdoptionMatrix] fetch failed:', err)
-        if (!cancelled) setRows([])
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Failed to load')
+          setRows([])
+        }
       })
       .finally(() => { if (!cancelled) setIsLoading(false) })
     return () => { cancelled = true }
   }, [days])
+
+  useEffect(() => {
+    const cancel = fetchData()
+    return cancel
+  }, [fetchData])
 
   // Pivot to feature × role lookup. Keys are stable so the table
   // ordering matches the RPC's pinned feature order.
@@ -76,6 +87,27 @@ export function FeatureAdoptionMatrix({ days = 30 }: FeatureAdoptionMatrixProps)
           {[1, 2, 3, 4, 5].map((i) => (
             <div key={i} className="h-8 bg-gray-100 rounded" />
           ))}
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <div className="flex items-start gap-3">
+          <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+          <div className="flex-1 min-w-0">
+            <h2 className="text-lg font-semibold text-gray-900">Feature Adoption</h2>
+            <p className="text-sm text-gray-600 mt-1 break-words">Couldn&apos;t load this panel: {error}</p>
+            <button
+              type="button"
+              onClick={() => fetchData()}
+              className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-purple-600 hover:text-purple-700"
+            >
+              <RefreshCw className="w-3.5 h-3.5" /> Retry
+            </button>
+          </div>
         </div>
       </div>
     )

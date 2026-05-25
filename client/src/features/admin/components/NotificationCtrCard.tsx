@@ -6,8 +6,8 @@
  * we send? which kinds work, which are noise?"
  */
 
-import { useEffect, useState } from 'react'
-import { Bell } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
+import { Bell, AlertTriangle, RefreshCw } from 'lucide-react'
 import { getNotificationCtr, type NotificationCtrRow } from '../api/adminApi'
 import { logger } from '@/lib/logger'
 
@@ -23,19 +23,29 @@ function humanKind(kind: string): string {
 export function NotificationCtrCard({ days = 30 }: { days?: number }) {
   const [rows, setRows] = useState<NotificationCtrRow[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
+  const fetchData = useCallback(() => {
     let cancelled = false
     setIsLoading(true)
+    setError(null)
     getNotificationCtr(days)
       .then((data) => { if (!cancelled) setRows(data) })
       .catch((err) => {
         logger.error('[NotificationCtrCard] fetch failed:', err)
-        if (!cancelled) setRows([])
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Failed to load')
+          setRows([])
+        }
       })
       .finally(() => { if (!cancelled) setIsLoading(false) })
     return () => { cancelled = true }
   }, [days])
+
+  useEffect(() => {
+    const cancel = fetchData()
+    return cancel
+  }, [fetchData])
 
   if (isLoading) {
     return (
@@ -43,6 +53,27 @@ export function NotificationCtrCard({ days = 30 }: { days?: number }) {
         <div className="h-4 w-40 bg-gray-200 rounded mb-4" />
         <div className="space-y-2">
           {[1, 2, 3, 4, 5].map((i) => <div key={i} className="h-6 bg-gray-100 rounded" />)}
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <div className="flex items-start gap-3">
+          <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+          <div className="flex-1 min-w-0">
+            <h3 className="text-sm font-semibold text-gray-700">Notification CTR</h3>
+            <p className="text-xs text-gray-500 mt-1 break-words">{error}</p>
+            <button
+              type="button"
+              onClick={() => fetchData()}
+              className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-purple-600 hover:text-purple-700"
+            >
+              <RefreshCw className="w-3 h-3" /> Retry
+            </button>
+          </div>
         </div>
       </div>
     )

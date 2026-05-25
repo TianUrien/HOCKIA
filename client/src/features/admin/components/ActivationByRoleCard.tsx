@@ -9,7 +9,8 @@
  *   - This:   "of role X signups, how many ever acted, and how fast?"
  */
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { AlertTriangle, RefreshCw } from 'lucide-react'
 import { getTimeToFirstValue, type TimeToFirstValueRow } from '../api/adminApi'
 import { logger } from '@/lib/logger'
 
@@ -27,19 +28,33 @@ function formatDuration(minutes: number | null): string {
 export function ActivationByRoleCard({ days = 90 }: { days?: number }) {
   const [rows, setRows] = useState<TimeToFirstValueRow[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  // Distinguish "RPC failed" from "no data" — the QA agent's pass 2
+  // caught that returning null on failure made the card look like a
+  // missing component rather than a broken one. Keep the error
+  // message so the inline error UI can hint at the cause.
+  const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
+  const fetchData = useCallback(() => {
     let cancelled = false
     setIsLoading(true)
+    setError(null)
     getTimeToFirstValue(days)
       .then((data) => { if (!cancelled) setRows(data) })
       .catch((err) => {
         logger.error('[ActivationByRoleCard] fetch failed:', err)
-        if (!cancelled) setRows([])
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Failed to load')
+          setRows([])
+        }
       })
       .finally(() => { if (!cancelled) setIsLoading(false) })
     return () => { cancelled = true }
   }, [days])
+
+  useEffect(() => {
+    const cancel = fetchData()
+    return cancel
+  }, [fetchData])
 
   if (isLoading) {
     return (
@@ -52,8 +67,35 @@ export function ActivationByRoleCard({ days = 90 }: { days?: number }) {
     )
   }
 
+  if (error) {
+    return (
+      <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <div className="flex items-start gap-3">
+          <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+          <div className="flex-1 min-w-0">
+            <h3 className="text-sm font-semibold text-gray-700">Activation by Role</h3>
+            <p className="text-xs text-gray-500 mt-1 break-words">{error}</p>
+            <button
+              type="button"
+              onClick={() => fetchData()}
+              className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-purple-600 hover:text-purple-700"
+            >
+              <RefreshCw className="w-3 h-3" /> Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   if (rows.length === 0) {
-    return null
+    return (
+      <div className="bg-white rounded-xl border border-gray-200 p-6 text-center">
+        <p className="text-sm text-gray-400">
+          No signups in the last {days} days to score activation against.
+        </p>
+      </div>
+    )
   }
 
   return (

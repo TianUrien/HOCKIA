@@ -257,10 +257,17 @@ export function AdminOverview() {
                 color="purple"
                 loading={isLoading}
                 trend={
+                  // signupTrend is a percentage. StatCard renders trend.value
+                  // as a raw number, so the previous label "vs last 7d"
+                  // displayed as "-100 vs last 7d" — looked like "lost 100
+                  // users" on a Total Users tile showing 15 (QA pass 2
+                  // finding). Label now reads "% in signups vs prior 7d"
+                  // to make the metric's meaning unambiguous: week-over-
+                  // week signup velocity, not a change in cumulative users.
                   signupTrend !== 0
                     ? {
                         value: Number(signupTrend),
-                        label: 'vs last 7d',
+                        label: '% in signups vs prior 7d',
                         direction: Number(signupTrend) > 0 ? 'up' : 'down',
                       }
                     : undefined
