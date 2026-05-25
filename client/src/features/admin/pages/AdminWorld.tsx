@@ -295,7 +295,7 @@ export default function AdminWorld() {
         <div className="flex items-center gap-3">
           <Globe2 className="w-8 h-8 text-purple-600" />
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Hockey World</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Clubs Directory (World)</h1>
             <p className="text-sm text-gray-500">Manage clubs, leagues, and regions</p>
           </div>
         </div>

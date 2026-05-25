@@ -22,8 +22,6 @@ import {
   Activity,
   Store,
   Globe2,
-  PieChart,
-  Network,
   Mail,
   Megaphone,
   BarChart3,
@@ -38,7 +36,6 @@ import {
   Search,
   Loader2,
   UserPlus,
-  SearchCheck,
   MessageSquare,
   Share2,
   TrendingDown,
@@ -47,6 +44,20 @@ import {
 import { searchProfiles } from '../api/adminApi'
 import type { AdminProfileListItem } from '../types'
 
+// Phase 2A of the admin IA audit (2026-05-25):
+//   - "Vacancy Management" → "Opportunities" (already lined up here;
+//     the page header is also renamed for consistency)
+//   - "Hockey World" → "Clubs Directory (World)"
+//   - "Data Issues" → "Data Integrity"
+//   - "Networking" item removed — its messaging tab fully duplicates
+//     Messaging Health; the friendship/reference views will move under
+//     a future "Engagement" section in Phase 2C
+//   - "Investors" removed from sidebar — promoted to a "Share investor
+//     snapshot" button on AdminOverview (the page itself is kept,
+//     reachable via the button → /admin/investors)
+//   - "Search Quality" removed — subsumed by Discovery; old URL redirects
+//     in App.tsx
+// Full sidebar restructure into collapsible groups is Phase 2B.
 const NAV_ITEMS = [
   { path: '/admin/overview', icon: LayoutDashboard, label: 'Overview', exact: true },
   { path: '/admin/opportunities', icon: Briefcase, label: 'Opportunities' },
@@ -60,19 +71,16 @@ const NAV_ITEMS = [
   { path: '/admin/onboarding', icon: UserPlus, label: 'Onboarding Funnel' },
   { path: '/admin/churn', icon: TrendingDown, label: 'Churn & Retention' },
   { path: '/admin/attribution', icon: Share2, label: 'Attribution' },
-  { path: '/admin/search-quality', icon: SearchCheck, label: 'Search Quality' },
   { path: '/admin/messaging-health', icon: MessageSquare, label: 'Messaging Health' },
   { path: '/admin/community', icon: HelpCircle, label: 'Community' },
   { path: '/admin/preferences', icon: ToggleRight, label: 'User Preferences' },
   { path: '/admin/discovery', icon: Sparkles, label: 'Discovery' },
-  { path: '/admin/networking', icon: Network, label: 'Networking' },
   { path: '/admin/email', icon: Mail, label: 'Email' },
   { path: '/admin/outreach', icon: Megaphone, label: 'Outreach' },
   { path: '/admin/monthly-report', icon: FileText, label: 'Monthly Report' },
-  { path: '/admin/investors', icon: PieChart, label: 'Investors' },
-  { path: '/admin/world', icon: Globe2, label: 'Hockey World' },
+  { path: '/admin/world', icon: Globe2, label: 'Clubs Directory (World)' },
   { path: '/admin/directory', icon: Users, label: 'Directory' },
-  { path: '/admin/data-issues', icon: AlertTriangle, label: 'Data Issues' },
+  { path: '/admin/data-issues', icon: AlertTriangle, label: 'Data Integrity' },
   { path: '/admin/reports', icon: Flag, label: 'Content Reports' },
   { path: '/admin/audit-log', icon: ScrollText, label: 'Audit Log' },
   { path: '/admin/settings', icon: Settings, label: 'Settings' },

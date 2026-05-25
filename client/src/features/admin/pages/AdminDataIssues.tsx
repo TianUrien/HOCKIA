@@ -40,7 +40,7 @@ export function AdminDataIssues() {
   } = useDataIssues()
 
   useEffect(() => {
-    document.title = 'Data Issues | HOCKIA Admin'
+    document.title = 'Data Integrity | HOCKIA Admin'
     fetchAll()
   }, [fetchAll])
 
@@ -179,7 +179,7 @@ export function AdminDataIssues() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Data Issues</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Data Integrity</h1>
           <p className="text-sm text-gray-500 mt-1">
             Find and fix data integrity problems
           </p>

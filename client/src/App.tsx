@@ -113,7 +113,6 @@ const AdminPlayers = lazyWithRetry(() => import('@/features/admin/pages/AdminPla
 const AdminEngagement = lazyWithRetry(() => import('@/features/admin/pages/AdminEngagement').then(m => ({ default: m.AdminEngagement })))
 const AdminFeatureUsage = lazyWithRetry(() => import('@/features/admin/pages/AdminFeatureUsage').then(m => ({ default: m.AdminFeatureUsage })))
 const AdminDiscovery = lazyWithRetry(() => import('@/features/admin/pages/AdminDiscovery').then(m => ({ default: m.AdminDiscovery })))
-const AdminNetworking = lazyWithRetry(() => import('@/features/admin/pages/AdminNetworking').then(m => ({ default: m.AdminNetworking })))
 const AdminDeviceUsers = lazyWithRetry(() => import('@/features/admin/pages/AdminDeviceUsers').then(m => ({ default: m.AdminDeviceUsers })))
 const AdminInvestorDashboard = lazyWithRetry(() => import('@/features/admin/pages/AdminInvestorDashboard').then(m => ({ default: m.AdminInvestorDashboard })))
 const AdminWorld = lazyWithRetry(() => import('@/features/admin/pages/AdminWorld'))
@@ -126,7 +125,6 @@ const AdminFunnels = lazyWithRetry(() => import('@/features/admin/pages/AdminFun
 const AdminCommunity = lazyWithRetry(() => import('@/features/admin/pages/AdminCommunity').then(m => ({ default: m.AdminCommunity })))
 const AdminMonthlyReport = lazyWithRetry(() => import('@/features/admin/pages/AdminMonthlyReport').then(m => ({ default: m.AdminMonthlyReport })))
 const AdminOnboardingFunnel = lazyWithRetry(() => import('@/features/admin/pages/AdminOnboardingFunnel').then(m => ({ default: m.AdminOnboardingFunnel })))
-const AdminSearchQuality = lazyWithRetry(() => import('@/features/admin/pages/AdminSearchQuality').then(m => ({ default: m.AdminSearchQuality })))
 const AdminMessagingHealth = lazyWithRetry(() => import('@/features/admin/pages/AdminMessagingHealth').then(m => ({ default: m.AdminMessagingHealth })))
 const AdminAttribution = lazyWithRetry(() => import('@/features/admin/pages/AdminAttribution').then(m => ({ default: m.AdminAttribution })))
 const AdminChurn = lazyWithRetry(() => import('@/features/admin/pages/AdminChurn').then(m => ({ default: m.AdminChurn })))
@@ -484,10 +482,17 @@ function App() {
                   <Route path="brands" element={<AdminBrands />} />
                   <Route path="players" element={<AdminPlayers />} />
                   <Route path="player-analytics" element={<Navigate to="/admin/players" replace />} />
+                  {/* Phase 2A: removed-from-sidebar pages still answer URLs
+                      (kept reachable for bookmarks; pages themselves remain).
+                      search-quality was subsumed by Discovery; networking
+                      duplicated Messaging Health; investors moved to a
+                      button on Overview but the page is still useful. */}
+                  <Route path="search-quality" element={<Navigate to="/admin/discovery" replace />} />
+                  <Route path="networking" element={<Navigate to="/admin/messaging-health" replace />} />
                   <Route path="engagement" element={<AdminEngagement />} />
                   <Route path="feature-usage" element={<AdminFeatureUsage />} />
                   <Route path="discovery" element={<AdminDiscovery />} />
-                  <Route path="networking" element={<AdminNetworking />} />
+                  {/* networking page removed Phase 2A — old URL caught by redirect above */}
                   <Route path="devices" element={<AdminDeviceUsers />} />
                   <Route path="devices/:platform" element={<AdminDeviceUsers />} />
                   <Route path="email" element={<AdminEmail />} />
@@ -499,7 +504,7 @@ function App() {
                   <Route path="community" element={<AdminCommunity />} />
                   <Route path="monthly-report" element={<AdminMonthlyReport />} />
                   <Route path="onboarding" element={<AdminOnboardingFunnel />} />
-                  <Route path="search-quality" element={<AdminSearchQuality />} />
+                  {/* search-quality page removed Phase 2A — old URL caught by redirect above */}
                   <Route path="messaging-health" element={<AdminMessagingHealth />} />
                   <Route path="attribution" element={<AdminAttribution />} />
                   <Route path="churn" element={<AdminChurn />} />

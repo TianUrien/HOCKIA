@@ -26,6 +26,7 @@ import {
   Bell,
   Smartphone,
   ChevronDown,
+  Share2,
 } from 'lucide-react'
 import { StatCard } from '../components/StatCard'
 import { CommandCenterKPICard } from '../components/CommandCenterKPICard'
@@ -56,7 +57,7 @@ export function AdminOverview() {
   const [errorBudget, setErrorBudget] = useState<ErrorBudgetStatus | null>(null)
 
   useEffect(() => {
-    document.title = 'Founder Command Center | HOCKIA'
+    document.title = 'Overview | HOCKIA Admin'
     setErrorBudget(getErrorBudgetStatus())
     const interval = setInterval(() => setErrorBudget(getErrorBudgetStatus()), 60000)
     return () => clearInterval(interval)
@@ -114,12 +115,20 @@ export function AdminOverview() {
       {/* ============================================================= */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Founder Command Center</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Overview</h1>
           <p className="text-sm text-gray-500 mt-1">
             Is the product working? Key signals at a glance.
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <Link
+            to="/admin/investors"
+            className="hidden sm:inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-purple-700 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors"
+            title="Open the shareable investor snapshot"
+          >
+            <Share2 className="w-4 h-4" />
+            Share investor snapshot
+          </Link>
           <select
             value={daysFilter}
             onChange={(e) => setDaysFilter(Number(e.target.value) as DaysFilter)}

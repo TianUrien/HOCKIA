@@ -196,7 +196,7 @@ export function AdminOpportunities() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Vacancy Management</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Opportunities</h1>
           <p className="text-sm text-gray-500 mt-1">
             Monitor vacancies, applications, and club activity
           </p>

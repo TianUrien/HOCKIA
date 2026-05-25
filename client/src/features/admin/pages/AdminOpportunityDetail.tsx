@@ -219,15 +219,18 @@ export function AdminOpportunityDetail() {
     )
   }
 
-  // detail.vacancy can be null when the opportunity was deleted or the ID is
-  // wrong — admin_get_vacancy_detail returns json_build_object with a null
-  // vacancy field rather than throwing. Without this guard the destructure
-  // succeeds with vacancy=undefined and `vacancy.title` crashes (Sentry
-  // JAVASCRIPT-REACT-9S).
-  if (!detail || !detail.vacancy) {
+  // admin_get_opportunity_detail returns { opportunity, club, stats } —
+  // the RPC was renamed from vacancy → opportunity in migration
+  // 202603230400 but the frontend type kept the old key, so every
+  // call resolved detail.vacancy to undefined and the page rendered
+  // a misleading "Vacancy not found" empty state even when the
+  // opportunity existed (as in the 28331754... case Tian saw on 2026-05-25
+  // with 2 pending applications). The destructure aliases opportunity →
+  // vacancy so the rest of the JSX (12+ field reads) stays unchanged.
+  if (!detail || !detail.opportunity) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500">Vacancy not found</p>
+        <p className="text-gray-500">Opportunity not found</p>
         <Link to="/admin/opportunities" className="text-purple-600 hover:text-purple-700 mt-2 inline-block">
           Back to opportunities
         </Link>
@@ -235,7 +238,7 @@ export function AdminOpportunityDetail() {
     )
   }
 
-  const { vacancy, club, stats } = detail
+  const { opportunity: vacancy, club, stats } = detail
 
   return (
     <div className="space-y-6">
