@@ -360,8 +360,12 @@ export type ApplicationStatus =
   | 'maybe'
   | 'rejected'
 
+// Field name matches admin_get_opportunity_detail's JSON shape exactly
+// (renamed from "vacancy" to "opportunity" in migration 202603230400).
+// Pre-fix this interface still read "vacancy", so the page showed a
+// misleading "not found" state for every real opportunity.
 export interface VacancyDetail {
-  vacancy: {
+  opportunity: {
     id: string
     club_id: string
     opportunity_type: 'player' | 'coach'
