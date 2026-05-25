@@ -483,6 +483,7 @@ function App() {
                   <Route path="clubs" element={<AdminClubs />} />
                   <Route path="brands" element={<AdminBrands />} />
                   <Route path="players" element={<AdminPlayers />} />
+                  <Route path="player-analytics" element={<Navigate to="/admin/players" replace />} />
                   <Route path="engagement" element={<AdminEngagement />} />
                   <Route path="feature-usage" element={<AdminFeatureUsage />} />
                   <Route path="discovery" element={<AdminDiscovery />} />

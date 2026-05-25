@@ -126,12 +126,19 @@ export function AdminOpportunities() {
       key: 'application_count',
       label: 'Applications',
       render: (_, row) => (
-        <div className="text-sm">
+        // Whole cell links straight to the Applicants section on the detail
+        // page. Before this, the "(N pending)" indicator was static text so
+        // the only way to reach applicants was the row-end chevron and then
+        // scrolling — audit Bug 2.
+        <Link
+          to={`/admin/opportunities/${row.id}?tab=applicants`}
+          className="text-sm hover:underline"
+        >
           <span className="font-medium text-gray-900">{row.application_count}</span>
           {row.pending_count > 0 && (
             <span className="text-xs text-amber-600 ml-1">({row.pending_count} pending)</span>
           )}
-        </div>
+        </Link>
       ),
     },
     {

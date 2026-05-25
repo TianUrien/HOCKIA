@@ -4,9 +4,9 @@
  * Detailed view of a single vacancy with applicants list.
  */
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { formatAdminDate } from '../utils/formatDate'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, useSearchParams, Link } from 'react-router-dom'
 import {
   ArrowLeft,
   RefreshCw,
@@ -31,6 +31,7 @@ import { logger } from '@/lib/logger'
 
 export function AdminOpportunityDetail() {
   const { id } = useParams<{ id: string }>()
+  const [searchParams] = useSearchParams()
   const [detail, setDetail] = useState<VacancyDetail | null>(null)
   const [applicants, setApplicants] = useState<VacancyApplicant[]>([])
   const [totalApplicants, setTotalApplicants] = useState(0)
@@ -39,6 +40,10 @@ export function AdminOpportunityDetail() {
   const [statusFilter, setStatusFilter] = useState<ApplicationStatus | 'all'>('all')
   const [page, setPage] = useState(0)
   const pageSize = 20
+  // Scroll target for ?tab=applicants deep-links from the list page.
+  // Single-page layout for now (audit's full Overview/Applicants/Activity
+  // tab rebuild is Phase 2); this gets the user to the table immediately.
+  const applicantsRef = useRef<HTMLDivElement | null>(null)
 
   const fetchData = useCallback(async () => {
     if (!id) return
@@ -72,6 +77,13 @@ export function AdminOpportunityDetail() {
     document.title = 'Vacancy Detail | HOCKIA Admin'
     fetchData()
   }, [fetchData])
+
+  // Scroll-to-applicants for ?tab=applicants deep-links. Waits until
+  // detail has loaded so the section actually exists in the DOM.
+  useEffect(() => {
+    if (!detail || searchParams.get('tab') !== 'applicants') return
+    applicantsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [detail, searchParams])
 
   const formatTimeToFirstApp = (minutes: number | null): string => {
     if (!minutes) return '—'
@@ -379,7 +391,7 @@ export function AdminOpportunityDetail() {
       </div>
 
       {/* Applicants Table */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div ref={applicantsRef} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
           <h2 className="font-semibold text-gray-900">
             Applicants ({totalApplicants})
