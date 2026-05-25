@@ -289,13 +289,16 @@ describe('FriendsTab', () => {
     expect(await screen.findByText(/No connections yet/i)).toBeInTheDocument()
   })
 
-  it('renders Requests section with deep-link anchor when isOwner', async () => {
+  it('renders Incoming requests section with deep-link anchor when isOwner', async () => {
     supabaseState.edgesResult = { data: [], error: null }
     const { container } = renderFriendsTab()
     // Wait for fetch to settle (data is empty so component renders the
-    // "no new requests" state under the anchor). "Incoming Requests"
-    // heading was renamed to "Requests" in the Community redesign.
-    await screen.findByText('Requests')
+    // "no new requests" state under the anchor). Heading history:
+    // "Incoming Requests" (original) → "Requests" (Community redesign)
+    // → "Incoming requests" (QA audit 2026-05-25 — needed to match the
+    // ?section=incoming URL anchor, which is now also the email/push
+    // CTA target after commit 4893b58).
+    await screen.findByText('Incoming requests')
     const anchor = container.querySelector('[data-deeplink-section="incoming-requests"]')
     expect(anchor).not.toBeNull()
   })

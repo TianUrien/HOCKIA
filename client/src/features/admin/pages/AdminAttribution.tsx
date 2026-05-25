@@ -232,7 +232,7 @@ export function AdminAttribution() {
               <UserPlus className="w-5 h-5 text-gray-400" />
             </div>
             <div className="text-xs font-medium text-green-600 uppercase tracking-wide mb-1">
-              Vacancy View &rarr; Application
+              Opportunity View &rarr; Application
             </div>
             <div className="text-3xl font-bold text-gray-900">
               {(vacancyToApp?.conversion_rate ?? 0).toFixed(1)}%
