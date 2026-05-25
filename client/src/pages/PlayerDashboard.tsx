@@ -211,6 +211,16 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
 
     const next = new URLSearchParams(searchParams)
     next.delete('tab')
+    // Legacy ?section=requests was renamed to ?section=incoming on
+    // 2026-05-09 (see FriendsTab section anchor handler — it only
+    // recognises 'incoming' and 'references' now). Emails and push
+    // payloads were migrated in commit 4893b58 but old bookmarks /
+    // in-app links / stale notifications still emit the old value.
+    // Translate it here so old URLs land on the same scroll anchor
+    // as the new ones. QA audit 2026-05-25 caught the divergence.
+    if (next.get('section') === 'requests') {
+      next.set('section', 'incoming')
+    }
     const qs = next.toString()
     const qsSuffix = qs ? `?${qs}` : ''
 

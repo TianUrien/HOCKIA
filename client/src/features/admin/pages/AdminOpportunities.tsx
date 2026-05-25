@@ -4,7 +4,7 @@
  * Vacancy management dashboard with filtering, stats, and drill-down.
  */
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { formatAdminDate } from '../utils/formatDate'
 import { Link } from 'react-router-dom'
 import {
@@ -26,6 +26,9 @@ import { logger } from '@/lib/logger'
 
 type StatusFilter = 'all' | 'draft' | 'open' | 'closed'
 type DaysFilter = 7 | 30 | 90 | null
+type RoleFilter = 'all' | 'player' | 'coach'
+type GenderFilter = 'all' | 'Women' | 'Men'
+type HasAppsFilter = 'all' | 'yes' | 'no'
 
 export function AdminOpportunities() {
   const [vacancies, setVacancies] = useState<VacancyListItem[]>([])
@@ -33,30 +36,44 @@ export function AdminOpportunities() {
   const [stats, setStats] = useState<ExtendedDashboardStats | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  
-  // Filters
+
+  // Filters. Phase 3A added country / role / gender / has-apps on top
+  // of the pre-existing status + days filters. All push down to the RPC
+  // (admin_get_opportunities, migration 20260525170000) so total_count
+  // stays consistent with what's paged through.
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [daysFilter, setDaysFilter] = useState<DaysFilter>(30)
+  const [countryFilter, setCountryFilter] = useState<string>('all')
+  const [roleFilter, setRoleFilter] = useState<RoleFilter>('all')
+  const [genderFilter, setGenderFilter] = useState<GenderFilter>('all')
+  const [hasAppsFilter, setHasAppsFilter] = useState<HasAppsFilter>('all')
   const [page, setPage] = useState(0)
   const pageSize = 20
 
   const fetchData = useCallback(async () => {
     setIsLoading(true)
     setError(null)
-    
+
     try {
       const params: VacancySearchParams = {
         status: statusFilter === 'all' ? undefined : statusFilter,
         days: daysFilter ?? undefined,
+        country: countryFilter === 'all' ? undefined : countryFilter,
+        opportunity_type: roleFilter === 'all' ? undefined : roleFilter,
+        gender: genderFilter === 'all' ? undefined : genderFilter,
+        has_apps:
+          hasAppsFilter === 'yes' ? true :
+          hasAppsFilter === 'no' ? false :
+          undefined,
         limit: pageSize,
         offset: page * pageSize,
       }
-      
+
       const [vacancyData, statsData] = await Promise.all([
         getVacancies(params),
         getExtendedDashboardStats(),
       ])
-      
+
       setVacancies(vacancyData.vacancies)
       setTotalCount(vacancyData.totalCount)
       setStats(statsData)
@@ -66,12 +83,31 @@ export function AdminOpportunities() {
     } finally {
       setIsLoading(false)
     }
-  }, [statusFilter, daysFilter, page])
+  }, [statusFilter, daysFilter, countryFilter, roleFilter, genderFilter, hasAppsFilter, page])
 
   useEffect(() => {
-    document.title = 'Vacancies | HOCKIA Admin'
+    document.title = 'Opportunities | HOCKIA Admin'
     fetchData()
   }, [fetchData])
+
+  // Derived from currently-loaded opportunities. Limited to the current
+  // page's countries — acceptable for HOCKIA's scale; a future enhancement
+  // could fetch the distinct set once on mount.
+  const countryOptions = useMemo(() => {
+    const set = new Set<string>()
+    for (const v of vacancies) {
+      if (v.location_country) set.add(v.location_country)
+    }
+    return [...set].sort()
+  }, [vacancies])
+
+  const hasActiveFilters =
+    statusFilter !== 'all' ||
+    daysFilter !== 30 ||
+    countryFilter !== 'all' ||
+    roleFilter !== 'all' ||
+    genderFilter !== 'all' ||
+    hasAppsFilter !== 'all'
 
   const columns: Column<VacancyListItem>[] = [
     {
@@ -243,10 +279,15 @@ export function AdminOpportunities() {
         />
       </div>
 
-      {/* Filters */}
-      <div className="flex items-center gap-4 bg-white p-4 rounded-xl border border-gray-200">
+      {/* Filters. Country options derived from the currently-loaded page
+          of vacancies — when nothing's been loaded yet (initial mount,
+          impossible-filter combo) the country dropdown only shows "All".
+          A future enhancement could fetch the full country set once on
+          mount; not worth the extra RPC call for HOCKIA's current
+          ~20 opp scale. */}
+      <div className="flex items-center gap-4 bg-white p-4 rounded-xl border border-gray-200 flex-wrap">
         <Filter className="w-4 h-4 text-gray-400" />
-        
+
         <div className="flex items-center gap-2">
           <label htmlFor="status-filter" className="text-sm text-gray-600">Status:</label>
           <select
@@ -286,11 +327,77 @@ export function AdminOpportunities() {
           </select>
         </div>
 
-        {(statusFilter !== 'all' || daysFilter !== 30) && (
+        <div className="flex items-center gap-2">
+          <label htmlFor="country-filter" className="text-sm text-gray-600">Country:</label>
+          <select
+            id="country-filter"
+            aria-label="Filter by country"
+            value={countryFilter}
+            onChange={(e) => { setCountryFilter(e.target.value); setPage(0) }}
+            className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-purple-500"
+          >
+            <option value="all">All</option>
+            {countryOptions.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <label htmlFor="role-filter" className="text-sm text-gray-600">Role:</label>
+          <select
+            id="role-filter"
+            aria-label="Filter by opportunity type"
+            value={roleFilter}
+            onChange={(e) => { setRoleFilter(e.target.value as RoleFilter); setPage(0) }}
+            className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-purple-500"
+          >
+            <option value="all">All</option>
+            <option value="player">Player</option>
+            <option value="coach">Coach</option>
+          </select>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <label htmlFor="gender-filter" className="text-sm text-gray-600">Gender:</label>
+          <select
+            id="gender-filter"
+            aria-label="Filter by gender"
+            value={genderFilter}
+            onChange={(e) => { setGenderFilter(e.target.value as GenderFilter); setPage(0) }}
+            className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-purple-500"
+          >
+            <option value="all">All</option>
+            <option value="Women">Women</option>
+            <option value="Men">Men</option>
+          </select>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <label htmlFor="has-apps-filter" className="text-sm text-gray-600">Applications:</label>
+          <select
+            id="has-apps-filter"
+            aria-label="Filter by application presence"
+            value={hasAppsFilter}
+            onChange={(e) => { setHasAppsFilter(e.target.value as HasAppsFilter); setPage(0) }}
+            className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-purple-500"
+          >
+            <option value="all">All</option>
+            <option value="yes">Has applications</option>
+            <option value="no">Zero applications</option>
+          </select>
+        </div>
+
+        {hasActiveFilters && (
           <button
+            type="button"
             onClick={() => {
               setStatusFilter('all')
               setDaysFilter(30)
+              setCountryFilter('all')
+              setRoleFilter('all')
+              setGenderFilter('all')
+              setHasAppsFilter('all')
               setPage(0)
             }}
             className="text-sm text-purple-600 hover:text-purple-700"

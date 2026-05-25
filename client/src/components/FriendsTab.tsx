@@ -535,7 +535,7 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole, h
           className="space-y-6 scroll-mt-[88px]"
         >
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">Requests</h3>
+            <h3 className="text-lg font-semibold text-gray-900">Incoming requests</h3>
             <p className="text-sm text-gray-500">Approve or decline pending requests from other members.</p>
           </div>
           {incomingRequests.length === 0

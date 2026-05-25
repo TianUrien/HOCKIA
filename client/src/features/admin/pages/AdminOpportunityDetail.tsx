@@ -74,7 +74,7 @@ export function AdminOpportunityDetail() {
   }, [id, statusFilter, page])
 
   useEffect(() => {
-    document.title = 'Vacancy Detail | HOCKIA Admin'
+    document.title = 'Opportunity Detail | HOCKIA Admin'
     fetchData()
   }, [fetchData])
 

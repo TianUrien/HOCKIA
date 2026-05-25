@@ -107,9 +107,7 @@ const AdminReports = lazyWithRetry(() => import('@/features/admin/pages/AdminRep
 const AdminSettings = lazyWithRetry(() => import('@/features/admin/pages/AdminSettings').then(m => ({ default: m.AdminSettings })))
 const AdminOpportunities = lazyWithRetry(() => import('@/features/admin/pages/AdminOpportunities').then(m => ({ default: m.AdminOpportunities })))
 const AdminOpportunityDetail = lazyWithRetry(() => import('@/features/admin/pages/AdminOpportunityDetail').then(m => ({ default: m.AdminOpportunityDetail })))
-const AdminClubs = lazyWithRetry(() => import('@/features/admin/pages/AdminClubs').then(m => ({ default: m.AdminClubs })))
-const AdminBrands = lazyWithRetry(() => import('@/features/admin/pages/AdminBrands').then(m => ({ default: m.AdminBrands })))
-const AdminPlayers = lazyWithRetry(() => import('@/features/admin/pages/AdminPlayers').then(m => ({ default: m.AdminPlayers })))
+const AdminUsers = lazyWithRetry(() => import('@/features/admin/pages/AdminUsers').then(m => ({ default: m.AdminUsers })))
 const AdminEngagement = lazyWithRetry(() => import('@/features/admin/pages/AdminEngagement').then(m => ({ default: m.AdminEngagement })))
 const AdminFeatureUsage = lazyWithRetry(() => import('@/features/admin/pages/AdminFeatureUsage').then(m => ({ default: m.AdminFeatureUsage })))
 const AdminDiscovery = lazyWithRetry(() => import('@/features/admin/pages/AdminDiscovery').then(m => ({ default: m.AdminDiscovery })))
@@ -121,13 +119,16 @@ const AdminEmailTemplateEditor = lazyWithRetry(() => import('@/features/admin/pa
 const AdminOutreach = lazyWithRetry(() => import('@/features/admin/pages/AdminOutreach'))
 const AdminPreferences = lazyWithRetry(() => import('@/features/admin/pages/AdminPreferences'))
 const AdminFeedAnalytics = lazyWithRetry(() => import('@/features/admin/pages/AdminFeedAnalytics').then(m => ({ default: m.AdminFeedAnalytics })))
-const AdminFunnels = lazyWithRetry(() => import('@/features/admin/pages/AdminFunnels').then(m => ({ default: m.AdminFunnels })))
+// Phase 2D: AdminFunnels / AdminOnboardingFunnel / AdminChurn are now
+// rendered INSIDE AdminProductHealth's tabbed shell — they're imported
+// statically by that component, no longer by App.tsx. Direct routes
+// to /admin/funnels, /admin/onboarding, /admin/churn redirect into
+// the matching tab below.
+const AdminProductHealth = lazyWithRetry(() => import('@/features/admin/pages/AdminProductHealth').then(m => ({ default: m.AdminProductHealth })))
 const AdminCommunity = lazyWithRetry(() => import('@/features/admin/pages/AdminCommunity').then(m => ({ default: m.AdminCommunity })))
 const AdminMonthlyReport = lazyWithRetry(() => import('@/features/admin/pages/AdminMonthlyReport').then(m => ({ default: m.AdminMonthlyReport })))
-const AdminOnboardingFunnel = lazyWithRetry(() => import('@/features/admin/pages/AdminOnboardingFunnel').then(m => ({ default: m.AdminOnboardingFunnel })))
 const AdminMessagingHealth = lazyWithRetry(() => import('@/features/admin/pages/AdminMessagingHealth').then(m => ({ default: m.AdminMessagingHealth })))
 const AdminAttribution = lazyWithRetry(() => import('@/features/admin/pages/AdminAttribution').then(m => ({ default: m.AdminAttribution })))
-const AdminChurn = lazyWithRetry(() => import('@/features/admin/pages/AdminChurn').then(m => ({ default: m.AdminChurn })))
 
 // Public investor dashboard (no auth required)
 const PublicInvestorDashboard = lazyWithRetry(() => import('@/pages/PublicInvestorDashboard'))
@@ -478,10 +479,15 @@ function App() {
                   <Route path="overview" element={<AdminOverview />} />
                   <Route path="opportunities" element={<AdminOpportunities />} />
                   <Route path="opportunities/:id" element={<AdminOpportunityDetail />} />
-                  <Route path="clubs" element={<AdminClubs />} />
-                  <Route path="brands" element={<AdminBrands />} />
-                  <Route path="players" element={<AdminPlayers />} />
-                  <Route path="player-analytics" element={<Navigate to="/admin/players" replace />} />
+                  {/* Phase 2C: Player / Club / Brand Analytics consolidated
+                      into a tabbed Users & Roles page. Old per-role URLs
+                      redirect into the matching tab so bookmarks survive. */}
+                  <Route path="users" element={<AdminUsers />} />
+                  <Route path="users/:role" element={<AdminUsers />} />
+                  <Route path="players" element={<Navigate to="/admin/users/players" replace />} />
+                  <Route path="clubs" element={<Navigate to="/admin/users/clubs" replace />} />
+                  <Route path="brands" element={<Navigate to="/admin/users/brands" replace />} />
+                  <Route path="player-analytics" element={<Navigate to="/admin/users/players" replace />} />
                   {/* Phase 2A: removed-from-sidebar pages still answer URLs
                       (kept reachable for bookmarks; pages themselves remain).
                       search-quality was subsumed by Discovery; networking
@@ -500,14 +506,21 @@ function App() {
                   <Route path="outreach" element={<AdminOutreach />} />
                   <Route path="preferences" element={<AdminPreferences />} />
                   <Route path="feed" element={<AdminFeedAnalytics />} />
-                  <Route path="funnels" element={<AdminFunnels />} />
                   <Route path="community" element={<AdminCommunity />} />
                   <Route path="monthly-report" element={<AdminMonthlyReport />} />
-                  <Route path="onboarding" element={<AdminOnboardingFunnel />} />
                   {/* search-quality page removed Phase 2A — old URL caught by redirect above */}
                   <Route path="messaging-health" element={<AdminMessagingHealth />} />
                   <Route path="attribution" element={<AdminAttribution />} />
-                  <Route path="churn" element={<AdminChurn />} />
+                  {/* Phase 2D: Funnels & Health / Onboarding Funnel / Churn
+                      consolidated into a tabbed Product Health page. Old
+                      per-page URLs redirect into the matching tab so
+                      bookmarks survive. The underlying components are
+                      still rendered (composed inside AdminProductHealth). */}
+                  <Route path="product-health" element={<AdminProductHealth />} />
+                  <Route path="product-health/:tab" element={<AdminProductHealth />} />
+                  <Route path="funnels" element={<Navigate to="/admin/product-health/activation" replace />} />
+                  <Route path="onboarding" element={<Navigate to="/admin/product-health/onboarding" replace />} />
+                  <Route path="churn" element={<Navigate to="/admin/product-health/retention" replace />} />
                   <Route path="investors" element={<AdminInvestorDashboard />} />
                   <Route path="world" element={<AdminWorld />} />
                   <Route path="data-issues" element={<AdminDataIssues />} />

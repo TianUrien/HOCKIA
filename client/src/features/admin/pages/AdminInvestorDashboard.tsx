@@ -27,6 +27,13 @@ export function AdminInvestorDashboard() {
   const [tokensLoading, setTokensLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  // Document title — was inheriting the bare "HOCKIA – The Home of
+  // Field Hockey" default, breaking the "X | HOCKIA Admin" pattern
+  // used by every other admin page (QA audit 2026-05-25).
+  useEffect(() => {
+    document.title = 'Investors | HOCKIA Admin'
+  }, [])
+
   const fetchData = useCallback(async () => {
     setLoading(true)
     setError(null)

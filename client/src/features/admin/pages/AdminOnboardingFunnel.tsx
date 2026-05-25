@@ -120,7 +120,7 @@ export function AdminOnboardingFunnel() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Onboarding Funnel</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Onboarding</h1>
           <p className="text-sm text-gray-500 mt-1">
             Step-by-step drop-off analysis for the onboarding flow
           </p>

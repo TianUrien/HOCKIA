@@ -86,9 +86,20 @@ export function AdminFunnels() {
           <div className="space-y-3">
             {steps.map((step, index) => {
               const widthPct = maxCount > 0 ? (step.count / maxCount) * 100 : 0
-              const conversionPct =
+              // Cap conversion at 100% — these "funnel" steps come from
+              // separate counts (vacancy_viewers vs applicants etc.) that
+              // aren't guaranteed to be a strict subset of the previous
+              // step. Without the cap a small viewer cohort + a larger
+              // applicant cohort renders as "125% conversion" (caught by
+              // the QA audit on 2026-05-25; same class as the Phase 1
+              // Batch B fix applied to the other admin funnels).
+              const rawConversion =
                 index > 0 && steps[index - 1].count > 0
-                  ? ((step.count / steps[index - 1].count) * 100).toFixed(1)
+                  ? (step.count / steps[index - 1].count) * 100
+                  : null
+              const conversionPct =
+                rawConversion !== null
+                  ? Math.min(100, Math.max(0, rawConversion)).toFixed(1)
                   : null
 
               return (
@@ -155,7 +166,7 @@ export function AdminFunnels() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
             <GitBranch className="w-6 h-6 text-purple-600" />
-            Conversion & Health
+            Activation
           </h1>
           <p className="text-sm text-gray-500 mt-1">
             User journey funnels, notification effectiveness, and marketplace balance

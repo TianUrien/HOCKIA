@@ -366,6 +366,13 @@ export async function getVacancies(params: VacancySearchParams = {}): Promise<{
     p_days: params.days || null,
     p_limit: params.limit || 50,
     p_offset: params.offset || 0,
+    // Phase 3A filters. `undefined` (no filter) needs to map to NULL on
+    // the server. `has_apps: false` is meaningful (zero-app opps) so the
+    // explicit `=== undefined` check matters — don't fold to falsy.
+    p_country: params.country || null,
+    p_opportunity_type: params.opportunity_type || null,
+    p_gender: params.gender || null,
+    p_has_apps: params.has_apps === undefined ? null : params.has_apps,
   })
   if (error) throw new Error(`Failed to get opportunities: ${error.message}`)
   
@@ -1886,6 +1893,86 @@ export async function getUserGrowthChart(days = 30): Promise<UserGrowthPoint[]> 
   const { data, error } = await adminRpc('admin_get_user_growth_chart', { p_days: days })
   if (error) throw new Error(`Failed to get user growth chart: ${error.message}`)
   return (data ?? []) as UserGrowthPoint[]
+}
+
+/** Phase 3A — Zero-Activity Users metric. Returns one row with the
+ *  total signups older than `days` AND the subset who've done zero
+ *  value-actions (apply / message / post / friend request / reference /
+ *  profile update). Powers the Overview Zero-Activity tile. */
+export interface ZeroActivityUsersResult {
+  total_signups: number
+  zero_activity_count: number
+}
+
+export async function getZeroActivityUsers(days = 7): Promise<ZeroActivityUsersResult> {
+  const { data, error } = await adminRpc('admin_get_zero_activity_users', { p_days_threshold: days })
+  if (error) throw new Error(`Failed to get zero-activity users: ${error.message}`)
+  // TABLE-returning RPC → array of one row.
+  const rows = (data ?? []) as ZeroActivityUsersResult[]
+  return rows[0] ?? { total_signups: 0, zero_activity_count: 0 }
+}
+
+/** Phase 3C — per-role missing-field breakdown. Returns top fields by
+ *  null_count for the given role, so each Users & Roles tab can show
+ *  "78% of coaches are missing experience" without re-querying. */
+export interface RoleMissingField {
+  field_name: string
+  null_count: number
+  total_role_users: number
+  null_pct: number
+}
+
+export async function getRoleMissingFields(role: string): Promise<RoleMissingField[]> {
+  const { data, error } = await adminRpc('admin_get_role_missing_fields', { p_role: role })
+  if (error) throw new Error(`Failed to get role missing fields: ${error.message}`)
+  return (data ?? []) as RoleMissingField[]
+}
+
+/** Phase 3D — Feature adoption matrix. One row per (feature, role)
+ *  showing what % of active users of that role used the feature in
+ *  the last `days` days. */
+export interface FeatureAdoptionRow {
+  feature_key: string
+  feature_label: string
+  role: string
+  user_count: number
+  active_users_in_role: number
+  adoption_pct: number
+}
+
+export async function getFeatureAdoption(days = 30): Promise<FeatureAdoptionRow[]> {
+  const { data, error } = await adminRpc('admin_get_feature_adoption', { p_days: days })
+  if (error) throw new Error(`Failed to get feature adoption: ${error.message}`)
+  return (data ?? []) as FeatureAdoptionRow[]
+}
+
+/** Phase 3E — median time from signup to first value-action, per role.
+ *  Plus the activation rate (activated_count / cohort_size). */
+export interface TimeToFirstValueRow {
+  role: string
+  cohort_size: number
+  activated_count: number
+  median_minutes_to_first_action: number | null
+}
+
+export async function getTimeToFirstValue(days = 90): Promise<TimeToFirstValueRow[]> {
+  const { data, error } = await adminRpc('admin_get_time_to_first_value', { p_days: days })
+  if (error) throw new Error(`Failed to get time-to-first-value: ${error.message}`)
+  return (data ?? []) as TimeToFirstValueRow[]
+}
+
+/** Phase 3E — Notification CTR per notification kind. */
+export interface NotificationCtrRow {
+  kind: string
+  sent_count: number
+  click_count: number
+  ctr_pct: number
+}
+
+export async function getNotificationCtr(days = 30): Promise<NotificationCtrRow[]> {
+  const { data, error } = await adminRpc('admin_get_notification_ctr', { p_days: days })
+  if (error) throw new Error(`Failed to get notification CTR: ${error.message}`)
+  return (data ?? []) as NotificationCtrRow[]
 }
 
 // ============================================================================

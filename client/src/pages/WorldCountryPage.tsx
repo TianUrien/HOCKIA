@@ -76,7 +76,15 @@ export default function WorldCountryPage() {
   const [clubs, setClubs] = useState<Club[]>([])
   const [clubsLoading, setClubsLoading] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(false)
+  // 'not-found' = the slug doesn't resolve to a known country (e.g.
+  //   /world/atlantis); user-facing copy should make that explicit and
+  //   point back to /world rather than blame the network.
+  // 'network' = lookups failed (RPC error, supabase down, etc.); retry
+  //   makes sense.
+  // false = no error.
+  // QA audit 2026-05-25 caught the prior "always say 'check your
+  // connection'" behaviour generating support noise for typo URLs.
+  const [error, setError] = useState<false | 'not-found' | 'network'>(false)
   // Real country that exists in the canonical `countries` table but has
   // no row in the `world_countries_with_directory` view yet (the directory
   // is curated — only ~9 countries today). Render a friendly empty state
@@ -235,7 +243,12 @@ export default function WorldCountryPage() {
         }
       } catch (err) {
         logger.error('[WorldCountryPage] Failed to fetch data:', err)
-        setError(true)
+        // "country_not_found:" prefix is thrown by the explicit not-found
+        // branch above when the slug doesn't match anything in either the
+        // directory or the canonical countries table. Everything else
+        // (RPC errors, network) gets the 'network' bucket.
+        const msg = err instanceof Error ? err.message : String(err)
+        setError(msg.startsWith('country_not_found') ? 'not-found' : 'network')
       } finally {
         setLoading(false)
       }
@@ -378,26 +391,38 @@ export default function WorldCountryPage() {
   }
 
   if (error) {
+    const isNotFound = error === 'not-found'
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
         <main className="mx-auto max-w-7xl px-4 pt-24 pb-12 md:px-6">
           <div className="text-center py-12">
             <Building2 className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-700 font-medium mb-1">Unable to load country data</p>
-            <p className="text-sm text-gray-500 mb-4">Check your connection and try again</p>
+            <p className="text-gray-700 font-medium mb-1">
+              {isNotFound ? 'Country not found' : 'Unable to load country data'}
+            </p>
+            <p className="text-sm text-gray-500 mb-4">
+              {isNotFound
+                ? `We couldn't find a country matching "${countrySlug}". Try the directory.`
+                : 'Check your connection and try again'}
+            </p>
             <div className="flex items-center justify-center gap-3">
               <Link to="/world" className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
                 Back to World
               </Link>
-              <button
-                type="button"
-                onClick={() => setRetryCount(c => c + 1)}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-              >
-                <RefreshCw className="w-4 h-4" />
-                Retry
-              </button>
+              {/* Retry doesn't help when the slug is just wrong — hide
+                  it for the not-found case so we don't suggest a fix
+                  that won't work. */}
+              {!isNotFound && (
+                <button
+                  type="button"
+                  onClick={() => setRetryCount(c => c + 1)}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  Retry
+                </button>
+              )}
             </div>
           </div>
         </main>

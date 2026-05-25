@@ -33,12 +33,15 @@ import { CommandCenterKPICard } from '../components/CommandCenterKPICard'
 import { CommandCenterGrowthChart } from '../components/CommandCenterGrowthChart'
 import { RetentionCurveChart } from '../components/RetentionCurveChart'
 import { ActivationFunnel } from '../components/ActivationFunnel'
+import { ActivationByRoleCard } from '../components/ActivationByRoleCard'
+import { NotificationCtrCard } from '../components/NotificationCtrCard'
 import { HealthSignals } from '../components/HealthSignals'
 import { ProductHealthHero } from '../components/ProductHealthHero'
 import { useAdminStats } from '../hooks/useAdminStats'
 import { useCommandCenter } from '../hooks/useCommandCenter'
 import { getErrorBudgetStatus } from '@/lib/errorBudget'
 import type { ErrorBudgetStatus } from '@/lib/errorBudget'
+import { getZeroActivityUsers, type ZeroActivityUsersResult } from '../api/adminApi'
 
 type DaysFilter = 7 | 30 | 90
 
@@ -55,12 +58,29 @@ export function AdminOverview() {
     refetch: ccRefetch,
   } = useCommandCenter(daysFilter)
   const [errorBudget, setErrorBudget] = useState<ErrorBudgetStatus | null>(null)
+  // Phase 3A — Zero-Activity Users tile. 7-day threshold matches the
+  // audit's definition: signed up ≥7d ago AND has done zero value-
+  // actions (apply, message, post, friend request, reference, profile
+  // update). On prod 2026-05-25 this surfaced 189/231 (82%) of signups
+  // as zero-activity — biggest readiness signal we have.
+  const [zeroActivity, setZeroActivity] = useState<ZeroActivityUsersResult | null>(null)
+  const [zeroActivityLoading, setZeroActivityLoading] = useState(true)
 
   useEffect(() => {
     document.title = 'Overview | HOCKIA Admin'
     setErrorBudget(getErrorBudgetStatus())
     const interval = setInterval(() => setErrorBudget(getErrorBudgetStatus()), 60000)
     return () => clearInterval(interval)
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    setZeroActivityLoading(true)
+    getZeroActivityUsers(7)
+      .then((res) => { if (!cancelled) setZeroActivity(res) })
+      .catch(() => { if (!cancelled) setZeroActivity({ total_signups: 0, zero_activity_count: 0 }) })
+      .finally(() => { if (!cancelled) setZeroActivityLoading(false) })
+    return () => { cancelled = true }
   }, [])
 
   const handleRefresh = () => {
@@ -210,6 +230,14 @@ export function AdminOverview() {
       </div>
 
       {/* ============================================================= */}
+      {/* PHASE 3E — Activation by role + Notification CTR (2-column)    */}
+      {/* ============================================================= */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <ActivationByRoleCard days={90} />
+        <NotificationCtrCard days={daysFilter} />
+      </div>
+
+      {/* ============================================================= */}
       {/* DETAILED METRICS (collapsible accordion)                       */}
       {/* ============================================================= */}
       <details className="group">
@@ -229,10 +257,15 @@ export function AdminOverview() {
                 color="purple"
                 loading={isLoading}
                 trend={
+                  // Pass value as a preformatted string with the %
+                  // glued to the number — keeps "-100%" from visually
+                  // splitting across the value/label wrap (QA pass 3
+                  // finding: "-100" alone read as "lost 100 users"
+                  // even with the relabelled context).
                   signupTrend !== 0
                     ? {
-                        value: Number(signupTrend),
-                        label: 'vs last 7d',
+                        value: `${Number(signupTrend) > 0 ? '+' : ''}${signupTrend}%`,
+                        label: 'in signups vs prior 7d',
                         direction: Number(signupTrend) > 0 ? 'up' : 'down',
                       }
                     : undefined
@@ -269,10 +302,15 @@ export function AdminOverview() {
             </div>
           </section>
 
-          {/* Signups */}
+          {/* Signups + activation health. The "Zero-Activity Users"
+              tile is the most important number on this section — it
+              answers "of the people who signed up, how many ghosted?".
+              Linked to the Directory pre-filtered for the same cohort
+              (Phase 3 work to make that filter actually wire up; for
+              now it lands on the unfiltered Directory). */}
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Signups</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
               <StatCard
                 label="Last 7 Days"
                 value={stats?.signups_7d ?? 0}
@@ -301,6 +339,30 @@ export function AdminOverview() {
                 color="amber"
                 loading={isLoading}
               />
+              <Link
+                to="/admin/directory?zero_activity=1"
+                className="block hover:opacity-90 transition-opacity"
+                title="Signed up ≥7 days ago and have done zero value-actions (apply, message, post, friend request, reference, profile update)."
+              >
+                <StatCard
+                  label="Zero-Activity (7d+)"
+                  value={zeroActivity?.zero_activity_count ?? 0}
+                  icon={UserX}
+                  color="red"
+                  loading={zeroActivityLoading}
+                  trend={
+                    zeroActivity && zeroActivity.total_signups > 0
+                      ? {
+                          value: Math.round(
+                            (zeroActivity.zero_activity_count / zeroActivity.total_signups) * 100,
+                          ),
+                          label: `% of ${zeroActivity.total_signups} signups`,
+                          direction: 'neutral',
+                        }
+                      : undefined
+                  }
+                />
+              </Link>
             </div>
           </section>
 
@@ -339,19 +401,27 @@ export function AdminOverview() {
             </div>
           </section>
 
-          {/* Brands */}
+          {/* Brand Entities — sub-strip tracking actual brand-row activity
+              (logo / bio / products / posts published). Distinct from
+              the "Brands" tile in the Users section above, which counts
+              role=brand profile accounts. QA pass 3 caught users
+              conflating the two; the section heading and the "Brand
+              Entities" tile label make the distinction explicit. */}
           <section>
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Brands</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Brand Entities</h2>
+            <p className="text-xs text-gray-500 -mt-3 mb-4">
+              Published brand rows + their activity (separate from the Brands account count in the Users section).
+            </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <StatCard
-                label="Total Brands"
-                value={stats?.total_brands ?? 0}
+                label="Brand Entities"
+                value={stats?.total_brand_entities ?? 0}
                 icon={Store}
                 color="purple"
                 loading={isLoading}
               />
               <StatCard
-                label="New Brands (7d)"
+                label="New Brand Entities (7d)"
                 value={stats?.brands_7d ?? 0}
                 icon={TrendingUp}
                 color="blue"

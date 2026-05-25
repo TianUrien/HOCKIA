@@ -96,7 +96,7 @@ export function AdminChurn() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Churn & Retention</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Retention</h1>
           <p className="text-sm text-gray-500 mt-1">
             User inactivity, churn patterns, and retention by role
           </p>

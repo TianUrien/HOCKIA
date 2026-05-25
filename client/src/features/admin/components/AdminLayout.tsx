@@ -7,7 +7,8 @@
  * - Global user search in header
  */
 
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react'
+import type { ComponentType } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard,
@@ -17,10 +18,8 @@ import {
   Settings,
   ArrowLeft,
   Briefcase,
-  Building2,
   UserCheck,
   Activity,
-  Store,
   Globe2,
   Mail,
   Megaphone,
@@ -35,61 +34,166 @@ import {
   X,
   Search,
   Loader2,
-  UserPlus,
   MessageSquare,
   Share2,
-  TrendingDown,
   Flag,
+  ChevronRight,
 } from 'lucide-react'
 import { searchProfiles } from '../api/adminApi'
 import type { AdminProfileListItem } from '../types'
 
-// Phase 2A of the admin IA audit (2026-05-25):
-//   - "Vacancy Management" → "Opportunities" (already lined up here;
-//     the page header is also renamed for consistency)
-//   - "Hockey World" → "Clubs Directory (World)"
-//   - "Data Issues" → "Data Integrity"
-//   - "Networking" item removed — its messaging tab fully duplicates
-//     Messaging Health; the friendship/reference views will move under
-//     a future "Engagement" section in Phase 2C
-//   - "Investors" removed from sidebar — promoted to a "Share investor
-//     snapshot" button on AdminOverview (the page itself is kept,
-//     reachable via the button → /admin/investors)
-//   - "Search Quality" removed — subsumed by Discovery; old URL redirects
-//     in App.tsx
-// Full sidebar restructure into collapsible groups is Phase 2B.
-const NAV_ITEMS = [
-  { path: '/admin/overview', icon: LayoutDashboard, label: 'Overview', exact: true },
-  { path: '/admin/opportunities', icon: Briefcase, label: 'Opportunities' },
-  { path: '/admin/clubs', icon: Building2, label: 'Club Analytics' },
-  { path: '/admin/players', icon: UserCheck, label: 'Player Analytics' },
-  { path: '/admin/brands', icon: Store, label: 'Brand Analytics' },
-  { path: '/admin/engagement', icon: Activity, label: 'User Engagement' },
-  { path: '/admin/feature-usage', icon: BarChart3, label: 'Feature Usage' },
-  { path: '/admin/feed', icon: Heart, label: 'Feed & Content' },
-  { path: '/admin/funnels', icon: GitBranch, label: 'Funnels & Health' },
-  { path: '/admin/onboarding', icon: UserPlus, label: 'Onboarding Funnel' },
-  { path: '/admin/churn', icon: TrendingDown, label: 'Churn & Retention' },
-  { path: '/admin/attribution', icon: Share2, label: 'Attribution' },
-  { path: '/admin/messaging-health', icon: MessageSquare, label: 'Messaging Health' },
-  { path: '/admin/community', icon: HelpCircle, label: 'Community' },
-  { path: '/admin/preferences', icon: ToggleRight, label: 'User Preferences' },
-  { path: '/admin/discovery', icon: Sparkles, label: 'Discovery' },
-  { path: '/admin/email', icon: Mail, label: 'Email' },
-  { path: '/admin/outreach', icon: Megaphone, label: 'Outreach' },
-  { path: '/admin/monthly-report', icon: FileText, label: 'Monthly Report' },
-  { path: '/admin/world', icon: Globe2, label: 'Clubs Directory (World)' },
-  { path: '/admin/directory', icon: Users, label: 'Directory' },
-  { path: '/admin/data-issues', icon: AlertTriangle, label: 'Data Integrity' },
-  { path: '/admin/reports', icon: Flag, label: 'Content Reports' },
-  { path: '/admin/audit-log', icon: ScrollText, label: 'Audit Log' },
-  { path: '/admin/settings', icon: Settings, label: 'Settings' },
+interface NavItem {
+  path: string
+  icon: ComponentType<{ className?: string }>
+  label: string
+  exact?: boolean
+}
+
+interface NavSection {
+  /** Display label for the collapsible group header. Set to null for the
+   *  single-item Overview row which renders without a section heading. */
+  label: string | null
+  /** Stable key for localStorage persistence of collapsed state. */
+  key: string
+  items: NavItem[]
+}
+
+// Phase 2B (admin IA audit, 2026-05-25): 25 items grouped into 6 sections
+// so the sidebar is scannable instead of an alphabet soup. Section order
+// is the audit's "Six Loops" lens — Overview → Users → Opportunities →
+// Product Health → Engagement+Comms → System.
+//
+// Page mergers (Player/Club/Brand → Users & Roles tabs; Funnels/Onboarding/
+// Churn → Product Health tabs) are Phase 2C/2D — separate slices because
+// they touch page state, not just nav.
+const NAV_SECTIONS: NavSection[] = [
+  {
+    label: null,
+    key: 'overview',
+    items: [
+      { path: '/admin/overview', icon: LayoutDashboard, label: 'Overview', exact: true },
+    ],
+  },
+  {
+    // Phase 2C — Player / Club / Brand Analytics consolidated into a
+    // single tabbed page (/admin/users). The single sidebar entry
+    // points at the default tab (players); switching tabs is in-page.
+    label: 'Users & Roles',
+    key: 'users',
+    items: [
+      { path: '/admin/users', icon: UserCheck, label: 'Role Analytics' },
+      { path: '/admin/directory', icon: Users, label: 'User Directory' },
+    ],
+  },
+  {
+    label: 'Opportunities',
+    key: 'opportunities',
+    items: [
+      { path: '/admin/opportunities', icon: Briefcase, label: 'Opportunities' },
+    ],
+  },
+  {
+    // Phase 2D — Funnels & Health / Onboarding / Churn consolidated
+    // into a tabbed Product Health page. User Engagement, Feature
+    // Usage, and Attribution stay separate because they cover
+    // different aspects (raw usage, feature adoption, cross-feature
+    // attribution) — they don't share a "funnel" lens that would
+    // make tabs meaningful.
+    label: 'Product Health',
+    key: 'health',
+    items: [
+      { path: '/admin/engagement', icon: Activity, label: 'User Engagement' },
+      { path: '/admin/feature-usage', icon: BarChart3, label: 'Feature Usage' },
+      { path: '/admin/product-health', icon: GitBranch, label: 'Funnels & Retention' },
+      { path: '/admin/attribution', icon: Share2, label: 'Attribution' },
+    ],
+  },
+  {
+    label: 'Engagement & Comms',
+    key: 'comms',
+    items: [
+      { path: '/admin/messaging-health', icon: MessageSquare, label: 'Messaging Health' },
+      { path: '/admin/community', icon: HelpCircle, label: 'Community' },
+      { path: '/admin/feed', icon: Heart, label: 'Feed & Content' },
+      { path: '/admin/reports', icon: Flag, label: 'Content Reports' },
+      { path: '/admin/discovery', icon: Sparkles, label: 'Discovery' },
+      { path: '/admin/email', icon: Mail, label: 'Email' },
+      { path: '/admin/outreach', icon: Megaphone, label: 'Outreach' },
+      { path: '/admin/monthly-report', icon: FileText, label: 'Monthly Report' },
+    ],
+  },
+  {
+    label: 'System',
+    key: 'system',
+    items: [
+      { path: '/admin/world', icon: Globe2, label: 'Clubs Directory (World)' },
+      { path: '/admin/data-issues', icon: AlertTriangle, label: 'Data Integrity' },
+      { path: '/admin/preferences', icon: ToggleRight, label: 'User Preferences' },
+      { path: '/admin/audit-log', icon: ScrollText, label: 'Audit Log' },
+      { path: '/admin/settings', icon: Settings, label: 'Settings' },
+    ],
+  },
 ]
+
+const COLLAPSED_STORAGE_KEY = 'admin.sidebar.collapsed.v1'
+
+function loadCollapsedSections(): Set<string> {
+  try {
+    const raw = localStorage.getItem(COLLAPSED_STORAGE_KEY)
+    if (!raw) return new Set()
+    const parsed = JSON.parse(raw)
+    return new Set(Array.isArray(parsed) ? parsed : [])
+  } catch {
+    return new Set()
+  }
+}
+
+function saveCollapsedSections(collapsed: Set<string>): void {
+  try {
+    localStorage.setItem(COLLAPSED_STORAGE_KEY, JSON.stringify([...collapsed]))
+  } catch {
+    // localStorage full or disabled — silently skip; collapse state just
+    // doesn't persist across reloads. Not worth surfacing to the user.
+  }
+}
 
 export function AdminLayout() {
   const location = useLocation()
   const navigate = useNavigate()
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+
+  // Collapsible section state. Persisted to localStorage so Tian's chosen
+  // collapse layout sticks across reloads. The section containing the
+  // active route is force-expanded below so a collapsed section never
+  // hides where you currently are.
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(() =>
+    loadCollapsedSections(),
+  )
+
+  // Resolve which section owns the active route — that section is always
+  // expanded regardless of saved collapse state. Otherwise navigating
+  // into a collapsed section would hide the current page in the sidebar.
+  const activeSectionKey = useMemo(() => {
+    for (const section of NAV_SECTIONS) {
+      const match = section.items.some((item) =>
+        item.exact
+          ? location.pathname === item.path
+          : location.pathname.startsWith(item.path),
+      )
+      if (match) return section.key
+    }
+    return null
+  }, [location.pathname])
+
+  const toggleSection = useCallback((key: string) => {
+    setCollapsedSections((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      saveCollapsedSections(next)
+      return next
+    })
+  }, [])
 
   // Global search state
   const [searchQuery, setSearchQuery] = useState('')
@@ -264,8 +368,18 @@ export function AdminLayout() {
               )}
             </div>
 
-            {/* Right section */}
-            <div className="flex items-center gap-4 flex-shrink-0">
+            {/* Right section. The amber "Admin Access" warning used to
+                live in the sidebar footer where it ate vertical space on
+                every page and got ignored after the first session. Moved
+                here as a small pill so it stays visible but unobtrusive. */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <span
+                className="hidden sm:inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-amber-50 text-amber-700 rounded-full border border-amber-200"
+                title="Actions in this portal affect real user data."
+              >
+                <AlertTriangle className="w-3 h-3" />
+                Live data
+              </span>
               <span className="hidden sm:inline-flex px-2 py-1 text-xs font-medium bg-purple-100 text-purple-700 rounded-full">
                 Admin Portal
               </span>
@@ -290,38 +404,90 @@ export function AdminLayout() {
           transform transition-transform duration-200 ease-in-out
           ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}>
-          <nav className="p-4 space-y-1 overflow-y-auto h-[calc(100%-6rem)]">
-            {NAV_ITEMS.map((item) => {
-              const isActive = item.exact
-                ? location.pathname === item.path
-                : location.pathname.startsWith(item.path)
+          <nav className="p-4 space-y-4 overflow-y-auto h-full">
+            {NAV_SECTIONS.map((section) => {
+              // Single-item sections (Overview) render the item flat,
+              // no section header or chevron — would be visual noise.
+              if (section.label === null) {
+                return (
+                  <div key={section.key} className="space-y-1">
+                    {section.items.map((item) => {
+                      const isActive = item.exact
+                        ? location.pathname === item.path
+                        : location.pathname.startsWith(item.path)
+                      return (
+                        <NavLink
+                          key={item.path}
+                          to={item.path}
+                          onClick={() => setIsSidebarOpen(false)}
+                          className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                            isActive
+                              ? 'bg-purple-50 text-purple-700'
+                              : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                          }`}
+                        >
+                          <item.icon className="w-5 h-5" />
+                          {item.label}
+                        </NavLink>
+                      )
+                    })}
+                  </div>
+                )
+              }
+
+              // Force-expand the section containing the active route so a
+              // collapsed-by-default section never hides where you are.
+              const isCollapsed =
+                collapsedSections.has(section.key) && activeSectionKey !== section.key
+              // Extracted as an explicitly-typed boolean so the jsx-a11y
+              // lint rule can statically verify the aria-expanded value.
+              // The inline expression form trips the rule even though
+              // the runtime value is valid.
+              const ariaExpanded: boolean = !isCollapsed
 
               return (
-                <NavLink
-                  key={item.path}
-                  to={item.path}
-                  onClick={() => setIsSidebarOpen(false)}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    isActive
-                      ? 'bg-purple-50 text-purple-700'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                  }`}
-                >
-                  <item.icon className="w-5 h-5" />
-                  {item.label}
-                </NavLink>
+                <div key={section.key} className="space-y-1">
+                  <button
+                    type="button"
+                    onClick={() => toggleSection(section.key)}
+                    className="w-full flex items-center justify-between px-3 py-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wider hover:text-gray-600 transition-colors"
+                    aria-expanded={ariaExpanded}
+                    aria-controls={`nav-section-${section.key}`}
+                  >
+                    <span>{section.label}</span>
+                    <ChevronRight
+                      className={`w-3.5 h-3.5 transition-transform ${isCollapsed ? '' : 'rotate-90'}`}
+                    />
+                  </button>
+                  {!isCollapsed && (
+                    <div id={`nav-section-${section.key}`} className="space-y-1">
+                      {section.items.map((item) => {
+                        const isActive = item.exact
+                          ? location.pathname === item.path
+                          : location.pathname.startsWith(item.path)
+                        return (
+                          <NavLink
+                            key={item.path}
+                            to={item.path}
+                            onClick={() => setIsSidebarOpen(false)}
+                            className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                              isActive
+                                ? 'bg-purple-50 text-purple-700'
+                                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                            }`}
+                          >
+                            <item.icon className="w-5 h-5" />
+                            {item.label}
+                          </NavLink>
+                        )
+                      })}
+                    </div>
+                  )
+                  }
+                </div>
               )
             })}
           </nav>
-
-          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-white">
-            <div className="px-3 py-2 bg-amber-50 rounded-lg">
-              <p className="text-xs font-medium text-amber-800">⚠️ Admin Access</p>
-              <p className="text-xs text-amber-600 mt-1">
-                Actions here affect real user data.
-              </p>
-            </div>
-          </div>
         </aside>
 
         {/* Main content */}
