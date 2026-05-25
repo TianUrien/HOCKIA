@@ -38,9 +38,19 @@ function lazyWithRetry<T extends ComponentType<any>>(
   return lazy(() =>
     importFn().catch((error: Error) => {
       const msg = (error.message ?? '').toLowerCase()
+      // Three stale-chunk signatures we've seen in prod Sentry:
+      //   1. "failed to fetch dynamically imported module" — Chrome/FF when
+      //      the old hashed file 404s post-deploy.
+      //   2. "failed to load module script" — generic browser variant.
+      //   3. "is not a valid javascript mime type" — Vercel's SPA fallback
+      //      serves index.html (text/html) for any unknown path, so when
+      //      Safari fetches a missing chunk it gets HTML and the ES module
+      //      loader throws this. Previously slipped past the guard and
+      //      surfaced as JAVASCRIPT-REACT-3 (95 occurrences in Sentry).
       const isStale =
         msg.includes('failed to fetch dynamically imported module') ||
-        msg.includes('failed to load module script')
+        msg.includes('failed to load module script') ||
+        msg.includes('is not a valid javascript mime type')
 
       if (isStale && !sessionStorage.getItem('chunk-reload')) {
         sessionStorage.setItem('chunk-reload', '1')
