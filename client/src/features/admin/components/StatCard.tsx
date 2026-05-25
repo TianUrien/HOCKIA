@@ -113,7 +113,10 @@ export function StatCard({
                 : 'text-gray-500'
             }
           >
-            {trend.value > 0 ? '+' : ''}
+            {/* '+' only on direction='up' (a positive delta). For
+                neutral (a raw count like "% of users" or "signups in
+                last 30d") the prefix would mislead — audit Bug 7. */}
+            {trend.direction === 'up' && trend.value > 0 ? '+' : ''}
             {trend.value}
           </span>
           <span className="text-gray-400">{trend.label}</span>

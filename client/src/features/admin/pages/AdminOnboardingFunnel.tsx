@@ -223,9 +223,18 @@ export function AdminOnboardingFunnel() {
               const pctOfTotal = signedUp > 0 ? (count / signedUp) * 100 : 0
               const prevStep = index > 0 ? FUNNEL_STEPS[index - 1] : null
               const prevCount: number = prevStep ? (funnel[prevStep.key] ?? 0) : 0
-              const dropOff =
+              // Cap at [0, 100] — RPC now returns cumulative-union counts so
+              // count <= prevCount, but float jitter or stale rows could
+              // momentarily push it slightly out of range. Math.max(0,...)
+              // prevents the pre-fix "-128.6% drop-off" double-minus
+              // rendering bug (audit Bug 3).
+              const rawDropOff =
                 prevStep && prevCount > 0
-                  ? (((prevCount - count) / prevCount) * 100).toFixed(1)
+                  ? ((prevCount - count) / prevCount) * 100
+                  : null
+              const dropOff =
+                rawDropOff !== null
+                  ? Math.min(100, Math.max(0, rawDropOff)).toFixed(1)
                   : null
 
               return (
@@ -234,7 +243,7 @@ export function AdminOnboardingFunnel() {
                   {dropOff !== null && (
                     <div className="flex items-center gap-2 py-1 pl-4">
                       <span className="text-xs font-medium text-red-500">
-                        -{dropOff}% drop-off
+                        {dropOff}% drop-off
                       </span>
                     </div>
                   )}

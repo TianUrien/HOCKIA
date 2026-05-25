@@ -112,7 +112,11 @@ export function AdminPlayers() {
     const steps = FUNNEL_STEPS.map((step, i) => {
       const value = Number(funnel[step.key]) || 0
       const prevValue = i > 0 ? Number(funnel[FUNNEL_STEPS[i - 1].key]) || 1 : value
-      const conversion = prevValue > 0 ? Math.round((value / prevValue) * 100) : 0
+      // Cap at 100 — these metrics are orthogonal facts, not a true
+      // funnel, so prevValue > value isn't guaranteed (see Bug 4 note
+      // on the render below). Bottleneck pick-up below uses .reduce()
+      // on this conversion so a 400% spike would mask the real worst.
+      const conversion = prevValue > 0 ? Math.min(100, Math.round((value / prevValue) * 100)) : 0
       return { ...step, value, conversion }
     })
 
@@ -276,13 +280,17 @@ export function AdminPlayers() {
               const colors = FUNNEL_COLORS[step.color] || FUNNEL_COLORS.purple
               const Icon = step.icon
 
-              // Step-to-step conversion
-              const prevValue = index > 0
-                ? Number(funnel?.[FUNNEL_STEPS[index - 1].key]) || 0
-                : value
-              const stepConversion = prevValue > 0
-                ? Math.round((value / prevValue) * 100)
-                : 0
+              // These player metrics are ORTHOGONAL facts (has_avatar,
+              // has_video, has_journey_entry, has_gallery_photo) — they
+              // are not a sequential funnel even though the layout looks
+              // like one. Step-to-step comparison produced nonsense like
+              // "400% from Has Journey Entry" when more players have
+              // gallery photos than journey entries (audit Bug 4). The
+              // sub-text below uses "% of all signed-up players" instead
+              // (the only meaningful comparison for independent metrics).
+              // The `insights` calculation above (line ~115) still caps
+              // step-to-step conversion at 100% so the bottleneck pick
+              // works without 400% spikes hiding the real worst step.
 
               return (
                 <div key={step.key} className="space-y-1.5">
@@ -306,13 +314,15 @@ export function AdminPlayers() {
                     />
                   </div>
 
-                  {/* Drop-off indicator */}
+                  {/* Step relation. Reframed as "% of signed-up players"
+                      since these are independent facts, not sequential
+                      funnel steps. The "% from previous" framing produced
+                      the audit's nonsense like "400% from Has Journey
+                      Entry" — capping at 100% above prevents the number
+                      but doesn't fix the framing. */}
                   {index > 0 && (
                     <p className="text-xs text-gray-400 pl-6">
-                      {stepConversion}% from {FUNNEL_STEPS[index - 1].label}
-                      {stepConversion < 100 && (
-                        <span className="text-gray-300"> &middot; {100 - stepConversion}% drop-off</span>
-                      )}
+                      {percentage}% of all signed-up players
                     </p>
                   )}
                 </div>

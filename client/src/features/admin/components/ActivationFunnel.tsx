@@ -56,7 +56,13 @@ export function ActivationFunnel({ data, loading }: ActivationFunnelProps) {
           const Icon = step.icon
 
           const prevValue = index > 0 ? (data?.[STEPS[index - 1].key] ?? 0) : value
-          const stepConversion = prevValue > 0 ? Math.round((value / prevValue) * 100) : 0
+          // Cap at 100% — admin_get_activation_funnel migration
+          // 20260525140000 makes the data cumulative-union (each step is
+          // a strict superset of the next), so this cap should never
+          // trigger. Kept as defense-in-depth in case the RPC is rolled
+          // back. Pre-fix this rendered as "Browsed Opportunity 175%"
+          // (audit Bug 4 / Overview activation funnel).
+          const stepConversion = prevValue > 0 ? Math.min(100, Math.round((value / prevValue) * 100)) : 0
 
           return (
             <div key={step.key} className="space-y-1.5">
