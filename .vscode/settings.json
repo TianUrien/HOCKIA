@@ -1,0 +1,20 @@
+{
+  "css.validate": false,
+  "css.lint.unknownAtRules": "ignore",
+  "scss.validate": false,
+  "less.validate": false,
+  "java.configuration.updateBuildConfiguration": "interactive",
+  "vscode-edge-devtools.webhintInstallNotification": false,
+  "vscode-edge-devtools.webhint": {
+    "hints": {
+      "no-inline-styles": "off",
+      "axe/aria": [
+        "error",
+        {
+          "aria-valid-attr-value": "off",
+          "aria-allowed-attr": "off"
+        }
+      ]
+    }
+  }
+}
