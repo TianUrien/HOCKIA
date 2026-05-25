@@ -207,7 +207,12 @@ export function AdminOpportunityDetail() {
     )
   }
 
-  if (!detail) {
+  // detail.vacancy can be null when the opportunity was deleted or the ID is
+  // wrong — admin_get_vacancy_detail returns json_build_object with a null
+  // vacancy field rather than throwing. Without this guard the destructure
+  // succeeds with vacancy=undefined and `vacancy.title` crashes (Sentry
+  // JAVASCRIPT-REACT-9S).
+  if (!detail || !detail.vacancy) {
     return (
       <div className="text-center py-12">
         <p className="text-gray-500">Vacancy not found</p>

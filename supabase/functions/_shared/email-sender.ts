@@ -37,6 +37,20 @@ const BATCH_API_DELAY_MS = 600
 const MAX_RETRIES = 3
 const RETRY_DELAY_BASE_MS = 1000
 
+// Thundering-herd guard for 429s. Resend caps at 5 req/sec; weekly digest
+// fan-out (notify-profile-views — N parallel webhook invocations on the
+// same INSERT burst) used to retry simultaneously after the same
+// `Retry-After: 1` and 429 again. We add 0–base ms of random jitter so
+// parallel callers spread across a wider window. Sentry SUPABASE-EDGE-
+// FUNCTIONS-4 had 85 events over 10 weekly runs before this guard.
+function computeRetryDelayMs(retryAfter: string | null, retryCount: number): number {
+  const baseMs = retryAfter
+    ? parseInt(retryAfter, 10) * 1000
+    : RETRY_DELAY_BASE_MS * Math.pow(2, retryCount)
+  const jitterMs = Math.random() * baseMs
+  return baseMs + jitterMs
+}
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -230,9 +244,7 @@ export async function sendTrackedEmail(params: {
 
       if (response.status === 429 && retryCount < MAX_RETRIES) {
         const retryAfter = response.headers.get('Retry-After')
-        const delayMs = retryAfter
-          ? parseInt(retryAfter, 10) * 1000
-          : RETRY_DELAY_BASE_MS * Math.pow(2, retryCount)
+        const delayMs = computeRetryDelayMs(retryAfter, retryCount)
         logger.warn('Rate limited, retrying', { recipient: to, retryCount: retryCount + 1, delayMs })
         await delay(delayMs)
         continue
@@ -336,9 +348,7 @@ async function sendBatchWithRetry(
 
     if (response.status === 429 && retryCount < MAX_RETRIES) {
       const retryAfter = response.headers.get('Retry-After')
-      const delayMs = retryAfter
-        ? parseInt(retryAfter, 10) * 1000
-        : RETRY_DELAY_BASE_MS * Math.pow(2, retryCount)
+      const delayMs = computeRetryDelayMs(retryAfter, retryCount)
       logger.warn('Batch rate limited, retrying', { batchSize: emailPayloads.length, retryCount: retryCount + 1, delayMs })
       await delay(delayMs)
       return sendBatchWithRetry(resendApiKey, emailPayloads, logger, retryCount + 1)
