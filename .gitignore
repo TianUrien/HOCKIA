@@ -12,7 +12,15 @@ supabase/supabase/
 Thumbs.db
 
 # IDE
-.vscode/
+.vscode/*
+# Allow team-wide VSCode config. Personal preferences should still
+# go in a per-user settings layer; this file silences false-positive
+# Edge Tools linter warnings that don't reflect the project's actual
+# quality bar (npm run lint is the source of truth).
+# Note: must be `.vscode/*` not `.vscode/`, because git won't list
+# contents of an ignored directory so an exception inside it has
+# no effect.
+!.vscode/settings.json
 .idea/
 
 # Dependencies

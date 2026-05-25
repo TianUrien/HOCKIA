@@ -146,6 +146,7 @@ export function AdminOnboardingFunnel() {
           {/* Role filter dropdown */}
           <div className="relative">
             <select
+              aria-label="Filter onboarding funnel by role"
               value={roleFilter ?? ''}
               onChange={(e) =>
                 setRoleFilter((e.target.value || null) as RoleFilter)
