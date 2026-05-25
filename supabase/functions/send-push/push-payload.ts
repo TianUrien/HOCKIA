@@ -29,7 +29,11 @@ export function buildPushPayload(
       return {
         title: 'Friend Request',
         body: `${actorName} wants to connect`,
-        url: '/dashboard/profile?tab=friends&section=requests',
+        // section=incoming scrolls to the incoming-requests block in
+        // FriendsTab. section=requests was the old name (removed 2026-05-09)
+        // and silently no-ops, leaving the user at the top of the Friends
+        // tab with no idea where their request went.
+        url: '/dashboard/profile?tab=friends&section=incoming',
         tag: 'friend-request',
       }
     case 'friend_request_accepted':
@@ -45,14 +49,16 @@ export function buildPushPayload(
       return {
         title: 'Reference Request',
         body: `${actorName} requested a reference`,
-        url: '/dashboard/profile?tab=friends&section=requests',
+        url: '/dashboard/profile?tab=friends&section=incoming',
         tag: 'reference-request',
       }
     case 'reference_request_accepted':
       return {
         title: 'Reference Accepted',
         body: `${actorName} accepted your reference request`,
-        url: '/dashboard/profile?tab=friends&section=accepted',
+        // Reference responses live on the dedicated References tab now,
+        // not under Friends. section=accepted on Friends was dead.
+        url: '/dashboard/profile/references',
         tag: 'reference-accepted',
       }
     case 'reference_updated':

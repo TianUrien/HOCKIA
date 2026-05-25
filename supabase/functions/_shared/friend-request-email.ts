@@ -133,7 +133,7 @@ export function generateEmailHtml(requester: RequesterData): string {
     </div>
 
     <p style="margin: 0 0 8px 0;">
-      <a href="${HOCKIA_BASE_URL}/dashboard/profile?tab=friends&section=requests" style="color: #8026FA; font-weight: 600; text-decoration: none;">View request &rarr;</a>
+      <a href="${HOCKIA_BASE_URL}/dashboard/profile?tab=friends&section=incoming" style="color: #8026FA; font-weight: 600; text-decoration: none;">View request &rarr;</a>
     </p>
 
     <p style="color: #9ca3af; font-size: 14px; margin: 0;">
@@ -171,7 +171,7 @@ export function generateEmailText(requester: RequesterData): string {
   lines.push(
     '',
     'View their request:',
-    `${HOCKIA_BASE_URL}/dashboard/profile?tab=friends&section=requests`,
+    `${HOCKIA_BASE_URL}/dashboard/profile?tab=friends&section=incoming`,
     '',
     'View their profile:',
     profileUrl,

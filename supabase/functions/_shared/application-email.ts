@@ -91,18 +91,25 @@ export function generateEmailHtml(
   
   const location = applicant.base_location?.trim() || null
   
-  // Build profile URL
-  const profileUrl = applicant.username 
+  // Two distinct destinations:
+  //   - applicantsUrl: the dashboard applicants list for THIS opportunity.
+  //     Primary CTA. Clubs/coaches want to review the application alongside
+  //     other applicants and triage (good fit / maybe / reject), not just
+  //     read one profile. Mirrors the in-app new-application notification
+  //     which already routes here (see notifications/config.ts).
+  //   - profileUrl: the applicant's public profile. Secondary CTA.
+  const applicantsUrl = `${HOCKIA_BASE_URL}/dashboard/opportunities/${opportunity.id}/applicants`
+  const profileUrl = applicant.username
     ? `${HOCKIA_BASE_URL}/players/${applicant.username}`
     : `${HOCKIA_BASE_URL}/players/id/${applicant.id}`
 
   // Build detail items for applicant card
   const detailItems: string[] = []
-  
+
   if (positionsText) {
     detailItems.push(`<span style="display: inline-block; background: #f3f4f6; padding: 4px 12px; border-radius: 16px; font-size: 14px; color: #374151; margin-right: 8px; margin-bottom: 8px;">${positionsText}</span>`)
   }
-  
+
   if (location) {
     detailItems.push(`<span style="display: inline-block; background: #f3f4f6; padding: 4px 12px; border-radius: 16px; font-size: 14px; color: #374151; margin-right: 8px; margin-bottom: 8px;">📍 ${location}</span>`)
   }
@@ -158,8 +165,12 @@ export function generateEmailHtml(
       </table>
     </div>
 
-    <p style="margin: 0;">
-      <a href="${profileUrl}" style="color: #8026FA; font-weight: 600; text-decoration: none;">View profile &rarr;</a>
+    <p style="margin: 0 0 8px 0;">
+      <a href="${applicantsUrl}" style="color: #8026FA; font-weight: 600; text-decoration: none;">Review applicants &rarr;</a>
+    </p>
+
+    <p style="color: #9ca3af; font-size: 14px; margin: 0;">
+      <a href="${profileUrl}" style="color: #8026FA; text-decoration: none;">View ${displayName}'s profile</a>
     </p>
   </div>
 
@@ -193,8 +204,10 @@ export function generateEmailText(
   
   const location = applicant.base_location?.trim() || null
   
-  // Build profile URL
-  const profileUrl = applicant.username 
+  // Mirror the HTML template: primary applicants-list CTA, secondary
+  // profile CTA. See generateEmailHtml for the rationale.
+  const applicantsUrl = `${HOCKIA_BASE_URL}/dashboard/opportunities/${opportunity.id}/applicants`
+  const profileUrl = applicant.username
     ? `${HOCKIA_BASE_URL}/players/${applicant.username}`
     : `${HOCKIA_BASE_URL}/players/id/${applicant.id}`
 
@@ -210,21 +223,22 @@ export function generateEmailText(
     'APPLICANT:',
     displayName,
   ]
-  
+
   if (positionsText) {
     lines.push(`Position: ${positionsText}`)
   }
-  
+
   if (location) {
     lines.push(`Location: ${location}`)
   }
-  
+
   lines.push(
     '',
-    'View their profile:',
-    profileUrl,
+    'Review applicants:',
+    applicantsUrl,
     '',
-    'Open their profile to learn more.',
+    `View ${displayName}'s profile:`,
+    profileUrl,
     '',
     '---',
     "You're receiving this because you're on HOCKIA.",

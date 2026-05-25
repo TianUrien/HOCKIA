@@ -169,7 +169,7 @@ export function generateAcceptedEmailHtml(
     </div>
 
     <p style="margin: 0 0 8px 0;">
-      <a href="${HOCKIA_BASE_URL}/dashboard/profile?tab=friends&section=accepted" style="color: #8026FA; font-weight: 600; text-decoration: none;">See it on your profile &rarr;</a>
+      <a href="${HOCKIA_BASE_URL}/dashboard/profile/references" style="color: #8026FA; font-weight: 600; text-decoration: none;">See it on your profile &rarr;</a>
     </p>
 
     <p style="color: #9ca3af; font-size: 14px; margin: 0;">
@@ -216,7 +216,7 @@ export function generateAcceptedEmailText(
   lines.push(
     '',
     'See it on your profile:',
-    `${HOCKIA_BASE_URL}/dashboard/profile?tab=friends&section=accepted`,
+    `${HOCKIA_BASE_URL}/dashboard/profile/references`,
     '',
     `View ${displayName}'s profile:`,
     profileUrl,
