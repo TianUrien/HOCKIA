@@ -104,13 +104,21 @@ export function AdminReports() {
     setError(null)
 
     try {
+      // 30s timeout — Supabase JS has no built-in abort for RPCs, so we race
+      // the call against a timer. Without this, a hung network or stalled
+      // PostgREST request leaves the skeleton on screen indefinitely (audit
+      // Bug 9 observation pre-202604111200 migration).
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error: rpcError } = await (supabase as any).rpc('admin_get_reports', {
+      const rpcPromise = (supabase as any).rpc('admin_get_reports', {
         p_status: statusFilter || null,
         p_category: categoryFilter || null,
         p_limit: PAGE_SIZE,
         p_offset: (page - 1) * PAGE_SIZE,
       })
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Request timed out after 30s')), 30000),
+      )
+      const { data, error: rpcError } = await Promise.race([rpcPromise, timeoutPromise])
 
       if (rpcError) throw rpcError
 

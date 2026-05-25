@@ -44,10 +44,16 @@ interface NotificationAction {
   action_rate: number
 }
 
+// Field names mirror admin_get_cross_feature_attribution exactly.
+// Bug 6 root cause: the prior interface used profile_to_message /
+// profile_to_friend_request / vacancy_to_application, so every read
+// resolved to undefined and the page showed "0 viewers → 0 converted"
+// across all three KPIs despite 354 profile_view and 248 vacancy_view
+// events on prod.
 interface AttributionData {
-  profile_to_message: ConversionPath
-  profile_to_friend_request: ConversionPath
-  vacancy_to_application: ConversionPath
+  profile_view_to_message: ConversionPath
+  profile_view_to_friend: ConversionPath
+  vacancy_view_to_application: ConversionPath
   notification_to_action: NotificationAction[]
 }
 
@@ -95,9 +101,9 @@ export function AdminAttribution() {
     )
   }
 
-  const profileToMessage = data?.profile_to_message
-  const profileToFriend = data?.profile_to_friend_request
-  const vacancyToApp = data?.vacancy_to_application
+  const profileToMessage = data?.profile_view_to_message
+  const profileToFriend = data?.profile_view_to_friend
+  const vacancyToApp = data?.vacancy_view_to_application
   const notificationActions = [...(data?.notification_to_action ?? [])].sort(
     (a, b) => b.clickers - a.clickers,
   )

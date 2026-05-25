@@ -100,14 +100,22 @@ export function InvestorDashboardContent({
             loading={loading}
           />
           <StatCard
-            label="Growth (30d)"
+            label="Growth rate (last 30d vs prior 30d)"
             value={`${(metrics?.growth_rate_30d ?? 0) >= 0 ? '+' : ''}${metrics?.growth_rate_30d ?? 0}%`}
             icon={TrendingUp}
             color={growthDirection === 'up' ? 'green' : 'red'}
+            // Audit Bug 7: rendering "+25 new users" with a green '+' next
+            // to a red "-60.9% growth" headline was visually contradictory.
+            // Both numbers were correct (25 = count of new in last 30d,
+            // -60.9% = rate of change vs prior 30d count of 64), but the
+            // contradiction made the card unreadable. Now the label says
+            // "last 30d vs prior 30d" explicitly, and the sub-trend
+            // forces direction=neutral so the count doesn't get a
+            // misleading +/- prefix.
             trend={{
               value: metrics?.signups_30d ?? 0,
-              label: 'new users',
-              direction: growthDirection,
+              label: 'signups in last 30d',
+              direction: 'neutral',
             }}
             loading={loading}
           />

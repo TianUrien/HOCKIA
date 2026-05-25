@@ -236,7 +236,7 @@ Deno.serve(async (req: Request) => {
       endorser_profile_url: profileUrl,
       relationship_type: reference.relationship_type || '',
       endorsement_text: reference.endorsement_text || '',
-      cta_url: `${HOCKIA_BASE_URL}/dashboard/profile?tab=friends&section=accepted`,
+      cta_url: `${HOCKIA_BASE_URL}/dashboard/profile/references`,
       settings_url: `${HOCKIA_BASE_URL}/settings`,
     }
 
