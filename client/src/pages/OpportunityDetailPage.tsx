@@ -37,7 +37,7 @@ export default function OpportunityDetailPage() {
 
   // Title resolves to the opportunity name once loaded; stays neutral
   // ("Opportunity") while fetching so the tab doesn't flash the static
-  // "HOCKIA – The Home of Field Hockey" suffix during the load.
+  // "HOCKIA – Where field hockey sticks together." suffix during the load.
   useDocumentTitle(opportunity?.title ? `${opportunity.title} • Opportunities` : 'Opportunity')
 
   const fetchVacancyDetails = useCallback(async () => {

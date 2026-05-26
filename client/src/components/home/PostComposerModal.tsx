@@ -4,6 +4,7 @@ import { Loader2, Search, Shield, X, ImagePlus } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
+import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import { useUserPosts, type PostImage } from '@/hooks/useUserPosts'
 import { validateImage, optimizeImage } from '@/lib/imageOptimization'
 import { useUploadManager } from '@/lib/uploadManager'
@@ -116,14 +117,9 @@ export function PostComposerModal({
   //   - On iOS Safari rubber-band overscroll bleeds through the backdrop
   // Save the previous overflow value so unmount restores rather than
   // overwriting state owned by a wrapping modal (mirrors Modal.tsx).
-  useEffect(() => {
-    if (!isOpen) return
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = previousOverflow
-    }
-  }, [isOpen])
+  // Use the position:fixed scroll-lock pattern so iOS WKWebView preserves
+  // the feed scroll position when the composer closes.
+  useBodyScrollLock(isOpen)
 
   // Add Escape-to-close so keyboard users / iPad with hardware keyboard
   // can dismiss without reaching the X button.

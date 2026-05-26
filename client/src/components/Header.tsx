@@ -77,7 +77,7 @@ export default function Header() {
             </button>
             
             <span className="hidden lg:inline-block px-3 py-1 rounded-full text-xs font-medium text-white bg-[#ff9500]">
-              The Home of Field Hockey.
+              Where field hockey sticks together.
             </span>
           </div>
 

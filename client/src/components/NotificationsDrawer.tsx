@@ -8,6 +8,7 @@ import { useNotificationStore } from '@/lib/notifications'
 import { useToastStore } from '@/lib/toast'
 import { cn } from '@/lib/utils'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
+import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import type { NotificationKind, NotificationRecord } from '@/lib/api/notifications'
 import { getNotificationConfig, resolveNotificationRoute } from './notifications/config'
 import { trackDbEvent } from '@/lib/trackDbEvent'
@@ -102,17 +103,10 @@ export default function NotificationsDrawer() {
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [isOpen, toggleDrawer])
 
-  useEffect(() => {
-    if (typeof document === 'undefined' || !isOpen) {
-      return
-    }
-
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = previousOverflow
-    }
-  }, [isOpen])
+  // Scroll lock — useBodyScrollLock pins scrollY so closing the drawer
+  // returns the user to the same spot in the underlying page (often the
+  // Home feed, opened from the global bell icon).
+  useBodyScrollLock(isOpen)
 
   const handleFriendRequest = async (friendshipId: string, action: 'accept' | 'decline') => {
     const success = await respondToFriendRequest({ friendshipId, action })

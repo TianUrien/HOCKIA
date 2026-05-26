@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { X, ChevronLeft, ChevronRight, Play, Pause, Volume2, VolumeX, Maximize } from 'lucide-react'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
+import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import { useSwipeGesture } from '@/hooks/useSwipeGesture'
 import { getImageUrl } from '@/lib/imageUrl'
 import type { PostMediaItem } from '@/types/homeFeed'
@@ -111,14 +112,9 @@ export function MediaLightbox({ images, initialIndex, onClose }: MediaLightboxPr
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [onClose, goNext, goPrev])
 
-  // Scroll lock
-  useEffect(() => {
-    const originalOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = originalOverflow
-    }
-  }, [])
+  // Scroll lock — useBodyScrollLock preserves scrollY across iOS WKWebView,
+  // so closing the lightbox returns the user to the same place in the feed.
+  useBodyScrollLock(true)
 
   const hasMultiple = images.length > 1
   const isFirst = currentIndex === 0

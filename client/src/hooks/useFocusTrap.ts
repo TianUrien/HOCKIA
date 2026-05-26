@@ -43,11 +43,13 @@ export function useFocusTrap({ containerRef, isActive, initialFocusRef }: FocusT
       ? initialFocusRef.current
       : focusableElements[0] ?? container
 
-    // Ensure the container can receive focus if needed
+    // Ensure the container can receive focus if needed. preventScroll
+    // so opening a modal never yanks the underlying page — the modal
+    // itself is in viewport via fixed positioning.
     if (initialElement === container && container.tabIndex === -1) {
-      container.focus()
+      container.focus({ preventScroll: true })
     } else {
-      initialElement?.focus()
+      initialElement?.focus({ preventScroll: true })
     }
 
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -95,7 +97,11 @@ export function useFocusTrap({ containerRef, isActive, initialFocusRef }: FocusT
     return () => {
       document.removeEventListener('keydown', handleKeyDown)
       document.removeEventListener('focus', handleFocus, true)
-      previouslyFocusedElement?.focus()
+      // preventScroll: restoring focus to the element that triggered
+      // the modal must not scroll the page — useBodyScrollLock owns
+      // scroll position restoration. Without this, closing a modal
+      // could pull the page to the trigger element's DOM position.
+      previouslyFocusedElement?.focus({ preventScroll: true })
     }
   }, [containerRef, initialFocusRef, isActive])
 }

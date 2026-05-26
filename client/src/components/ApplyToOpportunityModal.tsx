@@ -9,6 +9,7 @@ import { trackDbEvent } from '@/lib/trackDbEvent'
 import { trackApplicationSubmit } from '@/lib/analytics'
 import type { Vacancy } from '@/lib/supabase'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
+import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
 import { extractErrorMessage } from '@/lib/utils'
 
@@ -43,24 +44,19 @@ export default function ApplyToVacancyModal({
 
   useFocusTrap({ containerRef: dialogRef, isActive: isOpen })
 
+  useBodyScrollLock(isOpen)
+
   useEffect(() => {
     if (!isOpen) return
-
-    const originalOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.preventDefault()
         handleClose()
       }
     }
-
     document.addEventListener('keydown', handleKeyDown)
-
     return () => {
       document.removeEventListener('keydown', handleKeyDown)
-      document.body.style.overflow = originalOverflow
     }
   }, [handleClose, isOpen])
 

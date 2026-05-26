@@ -141,7 +141,7 @@ export default function DevelopersPage() {
             </div>
             <div className="text-gray-700 leading-relaxed space-y-4">
               <p>
-                <strong>HOCKIA</strong> is the home of field hockey — a platform where players, coaches, and clubs connect.
+                <strong>HOCKIA</strong> is where field hockey sticks together — a platform where players, coaches, and clubs connect.
                 Clubs post opportunities, and players from around the world discover and apply to join their teams.
               </p>
               <p>

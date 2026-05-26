@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { X } from 'lucide-react'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
+import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 
 interface LightboxMedia {
   id: string
@@ -18,24 +19,19 @@ export default function MediaLightbox({ media, onClose }: MediaLightboxProps) {
 
   useFocusTrap({ containerRef: dialogRef, isActive: Boolean(media) })
 
+  useBodyScrollLock(Boolean(media))
+
   useEffect(() => {
     if (!media) return
-
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.preventDefault()
         onClose()
       }
     }
-
     document.addEventListener('keydown', handleKeyDown)
-
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-
     return () => {
       document.removeEventListener('keydown', handleKeyDown)
-      document.body.style.overflow = previousOverflow
     }
   }, [media, onClose])
 
