@@ -286,7 +286,10 @@ function ScrollToTop() {
   const navigationType = useNavigationType()
   useEffect(() => {
     if (navigationType === 'POP') return
-    window.scrollTo(0, 0)
+    // behavior: 'instant' overrides `scroll-smooth` on <html> so route
+    // changes don't visibly animate scroll-to-top after the new page
+    // has already rendered at the previous scroll position.
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
   }, [pathname, navigationType])
   return null
 }

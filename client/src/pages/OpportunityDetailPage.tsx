@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuthStore } from '../lib/auth'
 import { logger } from '../lib/logger'
@@ -17,7 +17,22 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 export default function OpportunityDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const routerLocation = useLocation()
   const { user, profile } = useAuthStore()
+
+  // X-close behavior: if the user arrived via in-app navigation (from the
+  // list, home feed, search, notification, etc.), pop back so
+  // useScrollRestore returns them to the previous page's scrollY.
+  // location.key === 'default' only on the session's first navigation,
+  // which means we got here via deep link / shared URL / email CTA —
+  // there's no useful history to pop, so fall back to the list.
+  const handleClose = useCallback(() => {
+    if (routerLocation.key !== 'default') {
+      navigate(-1)
+    } else {
+      navigate('/opportunities')
+    }
+  }, [routerLocation.key, navigate])
   const isCurrentUserTestAccount = profile?.is_test_account ?? false
   // On staging the opportunities list shows test-account postings to
   // everyone (OpportunitiesPage skips the test filter when isStaging).
@@ -369,7 +384,7 @@ export default function OpportunityDetailPage() {
                 : club.mens_league_division ?? club.womens_league_division ?? null
             })()}
             worldClub={worldClub}
-            onClose={() => navigate('/opportunities')}
+            onClose={handleClose}
             onApply={canShowApplyButton ? handleApplyClick : undefined}
             hasApplied={hasApplied}
           />

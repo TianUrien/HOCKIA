@@ -56,7 +56,10 @@ export function useScrollRestore(ready = true) {
     const attemptScroll = (attempts = 0) => {
       const canScroll = document.documentElement.scrollHeight >= savedY + window.innerHeight * 0.5
       if (canScroll || attempts >= 10) {
-        window.scrollTo(0, savedY)
+        // behavior: 'instant' overrides `scroll-smooth` on <html>. Without
+        // it the user sees the page animate back to position on every
+        // browser back/forward — same flash as the modal-close case.
+        window.scrollTo({ top: savedY, left: 0, behavior: 'instant' })
         hasRestoredRef.current = true
       } else {
         setTimeout(() => attemptScroll(attempts + 1), 50)
