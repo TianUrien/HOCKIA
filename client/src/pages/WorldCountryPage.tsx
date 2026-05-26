@@ -138,7 +138,7 @@ export default function WorldCountryPage() {
 
     // Optimistic document.title before the fetch — the name lookup +
     // redirect path can take 400ms+, and during that window the title was
-    // stuck at the default "HOCKIA – The Home of Field Hockey" (bad for
+    // stuck at the default "HOCKIA – Where field hockey sticks together." (bad for
     // shares, tab labels, and SEO crawlers). Title-case the slug as a
     // best-guess; the real country name overwrites it below once the row
     // arrives.
