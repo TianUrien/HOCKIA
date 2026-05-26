@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { AlertTriangle, X } from 'lucide-react'
 import { logger } from '@/lib/logger'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
+import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 
 /**
  * In-app confirmation dialog for destructive actions. Replaces the
@@ -50,6 +51,8 @@ export default function ConfirmDialog({
 
   useFocusTrap({ containerRef: dialogRef, isActive: isOpen })
 
+  useBodyScrollLock(isOpen)
+
   useEffect(() => {
     if (!isOpen) return
     const handleKey = (e: KeyboardEvent) => {
@@ -59,11 +62,8 @@ export default function ConfirmDialog({
       }
     }
     document.addEventListener('keydown', handleKey)
-    const prevOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
     return () => {
       document.removeEventListener('keydown', handleKey)
-      document.body.style.overflow = prevOverflow
     }
   }, [isOpen, isSubmitting, onClose])
 

@@ -15,6 +15,7 @@ import { Avatar, RoleBadge } from '@/components'
 import { useSearch } from '@/hooks/useSearch'
 import { useRecentSearches } from '@/hooks/useRecentSearches'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
+import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import type { SearchResult, SearchPostResult, SearchPersonResult, SearchClubResult, SearchOpportunityResult as SearchOpportunityResultType } from '@/hooks/useSearch'
 
 type TabType = 'all' | 'posts' | 'people' | 'clubs' | 'opportunities'
@@ -205,21 +206,17 @@ export function SearchOverlay() {
   const results: SearchResult[] = data?.pages.flatMap((page) => page.results) ?? []
   const typeCounts = data?.pages[0]?.type_counts
 
-  // Scroll lock + escape key
+  useBodyScrollLock(isOpen)
+
+  // Escape key
   useEffect(() => {
     if (!isOpen) return
-
-    const originalOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') handleClose()
     }
     document.addEventListener('keydown', handleEscape)
-
     return () => {
       document.removeEventListener('keydown', handleEscape)
-      document.body.style.overflow = originalOverflow
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen])

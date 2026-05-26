@@ -37,6 +37,7 @@ import SignInPromptModal from '@/components/SignInPromptModal'
 import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
+import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import { useWorldClubLogo } from '@/hooks/useWorldClubLogo'
 import { getImageUrl } from '@/lib/imageUrl'
 import { logger } from '@/lib/logger'
@@ -161,17 +162,21 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
     })
   }, [member])
 
-  // Escape to close + body scroll lock while open
+  // Body scroll lock. Uses the position:fixed + scrollY-preservation
+  // pattern (vs naive overflow:hidden) because on iOS WKWebView the
+  // simple overflow toggle drops scrollY back to 0 on close, dumping
+  // the user at the top of the Community list every time they peek
+  // at a preview.
+  useBodyScrollLock(member !== null)
+
+  // Escape to close
   useEffect(() => {
     if (!member) return
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
     }
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
     document.addEventListener('keydown', handleKey)
     return () => {
-      document.body.style.overflow = previousOverflow
       document.removeEventListener('keydown', handleKey)
     }
   }, [member, onClose])

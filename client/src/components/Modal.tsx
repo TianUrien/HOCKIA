@@ -2,6 +2,7 @@ import { useEffect, useRef, type ReactNode } from 'react'
 import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
+import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 
 interface ModalProps {
   isOpen: boolean
@@ -16,23 +17,19 @@ export default function Modal({ isOpen, onClose, children, className, showClose 
 
   useFocusTrap({ containerRef: dialogRef, isActive: isOpen })
 
+  // Scroll lock pins scrollY so closing a modal nested inside a scrolled
+  // page (e.g. SignInPrompt over the Community list) doesn't dump the
+  // user back at the top on iOS WKWebView.
+  useBodyScrollLock(isOpen)
+
   useEffect(() => {
     if (!isOpen) return
-
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
     }
-
-    // Save previous overflow so we can restore it on close. Prevents this
-    // cleanup from stomping a scroll lock owned by a surrounding modal
-    // (e.g. MemberPreviewModal hosting SignInPromptModal).
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
     document.addEventListener('keydown', handleEscape)
-
     return () => {
       document.removeEventListener('keydown', handleEscape)
-      document.body.style.overflow = previousOverflow
     }
   }, [isOpen, onClose])
 

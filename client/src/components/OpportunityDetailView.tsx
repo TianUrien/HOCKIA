@@ -9,6 +9,7 @@ import { opportunityGenderToTeamLabel } from '@/lib/hockeyCategories'
 import { getShareOrigin } from '@/lib/profileShare'
 import { useAuthStore } from '@/lib/auth'
 import { useCountries } from '@/hooks/useCountries'
+import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import { checkOpportunityEligibility } from '@/lib/opportunityEligibility'
 
 interface VacancyDetailViewProps {
@@ -162,11 +163,10 @@ export default function VacancyDetailView({
     }
   }
 
+  useBodyScrollLock(true)
+
   useEffect(() => {
-    const originalOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
     requestAnimationFrame(() => setIsVisible(true))
-    return () => { document.body.style.overflow = originalOverflow }
   }, [])
 
   // Escape closes the view — standard dialog affordance, and the only

@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
+import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 
 interface ImagePreviewModalProps {
   src: string
@@ -16,21 +17,17 @@ export default function ImagePreviewModal({ src, alt, title, isOpen, onClose }: 
 
   useFocusTrap({ containerRef: dialogRef, isActive: isOpen })
 
+  useBodyScrollLock(isOpen)
+
   useEffect(() => {
     if (!isOpen) return
-
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         onClose()
       }
     }
-
-    const originalOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
     document.addEventListener('keydown', handleKeyDown)
-
     return () => {
-      document.body.style.overflow = originalOverflow
       document.removeEventListener('keydown', handleKeyDown)
     }
   }, [isOpen, onClose])

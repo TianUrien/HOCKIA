@@ -10,6 +10,7 @@ import LocationAutocomplete from './LocationAutocomplete'
 import type { LocationSelection } from './LocationAutocomplete'
 import { useCountries } from '@/hooks/useCountries'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
+import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import { useToastStore } from '@/lib/toast'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import { trackVacancyCreate } from '@/lib/analytics'
@@ -210,15 +211,10 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
     setFormData(initial)
   }, [addToast, editingVacancy, initialOpportunityType, isOpen, profile, user])
 
+  useBodyScrollLock(isOpen)
+
   useEffect(() => {
-    if (!isOpen) {
-      return
-    }
-
-    // Lock body scroll when modal is open
-    const originalOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-
+    if (!isOpen) return
     const handleKeyDown = (event: KeyboardEvent) => {
       // While the discard-confirm dialog is open, it owns Escape.
       if (event.key === 'Escape' && !showDiscardConfirm) {
@@ -226,12 +222,9 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
         handleClose()
       }
     }
-
     document.addEventListener('keydown', handleKeyDown)
-
     return () => {
       document.removeEventListener('keydown', handleKeyDown)
-      document.body.style.overflow = originalOverflow
     }
   }, [handleClose, isOpen, showDiscardConfirm])
 
