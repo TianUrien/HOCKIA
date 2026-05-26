@@ -38,7 +38,11 @@ export function useBodyScrollLock(enabled: boolean) {
       root.removeAttribute('data-chat-scroll-lock')
       body.removeAttribute('data-chat-scroll-lock')
       if (typeof window.scrollTo === 'function') {
-        window.scrollTo(0, scrollY)
+        // behavior: 'instant' overrides the global `scroll-smooth` set
+        // on <html> (globals.css). Without it, the cleanup's restore
+        // animates over ~300ms and the user sees the page "scroll back"
+        // after closing the modal. We want this single paint, invisible.
+        window.scrollTo({ top: scrollY, left: 0, behavior: 'instant' })
       }
     }
   }, [enabled])
