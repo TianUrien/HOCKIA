@@ -82,9 +82,11 @@ export default function CommunityPage() {
     if (saved !== undefined) {
       // rAF so the content for the new pathname has rendered enough to
       // accept the scrollY. Fallback to a 200ms settle pass for async
-      // content like PeopleListView's fetch.
-      requestAnimationFrame(() => window.scrollTo(0, saved))
-      const t = window.setTimeout(() => window.scrollTo(0, saved), 200)
+      // content like PeopleListView's fetch. behavior: 'instant'
+      // overrides the global `scroll-smooth` CSS so tab switches don't
+      // visibly animate the restore.
+      requestAnimationFrame(() => window.scrollTo({ top: saved, left: 0, behavior: 'instant' }))
+      const t = window.setTimeout(() => window.scrollTo({ top: saved, left: 0, behavior: 'instant' }), 200)
       return () => window.clearTimeout(t)
     }
   }, [location.pathname])
