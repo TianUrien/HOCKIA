@@ -16,6 +16,7 @@ import { logger } from '@/lib/logger'
 import { useOpportunityNotifications } from '@/hooks/useOpportunityNotifications'
 import { useCountries, type Country } from '@/hooks/useCountries'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
+import { useScrollRestore } from '@/hooks/useScrollRestore'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -165,6 +166,12 @@ export default function OpportunitiesPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [fetchError, setFetchError] = useState<string | null>(null)
   const [isSyncingNewVacancies, setIsSyncingNewVacancies] = useState(false)
+
+  // Restore scroll on POP-back from /opportunities/:id so the X-close
+  // (now navigate(-1)) lands the user exactly where they were. Gated on
+  // !isLoading so the hook waits for the list to render tall enough
+  // before scrolling.
+  useScrollRestore(!isLoading)
 
   // Filters — initialized from URL params
   const [filters, setFilters] = useState<FiltersState>(() => {
