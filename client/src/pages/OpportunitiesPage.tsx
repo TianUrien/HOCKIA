@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { ChevronDown, Shield, X, Check, ArrowUpDown, Plus } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuthStore } from '../lib/auth'
 import type { Vacancy } from '../lib/supabase'
 import Header from '../components/Header'
 import OpportunityCard from '../components/OpportunityCard'
+import OpportunityPreviewModal from '../components/OpportunityPreviewModal'
 import CreateOpportunityModal from '../components/CreateOpportunityModal'
 import Button from '../components/Button'
 import { OpportunityCardSkeleton } from '../components/Skeleton'
@@ -139,7 +140,6 @@ function FilterDropdown({ label, value, options, onChange, icon, clearable = tru
 
 export default function OpportunitiesPage() {
   useDocumentTitle('Opportunities')
-  const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const { user, profile } = useAuthStore()
   const isCurrentUserTestAccount = profile?.is_test_account ?? false
@@ -163,6 +163,13 @@ export default function OpportunitiesPage() {
   const [worldClubsMap, setWorldClubsMap] = useState<Record<string, { id: string; clubName: string; avatarUrl: string | null; countryName: string | null; flagEmoji: string | null; leagueName: string | null }>>({})
   const [userApplications, setUserApplications] = useState<string[]>([])
   const [showCreateModal, setShowCreateModal] = useState(false)
+
+  // Modal preview state — opening an opportunity from the list shows
+  // it as an overlay on top of the (still-mounted) list, so scroll /
+  // filters / search are preserved without a route navigation. Mirrors
+  // the Community MemberPreviewModal pattern. Deep-link entries to
+  // /opportunities/:id still use the standalone OpportunityDetailPage.
+  const [previewVacancy, setPreviewVacancy] = useState<Vacancy | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [fetchError, setFetchError] = useState<string | null>(null)
   const [isSyncingNewVacancies, setIsSyncingNewVacancies] = useState(false)
@@ -747,7 +754,7 @@ export default function OpportunitiesPage() {
                     publisherOrganization={org}
                     worldClub={vacancy.world_club_id ? worldClubsMap[vacancy.world_club_id] ?? null : null}
                     countryFlag={getFlagEmoji(vacancy.location_country)}
-                    onViewDetails={() => navigate(`/opportunities/${vacancy.id}`)}
+                    onViewDetails={() => setPreviewVacancy(vacancy)}
                   />
                 )
               })}
@@ -767,6 +774,23 @@ export default function OpportunitiesPage() {
           onSuccess={() => {
             setShowCreateModal(false)
             fetchVacancies({ skipCache: true })
+          }}
+        />
+      )}
+
+      {/* Opportunity preview — opens as an in-place overlay so the list
+          underneath stays mounted (scroll, filters, search all preserved).
+          All visible data is already in memory, so the modal opens
+          instantly without a fetch. */}
+      {previewVacancy && (
+        <OpportunityPreviewModal
+          vacancy={previewVacancy}
+          clubInfo={clubs[previewVacancy.club_id]}
+          worldClub={previewVacancy.world_club_id ? worldClubsMap[previewVacancy.world_club_id] ?? null : null}
+          hasApplied={userApplications.includes(previewVacancy.id)}
+          onClose={() => setPreviewVacancy(null)}
+          onApplicationSuccess={(vacancyId) => {
+            setUserApplications(prev => prev.includes(vacancyId) ? prev : [...prev, vacancyId])
           }}
         />
       )}
