@@ -1,13 +1,17 @@
 /**
  * useClubFit — pulls the auth viewer profile and computes a Club Fit
  * for a single candidate row. Pure derived state; no async fetch,
- * no cache table, no Supabase call. Recomputes when either side
- * changes.
+ * no cache table. Recomputes when either side changes.
  *
- * Sprint v1: the viewer's "context" IS their club profile. No
- * explicit ContextSwitcher yet. When the viewer isn't a club (or
- * hasn't declared team genders), `fit.isApplicable` is false and
- * the consumer should hide the chip entirely.
+ * Sprint 2: when the club viewer has an active recruiting_context
+ * row, its target_category overrides the implicit profile-derived
+ * target. So a multi-team club (Mixed by profile) can switch their
+ * Fit math to scope to "Women's team" via the ContextSwitcher chip
+ * without editing their profile.
+ *
+ * The active context is read from a shared zustand store (see
+ * useActiveRecruitingTarget), so many ClubFitChip instances on
+ * one page trigger ONE network fetch, not N.
  */
 
 import { useMemo } from 'react'
@@ -19,6 +23,7 @@ import {
 } from '@/lib/clubFit'
 import type { RecruitingContextProfileFields } from '@/lib/recruitingContext'
 import type { Profile } from '@/lib/supabase'
+import { useActiveRecruitingTarget } from './useRecruitingContext'
 
 /** Narrow a full profile down to just the recruiting-context fields. */
 function toViewerProfile(
@@ -44,8 +49,12 @@ export function useClubFit(
   candidate: FitCandidateFields | null | undefined,
 ): ClubFitResult {
   const { profile: viewerProfile } = useAuthStore()
+  const overrideTarget = useActiveRecruitingTarget()
   return useMemo(
-    () => computeClubFit(toViewerProfile(viewerProfile), candidate),
-    [viewerProfile, candidate],
+    () =>
+      computeClubFit(toViewerProfile(viewerProfile), candidate, {
+        overrideTarget,
+      }),
+    [viewerProfile, candidate, overrideTarget],
   )
 }

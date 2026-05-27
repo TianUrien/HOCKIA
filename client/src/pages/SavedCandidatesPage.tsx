@@ -16,6 +16,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { ArrowLeft, BookmarkCheck, Trash2, ExternalLink, MapPin, Building2 } from 'lucide-react'
 import Header from '@/components/Header'
 import { Avatar, RoleBadge } from '@/components'
+import ContextSwitcher from '@/components/recruiting/ContextSwitcher'
 import { useAuthStore } from '@/lib/auth'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { getInitials } from '@/lib/utils'
@@ -67,6 +68,12 @@ export default function SavedCandidatesPage() {
           <p className="text-sm text-gray-600 mt-1">
             Players you've saved from Community, search, or any profile. Only you can see this list.
           </p>
+          {/* Active recruiting context drives the Club Fit chip on
+              each saved candidate row. Self-hides for non-recruiter
+              roles. */}
+          <div className="mt-3">
+            <ContextSwitcher />
+          </div>
         </header>
 
         {error && (

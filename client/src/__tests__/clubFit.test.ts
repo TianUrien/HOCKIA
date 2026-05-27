@@ -184,4 +184,55 @@ describe('computeClubFit', () => {
     const result = computeClubFit(womensClub, baseFemalePlayer)
     expect(result.reasons.length).toBeGreaterThan(0)
   })
+
+  // ── Sprint 2: overrideTarget ────────────────────────────────────
+  it('overrideTarget=Women makes a Mixed club score against women rules', () => {
+    // Mixed club (both leagues set) would derive target='Mixed' and
+    // accept adult_men. With overrideTarget='Women' the men player
+    // should no longer match.
+    const mixedClub = { ...womensClub, mens_league_division: 'Nacional A' }
+    const malePlayer = { ...baseFemalePlayer, playing_category: 'adult_men' }
+
+    const noOverride = computeClubFit(mixedClub, malePlayer)
+    expect(noOverride.target).toBe('Mixed')
+    expect(noOverride.components.gender_match).toBe(1)
+
+    const withOverride = computeClubFit(mixedClub, malePlayer, {
+      overrideTarget: 'Women',
+    })
+    expect(withOverride.target).toBe('Women')
+    expect(withOverride.components.gender_match).toBe(0)
+  })
+
+  it('overrideTarget rescues a club with no leagues declared', () => {
+    // Without an override this would be NOT_APPLICABLE (no leagues
+    // → deriveTargetCategory returns null). With an override the
+    // club becomes Fit-capable.
+    const emptyClub = {
+      ...womensClub,
+      womens_league_division: null,
+      mens_league_division: null,
+    }
+    const noOverride = computeClubFit(emptyClub, baseFemalePlayer)
+    expect(noOverride.isApplicable).toBe(false)
+
+    const withOverride = computeClubFit(emptyClub, baseFemalePlayer, {
+      overrideTarget: 'Women',
+    })
+    expect(withOverride.isApplicable).toBe(true)
+    expect(withOverride.target).toBe('Women')
+    expect(withOverride.components.gender_match).toBe(1)
+  })
+
+  it('overrideTarget=null still hides the chip for a no-league club', () => {
+    const emptyClub = {
+      ...womensClub,
+      womens_league_division: null,
+      mens_league_division: null,
+    }
+    const result = computeClubFit(emptyClub, baseFemalePlayer, {
+      overrideTarget: null,
+    })
+    expect(result.isApplicable).toBe(false)
+  })
 })

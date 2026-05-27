@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Users, Star, HelpCircle, XCircle, Inbox, Search, X } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -8,6 +8,8 @@ import type { OpportunityApplicationWithApplicant, Opportunity, Json } from '@/l
 import type { Database } from '@/lib/database.types'
 import ApplicantCard from '@/components/ApplicantCard'
 import type { ApplicantReferenceInfo } from '@/components/ApplicantCard'
+import ContextSwitcher from '@/components/recruiting/ContextSwitcher'
+import { useRecruitingContext, opportunityGenderToTarget } from '@/hooks/useRecruitingContext'
 import { logger } from '@/lib/logger'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
@@ -47,6 +49,63 @@ export default function ApplicantsList() {
   const [referencesUnavailable, setReferencesUnavailable] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [positionFilter, setPositionFilter] = useState<string>('')
+
+  // Auto-scope the recruiter's active recruiting_context to this
+  // opportunity. The RPC find-or-creates a type='opportunity' row
+  // and atomically activates it, so Fit chips + carousel filters
+  // on subsequent surfaces narrow to this opportunity's gender.
+  //
+  // Ref guard fires the RPC at most once per (opportunity, viewer)
+  // pair per mount. The cancelled flag in cleanup suppresses the
+  // toast + ref retention if the page unmounts (or the opportunity
+  // changes via route swap) before the promise resolves, preventing
+  // a phantom toast for the old opportunity from leaking into the
+  // next view.
+  const { activateForOpportunity } = useRecruitingContext()
+  const autoActivatedRef = useRef<string | null>(null)
+  // Reset the ref when the viewer changes (logout/relogin without
+  // unmount) so the next sign-in re-activates instead of silently
+  // skipping because the previous user's id is cached.
+  const lastViewerIdRef = useRef<string | null>(null)
+  useEffect(() => {
+    if (lastViewerIdRef.current !== (user?.id ?? null)) {
+      lastViewerIdRef.current = user?.id ?? null
+      autoActivatedRef.current = null
+    }
+  }, [user?.id])
+
+  useEffect(() => {
+    if (!opportunity || !user) return
+    if (opportunity.club_id !== user.id) return
+    if (autoActivatedRef.current === opportunity.id) return
+    autoActivatedRef.current = opportunity.id
+    const target = opportunityGenderToTarget(opportunity.gender)
+    let cancelled = false
+    void activateForOpportunity({
+      opportunityId: opportunity.id,
+      target,
+      region: opportunity.location_city ?? null,
+      label: opportunity.title ? `${opportunity.title}` : null,
+    }).then((row) => {
+      if (cancelled) return
+      if (!row) {
+        addToast('Could not scope recruiting to this opportunity.', 'error')
+        // Clear the guard so a manual retry (e.g., navigating away
+        // and back) re-attempts the auto-activate.
+        autoActivatedRef.current = null
+        return
+      }
+      addToast(
+        target
+          ? `Recruiting scoped to this opportunity (${target}).`
+          : 'Recruiting scoped to this opportunity.',
+        'success',
+      )
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [opportunity, user, activateForOpportunity, addToast])
 
   useEffect(() => {
     const fetchData = async () => {
@@ -360,6 +419,13 @@ export default function ApplicantsList() {
                 </span>
               )}
             </p>
+            {/* Active recruiting context is auto-scoped to this
+                opportunity on mount. The chip lets the owner verify
+                the scope and switch back to their default context
+                when they're done. Self-hides for non-club/coach. */}
+            <div className="mt-3">
+              <ContextSwitcher />
+            </div>
           </div>
 
           {/* Search & Filter */}

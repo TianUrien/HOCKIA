@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.1"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       admin_audit_logs: {
@@ -2991,6 +3016,84 @@ export type Database = {
         }
         Relationships: []
       }
+      recruiting_context: {
+        Row: {
+          competition_id: number | null
+          created_at: string
+          id: string
+          is_active: boolean
+          label: string | null
+          opportunity_id: string | null
+          owner_id: string
+          region: string | null
+          target_category: string | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          competition_id?: number | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string | null
+          opportunity_id?: string | null
+          owner_id: string
+          region?: string | null
+          target_category?: string | null
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          competition_id?: number | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string | null
+          opportunity_id?: string | null
+          owner_id?: string
+          region?: string | null
+          target_category?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recruiting_context_competition_id_fkey"
+            columns: ["competition_id"]
+            isOneToOne: false
+            referencedRelation: "world_leagues"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recruiting_context_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recruiting_context_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "public_opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recruiting_context_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recruiting_context_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reference_reminder_queue: {
         Row: {
           created_at: string
@@ -4113,6 +4216,33 @@ export type Database = {
       }
       accept_terms: { Args: { p_version?: string }; Returns: undefined }
       acquire_profile_lock: { Args: { profile_id: string }; Returns: boolean }
+      activate_opportunity_recruiting_context: {
+        Args: {
+          p_label: string
+          p_opportunity_id: string
+          p_region: string
+          p_target_category: string
+        }
+        Returns: {
+          competition_id: number | null
+          created_at: string
+          id: string
+          is_active: boolean
+          label: string | null
+          opportunity_id: string | null
+          owner_id: string
+          region: string | null
+          target_category: string | null
+          type: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "recruiting_context"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       add_brand_ambassador: {
         Args: { p_brand_id: string; p_player_id: string }
         Returns: Json
@@ -5087,6 +5217,35 @@ export type Database = {
       }
       confirm_availability: { Args: never; Returns: undefined }
       content_check: { Args: { p_text: string }; Returns: string }
+      create_active_recruiting_context: {
+        Args: {
+          p_competition_id: number
+          p_label: string
+          p_opportunity_id: string
+          p_region: string
+          p_target_category: string
+          p_type: string
+        }
+        Returns: {
+          competition_id: number | null
+          created_at: string
+          id: string
+          is_active: boolean
+          label: string | null
+          opportunity_id: string | null
+          owner_id: string
+          region: string | null
+          target_category: string | null
+          type: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "recruiting_context"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       create_and_claim_world_club: {
         Args: {
           p_club_name: string
@@ -6047,6 +6206,28 @@ export type Database = {
         Args: { p_batch?: number; p_min_views?: number }
         Returns: number
       }
+      set_active_recruiting_context: {
+        Args: { p_id: string }
+        Returns: {
+          competition_id: number | null
+          created_at: string
+          id: string
+          is_active: boolean
+          label: string | null
+          opportunity_id: string | null
+          owner_id: string
+          region: string | null
+          target_category: string | null
+          type: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "recruiting_context"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       set_profile_comment_status: {
         Args: {
           p_comment_id: string
@@ -6352,6 +6533,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       application_status: ["pending", "shortlisted", "maybe", "rejected"],

@@ -33,7 +33,6 @@
 
 import {
   deriveTargetCategory,
-  isViewerFitCapable,
   playingCategoryMatchesTarget,
   type RecruitingContextProfileFields,
   type TargetCategory,
@@ -161,17 +160,39 @@ function competitionProximity(
 }
 
 /**
+ * Optional overrides applied on top of the profile-derived context.
+ * Sprint 2: the ContextSwitcher chip writes the active context's
+ * target_category into `overrideTarget` so a multi-team club can
+ * scope Fit to "Women's team this week" without editing their
+ * profile. When omitted, Fit falls back to deriveTargetCategory.
+ */
+export interface ComputeClubFitOptions {
+  overrideTarget?: TargetCategory | null
+}
+
+/**
  * Compute a Club Fit result for a single candidate vs the viewer's
  * profile. Returns NOT_APPLICABLE when the viewer can't compute Fit
  * (not a club, or no team category declared). The chip should hide
  * entirely on isApplicable=false rather than render a misleading grey.
+ *
+ * `options.overrideTarget` (Sprint 2): when the viewer has an active
+ * recruiting_context row, its target_category takes precedence over
+ * the profile-derived target. The viewer-role gate (clubs only) still
+ * applies — overrides don't expand who sees the chip.
  */
 export function computeClubFit(
   viewerProfile: (RecruitingContextProfileFields & { competition_tier?: number | null; competition_country_code?: string | null }) | null | undefined,
   candidate: FitCandidateFields | null | undefined,
+  options?: ComputeClubFitOptions,
 ): ClubFitResult {
   if (!viewerProfile || !candidate) return NOT_APPLICABLE
-  if (!isViewerFitCapable(viewerProfile)) return NOT_APPLICABLE
+  // Viewer must be a club (Sprint v1 + Sprint 2 keep the chip
+  // club-viewer only). We deliberately do NOT use isViewerFitCapable
+  // here because that helper also requires a profile-derived target,
+  // which would block override-only viewers (e.g., a brand-new club
+  // that picked a context via the switcher before filling leagues).
+  if (viewerProfile.role !== 'club') return NOT_APPLICABLE
   // Sprint v1: Fit chip is PLAYER-only. Coach context is deferred to
   // Sprint 2 (coaches need a different data source for their target —
   // their primary club affiliation, recruiter flag, etc.). Returning
@@ -179,7 +200,7 @@ export function computeClubFit(
   // brand candidates so we never surface a misleading signal.
   if (candidate.role !== 'player') return NOT_APPLICABLE
 
-  const target = deriveTargetCategory(viewerProfile)
+  const target = options?.overrideTarget ?? deriveTargetCategory(viewerProfile)
   if (!target) return NOT_APPLICABLE
 
   // ── Components ──────────────────────────────────────────────────

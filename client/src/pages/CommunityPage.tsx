@@ -38,7 +38,10 @@ import { useAuthStore } from '@/lib/auth'
 import {
   deriveTargetCategory,
   playingCategoriesForTarget,
+  type TargetCategory,
 } from '@/lib/recruitingContext'
+import { useActiveRecruitingTarget } from '@/hooks/useRecruitingContext'
+import ContextSwitcher from '@/components/recruiting/ContextSwitcher'
 
 const VALID_TABS: CommunityTab[] = ['all', 'players', 'coaches', 'clubs', 'umpires', 'brands', 'questions']
 
@@ -72,6 +75,16 @@ export default function CommunityPage() {
   // because that's their recruitment surface. The viewer's own role
   // goes LAST in their stack — they've already seen themselves.
   const { profile: viewerProfile } = useAuthStore()
+  // Sprint 2 recruiting context: the active ContextSwitcher target
+  // overrides the implicit profile-derived target. So a multi-team
+  // Mixed club can scope Fit + carousel filters to "Women" without
+  // touching their profile. Falls back to profile derivation when
+  // no context is active (anon/non-club viewers always see null
+  // here — useActiveRecruitingTarget gates on role).
+  const activeRecruitingTarget = useActiveRecruitingTarget()
+  const resolveTarget = (
+    profile: typeof viewerProfile,
+  ): TargetCategory | null => activeRecruitingTarget ?? deriveTargetCategory(profile)
 
   // Scroll restoration between Members ↔ Questions toggle (and across
   // role chips). React Router's default scrolls to top on route change;
@@ -239,6 +252,14 @@ export default function CommunityPage() {
             <p className="mt-1 text-sm text-gray-600">
               Connect with field hockey players, coaches, clubs and organisations around the world.
             </p>
+            {/* Recruiter-only: ContextSwitcher self-hides for players,
+                brands, umpires, and anon viewers. Mounted in the page
+                header so the active context is the first thing a
+                recruiter sees — scoping Club Fit + carousel filters
+                is the most important meta-decision on this page. */}
+            <div className="mt-3">
+              <ContextSwitcher />
+            </div>
           </header>
 
           {/* Members / Questions segmented control */}
@@ -350,7 +371,7 @@ export default function CommunityPage() {
                 // + mixed; men's club → men + boys + mixed). For lanes
                 // that aren't players (clubs / coaches) or non-club
                 // viewers, no filter is applied — they see all members.
-                const viewerTarget = deriveTargetCategory(viewerProfile)
+                const viewerTarget = resolveTarget(viewerProfile)
                 const filterPlayingCategories =
                   featured.lane === 'player' && viewerTarget
                     ? playingCategoriesForTarget(viewerTarget)
@@ -372,7 +393,7 @@ export default function CommunityPage() {
                 // Specific role tab: same club-scoped player filter when
                 // applicable. Coaches / clubs / umpires / brands lanes
                 // are untouched (no gender concept).
-                const viewerTarget = deriveTargetCategory(viewerProfile)
+                const viewerTarget = resolveTarget(viewerProfile)
                 const filterPlayingCategories =
                   memberRoleFilter === 'player' && viewerTarget
                     ? playingCategoriesForTarget(viewerTarget)
