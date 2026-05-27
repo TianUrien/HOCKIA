@@ -34,6 +34,7 @@ import {
   BookmarkCheck,
 } from 'lucide-react'
 import { RoleBadge, TierBadge, VerifiedBadge, AvailabilityPill, DualNationalityDisplay } from '@/components'
+import ClubFitChip from '@/components/recruiting/ClubFitChip'
 import RolePlaceholder from '@/components/RolePlaceholder'
 import SignInPromptModal from '@/components/SignInPromptModal'
 import { useAuthStore } from '@/lib/auth'
@@ -405,6 +406,20 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
                     {BRAND_CATEGORY_LABELS[member.brand_category] ?? member.brand_category}
                   </span>
                 )}
+                {/* Club Fit chip — recruiter-only. Hidden when viewer
+                    isn't a club or the candidate isn't player/coach. */}
+                <ClubFitChip
+                  candidate={{
+                    id: member.id,
+                    role: member.role,
+                    playing_category: member.playing_category ?? null,
+                    current_world_club_id: member.current_world_club_id ?? null,
+                    open_to_play: member.open_to_play ?? null,
+                    open_to_coach: member.open_to_coach ?? null,
+                    open_to_opportunities: (member as { open_to_opportunities?: boolean | null }).open_to_opportunities ?? null,
+                    last_active_at: (member as { last_active_at?: string | null }).last_active_at ?? null,
+                  }}
+                />
               </div>
             </div>
 

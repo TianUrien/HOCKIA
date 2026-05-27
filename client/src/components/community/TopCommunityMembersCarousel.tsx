@@ -4,6 +4,7 @@ import { Building2, ChevronRight, ShieldCheck } from 'lucide-react'
 import Avatar from '../Avatar'
 import RoleBadge from '../RoleBadge'
 import DualNationalityDisplay from '../DualNationalityDisplay'
+import ClubFitChip from '../recruiting/ClubFitChip'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 
@@ -54,11 +55,18 @@ interface TopMemberRow {
   base_location: string | null
   position: string | null
   current_club: string | null
+  current_world_club_id: string | null
   open_to_play: boolean | null
   open_to_coach: boolean | null
   open_to_opportunities: boolean | null
   is_verified: boolean | null
+  last_active_at: string | null
   profile_completeness_pct: number
+  /** Phase 3e — drives Club Fit gender_match + filtering. RPC now
+   *  returns this in get_top_community_members. */
+  playing_category: string | null
+  /** Legacy gender, kept as fallback for un-migrated rows. */
+  gender: string | null
 }
 
 interface TopCommunityMembersCarouselProps {
@@ -88,6 +96,13 @@ interface TopCommunityMembersCarouselProps {
    *  on the All tab use a lower limit (10) to keep the stacked layout
    *  compact. */
   limit?: number
+  /** Optional whitelist of playing_category values to keep in the
+   *  result set. Used by the Featured Players lane on the Community
+   *  page to scope to the viewer-club's team category (e.g.,
+   *  ['adult_women','girls','mixed'] for a women's club). Applied
+   *  client-side after fetch; we over-fetch by 2x to cover the case
+   *  where the filter drops half the rows. */
+  filterPlayingCategories?: readonly string[]
   /** Optional "View all" handler. The page wires this to scroll to
    *  the All members section. Omit to hide the CTA. */
   onViewAll?: () => void
@@ -116,6 +131,7 @@ export function TopCommunityMembersCarousel({
   title,
   subtitle,
   limit = DEFAULT_LIMIT,
+  filterPlayingCategories,
   onViewAll,
 }: TopCommunityMembersCarouselProps) {
   const navigate = useNavigate()
@@ -134,15 +150,28 @@ export function TopCommunityMembersCarousel({
       setLoading(true)
       setError(null)
       try {
+        // Over-fetch when a category filter is active so the filtered
+        // result still fills the carousel. 2x is conservative; usually
+        // the filter drops <40% of rows.
+        const fetchLimit = filterPlayingCategories && filterPlayingCategories.length > 0
+          ? Math.min(100, limit * 2)
+          : limit
+
         const { data, error: rpcError } = await supabase.rpc('get_top_community_members', {
           p_role: roleFilter ?? undefined,
-          p_limit: limit,
+          p_limit: fetchLimit,
           p_sort: sortCriterion,
           p_only_open: onlyOpen,
         })
         if (cancelled) return
         if (rpcError) throw rpcError
-        setMembers((data ?? []) as TopMemberRow[])
+
+        let rows = (data ?? []) as TopMemberRow[]
+        if (filterPlayingCategories && filterPlayingCategories.length > 0) {
+          const allowed = new Set(filterPlayingCategories)
+          rows = rows.filter((r) => r.playing_category && allowed.has(r.playing_category))
+        }
+        setMembers(rows.slice(0, limit))
       } catch (err) {
         logger.error('[TopCommunityMembersCarousel] fetch failed', err)
         if (!cancelled) setError('Unable to load top members right now.')
@@ -154,7 +183,7 @@ export function TopCommunityMembersCarousel({
     return () => {
       cancelled = true
     }
-  }, [roleFilter, sortCriterion, limit, onlyOpen])
+  }, [roleFilter, sortCriterion, limit, onlyOpen, filterPlayingCategories])
 
   const openMember = (m: TopMemberRow) => {
     const base =
@@ -316,9 +345,23 @@ function MemberCard({ member, onClick }: MemberCardProps) {
         {fullName}
       </p>
 
-      {/* Role badge */}
-      <div className="mt-1 flex justify-center min-h-[22px]">
+      {/* Role badge + Club Fit chip (recruiter-only; hidden when not
+          applicable). Stacks below role on the same row when narrow. */}
+      <div className="mt-1 flex flex-wrap justify-center items-center gap-1.5 min-h-[22px]">
         <RoleBadge role={member.role} />
+        <ClubFitChip
+          candidate={{
+            id: member.id,
+            role: member.role,
+            playing_category: member.playing_category,
+            current_world_club_id: member.current_world_club_id,
+            open_to_play: member.open_to_play,
+            open_to_coach: member.open_to_coach,
+            open_to_opportunities: member.open_to_opportunities,
+            last_active_at: member.last_active_at,
+          }}
+          variant="badge"
+        />
       </div>
 
       {/* Nationality slot — reserves 2 lines so single + dual

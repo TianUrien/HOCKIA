@@ -9,6 +9,7 @@ import { useWorldClubLogo } from '@/hooks/useWorldClubLogo'
 import { useIsProfileSaved } from '@/hooks/useSavedProfiles'
 import { getImageUrl } from '@/lib/imageUrl'
 import RolePlaceholder from './RolePlaceholder'
+import ClubFitChip from './recruiting/ClubFitChip'
 
 const BRAND_CATEGORY_LABELS: Record<string, string> = {
   equipment: 'Equipment',
@@ -39,6 +40,14 @@ interface MemberTileProps {
   current_world_club_id?: string | null
   open_to_play?: boolean
   open_to_coach?: boolean
+  /** Optional — used by ClubFitChip for "open to opportunities" check
+   *  on umpires + brands. Players/coaches use open_to_play/coach. */
+  open_to_opportunities?: boolean
+  /** Phase 3e player playing category — drives the gender_match
+   *  component of the recruiter-only Club Fit chip. */
+  playing_category?: string | null
+  /** Recency-30d signal for Fit availability + recency components. */
+  last_active_at?: string | null
   tier?: ProfileTier
   isVerified?: boolean
   verifiedAt?: string | null
@@ -217,10 +226,24 @@ export default function MemberTile(props: MemberTileProps) {
             <VerifiedBadge verified={props.isVerified} verifiedAt={props.verifiedAt} size="sm" />
           </div>
 
-          {/* Row 2: role pill + tier/level pill */}
+          {/* Row 2: role pill + tier/level pill + Club Fit chip
+              (recruiter-only; renders nothing when viewer isn't a club
+              or candidate isn't player/coach). */}
           <div className="flex items-center gap-1.5 flex-wrap">
             <RoleBadge role={props.role} />
             {modifierPill}
+            <ClubFitChip
+              candidate={{
+                id: props.id,
+                role: props.role,
+                playing_category: props.playing_category ?? null,
+                current_world_club_id: props.current_world_club_id ?? null,
+                open_to_play: props.open_to_play ?? null,
+                open_to_coach: props.open_to_coach ?? null,
+                open_to_opportunities: props.open_to_opportunities ?? null,
+                last_active_at: props.last_active_at ?? null,
+              }}
+            />
           </div>
 
           {/* Row 3: nationality (tile mode — full names + flags, EU pill

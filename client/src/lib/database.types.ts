@@ -5675,6 +5675,7 @@ export type Database = {
           current_club: string
           current_world_club_id: string
           full_name: string
+          gender: string
           id: string
           is_verified: boolean
           last_active_at: string
@@ -5684,6 +5685,7 @@ export type Database = {
           open_to_coach: boolean
           open_to_opportunities: boolean
           open_to_play: boolean
+          playing_category: string
           position: string
           profile_completeness_pct: number
           role: string

@@ -35,12 +35,16 @@ import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
 import { useIsProfileSaved } from '@/hooks/useSavedProfiles'
 import { resolveConversationRoute } from '@/lib/startConversation'
+import ClubFitChip from '@/components/recruiting/ClubFitChip'
 
 interface ScoutingCardProfile {
   id: string
   role: string | null
   full_name: string | null
   current_club: string | null
+  current_world_club_id: string | null
+  /** Phase 3e — drives the Club Fit chip's gender_match component. */
+  playing_category: string | null
   highlight_video_url: string | null
   /** Denormalized count of full-game video entries on the profile row.
    *  No separate join — same value MediaCard uses. */
@@ -285,13 +289,27 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
   // ── RENDER ─────────────────────────────────────────────────────────
   return (
     <section className="bg-white rounded-2xl border border-gray-200/80 shadow-sm p-5 md:p-6">
-      {/* Zone 1 — Availability status, the headline. */}
+      {/* Zone 1 — Availability status, the headline. The Club Fit chip
+          sits to the right (recruiter-only — hidden for non-club viewers
+          and for clubs without a declared team category). */}
       <div className={`flex items-center gap-3 rounded-xl border px-4 py-3 ${status.wrapperClass}`}>
         <span className={`h-2.5 w-2.5 rounded-full ${status.dotClass}`} aria-hidden="true" />
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <p className={`text-xs font-bold tracking-wide ${status.labelClass}`}>{status.label}</p>
           <p className="text-xs text-gray-600 mt-0.5 truncate">{status.sub}</p>
         </div>
+        <ClubFitChip
+          candidate={{
+            id: profile.id,
+            role: profile.role,
+            playing_category: profile.playing_category,
+            current_world_club_id: profile.current_world_club_id,
+            open_to_play: profile.open_to_play,
+            open_to_coach: profile.open_to_coach,
+            open_to_opportunities: profile.open_to_opportunities,
+            last_active_at: profile.last_active_at,
+          }}
+        />
       </div>
 
       {/* Zone 2 — Career evidence. Only non-empty rows render. */}

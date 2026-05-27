@@ -35,6 +35,10 @@ import {
 import type { CommunityTab } from '@/components/community'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { useAuthStore } from '@/lib/auth'
+import {
+  deriveTargetCategory,
+  playingCategoriesForTarget,
+} from '@/lib/recruitingContext'
 
 const VALID_TABS: CommunityTab[] = ['all', 'players', 'coaches', 'clubs', 'umpires', 'brands', 'questions']
 
@@ -340,6 +344,17 @@ export default function CommunityPage() {
                   viewerProfile?.role,
                   viewerProfile?.coach_recruits_for_team,
                 )
+                // Sprint v1 Club Fit: when the viewer is a club and the
+                // featured lane is players, scope the lane to the
+                // viewer's team category (women's club → women + girls
+                // + mixed; men's club → men + boys + mixed). For lanes
+                // that aren't players (clubs / coaches) or non-club
+                // viewers, no filter is applied — they see all members.
+                const viewerTarget = deriveTargetCategory(viewerProfile)
+                const filterPlayingCategories =
+                  featured.lane === 'player' && viewerTarget
+                    ? playingCategoriesForTarget(viewerTarget)
+                    : undefined
                 return (
                   <TopCommunityMembersCarousel
                     key={`featured-${themeIndex}-${refreshKey}`}
@@ -348,18 +363,30 @@ export default function CommunityPage() {
                     onlyOpen={featured.onlyOpen}
                     title={featured.title}
                     subtitle={featured.subtitle}
+                    filterPlayingCategories={filterPlayingCategories}
                     onViewAll={handleViewAllScroll}
                   />
                 )
               })()}
-              {!isNarrowed && activeTab !== 'all' && memberRoleFilter && (
-                <TopCommunityMembersCarousel
-                  key={`top-${activeTab}-${refreshKey}`}
-                  roleFilter={memberRoleFilter}
-                  sortCriterion={memberRoleFilter === 'player' ? 'availability_activity' : 'completeness'}
-                  onViewAll={handleViewAllScroll}
-                />
-              )}
+              {!isNarrowed && activeTab !== 'all' && memberRoleFilter && (() => {
+                // Specific role tab: same club-scoped player filter when
+                // applicable. Coaches / clubs / umpires / brands lanes
+                // are untouched (no gender concept).
+                const viewerTarget = deriveTargetCategory(viewerProfile)
+                const filterPlayingCategories =
+                  memberRoleFilter === 'player' && viewerTarget
+                    ? playingCategoriesForTarget(viewerTarget)
+                    : undefined
+                return (
+                  <TopCommunityMembersCarousel
+                    key={`top-${activeTab}-${refreshKey}`}
+                    roleFilter={memberRoleFilter}
+                    sortCriterion={memberRoleFilter === 'player' ? 'availability_activity' : 'completeness'}
+                    filterPlayingCategories={filterPlayingCategories}
+                    onViewAll={handleViewAllScroll}
+                  />
+                )
+              })()}
 
               {/* All Members section header. Count = filtered list size
                   when narrowing (search/OTO/drawer active), total

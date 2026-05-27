@@ -15,6 +15,8 @@ import { MemberTileSkeleton } from '@/components/Skeleton'
 import { MemberPreviewModal } from './MemberPreviewModal'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
+import { computeClubFit } from '@/lib/clubFit'
+import { deriveTargetCategory } from '@/lib/recruitingContext'
 import { requestCache } from '@/lib/requestCache'
 import { monitor } from '@/lib/monitor'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
@@ -47,6 +49,8 @@ export interface Profile {
   is_test_account?: boolean
   open_to_play?: boolean
   open_to_coach?: boolean
+  open_to_opportunities?: boolean
+  last_active_at?: string | null
   accepted_reference_count?: number
   coach_specialization?: string | null
   coach_specialization_custom?: string | null
@@ -82,7 +86,7 @@ export interface Profile {
 }
 
 const PROFILES_SELECT =
-  'id, avatar_url, full_name, role, nationality, nationality_country_id, nationality2_country_id, base_location, position, secondary_position, current_club, current_world_club_id, gender, playing_category, coaching_categories, umpiring_categories, created_at, is_test_account, open_to_play, open_to_coach, accepted_reference_count, coach_specialization, coach_specialization_custom, highlight_video_url, bio, club_bio, year_founded, website, contact_email, career_entry_count, accepted_friend_count, is_verified, verified_at, umpire_level, federation, umpire_since, officiating_specialization, languages, last_officiated_at, umpire_appointment_count, profile_completeness_pct'
+  'id, avatar_url, full_name, role, nationality, nationality_country_id, nationality2_country_id, base_location, position, secondary_position, current_club, current_world_club_id, gender, playing_category, coaching_categories, umpiring_categories, created_at, is_test_account, open_to_play, open_to_coach, open_to_opportunities, last_active_at, accepted_reference_count, coach_specialization, coach_specialization_custom, highlight_video_url, bio, club_bio, year_founded, website, contact_email, career_entry_count, accepted_friend_count, is_verified, verified_at, umpire_level, federation, umpire_since, officiating_specialization, languages, last_officiated_at, umpire_appointment_count, profile_completeness_pct'
 
 // CommunityFilters type moved to ./communityFilters.ts so the lifted
 // search bar / quick filters / drawer (now rendered by CommunityPage)
@@ -474,8 +478,47 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
       })
     }
 
+    // Sprint v1 Club Fit ranking: when the viewer is a club AND the
+    // user is on the default 'newest' sort (the implicit "show me
+    // relevant people" mode), re-order by Fit score descending.
+    // Explicit sort choices (completeness) are respected as-is.
+    const viewerTarget = deriveTargetCategory(currentUserProfile)
+    if (sort === 'newest' && viewerTarget && currentUserProfile) {
+      const viewerCtx = {
+        role: currentUserProfile.role,
+        womens_league_division: (currentUserProfile as { womens_league_division?: string | null }).womens_league_division ?? null,
+        mens_league_division: (currentUserProfile as { mens_league_division?: string | null }).mens_league_division ?? null,
+        current_world_club_id: currentUserProfile.current_world_club_id ?? null,
+      }
+      result = [...result]
+        .map((m) => ({
+          m,
+          fit: computeClubFit(viewerCtx, {
+            id: m.id,
+            role: m.role,
+            playing_category: m.playing_category ?? null,
+            current_world_club_id: m.current_world_club_id ?? null,
+            open_to_play: m.open_to_play ?? null,
+            open_to_coach: m.open_to_coach ?? null,
+            open_to_opportunities: m.open_to_opportunities ?? null,
+            last_active_at: m.last_active_at ?? null,
+          }),
+        }))
+        .sort((a, b) => {
+          // Primary: Fit score descending (NOT_APPLICABLE returns 0).
+          if (b.fit.score !== a.fit.score) return b.fit.score - a.fit.score
+          // Tiebreaker 1: completeness desc.
+          const ap = a.m.profile_completeness_pct ?? 0
+          const bp = b.m.profile_completeness_pct ?? 0
+          if (bp !== ap) return bp - ap
+          // Tiebreaker 2: id for stable pagination.
+          return a.m.id.localeCompare(b.m.id)
+        })
+        .map(({ m }) => m)
+    }
+
     return result
-  }, [allMembers, filters, sort])
+  }, [allMembers, filters, sort, currentUserProfile])
 
   // Emit filtered count upward whenever it changes. Combined with the
   // total-count effect this lets the parent choose: total when not
@@ -612,6 +655,9 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
                 current_world_club_id={member.current_world_club_id}
                 open_to_play={member.open_to_play}
                 open_to_coach={member.open_to_coach}
+                open_to_opportunities={member.open_to_opportunities}
+                playing_category={member.playing_category ?? null}
+                last_active_at={member.last_active_at ?? null}
                 tier={getMemberTier(member)}
                 isVerified={Boolean(member.is_verified)}
                 verifiedAt={member.verified_at ?? null}
