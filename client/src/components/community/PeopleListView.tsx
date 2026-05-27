@@ -118,7 +118,14 @@ interface PeopleListViewProps {
 
 export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilteredCountChange }: PeopleListViewProps) {
   const navigationType = useNavigationType()
-  const { profile: currentUserProfile } = useAuthStore()
+  // `loading` flips false once the auth session + profile resolve.
+  // Gating the fetch on it prevents the historical double-fire:
+  //   render 1 — profile null → viewerScope='anon' → fetch as anon
+  //   render 2 — profile loads → viewerScope='std' → fetch AGAIN
+  // The second fetch made Community look like it "loads twice".
+  // We now wait for auth to settle so viewerScope is correct on the
+  // very first fetch, and re-runs only happen for real filter changes.
+  const { profile: currentUserProfile, loading: authLoading } = useAuthStore()
   const isCurrentUserTestAccount = currentUserProfile?.is_test_account ?? false
   // On staging, test accounts are visible to everyone for QA. When true,
   // the test-account filter below is skipped entirely.
@@ -147,6 +154,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
   // Track whether this is a restored (back/forward) navigation
   const isRestoredRef = useRef(navigationType === 'POP')
 
+
   // Scroll restoration — waits for data to load before restoring position
   useScrollRestore(!isLoading)
 
@@ -156,22 +164,34 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
 
   // Total count for the current role + test-visibility scope. Runs
   // once per scope change (cheap head query). Drives the "N members"
-  // line under the All members heading in CommunityPage.
+  // line under the All members heading in CommunityPage. Gated on
+  // authLoading + dedupe-wrapped so a single cold load doesn't fire
+  // it twice under StrictMode / Suspense replay.
   useEffect(() => {
+    if (authLoading) return
     let cancelled = false
+    const cacheKey = `community-count-${roleFilter ?? 'all'}-${hideTestAccounts ? 'no-test' : 'all'}`
     const run = async () => {
       try {
-        let q = supabase
-          .from('profiles')
-          .select('id', { count: 'exact', head: true })
-          .eq('onboarding_completed', true)
-        if (roleFilter) q = q.eq('role', roleFilter)
-        if (hideTestAccounts) {
-          q = q.or('is_test_account.is.null,is_test_account.eq.false')
-        }
-        const { count, error } = await q
-        if (cancelled || error) return
-        onTotalCountChange?.(count ?? 0)
+        const count = await requestCache.dedupe<number>(
+          cacheKey,
+          async () => {
+            let q = supabase
+              .from('profiles')
+              .select('id', { count: 'exact', head: true })
+              .eq('onboarding_completed', true)
+            if (roleFilter) q = q.eq('role', roleFilter)
+            if (hideTestAccounts) {
+              q = q.or('is_test_account.is.null,is_test_account.eq.false')
+            }
+            const { count: c, error } = await q
+            if (error) throw error
+            return c ?? 0
+          },
+          30000,
+        )
+        if (cancelled) return
+        onTotalCountChange?.(count)
       } catch (err) {
         logger.error('Error fetching total community count:', err)
       }
@@ -180,118 +200,130 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     return () => {
       cancelled = true
     }
-  }, [roleFilter, hideTestAccounts, onTotalCountChange])
+  }, [authLoading, roleFilter, hideTestAccounts, onTotalCountChange])
 
-  // Fetch members from Supabase
+  // Fetch members from Supabase. Critical: measure() is INSIDE
+  // requestCache.dedupe so the module-level dedupe controls whether
+  // the measure runs at all. React 18 StrictMode (dev-only) double-
+  // invokes effects and React's Suspense/concurrent renderer can
+  // replay effects via reconnectPassiveEffects after CommunityPage
+  // resumes from its React.lazy boundary — without this structure,
+  // each replay triggered its own measure() + setState pair (user
+  // saw 2-3 "fetch_community_members" log entries on a single visit).
+  // Now: cache HIT → short-circuit via peek (no spinner, no measure);
+  // in-flight HIT → dedupe returns existing promise (no fn call, no
+  // measure); cache MISS + no in-flight → fn runs once (measure once).
   const fetchMembers = useCallback(async () => {
+    const roleKey = roleFilter ?? 'all'
+    const cacheKey = `community-members-${viewerScope}-${roleKey}`
+
+    // Fastest path: data already cached at the module level → hand
+    // it back synchronously, never touch isLoading or measure.
+    const cached = requestCache.peek<Profile[]>(cacheKey)
+    if (cached) {
+      setBaseMembers(cached)
+      setIsLoading(false)
+      return
+    }
+
     setIsLoading(true)
+    try {
+      const members = await requestCache.dedupe(
+        cacheKey,
+        async () => monitor.measure('fetch_community_members', async () => {
+          let query = supabase
+            .from('profiles')
+            .select(PROFILES_SELECT)
+            .eq('onboarding_completed', true) // Only show fully onboarded users
 
-    await monitor.measure('fetch_community_members', async () => {
-      try {
-        // Cache key includes test-account status AND roleFilter so:
-        //   (a) test and non-test users see different result sets
-        //   (b) each role route fetches its own newest-200 slice
-        // Without (b), a role chip would client-filter the 200 newest overall,
-        // which loses roles that aren't among the newest 200 once the community
-        // grows past ~200 members.
-        const roleKey = roleFilter ?? 'all'
-        const cacheKey = `community-members-${viewerScope}-${roleKey}`
+          // Narrow server-side when a role route is active — otherwise the
+          // 200-row ceiling silently truncates under-represented roles.
+          if (roleFilter) {
+            query = query.eq('role', roleFilter)
+          }
 
-        const members = await requestCache.dedupe(
-          cacheKey,
-          async () => {
-            let query = supabase
-              .from('profiles')
-              .select(PROFILES_SELECT)
-              .eq('onboarding_completed', true) // Only show fully onboarded users
+          // If current user is NOT a test account, exclude test accounts from results
+          if (hideTestAccounts) {
+            query = query.or('is_test_account.is.null,is_test_account.eq.false')
+          }
 
-            // Narrow server-side when a role route is active — otherwise the
-            // 200-row ceiling silently truncates under-represented roles.
-            if (roleFilter) {
-              query = query.eq('role', roleFilter)
-            }
+          const { data, error } = await query
+            .order('created_at', { ascending: false })
+            .limit(200) // Load reasonable batch for client-side filtering
 
-            // If current user is NOT a test account, exclude test accounts from results
-            if (hideTestAccounts) {
-              query = query.or('is_test_account.is.null,is_test_account.eq.false')
-            }
+          if (error) throw error
+          const members = ((data || []) as unknown) as Profile[]
 
-            const { data, error } = await query
-              .order('created_at', { ascending: false })
-              .limit(200) // Load reasonable batch for client-side filtering
-
-            if (error) throw error
-            const members = ((data || []) as unknown) as Profile[]
-
-            // Resolve brand slugs + completion fields for brand cards
-            const brandIds = members.filter(m => m.role === 'brand').map(m => m.id)
-            if (brandIds.length > 0) {
-              const { data: brands } = await supabase
-                .from('brands')
-                .select('profile_id, slug, category, bio, website_url, instagram_url, logo_url')
-                .in('profile_id', brandIds)
-              if (brands) {
-                const brandMap = new Map(
-                  (brands as { profile_id: string; slug: string; category: string; bio: string | null; website_url: string | null; instagram_url: string | null; logo_url: string | null }[]).map(
-                    (b) => [b.profile_id, b]
-                  )
+          // Resolve brand slugs + completion fields for brand cards
+          const brandIds = members.filter(m => m.role === 'brand').map(m => m.id)
+          if (brandIds.length > 0) {
+            const { data: brands } = await supabase
+              .from('brands')
+              .select('profile_id, slug, category, bio, website_url, instagram_url, logo_url')
+              .in('profile_id', brandIds)
+            if (brands) {
+              const brandMap = new Map(
+                (brands as { profile_id: string; slug: string; category: string; bio: string | null; website_url: string | null; instagram_url: string | null; logo_url: string | null }[]).map(
+                  (b) => [b.profile_id, b]
                 )
-                members.forEach(m => {
-                  if (m.role === 'brand') {
-                    const brand = brandMap.get(m.id)
-                    m.brand_slug = brand?.slug || null
-                    m.brand_category = brand?.category || null
-                    m.brand_bio = brand?.bio || null
-                    m.brand_website_url = brand?.website_url || null
-                    m.brand_instagram_url = brand?.instagram_url || null
-                    m.brand_logo_url = brand?.logo_url || null
-                  }
-                })
-              }
+              )
+              members.forEach(m => {
+                if (m.role === 'brand') {
+                  const brand = brandMap.get(m.id)
+                  m.brand_slug = brand?.slug || null
+                  m.brand_category = brand?.category || null
+                  m.brand_bio = brand?.bio || null
+                  m.brand_website_url = brand?.website_url || null
+                  m.brand_instagram_url = brand?.instagram_url || null
+                  m.brand_logo_url = brand?.logo_url || null
+                }
+              })
             }
+          }
 
-            return members
-          },
-          30000 // 30 second cache for community members
-        )
+          return members
+        }),
+        30000 // 30 second cache for community members
+      )
 
-        // Batch-prefetch world club logos BEFORE rendering to avoid N+1 queries in MemberCard.
-        // Must be outside requestCache.dedupe so it runs on cache hits too, and awaited
-        // so logoCache is warm before MemberCard hooks fire.
-        const worldClubIds = members
-          .map(m => m.current_world_club_id)
-          .filter((id): id is string => !!id)
-        if (worldClubIds.length > 0) {
-          await prefetchWorldClubLogos(worldClubIds)
-        }
-
-        setBaseMembers(members)
-        // INTENTIONAL: do NOT setAllMembers(members) here. The post-
-        // render effect below ([searchQuery, clientFilteredMembers, …])
-        // is the single writer for allMembers. Setting it from
-        // fetchMembers caused a race on hard-load with ?q= deep links:
-        // fetchMembers' setAllMembers([13]) won the race against the
-        // effect's setAllMembers([1 match]), and the grid stayed
-        // unfiltered until the user typed something to re-trigger the
-        // chain. (QA "13 members match" + grid shows 13.) The flow
-        // is now deterministic: baseMembers is the raw fetch, allMembers
-        // is always the search-filtered view derived from it.
-        // displayedMembers + hasMore are derived from filteredMembers
-        // via the useEffect below.
-      } catch (error) {
-        logger.error('Error fetching members:', error)
-      } finally {
-        setIsLoading(false)
+      // Batch-prefetch world club logos BEFORE rendering to avoid N+1
+      // queries in MemberCard. Runs on cache hits too (cheap if
+      // already warm).
+      const worldClubIds = members
+        .map(m => m.current_world_club_id)
+        .filter((id): id is string => !!id)
+      if (worldClubIds.length > 0) {
+        await prefetchWorldClubLogos(worldClubIds)
       }
-    })
+
+      setBaseMembers(members)
+      // INTENTIONAL: do NOT setAllMembers(members) here. The post-
+      // render effect below ([searchQuery, clientFilteredMembers, …])
+      // is the single writer for allMembers. Setting it from
+      // fetchMembers caused a race on hard-load with ?q= deep links:
+      // fetchMembers' setAllMembers([13]) won the race against the
+      // effect's setAllMembers([1 match]), and the grid stayed
+      // unfiltered until the user typed something to re-trigger the
+      // chain. (QA "13 members match" + grid shows 13.) The flow
+      // is now deterministic: baseMembers is the raw fetch, allMembers
+      // is always the search-filtered view derived from it.
+      // displayedMembers + hasMore are derived from filteredMembers
+      // via the useEffect below.
+    } catch (error) {
+      logger.error('Error fetching members:', error)
+    } finally {
+      setIsLoading(false)
+    }
   }, [hideTestAccounts, viewerScope, roleFilter])
 
   // Role sync moved to CommunityPage (it owns the filter state now).
 
-  // Initial load
+  // Initial load — gated on authLoading so we don't fire as 'anon'
+  // and then immediately re-fire as 'std' once the profile resolves.
   useEffect(() => {
+    if (authLoading) return
     fetchMembers()
-  }, [fetchMembers])
+  }, [authLoading, fetchMembers])
 
   // Perform server-side search
   const performServerSearch = useCallback(async (query: string) => {
@@ -657,6 +689,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
                 open_to_coach={member.open_to_coach}
                 open_to_opportunities={member.open_to_opportunities}
                 playing_category={member.playing_category ?? null}
+                position={member.position ?? null}
                 last_active_at={member.last_active_at ?? null}
                 tier={getMemberTier(member)}
                 isVerified={Boolean(member.is_verified)}

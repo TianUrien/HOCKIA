@@ -74,6 +74,8 @@ const CommunityPage = lazyWithRetry(() => import('@/pages/CommunityPage'))
 const QuestionDetailPage = lazyWithRetry(() => import('@/pages/QuestionDetailPage'))
 const ApplicantsList = lazyWithRetry(() => import('@/pages/ApplicantsList'))
 const SavedCandidatesPage = lazyWithRetry(() => import('@/pages/SavedCandidatesPage'))
+const ShortlistsIndexPage = lazyWithRetry(() => import('@/pages/ShortlistsIndexPage'))
+const ShortlistDetailPage = lazyWithRetry(() => import('@/pages/ShortlistDetailPage'))
 const PublicPlayerProfile = lazyWithRetry(() => import('@/pages/PublicPlayerProfile'))
 const PublicClubProfile = lazyWithRetry(() => import('@/pages/PublicClubProfile'))
 const PublicUmpireProfile = lazyWithRetry(() => import('@/pages/PublicUmpireProfile'))
@@ -443,6 +445,8 @@ function App() {
                 <Route path="/dashboard/profile/:section" element={<ErrorBoundary fallback={<RouteErrorFallback />}><DashboardRouter /></ErrorBoundary>} />
                 <Route path="/dashboard/opportunities/:opportunityId/applicants" element={<ErrorBoundary fallback={<RouteErrorFallback />}><ApplicantsList /></ErrorBoundary>} />
                 <Route path="/dashboard/saved" element={<ErrorBoundary fallback={<RouteErrorFallback />}><SavedCandidatesPage /></ErrorBoundary>} />
+                <Route path="/dashboard/shortlists" element={<ErrorBoundary fallback={<RouteErrorFallback />}><ShortlistsIndexPage /></ErrorBoundary>} />
+                <Route path="/dashboard/shortlists/:id" element={<ErrorBoundary fallback={<RouteErrorFallback />}><ShortlistDetailPage /></ErrorBoundary>} />
 
                 {/* Network-only profile routes (alias for clarity; still behind auth) */}
                 <Route path="/members/:username" element={<PublicPlayerProfile />} />

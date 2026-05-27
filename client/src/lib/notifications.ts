@@ -124,6 +124,16 @@ interface NotificationState {
 }
 
 
+// Module-level in-flight tracker for initialize(). NotificationBridge's
+// useEffect fires multiple times per cold load (React 18 StrictMode +
+// Suspense reconnect on lazy routes), and the store-level early-return
+// can't catch concurrent calls before the first one finishes setting
+// up the channel. These vars dedupe at the module level so all
+// concurrent initialize() calls for the same userId share one promise
+// → one `get_notifications` RPC per real init.
+let inFlightInit: Promise<void> | null = null
+let inFlightInitUserId: string | null = null
+
 const fetchNotifications = async (userId: string, options?: RefreshOptions): Promise<NotificationRecord[]> => {
   const cacheKey = generateCacheKey('profile_notifications', { userId })
   if (options?.bypassCache) {
@@ -450,26 +460,46 @@ export const useNotificationStore = create<NotificationState>((set, get) => {
         return
       }
 
+      // Dedupe concurrent initialize calls for the same user.
+      // NotificationBridge's effect can fire multiple times (React 18
+      // StrictMode double-invoke + Suspense reconnect) — without this
+      // guard each call ran a fresh refresh({ bypassCache: true }),
+      // producing 3 separate `get_notifications` RPCs on a cold load.
+      // The early-return above doesn't catch it because the first
+      // call hasn't set `channel` yet when the second fires.
+      if (!options?.force && inFlightInit && inFlightInitUserId === userId) {
+        return inFlightInit
+      }
+
       // Clear actor cache when switching users to prevent stale data and memory leaks
       if (currentUserId !== userId) {
         clearActorCache()
       }
 
-      await teardownChannel()
-      set({ userId, channel: null })
-      await get().refresh({ bypassCache: true })
+      inFlightInitUserId = userId
+      inFlightInit = (async () => {
+        try {
+          await teardownChannel()
+          set({ userId, channel: null })
+          await get().refresh({ bypassCache: true })
 
-      // Warn if too many realtime channels are open (indicates a leak somewhere)
-      const activeChannels = supabase.getChannels()
-      if (activeChannels.length > 10) {
-        logger.warn('[NOTIFICATIONS] High realtime channel count — possible leak', {
-          count: activeChannels.length,
-          names: activeChannels.map(c => c.topic).slice(0, 15),
-        })
-      }
+          // Warn if too many realtime channels are open (indicates a leak somewhere)
+          const activeChannels = supabase.getChannels()
+          if (activeChannels.length > 10) {
+            logger.warn('[NOTIFICATIONS] High realtime channel count — possible leak', {
+              count: activeChannels.length,
+              names: activeChannels.map(c => c.topic).slice(0, 15),
+            })
+          }
 
-      const nextChannel = attachChannel(userId)
-      set({ channel: nextChannel })
+          const nextChannel = attachChannel(userId)
+          set({ channel: nextChannel })
+        } finally {
+          inFlightInit = null
+          inFlightInitUserId = null
+        }
+      })()
+      await inFlightInit
     },
 
     refresh: async (options?: RefreshOptions) => {

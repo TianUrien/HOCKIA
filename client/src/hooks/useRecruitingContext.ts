@@ -87,6 +87,11 @@ export interface UseRecruitingContextResult {
   /** Delete a context. If it's the active one, no other becomes active —
    *  caller decides what to do next (re-seed, etc). */
   remove: (id: string) => Promise<void>
+  /** Deactivate the currently active context (no row deleted). The
+   *  owner is left with zero active contexts — Community / Fit /
+   *  carousel revert to "no scope applied". This is the user-facing
+   *  "Clear" action: opt-out without losing the saved row. */
+  clearActive: () => Promise<void>
   /** Manual refetch — used after external changes (e.g., another tab). */
   refresh: () => Promise<void>
   /** Clear the last error (call after toast dismissal). */
@@ -111,6 +116,7 @@ interface RecruitingContextStoreState {
   ensureFetched: () => Promise<void>
   refresh: () => Promise<void>
   activate: (id: string) => Promise<void>
+  clearActive: () => Promise<void>
   create: (input: CreateContextInput) => Promise<RecruitingContextRow | null>
   activateForOpportunity: (input: ActivateOpportunityContextInput) => Promise<RecruitingContextRow | null>
   update: (id: string, input: UpdateContextInput) => Promise<void>
@@ -227,6 +233,32 @@ export const useRecruitingContextStore = create<RecruitingContextStoreState>((se
     await refresh()
   },
 
+  clearActive: async () => {
+    const { ownerId, eligibleRole, refresh } = get()
+    if (!ownerId || !eligibleRole) return
+    // Plain UPDATE flipping is_active=false. Safe under multi-tab:
+    // we only deactivate; the partial unique index allows zero
+    // actives. No RPC needed because we never create or activate.
+    const { error: updateError } = await supabase
+      .from('recruiting_context')
+      .update({ is_active: false })
+      .eq('owner_id', ownerId)
+      .eq('is_active', true)
+    if (updateError) {
+      reportSupabaseError('useRecruitingContext.clearActive', updateError)
+      set({ error: 'Could not clear recruiting context' })
+      return
+    }
+    // Optimistic local flip so the chip + sheet update immediately,
+    // even if the trailing refresh() fails (e.g., transient network).
+    // The server is authoritative and refresh will reconcile when it
+    // succeeds; this just guarantees UI doesn't lag the user's tap.
+    set((s) => ({
+      rows: s.rows.map((r) => (r.is_active ? { ...r, is_active: false } : r)),
+    }))
+    await refresh()
+  },
+
   create: async (input) => {
     const { ownerId, eligibleRole, refresh } = get()
     if (!ownerId || !eligibleRole) return null
@@ -340,6 +372,7 @@ export function useRecruitingContext(): UseRecruitingContextResult {
   const ensureFetched = useRecruitingContextStore((s) => s.ensureFetched)
   const refresh = useRecruitingContextStore((s) => s.refresh)
   const activate = useRecruitingContextStore((s) => s.activate)
+  const clearActive = useRecruitingContextStore((s) => s.clearActive)
   const createCtx = useRecruitingContextStore((s) => s.create)
   const activateForOpportunity = useRecruitingContextStore((s) => s.activateForOpportunity)
   const update = useRecruitingContextStore((s) => s.update)
@@ -362,6 +395,7 @@ export function useRecruitingContext(): UseRecruitingContextResult {
     loading,
     error,
     activate,
+    clearActive,
     create: createCtx,
     activateForOpportunity,
     update,

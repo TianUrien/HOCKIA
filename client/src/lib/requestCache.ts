@@ -66,6 +66,22 @@ class RequestCache {
   }
 
   /**
+   * Synchronously check whether a cached value exists and is still
+   * within its TTL. Returns the value or undefined. Use this to
+   * short-circuit setState chains (e.g. avoid flashing a spinner on
+   * a re-mount where the data is already cached). Does NOT trigger
+   * the fn — purely a read.
+   */
+  peek<T>(key: string, cacheTTL?: number): T | undefined {
+    const ttl = cacheTTL ?? this.CACHE_TTL
+    const cached = this.cache.get(key)
+    if (cached && Date.now() - cached.timestamp < ttl) {
+      return cached.data as T
+    }
+    return undefined
+  }
+
+  /**
    * Invalidate cache for a specific key or pattern
    */
   invalidate(keyOrPattern: string | RegExp) {

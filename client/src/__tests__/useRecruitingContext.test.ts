@@ -409,6 +409,35 @@ describe('update', () => {
   })
 })
 
+// ── clearActive ────────────────────────────────────────────────────
+describe('clearActive', () => {
+  it('issues an UPDATE setting is_active=false on the owner\'s active row', async () => {
+    const { chain, recorder } = buildSelectChain([buildRow({ is_active: false })])
+    fromMock.mockReturnValue(chain)
+    useRecruitingContextStore.getState().setViewer(OWNER_A, 'club')
+
+    await useRecruitingContextStore.getState().clearActive()
+
+    expect(recorder.update).toEqual({ is_active: false })
+    expect(recorder.eq).toContain(`owner_id=${OWNER_A}`)
+    expect(recorder.eq).toContain('is_active=true')
+  })
+
+  it('is a no-op for ineligible viewers', async () => {
+    useRecruitingContextStore.getState().setViewer(OWNER_A, 'player')
+    await useRecruitingContextStore.getState().clearActive()
+    expect(fromMock).not.toHaveBeenCalled()
+  })
+
+  it('sets error on update failure', async () => {
+    const { chain } = buildSelectChain(null, new Error('update fail'))
+    fromMock.mockReturnValue(chain)
+    useRecruitingContextStore.getState().setViewer(OWNER_A, 'club')
+    await useRecruitingContextStore.getState().clearActive()
+    expect(useRecruitingContextStore.getState().error).toBe('Could not clear recruiting context')
+  })
+})
+
 // ── remove ─────────────────────────────────────────────────────────
 describe('remove', () => {
   it('issues a DELETE filtered by owner_id and id', async () => {
@@ -432,3 +461,4 @@ describe('clearError', () => {
     expect(useRecruitingContextStore.getState().error).toBe(null)
   })
 })
+

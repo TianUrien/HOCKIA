@@ -480,6 +480,65 @@ export type Database = {
           },
         ]
       }
+      club_fit_cache: {
+        Row: {
+          components: Json
+          computed_at: string
+          context_hash: string
+          owner_id: string
+          player_id: string
+          score: number
+          state: string
+        }
+        Insert: {
+          components: Json
+          computed_at?: string
+          context_hash: string
+          owner_id: string
+          player_id: string
+          score: number
+          state: string
+        }
+        Update: {
+          components?: Json
+          computed_at?: string
+          context_hash?: string
+          owner_id?: string
+          player_id?: string
+          score?: number
+          state?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "club_fit_cache_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "club_fit_cache_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "club_fit_cache_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "club_fit_cache_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       club_media: {
         Row: {
           alt_text: string | null
@@ -3154,6 +3213,8 @@ export type Database = {
           note: string | null
           owner_id: string
           saved_profile_id: string
+          shortlist_id: string
+          status: string
           updated_at: string
         }
         Insert: {
@@ -3162,6 +3223,8 @@ export type Database = {
           note?: string | null
           owner_id: string
           saved_profile_id: string
+          shortlist_id: string
+          status?: string
           updated_at?: string
         }
         Update: {
@@ -3170,6 +3233,8 @@ export type Database = {
           note?: string | null
           owner_id?: string
           saved_profile_id?: string
+          shortlist_id?: string
+          status?: string
           updated_at?: string
         }
         Relationships: [
@@ -3197,6 +3262,55 @@ export type Database = {
           {
             foreignKeyName: "saved_profiles_saved_profile_id_fkey"
             columns: ["saved_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saved_profiles_shortlist_id_fkey"
+            columns: ["shortlist_id"]
+            isOneToOne: false
+            referencedRelation: "shortlists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shortlists: {
+        Row: {
+          created_at: string
+          id: string
+          is_default: boolean
+          name: string
+          owner_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+          owner_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+          owner_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shortlists_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shortlists_owner_id_fkey"
+            columns: ["owner_id"]
             isOneToOne: false
             referencedRelation: "profiles_pending_country_review"
             referencedColumns: ["id"]
@@ -3856,8 +3970,10 @@ export type Database = {
           created_at: string
           display_order: number | null
           id: number
+          level_band_global: number | null
           logical_id: string | null
           name: string
+          parent_pyramid_id: number | null
           province_id: number | null
           slug: string | null
           tier: number | null
@@ -3868,8 +3984,10 @@ export type Database = {
           created_at?: string
           display_order?: number | null
           id?: number
+          level_band_global?: number | null
           logical_id?: string | null
           name: string
+          parent_pyramid_id?: number | null
           province_id?: number | null
           slug?: string | null
           tier?: number | null
@@ -3880,8 +3998,10 @@ export type Database = {
           created_at?: string
           display_order?: number | null
           id?: number
+          level_band_global?: number | null
           logical_id?: string | null
           name?: string
+          parent_pyramid_id?: number | null
           province_id?: number | null
           slug?: string | null
           tier?: number | null
@@ -3901,6 +4021,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "world_countries_with_directory"
             referencedColumns: ["country_id"]
+          },
+          {
+            foreignKeyName: "world_leagues_parent_pyramid_id_fkey"
+            columns: ["parent_pyramid_id"]
+            isOneToOne: false
+            referencedRelation: "world_leagues"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "world_leagues_province_id_fkey"
@@ -4192,6 +4319,14 @@ export type Database = {
       }
     }
     Functions: {
+      _club_fit_context_hash: {
+        Args: { p_opportunity_id: string; p_region: string; p_target: string }
+        Returns: string
+      }
+      _club_level_band: {
+        Args: { p_target: string; p_world_club_id: string }
+        Returns: number
+      }
       _enqueue_user_post_media: {
         Args: { p_images: Json; p_post_id: string; p_reason: string }
         Returns: undefined
@@ -4213,6 +4348,26 @@ export type Database = {
       _phs_normalize: {
         Args: { p_floor?: number; p_target: number; p_value: number }
         Returns: number
+      }
+      _player_level_band: {
+        Args: { p_playing_category: string; p_world_club_id: string }
+        Returns: number
+      }
+      _recency_30d: { Args: { ts: string }; Returns: number }
+      _target_accepts_category: {
+        Args: { p_category: string; p_target: string }
+        Returns: boolean
+      }
+      _upsert_club_fit_cache: {
+        Args: {
+          p_components: Json
+          p_context_hash: string
+          p_owner_id: string
+          p_player_id: string
+          p_score: number
+          p_state: string
+        }
+        Returns: undefined
       }
       accept_terms: { Args: { p_version?: string }; Returns: undefined }
       acquire_profile_lock: { Args: { profile_id: string }; Returns: boolean }
@@ -5210,6 +5365,20 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      compute_club_fit: {
+        Args: {
+          p_opportunity_id: string
+          p_owner_id: string
+          p_player_id: string
+          p_region: string
+          p_target: string
+        }
+        Returns: {
+          components: Json
+          score: number
+          state: string
+        }[]
+      }
       compute_product_health_score: { Args: never; Returns: Json }
       compute_profile_completeness_pct: {
         Args: { p: Database["public"]["Tables"]["profiles"]["Row"] }
@@ -5637,6 +5806,27 @@ export type Database = {
         }
         Returns: Json
       }
+      get_club_fit: {
+        Args: { p_context_id: string; p_player_id: string }
+        Returns: {
+          cache_hit: boolean
+          components: Json
+          computed_at: string
+          score: number
+          state: string
+        }[]
+      }
+      get_club_fit_batch: {
+        Args: { p_context_id: string; p_player_ids: string[] }
+        Returns: {
+          cache_hit: boolean
+          components: Json
+          computed_at: string
+          player_id: string
+          score: number
+          state: string
+        }[]
+      }
       get_club_members: {
         Args: { p_limit?: number; p_offset?: number; p_profile_id: string }
         Returns: {
@@ -5831,7 +6021,9 @@ export type Database = {
           accepted_reference_count: number
           avatar_url: string
           base_location: string
+          competition_level_band: number
           current_club: string
+          current_competition_name: string
           current_world_club_id: string
           full_name: string
           gender: string

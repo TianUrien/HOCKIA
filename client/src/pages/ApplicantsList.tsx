@@ -77,6 +77,9 @@ export default function ApplicantsList() {
   useEffect(() => {
     if (!opportunity || !user) return
     if (opportunity.club_id !== user.id) return
+    // Skip auto-scope for closed/draft opps — see the matching
+    // comment in OpportunityDetailPage.tsx for the rationale.
+    if (opportunity.status !== 'open') return
     if (autoActivatedRef.current === opportunity.id) return
     autoActivatedRef.current = opportunity.id
     const target = opportunityGenderToTarget(opportunity.gender)

@@ -21,8 +21,7 @@ const womensClub = {
   womens_league_division: 'Torneo Metropolitano C',
   mens_league_division: null,
   current_world_club_id: 'club-uuid',
-  competition_tier: null,
-  competition_country_code: null,
+  competition_level_band: null,
 }
 
 const baseFemalePlayer = {
@@ -30,8 +29,7 @@ const baseFemalePlayer = {
   role: 'player' as const,
   playing_category: 'adult_women',
   current_world_club_id: 'wc-1',
-  competition_tier: null,
-  competition_country_code: null,
+  competition_level_band: null,
   open_to_play: true,
   open_to_coach: null,
   open_to_opportunities: null,
@@ -93,7 +91,7 @@ describe('computeClubFit', () => {
     expect(result.components.gender_match).toBe(0)
   })
 
-  it('competition_proximity = 0 when either tier is null (Sprint v1 default)', () => {
+  it('competition_proximity = 0 when both sides have null level_band (default)', () => {
     const result = computeClubFit(womensClub, baseFemalePlayer)
     expect(result.components.competition_proximity).toBe(0)
   })
@@ -144,20 +142,50 @@ describe('computeClubFit', () => {
     expect(result.score).toBeLessThan(0.66)
   })
 
-  it('with matching same-country tier on top, the score crosses into green', () => {
+  it('matching level_band on top pushes score into green', () => {
+    // P1.2: proximity now uses level_band_global (1..10 curated, global)
+    // instead of tier+country. Same band = 1.0 proximity.
     const result = computeClubFit(
-      { ...womensClub, competition_tier: 3, competition_country_code: 'AR' },
-      { ...baseFemalePlayer, competition_tier: 3, competition_country_code: 'AR' },
+      { ...womensClub, competition_level_band: 3 },
+      { ...baseFemalePlayer, competition_level_band: 3 },
     )
     // proximity=0.4, gender=0.3, availability=0.2, recency=0.1 → 1.0 green
     expect(result.state).toBe('green')
     expect(result.score).toBeGreaterThanOrEqual(0.66)
+    expect(result.components.competition_proximity).toBe(1)
   })
 
-  it('cross-country proximity returns 0 (deferred to level_band_global)', () => {
+  it('cross-country with comparable level_bands now scores non-zero', () => {
+    // The old tier+country model hard-zeroed cross-country comparisons.
+    // P1.2's level_band_global is global, so a NL Hoofdklasse player
+    // (band 1) and an AR Metro A club (band 3) compute a real
+    // proximity instead of 0.
     const result = computeClubFit(
-      { ...womensClub, competition_tier: 1, competition_country_code: 'AR' },
-      { ...baseFemalePlayer, competition_tier: 1, competition_country_code: 'NL' },
+      { ...womensClub, competition_level_band: 3 }, // AR Metro A
+      { ...baseFemalePlayer, competition_level_band: 1 }, // NL Hoofdklasse
+    )
+    // |3 - 1| = 2; 1 - 2/4 = 0.5
+    expect(result.components.competition_proximity).toBe(0.5)
+  })
+
+  it('competition_proximity = 0 when either band is null', () => {
+    const noViewer = computeClubFit(
+      { ...womensClub, competition_level_band: null },
+      { ...baseFemalePlayer, competition_level_band: 3 },
+    )
+    expect(noViewer.components.competition_proximity).toBe(0)
+    const noCandidate = computeClubFit(
+      { ...womensClub, competition_level_band: 3 },
+      { ...baseFemalePlayer, competition_level_band: null },
+    )
+    expect(noCandidate.components.competition_proximity).toBe(0)
+  })
+
+  it('competition_proximity drops to 0 at 4+ bands apart', () => {
+    // |1 - 5| = 4 → 1 - 4/4 = 0
+    const result = computeClubFit(
+      { ...womensClub, competition_level_band: 1 },
+      { ...baseFemalePlayer, competition_level_band: 5 },
     )
     expect(result.components.competition_proximity).toBe(0)
   })
@@ -245,8 +273,7 @@ describe('computeClubFit', () => {
     womens_league_division: null,
     mens_league_division: null,
     current_world_club_id: 'club-uuid',
-    competition_tier: null,
-    competition_country_code: null,
+    competition_level_band: null,
   }
 
   it('coach viewer without override → NOT_APPLICABLE', () => {

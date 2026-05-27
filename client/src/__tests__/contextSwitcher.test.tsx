@@ -152,7 +152,7 @@ describe('ContextSwitcher render gate', () => {
 
 // ── Empty state ─────────────────────────────────────────────────────
 describe('empty state CTA', () => {
-  it('coach with no contexts → renders "Set recruiting context" CTA', () => {
+  it('coach with no contexts → renders the optional "Add recruiting context" CTA', () => {
     setAuthRole('coach')
     useRecruitingContextStore.setState({
       ownerId: OWNER,
@@ -162,7 +162,8 @@ describe('empty state CTA', () => {
       fetchedForOwner: OWNER,
     })
     render(<ContextSwitcher />)
-    expect(screen.getByText(/set recruiting context/i)).toBeInTheDocument()
+    expect(screen.getByText(/add recruiting context/i)).toBeInTheDocument()
+    expect(screen.getByText(/optional/i)).toBeInTheDocument()
   })
 })
 
@@ -189,31 +190,41 @@ describe('active context label', () => {
   })
 })
 
-// ── Reset button visibility ────────────────────────────────────────
-describe('Reset button visibility', () => {
-  it('hidden when the active context IS the default (type=club)', () => {
-    setAuthRole('club')
-    plantStore([buildRow({ id: 'club-1', type: 'club', is_active: true })])
-    render(<ContextSwitcher />)
-    expect(screen.queryByLabelText(/reset to your default/i)).not.toBeInTheDocument()
-  })
-
-  it('hidden when no default club row exists (typical coach)', () => {
+// ── Clear button visibility (Sprint 4: replaces Reset) ────────────
+// The Reset-to-default concept was removed when auto-seeded
+// type='club' rows were deleted from prod. The chip now exposes a
+// simple Clear (X) whenever there's ANY active context, which
+// deactivates without picking another row.
+describe('Clear button visibility', () => {
+  it('hidden when there is no active context', () => {
     setAuthRole('coach')
     useRecruitingContextStore.setState({
       ownerId: OWNER,
       eligibleRole: 'coach',
-      rows: [
-        buildRow({ id: 'custom-1', type: 'custom', label: 'Coach custom', is_active: true }),
-      ],
+      rows: [],
       loading: false,
       fetchedForOwner: OWNER,
     })
     render(<ContextSwitcher />)
-    expect(screen.queryByLabelText(/reset to your default/i)).not.toBeInTheDocument()
+    expect(screen.queryByLabelText(/clear active recruiting context/i)).not.toBeInTheDocument()
   })
 
-  it('visible when active=opportunity AND a default club row exists', () => {
+  it('visible when active=custom (any active context can be cleared)', () => {
+    setAuthRole('club')
+    plantStore([
+      buildRow({
+        id: 'custom-ctx',
+        type: 'custom',
+        target_category: 'Women',
+        label: 'Women — next season',
+        is_active: true,
+      }),
+    ])
+    render(<ContextSwitcher />)
+    expect(screen.getByLabelText(/clear active recruiting context/i)).toBeInTheDocument()
+  })
+
+  it('visible when active=opportunity', () => {
     setAuthRole('club')
     plantStore([
       buildRow({
@@ -224,25 +235,8 @@ describe('Reset button visibility', () => {
         label: 'Women — Goalkeeper hire',
         is_active: true,
       }),
-      buildRow({ id: 'club-default', type: 'club', is_active: false }),
     ])
     render(<ContextSwitcher />)
-    expect(screen.getByLabelText(/reset to your default/i)).toBeInTheDocument()
-  })
-
-  it('visible when active=custom AND a default club row exists', () => {
-    setAuthRole('club')
-    plantStore([
-      buildRow({
-        id: 'custom-ctx',
-        type: 'custom',
-        target_category: 'Women',
-        label: 'Women — next season',
-        is_active: true,
-      }),
-      buildRow({ id: 'club-default', type: 'club', is_active: false }),
-    ])
-    render(<ContextSwitcher />)
-    expect(screen.getByLabelText(/reset to your default/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/clear active recruiting context/i)).toBeInTheDocument()
   })
 })

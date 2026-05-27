@@ -22,7 +22,7 @@
  */
 
 import { useState } from 'react'
-import { ChevronDown, RotateCcw, Target } from 'lucide-react'
+import { ChevronDown, Target, X } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
 import { useRecruitingContext } from '@/hooks/useRecruitingContext'
 import ContextEditSheet from './ContextEditSheet'
@@ -33,9 +33,9 @@ interface ContextSwitcherProps {
 
 export default function ContextSwitcher({ className = '' }: ContextSwitcherProps) {
   const { profile: viewer } = useAuthStore()
-  const { active, available, loading, activate } = useRecruitingContext()
+  const { active, loading, clearActive } = useRecruitingContext()
   const [sheetOpen, setSheetOpen] = useState(false)
-  const [resetting, setResetting] = useState(false)
+  const [clearing, setClearing] = useState(false)
 
   const viewerRole = viewer?.role
   if (viewerRole !== 'club' && viewerRole !== 'coach') return null
@@ -44,22 +44,15 @@ export default function ContextSwitcher({ className = '' }: ContextSwitcherProps
   const summary = formatContextSummary(active)
   const isEmpty = !active
 
-  // Reset-to-default affordance: the auto-seeded type='club' context
-  // is the implicit fallback. When the recruiter has navigated into
-  // an opportunity (type='opportunity') or set up a custom scope
-  // (type='custom'), expose a one-tap path back to the default so
-  // they don't have to open the full sheet just to revert. Coaches
-  // have no auto-seed, so this hides for them by virtue of no
-  // 'club' row existing.
-  const defaultContext = available.find((c) => c.type === 'club')
-  const canReset = Boolean(
-    active && defaultContext && active.id !== defaultContext.id,
-  )
-  const handleReset = async () => {
-    if (!defaultContext) return
-    setResetting(true)
-    await activate(defaultContext.id)
-    setResetting(false)
+  // Clear affordance: only meaningful when there IS an active context.
+  // Sprint 4 removed the auto-seed `type='club'` fallback, so there's
+  // no "default context" to reset to — clear means "no scope, show
+  // everyone". One tap on the chip's X to opt out without opening
+  // the full sheet.
+  const handleClear = async () => {
+    setClearing(true)
+    await clearActive()
+    setClearing(false)
   }
 
   return (
@@ -71,40 +64,40 @@ export default function ContextSwitcher({ className = '' }: ContextSwitcherProps
           'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full',
           'text-xs font-medium border transition-colors',
           isEmpty
-            ? 'border-dashed border-[#8026FA]/50 text-[#8026FA] hover:bg-[#8026FA]/5'
+            ? 'border-dashed border-gray-300 text-gray-600 hover:border-[#8026FA]/50 hover:text-[#8026FA] hover:bg-[#8026FA]/5'
             : 'border-[#8026FA]/30 bg-[#8026FA]/5 text-[#8026FA] hover:bg-[#8026FA]/10',
           'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8026FA]/40',
           className,
         ].join(' ')}
-        aria-label={isEmpty ? 'Set recruiting context' : `Recruiting context: ${summary}. Tap to change.`}
+        aria-label={isEmpty ? 'Add an optional recruiting context' : `Recruiting context: ${summary}. Tap to change or clear.`}
       >
         <Target className="w-3.5 h-3.5" />
         {isEmpty ? (
-          <span>Set recruiting context</span>
+          <span>Add recruiting context <span className="text-gray-400">(optional)</span></span>
         ) : (
           <>
-            <span className="text-gray-500">Recruiting:</span>
+            <span className="text-gray-500">Scoped to:</span>
             <span className="font-semibold">{summary}</span>
           </>
         )}
         <ChevronDown className="w-3 h-3 opacity-60" />
       </button>
-      {canReset && (
+      {!isEmpty && (
         <button
           type="button"
-          onClick={handleReset}
-          disabled={resetting}
+          onClick={handleClear}
+          disabled={clearing}
           className={[
             'inline-flex items-center gap-1 px-2 py-1.5 rounded-full',
             'text-[11px] font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100',
             'transition-colors disabled:opacity-50',
             'focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-300',
           ].join(' ')}
-          aria-label="Reset to your default recruiting context"
-          title="Reset to your default context"
+          aria-label="Clear active recruiting context — show all members"
+          title="Clear scope — show all members"
         >
-          <RotateCcw className="w-3 h-3" />
-          Reset
+          <X className="w-3 h-3" />
+          Clear
         </button>
       )}
       <ContextEditSheet

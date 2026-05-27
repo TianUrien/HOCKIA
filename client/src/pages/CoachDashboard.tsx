@@ -11,6 +11,7 @@ import {
   CategoryConfirmationBanner,
 } from '@/components'
 import Header from '@/components/Header'
+import ContextSwitcher from '@/components/recruiting/ContextSwitcher'
 import JourneyTab from '@/components/JourneyTab'
 import MediaTab from '@/components/MediaTab'
 import CommentsTab from '@/components/CommentsTab'
@@ -577,6 +578,16 @@ export default function CoachDashboard({
             visitor views. ClubLinkPrompt reads auth/profile state
             internally — no props needed. */}
         {!readOnly && isLanding && <ClubLinkPrompt />}
+
+        {/* Own-profile only: recruiter context chip. The chip itself
+            self-hides for non-recruiter roles; the isOwnProfile gate
+            prevents a non-owner club/coach visitor from seeing their
+            OWN context floating on someone else's coach dashboard. */}
+        {isOwnProfile && !readOnly && (
+          <div>
+            <ContextSwitcher />
+          </div>
+        )}
 
         <HeroIdentityCard
           // PlayerProfileShape requires position: string | null but

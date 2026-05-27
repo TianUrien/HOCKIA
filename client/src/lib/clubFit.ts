@@ -69,14 +69,13 @@ export interface FitCandidateFields {
   role: string | null
   playing_category: string | null
   current_world_club_id: string | null
-  /** Optional: the player's club's league tier. When the carousel /
-   *  grid hasn't joined to world_clubs.world_leagues, this is null
-   *  and competition_proximity falls back to a binary same-club
-   *  signal (worth a yellow at best). */
-  competition_tier?: number | null
-  /** Optional: the player's club's country, for the cross-country
-   *  guard. When null, we assume same-country (v1 simplification). */
-  competition_country_code?: string | null
+  /** Curated 1..10 global level band derived from the player's
+   *  current_world_club → world_leagues.level_band_global. P1.2
+   *  switched proximity from same-country tier distance to this
+   *  global band, eliminating the cross-country dead zone. Null
+   *  when the player has no club linked or the club has no league
+   *  → competition_proximity = 0. */
+  competition_level_band?: number | null
   open_to_play: boolean | null
   open_to_coach: boolean | null
   open_to_opportunities: boolean | null
@@ -133,29 +132,20 @@ function clamp01(x: number): number {
 }
 
 /**
- * Within-country competition proximity. Returns 0 when we have no tier
- * data, 1.0 when the tiers match exactly, decaying linearly to 0 over
- * 4 tier steps. Cross-country comparisons return 0 until level_band_global
- * is curated.
+ * Cross-country competition proximity using the curated 1..10
+ * level_band_global. Returns 0 when either side is null, 1.0 when the
+ * bands match exactly, decaying linearly to 0 at 4+ bands apart.
+ * P1.2 replaced the tier+country model — same-country tier distance
+ * was a dead-end for cross-border recruiting which is HOCKIA's main
+ * use case. The level band collapses both dimensions into one
+ * comparable scalar.
  */
 function competitionProximity(
-  candidateTier: number | null | undefined,
-  viewerTier: number | null | undefined,
-  candidateCountry: string | null | undefined,
-  viewerCountry: string | null | undefined,
+  candidateLevelBand: number | null | undefined,
+  viewerLevelBand: number | null | undefined,
 ): number {
-  if (candidateTier == null || viewerTier == null) return 0
-  // Cross-country gate: when both countries are known and they differ,
-  // we can't honestly compare tiers without the level_band_global
-  // curation layer. Return 0.
-  if (
-    candidateCountry &&
-    viewerCountry &&
-    candidateCountry !== viewerCountry
-  ) {
-    return 0
-  }
-  const d = Math.abs(candidateTier - viewerTier)
+  if (candidateLevelBand == null || viewerLevelBand == null) return 0
+  const d = Math.abs(candidateLevelBand - viewerLevelBand)
   return clamp01(1 - d / DEFAULT_TIER_DISTANCE_CAP)
 }
 
@@ -183,7 +173,7 @@ export interface ComputeClubFitOptions {
  * override is their only path to an applicable Fit signal.
  */
 export function computeClubFit(
-  viewerProfile: (RecruitingContextProfileFields & { competition_tier?: number | null; competition_country_code?: string | null }) | null | undefined,
+  viewerProfile: (RecruitingContextProfileFields & { competition_level_band?: number | null }) | null | undefined,
   candidate: FitCandidateFields | null | undefined,
   options?: ComputeClubFitOptions,
 ): ClubFitResult {
@@ -220,25 +210,19 @@ export function computeClubFit(
     reasons.push('Playing category not added yet — no match info.')
   }
 
-  // Competition proximity (within-country).
+  // Competition proximity — cross-country via curated level_band_global.
   const competition_proximity = competitionProximity(
-    candidate.competition_tier ?? null,
-    viewerProfile.competition_tier ?? null,
-    candidate.competition_country_code ?? null,
-    viewerProfile.competition_country_code ?? null,
+    candidate.competition_level_band ?? null,
+    viewerProfile.competition_level_band ?? null,
   )
   if (competition_proximity >= 0.75) {
-    reasons.push('Same or adjacent league tier to your team.')
+    reasons.push('Plays at a comparable league level to your team.')
   } else if (competition_proximity > 0) {
-    reasons.push('Different league tier from your team.')
-  } else if (candidate.competition_tier == null) {
-    reasons.push('Current league not linked — tier comparison unavailable.')
-  } else if (
-    candidate.competition_country_code &&
-    viewerProfile.competition_country_code &&
-    candidate.competition_country_code !== viewerProfile.competition_country_code
-  ) {
-    reasons.push('Plays in a different country — cross-country fit not yet supported.')
+    reasons.push('Plays at a different league level from your team.')
+  } else if (candidate.competition_level_band == null) {
+    reasons.push('Current league not linked — level comparison unavailable.')
+  } else if (viewerProfile.competition_level_band == null) {
+    reasons.push("Your club's league level isn't set — level comparison unavailable.")
   }
 
   // Availability — open flag (60%) + recency_30d on last_active (40%).

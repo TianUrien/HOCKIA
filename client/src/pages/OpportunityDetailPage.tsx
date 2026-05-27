@@ -217,6 +217,13 @@ export default function OpportunityDetailPage() {
   useEffect(() => {
     if (!opportunity || !user) return
     if (opportunity.club_id !== user.id) return
+    // Closed/draft opps are out of the active recruiting flow — scoping
+    // to them creates a context that's invisible in the picker
+    // (filtered to status='open'). User feedback flagged this as
+    // confusing pollution. The picker still surfaces a closed opp IF
+    // a user already had it scoped (visibleOpps synthesis), so this
+    // gate doesn't trap anyone in a stale state.
+    if (opportunity.status !== 'open') return
     if (autoActivatedRef.current === opportunity.id) return
     autoActivatedRef.current = opportunity.id
     const target = opportunityGenderToTarget(opportunity.gender)
