@@ -34,6 +34,7 @@ import {
 } from '@/components/community/communityFilters'
 import type { CommunityTab } from '@/components/community'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
+import { useAuthStore } from '@/lib/auth'
 
 const VALID_TABS: CommunityTab[] = ['all', 'players', 'coaches', 'clubs', 'umpires', 'brands', 'questions']
 
@@ -61,6 +62,12 @@ export default function CommunityPage() {
   const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
   const [refreshKey, setRefreshKey] = useState(0)
+  // Viewer role drives the lane order on the All tab (Slice B+):
+  // a player wants to see "Featured clubs" first because that's
+  // actionable for them; a club wants "Featured players" first
+  // because that's their recruitment surface. The viewer's own role
+  // goes LAST in their stack — they've already seen themselves.
+  const { profile: viewerProfile } = useAuthStore()
 
   // Scroll restoration between Members ↔ Questions toggle (and across
   // role chips). React Router's default scrolls to top on route change;
@@ -305,11 +312,34 @@ export default function CommunityPage() {
                 <CommunityRoleChips activeTab={activeTab} />
               </div>
 
-              {/* Top community members carousel — hidden when narrowing */}
-              {!isNarrowed && (
+              {/* "Featured this week" carousel(s) — hidden when narrowing.
+                  Slice B redesign:
+                    - 'all' tab renders 3 stacked lanes (Players / Clubs /
+                      Coaches). Each lane has its own ranking criterion:
+                      players use availability+activity to avoid being
+                      ranked by data-entry; clubs and coaches keep
+                      profile-completeness ranking.
+                    - Lane order is viewer-aware (Slice B+) so each role
+                      sees their most-actionable lane first.
+                    - Specific role tabs render a single lane scoped to
+                      that role with the role-appropriate criterion. */}
+              {!isNarrowed && activeTab === 'all' && (
+                <>
+                  {laneOrderForViewer(viewerProfile?.role, viewerProfile?.coach_recruits_for_team).map((lane) => (
+                    <TopCommunityMembersCarousel
+                      key={`top-${lane}-${refreshKey}`}
+                      roleFilter={lane}
+                      sortCriterion={lane === 'player' ? 'availability_activity' : 'completeness'}
+                      limit={10}
+                    />
+                  ))}
+                </>
+              )}
+              {!isNarrowed && activeTab !== 'all' && memberRoleFilter && (
                 <TopCommunityMembersCarousel
                   key={`top-${activeTab}-${refreshKey}`}
                   roleFilter={memberRoleFilter}
+                  sortCriterion={memberRoleFilter === 'player' ? 'availability_activity' : 'completeness'}
                   onViewAll={handleViewAllScroll}
                 />
               )}
@@ -364,4 +394,46 @@ export default function CommunityPage() {
       </PullToRefresh>
     </div>
   )
+}
+
+// ── Viewer-aware lane order ──────────────────────────────────────────
+// On the All tab the 3 lanes (player/club/coach) render in an order
+// that puts the viewer's most-actionable lane FIRST and the viewer's
+// own role LAST (you've already seen yourself; peers are networking,
+// not discovery). Anon viewers default to the original Players →
+// Clubs → Coaches sequence.
+type CarouselLane = 'player' | 'club' | 'coach'
+
+function laneOrderForViewer(
+  role: string | null | undefined,
+  recruiterFlag: boolean | null | undefined,
+): CarouselLane[] {
+  switch (role) {
+    case 'player':
+      // A player is looking for a club to play for first, then
+      // coaches who might scout them, then peers for networking.
+      return ['club', 'coach', 'player']
+    case 'club':
+      // A club is recruiting — players first, coaches next (staff
+      // hires), then peer clubs.
+      return ['player', 'coach', 'club']
+    case 'coach':
+      // Coach split on the recruiter flag: recruiter-coaches behave
+      // like clubs (players first); non-recruiter coaches behave
+      // like players (clubs first — looking for a team).
+      return recruiterFlag
+        ? ['player', 'club', 'coach']
+        : ['club', 'player', 'coach']
+    case 'umpire':
+      // Umpires need to discover clubs (to officiate matches) and
+      // coaches (officiating networks); peer umpires last.
+      return ['club', 'coach', 'player']
+    case 'brand':
+      // Brands sponsor clubs and players; the order mirrors a club's
+      // recruitment lens.
+      return ['player', 'club', 'coach']
+    default:
+      // Anon or role-less viewer keeps the original carousel order.
+      return ['player', 'club', 'coach']
+  }
 }

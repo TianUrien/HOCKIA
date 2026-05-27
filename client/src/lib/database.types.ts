@@ -5661,7 +5661,7 @@ export type Database = {
         }[]
       }
       get_top_community_members: {
-        Args: { p_limit?: number; p_role?: string }
+        Args: { p_limit?: number; p_role?: string; p_sort?: string }
         Returns: {
           accepted_friend_count: number
           accepted_reference_count: number
