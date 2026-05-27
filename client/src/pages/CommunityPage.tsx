@@ -312,29 +312,38 @@ export default function CommunityPage() {
                 <CommunityRoleChips activeTab={activeTab} />
               </div>
 
-              {/* "Featured this week" carousel(s) — hidden when narrowing.
-                  Slice B redesign:
-                    - 'all' tab renders 3 stacked lanes (Players / Clubs /
-                      Coaches). Each lane has its own ranking criterion:
-                      players use availability+activity to avoid being
-                      ranked by data-entry; clubs and coaches keep
-                      profile-completeness ranking.
-                    - Lane order is viewer-aware (Slice B+) so each role
-                      sees their most-actionable lane first.
-                    - Specific role tabs render a single lane scoped to
-                      that role with the role-appropriate criterion. */}
-              {!isNarrowed && activeTab === 'all' && (
-                <>
-                  {laneOrderForViewer(viewerProfile?.role, viewerProfile?.coach_recruits_for_team).map((lane) => (
-                    <TopCommunityMembersCarousel
-                      key={`top-${lane}-${refreshKey}`}
-                      roleFilter={lane}
-                      sortCriterion={lane === 'player' ? 'availability_activity' : 'completeness'}
-                      limit={10}
-                    />
-                  ))}
-                </>
-              )}
+              {/* "Featured this week" carousel — hidden when narrowing.
+                  Slice C (2026-05-27) collapsed three stacked lanes
+                  down to a SINGLE viewer-targeted carousel to reduce
+                  visual noise and shorten the path to the All members
+                  grid:
+                    - 'all' tab renders one carousel whose role +
+                      criterion are driven by the viewer's own role
+                      (see featuredLaneForViewer). Players see clubs;
+                      clubs / recruiter-coaches see players; etc.
+                    - Specific role tabs (/community/players, etc.)
+                      still render a single carousel scoped to that
+                      tab's role with the role-appropriate criterion.
+
+                  Weekly theme rotation is intentionally NOT implemented
+                  yet — it would need additional sort criteria in the
+                  get_top_community_members RPC ("recently joined",
+                  "open to opportunities", etc.). Marked as a follow-up
+                  slice; for now the lane is fixed per role. */}
+              {!isNarrowed && activeTab === 'all' && (() => {
+                const featured = featuredLaneForViewer(
+                  viewerProfile?.role,
+                  viewerProfile?.coach_recruits_for_team,
+                )
+                return (
+                  <TopCommunityMembersCarousel
+                    key={`featured-${featured.lane}-${refreshKey}`}
+                    roleFilter={featured.lane}
+                    sortCriterion={featured.criterion}
+                    onViewAll={handleViewAllScroll}
+                  />
+                )
+              })()}
               {!isNarrowed && activeTab !== 'all' && memberRoleFilter && (
                 <TopCommunityMembersCarousel
                   key={`top-${activeTab}-${refreshKey}`}
@@ -396,44 +405,51 @@ export default function CommunityPage() {
   )
 }
 
-// ── Viewer-aware lane order ──────────────────────────────────────────
-// On the All tab the 3 lanes (player/club/coach) render in an order
-// that puts the viewer's most-actionable lane FIRST and the viewer's
-// own role LAST (you've already seen yourself; peers are networking,
-// not discovery). Anon viewers default to the original Players →
-// Clubs → Coaches sequence.
+// ── Viewer-aware featured lane chooser ───────────────────────────────
+// The All tab renders a SINGLE featured carousel (Slice C). The lane
+// + ranking criterion are chosen based on what's most actionable for
+// the viewer:
+//   - players look for clubs to play for → Featured Clubs (completeness)
+//   - clubs / recruiter-coaches look for players → Featured Players
+//     (availability + activity, never ranked by data-entry)
+//   - non-recruiter coaches look for clubs to coach at → Featured Clubs
+//   - umpires look for clubs to officiate at → Featured Clubs
+//   - brands look for players to sponsor → Featured Players
+//   - anon viewers default to Featured Players (the most discovery-
+//     valuable lane for someone not yet onboarded)
+//
+// Future: a weekly theme rotation could swap the criterion (e.g.,
+// "Recently joined" or "Open to opportunities") to keep the page
+// feeling fresh week-over-week. Deferred until the RPC supports more
+// sort criteria than ('completeness' | 'availability_activity').
 type CarouselLane = 'player' | 'club' | 'coach'
+type CarouselCriterion = 'completeness' | 'availability_activity'
 
-function laneOrderForViewer(
+interface FeaturedLane {
+  lane: CarouselLane
+  criterion: CarouselCriterion
+}
+
+function featuredLaneForViewer(
   role: string | null | undefined,
   recruiterFlag: boolean | null | undefined,
-): CarouselLane[] {
+): FeaturedLane {
   switch (role) {
     case 'player':
-      // A player is looking for a club to play for first, then
-      // coaches who might scout them, then peers for networking.
-      return ['club', 'coach', 'player']
+      return { lane: 'club', criterion: 'completeness' }
     case 'club':
-      // A club is recruiting — players first, coaches next (staff
-      // hires), then peer clubs.
-      return ['player', 'coach', 'club']
+      return { lane: 'player', criterion: 'availability_activity' }
     case 'coach':
-      // Coach split on the recruiter flag: recruiter-coaches behave
-      // like clubs (players first); non-recruiter coaches behave
-      // like players (clubs first — looking for a team).
       return recruiterFlag
-        ? ['player', 'club', 'coach']
-        : ['club', 'player', 'coach']
+        ? { lane: 'player', criterion: 'availability_activity' }
+        : { lane: 'club', criterion: 'completeness' }
     case 'umpire':
-      // Umpires need to discover clubs (to officiate matches) and
-      // coaches (officiating networks); peer umpires last.
-      return ['club', 'coach', 'player']
+      return { lane: 'club', criterion: 'completeness' }
     case 'brand':
-      // Brands sponsor clubs and players; the order mirrors a club's
-      // recruitment lens.
-      return ['player', 'club', 'coach']
+      return { lane: 'player', criterion: 'availability_activity' }
     default:
-      // Anon or role-less viewer keeps the original carousel order.
-      return ['player', 'club', 'coach']
+      // Anon / role-less viewer — default to Featured Players, the
+      // most discovery-relevant lane for someone exploring HOCKIA.
+      return { lane: 'player', criterion: 'availability_activity' }
   }
 }
