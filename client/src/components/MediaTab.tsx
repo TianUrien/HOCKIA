@@ -321,18 +321,28 @@ export default function MediaTab({ profileId, readOnly = false, renderHeader, sh
 // Video Embed Component
 function VideoEmbed({ url }: { url: string }) {
   const isGoogleDrive = url.includes('drive.google.com')
-  
+  const isYouTube = url.includes('youtube.com') || url.includes('youtu.be')
+  const isVimeo = url.includes('vimeo.com')
+
   const getEmbedUrl = (url: string) => {
-    // YouTube
-    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+    // YouTube — use the privacy-enhanced `youtube-nocookie.com` domain.
+    // The standard `youtube.com/embed` player tries to read its tracking
+    // cookies on init; when blocked by ITP / Capacitor WKWebView / Brave /
+    // Firefox-strict it throws "Error 153 — Video player configuration
+    // error" instead of playing. youtube-nocookie sidesteps that with no
+    // functional loss (autoplay/fullscreen/PiP all still work).
+    // ?rel=0 keeps related-video suggestions to the same channel.
+    // ?playsinline=1 keeps mobile playback inline instead of taking over
+    // the iOS fullscreen player on tap.
+    if (isYouTube) {
       const videoId = url.includes('youtu.be')
         ? url.split('youtu.be/')[1]?.split('?')[0]
         : new URLSearchParams(url.split('?')[1]).get('v')
-      return `https://www.youtube.com/embed/${videoId}`
+      return `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&playsinline=1`
     }
 
     // Vimeo
-    if (url.includes('vimeo.com')) {
+    if (isVimeo) {
       const videoId = url.split('vimeo.com/')[1]?.split('?')[0]
       return `https://player.vimeo.com/video/${videoId}`
     }
@@ -361,32 +371,52 @@ function VideoEmbed({ url }: { url: string }) {
 
   const embedUrl = getEmbedUrl(url)
 
+  // Universal external-watch fallback. Cross-origin iframes can't surface
+  // YouTube/Vimeo internal errors to us (same-origin policy), so we can't
+  // auto-hide the embed on failure. Instead, we always render a small
+  // text link below — the small minority whose embed still fails (strict
+  // privacy, corporate firewall, ad-blocker) get a clear escape hatch
+  // instead of a dead-end "Error 153" box.
+  const externalLabel = isYouTube ? 'Watch on YouTube' : isVimeo ? 'Watch on Vimeo' : isGoogleDrive ? 'Open in Drive' : 'Watch externally'
+
   return (
-    <div className="relative w-full rounded-xl overflow-hidden bg-black aspect-video">
-      {/* Drive's iframe doesn't reliably autoplay inline, so we surface a
-          small "Open in Drive" affordance for the case where the inline
-          play button does nothing. YouTube and Vimeo embeds play inline
-          fine and don't need an external-open shortcut from us — both
-          platforms expose their own. */}
-      {isGoogleDrive && (
+    <div>
+      <div className="relative w-full rounded-xl overflow-hidden bg-black aspect-video">
+        {/* Drive's iframe doesn't reliably autoplay inline, so we surface a
+            small "Open in Drive" affordance for the case where the inline
+            play button does nothing. YouTube and Vimeo embeds play inline
+            fine and don't need an external-open shortcut from us — both
+            platforms expose their own. */}
+        {isGoogleDrive && (
+          <a
+            href={getDirectUrl(url)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="absolute top-4 left-4 z-10 px-3 py-1 bg-white/90 text-gray-800 text-xs font-semibold rounded hover:bg-white transition-colors"
+          >
+            Open in Drive ↗
+          </a>
+        )}
+        <iframe
+          src={embedUrl}
+          className="absolute top-0 left-0 w-full h-full"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          loading="lazy"
+          referrerPolicy="strict-origin-when-cross-origin"
+          allowFullScreen
+          title="Highlight video player"
+        />
+      </div>
+      <div className="mt-2 text-right">
         <a
-          href={getDirectUrl(url)}
+          href={url}
           target="_blank"
           rel="noopener noreferrer"
-          className="absolute top-4 left-4 z-10 px-3 py-1 bg-white/90 text-gray-800 text-xs font-semibold rounded hover:bg-white transition-colors"
+          className="text-xs text-gray-500 hover:text-gray-700 hover:underline"
         >
-          Open in Drive ↗
+          Trouble loading? {externalLabel} →
         </a>
-      )}
-      <iframe
-        src={embedUrl}
-        className="absolute top-0 left-0 w-full h-full"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        loading="lazy"
-        referrerPolicy="strict-origin-when-cross-origin"
-        allowFullScreen
-        title="Highlight video player"
-      />
+      </div>
     </div>
   )
 }
