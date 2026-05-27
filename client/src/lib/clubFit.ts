@@ -178,8 +178,9 @@ export interface ComputeClubFitOptions {
  *
  * `options.overrideTarget` (Sprint 2): when the viewer has an active
  * recruiting_context row, its target_category takes precedence over
- * the profile-derived target. The viewer-role gate (clubs only) still
- * applies — overrides don't expand who sees the chip.
+ * the profile-derived target. Sprint 3 extends the viewer gate to
+ * coaches — they have no profile-derived target source, so the
+ * override is their only path to an applicable Fit signal.
  */
 export function computeClubFit(
   viewerProfile: (RecruitingContextProfileFields & { competition_tier?: number | null; competition_country_code?: string | null }) | null | undefined,
@@ -187,19 +188,22 @@ export function computeClubFit(
   options?: ComputeClubFitOptions,
 ): ClubFitResult {
   if (!viewerProfile || !candidate) return NOT_APPLICABLE
-  // Viewer must be a club (Sprint v1 + Sprint 2 keep the chip
-  // club-viewer only). We deliberately do NOT use isViewerFitCapable
-  // here because that helper also requires a profile-derived target,
-  // which would block override-only viewers (e.g., a brand-new club
-  // that picked a context via the switcher before filling leagues).
-  if (viewerProfile.role !== 'club') return NOT_APPLICABLE
-  // Sprint v1: Fit chip is PLAYER-only. Coach context is deferred to
-  // Sprint 2 (coaches need a different data source for their target —
-  // their primary club affiliation, recruiter flag, etc.). Returning
-  // NOT_APPLICABLE here hides the chip on coach / club / umpire /
-  // brand candidates so we never surface a misleading signal.
+  // Viewer must be a club or coach. Brands / umpires / players / anon
+  // never see Fit. The target is resolved below from override OR
+  // profile derivation; override-only viewers (coaches with a chosen
+  // context, clubs without leagues but with a context) are accepted
+  // here even though they have no profile-derived target.
+  if (viewerProfile.role !== 'club' && viewerProfile.role !== 'coach') return NOT_APPLICABLE
+  // Candidate must be a player. The chip stays hidden on coach / club /
+  // umpire / brand candidates so we never surface a misleading signal
+  // for roles whose Fit math isn't defined.
   if (candidate.role !== 'player') return NOT_APPLICABLE
 
+  // Sprint 3 (coach support): coaches have no profile-derived target —
+  // deriveTargetCategory returns null for any non-club viewer — so they
+  // rely entirely on options.overrideTarget (set by the ContextSwitcher
+  // chip / per-opportunity auto-scope). Clubs still get the profile
+  // derivation as a fallback.
   const target = options?.overrideTarget ?? deriveTargetCategory(viewerProfile)
   if (!target) return NOT_APPLICABLE
 
@@ -224,9 +228,9 @@ export function computeClubFit(
     viewerProfile.competition_country_code ?? null,
   )
   if (competition_proximity >= 0.75) {
-    reasons.push('Same or adjacent league tier to your club.')
+    reasons.push('Same or adjacent league tier to your team.')
   } else if (competition_proximity > 0) {
-    reasons.push('Different league tier from your club.')
+    reasons.push('Different league tier from your team.')
   } else if (candidate.competition_tier == null) {
     reasons.push('Current league not linked — tier comparison unavailable.')
   } else if (

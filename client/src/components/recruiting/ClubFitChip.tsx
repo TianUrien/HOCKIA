@@ -15,9 +15,10 @@
  * propagation so tapping the chip doesn't also trigger the parent
  * tile's preview action.
  *
- * Recruiter-only (player candidates + club viewers with a declared
- * team category). Returns null otherwise so consumers don't need to
- * gate at the call site.
+ * Recruiter-only (player candidates + club or coach viewers with a
+ * resolvable target — either profile-derived for clubs or override
+ * from an active recruiting_context for coaches). Returns null
+ * otherwise so consumers don't need to gate at the call site.
  *
  * Copy single-source-of-truth: `clubFitStateLabel()` in clubFit.ts
  * drives both the visible label, the title attribute, the aria-label,

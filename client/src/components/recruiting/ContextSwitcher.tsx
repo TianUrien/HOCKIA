@@ -22,7 +22,7 @@
  */
 
 import { useState } from 'react'
-import { ChevronDown, Target } from 'lucide-react'
+import { ChevronDown, RotateCcw, Target } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
 import { useRecruitingContext } from '@/hooks/useRecruitingContext'
 import ContextEditSheet from './ContextEditSheet'
@@ -33,8 +33,9 @@ interface ContextSwitcherProps {
 
 export default function ContextSwitcher({ className = '' }: ContextSwitcherProps) {
   const { profile: viewer } = useAuthStore()
-  const { active, loading } = useRecruitingContext()
+  const { active, available, loading, activate } = useRecruitingContext()
   const [sheetOpen, setSheetOpen] = useState(false)
+  const [resetting, setResetting] = useState(false)
 
   const viewerRole = viewer?.role
   if (viewerRole !== 'club' && viewerRole !== 'coach') return null
@@ -43,8 +44,26 @@ export default function ContextSwitcher({ className = '' }: ContextSwitcherProps
   const summary = formatContextSummary(active)
   const isEmpty = !active
 
+  // Reset-to-default affordance: the auto-seeded type='club' context
+  // is the implicit fallback. When the recruiter has navigated into
+  // an opportunity (type='opportunity') or set up a custom scope
+  // (type='custom'), expose a one-tap path back to the default so
+  // they don't have to open the full sheet just to revert. Coaches
+  // have no auto-seed, so this hides for them by virtue of no
+  // 'club' row existing.
+  const defaultContext = available.find((c) => c.type === 'club')
+  const canReset = Boolean(
+    active && defaultContext && active.id !== defaultContext.id,
+  )
+  const handleReset = async () => {
+    if (!defaultContext) return
+    setResetting(true)
+    await activate(defaultContext.id)
+    setResetting(false)
+  }
+
   return (
-    <>
+    <div className="inline-flex items-center gap-1.5">
       <button
         type="button"
         onClick={() => setSheetOpen(true)}
@@ -70,11 +89,29 @@ export default function ContextSwitcher({ className = '' }: ContextSwitcherProps
         )}
         <ChevronDown className="w-3 h-3 opacity-60" />
       </button>
+      {canReset && (
+        <button
+          type="button"
+          onClick={handleReset}
+          disabled={resetting}
+          className={[
+            'inline-flex items-center gap-1 px-2 py-1.5 rounded-full',
+            'text-[11px] font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100',
+            'transition-colors disabled:opacity-50',
+            'focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-300',
+          ].join(' ')}
+          aria-label="Reset to your default recruiting context"
+          title="Reset to your default context"
+        >
+          <RotateCcw className="w-3 h-3" />
+          Reset
+        </button>
+      )}
       <ContextEditSheet
         isOpen={sheetOpen}
         onClose={() => setSheetOpen(false)}
       />
-    </>
+    </div>
   )
 }
 

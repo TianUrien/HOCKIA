@@ -122,20 +122,32 @@ function isEligibleRole(role: string | null | undefined): role is 'club' | 'coac
   return role === 'club' || role === 'coach'
 }
 
+/** Monotonic fetch token. Every doFetch call increments this and
+ *  captures the value; when the network response lands, the handler
+ *  compares against the latest value and discards itself if a newer
+ *  fetch has been issued in the meantime. Prevents a stale
+ *  ensureFetched response from overwriting a post-mutation refresh()
+ *  that landed first (concurrent fetches racing back to the client).
+ */
+let latestFetchToken = 0
+
 /** Shared fetch implementation used by both ensureFetched (first-mount)
  *  and refresh (forced). Writes results into the store via the
  *  injected setter so caller-specific state (loading, fetchedForOwner)
- *  is decoupled from the network call itself. */
+ *  is decoupled from the network call itself. Stale responses
+ *  (token !== latestFetchToken) are discarded silently. */
 async function doFetch(
   ownerId: string,
   set: (partial: Partial<RecruitingContextStoreState>) => void,
 ): Promise<void> {
+  const myToken = ++latestFetchToken
   const { data, error: fetchError } = await supabase
     .from('recruiting_context')
     .select('*')
     .eq('owner_id', ownerId)
     .order('is_active', { ascending: false })
     .order('created_at', { ascending: false })
+  if (myToken !== latestFetchToken) return
   if (fetchError) {
     reportSupabaseError('useRecruitingContext.fetch', fetchError)
     set({ error: 'Could not load recruiting contexts', loading: false })
@@ -144,7 +156,10 @@ async function doFetch(
   set({ rows: (data ?? []) as RecruitingContextRow[], loading: false })
 }
 
-const useRecruitingContextStore = create<RecruitingContextStoreState>((set, get) => ({
+/** Exported for unit tests. Production code should use the
+ *  `useRecruitingContext()` / `useActiveRecruitingTarget()` hooks
+ *  below — direct store access bypasses the auth-store sync. */
+export const useRecruitingContextStore = create<RecruitingContextStoreState>((set, get) => ({
   ownerId: null,
   eligibleRole: null,
   rows: [],

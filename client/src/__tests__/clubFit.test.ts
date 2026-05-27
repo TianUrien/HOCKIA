@@ -235,4 +235,49 @@ describe('computeClubFit', () => {
     })
     expect(result.isApplicable).toBe(false)
   })
+
+  // ── Sprint 3: coach viewers ─────────────────────────────────────
+  // Coaches have no profile-derived target (no league columns); they
+  // rely on the active recruiting_context's overrideTarget for the
+  // Fit chip to mean anything.
+  const baseCoach = {
+    role: 'coach' as const,
+    womens_league_division: null,
+    mens_league_division: null,
+    current_world_club_id: 'club-uuid',
+    competition_tier: null,
+    competition_country_code: null,
+  }
+
+  it('coach viewer without override → NOT_APPLICABLE', () => {
+    const result = computeClubFit(baseCoach, baseFemalePlayer)
+    expect(result.isApplicable).toBe(false)
+  })
+
+  it('coach viewer with overrideTarget=Women → applicable + gender match', () => {
+    const result = computeClubFit(baseCoach, baseFemalePlayer, {
+      overrideTarget: 'Women',
+    })
+    expect(result.isApplicable).toBe(true)
+    expect(result.target).toBe('Women')
+    expect(result.components.gender_match).toBe(1)
+  })
+
+  it('coach viewer with overrideTarget=Men → adult_women does NOT match', () => {
+    const result = computeClubFit(baseCoach, baseFemalePlayer, {
+      overrideTarget: 'Men',
+    })
+    expect(result.isApplicable).toBe(true)
+    expect(result.target).toBe('Men')
+    expect(result.components.gender_match).toBe(0)
+  })
+
+  it('brand / umpire / player viewers stay NOT_APPLICABLE even with overrideTarget', () => {
+    const brand = computeClubFit({ ...baseCoach, role: 'brand' }, baseFemalePlayer, { overrideTarget: 'Women' })
+    const umpire = computeClubFit({ ...baseCoach, role: 'umpire' }, baseFemalePlayer, { overrideTarget: 'Women' })
+    const player = computeClubFit({ ...baseCoach, role: 'player' }, baseFemalePlayer, { overrideTarget: 'Women' })
+    expect(brand.isApplicable).toBe(false)
+    expect(umpire.isApplicable).toBe(false)
+    expect(player.isApplicable).toBe(false)
+  })
 })

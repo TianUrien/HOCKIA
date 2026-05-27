@@ -94,14 +94,3 @@ export function playingCategoryMatchesTarget(
   return allowed.includes(playerCategory)
 }
 
-/**
- * Is the viewer set up to use Club Fit at all? Sprint v1 = clubs only.
- * (Coaches deferred until Sprint 2 when they get explicit context
- * support; players / brands / anon never see Fit chips.)
- */
-export function isViewerFitCapable(
-  profile: RecruitingContextProfileFields | null | undefined,
-): boolean {
-  if (!profile || profile.role !== 'club') return false
-  return deriveTargetCategory(profile) !== null
-}

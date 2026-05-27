@@ -3,11 +3,13 @@
  * for a single candidate row. Pure derived state; no async fetch,
  * no cache table. Recomputes when either side changes.
  *
- * Sprint 2: when the club viewer has an active recruiting_context
- * row, its target_category overrides the implicit profile-derived
- * target. So a multi-team club (Mixed by profile) can switch their
- * Fit math to scope to "Women's team" via the ContextSwitcher chip
- * without editing their profile.
+ * Sprint 2/3: when the viewer has an active recruiting_context row
+ * (clubs auto-seeded, coaches opt-in via the switcher), its
+ * target_category overrides the implicit profile-derived target. So
+ * a multi-team club (Mixed by profile) can switch their Fit math to
+ * scope to "Women's team" via the ContextSwitcher chip without
+ * editing their profile, and a coach gets a working Fit chip the
+ * moment they set a context.
  *
  * The active context is read from a shared zustand store (see
  * useActiveRecruitingTarget), so many ClubFitChip instances on
