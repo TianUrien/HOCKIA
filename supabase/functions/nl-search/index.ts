@@ -1840,6 +1840,7 @@ Deno.serve(async (req) => {
           open_to_play, open_to_coach, open_to_opportunities,
           bio, avatar_url, highlight_video_url,
           coach_specialization, coach_specialization_custom,
+          womens_league_division, mens_league_division,
           onboarding_completed
         `)
         .eq('id', user.id)
@@ -2148,6 +2149,11 @@ Deno.serve(async (req) => {
           // Club-specific
           open_vacancy_count: userProfile.role === 'club' ? ((openVacanciesRes as any)?.count || 0) : undefined,
           pending_application_count: userProfile.role === 'club' ? ((pendingApplicationsRes as any)?.count || 0) : undefined,
+          // Team rosters — denormalized league/division names entered by
+          // the club via the dashboard league selector. Either can be
+          // null (e.g. women-only clubs leave mens_league_division null).
+          womens_team_league: userProfile.role === 'club' ? (userProfile.womens_league_division as string | null) : undefined,
+          mens_team_league: userProfile.role === 'club' ? (userProfile.mens_league_division as string | null) : undefined,
           // Brand-specific
           brand_category: userProfile.role === 'brand' ? (brandRow?.category || null) : undefined,
           brand_product_count: userProfile.role === 'brand' ? brandProductCount : undefined,
