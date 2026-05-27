@@ -73,6 +73,7 @@ const OpportunityDetailPage = lazyWithRetry(() => import('@/pages/OpportunityDet
 const CommunityPage = lazyWithRetry(() => import('@/pages/CommunityPage'))
 const QuestionDetailPage = lazyWithRetry(() => import('@/pages/QuestionDetailPage'))
 const ApplicantsList = lazyWithRetry(() => import('@/pages/ApplicantsList'))
+const SavedCandidatesPage = lazyWithRetry(() => import('@/pages/SavedCandidatesPage'))
 const PublicPlayerProfile = lazyWithRetry(() => import('@/pages/PublicPlayerProfile'))
 const PublicClubProfile = lazyWithRetry(() => import('@/pages/PublicClubProfile'))
 const PublicUmpireProfile = lazyWithRetry(() => import('@/pages/PublicUmpireProfile'))
@@ -441,6 +442,7 @@ function App() {
                     (section param is silently ignored, no crash). */}
                 <Route path="/dashboard/profile/:section" element={<ErrorBoundary fallback={<RouteErrorFallback />}><DashboardRouter /></ErrorBoundary>} />
                 <Route path="/dashboard/opportunities/:opportunityId/applicants" element={<ErrorBoundary fallback={<RouteErrorFallback />}><ApplicantsList /></ErrorBoundary>} />
+                <Route path="/dashboard/saved" element={<ErrorBoundary fallback={<RouteErrorFallback />}><SavedCandidatesPage /></ErrorBoundary>} />
 
                 {/* Network-only profile routes (alias for clarity; still behind auth) */}
                 <Route path="/members/:username" element={<PublicPlayerProfile />} />

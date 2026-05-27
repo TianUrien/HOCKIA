@@ -2,7 +2,9 @@ import { useState } from 'react'
 import {
   MapPin, Calendar, Edit2, Eye, MessageCircle, Landmark, Mail, Award,
   Users, Shield, ChevronRight, ChevronDown, ChevronUp, Camera, Check, Circle,
+  Bookmark, BookmarkCheck,
 } from 'lucide-react'
+import { useIsProfileSaved } from '@/hooks/useSavedProfiles'
 import {
   Avatar,
   DualNationalityDisplay,
@@ -80,6 +82,10 @@ export default function HeroIdentityCard({
   const [checklistOpen, setChecklistOpen] = useState(false)
   const friendCount = profile.accepted_friend_count ?? 0
   const referenceCount = profile.accepted_reference_count ?? 0
+  // Save action — only meaningful on the public/visitor view of someone
+  // else's profile. Owner sees their own dashboard and brands don't save.
+  const savedState = useIsProfileSaved(profile.id)
+  const showSaveButton = readOnly && savedState.isAuthenticated && !savedState.isOwnProfile
   const age = calculateAge(profile.date_of_birth)
   const positions = [profile.position, profile.secondary_position].filter(
     (value, index, self): value is string => {
@@ -218,6 +224,27 @@ export default function HeroIdentityCard({
                   <>
                     <MessageCircle className="w-4 h-4" />
                     Message
+                  </>
+                )}
+              </button>
+            )}
+            {showSaveButton && (
+              <button
+                type="button"
+                onClick={() => void savedState.toggle()}
+                disabled={savedState.mutating}
+                className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:text-[#8026FA] disabled:opacity-50"
+                title={savedState.isSaved ? 'Saved — tap to remove' : 'Save for later'}
+              >
+                {savedState.isSaved ? (
+                  <>
+                    <BookmarkCheck className="w-4 h-4 fill-[#8026FA] text-[#8026FA]" />
+                    Saved
+                  </>
+                ) : (
+                  <>
+                    <Bookmark className="w-4 h-4" />
+                    Save
                   </>
                 )}
               </button>

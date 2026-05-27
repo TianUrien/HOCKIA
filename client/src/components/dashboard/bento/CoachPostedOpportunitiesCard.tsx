@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Briefcase, FileText, Users, Plus } from 'lucide-react'
+import { Briefcase, FileText, Users, Plus, BookmarkCheck } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
+import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { cn } from '@/lib/utils'
 import DashboardCard from './DashboardCard'
@@ -47,8 +49,10 @@ export default function CoachPostedOpportunitiesCard({
   onManageOpportunities,
   bodyCopy = DEFAULT_BODY_COPY,
 }: CoachPostedOpportunitiesCardProps) {
+  const { user } = useAuthStore()
   const [openCount, setOpenCount] = useState<number | null>(null)
   const [applicants, setApplicants] = useState<number | null>(null)
+  const [savedCount, setSavedCount] = useState<number | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -93,6 +97,30 @@ export default function CoachPostedOpportunitiesCard({
       cancelled = true
     }
   }, [ownerProfileId])
+
+  // Saved Candidates count — separate fetch keyed on the current viewer
+  // (not ownerProfileId — saves belong to whoever is logged in, which on
+  // these dashboards is always the owner). Cheap head-count query.
+  useEffect(() => {
+    if (!user?.id) return
+    let cancelled = false
+    void supabase
+      .from('saved_profiles')
+      .select('id', { count: 'exact', head: true })
+      .eq('owner_id', user.id)
+      .then(({ count, error }) => {
+        if (cancelled) return
+        if (error) {
+          logger.warn('[CoachOpportunitiesCard] saved count failed', error)
+          setSavedCount(0)
+          return
+        }
+        setSavedCount(count ?? 0)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [user?.id])
 
   const openLabel =
     openCount === null
@@ -152,15 +180,26 @@ export default function CoachPostedOpportunitiesCard({
           Create opportunity
         </button>
 
-        {/* Secondary text link */}
-        <div className="text-center">
+        {/* Secondary actions — Manage opportunities + Saved Candidates.
+            Saved Candidates is the recruiter's private list of players
+            saved from Community / search / any profile (separate from
+            applicants, which are tied to opportunities). */}
+        <div className="flex items-center justify-center gap-4 text-sm font-medium">
           <button
             type="button"
             onClick={onManageOpportunities}
-            className="text-sm font-medium text-[#8026FA] hover:text-[#6B20D4]"
+            className="text-[#8026FA] hover:text-[#6B20D4]"
           >
             Manage all →
           </button>
+          <span className="text-gray-300">·</span>
+          <Link
+            to="/dashboard/saved"
+            className="inline-flex items-center gap-1.5 text-[#8026FA] hover:text-[#6B20D4]"
+          >
+            <BookmarkCheck className="h-3.5 w-3.5" />
+            Saved {savedCount !== null && savedCount > 0 ? `(${savedCount})` : ''}
+          </Link>
         </div>
       </div>
     </DashboardCard>

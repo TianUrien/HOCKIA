@@ -30,6 +30,8 @@ import {
   ExternalLink,
   Languages as LanguagesIcon,
   Activity,
+  Bookmark,
+  BookmarkCheck,
 } from 'lucide-react'
 import { RoleBadge, TierBadge, VerifiedBadge, AvailabilityPill, DualNationalityDisplay } from '@/components'
 import RolePlaceholder from '@/components/RolePlaceholder'
@@ -38,6 +40,7 @@ import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
+import { useIsProfileSaved } from '@/hooks/useSavedProfiles'
 import { useWorldClubLogo } from '@/hooks/useWorldClubLogo'
 import { getImageUrl } from '@/lib/imageUrl'
 import { logger } from '@/lib/logger'
@@ -71,6 +74,10 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
   const { user } = useAuthStore()
   const navigate = useNavigate()
   const { addToast } = useToastStore()
+  // Save action — sits next to the close X. Hidden on own preview +
+  // for anon viewers; the hook's toggle shows a sign-in toast for anon.
+  const savedState = useIsProfileSaved(member?.id ?? null)
+  const showSaveButton = savedState.isAuthenticated && !savedState.isOwnProfile
   const [showSignInPrompt, setShowSignInPrompt] = useState(false)
   const [signInAction, setSignInAction] = useState<'message' | 'view'>('view')
   const [sendingMessage, setSendingMessage] = useState(false)
@@ -314,6 +321,22 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
             <div className="md:hidden flex justify-center">
               <span className="inline-block w-12 h-1.5 rounded-full bg-gray-400/80" aria-hidden="true" />
             </div>
+            {showSaveButton && (
+              <button
+                type="button"
+                onClick={() => void savedState.toggle()}
+                disabled={savedState.mutating}
+                className="absolute top-2.5 right-14 w-9 h-9 rounded-full bg-white shadow-md ring-1 ring-gray-200 flex items-center justify-center text-gray-900 hover:bg-gray-50 hover:text-[#8026FA] active:bg-gray-100 disabled:opacity-50 transition-colors"
+                aria-label={savedState.isSaved ? 'Remove from saved' : 'Save for later'}
+                title={savedState.isSaved ? 'Saved — tap to remove' : 'Save for later'}
+              >
+                {savedState.isSaved ? (
+                  <BookmarkCheck className="w-4 h-4 fill-[#8026FA] text-[#8026FA]" strokeWidth={2.5} />
+                ) : (
+                  <Bookmark className="w-4 h-4" strokeWidth={2.5} />
+                )}
+              </button>
+            )}
             <button
               type="button"
               onClick={onClose}
