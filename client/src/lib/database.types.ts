@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.1"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       admin_audit_logs: {
@@ -78,6 +53,21 @@ export type Database = {
           target_id?: string
           target_type?: string
           user_agent?: string | null
+        }
+        Relationships: []
+      }
+      app_settings: {
+        Row: {
+          key: string
+          value: string
+        }
+        Insert: {
+          key: string
+          value: string
+        }
+        Update: {
+          key?: string
+          value?: string
         }
         Relationships: []
       }
@@ -296,6 +286,7 @@ export type Database = {
           ambassador_count: number
           bio: string | null
           category: string
+          country_id: number | null
           created_at: string | null
           deleted_at: string | null
           follower_count: number
@@ -313,6 +304,7 @@ export type Database = {
           ambassador_count?: number
           bio?: string | null
           category?: string
+          country_id?: number | null
           created_at?: string | null
           deleted_at?: string | null
           follower_count?: number
@@ -330,6 +322,7 @@ export type Database = {
           ambassador_count?: number
           bio?: string | null
           category?: string
+          country_id?: number | null
           created_at?: string | null
           deleted_at?: string | null
           follower_count?: number
@@ -344,6 +337,20 @@ export type Database = {
           website_url?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "brands_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "brands_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "world_countries_with_directory"
+            referencedColumns: ["country_id"]
+          },
           {
             foreignKeyName: "brands_profile_id_fkey"
             columns: ["profile_id"]
@@ -3037,6 +3044,62 @@ export type Database = {
           },
         ]
       }
+      saved_profiles: {
+        Row: {
+          created_at: string
+          id: string
+          note: string | null
+          owner_id: string
+          saved_profile_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          note?: string | null
+          owner_id: string
+          saved_profile_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          note?: string | null
+          owner_id?: string
+          saved_profile_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_profiles_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saved_profiles_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saved_profiles_saved_profile_id_fkey"
+            columns: ["saved_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saved_profiles_saved_profile_id_fkey"
+            columns: ["saved_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       storage_cleanup_queue: {
         Row: {
           attempts: number
@@ -4338,6 +4401,17 @@ export type Database = {
         }[]
       }
       admin_get_extended_dashboard_stats: { Args: never; Returns: Json }
+      admin_get_feature_adoption: {
+        Args: { p_days?: number }
+        Returns: {
+          active_users_in_role: number
+          adoption_pct: number
+          feature_key: string
+          feature_label: string
+          role: string
+          user_count: number
+        }[]
+      }
       admin_get_feature_usage_metrics: {
         Args: { p_days?: number; p_exclude_test?: boolean }
         Returns: Json
@@ -4378,6 +4452,15 @@ export type Database = {
         Args: { p_month?: number; p_year?: number }
         Returns: Json
       }
+      admin_get_notification_ctr: {
+        Args: { p_days?: number }
+        Returns: {
+          click_count: number
+          ctr_pct: number
+          kind: string
+          sent_count: number
+        }[]
+      }
       admin_get_notification_effectiveness: {
         Args: { p_days?: number; p_exclude_test?: boolean }
         Returns: Json
@@ -4389,9 +4472,13 @@ export type Database = {
       admin_get_opportunities: {
         Args: {
           p_club_id?: string
+          p_country?: string
           p_days?: number
+          p_gender?: string
+          p_has_apps?: boolean
           p_limit?: number
           p_offset?: number
+          p_opportunity_type?: Database["public"]["Enums"]["opportunity_type"]
           p_status?: Database["public"]["Enums"]["opportunity_status"]
         }
         Returns: {
@@ -4402,6 +4489,7 @@ export type Database = {
           club_name: string
           created_at: string
           first_application_at: string
+          gender: string
           id: string
           location_city: string
           location_country: string
@@ -4545,6 +4633,15 @@ export type Database = {
           signup_month: string
         }[]
       }
+      admin_get_role_missing_fields: {
+        Args: { p_role: string }
+        Returns: {
+          field_name: string
+          null_count: number
+          null_pct: number
+          total_role_users: number
+        }[]
+      }
       admin_get_search_quality: {
         Args: { p_days?: number; p_exclude_test?: boolean }
         Returns: Json
@@ -4558,6 +4655,15 @@ export type Database = {
           date: string
           players: number
           total_signups: number
+        }[]
+      }
+      admin_get_time_to_first_value: {
+        Args: { p_days?: number }
+        Returns: {
+          activated_count: number
+          cohort_size: number
+          median_minutes_to_first_action: number
+          role: string
         }[]
       }
       admin_get_top_countries: {
@@ -4603,6 +4709,13 @@ export type Database = {
           cumulative_total: number
           day: string
           new_users: number
+        }[]
+      }
+      admin_get_zero_activity_users: {
+        Args: { p_days_threshold?: number }
+        Returns: {
+          total_signups: number
+          zero_activity_count: number
         }[]
       }
       admin_list_investor_tokens: {
@@ -4989,6 +5102,7 @@ export type Database = {
         Args: {
           p_bio?: string
           p_category: string
+          p_country_id: number
           p_instagram_url?: string
           p_logo_url?: string
           p_name: string
@@ -5239,6 +5353,10 @@ export type Database = {
         Returns: number
       }
       escape_ilike: { Args: { input: string }; Returns: string }
+      expand_country_equivalents: {
+        Args: { p_ids: number[] }
+        Returns: number[]
+      }
       extract_storage_path: {
         Args: { p_bucket: string; p_url: string }
         Returns: string
@@ -5543,7 +5661,12 @@ export type Database = {
         }[]
       }
       get_top_community_members: {
-        Args: { p_limit?: number; p_role?: string }
+        Args: {
+          p_limit?: number
+          p_only_open?: boolean
+          p_role?: string
+          p_sort?: string
+        }
         Returns: {
           accepted_friend_count: number
           accepted_reference_count: number
@@ -5603,6 +5726,7 @@ export type Database = {
       }
       is_current_user_test_account: { Args: never; Returns: boolean }
       is_platform_admin: { Args: never; Returns: boolean }
+      is_staging_env: { Args: never; Returns: boolean }
       is_test_opportunity: {
         Args: { opportunity_club_id: string }
         Returns: boolean
@@ -5640,6 +5764,7 @@ export type Database = {
         Args: { p_notification_id: string }
         Returns: boolean
       }
+      mark_notifications_seen: { Args: { p_ids: string[] }; Returns: undefined }
       mark_opportunities_seen: {
         Args: { p_seen_at?: string }
         Returns: undefined
@@ -6225,9 +6350,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       application_status: ["pending", "shortlisted", "maybe", "rejected"],

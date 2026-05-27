@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MapPin, Building2, Shield } from 'lucide-react'
+import { MapPin, Building2, Shield, Bookmark, BookmarkCheck } from 'lucide-react'
 import { RoleBadge, TierBadge, VerifiedBadge, DualNationalityDisplay } from '@/components'
 import type { ProfileTier } from '@/lib/profileTier'
 import SignInPromptModal from '@/components/SignInPromptModal'
 import { useAuthStore } from '@/lib/auth'
 import { useWorldClubLogo } from '@/hooks/useWorldClubLogo'
+import { useIsProfileSaved } from '@/hooks/useSavedProfiles'
 import { getImageUrl } from '@/lib/imageUrl'
 import RolePlaceholder from './RolePlaceholder'
 
@@ -58,6 +59,13 @@ export default function MemberTile(props: MemberTileProps) {
   const { user } = useAuthStore()
   const navigate = useNavigate()
   const [showSignInPrompt, setShowSignInPrompt] = useState(false)
+  // Save action — Phase 1 of the Career Snapshot + Shortlist initiative.
+  // Hidden on own profile + when unauthenticated (toggle handler shows a
+  // sign-in toast in that case). Renders as an absolutely-positioned
+  // sibling of the main tile button so we don't nest interactive
+  // elements (a11y + click-target hygiene).
+  const savedState = useIsProfileSaved(props.id)
+  const showSaveButton = savedState.isAuthenticated && !savedState.isOwnProfile
   const clubLogo = useWorldClubLogo(props.current_world_club_id ?? null)
 
   const isBrand = props.role === 'brand'
@@ -137,6 +145,7 @@ export default function MemberTile(props: MemberTileProps) {
 
   return (
     <>
+      <div className="relative h-full">
       <button
         type="button"
         onClick={handleClick}
@@ -255,6 +264,27 @@ export default function MemberTile(props: MemberTileProps) {
           )}
         </div>
       </button>
+
+      {showSaveButton && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            void savedState.toggle()
+          }}
+          disabled={savedState.mutating}
+          className="absolute top-3 right-3 z-10 w-9 h-9 rounded-full bg-white/95 shadow-sm ring-1 ring-gray-200 flex items-center justify-center text-gray-700 hover:bg-white hover:text-[#8026FA] disabled:opacity-50 transition-colors"
+          aria-label={savedState.isSaved ? `Remove ${props.full_name} from saved` : `Save ${props.full_name}`}
+          title={savedState.isSaved ? 'Saved — tap to remove' : 'Save for later'}
+        >
+          {savedState.isSaved ? (
+            <BookmarkCheck className="w-4 h-4 fill-[#8026FA] text-[#8026FA]" />
+          ) : (
+            <Bookmark className="w-4 h-4" />
+          )}
+        </button>
+      )}
+      </div>
 
       <SignInPromptModal
         isOpen={showSignInPrompt}

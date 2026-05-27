@@ -5,6 +5,7 @@ import JourneyCard from './JourneyCard'
 import MediaCard from './MediaCard'
 import AboutMeCard from './AboutMeCard'
 import CommunityCard from './CommunityCard'
+import SavedCandidatesCard from './SavedCandidatesCard'
 import type { Profile } from '@/lib/supabase'
 import type { PlayerProfileShape } from '@/pages/PlayerDashboard'
 
@@ -110,7 +111,9 @@ export default function CoachBentoGrid({
         </>
       ) : (
         // Owner order: Basic info → My Posted Opportunities →
-        // Community → Journey → Media → My Applications (last).
+        // Saved Candidates → Community → Journey → Media →
+        // My Applications (last). Saved Candidates pairs visually with
+        // the recruitment surfaces above it.
         <>
           <BasicInfoCard profile={profile} readOnly={false} onEdit={onEdit} />
           <CoachPostedOpportunitiesCard
@@ -118,6 +121,7 @@ export default function CoachBentoGrid({
             onCreateOpportunity={onCreateOpportunity}
             onManageOpportunities={onManageOpportunities}
           />
+          <SavedCandidatesCard />
           <CommunityCard
             profile={profile as Pick<Profile, 'id' | 'accepted_friend_count' | 'accepted_reference_count' | 'post_count'>}
             onOpenTab={(tab) => onOpenTab(tab)}

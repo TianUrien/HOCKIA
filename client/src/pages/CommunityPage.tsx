@@ -34,6 +34,7 @@ import {
 } from '@/components/community/communityFilters'
 import type { CommunityTab } from '@/components/community'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
+import { useAuthStore } from '@/lib/auth'
 
 const VALID_TABS: CommunityTab[] = ['all', 'players', 'coaches', 'clubs', 'umpires', 'brands', 'questions']
 
@@ -61,6 +62,12 @@ export default function CommunityPage() {
   const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
   const [refreshKey, setRefreshKey] = useState(0)
+  // Viewer role drives the lane order on the All tab (Slice B+):
+  // a player wants to see "Featured clubs" first because that's
+  // actionable for them; a club wants "Featured players" first
+  // because that's their recruitment surface. The viewer's own role
+  // goes LAST in their stack — they've already seen themselves.
+  const { profile: viewerProfile } = useAuthStore()
 
   // Scroll restoration between Members ↔ Questions toggle (and across
   // role chips). React Router's default scrolls to top on route change;
@@ -305,11 +312,51 @@ export default function CommunityPage() {
                 <CommunityRoleChips activeTab={activeTab} />
               </div>
 
-              {/* Top community members carousel — hidden when narrowing */}
-              {!isNarrowed && (
+              {/* "Featured this week" carousel — hidden when narrowing.
+                  Slice C (2026-05-27) collapsed three stacked lanes
+                  down to a SINGLE viewer-targeted carousel to reduce
+                  visual noise and shorten the path to the All members
+                  grid:
+                    - 'all' tab renders one carousel whose role +
+                      criterion are driven by the viewer's own role
+                      (see featuredLaneForViewer). Players see clubs;
+                      clubs / recruiter-coaches see players; etc.
+                    - Specific role tabs (/community/players, etc.)
+                      still render a single carousel scoped to that
+                      tab's role with the role-appropriate criterion.
+
+                  Weekly theme rotation is intentionally NOT implemented
+                  yet — it would need additional sort criteria in the
+                  get_top_community_members RPC ("recently joined",
+                  "open to opportunities", etc.). Marked as a follow-up
+                  slice; for now the lane is fixed per role. */}
+              {!isNarrowed && activeTab === 'all' && (() => {
+                const themeOverride = searchParams.get('theme')
+                const themeIndex = themeOverride !== null && /^[0-3]$/.test(themeOverride)
+                  ? Number(themeOverride)
+                  : currentWeekThemeIndex()
+                const featured = featuredForTheme(
+                  themeIndex,
+                  viewerProfile?.role,
+                  viewerProfile?.coach_recruits_for_team,
+                )
+                return (
+                  <TopCommunityMembersCarousel
+                    key={`featured-${themeIndex}-${refreshKey}`}
+                    roleFilter={featured.lane}
+                    sortCriterion={featured.criterion}
+                    onlyOpen={featured.onlyOpen}
+                    title={featured.title}
+                    subtitle={featured.subtitle}
+                    onViewAll={handleViewAllScroll}
+                  />
+                )
+              })()}
+              {!isNarrowed && activeTab !== 'all' && memberRoleFilter && (
                 <TopCommunityMembersCarousel
                   key={`top-${activeTab}-${refreshKey}`}
                   roleFilter={memberRoleFilter}
+                  sortCriterion={memberRoleFilter === 'player' ? 'availability_activity' : 'completeness'}
                   onViewAll={handleViewAllScroll}
                 />
               )}
@@ -364,4 +411,116 @@ export default function CommunityPage() {
       </PullToRefresh>
     </div>
   )
+}
+
+// ── Weekly theme rotation for the Featured carousel ──────────────────
+// One carousel renders on the All tab; its theme rotates weekly so
+// the page feels fresh week-over-week. Theme index (0–3) cycles
+// through 4 themes:
+//
+//   THEME 0 — Role-targeted: viewer-aware (Featured Clubs for player
+//     viewers; Featured Players for club / recruiter-coach viewers;
+//     etc). Uses the existing role/criterion mapping.
+//   THEME 1 — New on HOCKIA: cross-role, ranked by created_at DESC.
+//   THEME 2 — Most complete profiles: cross-role, ranked by
+//     completeness (the original ranking for the carousel — still
+//     useful as a periodic surface for clubs / coaches looking for
+//     polished candidates).
+//   THEME 3 — Open to opportunities: cross-role, only profiles with
+//     an open-to-X flag set, ranked by availability_activity.
+//
+// Dev override: ?theme=0|1|2|3 in the URL forces a specific theme,
+// useful for QA + product review without waiting a week.
+type CarouselLane = 'player' | 'club' | 'coach' | undefined
+type CarouselCriterion = 'completeness' | 'availability_activity' | 'recently_joined'
+
+interface FeaturedConfig {
+  lane: CarouselLane
+  criterion: CarouselCriterion
+  onlyOpen: boolean
+  title: string
+  subtitle: string
+}
+
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000
+// Fixed reference epoch so the week index is stable across timezones
+// and doesn't shift mid-week. 2026-01-05 is a Monday — week boundary
+// rotates on Monday UTC across the platform.
+const WEEK_EPOCH_MS = Date.UTC(2026, 0, 5)
+const THEME_COUNT = 4
+
+/** Current theme index 0..3 based on weeks since the epoch. */
+function currentWeekThemeIndex(): number {
+  const idx = Math.floor((Date.now() - WEEK_EPOCH_MS) / WEEK_MS)
+  return ((idx % THEME_COUNT) + THEME_COUNT) % THEME_COUNT
+}
+
+/** Theme 0 only — viewer-aware role-targeted lane chooser. */
+function roleTargetedConfig(
+  role: string | null | undefined,
+  recruiterFlag: boolean | null | undefined,
+): { lane: 'player' | 'club'; criterion: 'completeness' | 'availability_activity'; title: string; subtitle: string } {
+  const wantsPlayers =
+    role === 'club' ||
+    role === 'brand' ||
+    (role === 'coach' && Boolean(recruiterFlag)) ||
+    role === undefined ||
+    role === null
+  if (wantsPlayers) {
+    return {
+      lane: 'player',
+      criterion: 'availability_activity',
+      title: 'Featured players',
+      subtitle: 'Open to opportunities and recently active.',
+    }
+  }
+  // Players, non-recruiter coaches, umpires → Featured clubs.
+  return {
+    lane: 'club',
+    criterion: 'completeness',
+    title: 'Featured clubs',
+    subtitle: 'Most complete profiles on HOCKIA.',
+  }
+}
+
+/** Resolve the FeaturedConfig for a given theme index + viewer context. */
+function featuredForTheme(
+  themeIndex: number,
+  role: string | null | undefined,
+  recruiterFlag: boolean | null | undefined,
+): FeaturedConfig {
+  switch (themeIndex) {
+    case 1:
+      return {
+        lane: undefined, // cross-role
+        criterion: 'recently_joined',
+        onlyOpen: false,
+        title: 'New on HOCKIA',
+        subtitle: 'Recently joined members across the platform.',
+      }
+    case 2:
+      return {
+        lane: undefined, // cross-role
+        criterion: 'completeness',
+        onlyOpen: false,
+        title: 'Most complete profiles',
+        subtitle: 'Polished profiles worth a closer look.',
+      }
+    case 3:
+      return {
+        lane: undefined, // cross-role
+        criterion: 'availability_activity',
+        onlyOpen: true,
+        title: 'Open to opportunities',
+        subtitle: 'Members accepting recruitment contact this month.',
+      }
+    case 0:
+    default: {
+      const targeted = roleTargetedConfig(role, recruiterFlag)
+      return {
+        ...targeted,
+        onlyOpen: false,
+      }
+    }
+  }
 }

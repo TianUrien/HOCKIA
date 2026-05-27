@@ -10,21 +10,36 @@ import { logger } from '@/lib/logger'
 /**
  * TopCommunityMembersCarousel
  *
- * Surfaces the top N onboarded members ranked by profile_completeness_pct
- * (computed server-side via a BEFORE-trigger on profiles — see migration
- * 20260519100000_top_community_members_score.sql). Uses the SQL RPC
- * get_top_community_members(p_role, p_limit) so role-scoped queries are
- * fast and sortable on an indexed column.
+ * Surfaces N onboarded members per role lane via the
+ * get_top_community_members(p_role, p_limit, p_sort) RPC. Sort
+ * criterion is role-aware:
+ *
+ *   - 'availability_activity' for the players lane — open-to-play +
+ *     recently active first; profile completeness becomes a
+ *     tiebreaker. Avoids the "humans publicly ranked by data-entry"
+ *     reading.
+ *   - 'completeness' (default) for clubs / coaches / umpires /
+ *     brands — those are organizations or service profiles where
+ *     "more complete = more useful" is a fair public signal.
+ *
+ * Phase 1 Carousel Slices A + B (2026-05-27):
+ *   - Renamed user-facing copy from "Top community members" → role-
+ *     aware defaults ("Featured players", "Featured clubs",
+ *     "Featured coaches") with a criterion-aware helper line under
+ *     each ("Open to opportunities and recently active." vs "Most
+ *     complete profiles on HOCKIA.").
+ *   - CommunityPage renders three stacked lanes on the "all" tab
+ *     instead of one mixed-role carousel.
+ *   - The % Complete number under each avatar is kept (it doubles
+ *     as a self-improvement signal for the profile owner and a
+ *     trust signal for visitors); the ranking story behind it is
+ *     now per-role honest.
  *
  * Design notes:
  *   - No star icon. The QA reference image used stars; the product
  *     decision is explicitly to avoid them because they read as ratings
- *     or favorites and these are neither — they're completeness ranks.
- *   - The completeness % is the visual hero of the card (ring around
- *     the avatar + numeric label). That's the ranking logic; the rest
- *     of the card is supportive identity context.
- *   - Horizontal scroll with snap on mobile, no role mixing — the
- *     parent controls role via the chip subnav.
+ *     or favorites and these are neither.
+ *   - Horizontal scroll with snap on mobile.
  */
 
 interface TopMemberRow {
@@ -52,21 +67,66 @@ interface TopCommunityMembersCarouselProps {
    *  all member-discovery roles (excludes brand — pass 'brand'
    *  explicitly to get the brand leaderboard). */
   roleFilter?: 'player' | 'coach' | 'club' | 'umpire' | 'brand'
+  /** Ranking criterion. Defaults to 'completeness' (existing behavior
+   *  for clubs/coaches/umpires/brands). Pass 'availability_activity'
+   *  for the players lane so humans aren't ranked by data-entry; pass
+   *  'recently_joined' for the "New on HOCKIA" weekly theme. */
+  sortCriterion?: 'completeness' | 'availability_activity' | 'recently_joined'
+  /** When true, the carousel only includes profiles with at least one
+   *  open-to-X flag set. Used by the "Open to opportunities" weekly
+   *  theme to filter the cross-role pool down to actively available
+   *  profiles. Defaults to false. */
+  onlyOpen?: boolean
+  /** Override the section header. When omitted, the carousel infers
+   *  a role-appropriate default ("Featured players", "Featured clubs"
+   *  etc.) from roleFilter. */
+  title?: string
+  /** Override the helper line under the title. When omitted, the
+   *  carousel infers a criterion-appropriate default. */
+  subtitle?: string
+  /** Page-level cap. Defaults to 20 (cross-role view); per-role lanes
+   *  on the All tab use a lower limit (10) to keep the stacked layout
+   *  compact. */
+  limit?: number
   /** Optional "View all" handler. The page wires this to scroll to
    *  the All members section. Omit to hide the CTA. */
   onViewAll?: () => void
 }
 
-const LIMIT = 20
+const DEFAULT_LIMIT = 20
+
+const ROLE_TITLE_DEFAULT: Record<string, string> = {
+  player: 'Featured players',
+  coach: 'Featured coaches',
+  club: 'Featured clubs',
+  umpire: 'Featured umpires',
+  brand: 'Featured brands',
+}
+
+const CRITERION_SUBTITLE_DEFAULT: Record<string, string> = {
+  availability_activity: 'Open to opportunities and recently active.',
+  completeness: 'Most complete profiles on HOCKIA.',
+  recently_joined: 'Recently joined HOCKIA.',
+}
 
 export function TopCommunityMembersCarousel({
   roleFilter,
+  sortCriterion = 'completeness',
+  onlyOpen = false,
+  title,
+  subtitle,
+  limit = DEFAULT_LIMIT,
   onViewAll,
 }: TopCommunityMembersCarouselProps) {
   const navigate = useNavigate()
   const [members, setMembers] = useState<TopMemberRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  // Resolve header copy: explicit overrides win; otherwise default to
+  // role-aware ("Featured players") + criterion-aware helper.
+  const resolvedTitle = title ?? (roleFilter ? ROLE_TITLE_DEFAULT[roleFilter] : 'Featured this week')
+  const resolvedSubtitle = subtitle ?? CRITERION_SUBTITLE_DEFAULT[sortCriterion]
 
   useEffect(() => {
     let cancelled = false
@@ -76,7 +136,9 @@ export function TopCommunityMembersCarousel({
       try {
         const { data, error: rpcError } = await supabase.rpc('get_top_community_members', {
           p_role: roleFilter ?? undefined,
-          p_limit: LIMIT,
+          p_limit: limit,
+          p_sort: sortCriterion,
+          p_only_open: onlyOpen,
         })
         if (cancelled) return
         if (rpcError) throw rpcError
@@ -92,7 +154,7 @@ export function TopCommunityMembersCarousel({
     return () => {
       cancelled = true
     }
-  }, [roleFilter])
+  }, [roleFilter, sortCriterion, limit, onlyOpen])
 
   const openMember = (m: TopMemberRow) => {
     const base =
@@ -125,10 +187,10 @@ export function TopCommunityMembersCarousel({
             id="top-members-heading"
             className="text-lg font-bold text-gray-900"
           >
-            Top community members
+            {resolvedTitle}
           </h2>
           <p className="mt-0.5 text-xs text-gray-500">
-            Most complete profiles on HOCKIA
+            {resolvedSubtitle}
           </p>
         </div>
         {onViewAll && !loading && !error && members.length > 0 && (

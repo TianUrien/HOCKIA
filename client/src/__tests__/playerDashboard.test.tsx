@@ -455,10 +455,16 @@ describe('PlayerDashboard (Bento Grid)', () => {
   // Catches the "select clause forgets show_last_active" regression
   // (Batch 8 staging QA) — verifies the value flows through PlayerDashboard
   // and HeroIdentityCard into the LastActivePill props.
+  //
+  // 2026-05-27: ScoutingCard now owns the visitor-view activity surface
+  // (Zone 1 status line), so HeroIdentityCard hides LastActivePill in
+  // the visitor view. The regression guard still matters — the
+  // show_last_active column still has to flow through the SELECT — so
+  // we assert it via the owner view where Hero still renders the pill.
 
   it('passes show_last_active=false through to LastActivePill', () => {
     renderDashboard({
-      readOnly: true,
+      readOnly: false,
       profileOverrides: {
         ...({ show_last_active: false, last_active_at: '2026-05-08T12:00:00Z' } as Record<string, unknown>),
       },
@@ -471,7 +477,7 @@ describe('PlayerDashboard (Bento Grid)', () => {
 
   it('passes show_last_active=true through to LastActivePill', () => {
     renderDashboard({
-      readOnly: true,
+      readOnly: false,
       profileOverrides: {
         ...({ show_last_active: true, last_active_at: '2026-05-08T12:00:00Z' } as Record<string, unknown>),
       },
@@ -483,7 +489,7 @@ describe('PlayerDashboard (Bento Grid)', () => {
 
   it('falls through to null (graceful default) when show_last_active is missing from the profile', () => {
     renderDashboard({
-      readOnly: true,
+      readOnly: false,
       profileOverrides: {
         ...({ last_active_at: '2026-05-08T12:00:00Z' } as Record<string, unknown>),
       },

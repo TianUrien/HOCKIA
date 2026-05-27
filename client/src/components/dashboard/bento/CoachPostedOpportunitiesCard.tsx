@@ -152,7 +152,9 @@ export default function CoachPostedOpportunitiesCard({
           Create opportunity
         </button>
 
-        {/* Secondary text link */}
+        {/* Secondary text link — Saved Candidates has its own dedicated
+            bento card alongside this one, so the buried inline link
+            that lived here previously is gone. */}
         <div className="text-center">
           <button
             type="button"
