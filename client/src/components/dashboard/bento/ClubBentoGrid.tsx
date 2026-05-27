@@ -3,6 +3,7 @@ import ClubBasicInfoCard from './ClubBasicInfoCard'
 import ClubMembersCard from './ClubMembersCard'
 import CommunityCard from './CommunityCard'
 import MediaCard from './MediaCard'
+import SavedCandidatesCard from './SavedCandidatesCard'
 import type { Profile } from '@/lib/supabase'
 
 /**
@@ -116,15 +117,19 @@ export default function ClubBentoGrid({
         </>
       ) : (
         // Owner order: Club information → My Posted Opportunities →
-        // Club Members → My Network → Media (full-width, last).
+        // Saved Candidates → Club Members → My Network → Media.
+        // Saved Candidates sits next to Posted Opportunities so the
+        // two recruitment surfaces (applicants pipeline + private
+        // shortlist) pair visually.
         <>
           <ClubBasicInfoCard profile={profile} readOnly={false} onEdit={onEdit} />
           <CoachPostedOpportunitiesCard
             ownerProfileId={profile.id}
             onCreateOpportunity={onCreateOpportunity}
             onManageOpportunities={onManageOpportunities}
-            bodyCopy="Publish player and coach roles and recruit candidates. Review applications and shortlist in one place."
+            bodyCopy="Publish player and coach roles and review applications in one place."
           />
+          <SavedCandidatesCard />
           <ClubMembersCard
             ownerProfileId={profile.id}
             onViewMembers={() => onOpenTab('members')}
