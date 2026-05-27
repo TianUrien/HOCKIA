@@ -82,10 +82,18 @@ export default function HeroIdentityCard({
   const [checklistOpen, setChecklistOpen] = useState(false)
   const friendCount = profile.accepted_friend_count ?? 0
   const referenceCount = profile.accepted_reference_count ?? 0
+  // When another user is viewing this profile, the ScoutingCard (rendered
+  // by Player/CoachDashboard above the Hero in the readOnly && !isOwn
+  // case) becomes the primary surface for availability + Save + Message.
+  // Hide the duplicated chips and recruitment actions from the Hero in
+  // that case so the visitor sees ONE source of truth. The owner viewing
+  // their own public preview keeps the chips so they can verify what
+  // visitors see (no ScoutingCard renders in that case either).
+  const isVisitorView = readOnly && !isOwnProfile
   // Save action — only meaningful on the public/visitor view of someone
   // else's profile. Owner sees their own dashboard and brands don't save.
   const savedState = useIsProfileSaved(profile.id)
-  const showSaveButton = readOnly && savedState.isAuthenticated && !savedState.isOwnProfile
+  const showSaveButton = readOnly && savedState.isAuthenticated && !savedState.isOwnProfile && !isVisitorView
   const age = calculateAge(profile.date_of_birth)
   const positions = [profile.position, profile.secondary_position].filter(
     (value, index, self): value is string => {
@@ -208,7 +216,10 @@ export default function HeroIdentityCard({
         {readOnly ? (
           <>
             <FriendshipButton profileId={profile.id} />
-            {!isOwnProfile && authProfileRole !== 'brand' && onMessage && (
+            {/* Message moved to ScoutingCard for recruiter-context
+                viewers. Kept on the own-profile-preview view so the
+                owner can still see what visitors normally see. */}
+            {!isOwnProfile && !isVisitorView && authProfileRole !== 'brand' && onMessage && (
               <button
                 type="button"
                 onClick={onMessage}
@@ -411,14 +422,22 @@ export default function HeroIdentityCard({
             {!readOnly && !completionLoading && (
               <TierBadge tier={calculateTier(completionPercentage)} />
             )}
-            <LastActivePill
-              lastActiveAt={(profile as Partial<Profile> | null)?.last_active_at ?? null}
-              showLastActive={
-                (profile as { show_last_active?: boolean | null } | null)?.show_last_active ?? null
-              }
-            />
-            {isAvailable && (
-              <AvailabilityPill variant={isCoach ? 'coach' : 'play'} />
+            {/* Activity + availability pills hidden in the visitor view
+                — ScoutingCard's Zone 1 (rendered above by Player/Coach
+                Dashboard) is the single prominent status surface for
+                recruiters. Kept on owner + own-profile-preview views. */}
+            {!isVisitorView && (
+              <>
+                <LastActivePill
+                  lastActiveAt={(profile as Partial<Profile> | null)?.last_active_at ?? null}
+                  showLastActive={
+                    (profile as { show_last_active?: boolean | null } | null)?.show_last_active ?? null
+                  }
+                />
+                {isAvailable && (
+                  <AvailabilityPill variant={isCoach ? 'coach' : 'play'} />
+                )}
+              </>
             )}
             {isRecruiterMode && (
               <span className="inline-flex items-center gap-1 rounded-full bg-[#8026FA]/10 px-2.5 py-1 text-[11px] font-semibold text-[#8026FA]">

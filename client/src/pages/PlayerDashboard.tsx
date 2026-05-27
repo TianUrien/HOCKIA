@@ -19,6 +19,7 @@ import ProfilePostsTab from '@/components/ProfilePostsTab'
 import SignInPromptModal from '@/components/SignInPromptModal'
 import HeroIdentityCard from '@/components/dashboard/bento/HeroIdentityCard'
 import PlayerBentoGrid from '@/components/dashboard/bento/PlayerBentoGrid'
+import ScoutingCard from '@/components/profile/ScoutingCard'
 import PlayerCommunityHub from '@/components/community/PlayerCommunityHub'
 import PublicCommunityView from '@/components/community/PublicCommunityView'
 import { ProfileViewersSection } from '@/components/ProfileViewersSection'
@@ -570,6 +571,30 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
           <div id="profile-viewers" className="scroll-mt-20">
             <ProfileViewersSection />
           </div>
+        )}
+
+        {/* ScoutingCard — visitor-only recruitment decision surface.
+            Three zones: availability headline, career evidence (no
+            duplication with the Hero), pinned actions. Replaces the
+            earlier CareerSnapshot which duplicated most of the Hero. */}
+        {readOnly && !isOwnProfile && isLanding && (
+          <ScoutingCard
+            profile={{
+              id: profile.id,
+              role: profile.role ?? null,
+              full_name: profile.full_name ?? null,
+              current_club: profile.current_club ?? null,
+              highlight_video_url: (profile as Profile).highlight_video_url ?? null,
+              full_game_video_count: (profile as Profile).full_game_video_count ?? null,
+              accepted_reference_count: (profile as Profile).accepted_reference_count ?? null,
+              last_active_at: (profile as Profile).last_active_at ?? null,
+              show_last_active: (profile as Profile).show_last_active ?? null,
+              open_to_play: (profile as Profile).open_to_play ?? null,
+              open_to_coach: (profile as Profile).open_to_coach ?? null,
+              open_to_opportunities: (profile as Profile).open_to_opportunities ?? null,
+            }}
+            onViewJourney={() => handleTabChange('journey')}
+          />
         )}
 
         {isLanding ? (

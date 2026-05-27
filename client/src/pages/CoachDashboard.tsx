@@ -20,6 +20,7 @@ import SignInPromptModal from '@/components/SignInPromptModal'
 import ClubLinkPrompt from '@/components/ClubLinkPrompt'
 import HeroIdentityCard from '@/components/dashboard/bento/HeroIdentityCard'
 import CoachBentoGrid from '@/components/dashboard/bento/CoachBentoGrid'
+import ScoutingCard from '@/components/profile/ScoutingCard'
 import CoachCommunityHub from '@/components/community/CoachCommunityHub'
 import PublicCommunityView from '@/components/community/PublicCommunityView'
 import { ProfileViewersSection } from '@/components/ProfileViewersSection'
@@ -603,6 +604,28 @@ export default function CoachDashboard({
           <div id="profile-viewers" className="scroll-mt-20">
             <ProfileViewersSection />
           </div>
+        )}
+
+        {/* ScoutingCard — visitor-only recruitment decision surface.
+            Same placement + rationale as PlayerDashboard. */}
+        {readOnly && !isOwnProfile && isLanding && (
+          <ScoutingCard
+            profile={{
+              id: profile.id,
+              role: profile.role ?? null,
+              full_name: profile.full_name ?? null,
+              current_club: profile.current_club ?? null,
+              highlight_video_url: profile.highlight_video_url ?? null,
+              full_game_video_count: profile.full_game_video_count ?? null,
+              accepted_reference_count: profile.accepted_reference_count ?? null,
+              last_active_at: profile.last_active_at ?? null,
+              show_last_active: profile.show_last_active ?? null,
+              open_to_play: null,
+              open_to_coach: profile.open_to_coach ?? null,
+              open_to_opportunities: profile.open_to_opportunities ?? null,
+            }}
+            onViewJourney={() => handleTabChange('journey')}
+          />
         )}
 
         {isLanding ? (
