@@ -331,15 +331,23 @@ export default function CommunityPage() {
                   "open to opportunities", etc.). Marked as a follow-up
                   slice; for now the lane is fixed per role. */}
               {!isNarrowed && activeTab === 'all' && (() => {
-                const featured = featuredLaneForViewer(
+                const themeOverride = searchParams.get('theme')
+                const themeIndex = themeOverride !== null && /^[0-3]$/.test(themeOverride)
+                  ? Number(themeOverride)
+                  : currentWeekThemeIndex()
+                const featured = featuredForTheme(
+                  themeIndex,
                   viewerProfile?.role,
                   viewerProfile?.coach_recruits_for_team,
                 )
                 return (
                   <TopCommunityMembersCarousel
-                    key={`featured-${featured.lane}-${refreshKey}`}
+                    key={`featured-${themeIndex}-${refreshKey}`}
                     roleFilter={featured.lane}
                     sortCriterion={featured.criterion}
+                    onlyOpen={featured.onlyOpen}
+                    title={featured.title}
+                    subtitle={featured.subtitle}
                     onViewAll={handleViewAllScroll}
                   />
                 )
@@ -405,51 +413,114 @@ export default function CommunityPage() {
   )
 }
 
-// ── Viewer-aware featured lane chooser ───────────────────────────────
-// The All tab renders a SINGLE featured carousel (Slice C). The lane
-// + ranking criterion are chosen based on what's most actionable for
-// the viewer:
-//   - players look for clubs to play for → Featured Clubs (completeness)
-//   - clubs / recruiter-coaches look for players → Featured Players
-//     (availability + activity, never ranked by data-entry)
-//   - non-recruiter coaches look for clubs to coach at → Featured Clubs
-//   - umpires look for clubs to officiate at → Featured Clubs
-//   - brands look for players to sponsor → Featured Players
-//   - anon viewers default to Featured Players (the most discovery-
-//     valuable lane for someone not yet onboarded)
+// ── Weekly theme rotation for the Featured carousel ──────────────────
+// One carousel renders on the All tab; its theme rotates weekly so
+// the page feels fresh week-over-week. Theme index (0–3) cycles
+// through 4 themes:
 //
-// Future: a weekly theme rotation could swap the criterion (e.g.,
-// "Recently joined" or "Open to opportunities") to keep the page
-// feeling fresh week-over-week. Deferred until the RPC supports more
-// sort criteria than ('completeness' | 'availability_activity').
-type CarouselLane = 'player' | 'club' | 'coach'
-type CarouselCriterion = 'completeness' | 'availability_activity'
+//   THEME 0 — Role-targeted: viewer-aware (Featured Clubs for player
+//     viewers; Featured Players for club / recruiter-coach viewers;
+//     etc). Uses the existing role/criterion mapping.
+//   THEME 1 — New on HOCKIA: cross-role, ranked by created_at DESC.
+//   THEME 2 — Most complete profiles: cross-role, ranked by
+//     completeness (the original ranking for the carousel — still
+//     useful as a periodic surface for clubs / coaches looking for
+//     polished candidates).
+//   THEME 3 — Open to opportunities: cross-role, only profiles with
+//     an open-to-X flag set, ranked by availability_activity.
+//
+// Dev override: ?theme=0|1|2|3 in the URL forces a specific theme,
+// useful for QA + product review without waiting a week.
+type CarouselLane = 'player' | 'club' | 'coach' | undefined
+type CarouselCriterion = 'completeness' | 'availability_activity' | 'recently_joined'
 
-interface FeaturedLane {
+interface FeaturedConfig {
   lane: CarouselLane
   criterion: CarouselCriterion
+  onlyOpen: boolean
+  title: string
+  subtitle: string
 }
 
-function featuredLaneForViewer(
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000
+// Fixed reference epoch so the week index is stable across timezones
+// and doesn't shift mid-week. 2026-01-05 is a Monday — week boundary
+// rotates on Monday UTC across the platform.
+const WEEK_EPOCH_MS = Date.UTC(2026, 0, 5)
+const THEME_COUNT = 4
+
+/** Current theme index 0..3 based on weeks since the epoch. */
+function currentWeekThemeIndex(): number {
+  const idx = Math.floor((Date.now() - WEEK_EPOCH_MS) / WEEK_MS)
+  return ((idx % THEME_COUNT) + THEME_COUNT) % THEME_COUNT
+}
+
+/** Theme 0 only — viewer-aware role-targeted lane chooser. */
+function roleTargetedConfig(
   role: string | null | undefined,
   recruiterFlag: boolean | null | undefined,
-): FeaturedLane {
-  switch (role) {
-    case 'player':
-      return { lane: 'club', criterion: 'completeness' }
-    case 'club':
-      return { lane: 'player', criterion: 'availability_activity' }
-    case 'coach':
-      return recruiterFlag
-        ? { lane: 'player', criterion: 'availability_activity' }
-        : { lane: 'club', criterion: 'completeness' }
-    case 'umpire':
-      return { lane: 'club', criterion: 'completeness' }
-    case 'brand':
-      return { lane: 'player', criterion: 'availability_activity' }
-    default:
-      // Anon / role-less viewer — default to Featured Players, the
-      // most discovery-relevant lane for someone exploring HOCKIA.
-      return { lane: 'player', criterion: 'availability_activity' }
+): { lane: 'player' | 'club'; criterion: 'completeness' | 'availability_activity'; title: string; subtitle: string } {
+  const wantsPlayers =
+    role === 'club' ||
+    role === 'brand' ||
+    (role === 'coach' && Boolean(recruiterFlag)) ||
+    role === undefined ||
+    role === null
+  if (wantsPlayers) {
+    return {
+      lane: 'player',
+      criterion: 'availability_activity',
+      title: 'Featured players',
+      subtitle: 'Open to opportunities and recently active.',
+    }
+  }
+  // Players, non-recruiter coaches, umpires → Featured clubs.
+  return {
+    lane: 'club',
+    criterion: 'completeness',
+    title: 'Featured clubs',
+    subtitle: 'Most complete profiles on HOCKIA.',
+  }
+}
+
+/** Resolve the FeaturedConfig for a given theme index + viewer context. */
+function featuredForTheme(
+  themeIndex: number,
+  role: string | null | undefined,
+  recruiterFlag: boolean | null | undefined,
+): FeaturedConfig {
+  switch (themeIndex) {
+    case 1:
+      return {
+        lane: undefined, // cross-role
+        criterion: 'recently_joined',
+        onlyOpen: false,
+        title: 'New on HOCKIA',
+        subtitle: 'Recently joined members across the platform.',
+      }
+    case 2:
+      return {
+        lane: undefined, // cross-role
+        criterion: 'completeness',
+        onlyOpen: false,
+        title: 'Most complete profiles',
+        subtitle: 'Polished profiles worth a closer look.',
+      }
+    case 3:
+      return {
+        lane: undefined, // cross-role
+        criterion: 'availability_activity',
+        onlyOpen: true,
+        title: 'Open to opportunities',
+        subtitle: 'Members accepting recruitment contact this month.',
+      }
+    case 0:
+    default: {
+      const targeted = roleTargetedConfig(role, recruiterFlag)
+      return {
+        ...targeted,
+        onlyOpen: false,
+      }
+    }
   }
 }

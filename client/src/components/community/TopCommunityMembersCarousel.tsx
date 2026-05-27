@@ -69,9 +69,14 @@ interface TopCommunityMembersCarouselProps {
   roleFilter?: 'player' | 'coach' | 'club' | 'umpire' | 'brand'
   /** Ranking criterion. Defaults to 'completeness' (existing behavior
    *  for clubs/coaches/umpires/brands). Pass 'availability_activity'
-   *  for the players lane so humans aren't ranked by data-entry — the
-   *  player lane surfaces open-to-play + recently-active first. */
-  sortCriterion?: 'completeness' | 'availability_activity'
+   *  for the players lane so humans aren't ranked by data-entry; pass
+   *  'recently_joined' for the "New on HOCKIA" weekly theme. */
+  sortCriterion?: 'completeness' | 'availability_activity' | 'recently_joined'
+  /** When true, the carousel only includes profiles with at least one
+   *  open-to-X flag set. Used by the "Open to opportunities" weekly
+   *  theme to filter the cross-role pool down to actively available
+   *  profiles. Defaults to false. */
+  onlyOpen?: boolean
   /** Override the section header. When omitted, the carousel infers
    *  a role-appropriate default ("Featured players", "Featured clubs"
    *  etc.) from roleFilter. */
@@ -101,11 +106,13 @@ const ROLE_TITLE_DEFAULT: Record<string, string> = {
 const CRITERION_SUBTITLE_DEFAULT: Record<string, string> = {
   availability_activity: 'Open to opportunities and recently active.',
   completeness: 'Most complete profiles on HOCKIA.',
+  recently_joined: 'Recently joined HOCKIA.',
 }
 
 export function TopCommunityMembersCarousel({
   roleFilter,
   sortCriterion = 'completeness',
+  onlyOpen = false,
   title,
   subtitle,
   limit = DEFAULT_LIMIT,
@@ -131,6 +138,7 @@ export function TopCommunityMembersCarousel({
           p_role: roleFilter ?? undefined,
           p_limit: limit,
           p_sort: sortCriterion,
+          p_only_open: onlyOpen,
         })
         if (cancelled) return
         if (rpcError) throw rpcError
@@ -146,7 +154,7 @@ export function TopCommunityMembersCarousel({
     return () => {
       cancelled = true
     }
-  }, [roleFilter, sortCriterion, limit])
+  }, [roleFilter, sortCriterion, limit, onlyOpen])
 
   const openMember = (m: TopMemberRow) => {
     const base =
