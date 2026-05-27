@@ -116,7 +116,7 @@ export interface LLMCallMeta {
  * quality/latency comparisons across prompt iterations don't require git
  * archaeology.
  */
-export const PROMPT_VERSION = '2026-04-30.phase3e-hockey-categories'
+export const PROMPT_VERSION = '2026-05-27.club-team-leagues'
 
 const EMPTY_META: LLMCallMeta = { retry_count: 0, usage: null }
 
@@ -236,6 +236,11 @@ export interface UserContext {
   // Club-specific (only populated when role === 'club')
   open_vacancy_count?: number
   pending_application_count?: number
+  /** Club team rosters by gender — populated from the club dashboard's
+   *  league selector. Either field can be null when the club doesn't
+   *  field a team of that gender (e.g. CASI's men's team is null). */
+  womens_team_league?: string | null
+  mens_team_league?: string | null
   // Brand-specific (only populated when role === 'brand')
   brand_category?: string | null
   brand_product_count?: number
@@ -338,6 +343,18 @@ function buildUserContextBlock(ctx: UserContext): string {
 
   // Club-specific block
   if (ctx.role === 'club') {
+    // Team leagues — explicit per-gender so the AI can answer
+    // "what competition does my women's team play in?" without asking
+    // the user. Emit "not set" only when both are missing so a women-only
+    // club like CASI doesn't get a misleading "men's team: not set" line.
+    const hasWomens = !!ctx.womens_team_league
+    const hasMens = !!ctx.mens_team_league
+    if (hasWomens || hasMens) {
+      if (hasWomens) lines.push(`- Women's team league/competition: ${ctx.womens_team_league}.`)
+      if (hasMens) lines.push(`- Men's team league/competition: ${ctx.mens_team_league}.`)
+    } else {
+      lines.push(`- Team league/competition: not set.`)
+    }
     lines.push(`- Open opportunities: ${ctx.open_vacancy_count ?? 0}.`)
     lines.push(`- Pending applications: ${ctx.pending_application_count ?? 0}.`)
   }
