@@ -51,6 +51,17 @@ class RequestCache {
   }
 
   /**
+   * Whether a fetch is currently in flight for this key. Used by
+   * "force-fresh" callers (e.g. strength-hook refresh()) to detect
+   * the race where a sibling consumer just started a fetch — in
+   * that case the caller should join the in-flight rather than
+   * bust it via invalidate() and produce a duplicate request.
+   */
+  hasInflight(key: string): boolean {
+    return this.inFlight.has(key)
+  }
+
+  /**
    * Read-only snapshot of all currently cached keys + their age.
    * Exposed on window.__HOCKIA_REQUEST_CACHE__ for one-shot inspection
    * during the diagnostic pass. Never modifies state.

@@ -101,4 +101,28 @@ describe('strength hook dedupe (useProfileStrength canary)', () => {
     })
     expect(fromSpy.mock.calls.filter((c) => c[0] === 'gallery_photos')).toHaveLength(2)
   })
+
+  it('refresh() joins an in-flight fetch instead of racing it (QA F-strength race)', async () => {
+    // Regression: aa52843 shipped refresh() that called invalidate()
+    // unconditionally. invalidate() deletes BOTH the cache entry AND
+    // the in-flight tracking, so a refresh() fired in the same render
+    // cycle as the hook's auto-fetch produced two identical fetches:
+    //   1. Auto-fetch starts → inFlight.set(key, A)
+    //   2. refresh() → invalidate(key) deletes A's in-flight entry
+    //   3. refresh() → fetchCounts() → cache miss + in-flight miss → starts B
+    // Both A and B fire fetches. Fix: refresh() now checks
+    // hasInflight() first and skips invalidate when one exists, so
+    // fetchCounts() joins the in-flight via dedupe instead of racing.
+    const { result } = renderHook(() => useProfileStrength(baseProfile))
+
+    // The hook's auto-fetch should already have started. Call refresh()
+    // BEFORE the first fetch resolves — this is the race condition.
+    await act(async () => {
+      await result.current.refresh()
+    })
+
+    // With the fix: exactly one fetch fires (auto-fetch; refresh joins it).
+    // Without the fix: two fetches fire.
+    expect(fromSpy.mock.calls.filter((c) => c[0] === 'gallery_photos')).toHaveLength(1)
+  })
 })

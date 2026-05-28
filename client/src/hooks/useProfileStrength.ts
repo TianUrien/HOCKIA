@@ -141,11 +141,18 @@ export function useProfileStrength(profile: Profile | null): ProfileStrengthResu
     }
   }, [profileId, cacheKey])
 
-  // Force-fresh re-fetch — busts the cache first so explicit refresh()
-  // calls (e.g. after an upload modal closes) skip the 30s window and
-  // hit the DB directly.
+  // Force-fresh re-fetch — busts the 30s cache so explicit refresh()
+  // calls (e.g. after an upload modal closes) skip the cached value.
+  // BUT: skip the invalidate when there's already an in-flight fetch
+  // for this key — invalidate() also deletes in-flight tracking, so
+  // racing it with the hook's own auto-fetch on first mount produced
+  // duplicate identical fetches (QA caught on aa52843). Joining the
+  // in-flight via dedupe() gives us the same fresh data without the
+  // duplicate.
   const refresh = useCallback(async () => {
-    if (cacheKey) requestCache.invalidate(cacheKey)
+    if (cacheKey && !requestCache.hasInflight(cacheKey)) {
+      requestCache.invalidate(cacheKey)
+    }
     await fetchCounts()
   }, [cacheKey, fetchCounts])
 

@@ -91,10 +91,15 @@ export function useUmpireProfileStrength({ profile }: UseUmpireProfileStrengthOp
     }
   }, [profileId, cacheKey])
 
-  // Force-fresh — busts the cache before re-fetching for explicit
-  // post-upload / post-edit signals.
+  // Force-fresh — bust the 30s cache so post-upload calls don't get
+  // the cached value. Skip the invalidate when a fetch is already
+  // in-flight (invalidate also nukes in-flight tracking, which raced
+  // the hook's auto-fetch on first mount and produced duplicate
+  // requests — QA caught the same race on the coach hook in aa52843).
   const refresh = useCallback(async () => {
-    if (cacheKey) requestCache.invalidate(cacheKey)
+    if (cacheKey && !requestCache.hasInflight(cacheKey)) {
+      requestCache.invalidate(cacheKey)
+    }
     await fetchGalleryCount()
   }, [cacheKey, fetchGalleryCount])
 

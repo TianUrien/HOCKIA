@@ -82,12 +82,19 @@ export function useCoachProfileStrength({ profile }: UseCoachProfileStrengthOpti
     }
   }, [profileId, cacheKey])
 
-  // refresh() busts the cache first so explicit "I just edited
-  // something, give me the truth" calls (CoachDashboard's tab-effect)
-  // don't get served stale data from the 30s window. Auto-mounts go
-  // through fetchCounts which honours the cache.
+  // refresh() needs two contracts at once:
+  //   1) "I just edited" → bust the 30s cache, fetch fresh.
+  //   2) Concurrent with the hook's auto-fetch on first mount → join
+  //      the in-flight instead of racing it. The QA pass on aa52843
+  //      caught the race: invalidate() also deletes the in-flight
+  //      tracking, so two callers fired identical fetches.
+  // Solution: only invalidate when there's no in-flight. The
+  // in-flight entry IS the freshest data we can get; awaiting it via
+  // dedupe() is correct.
   const refresh = useCallback(async () => {
-    if (cacheKey) requestCache.invalidate(cacheKey)
+    if (cacheKey && !requestCache.hasInflight(cacheKey)) {
+      requestCache.invalidate(cacheKey)
+    }
     await fetchCounts()
   }, [cacheKey, fetchCounts])
 
