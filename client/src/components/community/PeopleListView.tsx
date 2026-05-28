@@ -10,6 +10,7 @@ import { Loader2 } from 'lucide-react'
 import { useNavigationType } from 'react-router-dom'
 import { MemberTile } from '@/components'
 import { logger } from '@/lib/logger'
+import { isAuthExpiredError } from '@/lib/sentryHelpers'
 import { isOpenToAny } from '@/lib/hockeyCategories'
 import { MemberTileSkeleton } from '@/components/Skeleton'
 import { MemberPreviewModal } from './MemberPreviewModal'
@@ -193,7 +194,15 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
         if (cancelled) return
         onTotalCountChange?.(count)
       } catch (err) {
-        logger.error('Error fetching total community count:', err)
+        // 401s during the auth sign-out transition are expected (the
+        // in-flight request races against onAuthStateChange clearing
+        // the session). Downgrade to debug so it doesn't dominate the
+        // console; real errors still surface as ERROR.
+        if (isAuthExpiredError(err)) {
+          logger.debug('[PeopleListView] total count: session expired mid-fetch (ignored)')
+        } else {
+          logger.error('Error fetching total community count:', err)
+        }
       }
     }
     void run()
@@ -310,7 +319,11 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
       // displayedMembers + hasMore are derived from filteredMembers
       // via the useEffect below.
     } catch (error) {
-      logger.error('Error fetching members:', error)
+      if (isAuthExpiredError(error)) {
+        logger.debug('[PeopleListView] fetchMembers: session expired mid-fetch (ignored)')
+      } else {
+        logger.error('Error fetching members:', error)
+      }
     } finally {
       setIsLoading(false)
     }
@@ -414,7 +427,11 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
         // below). Setting them here would clobber the filtered grid when
         // performServerSearch double-fires under StrictMode.
       } catch (error) {
-        logger.error('Error searching members:', error)
+        if (isAuthExpiredError(error)) {
+          logger.debug('[PeopleListView] search: session expired mid-fetch (ignored)')
+        } else {
+          logger.error('Error searching members:', error)
+        }
       } finally {
         setIsSearching(false)
       }

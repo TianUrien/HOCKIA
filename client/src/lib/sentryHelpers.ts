@@ -6,6 +6,37 @@ type SupabaseErrorLike = {
   code?: string | number
   details?: string
   hint?: string
+  status?: number
+}
+
+/**
+ * Recognise the "auth lifecycle" shape of a Supabase / PostgREST error:
+ * a request that came back 401 because the session was being cleared
+ * (manual sign-out OR onAuthStateChange-signed-out OR token-refresh
+ * failure mid-flight). Examples:
+ *   - PostgREST: { code: 'PGRST301', message: 'JWT expired' }
+ *   - PostgREST: { message: 'JWT expired' / 'invalid JWT' / 'JWSError' }
+ *   - HTTP wrapper: { status: 401 }
+ *
+ * These are NOT bugs — they're expected during sign-out transitions
+ * and should be logged at WARN (or silently bailed) instead of ERROR
+ * + Sentry capture, which spams the console + alert pipeline. Use
+ * this guard before `logger.error` / `reportSupabaseError` to skip
+ * the noise.
+ */
+export function isAuthExpiredError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false
+  const e = error as SupabaseErrorLike
+  if (e.status === 401) return true
+  if (e.code === 'PGRST301' || e.code === '401') return true
+  const msg = (e.message ?? '').toLowerCase()
+  return (
+    msg.includes('jwt expired') ||
+    msg.includes('invalid jwt') ||
+    msg.includes('jwt verification') ||
+    msg.includes('jwsError'.toLowerCase()) ||
+    msg.includes('401')
+  )
 }
 
 type ExtraMetadata = Record<string, unknown>
@@ -66,6 +97,12 @@ export function reportSupabaseError(
   extras: ExtraMetadata = {},
   tags: TagMetadata = {}
 ) {
+  // Centralised auth-lifecycle skip: 401s racing against sign-out are
+  // expected, not bugs. Bailing here prevents EVERY callsite (every
+  // hook + page) from polluting Sentry without each having to add
+  // its own guard. The auth store handles the actual sign-out + UX.
+  if (isAuthExpiredError(error)) return
+
   const supabaseError = (typeof error === 'object' && error !== null ? error : undefined) as SupabaseErrorLike | undefined
   const browserContext = getInAppBrowserContext()
 

@@ -9,6 +9,7 @@ import HockeyContextLine from '../recruiting/HockeyContextLine'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { requestCache } from '@/lib/requestCache'
+import { isAuthExpiredError } from '@/lib/sentryHelpers'
 
 /**
  * TopCommunityMembersCarousel
@@ -210,8 +211,16 @@ export function TopCommunityMembersCarousel({
         if (cancelled) return
         setMembers(rows)
       } catch (err) {
-        logger.error('[TopCommunityMembersCarousel] fetch failed', err)
-        if (!cancelled) setError('Unable to load top members right now.')
+        if (isAuthExpiredError(err)) {
+          // Session expired mid-fetch (sign-out race). Don't alarm
+          // the console or Sentry; the auth flow will redirect the
+          // user. Suppress the error banner too since the page is
+          // about to navigate.
+          logger.debug('[TopCommunityMembersCarousel] session expired mid-fetch (ignored)')
+        } else {
+          logger.error('[TopCommunityMembersCarousel] fetch failed', err)
+          if (!cancelled) setError('Unable to load top members right now.')
+        }
       } finally {
         if (!cancelled) setLoading(false)
       }
