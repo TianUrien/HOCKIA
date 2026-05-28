@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Users } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { requestCache } from '@/lib/requestCache'
 import DashboardCard from './DashboardCard'
 
 /**
@@ -27,21 +28,31 @@ export default function ClubMembersCard({ ownerProfileId, onViewMembers }: ClubM
 
   useEffect(() => {
     let cancelled = false
+    // Bento-card fetch dedup (JourneyCard pattern). Members tab refetch
+    // covers any roster changes the user makes after editing.
+    const cacheKey = `club-members-card-count-${ownerProfileId}`
     const fetchCount = async () => {
       try {
         // limit 1 — we only need total_count off the first row, not the
         // roster itself. The RPC returns total_count on every row.
-        const { data, error } = await supabase.rpc('get_club_members', {
-          p_profile_id: ownerProfileId,
-          p_limit: 1,
-          p_offset: 0,
-        })
-        if (cancelled) return
-        if (error) throw error
-        setMemberCount(data && data.length > 0 ? data[0].total_count : 0)
+        const count = await requestCache.dedupe<number>(
+          cacheKey,
+          async () => {
+            const { data, error } = await supabase.rpc('get_club_members', {
+              p_profile_id: ownerProfileId,
+              p_limit: 1,
+              p_offset: 0,
+            })
+            if (error) throw error
+            return data && data.length > 0 ? data[0].total_count : 0
+          },
+          30000,
+        )
+        if (!cancelled) setMemberCount(count)
       } catch (err) {
+        if (cancelled) return
         logger.error('[ClubMembersCard] fetch member count failed', err)
-        if (!cancelled) setMemberCount(0)
+        setMemberCount(0)
       }
     }
     void fetchCount()

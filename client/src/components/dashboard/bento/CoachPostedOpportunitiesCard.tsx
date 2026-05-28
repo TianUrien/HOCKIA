@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Briefcase, FileText, Users, Plus } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { requestCache } from '@/lib/requestCache'
 import { cn } from '@/lib/utils'
 import DashboardCard from './DashboardCard'
 
@@ -52,40 +53,49 @@ export default function CoachPostedOpportunitiesCard({
 
   useEffect(() => {
     let cancelled = false
+    // Bento-card fetch dedup (JourneyCard pattern). Count + RPC cached
+    // under one key. 30s TTL — opportunities management tab refetches
+    // on visit when the user creates / closes a role.
+    const cacheKey = `coach-posted-opportunities-card-${ownerProfileId}`
     const fetchCounts = async () => {
       try {
-        const openRes = await supabase
-          .from('opportunities')
-          .select('id', { count: 'exact', head: true })
-          .eq('club_id', ownerProfileId)
-          .eq('status', 'open')
-        if (cancelled) return
-        if (openRes.error) throw openRes.error
-        setOpenCount(openRes.count ?? 0)
+        const result = await requestCache.dedupe<{ open: number; applicants: number }>(
+          cacheKey,
+          async () => {
+            const openRes = await supabase
+              .from('opportunities')
+              .select('id', { count: 'exact', head: true })
+              .eq('club_id', ownerProfileId)
+              .eq('status', 'open')
+            if (openRes.error) throw openRes.error
 
-        // Same RPC the vacancies tab uses; returns rows + applicant
-        // counts. We sum the counts here for the header metric so the
-        // number matches what the coach sees inside the management
-        // surface.
-        const appsRes = await supabase.rpc('fetch_club_opportunities_with_counts', {
-          p_club_id: ownerProfileId,
-          p_include_closed: false,
-          p_limit: 200,
-        })
-        if (cancelled) return
-        if (appsRes.error) throw appsRes.error
-        const total = (appsRes.data ?? []).reduce(
-          (sum: number, row: { applicant_count?: number | null }) =>
-            sum + (row.applicant_count ?? 0),
-          0,
+            // Same RPC the vacancies tab uses; returns rows + applicant
+            // counts. We sum the counts here for the header metric so the
+            // number matches what the coach sees inside the management
+            // surface.
+            const appsRes = await supabase.rpc('fetch_club_opportunities_with_counts', {
+              p_club_id: ownerProfileId,
+              p_include_closed: false,
+              p_limit: 200,
+            })
+            if (appsRes.error) throw appsRes.error
+            const total = (appsRes.data ?? []).reduce(
+              (sum: number, row: { applicant_count?: number | null }) =>
+                sum + (row.applicant_count ?? 0),
+              0,
+            )
+            return { open: openRes.count ?? 0, applicants: total }
+          },
+          30000,
         )
-        if (!cancelled) setApplicants(total)
+        if (cancelled) return
+        setOpenCount(result.open)
+        setApplicants(result.applicants)
       } catch (err) {
+        if (cancelled) return
         logger.error('[CoachOpportunitiesCard] fetch counts failed', err)
-        if (!cancelled) {
-          setOpenCount(0)
-          setApplicants(0)
-        }
+        setOpenCount(0)
+        setApplicants(0)
       }
     }
     void fetchCounts()

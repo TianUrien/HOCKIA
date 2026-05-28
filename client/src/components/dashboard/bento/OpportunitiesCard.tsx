@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Briefcase, FileText, Zap, ChevronRight } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { requestCache } from '@/lib/requestCache'
 import { cn } from '@/lib/utils'
 import AvailabilityToggleStrip from '@/components/AvailabilityToggleStrip'
 import DashboardCard from './DashboardCard'
@@ -40,19 +41,30 @@ export default function OpportunitiesCard({ ownerProfileId, onViewOpportunities,
 
   useEffect(() => {
     let cancelled = false
+    // Bento-card fetch dedup (JourneyCard pattern). Bento re-renders +
+    // tab navs back to landing were firing this count each time. 30s
+    // TTL — the opportunities feed itself refetches on visit.
+    const cacheKey = `opportunities-card-active-${ownerProfileId}`
     async function fetchCount() {
-      const { count, error } = await supabase
-        .from('opportunity_applications')
-        .select('id', { count: 'exact', head: true })
-        .eq('applicant_id', ownerProfileId)
-        .in('status', [...ACTIVE_STATUSES])
-
-      if (cancelled) return
-      if (error) {
-        logger.error('[OPPORTUNITIES_CARD] Failed to fetch application count', error)
+      try {
+        const count = await requestCache.dedupe<number>(
+          cacheKey,
+          async () => {
+            const res = await supabase
+              .from('opportunity_applications')
+              .select('id', { count: 'exact', head: true })
+              .eq('applicant_id', ownerProfileId)
+              .in('status', [...ACTIVE_STATUSES])
+            if (res.error) throw res.error
+            return res.count ?? 0
+          },
+          30000,
+        )
+        if (!cancelled) setActiveCount(count)
+      } catch (err) {
+        if (cancelled) return
+        logger.error('[OPPORTUNITIES_CARD] Failed to fetch application count', err)
         setActiveCount(0)
-      } else {
-        setActiveCount(count ?? 0)
       }
     }
     void fetchCount()

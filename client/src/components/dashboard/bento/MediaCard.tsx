@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Image as ImageIcon, Film, Play } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { requestCache } from '@/lib/requestCache'
 import { cn } from '@/lib/utils'
 import DashboardCard from './DashboardCard'
 import type { Profile } from '@/lib/supabase'
@@ -45,25 +46,38 @@ export default function MediaCard({ profile, readOnly, onManageMedia, role = 'pl
 
   useEffect(() => {
     let cancelled = false
+    // Bento-card fetch dedup (JourneyCard pattern). Cache key includes
+    // the table choice so player/coach (gallery_photos) and club
+    // (club_media) don't collide. 30s TTL — media tab refetches on
+    // visit after the user uploads / removes media.
+    const cacheKey = `media-card-gallery-${isClub ? 'club' : 'user'}-${profile.id}`
     async function fetchCount() {
-      // Clubs store gallery photos in club_media (keyed by club_id);
-      // players/coaches use gallery_photos (keyed by user_id).
-      const { count, error } = isClub
-        ? await supabase
-            .from('club_media')
-            .select('id', { count: 'exact', head: true })
-            .eq('club_id', profile.id)
-        : await supabase
-            .from('gallery_photos')
-            .select('id', { count: 'exact', head: true })
-            .eq('user_id', profile.id)
-
-      if (cancelled) return
-      if (error) {
-        logger.error('[MEDIA_CARD] Failed to fetch gallery count', error)
+      try {
+        const count = await requestCache.dedupe<number>(
+          cacheKey,
+          async () => {
+            // Clubs store gallery photos in club_media (keyed by
+            // club_id); players/coaches use gallery_photos (keyed by
+            // user_id).
+            const res = isClub
+              ? await supabase
+                  .from('club_media')
+                  .select('id', { count: 'exact', head: true })
+                  .eq('club_id', profile.id)
+              : await supabase
+                  .from('gallery_photos')
+                  .select('id', { count: 'exact', head: true })
+                  .eq('user_id', profile.id)
+            if (res.error) throw res.error
+            return res.count ?? 0
+          },
+          30000,
+        )
+        if (!cancelled) setGalleryCount(count)
+      } catch (err) {
+        if (cancelled) return
+        logger.error('[MEDIA_CARD] Failed to fetch gallery count', err)
         setGalleryCount(0)
-      } else {
-        setGalleryCount(count ?? 0)
       }
     }
     void fetchCount()

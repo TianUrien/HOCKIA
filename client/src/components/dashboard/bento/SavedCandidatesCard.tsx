@@ -4,6 +4,7 @@ import { BookmarkCheck, Bookmark } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
+import { requestCache } from '@/lib/requestCache'
 import { Avatar } from '@/components'
 import { getInitials } from '@/lib/utils'
 import DashboardCard from './DashboardCard'
@@ -37,63 +38,68 @@ export default function SavedCandidatesCard() {
   useEffect(() => {
     if (!user?.id) return
     let cancelled = false
-
+    // Bento-card fetch dedup (JourneyCard pattern). Both queries cached
+    // together under one key so Bento re-renders + tab navs share a
+    // single round trip. 30s TTL — Save toggles in the grid bust the
+    // useSavedProfileIds shared store; this Bento summary refreshes on
+    // next visit after TTL.
+    const cacheKey = `saved-candidates-card-${user.id}`
     const fetchAll = async () => {
       try {
-        const [countRes, recentRes] = await Promise.all([
-          supabase
-            .from('saved_profiles')
-            .select('id', { count: 'exact', head: true })
-            .eq('owner_id', user.id),
-          supabase
-            .from('saved_profiles')
-            .select(`
-              saved_profile_id,
-              profile:profiles!saved_profiles_saved_profile_id_fkey(
-                full_name,
-                avatar_url,
-                role
-              )
-            `)
-            .eq('owner_id', user.id)
-            .order('created_at', { ascending: false })
-            .limit(3),
-        ])
-
+        const result = await requestCache.dedupe<{ count: number; recent: RecentSave[] }>(
+          cacheKey,
+          async () => {
+            const [countRes, recentRes] = await Promise.all([
+              supabase
+                .from('saved_profiles')
+                .select('id', { count: 'exact', head: true })
+                .eq('owner_id', user.id),
+              supabase
+                .from('saved_profiles')
+                .select(`
+                  saved_profile_id,
+                  profile:profiles!saved_profiles_saved_profile_id_fkey(
+                    full_name,
+                    avatar_url,
+                    role
+                  )
+                `)
+                .eq('owner_id', user.id)
+                .order('created_at', { ascending: false })
+                .limit(3),
+            ])
+            if (countRes.error) {
+              logger.warn('[SavedCandidatesCard] count failed', countRes.error)
+            }
+            if (recentRes.error) {
+              logger.warn('[SavedCandidatesCard] recent failed', recentRes.error)
+            }
+            const rows = (recentRes.data ?? []) as unknown as Array<{
+              saved_profile_id: string
+              profile: { full_name: string | null; avatar_url: string | null; role: string | null } | null
+            }>
+            return {
+              count: countRes.count ?? 0,
+              recent: rows
+                .filter((r) => r.profile !== null)
+                .map((r) => ({
+                  saved_profile_id: r.saved_profile_id,
+                  full_name: r.profile!.full_name,
+                  avatar_url: r.profile!.avatar_url,
+                  role: r.profile!.role,
+                })),
+            }
+          },
+          30000,
+        )
         if (cancelled) return
-
-        if (countRes.error) {
-          logger.warn('[SavedCandidatesCard] count failed', countRes.error)
-          setCount(0)
-        } else {
-          setCount(countRes.count ?? 0)
-        }
-
-        if (recentRes.error) {
-          logger.warn('[SavedCandidatesCard] recent failed', recentRes.error)
-          setRecent([])
-        } else {
-          const rows = (recentRes.data ?? []) as unknown as Array<{
-            saved_profile_id: string
-            profile: { full_name: string | null; avatar_url: string | null; role: string | null } | null
-          }>
-          setRecent(
-            rows
-              .filter((r) => r.profile !== null)
-              .map((r) => ({
-                saved_profile_id: r.saved_profile_id,
-                full_name: r.profile!.full_name,
-                avatar_url: r.profile!.avatar_url,
-                role: r.profile!.role,
-              })),
-          )
-        }
+        setCount(result.count)
+        setRecent(result.recent)
       } catch (err) {
+        if (cancelled) return
         logger.error('[SavedCandidatesCard] fetch failed', err)
-        if (!cancelled) {
-          setCount(0)
-          setRecent([])
-        }
+        setCount(0)
+        setRecent([])
       }
     }
 

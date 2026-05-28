@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Users, Shield, MessageSquare, FileText } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { requestCache } from '@/lib/requestCache'
 import { cn } from '@/lib/utils'
 import DashboardCard from './DashboardCard'
 import type { Profile } from '@/lib/supabase'
@@ -35,19 +36,32 @@ export default function CommunityCard({ profile, onOpenTab, hideReferences = fal
 
   useEffect(() => {
     let cancelled = false
+    // Bento-card fetch dedup pattern (mirror of JourneyCard fix).
+    // Bento re-renders + tab navs back to landing were firing this
+    // count query repeatedly. 30s TTL keeps the comment number fresh
+    // enough after a moderation action — the comments tab itself
+    // refetches on visit.
+    const cacheKey = `community-card-comments-${profile.id}`
     async function fetchCount() {
-      const { count, error } = await supabase
-        .from('profile_comments')
-        .select('id', { count: 'exact', head: true })
-        .eq('profile_id', profile.id)
-        .eq('status', 'visible')
-
-      if (cancelled) return
-      if (error) {
-        logger.error('[COMMUNITY_CARD] Failed to fetch comment count', error)
+      try {
+        const count = await requestCache.dedupe<number>(
+          cacheKey,
+          async () => {
+            const res = await supabase
+              .from('profile_comments')
+              .select('id', { count: 'exact', head: true })
+              .eq('profile_id', profile.id)
+              .eq('status', 'visible')
+            if (res.error) throw res.error
+            return res.count ?? 0
+          },
+          30000,
+        )
+        if (!cancelled) setCommentCount(count)
+      } catch (err) {
+        if (cancelled) return
+        logger.error('[COMMUNITY_CARD] Failed to fetch comment count', err)
         setCommentCount(0)
-      } else {
-        setCommentCount(count ?? 0)
       }
     }
     void fetchCount()

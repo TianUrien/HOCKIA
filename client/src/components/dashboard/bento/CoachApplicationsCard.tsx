@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Send, FileText, CheckCircle2, ArrowRight } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { requestCache } from '@/lib/requestCache'
 import { cn } from '@/lib/utils'
 import DashboardCard from './DashboardCard'
 
@@ -49,31 +50,43 @@ export default function CoachApplicationsCard({
 
   useEffect(() => {
     let cancelled = false
+    // Bento-card fetch dedup (JourneyCard pattern). Both counts cached
+    // under one key so a single round trip serves Bento re-renders +
+    // tab navs back to landing. 30s TTL — marketplace + applications
+    // surfaces refetch on visit when the user takes action.
+    const cacheKey = `coach-applications-card-${ownerProfileId}`
     const fetchCounts = async () => {
       try {
-        const appliedRes = await supabase
-          .from('opportunity_applications')
-          .select('id', { count: 'exact', head: true })
-          .eq('applicant_id', ownerProfileId)
-          .in('status', [...ACTIVE_STATUSES])
+        const result = await requestCache.dedupe<{ applied: number; shortlisted: number }>(
+          cacheKey,
+          async () => {
+            const appliedRes = await supabase
+              .from('opportunity_applications')
+              .select('id', { count: 'exact', head: true })
+              .eq('applicant_id', ownerProfileId)
+              .in('status', [...ACTIVE_STATUSES])
+            if (appliedRes.error) throw appliedRes.error
+            const shortRes = await supabase
+              .from('opportunity_applications')
+              .select('id', { count: 'exact', head: true })
+              .eq('applicant_id', ownerProfileId)
+              .eq('status', SHORTLISTED_STATUS)
+            if (shortRes.error) throw shortRes.error
+            return {
+              applied: appliedRes.count ?? 0,
+              shortlisted: shortRes.count ?? 0,
+            }
+          },
+          30000,
+        )
         if (cancelled) return
-        if (appliedRes.error) throw appliedRes.error
-        setAppliedCount(appliedRes.count ?? 0)
-
-        const shortRes = await supabase
-          .from('opportunity_applications')
-          .select('id', { count: 'exact', head: true })
-          .eq('applicant_id', ownerProfileId)
-          .eq('status', SHORTLISTED_STATUS)
-        if (cancelled) return
-        if (shortRes.error) throw shortRes.error
-        setShortlistedCount(shortRes.count ?? 0)
+        setAppliedCount(result.applied)
+        setShortlistedCount(result.shortlisted)
       } catch (err) {
+        if (cancelled) return
         logger.error('[CoachApplicationsCard] fetch counts failed', err)
-        if (!cancelled) {
-          setAppliedCount(0)
-          setShortlistedCount(0)
-        }
+        setAppliedCount(0)
+        setShortlistedCount(0)
       }
     }
     void fetchCounts()
