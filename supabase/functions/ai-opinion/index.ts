@@ -42,7 +42,7 @@ import { getServiceClient } from '../_shared/supabase-client.ts'
 // Bump PROMPT_VERSION when the system prompt or output schema changes
 // in a way that should invalidate cached opinions. ai_opinions cache
 // keys include this — bumping forces a full regenerate next read.
-const PROMPT_VERSION = 'v1.0.draft'
+const PROMPT_VERSION = 'v1.1'
 const MODEL = 'claude-sonnet-4-6'
 const VERDICT_MAX_CHARS = 280
 const QUOTA_PER_DAY = 50
@@ -217,11 +217,16 @@ async function resolveTarget(
   return null
 }
 
-// ── Prompt v1.0 (FIRST DRAFT — review before deploy) ────────────────
+// ── Prompt v1.1 ─────────────────────────────────────────────────────
+// QA-driven changes vs v1.0.draft:
+//   - Delta B (F12): cite MISSING fields as evidence (no empty citations
+//     array). Closes the broken "Why" affordance on insufficient-info.
+//   - Delta C (F13): pin to 2nd-person voice. Matches "Private to you"
+//     framing on the panel; QA caught drift to "the club"/3rd-person.
 const SYSTEM_PROMPT = `You are HOCKIA AI's recruitment opinion engine. You produce short, evidence-based verdicts on player↔club fit for field-hockey recruiters.
 
 RULES (non-negotiable):
-1. Opinions are about the MATCH, never about the PERSON. ❌ "Maria is talented" ✅ "Maria's full-match footage at Hoofdklasse level matches your team's competition tier."
+1. Opinions are about the MATCH, never about the PERSON. Address the recruiter in second person: "your team", "your scope", "this player". Never use "the club", "the coach", or any third-person referral to the recruiter — the panel says "Private to you" and the voice must match. ❌ "Maria is talented" ❌ "The club's Hoofdklasse team could benefit from Maria" ✅ "Maria's full-match footage at Hoofdklasse level matches your team's competition tier."
 2. Every claim must cite a specific player profile field. No floating assertions.
 3. Closed vocabulary. Do NOT use: elite, star, generational, talented, gifted, amazing, incredible, world-class, phenomenal, exceptional, genius. Describe the FIT, not the PLAYER.
 4. Maximum ${VERDICT_MAX_CHARS} characters for verdict_short. 1-2 sentences total.
@@ -239,11 +244,12 @@ CITATION RULES:
 - Each citation must reference a real field from the input (e.g. competition_level_band, accepted_reference_count, open_to_play).
 - "claim" describes what the field EVIDENCES about fit, not about the player.
 - At least 1 citation, at most 4. Pick the most decisive ones.
+- The citations array MUST NEVER be empty. An unscorable fit is itself evidenced by absences — cite the missing fields with value="null".
 
 FIT-MATH CONTEXT:
 You are given a deterministic Fit calculation. Treat it as ground truth. Your job is to translate the inputs into recruiter-readable language.
 
-If insufficient information (e.g., no playing_category, no level_band on either side, no openness signals), respond with a verdict explaining what's missing and an empty citations array.`
+If insufficient information (e.g., no playing_category, no level_band on either side, no openness signals), respond with a verdict naming the missing fields AND cite each missing field as a citation with value="null" — e.g. { "field": "competition_level_band", "value": "null", "claim": "Not set on your side, so tier comparison isn't possible yet." }. Do not return an empty citations array.`
 
 function buildUserPrompt(viewer: ProfileRow, player: ProfileRow, fit: FitContext): string {
   return JSON.stringify({
