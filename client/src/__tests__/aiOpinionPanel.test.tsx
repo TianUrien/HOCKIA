@@ -35,6 +35,29 @@ vi.mock('@/hooks/useAIOpinion', () => ({
   }),
 }))
 
+// GA4 trackers — stubbed so tests don't depend on global window.gtag.
+const {
+  trackViewedSpy,
+  trackRegeneratedSpy,
+  trackFeedbackSpy,
+  trackQuotaExceededSpy,
+  trackErrorSpy,
+} = vi.hoisted(() => ({
+  trackViewedSpy: vi.fn(),
+  trackRegeneratedSpy: vi.fn(),
+  trackFeedbackSpy: vi.fn(),
+  trackQuotaExceededSpy: vi.fn(),
+  trackErrorSpy: vi.fn(),
+}))
+
+vi.mock('@/lib/analytics', () => ({
+  trackAIOpinionViewed: trackViewedSpy,
+  trackAIOpinionRegenerated: trackRegeneratedSpy,
+  trackAIOpinionFeedbackSubmitted: trackFeedbackSpy,
+  trackAIOpinionQuotaExceeded: trackQuotaExceededSpy,
+  trackAIOpinionError: trackErrorSpy,
+}))
+
 // import.meta.env mock — flag-off scenarios stub this to undefined.
 // Default to 'true' so the panel renders; one test below overrides
 // to 'false' for the flag-off case.
@@ -60,6 +83,11 @@ describe('AIOpinionPanel', () => {
     regenerateSpy.mockClear()
     submitFeedbackSpy.mockClear()
     submitFeedbackSpy.mockResolvedValue(undefined)
+    trackViewedSpy.mockClear()
+    trackRegeneratedSpy.mockClear()
+    trackFeedbackSpy.mockClear()
+    trackQuotaExceededSpy.mockClear()
+    trackErrorSpy.mockClear()
     cleanup()
     vi.stubEnv('VITE_ENABLE_AI_OPINION', 'true')
   })
@@ -311,5 +339,96 @@ describe('AIOpinionPanel', () => {
         const send = screen.getByRole('button', { name: /^Send$/i })
         expect(send).toBeDisabled()
       })
+  })
+
+  // ── GA4 analytics wiring ─────────────────────────────────────────
+  it('fires ai_opinion_viewed exactly once per opinion_id, with cached/fresh + quota in label/value', () => {
+    hookState.status = {
+      kind: 'ready',
+      data: { verdict_short: 'v', citations: [] },
+      cached: false,
+      quotaRemaining: 47,
+      opinionId: 'op-ga-1',
+    }
+    const { rerender } = render(<AIOpinionPanel candidate={candidate} />)
+    expect(trackViewedSpy).toHaveBeenCalledTimes(1)
+    expect(trackViewedSpy).toHaveBeenCalledWith(false, 47)
+
+    // Re-render with the SAME status object — should not double-fire.
+    rerender(<AIOpinionPanel candidate={candidate} />)
+    expect(trackViewedSpy).toHaveBeenCalledTimes(1)
+  })
+
+  it('fires ai_opinion_viewed with cached=true and null quota for cache hits', () => {
+    hookState.status = {
+      kind: 'ready',
+      data: { verdict_short: 'v', citations: [] },
+      cached: true,
+      quotaRemaining: null,
+      opinionId: 'op-ga-cached',
+    }
+    render(<AIOpinionPanel candidate={candidate} />)
+    expect(trackViewedSpy).toHaveBeenCalledWith(true, null)
+  })
+
+  it('Regenerate click fires ai_opinion_regenerated before invoking the hook', async () => {
+    hookState.status = {
+      kind: 'ready',
+      data: { verdict_short: 'v', citations: [] },
+      cached: false,
+      quotaRemaining: 5,
+      opinionId: 'op-ga-regen',
+    }
+    render(<AIOpinionPanel candidate={candidate} />)
+    await userEvent.click(screen.getByRole('button', { name: /Regenerate/i }))
+    expect(trackRegeneratedSpy).toHaveBeenCalledTimes(1)
+    expect(regenerateSpy).toHaveBeenCalledTimes(1)
+  })
+
+  it('thumbs up fires ai_opinion_feedback_submitted("up", has_reason=false)', async () => {
+    hookState.status = {
+      kind: 'ready',
+      data: { verdict_short: 'v', citations: [] },
+      cached: false,
+      quotaRemaining: 5,
+      opinionId: 'op-ga-up',
+    }
+    render(<AIOpinionPanel candidate={candidate} />)
+    await userEvent.click(screen.getByRole('button', { name: /^Helpful$/i }))
+    expect(trackFeedbackSpy).toHaveBeenCalledWith('up', false)
+  })
+
+  it('thumbs down then Send fires two feedback events: (down, false) then (down, true)', async () => {
+    hookState.status = {
+      kind: 'ready',
+      data: { verdict_short: 'v', citations: [] },
+      cached: false,
+      quotaRemaining: 5,
+      opinionId: 'op-ga-down-reason',
+    }
+    render(<AIOpinionPanel candidate={candidate} />)
+    await userEvent.click(screen.getByRole('button', { name: /^Not helpful$/i }))
+    expect(trackFeedbackSpy).toHaveBeenLastCalledWith('down', false)
+
+    const textarea = screen.getByLabelText(/What was off/i)
+    await userEvent.type(textarea, 'level was inverted')
+    await userEvent.click(screen.getByRole('button', { name: /^Send$/i }))
+
+    expect(trackFeedbackSpy).toHaveBeenCalledTimes(2)
+    expect(trackFeedbackSpy).toHaveBeenLastCalledWith('down', true)
+  })
+
+  it('fires ai_opinion_quota_exceeded once when status transitions to quota_exceeded', () => {
+    hookState.status = { kind: 'quota_exceeded', resetsAt: '2026-05-29T23:59:59Z' }
+    render(<AIOpinionPanel candidate={candidate} />)
+    expect(trackQuotaExceededSpy).toHaveBeenCalledTimes(1)
+    expect(trackErrorSpy).not.toHaveBeenCalled()
+  })
+
+  it('fires ai_opinion_error once when status transitions to error', () => {
+    hookState.status = { kind: 'error', message: 'network blip' }
+    render(<AIOpinionPanel candidate={candidate} />)
+    expect(trackErrorSpy).toHaveBeenCalledTimes(1)
+    expect(trackQuotaExceededSpy).not.toHaveBeenCalled()
   })
 })

@@ -397,3 +397,62 @@ export function trackReferenceNudgeDismiss(): void {
     category: 'references',
   })
 }
+
+// ============================================
+// AI Opinion Engine (Section F)
+// ============================================
+// Adoption + cost + feedback signal for the recruiter-facing LLM
+// verdict panel. viewer_role is already attached via setUserProperties
+// at login, so we don't repeat it per event. We never log opinion_id,
+// player_id, or the verdict/reason text (recruiter-private + PII).
+
+/** Fires once per (component instance, opinion_id) — distinguishes
+ *  cache hits from fresh LLM calls. value = quotaRemaining on fresh
+ *  responses (helps watch cost shape over time); omitted on cached. */
+export function trackAIOpinionViewed(cached: boolean, quotaRemaining: number | null): void {
+  trackEvent({
+    action: 'ai_opinion_viewed',
+    category: 'ai_opinion',
+    label: cached ? 'cached' : 'fresh',
+    value: !cached && typeof quotaRemaining === 'number' ? quotaRemaining : undefined,
+  })
+}
+
+/** User clicked Regenerate. Always implies a fresh LLM call on the
+ *  next response cycle (force: true bypasses both client + server cache). */
+export function trackAIOpinionRegenerated(): void {
+  trackEvent({
+    action: 'ai_opinion_regenerated',
+    category: 'ai_opinion',
+  })
+}
+
+/** Recruiter rated an opinion via thumbs up/down. `has_reason` lets
+ *  us compute "% of down-votes that explained why" funnel without
+ *  needing the reason text itself in analytics. */
+export function trackAIOpinionFeedbackSubmitted(rating: 'up' | 'down', hasReason: boolean): void {
+  trackEvent({
+    action: 'ai_opinion_feedback_submitted',
+    category: 'ai_opinion',
+    label: rating,
+    has_reason: hasReason ? 1 : 0,
+  })
+}
+
+/** Daily quota gate hit (50/day Phase 1 ceiling). Spike in this event
+ *  is the signal to raise the cap or change the pricing slice. */
+export function trackAIOpinionQuotaExceeded(): void {
+  trackEvent({
+    action: 'ai_opinion_quota_exceeded',
+    category: 'ai_opinion',
+  })
+}
+
+/** Edge function returned an error (network, LLM upstream, content
+ *  filter rejection). Spike here = check Supabase function logs. */
+export function trackAIOpinionError(): void {
+  trackEvent({
+    action: 'ai_opinion_error',
+    category: 'ai_opinion',
+  })
+}

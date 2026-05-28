@@ -33,6 +33,13 @@ import {
 import { useAIOpinion } from '@/hooks/useAIOpinion'
 import type { AIOpinionFeedbackRating } from '@/hooks/useAIOpinion'
 import type { FitCandidateFields } from '@/lib/clubFit'
+import {
+  trackAIOpinionViewed,
+  trackAIOpinionRegenerated,
+  trackAIOpinionFeedbackSubmitted,
+  trackAIOpinionQuotaExceeded,
+  trackAIOpinionError,
+} from '@/lib/analytics'
 
 interface AIOpinionPanelProps {
   candidate: FitCandidateFields
@@ -74,6 +81,32 @@ export default function AIOpinionPanel({ candidate, className = '' }: AIOpinionP
     setReasonText('')
   }, [opinionId])
 
+  // GA4: viewed event fires once per (panel instance, opinion_id).
+  // opinionId-keyed so a Regenerate-driven new verdict produces a
+  // second 'viewed' event (correctly — it IS a new verdict to view).
+  // The cached vs fresh distinction in the label lets us see cache
+  // hit rates over time.
+  const opinionCached = status.kind === 'ready' ? status.cached : null
+  const opinionQuotaRemaining = status.kind === 'ready' ? status.quotaRemaining : null
+  useEffect(() => {
+    if (opinionId && opinionCached !== null) {
+      trackAIOpinionViewed(opinionCached, opinionQuotaRemaining)
+    }
+  }, [opinionId, opinionCached, opinionQuotaRemaining])
+
+  // GA4: terminal-error state events. Fire once per transition into
+  // each status (not on every re-render while the status is stuck).
+  const statusKind = status.kind
+  useEffect(() => {
+    if (statusKind === 'quota_exceeded') trackAIOpinionQuotaExceeded()
+    else if (statusKind === 'error') trackAIOpinionError()
+  }, [statusKind])
+
+  const handleRegenerate = () => {
+    trackAIOpinionRegenerated()
+    void regenerate()
+  }
+
   const handleRating = async (next: AIOpinionFeedbackRating) => {
     if (submitting) return
     setSubmitting(true)
@@ -82,6 +115,10 @@ export default function AIOpinionPanel({ candidate, className = '' }: AIOpinionP
     else setReasonOpen(false)
     try {
       await submitFeedback(next, null)
+      // Track AFTER the write succeeds so analytics doesn't over-count
+      // failed submits. has_reason=false here — reason flow fires its
+      // own event when Send is clicked.
+      trackAIOpinionFeedbackSubmitted(next, false)
     } catch {
       // Hook already logged. Roll back UI state so user can retry.
       setRating(null)
@@ -96,6 +133,7 @@ export default function AIOpinionPanel({ candidate, className = '' }: AIOpinionP
     setSubmitting(true)
     try {
       await submitFeedback(rating, reasonText)
+      trackAIOpinionFeedbackSubmitted(rating, reasonText.trim().length > 0)
       setReasonOpen(false)
     } catch {
       // Keep the textarea open so the user can retry.
@@ -271,7 +309,7 @@ export default function AIOpinionPanel({ candidate, className = '' }: AIOpinionP
               )}
               <button
                 type="button"
-                onClick={() => void regenerate()}
+                onClick={handleRegenerate}
                 className="inline-flex items-center gap-1 font-medium text-[#8026FA] hover:text-[#6B20D4]"
                 title="Regenerate the opinion (counts against your daily quota if not cached)"
               >
