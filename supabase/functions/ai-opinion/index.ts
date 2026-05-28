@@ -84,6 +84,15 @@ interface FitContext {
   player_open_to_coach: boolean | null
   player_open_to_opportunities: boolean | null
   player_last_active_at: string | null
+  // Phase 2 Slice B1: prompt-relevant signals that should invalidate
+  // the cache when they change. Previously these were in the prompt
+  // payload but NOT in context_hash, so a player adding a highlight
+  // video could leave a stale "no video evidence" verdict in cache for
+  // up to 24h.
+  player_accepted_reference_count: number
+  player_career_entry_count: number
+  player_has_highlight_video: boolean
+  player_full_match_video_count: number
 }
 
 // ── sha256 hash via Web Crypto (Deno) ──────────────────────────────
@@ -107,6 +116,14 @@ async function sha256(input: string): Promise<string> {
 function computeContextHash(viewerId: string, playerId: string, fit: FitContext): Promise<string> {
   // Includes everything that would change the verdict. When ANY input
   // changes the hash differs → cache miss → fresh generation.
+  //
+  // Phase 2 Slice B1 added the bottom four fields. They appear in the
+  // prompt's player payload, so a verdict written for a player with
+  // zero videos becomes wrong the moment that player uploads a
+  // highlight reel. Lazy invalidation via hash drift keeps the cache
+  // correct without needing a separate trigger. Cost: one extra LLM
+  // call per recruiter per relevant player update inside the 24h TTL
+  // window — acceptable for the correctness gain.
   const payload = JSON.stringify({
     v: viewerId,
     p: playerId,
@@ -118,6 +135,10 @@ function computeContextHash(viewerId: string, playerId: string, fit: FitContext)
     oc: fit.player_open_to_coach,
     oo: fit.player_open_to_opportunities,
     pv: PROMPT_VERSION,
+    arc: fit.player_accepted_reference_count,
+    cec: fit.player_career_entry_count,
+    hhv: fit.player_has_highlight_video,
+    fmv: fit.player_full_match_video_count,
   })
   return sha256(payload)
 }
@@ -465,6 +486,10 @@ serve(async (req: Request) => {
     player_open_to_coach: player.open_to_coach,
     player_open_to_opportunities: player.open_to_opportunities,
     player_last_active_at: player.last_active_at,
+    player_accepted_reference_count: player.accepted_reference_count ?? 0,
+    player_career_entry_count: player.career_entry_count ?? 0,
+    player_has_highlight_video: Boolean(player.highlight_video_url?.trim()),
+    player_full_match_video_count: player.full_game_video_count ?? 0,
   }
 
   // 6) Compute hash + cache check.
@@ -476,18 +501,22 @@ serve(async (req: Request) => {
   if (!force) {
     const { data: cached } = await supabase
       .from('ai_opinions')
-      .select('verdict_short, citations, expires_at')
+      .select('id, verdict_short, citations, expires_at')
       .eq('viewer_id', viewerId)
       .eq('player_id', playerId)
       .eq('context_hash', contextHash)
       .gt('expires_at', new Date().toISOString())
       .maybeSingle()
     if (cached) {
-      const c = cached as { verdict_short: string; citations: Citation[] }
+      const c = cached as { id: string; verdict_short: string; citations: Citation[] }
       // F10 fix: include quota_remaining: null for shape consistency
       // with the fresh-generation path. The client union expects this
       // field on every ready response.
+      //
+      // Phase 2 Slice A: opinion_id surfaced so the client can submit
+      // feedback (thumbs up/down) tied to this specific verdict row.
       return new Response(JSON.stringify({
+        opinion_id: c.id,
         verdict_short: c.verdict_short,
         citations: c.citations,
         cached: true,
@@ -540,10 +569,15 @@ serve(async (req: Request) => {
     })
   }
 
-  // 9) Persist + increment quota. Best-effort — failures here don't
-  // block the response (the recruiter still gets their verdict).
+  // 9) Persist + increment quota. The upsert RETURNS the row id so we
+  // can surface it to the client for Phase 2 Slice A feedback tying
+  // (thumbs up/down references the specific opinion row). Best-effort
+  // on the quota increment — even if it fails the verdict still goes
+  // back, but a failed upsert here means we can't return an id and
+  // the panel will gracefully hide the feedback affordance.
+  let opinionId: string | null = null
   try {
-    await supabase.from('ai_opinions').upsert({
+    const { data: upserted } = await supabase.from('ai_opinions').upsert({
       viewer_id: viewerId,
       player_id: playerId,
       context_hash: contextHash,
@@ -553,6 +587,9 @@ serve(async (req: Request) => {
       prompt_version: PROMPT_VERSION,
       expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
     }, { onConflict: 'viewer_id,player_id,context_hash' })
+      .select('id')
+      .single()
+    opinionId = (upserted as { id: string } | null)?.id ?? null
     await supabase.from('ai_opinion_quota').upsert({
       viewer_id: viewerId,
       day: today,
@@ -563,6 +600,7 @@ serve(async (req: Request) => {
   }
 
   return new Response(JSON.stringify({
+    opinion_id: opinionId,
     verdict_short: payload.verdict_short,
     citations: payload.citations,
     cached: false,

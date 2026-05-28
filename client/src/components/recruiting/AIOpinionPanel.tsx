@@ -19,9 +19,19 @@
  * shown subtly so recruiters see they have a soft cap.
  */
 
-import { useState } from 'react'
-import { Sparkles, ChevronDown, ChevronUp, RefreshCcw, AlertCircle, Clock } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import {
+  Sparkles,
+  ChevronDown,
+  ChevronUp,
+  RefreshCcw,
+  AlertCircle,
+  Clock,
+  ThumbsUp,
+  ThumbsDown,
+} from 'lucide-react'
 import { useAIOpinion } from '@/hooks/useAIOpinion'
+import type { AIOpinionFeedbackRating } from '@/hooks/useAIOpinion'
 import type { FitCandidateFields } from '@/lib/clubFit'
 
 interface AIOpinionPanelProps {
@@ -41,8 +51,58 @@ function isFeatureEnabled(): boolean {
 
 export default function AIOpinionPanel({ candidate, className = '' }: AIOpinionPanelProps) {
   const featureEnabled = isFeatureEnabled()
-  const { status, regenerate } = useAIOpinion(candidate, { enabled: featureEnabled })
+  const { status, regenerate, submitFeedback } = useAIOpinion(candidate, { enabled: featureEnabled })
   const [citationsOpen, setCitationsOpen] = useState(false)
+  // Phase 2 Slice A: feedback state. `rating` is the rating this
+  // session has submitted (filled icon for visual confirmation).
+  // `reasonOpen` controls the textarea visibility — appears after a
+  // thumbs-down click so the user can optionally elaborate. The down
+  // vote itself is persisted immediately so the negative signal isn't
+  // lost if they navigate away before typing.
+  const [rating, setRating] = useState<AIOpinionFeedbackRating | null>(null)
+  const [reasonOpen, setReasonOpen] = useState(false)
+  const [reasonText, setReasonText] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+
+  // Reset feedback state whenever the underlying opinion changes
+  // (Regenerate → new opinionId). Otherwise the prior rating would
+  // visually carry over to a different verdict.
+  const opinionId = status.kind === 'ready' ? status.opinionId : null
+  useEffect(() => {
+    setRating(null)
+    setReasonOpen(false)
+    setReasonText('')
+  }, [opinionId])
+
+  const handleRating = async (next: AIOpinionFeedbackRating) => {
+    if (submitting) return
+    setSubmitting(true)
+    setRating(next)
+    if (next === 'down') setReasonOpen(true)
+    else setReasonOpen(false)
+    try {
+      await submitFeedback(next, null)
+    } catch {
+      // Hook already logged. Roll back UI state so user can retry.
+      setRating(null)
+      setReasonOpen(false)
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const handleReasonSubmit = async () => {
+    if (submitting || !rating) return
+    setSubmitting(true)
+    try {
+      await submitFeedback(rating, reasonText)
+      setReasonOpen(false)
+    } catch {
+      // Keep the textarea open so the user can retry.
+    } finally {
+      setSubmitting(false)
+    }
+  }
 
   // Hide entirely when the flag is off OR Fit doesn't apply. We never
   // want to teach recruiters that "AI opinion exists for some players
@@ -165,16 +225,100 @@ export default function AIOpinionPanel({ candidate, className = '' }: AIOpinionP
                 <span className="ml-1">· {status.quotaRemaining} fresh remaining today</span>
               )}
             </span>
-            <button
-              type="button"
-              onClick={() => void regenerate()}
-              className="inline-flex items-center gap-1 font-medium text-[#8026FA] hover:text-[#6B20D4]"
-              title="Regenerate the opinion (counts against your daily quota if not cached)"
-            >
-              <RefreshCcw className="h-3 w-3" />
-              Regenerate
-            </button>
+            <div className="flex items-center gap-3">
+              {status.opinionId && (
+                <div
+                  className="flex items-center gap-1"
+                  role="group"
+                  aria-label="Rate this opinion"
+                  data-testid="ai-opinion-feedback"
+                >
+                  <button
+                    type="button"
+                    onClick={() => void handleRating('up')}
+                    disabled={submitting}
+                    aria-pressed={rating === 'up' ? 'true' : 'false'}
+                    aria-label="Helpful"
+                    title="Helpful"
+                    className={[
+                      'inline-flex h-5 w-5 items-center justify-center rounded-full transition',
+                      rating === 'up'
+                        ? 'bg-[#8026FA]/15 text-[#8026FA]'
+                        : 'text-gray-400 hover:text-[#8026FA] hover:bg-[#8026FA]/10',
+                      submitting ? 'opacity-50' : '',
+                    ].join(' ')}
+                  >
+                    <ThumbsUp className="h-3 w-3" aria-hidden="true" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleRating('down')}
+                    disabled={submitting}
+                    aria-pressed={rating === 'down' ? 'true' : 'false'}
+                    aria-label="Not helpful"
+                    title="Not helpful"
+                    className={[
+                      'inline-flex h-5 w-5 items-center justify-center rounded-full transition',
+                      rating === 'down'
+                        ? 'bg-amber-100 text-amber-700'
+                        : 'text-gray-400 hover:text-amber-600 hover:bg-amber-50',
+                      submitting ? 'opacity-50' : '',
+                    ].join(' ')}
+                  >
+                    <ThumbsDown className="h-3 w-3" aria-hidden="true" />
+                  </button>
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={() => void regenerate()}
+                className="inline-flex items-center gap-1 font-medium text-[#8026FA] hover:text-[#6B20D4]"
+                title="Regenerate the opinion (counts against your daily quota if not cached)"
+              >
+                <RefreshCcw className="h-3 w-3" />
+                Regenerate
+              </button>
+            </div>
           </footer>
+
+          {reasonOpen && rating === 'down' && (
+            <div
+              className="mt-2.5 rounded-lg border border-amber-200 bg-amber-50/50 p-2.5"
+              data-testid="ai-opinion-feedback-reason"
+            >
+              <label
+                htmlFor="ai-opinion-feedback-reason-input"
+                className="block text-[10px] font-semibold text-amber-800"
+              >
+                What was off? (optional)
+              </label>
+              <textarea
+                id="ai-opinion-feedback-reason-input"
+                value={reasonText}
+                onChange={(e) => setReasonText(e.target.value.slice(0, 500))}
+                rows={2}
+                placeholder="e.g. the level comparison was inverted, or it missed a key fact…"
+                className="mt-1 w-full resize-none rounded border border-amber-200 bg-white px-2 py-1.5 text-xs text-gray-800 placeholder:text-gray-400 focus:border-amber-400 focus:outline-none focus:ring-1 focus:ring-amber-300"
+              />
+              <div className="mt-1.5 flex items-center justify-end gap-2 text-[10px]">
+                <button
+                  type="button"
+                  onClick={() => setReasonOpen(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  Skip
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleReasonSubmit()}
+                  disabled={submitting || reasonText.trim().length === 0}
+                  className="rounded bg-amber-600 px-2 py-1 font-medium text-white hover:bg-amber-700 disabled:opacity-40"
+                >
+                  Send
+                </button>
+              </div>
+            </div>
+          )}
         </>
       )}
     </section>

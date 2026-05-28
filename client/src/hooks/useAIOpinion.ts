@@ -42,10 +42,22 @@ export interface AIOpinionResult {
 export type AIOpinionStatus =
   | { kind: 'idle' }
   | { kind: 'loading' }
-  | { kind: 'ready'; data: AIOpinionResult; cached: boolean; quotaRemaining: number | null }
+  | {
+      kind: 'ready'
+      data: AIOpinionResult
+      cached: boolean
+      quotaRemaining: number | null
+      /** Phase 2 Slice A: id of the underlying ai_opinions row so the
+       *  panel's thumbs-up/down feedback can link to it. May be null on
+       *  cache misses where the persist failed (best-effort write) —
+       *  feedback affordance hides when null. */
+      opinionId: string | null
+    }
   | { kind: 'not_applicable'; reason: 'no_target' | 'not_recruiter' | 'self' | 'fit_not_applicable' }
   | { kind: 'quota_exceeded'; resetsAt: string }
   | { kind: 'error'; message: string }
+
+export type AIOpinionFeedbackRating = 'up' | 'down'
 
 interface UseAIOpinionOptions {
   /** When false, the hook stays idle and never calls the edge function.
@@ -68,6 +80,11 @@ export function useAIOpinion(
    *  server-side cache (so cheap if context_hash hasn't changed) AND
    *  the 50/day quota. */
   regenerate: () => Promise<void>
+  /** Phase 2 Slice A: write thumbs-up/down feedback against the current
+   *  ready opinion. UPSERT keyed on (opinion_id, viewer_id) so calling
+   *  this multiple times replaces the prior rating instead of stacking.
+   *  No-ops silently if status is not 'ready' or opinionId is null. */
+  submitFeedback: (rating: AIOpinionFeedbackRating, reason?: string | null) => Promise<void>
 } {
   const enabled = options.enabled !== false
   const { profile: viewer } = useAuthStore()
@@ -113,7 +130,7 @@ export function useAIOpinion(
       if (!forceRefresh) {
         const { data: existing } = await supabase
           .from('ai_opinions')
-          .select('verdict_short, citations, expires_at')
+          .select('id, verdict_short, citations, expires_at')
           .eq('viewer_id', viewerId)
           .eq('player_id', candidateId)
           .gt('expires_at', new Date().toISOString())
@@ -125,12 +142,13 @@ export function useAIOpinion(
           // Generated types treat the jsonb column as Json; the
           // edge function enforces the AIOpinionCitation shape on
           // write so a runtime cast is safe here.
-          const row = existing as unknown as { verdict_short: string; citations: AIOpinionCitation[] }
+          const row = existing as unknown as { id: string; verdict_short: string; citations: AIOpinionCitation[] }
           setStatus({
             kind: 'ready',
             data: { verdict_short: row.verdict_short, citations: row.citations },
             cached: true,
             quotaRemaining: null,
+            opinionId: row.id,
           })
           return
         }
@@ -166,6 +184,7 @@ export function useAIOpinion(
           throw error
         }
         const payload = data as {
+          opinion_id: string | null
           verdict_short: string
           citations: AIOpinionCitation[]
           cached: boolean
@@ -176,6 +195,7 @@ export function useAIOpinion(
           data: { verdict_short: payload.verdict_short, citations: payload.citations },
           cached: Boolean(payload.cached),
           quotaRemaining: typeof payload.quota_remaining === 'number' ? payload.quota_remaining : null,
+          opinionId: typeof payload.opinion_id === 'string' ? payload.opinion_id : null,
         })
       } catch (err) {
         if (seq !== requestSeq.current) return
@@ -197,5 +217,30 @@ export function useAIOpinion(
     await fetchOpinion(true)
   }, [fetchOpinion])
 
-  return { status, regenerate }
+  const submitFeedback = useCallback(
+    async (rating: AIOpinionFeedbackRating, reason: string | null = null) => {
+      // Capture opinionId + viewerId at call time. Status is a ref-like
+      // snapshot via the closure — fine because we only act if status
+      // is 'ready' with a non-null opinionId.
+      if (status.kind !== 'ready' || !status.opinionId || !viewerId) return
+      const { error } = await supabase
+        .from('ai_opinion_feedback')
+        .upsert(
+          {
+            opinion_id: status.opinionId,
+            viewer_id: viewerId,
+            rating,
+            reason: reason && reason.trim().length > 0 ? reason.trim() : null,
+          },
+          { onConflict: 'opinion_id,viewer_id' },
+        )
+      if (error) {
+        logger.error('[useAIOpinion] feedback submit failed', error)
+        throw error
+      }
+    },
+    [status, viewerId],
+  )
+
+  return { status, regenerate, submitFeedback }
 }

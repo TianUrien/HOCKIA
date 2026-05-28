@@ -22,7 +22,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook, waitFor, act } from '@testing-library/react'
 
 // Hoisted so vi.mock factories (themselves hoisted) can reference them.
-const { supabaseFromBuilder, supabaseFromSpy, supabaseInvokeSpy, authState, clubFitState } = vi.hoisted(() => {
+const { supabaseFromBuilder, supabaseFromSpy, supabaseUpsertSpy, supabaseInvokeSpy, authState, clubFitState } = vi.hoisted(() => {
+  const upsertSpy = vi.fn().mockResolvedValue({ error: null })
   const builder = {
     select: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
@@ -30,10 +31,12 @@ const { supabaseFromBuilder, supabaseFromSpy, supabaseInvokeSpy, authState, club
     order: vi.fn().mockReturnThis(),
     limit: vi.fn().mockReturnThis(),
     maybeSingle: vi.fn(),
+    upsert: upsertSpy,
   }
   return {
     supabaseFromBuilder: builder,
     supabaseFromSpy: vi.fn(() => builder),
+    supabaseUpsertSpy: upsertSpy,
     supabaseInvokeSpy: vi.fn(),
     authState: { profile: null as { id: string; role: string } | null },
     clubFitState: { isApplicable: true },
@@ -88,6 +91,8 @@ describe('useAIOpinion', () => {
   beforeEach(() => {
     supabaseFromSpy.mockClear()
     supabaseInvokeSpy.mockClear()
+    supabaseUpsertSpy.mockClear()
+    supabaseUpsertSpy.mockResolvedValue({ error: null })
     supabaseFromBuilder.maybeSingle.mockReset()
     authState.profile = null
     clubFitState.isApplicable = true
@@ -143,6 +148,7 @@ describe('useAIOpinion', () => {
     setRecruiterViewer()
     supabaseFromBuilder.maybeSingle.mockResolvedValueOnce({
       data: {
+        id: 'op-cached-1',
         verdict_short: 'Comparable competition level + open today.',
         citations: [{ field: 'competition_level_band', value: '6', claim: 'matches tier' }],
         expires_at: new Date(Date.now() + 60_000).toISOString(),
@@ -156,6 +162,7 @@ describe('useAIOpinion', () => {
     })
     const ready = expectCachedReady(result.current.status)
     expect(ready.cached).toBe(true)
+    expect(ready.opinionId).toBe('op-cached-1')
     expect(ready.data.verdict_short).toBe('Comparable competition level + open today.')
     expect(ready.data.citations).toHaveLength(1)
     expect(supabaseInvokeSpy).not.toHaveBeenCalled()
@@ -168,6 +175,7 @@ describe('useAIOpinion', () => {
     // Edge function returns a fresh opinion
     supabaseInvokeSpy.mockResolvedValueOnce({
       data: {
+        opinion_id: 'op-fresh-1',
         verdict_short: 'Hoofdklasse player open this week — strong availability.',
         citations: [
           { field: 'open_to_play', value: 'true', claim: 'actively looking' },
@@ -186,6 +194,7 @@ describe('useAIOpinion', () => {
     const ready = expectCachedReady(result.current.status)
     expect(ready.cached).toBe(false)
     expect(ready.quotaRemaining).toBe(47)
+    expect(ready.opinionId).toBe('op-fresh-1')
     expect(ready.data.citations).toHaveLength(2)
     expect(supabaseInvokeSpy).toHaveBeenCalledWith('ai-opinion', {
       body: { player_id: 'player-1', force: false },
@@ -240,6 +249,7 @@ describe('useAIOpinion', () => {
     // First mount: cache hit
     supabaseFromBuilder.maybeSingle.mockResolvedValueOnce({
       data: {
+        id: 'op-cached-regen',
         verdict_short: 'Cached verdict',
         citations: [{ field: 'a', value: 'b', claim: 'c' }],
         expires_at: new Date(Date.now() + 60_000).toISOString(),
@@ -256,6 +266,7 @@ describe('useAIOpinion', () => {
     // Regenerate: edge fn returns fresh
     supabaseInvokeSpy.mockResolvedValueOnce({
       data: {
+        opinion_id: 'op-regen-fresh',
         verdict_short: 'Fresh verdict',
         citations: [],
         cached: false,
@@ -276,5 +287,85 @@ describe('useAIOpinion', () => {
     const ready = expectCachedReady(result.current.status)
     expect(ready.cached).toBe(false)
     expect(ready.data.verdict_short).toBe('Fresh verdict')
+  })
+
+  // ── Phase 2 Slice A: feedback submission ─────────────────────────
+  it('submitFeedback upserts a row keyed on (opinion_id, viewer_id)', async () => {
+    setRecruiterViewer()
+    supabaseFromBuilder.maybeSingle.mockResolvedValueOnce({
+      data: {
+        id: 'op-feedback-1',
+        verdict_short: 'verdict',
+        citations: [],
+        expires_at: new Date(Date.now() + 60_000).toISOString(),
+      },
+      error: null,
+    })
+
+    const { result } = renderHook(() => useAIOpinion(baseCandidate))
+    await waitFor(() => {
+      expect(result.current.status.kind).toBe('ready')
+    })
+
+    await act(async () => {
+      await result.current.submitFeedback('up')
+    })
+
+    // First .from() call was the cache pre-flight; the feedback call is
+    // the second. Asserting both targets + the upsert payload locks in
+    // the schema contract.
+    expect(supabaseFromSpy).toHaveBeenCalledWith('ai_opinion_feedback')
+    expect(supabaseUpsertSpy).toHaveBeenCalledWith(
+      {
+        opinion_id: 'op-feedback-1',
+        viewer_id: 'viewer-club-1',
+        rating: 'up',
+        reason: null,
+      },
+      { onConflict: 'opinion_id,viewer_id' },
+    )
+  })
+
+  it('submitFeedback("down", reason) trims and persists the reason text', async () => {
+    setRecruiterViewer()
+    supabaseFromBuilder.maybeSingle.mockResolvedValueOnce({
+      data: {
+        id: 'op-feedback-2',
+        verdict_short: 'verdict',
+        citations: [],
+        expires_at: new Date(Date.now() + 60_000).toISOString(),
+      },
+      error: null,
+    })
+
+    const { result } = renderHook(() => useAIOpinion(baseCandidate))
+    await waitFor(() => {
+      expect(result.current.status.kind).toBe('ready')
+    })
+
+    await act(async () => {
+      await result.current.submitFeedback('down', '  the level comparison was inverted  ')
+    })
+
+    expect(supabaseUpsertSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        rating: 'down',
+        reason: 'the level comparison was inverted',
+      }),
+      { onConflict: 'opinion_id,viewer_id' },
+    )
+  })
+
+  it('submitFeedback no-ops when status is not ready (e.g. before mount resolves)', async () => {
+    // Hook returns idle while enabled=false — submitFeedback should
+    // silently swallow the call rather than throw or write garbage.
+    const { result } = renderHook(() =>
+      useAIOpinion(baseCandidate, { enabled: false }),
+    )
+    expect(result.current.status.kind).toBe('idle')
+    await act(async () => {
+      await result.current.submitFeedback('up')
+    })
+    expect(supabaseUpsertSpy).not.toHaveBeenCalled()
   })
 })

@@ -21,15 +21,17 @@ import type { FitCandidateFields } from '@/lib/clubFit'
 import type { AIOpinionStatus } from '@/hooks/useAIOpinion'
 
 // Stub useAIOpinion — control status per test.
-const { hookState, regenerateSpy } = vi.hoisted(() => ({
+const { hookState, regenerateSpy, submitFeedbackSpy } = vi.hoisted(() => ({
   hookState: { status: { kind: 'idle' } as AIOpinionStatus },
   regenerateSpy: vi.fn(),
+  submitFeedbackSpy: vi.fn().mockResolvedValue(undefined),
 }))
 
 vi.mock('@/hooks/useAIOpinion', () => ({
   useAIOpinion: () => ({
     status: hookState.status,
     regenerate: regenerateSpy,
+    submitFeedback: submitFeedbackSpy,
   }),
 }))
 
@@ -56,6 +58,8 @@ describe('AIOpinionPanel', () => {
   beforeEach(() => {
     hookState.status = { kind: 'idle' }
     regenerateSpy.mockClear()
+    submitFeedbackSpy.mockClear()
+    submitFeedbackSpy.mockResolvedValue(undefined)
     cleanup()
     vi.stubEnv('VITE_ENABLE_AI_OPINION', 'true')
   })
@@ -67,6 +71,7 @@ describe('AIOpinionPanel', () => {
       data: { verdict_short: 'should not render', citations: [] },
       cached: false,
       quotaRemaining: 49,
+      opinionId: 'op-test',
     }
     // Need to re-import module so the FEATURE_ENABLED const re-evaluates.
     // The simplest assertion: rendering returns no panel testid.
@@ -113,6 +118,7 @@ describe('AIOpinionPanel', () => {
       },
       cached: false,
       quotaRemaining: 47,
+      opinionId: 'op-test',
     }
     render(<AIOpinionPanel candidate={candidate} />)
     expect(screen.getByTestId('ai-opinion-verdict')).toHaveTextContent(
@@ -139,6 +145,7 @@ describe('AIOpinionPanel', () => {
       },
       cached: true,
       quotaRemaining: null,
+      opinionId: 'op-test',
     }
     render(<AIOpinionPanel candidate={candidate} />)
     expect(screen.queryByTestId('ai-opinion-citations')).toBeNull()
@@ -162,6 +169,7 @@ describe('AIOpinionPanel', () => {
       data: { verdict_short: 'verdict body', citations: [] },
       cached: true,
       quotaRemaining: 30,
+      opinionId: 'op-test',
     }
     render(<AIOpinionPanel candidate={candidate} />)
     const footer = screen.getByRole('button', { name: /Regenerate/i }).closest('footer')
@@ -196,9 +204,112 @@ describe('AIOpinionPanel', () => {
       data: { verdict_short: 'v', citations: [] },
       cached: true,
       quotaRemaining: null,
+      opinionId: 'op-test',
     }
     render(<AIOpinionPanel candidate={candidate} />)
     await userEvent.click(screen.getByRole('button', { name: /Regenerate/i }))
     expect(regenerateSpy).toHaveBeenCalledTimes(1)
+  })
+
+  // ── Phase 2 Slice A: feedback UI ─────────────────────────────────
+  it('hides feedback controls when opinionId is null', () => {
+    hookState.status = {
+      kind: 'ready',
+      data: { verdict_short: 'v', citations: [] },
+      cached: false,
+      quotaRemaining: 5,
+      opinionId: null,
+    }
+    render(<AIOpinionPanel candidate={candidate} />)
+    expect(screen.queryByTestId('ai-opinion-feedback')).toBeNull()
+    // Regenerate still renders — only the feedback chips depend on
+    // opinionId.
+    expect(screen.getByRole('button', { name: /Regenerate/i })).toBeInTheDocument()
+  })
+
+  it('thumbs up immediately submits with null reason and shows pressed state', async () => {
+    hookState.status = {
+      kind: 'ready',
+      data: { verdict_short: 'v', citations: [] },
+      cached: false,
+      quotaRemaining: 5,
+      opinionId: 'op-feedback-up',
+    }
+    render(<AIOpinionPanel candidate={candidate} />)
+    const helpful = screen.getByRole('button', { name: /^Helpful$/i })
+    expect(helpful).toHaveAttribute('aria-pressed', 'false')
+
+    await userEvent.click(helpful)
+
+    expect(submitFeedbackSpy).toHaveBeenCalledWith('up', null)
+    expect(helpful).toHaveAttribute('aria-pressed', 'true')
+    // No reason textarea for thumbs-up.
+    expect(screen.queryByTestId('ai-opinion-feedback-reason')).toBeNull()
+  })
+
+  it('thumbs down submits immediately AND opens the optional reason field', async () => {
+    hookState.status = {
+      kind: 'ready',
+      data: { verdict_short: 'v', citations: [] },
+      cached: false,
+      quotaRemaining: 5,
+      opinionId: 'op-feedback-down',
+    }
+    render(<AIOpinionPanel candidate={candidate} />)
+    const notHelpful = screen.getByRole('button', { name: /^Not helpful$/i })
+    await userEvent.click(notHelpful)
+
+    // Down vote registered immediately so we don't lose the signal if
+    // the user navigates away before typing.
+    expect(submitFeedbackSpy).toHaveBeenCalledWith('down', null)
+    expect(notHelpful).toHaveAttribute('aria-pressed', 'true')
+
+    // Reason textarea revealed for optional follow-up.
+    expect(screen.getByTestId('ai-opinion-feedback-reason')).toBeInTheDocument()
+    expect(screen.getByLabelText(/What was off/i)).toBeInTheDocument()
+  })
+
+  it('sending a reason on thumbs-down submits a second time with the trimmed text', async () => {
+    hookState.status = {
+      kind: 'ready',
+      data: { verdict_short: 'v', citations: [] },
+      cached: false,
+      quotaRemaining: 5,
+      opinionId: 'op-feedback-reason',
+    }
+    render(<AIOpinionPanel candidate={candidate} />)
+    await userEvent.click(screen.getByRole('button', { name: /^Not helpful$/i }))
+    expect(submitFeedbackSpy).toHaveBeenCalledTimes(1)
+
+    const textarea = screen.getByLabelText(/What was off/i)
+    await userEvent.type(textarea, 'level comparison was inverted')
+
+    await userEvent.click(screen.getByRole('button', { name: /^Send$/i }))
+
+    expect(submitFeedbackSpy).toHaveBeenCalledTimes(2)
+    expect(submitFeedbackSpy).toHaveBeenLastCalledWith(
+      'down',
+      'level comparison was inverted',
+    )
+    // Send closes the textarea once the second submit resolves.
+    expect(screen.queryByTestId('ai-opinion-feedback-reason')).toBeNull()
+  })
+
+  it('Send button is disabled when textarea is empty', () => {
+    hookState.status = {
+      kind: 'ready',
+      data: { verdict_short: 'v', citations: [] },
+      cached: false,
+      quotaRemaining: 5,
+      opinionId: 'op-feedback-empty',
+    }
+    render(<AIOpinionPanel candidate={candidate} />)
+    // Need to click down first to reveal the textarea.
+    return userEvent
+      .click(screen.getByRole('button', { name: /^Not helpful$/i }))
+      .then(() => {
+        const send = screen.getByRole('button', { name: /^Send$/i })
+        expect(send).toBeDisabled()
+      })
   })
 })

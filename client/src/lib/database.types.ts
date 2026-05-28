@@ -56,6 +56,58 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_opinion_feedback: {
+        Row: {
+          created_at: string
+          id: string
+          opinion_id: string
+          rating: string
+          reason: string | null
+          updated_at: string
+          viewer_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          opinion_id: string
+          rating: string
+          reason?: string | null
+          updated_at?: string
+          viewer_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          opinion_id?: string
+          rating?: string
+          reason?: string | null
+          updated_at?: string
+          viewer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_opinion_feedback_opinion_id_fkey"
+            columns: ["opinion_id"]
+            isOneToOne: false
+            referencedRelation: "ai_opinions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_opinion_feedback_viewer_id_fkey"
+            columns: ["viewer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_opinion_feedback_viewer_id_fkey"
+            columns: ["viewer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_opinion_quota: {
         Row: {
           count: number
