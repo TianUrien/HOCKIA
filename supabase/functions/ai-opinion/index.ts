@@ -42,7 +42,7 @@ import { getServiceClient } from '../_shared/supabase-client.ts'
 // Bump PROMPT_VERSION when the system prompt or output schema changes
 // in a way that should invalidate cached opinions. ai_opinions cache
 // keys include this — bumping forces a full regenerate next read.
-const PROMPT_VERSION = 'v1.1'
+const PROMPT_VERSION = 'v1.2'
 const MODEL = 'claude-sonnet-4-6'
 const VERDICT_MAX_CHARS = 280
 const QUOTA_PER_DAY = 50
@@ -217,12 +217,18 @@ async function resolveTarget(
   return null
 }
 
-// ── Prompt v1.1 ─────────────────────────────────────────────────────
-// QA-driven changes vs v1.0.draft:
+// ── Prompt v1.2 ─────────────────────────────────────────────────────
+// QA-driven changes:
+//   v1.1:
 //   - Delta B (F12): cite MISSING fields as evidence (no empty citations
 //     array). Closes the broken "Why" affordance on insufficient-info.
 //   - Delta C (F13): pin to 2nd-person voice. Matches "Private to you"
 //     framing on the panel; QA caught drift to "the club"/3rd-person.
+//   v1.2:
+//   - F21: lock the BAND CONVENTION (lower = higher tier). QA caught
+//     the model flipping "above"/"below" directionality between adjacent
+//     calls on the same band relationship; explicit rule removes the
+//     50/50 coin flip.
 const SYSTEM_PROMPT = `You are HOCKIA AI's recruitment opinion engine. You produce short, evidence-based verdicts on player↔club fit for field-hockey recruiters.
 
 RULES (non-negotiable):
@@ -247,6 +253,7 @@ CITATION RULES:
 - The citations array MUST NEVER be empty. An unscorable fit is itself evidenced by absences — cite the missing fields with value="null".
 
 FIT-MATH CONTEXT:
+BAND CONVENTION: competition_level_band uses a 1–10 scale where LOWER numbers are HIGHER tiers (band 1 = national top tier; band 10 = recreational). When comparing bands, a player at band 3 vs a recruiter at band 5 is TWO TIERS ABOVE the recruiter (player plays at a higher level). "Step up" means moving from a higher band number to a lower one; "step down" is the reverse. Never invert this — apply the convention consistently across every verdict.
 You are given a deterministic Fit calculation. Treat it as ground truth. Your job is to translate the inputs into recruiter-readable language.
 
 If insufficient information (e.g., no playing_category, no level_band on either side, no openness signals), respond with a verdict naming the missing fields AND cite each missing field as a citation with value="null" — e.g. { "field": "competition_level_band", "value": "null", "claim": "Not set on your side, so tier comparison isn't possible yet." }. Do not return an empty citations array.`
