@@ -7,7 +7,7 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { Loader2 } from 'lucide-react'
-import { useNavigationType } from 'react-router-dom'
+import { useNavigationType, Link } from 'react-router-dom'
 import { MemberTile } from '@/components'
 import { logger } from '@/lib/logger'
 import { isAuthExpiredError } from '@/lib/sentryHelpers'
@@ -127,6 +127,10 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
   // We now wait for auth to settle so viewerScope is correct on the
   // very first fetch, and re-runs only happen for real filter changes.
   const { profile: currentUserProfile, loading: authLoading } = useAuthStore()
+  // QA F5: profiles + count queries are RLS-gated and 401 for anon
+  // viewers. Skip both fetches entirely for anon and render a sign-in
+  // prompt below instead of letting the error path log to Sentry.
+  const isAnon = !authLoading && !currentUserProfile
   const isCurrentUserTestAccount = currentUserProfile?.is_test_account ?? false
   // On staging, test accounts are visible to everyone for QA. When true,
   // the test-account filter below is skipped entirely.
@@ -169,7 +173,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
   // authLoading + dedupe-wrapped so a single cold load doesn't fire
   // it twice under StrictMode / Suspense replay.
   useEffect(() => {
-    if (authLoading) return
+    if (authLoading || isAnon) return
     let cancelled = false
     const cacheKey = `community-count-${roleFilter ?? 'all'}-${hideTestAccounts ? 'no-test' : 'all'}`
     const run = async () => {
@@ -209,7 +213,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     return () => {
       cancelled = true
     }
-  }, [authLoading, roleFilter, hideTestAccounts, onTotalCountChange])
+  }, [authLoading, isAnon, roleFilter, hideTestAccounts, onTotalCountChange])
 
   // Fetch members from Supabase. Critical: measure() is INSIDE
   // requestCache.dedupe so the module-level dedupe controls whether
@@ -333,10 +337,15 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
 
   // Initial load — gated on authLoading so we don't fire as 'anon'
   // and then immediately re-fire as 'std' once the profile resolves.
+  // QA F5: also skip entirely for anon viewers (RLS would 401 the
+  // query and the error path logs to Sentry).
   useEffect(() => {
-    if (authLoading) return
+    if (authLoading || isAnon) {
+      setIsLoading(false)
+      return
+    }
     fetchMembers()
-  }, [authLoading, fetchMembers])
+  }, [authLoading, isAnon, fetchMembers])
 
   // Perform server-side search
   const performServerSearch = useCallback(async (query: string) => {
@@ -458,14 +467,15 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     setIsSearching(false)
 
     // Only trigger server search if client-side found nothing
-    // (the person might exist beyond the initial 200 loaded)
-    if (searchQuery.trim() && clientFilteredMembers.length === 0) {
+    // (the person might exist beyond the initial 200 loaded). Skip
+    // entirely for anon — the query would 401.
+    if (!isAnon && searchQuery.trim() && clientFilteredMembers.length === 0) {
       const debounceTimer = setTimeout(() => {
         performServerSearch(searchQuery)
       }, 500)
       return () => clearTimeout(debounceTimer)
     }
-  }, [searchQuery, clientFilteredMembers, performServerSearch])
+  }, [isAnon, searchQuery, clientFilteredMembers, performServerSearch])
 
   // Client-side filtering (all filters)
   const filteredMembers = useMemo(() => {
@@ -653,6 +663,39 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
   // Search suggestions, filter mutators, hasActiveFilters / isNarrowed
   // all live in the lifted CommunityFiltersState now (state prop).
   // The empty-state CTA below calls state.clearFilters directly.
+
+  // Anon viewers: surface a sign-in prompt instead of letting the
+  // empty grid (from the gated-out fetch above) look broken. Profile
+  // visibility is auth-gated by RLS; no public browse mode today.
+  if (isAnon) {
+    return (
+      <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
+        <div className="w-16 h-16 bg-gradient-to-br from-[#8026FA]/10 to-[#924CEC]/10 rounded-full flex items-center justify-center mx-auto mb-4">
+          <span className="text-3xl">👋</span>
+        </div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+          Sign in to browse the HOCKIA community
+        </h3>
+        <p className="text-gray-500 mb-5 max-w-sm mx-auto">
+          Create a free account to discover players, coaches, clubs, brands, and umpires.
+        </p>
+        <div className="inline-flex items-center gap-2">
+          <Link
+            to="/signin"
+            className="px-5 py-2 rounded-lg bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white font-medium hover:opacity-90 transition-opacity"
+          >
+            Sign in
+          </Link>
+          <Link
+            to="/signup"
+            className="px-5 py-2 rounded-lg border border-[#8026FA]/30 text-[#8026FA] font-medium hover:bg-[#8026FA]/5 transition-colors"
+          >
+            Create account
+          </Link>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div>

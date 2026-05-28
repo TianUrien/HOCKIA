@@ -10,6 +10,7 @@ import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { requestCache } from '@/lib/requestCache'
 import { isAuthExpiredError } from '@/lib/sentryHelpers'
+import { useAuthStore } from '@/lib/auth'
 
 /**
  * TopCommunityMembersCarousel
@@ -148,6 +149,13 @@ export function TopCommunityMembersCarousel({
   onViewAll,
 }: TopCommunityMembersCarouselProps) {
   const navigate = useNavigate()
+  const { profile: viewerProfile, loading: authLoading } = useAuthStore()
+  // QA F5: get_top_community_members RPC requires auth; firing it as
+  // anon returns 401 + logs "[TopCommunityMembersCarousel] fetch
+  // failed" to Sentry. Carousel is a discovery surface — meaningless
+  // without a viewer context — so render nothing for anon viewers
+  // instead of triggering the failed fetch.
+  const isAnon = !authLoading && !viewerProfile
   const [members, setMembers] = useState<TopMemberRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -164,6 +172,13 @@ export function TopCommunityMembersCarousel({
   const filterCategoryKey = filterPlayingCategories?.join('|') ?? ''
 
   useEffect(() => {
+    // Skip the fetch entirely while auth is settling, or when there's
+    // no viewer (anon). The RPC requires auth; running it as anon just
+    // produces a 401 + Sentry noise.
+    if (authLoading || isAnon) {
+      setLoading(false)
+      return
+    }
     let cancelled = false
     const fetchTop = async () => {
       // peek module-level cache first: when StrictMode dev-double-
@@ -232,7 +247,7 @@ export function TopCommunityMembersCarousel({
     // filterCategoryKey (scalar) replaces filterPlayingCategories
     // (array) as the dep so a parent render that produces the same
     // categories doesn't re-fire the effect.
-  }, [roleFilter, sortCriterion, limit, onlyOpen, filterCategoryKey, filterPlayingCategories])
+  }, [roleFilter, sortCriterion, limit, onlyOpen, filterCategoryKey, filterPlayingCategories, authLoading, isAnon])
 
   const openMember = (m: TopMemberRow) => {
     const base =
