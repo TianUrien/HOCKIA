@@ -39,7 +39,13 @@ export default function ContextSwitcher({ className = '' }: ContextSwitcherProps
 
   const viewerRole = viewer?.role
   if (viewerRole !== 'club' && viewerRole !== 'coach') return null
-  if (loading && !active) return null
+  // F4 (QA): during cold-load fetch, render an invisible placeholder
+  // matching the chip's intrinsic height so the surrounding layout
+  // doesn't reflow when the real chip pops in. Was a 2-3s empty gap
+  // above the Community tabs.
+  if (loading && !active) {
+    return <div className={['inline-flex h-[30px]', className].join(' ')} aria-hidden="true" />
+  }
 
   const summary = formatContextSummary(active)
   const isEmpty = !active
@@ -56,12 +62,17 @@ export default function ContextSwitcher({ className = '' }: ContextSwitcherProps
   }
 
   return (
-    <div className="inline-flex items-center gap-1.5">
+    // F14 (QA): cap the row width to the viewport's available space
+    // and let the label segment truncate. Without this, long opp
+    // titles ("E2E Vacancy - Automated Test") push × Clear off-screen
+    // at 390px and produce horizontal scroll. `max-w-full` + `min-w-0`
+    // on the inner button enable the ellipsis.
+    <div className="inline-flex items-center gap-1.5 max-w-full">
       <button
         type="button"
         onClick={() => setSheetOpen(true)}
         className={[
-          'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full',
+          'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full min-w-0',
           'text-xs font-medium border transition-colors',
           isEmpty
             ? 'border-dashed border-gray-300 text-gray-600 hover:border-[#8026FA]/50 hover:text-[#8026FA] hover:bg-[#8026FA]/5'
@@ -71,16 +82,16 @@ export default function ContextSwitcher({ className = '' }: ContextSwitcherProps
         ].join(' ')}
         aria-label={isEmpty ? 'Add an optional recruiting context' : `Recruiting context: ${summary}. Tap to change or clear.`}
       >
-        <Target className="w-3.5 h-3.5" />
+        <Target className="w-3.5 h-3.5 flex-shrink-0" />
         {isEmpty ? (
           <span>Add recruiting context <span className="text-gray-400">(optional)</span></span>
         ) : (
           <>
-            <span className="text-gray-500">Scoped to:</span>
-            <span className="font-semibold">{summary}</span>
+            <span className="text-gray-500 flex-shrink-0">Scoped to:</span>
+            <span className="font-semibold truncate min-w-0" title={summary}>{summary}</span>
           </>
         )}
-        <ChevronDown className="w-3 h-3 opacity-60" />
+        <ChevronDown className="w-3 h-3 opacity-60 flex-shrink-0" />
       </button>
       {!isEmpty && (
         <button

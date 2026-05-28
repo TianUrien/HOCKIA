@@ -347,6 +347,16 @@ export function useShortlistItems(shortlistId: string | null | undefined): UseSh
       return
     }
     trackDbEvent('shortlist.item_status_changed', 'shortlist_item', itemId, { status })
+    // F10 (QA): silent success felt broken even though the optimistic
+    // pill update was correct. Confirm-saved toast resolves the
+    // "did anything happen?" gap.
+    const STATUS_LABEL: Record<ShortlistItemStatus, string> = {
+      unsorted: 'Marked Unsorted',
+      good_fit: 'Marked Good fit',
+      maybe: 'Marked Maybe',
+      not_a_fit: 'Marked Not a fit',
+    }
+    addToast(STATUS_LABEL[status], 'success')
   }, [viewerId, items, addToast])
 
   const setNote = useCallback(async (itemId: string, note: string | null) => {
@@ -365,6 +375,10 @@ export function useShortlistItems(shortlistId: string | null | undefined): UseSh
       return
     }
     trackDbEvent('shortlist.note_saved', 'shortlist_item', itemId, { has_note: note != null })
+    // F10 (QA): toast on note save so the user knows the blur
+    // committed. Different copy for clear-note so they can tell
+    // their text was wiped.
+    addToast(note == null ? 'Note cleared' : 'Note saved', 'success')
   }, [viewerId, items, addToast])
 
   const moveTo = useCallback(async (itemId: string, targetShortlistId: string) => {
@@ -388,7 +402,12 @@ export function useShortlistItems(shortlistId: string | null | undefined): UseSh
         addToast('Could not move item', 'error')
       }
       setItems(previous)
+      return
     }
+    // F11 (QA): silent move felt unconfirmed. Toast the success so
+    // the user knows the row actually landed somewhere (they can't
+    // see the destination until they navigate over).
+    addToast('Moved to other list', 'success')
   }, [viewerId, shortlistId, items, addToast])
 
   return { items, loading, error, refresh, add, remove, setStatus, setNote, moveTo }

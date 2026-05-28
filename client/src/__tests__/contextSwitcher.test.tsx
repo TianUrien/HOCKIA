@@ -133,7 +133,7 @@ describe('ContextSwitcher render gate', () => {
     expect(container).toBeEmptyDOMElement()
   })
 
-  it('hides during initial load (loading=true, no active)', () => {
+  it('renders an invisible height placeholder during initial load (loading=true, no active)', () => {
     setAuthRole('club')
     // fetchedForOwner=OWNER so ensureFetched short-circuits — keeps
     // the test deterministic and avoids spurious act() warnings from
@@ -146,7 +146,12 @@ describe('ContextSwitcher render gate', () => {
       fetchedForOwner: OWNER,
     })
     const { container } = render(<ContextSwitcher />)
-    expect(container).toBeEmptyDOMElement()
+    // F4 fix: instead of returning null (which caused a 2-3s layout
+    // gap above the Community tabs on cold load), the chip now renders
+    // an aria-hidden placeholder reserving its height. No visible
+    // chrome, no Target icon, no chip text — just empty inline-flex.
+    expect(container.textContent).toBe('')
+    expect(container.querySelector('[aria-hidden="true"]')).not.toBeNull()
   })
 })
 

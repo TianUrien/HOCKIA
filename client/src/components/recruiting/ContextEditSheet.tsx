@@ -26,6 +26,7 @@ import {
 } from '@/hooks/useRecruitingContext'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
+import { useToastStore } from '@/lib/toast'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
 
 /** Shape the picker uses. Carries pre-derived `target` so the
@@ -54,6 +55,7 @@ const TARGET_OPTIONS: { value: RecruitingTargetCategory; label: string; helper: 
 export default function ContextEditSheet({ isOpen, onClose }: ContextEditSheetProps) {
   const { active, available, error, activate, clearActive, create, activateForOpportunity, remove, clearError } = useRecruitingContext()
   const { user } = useAuthStore()
+  const { addToast } = useToastStore()
 
   const [creating, setCreating] = useState(false)
   const [draftTarget, setDraftTarget] = useState<RecruitingTargetCategory | null>(null)
@@ -165,13 +167,24 @@ export default function ContextEditSheet({ isOpen, onClose }: ContextEditSheetPr
     // No-op if the active context already points at this opportunity.
     if (active?.opportunity_id === opp.id) return
     setBusy(true)
-    await activateForOpportunity({
+    const row = await activateForOpportunity({
       opportunityId: opp.id,
       target: opp.target,
       region: opp.location_city ?? null,
       label: opp.title,
     })
     setBusy(false)
+    // F3 fix: the auto-scope path on ApplicantsList /
+    // OpportunityDetailPage toasts; the manual-picker path was silent
+    // (QA F3). Surface the same toast so both flows feel consistent.
+    if (row) {
+      addToast(
+        opp.target
+          ? `Recruiting scoped to this opportunity (${opp.target}).`
+          : 'Recruiting scoped to this opportunity.',
+        'success',
+      )
+    }
   }
 
   const handleSave = async () => {

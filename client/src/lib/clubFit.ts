@@ -222,7 +222,7 @@ export function computeClubFit(
   } else if (candidate.competition_level_band == null) {
     reasons.push('Current league not linked — level comparison unavailable.')
   } else if (viewerProfile.competition_level_band == null) {
-    reasons.push("Your club's league level isn't set — level comparison unavailable.")
+    reasons.push("Your team's league level isn't set — level comparison unavailable.")
   }
 
   // Availability — open flag (60%) + recency_30d on last_active (40%).
@@ -246,6 +246,19 @@ export function computeClubFit(
   // count for full credit; we use last_active_at as a proxy when
   // profile_updated_at isn't available in the candidate row.
   const recency = recency30d(candidate.last_active_at)
+  // F7 fix: the spec calls for one bullet per weighted component
+  // (4 total). Availability already includes a recency factor, but
+  // the standalone recency weight (10%) also deserves its own
+  // bullet so the popover always shows 4 explanations.
+  if (recency >= 0.99) {
+    reasons.push('Active on HOCKIA within the last 30 days.')
+  } else if (recency > 0) {
+    reasons.push('Last active 30–90 days ago — profile partially fresh.')
+  } else if (candidate.last_active_at) {
+    reasons.push('Last active over 90 days ago.')
+  } else {
+    reasons.push('Activity recency unknown.')
+  }
 
   // ── Score + state ───────────────────────────────────────────────
   const components: ClubFitComponents = {

@@ -13,7 +13,8 @@
  */
 
 import { useNavigate, Link } from 'react-router-dom'
-import { ArrowLeft, BookmarkCheck, Trash2, ExternalLink, MapPin, Building2 } from 'lucide-react'
+import { ArrowLeft, BookmarkCheck, Trash2, ExternalLink } from 'lucide-react'
+import HockeyContextLine from '@/components/recruiting/HockeyContextLine'
 import Header from '@/components/Header'
 import { Avatar, RoleBadge } from '@/components'
 import ContextSwitcher from '@/components/recruiting/ContextSwitcher'
@@ -174,21 +175,16 @@ function SavedCandidateRow({ item, onRemoved }: { item: SavedProfileSummary; onR
             <h3 className="font-semibold text-gray-900 truncate">{profile.full_name ?? 'Unnamed'}</h3>
             <RoleBadge role={profile.role as 'player' | 'coach' | 'club' | 'brand' | 'umpire'} />
           </div>
-          <div className="mt-1 flex items-center gap-3 text-xs text-gray-600">
-            {profile.position && <span className="truncate">{profile.position}</span>}
-            {profile.base_location && (
-              <span className="inline-flex items-center gap-1 truncate">
-                <MapPin className="w-3 h-3 flex-shrink-0" />
-                {profile.base_location}
-              </span>
-            )}
-            {profile.current_club && (
-              <span className="inline-flex items-center gap-1 truncate">
-                <Building2 className="w-3 h-3 flex-shrink-0" />
-                {profile.current_club}
-              </span>
-            )}
-          </div>
+          {/* F12 (QA): consistency with the new ShortlistDetailPage —
+              both surfaces now use HockeyContextLine (club ·
+              competition · position) so users see the same row shape
+              regardless of which entry point they used. */}
+          <HockeyContextLine
+            clubName={profile.current_club}
+            competitionName={null}
+            position={profile.position}
+            className="mt-1"
+          />
         </div>
         <ExternalLink className="w-4 h-4 text-gray-400 flex-shrink-0" />
       </button>

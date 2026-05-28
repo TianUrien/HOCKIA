@@ -152,7 +152,19 @@ export default function ShortlistsIndexPage() {
                 list={list}
                 onOpen={() => navigate(`/dashboard/shortlists/${list.id}`)}
                 onRename={(name) => void rename(list.id, name)}
-                onDelete={() => void remove(list.id)}
+                onDelete={() => {
+                  // F8 (QA): confirm before destructive delete. List +
+                  // all items disappear with no undo, so a one-tap
+                  // confirm is the right safety. Native confirm beats
+                  // a modal here for terseness and a11y; can upgrade
+                  // to a styled dialog later if QA flags this too.
+                  const msg = list.item_count > 0
+                    ? `Delete "${list.name}" and remove ${list.item_count} ${list.item_count === 1 ? 'player' : 'players'} from this list? This can't be undone.`
+                    : `Delete "${list.name}"?`
+                  if (window.confirm(msg)) {
+                    void remove(list.id)
+                  }
+                }}
                 onSetDefault={() => void setDefault(list.id)}
               />
             ))}
@@ -188,6 +200,8 @@ function ShortlistRow({ list, onOpen, onRename, onDelete, onSetDefault }: RowPro
           <input
             autoFocus
             type="text"
+            aria-label={`Rename shortlist ${list.name}`}
+            placeholder="Shortlist name"
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             onBlur={commitRename}
