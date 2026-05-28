@@ -25,7 +25,8 @@
  * and the popover heading.
  */
 
-import { useCallback, useEffect, useId, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useClubFit } from '@/hooks/useClubFit'
 import { clubFitStateLabel, type ClubFitState } from '@/lib/clubFit'
 import type { FitCandidateFields } from '@/lib/clubFit'
@@ -82,11 +83,20 @@ export default function ClubFitChip({
   const popoverId = useId()
   const chipRef = useRef<HTMLSpanElement>(null)
 
-  // Click-outside + Escape to close.
+  // Popover element ref — for the click-outside check (need to exclude
+  // the portal-rendered popover from the "outside" calculation).
+  const popoverElRef = useRef<HTMLSpanElement>(null)
+
+  // Click-outside + Escape to close. The popover is portaled to
+  // document.body so chipRef.contains() alone isn't enough — clicks
+  // INSIDE the popover would otherwise fire the close handler.
   useEffect(() => {
     if (!open) return
     const onDocClick = (e: MouseEvent) => {
-      if (chipRef.current && !chipRef.current.contains(e.target as Node)) {
+      const target = e.target as Node
+      const insideChip = chipRef.current?.contains(target)
+      const insidePopover = popoverElRef.current?.contains(target)
+      if (!insideChip && !insidePopover) {
         setOpen(false)
       }
     }
@@ -151,6 +161,8 @@ export default function ClubFitChip({
             target={fit.target}
             label={label}
             reasons={fit.reasons}
+            anchorRef={chipRef}
+            popoverRef={popoverElRef}
           />
         )}
       </span>
@@ -192,6 +204,8 @@ export default function ClubFitChip({
           target={fit.target}
           label={label}
           reasons={fit.reasons}
+          anchorRef={chipRef}
+          popoverRef={popoverElRef}
         />
       )}
     </span>
@@ -203,19 +217,79 @@ interface ReasoningPopoverProps {
   target: string | null
   label: string
   reasons: string[]
+  anchorRef: React.RefObject<HTMLSpanElement | null>
+  popoverRef: React.RefObject<HTMLSpanElement | null>
 }
 
-/** Absolutely-positioned reasoning panel anchored to the chip. Stops
- *  propagation on every interactive event so the parent button never
- *  fires while the popover is open. */
-function ReasoningPopover({ id, target, label, reasons }: ReasoningPopoverProps) {
-  return (
+const POPOVER_WIDTH = 256 // matches w-64 in the markup
+const VIEWPORT_PADDING = 8 // breathing room from screen edges
+const ANCHOR_GAP = 6 // mt-1.5
+
+/**
+ * Fixed-position reasoning panel rendered via React portal to
+ * document.body so it escapes parent containers with `overflow:
+ * hidden` (MemberTile + carousel cards). Anchored to the chip via
+ * getBoundingClientRect, clamped to the viewport so it can't spill
+ * off the left/right edges at 390px mobile widths. Re-measures on
+ * scroll + resize so the popover follows the chip if the user
+ * scrolls while it's open.
+ *
+ * Was: absolutely-positioned span inside the chip, which clipped on
+ * every card boundary (QA F5/F15).
+ */
+function ReasoningPopover({
+  id, target, label, reasons, anchorRef, popoverRef,
+}: ReasoningPopoverProps) {
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null)
+
+  const measure = useCallback(() => {
+    const anchor = anchorRef.current
+    if (!anchor) return
+    const rect = anchor.getBoundingClientRect()
+    const viewportW = window.innerWidth
+    // Default anchor: bottom-left of the chip, popover left-aligned
+    const desiredLeft = rect.left
+    // Clamp horizontally so the popover never spills past either edge
+    const maxLeft = viewportW - POPOVER_WIDTH - VIEWPORT_PADDING
+    const left = Math.max(VIEWPORT_PADDING, Math.min(desiredLeft, maxLeft))
+    const top = rect.bottom + ANCHOR_GAP
+    setPos({ top, left })
+  }, [anchorRef])
+
+  // Measure on mount + whenever the chip moves (scroll, resize, fonts).
+  // useLayoutEffect runs before paint so there's no flash at (0,0).
+  useLayoutEffect(() => {
+    measure()
+  }, [measure])
+
+  useEffect(() => {
+    window.addEventListener('scroll', measure, true) // capture: catch nested scrolls too
+    window.addEventListener('resize', measure)
+    return () => {
+      window.removeEventListener('scroll', measure, true)
+      window.removeEventListener('resize', measure)
+    }
+  }, [measure])
+
+  // Avoid SSR / first-render flash at (0,0) — render only once we
+  // have a real measurement. Tests can still assert presence because
+  // useLayoutEffect runs synchronously after mount.
+  if (!pos) return null
+
+  return createPortal(
     <span
+      ref={popoverRef}
       id={id}
       role="tooltip"
       onClick={(e) => e.stopPropagation()}
       onMouseDown={(e) => e.stopPropagation()}
-      className="absolute z-30 left-0 top-full mt-1.5 w-64 rounded-lg border border-gray-200 bg-white p-3 shadow-xl text-left cursor-auto"
+      style={{
+        position: 'fixed',
+        top: pos.top,
+        left: pos.left,
+        width: POPOVER_WIDTH,
+      }}
+      className="z-50 rounded-lg border border-gray-200 bg-white p-3 shadow-xl text-left cursor-auto"
     >
       <span className="block text-[11px] font-bold text-gray-900 mb-1">
         {label}
@@ -234,6 +308,7 @@ function ReasoningPopover({ id, target, label, reasons }: ReasoningPopoverProps)
           </span>
         ))}
       </span>
-    </span>
+    </span>,
+    document.body,
   )
 }
