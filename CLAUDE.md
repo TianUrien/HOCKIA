@@ -35,3 +35,21 @@ do **not** push to `main` without explicit instruction.
 - `supabase/migrations/` — schema + RPC sources of truth
 - `client/e2e/` — Playwright smoke + role-scoped specs
 - `client/src/__tests__/` — Vitest unit tests
+
+## Data API GRANTs on new tables
+
+From Oct 30 2026 Supabase stops auto-exposing new public tables to the
+Data API. `supabase/migrations/20260528110000_explicit_data_api_grants.sql`
+installs `ALTER DEFAULT PRIVILEGES` for the postgres role so new
+`CREATE TABLE public.*` migrations inherit the standard grants
+(anon/authenticated CRUD + service_role ALL) automatically.
+
+For exceptions:
+- **Service-role-only table** (queues, scheduler state, etc.): add
+  `REVOKE ALL ON TABLE public.<x> FROM anon, authenticated;` after
+  the CREATE TABLE.
+- **Tighter than CRUD** (e.g. SELECT-only for one role): explicit
+  REVOKE for the disallowed verbs.
+
+RLS is still the actual gate on every public table — the GRANTs are
+the outer fence.
