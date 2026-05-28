@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MapPin, Building2, Shield, Bookmark, BookmarkCheck } from 'lucide-react'
+import { MapPin, Building2, Shield } from 'lucide-react'
 import { RoleBadge, TierBadge, VerifiedBadge, DualNationalityDisplay } from '@/components'
 import type { ProfileTier } from '@/lib/profileTier'
 import SignInPromptModal from '@/components/SignInPromptModal'
 import { useAuthStore } from '@/lib/auth'
 import { useWorldClubLogo, getPlayerLeagueName } from '@/hooks/useWorldClubLogo'
 import HockeyContextLine from '@/components/recruiting/HockeyContextLine'
-import { useIsProfileSaved } from '@/hooks/useSavedProfiles'
+import QuickActionsRow from '@/components/recruiting/QuickActionsRow'
 import { getImageUrl } from '@/lib/imageUrl'
 import RolePlaceholder from './RolePlaceholder'
 import ClubFitChip from './recruiting/ClubFitChip'
@@ -78,13 +78,13 @@ export default function MemberTile(props: MemberTileProps) {
   const { user } = useAuthStore()
   const navigate = useNavigate()
   const [showSignInPrompt, setShowSignInPrompt] = useState(false)
-  // Save action — Phase 1 of the Career Snapshot + Shortlist initiative.
-  // Hidden on own profile + when unauthenticated (toggle handler shows a
-  // sign-in toast in that case). Renders as an absolutely-positioned
-  // sibling of the main tile button so we don't nest interactive
-  // elements (a11y + click-target hygiene).
-  const savedState = useIsProfileSaved(props.id)
-  const showSaveButton = savedState.isAuthenticated && !savedState.isOwnProfile
+  // Quick actions (Save / Message / Shortlist menu / recruiter
+  // placeholders) live as a footer strip beneath the clickable
+  // identity area. QuickActionsRow self-gates on auth + non-self,
+  // and hides recruiter-only items (Invite/Compare) for non-recruiter
+  // viewers. Rendering it for every role is fine — Save + Message
+  // work the same across player/coach/club/brand/umpire.
+  const showQuickActions = Boolean(user) && user?.id !== props.id
   const clubLogo = useWorldClubLogo(props.current_world_club_id ?? null)
 
   const isBrand = props.role === 'brand'
@@ -164,11 +164,11 @@ export default function MemberTile(props: MemberTileProps) {
 
   return (
     <>
-      <div className="relative h-full">
+      <div className="flex flex-col h-full bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-md hover:border-gray-300 transition-all">
       <button
         type="button"
         onClick={handleClick}
-        className="group block w-full h-full text-left bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-md hover:border-gray-300 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8026FA] focus-visible:ring-offset-2"
+        className="group block w-full text-left flex-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8026FA] focus-visible:ring-offset-2"
         aria-label={(() => {
           const name = props.full_name?.trim() ?? ''
           const pct = props.profileCompletenessPct
@@ -317,24 +317,21 @@ export default function MemberTile(props: MemberTileProps) {
         </div>
       </button>
 
-      {showSaveButton && (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation()
-            void savedState.toggle()
-          }}
-          disabled={savedState.mutating}
-          className="absolute top-3 right-3 z-10 w-9 h-9 rounded-full bg-white/95 shadow-sm ring-1 ring-gray-200 flex items-center justify-center text-gray-700 hover:bg-white hover:text-[#8026FA] disabled:opacity-50 transition-colors"
-          aria-label={savedState.isSaved ? `Remove ${props.full_name} from saved` : `Save ${props.full_name}`}
-          title={savedState.isSaved ? 'Saved — tap to remove' : 'Save for later'}
+      {/* Quick-actions footer — sibling of the main clickable button so
+          we don't nest interactive elements. stopPropagation on the
+          wrapper keeps tile-level handlers from firing when a recruiter
+          taps inside the row. Hidden for anon viewers + own-profile. */}
+      {showQuickActions && (
+        <div
+          className="px-3 py-2 border-t border-gray-100 bg-gray-50/40"
+          onClick={(e) => e.stopPropagation()}
         >
-          {savedState.isSaved ? (
-            <BookmarkCheck className="w-4 h-4 fill-[#8026FA] text-[#8026FA]" />
-          ) : (
-            <Bookmark className="w-4 h-4" />
-          )}
-        </button>
+          <QuickActionsRow
+            playerId={props.id}
+            playerName={props.full_name}
+            compact
+          />
+        </div>
       )}
       </div>
 

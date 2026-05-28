@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useRef } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ArrowLeft } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
@@ -20,6 +20,7 @@ import ProfilePostsTab from '@/components/ProfilePostsTab'
 import SignInPromptModal from '@/components/SignInPromptModal'
 import ClubLinkPrompt from '@/components/ClubLinkPrompt'
 import HeroIdentityCard from '@/components/dashboard/bento/HeroIdentityCard'
+import RecruitmentVisibilityWidget from '@/components/dashboard/bento/RecruitmentVisibilityWidget'
 import CoachBentoGrid from '@/components/dashboard/bento/CoachBentoGrid'
 import ScoutingCard from '@/components/profile/ScoutingCard'
 import CoachCommunityHub from '@/components/community/CoachCommunityHub'
@@ -241,11 +242,14 @@ export default function CoachDashboard({
   const commentHighlightVersion = useNotificationStore((state) => state.commentHighlightVersion)
   const [highlightedComments, setHighlightedComments] = useState<Set<string>>(new Set())
 
-  // Profile strength for coaches (only compute for own profile).
+  // Profile strength refresh stays wired so other consumers
+  // (ProfileCompletionCard on the home feed, community tier badges)
+  // see fresh denormalized counts after profile edits here. The
+  // dashboard itself no longer renders a percentage — recruitment
+  // signals live in RecruitmentVisibilityWidget below the Hero.
   const strength = useCoachProfileStrength({
     profile: readOnly ? null : (profileData ?? authProfile) as CoachProfileShape | null,
   })
-  const prevPercentageRef = useRef<number | null>(null)
 
   const currentWorldClubId = (profile as Partial<Profile> | null)?.current_world_club_id ?? null
   const currentClubLogo = useWorldClubLogo(currentWorldClubId)
@@ -325,47 +329,6 @@ export default function CoachDashboard({
     void clearCommentNotifications()
   }, [activeTab, claimCommentHighlights, clearCommentNotifications, commentHighlightVersion, readOnly, highlightedComments])
 
-  // Toast when profile strength increases.
-  useEffect(() => {
-    if (readOnly || strength.loading) return
-    const currentPercentage = strength.percentage
-    const prevPercentage = prevPercentageRef.current
-
-    if (prevPercentage !== null && currentPercentage > prevPercentage) {
-      const increase = currentPercentage - prevPercentage
-      if (currentPercentage >= 100) {
-        addToast('Your coach profile is now complete! Clubs can fully evaluate you.', 'success')
-      } else {
-        addToast(`Profile strength +${increase}%. Keep going!`, 'success')
-      }
-    }
-    prevPercentageRef.current = currentPercentage
-  }, [strength.percentage, strength.loading, readOnly, addToast])
-
-  // Coach buckets have a slightly different shape than player buckets
-  // (actionId string vs action object). Adapt them to the Hero's
-  // ProfileStrengthBucket shape so the same checklist UI renders.
-  const adaptedBuckets: ProfileStrengthBucket[] = useMemo(
-    () =>
-      strength.buckets.map((b) => ({
-        id: b.id,
-        label: b.label,
-        description: b.hint,
-        unlockCopy: b.unlockCopy,
-        weight: b.weight,
-        completed: b.completed,
-        action:
-          b.actionId === 'journey-tab'
-            ? { type: 'tab' as const, tab: 'journey' }
-            : b.actionId === 'gallery-tab'
-              ? { type: 'tab' as const, tab: 'media' }
-              : b.actionId === 'friends-tab'
-                ? { type: 'tab' as const, tab: 'community' }
-                : { type: 'edit-profile' as const },
-      })),
-    [strength.buckets],
-  )
-
   const handleTabChange = useMemo(
     () => (tab: TabType) => {
       const wasSameTab = activeTab === tab
@@ -405,17 +368,18 @@ export default function CoachDashboard({
     [activeTab, navigate, readOnly, routeParams.id, routeParams.username, searchParams],
   )
 
-  const handleProfileStrengthAction = (bucket: ProfileStrengthBucket) => {
+  // Bucket-action dispatcher for RecruitmentVisibilityWidget. The coach
+  // 5-item set only emits edit-profile + tab actions (no add-video);
+  // anything unexpected falls through to opening the edit modal so the
+  // user always lands somewhere useful.
+  const handleVisibilityAction = (bucket: ProfileStrengthBucket) => {
     switch (bucket.action.type) {
       case 'edit-profile':
         setShowEditModal(true)
         break
-      case 'tab': {
-        const targetTab = bucket.action.tab as TabType
-        handleTabChange(targetTab)
+      case 'tab':
+        handleTabChange(bucket.action.tab as TabType)
         break
-      }
-      // Coach buckets don't have add-video; fall through.
       default:
         setShowEditModal(true)
     }
@@ -598,10 +562,6 @@ export default function CoachDashboard({
           readOnly={readOnly}
           isOwnProfile={isOwnProfile}
           authProfileRole={authProfile?.role}
-          completionPercentage={strength.percentage}
-          completionLoading={strength.loading}
-          completionBuckets={!readOnly ? adaptedBuckets : undefined}
-          onBucketAction={handleProfileStrengthAction}
           currentClubLogo={currentClubLogo}
           onEdit={() => setShowEditModal(true)}
           onViewPublic={handleViewPublic}
@@ -610,6 +570,16 @@ export default function CoachDashboard({
           onFriendsClick={handleFriendsClick}
           onReferencesClick={handleReferencesClick}
         />
+
+        {/* G.10 — private 5-item recruitment-readiness checklist for
+            coaches. Same component as PlayerDashboard; the widget
+            branches on profile.role to pick coach-specific items. */}
+        {!readOnly && isLanding && (
+          <RecruitmentVisibilityWidget
+            profile={profile as Profile}
+            onAction={handleVisibilityAction}
+          />
+        )}
 
         {!readOnly && isLanding && (
           <div id="profile-viewers" className="scroll-mt-20">

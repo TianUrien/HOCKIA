@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useRef } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ArrowLeft } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
@@ -18,6 +18,7 @@ import AddVideoLinkModal from '@/components/AddVideoLinkModal'
 import ProfilePostsTab from '@/components/ProfilePostsTab'
 import SignInPromptModal from '@/components/SignInPromptModal'
 import HeroIdentityCard from '@/components/dashboard/bento/HeroIdentityCard'
+import RecruitmentVisibilityWidget from '@/components/dashboard/bento/RecruitmentVisibilityWidget'
 import PlayerBentoGrid from '@/components/dashboard/bento/PlayerBentoGrid'
 import ScoutingCard from '@/components/profile/ScoutingCard'
 import PlayerCommunityHub from '@/components/community/PlayerCommunityHub'
@@ -185,9 +186,12 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
   const [sendingMessage, setSendingMessage] = useState(false)
   const claimCommentHighlights = useNotificationStore((state) => state.claimCommentHighlights)
 
-  // Profile strength for player profiles (only for own profile)
+  // Profile strength refresh is still wired so other consumers
+  // (ProfileCompletionCard on the home feed, ProfileHealthCard) stay
+  // current after the user edits their profile from this page. The
+  // dashboard itself no longer renders a percentage — recruitment
+  // signals live in RecruitmentVisibilityWidget below the Hero.
   const profileStrength = useProfileStrength(!readOnly ? (profile as Profile) : null)
-  const prevPercentageRef = useRef<number | null>(null)
   const clearCommentNotifications = useNotificationStore((state) => state.clearCommentNotifications)
   const commentHighlightVersion = useNotificationStore((state) => state.commentHighlightVersion)
   const [highlightedComments, setHighlightedComments] = useState<Set<string>>(new Set())
@@ -283,25 +287,6 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
 
     void clearCommentNotifications()
   }, [activeTab, claimCommentHighlights, clearCommentNotifications, commentHighlightVersion, readOnly, highlightedComments])
-
-  // Show toast when profile strength increases
-  useEffect(() => {
-    if (readOnly || profileStrength.loading) return
-
-    const currentPercentage = profileStrength.percentage
-    const prevPercentage = prevPercentageRef.current
-
-    if (prevPercentage !== null && currentPercentage > prevPercentage) {
-      const increase = currentPercentage - prevPercentage
-      if (currentPercentage >= 100) {
-        addToast("Your profile is now complete! Clubs can fully evaluate you.", 'success')
-      } else {
-        addToast(`Profile strength +${increase}%. Keep going!`, 'success')
-      }
-    }
-
-    prevPercentageRef.current = currentPercentage
-  }, [profileStrength.percentage, profileStrength.loading, readOnly, addToast])
 
   const handleTabChange = useMemo(
     () => (tab: TabType) => {
@@ -540,18 +525,14 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
           />
         )}
 
-        {/* Hero — replaces the legacy Profile Header card. Always at the top so
-            users know whose profile they're on regardless of which tab they're
-            viewing. Owner sees completion arc + edit; visitor sees Message + Connect. */}
+        {/* Hero — identity surface. Owner sees edit; visitor sees
+            Message + Connect. Recruitment-readiness signals live in
+            RecruitmentVisibilityWidget below for owner + landing. */}
         <HeroIdentityCard
           profile={profile}
           readOnly={readOnly}
           isOwnProfile={isOwnProfile}
           authProfileRole={authProfile?.role}
-          completionPercentage={profileStrength.percentage}
-          completionLoading={profileStrength.loading}
-          completionBuckets={!readOnly ? profileStrength.buckets : undefined}
-          onBucketAction={handleProfileStrengthAction}
           currentClubLogo={currentClubLogo}
           onEdit={() => setShowEditModal(true)}
           onViewPublic={handleViewPublic}
@@ -560,6 +541,16 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
           onFriendsClick={handleFriendsClick}
           onReferencesClick={handleReferencesClick}
         />
+
+        {/* G.10 — private 5-item recruitment-readiness checklist.
+            Owner-only on the landing view; replaces the legacy
+            "Profile complete %" arc that used to sit in HeroIdentityCard. */}
+        {!readOnly && isLanding && (
+          <RecruitmentVisibilityWidget
+            profile={profile as Profile}
+            onAction={handleProfileStrengthAction}
+          />
+        )}
 
         {/* "Who viewed your profile" — owner-only engagement nudge that
             sits between the Hero and the Bento Grid. Same placement

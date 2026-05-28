@@ -36,6 +36,7 @@ import { useToastStore } from '@/lib/toast'
 import { useIsProfileSaved } from '@/hooks/useSavedProfiles'
 import { resolveConversationRoute } from '@/lib/startConversation'
 import ClubFitChip from '@/components/recruiting/ClubFitChip'
+import MoreActionsMenu from '@/components/recruiting/MoreActionsMenu'
 
 interface ScoutingCardProfile {
   id: string
@@ -373,6 +374,15 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
                 </>
               )}
             </button>
+            {/* ⋯ — Move to list / Add note. Bespoke gradient Save +
+                Message stay as primary CTAs; this gives recruiters
+                access to multi-list workflows without leaving the
+                profile. Same menu used by QuickActionsRow on tile
+                surfaces, so behavior + telemetry stay consistent. */}
+            <MoreActionsMenu
+              playerId={profile.id}
+              playerName={profile.full_name ?? 'this player'}
+            />
             {showJourneyLink && (
               <button
                 type="button"

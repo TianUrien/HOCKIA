@@ -234,17 +234,25 @@ vi.mock('@/lib/auth', () => ({
 }))
 
 vi.mock('@/lib/supabase', () => {
-  const conversationQuery = {
+  // Single chainable builder that covers both the conversation-resolver
+  // path (select → or → maybeSingle) and the RecruitmentVisibilityWidget's
+  // count-style query (select → eq → eq, then await). The `.then` makes
+  // the builder thenable so an awaited query without an explicit
+  // terminator resolves to a `{count, data, error}` shape.
+  const builder: Record<string, unknown> = {
     select: vi.fn().mockReturnThis(),
     or: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
     maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'mock-conversation' }, error: null }),
     insert: vi.fn().mockReturnThis(),
     single: vi.fn().mockResolvedValue({ data: { id: 'conv-new' }, error: null }),
+    then: (resolve: (value: { data: null; count: number; error: null }) => unknown) =>
+      Promise.resolve({ data: null, count: 0, error: null }).then(resolve),
   }
 
   return {
     supabase: {
-      from: vi.fn(() => conversationQuery),
+      from: vi.fn(() => builder),
       rpc: vi.fn().mockResolvedValue({ data: false, error: null }),
     },
   }

@@ -7,36 +7,27 @@
  *     useIsProfileSaved which we extended in P1.5 to write into the
  *     default shortlist + create one on first save).
  *   - Message — navigates to /messages?new={playerId} (existing
- *     MessagesPage handles the "new conversation" deep link).
- *   - Invite to apply — DISABLED for now. Spec says "only when
- *     active opportunity exists for the owner"; the
- *     opportunity_invitations table + flow isn't built yet.
- *     Shows a "Coming soon" tooltip so recruiters know it's
- *     planned.
+ *     MessagesPage handles the "new conversation" deep link), unless
+ *     a consumer passes a custom onMessage handler.
+ *   - Invite to apply — DISABLED for now (recruiter-only; needs the
+ *     opportunity_invitations table). Shows a "Coming soon" tooltip.
  *   - Compare — explicitly deferred to Phase 2 per spec.
- *   - ⋯ overflow menu — Move to list (opens MoveToShortlistMenu via
- *     the shortlist hook's add()), Add note (jumps to default-list
- *     detail page), Hide (deferred — needs a hide_profiles table).
+ *   - ⋯ overflow — Move to list / Add note (rendered by the shared
+ *     MoreActionsMenu so other recruiter surfaces can reuse it).
  *
- * Recruiter-only visibility: this row hides entirely for player /
- * brand / umpire / anon viewers, mirroring ClubFitChip's contract.
- * Own-profile is also hidden (Save against yourself doesn't make
- * sense).
+ * Visibility: hidden for own-profile or anonymous viewers. Invite +
+ * Compare are recruiter-only (club/coach). Save + Message + ⋯ are
+ * available to any authenticated non-self viewer.
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  Bookmark, BookmarkCheck, MessageSquare, Send, BarChart3, MoreHorizontal,
-  FolderInput, Pencil,
+  Bookmark, BookmarkCheck, MessageSquare, Send, BarChart3,
 } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
 import { useIsProfileSaved } from '@/hooks/useSavedProfiles'
-import { supabase } from '@/lib/supabase'
-import { useToastStore } from '@/lib/toast'
 import { trackDbEvent } from '@/lib/trackDbEvent'
-import { reportSupabaseError } from '@/lib/sentryHelpers'
-import MoveToShortlistMenu from './MoveToShortlistMenu'
+import MoreActionsMenu from './MoreActionsMenu'
 
 interface QuickActionsRowProps {
   playerId: string
@@ -65,25 +56,7 @@ export default function QuickActionsRow({
   const { profile: viewer } = useAuthStore()
   const navigate = useNavigate()
   const savedState = useIsProfileSaved(playerId)
-  const [overflowOpen, setOverflowOpen] = useState(false)
-  const [moveMenuOpen, setMoveMenuOpen] = useState(false)
-  const overflowRef = useRef<HTMLDivElement>(null)
 
-  // Outside-click close for the overflow menu.
-  useEffect(() => {
-    if (!overflowOpen) return
-    const onDoc = (e: MouseEvent) => {
-      if (overflowRef.current && !overflowRef.current.contains(e.target as Node)) {
-        setOverflowOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', onDoc)
-    return () => document.removeEventListener('mousedown', onDoc)
-  }, [overflowOpen])
-
-  // Universal gate: any authenticated, non-self viewer can use Save
-  // + Message + Move-to. Invite + Compare are recruiter-only (see
-  // conditional rendering below).
   const viewerRole = viewer?.role
   const isRecruiter = viewerRole === 'club' || viewerRole === 'coach'
   if (savedState.isOwnProfile) return null
@@ -95,8 +68,6 @@ export default function QuickActionsRow({
   }
 
   const handleMessage = () => {
-    // Consumer override (e.g. MemberPreviewModal's smart conversation
-    // resolver) takes precedence over the default deep link.
     if (onMessage) {
       trackDbEvent('quick_action.message_clicked', 'profile', playerId, { source: 'custom' })
       onMessage()
@@ -112,7 +83,6 @@ export default function QuickActionsRow({
 
   return (
     <div className={['inline-flex items-center gap-1', className].join(' ')}>
-      {/* Save toggle — primary action. */}
       <ActionButton
         compact={compact}
         active={savedState.isSaved}
@@ -123,7 +93,6 @@ export default function QuickActionsRow({
         text={savedState.isSaved ? 'Saved' : 'Save'}
       />
 
-      {/* Message — wires to existing /messages?new={id} deep link. */}
       <ActionButton
         compact={compact}
         onClick={handleMessage}
@@ -132,10 +101,9 @@ export default function QuickActionsRow({
         text="Message"
       />
 
-      {/* Invite to apply — recruiter-only concept (Spec G.5: "only
-          when an active opportunity exists for the owner"). Hidden
-          entirely for non-recruiters; surfaced as disabled "Coming
-          soon" for recruiters until opportunity_invitations ships. */}
+      {/* Invite + Compare are recruiter-only placeholders (Spec G.5 /
+          Phase 2). Hidden for non-recruiters; disabled with tooltips
+          for recruiters until the underlying flows ship. */}
       {isRecruiter && (
         <ActionButton
           compact={compact}
@@ -148,8 +116,6 @@ export default function QuickActionsRow({
         />
       )}
 
-      {/* Compare — explicitly Phase 2 per spec. Recruiter-only since
-          comparing players is fundamentally a recruiter workflow. */}
       {isRecruiter && (
         <ActionButton
           compact={compact}
@@ -162,61 +128,11 @@ export default function QuickActionsRow({
         />
       )}
 
-      {/* Overflow: Move to list, Add note, Hide (deferred). */}
-      <div ref={overflowRef} className="relative">
-        <button
-          type="button"
-          onClick={() => setOverflowOpen((v) => !v)}
-          aria-label="More actions"
-          aria-haspopup="menu"
-          aria-expanded={overflowOpen}
-          className={[
-            compact ? 'p-1.5' : 'px-2.5 py-1.5',
-            'rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors',
-            'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8026FA]/40',
-          ].join(' ')}
-        >
-          <MoreHorizontal className={compact ? 'w-4 h-4' : 'w-4 h-4'} />
-        </button>
-        {overflowOpen && (
-          <div
-            role="menu"
-            className="absolute right-0 top-full mt-1 z-30 w-52 rounded-xl border border-gray-200 bg-white shadow-xl py-1"
-          >
-            <button
-              type="button"
-              role="menuitem"
-              onClick={() => { setOverflowOpen(false); setMoveMenuOpen(true) }}
-              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-900 hover:bg-gray-50"
-            >
-              <FolderInput className="w-4 h-4 text-gray-500" />
-              Move to list…
-            </button>
-            <button
-              type="button"
-              role="menuitem"
-              onClick={() => {
-                setOverflowOpen(false)
-                // Jump to the default-list detail page; users can
-                // expand the note textarea there. Wires through
-                // navigate so the existing layout shows.
-                navigate('/dashboard/shortlists')
-              }}
-              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-900 hover:bg-gray-50"
-            >
-              <Pencil className="w-4 h-4 text-gray-500" />
-              Add note in list
-            </button>
-            {/* Hide intentionally omitted until hide_profiles ships. */}
-          </div>
-        )}
-        <MoveToAddMenu
-          open={moveMenuOpen}
-          onClose={() => setMoveMenuOpen(false)}
-          playerId={playerId}
-          playerName={playerName}
-        />
-      </div>
+      <MoreActionsMenu
+        playerId={playerId}
+        playerName={playerName}
+        compact={compact}
+      />
     </div>
   )
 }
@@ -255,56 +171,5 @@ function ActionButton({
       <Icon className={compact ? 'w-4 h-4' : 'w-3.5 h-3.5'} />
       {!compact && <span>{text}</span>}
     </button>
-  )
-}
-
-/**
- * "Move to list" from the overflow menu — when the player isn't
- * already in any list, this is effectively "Add to list". We add
- * a row to the picked shortlist via a direct insert (the
- * useShortlistItems hook is per-list and not the right shape here).
- */
-interface MoveToAddMenuProps {
-  open: boolean
-  onClose: () => void
-  playerId: string
-  playerName: string
-}
-function MoveToAddMenu({ open, onClose, playerId, playerName }: MoveToAddMenuProps) {
-  const { profile: viewer } = useAuthStore()
-  const { addToast } = useToastStore()
-  const handlePick = useCallback(async (shortlistId: string, shortlistName: string) => {
-    if (!viewer?.id) return
-    const { error } = await supabase
-      .from('saved_profiles')
-      .insert({
-        owner_id: viewer.id,
-        saved_profile_id: playerId,
-        shortlist_id: shortlistId,
-      })
-    if (error) {
-      // 23505 = already in this list → friendly toast.
-      if (error.code === '23505') {
-        addToast(`${playerName} is already in ${shortlistName}`, 'success')
-        return
-      }
-      reportSupabaseError('QuickActionsRow.moveToAdd', error)
-      addToast('Could not add to that list', 'error')
-      return
-    }
-    trackDbEvent('shortlist.item_added', 'shortlist', shortlistId, {
-      player_id: playerId,
-      source: 'quick_actions',
-    })
-    addToast(`${playerName} added to ${shortlistName}`, 'success')
-  }, [viewer?.id, playerId, playerName, addToast])
-
-  return (
-    <MoveToShortlistMenu
-      open={open}
-      onClose={onClose}
-      onPick={handlePick}
-      title="Add to list…"
-    />
   )
 }
