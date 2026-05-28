@@ -44,6 +44,14 @@ interface QuickActionsRowProps {
   playerName: string
   /** Compact variant for tile-style cards (icon-only buttons). */
   compact?: boolean
+  /** Optional custom Message handler. When provided, called instead
+   *  of the default `navigate('/messages?new=<id>')`. Surfaces like
+   *  MemberPreviewModal pass this to preserve their bespoke
+   *  conversation-resolution logic (existing conversation lookup +
+   *  in-flight cancellation) which is smarter than the naïve deep
+   *  link.
+   */
+  onMessage?: () => void
   className?: string
 }
 
@@ -51,11 +59,11 @@ export default function QuickActionsRow({
   playerId,
   playerName,
   compact = false,
+  onMessage,
   className = '',
 }: QuickActionsRowProps) {
   const { profile: viewer } = useAuthStore()
   const navigate = useNavigate()
-  const { addToast } = useToastStore()
   const savedState = useIsProfileSaved(playerId)
   const [overflowOpen, setOverflowOpen] = useState(false)
   const [moveMenuOpen, setMoveMenuOpen] = useState(false)
@@ -73,14 +81,25 @@ export default function QuickActionsRow({
     return () => document.removeEventListener('mousedown', onDoc)
   }, [overflowOpen])
 
-  // Recruiter-only gate (mirrors ClubFitChip's contract).
+  // Universal gate: any authenticated, non-self viewer can use Save
+  // + Message + Move-to. Invite + Compare are recruiter-only (see
+  // conditional rendering below).
   const viewerRole = viewer?.role
-  if (viewerRole !== 'club' && viewerRole !== 'coach') return null
+  const isRecruiter = viewerRole === 'club' || viewerRole === 'coach'
   if (savedState.isOwnProfile) return null
+  if (!savedState.isAuthenticated) {
+    // Anonymous viewer — render nothing. Auth-gated CTAs would just
+    // toast "sign in" anyway; better to hide them entirely so the
+    // surface stays uncluttered for browsers.
+    return null
+  }
 
   const handleMessage = () => {
-    if (!savedState.isAuthenticated) {
-      addToast('Sign in to message players', 'error')
+    // Consumer override (e.g. MemberPreviewModal's smart conversation
+    // resolver) takes precedence over the default deep link.
+    if (onMessage) {
+      trackDbEvent('quick_action.message_clicked', 'profile', playerId, { source: 'custom' })
+      onMessage()
       return
     }
     navigate(`/messages?new=${playerId}`)
@@ -113,31 +132,35 @@ export default function QuickActionsRow({
         text="Message"
       />
 
-      {/* Invite to apply — deferred. The opportunity_invitations
-          table doesn't exist; spec G.5 makes this conditional on
-          "an active opportunity exists for the owner" anyway, so
-          surface as disabled with a tooltip rather than hiding it
-          (recruiters need to know it's coming). */}
-      <ActionButton
-        compact={compact}
-        disabled
-        onClick={() => {}}
-        label={`Invite ${playerName} to apply (coming soon)`}
-        title="Coming soon — invite players directly to your open opportunities"
-        icon={Send}
-        text="Invite"
-      />
+      {/* Invite to apply — recruiter-only concept (Spec G.5: "only
+          when an active opportunity exists for the owner"). Hidden
+          entirely for non-recruiters; surfaced as disabled "Coming
+          soon" for recruiters until opportunity_invitations ships. */}
+      {isRecruiter && (
+        <ActionButton
+          compact={compact}
+          disabled
+          onClick={() => {}}
+          label={`Invite ${playerName} to apply (coming soon)`}
+          title="Coming soon — invite players directly to your open opportunities"
+          icon={Send}
+          text="Invite"
+        />
+      )}
 
-      {/* Compare — explicitly Phase 2 per spec. */}
-      <ActionButton
-        compact={compact}
-        disabled
-        onClick={() => {}}
-        label="Compare (Phase 2)"
-        title="Phase 2"
-        icon={BarChart3}
-        text="Compare"
-      />
+      {/* Compare — explicitly Phase 2 per spec. Recruiter-only since
+          comparing players is fundamentally a recruiter workflow. */}
+      {isRecruiter && (
+        <ActionButton
+          compact={compact}
+          disabled
+          onClick={() => {}}
+          label="Compare (Phase 2)"
+          title="Phase 2"
+          icon={BarChart3}
+          text="Compare"
+        />
+      )}
 
       {/* Overflow: Move to list, Add note, Hide (deferred). */}
       <div ref={overflowRef} className="relative">

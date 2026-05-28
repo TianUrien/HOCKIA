@@ -18,7 +18,6 @@ import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import {
   X,
-  MessageCircle,
   User,
   MapPin,
   Building2,
@@ -30,8 +29,6 @@ import {
   ExternalLink,
   Languages as LanguagesIcon,
   Activity,
-  Bookmark,
-  BookmarkCheck,
 } from 'lucide-react'
 import { RoleBadge, TierBadge, VerifiedBadge, AvailabilityPill, DualNationalityDisplay } from '@/components'
 import ClubFitChip from '@/components/recruiting/ClubFitChip'
@@ -42,6 +39,7 @@ import { useToastStore } from '@/lib/toast'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import { useIsProfileSaved } from '@/hooks/useSavedProfiles'
+import QuickActionsRow from '@/components/recruiting/QuickActionsRow'
 import { useWorldClubLogo } from '@/hooks/useWorldClubLogo'
 import { getImageUrl } from '@/lib/imageUrl'
 import { logger } from '@/lib/logger'
@@ -322,22 +320,12 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
             <div className="md:hidden flex justify-center">
               <span className="inline-block w-12 h-1.5 rounded-full bg-gray-400/80" aria-hidden="true" />
             </div>
-            {showSaveButton && (
-              <button
-                type="button"
-                onClick={() => void savedState.toggle()}
-                disabled={savedState.mutating}
-                className="absolute top-2.5 right-14 w-9 h-9 rounded-full bg-white shadow-md ring-1 ring-gray-200 flex items-center justify-center text-gray-900 hover:bg-gray-50 hover:text-[#8026FA] active:bg-gray-100 disabled:opacity-50 transition-colors"
-                aria-label={savedState.isSaved ? 'Remove from saved' : 'Save for later'}
-                title={savedState.isSaved ? 'Saved — tap to remove' : 'Save for later'}
-              >
-                {savedState.isSaved ? (
-                  <BookmarkCheck className="w-4 h-4 fill-[#8026FA] text-[#8026FA]" strokeWidth={2.5} />
-                ) : (
-                  <Bookmark className="w-4 h-4" strokeWidth={2.5} />
-                )}
-              </button>
-            )}
+            {/* Save button moved INTO QuickActionsRow above the
+                sticky footer (Spec G.5 mount). Players viewing other
+                profiles still get a Save action via QuickActionsRow;
+                recruiters get the full row (Save + Message + Invite
+                + Compare + ⋯). Removing the corner bookmark de-
+                clutters the hero image area. */}
             <button
               type="button"
               onClick={onClose}
@@ -577,33 +565,36 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
             )}
           </div>
 
-          {/* Footer CTAs */}
-          <div className="sticky bottom-0 bg-white border-t border-gray-100 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] flex gap-2">
+          {/* Quick actions row — Spec G.5. Save toggle, Message
+              (uses the bespoke handleMessage so the smart
+              conversation-resolution logic is preserved), Invite/
+              Compare (recruiter-only, disabled until built), and
+              overflow with Move-to-list / Add note. The row
+              auto-hides for own-profile + anonymous viewers; for
+              non-recruiters only Save + Message + ⋯ render. */}
+          {showSaveButton && (
+            <div className="px-4 pb-3 flex justify-center">
+              <QuickActionsRow
+                playerId={member.id}
+                playerName={member.full_name ?? 'this member'}
+                onMessage={() => void handleMessage()}
+                className="w-full justify-center flex-wrap"
+              />
+            </div>
+          )}
+
+          {/* Footer CTA — View Profile only now. Message moved into
+              QuickActionsRow above so the sticky footer stays single-
+              purpose: the primary "see more" action. */}
+          <div className="sticky bottom-0 bg-white border-t border-gray-100 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
             <button
               type="button"
               onClick={handleViewProfile}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 min-h-[44px] rounded-lg border border-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-50 transition-colors"
+              disabled={sendingMessage}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 min-h-[44px] rounded-lg bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-60"
             >
               <User className="w-4 h-4" />
               View Profile
-            </button>
-            <button
-              type="button"
-              onClick={handleMessage}
-              disabled={sendingMessage}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 min-h-[44px] rounded-lg bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-60"
-            >
-              {sendingMessage ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Sending...
-                </>
-              ) : (
-                <>
-                  <MessageCircle className="w-4 h-4" />
-                  Message
-                </>
-              )}
             </button>
           </div>
         </div>
