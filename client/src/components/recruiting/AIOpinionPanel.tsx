@@ -29,18 +29,26 @@ interface AIOpinionPanelProps {
   className?: string
 }
 
-const FEATURE_ENABLED =
-  (import.meta.env.VITE_ENABLE_AI_OPINION ?? '').toString().toLowerCase() === 'true'
+/** Read the build/runtime flag inside the function so vitest can
+ *  stub it via `vi.stubEnv('VITE_ENABLE_AI_OPINION', 'true')` after
+ *  the module is imported. In prod, Vite replaces `import.meta.env.X`
+ *  at build time with a literal, so this stays a dead-code-elimination-
+ *  friendly check — the function body is gone from the bundle when
+ *  the flag is unset at build. */
+function isFeatureEnabled(): boolean {
+  return (import.meta.env.VITE_ENABLE_AI_OPINION ?? '').toString().toLowerCase() === 'true'
+}
 
 export default function AIOpinionPanel({ candidate, className = '' }: AIOpinionPanelProps) {
-  const { status, regenerate } = useAIOpinion(candidate, { enabled: FEATURE_ENABLED })
+  const featureEnabled = isFeatureEnabled()
+  const { status, regenerate } = useAIOpinion(candidate, { enabled: featureEnabled })
   const [citationsOpen, setCitationsOpen] = useState(false)
 
   // Hide entirely when the flag is off OR Fit doesn't apply. We never
   // want to teach recruiters that "AI opinion exists for some players
   // but not others" — gated invisibly so the surface stays consistent
   // with how ClubFitChip behaves.
-  if (!FEATURE_ENABLED) return null
+  if (!featureEnabled) return null
   if (status.kind === 'idle' || status.kind === 'not_applicable') return null
 
   return (
@@ -115,7 +123,7 @@ export default function AIOpinionPanel({ candidate, className = '' }: AIOpinionP
               <button
                 type="button"
                 onClick={() => setCitationsOpen((open) => !open)}
-                aria-expanded={citationsOpen}
+                aria-expanded={citationsOpen ? 'true' : 'false'}
                 aria-controls="ai-opinion-citations"
                 className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#8026FA] hover:text-[#6B20D4]"
               >
