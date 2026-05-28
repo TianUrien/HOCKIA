@@ -1990,3 +1990,108 @@ export async function getMonthlyReport(
   if (error) throw new Error(`Failed to get monthly report: ${error.message}`)
   return data as MonthlyReportData
 }
+
+
+// ============================================================================
+// AI OPINION ANALYTICS
+// ============================================================================
+// Section F admin dashboard. Source-of-truth qualitative data —
+// verdict text + feedback reasons that GA4 never sees.
+
+export interface AIOpinionDailyPoint {
+  day: string
+  generations: number
+}
+
+export interface AIOpinionVersionBreakdown {
+  prompt_version: string
+  generations: number
+}
+
+export interface AIOpinionModelBreakdown {
+  model: string
+  generations: number
+}
+
+export interface AIOpinionFeedbackByVersion {
+  prompt_version: string
+  up_count: number
+  down_count: number
+}
+
+export interface AIOpinionTopRecruiter {
+  viewer_id: string
+  viewer_name: string | null
+  viewer_role: string | null
+  generations: number
+}
+
+export interface AIOpinionMetrics {
+  summary: {
+    total_fresh_generations: number
+    unique_recruiters: number
+    unique_players_evaluated: number
+    still_fresh_count: number
+  }
+  daily: AIOpinionDailyPoint[]
+  by_version: AIOpinionVersionBreakdown[]
+  by_model: AIOpinionModelBreakdown[]
+  feedback: {
+    total_rated: number
+    up_count: number
+    down_count: number
+    down_with_reason: number
+    by_version: AIOpinionFeedbackByVersion[]
+  }
+  top_recruiters: AIOpinionTopRecruiter[]
+  window_days: number
+  generated_at: string
+}
+
+export async function getAIOpinionMetrics(days: number = 30): Promise<AIOpinionMetrics> {
+  const { data, error } = await adminRpc('admin_get_ai_opinion_metrics', { p_days: days })
+  if (error) throw new Error(`Failed to get AI opinion metrics: ${error.message}`)
+  return data as AIOpinionMetrics
+}
+
+export interface AIOpinionFeedbackRow {
+  feedback_id: string
+  rating: 'up' | 'down'
+  reason: string | null
+  feedback_created_at: string
+  feedback_updated_at: string
+  opinion_id: string
+  verdict_short: string
+  citations: Array<{ field: string; value: string; claim: string }>
+  prompt_version: string
+  model: string
+  opinion_created_at: string
+  viewer_id: string
+  viewer_name: string | null
+  viewer_role: string | null
+  player_id: string
+  player_name: string | null
+  player_role: string | null
+}
+
+export interface AIOpinionFeedbackPage {
+  rows: AIOpinionFeedbackRow[]
+  total: number
+  limit: number
+  offset: number
+  rating_filter: 'up' | 'down' | null
+}
+
+export async function getRecentAIOpinionFeedback(opts: {
+  limit?: number
+  offset?: number
+  rating?: 'up' | 'down' | null
+} = {}): Promise<AIOpinionFeedbackPage> {
+  const { data, error } = await adminRpc('admin_get_recent_ai_opinion_feedback', {
+    p_limit: opts.limit ?? 50,
+    p_offset: opts.offset ?? 0,
+    p_rating: opts.rating ?? null,
+  })
+  if (error) throw new Error(`Failed to get AI opinion feedback: ${error.message}`)
+  return data as AIOpinionFeedbackPage
+}

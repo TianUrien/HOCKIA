@@ -104,6 +104,7 @@ const NAV_SECTIONS: NavSection[] = [
     items: [
       { path: '/admin/engagement', icon: Activity, label: 'User Engagement' },
       { path: '/admin/feature-usage', icon: BarChart3, label: 'Feature Usage' },
+      { path: '/admin/ai-opinions', icon: Sparkles, label: 'AI Opinions' },
       { path: '/admin/product-health', icon: GitBranch, label: 'Funnels & Retention' },
       { path: '/admin/attribution', icon: Share2, label: 'Attribution' },
     ],

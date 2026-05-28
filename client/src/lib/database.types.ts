@@ -4612,6 +4612,7 @@ export type Database = {
         Returns: Json
       }
       admin_get_activation_funnel: { Args: { p_days?: number }; Returns: Json }
+      admin_get_ai_opinion_metrics: { Args: { p_days?: number }; Returns: Json }
       admin_get_audit_logs: {
         Args: {
           p_action?: string
@@ -4998,6 +4999,10 @@ export type Database = {
           profile_id: string
           role: string
         }[]
+      }
+      admin_get_recent_ai_opinion_feedback: {
+        Args: { p_limit?: number; p_offset?: number; p_rating?: string }
+        Returns: Json
       }
       admin_get_reference_metrics: {
         Args: { p_days?: number; p_exclude_test?: boolean; p_role?: string }
