@@ -137,9 +137,13 @@ export function useAIOpinion(
       }
 
       // Cache miss (or force refresh) — call the edge function.
+      // When forceRefresh=true (user clicked Regenerate), pass
+      // `force: true` so the server-side cache check is also bypassed.
+      // Without this the edge function would serve the same cached row
+      // and Regenerate would be a no-op (QA F8).
       try {
         const { data, error } = await supabase.functions.invoke('ai-opinion', {
-          body: { player_id: candidateId },
+          body: { player_id: candidateId, force: forceRefresh },
         })
         if (seq !== requestSeq.current) return
         if (error) {

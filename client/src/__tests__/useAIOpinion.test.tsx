@@ -188,7 +188,7 @@ describe('useAIOpinion', () => {
     expect(ready.quotaRemaining).toBe(47)
     expect(ready.data.citations).toHaveLength(2)
     expect(supabaseInvokeSpy).toHaveBeenCalledWith('ai-opinion', {
-      body: { player_id: 'player-1' },
+      body: { player_id: 'player-1', force: false },
     })
   })
 
@@ -267,8 +267,11 @@ describe('useAIOpinion', () => {
       await result.current.regenerate()
     })
     expect(supabaseInvokeSpy).toHaveBeenCalledTimes(1)
+    // Critical: regenerate must send `force: true` so the edge function
+    // skips its server-side cache check. Without this, QA F8 reproduces:
+    // server serves the same cached row and Regenerate is a no-op.
     expect(supabaseInvokeSpy).toHaveBeenCalledWith('ai-opinion', {
-      body: { player_id: 'player-1' },
+      body: { player_id: 'player-1', force: true },
     })
     const ready = expectCachedReady(result.current.status)
     expect(ready.cached).toBe(false)

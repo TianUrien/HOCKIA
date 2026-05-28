@@ -59,6 +59,7 @@ export default function AIOpinionPanel({ candidate, className = '' }: AIOpinionP
       ].join(' ')}
       data-testid="ai-opinion-panel"
       aria-label="HOCKIA AI fit opinion"
+      aria-busy={status.kind === 'loading'}
     >
       <header className="flex items-start gap-2.5 mb-2">
         <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-white text-[#8026FA] shadow-sm">

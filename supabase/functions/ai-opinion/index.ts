@@ -386,11 +386,18 @@ serve(async (req: Request) => {
   const viewerId = userData.user.id
 
   // 2) Parse + validate request body.
+  //    `force: true` (QA F8) bypasses the server-side cache check
+  //    below — the client's regenerate() affordance sends it so a
+  //    user-triggered "give me a fresh take" doesn't silently re-serve
+  //    the cached row. Quota still applies; force doesn't grant extra
+  //    daily generations.
   let playerId: string
+  let force = false
   try {
-    const body = await req.json() as { player_id?: string }
+    const body = await req.json() as { player_id?: string; force?: boolean }
     if (!body.player_id || typeof body.player_id !== 'string') throw new Error()
     playerId = body.player_id
+    force = body.force === true
   } catch {
     return new Response(JSON.stringify({ error: 'missing_player_id' }), {
       status: 400,
@@ -448,25 +455,35 @@ serve(async (req: Request) => {
   }
 
   // 6) Compute hash + cache check.
+  //    When `force: true` (Regenerate from the panel — F8 fix), skip
+  //    the cache lookup entirely so the user gets a fresh LLM call.
+  //    Quota still gates further down, so abusive Regenerate clicking
+  //    still hits the 50/day soft cap.
   const contextHash = await computeContextHash(viewerId, playerId, fit)
-  const { data: cached } = await supabase
-    .from('ai_opinions')
-    .select('verdict_short, citations, expires_at')
-    .eq('viewer_id', viewerId)
-    .eq('player_id', playerId)
-    .eq('context_hash', contextHash)
-    .gt('expires_at', new Date().toISOString())
-    .maybeSingle()
-  if (cached) {
-    const c = cached as { verdict_short: string; citations: Citation[] }
-    return new Response(JSON.stringify({
-      verdict_short: c.verdict_short,
-      citations: c.citations,
-      cached: true,
-    }), {
-      status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
+  if (!force) {
+    const { data: cached } = await supabase
+      .from('ai_opinions')
+      .select('verdict_short, citations, expires_at')
+      .eq('viewer_id', viewerId)
+      .eq('player_id', playerId)
+      .eq('context_hash', contextHash)
+      .gt('expires_at', new Date().toISOString())
+      .maybeSingle()
+    if (cached) {
+      const c = cached as { verdict_short: string; citations: Citation[] }
+      // F10 fix: include quota_remaining: null for shape consistency
+      // with the fresh-generation path. The client union expects this
+      // field on every ready response.
+      return new Response(JSON.stringify({
+        verdict_short: c.verdict_short,
+        citations: c.citations,
+        cached: true,
+        quota_remaining: null,
+      }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
   }
 
   // 7) Cache miss — quota check before paying the LLM.
