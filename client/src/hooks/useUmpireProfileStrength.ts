@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { requestCache } from '@/lib/requestCache'
 import type { UmpireProfileShape } from '@/pages/UmpireDashboard'
 
 export interface ProfileBucket {
@@ -55,30 +56,47 @@ export function useUmpireProfileStrength({ profile }: UseUmpireProfileStrengthOp
   const [loading, setLoading] = useState<boolean>(Boolean(profile?.id))
 
   const profileId = profile?.id ?? null
+  // Deduped via requestCache so MediaCard + this hook + the dashboard's
+  // tab-effect refresh share one round trip. 30s TTL matches the Bento
+  // card batch (8ee75aa). refresh() below busts the cache for explicit
+  // post-upload calls.
+  const cacheKey = profileId ? `umpire-strength-gallery-${profileId}` : null
 
   const fetchGalleryCount = useCallback(async () => {
-    if (!profileId) {
+    if (!profileId || !cacheKey) {
       setGalleryCount(0)
       setLoading(false)
       return
     }
     setLoading(true)
     try {
-      const { count, error } = await supabase
-        .from('gallery_photos')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', profileId)
-
-      if (error) {
-        logger.error('[useUmpireProfileStrength] gallery count failed:', error)
-        setGalleryCount(0)
-      } else {
-        setGalleryCount(count ?? 0)
-      }
+      const count = await requestCache.dedupe<number>(
+        cacheKey,
+        async () => {
+          const { count: c, error } = await supabase
+            .from('gallery_photos')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', profileId)
+          if (error) throw error
+          return c ?? 0
+        },
+        30000,
+      )
+      setGalleryCount(count)
+    } catch (error) {
+      logger.error('[useUmpireProfileStrength] gallery count failed:', error)
+      setGalleryCount(0)
     } finally {
       setLoading(false)
     }
-  }, [profileId])
+  }, [profileId, cacheKey])
+
+  // Force-fresh — busts the cache before re-fetching for explicit
+  // post-upload / post-edit signals.
+  const refresh = useCallback(async () => {
+    if (cacheKey) requestCache.invalidate(cacheKey)
+    await fetchGalleryCount()
+  }, [cacheKey, fetchGalleryCount])
 
   useEffect(() => {
     void fetchGalleryCount()
@@ -216,7 +234,8 @@ export function useUmpireProfileStrength({ profile }: UseUmpireProfileStrengthOp
     buckets,
     /** True while fetching gallery count. */
     loading,
-    /** Re-fetch counts (call after updates). */
-    refresh: fetchGalleryCount,
+    /** Force-fresh re-fetch — busts the dedupe cache before fetching
+     *  so explicit post-upload calls don't get the 30s-cached value. */
+    refresh,
   }
 }

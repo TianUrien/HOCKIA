@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { supabase } from '@/lib/supabase'
+import { requestCache } from '@/lib/requestCache'
 import type { CoachProfileShape } from '@/pages/CoachDashboard'
 import type { Profile } from '@/lib/supabase'
 
@@ -47,24 +48,48 @@ export function useCoachProfileStrength({ profile }: UseCoachProfileStrengthOpti
   const journeyCount: number = profile?.career_entry_count ?? 0
   const referenceCount: number = profile?.accepted_reference_count ?? 0
 
-  // Fetch gallery count (only remaining query needed)
+  // Fetch gallery count (only remaining query needed). Deduped via
+  // requestCache so multiple consumers on the same dashboard render
+  // (e.g. MediaCard + this hook + the dashboard's tab-effect refresh)
+  // share a single round trip. 30s TTL matches the Bento card batch
+  // (8ee75aa) — auto-mounts within the window hit cache; refresh()
+  // below busts the cache when the user explicitly returns from a
+  // surface where they may have edited the gallery.
+  const cacheKey = profileId ? `coach-strength-gallery-${profileId}` : null
+
   const fetchCounts = useCallback(async () => {
-    if (!profileId) {
+    if (!profileId || !cacheKey) {
       setGalleryCount(null)
       setLoading(false)
       return
     }
     setLoading(true)
     try {
-      const galleryRes = await supabase
-        .from('gallery_photos')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', profileId)
-      setGalleryCount(galleryRes.count ?? 0)
+      const count = await requestCache.dedupe<number>(
+        cacheKey,
+        async () => {
+          const galleryRes = await supabase
+            .from('gallery_photos')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', profileId)
+          return galleryRes.count ?? 0
+        },
+        30000,
+      )
+      setGalleryCount(count)
     } finally {
       setLoading(false)
     }
-  }, [profileId])
+  }, [profileId, cacheKey])
+
+  // refresh() busts the cache first so explicit "I just edited
+  // something, give me the truth" calls (CoachDashboard's tab-effect)
+  // don't get served stale data from the 30s window. Auto-mounts go
+  // through fetchCounts which honours the cache.
+  const refresh = useCallback(async () => {
+    if (cacheKey) requestCache.invalidate(cacheKey)
+    await fetchCounts()
+  }, [cacheKey, fetchCounts])
 
   useEffect(() => {
     void fetchCounts()
@@ -201,7 +226,9 @@ export function useCoachProfileStrength({ profile }: UseCoachProfileStrengthOpti
     buckets,
     /** True while fetching journey/gallery counts */
     loading,
-    /** Re-fetch counts (call after updates) */
-    refresh: fetchCounts,
+    /** Force-fresh re-fetch — busts the dedupe cache first so callers
+     *  who just mutated data (e.g. uploaded a gallery photo) see the
+     *  truth, not a cached count. */
+    refresh,
   }
 }

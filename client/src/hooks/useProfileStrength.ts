@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { requestCache } from '@/lib/requestCache'
 import type { Profile } from '@/lib/supabase'
 
 export type ProfileStrengthBucket = {
@@ -104,30 +105,49 @@ export function useProfileStrength(profile: Profile | null): ProfileStrengthResu
   // as the others — no extra query needed.
   const fullGameVideoCount: number = profile?.full_game_video_count ?? 0
 
+  // Gallery count is the only remaining query (everything else lives
+  // on the profile row). Deduped via requestCache so MediaCard + this
+  // hook + the dashboard's tab-effect refresh share one round trip.
+  // 30s TTL matches the Bento card batch (8ee75aa). refresh() below
+  // busts the cache for explicit "I just edited" calls.
+  const profileId = profile?.id ?? null
+  const cacheKey = profileId ? `player-strength-gallery-${profileId}` : null
+
   const fetchCounts = useCallback(async () => {
-    if (!profile?.id) {
+    if (!profileId || !cacheKey) {
       setLoading(false)
       return
     }
 
     setLoading(true)
     try {
-      const galleryRes = await supabase
-        .from('gallery_photos')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', profile.id)
-
-      if (galleryRes.error) {
-        logger.error('Error fetching gallery count:', galleryRes.error)
-      } else {
-        setGalleryCount(galleryRes.count ?? 0)
-      }
+      const count = await requestCache.dedupe<number>(
+        cacheKey,
+        async () => {
+          const galleryRes = await supabase
+            .from('gallery_photos')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', profileId)
+          if (galleryRes.error) throw galleryRes.error
+          return galleryRes.count ?? 0
+        },
+        30000,
+      )
+      setGalleryCount(count)
     } catch (error) {
       logger.error('Error fetching profile strength data:', error)
     } finally {
       setLoading(false)
     }
-  }, [profile?.id])
+  }, [profileId, cacheKey])
+
+  // Force-fresh re-fetch — busts the cache first so explicit refresh()
+  // calls (e.g. after an upload modal closes) skip the 30s window and
+  // hit the DB directly.
+  const refresh = useCallback(async () => {
+    if (cacheKey) requestCache.invalidate(cacheKey)
+    await fetchCounts()
+  }, [cacheKey, fetchCounts])
 
   useEffect(() => {
     void fetchCounts()
@@ -256,6 +276,6 @@ export function useProfileStrength(profile: Profile | null): ProfileStrengthResu
     percentage,
     buckets,
     loading,
-    refresh: fetchCounts,
+    refresh,
   }
 }
