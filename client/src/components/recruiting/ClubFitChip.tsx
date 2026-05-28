@@ -45,6 +45,35 @@ const STATE_TO_BARS: Record<ClubFitState, 1 | 2 | 3> = {
   grey: 1,
 }
 
+/**
+ * Module-level "currently open chip" closer. After F5/F15 portaled
+ * each popover to document.body, the old "click another chip → close
+ * me" relied on outside-click — which doesn't fire because the new
+ * chip's click handler stops propagation. So two popovers could
+ * coexist (QA R1, high regression).
+ *
+ * Fix: every chip that opens registers its close fn here, evicting
+ * whoever was registered before. Opening B closes A automatically.
+ * Cleanup on unmount or close removes itself. Only one popover can
+ * be open across the entire page at any time — matches the spec's
+ * "don't stack" rule.
+ */
+let activeChipCloser: (() => void) | null = null
+
+function registerActiveChip(close: () => void) {
+  const previous = activeChipCloser
+  activeChipCloser = close
+  if (previous && previous !== close) {
+    previous()
+  }
+}
+
+function unregisterActiveChip(close: () => void) {
+  if (activeChipCloser === close) {
+    activeChipCloser = null
+  }
+}
+
 /** Three-bar signal indicator. Heights grow left→right; filled bars
  *  in HOCKIA purple, unfilled in a subtle gray. Pure visual — the
  *  surrounding chip owns the accessible label. */
@@ -86,6 +115,16 @@ export default function ClubFitChip({
   // Popover element ref — for the click-outside check (need to exclude
   // the portal-rendered popover from the "outside" calculation).
   const popoverElRef = useRef<HTMLSpanElement>(null)
+
+  // R1 fix: single-active-chip registry. When this chip opens, evict
+  // any previously open chip. On close/unmount, deregister so we
+  // don't leak a stale closer.
+  useEffect(() => {
+    if (!open) return
+    const close = () => setOpen(false)
+    registerActiveChip(close)
+    return () => unregisterActiveChip(close)
+  }, [open])
 
   // Click-outside + Escape to close. The popover is portaled to
   // document.body so chipRef.contains() alone isn't enough — clicks

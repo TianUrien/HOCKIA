@@ -125,7 +125,7 @@ export default function ShortlistDetailPage() {
                 onStatusChange={(s) => void setStatus(item.id, s)}
                 onNoteSave={(note) => void setNote(item.id, note)}
                 onRemove={() => void remove(item.id)}
-                onMoveTo={(target) => moveTo(item.id, target)}
+                onMoveTo={(target, name) => moveTo(item.id, target, name)}
                 onOpen={() => navigate(`/players/id/${item.profile?.id ?? item.saved_profile_id}`)}
               />
             ))}
@@ -142,7 +142,7 @@ interface RowProps {
   onStatusChange: (s: ShortlistItemStatus) => void
   onNoteSave: (note: string | null) => void
   onRemove: () => void
-  onMoveTo: (targetShortlistId: string) => Promise<void>
+  onMoveTo: (targetShortlistId: string, targetName: string) => Promise<void>
   onOpen: () => void
 }
 
@@ -294,7 +294,7 @@ function ShortlistItemRow({
           <MoveToShortlistMenu
             open={moveMenuOpen}
             onClose={() => setMoveMenuOpen(false)}
-            onPick={(target) => onMoveTo(target)}
+            onPick={(target, name) => onMoveTo(target, name)}
             currentShortlistId={currentShortlistId}
             title="Move to…"
           />

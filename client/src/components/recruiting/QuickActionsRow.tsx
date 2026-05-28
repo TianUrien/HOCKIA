@@ -250,7 +250,7 @@ interface MoveToAddMenuProps {
 function MoveToAddMenu({ open, onClose, playerId, playerName }: MoveToAddMenuProps) {
   const { profile: viewer } = useAuthStore()
   const { addToast } = useToastStore()
-  const handlePick = useCallback(async (shortlistId: string) => {
+  const handlePick = useCallback(async (shortlistId: string, shortlistName: string) => {
     if (!viewer?.id) return
     const { error } = await supabase
       .from('saved_profiles')
@@ -262,7 +262,7 @@ function MoveToAddMenu({ open, onClose, playerId, playerName }: MoveToAddMenuPro
     if (error) {
       // 23505 = already in this list → friendly toast.
       if (error.code === '23505') {
-        addToast(`${playerName} is already in that list`, 'success')
+        addToast(`${playerName} is already in ${shortlistName}`, 'success')
         return
       }
       reportSupabaseError('QuickActionsRow.moveToAdd', error)
@@ -273,7 +273,7 @@ function MoveToAddMenu({ open, onClose, playerId, playerName }: MoveToAddMenuPro
       player_id: playerId,
       source: 'quick_actions',
     })
-    addToast(`${playerName} added`, 'success')
+    addToast(`${playerName} added to ${shortlistName}`, 'success')
   }, [viewer?.id, playerId, playerName, addToast])
 
   return (

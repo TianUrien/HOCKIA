@@ -225,8 +225,10 @@ export interface UseShortlistItemsResult {
   remove: (itemId: string) => Promise<void>
   setStatus: (itemId: string, status: ShortlistItemStatus) => Promise<void>
   setNote: (itemId: string, note: string | null) => Promise<void>
-  /** Move an item to a different shortlist (drag/drop or move action). */
-  moveTo: (itemId: string, targetShortlistId: string) => Promise<void>
+  /** Move an item to a different shortlist (drag/drop or move action).
+   *  Pass the destination list's name so the success toast can
+   *  surface it ("Moved to <name>") instead of a generic string. */
+  moveTo: (itemId: string, targetShortlistId: string, targetName?: string) => Promise<void>
 }
 
 export function useShortlistItems(shortlistId: string | null | undefined): UseShortlistItemsResult {
@@ -381,7 +383,7 @@ export function useShortlistItems(shortlistId: string | null | undefined): UseSh
     addToast(note == null ? 'Note cleared' : 'Note saved', 'success')
   }, [viewerId, items, addToast])
 
-  const moveTo = useCallback(async (itemId: string, targetShortlistId: string) => {
+  const moveTo = useCallback(async (itemId: string, targetShortlistId: string, targetName?: string) => {
     if (!viewerId || targetShortlistId === shortlistId) return
     // Optimistic local removal (item leaves the current list); revert
     // on error.
@@ -404,10 +406,14 @@ export function useShortlistItems(shortlistId: string | null | undefined): UseSh
       setItems(previous)
       return
     }
-    // F11 (QA): silent move felt unconfirmed. Toast the success so
-    // the user knows the row actually landed somewhere (they can't
-    // see the destination until they navigate over).
-    addToast('Moved to other list', 'success')
+    // F11 + R2 (QA): toast the success so the user knows the row
+    // actually landed somewhere; include the destination list's name
+    // when the caller passed one ("Moved to Women's pre-season"
+    // beats a generic "Moved to other list").
+    addToast(
+      targetName ? `Moved to ${targetName}` : 'Moved to other list',
+      'success',
+    )
   }, [viewerId, shortlistId, items, addToast])
 
   return { items, loading, error, refresh, add, remove, setStatus, setNote, moveTo }

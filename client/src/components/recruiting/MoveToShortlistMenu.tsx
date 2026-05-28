@@ -24,8 +24,10 @@ interface MoveToShortlistMenuProps {
   open: boolean
   onClose: () => void
   /** Called when the user picks a destination list. Parent is
-   *  responsible for the actual move / add side effect. */
-  onPick: (shortlistId: string) => Promise<void> | void
+   *  responsible for the actual move / add side effect. Receives
+   *  the list's display name as the second arg so success toasts
+   *  can read "Moved to <list name>" (R2). */
+  onPick: (shortlistId: string, shortlistName: string) => Promise<void> | void
   /** Optional: ID of the list the item is CURRENTLY in (used in
    *  'move' mode to grey it out). Omit in 'add' mode. */
   currentShortlistId?: string | null
@@ -65,9 +67,9 @@ export default function MoveToShortlistMenu({
     }
   }, [open, onClose])
 
-  const handlePick = useCallback(async (id: string) => {
+  const handlePick = useCallback(async (id: string, name: string) => {
     setBusy(true)
-    await onPick(id)
+    await onPick(id, name)
     setBusy(false)
     onClose()
   }, [onPick, onClose])
@@ -78,7 +80,7 @@ export default function MoveToShortlistMenu({
     setBusy(true)
     const created = await create(trimmed)
     if (created) {
-      await onPick(created.id)
+      await onPick(created.id, created.name)
       setDraft('')
       setCreating(false)
       onClose()
@@ -118,7 +120,7 @@ export default function MoveToShortlistMenu({
                 key={list.id}
                 type="button"
                 disabled={isCurrent || busy}
-                onClick={() => void handlePick(list.id)}
+                onClick={() => void handlePick(list.id, list.name)}
                 className={[
                   'w-full flex items-center justify-between gap-2 px-3 py-2 text-left text-sm transition-colors',
                   isCurrent
