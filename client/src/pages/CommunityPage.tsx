@@ -41,6 +41,7 @@ import {
 } from '@/lib/recruitingContext'
 import { useActiveRecruitingTarget } from '@/hooks/useRecruitingContext'
 import ContextSwitcher from '@/components/recruiting/ContextSwitcher'
+import CoachContextNudge from '@/components/recruiting/CoachContextNudge'
 
 const VALID_TABS: CommunityTab[] = ['all', 'players', 'coaches', 'clubs', 'umpires', 'brands', 'questions']
 
@@ -322,6 +323,15 @@ export default function CommunityPage() {
 
           {isMembers ? (
             <>
+              {/* Coach-only discoverability banner — surfaces only when
+                  a coach has no active recruiting context. Sets the
+                  expectation that Club Fit needs a scope before it
+                  appears on player cards. Self-hides once context is
+                  set or the user dismisses. */}
+              <div className="mb-3">
+                <CoachContextNudge />
+              </div>
+
               {/* Search bar */}
               <div className="relative mb-3">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 z-10" />

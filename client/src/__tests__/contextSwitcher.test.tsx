@@ -157,11 +157,28 @@ describe('ContextSwitcher render gate', () => {
 
 // ── Empty state ─────────────────────────────────────────────────────
 describe('empty state CTA', () => {
-  it('coach with no contexts → renders the optional "Add recruiting context" CTA', () => {
+  it('coach with no contexts → renders Club-Fit-enabling CTA (no "optional" label)', () => {
+    // Coaches have no profile-derived target source, so a context is
+    // REQUIRED for Club Fit to render — the empty-state copy should
+    // reflect that instead of the old generic "(optional)" label.
     setAuthRole('coach')
     useRecruitingContextStore.setState({
       ownerId: OWNER,
       eligibleRole: 'coach',
+      rows: [],
+      loading: false,
+      fetchedForOwner: OWNER,
+    })
+    render(<ContextSwitcher />)
+    expect(screen.getByText(/set scope to enable club fit/i)).toBeInTheDocument()
+    expect(screen.queryByText(/optional/i)).not.toBeInTheDocument()
+  })
+
+  it('club with no contexts → keeps "(optional)" because profile-derived target still works', () => {
+    setAuthRole('club')
+    useRecruitingContextStore.setState({
+      ownerId: OWNER,
+      eligibleRole: 'club',
       rows: [],
       loading: false,
       fetchedForOwner: OWNER,

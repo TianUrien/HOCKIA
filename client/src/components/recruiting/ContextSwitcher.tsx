@@ -49,6 +49,17 @@ export default function ContextSwitcher({ className = '' }: ContextSwitcherProps
 
   const summary = formatContextSummary(active)
   const isEmpty = !active
+  // Role-aware empty-state copy. Coaches need a context for Club Fit
+  // to render at all (no profile-derived target source); clubs get
+  // Fit from profile fields, so a context is genuinely optional for
+  // them. The old generic "(optional)" copy misled coaches into
+  // skipping it and never seeing Fit chips on player cards.
+  const isCoach = viewerRole === 'coach'
+  const emptyLabel = isCoach ? 'Set scope to enable Club Fit' : 'Add recruiting context'
+  const emptyHint = isCoach ? null : '(optional)'
+  const ariaEmpty = isCoach
+    ? 'Set a recruiting scope to enable Club Fit ratings on player cards'
+    : 'Add an optional recruiting context'
 
   // Clear affordance: only meaningful when there IS an active context.
   // Sprint 4 removed the auto-seed `type='club'` fallback, so there's
@@ -80,11 +91,14 @@ export default function ContextSwitcher({ className = '' }: ContextSwitcherProps
           'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8026FA]/40',
           className,
         ].join(' ')}
-        aria-label={isEmpty ? 'Add an optional recruiting context' : `Recruiting context: ${summary}. Tap to change or clear.`}
+        aria-label={isEmpty ? ariaEmpty : `Recruiting context: ${summary}. Tap to change or clear.`}
       >
         <Target className="w-3.5 h-3.5 flex-shrink-0" />
         {isEmpty ? (
-          <span>Add recruiting context <span className="text-gray-400">(optional)</span></span>
+          <span>
+            {emptyLabel}
+            {emptyHint && <span className="text-gray-400"> {emptyHint}</span>}
+          </span>
         ) : (
           <>
             <span className="text-gray-500 flex-shrink-0">Scoped to:</span>
