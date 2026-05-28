@@ -33,6 +33,30 @@ interface MoreActionsMenuProps {
   compact?: boolean
 }
 
+/**
+ * Single-open invariant across the whole page. Mirror of the
+ * activeChipCloser pattern in ClubFitChip — opening menu B synchronously
+ * evicts whoever was registered before, so two ⋯ menus can't be visible
+ * at once. Document-mousedown outside-click handling alone wasn't
+ * enough: the close-A state update raced React's open-B click and they
+ * sometimes batched into the same render (Community grid F1 regression).
+ */
+let activeMenuCloser: (() => void) | null = null
+
+function registerActiveMenu(close: () => void) {
+  const previous = activeMenuCloser
+  activeMenuCloser = close
+  if (previous && previous !== close) {
+    previous()
+  }
+}
+
+function unregisterActiveMenu(close: () => void) {
+  if (activeMenuCloser === close) {
+    activeMenuCloser = null
+  }
+}
+
 export default function MoreActionsMenu({
   playerId,
   playerName,
@@ -43,16 +67,24 @@ export default function MoreActionsMenu({
   const [moveMenuOpen, setMoveMenuOpen] = useState(false)
   const wrapperRef = useRef<HTMLDivElement>(null)
 
+  // Stable close fn — re-registered on each open so the singleton always
+  // points at the most recently opened menu's setter.
+  const close = useCallback(() => setOverflowOpen(false), [])
+
   useEffect(() => {
     if (!overflowOpen) return
+    registerActiveMenu(close)
     const onDoc = (e: MouseEvent) => {
       if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
         setOverflowOpen(false)
       }
     }
     document.addEventListener('mousedown', onDoc)
-    return () => document.removeEventListener('mousedown', onDoc)
-  }, [overflowOpen])
+    return () => {
+      document.removeEventListener('mousedown', onDoc)
+      unregisterActiveMenu(close)
+    }
+  }, [overflowOpen, close])
 
   return (
     <div ref={wrapperRef} className="relative">

@@ -21,6 +21,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react'
+import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
@@ -77,52 +78,117 @@ export interface UseShortlistsResult {
   setDefault: (id: string) => Promise<void>
 }
 
+// ── Module-level shared store ───────────────────────────────────────
+//
+// QA F3: each consumer (MoveToShortlistMenu picker, ShortlistsIndex,
+// ShortlistDetail) was calling its own useEffect → its own fetch.
+// Opening the ⋯ picker N times in a session fired N identical
+// `?select=*,saved_profiles(count)` GETs to the same owner. Agent
+// observed 7 fetches in a single Players-tab interaction.
+//
+// Fix: move state into a module-level zustand store + dedupe in-flight
+// promises. First consumer triggers the fetch, subsequent consumers
+// (and re-mounts) reuse the cached result. Mutations (create/rename/
+// remove/setDefault) re-run the fetch through `refresh()` so item
+// counts stay current after writes.
+
+interface ShortlistsStoreState {
+  ownerId: string | null
+  lists: ShortlistWithCount[]
+  loading: boolean
+  error: string | null
+  /** When non-null, a fetch is in flight — awaiting consumers join it
+   *  instead of firing their own. */
+  inflight: Promise<void> | null
+  /** Run once per owner (or after invalidate). No-op when a fresh
+   *  cached result already exists. */
+  ensureFetched: (ownerId: string) => Promise<void>
+  /** Force a fresh fetch — used by mutations to pick up new counts. */
+  refresh: (ownerId: string) => Promise<void>
+  /** Drop the cache (called on sign-out / owner change). */
+  clear: () => void
+}
+
+const useShortlistsStore = create<ShortlistsStoreState>((set, get) => {
+  const runFetch = (ownerId: string): Promise<void> => {
+    set({ ownerId, loading: true, error: null })
+    const promise = (async () => {
+      const { data, error: fetchError } = await supabase
+        .from('shortlists')
+        .select('*, saved_profiles(count)')
+        .eq('owner_id', ownerId)
+        .order('is_default', { ascending: false })
+        .order('created_at', { ascending: false })
+      if (fetchError) {
+        reportSupabaseError('useShortlistsStore.fetch', fetchError)
+        set({ error: 'Could not load shortlists', loading: false, inflight: null })
+        return
+      }
+      const lists = (data ?? []).map((row) => {
+        const counts = row.saved_profiles as { count: number }[] | null
+        const itemCount = counts?.[0]?.count ?? 0
+        return { ...row, item_count: itemCount } as ShortlistWithCount
+      })
+      set({ lists, loading: false, inflight: null })
+    })()
+    set({ inflight: promise })
+    return promise
+  }
+  return {
+    ownerId: null,
+    lists: [],
+    loading: false,
+    error: null,
+    inflight: null,
+    ensureFetched: async (ownerId) => {
+      const state = get()
+      // Cache hit — same owner, already loaded, no in-flight fetch.
+      if (state.ownerId === ownerId && !state.inflight && !state.loading) {
+        return
+      }
+      // Dedup — a fetch for this owner is already running, join it.
+      if (state.inflight && state.ownerId === ownerId) {
+        return state.inflight
+      }
+      // Owner changed (sign-in switch) — drop stale data + refetch.
+      if (state.ownerId !== ownerId) {
+        set({ lists: [], error: null })
+      }
+      return runFetch(ownerId)
+    },
+    refresh: async (ownerId) => runFetch(ownerId),
+    clear: () => set({ ownerId: null, lists: [], loading: false, error: null, inflight: null }),
+  }
+})
+
+/** Test-only escape hatch — resets the singleton between test files
+ *  that share the module graph. Not exported from the barrel. */
+export function __resetShortlistsStoreForTests() {
+  useShortlistsStore.getState().clear()
+}
+
 export function useShortlists(): UseShortlistsResult {
   const { profile: viewer } = useAuthStore()
   const { addToast } = useToastStore()
   const viewerId = viewer?.id ?? null
-  const [lists, setLists] = useState<ShortlistWithCount[]>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
-  const refresh = useCallback(async () => {
-    if (!viewerId) {
-      setLists([])
-      return
-    }
-    setLoading(true)
-    setError(null)
-    // Single query: lists + their item counts via embedded aggregate.
-    // PostgREST returns `count` on embedded resources when using the
-    // `!count` selector. Saves a second round-trip vs separate counts.
-    const { data, error: fetchError } = await supabase
-      .from('shortlists')
-      .select('*, saved_profiles(count)')
-      .eq('owner_id', viewerId)
-      .order('is_default', { ascending: false })
-      .order('created_at', { ascending: false })
-    if (fetchError) {
-      reportSupabaseError('useShortlists.refresh', fetchError)
-      setError('Could not load shortlists')
-      setLoading(false)
-      return
-    }
-    setLists(
-      (data ?? []).map((row) => {
-        const counts = row.saved_profiles as { count: number }[] | null
-        const itemCount = counts?.[0]?.count ?? 0
-        return {
-          ...row,
-          item_count: itemCount,
-        } as ShortlistWithCount
-      }),
-    )
-    setLoading(false)
-  }, [viewerId])
+  // Selector subscriptions — only re-render when the field changes.
+  const lists = useShortlistsStore((s) => s.lists)
+  const loading = useShortlistsStore((s) => s.loading)
+  const error = useShortlistsStore((s) => s.error)
 
   useEffect(() => {
-    void refresh()
-  }, [refresh])
+    if (!viewerId) {
+      useShortlistsStore.getState().clear()
+      return
+    }
+    void useShortlistsStore.getState().ensureFetched(viewerId)
+  }, [viewerId])
+
+  const refresh = useCallback(async () => {
+    if (!viewerId) return
+    await useShortlistsStore.getState().refresh(viewerId)
+  }, [viewerId])
 
   const create = useCallback(async (name: string): Promise<ShortlistRow | null> => {
     if (!viewerId) return null

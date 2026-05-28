@@ -132,4 +132,33 @@ describe('MoreActionsMenu', () => {
     await userEvent.click(screen.getByRole('button', { name: 'outside' }))
     expect(screen.queryByRole('menu')).not.toBeInTheDocument()
   })
+
+  it('enforces a single-open invariant — opening menu B closes menu A', async () => {
+    // Regression test for F1: Community grid had both ⋯ menus open
+    // simultaneously because the document-mousedown handler raced
+    // React's onClick. Module-level activeMenuCloser singleton fixes it.
+    render(
+      <MemoryRouter>
+        <div>
+          <div data-testid="wrapper-a">
+            <MoreActionsMenu playerId="player-A" playerName="Player A" />
+          </div>
+          <div data-testid="wrapper-b">
+            <MoreActionsMenu playerId="player-B" playerName="Player B" />
+          </div>
+        </div>
+      </MemoryRouter>,
+    )
+
+    const [triggerA, triggerB] = screen.getAllByRole('button', { name: /more actions/i })
+
+    await userEvent.click(triggerA)
+    expect(screen.getAllByRole('menu')).toHaveLength(1)
+
+    await userEvent.click(triggerB)
+    // Both clicks complete, but A must have closed first.
+    expect(screen.getAllByRole('menu')).toHaveLength(1)
+    expect(triggerA).toHaveAttribute('aria-expanded', 'false')
+    expect(triggerB).toHaveAttribute('aria-expanded', 'true')
+  })
 })
