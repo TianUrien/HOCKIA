@@ -99,6 +99,7 @@ export default function CoachBentoGrid({
             profileId={profile.id}
             readOnly
             role="coach"
+            careerEntryCount={profile.career_entry_count ?? null}
             bio={profile.bio ?? null}
             onViewJourney={() => onOpenTab('journey')}
           />
@@ -130,6 +131,7 @@ export default function CoachBentoGrid({
             profileId={profile.id}
             readOnly={false}
             role="coach"
+            careerEntryCount={profile.career_entry_count ?? null}
             bio={profile.bio ?? null}
             onViewJourney={() => onOpenTab('journey')}
           />

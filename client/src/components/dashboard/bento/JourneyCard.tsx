@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Flag, Landmark, Globe2, Award, Calendar } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { requestCache } from '@/lib/requestCache'
 import { detectBioCredentials } from '@/lib/bioCredentials'
 import DashboardCard from './DashboardCard'
 
@@ -27,6 +28,12 @@ interface JourneyCardProps {
   readOnly: boolean
   /** Drives the read-only empty-state copy ("This {role} hasn't…"). */
   role?: 'player' | 'coach'
+  /** Denormalized total entry count on profiles.career_entry_count
+   *  (trigger-maintained). When passed AND zero, the card renders the
+   *  empty state without firing the breakdown fetch — the common case
+   *  on fresh profiles. Optional for back-compat; omit to always
+   *  fetch. */
+  careerEntryCount?: number | null
   /** Free-text bio. When present, high-signal credentials (World Cup,
    *  Olympic, NCAA, Pan Am, Premier League, FIH, captain, medals) are
    *  extracted and rendered as a "From bio" footer. Closes the QA-reported
@@ -53,7 +60,7 @@ const EMPTY: GroupedCounts = {
   total: 0,
 }
 
-export default function JourneyCard({ profileId, readOnly, role = 'player', bio, onViewJourney }: JourneyCardProps) {
+export default function JourneyCard({ profileId, readOnly, role = 'player', careerEntryCount, bio, onViewJourney }: JourneyCardProps) {
   const [counts, setCounts] = useState<GroupedCounts | null>(null)
 
   // Pure regex scan; same patterns as the Hockia AI owner-handler
@@ -61,53 +68,74 @@ export default function JourneyCard({ profileId, readOnly, role = 'player', bio,
   // or no credentials match — section renders nothing in that case.
   const bioCredentials = useMemo(() => detectBioCredentials(bio), [bio])
 
+  // F2 fix — short-circuit the fetch when the denormalized total is
+  // known to be 0. Avoids a wasted GET on fresh profiles (common case
+  // for the coach dashboard QA flagged).
+  const knownEmpty = careerEntryCount === 0
+
   useEffect(() => {
-    let cancelled = false
-    async function fetchCounts() {
-      const { data, error } = await supabase
-        .from('career_history')
-        .select('entry_type')
-        .eq('user_id', profileId)
-
-      if (cancelled) return
-      if (error) {
-        logger.error('[JOURNEY_CARD] Failed to fetch journey counts', error)
-        setCounts(EMPTY)
-        return
-      }
-
-      const grouped: GroupedCounts = { ...EMPTY }
-      for (const row of data ?? []) {
-        const type = (row.entry_type ?? 'other') as string
-        switch (type) {
-          case 'club':
-            grouped.clubs += 1
-            break
-          case 'national_team':
-            // DB enum value is legacy ('national_team') but the bucket
-            // now covers any representative-team experience: regional,
-            // provincial, state, or national. JourneyTab uses
-            // "Representative Team" as the entry-type label.
-            grouped.representative += 1
-            break
-          case 'achievement':
-          case 'tournament':
-            grouped.achievements += 1
-            break
-          case 'milestone':
-          case 'academy':
-            grouped.milestones += 1
-            break
-        }
-        grouped.total += 1
-      }
-      setCounts(grouped)
+    if (knownEmpty) {
+      setCounts(EMPTY)
+      return
     }
-    void fetchCounts()
+    let cancelled = false
+    // F2 fix — requestCache.dedupe so re-mounts of the same profile in
+    // a session reuse the same breakdown. Bento Grid re-renders + tab
+    // navigations used to fire the same GET repeatedly. 30s TTL keeps
+    // the breakdown fresh enough after a Journey edit (the edit flow
+    // also clears the cache via cacheKey below).
+    const cacheKey = `journey-counts-${profileId}`
+    const run = async () => {
+      try {
+        const grouped = await requestCache.dedupe<GroupedCounts>(
+          cacheKey,
+          async () => {
+            const { data, error } = await supabase
+              .from('career_history')
+              .select('entry_type')
+              .eq('user_id', profileId)
+            if (error) throw error
+            const result: GroupedCounts = { ...EMPTY }
+            for (const row of data ?? []) {
+              const type = (row.entry_type ?? 'other') as string
+              switch (type) {
+                case 'club':
+                  result.clubs += 1
+                  break
+                case 'national_team':
+                  // DB enum value is legacy ('national_team') but the
+                  // bucket now covers any representative-team experience:
+                  // regional, provincial, state, or national. JourneyTab
+                  // uses "Representative Team" as the entry-type label.
+                  result.representative += 1
+                  break
+                case 'achievement':
+                case 'tournament':
+                  result.achievements += 1
+                  break
+                case 'milestone':
+                case 'academy':
+                  result.milestones += 1
+                  break
+              }
+              result.total += 1
+            }
+            return result
+          },
+          30000,
+        )
+        if (!cancelled) setCounts(grouped)
+      } catch (err) {
+        if (cancelled) return
+        logger.error('[JOURNEY_CARD] Failed to fetch journey counts', err)
+        setCounts(EMPTY)
+      }
+    }
+    void run()
     return () => {
       cancelled = true
     }
-  }, [profileId])
+  }, [profileId, knownEmpty])
 
   const isEmpty = counts !== null && counts.total === 0
 

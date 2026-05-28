@@ -6,6 +6,7 @@ import RoleBadge from '../RoleBadge'
 import DualNationalityDisplay from '../DualNationalityDisplay'
 import ClubFitChip from '../recruiting/ClubFitChip'
 import HockeyContextLine from '../recruiting/HockeyContextLine'
+import QuickActionsRow from '../recruiting/QuickActionsRow'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { requestCache } from '@/lib/requestCache'
@@ -329,6 +330,13 @@ interface MemberCardProps {
 }
 
 function MemberCard({ member, onClick }: MemberCardProps) {
+  // Carousel-card auth gate mirrors MemberTile — anon viewers + the
+  // card's own owner don't see the QuickActionsRow strip. The strip
+  // self-gates internally too, but checking here also lets us skip
+  // the wrapping container (avoids the border-top divider showing
+  // with nothing inside it).
+  const { profile: viewerProfile } = useAuthStore()
+  const showQuickActions = Boolean(viewerProfile) && viewerProfile?.id !== member.id
   // .trim() guards against legacy rows with trailing whitespace in
   // full_name — the value leaks into both the visible label and the
   // aria-label (which then produces "Open Maria 's profile" with an
@@ -376,11 +384,14 @@ function MemberCard({ member, onClick }: MemberCardProps) {
   // Total natural height settles around ~290px — same for every
   // member; no fixed `h-[…]` needed.
   return (
+    <div
+      className="snap-center flex-shrink-0 w-52 rounded-2xl border border-gray-200/80 bg-white shadow-sm hover:shadow-md transition-shadow flex flex-col overflow-hidden"
+      data-testid={`top-member-card-${member.id}`}
+    >
     <button
       type="button"
       onClick={onClick}
-      className="snap-center flex-shrink-0 w-52 rounded-2xl border border-gray-200/80 bg-white shadow-sm p-4 hover:shadow-md transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8026FA]/40 flex flex-col text-center"
-      data-testid={`top-member-card-${member.id}`}
+      className="flex-1 p-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8026FA]/40 flex flex-col text-center"
       aria-label={`${fullName}, ${member.profile_completeness_pct}% profile complete. Tap to open profile.`}
     >
       {/* Avatar slot — fixed centered */}
@@ -480,6 +491,25 @@ function MemberCard({ member, onClick }: MemberCardProps) {
         )}
       </div>
     </button>
+
+    {/* F4 — recruiter quick-actions footer. Sibling of the clickable
+        identity area so we don't nest interactive elements. Same
+        compact strip MemberTile uses on the grid; stopPropagation
+        keeps a tap on Save / Message / ⋯ from also opening the
+        profile. Hidden for anon viewers + the card's own owner. */}
+    {showQuickActions && (
+      <div
+        className="px-3 py-2 border-t border-gray-100 bg-gray-50/40 flex justify-center"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <QuickActionsRow
+          playerId={member.id}
+          playerName={fullName}
+          compact
+        />
+      </div>
+    )}
+    </div>
   )
 }
 
