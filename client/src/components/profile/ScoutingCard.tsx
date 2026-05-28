@@ -36,6 +36,7 @@ import { useToastStore } from '@/lib/toast'
 import { useIsProfileSaved } from '@/hooks/useSavedProfiles'
 import { resolveConversationRoute } from '@/lib/startConversation'
 import ClubFitChip from '@/components/recruiting/ClubFitChip'
+import AIOpinionPanel from '@/components/recruiting/AIOpinionPanel'
 import MoreActionsMenu from '@/components/recruiting/MoreActionsMenu'
 
 interface ScoutingCardProfile {
@@ -300,6 +301,25 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
           <p className="text-xs text-gray-600 mt-0.5 truncate">{status.sub}</p>
         </div>
         <ClubFitChip
+          candidate={{
+            id: profile.id,
+            role: profile.role,
+            playing_category: profile.playing_category,
+            current_world_club_id: profile.current_world_club_id,
+            open_to_play: profile.open_to_play,
+            open_to_coach: profile.open_to_coach,
+            open_to_opportunities: profile.open_to_opportunities,
+            last_active_at: profile.last_active_at,
+          }}
+        />
+      </div>
+
+      {/* Section F (G.7) — HOCKIA AI fit opinion. Recruiter-only,
+          flag-gated, and hidden when Fit isn't applicable (no scope,
+          self-view, missing inputs). Same candidate shape as the chip
+          above so the gating stays in sync. */}
+      <div className="mt-3">
+        <AIOpinionPanel
           candidate={{
             id: profile.id,
             role: profile.role,

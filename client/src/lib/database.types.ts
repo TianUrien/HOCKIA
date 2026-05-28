@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.1"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       admin_audit_logs: {
@@ -80,6 +55,107 @@ export type Database = {
           user_agent?: string | null
         }
         Relationships: []
+      }
+      ai_opinion_quota: {
+        Row: {
+          count: number
+          day: string
+          viewer_id: string
+        }
+        Insert: {
+          count?: number
+          day?: string
+          viewer_id: string
+        }
+        Update: {
+          count?: number
+          day?: string
+          viewer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_opinion_quota_viewer_id_fkey"
+            columns: ["viewer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_opinion_quota_viewer_id_fkey"
+            columns: ["viewer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_opinions: {
+        Row: {
+          citations: Json
+          context_hash: string
+          created_at: string
+          expires_at: string
+          id: string
+          model: string
+          player_id: string
+          prompt_version: string
+          verdict_short: string
+          viewer_id: string
+        }
+        Insert: {
+          citations?: Json
+          context_hash: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          model: string
+          player_id: string
+          prompt_version: string
+          verdict_short: string
+          viewer_id: string
+        }
+        Update: {
+          citations?: Json
+          context_hash?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          model?: string
+          player_id?: string
+          prompt_version?: string
+          verdict_short?: string
+          viewer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_opinions_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_opinions_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_opinions_viewer_id_fkey"
+            columns: ["viewer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_opinions_viewer_id_fkey"
+            columns: ["viewer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       app_settings: {
         Row: {
@@ -6725,9 +6801,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       application_status: ["pending", "shortlisted", "maybe", "rejected"],
