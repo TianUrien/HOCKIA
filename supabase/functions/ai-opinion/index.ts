@@ -86,14 +86,22 @@ interface FitContext {
   player_last_active_at: string | null
 }
 
-// ── md5 hash via Web Crypto (Deno) ──────────────────────────────────
-async function md5(input: string): Promise<string> {
+// ── sha256 hash via Web Crypto (Deno) ──────────────────────────────
+// NOT MD5: Deno's Web Crypto API follows the spec strictly and only
+// supports SHA-1/256/384/512. Earlier this function used MD5 which
+// throws DOMException, killing the handler before the success path
+// could return a CORS-headed response — surfaced to the browser as
+// `FunctionsFetchError: Failed to send a request to the Edge
+// Function` (QA F1 on staging). Truncating SHA-256 to 32 hex chars
+// gives an identically-shaped cache key without changing the schema.
+async function sha256(input: string): Promise<string> {
   const encoder = new TextEncoder()
   const data = encoder.encode(input)
-  const buf = await crypto.subtle.digest('MD5', data)
+  const buf = await crypto.subtle.digest('SHA-256', data)
   return Array.from(new Uint8Array(buf))
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('')
+    .slice(0, 32)
 }
 
 function computeContextHash(viewerId: string, playerId: string, fit: FitContext): Promise<string> {
@@ -111,7 +119,7 @@ function computeContextHash(viewerId: string, playerId: string, fit: FitContext)
     oo: fit.player_open_to_opportunities,
     pv: PROMPT_VERSION,
   })
-  return md5(payload)
+  return sha256(payload)
 }
 
 // ── Viewer + player profile fetch ───────────────────────────────────
@@ -338,6 +346,12 @@ function passesContentFilter(payload: OpinionPayload): { ok: boolean; reason?: s
 
 // ── HTTP handler ────────────────────────────────────────────────────
 serve(async (req: Request) => {
+  // CORS headers must be resolved BEFORE any work that could throw —
+  // the outer try/catch below uses them to return a CORS-headed 500
+  // when something unexpected happens. Without that, the browser
+  // surfaces the failure as `FunctionsFetchError: Failed to send a
+  // request to the Edge Function` (QA F1) instead of giving the
+  // client a clean error code + message to render in the UI.
   const corsHeaders = getCorsHeaders(req.headers.get('origin'))
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -348,6 +362,8 @@ serve(async (req: Request) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }
+
+  try {
 
   const supabase = getServiceClient()
 
@@ -525,4 +541,25 @@ serve(async (req: Request) => {
     status: 200,
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   })
+
+  } catch (err) {
+    // Top-level safety net. Any uncaught throw — bad UUID coerce in a
+    // supabase query, a runtime DOMException from Web Crypto, a parse
+    // bug we didn't anticipate — lands here so the client gets a
+    // CORS-headed 500 with a stable error code, never a fetch-layer
+    // failure. The QA pass (F1) explicitly called out the missing
+    // catch as the reason `FunctionsFetchError: Failed to send a
+    // request` was reaching the browser.
+    console.error('[ai-opinion] unhandled exception', err)
+    return new Response(
+      JSON.stringify({
+        error: 'internal',
+        detail: err instanceof Error ? err.message : 'unknown',
+      }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      },
+    )
+  }
 })
