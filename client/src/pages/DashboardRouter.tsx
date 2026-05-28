@@ -146,7 +146,13 @@ export default function DashboardRouter() {
   }
 
   if (profile.role === 'coach') {
-    return <div data-testid="dashboard-coach"><CoachDashboard /></div>
+    // isOwnProfile=true: DashboardRouter ALWAYS renders the auth
+    // viewer's own dashboard. CoachDashboard / ClubDashboard mount
+    // recruiter chrome (ContextSwitcher, etc.) under this gate; the
+    // visitor-mode (readOnly + isOwnProfile=false) path lives in the
+    // public profile routes, not here. QA caught the dashboard chip
+    // missing because the gate was previously defaulting to false.
+    return <div data-testid="dashboard-coach"><CoachDashboard isOwnProfile /></div>
   }
 
   // Brand users: render BrandDashboard (handles its own loading/redirect logic)
@@ -159,7 +165,7 @@ export default function DashboardRouter() {
   }
 
   if (profile.role === 'club') {
-    return <div data-testid="dashboard-club"><ClubDashboard /></div>
+    return <div data-testid="dashboard-club"><ClubDashboard isOwnProfile /></div>
   }
 
   // Unrecognised role — surface explicitly instead of silently rendering

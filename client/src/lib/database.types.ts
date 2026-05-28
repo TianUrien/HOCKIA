@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.1"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       admin_audit_logs: {
@@ -451,6 +476,65 @@ export type Database = {
             columns: ["world_club_id"]
             isOneToOne: false
             referencedRelation: "world_clubs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      club_fit_cache: {
+        Row: {
+          components: Json
+          computed_at: string
+          context_hash: string
+          owner_id: string
+          player_id: string
+          score: number
+          state: string
+        }
+        Insert: {
+          components: Json
+          computed_at?: string
+          context_hash: string
+          owner_id: string
+          player_id: string
+          score: number
+          state: string
+        }
+        Update: {
+          components?: Json
+          computed_at?: string
+          context_hash?: string
+          owner_id?: string
+          player_id?: string
+          score?: number
+          state?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "club_fit_cache_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "club_fit_cache_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "club_fit_cache_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "club_fit_cache_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_pending_country_review"
             referencedColumns: ["id"]
           },
         ]
@@ -2991,6 +3075,84 @@ export type Database = {
         }
         Relationships: []
       }
+      recruiting_context: {
+        Row: {
+          competition_id: number | null
+          created_at: string
+          id: string
+          is_active: boolean
+          label: string | null
+          opportunity_id: string | null
+          owner_id: string
+          region: string | null
+          target_category: string | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          competition_id?: number | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string | null
+          opportunity_id?: string | null
+          owner_id: string
+          region?: string | null
+          target_category?: string | null
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          competition_id?: number | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string | null
+          opportunity_id?: string | null
+          owner_id?: string
+          region?: string | null
+          target_category?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recruiting_context_competition_id_fkey"
+            columns: ["competition_id"]
+            isOneToOne: false
+            referencedRelation: "world_leagues"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recruiting_context_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recruiting_context_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "public_opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recruiting_context_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recruiting_context_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reference_reminder_queue: {
         Row: {
           created_at: string
@@ -3051,6 +3213,8 @@ export type Database = {
           note: string | null
           owner_id: string
           saved_profile_id: string
+          shortlist_id: string
+          status: string
           updated_at: string
         }
         Insert: {
@@ -3059,6 +3223,8 @@ export type Database = {
           note?: string | null
           owner_id: string
           saved_profile_id: string
+          shortlist_id: string
+          status?: string
           updated_at?: string
         }
         Update: {
@@ -3067,6 +3233,8 @@ export type Database = {
           note?: string | null
           owner_id?: string
           saved_profile_id?: string
+          shortlist_id?: string
+          status?: string
           updated_at?: string
         }
         Relationships: [
@@ -3094,6 +3262,55 @@ export type Database = {
           {
             foreignKeyName: "saved_profiles_saved_profile_id_fkey"
             columns: ["saved_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saved_profiles_shortlist_id_fkey"
+            columns: ["shortlist_id"]
+            isOneToOne: false
+            referencedRelation: "shortlists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shortlists: {
+        Row: {
+          created_at: string
+          id: string
+          is_default: boolean
+          name: string
+          owner_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+          owner_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+          owner_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shortlists_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shortlists_owner_id_fkey"
+            columns: ["owner_id"]
             isOneToOne: false
             referencedRelation: "profiles_pending_country_review"
             referencedColumns: ["id"]
@@ -3753,8 +3970,10 @@ export type Database = {
           created_at: string
           display_order: number | null
           id: number
+          level_band_global: number | null
           logical_id: string | null
           name: string
+          parent_pyramid_id: number | null
           province_id: number | null
           slug: string | null
           tier: number | null
@@ -3765,8 +3984,10 @@ export type Database = {
           created_at?: string
           display_order?: number | null
           id?: number
+          level_band_global?: number | null
           logical_id?: string | null
           name: string
+          parent_pyramid_id?: number | null
           province_id?: number | null
           slug?: string | null
           tier?: number | null
@@ -3777,8 +3998,10 @@ export type Database = {
           created_at?: string
           display_order?: number | null
           id?: number
+          level_band_global?: number | null
           logical_id?: string | null
           name?: string
+          parent_pyramid_id?: number | null
           province_id?: number | null
           slug?: string | null
           tier?: number | null
@@ -3798,6 +4021,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "world_countries_with_directory"
             referencedColumns: ["country_id"]
+          },
+          {
+            foreignKeyName: "world_leagues_parent_pyramid_id_fkey"
+            columns: ["parent_pyramid_id"]
+            isOneToOne: false
+            referencedRelation: "world_leagues"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "world_leagues_province_id_fkey"
@@ -4089,6 +4319,14 @@ export type Database = {
       }
     }
     Functions: {
+      _club_fit_context_hash: {
+        Args: { p_opportunity_id: string; p_region: string; p_target: string }
+        Returns: string
+      }
+      _club_level_band: {
+        Args: { p_target: string; p_world_club_id: string }
+        Returns: number
+      }
       _enqueue_user_post_media: {
         Args: { p_images: Json; p_post_id: string; p_reason: string }
         Returns: undefined
@@ -4111,8 +4349,55 @@ export type Database = {
         Args: { p_floor?: number; p_target: number; p_value: number }
         Returns: number
       }
+      _player_level_band: {
+        Args: { p_playing_category: string; p_world_club_id: string }
+        Returns: number
+      }
+      _recency_30d: { Args: { ts: string }; Returns: number }
+      _target_accepts_category: {
+        Args: { p_category: string; p_target: string }
+        Returns: boolean
+      }
+      _upsert_club_fit_cache: {
+        Args: {
+          p_components: Json
+          p_context_hash: string
+          p_owner_id: string
+          p_player_id: string
+          p_score: number
+          p_state: string
+        }
+        Returns: undefined
+      }
       accept_terms: { Args: { p_version?: string }; Returns: undefined }
       acquire_profile_lock: { Args: { profile_id: string }; Returns: boolean }
+      activate_opportunity_recruiting_context: {
+        Args: {
+          p_label: string
+          p_opportunity_id: string
+          p_region: string
+          p_target_category: string
+        }
+        Returns: {
+          competition_id: number | null
+          created_at: string
+          id: string
+          is_active: boolean
+          label: string | null
+          opportunity_id: string | null
+          owner_id: string
+          region: string | null
+          target_category: string | null
+          type: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "recruiting_context"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       add_brand_ambassador: {
         Args: { p_brand_id: string; p_player_id: string }
         Returns: Json
@@ -5080,6 +5365,20 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      compute_club_fit: {
+        Args: {
+          p_opportunity_id: string
+          p_owner_id: string
+          p_player_id: string
+          p_region: string
+          p_target: string
+        }
+        Returns: {
+          components: Json
+          score: number
+          state: string
+        }[]
+      }
       compute_product_health_score: { Args: never; Returns: Json }
       compute_profile_completeness_pct: {
         Args: { p: Database["public"]["Tables"]["profiles"]["Row"] }
@@ -5087,6 +5386,35 @@ export type Database = {
       }
       confirm_availability: { Args: never; Returns: undefined }
       content_check: { Args: { p_text: string }; Returns: string }
+      create_active_recruiting_context: {
+        Args: {
+          p_competition_id: number
+          p_label: string
+          p_opportunity_id: string
+          p_region: string
+          p_target_category: string
+          p_type: string
+        }
+        Returns: {
+          competition_id: number | null
+          created_at: string
+          id: string
+          is_active: boolean
+          label: string | null
+          opportunity_id: string | null
+          owner_id: string
+          region: string | null
+          target_category: string | null
+          type: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "recruiting_context"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       create_and_claim_world_club: {
         Args: {
           p_club_name: string
@@ -5478,6 +5806,27 @@ export type Database = {
         }
         Returns: Json
       }
+      get_club_fit: {
+        Args: { p_context_id: string; p_player_id: string }
+        Returns: {
+          cache_hit: boolean
+          components: Json
+          computed_at: string
+          score: number
+          state: string
+        }[]
+      }
+      get_club_fit_batch: {
+        Args: { p_context_id: string; p_player_ids: string[] }
+        Returns: {
+          cache_hit: boolean
+          components: Json
+          computed_at: string
+          player_id: string
+          score: number
+          state: string
+        }[]
+      }
       get_club_members: {
         Args: { p_limit?: number; p_offset?: number; p_profile_id: string }
         Returns: {
@@ -5672,9 +6021,12 @@ export type Database = {
           accepted_reference_count: number
           avatar_url: string
           base_location: string
+          competition_level_band: number
           current_club: string
+          current_competition_name: string
           current_world_club_id: string
           full_name: string
+          gender: string
           id: string
           is_verified: boolean
           last_active_at: string
@@ -5684,6 +6036,7 @@ export type Database = {
           open_to_coach: boolean
           open_to_opportunities: boolean
           open_to_play: boolean
+          playing_category: string
           position: string
           profile_completeness_pct: number
           role: string
@@ -6045,6 +6398,28 @@ export type Database = {
         Args: { p_batch?: number; p_min_views?: number }
         Returns: number
       }
+      set_active_recruiting_context: {
+        Args: { p_id: string }
+        Returns: {
+          competition_id: number | null
+          created_at: string
+          id: string
+          is_active: boolean
+          label: string | null
+          opportunity_id: string | null
+          owner_id: string
+          region: string | null
+          target_category: string | null
+          type: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "recruiting_context"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       set_profile_comment_status: {
         Args: {
           p_comment_id: string
@@ -6350,6 +6725,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       application_status: ["pending", "shortlisted", "maybe", "rejected"],

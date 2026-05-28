@@ -11,6 +11,7 @@ import {
   CategoryConfirmationBanner,
 } from '@/components'
 import Header from '@/components/Header'
+import ContextSwitcher from '@/components/recruiting/ContextSwitcher'
 import JourneyTab from '@/components/JourneyTab'
 import MediaTab from '@/components/MediaTab'
 import CommentsTab from '@/components/CommentsTab'
@@ -578,6 +579,16 @@ export default function CoachDashboard({
             internally — no props needed. */}
         {!readOnly && isLanding && <ClubLinkPrompt />}
 
+        {/* Own-profile only: recruiter context chip. The chip itself
+            self-hides for non-recruiter roles; the isOwnProfile gate
+            prevents a non-owner club/coach visitor from seeing their
+            OWN context floating on someone else's coach dashboard. */}
+        {isOwnProfile && !readOnly && (
+          <div>
+            <ContextSwitcher />
+          </div>
+        )}
+
         <HeroIdentityCard
           // PlayerProfileShape requires position: string | null but
           // CoachProfileShape leaves it optional via Partial<Profile>.
@@ -615,6 +626,11 @@ export default function CoachDashboard({
               role: profile.role ?? null,
               full_name: profile.full_name ?? null,
               current_club: profile.current_club ?? null,
+              current_world_club_id: profile.current_world_club_id ?? null,
+              // Coaches don't have playing_category — pass null so Fit
+              // chip stays hidden on coach profile views (Fit is
+              // player-only in Sprint v1).
+              playing_category: null,
               highlight_video_url: profile.highlight_video_url ?? null,
               full_game_video_count: profile.full_game_video_count ?? null,
               accepted_reference_count: profile.accepted_reference_count ?? null,

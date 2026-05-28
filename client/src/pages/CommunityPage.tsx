@@ -15,7 +15,7 @@
  * sit above it cleanly.
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useNavigate, useSearchParams, useLocation } from 'react-router-dom'
 import { Search, Filter, Loader2 } from 'lucide-react'
 import { Header } from '@/components'
@@ -35,6 +35,12 @@ import {
 import type { CommunityTab } from '@/components/community'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { useAuthStore } from '@/lib/auth'
+import {
+  deriveTargetCategory,
+  playingCategoriesForTarget,
+} from '@/lib/recruitingContext'
+import { useActiveRecruitingTarget } from '@/hooks/useRecruitingContext'
+import ContextSwitcher from '@/components/recruiting/ContextSwitcher'
 
 const VALID_TABS: CommunityTab[] = ['all', 'players', 'coaches', 'clubs', 'umpires', 'brands', 'questions']
 
@@ -68,6 +74,13 @@ export default function CommunityPage() {
   // because that's their recruitment surface. The viewer's own role
   // goes LAST in their stack — they've already seen themselves.
   const { profile: viewerProfile } = useAuthStore()
+  // Sprint 2 recruiting context: the active ContextSwitcher target
+  // overrides the implicit profile-derived target. So a multi-team
+  // Mixed club can scope Fit + carousel filters to "Women" without
+  // touching their profile. Falls back to profile derivation when
+  // no context is active (anon/non-club viewers always see null
+  // here — useActiveRecruitingTarget gates on role).
+  const activeRecruitingTarget = useActiveRecruitingTarget()
 
   // Scroll restoration between Members ↔ Questions toggle (and across
   // role chips). React Router's default scrolls to top on route change;
@@ -125,6 +138,63 @@ export default function CommunityPage() {
   // carousel returns top across non-brand roles.
   const memberRoleFilter: 'player' | 'coach' | 'club' | 'umpire' | 'brand' | undefined =
     isMembers && activeTab !== 'all' ? ROLE_FILTER_BY_TAB[activeTab as keyof typeof ROLE_FILTER_BY_TAB] : undefined
+
+  // ── Featured carousel inputs (memoized) ─────────────────────────
+  // These used to be computed inside the JSX IIFE, which produced a
+  // brand-new `filterPlayingCategories` array reference on every
+  // render. TopCommunityMembersCarousel's effect depends on that
+  // array, so each parent render re-fired its fetch — a single cold
+  // /community load saw 3–5 RPC calls to get_top_community_members.
+  // Hoisting + useMemo keeps the array reference stable across
+  // renders that don't actually change the inputs.
+  const themeIndex = useMemo(() => {
+    const themeOverride = searchParams.get('theme')
+    return themeOverride !== null && /^[0-3]$/.test(themeOverride)
+      ? Number(themeOverride)
+      : currentWeekThemeIndex()
+  }, [searchParams])
+
+  const featured = useMemo(
+    () => featuredForTheme(
+      themeIndex,
+      viewerProfile?.role,
+      viewerProfile?.coach_recruits_for_team,
+    ),
+    [themeIndex, viewerProfile?.role, viewerProfile?.coach_recruits_for_team],
+  )
+
+  // viewerTarget — primitives only (string | null), so memoization
+  // is on the underlying profile fields the resolver actually reads.
+  // The ESLint rule wants the whole `viewerProfile` object, but
+  // depending on a new profile reference every render would defeat
+  // the point of this memo (which is what produced the carousel
+  // double-fetch in the first place — see CommunityPage's filter
+  // hoisting comment above).
+  const viewerTarget = useMemo(
+    () => activeRecruitingTarget ?? deriveTargetCategory(viewerProfile),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      activeRecruitingTarget,
+      viewerProfile?.role,
+      viewerProfile?.womens_league_division,
+      viewerProfile?.mens_league_division,
+    ],
+  )
+
+  // The single source of truth for the carousel's category whitelist
+  // prop. Stable array reference: only changes when the underlying
+  // lane (featured.lane or memberRoleFilter, depending on which tab
+  // is active) or viewerTarget actually changes.
+  const filterPlayingCategories = useMemo(() => {
+    if (activeTab === 'all') {
+      return featured.lane === 'player' && viewerTarget
+        ? playingCategoriesForTarget(viewerTarget)
+        : undefined
+    }
+    return memberRoleFilter === 'player' && viewerTarget
+      ? playingCategoriesForTarget(viewerTarget)
+      : undefined
+  }, [activeTab, featured.lane, memberRoleFilter, viewerTarget])
 
   // Lifted filter state. searchQuery is seeded from the URL ?q= param
   // on first mount via the hook's initial value; the sync effects
@@ -235,6 +305,14 @@ export default function CommunityPage() {
             <p className="mt-1 text-sm text-gray-600">
               Connect with field hockey players, coaches, clubs and organisations around the world.
             </p>
+            {/* Recruiter-only: ContextSwitcher self-hides for players,
+                brands, umpires, and anon viewers. Mounted in the page
+                header so the active context is the first thing a
+                recruiter sees — scoping Club Fit + carousel filters
+                is the most important meta-decision on this page. */}
+            <div className="mt-3">
+              <ContextSwitcher />
+            </div>
           </header>
 
           {/* Members / Questions segmented control */}
@@ -282,7 +360,7 @@ export default function CommunityPage() {
                 <button
                   type="button"
                   onClick={() => updateFilter('availability', filters.availability === 'open' ? 'all' : 'open')}
-                  aria-pressed={filters.availability === 'open' ? 'true' : 'false'}
+                  aria-pressed={filters.availability === 'open'}
                   className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-1.5 flex-shrink-0 ${
                     filters.availability === 'open'
                       ? 'bg-emerald-500 text-white'
@@ -295,7 +373,7 @@ export default function CommunityPage() {
                 <button
                   type="button"
                   onClick={() => setShowFilters(!showFilters)}
-                  aria-expanded={showFilters ? 'true' : 'false'}
+                  aria-expanded={showFilters}
                   className="flex items-center gap-1.5 whitespace-nowrap px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-full hover:bg-gray-200 active:bg-gray-300 transition-colors flex-shrink-0"
                 >
                   <Filter className="w-4 h-4" />
@@ -330,33 +408,24 @@ export default function CommunityPage() {
                   get_top_community_members RPC ("recently joined",
                   "open to opportunities", etc.). Marked as a follow-up
                   slice; for now the lane is fixed per role. */}
-              {!isNarrowed && activeTab === 'all' && (() => {
-                const themeOverride = searchParams.get('theme')
-                const themeIndex = themeOverride !== null && /^[0-3]$/.test(themeOverride)
-                  ? Number(themeOverride)
-                  : currentWeekThemeIndex()
-                const featured = featuredForTheme(
-                  themeIndex,
-                  viewerProfile?.role,
-                  viewerProfile?.coach_recruits_for_team,
-                )
-                return (
-                  <TopCommunityMembersCarousel
-                    key={`featured-${themeIndex}-${refreshKey}`}
-                    roleFilter={featured.lane}
-                    sortCriterion={featured.criterion}
-                    onlyOpen={featured.onlyOpen}
-                    title={featured.title}
-                    subtitle={featured.subtitle}
-                    onViewAll={handleViewAllScroll}
-                  />
-                )
-              })()}
+              {!isNarrowed && activeTab === 'all' && (
+                <TopCommunityMembersCarousel
+                  key={`featured-${themeIndex}-${refreshKey}`}
+                  roleFilter={featured.lane}
+                  sortCriterion={featured.criterion}
+                  onlyOpen={featured.onlyOpen}
+                  title={featured.title}
+                  subtitle={featured.subtitle}
+                  filterPlayingCategories={filterPlayingCategories}
+                  onViewAll={handleViewAllScroll}
+                />
+              )}
               {!isNarrowed && activeTab !== 'all' && memberRoleFilter && (
                 <TopCommunityMembersCarousel
                   key={`top-${activeTab}-${refreshKey}`}
                   roleFilter={memberRoleFilter}
                   sortCriterion={memberRoleFilter === 'player' ? 'availability_activity' : 'completeness'}
+                  filterPlayingCategories={filterPlayingCategories}
                   onViewAll={handleViewAllScroll}
                 />
               )}

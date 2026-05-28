@@ -67,6 +67,10 @@ vi.mock('@/lib/auth', () => ({
 
 vi.mock('@/hooks/useWorldClubLogo', () => ({
   useWorldClubLogo: () => null,
+  // P1.4 — MemberTile now also imports getPlayerLeagueName for the
+  // HockeyContextLine middle segment. Return null so the line falls
+  // back to "Not added yet" in tests (matches the empty-cache state).
+  getPlayerLeagueName: () => null,
 }))
 
 vi.mock('@/lib/imageUrl', () => ({
@@ -179,13 +183,17 @@ describe('MemberTile — role coverage', () => {
     expect(screen.getByText('HC Bloemendaal')).toBeInTheDocument()
   })
 
-  it('player tile falls back to base_location when no current_team', () => {
+  it('player tile shows HockeyContextLine fallback when no current_team', () => {
+    // P1.4: player cards now render HockeyContextLine (club · competition
+    // · position) instead of a location-fallback row. Missing club
+    // surfaces as italic "Not added yet" — base_location is no longer a
+    // fallback for the team segment.
     renderTile({
       role: 'player',
       current_team: null,
       base_location: 'Amsterdam',
     })
-    expect(screen.getByText('Amsterdam')).toBeInTheDocument()
+    expect(screen.getAllByText('Not added yet').length).toBeGreaterThanOrEqual(1)
   })
 
   it('coach tile shows current_team', () => {

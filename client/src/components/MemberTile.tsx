@@ -5,10 +5,12 @@ import { RoleBadge, TierBadge, VerifiedBadge, DualNationalityDisplay } from '@/c
 import type { ProfileTier } from '@/lib/profileTier'
 import SignInPromptModal from '@/components/SignInPromptModal'
 import { useAuthStore } from '@/lib/auth'
-import { useWorldClubLogo } from '@/hooks/useWorldClubLogo'
+import { useWorldClubLogo, getPlayerLeagueName } from '@/hooks/useWorldClubLogo'
+import HockeyContextLine from '@/components/recruiting/HockeyContextLine'
 import { useIsProfileSaved } from '@/hooks/useSavedProfiles'
 import { getImageUrl } from '@/lib/imageUrl'
 import RolePlaceholder from './RolePlaceholder'
+import ClubFitChip from './recruiting/ClubFitChip'
 
 const BRAND_CATEGORY_LABELS: Record<string, string> = {
   equipment: 'Equipment',
@@ -39,6 +41,23 @@ interface MemberTileProps {
   current_world_club_id?: string | null
   open_to_play?: boolean
   open_to_coach?: boolean
+  /** Optional — used by ClubFitChip for "open to opportunities" check
+   *  on umpires + brands. Players/coaches use open_to_play/coach. */
+  open_to_opportunities?: boolean
+  /** Phase 3e player playing category — drives the gender_match
+   *  component of the recruiter-only Club Fit chip. */
+  playing_category?: string | null
+  /** P1.2 curated 1..10 level band — drives the competition_proximity
+   *  component of the recruiter-only Club Fit chip. Null when the
+   *  player has no current_world_club_id or the club's league hasn't
+   *  been seeded with a band. */
+  competition_level_band?: number | null
+  /** P1.4 — player position (Forward / Midfield / Defender /
+   *  Goalkeeper). Renders as the third segment of HockeyContextLine.
+   *  Only meaningful for players. */
+  position?: string | null
+  /** Recency-30d signal for Fit availability + recency components. */
+  last_active_at?: string | null
   tier?: ProfileTier
   isVerified?: boolean
   verifiedAt?: string | null
@@ -217,10 +236,25 @@ export default function MemberTile(props: MemberTileProps) {
             <VerifiedBadge verified={props.isVerified} verifiedAt={props.verifiedAt} size="sm" />
           </div>
 
-          {/* Row 2: role pill + tier/level pill */}
+          {/* Row 2: role pill + tier/level pill + Club Fit chip
+              (recruiter-only; renders nothing when viewer isn't a club
+              or candidate isn't player/coach). */}
           <div className="flex items-center gap-1.5 flex-wrap">
             <RoleBadge role={props.role} />
             {modifierPill}
+            <ClubFitChip
+              candidate={{
+                id: props.id,
+                role: props.role,
+                playing_category: props.playing_category ?? null,
+                current_world_club_id: props.current_world_club_id ?? null,
+                competition_level_band: props.competition_level_band ?? null,
+                open_to_play: props.open_to_play ?? null,
+                open_to_coach: props.open_to_coach ?? null,
+                open_to_opportunities: props.open_to_opportunities ?? null,
+                last_active_at: props.last_active_at ?? null,
+              }}
+            />
           </div>
 
           {/* Row 3: nationality (tile mode — full names + flags, EU pill
@@ -237,8 +271,26 @@ export default function MemberTile(props: MemberTileProps) {
             </div>
           )}
 
-          {/* Row 4: club / location / federation / category (truncated) */}
-          {roleNative && (
+          {/* P1.4 Hockey context line — players only (club ·
+              competition · position with per-segment "Not added yet"
+              fallback). Competition name is pulled from the
+              prefetchWorldClubLogos cache, which PeopleListView warms
+              before rendering the grid. For non-player roles we keep
+              the legacy single-row team/federation/category display
+              because they don't have positions or leagues in the same
+              sense. */}
+          {props.role === 'player' ? (
+            <div className="pt-2 border-t border-gray-100">
+              <HockeyContextLine
+                clubName={props.current_team}
+                competitionName={getPlayerLeagueName(
+                  props.current_world_club_id ?? null,
+                  props.playing_category ?? null,
+                )}
+                position={props.position}
+              />
+            </div>
+          ) : roleNative && (
             <div className="flex items-center gap-1.5 text-xs text-gray-500 min-w-0 pt-2 border-t border-gray-100">
               {roleNative.kind === 'team' && clubLogo ? (
                 <img

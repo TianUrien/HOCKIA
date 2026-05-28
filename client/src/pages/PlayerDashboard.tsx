@@ -584,6 +584,8 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
               role: profile.role ?? null,
               full_name: profile.full_name ?? null,
               current_club: profile.current_club ?? null,
+              current_world_club_id: profile.current_world_club_id ?? null,
+              playing_category: (profile as Profile).playing_category ?? null,
               highlight_video_url: (profile as Profile).highlight_video_url ?? null,
               full_game_video_count: (profile as Profile).full_game_video_count ?? null,
               accepted_reference_count: (profile as Profile).accepted_reference_count ?? null,
