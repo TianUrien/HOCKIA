@@ -66,10 +66,23 @@ export default function SettingsSheet({ className = '' }: SettingsSheetProps) {
   useEffect(() => {
     if (!isOpen) return
     updatePos()
-    const handle = () => updatePos()
+    // rAF-coalesced — sync getBoundingClientRect inside the scroll
+    // handler would otherwise cause layout thrash on every momentum-
+    // scroll frame. One measure per frame is enough for visible
+    // tracking and removes a real main-thread cost when the sheet is
+    // open during scroll.
+    let rafId: number | null = null
+    const handle = () => {
+      if (rafId !== null) return
+      rafId = requestAnimationFrame(() => {
+        rafId = null
+        updatePos()
+      })
+    }
     window.addEventListener('scroll', handle, true)
     window.addEventListener('resize', handle)
     return () => {
+      if (rafId !== null) cancelAnimationFrame(rafId)
       window.removeEventListener('scroll', handle, true)
       window.removeEventListener('resize', handle)
     }

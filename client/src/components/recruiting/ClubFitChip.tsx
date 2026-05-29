@@ -302,11 +302,26 @@ function ReasoningPopover({
   }, [measure])
 
   useEffect(() => {
-    window.addEventListener('scroll', measure, true) // capture: catch nested scrolls too
-    window.addEventListener('resize', measure)
+    // rAF-coalesced — sync getBoundingClientRect inside the scroll
+    // handler causes layout thrash if fired hundreds of times per
+    // second during a momentum scroll. The rAF gate drops anything
+    // beyond one measure per frame (~16ms at 60fps); the first
+    // measure of a frame still runs synchronously inside the rAF
+    // callback so positioning stays pixel-correct.
+    let rafId: number | null = null
+    const onChange = () => {
+      if (rafId !== null) return
+      rafId = requestAnimationFrame(() => {
+        rafId = null
+        measure()
+      })
+    }
+    window.addEventListener('scroll', onChange, true) // capture: catch nested scrolls too
+    window.addEventListener('resize', onChange)
     return () => {
-      window.removeEventListener('scroll', measure, true)
-      window.removeEventListener('resize', measure)
+      if (rafId !== null) cancelAnimationFrame(rafId)
+      window.removeEventListener('scroll', onChange, true)
+      window.removeEventListener('resize', onChange)
     }
   }, [measure])
 
