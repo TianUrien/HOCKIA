@@ -9,6 +9,7 @@
  */
 
 import { Capacitor } from '@capacitor/core'
+import { sanitizePath, pathToSafeTitle, hashUserId } from './analyticsSanitizers'
 
 const GA_MEASUREMENT_ID = import.meta.env.VITE_GA_MEASUREMENT_ID ?? 'G-NE620GQKTX'
 
@@ -24,25 +25,50 @@ declare global {
 }
 
 /**
- * Initialize GA4 - currently a no-op since config is in index.html
- * Kept for future enhancements (e.g., consent management)
+ * Initialize GA4 - currently a no-op since gtag config is loaded in
+ * lib/cookieConsent.ts after the user grants analytics consent.
+ * Kept for parity with the trackPageView/setUserProperties API.
  */
 export function initGA(): void {
-  // Config is handled in index.html for immediate activation
-  // This function is kept for potential future use (consent, debug mode, etc.)
+  // No-op. cookieConsent.enableAnalytics() loads gtag.js and runs the
+  // initial gtag('config', ...). trackPageView fires the first
+  // sanitized page_view from App.tsx's route useEffect.
 }
 
 /**
- * Track page views on route changes (SPA navigation)
- * Call this in useEffect when location changes
+ * Track page views on route changes (SPA navigation).
+ *
+ * PII scrub: strips UUID segments from the path, overrides the title
+ * for identifying routes (profile pages, opportunity details, etc.),
+ * and builds a sanitized page_location from the origin + sanitized
+ * path — never sends window.location.href directly. The sanitized
+ * page_location + page_title are also `set()` so they stick across
+ * subsequent auto-captured events (event-time gtag would otherwise
+ * re-read window.location at fire time).
  */
 export function trackPageView(path: string, title?: string): void {
   if (typeof window === 'undefined' || isNative) return
 
+  const sanitizedPath = sanitizePath(path)
+  const fallbackTitle = title ?? document.title
+  const sanitizedTitle = pathToSafeTitle(sanitizedPath, fallbackTitle)
+  const origin = typeof window.location !== 'undefined' ? window.location.origin : ''
+  const sanitizedLocation = `${origin}${sanitizedPath}`
+
   window.gtag?.('event', 'page_view', {
-    page_path: path,
-    page_title: title || document.title,
-    page_location: window.location.href,
+    page_path: sanitizedPath,
+    page_title: sanitizedTitle,
+    page_location: sanitizedLocation,
+  })
+
+  // Make these sticky so trackEvent calls between page changes don't
+  // accidentally pick up the raw window.location/document.title at
+  // event-fire time. gtag('set', { page_location, page_title })
+  // overrides the auto-captured values for all subsequent hits.
+  window.gtag?.('set', {
+    page_path: sanitizedPath,
+    page_title: sanitizedTitle,
+    page_location: sanitizedLocation,
   })
 }
 
@@ -70,19 +96,31 @@ export function trackEvent({ action, category, label, value, ...params }: TrackE
 }
 
 /**
- * Set user properties after login
- * This links analytics data to a user ID for cross-device tracking
+ * Set user properties after login.
+ *
+ * PII scrub: the raw Supabase profile UUID is one-way hashed before
+ * leaving the device so GA's `uid` param can't be correlated to a
+ * real database identifier (same input → same hash preserves the
+ * cross-device tracking signal). `user_role` (player/coach/club)
+ * stays unhashed since it's deliberately the only profile attribute
+ * we want GA to break events down by.
+ *
+ * Async because Web Crypto's SHA-256 is async. Callers can await or
+ * fire-and-forget — login flow doesn't depend on the GA write
+ * completing, so awaiting just for ordering is fine to skip.
  */
-export function setUserProperties(userId: string, role: string): void {
+export async function setUserProperties(userId: string, role: string): Promise<void> {
   if (typeof window === 'undefined' || isNative) return
 
+  const hashedId = await hashUserId(userId)
+
   window.gtag?.('set', 'user_properties', {
-    user_id: userId,
+    user_id: hashedId,
     user_role: role, // 'player', 'coach', 'club'
   })
 
   window.gtag?.('config', GA_MEASUREMENT_ID, {
-    user_id: userId,
+    user_id: hashedId,
   })
 }
 

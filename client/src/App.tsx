@@ -185,7 +185,6 @@ function EngagementTracker() {
 // Google Analytics page view tracker
 function AnalyticsTracker() {
   const location = useLocation()
-  const isFirstRender = useRef(true)
 
   useEffect(() => {
     // Tag current route on every event sent to Sentry (critical for debugging
@@ -198,11 +197,11 @@ function AnalyticsTracker() {
       data: { pathname: location.pathname, search: location.search },
     })
 
-    // Skip the initial render (GA handles it via initGA)
-    if (isFirstRender.current) {
-      isFirstRender.current = false
-      return
-    }
+    // Fire on every route change INCLUDING the first render. We
+    // disabled gtag's send_page_view in cookieConsent.ts as part of
+    // the PII scrub (initial auto pageview leaked raw URLs / titles),
+    // so trackPageView is now the single source of all page_view
+    // events. Sanitization is applied inside trackPageView.
     trackPageView(location.pathname + location.search)
   }, [location])
 

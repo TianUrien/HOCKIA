@@ -195,8 +195,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (data) {
         logger.debug('[AUTH_STORE] Profile fetched', { userId, duration })
         set({ profile: data, profileStatus: 'loaded', profileFetchedAt: resolvedAt })
-        // Set GA4 user properties for analytics tracking
-        setUserProperties(userId, data.role)
+        // Set GA4 user properties for analytics tracking. Fire-and-
+        // forget — setUserProperties is async now (sha256 hashing the
+        // userId via Web Crypto before passing to gtag), and login
+        // doesn't depend on the GA write completing.
+        void setUserProperties(userId, data.role)
         // Fire-and-forget: stamp last_active_at on the server so the
         // "Active recently" Snapshot signal turns ✓. The RPC is throttled
         // to once per hour per user, so frequent profile re-fetches don't

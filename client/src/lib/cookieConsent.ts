@@ -47,7 +47,13 @@ export function enableGA4() {
   // eslint-disable-next-line prefer-rest-params, @typescript-eslint/no-unused-vars -- gtag uses implicit `arguments` object per GA4 snippet
   function gtag(..._args: unknown[]) { window.dataLayer!.push(arguments) }
   gtag('js', new Date())
-  gtag('config', GA_ID, { send_page_view: true })
+  // send_page_view: false because gtag's auto-fired initial page_view
+  // would carry the raw window.location.href + document.title (both
+  // can include UUIDs / profile names). lib/analytics.ts owns ALL
+  // page_view events — trackPageView fires sanitized payloads from
+  // App.tsx's route useEffect, including the first render after
+  // consent is granted.
+  gtag('config', GA_ID, { send_page_view: false })
 
   // Expose gtag globally for analytics.ts
   ;(window as unknown as Record<string, unknown>).gtag = gtag
