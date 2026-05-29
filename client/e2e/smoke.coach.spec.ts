@@ -41,12 +41,12 @@ test.describe('@smoke coach', () => {
   test('coach can view community page', async ({ page }) => {
     await page.goto('/community')
 
-    // Community page title (h1) should load. Disambiguates from the
-    // carousel's "Top community members" h2 added in the May 2026
-    // Top Members redesign.
+    // Community page intro removed 2026-05-29 — assert on the
+    // segmented control tabs as the stable "page rendered" signal.
     await expect(
-      page.getByRole('heading', { level: 1, name: /community/i })
+      page.getByRole('button', { name: /members/i })
     ).toBeVisible({ timeout: 20000 })
+    await expect(page.getByRole('button', { name: /questions/i })).toBeVisible()
   })
 
   test('coach cannot access brand dashboard', async ({ page }) => {

@@ -38,15 +38,11 @@ test.describe('@smoke public', () => {
     await page.goto('/community')
     await page.waitForLoadState('networkidle')
 
-    // Community page title (h1) should be visible. Disambiguates from
-    // the carousel's "Top community members" h2 added in the May 2026
-    // Top Members redesign.
-    await expect(
-      page.getByRole('heading', { level: 1, name: /community/i })
-    ).toBeVisible({ timeout: 20000 })
-
-    // Tab switcher should show Members and Questions tabs
-    await expect(page.getByRole('button', { name: /members/i })).toBeVisible()
+    // Community page intro (h1 title + description) was removed
+    // 2026-05-29 — the page now starts directly with the segmented
+    // control. Assert on those tabs as the stable "page rendered"
+    // signal.
+    await expect(page.getByRole('button', { name: /members/i })).toBeVisible({ timeout: 20000 })
     await expect(page.getByRole('button', { name: /questions/i })).toBeVisible()
   })
 
