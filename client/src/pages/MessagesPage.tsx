@@ -357,7 +357,14 @@ export default function MessagesPage() {
           pathname: `/messages/${existingConversation.id}`,
           search: nextSearch ? `?${nextSearch}` : ''
         },
-        { replace: true }
+        // Preserve location.state across the URL upgrade — otherwise
+        // navigation `state: { returnTo }` set by the upstream entry
+        // point (profile Message button, etc.) is wiped to null, and
+        // the back button falls back to the inbox. Bug surfaced by
+        // QA agent on commit b1ddcdc: profile→Message→back returned
+        // to /messages instead of the originating profile because
+        // this replace dropped the state.
+        { replace: true, state: location.state }
       )
       return
     }
@@ -423,7 +430,11 @@ export default function MessagesPage() {
             pathname: `/messages/${pendingId}`,
             search: nextSearch ? `?${nextSearch}` : ''
           },
-          { replace: true }
+          // Preserve location.state — see matching note above on the
+          // existing-conversation upgrade. Without this, the
+          // `?new=` → `/messages/pending-<id>` upgrade drops the
+          // returnTo set by profile/preview/references entry points.
+          { replace: true, state: location.state }
         )
       } catch (error) {
         if (isCancelled) return
@@ -443,7 +454,7 @@ export default function MessagesPage() {
     return () => {
       isCancelled = true
     }
-  }, [newConversationTargetId, user?.id, conversations, pendingConversation, navigate, searchParams])
+  }, [newConversationTargetId, user?.id, conversations, pendingConversation, navigate, searchParams, location.state])
 
   // Participant-scoped realtime: refresh whenever any conversation involving the user changes
   useEffect(() => {
@@ -653,13 +664,19 @@ export default function MessagesPage() {
       nextParams.set('conversation', createdConversation.id)
       nextParams.delete('new')
       const nextSearch = nextParams.toString()
-      navigate({
-        pathname: `/messages/${createdConversation.id}`,
-        search: nextSearch ? `?${nextSearch}` : ''
-      })
+      navigate(
+        {
+          pathname: `/messages/${createdConversation.id}`,
+          search: nextSearch ? `?${nextSearch}` : ''
+        },
+        // Preserve returnTo across the pending → real-conversation
+        // URL transition. Replace so the user doesn't navigate-back
+        // into the pending URL.
+        { replace: true, state: location.state }
+      )
       // Don't force refresh - real-time subscription will handle updates
     },
-    [navigate, searchParams]
+    [navigate, searchParams, location.state]
   )
 
   const handleConversationRead = useCallback(

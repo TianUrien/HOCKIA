@@ -20,7 +20,7 @@
  * available to any authenticated non-self viewer.
  */
 
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import {
   Bookmark, BookmarkCheck, MessageSquare, Send, BarChart3,
 } from 'lucide-react'
@@ -55,6 +55,7 @@ export default function QuickActionsRow({
 }: QuickActionsRowProps) {
   const { profile: viewer } = useAuthStore()
   const navigate = useNavigate()
+  const location = useLocation()
   const savedState = useIsProfileSaved(playerId)
 
   const viewerRole = viewer?.role
@@ -73,7 +74,11 @@ export default function QuickActionsRow({
       onMessage()
       return
     }
-    navigate(`/messages?new=${playerId}`)
+    // returnTo: conversation back button returns to the page that
+    // hosted this quick-actions row (typically /community or a
+    // profile). Without this, back drops the user on the inbox.
+    const returnTo = location.pathname + location.search
+    navigate(`/messages?new=${playerId}`, { state: { returnTo } })
     trackDbEvent('quick_action.message_clicked', 'profile', playerId)
   }
 

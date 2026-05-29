@@ -158,6 +158,11 @@ describe('QuickActionsRow', () => {
     setViewer({ role: 'club' })
     renderRow()
     await userEvent.click(screen.getByRole('button', { name: /message jordan hall/i }))
-    expect(navigateMock).toHaveBeenCalledWith('/messages?new=player-9')
+    // Second arg carries returnTo state for context-aware back nav
+    // — defaults to '/' since MemoryRouter starts at root path.
+    expect(navigateMock).toHaveBeenCalledWith(
+      '/messages?new=player-9',
+      { state: { returnTo: '/' } },
+    )
   })
 })
