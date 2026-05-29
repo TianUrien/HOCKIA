@@ -28,13 +28,11 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Star, MessageCircle, Bookmark, BookmarkCheck } from 'lucide-react'
+import { Star, Bookmark, BookmarkCheck } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { useAuthStore } from '@/lib/auth'
-import { useToastStore } from '@/lib/toast'
 import { useIsProfileSaved } from '@/hooks/useSavedProfiles'
-import { resolveConversationRoute } from '@/lib/startConversation'
 import ClubFitChip from '@/components/recruiting/ClubFitChip'
 import AIOpinionPanel from '@/components/recruiting/AIOpinionPanel'
 import MoreActionsMenu from '@/components/recruiting/MoreActionsMenu'
@@ -86,9 +84,7 @@ const DAY_MS = 24 * 60 * 60 * 1000
 export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardProps) {
   const navigate = useNavigate()
   const { user } = useAuthStore()
-  const { addToast } = useToastStore()
   const [counts, setCounts] = useState<EvidenceCounts | null>(null)
-  const [sendingMessage, setSendingMessage] = useState(false)
   const savedState = useIsProfileSaved(profile.id)
 
   // Two parallel fetches — career_history (counts + most-recent per
@@ -191,26 +187,9 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
   })()
 
   // ── ZONE 3 HANDLERS ────────────────────────────────────────────────
-  const handleMessage = useCallback(async () => {
-    if (!user) {
-      addToast('Sign in to message', 'error')
-      return
-    }
-    if (user.id === profile.id) {
-      addToast('You cannot message yourself.', 'error')
-      return
-    }
-    setSendingMessage(true)
-    try {
-      const route = await resolveConversationRoute(user.id, profile.id)
-      navigate(route)
-    } catch (err) {
-      logger.error('[ScoutingCard] resolve conversation failed', err)
-      addToast('Could not open conversation. Please try again.', 'error')
-    } finally {
-      setSendingMessage(false)
-    }
-  }, [user, profile.id, navigate, addToast])
+  // handleMessage was removed 2026-05-29 alongside the Message button —
+  // the universal Message action lives in HeroIdentityCard's CTA row
+  // now (recruiter + non-recruiter visitors all use the same surface).
 
   const handleViewJourney = useCallback(() => {
     if (onViewJourney) return onViewJourney()
@@ -376,29 +355,16 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
                 </>
               )}
             </button>
-            <button
-              type="button"
-              onClick={() => void handleMessage()}
-              disabled={sendingMessage}
-              className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-            >
-              {sendingMessage ? (
-                <>
-                  <div className="h-4 w-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
-                  Opening…
-                </>
-              ) : (
-                <>
-                  <MessageCircle className="h-4 w-4" />
-                  Message
-                </>
-              )}
-            </button>
-            {/* ⋯ — Move to list / Add note. Bespoke gradient Save +
-                Message stay as primary CTAs; this gives recruiters
-                access to multi-list workflows without leaving the
-                profile. Same menu used by QuickActionsRow on tile
-                surfaces, so behavior + telemetry stay consistent. */}
+            {/* Message moved to HeroIdentityCard's CTA row (2026-05-29) —
+                it's a universal visitor action and belongs in the hero,
+                not in the recruiter-specific ScoutingCard zone. Two
+                identical Message buttons with equal prominence created
+                visual noise for recruiters. ScoutingCard keeps the
+                recruiter-specific actions: Shortlist + ⋯ menu (move
+                between lists, add note). */}
+            {/* ⋯ — Move to list / Add note. Same menu used by
+                QuickActionsRow on tile surfaces, so behavior +
+                telemetry stay consistent. */}
             <MoreActionsMenu
               playerId={profile.id}
               playerName={profile.full_name ?? 'this player'}

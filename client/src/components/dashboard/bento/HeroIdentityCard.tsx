@@ -191,26 +191,29 @@ export default function HeroIdentityCard({
       </div>
 
       {/* CTA ROW — full-width below the identity zone. Visitor sees
-          Message + Connect + Report; owner sees Share + View + Edit.
+          Add Friend + Message; owner sees Share + View + Edit.
           Comfortable margin separates it from the identity block. */}
       <div className="mt-6 flex flex-wrap items-center gap-2">
         {readOnly ? (
           <>
             <FriendshipButton profileId={profile.id} />
-            {/* Message moved to ScoutingCard for recruiter-context
-                viewers. Kept on the own-profile-preview view so the
-                owner can still see what visitors normally see. */}
-            {!isOwnProfile && !isVisitorView && authProfileRole !== 'brand' && onMessage && (
+            {/* Message — secondary action paired with Add Friend.
+                Brands intentionally excluded: brand outreach still
+                routes through their dedicated flow. The owner-preview
+                view (isVisitorView=false here means the owner is
+                previewing) also sees this so they know what
+                visitors get. */}
+            {!isOwnProfile && authProfileRole !== 'brand' && onMessage && (
               <button
                 type="button"
                 onClick={onMessage}
                 disabled={sendingMessage}
-                className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-[#8026FA] to-[#924CEC] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-90 disabled:opacity-60"
+                className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:text-[#8026FA] disabled:opacity-50"
               >
                 {sendingMessage ? (
                   <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Sending...
+                    <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+                    Opening…
                   </>
                 ) : (
                   <>

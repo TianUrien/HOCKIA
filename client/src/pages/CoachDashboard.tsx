@@ -28,7 +28,7 @@ import PublicCommunityView from '@/components/community/PublicCommunityView'
 import { ProfileViewersSection } from '@/components/ProfileViewersSection'
 import type { Profile } from '@/lib/supabase'
 import { supabase } from '@/lib/supabase'
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams, useLocation } from 'react-router-dom'
 import { useToastStore } from '@/lib/toast'
 import { useNotificationStore } from '@/lib/notifications'
 import { useCoachProfileStrength } from '@/hooks/useCoachProfileStrength'
@@ -136,8 +136,22 @@ export default function CoachDashboard({
   const refreshAuthProfile = useAuthStore((s) => s.refreshProfile)
   const profile = (profileData ?? authProfile) as CoachProfileShape | null
   const navigate = useNavigate()
+  const location = useLocation()
   const [searchParams] = useSearchParams()
   const { addToast } = useToastStore()
+
+  /** Visitor-view back button. See matching handler + comment in
+   *  PlayerDashboard — when location.key === 'default' the user
+   *  arrived via a deep link with no in-app history, so navigate(-1)
+   *  would exit HOCKIA entirely. Fall back to /community in that
+   *  case. */
+  const handleBack = () => {
+    if (location.key === 'default') {
+      navigate('/community')
+    } else {
+      navigate(-1)
+    }
+  }
 
   // Section comes from the URL route segment, not a ?tab= param. Same
   // pattern as PlayerDashboard's PR2 route promotion.
@@ -509,7 +523,7 @@ export default function CoachDashboard({
         {readOnly && !isOwnProfile && (
           <button
             type="button"
-            onClick={() => navigate(-1)}
+            onClick={() => handleBack()}
             className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />

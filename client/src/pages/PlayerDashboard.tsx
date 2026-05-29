@@ -26,7 +26,7 @@ import PublicCommunityView from '@/components/community/PublicCommunityView'
 import { ProfileViewersSection } from '@/components/ProfileViewersSection'
 import type { Profile } from '@/lib/supabase'
 import { supabase } from '@/lib/supabase'
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams, useLocation } from 'react-router-dom'
 import { useToastStore } from '@/lib/toast'
 import { useNotificationStore } from '@/lib/notifications'
 import { useProfileStrength, type ProfileStrengthBucket } from '@/hooks/useProfileStrength'
@@ -108,8 +108,26 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
   const { profile: authProfile, user } = useAuthStore()
   const profile = (profileData ?? authProfile) as PlayerProfileShape | null
   const navigate = useNavigate()
+  const location = useLocation()
   const [searchParams] = useSearchParams()
   const { addToast } = useToastStore()
+
+  /** Visitor-view back button. When the user reached this profile via
+   *  an in-app navigation, navigate(-1) is correct. When they arrived
+   *  via a shared/deep link in a fresh tab, the browser history is
+   *  empty — navigate(-1) would exit the app (back to chrome://newtab
+   *  on Chrome, dropping them out of HOCKIA entirely). React-Router
+   *  marks the initial entry with location.key === 'default'; on that
+   *  case we route to /community as a sensible app-internal fallback.
+   *  (Visitor view only — owner's back button is unused; this only
+   *  fires when readOnly && !isOwnProfile.) */
+  const handleBack = () => {
+    if (location.key === 'default') {
+      navigate('/community')
+    } else {
+      navigate(-1)
+    }
+  }
 
   // PR2 — section comes from the URL route segment, not a ?tab= param.
   // - Owner: /dashboard/profile/:section  (DashboardRouter dispatches here)
@@ -494,7 +512,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
         {readOnly && !isOwnProfile && (
           <button
             type="button"
-            onClick={() => navigate(-1)}
+            onClick={() => handleBack()}
             className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
