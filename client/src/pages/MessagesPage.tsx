@@ -754,6 +754,34 @@ export default function MessagesPage() {
     ? /^[0-9a-fA-F-]{36}$/.test(selectedConversationId)
     : false
 
+  // Self-heal when the URL carries a non-UUID conversation id (stale
+  // link, typo, copy-paste mishap). Without this, the loading branch
+  // below renders an infinite "Loading conversation…" spinner because
+  // the hydration useEffect early-returns on invalid IDs and never
+  // sets the not-found path. App Store reviewer flag — fixed
+  // 2026-05-29 from the readiness QA pass. Pending IDs are valid
+  // even though they don't match the UUID regex, so exclude those.
+  useEffect(() => {
+    if (!selectedConversationId) return
+    if (isPendingConversation) return
+    if (isValidConversationId) return
+    // Malformed id — clear it + drop the conversation param from the
+    // URL so the user lands cleanly on the inbox.
+    logger.warn('Invalid conversation id in URL', { selectedConversationId })
+    setSelectedConversationId(null)
+    const nextParams = new URLSearchParams(searchParams)
+    nextParams.delete('conversation')
+    nextParams.delete('new')
+    const nextSearch = nextParams.toString()
+    navigate(
+      {
+        pathname: '/messages',
+        search: nextSearch ? `?${nextSearch}` : '',
+      },
+      { replace: true },
+    )
+  }, [selectedConversationId, isPendingConversation, isValidConversationId, navigate, searchParams])
+
   useEffect(() => {
     if (!user?.id || !selectedConversationId || isPendingConversation || !isValidConversationId) {
       return
