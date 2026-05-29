@@ -3727,6 +3727,104 @@ export type Database = {
           },
         ]
       }
+      user_feedback: {
+        Row: {
+          admin_notes: string | null
+          app_version: string | null
+          assigned_to: string | null
+          body: string
+          category: string
+          created_at: string
+          environment: string | null
+          id: string
+          is_urgent: boolean
+          priority: string | null
+          resolved_at: string | null
+          route: string | null
+          route_raw: string | null
+          sentry_replay_url: string | null
+          status: string
+          updated_at: string
+          user_agent: string | null
+          user_id: string
+          user_role: string
+          viewport: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          app_version?: string | null
+          assigned_to?: string | null
+          body: string
+          category: string
+          created_at?: string
+          environment?: string | null
+          id?: string
+          is_urgent?: boolean
+          priority?: string | null
+          resolved_at?: string | null
+          route?: string | null
+          route_raw?: string | null
+          sentry_replay_url?: string | null
+          status?: string
+          updated_at?: string
+          user_agent?: string | null
+          user_id: string
+          user_role: string
+          viewport?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          app_version?: string | null
+          assigned_to?: string | null
+          body?: string
+          category?: string
+          created_at?: string
+          environment?: string | null
+          id?: string
+          is_urgent?: boolean
+          priority?: string | null
+          resolved_at?: string | null
+          route?: string | null
+          route_raw?: string | null
+          sentry_replay_url?: string | null
+          status?: string
+          updated_at?: string
+          user_agent?: string | null
+          user_id?: string
+          user_role?: string
+          viewport?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_feedback_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_feedback_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_feedback_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_feedback_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_posts: {
         Row: {
           author_id: string
@@ -4834,6 +4932,17 @@ export type Database = {
         Args: { p_days?: number; p_exclude_test?: boolean }
         Returns: Json
       }
+      admin_get_feedback_list: {
+        Args: {
+          p_category?: string
+          p_limit?: number
+          p_offset?: number
+          p_status?: string
+          p_urgent_only?: boolean
+        }
+        Returns: Json
+      }
+      admin_get_feedback_metrics: { Args: { p_days?: number }; Returns: Json }
       admin_get_friendship_metrics: {
         Args: { p_days?: number; p_exclude_test?: boolean; p_role?: string }
         Returns: Json
@@ -5320,6 +5429,18 @@ export type Database = {
       admin_update_email_template_name: {
         Args: { p_name: string; p_template_id: string }
         Returns: undefined
+      }
+      admin_update_feedback: {
+        Args: {
+          p_admin_notes?: string
+          p_assigned_to?: string
+          p_clear_assigned_to?: boolean
+          p_clear_priority?: boolean
+          p_id: string
+          p_priority?: string
+          p_status?: string
+        }
+        Returns: Json
       }
       admin_update_profile: {
         Args: { p_profile_id: string; p_reason?: string; p_updates: Json }
@@ -6579,6 +6700,21 @@ export type Database = {
       show_trgm: { Args: { "": string }; Returns: string[] }
       snapshot_product_health_score: { Args: never; Returns: undefined }
       staging_reset_onboarding: { Args: never; Returns: undefined }
+      submit_user_feedback: {
+        Args: {
+          p_app_version?: string
+          p_body: string
+          p_category: string
+          p_environment?: string
+          p_is_urgent?: boolean
+          p_route?: string
+          p_route_raw?: string
+          p_sentry_replay_url?: string
+          p_user_agent?: string
+          p_viewport?: string
+        }
+        Returns: string
+      }
       toggle_post_like: { Args: { p_post_id: string }; Returns: Json }
       touch_profile_activity: { Args: never; Returns: undefined }
       track_event: {
