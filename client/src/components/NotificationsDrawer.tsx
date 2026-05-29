@@ -318,7 +318,7 @@ export default function NotificationsDrawer() {
               <button
                 type="button"
                 onClick={(event) => event.stopPropagation()}
-                className="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+                className="rounded-full min-w-[44px] min-h-[44px] inline-flex items-center justify-center text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
                 aria-label="More options"
               >
                 <MoreHorizontal className="h-4 w-4" />
@@ -363,7 +363,7 @@ export default function NotificationsDrawer() {
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  className="rounded-full bg-gray-100 p-2 text-gray-500 transition hover:bg-gray-200 hover:text-gray-700"
+                  className="rounded-full bg-gray-100 min-w-[44px] min-h-[44px] inline-flex items-center justify-center text-gray-500 transition hover:bg-gray-200 hover:text-gray-700"
                   aria-label="Search notifications"
                   onClick={(event) => event.stopPropagation()}
                 >
@@ -371,7 +371,7 @@ export default function NotificationsDrawer() {
                 </button>
                 <button
                   type="button"
-                  className="rounded-full bg-gray-100 p-2 text-gray-500 transition hover:bg-gray-200 hover:text-gray-700"
+                  className="rounded-full bg-gray-100 min-w-[44px] min-h-[44px] inline-flex items-center justify-center text-gray-500 transition hover:bg-gray-200 hover:text-gray-700"
                   aria-label="Notification settings"
                   onClick={(event) => event.stopPropagation()}
                 >
@@ -380,7 +380,7 @@ export default function NotificationsDrawer() {
                 <button
                   type="button"
                   onClick={() => toggleDrawer(false)}
-                  className="rounded-full bg-gray-100 p-2 text-gray-500 transition hover:bg-gray-200 hover:text-gray-700"
+                  className="rounded-full bg-gray-100 min-w-[44px] min-h-[44px] inline-flex items-center justify-center text-gray-500 transition hover:bg-gray-200 hover:text-gray-700"
                   aria-label="Close notifications"
                 >
                   ✕
@@ -394,7 +394,7 @@ export default function NotificationsDrawer() {
                   type="button"
                   onClick={() => setActiveFilter(filter.id)}
                   className={cn(
-                    'rounded-full px-4 py-1.5 text-sm font-semibold transition',
+                    'rounded-full px-4 min-h-[44px] inline-flex items-center text-sm font-semibold transition',
                     activeFilter === filter.id
                       ? 'bg-[#0866FF] text-white shadow-sm'
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -407,7 +407,7 @@ export default function NotificationsDrawer() {
                 <button
                   type="button"
                   onClick={() => void markAllRead()}
-                  className="ml-auto flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-[#0866FF] transition hover:bg-blue-50"
+                  className="ml-auto inline-flex items-center gap-1.5 rounded-full px-3 min-h-[44px] text-sm font-medium text-[#0866FF] transition hover:bg-blue-50"
                 >
                   <CheckCheck className="h-4 w-4" />
                   Mark all as read

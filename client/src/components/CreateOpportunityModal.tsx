@@ -507,9 +507,10 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
           </div>
           <button
             ref={closeButtonRef}
+            type="button"
             onClick={handleClose}
             disabled={isLoading}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+            className="min-w-[44px] min-h-[44px] inline-flex items-center justify-center hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
             aria-label="Close modal"
           >
             <X className="w-5 h-5 text-gray-500" />
@@ -810,8 +811,9 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                 <div key={index} className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
                   <span className="flex-1 text-sm text-gray-700">{req}</span>
                   <button
+                    type="button"
                     onClick={() => removeRequirement(index)}
-                    className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                    className="min-w-[44px] min-h-[44px] inline-flex items-center justify-center text-gray-400 hover:text-red-600 transition-colors"
                     aria-label="Remove requirement"
                   >
                     <X className="w-4 h-4" />
@@ -842,8 +844,9 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                   placeholder="Add a requirement..."
                 />
                 <button
+                  type="button"
                   onClick={addRequirement}
-                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2"
+                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2 min-h-[44px]"
                 >
                   <Plus className="w-4 h-4" />
                   Add Requirement
@@ -864,6 +867,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                 return (
                   <button
                     key={benefit.id}
+                    type="button"
                     onClick={() => toggleBenefit(benefit.id)}
                     className={`p-4 rounded-xl border-2 transition-all ${
                       isSelected
@@ -920,8 +924,9 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                   >
                     {benefit}
                     <button
+                      type="button"
                       onClick={() => removeCustomBenefit(index)}
-                      className="hover:text-purple-900"
+                      className="hover:text-purple-900 min-w-[44px] min-h-[44px] inline-flex items-center justify-center -m-2"
                       aria-label="Remove benefit"
                     >
                       <X className="w-3 h-3" />
@@ -944,8 +949,9 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                   placeholder="e.g., Professional coaching and skill development"
                 />
                 <button
+                  type="button"
                   onClick={addCustomBenefit}
-                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2"
+                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2 min-h-[44px]"
                 >
                   <Plus className="w-4 h-4" />
                   Add Custom Benefit

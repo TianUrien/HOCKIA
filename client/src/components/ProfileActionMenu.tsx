@@ -94,7 +94,7 @@ export default function ProfileActionMenu({ targetId, targetName }: ProfileActio
         <button
           type="button"
           onClick={() => setOpen(!open)}
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          className="min-w-[44px] min-h-[44px] inline-flex items-center justify-center hover:bg-gray-100 rounded-lg transition-colors"
           aria-label="More actions"
         >
           <MoreVertical className="w-5 h-5 text-gray-500" />

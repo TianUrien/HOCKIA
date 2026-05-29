@@ -342,7 +342,7 @@ export default function CommunityPage() {
                     type="button"
                     onClick={() => setSearchQuery('')}
                     aria-label="Clear search"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-lg"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 min-w-[44px] min-h-[44px] inline-flex items-center justify-center text-gray-400 hover:text-gray-600 text-lg"
                   >
                     ×
                   </button>
@@ -360,7 +360,7 @@ export default function CommunityPage() {
                   type="button"
                   onClick={() => updateFilter('availability', filters.availability === 'open' ? 'all' : 'open')}
                   aria-pressed={filters.availability === 'open'}
-                  className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-1.5 flex-shrink-0 ${
+                  className={`whitespace-nowrap px-4 min-h-[44px] rounded-full text-sm font-medium transition-all flex items-center gap-1.5 flex-shrink-0 ${
                     filters.availability === 'open'
                       ? 'bg-emerald-500 text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -373,7 +373,7 @@ export default function CommunityPage() {
                   type="button"
                   onClick={() => setShowFilters(!showFilters)}
                   aria-expanded={showFilters}
-                  className="flex items-center gap-1.5 whitespace-nowrap px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-full hover:bg-gray-200 active:bg-gray-300 transition-colors flex-shrink-0"
+                  className="flex items-center gap-1.5 whitespace-nowrap px-4 min-h-[44px] text-sm font-medium text-gray-700 bg-gray-100 rounded-full hover:bg-gray-200 active:bg-gray-300 transition-colors flex-shrink-0"
                 >
                   <Filter className="w-4 h-4" />
                   Filters

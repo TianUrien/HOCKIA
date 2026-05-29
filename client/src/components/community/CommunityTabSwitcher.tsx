@@ -26,7 +26,7 @@ export function CommunityTabSwitcher({ activeTab }: CommunityTabSwitcherProps) {
             type="button"
             key={tab.id}
             onClick={() => navigate(tab.path)}
-            className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+            className={`flex items-center gap-2 px-5 min-h-[44px] rounded-lg text-sm font-medium transition-all duration-200 ${
               isActive
                 ? 'bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white shadow-md'
                 : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'

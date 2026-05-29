@@ -65,13 +65,15 @@ export default function Header() {
         <div className="flex items-center justify-between">
           {/* Logo & Tagline */}
           <div className="flex items-center gap-3">
-            <button 
+            <button
+              type="button"
               onClick={() => handleNavigate(user ? '/home' : '/')}
-              className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+              className="flex items-center gap-2 hover:opacity-80 transition-opacity min-h-[44px]"
+              aria-label="HOCKIA — go home"
             >
-              <img 
+              <img
                 src="/HockiaLogoBlack.svg"
-                alt="HOCKIA"
+                alt=""
                 className="h-8"
               />
             </button>

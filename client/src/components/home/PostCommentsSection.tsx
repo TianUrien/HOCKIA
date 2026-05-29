@@ -223,7 +223,8 @@ export function PostCommentsSection({
               type="button"
               onClick={handleSubmit}
               disabled={!newComment.trim() || isSubmitting}
-              className="p-1 text-gray-400 hover:text-[#8026FA] disabled:opacity-30 transition-colors"
+              className="min-w-[44px] min-h-[44px] inline-flex items-center justify-center text-gray-400 hover:text-[#8026FA] disabled:opacity-30 transition-colors"
+              aria-label="Post comment"
             >
               {isSubmitting ? (
                 <Loader2 className="w-4 h-4 animate-spin" />

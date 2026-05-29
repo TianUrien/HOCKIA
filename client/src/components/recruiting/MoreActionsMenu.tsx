@@ -60,7 +60,6 @@ function unregisterActiveMenu(close: () => void) {
 export default function MoreActionsMenu({
   playerId,
   playerName,
-  compact = false,
 }: MoreActionsMenuProps) {
   const navigate = useNavigate()
   const [overflowOpen, setOverflowOpen] = useState(false)
@@ -95,7 +94,7 @@ export default function MoreActionsMenu({
         aria-haspopup="menu"
         aria-expanded={overflowOpen}
         className={[
-          compact ? 'p-1.5' : 'px-2.5 py-1.5',
+          'min-w-[44px] min-h-[44px] inline-flex items-center justify-center',
           'rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors',
           'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8026FA]/40',
         ].join(' ')}
