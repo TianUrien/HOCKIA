@@ -75,23 +75,33 @@ export function pathToSafeTitle(sanitizedPath: string, fallback: string): string
 }
 
 /**
- * One-way hash for the GA4 `user_id` param. Preserves cross-device
- * tracking (same input → same hash) while removing the ability for
- * GA or anyone with GA access to correlate the value with a real
- * Supabase profile UUID.
+ * One-way hash for any UUID-shaped identifier that would otherwise
+ * leak into GA (user_id, profile_id on profile_view events,
+ * vacancy_id on opportunity events, etc.). Preserves grouping
+ * signal (same input → same hash) so analytics like "unique
+ * profiles viewed" still work, while removing the ability for GA
+ * or anyone with GA access to correlate the value back to a real
+ * Supabase row.
  *
- * 16-char prefix of SHA-256 — 64 bits of entropy is more than enough
- * to keep collisions astronomically unlikely across our user base.
- * Namespaced with a literal prefix so even if someone exfiltrated
- * GA data they can't rainbow-table HOCKIA's hashes against a
- * generic UUID hash table.
+ * 16-char prefix of SHA-256 — 64 bits of entropy is more than
+ * enough to keep collisions astronomically unlikely across HOCKIA's
+ * row counts. Namespaced with a literal prefix so even if someone
+ * exfiltrated GA data they can't rainbow-table HOCKIA's hashes
+ * against a generic UUID hash table.
  */
-export async function hashUserId(userId: string): Promise<string> {
+export async function hashId(id: string): Promise<string> {
   const encoder = new TextEncoder()
-  const data = encoder.encode(`hockia-analytics:${userId}`)
+  const data = encoder.encode(`hockia-analytics:${id}`)
   const buf = await crypto.subtle.digest('SHA-256', data)
   return Array.from(new Uint8Array(buf))
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('')
     .slice(0, 16)
 }
+
+/**
+ * Back-compat alias for the previous user-specific name. New code
+ * should call hashId directly.
+ * @deprecated Use hashId instead.
+ */
+export const hashUserId = hashId

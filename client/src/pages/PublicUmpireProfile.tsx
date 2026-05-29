@@ -141,7 +141,7 @@ export default function PublicUmpireProfile() {
     if (!profile || isOwnProfile) return
     const ref = new URLSearchParams(window.location.search).get('ref') || 'direct'
     trackDbEvent('profile_view', 'profile', profile.id, { viewed_role: 'umpire', source: ref })
-    trackProfileView('umpire', profile.id)
+    void trackProfileView('umpire', profile.id)
     if (!currentUserProfile) trackPublicProfileViewed('umpire')
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.id])

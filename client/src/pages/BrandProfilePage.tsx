@@ -57,7 +57,7 @@ export default function BrandProfilePage() {
     if (!brand || isOwnBrand) return
     const ref = new URLSearchParams(window.location.search).get('ref') || 'direct'
     trackDbEvent('profile_view', 'profile', brand.profile_id, { viewed_role: 'brand', source: ref })
-    trackProfileView('brand', brand.profile_id)
+    void trackProfileView('brand', brand.profile_id)
     if (!user) trackPublicProfileViewed('brand')
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [brand?.id])

@@ -149,7 +149,7 @@ export default function ApplyToVacancyModal({
         }
       } else {
         trackDbEvent('application_submit', 'vacancy', vacancy.id, { position: vacancy.position ?? undefined })
-        trackApplicationSubmit(vacancy.id, vacancy.position ?? undefined)
+        void trackApplicationSubmit(vacancy.id, vacancy.position ?? undefined)
         onSuccess(vacancy.id)
         onClose()
         addToast('Application submitted successfully!', 'success')

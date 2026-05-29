@@ -11,6 +11,7 @@ import { describe, it, expect } from 'vitest'
 import {
   sanitizePath,
   pathToSafeTitle,
+  hashId,
   hashUserId,
 } from '@/lib/analyticsSanitizers'
 
@@ -101,29 +102,28 @@ describe('pathToSafeTitle', () => {
   })
 })
 
-describe('hashUserId', () => {
+describe('hashId', () => {
   it('returns a 16-char hex string', async () => {
-    const hash = await hashUserId(SAMPLE_UUID)
+    const hash = await hashId(SAMPLE_UUID)
     expect(hash).toMatch(/^[0-9a-f]{16}$/)
   })
 
-  it('is deterministic — same input produces same hash (cross-device tracking signal)', async () => {
-    const a = await hashUserId(SAMPLE_UUID)
-    const b = await hashUserId(SAMPLE_UUID)
+  it('is deterministic — same input produces same hash (preserves grouping signal in GA)', async () => {
+    const a = await hashId(SAMPLE_UUID)
+    const b = await hashId(SAMPLE_UUID)
     expect(a).toBe(b)
   })
 
   it('different inputs produce different hashes', async () => {
-    const a = await hashUserId(SAMPLE_UUID)
-    const b = await hashUserId(SECOND_UUID)
+    const a = await hashId(SAMPLE_UUID)
+    const b = await hashId(SECOND_UUID)
     expect(a).not.toBe(b)
   })
 
   it('output does NOT contain the raw UUID', async () => {
-    // The whole point of hashing: GA's `uid` param can't be reversed
-    // to a Supabase profile UUID even if someone exfiltrated the GA
-    // data set.
-    const hash = await hashUserId(SAMPLE_UUID)
+    // The whole point of hashing: GA param values can't be reversed
+    // to a Supabase row even if someone exfiltrated the GA data set.
+    const hash = await hashId(SAMPLE_UUID)
     expect(hash).not.toContain(SAMPLE_UUID)
     // Stronger: shouldn't contain any 8-char substring of the UUID.
     expect(hash).not.toContain(SAMPLE_UUID.slice(0, 8))
@@ -133,7 +133,7 @@ describe('hashUserId', () => {
     // Defends against rainbow-table reverse — even if someone has a
     // pre-computed sha256 table for UUIDs, our hashes won't match
     // because they include the "hockia-analytics:" namespace.
-    const ourHash = await hashUserId(SAMPLE_UUID)
+    const ourHash = await hashId(SAMPLE_UUID)
     // Generic sha256(UUID) — what an attacker might try first.
     const encoder = new TextEncoder()
     const buf = await crypto.subtle.digest('SHA-256', encoder.encode(SAMPLE_UUID))
@@ -142,5 +142,11 @@ describe('hashUserId', () => {
       .join('')
       .slice(0, 16)
     expect(ourHash).not.toBe(genericHash)
+  })
+
+  it('hashUserId is a back-compat alias for hashId (same algorithm)', async () => {
+    const viaAlias = await hashUserId(SAMPLE_UUID)
+    const viaCanonical = await hashId(SAMPLE_UUID)
+    expect(viaAlias).toBe(viaCanonical)
   })
 })

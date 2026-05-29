@@ -9,7 +9,7 @@
  */
 
 import { Capacitor } from '@capacitor/core'
-import { sanitizePath, pathToSafeTitle, hashUserId } from './analyticsSanitizers'
+import { sanitizePath, pathToSafeTitle, hashId } from './analyticsSanitizers'
 
 const GA_MEASUREMENT_ID = import.meta.env.VITE_GA_MEASUREMENT_ID ?? 'G-NE620GQKTX'
 
@@ -112,7 +112,7 @@ export function trackEvent({ action, category, label, value, ...params }: TrackE
 export async function setUserProperties(userId: string, role: string): Promise<void> {
   if (typeof window === 'undefined' || isNative) return
 
-  const hashedId = await hashUserId(userId)
+  const hashedId = await hashId(userId)
 
   window.gtag?.('set', 'user_properties', {
     user_id: hashedId,
@@ -195,23 +195,37 @@ export function trackProfileStrengthMilestone(milestone: string, percentage: num
   })
 }
 
-/** Track vacancy view */
-export function trackVacancyView(vacancyId: string, position?: string, location?: string): void {
+/** Track vacancy view. vacancyId is hashed before reaching GA — see
+ *  hashId. Preserves "unique vacancies viewed" grouping signal in
+ *  GA reports without leaking raw Supabase UUIDs. Returns the
+ *  underlying hash promise so callers can await it (in practice
+ *  production callers fire-and-forget via `void`; tests await). */
+export async function trackVacancyView(
+  vacancyId: string,
+  position?: string,
+  location?: string,
+): Promise<void> {
+  const hashedVacancyId = await hashId(vacancyId)
   trackEvent({
     action: 'vacancy_view',
     category: 'vacancies',
-    label: vacancyId,
+    label: hashedVacancyId,
     vacancy_position: position,
     vacancy_location: location,
   })
 }
 
-/** Track application submission */
-export function trackApplicationSubmit(vacancyId: string, position?: string): void {
+/** Track application submission. vacancyId is hashed before reaching
+ *  GA — see hashId. Async for the same reason as trackVacancyView. */
+export async function trackApplicationSubmit(
+  vacancyId: string,
+  position?: string,
+): Promise<void> {
+  const hashedVacancyId = await hashId(vacancyId)
   trackEvent({
     action: 'application_submit',
     category: 'applications',
-    label: vacancyId,
+    label: hashedVacancyId,
     vacancy_position: position,
   })
 }
@@ -242,13 +256,19 @@ export function trackMessageSend(): void {
   })
 }
 
-/** Track profile view (viewing another user's profile) */
-export function trackProfileView(profileRole: string, profileId: string): void {
+/** Track profile view (viewing another user's profile). profileId
+ *  is hashed before reaching GA — see hashId. Preserves "unique
+ *  profiles viewed" grouping signal in GA reports without leaking
+ *  raw Supabase profile UUIDs. (QA agent flagged the prior raw-UUID
+ *  emission as critical.) Async for the same reason as the other
+ *  ID-hashing trackers — see trackVacancyView. */
+export async function trackProfileView(profileRole: string, profileId: string): Promise<void> {
+  const hashedProfileId = await hashId(profileId)
   trackEvent({
     action: 'profile_view',
     category: 'discovery',
     label: profileRole,
-    profile_id: profileId,
+    profile_id: hashedProfileId,
   })
 }
 

@@ -311,7 +311,7 @@ export default function OpportunityDetailPage() {
       position: opportunity.position ?? undefined,
       location: opportunity.location_city ?? undefined,
     })
-    trackVacancyView(opportunity.id, opportunity.position ?? undefined, opportunity.location_city ?? undefined)
+    void trackVacancyView(opportunity.id, opportunity.position ?? undefined, opportunity.location_city ?? undefined)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [opportunity?.id])
 

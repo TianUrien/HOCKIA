@@ -173,7 +173,7 @@ export default function PublicPlayerProfile() {
     if (!profile || isOwnProfile) return
     const ref = new URLSearchParams(window.location.search).get('ref') || 'direct'
     trackDbEvent('profile_view', 'profile', profile.id, { viewed_role: profile.role, source: ref })
-    trackProfileView(profile.role, profile.id)
+    void trackProfileView(profile.role, profile.id)
     // Anon-only counterpart — fires for external/share-link visitors so we
     // can measure the share funnel without logging identifying info.
     if (!currentUserProfile) trackPublicProfileViewed(profile.role)
