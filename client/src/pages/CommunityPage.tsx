@@ -296,25 +296,14 @@ export default function CommunityPage() {
 
       <PullToRefresh onRefresh={handleRefresh}>
         <main className="max-w-7xl mx-auto px-4 md:px-6 pt-20 pb-12">
-          {/* Page title + subtitle */}
-          <header className="mb-4">
-            <h1 className="text-2xl sm:text-3xl font-bold">
-              <span className="bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-transparent bg-clip-text italic">
-                Community
-              </span>
-            </h1>
-            <p className="mt-1 text-sm text-gray-600">
-              Connect with field hockey players, coaches, clubs and organisations around the world.
-            </p>
-            {/* Recruiter-only: ContextSwitcher self-hides for players,
-                brands, umpires, and anon viewers. Mounted in the page
-                header so the active context is the first thing a
-                recruiter sees — scoping Club Fit + carousel filters
-                is the most important meta-decision on this page. */}
-            <div className="mt-3">
-              <ContextSwitcher />
-            </div>
-          </header>
+          {/* Page intro (title + subtitle) removed 2026-05-29 — the
+              Community label was redundant with the bottom-nav active
+              state, and the description added vertical noise above
+              the actual interactive surface. Recruiter-only
+              ContextSwitcher self-hides for players, brands, umpires,
+              and anon viewers; when hidden, the page starts directly
+              with the Members / Questions segmented control below. */}
+          <ContextSwitcher className="mb-4" />
 
           {/* Members / Questions segmented control */}
           <div className="mb-4">
