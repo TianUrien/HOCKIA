@@ -77,8 +77,13 @@ test.describe('@smoke home feed player', () => {
     await homeFeedPage.openHomeFeed()
     await page.waitForLoadState('networkidle')
 
-    // Look for any Comment button
-    const commentButton = page.getByRole('button', { name: /comment/i }).first()
+    // Look for the post-interaction Comment button (PostInteractionBar
+    // renders <span>Comment</span> inside a <button>). `exact: true`
+    // is required because activity-card divs with role="button" can
+    // carry names like "E2E Test FC commented on your post" which
+    // also match a loose /comment/i regex and shift the .first()
+    // target onto the wrong element.
+    const commentButton = page.getByRole('button', { name: 'Comment', exact: true }).first()
     const hasCommentButton = await commentButton.isVisible({ timeout: 10000 }).catch(() => false)
 
     if (hasCommentButton) {

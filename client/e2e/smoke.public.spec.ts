@@ -41,9 +41,13 @@ test.describe('@smoke public', () => {
     // Community page intro (h1 title + description) was removed
     // 2026-05-29 — the page now starts directly with the segmented
     // control. Assert on those tabs as the stable "page rendered"
-    // signal.
-    await expect(page.getByRole('button', { name: /members/i })).toBeVisible({ timeout: 20000 })
-    await expect(page.getByRole('button', { name: /questions/i })).toBeVisible()
+    // signal. `exact: true` to disambiguate from the ContextSwitcher's
+    // "…show all members" button (recruiter view only, but anon view
+    // can flip into recruiter mode after auth, so be defensive).
+    await expect(
+      page.getByRole('button', { name: 'Members', exact: true }),
+    ).toBeVisible({ timeout: 20000 })
+    await expect(page.getByRole('button', { name: 'Questions', exact: true })).toBeVisible()
   })
 
   test('world directory loads (public)', async ({ page }) => {

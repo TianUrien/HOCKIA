@@ -43,10 +43,14 @@ test.describe('@smoke coach', () => {
 
     // Community page intro removed 2026-05-29 — assert on the
     // segmented control tabs as the stable "page rendered" signal.
+    // `exact: true` is required because the ContextSwitcher's "Clear
+    // scope" button has aria-label "…show all members" which loose
+    // /members/i matching also picks up — strict-mode violation
+    // otherwise.
     await expect(
-      page.getByRole('button', { name: /members/i })
+      page.getByRole('button', { name: 'Members', exact: true })
     ).toBeVisible({ timeout: 20000 })
-    await expect(page.getByRole('button', { name: /questions/i })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Questions', exact: true })).toBeVisible()
   })
 
   test('coach cannot access brand dashboard', async ({ page }) => {
