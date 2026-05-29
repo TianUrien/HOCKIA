@@ -8,6 +8,9 @@ const user = userEvent.setup()
 const navigateMock = vi.fn()
 vi.mock('react-router-dom', () => ({
   useNavigate: () => navigateMock,
+  // Stub returns a stable object — the component reads
+  // pathname/search to build `returnTo` for context-aware back nav.
+  useLocation: () => ({ pathname: '/players/id/test', search: '' }),
 }))
 
 const toastMocks = vi.hoisted(() => ({
@@ -150,7 +153,13 @@ describe('PublicReferencesSection', () => {
     await user.click(await screen.findByRole('button', { name: /message/i }))
 
     await waitFor(() => {
-      expect(navigateMock).toHaveBeenCalledWith('/messages?conversation=conversation-7')
+      // Second arg carries the returnTo state for context-aware back
+      // navigation from the conversation. Test stubs location to
+      // pathname='/players/id/test' (see top-of-file mock).
+      expect(navigateMock).toHaveBeenCalledWith(
+        '/messages?conversation=conversation-7',
+        { state: { returnTo: '/players/id/test' } },
+      )
     })
     expect(supabaseState.lastTable).toBe('conversations')
     expect(supabaseState.lastOrClause).toContain('participant_one_id.eq.viewer-1')
@@ -168,7 +177,10 @@ describe('PublicReferencesSection', () => {
     await user.click(await screen.findByRole('button', { name: /message/i }))
 
     await waitFor(() => {
-      expect(navigateMock).toHaveBeenCalledWith('/messages?new=coach-9')
+      expect(navigateMock).toHaveBeenCalledWith(
+        '/messages?new=coach-9',
+        { state: { returnTo: '/players/id/test' } },
+      )
     })
   })
 })

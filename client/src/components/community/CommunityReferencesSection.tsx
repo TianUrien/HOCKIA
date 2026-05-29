@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import {
   ShieldCheck,
   MessageCircle,
@@ -111,6 +111,7 @@ export default function CommunityReferencesSection({
   const { user } = useAuthStore()
   const { addToast } = useToastStore()
   const navigate = useNavigate()
+  const location = useLocation()
   const dismissNotification = useNotificationStore((state) => state.dismissBySource)
 
   const [internalAddOpen, setInternalAddOpen] = useState(false)
@@ -173,8 +174,11 @@ export default function CommunityReferencesSection({
         )
         .maybeSingle()
       if (error) throw error
-      if (data?.id) navigate(`/messages?conversation=${data.id}`)
-      else navigate(`/messages?new=${targetId}`)
+      // returnTo: conversation back button returns to current page
+      // (the community references view).
+      const returnTo = location.pathname + location.search
+      if (data?.id) navigate(`/messages?conversation=${data.id}`, { state: { returnTo } })
+      else navigate(`/messages?new=${targetId}`, { state: { returnTo } })
     } catch (error) {
       logger.error('Failed to open messages', error)
       addToast('Unable to start conversation. Please try again.', 'error')

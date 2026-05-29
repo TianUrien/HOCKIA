@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import TrustedReferenceCard from './TrustedReferenceCard'
 import { useTrustedReferences } from '@/hooks/useTrustedReferences'
@@ -19,6 +19,7 @@ export default function PublicReferencesSection({ profileId, profileName }: Publ
   const { user } = useAuthStore()
   const { addToast } = useToastStore()
   const navigate = useNavigate()
+  const location = useLocation()
   const [messageTarget, setMessageTarget] = useState<string | null>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
@@ -103,10 +104,13 @@ export default function PublicReferencesSection({ profileId, profileName }: Publ
 
       if (error) throw error
 
+      // returnTo: pass current path so the conversation back button
+      // returns to the profile containing this references section.
+      const returnTo = location.pathname + location.search
       if (data?.id) {
-        navigate(`/messages?conversation=${data.id}`)
+        navigate(`/messages?conversation=${data.id}`, { state: { returnTo } })
       } else {
-        navigate(`/messages?new=${targetId}`)
+        navigate(`/messages?new=${targetId}`, { state: { returnTo } })
       }
     } catch (error) {
       logger.error('Failed to open messages', error)

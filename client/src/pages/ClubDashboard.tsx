@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useRef } from 'react'
 import { ArrowLeft } from 'lucide-react'
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams, useLocation } from 'react-router-dom'
 import Header from '@/components/Header'
 import {
   EditProfileModal,
@@ -109,6 +109,7 @@ export default function ClubDashboard({
   const { profile: authProfile, user } = useAuthStore()
   const profile = (profileData ?? authProfile) as ClubProfileShape | null
   const navigate = useNavigate()
+  const location = useLocation()
   const [searchParams] = useSearchParams()
   const { addToast } = useToastStore()
 
@@ -395,10 +396,14 @@ export default function ClubDashboard({
         )
         .maybeSingle()
       if (fetchError) throw fetchError
+      // returnTo state — MessagesPage back button uses it to return
+      // to this profile instead of the inbox. See same pattern in
+      // PlayerDashboard.handleSendMessage.
+      const returnTo = location.pathname + location.search
       if (existingConv?.id) {
-        navigate(`/messages?conversation=${existingConv.id}`)
+        navigate(`/messages?conversation=${existingConv.id}`, { state: { returnTo } })
       } else {
-        navigate(`/messages?new=${profileData.id}`)
+        navigate(`/messages?new=${profileData.id}`, { state: { returnTo } })
       }
     } catch (error) {
       logger.error('Error starting conversation:', error)

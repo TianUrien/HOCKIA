@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { MessageCircle, User, Globe, MapPin, Shield, Building2, Activity } from 'lucide-react'
 import { Avatar, RoleBadge, TierBadge, VerifiedBadge, NationalityCardDisplay, AvailabilityPill } from '@/components'
 import type { ProfileTier } from '@/lib/profileTier'
@@ -80,6 +80,7 @@ export default function MemberCard({
 }: MemberCardProps) {
   const umpireActivity = role === 'umpire' ? getUmpireActivity(lastOfficiatedAt) : null
   const navigate = useNavigate()
+  const location = useLocation()
   const { user } = useAuthStore()
   const { addToast } = useToastStore()
   const clubLogo = useWorldClubLogo(current_world_club_id ?? null)
@@ -120,12 +121,16 @@ export default function MemberCard({
       // If there's a database error (not just "no results"), throw it
       if (fetchError) throw fetchError
 
+      // returnTo: the page the user was browsing when they clicked
+      // Message on this card (typically /community). Conversation
+      // back button reads this to return them to context.
+      const returnTo = location.pathname + location.search
       if (existingConversation) {
         // Conversation exists - navigate to it
-        navigate(`/messages?conversation=${existingConversation.id}`)
+        navigate(`/messages?conversation=${existingConversation.id}`, { state: { returnTo } })
       } else {
         // No conversation yet - open messages in "new conversation" mode
-        navigate(`/messages?new=${id}`)
+        navigate(`/messages?new=${id}`, { state: { returnTo } })
       }
     } catch (error) {
       logger.error('Error creating conversation:', error)

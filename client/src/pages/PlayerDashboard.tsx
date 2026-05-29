@@ -449,10 +449,16 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
 
       if (fetchError) throw fetchError
 
+      // returnTo state: MessagesPage's back button reads this so the
+      // user lands back on this profile after closing the conversation,
+      // instead of the inbox (UX bug: messaging shouldn't erase the
+      // browsing context). Captures current path + search so any
+      // ?ref=community etc. is preserved on return.
+      const returnTo = location.pathname + location.search
       if (existingConv?.id) {
-        navigate(`/messages?conversation=${existingConv.id}`)
+        navigate(`/messages?conversation=${existingConv.id}`, { state: { returnTo } })
       } else {
-        navigate(`/messages?new=${profileData.id}`)
+        navigate(`/messages?new=${profileData.id}`, { state: { returnTo } })
       }
     } catch (error) {
       logger.error('Error starting conversation:', error)

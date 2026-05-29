@@ -13,7 +13,7 @@ import { useTrustedReferences } from '@/hooks/useTrustedReferences'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useNotificationStore } from '@/lib/notifications'
 import { cn, formatRelationshipType } from '@/lib/utils'
 import { trackReferenceModalOpen } from '@/lib/analytics'
@@ -94,6 +94,7 @@ export default function TrustedReferencesSection({
   const { user } = useAuthStore()
   const { addToast } = useToastStore()
   const navigate = useNavigate()
+  const location = useLocation()
   const dismissNotification = useNotificationStore((state) => state.dismissBySource)
   const allowedRequesterRoles: Profile['role'][] = ['player', 'coach', 'umpire']
   const canCollectReferences = isOwner && !!profileRole && allowedRequesterRoles.includes(profileRole)
@@ -160,10 +161,14 @@ export default function TrustedReferencesSection({
 
       if (error) throw error
 
+      // returnTo: pass current path so the conversation back button
+      // returns to the page containing this references section
+      // (typically a profile or dashboard).
+      const returnTo = location.pathname + location.search
       if (data?.id) {
-        navigate(`/messages?conversation=${data.id}`)
+        navigate(`/messages?conversation=${data.id}`, { state: { returnTo } })
       } else {
-        navigate(`/messages?new=${targetId}`)
+        navigate(`/messages?new=${targetId}`, { state: { returnTo } })
       }
     } catch (error) {
       logger.error('Failed to open messages', error)

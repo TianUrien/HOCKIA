@@ -595,6 +595,22 @@ export default function MessagesPage() {
   )
 
   const handleBackToList = useCallback(() => {
+    // Context-aware back: if the caller passed a returnTo via
+    // location.state (e.g. profile Message button stores the profile
+    // path before navigating here), honor it so the user lands back
+    // on the surface they came from. `replace: true` collapses the
+    // conversation entry so browser-back from the returnTo destination
+    // doesn't loop right back to the conversation.
+    //
+    // Fall back to the inbox-style behavior (clear conversation
+    // selection, stay on /messages) when no returnTo is present —
+    // matches the "opened from inbox" + "opened via deep link" cases.
+    const state = location.state as { returnTo?: unknown } | null
+    const returnTo = typeof state?.returnTo === 'string' ? state.returnTo : null
+    if (returnTo) {
+      navigate(returnTo, { replace: true })
+      return
+    }
     setSelectedConversationId(null)
     setPendingConversation(null)
     const nextParams = new URLSearchParams(searchParams)
@@ -605,7 +621,7 @@ export default function MessagesPage() {
       pathname: '/messages',
       search: nextSearch ? `?${nextSearch}` : ''
     })
-  }, [navigate, searchParams])
+  }, [navigate, searchParams, location.state])
 
   const handleConversationCreated = useCallback(
     (createdConversation: Conversation) => {

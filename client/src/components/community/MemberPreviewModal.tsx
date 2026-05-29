@@ -15,7 +15,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import {
   X,
   User,
@@ -72,6 +72,7 @@ interface MemberPreviewModalProps {
 export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps) {
   const { user } = useAuthStore()
   const navigate = useNavigate()
+  const location = useLocation()
   const { addToast } = useToastStore()
   // Save action — sits next to the close X. Hidden on own preview +
   // for anon viewers; the hook's toggle shows a sign-in toast for anon.
@@ -240,7 +241,11 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
         label: targetRole,
       })
       onClose()
-      navigate(route)
+      // returnTo: the page that opened the preview modal (typically
+      // /community). Conversation back button reads this so closing
+      // the chat returns the user to where they were browsing.
+      const returnTo = location.pathname + location.search
+      navigate(route, { state: { returnTo } })
     } catch (error) {
       if (activeMemberIdRef.current !== targetId) return
       logger.error('Error starting conversation from preview:', error)

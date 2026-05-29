@@ -424,10 +424,14 @@ export default function CoachDashboard({
 
       if (fetchError) throw fetchError
 
+      // returnTo state — see PlayerDashboard.handleSendMessage for
+      // rationale. MessagesPage back button uses this to return to
+      // this profile instead of the inbox.
+      const returnTo = location.pathname + location.search
       if (existingConv?.id) {
-        navigate(`/messages?conversation=${existingConv.id}`)
+        navigate(`/messages?conversation=${existingConv.id}`, { state: { returnTo } })
       } else {
-        navigate(`/messages?new=${profileData.id}`)
+        navigate(`/messages?new=${profileData.id}`, { state: { returnTo } })
       }
     } catch (error) {
       logger.error('Error starting conversation:', error)
