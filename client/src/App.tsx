@@ -114,6 +114,7 @@ const AdminUsers = lazyWithRetry(() => import('@/features/admin/pages/AdminUsers
 const AdminEngagement = lazyWithRetry(() => import('@/features/admin/pages/AdminEngagement').then(m => ({ default: m.AdminEngagement })))
 const AdminFeatureUsage = lazyWithRetry(() => import('@/features/admin/pages/AdminFeatureUsage').then(m => ({ default: m.AdminFeatureUsage })))
 const AdminAIOpinions = lazyWithRetry(() => import('@/features/admin/pages/AdminAIOpinions').then(m => ({ default: m.AdminAIOpinions })))
+const AdminFeedback = lazyWithRetry(() => import('@/features/admin/pages/AdminFeedback').then(m => ({ default: m.AdminFeedback })))
 const AdminDiscovery = lazyWithRetry(() => import('@/features/admin/pages/AdminDiscovery').then(m => ({ default: m.AdminDiscovery })))
 const AdminDeviceUsers = lazyWithRetry(() => import('@/features/admin/pages/AdminDeviceUsers').then(m => ({ default: m.AdminDeviceUsers })))
 const AdminInvestorDashboard = lazyWithRetry(() => import('@/features/admin/pages/AdminInvestorDashboard').then(m => ({ default: m.AdminInvestorDashboard })))
@@ -507,6 +508,7 @@ function App() {
                   <Route path="engagement" element={<AdminEngagement />} />
                   <Route path="feature-usage" element={<AdminFeatureUsage />} />
                   <Route path="ai-opinions" element={<AdminAIOpinions />} />
+                  <Route path="feedback" element={<AdminFeedback />} />
                   <Route path="discovery" element={<AdminDiscovery />} />
                   {/* networking page removed Phase 2A — old URL caught by redirect above */}
                   <Route path="devices" element={<AdminDeviceUsers />} />

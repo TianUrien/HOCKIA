@@ -2095,3 +2095,131 @@ export async function getRecentAIOpinionFeedback(opts: {
   if (error) throw new Error(`Failed to get AI opinion feedback: ${error.message}`)
   return data as AIOpinionFeedbackPage
 }
+
+// ============================================================================
+// USER FEEDBACK
+// ============================================================================
+// Admin surface for the in-app feedback collection (user_feedback table).
+// Three RPCs: metrics dashboard, paginated list, single-row mutation.
+
+export type FeedbackCategoryFilter = 'bug' | 'confusing' | 'idea' | 'praise' | 'other'
+export type FeedbackStatusFilter = 'new' | 'reviewing' | 'planned' | 'fixed' | 'closed'
+export type FeedbackPriority = 'p0' | 'p1' | 'p2' | 'p3'
+
+export interface FeedbackDailyPoint {
+  day: string
+  submissions: number
+}
+
+export interface FeedbackCategoryCount {
+  category: FeedbackCategoryFilter
+  count: number
+}
+
+export interface FeedbackStatusCount {
+  status: FeedbackStatusFilter
+  count: number
+}
+
+export interface FeedbackRoleCount {
+  user_role: string
+  count: number
+}
+
+export interface FeedbackMetrics {
+  summary: {
+    total: number
+    urgent: number
+    new: number
+    open_total: number
+    unique_users: number
+  }
+  daily: FeedbackDailyPoint[]
+  by_category: FeedbackCategoryCount[]
+  by_status: FeedbackStatusCount[]
+  by_role: FeedbackRoleCount[]
+  window_days: number
+  generated_at: string
+}
+
+export async function getFeedbackMetrics(days: number = 30): Promise<FeedbackMetrics> {
+  const { data, error } = await adminRpc('admin_get_feedback_metrics', { p_days: days })
+  if (error) throw new Error(`Failed to get feedback metrics: ${error.message}`)
+  return data as FeedbackMetrics
+}
+
+export interface FeedbackRow {
+  id: string
+  user_id: string
+  user_name: string | null
+  user_avatar_url: string | null
+  user_role: string
+  category: FeedbackCategoryFilter
+  body: string
+  is_urgent: boolean
+  route: string | null
+  route_raw: string | null
+  user_agent: string | null
+  viewport: string | null
+  environment: string | null
+  app_version: string | null
+  sentry_replay_url: string | null
+  status: FeedbackStatusFilter
+  priority: FeedbackPriority | null
+  assigned_to: string | null
+  assigned_to_name: string | null
+  admin_notes: string | null
+  created_at: string
+  updated_at: string
+  resolved_at: string | null
+}
+
+export interface FeedbackListPage {
+  rows: FeedbackRow[]
+  total: number
+  limit: number
+  offset: number
+  status_filter: FeedbackStatusFilter | null
+  category_filter: FeedbackCategoryFilter | null
+  urgent_only: boolean
+}
+
+export async function getFeedbackList(opts: {
+  limit?: number
+  offset?: number
+  status?: FeedbackStatusFilter | null
+  category?: FeedbackCategoryFilter | null
+  urgentOnly?: boolean
+} = {}): Promise<FeedbackListPage> {
+  const { data, error } = await adminRpc('admin_get_feedback_list', {
+    p_limit: opts.limit ?? 25,
+    p_offset: opts.offset ?? 0,
+    p_status: opts.status ?? null,
+    p_category: opts.category ?? null,
+    p_urgent_only: opts.urgentOnly ?? false,
+  })
+  if (error) throw new Error(`Failed to get feedback list: ${error.message}`)
+  return data as FeedbackListPage
+}
+
+export async function updateFeedback(opts: {
+  id: string
+  status?: FeedbackStatusFilter
+  priority?: FeedbackPriority
+  assignedTo?: string
+  adminNotes?: string
+  clearPriority?: boolean
+  clearAssignedTo?: boolean
+}): Promise<FeedbackRow> {
+  const { data, error } = await adminRpc('admin_update_feedback', {
+    p_id: opts.id,
+    p_status: opts.status ?? null,
+    p_priority: opts.priority ?? null,
+    p_assigned_to: opts.assignedTo ?? null,
+    p_admin_notes: opts.adminNotes ?? null,
+    p_clear_priority: opts.clearPriority ?? false,
+    p_clear_assigned_to: opts.clearAssignedTo ?? false,
+  })
+  if (error) throw new Error(`Failed to update feedback: ${error.message}`)
+  return data as FeedbackRow
+}

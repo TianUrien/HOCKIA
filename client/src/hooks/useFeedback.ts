@@ -87,6 +87,18 @@ export function useFeedback(): {
       const id = typeof data === 'string' ? data : ''
       setStatus({ kind: 'success', id })
       trackFeedbackSubmitted(input.category, input.isUrgent ?? false)
+
+      // Fire-and-forget admin notification. Failures here are non-
+      // fatal — the row is already persisted, so the user's submit
+      // shouldn't fail. The edge fn itself swallows Resend errors
+      // and returns 200 anyway. We just need to kick it off.
+      if (id) {
+        void supabase.functions.invoke('notify-feedback-submitted', {
+          body: { feedback_id: id },
+        }).catch((notifyErr) => {
+          logger.warn('[useFeedback] notify edge fn invoke failed', notifyErr)
+        })
+      }
     } catch (err) {
       logger.error('[useFeedback] unexpected error', err)
       setStatus({
