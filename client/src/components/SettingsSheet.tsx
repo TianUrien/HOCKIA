@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
-import { Settings as SettingsIcon, LogOut } from 'lucide-react'
+import { Settings as SettingsIcon, LogOut, MessageSquarePlus } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
 import { useNotificationStore } from '@/lib/notifications'
 import { useToastStore } from '@/lib/toast'
 import { logger } from '@/lib/logger'
+import FeedbackModal from './FeedbackModal'
 
 /**
  * SettingsSheet — gear-icon trigger + dropdown menu hosting Settings +
@@ -28,6 +29,7 @@ export default function SettingsSheet({ className = '' }: SettingsSheetProps) {
   const closeNotificationsDrawer = useNotificationStore((state) => state.toggleDrawer)
 
   const [isOpen, setIsOpen] = useState(false)
+  const [feedbackOpen, setFeedbackOpen] = useState(false)
   const [pos, setPos] = useState<{ top: number; right: number } | null>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -172,6 +174,20 @@ export default function SettingsSheet({ className = '' }: SettingsSheetProps) {
               <SettingsIcon className="h-4 w-4" />
               Settings
             </button>
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                setIsOpen(false)
+                closeNotificationsDrawer(false)
+                setFeedbackOpen(true)
+              }}
+              className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium text-gray-700 hover:bg-gray-50"
+              data-testid="settings-sheet-feedback"
+            >
+              <MessageSquarePlus className="h-4 w-4" />
+              Send feedback
+            </button>
             <div className="my-1 h-px bg-gray-200" />
             <button
               type="button"
@@ -185,6 +201,7 @@ export default function SettingsSheet({ className = '' }: SettingsSheetProps) {
           </div>,
           document.body,
         )}
+      <FeedbackModal open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
     </>
   )
 }

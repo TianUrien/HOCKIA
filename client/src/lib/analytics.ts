@@ -514,3 +514,25 @@ export function trackAIOpinionError(): void {
     category: 'ai_opinion',
   })
 }
+
+// ============================================
+// User Feedback
+// ============================================
+// Lets us watch adoption + category mix in GA4 without going
+// into the admin dashboard. Body / route / device aren't sent to
+// GA — those live in user_feedback (with sanitized route per the
+// PII discipline).
+
+/** Recorded when a feedback submit succeeds. Body / route never
+ *  reach GA — only the shape (category + urgency flag). */
+export function trackFeedbackSubmitted(
+  category: 'bug' | 'confusing' | 'idea' | 'praise' | 'other',
+  isUrgent: boolean,
+): void {
+  trackEvent({
+    action: 'feedback_submitted',
+    category: 'feedback',
+    label: category,
+    is_urgent: isUrgent ? 1 : 0,
+  })
+}
