@@ -36,7 +36,10 @@ import { getCorsHeaders } from '../_shared/cors.ts'
  */
 
 const DEFAULT_RECIPIENT = 'tianurien@gmail.com'
-const DEFAULT_FROM = 'HOCKIA Feedback <feedback@inhockia.com>'
+// Must be a verified Resend sender — see the existing pattern in
+// _shared/email-sender.ts and _shared/reference-request-email.ts.
+// Using a non-verified subdomain would silently 401 at Resend.
+const DEFAULT_FROM = 'HOCKIA Feedback <team@inhockia.com>'
 const DEFAULT_BASE_URL = 'https://app.inhockia.com'
 
 const CATEGORY_LABEL: Record<string, string> = {
