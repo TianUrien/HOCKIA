@@ -161,7 +161,11 @@ export default function MobileBottomNav() {
               line with the primary nav. Inherits visibility from the parent
               nav, so it hides whenever the bottom nav hides (incl. /discover). */}
           <div className="relative">
-            {/* Floating HOCKIA AI button */}
+            {/* Floating HOCKIA AI button — solid purple gradient with
+                white icon. Matches the DiscoverPage's own Hockia AI
+                header chip + empty-state badge styling so the surface
+                stays visually consistent end-to-end. Stronger shadow
+                + ring keeps it readable against the white nav bar. */}
             <button
               type="button"
               onClick={() => handleNavigate('/discover')}
@@ -169,12 +173,11 @@ export default function MobileBottomNav() {
               className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4
                          w-12 h-12 rounded-full
                          bg-gradient-to-br from-[#8026FA] to-[#924CEC]
-                         p-[2px] shadow-lg shadow-[#8026FA]/30
+                         flex items-center justify-center
+                         shadow-lg shadow-[#8026FA]/40 ring-2 ring-white
                          active:scale-95 transition-transform duration-150"
             >
-              <span className="flex items-center justify-center w-full h-full rounded-full bg-white">
-                <Sparkles className="w-5 h-5 text-[#8026FA]" strokeWidth={2.25} />
-              </span>
+              <Sparkles className="w-5 h-5 text-white" strokeWidth={2.25} />
             </button>
 
             {/* Avatar = Dashboard nav item. Tap navigates directly to
