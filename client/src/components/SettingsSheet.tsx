@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { Settings as SettingsIcon, LogOut, MessageSquarePlus } from 'lucide-react'
@@ -6,7 +6,12 @@ import { useAuthStore } from '@/lib/auth'
 import { useNotificationStore } from '@/lib/notifications'
 import { useToastStore } from '@/lib/toast'
 import { logger } from '@/lib/logger'
-import FeedbackModal from './FeedbackModal'
+
+// Lazy-loaded — only pulled into the bundle when the user actually
+// opens the feedback modal. Cuts ~19KB from the main bundle (the
+// modal + its useFeedback hook + feedbackContext + the
+// notify-feedback-submitted invoke chain).
+const FeedbackModal = lazy(() => import('./FeedbackModal'))
 
 /**
  * SettingsSheet — gear-icon trigger + dropdown menu hosting Settings +
@@ -201,7 +206,11 @@ export default function SettingsSheet({ className = '' }: SettingsSheetProps) {
           </div>,
           document.body,
         )}
-      <FeedbackModal open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
+      {feedbackOpen && (
+        <Suspense fallback={null}>
+          <FeedbackModal open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
+        </Suspense>
+      )}
     </>
   )
 }

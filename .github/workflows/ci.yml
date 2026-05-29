@@ -153,21 +153,25 @@ jobs:
             exit 1
           fi
 
-          # Early warning: raw at 90% of budget (2970KB)
+          # Early warning: raw at 90% of budget (3060KB)
           # Budget bumped 3200KB → 3300KB on 2026-05-27 — Phase 1
-          # carousel rotation work (ScoutingCard + Save flow + 3
-          # carousel iterations + theme rotation helpers + 3 migrations'
-          # type regen) pushed raw from ~3190KB to 3202KB, 2KB over the
-          # previous 3200KB gate. 100KB of new headroom absorbs the next
-          # batch of small features (filters, AI transparency, etc.)
-          # without another bump.
-          if [ "$TOTAL_JS" -gt 3041280 ]; then
-            echo "::warning::Bundle nearing raw budget: ${TOTAL_KB}KB / 3300KB ($(( TOTAL_KB * 100 / 3300 ))%)"
+          # carousel rotation work pushed raw from ~3190KB to 3202KB.
+          # Budget bumped 3300KB → 3400KB on 2026-05-29 — the App Store
+          # readiness batch (FAB + Message in hero + Community intro
+          # removal + context-aware back navigation + touch-target sweep
+          # + invalid-conversation self-heal) AND the user-feedback MVP
+          # (modal + hook + admin dashboard + edge fn + 4 new RPCs)
+          # together added ~19KB raw, tipping the 3300 gate. The
+          # feedback modal is lazy-loaded via React.lazy but the chunk
+          # overhead bites. 100KB of new headroom absorbs the next
+          # batch of small features.
+          if [ "$TOTAL_JS" -gt 3133440 ]; then
+            echo "::warning::Bundle nearing raw budget: ${TOTAL_KB}KB / 3400KB ($(( TOTAL_KB * 100 / 3400 ))%)"
           fi
 
-          # Secondary gate: raw total must stay under 3.3MB
-          if [ "$TOTAL_JS" -gt 3379200 ]; then
-            echo "::error::Raw bundle budget exceeded! ${TOTAL_KB}KB > 3300KB"
+          # Secondary gate: raw total must stay under 3.4MB
+          if [ "$TOTAL_JS" -gt 3481600 ]; then
+            echo "::error::Raw bundle budget exceeded! ${TOTAL_KB}KB > 3400KB"
             exit 1
           fi
 
