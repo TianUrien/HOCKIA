@@ -191,64 +191,79 @@ export default function HeroIdentityCard({
       </div>
 
       {/* CTA ROW — full-width below the identity zone. Visitor sees
-          Add Friend + Message; owner sees Share + View + Edit.
-          Comfortable margin separates it from the identity block. */}
-      <div className="mt-6 flex flex-wrap items-center gap-2">
+          Add Friend + Message + ⋮; owner sees Share + View + Edit.
+          Comfortable margin separates it from the identity block.
+
+          Layout-stability fix: the visitor primaries (Friends, Message,
+          Save) live in a flex-1 container; the compact ⋮ menu is a
+          flex-shrink-0 sibling pinned to its right. Because the flex-1
+          container reserves the left space from the FIRST paint, the ⋮
+          sits in its final position immediately — it does NOT depend on
+          when FriendshipButton's async useFriendship state resolves.
+          Previously the ⋮ was a peer of the primaries in a single
+          flex-wrap row, so as the primaries' presence/width settled
+          during load the flex distribution re-flowed and the ⋮ visibly
+          jumped from bottom-left to its final spot. The ⋮ also portals
+          its dropdown to body with viewport clamping (ProfileActionMenu)
+          so the menu itself is never off-screen. */}
+      <div className="mt-6 flex items-center gap-2">
         {readOnly ? (
           <>
-            <FriendshipButton profileId={profile.id} />
-            {/* Message — secondary action paired with Add Friend.
-                Brands intentionally excluded: brand outreach still
-                routes through their dedicated flow. The owner-preview
-                view (isVisitorView=false here means the owner is
-                previewing) also sees this so they know what
-                visitors get. */}
-            {!isOwnProfile && authProfileRole !== 'brand' && onMessage && (
-              <button
-                type="button"
-                onClick={onMessage}
-                disabled={sendingMessage}
-                className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:text-[#8026FA] disabled:opacity-50"
-              >
-                {sendingMessage ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
-                    Opening…
-                  </>
-                ) : (
-                  <>
-                    <MessageCircle className="w-4 h-4" />
-                    Message
-                  </>
-                )}
-              </button>
-            )}
-            {showSaveButton && (
-              <button
-                type="button"
-                onClick={() => void savedState.toggle()}
-                disabled={savedState.mutating}
-                className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:text-[#8026FA] disabled:opacity-50"
-                title={savedState.isSaved ? 'Saved — tap to remove' : 'Save for later'}
-              >
-                {savedState.isSaved ? (
-                  <>
-                    <BookmarkCheck className="w-4 h-4 fill-[#8026FA] text-[#8026FA]" />
-                    Saved
-                  </>
-                ) : (
-                  <>
-                    <Bookmark className="w-4 h-4" />
-                    Save
-                  </>
-                )}
-              </button>
-            )}
-            {isOwnProfile && (
-              <ShareProfileButton
-                profile={{ role: profile.role as 'player' | 'coach', username: profile.username, id: profile.id }}
-              />
-            )}
+            <div className="flex-1 flex flex-wrap items-center gap-2 min-w-0">
+              <FriendshipButton profileId={profile.id} className="flex-1 justify-center min-w-0" />
+              {/* Message — secondary action paired with Add Friend.
+                  Brands intentionally excluded: brand outreach still
+                  routes through their dedicated flow. The owner-preview
+                  view (isVisitorView=false here means the owner is
+                  previewing) also sees this so they know what
+                  visitors get. */}
+              {!isOwnProfile && authProfileRole !== 'brand' && onMessage && (
+                <button
+                  type="button"
+                  onClick={onMessage}
+                  disabled={sendingMessage}
+                  className="flex-1 justify-center min-w-0 inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:text-[#8026FA] disabled:opacity-50"
+                >
+                  {sendingMessage ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+                      Opening…
+                    </>
+                  ) : (
+                    <>
+                      <MessageCircle className="w-4 h-4" />
+                      Message
+                    </>
+                  )}
+                </button>
+              )}
+              {showSaveButton && (
+                <button
+                  type="button"
+                  onClick={() => void savedState.toggle()}
+                  disabled={savedState.mutating}
+                  className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:text-[#8026FA] disabled:opacity-50"
+                  title={savedState.isSaved ? 'Saved — tap to remove' : 'Save for later'}
+                >
+                  {savedState.isSaved ? (
+                    <>
+                      <BookmarkCheck className="w-4 h-4 fill-[#8026FA] text-[#8026FA]" />
+                      Saved
+                    </>
+                  ) : (
+                    <>
+                      <Bookmark className="w-4 h-4" />
+                      Save
+                    </>
+                  )}
+                </button>
+              )}
+              {isOwnProfile && (
+                <ShareProfileButton
+                  profile={{ role: profile.role as 'player' | 'coach', username: profile.username, id: profile.id }}
+                />
+              )}
+            </div>
             {!isOwnProfile && (
               <ProfileActionMenu targetId={profile.id} targetName={profile.full_name ?? 'this user'} />
             )}
