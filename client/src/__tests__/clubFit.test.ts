@@ -68,6 +68,36 @@ describe('computeClubFit', () => {
     expect(club.isApplicable).toBe(false)
   })
 
+  // ── Role-compatibility gate (target_role) ──────────────────────────
+  // The active recruiting context may be scoped to a non-player
+  // opportunity (e.g. a club hiring a coach). Club Fit only models
+  // player↔team fit, so a coach-seeking context must yield NO fit
+  // label — otherwise a matching player gets mislabelled "Possible
+  // fit" for a coach opportunity (the trust bug this gate fixes).
+  it('returns NOT_APPLICABLE when the context targets a non-player role (coach opportunity)', () => {
+    const result = computeClubFit(womensClub, baseFemalePlayer, { targetRole: 'coach' })
+    expect(result.isApplicable).toBe(false)
+  })
+
+  it('still applies when the context explicitly targets players', () => {
+    const result = computeClubFit(womensClub, baseFemalePlayer, { targetRole: 'player' })
+    expect(result.isApplicable).toBe(true)
+  })
+
+  it('applies when targetRole is null/absent (club/custom context = player-seeking default)', () => {
+    const nullRole = computeClubFit(womensClub, baseFemalePlayer, { targetRole: null })
+    const absent = computeClubFit(womensClub, baseFemalePlayer)
+    expect(nullRole.isApplicable).toBe(true)
+    expect(absent.isApplicable).toBe(true)
+  })
+
+  it('blocks any non-player target role, not just coach', () => {
+    const umpire = computeClubFit(womensClub, baseFemalePlayer, { targetRole: 'umpire' })
+    const brand = computeClubFit(womensClub, baseFemalePlayer, { targetRole: 'brand' })
+    expect(umpire.isApplicable).toBe(false)
+    expect(brand.isApplicable).toBe(false)
+  })
+
   it('gender_match = 1 when player plays adult_women and club is women', () => {
     const result = computeClubFit(womensClub, baseFemalePlayer)
     expect(result.components.gender_match).toBe(1)

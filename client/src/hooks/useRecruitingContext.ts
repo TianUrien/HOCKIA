@@ -463,3 +463,41 @@ export function useActiveRecruitingTarget(): RecruitingTargetCategory | null {
 
   return target
 }
+
+/**
+ * Companion to useActiveRecruitingTarget — returns the active
+ * context's sought ROLE ('player' | 'coach' | … | null), derived
+ * server-side from the linked opportunity's opportunity_type
+ * (migration 20260529180000). NULL for club / custom contexts,
+ * which are treated as player-seeking by consumers.
+ *
+ * Used by useClubFit to gate fit labels: Club Fit only does
+ * player-fit math, so a coach-seeking context must produce NO fit
+ * chip (rather than mislabel players as "Possible fit" for a coach
+ * opportunity — the trust bug this fixes).
+ *
+ * Same shared-store subscription as useActiveRecruitingTarget, so it
+ * adds no extra network fetch.
+ */
+export function useActiveRecruitingTargetRole(): string | null {
+  const { profile: viewer } = useAuthStore()
+  const viewerId = viewer?.id ?? null
+  const viewerRole = viewer?.role ?? null
+
+  const setViewer = useRecruitingContextStore((s) => s.setViewer)
+  const ensureFetched = useRecruitingContextStore((s) => s.ensureFetched)
+  const role = useRecruitingContextStore((s) => {
+    const row = s.rows.find((r) => r.is_active)
+    return (row?.target_role ?? null) as string | null
+  })
+
+  useEffect(() => {
+    setViewer(viewerId, viewerRole)
+  }, [viewerId, viewerRole, setViewer])
+
+  useEffect(() => {
+    void ensureFetched()
+  }, [viewerId, viewerRole, ensureFetched])
+
+  return role
+}

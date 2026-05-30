@@ -158,6 +158,14 @@ function competitionProximity(
  */
 export interface ComputeClubFitOptions {
   overrideTarget?: TargetCategory | null
+  /** Sought ROLE of the active recruiting context ('player' | 'coach'
+   *  | … | null), from the linked opportunity's opportunity_type.
+   *  Role-compatibility gate: Club Fit only models PLAYER fit, so when
+   *  the active context seeks a non-player role we must produce NO fit
+   *  label rather than mislabel players as a fit for, e.g., a coach
+   *  opportunity. NULL = club/custom context → treated as
+   *  player-seeking (preserves the club→player default). */
+  targetRole?: string | null
 }
 
 /**
@@ -188,6 +196,18 @@ export function computeClubFit(
   // umpire / brand candidates so we never surface a misleading signal
   // for roles whose Fit math isn't defined.
   if (candidate.role !== 'player') return NOT_APPLICABLE
+
+  // Role-compatibility gate. The active recruiting context may be
+  // scoped to a non-player opportunity (e.g. a club hiring a COACH).
+  // Club Fit only models player↔team fit, so when the context seeks a
+  // role other than 'player' we must produce NO label — otherwise a
+  // player would be mislabelled "Possible fit" for a coach opportunity
+  // (the trust bug). NULL targetRole = club/custom context with no
+  // explicit role → treated as player-seeking (the club→player
+  // default), so today's behaviour is preserved.
+  if (options?.targetRole != null && options.targetRole !== 'player') {
+    return NOT_APPLICABLE
+  }
 
   // Sprint 3 (coach support): coaches have no profile-derived target —
   // deriveTargetCategory returns null for any non-club viewer — so they
