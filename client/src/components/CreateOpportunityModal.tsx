@@ -582,6 +582,8 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                 <input
                   id={opportunityTitleFieldId}
                   type="text"
+                  required
+                  aria-required="true"
                   value={formData.title}
                   onChange={(e) => handleInputChange('title', e.target.value)}
                   maxLength={TITLE_MAX}
@@ -640,6 +642,8 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                   <select
                     value={formData.position || ''}
                     onChange={(e) => handleInputChange('position', e.target.value || undefined)}
+                    aria-required={formData.opportunity_type === 'player' ? 'true' : undefined}
+                    aria-invalid={errors.position ? true : undefined}
                     className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#10b981] focus:border-transparent bg-white ${
                       errors.position ? 'border-red-500' : 'border-gray-300'
                     }`}
@@ -675,6 +679,8 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                     onChange={(e) =>
                       handleInputChange('gender', e.target.value as 'Men' | 'Women' | 'Girls' | 'Boys' | 'Mixed')
                     }
+                    aria-required="true"
+                    aria-invalid={errors.gender ? true : undefined}
                     className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#10b981] focus:border-transparent bg-white ${
                       errors.gender ? 'border-red-500' : 'border-gray-300'
                     }`}

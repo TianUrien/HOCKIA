@@ -80,6 +80,7 @@ export default function PlayerBentoGrid({
           <CommunityCard
             profile={profile as Pick<Profile, 'id' | 'accepted_friend_count' | 'accepted_reference_count' | 'post_count'>}
             onOpenTab={onOpenTab}
+            readOnly
           />
         </>
       ) : (

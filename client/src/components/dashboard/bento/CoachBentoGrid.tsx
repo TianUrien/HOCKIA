@@ -94,6 +94,7 @@ export default function CoachBentoGrid({
           <CommunityCard
             profile={profile as Pick<Profile, 'id' | 'accepted_friend_count' | 'accepted_reference_count' | 'post_count'>}
             onOpenTab={(tab) => onOpenTab(tab)}
+            readOnly
           />
           <JourneyCard
             profileId={profile.id}

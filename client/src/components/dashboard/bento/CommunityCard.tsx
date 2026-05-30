@@ -78,11 +78,12 @@ export default function CommunityCard({ profile, onOpenTab, hideReferences = fal
   return (
     <DashboardCard
       icon={Users}
-      // "My Network" is the user's personal social hub (friends, refs,
-      // comments, posts on their own profile). The bottom-nav "Community"
-      // is the global HOCKIA directory — same word, different scope.
-      // Renaming this card resolves the label collision QA flagged.
-      title="My Network"
+      // "My Network" is the OWNER's personal social hub. On a visitor's
+      // view of someone else's profile the first-person framing is wrong
+      // (you're not looking at *your* network), so we drop to a neutral
+      // "Network" + "View network" CTA. The bottom-nav "Community" is the
+      // global HOCKIA directory — same word, different scope.
+      title={readOnly ? 'Network' : 'My Network'}
       subtitle={hideReferences ? 'Connections, comments and posts' : 'Friends, references, comments and posts'}
       ctaLabel={readOnly ? 'View network' : 'Go to my network'}
       // Opens the unified My Network page (all sections stacked).
