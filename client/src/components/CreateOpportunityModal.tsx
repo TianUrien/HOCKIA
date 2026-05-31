@@ -1035,11 +1035,11 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
             QA-flagged as a confusing dead-end. Editing an existing row
             keeps the single update CTA — the form's status select
             inside the modal controls the destination state there. */}
-        <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50">
+        <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50">
           <button
             onClick={handleClose}
             disabled={isLoading}
-            className="px-6 py-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors font-medium disabled:opacity-50"
+            className="w-full sm:w-auto whitespace-nowrap px-6 py-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors font-medium disabled:opacity-50"
             type="button"
           >
             Cancel
@@ -1048,7 +1048,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
             <Button
               onClick={() => handleSave()}
               disabled={isLoading}
-              className="flex items-center gap-2 bg-[#10b981] hover:bg-[#059669]"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 whitespace-nowrap bg-[#10b981] hover:bg-[#059669]"
             >
               {isLoading ? 'Saving…' : 'Update Opportunity'}
             </Button>
@@ -1058,14 +1058,14 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                 variant="outline"
                 onClick={() => handleSave('draft')}
                 disabled={isLoading}
-                className="flex items-center gap-2"
+                className="w-full sm:w-auto flex items-center justify-center gap-2 whitespace-nowrap"
               >
                 {isLoading ? 'Saving…' : 'Save as draft'}
               </Button>
               <Button
                 onClick={() => handleSave('open')}
                 disabled={isLoading}
-                className="flex items-center gap-2 bg-[#10b981] hover:bg-[#059669]"
+                className="w-full sm:w-auto flex items-center justify-center gap-2 whitespace-nowrap bg-[#10b981] hover:bg-[#059669]"
               >
                 {isLoading ? 'Publishing…' : 'Publish now'}
               </Button>

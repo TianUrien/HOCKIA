@@ -199,7 +199,7 @@ export default function MobileBottomNav() {
               }`}
             >
               <div
-                className={`relative mb-0.5 transition-transform duration-200 ${
+                className={`relative flex items-center justify-center w-7 h-7 mb-0.5 transition-transform duration-200 ${
                   location.pathname.startsWith('/dashboard') ? 'scale-110' : 'scale-100'
                 }`}
               >
@@ -218,11 +218,13 @@ export default function MobileBottomNav() {
                   size="sm"
                   loading="eager"
                   role={profile?.role}
-                  className={
+                  // Match the 24px icon box of sibling nav items so the
+                  // Dashboard slot is the same height (was ~4px taller).
+                  className={`!w-6 !h-6 ${
                     location.pathname.startsWith('/dashboard')
                       ? 'ring-2 ring-[#8026FA] ring-offset-2'
-                      : undefined
-                  }
+                      : ''
+                  }`}
                 />
               </div>
               {/* Label matches sibling nav items — hidden under 360px to

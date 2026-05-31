@@ -206,11 +206,11 @@ export default function HeroIdentityCard({
           jumped from bottom-left to its final spot. The ⋮ also portals
           its dropdown to body with viewport clamping (ProfileActionMenu)
           so the menu itself is never off-screen. */}
-      <div className="mt-6 flex items-center gap-2">
+      <div className="mt-6 flex items-stretch gap-2">
         {readOnly ? (
           <>
-            <div className="flex-1 flex flex-wrap items-center gap-2 min-w-0">
-              <FriendshipButton profileId={profile.id} className="flex-1 justify-center min-w-0" />
+            <div className="flex-1 flex items-stretch gap-2 min-w-0">
+              <FriendshipButton profileId={profile.id} className="flex-1 justify-center min-w-0 whitespace-nowrap" />
               {/* Message — secondary action paired with Add Friend.
                   Brands intentionally excluded: brand outreach still
                   routes through their dedicated flow. The owner-preview
@@ -222,7 +222,7 @@ export default function HeroIdentityCard({
                   type="button"
                   onClick={onMessage}
                   disabled={sendingMessage}
-                  className="flex-1 justify-center min-w-0 inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:text-[#8026FA] disabled:opacity-50"
+                  className="flex-1 justify-center min-w-0 whitespace-nowrap inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:text-[#8026FA] disabled:opacity-50"
                 >
                   {sendingMessage ? (
                     <>
@@ -242,7 +242,7 @@ export default function HeroIdentityCard({
                   type="button"
                   onClick={() => void savedState.toggle()}
                   disabled={savedState.mutating}
-                  className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:text-[#8026FA] disabled:opacity-50"
+                  className="inline-flex items-center gap-2 whitespace-nowrap rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:text-[#8026FA] disabled:opacity-50"
                   title={savedState.isSaved ? 'Saved — tap to remove' : 'Save for later'}
                 >
                   {savedState.isSaved ? (
