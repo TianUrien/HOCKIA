@@ -280,6 +280,7 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
           <p className="text-xs text-gray-600 mt-0.5 truncate">{status.sub}</p>
         </div>
         <ClubFitChip
+          className="flex-shrink-0 whitespace-nowrap"
           candidate={{
             id: profile.id,
             role: profile.role,

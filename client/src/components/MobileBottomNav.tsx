@@ -22,6 +22,50 @@ export default function MobileBottomNav() {
   } = useNavigation()
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false)
   const [isHidden, setIsHidden] = useState(false)
+  // The floating Hockia AI button hides while the user scrolls DOWN through
+  // content (so it never obscures what they're reading — e.g. a card's fit
+  // chip or gallery text) and reappears on scroll-up, near the top, or once
+  // scrolling stops. The bottom nav itself stays put; only the FAB reacts.
+  const [fabHidden, setFabHidden] = useState(false)
+
+  // rAF-coalesced scroll listener — compares scrollY frame-to-frame to derive
+  // direction. Hide on downward scroll past a small threshold; show on any
+  // upward scroll or when within 80px of the top. A short idle timer also
+  // re-reveals it so it never stays hidden once the user pauses.
+  useEffect(() => {
+    let lastY = window.scrollY
+    let ticking = false
+    let idleTimer: ReturnType<typeof setTimeout> | null = null
+
+    const update = () => {
+      ticking = false
+      const y = window.scrollY
+      const delta = y - lastY
+      if (y < 80) {
+        setFabHidden(false)
+      } else if (delta > 6) {
+        setFabHidden(true)
+      } else if (delta < -6) {
+        setFabHidden(false)
+      }
+      lastY = y
+      if (idleTimer) clearTimeout(idleTimer)
+      idleTimer = setTimeout(() => setFabHidden(false), 1200)
+    }
+
+    const onScroll = () => {
+      if (!ticking) {
+        ticking = true
+        requestAnimationFrame(update)
+      }
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      if (idleTimer) clearTimeout(idleTimer)
+    }
+  }, [])
 
   // Navigation items
   const navItems: NavItem[] = [
@@ -170,12 +214,17 @@ export default function MobileBottomNav() {
               type="button"
               onClick={() => handleNavigate('/discover')}
               aria-label="Open Hockia AI"
-              className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4
+              aria-hidden={fabHidden || undefined}
+              tabIndex={fabHidden ? -1 : 0}
+              className={`absolute bottom-full left-1/2 mb-4
                          w-12 h-12 rounded-full
                          bg-gradient-to-br from-[#8026FA] to-[#924CEC]
                          flex items-center justify-center
                          shadow-lg shadow-[#8026FA]/40 ring-2 ring-white
-                         active:scale-95 transition-transform duration-150"
+                         transition-all duration-300 ease-out
+                         ${fabHidden
+                           ? '-translate-x-1/2 translate-y-24 opacity-0 pointer-events-none'
+                           : '-translate-x-1/2 translate-y-0 opacity-100 active:scale-95'}`}
             >
               <Sparkles className="w-5 h-5 text-white" strokeWidth={2.25} />
             </button>
