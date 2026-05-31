@@ -1,8 +1,7 @@
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuthStore } from '../lib/auth'
-import { useToastStore } from '../lib/toast'
 import { logger } from '../lib/logger'
 import { trackDbEvent } from '../lib/trackDbEvent'
 import { trackVacancyView } from '../lib/analytics'
@@ -13,12 +12,7 @@ import ApplyToOpportunityModal from '../components/ApplyToOpportunityModal'
 import SignInPromptModal from '../components/SignInPromptModal'
 import OpportunityJsonLd from '../components/OpportunityJsonLd'
 import Breadcrumbs from '../components/Breadcrumbs'
-import ContextSwitcher from '../components/recruiting/ContextSwitcher'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
-import {
-  useRecruitingContext,
-  opportunityGenderToTarget,
-} from '@/hooks/useRecruitingContext'
 
 export default function OpportunityDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -198,59 +192,13 @@ export default function OpportunityDetailPage() {
     fetchVacancyDetails()
   }, [id, navigate, fetchVacancyDetails])
 
-  // Sprint 3: when the owner of this opportunity views their own
-  // detail page, auto-scope their active recruiting_context to it —
-  // same behavior as ApplicantsList so the two surfaces stay
-  // consistent. Non-owners (anonymous, applicants, other recruiters)
-  // hit the early return. Cancelled flag + ref guards mirror the
-  // ApplicantsList implementation; see audit-fix notes there.
-  const { addToast } = useToastStore()
-  const { activateForOpportunity } = useRecruitingContext()
-  const autoActivatedRef = useRef<string | null>(null)
-  const lastViewerIdRef = useRef<string | null>(null)
-  useEffect(() => {
-    if (lastViewerIdRef.current !== (user?.id ?? null)) {
-      lastViewerIdRef.current = user?.id ?? null
-      autoActivatedRef.current = null
-    }
-  }, [user?.id])
-  useEffect(() => {
-    if (!opportunity || !user) return
-    if (opportunity.club_id !== user.id) return
-    // Closed/draft opps are out of the active recruiting flow — scoping
-    // to them creates a context that's invisible in the picker
-    // (filtered to status='open'). User feedback flagged this as
-    // confusing pollution. The picker still surfaces a closed opp IF
-    // a user already had it scoped (visibleOpps synthesis), so this
-    // gate doesn't trap anyone in a stale state.
-    if (opportunity.status !== 'open') return
-    if (autoActivatedRef.current === opportunity.id) return
-    autoActivatedRef.current = opportunity.id
-    const target = opportunityGenderToTarget(opportunity.gender)
-    let cancelled = false
-    void activateForOpportunity({
-      opportunityId: opportunity.id,
-      target,
-      region: opportunity.location_city ?? null,
-      label: opportunity.title ? `${opportunity.title}` : null,
-    }).then((row) => {
-      if (cancelled) return
-      if (!row) {
-        addToast('Could not scope recruiting to this opportunity.', 'error')
-        autoActivatedRef.current = null
-        return
-      }
-      addToast(
-        target
-          ? `Recruiting scoped to this opportunity (${target}).`
-          : 'Recruiting scoped to this opportunity.',
-        'success',
-      )
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [opportunity, user, activateForOpportunity, addToast])
+  // NOTE: viewing this page no longer auto-mutates the owner's global
+  // recruiting context (removed alongside the matching ApplicantsList
+  // auto-scope). Silently activating a context here changed Fit chips +
+  // the Community carousel everywhere the moment an owner opened their
+  // own opportunity — an unrequested side effect. Owners who want to
+  // scope Community to an opportunity do it explicitly via the "Your
+  // opportunities" picker in the ContextSwitcher sheet.
 
   // SEO: Update page title and meta tags for crawlers
   useEffect(() => {
@@ -427,18 +375,6 @@ export default function OpportunityDetailPage() {
                 { label: opportunity.title },
               ]}
             />
-            {/* Owner-only: the chip would render their global recruiter
-                context, but on someone else's opportunity it reads as
-                "you're recruiting for this" which is misleading. Gate
-                to owners so the chip only appears where the auto-scope
-                effect actually fires. Non-owner club/coach viewers
-                still see their context on Community / Saved / their own
-                ApplicantsList. */}
-            {opportunity.club_id === user?.id && (
-              <div className="mt-3">
-                <ContextSwitcher />
-              </div>
-            )}
           </div>
           <OpportunityDetailView
             vacancy={opportunity}

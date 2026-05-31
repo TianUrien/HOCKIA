@@ -201,7 +201,7 @@ export default function CommunityPage() {
   // on first mount via the hook's initial value; the sync effects
   // below keep them aligned afterwards.
   const filtersState = useCommunityFiltersState(memberRoleFilter, searchParams.get('q') ?? '')
-  const { searchQuery, setSearchQuery, filters, updateFilter, hasActiveFilters, isNarrowed, sort, setSort, showFilters, setShowFilters } = filtersState
+  const { searchQuery, setSearchQuery, filters, updateFilter, hasActiveFilters, isNarrowed, sort, setSort, showFilters, setShowFilters, applyContextFit, setApplyContextFit } = filtersState
 
   // Input → URL: write searchQuery to the URL ?q= param.
   //
@@ -458,6 +458,29 @@ export default function CommunityPage() {
                     <option value="completeness">Profile completeness</option>
                   </select>
                 </label>
+                {/* Context-fit toggle — explicit opt-in. Only shown when:
+                    the viewer is a recruiter (club/coach) AND has an
+                    active recruiting context AND the default 'newest'
+                    sort is selected (the mode the Fit ranking hooks
+                    into). Ticking it sorts the grid best-fit-first for
+                    that context; nobody is hidden. Disabled-state copy
+                    isn't needed — it simply doesn't render otherwise. */}
+                {(viewerProfile?.role === 'club' || viewerProfile?.role === 'coach') &&
+                  activeRecruitingTarget &&
+                  sort === 'newest' && (
+                    <label
+                      className="text-xs text-gray-600 flex items-center gap-1.5 flex-shrink-0 cursor-pointer"
+                      title="Sort this list best-fit-first for your active recruiting context. Nobody is hidden."
+                    >
+                      <input
+                        type="checkbox"
+                        checked={applyContextFit}
+                        onChange={(e) => setApplyContextFit(e.target.checked)}
+                        className="rounded border-gray-300 text-[#8026FA] focus:ring-[#8026FA]/40"
+                      />
+                      <span className="font-medium">Best matches first</span>
+                    </label>
+                  )}
               </section>
 
               {/* All Members grid */}

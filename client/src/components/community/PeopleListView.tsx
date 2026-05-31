@@ -18,6 +18,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { computeClubFit } from '@/lib/clubFit'
 import { deriveTargetCategory } from '@/lib/recruitingContext'
+import { useActiveRecruitingTarget, useActiveRecruitingTargetRole } from '@/hooks/useRecruitingContext'
 import { requestCache } from '@/lib/requestCache'
 import { monitor } from '@/lib/monitor'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
@@ -144,7 +145,14 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     ? 'anon'
     : isCurrentUserTestAccount ? 'test' : 'std'
 
-  const { searchQuery, filters, sort, clearFilters, isNarrowed } = state
+  const { searchQuery, filters, sort, applyContextFit, clearFilters, isNarrowed } = state
+  // Active recruiting context (recruiter-only; null otherwise). When the
+  // recruiter explicitly opts in via `applyContextFit`, the grid sorts
+  // best-fit-first FOR THIS CONTEXT instead of the viewer's own profile
+  // target — matching what the per-card Fit chips already show. Nobody
+  // is hidden; this only re-orders.
+  const contextTarget = useActiveRecruitingTarget()
+  const contextTargetRole = useActiveRecruitingTargetRole()
 
   const [baseMembers, setBaseMembers] = useState<Profile[]>([])
   const [allMembers, setAllMembers] = useState<Profile[]>([])
@@ -537,11 +545,19 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
       })
     }
 
-    // Sprint v1 Club Fit ranking: when the viewer is a club AND the
-    // user is on the default 'newest' sort (the implicit "show me
-    // relevant people" mode), re-order by Fit score descending.
-    // Explicit sort choices (completeness) are respected as-is.
-    const viewerTarget = deriveTargetCategory(currentUserProfile)
+    // Club Fit ranking: re-order by Fit score descending. This fires in
+    // two modes, both only on the default 'newest' sort (explicit
+    // 'completeness' is respected as-is) and only for a viewer who has a
+    // derivable target:
+    //   1. Default — the implicit "show me relevant people" ranking,
+    //      scored against the viewer's OWN profile target.
+    //   2. Context-fit (applyContextFit) — the recruiter explicitly
+    //      ticked "Apply context to this list", so we score against
+    //      their ACTIVE recruiting context's target + role instead,
+    //      matching the per-card Fit chips. Nobody is hidden; sort only.
+    const profileTarget = deriveTargetCategory(currentUserProfile)
+    const useContextFit = applyContextFit && !!contextTarget
+    const viewerTarget = useContextFit ? contextTarget : profileTarget
     if (sort === 'newest' && viewerTarget && currentUserProfile) {
       const viewerCtx = {
         role: currentUserProfile.role,
@@ -549,6 +565,12 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
         mens_league_division: (currentUserProfile as { mens_league_division?: string | null }).mens_league_division ?? null,
         current_world_club_id: currentUserProfile.current_world_club_id ?? null,
       }
+      // In context-fit mode, pass the context target + role through so
+      // the score (and the role gate that suppresses player-fit for
+      // coach-seeking contexts) matches exactly what the Fit chips show.
+      const fitOptions = useContextFit
+        ? { overrideTarget: contextTarget, targetRole: contextTargetRole }
+        : undefined
       result = [...result]
         .map((m) => ({
           m,
@@ -561,7 +583,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
             open_to_coach: m.open_to_coach ?? null,
             open_to_opportunities: m.open_to_opportunities ?? null,
             last_active_at: m.last_active_at ?? null,
-          }),
+          }, fitOptions),
         }))
         .sort((a, b) => {
           // Primary: Fit score descending (NOT_APPLICABLE returns 0).
@@ -577,7 +599,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     }
 
     return result
-  }, [allMembers, filters, sort, currentUserProfile])
+  }, [allMembers, filters, sort, currentUserProfile, applyContextFit, contextTarget, contextTargetRole])
 
   // Emit filtered count upward whenever it changes. Combined with the
   // total-count effect this lets the parent choose: total when not

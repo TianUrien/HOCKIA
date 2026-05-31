@@ -51,6 +51,12 @@ export interface CommunityFiltersState {
   setShowFilters: (open: boolean) => void
   sort: SortOption
   setSort: (value: SortOption) => void
+  /** Explicit opt-in: when ON and the recruiter has an active recruiting
+   *  context, the members grid is sorted best-fit-first FOR THAT CONTEXT
+   *  (everyone stays visible — sort, never hide). Off by default so a
+   *  context never silently re-orders the grid. */
+  applyContextFit: boolean
+  setApplyContextFit: (value: boolean) => void
   /** Has the user narrowed beyond the chip-driven role? */
   hasActiveFilters: boolean
   /** Search query OR any active filter — drives the carousel hide. */
@@ -80,6 +86,11 @@ export function useCommunityFiltersState(
   // reload, which is acceptable.
   const [showFilters, setShowFilters] = useState(false)
   const [sort, setSort] = useState<SortOption>('newest')
+  // Off by default — context-fit re-ordering is strictly opt-in (the
+  // recruiter ticks "Apply context to this list"). Plain useState so it
+  // survives chip-driven route changes within a session, same rationale
+  // as sort/showFilters above.
+  const [applyContextFit, setApplyContextFit] = useState(false)
 
   const updateFilter = useCallback(<K extends keyof CommunityFilters>(key: K, value: CommunityFilters[K]) => {
     setFilters((prev) => {
@@ -136,6 +147,8 @@ export function useCommunityFiltersState(
     setShowFilters,
     sort,
     setSort,
+    applyContextFit,
+    setApplyContextFit,
     hasActiveFilters,
     isNarrowed,
   }
