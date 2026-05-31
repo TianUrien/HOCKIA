@@ -25,6 +25,12 @@ vi.mock('@/components/dashboard/bento/AboutMeCard', () => ({
 vi.mock('@/components/dashboard/bento/CommunityCard', () => ({
   default: () => <div data-testid="community-card" />,
 }))
+// SavedCandidatesCard pulls in @/lib/supabase at import time (count
+// fetch), which throws without env vars in the unit env — mock it like
+// the other child cards so PlayerBentoGrid stays composition-only.
+vi.mock('@/components/dashboard/bento/SavedCandidatesCard', () => ({
+  default: () => <div data-testid="saved-candidates-card" />,
+}))
 
 const baseProfile: PlayerProfileShape = {
   id: 'player-1',
