@@ -29,7 +29,33 @@ interface RecentSave {
   role: string | null
 }
 
-export default function SavedCandidatesCard() {
+/** Recruiters (club/coach) save *candidates*; players save mixed
+ *  profiles (clubs, coaches, other players) they want to revisit or
+ *  message — so the copy flexes by role. The data + fetch + route are
+ *  identical; only the framing changes. */
+interface SavedCandidatesCardProps {
+  variant?: 'recruiter' | 'player'
+}
+
+const VARIANT_COPY = {
+  recruiter: {
+    title: 'Saved Candidates',
+    subtitle: "Players you've bookmarked from Community",
+    emptyCount: 'No saved candidates yet',
+    emptyHint:
+      'Tap the bookmark icon on any player card in Community to save them here. Only you can see this list — saved players are never notified.',
+  },
+  player: {
+    title: 'Saved Profiles',
+    subtitle: 'People you saved to revisit later',
+    emptyCount: 'No saved profiles yet',
+    emptyHint:
+      'Tap the bookmark icon on any profile to save them here. Only you can see this list — saved people are never notified.',
+  },
+} as const
+
+export default function SavedCandidatesCard({ variant = 'recruiter' }: SavedCandidatesCardProps) {
+  const copy = VARIANT_COPY[variant]
   const { user } = useAuthStore()
   const navigate = useNavigate()
   const [count, setCount] = useState<number | null>(null)
@@ -113,7 +139,7 @@ export default function SavedCandidatesCard() {
     count === null
       ? '—'
       : count === 0
-        ? 'No saved candidates yet'
+        ? copy.emptyCount
         : count === 1
           ? '1 saved'
           : `${count} saved`
@@ -124,8 +150,8 @@ export default function SavedCandidatesCard() {
   return (
     <DashboardCard
       icon={BookmarkCheck}
-      title="Saved Candidates"
-      subtitle="Players you've bookmarked from Community"
+      title={copy.title}
+      subtitle={copy.subtitle}
       ctaLabel={hasSaves ? 'View all' : 'Browse Community'}
       onCtaClick={() => navigate(hasSaves ? '/dashboard/saved' : '/community')}
       testId="saved-candidates-card"
@@ -175,7 +201,7 @@ export default function SavedCandidatesCard() {
           </div>
         ) : count !== null ? (
           <p className="text-xs text-gray-500 leading-relaxed">
-            Tap the bookmark icon on any player card in Community to save them here. Only you can see this list — saved players are never notified.
+            {copy.emptyHint}
           </p>
         ) : null}
       </div>

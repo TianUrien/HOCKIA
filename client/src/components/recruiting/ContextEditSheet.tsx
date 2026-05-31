@@ -345,7 +345,7 @@ export default function ContextEditSheet({ isOpen, onClose }: ContextEditSheetPr
                         type="button"
                         onClick={() => handlePickOpportunity(opp)}
                         disabled={busy}
-                        className="flex-1 flex items-center gap-3 text-left disabled:opacity-50"
+                        className="flex-1 min-w-0 flex items-center gap-3 text-left disabled:opacity-50"
                       >
                         <span
                           className={[

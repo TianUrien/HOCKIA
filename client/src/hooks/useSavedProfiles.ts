@@ -186,7 +186,7 @@ export function useIsProfileSaved(profileId: string | null | undefined): UseIsPr
 
   const toggle = useCallback(async () => {
     if (!viewerId) {
-      addToast('Sign in to save players', 'error')
+      addToast('Sign in to save profiles', 'error')
       return
     }
     if (!profileId || isOwnProfile || mutating) return
@@ -262,11 +262,11 @@ export function useIsProfileSaved(profileId: string | null | undefined): UseIsPr
           if (error.code !== '23505') {
             removeLocally(profileId)
             reportSupabaseError('useIsProfileSaved.save', error, { profileId })
-            addToast('Could not save player', 'error')
+            addToast('Could not save profile', 'error')
             return
           }
         } else {
-          addToast('Saved — see Saved Candidates in your dashboard', 'success')
+          addToast('Saved — see your saved list in the dashboard', 'success')
         }
       }
     } finally {

@@ -4,6 +4,7 @@ import JourneyCard from './JourneyCard'
 import MediaCard from './MediaCard'
 import AboutMeCard from './AboutMeCard'
 import CommunityCard from './CommunityCard'
+import SavedCandidatesCard from './SavedCandidatesCard'
 import type { Profile } from '@/lib/supabase'
 import type { PlayerProfileShape } from '@/pages/PlayerDashboard'
 
@@ -107,6 +108,13 @@ export default function PlayerBentoGrid({
             profile={profile as Pick<Profile, 'id' | 'accepted_friend_count' | 'accepted_reference_count' | 'post_count'>}
             onOpenTab={onOpenTab}
           />
+          {/* Saved Profiles — players save mixed profiles (clubs they're
+              interested in, coaches to contact, players to follow) to
+              revisit later. Same private list + /dashboard/saved page
+              clubs/coaches use, but framed as "Saved Profiles" not
+              "Saved Candidates". Owner-only (it's inside the
+              readOnly=false branch). */}
+          <SavedCandidatesCard variant="player" />
           <OpportunitiesCard
             ownerProfileId={profile.id}
             onViewOpportunities={onViewOpportunities}

@@ -24,8 +24,14 @@ import { getInitials } from '@/lib/utils'
 import { useSavedProfilesList, useIsProfileSaved, type SavedProfileSummary } from '@/hooks/useSavedProfiles'
 
 export default function SavedCandidatesPage() {
-  useDocumentTitle('Saved Candidates')
-  const { user } = useAuthStore()
+  const { user, profile } = useAuthStore()
+  // Recruiters (club/coach) save "candidates"; everyone else (players,
+  // umpires) saves mixed "profiles" — clubs, coaches, players they want
+  // to revisit. Same list + data; only the framing changes. Mirrors the
+  // SavedCandidatesCard variant copy.
+  const isRecruiter = profile?.role === 'club' || profile?.role === 'coach'
+  const noun = isRecruiter ? 'Saved Candidates' : 'Saved Profiles'
+  useDocumentTitle(noun)
   const navigate = useNavigate()
   const { items, loading, error, refresh } = useSavedProfilesList()
 
@@ -34,8 +40,8 @@ export default function SavedCandidatesPage() {
       <div className="min-h-screen bg-gray-50">
         <Header />
         <div className="max-w-3xl mx-auto px-4 pt-24 pb-12 text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Sign in to view saved candidates</h1>
-          <p className="text-gray-600 mb-6">Save players you discover and keep them organised for later.</p>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Sign in to view saved profiles</h1>
+          <p className="text-gray-600 mb-6">Save people you discover and keep them organised for later.</p>
           <button
             type="button"
             onClick={() => navigate('/signin')}
@@ -64,10 +70,12 @@ export default function SavedCandidatesPage() {
         <header className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
             <BookmarkCheck className="w-6 h-6 text-[#8026FA]" />
-            Saved Candidates
+            {noun}
           </h1>
           <p className="text-sm text-gray-600 mt-1">
-            Players you've saved from Community, search, or any profile. Only you can see this list.
+            {isRecruiter
+              ? "Players you've saved from Community, search, or any profile. Only you can see this list."
+              : "People you've saved from Community, search, or any profile. Only you can see this list."}
           </p>
           {/* Active recruiting context drives the Club Fit chip on
               each saved candidate row. Self-hides for non-recruiter
@@ -93,7 +101,7 @@ export default function SavedCandidatesPage() {
             ))}
           </div>
         ) : items.length === 0 ? (
-          <EmptyState />
+          <EmptyState isRecruiter={isRecruiter} />
         ) : (
           <ul className="space-y-3">
             {items.map((item) => (
@@ -106,15 +114,19 @@ export default function SavedCandidatesPage() {
   )
 }
 
-function EmptyState() {
+function EmptyState({ isRecruiter }: { isRecruiter: boolean }) {
   return (
     <div className="rounded-xl border-2 border-dashed border-gray-300 bg-white p-8 text-center">
       <div className="w-16 h-16 rounded-full bg-purple-50 flex items-center justify-center mx-auto mb-4">
         <BookmarkCheck className="w-7 h-7 text-[#8026FA]" />
       </div>
-      <h2 className="text-lg font-semibold text-gray-900 mb-1">No saved candidates yet</h2>
+      <h2 className="text-lg font-semibold text-gray-900 mb-1">
+        {isRecruiter ? 'No saved candidates yet' : 'No saved profiles yet'}
+      </h2>
       <p className="text-sm text-gray-600 mb-6">
-        Tap the bookmark icon on any player card in Community to save them here.
+        {isRecruiter
+          ? 'Tap the bookmark icon on any player card in Community to save them here.'
+          : 'Tap the bookmark icon on any profile in Community to save them here.'}
       </p>
       <Link
         to="/community"
