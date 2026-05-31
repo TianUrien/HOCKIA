@@ -176,35 +176,43 @@ export default function ClubHeroCard({
       </div>
 
       {/* CTA row */}
-      <div className="mt-6 flex flex-wrap items-center gap-2">
+      <div className="mt-6 flex items-stretch gap-2">
         {readOnly ? (
           <>
-            <FriendshipButton profileId={profile.id} />
-            {!isOwnProfile && authProfileRole !== 'brand' && onMessage && (
-              <button
-                type="button"
-                onClick={onMessage}
-                disabled={sendingMessage}
-                className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-[#8026FA] to-[#924CEC] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-90 disabled:opacity-60"
-              >
-                {sendingMessage ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Sending...
-                  </>
-                ) : (
-                  <>
-                    <MessageCircle className="w-4 h-4" />
-                    Message
-                  </>
-                )}
-              </button>
-            )}
-            {isOwnProfile && (
-              <ShareProfileButton
-                profile={{ role: 'club', username: profile.username, id: profile.id }}
-              />
-            )}
+            {/* Primaries share the row in a flex-1 container; the ⋮ menu
+                is a flex-shrink-0 sibling pinned right (mirrors
+                HeroIdentityCard). items-stretch + h-11 on every control
+                keeps Friends / Message / ⋮ one even 44px line, and the
+                Friends-dropdown state can shrink+truncate instead of
+                overflowing into Message. */}
+            <div className="flex-1 flex items-stretch gap-2 min-w-0">
+              <FriendshipButton profileId={profile.id} className="flex-1 min-w-0 whitespace-nowrap" />
+              {!isOwnProfile && authProfileRole !== 'brand' && onMessage && (
+                <button
+                  type="button"
+                  onClick={onMessage}
+                  disabled={sendingMessage}
+                  className="flex-1 min-w-0 justify-center whitespace-nowrap inline-flex h-11 items-center gap-2 rounded-lg bg-gradient-to-r from-[#8026FA] to-[#924CEC] px-4 text-sm font-semibold text-white shadow-sm hover:opacity-90 disabled:opacity-60"
+                >
+                  {sendingMessage ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin flex-shrink-0" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <MessageCircle className="w-4 h-4 flex-shrink-0" />
+                      Message
+                    </>
+                  )}
+                </button>
+              )}
+              {isOwnProfile && (
+                <ShareProfileButton
+                  profile={{ role: 'club', username: profile.username, id: profile.id }}
+                />
+              )}
+            </div>
             {!isOwnProfile && (
               <ProfileActionMenu targetId={profile.id} targetName={profile.full_name ?? 'this club'} />
             )}

@@ -9,6 +9,15 @@ interface FriendshipButtonProps {
   className?: string
 }
 
+// Single source of truth for the control's box across EVERY state
+// (loading / unauth / blocked / add-friend / friends-dropdown / request-sent).
+// h-11 = 44px to match the ⋮ ProfileActionMenu (min-h-[44px]) and the
+// Message button so the action row is one even line on every profile type.
+// justify-center + min-w-0 let the button sit in a flex-1 slot and shrink
+// (truncating its label) instead of overflowing into its neighbour.
+const BTN_BASE =
+  'inline-flex h-11 items-center justify-center gap-2 rounded-lg px-4 text-sm transition disabled:opacity-60'
+
 export default function FriendshipButton({ profileId, className }: FriendshipButtonProps) {
   const { addToast } = useToastStore()
   const [menuOpen, setMenuOpen] = useState(false)
@@ -73,7 +82,7 @@ export default function FriendshipButton({ profileId, className }: FriendshipBut
       <button
         type="button"
         disabled
-        className={cn('inline-flex items-center gap-2 rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600', className)}
+        className={cn(BTN_BASE, 'border border-gray-200 font-medium text-gray-600', className)}
       >
         <Loader2 className="h-4 w-4 animate-spin" />
         Checking...
@@ -87,9 +96,9 @@ export default function FriendshipButton({ profileId, className }: FriendshipBut
       <button
         type="button"
         onClick={handleAuthRequired}
-        className={cn('inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50', className)}
+        className={cn(BTN_BASE, 'border border-gray-200 bg-white font-semibold text-gray-700 hover:bg-gray-50', className)}
       >
-        <UserPlus className="h-4 w-4" />
+        <UserPlus className="h-4 w-4 flex-shrink-0" />
         Add Friend
       </button>
     )
@@ -98,8 +107,8 @@ export default function FriendshipButton({ profileId, className }: FriendshipBut
   // Blocked state
   if (status === 'blocked') {
     return (
-      <span className={cn('inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700', className)}>
-        <Shield className="h-4 w-4" />
+      <span className={cn(BTN_BASE, 'border border-red-200 bg-red-50 font-semibold text-red-700', className)}>
+        <Shield className="h-4 w-4 flex-shrink-0" />
         Blocked
       </span>
     )
@@ -113,7 +122,7 @@ export default function FriendshipButton({ profileId, className }: FriendshipBut
           type="button"
           disabled={mutating}
           onClick={() => void acceptRequest()}
-          className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm disabled:opacity-60"
+          className={cn(BTN_BASE, 'bg-gradient-to-r from-emerald-500 to-emerald-600 font-semibold text-white shadow-sm')}
         >
           {mutating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
           Accept
@@ -122,7 +131,7 @@ export default function FriendshipButton({ profileId, className }: FriendshipBut
           type="button"
           disabled={mutating}
           onClick={() => void rejectRequest()}
-          className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+          className={cn(BTN_BASE, 'border border-gray-200 font-semibold text-gray-700 hover:bg-gray-50')}
         >
           {mutating ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserX className="h-4 w-4" />}
           Decline
@@ -136,7 +145,7 @@ export default function FriendshipButton({ profileId, className }: FriendshipBut
     if (isFriend) {
       return {
         label: 'Friends',
-        icon: <Check className="h-4 w-4" />,
+        icon: <Check className="h-4 w-4 flex-shrink-0" />,
         className: 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100',
         hasDropdown: true,
       }
@@ -145,7 +154,7 @@ export default function FriendshipButton({ profileId, className }: FriendshipBut
     if (isOutgoingRequest) {
       return {
         label: 'Request Sent',
-        icon: <Clock className="h-4 w-4" />,
+        icon: <Clock className="h-4 w-4 flex-shrink-0" />,
         className: 'border-gray-300 bg-gray-50 text-gray-600 hover:bg-gray-100',
         hasDropdown: true,
       }
@@ -154,7 +163,7 @@ export default function FriendshipButton({ profileId, className }: FriendshipBut
     // Default: no relationship
     return {
       label: 'Add Friend',
-      icon: <UserPlus className="h-4 w-4" />,
+      icon: <UserPlus className="h-4 w-4 flex-shrink-0" />,
       className: 'bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white shadow-sm hover:opacity-90',
       hasDropdown: false,
     }
@@ -169,14 +178,10 @@ export default function FriendshipButton({ profileId, className }: FriendshipBut
         type="button"
         disabled={mutating}
         onClick={() => void sendRequest()}
-        className={cn(
-          'inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition disabled:opacity-60',
-          config.className,
-          className
-        )}
+        className={cn(BTN_BASE, 'font-semibold', config.className, className)}
       >
-        {mutating ? <Loader2 className="h-4 w-4 animate-spin" /> : config.icon}
-        {config.label}
+        {mutating ? <Loader2 className="h-4 w-4 animate-spin flex-shrink-0" /> : config.icon}
+        <span className="truncate">{config.label}</span>
       </button>
     )
   }
@@ -188,14 +193,11 @@ export default function FriendshipButton({ profileId, className }: FriendshipBut
         type="button"
         disabled={mutating}
         onClick={() => setMenuOpen((prev) => !prev)}
-        className={cn(
-          'inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold transition disabled:opacity-60',
-          config.className
-        )}
+        className={cn(BTN_BASE, 'w-full border font-semibold', config.className)}
       >
-        {mutating ? <Loader2 className="h-4 w-4 animate-spin" /> : config.icon}
-        {config.label}
-        <ChevronDown className={cn('h-4 w-4 transition-transform', menuOpen && 'rotate-180')} />
+        {mutating ? <Loader2 className="h-4 w-4 animate-spin flex-shrink-0" /> : config.icon}
+        <span className="truncate">{config.label}</span>
+        <ChevronDown className={cn('h-4 w-4 flex-shrink-0 transition-transform', menuOpen && 'rotate-180')} />
       </button>
 
       {menuOpen && (

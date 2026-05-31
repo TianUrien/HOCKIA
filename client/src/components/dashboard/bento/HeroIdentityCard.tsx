@@ -222,7 +222,7 @@ export default function HeroIdentityCard({
                   type="button"
                   onClick={onMessage}
                   disabled={sendingMessage}
-                  className="flex-1 justify-center min-w-0 whitespace-nowrap inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:text-[#8026FA] disabled:opacity-50"
+                  className="flex-1 justify-center min-w-0 whitespace-nowrap inline-flex h-11 items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:text-[#8026FA] disabled:opacity-50"
                 >
                   {sendingMessage ? (
                     <>
@@ -242,7 +242,7 @@ export default function HeroIdentityCard({
                   type="button"
                   onClick={() => void savedState.toggle()}
                   disabled={savedState.mutating}
-                  className="inline-flex items-center gap-2 whitespace-nowrap rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:text-[#8026FA] disabled:opacity-50"
+                  className="inline-flex h-11 items-center gap-2 whitespace-nowrap rounded-lg border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:text-[#8026FA] disabled:opacity-50"
                   title={savedState.isSaved ? 'Saved — tap to remove' : 'Save for later'}
                 >
                   {savedState.isSaved ? (
