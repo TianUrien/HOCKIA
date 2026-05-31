@@ -118,8 +118,8 @@ export default function ContextSwitcher({ className = '' }: ContextSwitcherProps
             'transition-colors disabled:opacity-50',
             'focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-300',
           ].join(' ')}
-          aria-label="Clear active recruiting context — show all members"
-          title="Clear scope — show all members"
+          aria-label="Clear active recruiting context"
+          title="Clear scope"
         >
           <X className="w-3 h-3" />
           Clear

@@ -220,7 +220,7 @@ export default function ContextEditSheet({ isOpen, onClose }: ContextEditSheetPr
           <div>
             <h2 className="text-lg font-bold text-gray-900">Recruiting context</h2>
             <p className="text-xs text-gray-500 mt-0.5">
-              Optional — personalises Fit + narrows Community to a target. Only you see this.
+              Optional — personalises Fit chips + featured players to a target. Only you see this.
             </p>
           </div>
           <button
@@ -282,8 +282,8 @@ export default function ContextEditSheet({ isOpen, onClose }: ContextEditSheetPr
                   {!active && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-gray-900">No context — show all members</p>
-                  <p className="text-xs text-gray-500">Community is unfiltered; Fit chips use your profile.</p>
+                  <p className="text-sm font-medium text-gray-900">No context</p>
+                  <p className="text-xs text-gray-500">Fit chips + featured players use your profile.</p>
                 </div>
               </button>
             </li>
