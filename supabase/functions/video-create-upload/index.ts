@@ -90,6 +90,9 @@ Deno.serve(async (req) => {
   const kind: Kind = body.kind === 'full_match' ? 'full_match' : 'highlight'
   const visibility = body.visibility === 'recruiters' ? 'recruiters' : 'public'
   const maxDurationSeconds = LIMITS[kind].maxDurationSeconds
+  // tus requires the total byte length up front (Upload-Length).
+  const fileSize = typeof body.fileSize === 'number' && body.fileSize > 0 ? Math.floor(body.fileSize) : 0
+  if (!fileSize || fileSize > 1_073_741_824) return json({ error: 'invalid_file_size' }, 400)
 
   // 4) Create our row first (status pending_upload) so we have an id to
   //    correlate the Cloudflare asset back to via webhook meta.
@@ -111,36 +114,49 @@ Deno.serve(async (req) => {
   }
   const videoId = (row as { id: string }).id
 
-  // 5) Ask Cloudflare for a direct-upload URL. We pass our row id in meta
-  //    so the webhook can map the asset back, and require a signed
-  //    playback URL (requireSignedURLs) so the asset is never publicly
-  //    addressable — playback always goes through video-playback-token.
+  // 5) Create a RESUMABLE (tus) upload on Cloudflare. The basic
+  //    direct_upload one-shot caps at 200 MB — real highlight reels
+  //    routinely exceed that (e.g. a 291 MB file → 413). tus has no size
+  //    cap and survives flaky mobile connections (resumes on drop).
+  //
+  //    We POST to the tus creation endpoint server-side (with our API
+  //    token), and Cloudflare returns a `Location` URL the CLIENT then
+  //    uploads to via tus-js-client (no token needed client-side).
+  //    Metadata (requiresignedurls, maxdurationseconds, our row id) is
+  //    passed via the base64 Upload-Metadata header per the tus spec.
+  const b64 = (s: string) => btoa(unescape(encodeURIComponent(s)))
+  const uploadMetadata = [
+    `requiresignedurls`, // key with no value = boolean true (CF convention)
+    `maxdurationseconds ${b64(String(maxDurationSeconds))}`,
+    `hockiavideoid ${b64(videoId)}`,
+    `hockiauserid ${b64(userId)}`,
+    `name ${b64(title)}`,
+  ].join(',')
+
   const cfRes = await fetch(
-    `https://api.cloudflare.com/client/v4/accounts/${accountId}/stream/direct_upload`,
+    `https://api.cloudflare.com/client/v4/accounts/${accountId}/stream?direct_user=true`,
     {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${apiToken}`,
-        'Content-Type': 'application/json',
+        'Tus-Resumable': '1.0.0',
+        'Upload-Length': String(fileSize),
+        'Upload-Metadata': uploadMetadata,
       },
-      body: JSON.stringify({
-        maxDurationSeconds,
-        requireSignedURLs: true,
-        meta: { hockiaVideoId: videoId, hockiaUserId: userId, name: title },
-      }),
     },
   )
-  const cfJson = await cfRes.json().catch(() => null)
-  if (!cfRes.ok || !cfJson?.success || !cfJson?.result?.uploadURL) {
+  const location = cfRes.headers.get('Location')
+  const uid = cfRes.headers.get('stream-media-id')
+  if (cfRes.status !== 201 || !location || !uid) {
     // Roll the row back so we don't leave an orphan pending_upload.
     await supabase.from('player_videos').delete().eq('id', videoId)
-    return json({ error: 'cloudflare_upload_init_failed', detail: cfJson?.errors }, 502)
+    const detail = await cfRes.text().catch(() => '')
+    return json({ error: 'cloudflare_upload_init_failed', status: cfRes.status, detail: detail.slice(0, 300) }, 502)
   }
-
-  const { uploadURL, uid } = cfJson.result as { uploadURL: string; uid: string }
 
   // Stamp the cf_uid onto the row so the webhook can also match on it.
   await supabase.from('player_videos').update({ cf_uid: uid }).eq('id', videoId)
 
-  return json({ videoId, uploadURL, cfUid: uid })
+  // tusUploadUrl is what the client resumes against with tus-js-client.
+  return json({ videoId, tusUploadUrl: location, cfUid: uid })
 })

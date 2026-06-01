@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef } from 'react'
+import { Upload } from 'tus-js-client'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 
@@ -42,6 +43,7 @@ export function useNativeVideoUpload() {
   const [error, setError] = useState<string | null>(null)
   const [videoId, setVideoId] = useState<string | null>(null)
   const cancelRef = useRef(false)
+  const uploadRef = useRef<Upload | null>(null)
 
   const reset = useCallback(() => {
     cancelRef.current = false
@@ -68,9 +70,9 @@ export function useNativeVideoUpload() {
       return null
     }
 
-    // ── 1. Ask the edge fn for a Cloudflare direct-upload URL ──
+    // ── 1. Ask the edge fn for a Cloudflare RESUMABLE (tus) upload URL ──
     setPhase('creating')
-    let createData: { videoId: string; uploadURL: string } | null = null
+    let createData: { videoId: string; tusUploadUrl: string } | null = null
     try {
       const { data, error: fnErr } = await supabase.functions.invoke('video-create-upload', {
         body: {
@@ -78,11 +80,12 @@ export function useNativeVideoUpload() {
           description: opts.description ?? null,
           visibility: opts.visibility ?? 'public',
           kind: opts.kind ?? 'highlight',
+          fileSize: file.size,
         },
       })
       if (fnErr) throw fnErr
-      if (!data?.uploadURL || !data?.videoId) throw new Error('No upload URL returned')
-      createData = data as { videoId: string; uploadURL: string }
+      if (!data?.tusUploadUrl || !data?.videoId) throw new Error('No upload URL returned')
+      createData = data as { videoId: string; tusUploadUrl: string }
     } catch (err) {
       logger.error('[useNativeVideoUpload] create-upload failed', err)
       setError('Could not start the upload. Please try again.')
@@ -91,22 +94,30 @@ export function useNativeVideoUpload() {
     }
     setVideoId(createData.videoId)
 
-    // ── 2. Upload bytes straight to Cloudflare (XHR for progress) ──
+    // ── 2. Resumable upload straight to Cloudflare via tus ──
+    //    tus has no 200 MB cap (the basic one-shot does) and resumes if a
+    //    mobile connection drops mid-upload. The edge fn already created
+    //    the asset + set its metadata, so here we only push bytes to the
+    //    returned upload URL (no auth needed client-side).
     setPhase('uploading')
     const uploadOk = await new Promise<boolean>((resolve) => {
-      const xhr = new XMLHttpRequest()
-      xhr.open('POST', createData!.uploadURL, true)
-      xhr.upload.onprogress = (e) => {
-        if (e.lengthComputable) setProgress(Math.round((e.loaded / e.total) * 100))
-      }
-      xhr.onload = () => resolve(xhr.status >= 200 && xhr.status < 300)
-      xhr.onerror = () => resolve(false)
-      xhr.onabort = () => resolve(false)
-      if (cancelRef.current) { xhr.abort(); return }
-      const form = new FormData()
-      form.append('file', file)
-      xhr.send(form)
+      const tus = new Upload(file, {
+        uploadUrl: createData!.tusUploadUrl,
+        chunkSize: 50 * 1024 * 1024, // 50 MB chunks — CF tus requires a fixed chunkSize
+        retryDelays: [0, 3000, 6000, 12000],
+        metadata: { filename: file.name, filetype: file.type },
+        onProgress: (sent, total) => setProgress(Math.round((sent / total) * 100)),
+        onError: (err) => {
+          logger.error('[useNativeVideoUpload] tus error', err)
+          resolve(false)
+        },
+        onSuccess: () => resolve(true),
+      })
+      uploadRef.current = tus
+      if (cancelRef.current) { resolve(false); return }
+      tus.start()
     })
+    uploadRef.current = null
     if (cancelRef.current) { setPhase('idle'); return null }
     if (!uploadOk) {
       setError('The upload was interrupted. Please try again.')
@@ -147,6 +158,10 @@ export function useNativeVideoUpload() {
 
   const cancel = useCallback(() => {
     cancelRef.current = true
+    if (uploadRef.current) {
+      void uploadRef.current.abort()
+      uploadRef.current = null
+    }
   }, [])
 
   return { phase, progress, error, videoId, upload, cancel, reset }
