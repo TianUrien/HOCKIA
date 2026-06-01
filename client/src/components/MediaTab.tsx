@@ -13,6 +13,7 @@ import ConfirmActionModal from './ConfirmActionModal'
 import Skeleton from './Skeleton'
 import GalleryManager from './GalleryManager'
 import FullGameVideosSection from './FullGameVideosSection'
+import NativeVideosSection from './media/NativeVideosSection'
 
 interface MediaTabHeaderRenderProps {
   canManageVideo: boolean
@@ -278,6 +279,14 @@ export default function MediaTab({ profileId, readOnly = false, renderHeader, sh
           The section component hides itself entirely in readOnly mode
           when zero videos pass the visitor's RLS scope, so visitors of
           a player with no public videos see no orphan header. */}
+      {/* Native (Cloudflare Stream) uploaded videos — the new reliable
+          primary path. Runs alongside the legacy embed highlight above
+          (hybrid) and sits before full-match footage. RLS + the playback
+          token enforce visibility per viewer. */}
+      {showVideo && isPlayerProfile && targetUserId && (
+        <NativeVideosSection playerUserId={targetUserId} readOnly={readOnly} />
+      )}
+
       {showVideo && isPlayerProfile && targetUserId && (
         <FullGameVideosSection playerUserId={targetUserId} readOnly={readOnly} />
       )}
