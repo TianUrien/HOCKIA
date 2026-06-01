@@ -116,7 +116,11 @@ describe('MediaTab', () => {
       expect(headerRender).toHaveBeenCalled()
     })
 
-    expect(screen.getByTitle('Highlight video player')).toBeInTheDocument()
+    // YouTube + Drive now use a click-to-load façade: at rest the video
+    // surface is a play button ("Play highlight video"), and the iframe
+    // mounts only after the user clicks. So the at-rest assertion targets
+    // the façade button rather than the (deferred) iframe title.
+    expect(screen.getByLabelText('Play highlight video')).toBeInTheDocument()
     expect(headerRender).toHaveBeenLastCalledWith(
       expect.objectContaining({ canManageVideo: true, openManageModal: expect.any(Function) })
     )
@@ -179,7 +183,7 @@ describe('MediaTab — highlight visibility toggle', () => {
     render(<MediaTab highlightVisibility="public" />)
 
     await waitFor(() => {
-      expect(screen.getByTitle('Highlight video player')).toBeInTheDocument()
+      expect(screen.getByLabelText('Play highlight video')).toBeInTheDocument()
     })
 
     expect(screen.getByLabelText(/recruiters only/i)).toBeInTheDocument()
@@ -190,7 +194,7 @@ describe('MediaTab — highlight visibility toggle', () => {
     render(<MediaTab readOnly highlightVisibility="public" viewerRole="player" isOwnProfile />)
 
     await waitFor(() => {
-      expect(screen.getByTitle('Highlight video player')).toBeInTheDocument()
+      expect(screen.getByLabelText('Play highlight video')).toBeInTheDocument()
     })
 
     expect(screen.queryByLabelText(/recruiters only/i)).not.toBeInTheDocument()
@@ -299,7 +303,7 @@ describe('MediaTab — highlight visibility toggle', () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByTitle('Highlight video player')).toBeInTheDocument()
+      expect(screen.getByLabelText('Play highlight video')).toBeInTheDocument()
     })
 
     expect(screen.queryByText('Highlight Video Restricted')).not.toBeInTheDocument()
@@ -317,7 +321,7 @@ describe('MediaTab — highlight visibility toggle', () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByTitle('Highlight video player')).toBeInTheDocument()
+      expect(screen.getByLabelText('Play highlight video')).toBeInTheDocument()
     })
 
     expect(screen.queryByText('Highlight Video Restricted')).not.toBeInTheDocument()
