@@ -33,7 +33,9 @@ function formatDuration(s?: number | null): string | null {
 
 export default function NativeVideoPlayer({
   videoId,
-  thumbnailUrl,
+  // thumbnailUrl is intentionally NOT used: the stored value is an
+  // unsigned URL that 401s on a requireSignedURLs asset. We render only
+  // the SIGNED thumbnail fetched with the playback token below.
   title,
   durationSeconds,
 }: NativeVideoPlayerProps) {
@@ -106,13 +108,14 @@ export default function NativeVideoPlayer({
           aria-label="Play video"
           className="group absolute inset-0 flex flex-col items-center justify-center gap-3 overflow-hidden text-white"
         >
-          {/* SIGNED Cloudflare thumbnail (the stored thumbnailUrl is
-              unsigned → 401s on a requireSignedURLs asset, so prefer the
-              signed one from the token fn). object-cover cropped; falls
-              back to the branded gradient if absent/fails. */}
-          {(signedThumb ?? thumbnailUrl) ? (
+          {/* ONLY the SIGNED thumbnail is ever rendered. The stored
+              thumbnailUrl is an unsigned customer-subdomain URL that 401s
+              on a requireSignedURLs asset, so we must NOT paint it (even
+              briefly) — the branded gradient covers the gap until the
+              signed URL from the token fn arrives. object-cover cropped. */}
+          {signedThumb ? (
             <img
-              src={signedThumb ?? thumbnailUrl ?? ''}
+              src={signedThumb}
               alt=""
               aria-hidden="true"
               className="absolute inset-0 h-full w-full object-cover"
@@ -122,7 +125,7 @@ export default function NativeVideoPlayer({
           <span
             className="absolute inset-0 bg-gradient-to-br from-[#1a1030] via-[#2a1a4a] to-[#8026FA]/40"
             aria-hidden="true"
-            style={(signedThumb ?? thumbnailUrl) ? { background: 'rgba(0,0,0,0.30)' } : undefined}
+            style={signedThumb ? { background: 'rgba(0,0,0,0.30)' } : undefined}
           />
           {state === 'loading' ? (
             <span className="relative flex h-14 w-14 items-center justify-center rounded-full bg-white/95 shadow-lg">
