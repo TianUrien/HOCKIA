@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { Play, Loader2, AlertCircle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
@@ -49,15 +49,29 @@ export default function NativeVideoPlayer({
 }: NativeVideoPlayerProps) {
   const [state, setState] = useState<'idle' | 'loading' | 'playing' | 'error'>('idle')
   const [hlsUrl, setHlsUrl] = useState<string | null>(null)
+  const [iframeUrl, setIframeUrl] = useState<string | null>(null)
   const [signedThumb, setSignedThumb] = useState<string | null>(null)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const videoElRef = useRef<HTMLVideoElement | null>(null)
 
+  // Can THIS browser play HLS natively in a <video>? True on Safari / iOS /
+  // the Capacitor WKWebView — our App Store target, and exactly where the
+  // cross-origin-iframe gesture bug bites. There we use a native <video>
+  // (correct touch ownership). Where HLS isn't native (desktop + Android
+  // Chrome) we fall back to the Cloudflare iframe — which works fine on
+  // those platforms — rather than pull in hls.js (~430KB, blows the
+  // bundle budget for a path that isn't the reported problem).
+  const nativeHls = useMemo(() => {
+    if (typeof document === 'undefined') return false
+    const v = document.createElement('video')
+    return v.canPlayType('application/vnd.apple.mpegurl') !== ''
+  }, [])
+
   // Mint a signed playback token on mount. The asset is requireSignedURLs,
-  // so the stored thumbnail_url (an UNSIGNED customer-subdomain URL) 401s —
-  // we must use the SIGNED thumbnail + HLS manifest the token fn returns.
-  // One call gives us the poster (now) and the HLS source (on play), and
-  // surfaces access-denial early so a recruiters-only card reads correctly.
+  // so the stored thumbnail_url (UNSIGNED) 401s — we use the SIGNED
+  // thumbnail + HLS/iframe the token fn returns. One call gives the poster
+  // (now) and the playback source (on play), and surfaces access-denial
+  // early so a recruiters-only card reads correctly at rest.
   useEffect(() => {
     let cancelled = false
     void (async () => {
@@ -70,10 +84,10 @@ export default function NativeVideoPlayer({
             setErrorMsg('Visible to recruiters (clubs and coaches) only.')
             setState('error')
           }
-          // generic/other: leave at idle so the play button still lets them retry
           return
         }
         setHlsUrl(data.hls as string)
+        if (data.iframe) setIframeUrl(data.iframe as string)
         if (data.thumbnail) setSignedThumb(data.thumbnail as string)
       } catch (err) {
         if (!cancelled) logger.error('[NativeVideoPlayer] token prefetch failed', err)
@@ -82,57 +96,34 @@ export default function NativeVideoPlayer({
     return () => { cancelled = true }
   }, [videoId])
 
+  const ready = nativeHls ? !!hlsUrl : !!iframeUrl
   const activate = useCallback(() => {
     if (state === 'error') return
-    if (hlsUrl) { setState('playing'); return }
-    // token not ready yet — show loading; the effect above will set it.
-    setState('loading')
-  }, [hlsUrl, state])
+    if (ready) { setState('playing'); return }
+    setState('loading') // token not ready yet — the effect below promotes it
+  }, [ready, state])
 
-  // If the user tapped before the token arrived, start playing once it lands.
   useEffect(() => {
-    if (state === 'loading' && hlsUrl) setState('playing')
-  }, [state, hlsUrl])
+    if (state === 'loading' && ready) setState('playing')
+  }, [state, ready])
 
-  // Attach the HLS source to the native <video> once we're playing.
-  // Safari/iOS play HLS natively (just set src). Other browsers need
-  // hls.js, lazy-imported here so it's a separate chunk (no upfront cost).
+  // Native path: attach the signed HLS manifest to the <video> on play.
   useEffect(() => {
-    if (state !== 'playing' || !hlsUrl) return
+    if (state !== 'playing' || !nativeHls || !hlsUrl) return
     const video = videoElRef.current
     if (!video) return
-    let hls: { destroy: () => void } | null = null
-    if (video.canPlayType('application/vnd.apple.mpegurl')) {
-      // Native HLS (Safari, iOS, the Capacitor WKWebView).
-      video.src = hlsUrl
-      void video.play().catch(() => { /* autoplay may be blocked; controls remain */ })
-    } else {
-      void import('hls.js').then(({ default: Hls }) => {
-        if (Hls.isSupported() && videoElRef.current) {
-          const instance = new Hls({ maxBufferLength: 30 })
-          instance.loadSource(hlsUrl)
-          instance.attachMedia(videoElRef.current)
-          hls = instance
-          void videoElRef.current.play().catch(() => {})
-        } else if (videoElRef.current) {
-          // Last-resort: let the element try the manifest directly.
-          videoElRef.current.src = hlsUrl
-        }
-      }).catch((err) => logger.error('[NativeVideoPlayer] hls.js load failed', err))
-    }
-    return () => { if (hls) hls.destroy() }
-  }, [state, hlsUrl])
+    video.src = hlsUrl
+    void video.play().catch(() => { /* autoplay may be blocked; controls remain */ })
+  }, [state, nativeHls, hlsUrl])
 
   const duration = formatDuration(durationSeconds)
 
   return (
     <div className="relative w-full overflow-hidden rounded-xl bg-black aspect-video">
-      {state === 'playing' && hlsUrl ? (
-        // Native HTML5 player — owns its own touch gestures (fixes the
-        // iOS "page scrolls instead of controlling video" bug) and gives
-        // a comfortably-sized control bar + native fullscreen.
-        // playsInline keeps it inline on iPhone instead of forcing the
-        // OS fullscreen player on first tap.
+      {state === 'playing' && nativeHls && hlsUrl ? (
+        // Native HTML5 player (Safari/iOS/WKWebView) — owns its own touch
+        // gestures, fixing the iOS "page scrolls instead of controlling
+        // video" bug. playsInline keeps it inline on iPhone.
         <video
           ref={videoElRef}
           controls
@@ -140,6 +131,17 @@ export default function NativeVideoPlayer({
           preload="metadata"
           poster={signedThumb ?? undefined}
           className="absolute inset-0 h-full w-full bg-black"
+          title={title ?? 'Player video'}
+        />
+      ) : state === 'playing' && iframeUrl ? (
+        // Fallback (desktop / Android Chrome — no native HLS): Cloudflare's
+        // signed iframe player. The iframe-gesture quirk doesn't affect
+        // these platforms; this avoids bundling hls.js.
+        <iframe
+          src={`${iframeUrl}?autoplay=true&controls=true`}
+          className="absolute inset-0 h-full w-full border-0"
+          allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen;"
+          allowFullScreen
           title={title ?? 'Player video'}
         />
       ) : (

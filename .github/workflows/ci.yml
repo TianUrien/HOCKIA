@@ -134,22 +134,22 @@ jobs:
           GZIP_KB=$((GZIP_TOTAL / 1024))
           echo "JS bundle: ${TOTAL_KB}KB raw / ${GZIP_KB}KB gzip"
 
-          # Early warning: gzip at 90% of budget (765KB)
-          # Budget bumped 800KB → 850KB on 2026-05-27 — Phase 1 of the
-          # Shortlist initiative (Save action on 4 surfaces + new hook +
-          # SavedCandidatesPage) tipped main-bundle gzip from 798KB →
-          # 801KB. The lazy-loaded SavedCandidatesPage is in its own
-          # chunk; the bump covers the small main-bundle delta for the
-          # Save button + hook reused across surfaces. 50KB headroom
-          # absorbs the queued slices (CareerSnapshot, factual filters,
-          # AI state-of-filters) without another bump.
-          if [ "$GZIP_TOTAL" -gt 783360 ]; then
-            echo "::warning::Bundle nearing gzip budget: ${GZIP_KB}KB / 850KB ($(( GZIP_KB * 100 / 850 ))%)"
+          # Early warning: gzip at ~90% of budget (810KB)
+          # Budget bumped 850KB → 880KB on 2026-06-01 — native player
+          # video (Cloudflare Stream): the upload modal + native HTML5
+          # player + sections tipped gzip from 801KB → 852KB. hls.js was
+          # deliberately NOT added (it would've been ~140KB gzip and blown
+          # the budget); the player uses native <video> HLS on Safari/iOS
+          # and the Cloudflare iframe elsewhere, so the delta is just our
+          # own component code. 28KB headroom for the queued UX
+          # consolidation pass.
+          if [ "$GZIP_TOTAL" -gt 811008 ]; then
+            echo "::warning::Bundle nearing gzip budget: ${GZIP_KB}KB / 880KB ($(( GZIP_KB * 100 / 880 ))%)"
           fi
 
-          # Primary gate: gzip total must stay under 850KB
-          if [ "$GZIP_TOTAL" -gt 870400 ]; then
-            echo "::error::Gzip bundle budget exceeded! ${GZIP_KB}KB > 850KB"
+          # Primary gate: gzip total must stay under 880KB
+          if [ "$GZIP_TOTAL" -gt 901120 ]; then
+            echo "::error::Gzip bundle budget exceeded! ${GZIP_KB}KB > 880KB"
             exit 1
           fi
 
