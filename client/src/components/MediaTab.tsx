@@ -379,37 +379,51 @@ function VideoEmbed({ url }: { url: string }) {
   // instead of a dead-end "Error 153" box.
   const externalLabel = isYouTube ? 'Watch on YouTube' : isVimeo ? 'Watch on Vimeo' : isGoogleDrive ? 'Open in Drive' : 'Watch externally'
 
+  // Google Drive click-to-load façade.
+  //   Drive's /preview iframe renders Drive's own player chrome + the
+  //   video's intrinsic title-card frame (e.g. a name overlay baked into
+  //   the clip), which we can't style or crop (cross-origin). At rest that
+  //   read as "broken" — cut-off text under a floating "Open in Drive"
+  //   badge. Drive's thumbnail API (thumbnail?id= / lh3) also doesn't
+  //   serve a usable poster for these files (500 / HTML), so we can't show
+  //   a real video frame. Instead: a clean branded poster with a play
+  //   button at rest; clicking loads the /preview iframe inline so
+  //   playback still works. YouTube/Vimeo embed cleanly and keep their
+  //   live embed (no façade).
+  const [driveActivated, setDriveActivated] = useState(false)
+  const showDriveFacade = isGoogleDrive && !driveActivated
+
   return (
     <div>
       <div className="relative w-full rounded-xl overflow-hidden bg-black aspect-video">
-        {/* Drive's iframe doesn't reliably autoplay inline, so we surface a
-            small "Open in Drive" affordance for the case where the inline
-            play button does nothing. YouTube and Vimeo embeds play inline
-            fine and don't need an external-open shortcut from us — both
-            platforms expose their own. */}
-        {isGoogleDrive && (
-          <a
-            href={getDirectUrl(url)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="absolute top-4 left-4 z-10 px-3 py-1 bg-white/90 text-gray-800 text-xs font-semibold rounded hover:bg-white transition-colors"
+        {showDriveFacade ? (
+          <button
+            type="button"
+            onClick={() => setDriveActivated(true)}
+            aria-label="Play highlight video"
+            className="group absolute inset-0 flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-[#1a1030] via-[#2a1a4a] to-[#8026FA]/40 text-white"
           >
-            Open in Drive ↗
-          </a>
+            <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white/95 shadow-lg transition-transform group-hover:scale-105 group-active:scale-95">
+              <Video className="h-6 w-6 text-[#8026FA]" />
+            </span>
+            <span className="text-sm font-semibold">Watch highlight video</span>
+            <span className="text-[11px] text-white/70">Tap to play · opens in Google Drive player</span>
+          </button>
+        ) : (
+          <iframe
+            src={embedUrl}
+            className="absolute top-0 left-0 w-full h-full border-0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            loading="lazy"
+            referrerPolicy="strict-origin-when-cross-origin"
+            allowFullScreen
+            title="Highlight video player"
+          />
         )}
-        <iframe
-          src={embedUrl}
-          className="absolute top-0 left-0 w-full h-full"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          loading="lazy"
-          referrerPolicy="strict-origin-when-cross-origin"
-          allowFullScreen
-          title="Highlight video player"
-        />
       </div>
       <div className="mt-2 text-right">
         <a
-          href={url}
+          href={isGoogleDrive ? getDirectUrl(url) : url}
           target="_blank"
           rel="noopener noreferrer"
           className="text-xs text-gray-500 hover:text-gray-700 hover:underline"
