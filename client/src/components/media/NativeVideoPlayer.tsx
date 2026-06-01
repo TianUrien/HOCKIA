@@ -30,6 +30,11 @@ interface NativeVideoPlayerProps {
   thumbnailUrl?: string | null
   title?: string
   durationSeconds?: number | null
+  /** The viewer is the profile OWNER managing their own Media tab. The
+   *  owner can always play their own video regardless of visibility — so
+   *  we never show them the recruiters-only gated message, and we retry
+   *  the token once if the first call races their session auth. */
+  isOwner?: boolean
 }
 
 function formatDuration(s?: number | null): string | null {
@@ -46,6 +51,7 @@ export default function NativeVideoPlayer({
   // the SIGNED thumbnail fetched with the playback token below.
   title,
   durationSeconds,
+  isOwner = false,
 }: NativeVideoPlayerProps) {
   const [state, setState] = useState<'idle' | 'loading' | 'playing' | 'error'>('idle')
   const [hlsUrl, setHlsUrl] = useState<string | null>(null)
@@ -74,13 +80,21 @@ export default function NativeVideoPlayer({
   // early so a recruiters-only card reads correctly at rest.
   useEffect(() => {
     let cancelled = false
-    void (async () => {
+    const mintToken = async (attempt: number): Promise<void> => {
       try {
         const { data, error } = await supabase.functions.invoke('video-playback-token', { body: { videoId } })
         if (cancelled) return
         if (error || !data?.hls) {
           const code = (error as { context?: { status?: number } } | null)?.context?.status
-          if (code === 403 || code === 401) {
+          // The OWNER must always be able to play their own video. A 401/403
+          // for an owner means the session JWT hadn't attached yet (race on
+          // first paint, e.g. right after upload) — NOT a real denial. Retry
+          // once after a short beat; never show the owner the gated message.
+          if ((code === 403 || code === 401) && isOwner && attempt === 0) {
+            setTimeout(() => { if (!cancelled) void mintToken(1) }, 1200)
+            return
+          }
+          if ((code === 403 || code === 401) && !isOwner) {
             setErrorMsg('Visible to recruiters (clubs and coaches) only.')
             setState('error')
           }
@@ -92,9 +106,10 @@ export default function NativeVideoPlayer({
       } catch (err) {
         if (!cancelled) logger.error('[NativeVideoPlayer] token prefetch failed', err)
       }
-    })()
+    }
+    void mintToken(0)
     return () => { cancelled = true }
-  }, [videoId])
+  }, [videoId, isOwner])
 
   const ready = nativeHls ? !!hlsUrl : !!iframeUrl
   const activate = useCallback(() => {

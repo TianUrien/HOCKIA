@@ -117,6 +117,11 @@ export default function NativeVideosSection({ playerUserId, readOnly }: NativeVi
                   thumbnailUrl={v.thumbnail_url}
                   title={v.title}
                   durationSeconds={v.duration_seconds}
+                  // !readOnly here means the viewer is the profile OWNER
+                  // managing their own Media tab. The owner can ALWAYS play
+                  // their own video regardless of visibility — never show
+                  // them the recruiters-only gated state.
+                  isOwner={!readOnly}
                 />
               ) : (
                 // Owner-only processing / failed state.
