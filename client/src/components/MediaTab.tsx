@@ -371,43 +371,70 @@ function VideoEmbed({ url }: { url: string }) {
 
   const embedUrl = getEmbedUrl(url)
 
-  // Universal external-watch fallback. Cross-origin iframes can't surface
-  // YouTube/Vimeo internal errors to us (same-origin policy), so we can't
-  // auto-hide the embed on failure. Instead, we always render a small
-  // text link below — the small minority whose embed still fails (strict
-  // privacy, corporate firewall, ad-blocker) get a clear escape hatch
-  // instead of a dead-end "Error 153" box.
+  // YouTube video id — reused for both the embed and the poster thumbnail.
+  const youTubeId = isYouTube
+    ? (url.includes('youtu.be')
+        ? url.split('youtu.be/')[1]?.split('?')[0]
+        : new URLSearchParams(url.split('?')[1]).get('v')) ?? null
+    : null
+
   const externalLabel = isYouTube ? 'Watch on YouTube' : isVimeo ? 'Watch on Vimeo' : isGoogleDrive ? 'Open in Drive' : 'Watch externally'
 
-  // Google Drive click-to-load façade.
-  //   Drive's /preview iframe renders Drive's own player chrome + the
-  //   video's intrinsic title-card frame (e.g. a name overlay baked into
-  //   the clip), which we can't style or crop (cross-origin). At rest that
-  //   read as "broken" — cut-off text under a floating "Open in Drive"
-  //   badge. Drive's thumbnail API (thumbnail?id= / lh3) also doesn't
-  //   serve a usable poster for these files (500 / HTML), so we can't show
-  //   a real video frame. Instead: a clean branded poster with a play
-  //   button at rest; clicking loads the /preview iframe inline so
-  //   playback still works. YouTube/Vimeo embed cleanly and keep their
-  //   live embed (no façade).
-  const [driveActivated, setDriveActivated] = useState(false)
-  const showDriveFacade = isGoogleDrive && !driveActivated
+  // Click-to-load façade for YouTube + Google Drive.
+  //   Why a façade: a cross-origin iframe renders the provider's own
+  //   player chrome and, on failure (a non-embeddable / private / deleted
+  //   YouTube video, or a Drive clip with a baked-in title frame), shows
+  //   the provider's grey error box — which reads as "HOCKIA is broken"
+  //   even though our embed URL is correct. We can't detect that failure
+  //   (same-origin policy) or restyle the iframe's contents.
+  //   So at rest we show a clean poster + play button and DON'T mount the
+  //   iframe; clicking mounts it so playback works. YouTube gets a REAL
+  //   thumbnail (img.youtube.com is available cross-origin); Drive can't
+  //   supply a poster (its thumbnail API returns HTML, not an image), so
+  //   it gets a branded placeholder. Vimeo embeds reliably and keeps its
+  //   live embed. Bonus: defers the heavy iframe until intent.
+  const usesFacade = isYouTube || isGoogleDrive
+  const [activated, setActivated] = useState(false)
+  const [thumbFailed, setThumbFailed] = useState(false)
+  const showFacade = usesFacade && !activated
+  // hqdefault is the most reliably-present YouTube thumbnail size.
+  const ytThumb = youTubeId ? `https://img.youtube.com/vi/${youTubeId}/hqdefault.jpg` : null
+  const showYtThumb = isYouTube && ytThumb && !thumbFailed
 
   return (
     <div>
       <div className="relative w-full rounded-xl overflow-hidden bg-black aspect-video">
-        {showDriveFacade ? (
+        {showFacade ? (
           <button
             type="button"
-            onClick={() => setDriveActivated(true)}
+            onClick={() => setActivated(true)}
             aria-label="Play highlight video"
-            className="group absolute inset-0 flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-[#1a1030] via-[#2a1a4a] to-[#8026FA]/40 text-white"
+            className="group absolute inset-0 flex flex-col items-center justify-center gap-3 overflow-hidden bg-gradient-to-br from-[#1a1030] via-[#2a1a4a] to-[#8026FA]/40 text-white"
           >
-            <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white/95 shadow-lg transition-transform group-hover:scale-105 group-active:scale-95">
+            {/* Real YouTube thumbnail when available; object-cover crops it
+                cleanly to 16:9. Falls back to the branded gradient (Drive,
+                or a YouTube thumb that 404s) underneath. */}
+            {showYtThumb && (
+              <img
+                src={ytThumb}
+                alt=""
+                aria-hidden="true"
+                onError={() => setThumbFailed(true)}
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+            )}
+            {showYtThumb && <span className="absolute inset-0 bg-black/30" aria-hidden="true" />}
+            <span className="relative flex h-14 w-14 items-center justify-center rounded-full bg-white/95 shadow-lg transition-transform group-hover:scale-105 group-active:scale-95">
               <Video className="h-6 w-6 text-[#8026FA]" />
             </span>
-            <span className="text-sm font-semibold">Watch highlight video</span>
-            <span className="text-[11px] text-white/70">Tap to play · opens in Google Drive player</span>
+            {!showYtThumb && (
+              <>
+                <span className="relative text-sm font-semibold">Watch highlight video</span>
+                <span className="relative text-[11px] text-white/70">
+                  Tap to play · opens in {isGoogleDrive ? 'Google Drive' : 'YouTube'} player
+                </span>
+              </>
+            )}
           </button>
         ) : (
           <iframe
@@ -421,16 +448,24 @@ function VideoEmbed({ url }: { url: string }) {
           />
         )}
       </div>
-      <div className="mt-2 text-right">
-        <a
-          href={isGoogleDrive ? getDirectUrl(url) : url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-xs text-gray-500 hover:text-gray-700 hover:underline"
-        >
-          Trouble loading? {externalLabel} →
-        </a>
-      </div>
+      {/* The escape-hatch link only shows once the player is actually
+          mounted — at rest the poster is clean, so an always-on "Trouble
+          loading?" line would itself read as an error. After activation
+          it's the right place to land if the provider refuses the embed
+          (e.g. a non-embeddable YouTube video). Non-façade providers
+          (Vimeo) keep it always-on since their iframe mounts immediately. */}
+      {(!usesFacade || activated) && (
+        <div className="mt-2 text-right">
+          <a
+            href={isGoogleDrive ? getDirectUrl(url) : url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-gray-500 hover:text-gray-700 hover:underline"
+          >
+            Trouble loading? {externalLabel} →
+          </a>
+        </div>
+      )}
     </div>
   )
 }
