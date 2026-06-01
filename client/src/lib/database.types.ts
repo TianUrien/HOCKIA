@@ -2147,6 +2147,78 @@ export type Database = {
           },
         ]
       }
+      player_videos: {
+        Row: {
+          cf_uid: string | null
+          created_at: string
+          description: string | null
+          display_order: number
+          duration_seconds: number | null
+          error_reason: string | null
+          id: string
+          kind: string
+          playback_id: string | null
+          provider: string
+          status: string
+          thumbnail_url: string | null
+          title: string
+          updated_at: string
+          user_id: string
+          visibility: string
+        }
+        Insert: {
+          cf_uid?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          duration_seconds?: number | null
+          error_reason?: string | null
+          id?: string
+          kind?: string
+          playback_id?: string | null
+          provider?: string
+          status?: string
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+          visibility?: string
+        }
+        Update: {
+          cf_uid?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          duration_seconds?: number | null
+          error_reason?: string | null
+          id?: string
+          kind?: string
+          playback_id?: string | null
+          provider?: string
+          status?: string
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_videos_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_videos_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       post_comments: {
         Row: {
           author_id: string

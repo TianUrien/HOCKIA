@@ -353,6 +353,20 @@ backend = "postgres"
 [functions.resend-webhook]
 verify_jwt = false
 
+# Native video pipeline (Cloudflare Stream). All three verify their own
+# auth inside the handler, so the gateway JWT check must be OFF:
+#   - video-webhook: called by Cloudflare (no user JWT) — signature-verified.
+#   - video-playback-token: allows ANONYMOUS callers for public videos
+#     (gateway JWT=true would 401 them); role is checked in-handler.
+#   - video-create-upload: verifies the JWT + player role in-handler; kept
+#     consistent so a deploy can't silently flip it and 401 valid traffic.
+[functions.video-webhook]
+verify_jwt = false
+[functions.video-playback-token]
+verify_jwt = false
+[functions.video-create-upload]
+verify_jwt = false
+
 # Experimental features may be deprecated any time
 [experimental]
 # Configures Postgres storage engine to use OrioleDB (S3)
