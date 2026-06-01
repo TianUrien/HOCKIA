@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { Play, Loader2, AlertCircle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
@@ -39,34 +39,49 @@ export default function NativeVideoPlayer({
 }: NativeVideoPlayerProps) {
   const [state, setState] = useState<'idle' | 'loading' | 'playing' | 'error'>('idle')
   const [iframeUrl, setIframeUrl] = useState<string | null>(null)
+  const [signedThumb, setSignedThumb] = useState<string | null>(null)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
-  const activate = useCallback(async () => {
-    setState('loading')
-    setErrorMsg(null)
-    try {
-      const { data, error } = await supabase.functions.invoke('video-playback-token', {
-        body: { videoId },
-      })
-      if (error || !data?.iframe) {
-        // Distinguish access-denied from generic failure for a clear message.
-        const code = (error as { context?: { status?: number } } | null)?.context?.status
-        if (code === 403 || code === 401) {
-          setErrorMsg('This video is visible to recruiters (clubs and coaches) only.')
-        } else {
-          setErrorMsg('Could not load this video. Please try again.')
+  // Mint a signed playback token on mount. The asset is requireSignedURLs,
+  // so the stored thumbnail_url (an UNSIGNED customer-subdomain URL) 401s —
+  // we must use the SIGNED thumbnail the token fn returns. One call gives
+  // us both the poster (now) and the iframe (on play), and also surfaces
+  // access-denial early so a recruiters-only card reads correctly at rest.
+  useEffect(() => {
+    let cancelled = false
+    void (async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('video-playback-token', { body: { videoId } })
+        if (cancelled) return
+        if (error || !data?.iframe) {
+          const code = (error as { context?: { status?: number } } | null)?.context?.status
+          if (code === 403 || code === 401) {
+            setErrorMsg('Visible to recruiters (clubs and coaches) only.')
+            setState('error')
+          }
+          // generic/other: leave at idle so the play button still lets them retry
+          return
         }
-        setState('error')
-        return
+        setIframeUrl(data.iframe as string)
+        if (data.thumbnail) setSignedThumb(data.thumbnail as string)
+      } catch (err) {
+        if (!cancelled) logger.error('[NativeVideoPlayer] token prefetch failed', err)
       }
-      setIframeUrl(data.iframe as string)
-      setState('playing')
-    } catch (err) {
-      logger.error('[NativeVideoPlayer] token mint failed', err)
-      setErrorMsg('Could not load this video. Please try again.')
-      setState('error')
-    }
+    })()
+    return () => { cancelled = true }
   }, [videoId])
+
+  const activate = useCallback(() => {
+    if (state === 'error') return
+    if (iframeUrl) { setState('playing'); return }
+    // token not ready yet — show loading; the effect above will set it.
+    setState('loading')
+  }, [iframeUrl, state])
+
+  // If the user tapped before the token arrived, start playing once it lands.
+  useEffect(() => {
+    if (state === 'loading' && iframeUrl) setState('playing')
+  }, [state, iframeUrl])
 
   const duration = formatDuration(durationSeconds)
 
@@ -74,9 +89,12 @@ export default function NativeVideoPlayer({
     <div className="relative w-full overflow-hidden rounded-xl bg-black aspect-video">
       {state === 'playing' && iframeUrl ? (
         <iframe
-          src={`${iframeUrl}?autoplay=true`}
+          // controls=true → the player's control bar (play/PAUSE/scrub/
+          // fullscreen/volume) is shown; autoplay=true starts it on tap.
+          // Without controls the bar was hidden, so the user couldn't pause.
+          src={`${iframeUrl}?autoplay=true&controls=true`}
           className="absolute inset-0 h-full w-full border-0"
-          allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
+          allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen;"
           allowFullScreen
           title={title ?? 'Player video'}
         />
@@ -88,11 +106,13 @@ export default function NativeVideoPlayer({
           aria-label="Play video"
           className="group absolute inset-0 flex flex-col items-center justify-center gap-3 overflow-hidden text-white"
         >
-          {/* Real Cloudflare thumbnail, object-cover cropped. Falls back to
-              a branded gradient if absent / fails. */}
-          {thumbnailUrl ? (
+          {/* SIGNED Cloudflare thumbnail (the stored thumbnailUrl is
+              unsigned → 401s on a requireSignedURLs asset, so prefer the
+              signed one from the token fn). object-cover cropped; falls
+              back to the branded gradient if absent/fails. */}
+          {(signedThumb ?? thumbnailUrl) ? (
             <img
-              src={thumbnailUrl}
+              src={signedThumb ?? thumbnailUrl ?? ''}
               alt=""
               aria-hidden="true"
               className="absolute inset-0 h-full w-full object-cover"
@@ -102,7 +122,7 @@ export default function NativeVideoPlayer({
           <span
             className="absolute inset-0 bg-gradient-to-br from-[#1a1030] via-[#2a1a4a] to-[#8026FA]/40"
             aria-hidden="true"
-            style={thumbnailUrl ? { background: 'rgba(0,0,0,0.30)' } : undefined}
+            style={(signedThumb ?? thumbnailUrl) ? { background: 'rgba(0,0,0,0.30)' } : undefined}
           />
           {state === 'loading' ? (
             <span className="relative flex h-14 w-14 items-center justify-center rounded-full bg-white/95 shadow-lg">
