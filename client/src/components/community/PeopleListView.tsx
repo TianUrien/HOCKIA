@@ -18,7 +18,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { computeClubFit } from '@/lib/clubFit'
 import { deriveTargetCategory } from '@/lib/recruitingContext'
-import { useActiveRecruitingTarget, useActiveRecruitingTargetRole } from '@/hooks/useRecruitingContext'
+import { useActiveRecruitingTarget, useActiveRecruitingTargetRole, useActiveRecruitingTargetPosition } from '@/hooks/useRecruitingContext'
 import { requestCache } from '@/lib/requestCache'
 import { monitor } from '@/lib/monitor'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
@@ -153,6 +153,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
   // is hidden; this only re-orders.
   const contextTarget = useActiveRecruitingTarget()
   const contextTargetRole = useActiveRecruitingTargetRole()
+  const contextTargetPosition = useActiveRecruitingTargetPosition()
 
   const [baseMembers, setBaseMembers] = useState<Profile[]>([])
   const [allMembers, setAllMembers] = useState<Profile[]>([])
@@ -569,7 +570,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
       // the score (and the role gate that suppresses player-fit for
       // coach-seeking contexts) matches exactly what the Fit chips show.
       const fitOptions = useContextFit
-        ? { overrideTarget: contextTarget, targetRole: contextTargetRole }
+        ? { overrideTarget: contextTarget, targetRole: contextTargetRole, targetPosition: contextTargetPosition }
         : undefined
       result = [...result]
         .map((m) => ({
@@ -583,6 +584,8 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
             open_to_coach: m.open_to_coach ?? null,
             open_to_opportunities: m.open_to_opportunities ?? null,
             last_active_at: m.last_active_at ?? null,
+            position: m.position ?? null,
+            secondary_position: m.secondary_position ?? null,
           }, fitOptions),
         }))
         .sort((a, b) => {
@@ -599,7 +602,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     }
 
     return result
-  }, [allMembers, filters, sort, currentUserProfile, applyContextFit, contextTarget, contextTargetRole])
+  }, [allMembers, filters, sort, currentUserProfile, applyContextFit, contextTarget, contextTargetRole, contextTargetPosition])
 
   // Emit filtered count upward whenever it changes. Combined with the
   // total-count effect this lets the parent choose: total when not

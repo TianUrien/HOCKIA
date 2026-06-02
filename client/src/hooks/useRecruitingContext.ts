@@ -501,3 +501,30 @@ export function useActiveRecruitingTargetRole(): string | null {
 
   return role
 }
+
+/** Active scope's sought player POSITION (opportunity_position text) or
+ *  null. Phase 2: drives the position_match component in computeClubFit
+ *  so a goalkeeper scope ranks goalkeepers first. Same store-read +
+ *  ensure-fetched pattern as the role selector. */
+export function useActiveRecruitingTargetPosition(): string | null {
+  const { profile: viewer } = useAuthStore()
+  const viewerId = viewer?.id ?? null
+  const viewerRole = viewer?.role ?? null
+
+  const setViewer = useRecruitingContextStore((s) => s.setViewer)
+  const ensureFetched = useRecruitingContextStore((s) => s.ensureFetched)
+  const position = useRecruitingContextStore((s) => {
+    const row = s.rows.find((r) => r.is_active)
+    return (row?.target_position ?? null) as string | null
+  })
+
+  useEffect(() => {
+    setViewer(viewerId, viewerRole)
+  }, [viewerId, viewerRole, setViewer])
+
+  useEffect(() => {
+    void ensureFetched()
+  }, [viewerId, viewerRole, ensureFetched])
+
+  return position
+}

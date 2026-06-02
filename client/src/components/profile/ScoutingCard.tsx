@@ -45,6 +45,11 @@ interface ScoutingCardProfile {
   current_world_club_id: string | null
   /** Phase 3e — drives the Club Fit chip's gender_match component. */
   playing_category: string | null
+  /** Phase 2 — drives the Club Fit chip's position_match component when
+   *  the active scope sought a specific position. Optional; null when the
+   *  parent doesn't supply it (chip still works, just no position signal). */
+  position?: string | null
+  secondary_position?: string | null
   highlight_video_url: string | null
   /** Denormalized count of full-game video entries on the profile row.
    *  No separate join — same value MediaCard uses. */
@@ -290,6 +295,8 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
             open_to_coach: profile.open_to_coach,
             open_to_opportunities: profile.open_to_opportunities,
             last_active_at: profile.last_active_at,
+            position: profile.position ?? null,
+            secondary_position: profile.secondary_position ?? null,
           }}
         />
       </div>

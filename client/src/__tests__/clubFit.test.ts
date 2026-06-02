@@ -337,4 +337,57 @@ describe('computeClubFit', () => {
     expect(umpire.isApplicable).toBe(false)
     expect(player.isApplicable).toBe(false)
   })
+
+  // ── Phase 2: position_match component ──────────────────────────────
+  describe('position_match (Phase 2)', () => {
+    const gk = { ...baseFemalePlayer, position: 'goalkeeper', secondary_position: 'defender' }
+
+    it('is 0 and weighted out when the scope has NO target position (unchanged ranking)', () => {
+      // Same candidate, with and without a (null) targetPosition → identical score.
+      const withoutOpt = computeClubFit(womensClub, gk)
+      const withNullPos = computeClubFit(womensClub, gk, { targetPosition: null })
+      expect(withoutOpt.components.position_match).toBe(0)
+      expect(withNullPos.components.position_match).toBe(0)
+      expect(withNullPos.score).toBeCloseTo(withoutOpt.score, 5)
+    })
+
+    it('primary position match = 1.0 and lifts the score', () => {
+      const noPos = computeClubFit(womensClub, gk)
+      const matched = computeClubFit(womensClub, gk, { targetPosition: 'goalkeeper' })
+      expect(matched.components.position_match).toBe(1)
+      // A full position match should raise (or hold) the score vs no-position.
+      expect(matched.score).toBeGreaterThanOrEqual(noPos.score)
+    })
+
+    it('secondary position match = 0.5', () => {
+      const matched = computeClubFit(womensClub, gk, { targetPosition: 'defender' })
+      expect(matched.components.position_match).toBe(0.5)
+    })
+
+    it('no overlap = 0 (off-position player ranks below, but is NOT filtered out)', () => {
+      const matched = computeClubFit(womensClub, gk, { targetPosition: 'forward' })
+      expect(matched.components.position_match).toBe(0)
+      // Still applicable — soft signal, never a hard filter.
+      expect(matched.isApplicable).toBe(true)
+    })
+
+    it('a goalkeeper outranks an identical non-goalkeeper for a goalkeeper scope', () => {
+      const keeper = { ...baseFemalePlayer, id: 'k', position: 'goalkeeper', secondary_position: null }
+      const forward = { ...baseFemalePlayer, id: 'f', position: 'forward', secondary_position: null }
+      const keeperFit = computeClubFit(womensClub, keeper, { targetPosition: 'goalkeeper' })
+      const forwardFit = computeClubFit(womensClub, forward, { targetPosition: 'goalkeeper' })
+      expect(keeperFit.score).toBeGreaterThan(forwardFit.score)
+    })
+
+    it('matching is case-insensitive', () => {
+      const matched = computeClubFit(womensClub, { ...gk, position: 'Goalkeeper' }, { targetPosition: 'goalkeeper' })
+      expect(matched.components.position_match).toBe(1)
+    })
+
+    it('player without a position scores 0 under a position scope (no false credit)', () => {
+      const noPosPlayer = { ...baseFemalePlayer, position: null, secondary_position: null }
+      const result = computeClubFit(womensClub, noPosPlayer, { targetPosition: 'goalkeeper' })
+      expect(result.components.position_match).toBe(0)
+    })
+  })
 })

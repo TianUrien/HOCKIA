@@ -45,6 +45,10 @@ export interface ClubFitComponents {
   competition_proximity: number
   availability: number
   recency: number
+  /** Position fit vs the scope's target_position. Only contributes to
+   *  the score when the active scope HAS a target position; otherwise
+   *  0 and weighted out (see computeClubFit weight logic). */
+  position_match: number
 }
 
 export interface ClubFitResult {
@@ -80,16 +84,38 @@ export interface FitCandidateFields {
   open_to_coach: boolean | null
   open_to_opportunities: boolean | null
   last_active_at: string | null
+  /** Player's primary + secondary positions, compared to the scope's
+   *  target_position for the position_match component. Optional — a
+   *  player without positions scores 0 there (only matters when the
+   *  scope has a target position). */
+  position?: string | null
+  secondary_position?: string | null
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000
 const DEFAULT_TIER_DISTANCE_CAP = 4
 
+// Base weights — used when the scope has NO target position (the common
+// case, and every pre-Phase-2 call). Position contributes nothing here,
+// so ranking is identical to before.
 const WEIGHTS = {
   competition_proximity: 0.4,
   gender_match: 0.3,
   availability: 0.2,
   recency: 0.1,
+} as const
+
+// Position-aware weights — used ONLY when the scope carries a
+// target_position. position_match takes 25%; the original four are
+// scaled to the remaining 75% in their original proportions (×0.75), so
+// their relative ordering is preserved and a goalkeeper scope floats
+// goalkeepers up without erasing the league/gender/availability signal.
+const WEIGHTS_WITH_POSITION = {
+  competition_proximity: 0.30, // 0.40 × 0.75
+  gender_match: 0.225,         // 0.30 × 0.75
+  availability: 0.15,          // 0.20 × 0.75
+  recency: 0.075,              // 0.10 × 0.75
+  position_match: 0.25,
 } as const
 
 const STATE_THRESHOLDS = {
@@ -106,9 +132,30 @@ const NOT_APPLICABLE: ClubFitResult = {
     competition_proximity: 0,
     availability: 0,
     recency: 0,
+    position_match: 0,
   },
   reasons: [],
   target: null,
+}
+
+/**
+ * Position fit: player's primary/secondary position vs the scope's
+ * target position. Exact primary = 1.0, secondary = 0.5, no overlap = 0.
+ * Comparison is case-insensitive on the normalized position strings
+ * (profiles.position / opportunity.position share the opportunity_position
+ * vocabulary). Returns 0 when either side is missing.
+ */
+function positionMatch(
+  primary: string | null | undefined,
+  secondary: string | null | undefined,
+  targetPosition: string | null | undefined,
+): number {
+  if (!targetPosition) return 0
+  const t = targetPosition.trim().toLowerCase()
+  if (!t) return 0
+  if (primary && primary.trim().toLowerCase() === t) return 1
+  if (secondary && secondary.trim().toLowerCase() === t) return 0.5
+  return 0
 }
 
 /**
@@ -166,6 +213,12 @@ export interface ComputeClubFitOptions {
    *  opportunity. NULL = club/custom context → treated as
    *  player-seeking (preserves the club→player default). */
   targetRole?: string | null
+  /** Sought player POSITION of the active scope (opportunity_position
+   *  text, e.g. 'goalkeeper'), from the linked opportunity. When set, a
+   *  position_match component is added (25%) and the other four are
+   *  scaled to 75% — floating matching players up. NULL/undefined = no
+   *  position signal; the original 4-component model is used unchanged. */
+  targetPosition?: string | null
 }
 
 /**
@@ -280,20 +333,49 @@ export function computeClubFit(
     reasons.push('Activity recency unknown.')
   }
 
+  // Position match — only meaningful when the scope sought a specific
+  // position. Soft signal (floats matches up), never a hard filter.
+  const hasTargetPosition = Boolean(options?.targetPosition && options.targetPosition.trim())
+  const position_match = positionMatch(candidate.position, candidate.secondary_position, options?.targetPosition)
+  if (hasTargetPosition) {
+    const tp = humanizePosition(options!.targetPosition!)
+    if (position_match >= 1) {
+      reasons.push(`Plays ${tp} — matches the position you're recruiting.`)
+    } else if (position_match > 0) {
+      reasons.push(`Plays ${tp} as a secondary position.`)
+    } else if (candidate.position) {
+      reasons.push(`Primary position is ${humanizePosition(candidate.position)} — not ${tp}.`)
+    } else {
+      reasons.push('Position not added yet — no position match info.')
+    }
+  }
+
   // ── Score + state ───────────────────────────────────────────────
   const components: ClubFitComponents = {
     gender_match,
     competition_proximity,
     availability,
     recency,
+    position_match,
   }
 
-  const score = clamp01(
-    WEIGHTS.competition_proximity * competition_proximity +
-      WEIGHTS.gender_match * gender_match +
-      WEIGHTS.availability * availability +
-      WEIGHTS.recency * recency,
-  )
+  // When the scope carries a target position, use the position-aware
+  // weight set (position 25% + others scaled to 75%); otherwise the
+  // original 4-component model — so position-less scopes are unchanged.
+  const score = hasTargetPosition
+    ? clamp01(
+        WEIGHTS_WITH_POSITION.competition_proximity * competition_proximity +
+          WEIGHTS_WITH_POSITION.gender_match * gender_match +
+          WEIGHTS_WITH_POSITION.availability * availability +
+          WEIGHTS_WITH_POSITION.recency * recency +
+          WEIGHTS_WITH_POSITION.position_match * position_match,
+      )
+    : clamp01(
+        WEIGHTS.competition_proximity * competition_proximity +
+          WEIGHTS.gender_match * gender_match +
+          WEIGHTS.availability * availability +
+          WEIGHTS.recency * recency,
+      )
 
   let state: ClubFitState
   if (score >= STATE_THRESHOLDS.green) state = 'green'
@@ -338,4 +420,23 @@ function humanizeCategory(category: string): string {
     default:
       return category
   }
+}
+
+/** Human label for an opportunity_position value (e.g. 'goalkeeper' →
+ *  'Goalkeeper'). Falls back to a title-cased version of the raw value
+ *  so new enum entries still read cleanly without a code change. */
+function humanizePosition(position: string): string {
+  const p = position.trim().toLowerCase()
+  const known: Record<string, string> = {
+    goalkeeper: 'Goalkeeper',
+    defender: 'Defender',
+    midfielder: 'Midfielder',
+    forward: 'Forward',
+    striker: 'Striker',
+  }
+  if (known[p]) return known[p]
+  return p
+    .split(/[\s_-]+/)
+    .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))
+    .join(' ')
 }
