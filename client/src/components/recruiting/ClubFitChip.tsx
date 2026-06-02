@@ -226,6 +226,7 @@ export default function ClubFitChip({
             target={fit.target}
             label={label}
             reasons={fit.reasons}
+            kind={kind}
             anchorRef={chipRef}
             popoverRef={popoverElRef}
           />
@@ -269,6 +270,7 @@ export default function ClubFitChip({
           target={fit.target}
           label={label}
           reasons={fit.reasons}
+          kind={kind}
           anchorRef={chipRef}
           popoverRef={popoverElRef}
         />
@@ -282,6 +284,8 @@ interface ReasoningPopoverProps {
   target: string | null
   label: string
   reasons: string[]
+  /** 'coach' makes the privacy footer read "coach" instead of "player". */
+  kind?: 'club' | 'coach'
   anchorRef: React.RefObject<HTMLSpanElement | null>
   popoverRef: React.RefObject<HTMLSpanElement | null>
 }
@@ -303,8 +307,9 @@ const ANCHOR_GAP = 6 // mt-1.5
  * every card boundary (QA F5/F15).
  */
 function ReasoningPopover({
-  id, target, label, reasons, anchorRef, popoverRef,
+  id, target, label, reasons, kind = 'club', anchorRef, popoverRef,
 }: ReasoningPopoverProps) {
+  const subject = kind === 'coach' ? 'coach' : 'player'
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null)
 
   const measure = useCallback(() => {
@@ -378,7 +383,7 @@ function ReasoningPopover({
         )}
       </span>
       <span className="block text-[10px] text-gray-500 mb-2 leading-relaxed">
-        Based on facts in this player's profile. Never published back to the player.
+        Based on facts in this {subject}'s profile. Never published back to the {subject}.
       </span>
       <span className="block space-y-1 text-[11px] text-gray-700">
         {reasons.map((r, i) => (
