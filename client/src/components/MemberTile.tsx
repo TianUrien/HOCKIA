@@ -11,6 +11,7 @@ import QuickActionsRow from '@/components/recruiting/QuickActionsRow'
 import { getImageUrl } from '@/lib/imageUrl'
 import RolePlaceholder from './RolePlaceholder'
 import ClubFitChip from './recruiting/ClubFitChip'
+import { useCoachFit } from '@/hooks/useCoachFit'
 
 const BRAND_CATEGORY_LABELS: Record<string, string> = {
   equipment: 'Equipment',
@@ -47,6 +48,11 @@ interface MemberTileProps {
   /** Phase 3e player playing category — drives the gender_match
    *  component of the recruiter-only Club Fit chip. */
   playing_category?: string | null
+  /** Phase 2C — coach specialization + coaching categories, drive the
+   *  recruiter-only Coach Fit chip on coach candidates (specialization
+   *  match vs the sought coaching role, category as a tiebreak). */
+  coach_specialization?: string | null
+  coaching_categories?: string[] | null
   /** P1.2 curated 1..10 level band — drives the competition_proximity
    *  component of the recruiter-only Club Fit chip. Null when the
    *  player has no current_world_club_id or the club's league hasn't
@@ -86,6 +92,18 @@ export default function MemberTile(props: MemberTileProps) {
   // work the same across player/coach/club/brand/umpire.
   const showQuickActions = Boolean(user) && user?.id !== props.id
   const clubLogo = useWorldClubLogo(props.current_world_club_id ?? null)
+  // Phase 2C — Coach Fit for this candidate vs the active scope. Returns
+  // NOT_APPLICABLE (chip renders null) for non-coaches or non-coach scopes.
+  const coachFit = useCoachFit(
+    props.role === 'coach'
+      ? {
+          id: props.id,
+          role: props.role,
+          coach_specialization: props.coach_specialization ?? null,
+          coaching_categories: props.coaching_categories ?? null,
+        }
+      : null,
+  )
 
   const isBrand = props.role === 'brand'
   const heroSrc = isBrand ? (props.brandLogoUrl ?? props.avatar_url) : props.avatar_url
@@ -255,6 +273,10 @@ export default function MemberTile(props: MemberTileProps) {
                 last_active_at: props.last_active_at ?? null,
               }}
             />
+            {/* Phase 2C — Coach Fit chip. Renders only for coach
+                candidates under a coach-seeking scope (returns null
+                otherwise); the player chip above is null for coaches. */}
+            <ClubFitChip kind="coach" fitResult={coachFit} />
           </div>
 
           {/* Row 3: nationality (tile mode — full names + flags, EU pill

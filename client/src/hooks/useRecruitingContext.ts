@@ -528,3 +528,31 @@ export function useActiveRecruitingTargetPosition(): string | null {
 
   return position
 }
+
+/** Whether the active scope requires an EU passport (Phase 2D). Derived
+ *  server-side from the linked opportunity's eu_passport_required. When
+ *  true on a player scope, Community applies a HARD EU-eligibility filter
+ *  (players with no nationality on file are kept). Same store-read +
+ *  ensure-fetched pattern as the other scope selectors. */
+export function useActiveRecruitingEuRequired(): boolean {
+  const { profile: viewer } = useAuthStore()
+  const viewerId = viewer?.id ?? null
+  const viewerRole = viewer?.role ?? null
+
+  const setViewer = useRecruitingContextStore((s) => s.setViewer)
+  const ensureFetched = useRecruitingContextStore((s) => s.ensureFetched)
+  const euRequired = useRecruitingContextStore((s) => {
+    const row = s.rows.find((r) => r.is_active)
+    return Boolean(row?.eu_required)
+  })
+
+  useEffect(() => {
+    setViewer(viewerId, viewerRole)
+  }, [viewerId, viewerRole, setViewer])
+
+  useEffect(() => {
+    void ensureFetched()
+  }, [viewerId, viewerRole, ensureFetched])
+
+  return euRequired
+}

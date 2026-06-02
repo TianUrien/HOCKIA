@@ -64,6 +64,7 @@ function buildRow(overrides: Partial<RecruitingContextRow>): RecruitingContextRo
     target_category: 'Mixed',
     target_role: null,
     target_position: null,
+    eu_required: false,
     competition_id: null,
     region: null,
     opportunity_id: null,

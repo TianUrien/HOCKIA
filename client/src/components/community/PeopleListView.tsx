@@ -17,8 +17,10 @@ import { MemberPreviewModal } from './MemberPreviewModal'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { computeClubFit } from '@/lib/clubFit'
+import { computeCoachFit } from '@/lib/coachFit'
 import { deriveTargetCategory } from '@/lib/recruitingContext'
-import { useActiveRecruitingTarget, useActiveRecruitingTargetRole, useActiveRecruitingTargetPosition } from '@/hooks/useRecruitingContext'
+import { useActiveRecruitingTarget, useActiveRecruitingTargetRole, useActiveRecruitingTargetPosition, useActiveRecruitingEuRequired } from '@/hooks/useRecruitingContext'
+import { useCountries, isEuCountryCode } from '@/hooks/useCountries'
 import { requestCache } from '@/lib/requestCache'
 import { monitor } from '@/lib/monitor'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
@@ -116,9 +118,14 @@ interface PeopleListViewProps {
    *  the total. Fixes the QA-flagged 'badge says 13 but grid shows 1'
    *  desync. */
   onFilteredCountChange?: (n: number) => void
+  /** True when an active recruiting scope is reshaping the grid (the
+   *  focused, role-hard-filtered view — NOT the "Show everyone" escape).
+   *  Phase 2D: gates the EU-eligibility hard filter so it applies only in
+   *  the scoped view and is lifted the moment the user widens to everyone. */
+  scopeReshaping?: boolean
 }
 
-export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilteredCountChange }: PeopleListViewProps) {
+export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilteredCountChange, scopeReshaping = false }: PeopleListViewProps) {
   const navigationType = useNavigationType()
   // `loading` flips false once the auth session + profile resolve.
   // Gating the fetch on it prevents the historical double-fire:
@@ -154,6 +161,19 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
   const contextTarget = useActiveRecruitingTarget()
   const contextTargetRole = useActiveRecruitingTargetRole()
   const contextTargetPosition = useActiveRecruitingTargetPosition()
+  // Phase 2D — EU eligibility hard filter. When the active scope's linked
+  // opportunity requires an EU passport, candidates whose declared
+  // nationality is non-EU drop out of the scoped grid. Candidates with NO
+  // nationality on file are KEPT (missing data never hides someone — same
+  // philosophy as opportunityEligibility.ts). Only applies while the scope
+  // is reshaping the grid; widening to "Show everyone" lifts it.
+  const euRequired = useActiveRecruitingEuRequired()
+  const { countries } = useCountries()
+  const euCountryIds = useMemo(
+    () => new Set(countries.filter((c) => isEuCountryCode(c.code)).map((c) => c.id)),
+    [countries],
+  )
+  const euFilterActive = scopeReshaping && euRequired
 
   const [baseMembers, setBaseMembers] = useState<Profile[]>([])
   const [allMembers, setAllMembers] = useState<Profile[]>([])
@@ -533,6 +553,22 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
       )
     }
 
+    // Phase 2D — EU eligibility HARD filter. When the active scope requires
+    // an EU passport (eu_required, derived from the opportunity), drop
+    // candidates whose declared nationality is verifiably non-EU. A
+    // candidate is kept when EITHER nationality is an EU member state, OR
+    // they have no nationality on file at all (incomplete profile is never
+    // a reason to hide someone — mirrors opportunityEligibility.ts). Gated
+    // on euFilterActive so it only bites in the focused scoped view.
+    if (euFilterActive) {
+      result = result.filter((m) => {
+        const ids = [m.nationality_country_id, m.nationality2_country_id]
+          .filter((id): id is number => typeof id === 'number')
+        if (ids.length === 0) return true // unknown nationality → keep
+        return ids.some((id) => euCountryIds.has(id))
+      })
+    }
+
     // Sort. 'newest' is the natural fetch order (created_at DESC); no
     // re-sort needed — slicing keeps that order intact. 'completeness'
     // sorts by profile_completeness_pct DESC with id tiebreaker for
@@ -559,7 +595,14 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     const profileTarget = deriveTargetCategory(currentUserProfile)
     const useContextFit = applyContextFit && !!contextTarget
     const viewerTarget = useContextFit ? contextTarget : profileTarget
-    if (sort === 'newest' && viewerTarget && currentUserProfile) {
+    // Phase 2C — coach-fit ranking. A coach opportunity carries no gender,
+    // so contextTarget (category) is null and the player path above won't
+    // fire for it. Detect a coach scope that names a specific coaching
+    // role and rank coaches by coach fit instead. (Category may be null;
+    // coach fit is specialization-first.)
+    const useCoachContextFit =
+      applyContextFit && contextTargetRole === 'coach' && Boolean(contextTargetPosition)
+    if (sort === 'newest' && currentUserProfile && (viewerTarget || useCoachContextFit)) {
       const viewerCtx = {
         role: currentUserProfile.role,
         womens_league_division: (currentUserProfile as { womens_league_division?: string | null }).womens_league_division ?? null,
@@ -573,24 +616,38 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
         ? { overrideTarget: contextTarget, targetRole: contextTargetRole, targetPosition: contextTargetPosition }
         : undefined
       result = [...result]
-        .map((m) => ({
-          m,
-          fit: computeClubFit(viewerCtx, {
-            id: m.id,
-            role: m.role,
-            playing_category: m.playing_category ?? null,
-            current_world_club_id: m.current_world_club_id ?? null,
-            open_to_play: m.open_to_play ?? null,
-            open_to_coach: m.open_to_coach ?? null,
-            open_to_opportunities: m.open_to_opportunities ?? null,
-            last_active_at: m.last_active_at ?? null,
-            position: m.position ?? null,
-            secondary_position: m.secondary_position ?? null,
-          }, fitOptions),
-        }))
+        .map((m) => {
+          // Coach candidates under a coach scope are ranked by Coach Fit;
+          // everyone else by Club Fit (NOT_APPLICABLE → 0).
+          const score =
+            useCoachContextFit && m.role === 'coach'
+              ? computeCoachFit(viewerCtx, {
+                  id: m.id,
+                  role: m.role,
+                  coach_specialization: m.coach_specialization ?? null,
+                  coaching_categories: m.coaching_categories ?? null,
+                }, {
+                  overrideTarget: contextTarget,
+                  targetRole: contextTargetRole,
+                  targetSpecialization: contextTargetPosition,
+                }).score
+              : computeClubFit(viewerCtx, {
+                  id: m.id,
+                  role: m.role,
+                  playing_category: m.playing_category ?? null,
+                  current_world_club_id: m.current_world_club_id ?? null,
+                  open_to_play: m.open_to_play ?? null,
+                  open_to_coach: m.open_to_coach ?? null,
+                  open_to_opportunities: m.open_to_opportunities ?? null,
+                  last_active_at: m.last_active_at ?? null,
+                  position: m.position ?? null,
+                  secondary_position: m.secondary_position ?? null,
+                }, fitOptions).score
+          return { m, score }
+        })
         .sort((a, b) => {
           // Primary: Fit score descending (NOT_APPLICABLE returns 0).
-          if (b.fit.score !== a.fit.score) return b.fit.score - a.fit.score
+          if (b.score !== a.score) return b.score - a.score
           // Tiebreaker 1: completeness desc.
           const ap = a.m.profile_completeness_pct ?? 0
           const bp = b.m.profile_completeness_pct ?? 0
@@ -602,7 +659,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     }
 
     return result
-  }, [allMembers, filters, sort, currentUserProfile, applyContextFit, contextTarget, contextTargetRole, contextTargetPosition])
+  }, [allMembers, filters, sort, currentUserProfile, applyContextFit, contextTarget, contextTargetRole, contextTargetPosition, euFilterActive, euCountryIds])
 
   // Emit filtered count upward whenever it changes. Combined with the
   // total-count effect this lets the parent choose: total when not
@@ -774,6 +831,8 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
                 open_to_coach={member.open_to_coach}
                 open_to_opportunities={member.open_to_opportunities}
                 playing_category={member.playing_category ?? null}
+                coach_specialization={member.coach_specialization ?? null}
+                coaching_categories={member.coaching_categories ?? null}
                 position={member.position ?? null}
                 last_active_at={member.last_active_at ?? null}
                 tier={getMemberTier(member)}

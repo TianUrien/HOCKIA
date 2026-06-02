@@ -31,8 +31,28 @@ import { useClubFit } from '@/hooks/useClubFit'
 import { clubFitStateLabel, type ClubFitState } from '@/lib/clubFit'
 import type { FitCandidateFields } from '@/lib/clubFit'
 
+/** The minimal fit shape this chip renders. Both ClubFitResult and
+ *  CoachFitResult satisfy it, so the chip is the single visual surface for
+ *  both the player (Club Fit) and coach (Coach Fit) models. */
+export interface ChipFitResult {
+  isApplicable: boolean
+  state: ClubFitState
+  reasons: string[]
+  target: string | null
+}
+
 interface ClubFitChipProps {
-  candidate: FitCandidateFields | null | undefined
+  /** Player candidate — used for the default Club Fit path (the chip
+   *  computes the fit itself via useClubFit). Omit when passing a
+   *  precomputed `fitResult` (e.g. coach fit). */
+  candidate?: FitCandidateFields | null | undefined
+  /** Precomputed fit result. When provided, the chip renders THIS instead
+   *  of computing player fit — the path used for coach candidates (Phase
+   *  2C), whose fit is computed by useCoachFit upstream. */
+  fitResult?: ChipFitResult | null
+  /** Which model this chip represents — only affects the aria-label
+   *  wording ('Club fit' vs 'Coach fit'). Defaults to 'club'. */
+  kind?: 'club' | 'coach'
   /** Compact = just the signal bars (carousel cards).
    *  Default = bars + label (tiles, profiles). */
   variant?: 'pill' | 'badge'
@@ -104,10 +124,16 @@ function SignalBars({ filled }: { filled: 1 | 2 | 3 }) {
 
 export default function ClubFitChip({
   candidate,
+  fitResult,
+  kind = 'club',
   variant = 'pill',
   className = '',
 }: ClubFitChipProps) {
-  const fit = useClubFit(candidate)
+  // Rules of hooks: always compute the player fit. When a precomputed
+  // `fitResult` is supplied (coach path), it takes precedence and the
+  // player computation (NOT_APPLICABLE for a coach candidate) is ignored.
+  const computed = useClubFit(candidate ?? null)
+  const fit: ChipFitResult = fitResult ?? computed
   const [open, setOpen] = useState(false)
   const popoverId = useId()
   const chipRef = useRef<HTMLSpanElement>(null)
@@ -189,7 +215,7 @@ export default function ClubFitChip({
           className,
         ].join(' ')}
         title={tooltip}
-        aria-label={`Club fit: ${label}. Tap for reasoning.`}
+        aria-label={`${kind === 'coach' ? 'Coach' : 'Club'} fit: ${label}. Tap for reasoning.`}
         aria-expanded={open}
         aria-controls={popoverId}
       >
@@ -231,7 +257,7 @@ export default function ClubFitChip({
         className,
       ].join(' ')}
       title={tooltip}
-      aria-label={`Club fit: ${label}. Tap for reasoning.`}
+      aria-label={`${kind === 'coach' ? 'Coach' : 'Club'} fit: ${label}. Tap for reasoning.`}
       aria-expanded={open}
       aria-controls={popoverId}
     >

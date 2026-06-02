@@ -544,6 +544,7 @@ export default function CommunityPage() {
                   state={filtersState}
                   onTotalCountChange={setTotalCount}
                   onFilteredCountChange={setFilteredCount}
+                  scopeReshaping={scopeReshaping}
                 />
               </div>
             </>

@@ -3286,6 +3286,7 @@ export type Database = {
           owner_id: string
           region: string | null
           target_category: string | null
+          eu_required: boolean
           target_position: string | null
           target_role: string | null
           type: string
@@ -3301,6 +3302,7 @@ export type Database = {
           owner_id: string
           region?: string | null
           target_category?: string | null
+          eu_required?: boolean
           target_position?: string | null
           target_role?: string | null
           type: string
@@ -3316,6 +3318,7 @@ export type Database = {
           owner_id?: string
           region?: string | null
           target_category?: string | null
+          eu_required?: boolean
           target_position?: string | null
           target_role?: string | null
           type?: string
@@ -4692,6 +4695,7 @@ export type Database = {
           owner_id: string
           region: string | null
           target_category: string | null
+          eu_required: boolean
           target_position: string | null
           target_role: string | null
           type: string
@@ -5739,6 +5743,7 @@ export type Database = {
           owner_id: string
           region: string | null
           target_category: string | null
+          eu_required: boolean
           target_position: string | null
           target_role: string | null
           type: string
@@ -6746,6 +6751,7 @@ export type Database = {
           owner_id: string
           region: string | null
           target_category: string | null
+          eu_required: boolean
           target_position: string | null
           target_role: string | null
           type: string
