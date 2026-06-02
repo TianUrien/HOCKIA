@@ -39,7 +39,7 @@ import {
   deriveTargetCategory,
   playingCategoriesForTarget,
 } from '@/lib/recruitingContext'
-import { useActiveRecruitingTarget } from '@/hooks/useRecruitingContext'
+import { useActiveRecruitingTarget, useActiveRecruitingTargetRole } from '@/hooks/useRecruitingContext'
 import ContextSwitcher from '@/components/recruiting/ContextSwitcher'
 import CoachContextNudge from '@/components/recruiting/CoachContextNudge'
 
@@ -82,6 +82,28 @@ export default function CommunityPage() {
   // no context is active (anon/non-club viewers always see null
   // here — useActiveRecruitingTarget gates on role).
   const activeRecruitingTarget = useActiveRecruitingTarget()
+  // The sought ROLE of the active scope ('player' | 'coach' | null),
+  // server-derived from the linked opportunity's opportunity_type. This is
+  // the primary axis for reshaping Community: a coach-scope should surface
+  // COACHES, a player-scope should surface PLAYERS.
+  const activeRecruitingRole = useActiveRecruitingTargetRole()
+  const isRecruiterViewer = viewerProfile?.role === 'club' || viewerProfile?.role === 'coach'
+  // A scope "reshapes" Community only when: viewer is a recruiter, a scope
+  // is active, AND it carries a role we can filter on. (target_role is only
+  // 'player' or 'coach' today; category-only/custom scopes don't hard-filter
+  // by role.)
+  const scopedRole: 'player' | 'coach' | null =
+    isRecruiterViewer && (activeRecruitingRole === 'player' || activeRecruitingRole === 'coach')
+      ? activeRecruitingRole
+      : null
+  // "Show everyone" escape — the recruiter can widen past the auto role
+  // filter without clearing the scope (Fit ranking + category still apply).
+  // Reset whenever the scoped role changes so a new scope re-focuses.
+  const [showEveryone, setShowEveryone] = useState(false)
+  useEffect(() => { setShowEveryone(false) }, [scopedRole])
+  // The scope is actively reshaping the page (role filter applied) when a
+  // scopedRole exists and the user hasn't widened to everyone.
+  const scopeReshaping = scopedRole !== null && !showEveryone
 
   // Scroll restoration between Members ↔ Questions toggle (and across
   // role chips). React Router's default scrolls to top on route change;
@@ -137,8 +159,14 @@ export default function CommunityPage() {
   // Map the chip tab id → role filter for both the PeopleListView and
   // the carousel. 'all' → undefined: the grid loads every role; the
   // carousel returns top across non-brand roles.
-  const memberRoleFilter: 'player' | 'coach' | 'club' | 'umpire' | 'brand' | undefined =
+  const chipRoleFilter: 'player' | 'coach' | 'club' | 'umpire' | 'brand' | undefined =
     isMembers && activeTab !== 'all' ? ROLE_FILTER_BY_TAB[activeTab as keyof typeof ROLE_FILTER_BY_TAB] : undefined
+  // When a scope is actively reshaping the page, the sought role becomes a
+  // HARD filter on both the carousel and All Members — overriding the chip
+  // default — so a coach-scope shows coaches, a player-scope shows players.
+  // "Show everyone" clears this back to the chip-driven filter.
+  const memberRoleFilter: 'player' | 'coach' | 'club' | 'umpire' | 'brand' | undefined =
+    scopeReshaping ? scopedRole! : chipRoleFilter
 
   // ── Featured carousel inputs (memoized) ─────────────────────────
   // These used to be computed inside the JSX IIFE, which produced a
@@ -201,7 +229,16 @@ export default function CommunityPage() {
   // on first mount via the hook's initial value; the sync effects
   // below keep them aligned afterwards.
   const filtersState = useCommunityFiltersState(memberRoleFilter, searchParams.get('q') ?? '')
-  const { searchQuery, setSearchQuery, filters, updateFilter, hasActiveFilters, isNarrowed, sort, setSort, showFilters, setShowFilters, applyContextFit, setApplyContextFit } = filtersState
+  const { searchQuery, setSearchQuery, filters, updateFilter, hasActiveFilters, isNarrowed, sort, setSort, showFilters, setShowFilters, setApplyContextFit } = filtersState
+
+  // Auto-apply context-fit ranking whenever a scope is active (the opt-in
+  // "Best matches first" toggle is gone — a scope now reshapes by default).
+  // Player-scope → players ranked best-fit-first; for non-player scopes the
+  // role filter is the primary effect (no coach-fit math yet — Phase 2).
+  useEffect(() => {
+    setApplyContextFit(Boolean(scopedRole))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scopedRole])
 
   // Input → URL: write searchQuery to the URL ?q= param.
   //
@@ -407,7 +444,22 @@ export default function CommunityPage() {
                   get_top_community_members RPC ("recently joined",
                   "open to opportunities", etc.). Marked as a follow-up
                   slice; for now the lane is fixed per role. */}
-              {!isNarrowed && activeTab === 'all' && (
+              {/* When a scope is reshaping the page, the carousel is driven
+                  by the SOUGHT ROLE (coach-scope → featured coaches,
+                  player-scope → featured players) — matching All Members.
+                  Otherwise the existing theme/role-tab behaviour applies. */}
+              {!isNarrowed && scopeReshaping && (
+                <TopCommunityMembersCarousel
+                  key={`scoped-${scopedRole}-${refreshKey}`}
+                  roleFilter={scopedRole!}
+                  sortCriterion={scopedRole === 'player' ? 'availability_activity' : 'completeness'}
+                  title={scopedRole === 'coach' ? 'Top coaches for your search' : 'Top players for your search'}
+                  subtitle="Ranked for your active recruiting scope"
+                  filterPlayingCategories={filterPlayingCategories}
+                  onViewAll={handleViewAllScroll}
+                />
+              )}
+              {!isNarrowed && !scopeReshaping && activeTab === 'all' && (
                 <TopCommunityMembersCarousel
                   key={`featured-${themeIndex}-${refreshKey}`}
                   roleFilter={featured.lane}
@@ -419,7 +471,7 @@ export default function CommunityPage() {
                   onViewAll={handleViewAllScroll}
                 />
               )}
-              {!isNarrowed && activeTab !== 'all' && memberRoleFilter && (
+              {!isNarrowed && !scopeReshaping && activeTab !== 'all' && memberRoleFilter && (
                 <TopCommunityMembersCarousel
                   key={`top-${activeTab}-${refreshKey}`}
                   roleFilter={memberRoleFilter}
@@ -458,30 +510,32 @@ export default function CommunityPage() {
                     <option value="completeness">Profile completeness</option>
                   </select>
                 </label>
-                {/* Context-fit toggle — explicit opt-in. Only shown when:
-                    the viewer is a recruiter (club/coach) AND has an
-                    active recruiting context AND the default 'newest'
-                    sort is selected (the mode the Fit ranking hooks
-                    into). Ticking it sorts the grid best-fit-first for
-                    that context; nobody is hidden. Disabled-state copy
-                    isn't needed — it simply doesn't render otherwise. */}
-                {(viewerProfile?.role === 'club' || viewerProfile?.role === 'coach') &&
-                  activeRecruitingTarget &&
-                  sort === 'newest' && (
-                    <label
-                      className="text-xs text-gray-600 flex items-center gap-1.5 flex-shrink-0 cursor-pointer"
-                      title="Sort this list best-fit-first for your active recruiting context. Nobody is hidden."
-                    >
-                      <input
-                        type="checkbox"
-                        checked={applyContextFit}
-                        onChange={(e) => setApplyContextFit(e.target.checked)}
-                        className="rounded border-gray-300 text-[#8026FA] focus:ring-[#8026FA]/40"
-                      />
-                      <span className="font-medium">Best matches first</span>
-                    </label>
-                  )}
               </section>
+
+              {/* Scoped-state banner — when a scope reshapes the page, make
+                  it explicit that results are role-filtered + ranked for
+                  the active recruiting search, with a one-tap escape to
+                  widen back to everyone (without clearing the scope). */}
+              {scopedRole && (
+                <div className="mb-3 flex items-center justify-between gap-3 rounded-xl border border-[#8026FA]/20 bg-[#8026FA]/[0.04] px-4 py-2.5">
+                  <p className="min-w-0 text-xs text-gray-700">
+                    {scopeReshaping ? (
+                      <>
+                        Showing <span className="font-semibold">{scopedRole === 'coach' ? 'coaches' : 'players'}</span> ranked for your recruiting scope.
+                      </>
+                    ) : (
+                      <>Showing everyone — your scope still personalises ranking.</>
+                    )}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setShowEveryone((v) => !v)}
+                    className="flex-shrink-0 whitespace-nowrap text-xs font-semibold text-[#8026FA] hover:underline"
+                  >
+                    {scopeReshaping ? 'Show everyone' : `Show ${scopedRole === 'coach' ? 'coaches' : 'players'} only`}
+                  </button>
+                </div>
+              )}
 
               {/* All Members grid */}
               <div key={`${activeTab}-${refreshKey}`} className="animate-fade-in">
