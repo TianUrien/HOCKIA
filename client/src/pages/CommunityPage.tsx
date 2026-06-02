@@ -457,6 +457,7 @@ export default function CommunityPage() {
                   subtitle="Ranked for your active recruiting scope"
                   filterPlayingCategories={filterPlayingCategories}
                   onViewAll={handleViewAllScroll}
+                  showEvidence
                 />
               )}
               {!isNarrowed && !scopeReshaping && activeTab === 'all' && (

@@ -133,6 +133,12 @@ interface TopCommunityMembersCarouselProps {
   /** Optional "View all" handler. The page wires this to scroll to
    *  the All members section. Omit to hide the CTA. */
   onViewAll?: () => void
+  /** When true, render the recruiter "Proven" evidence pill on cards.
+   *  Reserved for the recruitment-context ("Top … for your search")
+   *  instance shown while a scope is active. Defaults false so discovery
+   *  rails — New on HOCKIA, themed/role-tab lanes — stay free of
+   *  recruitment signals (onboarding/profile-building intent). */
+  showEvidence?: boolean
 }
 
 const DEFAULT_LIMIT = 20
@@ -160,6 +166,7 @@ export function TopCommunityMembersCarousel({
   limit = DEFAULT_LIMIT,
   filterPlayingCategories,
   onViewAll,
+  showEvidence = false,
 }: TopCommunityMembersCarouselProps) {
   const navigate = useNavigate()
   const { profile: viewerProfile, loading: authLoading } = useAuthStore()
@@ -324,7 +331,7 @@ export function TopCommunityMembersCarousel({
           className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-2 snap-x snap-mandatory scrollbar-hide [scrollbar-width:none] md:mx-0 md:px-0"
         >
           {members.map((m) => (
-            <MemberCard key={m.id} member={m} onClick={() => openMember(m)} />
+            <MemberCard key={m.id} member={m} onClick={() => openMember(m)} showEvidence={showEvidence} />
           ))}
         </div>
       )}
@@ -339,9 +346,12 @@ export function TopCommunityMembersCarousel({
 interface MemberCardProps {
   member: TopMemberRow
   onClick: () => void
+  /** Render the recruiter "Proven" evidence pill (recruitment-context
+   *  carousel only — keeps discovery rails signal-free). */
+  showEvidence?: boolean
 }
 
-function MemberCard({ member, onClick }: MemberCardProps) {
+function MemberCard({ member, onClick, showEvidence = false }: MemberCardProps) {
   // Carousel-card auth gate mirrors MemberTile — anon viewers + the
   // card's own owner don't see the QuickActionsRow strip. The strip
   // self-gates internally too, but checking here also lets us skip
@@ -474,8 +484,9 @@ function MemberCard({ member, onClick }: MemberCardProps) {
         {/* Phase 2C — Coach Fit chip (coach cards under a coach scope;
             null otherwise). */}
         <ClubFitChip kind="coach" fitResult={coachFit} variant="badge" />
-        {/* Increment #1 — Proven lens, compact pill (dense card). */}
-        <ProvenSignal result={evidence} variant="compact" />
+        {/* Increment #1 — Proven lens, compact pill. Recruitment-context
+            carousel only (option b: discovery rails stay signal-free). */}
+        {showEvidence && <ProvenSignal result={evidence} variant="compact" />}
       </div>
 
       {/* Nationality slot — reserves 2 lines so single + dual
