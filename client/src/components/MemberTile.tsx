@@ -11,7 +11,9 @@ import QuickActionsRow from '@/components/recruiting/QuickActionsRow'
 import { getImageUrl } from '@/lib/imageUrl'
 import RolePlaceholder from './RolePlaceholder'
 import ClubFitChip from './recruiting/ClubFitChip'
+import ProvenSignal from './recruiting/ProvenSignal'
 import { useCoachFit } from '@/hooks/useCoachFit'
+import { useEvidence } from '@/hooks/useEvidence'
 
 const BRAND_CATEGORY_LABELS: Record<string, string> = {
   equipment: 'Equipment',
@@ -64,6 +66,13 @@ interface MemberTileProps {
   position?: string | null
   /** Recency-30d signal for Fit availability + recency components. */
   last_active_at?: string | null
+  /** Increment #1 (Proven lens) — evidence inputs for the recruiter-only
+   *  confidence signal: highlight reel, full-match footage count, and
+   *  accepted references. (Verified + linked club come from isVerified +
+   *  current_world_club_id.) */
+  highlight_video_url?: string | null
+  full_game_video_count?: number | null
+  accepted_reference_count?: number | null
   tier?: ProfileTier
   isVerified?: boolean
   verifiedAt?: string | null
@@ -104,6 +113,17 @@ export default function MemberTile(props: MemberTileProps) {
         }
       : null,
   )
+  // Increment #1 — Proven lens. Recruiter-only evidence/confidence signal
+  // (renders nothing for non-recruiter viewers or candidates with no
+  // evidence on file).
+  const evidence = useEvidence({
+    role: props.role,
+    highlight_video_url: props.highlight_video_url ?? null,
+    full_game_video_count: props.full_game_video_count ?? null,
+    accepted_reference_count: props.accepted_reference_count ?? null,
+    is_verified: props.isVerified ?? null,
+    current_world_club_id: props.current_world_club_id ?? null,
+  })
 
   const isBrand = props.role === 'brand'
   const heroSrc = isBrand ? (props.brandLogoUrl ?? props.avatar_url) : props.avatar_url
@@ -278,6 +298,11 @@ export default function MemberTile(props: MemberTileProps) {
                 otherwise); the player chip above is null for coaches. */}
             <ClubFitChip kind="coach" fitResult={coachFit} />
           </div>
+
+          {/* Proven lens (Increment #1) — recruiter-only evidence
+              confidence: tier pill + glanceable facts. Renders nothing
+              for non-recruiter viewers or candidates with no evidence. */}
+          <ProvenSignal result={evidence} />
 
           {/* Row 3: nationality (tile mode — full names + flags, EU pill
               as a small chip; flex-wrap so dual-nat doesn't truncate). */}

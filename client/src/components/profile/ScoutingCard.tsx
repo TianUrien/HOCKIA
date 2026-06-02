@@ -34,7 +34,9 @@ import { logger } from '@/lib/logger'
 import { useAuthStore } from '@/lib/auth'
 import { useIsProfileSaved } from '@/hooks/useSavedProfiles'
 import ClubFitChip from '@/components/recruiting/ClubFitChip'
+import ProvenSignal from '@/components/recruiting/ProvenSignal'
 import { useCoachFit } from '@/hooks/useCoachFit'
+import { useEvidence } from '@/hooks/useEvidence'
 import AIOpinionPanel from '@/components/recruiting/AIOpinionPanel'
 import MoreActionsMenu from '@/components/recruiting/MoreActionsMenu'
 
@@ -60,6 +62,9 @@ interface ScoutingCardProfile {
    *  No separate join — same value MediaCard uses. */
   full_game_video_count: number | null
   accepted_reference_count: number | null
+  /** Increment #1 (Proven lens) — verified badge feeds the evidence
+   *  confidence signal alongside video/references/level. */
+  is_verified?: boolean | null
   last_active_at: string | null
   show_last_active: boolean | null
   open_to_play: boolean | null
@@ -108,6 +113,15 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
         }
       : null,
   )
+  // Increment #1 — Proven lens (recruiter-only evidence confidence).
+  const evidence = useEvidence({
+    role: profile.role,
+    highlight_video_url: profile.highlight_video_url,
+    full_game_video_count: profile.full_game_video_count,
+    accepted_reference_count: profile.accepted_reference_count,
+    is_verified: profile.is_verified ?? null,
+    current_world_club_id: profile.current_world_club_id,
+  })
 
   // Two parallel fetches — career_history (counts + most-recent per
   // type) and the gallery count. The full-game-video count is
@@ -323,6 +337,10 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
           fitResult={coachFit}
         />
       </div>
+
+      {/* Proven lens (Increment #1) — recruiter-only evidence confidence
+          (tier pill + facts). Renders nothing when no evidence applies. */}
+      <ProvenSignal result={evidence} className="mt-3" />
 
       {/* Section F (G.7) — HOCKIA AI fit opinion. Recruiter-only,
           flag-gated, and hidden when Fit isn't applicable (no scope,

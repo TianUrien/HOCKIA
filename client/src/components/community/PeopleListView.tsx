@@ -62,6 +62,8 @@ export interface Profile {
   brand_category?: string | null
   // Extra fields used to compute profile-complete pill (cheap, on the profile row or brand join)
   highlight_video_url?: string | null
+  // Increment #1 (Proven lens) — count of full-match videos on the row.
+  full_game_video_count?: number | null
   bio?: string | null
   club_bio?: string | null
   year_founded?: number | null
@@ -90,7 +92,7 @@ export interface Profile {
 }
 
 const PROFILES_SELECT =
-  'id, avatar_url, full_name, role, nationality, nationality_country_id, nationality2_country_id, base_location, position, secondary_position, current_club, current_world_club_id, gender, playing_category, coaching_categories, umpiring_categories, created_at, is_test_account, open_to_play, open_to_coach, open_to_opportunities, last_active_at, accepted_reference_count, coach_specialization, coach_specialization_custom, highlight_video_url, bio, club_bio, year_founded, website, contact_email, career_entry_count, accepted_friend_count, is_verified, verified_at, umpire_level, federation, umpire_since, officiating_specialization, languages, last_officiated_at, umpire_appointment_count, profile_completeness_pct'
+  'id, avatar_url, full_name, role, nationality, nationality_country_id, nationality2_country_id, base_location, position, secondary_position, current_club, current_world_club_id, gender, playing_category, coaching_categories, umpiring_categories, created_at, is_test_account, open_to_play, open_to_coach, open_to_opportunities, last_active_at, accepted_reference_count, coach_specialization, coach_specialization_custom, highlight_video_url, full_game_video_count, bio, club_bio, year_founded, website, contact_email, career_entry_count, accepted_friend_count, is_verified, verified_at, umpire_level, federation, umpire_since, officiating_specialization, languages, last_officiated_at, umpire_appointment_count, profile_completeness_pct'
 
 // CommunityFilters type moved to ./communityFilters.ts so the lifted
 // search bar / quick filters / drawer (now rendered by CommunityPage)
@@ -835,6 +837,9 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
                 coaching_categories={member.coaching_categories ?? null}
                 position={member.position ?? null}
                 last_active_at={member.last_active_at ?? null}
+                highlight_video_url={member.highlight_video_url ?? null}
+                full_game_video_count={member.full_game_video_count ?? null}
+                accepted_reference_count={member.accepted_reference_count ?? null}
                 tier={getMemberTier(member)}
                 isVerified={Boolean(member.is_verified)}
                 verifiedAt={member.verified_at ?? null}

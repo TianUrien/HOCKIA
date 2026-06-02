@@ -625,6 +625,7 @@ export default function CoachDashboard({
               highlight_video_url: profile.highlight_video_url ?? null,
               full_game_video_count: profile.full_game_video_count ?? null,
               accepted_reference_count: profile.accepted_reference_count ?? null,
+              is_verified: profile.is_verified ?? null,
               last_active_at: profile.last_active_at ?? null,
               show_last_active: profile.show_last_active ?? null,
               open_to_play: null,

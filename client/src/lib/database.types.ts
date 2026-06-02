@@ -6368,8 +6368,10 @@ export type Database = {
           current_club: string
           current_competition_name: string
           current_world_club_id: string
+          full_game_video_count: number
           full_name: string
           gender: string
+          highlight_video_url: string
           id: string
           is_verified: boolean
           last_active_at: string

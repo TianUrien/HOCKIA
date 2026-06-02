@@ -5,7 +5,9 @@ import Avatar from '../Avatar'
 import RoleBadge from '../RoleBadge'
 import DualNationalityDisplay from '../DualNationalityDisplay'
 import ClubFitChip from '../recruiting/ClubFitChip'
+import ProvenSignal from '../recruiting/ProvenSignal'
 import { useCoachFit } from '@/hooks/useCoachFit'
+import { useEvidence } from '@/hooks/useEvidence'
 import HockeyContextLine from '../recruiting/HockeyContextLine'
 import QuickActionsRow from '../recruiting/QuickActionsRow'
 import { supabase } from '@/lib/supabase'
@@ -66,6 +68,7 @@ interface TopMemberRow {
   open_to_coach: boolean | null
   open_to_opportunities: boolean | null
   is_verified: boolean | null
+  accepted_reference_count: number | null
   last_active_at: string | null
   profile_completeness_pct: number
   /** Phase 3e — drives Club Fit gender_match + filtering. RPC now
@@ -87,6 +90,10 @@ interface TopMemberRow {
    *  Coach Fit chip on coach cards (null for non-coach rows). */
   coach_specialization: string | null
   coaching_categories: string[] | null
+  /** Increment #1 — Proven lens video evidence (refs/verified/level
+   *  already present above). */
+  highlight_video_url: string | null
+  full_game_video_count: number | null
 }
 
 interface TopCommunityMembersCarouselProps {
@@ -354,6 +361,15 @@ function MemberCard({ member, onClick }: MemberCardProps) {
         }
       : null,
   )
+  // Increment #1 — Proven lens (compact pill on the dense carousel card).
+  const evidence = useEvidence({
+    role: member.role,
+    highlight_video_url: member.highlight_video_url,
+    full_game_video_count: member.full_game_video_count,
+    accepted_reference_count: member.accepted_reference_count,
+    is_verified: member.is_verified,
+    current_world_club_id: member.current_world_club_id,
+  })
   // .trim() guards against legacy rows with trailing whitespace in
   // full_name — the value leaks into both the visible label and the
   // aria-label (which then produces "Open Maria 's profile" with an
@@ -458,6 +474,8 @@ function MemberCard({ member, onClick }: MemberCardProps) {
         {/* Phase 2C — Coach Fit chip (coach cards under a coach scope;
             null otherwise). */}
         <ClubFitChip kind="coach" fitResult={coachFit} variant="badge" />
+        {/* Increment #1 — Proven lens, compact pill (dense card). */}
+        <ProvenSignal result={evidence} variant="compact" />
       </div>
 
       {/* Nationality slot — reserves 2 lines so single + dual

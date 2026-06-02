@@ -604,6 +604,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
               highlight_video_url: (profile as Profile).highlight_video_url ?? null,
               full_game_video_count: (profile as Profile).full_game_video_count ?? null,
               accepted_reference_count: (profile as Profile).accepted_reference_count ?? null,
+              is_verified: (profile as Profile).is_verified ?? null,
               last_active_at: (profile as Profile).last_active_at ?? null,
               show_last_active: (profile as Profile).show_last_active ?? null,
               open_to_play: (profile as Profile).open_to_play ?? null,
