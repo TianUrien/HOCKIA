@@ -1,5 +1,5 @@
 import { useState, useEffect, type ReactNode } from 'react'
-import { Video, Upload, Trash2, Lock } from 'lucide-react'
+import { Video, Trash2, Lock } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
@@ -205,88 +205,72 @@ export default function MediaTab({ profileId, readOnly = false, renderHeader, sh
             return headerContent ? <div className="mb-3">{headerContent}</div> : null
           })()}
 
+          {/* Native (Cloudflare Stream) uploads are the PRIMARY highlight
+              surface — reliable, in-app playback. The legacy embed-link
+              highlight (profiles.highlight_video_url) renders below it as
+              a secondary "Linked highlight" when one exists, so existing
+              link-highlights aren't lost during the transition. Upload is
+              the headline action; "paste a link" is the secondary path
+              (opens AddVideoLinkModal). */}
           {isLoadingProfile ? (
             <div className="space-y-4">
               <Skeleton className="aspect-video w-full" variant="rectangular" />
               <Skeleton className="h-10 w-40" />
             </div>
-          ) : displayProfile?.highlight_video_url ? (
-            canViewVideo ? (
-              <>
-                <div className="relative">
-                  <VideoEmbed url={displayProfile.highlight_video_url} />
-                  {!readOnly && (
-                    <button
-                      onClick={() => setShowVideoDeleteModal(true)}
-                      disabled={deletingVideo}
-                      className="absolute right-4 top-4 rounded-lg bg-red-500 p-2 text-white transition-colors hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-50"
-                      title="Remove video"
-                      aria-label="Remove video"
-                      type="button"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
-                {!readOnly && (
-                  <VisibilityToggle
-                    visibility={visibility}
-                    saving={savingVisibility}
-                    onChange={handleVisibilityChange}
-                  />
-                )}
-              </>
-            ) : (
-              <RestrictedVideoState showSignIn={!viewerRole} />
-            )
           ) : (
-            <div className="rounded-xl border-2 border-dashed border-gray-300 p-8 text-center sm:p-12">
-              <div className="mb-4 flex justify-center">
-                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-600">
-                  <Video className="h-10 w-10 text-white" />
-                </div>
-              </div>
-              <h3 className="mb-2 text-lg font-semibold text-gray-900">No Highlight Video Yet</h3>
-              <p className="mb-6 text-gray-600">
-                {readOnly
-                  ? 'This player has not added a highlight video yet.'
-                  : 'Drop in your highlight reel so coaches can evaluate your skills faster.'}
-              </p>
-              {!readOnly && (
-                <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
-                  <Button
-                    onClick={() => setShowAddVideoModal(true)}
-                    className="flex items-center gap-2"
-                  >
-                    <Upload className="h-4 w-4" />
-                    Add Video Link
-                  </Button>
-                  <p className="max-w-xs text-center text-xs text-gray-500">
-                    Uploading files directly is coming soon. For now, paste a share link from YouTube, Vimeo, or Google Drive.
-                  </p>
-                </div>
+            <div className="space-y-6">
+              {isPlayerProfile && targetUserId && (
+                <NativeVideosSection
+                  playerUserId={targetUserId}
+                  readOnly={readOnly}
+                  hasLegacyHighlight={Boolean(displayProfile?.highlight_video_url)}
+                  onAddLink={!readOnly ? () => setShowAddVideoModal(true) : undefined}
+                />
+              )}
+
+              {/* Legacy linked highlight — only when one exists. */}
+              {displayProfile?.highlight_video_url && (
+                canViewVideo ? (
+                  <div className="space-y-2">
+                    <h3 className="flex items-center gap-2 text-base font-bold text-gray-900">
+                      <Video className="h-4 w-4 flex-shrink-0 text-[#8026FA]" />
+                      Linked highlight
+                    </h3>
+                    <div className="relative">
+                      <VideoEmbed url={displayProfile.highlight_video_url} />
+                      {!readOnly && (
+                        <button
+                          onClick={() => setShowVideoDeleteModal(true)}
+                          disabled={deletingVideo}
+                          className="absolute right-4 top-4 rounded-lg bg-red-500 p-2 text-white transition-colors hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-50"
+                          title="Remove video"
+                          aria-label="Remove video"
+                          type="button"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                    {!readOnly && (
+                      <VisibilityToggle
+                        visibility={visibility}
+                        saving={savingVisibility}
+                        onChange={handleVisibilityChange}
+                      />
+                    )}
+                  </div>
+                ) : (
+                  <RestrictedVideoState showSignIn={!viewerRole} />
+                )
               )}
             </div>
           )}
         </div>
       ) : null}
 
-      {/* Full game videos — player-only feature, beneath the highlight
-          block so highlight stays the quick first impression and full
-          games sit as deeper evidence for clubs/coaches. RLS filters
-          which rows each visitor sees: anon/player → public only;
-          club/coach → public + recruiters; owner → all.
-          The section component hides itself entirely in readOnly mode
-          when zero videos pass the visitor's RLS scope, so visitors of
-          a player with no public videos see no orphan header. */}
-      {/* Native (Cloudflare Stream) uploaded videos — the new reliable
-          primary path. Runs alongside the legacy embed highlight above
-          (hybrid) and sits before full-match footage. RLS + the playback
-          token enforce visibility per viewer. */}
-      {showVideo && isPlayerProfile && targetUserId && (
-        <NativeVideosSection playerUserId={targetUserId} readOnly={readOnly} />
-      )}
-
+      {/* Full game videos — player-only, beneath the highlight block so
+          highlight stays the quick first impression and full games sit as
+          deeper evidence. RLS filters which rows each visitor sees. */}
       {showVideo && isPlayerProfile && targetUserId && (
         <FullGameVideosSection playerUserId={targetUserId} readOnly={readOnly} />
       )}

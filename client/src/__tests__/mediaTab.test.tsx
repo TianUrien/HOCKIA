@@ -127,7 +127,7 @@ describe('MediaTab', () => {
     expect(screen.getByTestId('gallery-manager')).toBeInTheDocument()
   })
 
-  it('shows the add video call-to-action when no highlight exists', async () => {
+  it('shows the upload + paste-link call-to-action when no highlight exists', async () => {
     setAuthState({
       profile: {
         id: 'user-1',
@@ -138,8 +138,15 @@ describe('MediaTab', () => {
 
     render(<MediaTab />)
 
-    expect(await screen.findByText('No Highlight Video Yet')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /add video link/i })).toBeInTheDocument()
+    // Consolidated empty state (native-first): upload is the primary CTA,
+    // paste-a-link is the secondary path. The old "No Highlight Video Yet"
+    // + "Add video link" block was replaced by NativeVideosSection's
+    // "Add your highlight reel" prompt.
+    expect(await screen.findByText('Add your highlight reel')).toBeInTheDocument()
+    // "Upload video" appears twice — the section header CTA + the empty-state
+    // CTA — so assert at least one exists rather than a unique match.
+    expect(screen.getAllByRole('button', { name: /upload video/i }).length).toBeGreaterThan(0)
+    expect(screen.getByRole('button', { name: /paste a youtube/i })).toBeInTheDocument()
   })
 
   it('removes the highlight video when confirmed', async () => {

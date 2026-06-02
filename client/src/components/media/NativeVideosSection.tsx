@@ -30,9 +30,17 @@ interface PlayerVideoRow {
 interface NativeVideosSectionProps {
   playerUserId: string
   readOnly: boolean
+  /** True when the player already has a legacy embed highlight
+   *  (profiles.highlight_video_url) rendered below this section. Used so
+   *  the owner empty-state doesn't claim "no highlight" when a linked one
+   *  exists, and so the "or paste a link" affordance can read correctly. */
+  hasLegacyHighlight?: boolean
+  /** Opens MediaTab's AddVideoLinkModal (paste a YouTube/Vimeo/Drive
+   *  link) — the secondary, link-based path. Owner-only. */
+  onAddLink?: () => void
 }
 
-export default function NativeVideosSection({ playerUserId, readOnly }: NativeVideosSectionProps) {
+export default function NativeVideosSection({ playerUserId, readOnly, hasLegacyHighlight = false, onAddLink }: NativeVideosSectionProps) {
   const [videos, setVideos] = useState<PlayerVideoRow[]>([])
   const [loading, setLoading] = useState(true)
   const [uploadOpen, setUploadOpen] = useState(false)
@@ -81,18 +89,18 @@ export default function NativeVideosSection({ playerUserId, readOnly }: NativeVi
 
   return (
     <section className="space-y-3">
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0">
           <h3 className="flex items-center gap-2 text-base font-bold text-gray-900">
-            <Film className="h-4 w-4 text-[#8026FA]" />
-            Uploaded videos
+            <Film className="h-4 w-4 text-[#8026FA] flex-shrink-0" />
+            Highlight videos
           </h3>
-          <p className="text-xs text-gray-500">Videos hosted on HOCKIA — play instantly, no external links.</p>
+          <p className="text-xs text-gray-500">Hosted on HOCKIA — play instantly, no external links.</p>
         </div>
         {!readOnly && (
-          <Button variant="outline" onClick={() => setUploadOpen(true)} className="flex items-center gap-1.5 whitespace-nowrap">
+          <Button variant="primary" onClick={() => setUploadOpen(true)} className="flex items-center gap-1.5 whitespace-nowrap flex-shrink-0">
             <Plus className="h-4 w-4" />
-            Upload
+            Upload video
           </Button>
         )}
       </div>
@@ -102,10 +110,36 @@ export default function NativeVideosSection({ playerUserId, readOnly }: NativeVi
           <Loader2 className="h-5 w-5 animate-spin" />
         </div>
       ) : videos.length === 0 ? (
-        !readOnly && (
-          <p className="rounded-xl border border-dashed border-gray-200 px-4 py-6 text-center text-sm text-gray-500">
-            No uploaded videos yet. Tap “Upload” to add your first highlight — it plays directly inside HOCKIA.
-          </p>
+        // Owner empty state — upload is the primary path; paste-a-link is
+        // the secondary fallback. Suppressed when a legacy linked highlight
+        // already exists below (so we don't claim "no highlight").
+        !readOnly && !hasLegacyHighlight && (
+          <div className="rounded-xl border-2 border-dashed border-gray-300 px-4 py-8 text-center">
+            <div className="mb-3 flex justify-center">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-[#8026FA] to-[#924CEC]">
+                <Film className="h-6 w-6 text-white" />
+              </div>
+            </div>
+            <p className="text-sm font-semibold text-gray-900">Add your highlight reel</p>
+            <p className="mx-auto mb-4 mt-1 max-w-xs text-xs text-gray-500">
+              Upload a video so clubs and coaches can evaluate you — it plays directly inside HOCKIA.
+            </p>
+            <div className="flex flex-col items-center justify-center gap-2 sm:flex-row">
+              <Button onClick={() => setUploadOpen(true)} className="flex items-center gap-1.5">
+                <Plus className="h-4 w-4" />
+                Upload video
+              </Button>
+              {onAddLink && (
+                <button
+                  type="button"
+                  onClick={onAddLink}
+                  className="text-xs font-medium text-[#8026FA] hover:underline"
+                >
+                  or paste a YouTube / Vimeo / Drive link
+                </button>
+              )}
+            </div>
+          </div>
         )
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -157,6 +191,18 @@ export default function NativeVideosSection({ playerUserId, readOnly }: NativeVi
             </div>
           ))}
         </div>
+      )}
+
+      {/* Secondary link path — always reachable for the owner once they
+          have videos (the empty state offers it too). */}
+      {!readOnly && videos.length > 0 && onAddLink && (
+        <button
+          type="button"
+          onClick={onAddLink}
+          className="text-xs font-medium text-[#8026FA] hover:underline"
+        >
+          or paste a YouTube / Vimeo / Drive link
+        </button>
       )}
 
       <UploadVideoModal
