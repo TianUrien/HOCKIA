@@ -34,6 +34,7 @@ import { logger } from '@/lib/logger'
 import { useAuthStore } from '@/lib/auth'
 import { useIsProfileSaved } from '@/hooks/useSavedProfiles'
 import ClubFitChip from '@/components/recruiting/ClubFitChip'
+import { useCoachFit } from '@/hooks/useCoachFit'
 import AIOpinionPanel from '@/components/recruiting/AIOpinionPanel'
 import MoreActionsMenu from '@/components/recruiting/MoreActionsMenu'
 
@@ -50,6 +51,10 @@ interface ScoutingCardProfile {
    *  parent doesn't supply it (chip still works, just no position signal). */
   position?: string | null
   secondary_position?: string | null
+  /** Phase 2C — drive the Coach Fit chip on coach profiles (specialization
+   *  match vs the sought coaching role). Optional; null/absent for players. */
+  coach_specialization?: string | null
+  coaching_categories?: string[] | null
   highlight_video_url: string | null
   /** Denormalized count of full-game video entries on the profile row.
    *  No separate join — same value MediaCard uses. */
@@ -91,6 +96,18 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
   const { user } = useAuthStore()
   const [counts, setCounts] = useState<EvidenceCounts | null>(null)
   const savedState = useIsProfileSaved(profile.id)
+  // Phase 2C — Coach Fit for coach profiles. NOT_APPLICABLE (chip null)
+  // for players or when no coach scope is active.
+  const coachFit = useCoachFit(
+    profile.role === 'coach'
+      ? {
+          id: profile.id,
+          role: profile.role,
+          coach_specialization: profile.coach_specialization ?? null,
+          coaching_categories: profile.coaching_categories ?? null,
+        }
+      : null,
+  )
 
   // Two parallel fetches — career_history (counts + most-recent per
   // type) and the gallery count. The full-game-video count is
@@ -298,6 +315,12 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
             position: profile.position ?? null,
             secondary_position: profile.secondary_position ?? null,
           }}
+        />
+        {/* Phase 2C — Coach Fit chip for coach profiles (null otherwise). */}
+        <ClubFitChip
+          className="flex-shrink-0 whitespace-nowrap"
+          kind="coach"
+          fitResult={coachFit}
         />
       </div>
 

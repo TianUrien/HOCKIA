@@ -5,6 +5,7 @@ import Avatar from '../Avatar'
 import RoleBadge from '../RoleBadge'
 import DualNationalityDisplay from '../DualNationalityDisplay'
 import ClubFitChip from '../recruiting/ClubFitChip'
+import { useCoachFit } from '@/hooks/useCoachFit'
 import HockeyContextLine from '../recruiting/HockeyContextLine'
 import QuickActionsRow from '../recruiting/QuickActionsRow'
 import { supabase } from '@/lib/supabase'
@@ -82,6 +83,10 @@ interface TopMemberRow {
    *  Drives HockeyContextLine's middle segment. Server-side join
    *  saves a per-card client lookup. */
   current_competition_name: string | null
+  /** Phase 2C — coach specialization + coaching categories, drive the
+   *  Coach Fit chip on coach cards (null for non-coach rows). */
+  coach_specialization: string | null
+  coaching_categories: string[] | null
 }
 
 interface TopCommunityMembersCarouselProps {
@@ -337,6 +342,18 @@ function MemberCard({ member, onClick }: MemberCardProps) {
   // with nothing inside it).
   const { profile: viewerProfile } = useAuthStore()
   const showQuickActions = Boolean(viewerProfile) && viewerProfile?.id !== member.id
+  // Phase 2C — Coach Fit for coach cards. NOT_APPLICABLE (chip null) for
+  // non-coaches or non-coach scopes.
+  const coachFit = useCoachFit(
+    member.role === 'coach'
+      ? {
+          id: member.id,
+          role: member.role,
+          coach_specialization: member.coach_specialization,
+          coaching_categories: member.coaching_categories,
+        }
+      : null,
+  )
   // .trim() guards against legacy rows with trailing whitespace in
   // full_name — the value leaks into both the visible label and the
   // aria-label (which then produces "Open Maria 's profile" with an
@@ -438,6 +455,9 @@ function MemberCard({ member, onClick }: MemberCardProps) {
           }}
           variant="badge"
         />
+        {/* Phase 2C — Coach Fit chip (coach cards under a coach scope;
+            null otherwise). */}
+        <ClubFitChip kind="coach" fitResult={coachFit} variant="badge" />
       </div>
 
       {/* Nationality slot — reserves 2 lines so single + dual

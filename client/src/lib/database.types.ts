@@ -6362,6 +6362,8 @@ export type Database = {
           accepted_reference_count: number
           avatar_url: string
           base_location: string
+          coach_specialization: string
+          coaching_categories: string[]
           competition_level_band: number
           current_club: string
           current_competition_name: string

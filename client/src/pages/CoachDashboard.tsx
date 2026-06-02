@@ -615,10 +615,13 @@ export default function CoachDashboard({
               full_name: profile.full_name ?? null,
               current_club: profile.current_club ?? null,
               current_world_club_id: profile.current_world_club_id ?? null,
-              // Coaches don't have playing_category — pass null so Fit
-              // chip stays hidden on coach profile views (Fit is
-              // player-only in Sprint v1).
+              // Coaches don't have playing_category (player-only). Coach
+              // fit (Phase 2C) reads coach_specialization + coaching
+              // categories instead — passed below so a recruiter with an
+              // active coach scope sees a Coach Fit chip here.
               playing_category: null,
+              coach_specialization: (profile as { coach_specialization?: string | null }).coach_specialization ?? null,
+              coaching_categories: (profile as { coaching_categories?: string[] | null }).coaching_categories ?? null,
               highlight_video_url: profile.highlight_video_url ?? null,
               full_game_video_count: profile.full_game_video_count ?? null,
               accepted_reference_count: profile.accepted_reference_count ?? null,
