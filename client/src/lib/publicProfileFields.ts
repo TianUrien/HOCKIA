@@ -61,6 +61,15 @@ export const PUBLIC_PROFILE_FIELDS_LIST = [
   'accepted_friend_count',
   'post_count',
   'full_game_video_count',
+  // Matching Increment #2 — candidate intent shown read-only on the
+  // public profile (the "Interested" preferences they chose to share).
+  'relocation_willingness',
+  'relocation_countries_open',
+  'relocation_countries_excluded',
+  'level_target',
+  'opportunity_preference',
+  'available_from',
+  'availability_duration',
 ] as const
 
 export const PUBLIC_PROFILE_FIELDS = PUBLIC_PROFILE_FIELDS_LIST.join(',')

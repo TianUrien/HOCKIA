@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import type { Profile } from '@/lib/supabase'
 import { Button, Input, CountrySelect, StorageImage, LocationAutocomplete, PlayingCategorySelector, MultiCategorySelector, DateOfBirthPicker } from '@/components'
+import CountryMultiSelect from '@/components/CountryMultiSelect'
 import type { LocationSelection } from '@/components/LocationAutocomplete'
 import { logger } from '@/lib/logger'
 import { optimizeAvatarImage, validateImage } from '@/lib/imageOptimization'
@@ -76,6 +77,15 @@ type ProfileFormData = {
   open_to_play: boolean
   open_to_coach: boolean
   open_to_opportunities: boolean
+  // Matching Increment #2 — candidate intent ("Interested" lens). Stored
+  // as '' when unset (mapped to null on save); arrays of countries.id.
+  relocation_willingness: string
+  relocation_countries_open: number[]
+  relocation_countries_excluded: number[]
+  level_target: string
+  opportunity_preference: string
+  available_from: string
+  availability_duration: string
   brand_representation: string
   coach_specialization: CoachSpecialization | ''
   coach_specialization_custom: string
@@ -251,6 +261,13 @@ const buildInitialFormData = (profile?: Profile | null): ProfileFormData => ({
   open_to_play: Boolean(profile?.open_to_play),
   open_to_coach: Boolean(profile?.open_to_coach),
   open_to_opportunities: Boolean(profile?.open_to_opportunities),
+  relocation_willingness: profile?.relocation_willingness ?? '',
+  relocation_countries_open: profile?.relocation_countries_open ?? [],
+  relocation_countries_excluded: profile?.relocation_countries_excluded ?? [],
+  level_target: profile?.level_target ?? '',
+  opportunity_preference: profile?.opportunity_preference ?? '',
+  available_from: profile?.available_from ?? '',
+  availability_duration: profile?.availability_duration ?? '',
   brand_representation: profile?.brand_representation || '',
   coach_specialization: (profile?.coach_specialization as CoachSpecialization) || '',
   coach_specialization_custom: profile?.coach_specialization_custom || '',
@@ -262,6 +279,52 @@ const buildInitialFormData = (profile?: Profile | null): ProfileFormData => ({
   languages: profile?.languages ?? [],
   pending_language: '',
 })
+
+// Candidate-intent option sets (Matching Increment #2 — Interested lens).
+const RELOCATION_OPTIONS = [
+  { value: 'relocate', label: 'Open to relocating' },
+  { value: 'home_only', label: 'Staying in my country' },
+  { value: 'open_to_discuss', label: 'Open to discuss' },
+] as const
+const LEVEL_TARGET_OPTIONS = [
+  { value: 'top', label: 'Highest I can' },
+  { value: 'competitive', label: 'Competitive' },
+  { value: 'development', label: 'Development' },
+  { value: 'any', label: 'Any level' },
+] as const
+const OPPORTUNITY_PREF_OPTIONS = [
+  { value: 'paid', label: 'Paid' },
+  { value: 'development', label: 'Development' },
+  { value: 'either', label: 'Either' },
+] as const
+const AVAILABILITY_DURATION_OPTIONS = [
+  { value: 'full_season', label: 'Full season' },
+  { value: 'half_season', label: 'Half season' },
+  { value: 'short_term', label: 'Short term' },
+  { value: 'flexible', label: 'Flexible' },
+] as const
+
+/** Pill-button styling for the single-choice candidate-intent rows. */
+const segmentedClass = (active: boolean) =>
+  `px-3 py-1.5 rounded-full text-sm border transition-colors ${
+    active
+      ? 'border-[#8026FA] bg-[#8026FA]/10 text-[#5b16b8] font-medium'
+      : 'border-gray-300 text-gray-600 hover:border-gray-400'
+  }`
+
+/** Candidate-intent fields (Matching Increment #2) shared by player +
+ *  coach saves. Empty strings map to null; country arrays pass through. */
+function candidateIntentUpdate(formData: ProfileFormData): Record<string, unknown> {
+  return {
+    relocation_willingness: formData.relocation_willingness || null,
+    relocation_countries_open: formData.relocation_countries_open,
+    relocation_countries_excluded: formData.relocation_countries_excluded,
+    level_target: formData.level_target || null,
+    opportunity_preference: formData.opportunity_preference || null,
+    available_from: formData.available_from || null,
+    availability_duration: formData.availability_duration || null,
+  }
+}
 
 export default function EditProfileModal({ isOpen, onClose, role }: EditProfileModalProps) {
   const { profile, setProfile } = useAuthStore()
@@ -633,6 +696,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
       optimisticUpdate.open_to_play = formData.open_to_play
       optimisticUpdate.open_to_opportunities = formData.open_to_opportunities
       optimisticUpdate.brand_representation = formData.brand_representation || null
+      Object.assign(optimisticUpdate, candidateIntentUpdate(formData))
     } else if (role === 'coach') {
       optimisticUpdate.nationality = formData.nationality
       optimisticUpdate.nationality_country_id = formData.nationality_country_id
@@ -656,6 +720,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
         ? formData.coach_specialization_custom.trim() || null
         : null
       optimisticUpdate.coach_recruits_for_team = formData.coach_recruits_for_team
+      Object.assign(optimisticUpdate, candidateIntentUpdate(formData))
     } else if (role === 'umpire') {
       const umpireSinceYear = formSnapshot.umpire_since ? parseInt(formSnapshot.umpire_since, 10) : null
       optimisticUpdate.nationality = formSnapshot.nationality
@@ -1260,6 +1325,119 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                   </label>
                 </div>
               </>
+            )}
+
+            {/* Recruitment preferences (Matching Increment #2 — Interested
+                lens). Player + coach only; all optional. */}
+            {(role === 'player' || role === 'coach') && (
+              <div className="pt-4 mt-1 border-t border-gray-200 space-y-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Recruitment preferences</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Optional — sharpens your matches with recruiters. Never shown as a requirement on your profile.
+                  </p>
+                </div>
+
+                {/* Relocation willingness */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Open to relocating?</label>
+                  <div className="flex flex-wrap gap-2">
+                    {RELOCATION_OPTIONS.map((opt) => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, relocation_willingness: formData.relocation_willingness === opt.value ? '' : opt.value })}
+                        className={segmentedClass(formData.relocation_willingness === opt.value)}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Countries — collapsed by default to keep friction low */}
+                <details className="rounded-lg border border-gray-200 px-3 py-2">
+                  <summary className="text-sm text-gray-700 cursor-pointer select-none">Add specific countries (optional)</summary>
+                  <div className="mt-3 space-y-3">
+                    <CountryMultiSelect
+                      label="Open to playing in"
+                      value={formData.relocation_countries_open}
+                      onChange={(ids) => setFormData({ ...formData, relocation_countries_open: ids })}
+                      excludeIds={formData.relocation_countries_excluded}
+                      placeholder="Add countries you'd consider"
+                    />
+                    <CountryMultiSelect
+                      label="Would not consider"
+                      value={formData.relocation_countries_excluded}
+                      onChange={(ids) => setFormData({ ...formData, relocation_countries_excluded: ids })}
+                      excludeIds={formData.relocation_countries_open}
+                      placeholder="Add countries to exclude"
+                    />
+                  </div>
+                </details>
+
+                {/* Availability window */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Available from</label>
+                    <input
+                      type="date"
+                      value={formData.available_from}
+                      onChange={(e) => setFormData({ ...formData, available_from: e.target.value })}
+                      aria-label="Available from"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#8026FA] focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Duration</label>
+                    <select
+                      value={formData.availability_duration}
+                      onChange={(e) => setFormData({ ...formData, availability_duration: e.target.value })}
+                      aria-label="Availability duration"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#8026FA] focus:border-transparent"
+                    >
+                      <option value="">Not set</option>
+                      {AVAILABILITY_DURATION_OPTIONS.map((o) => (
+                        <option key={o.value} value={o.value}>{o.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Level target */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Level you're targeting</label>
+                  <div className="flex flex-wrap gap-2">
+                    {LEVEL_TARGET_OPTIONS.map((opt) => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, level_target: formData.level_target === opt.value ? '' : opt.value })}
+                        className={segmentedClass(formData.level_target === opt.value)}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Opportunity preference */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Looking for</label>
+                  <div className="flex flex-wrap gap-2">
+                    {OPPORTUNITY_PREF_OPTIONS.map((opt) => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, opportunity_preference: formData.opportunity_preference === opt.value ? '' : opt.value })}
+                        className={segmentedClass(formData.opportunity_preference === opt.value)}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
             )}
 
             {/* Umpire-specific fields — credentials-first layout matches the

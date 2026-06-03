@@ -3,6 +3,7 @@ import {
   DualNationalityDisplay,
 } from '@/components'
 import DashboardCard from './DashboardCard'
+import { useCountries } from '@/hooks/useCountries'
 import { calculateAge, formatDateOfBirth } from '@/lib/utils'
 import { categoriesToDisplay, categoryToDisplay } from '@/lib/hockeyCategories'
 import { getSpecializationLabel } from '@/lib/coachSpecializations'
@@ -13,6 +14,36 @@ interface BasicInfoCardProps {
   profile: PlayerProfileShape
   readOnly: boolean
   onEdit?: () => void
+}
+
+// Matching Increment #2 — read-only labels for candidate-intent fields.
+const RELOCATION_LABEL: Record<string, string> = {
+  relocate: 'Open to relocating',
+  home_only: 'Staying in home country',
+  open_to_discuss: 'Open to discuss',
+}
+const LEVEL_TARGET_LABEL: Record<string, string> = {
+  top: 'Highest level',
+  competitive: 'Competitive',
+  development: 'Development',
+  any: 'Any level',
+}
+const OPPORTUNITY_PREF_LABEL: Record<string, string> = {
+  paid: 'Paid',
+  development: 'Development',
+  either: 'Paid or development',
+}
+const DURATION_LABEL: Record<string, string> = {
+  full_season: 'Full season',
+  half_season: 'Half season',
+  short_term: 'Short term',
+  flexible: 'Flexible',
+}
+
+function formatAvailableFrom(date: string): string {
+  const d = new Date(`${date}T00:00:00`)
+  if (Number.isNaN(d.getTime())) return date
+  return d.toLocaleDateString(undefined, { month: 'short', year: 'numeric' })
 }
 
 interface RowProps {
@@ -60,6 +91,34 @@ export default function BasicInfoCard({ profile, readOnly, onEdit }: BasicInfoCa
         profile.coach_specialization_custom ?? null,
       )
     : null
+
+  // Matching Increment #2 — recruitment preferences (read-only). Player +
+  // coach only; the whole subsection hides when nothing is set.
+  const { getCountryById } = useCountries()
+  const isCandidate = profile.role === 'player' || profile.role === 'coach'
+  const openCountries = (profile.relocation_countries_open ?? [])
+    .map((id) => getCountryById(id)?.name)
+    .filter((n): n is string => Boolean(n))
+  const excludedCountries = (profile.relocation_countries_excluded ?? [])
+    .map((id) => getCountryById(id)?.name)
+    .filter((n): n is string => Boolean(n))
+  const availabilityText = profile.available_from
+    ? `From ${formatAvailableFrom(profile.available_from)}${
+        profile.availability_duration ? ` · ${DURATION_LABEL[profile.availability_duration] ?? ''}` : ''
+      }`
+    : profile.availability_duration
+      ? (DURATION_LABEL[profile.availability_duration] ?? null)
+      : null
+  const hasPrefs =
+    isCandidate &&
+    Boolean(
+      profile.relocation_willingness ||
+        profile.level_target ||
+        profile.opportunity_preference ||
+        availabilityText ||
+        openCountries.length > 0 ||
+        excludedCountries.length > 0,
+    )
 
   return (
     <DashboardCard
@@ -137,6 +196,48 @@ export default function BasicInfoCard({ profile, readOnly, onEdit }: BasicInfoCa
           )}
         </Row>
       </div>
+
+      {/* Recruitment preferences (Matching Increment #2 — read-only).
+          Hidden entirely when the candidate hasn't set any. */}
+      {hasPrefs && (
+        <div className="mt-5 pt-5 border-t border-gray-100">
+          <p className="text-[11px] uppercase tracking-wide text-gray-500 font-medium mb-2">
+            Recruitment preferences
+          </p>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+            {profile.relocation_willingness && (
+              <Row label="Relocation">
+                <span>{RELOCATION_LABEL[profile.relocation_willingness] ?? profile.relocation_willingness}</span>
+              </Row>
+            )}
+            {availabilityText && (
+              <Row label="Availability">
+                <span>{availabilityText}</span>
+              </Row>
+            )}
+            {profile.level_target && (
+              <Row label="Level target">
+                <span>{LEVEL_TARGET_LABEL[profile.level_target] ?? profile.level_target}</span>
+              </Row>
+            )}
+            {profile.opportunity_preference && (
+              <Row label="Looking for">
+                <span>{OPPORTUNITY_PREF_LABEL[profile.opportunity_preference] ?? profile.opportunity_preference}</span>
+              </Row>
+            )}
+            {openCountries.length > 0 && (
+              <Row label="Open to countries">
+                <span className="block truncate" title={openCountries.join(', ')}>{openCountries.join(', ')}</span>
+              </Row>
+            )}
+            {excludedCountries.length > 0 && (
+              <Row label="Would not consider">
+                <span className="block truncate" title={excludedCountries.join(', ')}>{excludedCountries.join(', ')}</span>
+              </Row>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* About me subsection — merged in from the previous standalone
           AboutMeCard so owners see facts + bio in one place. The card's

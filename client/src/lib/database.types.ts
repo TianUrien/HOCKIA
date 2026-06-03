@@ -2859,6 +2859,13 @@ export type Database = {
           open_to_coach: boolean
           open_to_opportunities: boolean
           open_to_play: boolean
+          relocation_willingness: string | null
+          relocation_countries_open: number[]
+          relocation_countries_excluded: number[]
+          level_target: string | null
+          opportunity_preference: string | null
+          available_from: string | null
+          availability_duration: string | null
           playing_category: string | null
           position: string | null
           post_count: number
@@ -2951,6 +2958,13 @@ export type Database = {
           open_to_coach?: boolean
           open_to_opportunities?: boolean
           open_to_play?: boolean
+          relocation_willingness?: string | null
+          relocation_countries_open?: number[]
+          relocation_countries_excluded?: number[]
+          level_target?: string | null
+          opportunity_preference?: string | null
+          available_from?: string | null
+          availability_duration?: string | null
           playing_category?: string | null
           position?: string | null
           post_count?: number
@@ -3043,6 +3057,13 @@ export type Database = {
           open_to_coach?: boolean
           open_to_opportunities?: boolean
           open_to_play?: boolean
+          relocation_willingness?: string | null
+          relocation_countries_open?: number[]
+          relocation_countries_excluded?: number[]
+          level_target?: string | null
+          opportunity_preference?: string | null
+          available_from?: string | null
+          availability_duration?: string | null
           playing_category?: string | null
           position?: string | null
           post_count?: number

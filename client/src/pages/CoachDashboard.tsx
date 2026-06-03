@@ -21,6 +21,7 @@ import SignInPromptModal from '@/components/SignInPromptModal'
 import ClubLinkPrompt from '@/components/ClubLinkPrompt'
 import HeroIdentityCard from '@/components/dashboard/bento/HeroIdentityCard'
 import RecruitmentVisibilityWidget from '@/components/dashboard/bento/RecruitmentVisibilityWidget'
+import RecruitmentPrefsNudge from '@/components/dashboard/RecruitmentPrefsNudge'
 import CoachBentoGrid from '@/components/dashboard/bento/CoachBentoGrid'
 import ScoutingCard from '@/components/profile/ScoutingCard'
 import CoachCommunityHub from '@/components/community/CoachCommunityHub'
@@ -597,6 +598,11 @@ export default function CoachDashboard({
             profile={profile as Profile}
             onAction={handleVisibilityAction}
           />
+        )}
+
+        {/* Matching Increment #2 — dismissible recruitment-preferences nudge. */}
+        {!readOnly && isLanding && (
+          <RecruitmentPrefsNudge profile={profile as Profile} onAdd={() => setShowEditModal(true)} />
         )}
 
         {!readOnly && isLanding && (

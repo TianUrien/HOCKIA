@@ -19,6 +19,7 @@ import ProfilePostsTab from '@/components/ProfilePostsTab'
 import SignInPromptModal from '@/components/SignInPromptModal'
 import HeroIdentityCard from '@/components/dashboard/bento/HeroIdentityCard'
 import RecruitmentVisibilityWidget from '@/components/dashboard/bento/RecruitmentVisibilityWidget'
+import RecruitmentPrefsNudge from '@/components/dashboard/RecruitmentPrefsNudge'
 import PlayerBentoGrid from '@/components/dashboard/bento/PlayerBentoGrid'
 import ScoutingCard from '@/components/profile/ScoutingCard'
 import PlayerCommunityHub from '@/components/community/PlayerCommunityHub'
@@ -574,6 +575,12 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
             profile={profile as Profile}
             onAction={handleProfileStrengthAction}
           />
+        )}
+
+        {/* Matching Increment #2 — dismissible nudge to add recruitment
+            preferences (Interested lens). Self-hides once set or dismissed. */}
+        {!readOnly && isLanding && (
+          <RecruitmentPrefsNudge profile={profile as Profile} onAdd={() => setShowEditModal(true)} />
         )}
 
         {/* "Who viewed your profile" — owner-only engagement nudge that
