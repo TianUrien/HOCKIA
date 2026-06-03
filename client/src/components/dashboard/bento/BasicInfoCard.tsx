@@ -5,6 +5,7 @@ import {
 import DashboardCard from './DashboardCard'
 import { useCountries } from '@/hooks/useCountries'
 import { summarizeCandidateIntent } from '@/lib/candidateIntent'
+import { specialistSkillLabels } from '@/lib/specialistSkills'
 import { calculateAge, formatDateOfBirth } from '@/lib/utils'
 import { categoriesToDisplay, categoryToDisplay } from '@/lib/hockeyCategories'
 import { getSpecializationLabel } from '@/lib/coachSpecializations'
@@ -69,6 +70,8 @@ export default function BasicInfoCard({ profile, readOnly, onEdit }: BasicInfoCa
   const isCandidate = profile.role === 'player' || profile.role === 'coach'
   const intent = summarizeCandidateIntent(profile, (id) => getCountryById(id)?.name)
   const hasPrefs = isCandidate && intent.hasAny
+  // Matching Increment #3 — player specialist tags (read-only chips).
+  const playerSkills = profile.role === 'player' ? specialistSkillLabels(profile.specialist_skills) : []
 
   return (
     <DashboardCard
@@ -146,6 +149,23 @@ export default function BasicInfoCard({ profile, readOnly, onEdit }: BasicInfoCa
           )}
         </Row>
       </div>
+
+      {/* Specialist skills (Matching Increment #3 — read-only chips,
+          players only, hidden when none set). */}
+      {playerSkills.length > 0 && (
+        <div className="mt-5 pt-5 border-t border-gray-100">
+          <p className="text-[11px] uppercase tracking-wide text-gray-500 font-medium mb-2">
+            Specialist skills
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {playerSkills.map((s) => (
+              <span key={s} className="rounded-full bg-[#8026FA]/10 text-[#5b16b8] text-xs font-medium px-2 py-0.5">
+                {s}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Recruitment preferences (Matching Increment #2 — read-only).
           Hidden entirely when the candidate hasn't set any. */}

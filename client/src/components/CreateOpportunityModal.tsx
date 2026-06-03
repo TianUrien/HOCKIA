@@ -14,6 +14,7 @@ import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import { useToastStore } from '@/lib/toast'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import { trackVacancyCreate } from '@/lib/analytics'
+import SpecialistSkillsSelect from '@/components/SpecialistSkillsSelect'
 
 interface CreateVacancyModalProps {
   isOpen: boolean
@@ -60,6 +61,8 @@ const buildInitialFormData = (vacancy?: Vacancy | null, initialOpportunityType?:
   start_date: vacancy?.start_date || null,
   duration_text: vacancy?.duration_text || '',
   requirements: vacancy?.requirements || [],
+  // Matching Increment #3 — specialist skills this opportunity seeks.
+  specialist_skills_wanted: vacancy?.specialist_skills_wanted || [],
   benefits: vacancy?.benefits || [],
   custom_benefits: vacancy?.custom_benefits || [],
   priority: vacancy?.priority || 'medium',
@@ -410,6 +413,8 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
         start_date: formData.start_date || null,
         duration_text: formData.duration_text || null,
         requirements: formData.requirements || [],
+        // Increment #3 — player opps only; cleared for coach opps.
+        specialist_skills_wanted: formData.opportunity_type === 'player' ? (formData.specialist_skills_wanted || []) : [],
         benefits: formData.benefits || [],
         custom_benefits: formData.custom_benefits || [],
         priority: formData.priority || 'medium',
@@ -700,6 +705,18 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                 </div>
                 )}
               </div>
+
+              {/* Specialist skills wanted (Matching Increment #3) — player
+                  opportunities only; optional. */}
+              {formData.opportunity_type === 'player' && (
+                <SpecialistSkillsSelect
+                  label="Specialist skills wanted"
+                  hint="Optional — the specialism you most need. We'll surface players who match."
+                  value={formData.specialist_skills_wanted || []}
+                  onChange={(next) => handleInputChange('specialist_skills_wanted', next)}
+                  position={formData.position}
+                />
+              )}
 
               {/* Description */}
               <div>

@@ -6,6 +6,7 @@ import { useAuthStore } from '@/lib/auth'
 import type { Profile } from '@/lib/supabase'
 import { Button, Input, CountrySelect, StorageImage, LocationAutocomplete, PlayingCategorySelector, MultiCategorySelector, DateOfBirthPicker } from '@/components'
 import CountryMultiSelect from '@/components/CountryMultiSelect'
+import SpecialistSkillsSelect from '@/components/SpecialistSkillsSelect'
 import type { LocationSelection } from '@/components/LocationAutocomplete'
 import { logger } from '@/lib/logger'
 import { optimizeAvatarImage, validateImage } from '@/lib/imageOptimization'
@@ -77,6 +78,8 @@ type ProfileFormData = {
   open_to_play: boolean
   open_to_coach: boolean
   open_to_opportunities: boolean
+  // Matching Increment #3 — player specialist skill tags.
+  specialist_skills: string[]
   // Matching Increment #2 — candidate intent ("Interested" lens). Stored
   // as '' when unset (mapped to null on save); arrays of countries.id.
   relocation_willingness: string
@@ -261,6 +264,7 @@ const buildInitialFormData = (profile?: Profile | null): ProfileFormData => ({
   open_to_play: Boolean(profile?.open_to_play),
   open_to_coach: Boolean(profile?.open_to_coach),
   open_to_opportunities: Boolean(profile?.open_to_opportunities),
+  specialist_skills: profile?.specialist_skills ?? [],
   relocation_willingness: profile?.relocation_willingness ?? '',
   relocation_countries_open: profile?.relocation_countries_open ?? [],
   relocation_countries_excluded: profile?.relocation_countries_excluded ?? [],
@@ -696,6 +700,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
       optimisticUpdate.open_to_play = formData.open_to_play
       optimisticUpdate.open_to_opportunities = formData.open_to_opportunities
       optimisticUpdate.brand_representation = formData.brand_representation || null
+      optimisticUpdate.specialist_skills = formData.specialist_skills
       Object.assign(optimisticUpdate, candidateIntentUpdate(formData))
     } else if (role === 'coach') {
       optimisticUpdate.nationality = formData.nationality
@@ -1077,6 +1082,16 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                     onChange={(next) => setFormData({ ...formData, playing_category: next })}
                   />
                 </div>
+
+                {/* Specialist skills (Matching Increment #3) — what the
+                    player specialises in, beyond position. Optional. */}
+                <SpecialistSkillsSelect
+                  label="Specialist skills"
+                  hint="Optional — what you specialise in beyond your position. Helps recruiters find the exact player they need."
+                  value={formData.specialist_skills}
+                  onChange={(next) => setFormData({ ...formData, specialist_skills: next })}
+                  position={formData.position}
+                />
 
                 {/* ── Personal ── */}
                 <div className="pt-3 mt-1 border-t border-gray-100">

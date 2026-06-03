@@ -36,6 +36,9 @@ export const PUBLIC_PROFILE_FIELDS_LIST = [
   'date_of_birth',
   'position',
   'secondary_position',
+  // Matching Increment #3 — player specialist tags (shown on profile +
+  // recruiter ScoutingCard).
+  'specialist_skills',
   'contact_email',
   'contact_email_public',
   'social_links',

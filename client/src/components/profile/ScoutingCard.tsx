@@ -34,6 +34,7 @@ import { logger } from '@/lib/logger'
 import { useAuthStore } from '@/lib/auth'
 import { useCountries } from '@/hooks/useCountries'
 import { summarizeCandidateIntent } from '@/lib/candidateIntent'
+import { specialistSkillLabels } from '@/lib/specialistSkills'
 import { useInterest } from '@/hooks/useInterest'
 import InterestSignal from '@/components/recruiting/InterestSignal'
 import { useIsProfileSaved } from '@/hooks/useSavedProfiles'
@@ -57,6 +58,8 @@ interface ScoutingCardProfile {
    *  parent doesn't supply it (chip still works, just no position signal). */
   position?: string | null
   secondary_position?: string | null
+  /** Increment #3 — player specialist tags (read-only chips). */
+  specialist_skills?: string[] | null
   /** Phase 2C — drive the Coach Fit chip on coach profiles (specialization
    *  match vs the sought coaching role). Optional; null/absent for players. */
   coach_specialization?: string | null
@@ -130,6 +133,8 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
     available_from: profile.available_from ?? null,
     home_country_id: profile.base_country_id ?? profile.nationality_country_id ?? null,
   })
+  // Increment #3 — player specialist tags (read-only chips).
+  const specialistSkills = specialistSkillLabels(profile.specialist_skills)
   const [counts, setCounts] = useState<EvidenceCounts | null>(null)
   const savedState = useIsProfileSaved(profile.id)
   // Phase 2C — Coach Fit for coach profiles. NOT_APPLICABLE (chip null)
@@ -376,6 +381,17 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
       {/* Interested lens (Increment #2.2) — scored match of intent vs the
           active opportunity scope. Recruiter + active-scope gated. */}
       <InterestSignal result={interest} className="mt-3" />
+
+      {/* Specialist skills (Increment #3) — read-only player tags. */}
+      {specialistSkills.length > 0 && (
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {specialistSkills.map((s) => (
+            <span key={s} className="rounded-full bg-[#8026FA]/10 text-[#5b16b8] text-xs font-medium px-2 py-0.5">
+              {s}
+            </span>
+          ))}
+        </div>
+      )}
 
       {/* Recruitment preferences (Increment #2 — Interested lens, read-only).
           Recruiter viewers only; hidden when the candidate set none. */}

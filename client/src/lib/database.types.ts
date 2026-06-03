@@ -1803,6 +1803,7 @@ export type Database = {
           priority: Database["public"]["Enums"]["opportunity_priority"] | null
           published_at: string | null
           requirements: string[]
+          specialist_skills_wanted: string[]
           search_vector: unknown
           start_date: string | null
           status: Database["public"]["Enums"]["opportunity_status"]
@@ -1833,6 +1834,7 @@ export type Database = {
           priority?: Database["public"]["Enums"]["opportunity_priority"] | null
           published_at?: string | null
           requirements?: string[]
+          specialist_skills_wanted?: string[]
           search_vector?: unknown
           start_date?: string | null
           status?: Database["public"]["Enums"]["opportunity_status"]
@@ -1863,6 +1865,7 @@ export type Database = {
           priority?: Database["public"]["Enums"]["opportunity_priority"] | null
           published_at?: string | null
           requirements?: string[]
+          specialist_skills_wanted?: string[]
           search_vector?: unknown
           start_date?: string | null
           status?: Database["public"]["Enums"]["opportunity_status"]
@@ -2861,6 +2864,7 @@ export type Database = {
           open_to_play: boolean
           relocation_willingness: string | null
           relocation_countries_open: number[]
+          specialist_skills: string[]
           relocation_countries_excluded: number[]
           level_target: string | null
           opportunity_preference: string | null
@@ -2960,6 +2964,7 @@ export type Database = {
           open_to_play?: boolean
           relocation_willingness?: string | null
           relocation_countries_open?: number[]
+          specialist_skills?: string[]
           relocation_countries_excluded?: number[]
           level_target?: string | null
           opportunity_preference?: string | null
@@ -3059,6 +3064,7 @@ export type Database = {
           open_to_play?: boolean
           relocation_willingness?: string | null
           relocation_countries_open?: number[]
+          specialist_skills?: string[]
           relocation_countries_excluded?: number[]
           level_target?: string | null
           opportunity_preference?: string | null
