@@ -619,6 +619,8 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
               opportunity_preference: (profile as Profile).opportunity_preference ?? null,
               available_from: (profile as Profile).available_from ?? null,
               availability_duration: (profile as Profile).availability_duration ?? null,
+              base_country_id: (profile as Profile).base_country_id ?? null,
+              nationality_country_id: (profile as Profile).nationality_country_id ?? null,
               last_active_at: (profile as Profile).last_active_at ?? null,
               show_last_active: (profile as Profile).show_last_active ?? null,
               open_to_play: (profile as Profile).open_to_play ?? null,

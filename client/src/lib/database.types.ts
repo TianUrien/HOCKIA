@@ -3309,6 +3309,8 @@ export type Database = {
           target_category: string | null
           eu_required: boolean
           target_position: string | null
+          target_location_country: string | null
+          target_start_date: string | null
           target_role: string | null
           type: string
           updated_at: string
@@ -3325,6 +3327,8 @@ export type Database = {
           target_category?: string | null
           eu_required?: boolean
           target_position?: string | null
+          target_location_country?: string | null
+          target_start_date?: string | null
           target_role?: string | null
           type: string
           updated_at?: string
@@ -3341,6 +3345,8 @@ export type Database = {
           target_category?: string | null
           eu_required?: boolean
           target_position?: string | null
+          target_location_country?: string | null
+          target_start_date?: string | null
           target_role?: string | null
           type?: string
           updated_at?: string
@@ -4718,6 +4724,8 @@ export type Database = {
           target_category: string | null
           eu_required: boolean
           target_position: string | null
+          target_location_country: string | null
+          target_start_date: string | null
           target_role: string | null
           type: string
           updated_at: string
@@ -5766,6 +5774,8 @@ export type Database = {
           target_category: string | null
           eu_required: boolean
           target_position: string | null
+          target_location_country: string | null
+          target_start_date: string | null
           target_role: string | null
           type: string
           updated_at: string
@@ -6388,6 +6398,8 @@ export type Database = {
           competition_level_band: number
           current_club: string
           current_competition_name: string
+          available_from: string
+          base_country_id: number
           current_world_club_id: string
           full_game_video_count: number
           full_name: string
@@ -6397,6 +6409,9 @@ export type Database = {
           is_verified: boolean
           last_active_at: string
           nationality: string
+          relocation_countries_excluded: number[]
+          relocation_countries_open: number[]
+          relocation_willingness: string
           nationality_country_id: number
           nationality2_country_id: number
           open_to_coach: boolean
@@ -6778,6 +6793,8 @@ export type Database = {
           target_category: string | null
           eu_required: boolean
           target_position: string | null
+          target_location_country: string | null
+          target_start_date: string | null
           target_role: string | null
           type: string
           updated_at: string

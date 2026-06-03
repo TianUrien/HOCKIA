@@ -34,6 +34,8 @@ import { logger } from '@/lib/logger'
 import { useAuthStore } from '@/lib/auth'
 import { useCountries } from '@/hooks/useCountries'
 import { summarizeCandidateIntent } from '@/lib/candidateIntent'
+import { useInterest } from '@/hooks/useInterest'
+import InterestSignal from '@/components/recruiting/InterestSignal'
 import { useIsProfileSaved } from '@/hooks/useSavedProfiles'
 import ClubFitChip from '@/components/recruiting/ClubFitChip'
 import ProvenSignal from '@/components/recruiting/ProvenSignal'
@@ -76,6 +78,10 @@ interface ScoutingCardProfile {
   opportunity_preference?: string | null
   available_from?: string | null
   availability_duration?: string | null
+  /** Increment #2.2 — home country (base ?? nationality) for the
+   *  Interested lens "home only" check. */
+  base_country_id?: number | null
+  nationality_country_id?: number | null
   last_active_at: string | null
   show_last_active: boolean | null
   open_to_play: boolean | null
@@ -115,6 +121,15 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
   const { getCountryById } = useCountries()
   const intent = summarizeCandidateIntent(profile, (id) => getCountryById(id)?.name)
   const showIntent = isRecruiterViewer && intent.hasAny
+  // Increment #2.2 — Interested lens vs the active opportunity scope.
+  const interest = useInterest({
+    role: profile.role,
+    relocation_willingness: profile.relocation_willingness ?? null,
+    relocation_countries_open: profile.relocation_countries_open ?? null,
+    relocation_countries_excluded: profile.relocation_countries_excluded ?? null,
+    available_from: profile.available_from ?? null,
+    home_country_id: profile.base_country_id ?? profile.nationality_country_id ?? null,
+  })
   const [counts, setCounts] = useState<EvidenceCounts | null>(null)
   const savedState = useIsProfileSaved(profile.id)
   // Phase 2C — Coach Fit for coach profiles. NOT_APPLICABLE (chip null)
@@ -357,6 +372,10 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
       {/* Proven lens (Increment #1) — recruiter-only evidence confidence
           (tier pill + facts). Renders nothing when no evidence applies. */}
       <ProvenSignal result={evidence} className="mt-3" />
+
+      {/* Interested lens (Increment #2.2) — scored match of intent vs the
+          active opportunity scope. Recruiter + active-scope gated. */}
+      <InterestSignal result={interest} className="mt-3" />
 
       {/* Recruitment preferences (Increment #2 — Interested lens, read-only).
           Recruiter viewers only; hidden when the candidate set none. */}

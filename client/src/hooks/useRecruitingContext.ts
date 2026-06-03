@@ -556,3 +556,54 @@ export function useActiveRecruitingEuRequired(): boolean {
 
   return euRequired
 }
+
+/** Active scope's opportunity location_country (raw text) or null
+ *  (Phase 2.2). Drives the Interested-lens mobility match. Same
+ *  store-read + ensure-fetched pattern as the other scope selectors. */
+export function useActiveRecruitingTargetLocation(): string | null {
+  const { profile: viewer } = useAuthStore()
+  const viewerId = viewer?.id ?? null
+  const viewerRole = viewer?.role ?? null
+
+  const setViewer = useRecruitingContextStore((s) => s.setViewer)
+  const ensureFetched = useRecruitingContextStore((s) => s.ensureFetched)
+  const location = useRecruitingContextStore((s) => {
+    const row = s.rows.find((r) => r.is_active)
+    return (row?.target_location_country ?? null) as string | null
+  })
+
+  useEffect(() => {
+    setViewer(viewerId, viewerRole)
+  }, [viewerId, viewerRole, setViewer])
+
+  useEffect(() => {
+    void ensureFetched()
+  }, [viewerId, viewerRole, ensureFetched])
+
+  return location
+}
+
+/** Active scope's opportunity start_date (ISO date string) or null
+ *  (Phase 2.2). Drives the Interested-lens availability check. */
+export function useActiveRecruitingTargetStartDate(): string | null {
+  const { profile: viewer } = useAuthStore()
+  const viewerId = viewer?.id ?? null
+  const viewerRole = viewer?.role ?? null
+
+  const setViewer = useRecruitingContextStore((s) => s.setViewer)
+  const ensureFetched = useRecruitingContextStore((s) => s.ensureFetched)
+  const startDate = useRecruitingContextStore((s) => {
+    const row = s.rows.find((r) => r.is_active)
+    return (row?.target_start_date ?? null) as string | null
+  })
+
+  useEffect(() => {
+    setViewer(viewerId, viewerRole)
+  }, [viewerId, viewerRole, setViewer])
+
+  useEffect(() => {
+    void ensureFetched()
+  }, [viewerId, viewerRole, ensureFetched])
+
+  return startDate
+}

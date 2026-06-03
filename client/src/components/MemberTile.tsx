@@ -12,8 +12,10 @@ import { getImageUrl } from '@/lib/imageUrl'
 import RolePlaceholder from './RolePlaceholder'
 import ClubFitChip from './recruiting/ClubFitChip'
 import ProvenSignal from './recruiting/ProvenSignal'
+import InterestSignal from './recruiting/InterestSignal'
 import { useCoachFit } from '@/hooks/useCoachFit'
 import { useEvidence } from '@/hooks/useEvidence'
+import { useInterest } from '@/hooks/useInterest'
 
 const BRAND_CATEGORY_LABELS: Record<string, string> = {
   equipment: 'Equipment',
@@ -73,6 +75,14 @@ interface MemberTileProps {
   highlight_video_url?: string | null
   full_game_video_count?: number | null
   accepted_reference_count?: number | null
+  /** Increment #2.2 (Interested lens) — candidate intent for the 🤝 signal
+   *  vs the active opportunity scope. */
+  relocation_willingness?: string | null
+  relocation_countries_open?: number[] | null
+  relocation_countries_excluded?: number[] | null
+  available_from?: string | null
+  /** Home country (base_country_id ?? nationality_country_id). */
+  home_country_id?: number | null
   tier?: ProfileTier
   isVerified?: boolean
   verifiedAt?: string | null
@@ -123,6 +133,16 @@ export default function MemberTile(props: MemberTileProps) {
     accepted_reference_count: props.accepted_reference_count ?? null,
     is_verified: props.isVerified ?? null,
     current_world_club_id: props.current_world_club_id ?? null,
+  })
+  // Increment #2.2 — Interested lens vs the active opportunity scope.
+  // NOT_APPLICABLE (renders null) for non-recruiters or with no scope.
+  const interest = useInterest({
+    role: props.role,
+    relocation_willingness: props.relocation_willingness ?? null,
+    relocation_countries_open: props.relocation_countries_open ?? null,
+    relocation_countries_excluded: props.relocation_countries_excluded ?? null,
+    available_from: props.available_from ?? null,
+    home_country_id: props.home_country_id ?? null,
   })
 
   const isBrand = props.role === 'brand'
@@ -303,6 +323,10 @@ export default function MemberTile(props: MemberTileProps) {
               confidence: tier pill + glanceable facts. Renders nothing
               for non-recruiter viewers or candidates with no evidence. */}
           <ProvenSignal result={evidence} />
+
+          {/* Interested lens (Increment #2.2) — recruiter + active-scope
+              only; renders nothing otherwise. */}
+          <InterestSignal result={interest} variant="compact" />
 
           {/* Row 3: nationality (tile mode — full names + flags, EU pill
               as a small chip; flex-wrap so dual-nat doesn't truncate). */}

@@ -6,8 +6,10 @@ import RoleBadge from '../RoleBadge'
 import DualNationalityDisplay from '../DualNationalityDisplay'
 import ClubFitChip from '../recruiting/ClubFitChip'
 import ProvenSignal from '../recruiting/ProvenSignal'
+import InterestSignal from '../recruiting/InterestSignal'
 import { useCoachFit } from '@/hooks/useCoachFit'
 import { useEvidence } from '@/hooks/useEvidence'
+import { useInterest } from '@/hooks/useInterest'
 import HockeyContextLine from '../recruiting/HockeyContextLine'
 import QuickActionsRow from '../recruiting/QuickActionsRow'
 import { supabase } from '@/lib/supabase'
@@ -94,6 +96,12 @@ interface TopMemberRow {
    *  already present above). */
   highlight_video_url: string | null
   full_game_video_count: number | null
+  /** Increment #2.2 — Interested lens candidate intent. */
+  relocation_willingness: string | null
+  relocation_countries_open: number[] | null
+  relocation_countries_excluded: number[] | null
+  available_from: string | null
+  base_country_id: number | null
 }
 
 interface TopCommunityMembersCarouselProps {
@@ -380,6 +388,15 @@ function MemberCard({ member, onClick, showEvidence = false }: MemberCardProps) 
     is_verified: member.is_verified,
     current_world_club_id: member.current_world_club_id,
   })
+  // Increment #2.2 — Interested lens (only renders under an active scope).
+  const interest = useInterest({
+    role: member.role,
+    relocation_willingness: member.relocation_willingness,
+    relocation_countries_open: member.relocation_countries_open,
+    relocation_countries_excluded: member.relocation_countries_excluded,
+    available_from: member.available_from,
+    home_country_id: member.base_country_id ?? member.nationality_country_id,
+  })
   // .trim() guards against legacy rows with trailing whitespace in
   // full_name — the value leaks into both the visible label and the
   // aria-label (which then produces "Open Maria 's profile" with an
@@ -487,6 +504,9 @@ function MemberCard({ member, onClick, showEvidence = false }: MemberCardProps) 
         {/* Increment #1 — Proven lens, compact pill. Recruitment-context
             carousel only (option b: discovery rails stay signal-free). */}
         {showEvidence && <ProvenSignal result={evidence} variant="compact" />}
+        {/* Increment #2.2 — Interested lens, compact pill. Self-gates to an
+            active opportunity scope (only the scoped carousel). */}
+        {showEvidence && <InterestSignal result={interest} variant="compact" />}
       </div>
 
       {/* Nationality slot — reserves 2 lines so single + dual

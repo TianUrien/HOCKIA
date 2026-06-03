@@ -639,6 +639,8 @@ export default function CoachDashboard({
               opportunity_preference: (profile as { opportunity_preference?: string | null }).opportunity_preference ?? null,
               available_from: (profile as { available_from?: string | null }).available_from ?? null,
               availability_duration: (profile as { availability_duration?: string | null }).availability_duration ?? null,
+              base_country_id: (profile as { base_country_id?: number | null }).base_country_id ?? null,
+              nationality_country_id: (profile as { nationality_country_id?: number | null }).nationality_country_id ?? null,
               last_active_at: profile.last_active_at ?? null,
               show_last_active: profile.show_last_active ?? null,
               open_to_play: null,
