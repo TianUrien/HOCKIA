@@ -19,7 +19,7 @@ import { useAuthStore } from '@/lib/auth'
 import { computeClubFit } from '@/lib/clubFit'
 import { computeCoachFit } from '@/lib/coachFit'
 import { deriveTargetCategory } from '@/lib/recruitingContext'
-import { useActiveRecruitingTarget, useActiveRecruitingTargetRole, useActiveRecruitingTargetPosition, useActiveRecruitingEuRequired } from '@/hooks/useRecruitingContext'
+import { useActiveRecruitingTarget, useActiveRecruitingTargetRole, useActiveRecruitingTargetPosition, useActiveRecruitingEuRequired, useActiveRecruitingTargetSpecialists } from '@/hooks/useRecruitingContext'
 import { useCountries, isEuCountryCode } from '@/hooks/useCountries'
 import { requestCache } from '@/lib/requestCache'
 import { monitor } from '@/lib/monitor'
@@ -64,6 +64,8 @@ export interface Profile {
   relocation_countries_open?: number[] | null
   relocation_countries_excluded?: number[] | null
   available_from?: string | null
+  // Increment #3.2 — player specialist tags for the Fit-lens role match.
+  specialist_skills?: string[] | null
   brand_slug?: string | null
   brand_category?: string | null
   // Extra fields used to compute profile-complete pill (cheap, on the profile row or brand join)
@@ -98,7 +100,7 @@ export interface Profile {
 }
 
 const PROFILES_SELECT =
-  'id, avatar_url, full_name, role, nationality, nationality_country_id, nationality2_country_id, base_location, position, secondary_position, current_club, current_world_club_id, gender, playing_category, coaching_categories, umpiring_categories, created_at, is_test_account, open_to_play, open_to_coach, open_to_opportunities, last_active_at, accepted_reference_count, coach_specialization, coach_specialization_custom, base_country_id, relocation_willingness, relocation_countries_open, relocation_countries_excluded, available_from, highlight_video_url, full_game_video_count, bio, club_bio, year_founded, website, contact_email, career_entry_count, accepted_friend_count, is_verified, verified_at, umpire_level, federation, umpire_since, officiating_specialization, languages, last_officiated_at, umpire_appointment_count, profile_completeness_pct'
+  'id, avatar_url, full_name, role, nationality, nationality_country_id, nationality2_country_id, base_location, position, secondary_position, current_club, current_world_club_id, gender, playing_category, coaching_categories, umpiring_categories, created_at, is_test_account, open_to_play, open_to_coach, open_to_opportunities, last_active_at, accepted_reference_count, coach_specialization, coach_specialization_custom, base_country_id, relocation_willingness, relocation_countries_open, relocation_countries_excluded, available_from, specialist_skills, highlight_video_url, full_game_video_count, bio, club_bio, year_founded, website, contact_email, career_entry_count, accepted_friend_count, is_verified, verified_at, umpire_level, federation, umpire_since, officiating_specialization, languages, last_officiated_at, umpire_appointment_count, profile_completeness_pct'
 
 // CommunityFilters type moved to ./communityFilters.ts so the lifted
 // search bar / quick filters / drawer (now rendered by CommunityPage)
@@ -169,6 +171,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
   const contextTarget = useActiveRecruitingTarget()
   const contextTargetRole = useActiveRecruitingTargetRole()
   const contextTargetPosition = useActiveRecruitingTargetPosition()
+  const contextTargetSpecialists = useActiveRecruitingTargetSpecialists()
   // Phase 2D — EU eligibility hard filter. When the active scope's linked
   // opportunity requires an EU passport, candidates whose declared
   // nationality is non-EU drop out of the scoped grid. Candidates with NO
@@ -621,7 +624,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
       // the score (and the role gate that suppresses player-fit for
       // coach-seeking contexts) matches exactly what the Fit chips show.
       const fitOptions = useContextFit
-        ? { overrideTarget: contextTarget, targetRole: contextTargetRole, targetPosition: contextTargetPosition }
+        ? { overrideTarget: contextTarget, targetRole: contextTargetRole, targetPosition: contextTargetPosition, targetSpecialists: contextTargetSpecialists }
         : undefined
       result = [...result]
         .map((m) => {
@@ -650,6 +653,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
                   last_active_at: m.last_active_at ?? null,
                   position: m.position ?? null,
                   secondary_position: m.secondary_position ?? null,
+                  specialist_skills: m.specialist_skills ?? null,
                 }, fitOptions).score
           return { m, score }
         })
@@ -667,7 +671,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     }
 
     return result
-  }, [allMembers, filters, sort, currentUserProfile, applyContextFit, contextTarget, contextTargetRole, contextTargetPosition, euFilterActive, euCountryIds])
+  }, [allMembers, filters, sort, currentUserProfile, applyContextFit, contextTarget, contextTargetRole, contextTargetPosition, contextTargetSpecialists, euFilterActive, euCountryIds])
 
   // Emit filtered count upward whenever it changes. Combined with the
   // total-count effect this lets the parent choose: total when not

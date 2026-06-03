@@ -67,6 +67,7 @@ function buildRow(overrides: Partial<RecruitingContextRow>): RecruitingContextRo
     eu_required: false,
     target_location_country: null,
     target_start_date: null,
+    target_specialists: [],
     competition_id: null,
     region: null,
     opportunity_id: null,

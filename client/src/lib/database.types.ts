@@ -3316,6 +3316,7 @@ export type Database = {
           eu_required: boolean
           target_position: string | null
           target_location_country: string | null
+          target_specialists: string[]
           target_start_date: string | null
           target_role: string | null
           type: string
@@ -3334,6 +3335,7 @@ export type Database = {
           eu_required?: boolean
           target_position?: string | null
           target_location_country?: string | null
+          target_specialists?: string[]
           target_start_date?: string | null
           target_role?: string | null
           type: string
@@ -3352,6 +3354,7 @@ export type Database = {
           eu_required?: boolean
           target_position?: string | null
           target_location_country?: string | null
+          target_specialists?: string[]
           target_start_date?: string | null
           target_role?: string | null
           type?: string
@@ -4731,6 +4734,7 @@ export type Database = {
           eu_required: boolean
           target_position: string | null
           target_location_country: string | null
+          target_specialists: string[]
           target_start_date: string | null
           target_role: string | null
           type: string
@@ -5781,6 +5785,7 @@ export type Database = {
           eu_required: boolean
           target_position: string | null
           target_location_country: string | null
+          target_specialists: string[]
           target_start_date: string | null
           target_role: string | null
           type: string
@@ -6800,6 +6805,7 @@ export type Database = {
           eu_required: boolean
           target_position: string | null
           target_location_country: string | null
+          target_specialists: string[]
           target_start_date: string | null
           target_role: string | null
           type: string

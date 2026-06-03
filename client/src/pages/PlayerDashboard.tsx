@@ -608,6 +608,8 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
               current_club: profile.current_club ?? null,
               current_world_club_id: profile.current_world_club_id ?? null,
               playing_category: (profile as Profile).playing_category ?? null,
+              position: (profile as Profile).position ?? null,
+              secondary_position: (profile as Profile).secondary_position ?? null,
               specialist_skills: (profile as Profile).specialist_skills ?? null,
               highlight_video_url: (profile as Profile).highlight_video_url ?? null,
               full_game_video_count: (profile as Profile).full_game_video_count ?? null,

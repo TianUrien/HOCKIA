@@ -364,6 +364,7 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
             last_active_at: profile.last_active_at,
             position: profile.position ?? null,
             secondary_position: profile.secondary_position ?? null,
+            specialist_skills: profile.specialist_skills ?? null,
           }}
         />
         {/* Phase 2C — Coach Fit chip for coach profiles (null otherwise). */}

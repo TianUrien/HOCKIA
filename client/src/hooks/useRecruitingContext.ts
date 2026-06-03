@@ -583,6 +583,38 @@ export function useActiveRecruitingTargetLocation(): string | null {
   return location
 }
 
+/** Stable empty-array reference for the no-scope path (see selector note). */
+const EMPTY_SPECIALISTS: readonly string[] = []
+
+/** Active scope's sought specialist skills (opportunity
+ *  specialist_skills_wanted) or [] (Phase 3.2). Folds into the Fit-lens
+ *  role (position_match) component. */
+export function useActiveRecruitingTargetSpecialists(): string[] {
+  const { profile: viewer } = useAuthStore()
+  const viewerId = viewer?.id ?? null
+  const viewerRole = viewer?.role ?? null
+
+  const setViewer = useRecruitingContextStore((s) => s.setViewer)
+  const ensureFetched = useRecruitingContextStore((s) => s.ensureFetched)
+  // Return a STABLE empty array on the no-scope path — a fresh `[]` each
+  // render would change the store snapshot every time and loop forever
+  // (Max update depth). The row's own array is a stable reference.
+  const specialists = useRecruitingContextStore((s) => {
+    const row = s.rows.find((r) => r.is_active)
+    return (row?.target_specialists ?? EMPTY_SPECIALISTS) as string[]
+  })
+
+  useEffect(() => {
+    setViewer(viewerId, viewerRole)
+  }, [viewerId, viewerRole, setViewer])
+
+  useEffect(() => {
+    void ensureFetched()
+  }, [viewerId, viewerRole, ensureFetched])
+
+  return specialists
+}
+
 /** Active scope's opportunity start_date (ISO date string) or null
  *  (Phase 2.2). Drives the Interested-lens availability check. */
 export function useActiveRecruitingTargetStartDate(): string | null {

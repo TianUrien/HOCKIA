@@ -28,7 +28,7 @@ import {
   type RecruitingContextProfileFields,
 } from '@/lib/recruitingContext'
 import type { Profile } from '@/lib/supabase'
-import { useActiveRecruitingTarget, useActiveRecruitingTargetRole, useActiveRecruitingTargetPosition } from './useRecruitingContext'
+import { useActiveRecruitingTarget, useActiveRecruitingTargetRole, useActiveRecruitingTargetPosition, useActiveRecruitingTargetSpecialists } from './useRecruitingContext'
 import { getClubLevelBand } from './useWorldClubLogo'
 
 /** Narrow a full profile down to just the recruiting-context fields,
@@ -58,6 +58,7 @@ export function useClubFit(
   const overrideTarget = useActiveRecruitingTarget()
   const targetRole = useActiveRecruitingTargetRole()
   const targetPosition = useActiveRecruitingTargetPosition()
+  const targetSpecialists = useActiveRecruitingTargetSpecialists()
   return useMemo(() => {
     const profileTarget = deriveTargetCategory({
       role: viewerProfile?.role ?? null,
@@ -69,7 +70,7 @@ export function useClubFit(
     return computeClubFit(
       toViewerProfile(viewerProfile, effectiveTarget),
       candidate,
-      { overrideTarget, targetRole, targetPosition },
+      { overrideTarget, targetRole, targetPosition, targetSpecialists },
     )
-  }, [viewerProfile, candidate, overrideTarget, targetRole, targetPosition])
+  }, [viewerProfile, candidate, overrideTarget, targetRole, targetPosition, targetSpecialists])
 }

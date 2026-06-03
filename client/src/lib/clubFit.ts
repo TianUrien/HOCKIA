@@ -37,6 +37,7 @@ import {
   type RecruitingContextProfileFields,
   type TargetCategory,
 } from './recruitingContext'
+import { specialistSkillLabel } from './specialistSkills'
 
 export type ClubFitState = 'green' | 'yellow' | 'grey'
 
@@ -90,6 +91,9 @@ export interface FitCandidateFields {
    *  scope has a target position). */
   position?: string | null
   secondary_position?: string | null
+  /** Player's specialist tags (Increment #3) — compared to the scope's
+   *  targetSpecialists to refine the role (position_match) component. */
+  specialist_skills?: string[] | null
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000
@@ -219,6 +223,13 @@ export interface ComputeClubFitOptions {
    *  scaled to 75% — floating matching players up. NULL/undefined = no
    *  position signal; the original 4-component model is used unchanged. */
   targetPosition?: string | null
+  /** Sought specialist skills of the active scope (opportunity
+   *  specialist_skills_wanted). When non-empty, the candidate's
+   *  specialist_skills are folded into the position_match (role) component
+   *  alongside position — a player who holds a sought specialism ranks up.
+   *  Empty/undefined = no specialist signal (position-only behaviour
+   *  unchanged). */
+  targetSpecialists?: string[] | null
 }
 
 /**
@@ -333,15 +344,19 @@ export function computeClubFit(
     reasons.push('Activity recency unknown.')
   }
 
-  // Position match — only meaningful when the scope sought a specific
-  // position. Soft signal (floats matches up), never a hard filter.
+  // Role match — position + specialist specialism. Both are SOFT signals
+  // (float matches up, never a hard filter). The position_match component
+  // now represents overall role fit:
+  //   - position only sought  → position fit (Increment #2B, unchanged)
+  //   - specialists sought too → average of position fit + specialist fit
+  //   - specialists only       → specialist fit
   const hasTargetPosition = Boolean(options?.targetPosition && options.targetPosition.trim())
-  const position_match = positionMatch(candidate.position, candidate.secondary_position, options?.targetPosition)
+  const positionFit = positionMatch(candidate.position, candidate.secondary_position, options?.targetPosition)
   if (hasTargetPosition) {
     const tp = humanizePosition(options!.targetPosition!)
-    if (position_match >= 1) {
+    if (positionFit >= 1) {
       reasons.push(`Plays ${tp} — matches the position you're recruiting.`)
-    } else if (position_match > 0) {
+    } else if (positionFit > 0) {
       reasons.push(`Plays ${tp} as a secondary position.`)
     } else if (candidate.position) {
       reasons.push(`Primary position is ${humanizePosition(candidate.position)} — not ${tp}.`)
@@ -349,6 +364,32 @@ export function computeClubFit(
       reasons.push('Position not added yet — no position match info.')
     }
   }
+
+  // Specialist (Increment #3.2) — fraction of the sought specialisms the
+  // player holds. Folded into the role component below.
+  const soughtSpecialists = (options?.targetSpecialists ?? []).filter(Boolean)
+  const hasSpecialists = soughtSpecialists.length > 0
+  const candidateSkills = new Set((candidate.specialist_skills ?? []).map((s) => s.toLowerCase()))
+  const matchedSpecialists = soughtSpecialists.filter((s) => candidateSkills.has(s.toLowerCase()))
+  const specialistFit = hasSpecialists ? matchedSpecialists.length / soughtSpecialists.length : 0
+  if (hasSpecialists) {
+    if (matchedSpecialists.length === soughtSpecialists.length) {
+      reasons.push(`Holds the specialism${soughtSpecialists.length > 1 ? 's' : ''} you're recruiting (${matchedSpecialists.map(specialistSkillLabel).join(', ')}).`)
+    } else if (matchedSpecialists.length > 0) {
+      reasons.push(`Holds ${matchedSpecialists.map(specialistSkillLabel).join(', ')} (of the ${soughtSpecialists.length} sought).`)
+    } else {
+      reasons.push("Doesn't list the specialism you're recruiting.")
+    }
+  }
+
+  // Combine position + specialist into the role (position_match) component.
+  const hasRoleTarget = hasTargetPosition || hasSpecialists
+  const position_match =
+    hasTargetPosition && hasSpecialists
+      ? (positionFit + specialistFit) / 2
+      : hasSpecialists
+        ? specialistFit
+        : positionFit
 
   // ── Score + state ───────────────────────────────────────────────
   const components: ClubFitComponents = {
@@ -359,10 +400,10 @@ export function computeClubFit(
     position_match,
   }
 
-  // When the scope carries a target position, use the position-aware
-  // weight set (position 25% + others scaled to 75%); otherwise the
-  // original 4-component model — so position-less scopes are unchanged.
-  const score = hasTargetPosition
+  // When the scope carries a role target (position and/or specialist), use
+  // the role-aware weight set (role 25% + others scaled to 75%); otherwise
+  // the original 4-component model — so role-less scopes are unchanged.
+  const score = hasRoleTarget
     ? clamp01(
         WEIGHTS_WITH_POSITION.competition_proximity * competition_proximity +
           WEIGHTS_WITH_POSITION.gender_match * gender_match +

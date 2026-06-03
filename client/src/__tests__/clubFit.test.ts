@@ -390,4 +390,46 @@ describe('computeClubFit', () => {
       expect(result.components.position_match).toBe(0)
     })
   })
+
+  describe('specialist match (Phase 3.2) — folded into position_match', () => {
+    const holder = { ...baseFemalePlayer, id: 'h', specialist_skills: ['drag_flicker', 'playmaker'] }
+    const nonHolder = { ...baseFemalePlayer, id: 'n', specialist_skills: ['indoor'] }
+
+    it('a sought specialist boosts a holder over a non-holder', () => {
+      const opts = { overrideTarget: 'Women' as const, targetSpecialists: ['drag_flicker'] }
+      expect(computeClubFit(womensClub, holder, opts).score)
+        .toBeGreaterThan(computeClubFit(womensClub, nonHolder, opts).score)
+    })
+
+    it('specialist-only scope: holder gets full role match, non-holder zero', () => {
+      const opts = { overrideTarget: 'Women' as const, targetSpecialists: ['drag_flicker'] }
+      expect(computeClubFit(womensClub, holder, opts).components.position_match).toBe(1)
+      expect(computeClubFit(womensClub, nonHolder, opts).components.position_match).toBe(0)
+    })
+
+    it('partial overlap scores a fraction (1 of 2 sought)', () => {
+      const opts = { overrideTarget: 'Women' as const, targetSpecialists: ['drag_flicker', 'target_forward'] }
+      expect(computeClubFit(womensClub, holder, opts).components.position_match).toBeCloseTo(0.5, 5)
+    })
+
+    it('position + specialist average into the role component', () => {
+      const mid = { ...baseFemalePlayer, position: 'midfielder', secondary_position: null }
+      const flicker = computeClubFit(womensClub, { ...mid, specialist_skills: ['drag_flicker'] }, { targetPosition: 'midfielder', targetSpecialists: ['drag_flicker'] })
+      const plain = computeClubFit(womensClub, { ...mid, specialist_skills: [] }, { targetPosition: 'midfielder', targetSpecialists: ['drag_flicker'] })
+      expect(flicker.components.position_match).toBe(1) // (1 position + 1 specialist)/2
+      expect(plain.components.position_match).toBeCloseTo(0.5, 5) // (1 position + 0 specialist)/2
+      expect(flicker.score).toBeGreaterThan(plain.score)
+    })
+
+    it('case-insensitive specialist matching', () => {
+      const opts = { overrideTarget: 'Women' as const, targetSpecialists: ['DRAG_FLICKER'] }
+      expect(computeClubFit(womensClub, holder, opts).components.position_match).toBe(1)
+    })
+
+    it('no specialists sought → score identical to the pre-3.2 model (no regression)', () => {
+      const withField = computeClubFit(womensClub, holder, { overrideTarget: 'Women' })
+      const without = computeClubFit(womensClub, { ...holder, specialist_skills: undefined }, { overrideTarget: 'Women' })
+      expect(withField.score).toBeCloseTo(without.score, 5)
+    })
+  })
 })
