@@ -25,6 +25,9 @@ export const PUBLIC_PROFILE_FIELDS_LIST = [
   'nationality',
   'nationality_country_id',
   'nationality2_country_id',
+  // Increment #2.2 — residence drives the Interested-lens "home country"
+  // ("staying in my country"); keeps the grid + ScoutingCard consistent.
+  'base_country_id',
   'current_club',
   'current_world_club_id',
   'gender',
