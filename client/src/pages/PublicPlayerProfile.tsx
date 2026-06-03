@@ -34,6 +34,7 @@ type PublicProfileBase = Pick<
   | 'date_of_birth'
   | 'position'
   | 'secondary_position'
+  | 'specialist_skills'
   | 'contact_email'
   | 'contact_email_public'
   | 'open_to_play'

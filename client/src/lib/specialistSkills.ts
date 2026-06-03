@@ -50,3 +50,17 @@ export function specialistSkillLabel(value: string): string {
 export function specialistSkillLabels(values: string[] | null | undefined): string[] {
   return (values ?? []).map(specialistSkillLabel).filter(Boolean)
 }
+
+const GK_ONLY_VALUES = new Set(SPECIALIST_SKILLS.filter((s) => s.gkOnly).map((s) => s.value))
+
+/** Drop GK-only tags (e.g. Sweeper Keeper) when the position isn't
+ *  goalkeeper. Used on position-change AND at save time so a gated tag
+ *  can't leak onto an outfield player/opportunity via stale form state. */
+export function pruneSpecialistSkillsForPosition(
+  skills: string[] | null | undefined,
+  position: string | null | undefined,
+): string[] {
+  const list = skills ?? []
+  if ((position ?? '').toLowerCase() === 'goalkeeper') return list
+  return list.filter((v) => !GK_ONLY_VALUES.has(v))
+}

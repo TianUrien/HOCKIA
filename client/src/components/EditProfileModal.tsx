@@ -7,6 +7,7 @@ import type { Profile } from '@/lib/supabase'
 import { Button, Input, CountrySelect, StorageImage, LocationAutocomplete, PlayingCategorySelector, MultiCategorySelector, DateOfBirthPicker } from '@/components'
 import CountryMultiSelect from '@/components/CountryMultiSelect'
 import SpecialistSkillsSelect from '@/components/SpecialistSkillsSelect'
+import { pruneSpecialistSkillsForPosition } from '@/lib/specialistSkills'
 import type { LocationSelection } from '@/components/LocationAutocomplete'
 import { logger } from '@/lib/logger'
 import { optimizeAvatarImage, validateImage } from '@/lib/imageOptimization'
@@ -700,7 +701,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
       optimisticUpdate.open_to_play = formData.open_to_play
       optimisticUpdate.open_to_opportunities = formData.open_to_opportunities
       optimisticUpdate.brand_representation = formData.brand_representation || null
-      optimisticUpdate.specialist_skills = formData.specialist_skills
+      optimisticUpdate.specialist_skills = pruneSpecialistSkillsForPosition(formData.specialist_skills, formData.position)
       Object.assign(optimisticUpdate, candidateIntentUpdate(formData))
     } else if (role === 'coach') {
       optimisticUpdate.nationality = formData.nationality
@@ -1038,7 +1039,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                   <select
                     id="player-position"
                     value={formData.position}
-                    onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, position: e.target.value, specialist_skills: pruneSpecialistSkillsForPosition(formData.specialist_skills, e.target.value) })}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8026FA] focus:border-transparent"
                     required
                     aria-label="Select position"

@@ -15,6 +15,7 @@ import { useToastStore } from '@/lib/toast'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import { trackVacancyCreate } from '@/lib/analytics'
 import SpecialistSkillsSelect from '@/components/SpecialistSkillsSelect'
+import { pruneSpecialistSkillsForPosition } from '@/lib/specialistSkills'
 
 interface CreateVacancyModalProps {
   isOpen: boolean
@@ -299,6 +300,12 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
       if (field === 'opportunity_type' && value === 'coach') {
         next.position = undefined  // reset — coach has different position options
         next.gender = undefined
+        next.specialist_skills_wanted = []  // coach opps have no specialist tags
+      }
+      // Increment #3 — drop GK-only tags (Sweeper Keeper) when the position
+      // moves away from goalkeeper, so a gated tag can't leak via stale state.
+      if (field === 'position') {
+        next.specialist_skills_wanted = pruneSpecialistSkillsForPosition(prev.specialist_skills_wanted, value)
       }
       return next
     })
@@ -414,7 +421,9 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
         duration_text: formData.duration_text || null,
         requirements: formData.requirements || [],
         // Increment #3 — player opps only; cleared for coach opps.
-        specialist_skills_wanted: formData.opportunity_type === 'player' ? (formData.specialist_skills_wanted || []) : [],
+        specialist_skills_wanted: formData.opportunity_type === 'player'
+          ? pruneSpecialistSkillsForPosition(formData.specialist_skills_wanted, formData.position)
+          : [],
         benefits: formData.benefits || [],
         custom_benefits: formData.custom_benefits || [],
         priority: formData.priority || 'medium',
