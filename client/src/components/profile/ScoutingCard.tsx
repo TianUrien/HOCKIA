@@ -32,6 +32,8 @@ import { Star, Bookmark, BookmarkCheck } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { useAuthStore } from '@/lib/auth'
+import { useCountries } from '@/hooks/useCountries'
+import { summarizeCandidateIntent } from '@/lib/candidateIntent'
 import { useIsProfileSaved } from '@/hooks/useSavedProfiles'
 import ClubFitChip from '@/components/recruiting/ClubFitChip'
 import ProvenSignal from '@/components/recruiting/ProvenSignal'
@@ -65,6 +67,15 @@ interface ScoutingCardProfile {
   /** Increment #1 (Proven lens) — verified badge feeds the evidence
    *  confidence signal alongside video/references/level. */
   is_verified?: boolean | null
+  /** Increment #2 (Interested lens) — candidate recruitment preferences,
+   *  shown read-only to recruiter viewers. */
+  relocation_willingness?: string | null
+  relocation_countries_open?: number[] | null
+  relocation_countries_excluded?: number[] | null
+  level_target?: string | null
+  opportunity_preference?: string | null
+  available_from?: string | null
+  availability_duration?: string | null
   last_active_at: string | null
   show_last_active: boolean | null
   open_to_play: boolean | null
@@ -98,7 +109,12 @@ const DAY_MS = 24 * 60 * 60 * 1000
 
 export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardProps) {
   const navigate = useNavigate()
-  const { user } = useAuthStore()
+  const { user, profile: viewerProfile } = useAuthStore()
+  // Increment #2 — recruitment preferences are recruiter-facing only.
+  const isRecruiterViewer = viewerProfile?.role === 'club' || viewerProfile?.role === 'coach'
+  const { getCountryById } = useCountries()
+  const intent = summarizeCandidateIntent(profile, (id) => getCountryById(id)?.name)
+  const showIntent = isRecruiterViewer && intent.hasAny
   const [counts, setCounts] = useState<EvidenceCounts | null>(null)
   const savedState = useIsProfileSaved(profile.id)
   // Phase 2C — Coach Fit for coach profiles. NOT_APPLICABLE (chip null)
@@ -341,6 +357,24 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
       {/* Proven lens (Increment #1) — recruiter-only evidence confidence
           (tier pill + facts). Renders nothing when no evidence applies. */}
       <ProvenSignal result={evidence} className="mt-3" />
+
+      {/* Recruitment preferences (Increment #2 — Interested lens, read-only).
+          Recruiter viewers only; hidden when the candidate set none. */}
+      {showIntent && (
+        <div className="mt-3 rounded-xl border border-gray-200 px-4 py-3">
+          <p className="text-[11px] uppercase tracking-wide text-gray-500 font-medium mb-2">
+            Recruitment preferences
+          </p>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+            {intent.rows.map((r) => (
+              <div key={r.key} className="flex flex-col gap-0.5 min-w-0">
+                <span className="text-[11px] uppercase tracking-wide text-gray-500">{r.label}</span>
+                <span className="text-sm text-gray-900 truncate" title={r.value}>{r.value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Section F (G.7) — HOCKIA AI fit opinion. Recruiter-only,
           flag-gated, and hidden when Fit isn't applicable (no scope,

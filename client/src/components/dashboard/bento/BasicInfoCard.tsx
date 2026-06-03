@@ -4,6 +4,7 @@ import {
 } from '@/components'
 import DashboardCard from './DashboardCard'
 import { useCountries } from '@/hooks/useCountries'
+import { summarizeCandidateIntent } from '@/lib/candidateIntent'
 import { calculateAge, formatDateOfBirth } from '@/lib/utils'
 import { categoriesToDisplay, categoryToDisplay } from '@/lib/hockeyCategories'
 import { getSpecializationLabel } from '@/lib/coachSpecializations'
@@ -14,36 +15,6 @@ interface BasicInfoCardProps {
   profile: PlayerProfileShape
   readOnly: boolean
   onEdit?: () => void
-}
-
-// Matching Increment #2 — read-only labels for candidate-intent fields.
-const RELOCATION_LABEL: Record<string, string> = {
-  relocate: 'Open to relocating',
-  home_only: 'Staying in home country',
-  open_to_discuss: 'Open to discuss',
-}
-const LEVEL_TARGET_LABEL: Record<string, string> = {
-  top: 'Highest level',
-  competitive: 'Competitive',
-  development: 'Development',
-  any: 'Any level',
-}
-const OPPORTUNITY_PREF_LABEL: Record<string, string> = {
-  paid: 'Paid',
-  development: 'Development',
-  either: 'Paid or development',
-}
-const DURATION_LABEL: Record<string, string> = {
-  full_season: 'Full season',
-  half_season: 'Half season',
-  short_term: 'Short term',
-  flexible: 'Flexible',
-}
-
-function formatAvailableFrom(date: string): string {
-  const d = new Date(`${date}T00:00:00`)
-  if (Number.isNaN(d.getTime())) return date
-  return d.toLocaleDateString(undefined, { month: 'short', year: 'numeric' })
 }
 
 interface RowProps {
@@ -96,29 +67,8 @@ export default function BasicInfoCard({ profile, readOnly, onEdit }: BasicInfoCa
   // coach only; the whole subsection hides when nothing is set.
   const { getCountryById } = useCountries()
   const isCandidate = profile.role === 'player' || profile.role === 'coach'
-  const openCountries = (profile.relocation_countries_open ?? [])
-    .map((id) => getCountryById(id)?.name)
-    .filter((n): n is string => Boolean(n))
-  const excludedCountries = (profile.relocation_countries_excluded ?? [])
-    .map((id) => getCountryById(id)?.name)
-    .filter((n): n is string => Boolean(n))
-  const availabilityText = profile.available_from
-    ? `From ${formatAvailableFrom(profile.available_from)}${
-        profile.availability_duration ? ` · ${DURATION_LABEL[profile.availability_duration] ?? ''}` : ''
-      }`
-    : profile.availability_duration
-      ? (DURATION_LABEL[profile.availability_duration] ?? null)
-      : null
-  const hasPrefs =
-    isCandidate &&
-    Boolean(
-      profile.relocation_willingness ||
-        profile.level_target ||
-        profile.opportunity_preference ||
-        availabilityText ||
-        openCountries.length > 0 ||
-        excludedCountries.length > 0,
-    )
+  const intent = summarizeCandidateIntent(profile, (id) => getCountryById(id)?.name)
+  const hasPrefs = isCandidate && intent.hasAny
 
   return (
     <DashboardCard
@@ -205,36 +155,11 @@ export default function BasicInfoCard({ profile, readOnly, onEdit }: BasicInfoCa
             Recruitment preferences
           </p>
           <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-            {profile.relocation_willingness && (
-              <Row label="Relocation">
-                <span>{RELOCATION_LABEL[profile.relocation_willingness] ?? profile.relocation_willingness}</span>
+            {intent.rows.map((r) => (
+              <Row key={r.key} label={r.label}>
+                <span className="block truncate" title={r.value}>{r.value}</span>
               </Row>
-            )}
-            {availabilityText && (
-              <Row label="Availability">
-                <span>{availabilityText}</span>
-              </Row>
-            )}
-            {profile.level_target && (
-              <Row label="Level target">
-                <span>{LEVEL_TARGET_LABEL[profile.level_target] ?? profile.level_target}</span>
-              </Row>
-            )}
-            {profile.opportunity_preference && (
-              <Row label="Looking for">
-                <span>{OPPORTUNITY_PREF_LABEL[profile.opportunity_preference] ?? profile.opportunity_preference}</span>
-              </Row>
-            )}
-            {openCountries.length > 0 && (
-              <Row label="Open to countries">
-                <span className="block truncate" title={openCountries.join(', ')}>{openCountries.join(', ')}</span>
-              </Row>
-            )}
-            {excludedCountries.length > 0 && (
-              <Row label="Would not consider">
-                <span className="block truncate" title={excludedCountries.join(', ')}>{excludedCountries.join(', ')}</span>
-              </Row>
-            )}
+            ))}
           </div>
         </div>
       )}

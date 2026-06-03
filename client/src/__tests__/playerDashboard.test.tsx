@@ -243,6 +243,9 @@ vi.mock('@/lib/supabase', () => {
     select: vi.fn().mockReturnThis(),
     or: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
+    // ScoutingCard (visitor view) now resolves country names via
+    // useCountries → .from('countries').select().order('name').then().
+    order: vi.fn().mockReturnThis(),
     maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'mock-conversation' }, error: null }),
     insert: vi.fn().mockReturnThis(),
     single: vi.fn().mockResolvedValue({ data: { id: 'conv-new' }, error: null }),
