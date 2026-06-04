@@ -6,6 +6,8 @@ import { Avatar, StorageImage } from './index'
 import Button from './Button'
 import type { WorldClubInfo } from './OpportunityCard'
 import { opportunityGenderToTeamLabel } from '@/lib/hockeyCategories'
+import { levelSoughtLabel, compensationLabel, recruitmentProblemLabel } from '@/lib/opportunityIntent'
+import { specialistSkillLabels } from '@/lib/specialistSkills'
 import { getShareOrigin } from '@/lib/profileShare'
 import { useAuthStore } from '@/lib/auth'
 import { useCountries } from '@/hooks/useCountries'
@@ -151,6 +153,15 @@ export default function VacancyDetailView({
   if (isPlayerOpportunity && vacancy.position) {
     tags.push(vacancy.position.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()))
   }
+  // Matching Increment #3/#4 — surface recruiter intent on the opportunity.
+  if (isPlayerOpportunity) {
+    const level = levelSoughtLabel(vacancy.level_sought)
+    if (level) tags.push(level)
+    const comp = compensationLabel(vacancy.compensation)
+    if (comp) tags.push(comp)
+    for (const skill of specialistSkillLabels(vacancy.specialist_skills_wanted)) tags.push(skill)
+  }
+  const recruitmentProblem = isPlayerOpportunity ? recruitmentProblemLabel(vacancy.recruitment_problem) : null
 
   // Deadline
   let deadlineText: string | null = null
@@ -289,6 +300,13 @@ export default function VacancyDetailView({
             <h1 className="text-2xl font-bold text-gray-900 mb-4 leading-tight">
               {vacancy.title}
             </h1>
+
+            {/* Recruitment problem (Matching Increment #4) — what they're solving. */}
+            {recruitmentProblem && (
+              <p className="-mt-2 mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-[#5b16b8]">
+                <Flag className="w-4 h-4" /> Solving: {recruitmentProblem}
+              </p>
+            )}
 
             {/* Meta info */}
             <div className="space-y-1.5 text-[15px] text-gray-500 mb-5">
