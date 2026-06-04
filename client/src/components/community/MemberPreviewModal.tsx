@@ -411,6 +411,12 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
                     open_to_coach: member.open_to_coach ?? null,
                     open_to_opportunities: (member as { open_to_opportunities?: boolean | null }).open_to_opportunities ?? null,
                     last_active_at: (member as { last_active_at?: string | null }).last_active_at ?? null,
+                    // Increment #2B/#3.2 — the preview popover shows full Fit
+                    // reasons, so it needs position + specialist for the role
+                    // (position_match) component (the inline card bars don't).
+                    position: member.position ?? null,
+                    secondary_position: member.secondary_position ?? null,
+                    specialist_skills: (member as { specialist_skills?: string[] | null }).specialist_skills ?? null,
                   }}
                 />
               </div>
