@@ -16,6 +16,8 @@ import { trackDbEvent } from '@/lib/trackDbEvent'
 import { trackVacancyCreate } from '@/lib/analytics'
 import SpecialistSkillsSelect from '@/components/SpecialistSkillsSelect'
 import { pruneSpecialistSkillsForPosition } from '@/lib/specialistSkills'
+import { LEVEL_SOUGHT_OPTIONS, COMPENSATION_OPTIONS, RECRUITMENT_PROBLEM_OPTIONS, levelSoughtFromBand } from '@/lib/opportunityIntent'
+import { getClubLevelBand, prefetchWorldClubLogos } from '@/hooks/useWorldClubLogo'
 
 interface CreateVacancyModalProps {
   isOpen: boolean
@@ -64,6 +66,10 @@ const buildInitialFormData = (vacancy?: Vacancy | null, initialOpportunityType?:
   requirements: vacancy?.requirements || [],
   // Matching Increment #3 — specialist skills this opportunity seeks.
   specialist_skills_wanted: vacancy?.specialist_skills_wanted || [],
+  // Matching Increment #4 — recruiter intent (level / compensation / problem).
+  level_sought: vacancy?.level_sought || '',
+  compensation: vacancy?.compensation || '',
+  recruitment_problem: vacancy?.recruitment_problem || '',
   benefits: vacancy?.benefits || [],
   custom_benefits: vacancy?.custom_benefits || [],
   priority: vacancy?.priority || 'medium',
@@ -170,6 +176,23 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
 
   // Hand focus to the discard-confirm dialog while it's open.
   useFocusTrap({ containerRef: dialogRef, isActive: isOpen && !showDiscardConfirm, initialFocusRef: opportunityTypeRef })
+
+  // Increment #4 — pre-fill level_sought from the creating club's league
+  // band for a NEW opportunity (recruiter can override). Best-effort: warm
+  // the band cache then read it; leaves the field blank if unseeded.
+  useEffect(() => {
+    if (!isOpen || editingVacancy) return
+    const clubId = profile?.current_world_club_id
+    if (!clubId) return
+    let cancelled = false
+    void (async () => {
+      await prefetchWorldClubLogos([clubId])
+      if (cancelled) return
+      const tier = levelSoughtFromBand(getClubLevelBand(clubId, null))
+      if (tier) setFormData((prev) => (prev.level_sought ? prev : { ...prev, level_sought: tier }))
+    })()
+    return () => { cancelled = true }
+  }, [isOpen, editingVacancy, profile?.current_world_club_id])
 
   useEffect(() => {
     if (!isOpen) {
@@ -424,6 +447,10 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
         specialist_skills_wanted: formData.opportunity_type === 'player'
           ? pruneSpecialistSkillsForPosition(formData.specialist_skills_wanted, formData.position)
           : [],
+        // Increment #4 — recruiter intent (empty string → null).
+        level_sought: formData.level_sought || null,
+        compensation: formData.compensation || null,
+        recruitment_problem: formData.recruitment_problem || null,
         benefits: formData.benefits || [],
         custom_benefits: formData.custom_benefits || [],
         priority: formData.priority || 'medium',
@@ -725,6 +752,59 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                   onChange={(next) => handleInputChange('specialist_skills_wanted', next)}
                   position={formData.position}
                 />
+              )}
+
+              {/* Recruiter intent (Matching Increment #4) — player opps only.
+                  Kept simple: clarify intent, not fill an HR form. */}
+              {formData.opportunity_type === 'player' && (
+                <div className="space-y-4 rounded-lg border border-gray-200 p-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">What you're looking for</p>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">What are you solving this season?</label>
+                    <select
+                      value={formData.recruitment_problem || ''}
+                      onChange={(e) => handleInputChange('recruitment_problem', e.target.value || undefined)}
+                      aria-label="Recruitment problem"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#10b981] focus:border-transparent bg-white"
+                    >
+                      <option value="">Optional</option>
+                      {RECRUITMENT_PROBLEM_OPTIONS.map((o) => (
+                        <option key={o.value} value={o.value}>{o.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Level sought</label>
+                      <select
+                        value={formData.level_sought || ''}
+                        onChange={(e) => handleInputChange('level_sought', e.target.value || undefined)}
+                        aria-label="Level sought"
+                        className="w-full px-3 py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#10b981] focus:border-transparent bg-white"
+                      >
+                        <option value="">Select</option>
+                        {LEVEL_SOUGHT_OPTIONS.map((o) => (
+                          <option key={o.value} value={o.value}>{o.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Compensation</label>
+                      <select
+                        value={formData.compensation || ''}
+                        onChange={(e) => handleInputChange('compensation', e.target.value || undefined)}
+                        aria-label="Compensation"
+                        className="w-full px-3 py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#10b981] focus:border-transparent bg-white"
+                      >
+                        <option value="">Select</option>
+                        {COMPENSATION_OPTIONS.map((o) => (
+                          <option key={o.value} value={o.value}>{o.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-gray-400">Level pre-fills from your club's level — change it if you're recruiting above or below.</p>
+                </div>
               )}
 
               {/* Description */}

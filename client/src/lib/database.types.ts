@@ -1804,6 +1804,9 @@ export type Database = {
           published_at: string | null
           requirements: string[]
           specialist_skills_wanted: string[]
+          level_sought: string | null
+          compensation: string | null
+          recruitment_problem: string | null
           search_vector: unknown
           start_date: string | null
           status: Database["public"]["Enums"]["opportunity_status"]
@@ -1835,6 +1838,9 @@ export type Database = {
           published_at?: string | null
           requirements?: string[]
           specialist_skills_wanted?: string[]
+          level_sought?: string | null
+          compensation?: string | null
+          recruitment_problem?: string | null
           search_vector?: unknown
           start_date?: string | null
           status?: Database["public"]["Enums"]["opportunity_status"]
@@ -1866,6 +1872,9 @@ export type Database = {
           published_at?: string | null
           requirements?: string[]
           specialist_skills_wanted?: string[]
+          level_sought?: string | null
+          compensation?: string | null
+          recruitment_problem?: string | null
           search_vector?: unknown
           start_date?: string | null
           status?: Database["public"]["Enums"]["opportunity_status"]
@@ -3317,6 +3326,9 @@ export type Database = {
           target_position: string | null
           target_location_country: string | null
           target_specialists: string[]
+          target_level: string | null
+          target_compensation: string | null
+          target_problem: string | null
           target_start_date: string | null
           target_role: string | null
           type: string
@@ -3336,6 +3348,9 @@ export type Database = {
           target_position?: string | null
           target_location_country?: string | null
           target_specialists?: string[]
+          target_level?: string | null
+          target_compensation?: string | null
+          target_problem?: string | null
           target_start_date?: string | null
           target_role?: string | null
           type: string
@@ -3355,6 +3370,9 @@ export type Database = {
           target_position?: string | null
           target_location_country?: string | null
           target_specialists?: string[]
+          target_level?: string | null
+          target_compensation?: string | null
+          target_problem?: string | null
           target_start_date?: string | null
           target_role?: string | null
           type?: string
@@ -4735,6 +4753,9 @@ export type Database = {
           target_position: string | null
           target_location_country: string | null
           target_specialists: string[]
+          target_level: string | null
+          target_compensation: string | null
+          target_problem: string | null
           target_start_date: string | null
           target_role: string | null
           type: string
@@ -5786,6 +5807,9 @@ export type Database = {
           target_position: string | null
           target_location_country: string | null
           target_specialists: string[]
+          target_level: string | null
+          target_compensation: string | null
+          target_problem: string | null
           target_start_date: string | null
           target_role: string | null
           type: string
@@ -6806,6 +6830,9 @@ export type Database = {
           target_position: string | null
           target_location_country: string | null
           target_specialists: string[]
+          target_level: string | null
+          target_compensation: string | null
+          target_problem: string | null
           target_start_date: string | null
           target_role: string | null
           type: string
