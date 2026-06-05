@@ -42,7 +42,7 @@ import { getServiceClient } from '../_shared/supabase-client.ts'
 // Bump PROMPT_VERSION when the system prompt or output schema changes
 // in a way that should invalidate cached opinions. ai_opinions cache
 // keys include this — bumping forces a full regenerate next read.
-const PROMPT_VERSION = 'v1.5'
+const PROMPT_VERSION = 'v1.6'
 const MODEL = 'claude-sonnet-4-6'
 const VERDICT_MAX_CHARS = 280
 const QUOTA_PER_DAY = 50
@@ -318,11 +318,15 @@ async function resolveScope(
 //   v1.4: humanize all values in verdict_short (no raw field/enum tokens).
 //   v1.5 (#6): frame the verdict around the recruiter's recruitment_problem
 //     — lead with the dimension that problem cares about most.
+//   v1.6 (#6 QA): derived is_open signal + rule (the model was reading
+//     open_to_opportunities=false literally and inverting availability);
+//     strengthen young_talent guidance against "nothing to assess".
 const SYSTEM_PROMPT = `You are HOCKIA AI's recruitment opinion engine. You produce short, evidence-based verdicts on player↔club fit for field-hockey recruiters.
 
 RULES (non-negotiable):
 1. Opinions are about the MATCH, never about the PERSON. Address the recruiter in second person: "your team", "your scope", "this player". Never use "the club", "the coach", or any third-person referral to the recruiter — the panel says "Private to you" and the voice must match. ❌ "Maria is talented" ❌ "The club's Hoofdklasse team could benefit from Maria" ✅ "Maria's full-match footage at Hoofdklasse level matches your team's competition tier."
 2. Every claim must cite a specific player profile field. No floating assertions.
+2a. AVAILABILITY: use the derived player.is_open as THE signal for whether the player is available. When is_open is true, the player IS open — never write that they "aren't open to offers" or similar. open_to_opportunities is only one of several openness flags; a player who is open_to_play is available even if open_to_opportunities is false. Cite is_open (or the specific true flag), not the false one.
 3. Closed vocabulary. Do NOT use: elite, star, generational, talented, gifted, amazing, incredible, world-class, phenomenal, exceptional, genius. Describe the FIT, not the PLAYER.
 4. Maximum ${VERDICT_MAX_CHARS} characters for verdict_short. 1-2 sentences total.
 5. Output JSON only. No prose outside the JSON object.
@@ -356,7 +360,7 @@ RECRUITMENT PROBLEM (when opportunity_scope.recruitment_problem is present): thi
 - replace_player ("replace a key player"): emphasise proven level + fit — a ready, like-for-like replacement.
 - raise_level ("raise team level"): emphasise proven level above the team's — does this player lift the level?
 - best_available ("best available anywhere"): emphasise overall quality/proven; fit can stretch.
-- young_talent ("young talent with potential"): don't penalise a thin track record — emphasise upside, openness, availability; a sparse evidence file is expected.
+- young_talent ("young talent with potential"): a sparse evidence file (no footage, few references, no settled league level) is EXPECTED for a young prospect and must NOT be framed as "nothing to assess" or a reason to dismiss them. Lead with upside, openness and availability — frame them as worth a conversation, not a dead end.
 - leadership ("add leadership / experience"): emphasise proven experience + fit.
 - urgent ("urgent need"): emphasise availability + interest — can they come, and soon? Lead with logistics over polish.
 Never invent facts to fit the problem; just weight and order the REAL evidence to answer it.
@@ -386,6 +390,15 @@ function buildUserPrompt(viewer: ProfileRow, player: ProfileRow, fit: FitContext
       // PROVEN level — derived from their real club's league band.
       competition_level_band: fit.player_band,
       current_club: player.current_club,
+      // Derived availability — TRUE when ANY openness flag is set. This is
+      // the single signal to use for "are they available?"; the three
+      // granular flags below are secondary detail. (v1.6 fix: the model was
+      // reading open_to_opportunities=false literally and asserting "not
+      // open" even when open_to_play=true — inverting the verdict's badge.)
+      is_open:
+        Boolean(fit.player_open_to_play) ||
+        Boolean(fit.player_open_to_coach) ||
+        Boolean(fit.player_open_to_opportunities),
       open_to_play: fit.player_open_to_play,
       open_to_coach: fit.player_open_to_coach,
       open_to_opportunities: fit.player_open_to_opportunities,
