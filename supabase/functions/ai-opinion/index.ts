@@ -42,7 +42,7 @@ import { getServiceClient } from '../_shared/supabase-client.ts'
 // Bump PROMPT_VERSION when the system prompt or output schema changes
 // in a way that should invalidate cached opinions. ai_opinions cache
 // keys include this — bumping forces a full regenerate next read.
-const PROMPT_VERSION = 'v1.6'
+const PROMPT_VERSION = 'v1.7'
 const MODEL = 'claude-sonnet-4-6'
 const VERDICT_MAX_CHARS = 280
 const QUOTA_PER_DAY = 50
@@ -76,6 +76,16 @@ interface OpinionPayload {
 }
 
 interface FitContext {
+  // #6b — which kind of candidate this is ('player' | 'coach'); selects the
+  // player↔club vs coach↔team assessment path + prompt branch.
+  candidate_role: string
+  // #6b — coach-seeking scope fields (the role + specific coaching role the
+  // opening seeks); null for a player-seeking scope.
+  scope_target_role: string | null
+  scope_target_position: string | null
+  // #6b — coach candidate's own specialization + categories.
+  player_coach_specialization: string | null
+  player_coaching_categories: string[] | null
   viewer_target: 'Men' | 'Women' | 'Mixed' | null
   viewer_band: number | null
   // #5 Part 2 — the active opportunity scope (level_sought / compensation /
@@ -166,6 +176,12 @@ function computeContextHash(viewerId: string, playerId: string, fit: FitContext)
     pop: fit.player_opportunity_preference,
     prw: fit.player_relocation_willingness,
     paf: fit.player_available_from,
+    // #6b — coach-candidate dimensions.
+    cr: fit.candidate_role,
+    str: fit.scope_target_role,
+    stp: fit.scope_target_position,
+    pcs: fit.player_coach_specialization,
+    pcc: fit.player_coaching_categories,
   })
   return sha256(payload)
 }
@@ -192,12 +208,14 @@ interface ProfileRow {
   opportunity_preference: string | null
   relocation_willingness: string | null
   available_from: string | null
+  // #6b — coach candidate's specialization (coaching_categories above).
+  coach_specialization: string | null
 }
 
 async function fetchProfile(supabase: ReturnType<typeof getServiceClient>, id: string): Promise<ProfileRow | null> {
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, role, full_name, current_world_club_id, playing_category, coaching_categories, open_to_play, open_to_coach, open_to_opportunities, last_active_at, accepted_reference_count, career_entry_count, highlight_video_url, full_game_video_count, current_club, level_target, opportunity_preference, relocation_willingness, available_from')
+    .select('id, role, full_name, current_world_club_id, playing_category, coaching_categories, open_to_play, open_to_coach, open_to_opportunities, last_active_at, accepted_reference_count, career_entry_count, highlight_video_url, full_game_video_count, current_club, level_target, opportunity_preference, relocation_willingness, available_from, coach_specialization')
     .eq('id', id)
     .maybeSingle()
   if (error) throw error
@@ -246,6 +264,10 @@ interface RecruitingScope {
   location_country: string | null
   start_date: string | null
   problem: string | null
+  // #6b — the role the opening seeks ('player' | 'coach' | null) + the
+  // specific coaching role (opportunity.position holds the coach enum).
+  role: string | null
+  position: string | null
 }
 
 async function resolveScope(
@@ -257,7 +279,7 @@ async function resolveScope(
   // opt-in via ContextSwitcher).
   const { data: ctx } = await supabase
     .from('recruiting_context')
-    .select('target_category, target_level, target_compensation, target_location_country, target_start_date, target_problem')
+    .select('target_category, target_level, target_compensation, target_location_country, target_start_date, target_problem, target_role, target_position')
     .eq('owner_id', viewerId)
     .eq('is_active', true)
     .maybeSingle()
@@ -268,6 +290,8 @@ async function resolveScope(
     target_location_country: string | null
     target_start_date: string | null
     target_problem: string | null
+    target_role: string | null
+    target_position: string | null
   } | null
   const scope: RecruitingScope = {
     target: (row?.target_category as 'Men' | 'Women' | 'Mixed' | null) ?? null,
@@ -276,6 +300,8 @@ async function resolveScope(
     location_country: row?.target_location_country ?? null,
     start_date: row?.target_start_date ?? null,
     problem: row?.target_problem ?? null,
+    role: row?.target_role ?? null,
+    position: row?.target_position ?? null,
   }
   if (scope.target) return scope
 
@@ -321,7 +347,10 @@ async function resolveScope(
 //   v1.6 (#6 QA): derived is_open signal + rule (the model was reading
 //     open_to_opportunities=false literally and inverting availability);
 //     strengthen young_talent guidance against "nothing to assess".
-const SYSTEM_PROMPT = `You are HOCKIA AI's recruitment opinion engine. You produce short, evidence-based verdicts on player↔club fit for field-hockey recruiters.
+//   v1.7 (#6b): coach-candidate support — when the payload has a `coach`
+//     object (opportunity_scope.seeking='coach'), assess coaching-role +
+//     team-category match + experience + availability, not player level.
+const SYSTEM_PROMPT = `You are HOCKIA AI's recruitment opinion engine. You produce short, evidence-based verdicts on player↔club AND coach↔team fit for field-hockey recruiters.
 
 RULES (non-negotiable):
 1. Opinions are about the MATCH, never about the PERSON. Address the recruiter in second person: "your team", "your scope", "this player". Never use "the club", "the coach", or any third-person referral to the recruiter — the panel says "Private to you" and the voice must match. ❌ "Maria is talented" ❌ "The club's Hoofdklasse team could benefit from Maria" ✅ "Maria's full-match footage at Hoofdklasse level matches your team's competition tier."
@@ -367,9 +396,47 @@ Never invent facts to fit the problem; just weight and order the REAL evidence t
 
 SELF-DECLARED VS PROVEN (non-negotiable): competition_level_band is the player's PROVEN level (where they actually play); level_target is only what they SAY they want. PROVEN outranks self-declared for level matching — never describe a player as being at a level their band doesn't support just because their level_target claims it. You may note the stated aspiration as colour ("they're targeting a higher level than they've proven"), but anchor the level verdict on the band.
 
+COACH CANDIDATE (when the payload has a "coach" object instead of "player", i.e. opportunity_scope.seeking="coach"): you are assessing a COACH for a coaching role, NOT a player. Ignore all player concepts — there is no competition_level_band, level, or footage to weigh. Judge on:
+- coaching role: coach.coach_specialization vs opportunity_scope.coaching_role_sought (e.g. a head_coach for a head_coach opening is a direct match; a different specialization is a weaker fit).
+- team category: coach.coaching_categories vs opportunity_scope.team_category (do they coach that category?).
+- experience / trust: accepted_reference_count + career_entry_count (who vouches + track record).
+- availability: is_open (same rule as above — true means available).
+Cite the coach fields (coach_specialization, coaching_categories, accepted_reference_count, is_open). All other rules (MATCH not person, 2nd person, closed vocabulary, humanized values, ≤${VERDICT_MAX_CHARS} chars, JSON only) apply unchanged.
+
 If insufficient information (e.g., no playing_category, no level_band on either side, no openness signals), respond with a verdict naming the missing fields AND cite each missing field as a citation with value="null" — e.g. { "field": "competition_level_band", "value": "null", "claim": "Not set on your side, so tier comparison isn't possible yet." }. Do not return an empty citations array.`
 
 function buildUserPrompt(viewer: ProfileRow, player: ProfileRow, fit: FitContext): string {
+  const isOpen =
+    Boolean(fit.player_open_to_play) ||
+    Boolean(fit.player_open_to_coach) ||
+    Boolean(fit.player_open_to_opportunities)
+
+  // #6b — coach candidate: assess on coaching-role + team-category match +
+  // experience + availability. Level/band/footage don't apply to coaches.
+  if (fit.candidate_role === 'coach') {
+    return JSON.stringify({
+      viewer_role: viewer.role,
+      opportunity_scope: {
+        seeking: 'coach',
+        coaching_role_sought: fit.scope_target_position, // e.g. head_coach
+        team_category: fit.viewer_target,
+        recruitment_problem: fit.viewer_recruitment_problem,
+      },
+      coach: {
+        role: player.role,
+        coach_specialization: fit.player_coach_specialization,
+        coaching_categories: fit.player_coaching_categories,
+        is_open: isOpen,
+        open_to_coach: fit.player_open_to_coach,
+        open_to_opportunities: fit.player_open_to_opportunities,
+        last_active_at: fit.player_last_active_at,
+        accepted_reference_count: player.accepted_reference_count ?? 0,
+        career_entry_count: player.career_entry_count ?? 0,
+        current_club: player.current_club,
+      },
+    }, null, 2)
+  }
+
   return JSON.stringify({
     viewer_role: viewer.role,
     viewer_target_category: fit.viewer_target,
@@ -589,11 +656,28 @@ serve(async (req: Request) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }
+  // 5a) Role compatibility (#6b) — mirror the lenses: a coach-seeking scope
+  // assesses coach candidates (Coach Fit); a player-seeking scope assesses
+  // player candidates (Club Fit). A mismatch is not_applicable (no opinion),
+  // exactly like the deterministic chip hiding.
+  const isCoachScope = scope.role === 'coach'
+  const candidateIsCoach = player.role === 'coach'
+  if (isCoachScope !== candidateIsCoach) {
+    return new Response(JSON.stringify({ error: 'not_applicable', detail: 'candidate role does not match the scoped opening' }), {
+      status: 403,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
+  }
   const [viewerBand, playerBand] = await Promise.all([
     fetchLevelBand(supabase, viewer.current_world_club_id, scope.target === 'Women' ? 'adult_women' : 'adult_men'),
     fetchLevelBand(supabase, player.current_world_club_id, player.playing_category),
   ])
   const fit: FitContext = {
+    candidate_role: player.role,
+    scope_target_role: scope.role,
+    scope_target_position: scope.position,
+    player_coach_specialization: player.coach_specialization,
+    player_coaching_categories: player.coaching_categories,
     viewer_target: scope.target,
     viewer_band: viewerBand,
     viewer_target_level: scope.level,

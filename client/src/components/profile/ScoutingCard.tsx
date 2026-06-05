@@ -49,10 +49,7 @@ import RecruiterVerdictCard from '@/components/recruiting/RecruiterVerdictCard'
 import AIOpinionPanel from '@/components/recruiting/AIOpinionPanel'
 import MoreActionsMenu from '@/components/recruiting/MoreActionsMenu'
 import {
-  useActiveRecruitingTargetLevel,
-  useActiveRecruitingTargetCompensation,
-  useActiveRecruitingTargetLocation,
-  useActiveRecruitingTargetStartDate,
+  useHasActiveRecruitingScope,
   useActiveRecruitingTargetProblem,
 } from '@/hooks/useRecruitingContext'
 
@@ -222,15 +219,13 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
         }
       : null,
   )
-  // An opportunity is the active scope when any opportunity-derived field
-  // is set (level / compensation / location / start). A club with only a
-  // profile-derived team category has none of these → "general fit".
-  const scopeLevel = useActiveRecruitingTargetLevel()
-  const scopeCompensation = useActiveRecruitingTargetCompensation()
-  const scopeLocation = useActiveRecruitingTargetLocation()
-  const scopeStartDate = useActiveRecruitingTargetStartDate()
+  // "For your scope" when the recruiter has an active context (opportunity
+  // OR custom) they chose; "general fit" only when there's none (profile-
+  // derived defaults). Using the active-context signal — not whether
+  // level/compensation/location happen to be set — so a coach opening (or
+  // any minimal opening) still reads as scoped.
+  const hasOpeningScope = useHasActiveRecruitingScope()
   const scopeProblem = useActiveRecruitingTargetProblem()
-  const hasOpeningScope = Boolean(scopeLevel || scopeCompensation || scopeLocation || scopeStartDate)
 
   // Increment #5 — the explanation-led synthesis verdict that leads the
   // card. Fuses whichever Fit applies (player Club Fit / coach Coach Fit)
@@ -445,6 +440,9 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
               open_to_coach: profile.open_to_coach,
               open_to_opportunities: profile.open_to_opportunities,
               last_active_at: profile.last_active_at,
+              // #6b — coach-candidate path: gates the panel on Coach Fit.
+              coach_specialization: profile.coach_specialization,
+              coaching_categories: profile.coaching_categories,
             }}
           />
         </div>

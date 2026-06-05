@@ -26,6 +26,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { useClubFit } from './useClubFit'
+import { useCoachFit } from './useCoachFit'
 import type { FitCandidateFields } from '@/lib/clubFit'
 
 export interface AIOpinionCitation {
@@ -70,8 +71,17 @@ interface UseAIOpinionOptions {
  * @param candidate The full Fit candidate fields. Must match what
  *   ClubFitChip uses so the recruiter-only gating is consistent.
  */
+/** The candidate shape the AI opinion accepts — the Club-Fit fields plus
+ *  the coach-fit fields used when the candidate is a coach. The edge
+ *  function re-derives everything from player_id server-side; these are
+ *  only used client-side to gate the panel on the role-appropriate Fit. */
+export type AIOpinionCandidate = FitCandidateFields & {
+  coach_specialization?: string | null
+  coaching_categories?: string[] | null
+}
+
 export function useAIOpinion(
-  candidate: FitCandidateFields | null | undefined,
+  candidate: AIOpinionCandidate | null | undefined,
   options: UseAIOpinionOptions = {},
 ): {
   status: AIOpinionStatus
@@ -88,7 +98,22 @@ export function useAIOpinion(
 } {
   const enabled = options.enabled !== false
   const { profile: viewer } = useAuthStore()
-  const fit = useClubFit(candidate)
+  // Gate on the role-appropriate Fit: Club Fit for player candidates,
+  // Coach Fit for coach candidates. Both hooks always run (rules of hooks);
+  // the non-matching one returns NOT_APPLICABLE and is ignored. This is
+  // what makes the AI panel render for coach candidates too (#6b).
+  const clubFit = useClubFit(candidate)
+  const coachFit = useCoachFit(
+    candidate?.role === 'coach'
+      ? {
+          id: candidate.id,
+          role: candidate.role,
+          coach_specialization: candidate.coach_specialization ?? null,
+          coaching_categories: candidate.coaching_categories ?? null,
+        }
+      : null,
+  )
+  const fit = candidate?.role === 'coach' ? coachFit : clubFit
   const [status, setStatus] = useState<AIOpinionStatus>({ kind: 'idle' })
 
   // Ref used to drop stale responses if the candidate changes mid-flight

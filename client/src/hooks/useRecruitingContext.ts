@@ -692,6 +692,32 @@ export function useActiveRecruitingTargetCompensation(): string | null {
   return compensation
 }
 
+/** Whether the viewer has ANY active recruiting context (opportunity or
+ *  custom). The #5 verdict uses this to label the lead "for your scope"
+ *  (an explicit scope the recruiter chose) vs "general fit" (no active
+ *  context → profile-derived defaults). More robust than inferring scope
+ *  from level/compensation/location being set — a coach opening, or a
+ *  minimal opening, can be active with none of those populated. */
+export function useHasActiveRecruitingScope(): boolean {
+  const { profile: viewer } = useAuthStore()
+  const viewerId = viewer?.id ?? null
+  const viewerRole = viewer?.role ?? null
+
+  const setViewer = useRecruitingContextStore((s) => s.setViewer)
+  const ensureFetched = useRecruitingContextStore((s) => s.ensureFetched)
+  const hasActive = useRecruitingContextStore((s) => s.rows.some((r) => r.is_active))
+
+  useEffect(() => {
+    setViewer(viewerId, viewerRole)
+  }, [viewerId, viewerRole, setViewer])
+
+  useEffect(() => {
+    void ensureFetched()
+  }, [viewerId, viewerRole, ensureFetched])
+
+  return hasActive
+}
+
 /** Active scope's recruitment problem (#4a: replace_player / raise_level /
  *  best_available / young_talent / leadership / urgent) or null. Drives the
  *  #6 verdict re-weighting — the problem reshapes how the four lenses

@@ -31,8 +31,7 @@ import {
   ThumbsDown,
 } from 'lucide-react'
 import { useAIOpinion } from '@/hooks/useAIOpinion'
-import type { AIOpinionFeedbackRating } from '@/hooks/useAIOpinion'
-import type { FitCandidateFields } from '@/lib/clubFit'
+import type { AIOpinionFeedbackRating, AIOpinionCandidate } from '@/hooks/useAIOpinion'
 import {
   trackAIOpinionViewed,
   trackAIOpinionRegenerated,
@@ -42,7 +41,7 @@ import {
 } from '@/lib/analytics'
 
 interface AIOpinionPanelProps {
-  candidate: FitCandidateFields
+  candidate: AIOpinionCandidate
   className?: string
 }
 
