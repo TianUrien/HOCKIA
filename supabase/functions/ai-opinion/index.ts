@@ -42,7 +42,7 @@ import { getServiceClient } from '../_shared/supabase-client.ts'
 // Bump PROMPT_VERSION when the system prompt or output schema changes
 // in a way that should invalidate cached opinions. ai_opinions cache
 // keys include this — bumping forces a full regenerate next read.
-const PROMPT_VERSION = 'v1.2'
+const PROMPT_VERSION = 'v1.3'
 const MODEL = 'claude-sonnet-4-6'
 const VERDICT_MAX_CHARS = 280
 const QUOTA_PER_DAY = 50
@@ -78,6 +78,13 @@ interface OpinionPayload {
 interface FitContext {
   viewer_target: 'Men' | 'Women' | 'Mixed' | null
   viewer_band: number | null
+  // #5 Part 2 — the active opportunity scope (level_sought / compensation /
+  // location / start) so the verdict reflects the #4a/#4b recruiter intent,
+  // not just category + band. Null when no opportunity scope is active.
+  viewer_target_level: string | null
+  viewer_target_compensation: string | null
+  viewer_target_location_country: string | null
+  viewer_target_start_date: string | null
   player_category: string | null
   player_band: number | null
   player_open_to_play: boolean | null
@@ -93,6 +100,12 @@ interface FitContext {
   player_career_entry_count: number
   player_has_highlight_video: boolean
   player_full_match_video_count: number
+  // #5 Part 2 — self-declared candidate intent (#2.1/#4b). PROVEN level
+  // (player_band) still outranks these for level matching.
+  player_level_target: string | null
+  player_opportunity_preference: string | null
+  player_relocation_willingness: string | null
+  player_available_from: string | null
 }
 
 // ── sha256 hash via Web Crypto (Deno) ──────────────────────────────
@@ -139,6 +152,17 @@ function computeContextHash(viewerId: string, playerId: string, fit: FitContext)
     cec: fit.player_career_entry_count,
     hhv: fit.player_has_highlight_video,
     fmv: fit.player_full_match_video_count,
+    // #5 Part 2 — scope intent + candidate intent change the verdict, so
+    // they must drift the hash (else a recruiter switching to a paid /
+    // higher-level scope keeps a stale verdict for up to 24h).
+    vtl: fit.viewer_target_level,
+    vtc: fit.viewer_target_compensation,
+    vtloc: fit.viewer_target_location_country,
+    vtsd: fit.viewer_target_start_date,
+    plt: fit.player_level_target,
+    pop: fit.player_opportunity_preference,
+    prw: fit.player_relocation_willingness,
+    paf: fit.player_available_from,
   })
   return sha256(payload)
 }
@@ -160,12 +184,17 @@ interface ProfileRow {
   highlight_video_url: string | null
   full_game_video_count: number | null
   current_club: string | null
+  // #5 Part 2 — self-declared candidate intent (#2.1/#4b).
+  level_target: string | null
+  opportunity_preference: string | null
+  relocation_willingness: string | null
+  available_from: string | null
 }
 
 async function fetchProfile(supabase: ReturnType<typeof getServiceClient>, id: string): Promise<ProfileRow | null> {
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, role, full_name, current_world_club_id, playing_category, coaching_categories, open_to_play, open_to_coach, open_to_opportunities, last_active_at, accepted_reference_count, career_entry_count, highlight_video_url, full_game_video_count, current_club')
+    .select('id, role, full_name, current_world_club_id, playing_category, coaching_categories, open_to_play, open_to_coach, open_to_opportunities, last_active_at, accepted_reference_count, career_entry_count, highlight_video_url, full_game_video_count, current_club, level_target, opportunity_preference, relocation_willingness, available_from')
     .eq('id', id)
     .maybeSingle()
   if (error) throw error
@@ -202,28 +231,53 @@ async function fetchLevelBand(
   return (league as { level_band_global: number | null } | null)?.level_band_global ?? null
 }
 
-// ── Effective recruiting target ─────────────────────────────────────
-async function resolveTarget(
+// ── Effective recruiting scope ──────────────────────────────────────
+// The active recruiting_context carries the full opportunity intent — the
+// sought category PLUS (when scoped to an opportunity, #4a/#4b) the
+// level_sought / compensation / location / start. The verdict needs all of
+// it so the AI narrates the same picture the deterministic lenses score.
+interface RecruitingScope {
+  target: 'Men' | 'Women' | 'Mixed' | null
+  level: string | null
+  compensation: string | null
+  location_country: string | null
+  start_date: string | null
+}
+
+async function resolveScope(
   supabase: ReturnType<typeof getServiceClient>,
   viewerId: string,
   viewerRole: string,
-): Promise<'Men' | 'Women' | 'Mixed' | null> {
+): Promise<RecruitingScope> {
   // Active recruiting_context wins if present (clubs auto-seed, coaches
   // opt-in via ContextSwitcher).
   const { data: ctx } = await supabase
     .from('recruiting_context')
-    .select('target_category')
+    .select('target_category, target_level, target_compensation, target_location_country, target_start_date')
     .eq('owner_id', viewerId)
     .eq('is_active', true)
     .maybeSingle()
-  const override = (ctx as { target_category: string | null } | null)?.target_category as
-    | 'Men' | 'Women' | 'Mixed' | null
-    | undefined
-  if (override) return override
+  const row = ctx as {
+    target_category: string | null
+    target_level: string | null
+    target_compensation: string | null
+    target_location_country: string | null
+    target_start_date: string | null
+  } | null
+  const scope: RecruitingScope = {
+    target: (row?.target_category as 'Men' | 'Women' | 'Mixed' | null) ?? null,
+    level: row?.target_level ?? null,
+    compensation: row?.target_compensation ?? null,
+    location_country: row?.target_location_country ?? null,
+    start_date: row?.target_start_date ?? null,
+  }
+  if (scope.target) return scope
 
-  // Clubs: derive from profile's league divisions (men's / women's).
-  // Coaches: no profile-derived target — return null if no override.
-  if (viewerRole !== 'club') return null
+  // Clubs: derive the category from profile's league divisions (men's /
+  // women's). Coaches: no profile-derived target — leave target null (the
+  // caller returns not_applicable). The opportunity-scope fields stay null
+  // either way (only an active opportunity context carries them).
+  if (viewerRole !== 'club') return scope
   const { data: profile } = await supabase
     .from('profiles')
     .select('mens_league_division, womens_league_division')
@@ -232,10 +286,8 @@ async function resolveTarget(
   const p = profile as { mens_league_division: string | null; womens_league_division: string | null } | null
   const hasMen = Boolean(p?.mens_league_division)
   const hasWomen = Boolean(p?.womens_league_division)
-  if (hasMen && hasWomen) return 'Mixed'
-  if (hasMen) return 'Men'
-  if (hasWomen) return 'Women'
-  return null
+  scope.target = hasMen && hasWomen ? 'Mixed' : hasMen ? 'Men' : hasWomen ? 'Women' : null
+  return scope
 }
 
 // ── Prompt v1.2 ─────────────────────────────────────────────────────
@@ -250,6 +302,13 @@ async function resolveTarget(
 //     the model flipping "above"/"below" directionality between adjacent
 //     calls on the same band relationship; explicit rule removes the
 //     50/50 coin flip.
+//   v1.3 (#5 Part 2):
+//   - Feed the active opportunity scope (level_sought / compensation /
+//     location / start) + the player's self-declared intent (level_target,
+//     opportunity_preference, relocation, available_from) so the verdict
+//     reflects the full #4a/#4b model, not just category + band.
+//   - SELF-DECLARED VS PROVEN rule: proven level (band) outranks the
+//     player's stated level_target for level matching.
 const SYSTEM_PROMPT = `You are HOCKIA AI's recruitment opinion engine. You produce short, evidence-based verdicts on player↔club fit for field-hockey recruiters.
 
 RULES (non-negotiable):
@@ -277,6 +336,14 @@ FIT-MATH CONTEXT:
 BAND CONVENTION: competition_level_band uses a 1–10 scale where LOWER numbers are HIGHER tiers (band 1 = national top tier; band 10 = recreational). When comparing bands, a player at band 3 vs a recruiter at band 5 is TWO TIERS ABOVE the recruiter (player plays at a higher level). "Step up" means moving from a higher band number to a lower one; "step down" is the reverse. Never invert this — apply the convention consistently across every verdict.
 You are given a deterministic Fit calculation. Treat it as ground truth. Your job is to translate the inputs into recruiter-readable language.
 
+OPPORTUNITY SCOPE (when opportunity_scope fields are present): the recruiter is hiring for a specific opening. Weigh these against the player:
+- level_sought (elite > high_performance > competitive > development): the level the opening targets. Compare it to the player's PROVEN level (competition_level_band) FIRST.
+- compensation (paid / unpaid_development / either) vs the player's opportunity_preference (paid / development / either): an "either" on either side is compatible; a player who wants paid being shown an unpaid/development role is a real mismatch worth flagging.
+- location_country + start_date vs the player's relocation_willingness + available_from: logistics that can make or break a deal.
+When opportunity_scope fields are null, the recruiter hasn't scoped to an opening — do not invent level/compensation/logistics claims; stick to category + band + evidence.
+
+SELF-DECLARED VS PROVEN (non-negotiable): competition_level_band is the player's PROVEN level (where they actually play); level_target is only what they SAY they want. PROVEN outranks self-declared for level matching — never describe a player as being at a level their band doesn't support just because their level_target claims it. You may note the stated aspiration as colour ("they're targeting a higher level than they've proven"), but anchor the level verdict on the band.
+
 If insufficient information (e.g., no playing_category, no level_band on either side, no openness signals), respond with a verdict naming the missing fields AND cite each missing field as a citation with value="null" — e.g. { "field": "competition_level_band", "value": "null", "claim": "Not set on your side, so tier comparison isn't possible yet." }. Do not return an empty citations array.`
 
 function buildUserPrompt(viewer: ProfileRow, player: ProfileRow, fit: FitContext): string {
@@ -284,9 +351,18 @@ function buildUserPrompt(viewer: ProfileRow, player: ProfileRow, fit: FitContext
     viewer_role: viewer.role,
     viewer_target_category: fit.viewer_target,
     viewer_competition_level_band: fit.viewer_band,
+    // #5 Part 2 — the active opportunity scope (null when the recruiter
+    // hasn't scoped to an opportunity; then skip level/comp/logistics).
+    opportunity_scope: {
+      level_sought: fit.viewer_target_level,
+      compensation: fit.viewer_target_compensation,
+      location_country: fit.viewer_target_location_country,
+      start_date: fit.viewer_target_start_date,
+    },
     player: {
       role: player.role,
       playing_category: fit.player_category,
+      // PROVEN level — derived from their real club's league band.
       competition_level_band: fit.player_band,
       current_club: player.current_club,
       open_to_play: fit.player_open_to_play,
@@ -297,6 +373,12 @@ function buildUserPrompt(viewer: ProfileRow, player: ProfileRow, fit: FitContext
       career_entry_count: player.career_entry_count ?? 0,
       has_highlight_video: Boolean(player.highlight_video_url?.trim()),
       full_match_video_count: player.full_game_video_count ?? 0,
+      // SELF-DECLARED intent — what the player SAYS they want. Outranked by
+      // proven level for level matching (see SELF-DECLARED VS PROVEN rule).
+      level_target: fit.player_level_target,
+      opportunity_preference: fit.player_opportunity_preference,
+      relocation_willingness: fit.player_relocation_willingness,
+      available_from: fit.player_available_from,
     },
   }, null, 2)
 }
@@ -465,21 +547,25 @@ serve(async (req: Request) => {
     })
   }
 
-  // 5) Resolve effective target + both sides' level bands.
-  const viewerTarget = await resolveTarget(supabase, viewerId, viewer.role)
-  if (!viewerTarget) {
+  // 5) Resolve effective scope (category + opportunity intent) + bands.
+  const scope = await resolveScope(supabase, viewerId, viewer.role)
+  if (!scope.target) {
     return new Response(JSON.stringify({ error: 'not_applicable', detail: 'no recruiting target — set a context via the chip' }), {
       status: 403,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }
   const [viewerBand, playerBand] = await Promise.all([
-    fetchLevelBand(supabase, viewer.current_world_club_id, viewerTarget === 'Women' ? 'adult_women' : 'adult_men'),
+    fetchLevelBand(supabase, viewer.current_world_club_id, scope.target === 'Women' ? 'adult_women' : 'adult_men'),
     fetchLevelBand(supabase, player.current_world_club_id, player.playing_category),
   ])
   const fit: FitContext = {
-    viewer_target: viewerTarget,
+    viewer_target: scope.target,
     viewer_band: viewerBand,
+    viewer_target_level: scope.level,
+    viewer_target_compensation: scope.compensation,
+    viewer_target_location_country: scope.location_country,
+    viewer_target_start_date: scope.start_date,
     player_category: player.playing_category,
     player_band: playerBand,
     player_open_to_play: player.open_to_play,
@@ -490,6 +576,10 @@ serve(async (req: Request) => {
     player_career_entry_count: player.career_entry_count ?? 0,
     player_has_highlight_video: Boolean(player.highlight_video_url?.trim()),
     player_full_match_video_count: player.full_game_video_count ?? 0,
+    player_level_target: player.level_target,
+    player_opportunity_preference: player.opportunity_preference,
+    player_relocation_willingness: player.relocation_willingness,
+    player_available_from: player.available_from,
   }
 
   // 6) Compute hash + cache check.
