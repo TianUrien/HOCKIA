@@ -83,6 +83,11 @@ interface MemberTileProps {
   available_from?: string | null
   /** Home country (base_country_id ?? nationality_country_id). */
   home_country_id?: number | null
+  /** Increment #4b — self-declared level + compensation intent, fed to the
+   *  Interested lens level/compensation alignment (proven level is resolved
+   *  inside useInterest from current_world_club_id + playing_category). */
+  level_target?: string | null
+  opportunity_preference?: string | null
   tier?: ProfileTier
   isVerified?: boolean
   verifiedAt?: string | null
@@ -143,6 +148,12 @@ export default function MemberTile(props: MemberTileProps) {
     relocation_countries_excluded: props.relocation_countries_excluded ?? null,
     available_from: props.available_from ?? null,
     home_country_id: props.home_country_id ?? null,
+    // #4b — proven level resolves from the warm club cache via these two;
+    // self-declared level/comp come straight off the row.
+    current_world_club_id: props.current_world_club_id ?? null,
+    playing_category: props.playing_category ?? null,
+    level_target: props.level_target ?? null,
+    opportunity_preference: props.opportunity_preference ?? null,
   })
 
   const isBrand = props.role === 'brand'

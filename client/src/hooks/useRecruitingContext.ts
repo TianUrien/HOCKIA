@@ -639,3 +639,55 @@ export function useActiveRecruitingTargetStartDate(): string | null {
 
   return startDate
 }
+
+/** Active scope's opportunity level_sought (#4a:
+ *  elite/high_performance/competitive/development) or null. Drives the
+ *  Interested-lens level-alignment check (#4b). */
+export function useActiveRecruitingTargetLevel(): string | null {
+  const { profile: viewer } = useAuthStore()
+  const viewerId = viewer?.id ?? null
+  const viewerRole = viewer?.role ?? null
+
+  const setViewer = useRecruitingContextStore((s) => s.setViewer)
+  const ensureFetched = useRecruitingContextStore((s) => s.ensureFetched)
+  const level = useRecruitingContextStore((s) => {
+    const row = s.rows.find((r) => r.is_active)
+    return (row?.target_level ?? null) as string | null
+  })
+
+  useEffect(() => {
+    setViewer(viewerId, viewerRole)
+  }, [viewerId, viewerRole, setViewer])
+
+  useEffect(() => {
+    void ensureFetched()
+  }, [viewerId, viewerRole, ensureFetched])
+
+  return level
+}
+
+/** Active scope's opportunity compensation (#4a:
+ *  paid/unpaid_development/either) or null. Drives the Interested-lens
+ *  compensation-alignment check (#4b). */
+export function useActiveRecruitingTargetCompensation(): string | null {
+  const { profile: viewer } = useAuthStore()
+  const viewerId = viewer?.id ?? null
+  const viewerRole = viewer?.role ?? null
+
+  const setViewer = useRecruitingContextStore((s) => s.setViewer)
+  const ensureFetched = useRecruitingContextStore((s) => s.ensureFetched)
+  const compensation = useRecruitingContextStore((s) => {
+    const row = s.rows.find((r) => r.is_active)
+    return (row?.target_compensation ?? null) as string | null
+  })
+
+  useEffect(() => {
+    setViewer(viewerId, viewerRole)
+  }, [viewerId, viewerRole, setViewer])
+
+  useEffect(() => {
+    void ensureFetched()
+  }, [viewerId, viewerRole, ensureFetched])
+
+  return compensation
+}

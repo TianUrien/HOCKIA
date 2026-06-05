@@ -71,3 +71,33 @@ export const LEVEL_RANK: Record<string, number> = {
   competitive: 2,
   development: 1,
 }
+
+/**
+ * Candidate-side self-declared level target (#2.1 vocabulary:
+ * top/competitive/development/any) projected onto the same 4-tier ordinal
+ * scale as the opportunity's level_sought, so the Interested lens can
+ * compare "what they say they want" against "what the recruiter seeks".
+ * 'top' = highest aspiration → elite rank; 'any' is intentionally absent
+ * (no constraint → neutral, returns null).
+ */
+export const CANDIDATE_LEVEL_RANK: Record<string, number> = {
+  top: 4,
+  competitive: 2,
+  development: 1,
+}
+
+/** Map a self-declared level_target to its ordinal rank, or null when the
+ *  candidate is open to any level (or the value is unset/unknown). */
+export function candidateLevelRank(levelTarget: string | null | undefined): number | null {
+  if (!levelTarget) return null
+  return CANDIDATE_LEVEL_RANK[levelTarget] ?? null
+}
+
+/** Map a curated league band (1..10) to the level ordinal it implies —
+ *  the candidate's PROVEN level for matching. Goes band → tier key
+ *  (levelSoughtFromBand) → LEVEL_RANK. Returns null when the band is
+ *  unknown (unseeded club / no linked club). */
+export function bandToLevelRank(band: number | null | undefined): number | null {
+  const tier = levelSoughtFromBand(band)
+  return tier ? (LEVEL_RANK[tier] ?? null) : null
+}

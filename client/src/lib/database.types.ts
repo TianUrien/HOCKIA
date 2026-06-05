@@ -6457,6 +6457,8 @@ export type Database = {
           profile_completeness_pct: number
           role: string
           username: string
+          level_target: string
+          opportunity_preference: string
         }[]
       }
       get_user_conversations: {

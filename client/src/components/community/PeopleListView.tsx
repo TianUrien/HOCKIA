@@ -64,6 +64,10 @@ export interface Profile {
   relocation_countries_open?: number[] | null
   relocation_countries_excluded?: number[] | null
   available_from?: string | null
+  // Self-declared intent (#2.1) — fed to the Interested lens level +
+  // compensation alignment (#4b).
+  level_target?: string | null
+  opportunity_preference?: string | null
   // Increment #3.2 — player specialist tags for the Fit-lens role match.
   specialist_skills?: string[] | null
   brand_slug?: string | null
@@ -100,7 +104,7 @@ export interface Profile {
 }
 
 const PROFILES_SELECT =
-  'id, avatar_url, full_name, role, nationality, nationality_country_id, nationality2_country_id, base_location, position, secondary_position, current_club, current_world_club_id, gender, playing_category, coaching_categories, umpiring_categories, created_at, is_test_account, open_to_play, open_to_coach, open_to_opportunities, last_active_at, accepted_reference_count, coach_specialization, coach_specialization_custom, base_country_id, relocation_willingness, relocation_countries_open, relocation_countries_excluded, available_from, specialist_skills, highlight_video_url, full_game_video_count, bio, club_bio, year_founded, website, contact_email, career_entry_count, accepted_friend_count, is_verified, verified_at, umpire_level, federation, umpire_since, officiating_specialization, languages, last_officiated_at, umpire_appointment_count, profile_completeness_pct'
+  'id, avatar_url, full_name, role, nationality, nationality_country_id, nationality2_country_id, base_location, position, secondary_position, current_club, current_world_club_id, gender, playing_category, coaching_categories, umpiring_categories, created_at, is_test_account, open_to_play, open_to_coach, open_to_opportunities, last_active_at, accepted_reference_count, coach_specialization, coach_specialization_custom, base_country_id, relocation_willingness, relocation_countries_open, relocation_countries_excluded, available_from, level_target, opportunity_preference, specialist_skills, highlight_video_url, full_game_video_count, bio, club_bio, year_founded, website, contact_email, career_entry_count, accepted_friend_count, is_verified, verified_at, umpire_level, federation, umpire_since, officiating_specialization, languages, last_officiated_at, umpire_appointment_count, profile_completeness_pct'
 
 // CommunityFilters type moved to ./communityFilters.ts so the lifted
 // search bar / quick filters / drawer (now rendered by CommunityPage)
@@ -854,6 +858,8 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
                 relocation_countries_open={member.relocation_countries_open ?? null}
                 relocation_countries_excluded={member.relocation_countries_excluded ?? null}
                 available_from={member.available_from ?? null}
+                level_target={member.level_target ?? null}
+                opportunity_preference={member.opportunity_preference ?? null}
                 home_country_id={member.base_country_id ?? member.nationality_country_id ?? null}
                 tier={getMemberTier(member)}
                 isVerified={Boolean(member.is_verified)}

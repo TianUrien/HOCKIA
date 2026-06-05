@@ -35,7 +35,8 @@ import { useAuthStore } from '@/lib/auth'
 import { useCountries } from '@/hooks/useCountries'
 import { summarizeCandidateIntent } from '@/lib/candidateIntent'
 import { specialistSkillLabels } from '@/lib/specialistSkills'
-import { useInterest } from '@/hooks/useInterest'
+import { useInterest, categoryToBandTarget } from '@/hooks/useInterest'
+import { getClubLevelBand, prefetchWorldClubLogos } from '@/hooks/useWorldClubLogo'
 import InterestSignal from '@/components/recruiting/InterestSignal'
 import { useIsProfileSaved } from '@/hooks/useSavedProfiles'
 import ClubFitChip from '@/components/recruiting/ClubFitChip'
@@ -124,6 +125,33 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
   const { getCountryById } = useCountries()
   const intent = summarizeCandidateIntent(profile, (id) => getCountryById(id)?.name)
   const showIntent = isRecruiterViewer && intent.hasAny
+  // Increment #4b — resolve the candidate's PROVEN level (club league band)
+  // for the Interested lens. Unlike the grid, the deep profile doesn't warm
+  // the world-club cache, so resolve it here (cache-first, then prefetch)
+  // and pass it explicitly into the lens so it's render-safe + identical to
+  // the grid/carousel score.
+  const [provenBand, setProvenBand] = useState<number | null>(null)
+  useEffect(() => {
+    let alive = true
+    const clubId = profile.current_world_club_id ?? null
+    const target = categoryToBandTarget(profile.playing_category ?? null)
+    if (!clubId) {
+      setProvenBand(null)
+      return
+    }
+    const cached = getClubLevelBand(clubId, target)
+    if (cached != null) {
+      setProvenBand(cached)
+      return
+    }
+    void prefetchWorldClubLogos([clubId]).then(() => {
+      if (alive) setProvenBand(getClubLevelBand(clubId, target))
+    })
+    return () => {
+      alive = false
+    }
+  }, [profile.current_world_club_id, profile.playing_category])
+
   // Increment #2.2 — Interested lens vs the active opportunity scope.
   const interest = useInterest({
     role: profile.role,
@@ -132,6 +160,12 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
     relocation_countries_excluded: profile.relocation_countries_excluded ?? null,
     available_from: profile.available_from ?? null,
     home_country_id: profile.base_country_id ?? profile.nationality_country_id ?? null,
+    // #4b — self-declared intent off the row; proven band resolved above.
+    proven_level_band: provenBand,
+    current_world_club_id: profile.current_world_club_id ?? null,
+    playing_category: profile.playing_category ?? null,
+    level_target: profile.level_target ?? null,
+    opportunity_preference: profile.opportunity_preference ?? null,
   })
   // Increment #3 — player specialist tags (read-only chips).
   const specialistSkills = specialistSkillLabels(profile.specialist_skills)

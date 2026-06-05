@@ -102,6 +102,9 @@ interface TopMemberRow {
   relocation_countries_excluded: number[] | null
   available_from: string | null
   base_country_id: number | null
+  // Self-declared intent (#2.1) — Interested-lens level + compensation (#4b).
+  level_target: string | null
+  opportunity_preference: string | null
 }
 
 interface TopCommunityMembersCarouselProps {
@@ -396,6 +399,13 @@ function MemberCard({ member, onClick, showEvidence = false }: MemberCardProps) 
     relocation_countries_excluded: member.relocation_countries_excluded,
     available_from: member.available_from,
     home_country_id: member.base_country_id ?? member.nationality_country_id,
+    // #4b — the RPC already returns competition_level_band (proven level)
+    // and the candidate's self-declared level/compensation intent.
+    proven_level_band: member.competition_level_band,
+    current_world_club_id: member.current_world_club_id,
+    playing_category: member.playing_category,
+    level_target: member.level_target,
+    opportunity_preference: member.opportunity_preference,
   })
   // .trim() guards against legacy rows with trailing whitespace in
   // full_name — the value leaks into both the visible label and the
