@@ -71,6 +71,11 @@ vi.mock('@/hooks/useWorldClubLogo', () => ({
   // HockeyContextLine middle segment. Return null so the line falls
   // back to "Not added yet" in tests (matches the empty-cache state).
   getPlayerLeagueName: () => null,
+  // #4b — useInterest resolves the candidate's proven band via this.
+  // Null = unknown band (empty-cache state) so the level component is
+  // simply not measured in tests.
+  getClubLevelBand: () => null,
+  prefetchWorldClubLogos: () => Promise.resolve(),
 }))
 
 vi.mock('@/lib/imageUrl', () => ({

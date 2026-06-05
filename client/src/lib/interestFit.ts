@@ -6,26 +6,30 @@
  * This scores the candidate's stated intent (Increment #2.1 fields)
  * against the active scope's opportunity:
  *
- *   Mobility (primary) — relocation willingness + countries open/excluded
- *     vs the opportunity's country.
- *   Availability (secondary) — available_from vs the opportunity's
- *     start_date. Mostly dormant today (few opportunities set a start
- *     date) → contributes nothing when unmeasurable, self-activates as
- *     clubs add dates.
+ *   Mobility — relocation willingness + countries open/excluded vs the
+ *     opportunity's country.
+ *   Level (#4b) — the opportunity's level_sought vs the candidate's level.
+ *     PROVEN level (from the linked club's league band) anchors the score;
+ *     self-declared level_target adjusts it secondarily. "What they've
+ *     proven" outweighs "what they say" — a recruiter-trust principle.
+ *   Compensation (#4b) — the opportunity's compensation vs the candidate's
+ *     stated paid/development preference.
+ *   Availability — available_from vs the opportunity's start_date. Mostly
+ *     dormant today (few opportunities set a start date) → contributes
+ *     nothing when unmeasurable, self-activates as clubs add dates.
  *
- * SOFT signal: a clear mismatch (excluded country, home-only + abroad)
+ * SOFT signal: a clear mismatch (excluded country, wants-paid vs unpaid)
  * ranks the candidate DOWN with a reason — never filters them out. EU
  * eligibility remains the only hard gate.
  *
  * Pure function: country names are resolved by an injected `countryName`
- * (from useCountries) so this stays testable. Returns NOT_APPLICABLE when
+ * (from useCountries) and the candidate's proven band is resolved upstream
+ * (useInterest) so this stays testable. Returns NOT_APPLICABLE when
  * nothing can be measured (chip hides), mirroring the other lenses.
- *
- * Deferred to Increment #4 (need recruiter-side fields): level-target and
- * paid/development matching.
  */
 
 import { formatAvailableFrom } from './candidateIntent'
+import { LEVEL_RANK, bandToLevelRank, candidateLevelRank, levelSoughtLabel } from './opportunityIntent'
 
 export type InterestLevel = 'strong' | 'possible' | 'low'
 
@@ -45,6 +49,14 @@ export interface InterestCandidateFields {
   available_from?: string | null
   /** Candidate's home country (base_country_id ?? nationality_country_id). */
   home_country_id?: number | null
+  /** Curated league band (1..10) of the candidate's current club — their
+   *  PROVEN level. Resolved upstream (useInterest) from the world-club
+   *  cache so this stays a pure number here. Null = unknown. */
+  proven_level_band?: number | null
+  /** Self-declared level aspiration (#2.1: top/competitive/development/any). */
+  level_target?: string | null
+  /** Self-declared compensation preference (#2.1: paid/development/either). */
+  opportunity_preference?: string | null
 }
 
 export interface ComputeInterestOptions {
@@ -54,11 +66,18 @@ export interface ComputeInterestOptions {
   targetLocationCountry?: string | null
   /** Opportunity start_date (ISO). */
   targetStartDate?: string | null
+  /** Opportunity level_sought (#4a: elite/high_performance/competitive/development). */
+  targetLevel?: string | null
+  /** Opportunity compensation (#4a: paid/unpaid_development/either). */
+  targetCompensation?: string | null
   /** Resolve a countries.id to a display name (e.g. useCountries). */
   countryName: (id: number) => string | undefined
 }
 
-const WEIGHTS = { mobility: 0.7, availability: 0.3 } as const
+// Level + compensation are now first-class recruiter-intent signals
+// alongside mobility; availability stays the minor (mostly dormant) one.
+// Weights renormalize over whatever is measurable (see below).
+const WEIGHTS = { mobility: 0.35, level: 0.3, compensation: 0.2, availability: 0.15 } as const
 const LEVEL_THRESHOLDS = { strong: 0.66, possible: 0.4 } as const
 
 const NOT_APPLICABLE: InterestResult = { isApplicable: false, level: 'low', score: 0, reasons: [] }
@@ -96,9 +115,18 @@ export function computeInterest(
 ): InterestResult {
   if (!candidate) return NOT_APPLICABLE
   // Interested only applies to the role the scope seeks (player/coach), and
-  // only for an actual opportunity scope (location present).
+  // only when the scope carries at least one comparable axis (location,
+  // start date, level, or compensation). Without any of those there's
+  // nothing to be "interested" against → chip hides.
   if (!options.targetRole || candidate.role !== options.targetRole) return NOT_APPLICABLE
-  if (!options.targetLocationCountry && !options.targetStartDate) return NOT_APPLICABLE
+  if (
+    !options.targetLocationCountry &&
+    !options.targetStartDate &&
+    !options.targetLevel &&
+    !options.targetCompensation
+  ) {
+    return NOT_APPLICABLE
+  }
 
   const reasons: string[] = []
   const measured: Array<{ score: number; weight: number }> = []
@@ -160,6 +188,90 @@ export function computeInterest(
       }
     }
     measured.push({ score: clamp01(mobility), weight: WEIGHTS.mobility })
+  }
+
+  // ── Level alignment (proven first, self-declared second) ──
+  // PROVEN level (the candidate's club-league band) anchors the score;
+  // the self-declared aspiration only adjusts it. A recruiter trusts what
+  // a player has demonstrated over what they wrote in a preference.
+  const oppLevelRank = options.targetLevel ? (LEVEL_RANK[options.targetLevel] ?? null) : null
+  if (oppLevelRank != null) {
+    const provenRank = bandToLevelRank(candidate.proven_level_band)
+    const declaredRank = candidateLevelRank(candidate.level_target)
+    const basisRank = provenRank ?? declaredRank
+    if (basisRank != null) {
+      const proven = provenRank != null
+      const diff = oppLevelRank - basisRank // + = opening above candidate; − = below
+      const absDiff = Math.abs(diff)
+      let levelScore = absDiff === 0 ? 1 : absDiff === 1 ? 0.8 : absDiff === 2 ? 0.55 : 0.4
+      const oppLabel = levelSoughtLabel(options.targetLevel)?.toLowerCase() ?? 'this level'
+
+      if (absDiff === 0) {
+        reasons.push(
+          proven
+            ? `Has proven ${oppLabel} — matches what you're recruiting.`
+            : `Targeting ${oppLabel} — matches what you're recruiting.`,
+        )
+      } else if (diff > 0) {
+        const phrase = absDiff === 1 ? 'A step up from' : 'Well above'
+        reasons.push(
+          proven
+            ? `${phrase} the level they've proven.`
+            : `${phrase} the level they say they're targeting.`,
+        )
+      } else {
+        reasons.push(
+          proven
+            ? `Below the level they've proven${absDiff >= 2 ? ' — likely over-qualified' : ''}.`
+            : `Below the level they say they're targeting.`,
+        )
+      }
+
+      // Secondary: when proven anchors the score, factor in stated desire —
+      // a strong player offered a level below what they SAY they want is a
+      // weaker interest bet even if they could clearly play it.
+      if (proven && declaredRank != null) {
+        if (declaredRank < oppLevelRank) {
+          levelScore *= 0.85
+          reasons.push('Though they say they want a lower level than this opening.')
+        } else if (declaredRank > oppLevelRank + 1) {
+          levelScore *= 0.9
+          reasons.push('They say they want a higher level than this opening.')
+        }
+      }
+      measured.push({ score: clamp01(levelScore), weight: WEIGHTS.level })
+    }
+  }
+
+  // ── Compensation alignment ──
+  // Opportunity vocab is paid/unpaid_development/either; candidate vocab is
+  // paid/development/either. 'either' on either side = compatible. A clear
+  // wants-paid vs unpaid-role clash ranks down (soft, with a reason).
+  const oppComp = options.targetCompensation ?? null
+  const candPref = candidate.opportunity_preference ?? null
+  if (oppComp && candPref) {
+    let compScore: number
+    let compReason: string
+    if (oppComp === 'either' || candPref === 'either') {
+      compScore = 0.85
+      compReason =
+        candPref === 'either' ? 'Open to paid or development.' : 'This opening is open on compensation.'
+    } else if (candPref === 'paid' && oppComp === 'paid') {
+      compScore = 1
+      compReason = 'Wants paid — this is a paid role.'
+    } else if (candPref === 'development' && oppComp === 'unpaid_development') {
+      compScore = 1
+      compReason = 'Looking for a development role — matches.'
+    } else if (candPref === 'paid' && oppComp === 'unpaid_development') {
+      compScore = 0.1
+      compReason = 'Wants paid; this is a development role.'
+    } else {
+      // candidate development, opportunity paid — no conflict, a small plus.
+      compScore = 0.9
+      compReason = 'Open to a development role; this one is paid.'
+    }
+    reasons.push(compReason)
+    measured.push({ score: compScore, weight: WEIGHTS.compensation })
   }
 
   // ── Availability ──

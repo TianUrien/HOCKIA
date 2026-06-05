@@ -188,6 +188,10 @@ vi.mock('@/hooks/useProfileStrength', () => ({
 
 vi.mock('@/hooks/useWorldClubLogo', () => ({
   useWorldClubLogo: () => null,
+  // #4b — ScoutingCard's useInterest resolves the proven band via these.
+  getClubLevelBand: () => null,
+  getPlayerLeagueName: () => null,
+  prefetchWorldClubLogos: () => Promise.resolve(),
 }))
 
 vi.mock('@/hooks/useTabDeepLinkScroll', () => ({
