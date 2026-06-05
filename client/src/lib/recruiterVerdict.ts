@@ -29,21 +29,26 @@ export type VerdictTier = 'pursue' | 'consider' | 'longshot' | 'pass'
 
 /** Minimal shapes the synthesis reads — a structural subset of
  *  ClubFitResult / EvidenceResult / InterestResult so this stays decoupled
- *  from each lens's full interface and trivially testable. */
+ *  from each lens's full interface and trivially testable. `positives` /
+ *  `caveats` are the polarity-split reasons (the lenses tag them at source
+ *  so the verdict never has to guess a sentence's tone). */
 export interface VerdictFitInput {
   isApplicable: boolean
   state: 'green' | 'yellow' | 'grey'
-  reasons: string[]
+  positives: string[]
+  caveats: string[]
 }
 export interface VerdictEvidenceInput {
   isApplicable: boolean
   level: 'strong' | 'moderate' | 'limited'
+  /** Evidence only ever lists what EXISTS, so every reason is a positive. */
   reasons: string[]
 }
 export interface VerdictInterestInput {
   isApplicable: boolean
   level: 'strong' | 'possible' | 'low'
-  reasons: string[]
+  positives: string[]
+  caveats: string[]
 }
 
 export interface RecruiterVerdictInput {
@@ -51,6 +56,11 @@ export interface RecruiterVerdictInput {
   fit: VerdictFitInput | null | undefined
   evidence: VerdictEvidenceInput | null | undefined
   interest: VerdictInterestInput | null | undefined
+  /** True when an opportunity is the active scope (level/compensation/etc).
+   *  Drives the lead's "for your scope" vs "general fit" label — a club
+   *  with only a profile-derived team category still gets a verdict, just
+   *  framed as a general read rather than for a specific opening. */
+  hasOpeningScope?: boolean
 }
 
 export interface RecruiterVerdict {
@@ -64,6 +74,9 @@ export interface RecruiterVerdict {
   highlights: string[]
   /** Ranked concerns pulled from the lenses (0–2). */
   caveats: string[]
+  /** Whether an opportunity is the active scope — drives the lead's
+   *  "for your scope" vs "general fit" framing. */
+  scoped: boolean
 }
 
 const NOT_APPLICABLE: RecruiterVerdict = {
@@ -72,6 +85,7 @@ const NOT_APPLICABLE: RecruiterVerdict = {
   headline: '',
   highlights: [],
   caveats: [],
+  scoped: false,
 }
 
 const HEADLINES: Record<VerdictTier, string> = {
@@ -120,31 +134,26 @@ export function computeRecruiterVerdict(input: RecruiterVerdictInput): Recruiter
   // surface (the recruiter may be flexible) without a misleading headline.
   if (fit.state === 'grey' && (tier === 'pursue' || tier === 'consider')) tier = 'longshot'
 
-  // Highlights — the strongest positive reason from each lens in a positive
-  // state, fit first (the spine), then proven, then interested. The lens
-  // reasons are already well-formed sentences; reuse them verbatim.
+  // Highlights — strongest SELLING POINTS, fit first (spine), then proven,
+  // then interested. Pull from each lens's polarity-tagged `positives` so a
+  // mixed-tone lens (interest) never contributes a concern here. Evidence
+  // only lists what exists, so its reasons are all positive — but only
+  // surface them when the track record is more than thin (moderate+).
   const highlights: string[] = []
-  if (fit.state === 'green' && fit.reasons[0]) highlights.push(fit.reasons[0])
+  if (fit.positives[0]) highlights.push(fit.positives[0])
   if (evidence?.isApplicable && evidence.level !== 'limited' && evidence.reasons[0]) {
     highlights.push(evidence.reasons[0])
   }
-  if (interest?.isApplicable && interest.level !== 'low' && interest.reasons[0]) {
-    highlights.push(interest.reasons[0])
-  }
-  // If Fit is only yellow (no green highlight yet) but the candidate is
-  // otherwise positive, still lead with Fit's first reason so the headline
-  // isn't unexplained.
-  if (highlights.length === 0 && fit.reasons[0]) highlights.push(fit.reasons[0])
+  if (interest?.isApplicable && interest.positives[0]) highlights.push(interest.positives[0])
 
-  // Caveats — the decision-relevant concerns. A low Interested signal is the
-  // sharpest (active mismatch); then a grey Fit; then thin evidence.
+  // Caveats — decision-relevant CONCERNS. A live Interested mismatch is the
+  // sharpest; then a Fit concern (category/level/availability); then a thin
+  // track record (a synthesized note — evidence reasons are never negative).
   const caveats: string[] = []
-  if (interest?.isApplicable && interest.level === 'low' && interest.reasons[0]) {
-    caveats.push(interest.reasons[0])
-  }
-  if (fit.state === 'grey' && fit.reasons[0]) caveats.push(fit.reasons[0])
-  if (evidence?.isApplicable && evidence.level === 'limited' && evidence.reasons[0]) {
-    caveats.push(evidence.reasons[0])
+  if (interest?.isApplicable && interest.caveats[0]) caveats.push(interest.caveats[0])
+  if (fit.caveats[0]) caveats.push(fit.caveats[0])
+  if (evidence?.isApplicable && evidence.level === 'limited') {
+    caveats.push('Limited track record on file so far.')
   }
 
   return {
@@ -153,5 +162,6 @@ export function computeRecruiterVerdict(input: RecruiterVerdictInput): Recruiter
     headline: HEADLINES[tier],
     highlights: highlights.slice(0, 3),
     caveats: caveats.slice(0, 2),
+    scoped: Boolean(input.hasOpeningScope),
   }
 }

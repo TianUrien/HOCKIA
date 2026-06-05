@@ -48,6 +48,12 @@ import { computeRecruiterVerdict } from '@/lib/recruiterVerdict'
 import RecruiterVerdictCard from '@/components/recruiting/RecruiterVerdictCard'
 import AIOpinionPanel from '@/components/recruiting/AIOpinionPanel'
 import MoreActionsMenu from '@/components/recruiting/MoreActionsMenu'
+import {
+  useActiveRecruitingTargetLevel,
+  useActiveRecruitingTargetCompensation,
+  useActiveRecruitingTargetLocation,
+  useActiveRecruitingTargetStartDate,
+} from '@/hooks/useRecruitingContext'
 
 interface ScoutingCardProfile {
   id: string
@@ -215,6 +221,15 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
         }
       : null,
   )
+  // An opportunity is the active scope when any opportunity-derived field
+  // is set (level / compensation / location / start). A club with only a
+  // profile-derived team category has none of these → "general fit".
+  const scopeLevel = useActiveRecruitingTargetLevel()
+  const scopeCompensation = useActiveRecruitingTargetCompensation()
+  const scopeLocation = useActiveRecruitingTargetLocation()
+  const scopeStartDate = useActiveRecruitingTargetStartDate()
+  const hasOpeningScope = Boolean(scopeLevel || scopeCompensation || scopeLocation || scopeStartDate)
+
   // Increment #5 — the explanation-led synthesis verdict that leads the
   // card. Fuses whichever Fit applies (player Club Fit / coach Coach Fit)
   // with the Proven + Interested lenses into one qualitative read.
@@ -222,6 +237,7 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
     fit: profile.role === 'coach' ? coachFit : clubFit,
     evidence,
     interest,
+    hasOpeningScope,
   })
 
   // Two parallel fetches — career_history (counts + most-recent per
@@ -439,22 +455,10 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
           <p className={`text-xs font-bold tracking-wide ${status.labelClass}`}>{status.label}</p>
           <p className="text-xs text-gray-600 mt-0.5 truncate">{status.sub}</p>
         </div>
-        <ClubFitChip
-          className="flex-shrink-0 whitespace-nowrap"
-          candidate={{
-            id: profile.id,
-            role: profile.role,
-            playing_category: profile.playing_category,
-            current_world_club_id: profile.current_world_club_id,
-            open_to_play: profile.open_to_play,
-            open_to_coach: profile.open_to_coach,
-            open_to_opportunities: profile.open_to_opportunities,
-            last_active_at: profile.last_active_at,
-            position: profile.position ?? null,
-            secondary_position: profile.secondary_position ?? null,
-            specialist_skills: profile.specialist_skills ?? null,
-          }}
-        />
+        {/* #5: render the SAME clubFit result the verdict consumes (via
+            fitResult) instead of letting the chip recompute its own — keeps
+            the chip and the lead verdict from ever disagreeing. */}
+        <ClubFitChip className="flex-shrink-0 whitespace-nowrap" fitResult={clubFit} />
         {/* Phase 2C — Coach Fit chip for coach profiles (null otherwise). */}
         <ClubFitChip
           className="flex-shrink-0 whitespace-nowrap"

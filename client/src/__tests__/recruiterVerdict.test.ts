@@ -6,28 +6,28 @@
  *   - Action tiers (Pursue / Worth considering / Longshot / Likely pass)
  *     fuse Fit (spine) + Proven (support) + Interested (real weight, low =
  *     negative). Scores stay internal; only the tier is exposed.
- *   - Highlights pull positive lens reasons (fit→proven→interested);
- *     caveats pull concerns (low interest → grey fit → thin evidence).
+ *   - Highlights pull each lens's POSITIVES (fit→proven→interested);
+ *     caveats pull CAVEATS (interest → fit → thin evidence). Polarity comes
+ *     from the lens tags, never inferred from the overall level.
  */
 
 import { describe, expect, it } from 'vitest'
 import { computeRecruiterVerdict } from '@/lib/recruiterVerdict'
 
-const fit = (state: 'green' | 'yellow' | 'grey', reasons: string[] = [`fit:${state}`], isApplicable = true) => ({
-  isApplicable,
-  state,
-  reasons,
-})
-const evidence = (level: 'strong' | 'moderate' | 'limited', reasons: string[] = [`ev:${level}`], isApplicable = true) => ({
-  isApplicable,
-  level,
-  reasons,
-})
-const interest = (level: 'strong' | 'possible' | 'low', reasons: string[] = [`int:${level}`], isApplicable = true) => ({
-  isApplicable,
-  level,
-  reasons,
-})
+const fit = (
+  state: 'green' | 'yellow' | 'grey',
+  { positives = [], caveats = [], isApplicable = true }: { positives?: string[]; caveats?: string[]; isApplicable?: boolean } = {},
+) => ({ isApplicable, state, positives, caveats })
+
+const evidence = (
+  level: 'strong' | 'moderate' | 'limited',
+  { reasons = [`ev:${level}`], isApplicable = true }: { reasons?: string[]; isApplicable?: boolean } = {},
+) => ({ isApplicable, level, reasons })
+
+const interest = (
+  level: 'strong' | 'possible' | 'low',
+  { positives = [], caveats = [], isApplicable = true }: { positives?: string[]; caveats?: string[]; isApplicable?: boolean } = {},
+) => ({ isApplicable, level, positives, caveats })
 
 describe('computeRecruiterVerdict', () => {
   it('NOT_APPLICABLE when fit is null', () => {
@@ -36,110 +36,113 @@ describe('computeRecruiterVerdict', () => {
   })
 
   it('NOT_APPLICABLE when fit is not applicable', () => {
-    const r = computeRecruiterVerdict({ fit: fit('green', ['x'], false), evidence: null, interest: null })
+    const r = computeRecruiterVerdict({ fit: fit('green', { isApplicable: false }), evidence: null, interest: null })
     expect(r.isApplicable).toBe(false)
   })
 
-  it('green fit + strong proven + strong interest → Pursue', () => {
+  it('green fit + strong proven + strong interest → Pursue, highlights from positives only', () => {
     const r = computeRecruiterVerdict({
-      fit: fit('green'),
-      evidence: evidence('strong'),
-      interest: interest('strong'),
+      fit: fit('green', { positives: ['Plays Adult Men — matches your team category.'] }),
+      evidence: evidence('strong', { reasons: ['Full match footage available.'] }),
+      interest: interest('strong', { positives: ['Open to relocating.'] }),
     })
     expect(r.tier).toBe('pursue')
     expect(r.headline).toBe('Pursue')
-    expect(r.highlights.length).toBeGreaterThanOrEqual(3)
+    expect(r.highlights).toEqual([
+      'Plays Adult Men — matches your team category.',
+      'Full match footage available.',
+      'Open to relocating.',
+    ])
     expect(r.caveats).toEqual([])
   })
 
-  it('green fit alone (no proven/interest) → Worth considering (not Pursue without support)', () => {
-    const r = computeRecruiterVerdict({ fit: fit('green'), evidence: null, interest: null })
-    // 2.0 points — above 1.4 (consider) but below 2.6 (pursue).
-    expect(r.tier).toBe('consider')
-    expect(r.highlights[0]).toBe('fit:green')
-  })
-
-  it('possible fit alone → Longshot', () => {
-    const r = computeRecruiterVerdict({ fit: fit('yellow'), evidence: null, interest: null })
-    // 1.0 points — above 0.4 (longshot) but below 1.4 (consider).
-    expect(r.tier).toBe('longshot')
-  })
-
-  it('low interest drags a green fit down out of Pursue and surfaces as a caveat', () => {
-    const strong = computeRecruiterVerdict({ fit: fit('green'), evidence: evidence('strong'), interest: interest('strong') })
-    const dragged = computeRecruiterVerdict({
-      fit: fit('green'),
+  it('green fit alone → Worth considering (not Pursue without support)', () => {
+    const r = computeRecruiterVerdict({
+      fit: fit('green', { positives: ['Right level.'] }),
       evidence: null,
-      interest: interest('low', ['Wants paid; this is a development role.']),
+      interest: null,
     })
-    expect(strong.tier).toBe('pursue')
-    // green(2) + low(−0.8) = 1.2 → longshot, not pursue.
-    expect(dragged.tier).toBe('longshot')
-    expect(dragged.caveats).toContain('Wants paid; this is a development role.')
-  })
-
-  it('grey fit can never be Pursue/Worth considering — capped at Longshot', () => {
-    const r = computeRecruiterVerdict({
-      fit: fit('grey', ['Different level from your team.']),
-      evidence: evidence('strong'),
-      interest: interest('strong'),
-    })
-    // Raw points (0 + 1.2 + 1.6 = 2.8) clear the pursue threshold, but the
-    // grey-fit cap pulls it back: doesn't fit → at best a longshot.
-    expect(r.tier).toBe('longshot')
-  })
-
-  it('mediocre fit + active mismatch → Likely pass', () => {
-    const r = computeRecruiterVerdict({
-      fit: fit('yellow', ['Close on level.']),
-      evidence: null,
-      interest: interest('low', ['Excluded that country.']),
-    })
-    // yellow(1) + low(−0.8) = 0.2 → below 0.4 → pass.
-    expect(r.tier).toBe('pass')
-    expect(r.headline).toBe('Likely pass')
-    expect(r.caveats[0]).toBe('Excluded that country.')
-  })
-
-  it('grey fit alone → Likely pass, fit reason as a caveat', () => {
-    const r = computeRecruiterVerdict({
-      fit: fit('grey', ['Different level from your team.']),
-      evidence: evidence('limited'),
-      interest: interest('low', ['Excluded that country.']),
-    })
-    expect(r.tier).toBe('pass')
-    // Low interest is the sharpest caveat, listed first; grey fit follows.
-    expect(r.caveats[0]).toBe('Excluded that country.')
-    expect(r.caveats).toContain('Different level from your team.')
-  })
-
-  it('ignores non-applicable proven/interest in both scoring and reasons', () => {
-    const r = computeRecruiterVerdict({
-      fit: fit('green', ['Right level.']),
-      evidence: evidence('strong', ['has video'], false),
-      interest: interest('strong', ['open'], false),
-    })
-    // Only fit counts → 2.0 → Worth considering; no proven/interest reasons.
     expect(r.tier).toBe('consider')
     expect(r.highlights).toEqual(['Right level.'])
   })
 
+  it('possible fit alone → Longshot', () => {
+    const r = computeRecruiterVerdict({ fit: fit('yellow', { positives: ['Open recently.'] }), evidence: null, interest: null })
+    expect(r.tier).toBe('longshot')
+  })
+
+  it('low interest drags a green fit out of Pursue and its caveat surfaces (not as a highlight)', () => {
+    const dragged = computeRecruiterVerdict({
+      fit: fit('green', { positives: ['Right level.'] }),
+      evidence: null,
+      interest: interest('low', { caveats: ['Wants paid; this is a development role.'] }),
+    })
+    expect(dragged.tier).toBe('longshot') // green(2) + low(−0.8) = 1.2
+    expect(dragged.caveats).toContain('Wants paid; this is a development role.')
+    expect(dragged.highlights).not.toContain('Wants paid; this is a development role.')
+  })
+
+  it('grey fit (category mismatch) can never be Pursue/Worth considering — capped at Longshot', () => {
+    const r = computeRecruiterVerdict({
+      fit: fit('grey', { caveats: ['Plays Adult Women — different from your team category.'] }),
+      evidence: evidence('strong', { reasons: ['Full match footage available.'] }),
+      interest: interest('strong', { positives: ['Open to relocating.'] }),
+    })
+    // Raw points (0 + 1.2 + 1.6 = 2.8) clear pursue, but the grey cap pulls
+    // it back: doesn't fit → at best a longshot.
+    expect(r.tier).toBe('longshot')
+    expect(r.caveats).toContain('Plays Adult Women — different from your team category.')
+  })
+
+  it('mediocre fit + active mismatch → Likely pass, interest caveat listed first', () => {
+    const r = computeRecruiterVerdict({
+      fit: fit('yellow', { positives: ['Close on level.'], caveats: ['Different league level.'] }),
+      evidence: null,
+      interest: interest('low', { caveats: ['Excluded that country.'] }),
+    })
+    expect(r.tier).toBe('pass') // yellow(1) + low(−0.8) = 0.2
+    expect(r.headline).toBe('Likely pass')
+    expect(r.caveats[0]).toBe('Excluded that country.')
+  })
+
+  it('thin evidence becomes a synthesized caveat, never a positive evidence line as a caveat', () => {
+    const r = computeRecruiterVerdict({
+      fit: fit('yellow', { positives: ['Close on level.'] }),
+      evidence: evidence('limited', { reasons: ['Plays at a listed club & league (provable level).'] }),
+      interest: null,
+    })
+    // The positive evidence sentence must NOT appear as a caveat (the bug),
+    // and limited evidence yields a synthesized concern instead.
+    expect(r.caveats).not.toContain('Plays at a listed club & league (provable level).')
+    expect(r.caveats).toContain('Limited track record on file so far.')
+    // Limited evidence is too thin to be a selling point → not a highlight.
+    expect(r.highlights).not.toContain('Plays at a listed club & league (provable level).')
+  })
+
+  it('over-qualification note (interest caveat) is a caveat, not a highlight', () => {
+    const r = computeRecruiterVerdict({
+      fit: fit('green', { positives: ['Right level.'] }),
+      evidence: null,
+      interest: interest('possible', { caveats: ["Below the level they've proven."] }),
+    })
+    expect(r.caveats).toContain("Below the level they've proven.")
+    expect(r.highlights).not.toContain("Below the level they've proven.")
+  })
+
   it('caps highlights at 3 and caveats at 2', () => {
     const r = computeRecruiterVerdict({
-      fit: fit('green', ['f1', 'f2']),
-      evidence: evidence('strong', ['e1']),
-      interest: interest('strong', ['i1']),
+      fit: fit('green', { positives: ['f1', 'f2'], caveats: ['c1'] }),
+      evidence: evidence('strong', { reasons: ['e1'] }),
+      interest: interest('low', { caveats: ['i1', 'i2'] }),
     })
     expect(r.highlights.length).toBeLessThanOrEqual(3)
     expect(r.caveats.length).toBeLessThanOrEqual(2)
   })
 
-  it('limited evidence appears as a caveat when nothing sharper outranks it', () => {
-    const r = computeRecruiterVerdict({
-      fit: fit('yellow', ['Close on level.']),
-      evidence: evidence('limited', ['Little evidence on file.']),
-      interest: interest('possible', ['Open to discuss.']),
-    })
-    expect(r.caveats).toContain('Little evidence on file.')
+  it('scoped flag passes through for the for-your-scope vs general-fit label', () => {
+    const scoped = computeRecruiterVerdict({ fit: fit('green', { positives: ['x'] }), evidence: null, interest: null, hasOpeningScope: true })
+    const general = computeRecruiterVerdict({ fit: fit('green', { positives: ['x'] }), evidence: null, interest: null })
+    expect(scoped.scoped).toBe(true)
+    expect(general.scoped).toBe(false)
   })
 })

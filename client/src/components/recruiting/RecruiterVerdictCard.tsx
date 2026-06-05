@@ -64,7 +64,7 @@ export default function RecruiterVerdictCard({ verdict, className = '' }: Recrui
         <Icon className={`w-4 h-4 flex-shrink-0 ${style.iconClass}`} aria-hidden="true" />
         <p className={`text-sm font-bold ${style.headlineClass}`}>{verdict.headline}</p>
         <span className="ml-auto text-[10px] uppercase tracking-wide text-gray-400 font-medium">
-          for your scope
+          {verdict.scoped ? 'for your scope' : 'general fit'}
         </span>
       </div>
 

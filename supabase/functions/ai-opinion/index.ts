@@ -42,7 +42,7 @@ import { getServiceClient } from '../_shared/supabase-client.ts'
 // Bump PROMPT_VERSION when the system prompt or output schema changes
 // in a way that should invalidate cached opinions. ai_opinions cache
 // keys include this — bumping forces a full regenerate next read.
-const PROMPT_VERSION = 'v1.3'
+const PROMPT_VERSION = 'v1.4'
 const MODEL = 'claude-sonnet-4-6'
 const VERDICT_MAX_CHARS = 280
 const QUOTA_PER_DAY = 50
@@ -317,6 +317,7 @@ RULES (non-negotiable):
 3. Closed vocabulary. Do NOT use: elite, star, generational, talented, gifted, amazing, incredible, world-class, phenomenal, exceptional, genius. Describe the FIT, not the PLAYER.
 4. Maximum ${VERDICT_MAX_CHARS} characters for verdict_short. 1-2 sentences total.
 5. Output JSON only. No prose outside the JSON object.
+6. HUMANIZE all values in verdict_short. Never write raw field names or enum tokens — no underscores, no snake_case. Translate to natural English: open_to_opportunities=false → "isn't open to offers"; high_performance → "high-performance"; unpaid_development → "a development role"; competition_level_band → "their league level". Raw field names belong ONLY in the citations array's "field" key, never in prose.
 
 OUTPUT SCHEMA (strict):
 {

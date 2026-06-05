@@ -64,6 +64,11 @@ export interface ClubFitResult {
   /** Human-readable reasons, used by the chip tooltip. Each entry is
    *  one factual line per evaluated component. */
   reasons: string[]
+  /** Reasons split by polarity for the #5 recruiter verdict, which needs
+   *  to know which lines are selling points vs concerns (the chip keeps
+   *  using the flat `reasons`). A line appears in exactly one of these. */
+  positives: string[]
+  caveats: string[]
   /** The target category this Fit was computed against. */
   target: TargetCategory | null
 }
@@ -139,6 +144,8 @@ const NOT_APPLICABLE: ClubFitResult = {
     position_match: 0,
   },
   reasons: [],
+  positives: [],
+  caveats: [],
   target: null,
 }
 
@@ -282,16 +289,31 @@ export function computeClubFit(
   if (!target) return NOT_APPLICABLE
 
   // ── Components ──────────────────────────────────────────────────
+  // Reasons are also split by polarity so the #5 verdict can surface
+  // selling points vs concerns with the right icon. Tone defaults to
+  // neutral (informational, neither a highlight nor a caveat).
   const reasons: string[] = []
+  const positives: string[] = []
+  const caveats: string[] = []
+  const pushReason = (text: string, tone: 'positive' | 'caveat' | 'neutral' = 'neutral') => {
+    reasons.push(text)
+    if (tone === 'positive') positives.push(text)
+    else if (tone === 'caveat') caveats.push(text)
+  }
 
   // Gender match — player's category against target's allowed set.
   const gender_match = playingCategoryMatchesTarget(candidate.playing_category, target) ? 1 : 0
+  // A CONFIRMED category mismatch (player has a category and it doesn't
+  // match the target) is disqualifying — a woman can't be recruited for a
+  // men's team however strong her other signals. Unknown category (null)
+  // is not penalised this way; it's just missing info.
+  const categoryMismatch = Boolean(candidate.playing_category) && gender_match === 0
   if (gender_match === 1 && candidate.playing_category) {
-    reasons.push(`Plays ${humanizeCategory(candidate.playing_category)} — matches ${target.toLowerCase()}'s team category.`)
+    pushReason(`Plays ${humanizeCategory(candidate.playing_category)} — matches ${target.toLowerCase()}'s team category.`, 'positive')
   } else if (candidate.playing_category) {
-    reasons.push(`Plays ${humanizeCategory(candidate.playing_category)} — different from your team's category.`)
+    pushReason(`Plays ${humanizeCategory(candidate.playing_category)} — different from your team's category.`, 'caveat')
   } else {
-    reasons.push('Playing category not added yet — no match info.')
+    pushReason('Playing category not added yet — no match info.')
   }
 
   // Competition proximity — cross-country via curated level_band_global.
@@ -300,13 +322,13 @@ export function computeClubFit(
     viewerProfile.competition_level_band ?? null,
   )
   if (competition_proximity >= 0.75) {
-    reasons.push('Plays at a comparable league level to your team.')
+    pushReason('Plays at a comparable league level to your team.', 'positive')
   } else if (competition_proximity > 0) {
-    reasons.push('Plays at a different league level from your team.')
+    pushReason('Plays at a different league level from your team.')
   } else if (candidate.competition_level_band == null) {
-    reasons.push('Current league not linked — level comparison unavailable.')
+    pushReason('Current league not linked — level comparison unavailable.')
   } else if (viewerProfile.competition_level_band == null) {
-    reasons.push("Your team's league level isn't set — level comparison unavailable.")
+    pushReason("Your team's league level isn't set — level comparison unavailable.")
   }
 
   // Availability — open flag (60%) + recency_30d on last_active (40%).
@@ -317,31 +339,32 @@ export function computeClubFit(
   const activeFactor = recency30d(candidate.last_active_at)
   const availability = clamp01(0.6 * (isOpen ? 1 : 0) + 0.4 * activeFactor)
   if (isOpen && activeFactor >= 0.99) {
-    reasons.push('Open to opportunities and active recently.')
+    pushReason('Open to opportunities and active recently.', 'positive')
   } else if (isOpen) {
-    reasons.push('Open to opportunities (less recent activity).')
+    pushReason('Open to opportunities (less recent activity).', 'positive')
   } else if (activeFactor >= 0.99) {
-    reasons.push('Recently active (not flagged open to opportunities).')
+    pushReason('Recently active (not flagged open to opportunities).')
   } else {
-    reasons.push('Not currently flagged open to opportunities.')
+    pushReason('Not currently flagged open to opportunities.', 'caveat')
   }
 
   // Recency — profile freshness signal. Profiles updated within 30d
   // count for full credit; we use last_active_at as a proxy when
-  // profile_updated_at isn't available in the candidate row.
+  // profile_updated_at isn't available in the candidate row. Kept neutral
+  // for the verdict — "last active" is context, not a selling point.
   const recency = recency30d(candidate.last_active_at)
   // F7 fix: the spec calls for one bullet per weighted component
   // (4 total). Availability already includes a recency factor, but
   // the standalone recency weight (10%) also deserves its own
   // bullet so the popover always shows 4 explanations.
   if (recency >= 0.99) {
-    reasons.push('Active on HOCKIA within the last 30 days.')
+    pushReason('Active on HOCKIA within the last 30 days.')
   } else if (recency > 0) {
-    reasons.push('Last active 30–90 days ago — profile partially fresh.')
+    pushReason('Last active 30–90 days ago — profile partially fresh.')
   } else if (candidate.last_active_at) {
-    reasons.push('Last active over 90 days ago.')
+    pushReason('Last active over 90 days ago.')
   } else {
-    reasons.push('Activity recency unknown.')
+    pushReason('Activity recency unknown.')
   }
 
   // Role match — position + specialist specialism. Both are SOFT signals
@@ -355,13 +378,13 @@ export function computeClubFit(
   if (hasTargetPosition) {
     const tp = humanizePosition(options!.targetPosition!)
     if (positionFit >= 1) {
-      reasons.push(`Plays ${tp} — matches the position you're recruiting.`)
+      pushReason(`Plays ${tp} — matches the position you're recruiting.`, 'positive')
     } else if (positionFit > 0) {
-      reasons.push(`Plays ${tp} as a secondary position.`)
+      pushReason(`Plays ${tp} as a secondary position.`, 'positive')
     } else if (candidate.position) {
-      reasons.push(`Primary position is ${humanizePosition(candidate.position)} — not ${tp}.`)
+      pushReason(`Primary position is ${humanizePosition(candidate.position)} — not ${tp}.`, 'caveat')
     } else {
-      reasons.push('Position not added yet — no position match info.')
+      pushReason('Position not added yet — no position match info.')
     }
   }
 
@@ -374,11 +397,11 @@ export function computeClubFit(
   const specialistFit = hasSpecialists ? matchedSpecialists.length / soughtSpecialists.length : 0
   if (hasSpecialists) {
     if (matchedSpecialists.length === soughtSpecialists.length) {
-      reasons.push(`Holds the specialism${soughtSpecialists.length > 1 ? 's' : ''} you're recruiting (${matchedSpecialists.map(specialistSkillLabel).join(', ')}).`)
+      pushReason(`Holds the specialism${soughtSpecialists.length > 1 ? 's' : ''} you're recruiting (${matchedSpecialists.map(specialistSkillLabel).join(', ')}).`, 'positive')
     } else if (matchedSpecialists.length > 0) {
-      reasons.push(`Holds ${matchedSpecialists.map(specialistSkillLabel).join(', ')} (of the ${soughtSpecialists.length} sought).`)
+      pushReason(`Holds ${matchedSpecialists.map(specialistSkillLabel).join(', ')} (of the ${soughtSpecialists.length} sought).`, 'positive')
     } else {
-      reasons.push("Doesn't list the specialism you're recruiting.")
+      pushReason("Doesn't list the specialism you're recruiting.", 'caveat')
     }
   }
 
@@ -423,12 +446,21 @@ export function computeClubFit(
   else if (score >= STATE_THRESHOLDS.yellow) state = 'yellow'
   else state = 'grey'
 
+  // Hard disqualifier: a confirmed category mismatch (e.g. a woman under a
+  // men's-team scope) can't be a fit no matter how the soft components add
+  // up. Force grey so the chip + the #5 verdict read it as "doesn't fit",
+  // and so it reads identically on every surface regardless of whether the
+  // candidate's league band happened to resolve.
+  if (categoryMismatch) state = 'grey'
+
   return {
     isApplicable: true,
     state,
     score,
     components,
     reasons,
+    positives,
+    caveats,
     target,
   }
 }

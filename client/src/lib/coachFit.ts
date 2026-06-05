@@ -62,6 +62,10 @@ export interface CoachFitResult {
   components: CoachFitComponents
   /** Factual, non-judgmental lines for the chip tooltip. */
   reasons: string[]
+  /** Reasons split by polarity for the #5 recruiter verdict (the chip
+   *  keeps using the flat `reasons`). */
+  positives: string[]
+  caveats: string[]
   /** The target category this fit was computed against. */
   target: TargetCategory | null
 }
@@ -103,6 +107,8 @@ const NOT_APPLICABLE: CoachFitResult = {
   score: 0,
   components: { specialization_match: 0, category_match: 0 },
   reasons: [],
+  positives: [],
+  caveats: [],
   target: null,
 }
 
@@ -168,19 +174,27 @@ export function computeCoachFit(
   if (!soughtSpec) return NOT_APPLICABLE
 
   const reasons: string[] = []
+  const positives: string[] = []
+  const caveats: string[] = []
+  const pushReason = (text: string, tone: 'positive' | 'caveat' | 'neutral' = 'neutral') => {
+    reasons.push(text)
+    if (tone === 'positive') positives.push(text)
+    else if (tone === 'caveat') caveats.push(text)
+  }
 
   // ── Specialization match (dominant signal) ──
   const candidateSpec = normalizeSpec(candidate.coach_specialization)
   const specialization_match = candidateSpec && candidateSpec === soughtSpec ? 1 : 0
   const soughtLabel = humanizeCoachSpecialization(options!.targetSpecialization!)
   if (specialization_match === 1) {
-    reasons.push(`Specializes as ${soughtLabel} — matches the role you're recruiting.`)
+    pushReason(`Specializes as ${soughtLabel} — matches the role you're recruiting.`, 'positive')
   } else if (candidate.coach_specialization) {
-    reasons.push(
+    pushReason(
       `Specializes as ${humanizeCoachSpecialization(candidate.coach_specialization)} — not ${soughtLabel}.`,
+      'caveat',
     )
   } else {
-    reasons.push('Coaching specialization not added yet — no role match info.')
+    pushReason('Coaching specialization not added yet — no role match info.')
   }
 
   // ── Category match (tiebreak) ──
@@ -193,11 +207,11 @@ export function computeCoachFit(
       : 0
   if (target) {
     if (category_match === 1) {
-      reasons.push(`Coaches ${target.toLowerCase()}'s teams — matches your team category.`)
+      pushReason(`Coaches ${target.toLowerCase()}'s teams — matches your team category.`, 'positive')
     } else if (Array.isArray(candidate.coaching_categories) && candidate.coaching_categories.length > 0) {
-      reasons.push(`Coaches a different team category from ${target.toLowerCase()}'s.`)
+      pushReason(`Coaches a different team category from ${target.toLowerCase()}'s.`, 'caveat')
     } else {
-      reasons.push('Coaching categories not added yet — no category match info.')
+      pushReason('Coaching categories not added yet — no category match info.')
     }
   }
 
@@ -214,6 +228,8 @@ export function computeCoachFit(
     score,
     components: { specialization_match, category_match },
     reasons,
+    positives,
+    caveats,
     target,
   }
 }
