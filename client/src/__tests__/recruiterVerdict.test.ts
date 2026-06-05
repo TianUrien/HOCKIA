@@ -114,7 +114,7 @@ describe('computeRecruiterVerdict', () => {
     // The positive evidence sentence must NOT appear as a caveat (the bug),
     // and limited evidence yields a synthesized concern instead.
     expect(r.caveats).not.toContain('Plays at a listed club & league (provable level).')
-    expect(r.caveats).toContain('Limited track record on file so far.')
+    expect(r.caveats).toContain('Limited video & references on file so far.')
     // Limited evidence is too thin to be a selling point → not a highlight.
     expect(r.highlights).not.toContain('Plays at a listed club & league (provable level).')
   })

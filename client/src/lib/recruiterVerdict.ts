@@ -153,7 +153,10 @@ export function computeRecruiterVerdict(input: RecruiterVerdictInput): Recruiter
   if (interest?.isApplicable && interest.caveats[0]) caveats.push(interest.caveats[0])
   if (fit.caveats[0]) caveats.push(fit.caveats[0])
   if (evidence?.isApplicable && evidence.level === 'limited') {
-    caveats.push('Limited track record on file so far.')
+    // Specifically the Proven-lens evidence VOLUME (video + references),
+    // not their playing level — a proven-level player can still have thin
+    // verifiable evidence on file, so keep this distinct from "level".
+    caveats.push('Limited video & references on file so far.')
   }
 
   return {
