@@ -41,8 +41,11 @@ import InterestSignal from '@/components/recruiting/InterestSignal'
 import { useIsProfileSaved } from '@/hooks/useSavedProfiles'
 import ClubFitChip from '@/components/recruiting/ClubFitChip'
 import ProvenSignal from '@/components/recruiting/ProvenSignal'
+import { useClubFit } from '@/hooks/useClubFit'
 import { useCoachFit } from '@/hooks/useCoachFit'
 import { useEvidence } from '@/hooks/useEvidence'
+import { computeRecruiterVerdict } from '@/lib/recruiterVerdict'
+import RecruiterVerdictCard from '@/components/recruiting/RecruiterVerdictCard'
 import AIOpinionPanel from '@/components/recruiting/AIOpinionPanel'
 import MoreActionsMenu from '@/components/recruiting/MoreActionsMenu'
 
@@ -191,6 +194,34 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
     accepted_reference_count: profile.accepted_reference_count,
     is_verified: profile.is_verified ?? null,
     current_world_club_id: profile.current_world_club_id,
+  })
+  // Player Club Fit at the card level (the chip computes its own copy, but
+  // the #5 verdict needs the result here). NOT_APPLICABLE for coaches.
+  const clubFit = useClubFit(
+    profile.role === 'player'
+      ? {
+          id: profile.id,
+          role: profile.role,
+          playing_category: profile.playing_category,
+          current_world_club_id: profile.current_world_club_id,
+          competition_level_band: provenBand,
+          open_to_play: profile.open_to_play,
+          open_to_coach: profile.open_to_coach,
+          open_to_opportunities: profile.open_to_opportunities,
+          last_active_at: profile.last_active_at,
+          position: profile.position ?? null,
+          secondary_position: profile.secondary_position ?? null,
+          specialist_skills: profile.specialist_skills ?? null,
+        }
+      : null,
+  )
+  // Increment #5 — the explanation-led synthesis verdict that leads the
+  // card. Fuses whichever Fit applies (player Club Fit / coach Coach Fit)
+  // with the Proven + Interested lenses into one qualitative read.
+  const verdict = computeRecruiterVerdict({
+    fit: profile.role === 'coach' ? coachFit : clubFit,
+    evidence,
+    interest,
   })
 
   // Two parallel fetches — career_history (counts + most-recent per
@@ -376,6 +407,29 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
   // ── RENDER ─────────────────────────────────────────────────────────
   return (
     <section className="bg-white rounded-2xl border border-gray-200/80 shadow-sm p-5 md:p-6">
+      {/* Increment #5 — explanation-led lead. The synthesized verdict
+          (qualitative tier + ranked highlights/caveats) tops the card,
+          with the HOCKIA AI panel narrating the same read directly beneath.
+          Both are recruiter + scope gated (render null otherwise), so for
+          non-recruiters the card still opens on the availability headline. */}
+      {verdict.isApplicable && (
+        <div className="mb-3 space-y-3">
+          <RecruiterVerdictCard verdict={verdict} />
+          <AIOpinionPanel
+            candidate={{
+              id: profile.id,
+              role: profile.role,
+              playing_category: profile.playing_category,
+              current_world_club_id: profile.current_world_club_id,
+              open_to_play: profile.open_to_play,
+              open_to_coach: profile.open_to_coach,
+              open_to_opportunities: profile.open_to_opportunities,
+              last_active_at: profile.last_active_at,
+            }}
+          />
+        </div>
+      )}
+
       {/* Zone 1 — Availability status, the headline. The Club Fit chip
           sits to the right (recruiter-only — hidden for non-club viewers
           and for clubs without a declared team category). */}
@@ -446,24 +500,8 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
         </div>
       )}
 
-      {/* Section F (G.7) — HOCKIA AI fit opinion. Recruiter-only,
-          flag-gated, and hidden when Fit isn't applicable (no scope,
-          self-view, missing inputs). Same candidate shape as the chip
-          above so the gating stays in sync. */}
-      <div className="mt-3">
-        <AIOpinionPanel
-          candidate={{
-            id: profile.id,
-            role: profile.role,
-            playing_category: profile.playing_category,
-            current_world_club_id: profile.current_world_club_id,
-            open_to_play: profile.open_to_play,
-            open_to_coach: profile.open_to_coach,
-            open_to_opportunities: profile.open_to_opportunities,
-            last_active_at: profile.last_active_at,
-          }}
-        />
-      </div>
+      {/* (Increment #5 moved the HOCKIA AI panel up to narrate the verdict
+          at the top of the card — see the lead block above.) */}
 
       {/* Zone 2 — Career evidence. Only non-empty rows render. */}
       {hasAnyEvidence && (
