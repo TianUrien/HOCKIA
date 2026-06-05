@@ -42,7 +42,7 @@ import { getServiceClient } from '../_shared/supabase-client.ts'
 // Bump PROMPT_VERSION when the system prompt or output schema changes
 // in a way that should invalidate cached opinions. ai_opinions cache
 // keys include this — bumping forces a full regenerate next read.
-const PROMPT_VERSION = 'v1.4'
+const PROMPT_VERSION = 'v1.5'
 const MODEL = 'claude-sonnet-4-6'
 const VERDICT_MAX_CHARS = 280
 const QUOTA_PER_DAY = 50
@@ -85,6 +85,8 @@ interface FitContext {
   viewer_target_compensation: string | null
   viewer_target_location_country: string | null
   viewer_target_start_date: string | null
+  // #6 — the recruiter's stated problem; frames which dimensions matter most.
+  viewer_recruitment_problem: string | null
   player_category: string | null
   player_band: number | null
   player_open_to_play: boolean | null
@@ -159,6 +161,7 @@ function computeContextHash(viewerId: string, playerId: string, fit: FitContext)
     vtc: fit.viewer_target_compensation,
     vtloc: fit.viewer_target_location_country,
     vtsd: fit.viewer_target_start_date,
+    vrp: fit.viewer_recruitment_problem,
     plt: fit.player_level_target,
     pop: fit.player_opportunity_preference,
     prw: fit.player_relocation_willingness,
@@ -242,6 +245,7 @@ interface RecruitingScope {
   compensation: string | null
   location_country: string | null
   start_date: string | null
+  problem: string | null
 }
 
 async function resolveScope(
@@ -253,7 +257,7 @@ async function resolveScope(
   // opt-in via ContextSwitcher).
   const { data: ctx } = await supabase
     .from('recruiting_context')
-    .select('target_category, target_level, target_compensation, target_location_country, target_start_date')
+    .select('target_category, target_level, target_compensation, target_location_country, target_start_date, target_problem')
     .eq('owner_id', viewerId)
     .eq('is_active', true)
     .maybeSingle()
@@ -263,6 +267,7 @@ async function resolveScope(
     target_compensation: string | null
     target_location_country: string | null
     target_start_date: string | null
+    target_problem: string | null
   } | null
   const scope: RecruitingScope = {
     target: (row?.target_category as 'Men' | 'Women' | 'Mixed' | null) ?? null,
@@ -270,6 +275,7 @@ async function resolveScope(
     compensation: row?.target_compensation ?? null,
     location_country: row?.target_location_country ?? null,
     start_date: row?.target_start_date ?? null,
+    problem: row?.target_problem ?? null,
   }
   if (scope.target) return scope
 
@@ -309,6 +315,9 @@ async function resolveScope(
 //     reflects the full #4a/#4b model, not just category + band.
 //   - SELF-DECLARED VS PROVEN rule: proven level (band) outranks the
 //     player's stated level_target for level matching.
+//   v1.4: humanize all values in verdict_short (no raw field/enum tokens).
+//   v1.5 (#6): frame the verdict around the recruiter's recruitment_problem
+//     — lead with the dimension that problem cares about most.
 const SYSTEM_PROMPT = `You are HOCKIA AI's recruitment opinion engine. You produce short, evidence-based verdicts on player↔club fit for field-hockey recruiters.
 
 RULES (non-negotiable):
@@ -343,6 +352,15 @@ OPPORTUNITY SCOPE (when opportunity_scope fields are present): the recruiter is 
 - location_country + start_date vs the player's relocation_willingness + available_from: logistics that can make or break a deal.
 When opportunity_scope fields are null, the recruiter hasn't scoped to an opening — do not invent level/compensation/logistics claims; stick to category + band + evidence.
 
+RECRUITMENT PROBLEM (when opportunity_scope.recruitment_problem is present): this is what the recruiter is solving — frame the verdict around it and lead with the dimension it cares about most:
+- replace_player ("replace a key player"): emphasise proven level + fit — a ready, like-for-like replacement.
+- raise_level ("raise team level"): emphasise proven level above the team's — does this player lift the level?
+- best_available ("best available anywhere"): emphasise overall quality/proven; fit can stretch.
+- young_talent ("young talent with potential"): don't penalise a thin track record — emphasise upside, openness, availability; a sparse evidence file is expected.
+- leadership ("add leadership / experience"): emphasise proven experience + fit.
+- urgent ("urgent need"): emphasise availability + interest — can they come, and soon? Lead with logistics over polish.
+Never invent facts to fit the problem; just weight and order the REAL evidence to answer it.
+
 SELF-DECLARED VS PROVEN (non-negotiable): competition_level_band is the player's PROVEN level (where they actually play); level_target is only what they SAY they want. PROVEN outranks self-declared for level matching — never describe a player as being at a level their band doesn't support just because their level_target claims it. You may note the stated aspiration as colour ("they're targeting a higher level than they've proven"), but anchor the level verdict on the band.
 
 If insufficient information (e.g., no playing_category, no level_band on either side, no openness signals), respond with a verdict naming the missing fields AND cite each missing field as a citation with value="null" — e.g. { "field": "competition_level_band", "value": "null", "claim": "Not set on your side, so tier comparison isn't possible yet." }. Do not return an empty citations array.`
@@ -359,6 +377,8 @@ function buildUserPrompt(viewer: ProfileRow, player: ProfileRow, fit: FitContext
       compensation: fit.viewer_target_compensation,
       location_country: fit.viewer_target_location_country,
       start_date: fit.viewer_target_start_date,
+      // #6 — what the recruiter is solving; frame the verdict around it.
+      recruitment_problem: fit.viewer_recruitment_problem,
     },
     player: {
       role: player.role,
@@ -567,6 +587,7 @@ serve(async (req: Request) => {
     viewer_target_compensation: scope.compensation,
     viewer_target_location_country: scope.location_country,
     viewer_target_start_date: scope.start_date,
+    viewer_recruitment_problem: scope.problem,
     player_category: player.playing_category,
     player_band: playerBand,
     player_open_to_play: player.open_to_play,

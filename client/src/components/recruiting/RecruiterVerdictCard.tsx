@@ -68,6 +68,13 @@ export default function RecruiterVerdictCard({ verdict, className = '' }: Recrui
         </span>
       </div>
 
+      {/* #6 — the recruitment problem the weighting was tuned for. */}
+      {verdict.weightedFor && (
+        <p className="mt-1 text-[11px] text-gray-500">
+          Weighted for <span className="font-medium text-gray-700">{verdict.weightedFor}</span>
+        </p>
+      )}
+
       {(verdict.highlights.length > 0 || verdict.caveats.length > 0) && (
         <ul className="mt-2 space-y-1">
           {verdict.highlights.map((h, i) => (

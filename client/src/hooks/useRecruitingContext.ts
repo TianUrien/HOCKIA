@@ -691,3 +691,30 @@ export function useActiveRecruitingTargetCompensation(): string | null {
 
   return compensation
 }
+
+/** Active scope's recruitment problem (#4a: replace_player / raise_level /
+ *  best_available / young_talent / leadership / urgent) or null. Drives the
+ *  #6 verdict re-weighting — the problem reshapes how the four lenses
+ *  combine into the recommendation. */
+export function useActiveRecruitingTargetProblem(): string | null {
+  const { profile: viewer } = useAuthStore()
+  const viewerId = viewer?.id ?? null
+  const viewerRole = viewer?.role ?? null
+
+  const setViewer = useRecruitingContextStore((s) => s.setViewer)
+  const ensureFetched = useRecruitingContextStore((s) => s.ensureFetched)
+  const problem = useRecruitingContextStore((s) => {
+    const row = s.rows.find((r) => r.is_active)
+    return (row?.target_problem ?? null) as string | null
+  })
+
+  useEffect(() => {
+    setViewer(viewerId, viewerRole)
+  }, [viewerId, viewerRole, setViewer])
+
+  useEffect(() => {
+    void ensureFetched()
+  }, [viewerId, viewerRole, ensureFetched])
+
+  return problem
+}

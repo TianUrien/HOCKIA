@@ -146,3 +146,71 @@ describe('computeRecruiterVerdict', () => {
     expect(general.scoped).toBe(false)
   })
 })
+
+// ── Increment #6 — recruitment-problem re-weighting ─────────────────
+describe('computeRecruiterVerdict — problem re-weighting (#6)', () => {
+  it('unknown / no problem → balanced default + weightedFor null', () => {
+    const r = computeRecruiterVerdict({ fit: fit('green', { positives: ['x'] }), evidence: null, interest: null })
+    expect(r.weightedFor).toBeNull()
+    const unknown = computeRecruiterVerdict({ fit: fit('green', { positives: ['x'] }), evidence: null, interest: null, problem: 'nonsense' })
+    expect(unknown.weightedFor).toBeNull() // unrecognised → no label, default weights
+  })
+
+  it('weightedFor carries the human problem label', () => {
+    const r = computeRecruiterVerdict({ fit: fit('green', { positives: ['x'] }), evidence: null, interest: null, problem: 'urgent' })
+    expect(r.weightedFor).toBe('Urgent need')
+  })
+
+  it('a high-interest / low-proven player ranks higher under "Urgent" than under "Raise team level"', () => {
+    // Lopsided candidate: only a yellow fit + thin evidence, but strongly
+    // interested + available. Urgent (interest-heavy) should value them far
+    // more than Raise-level (proven-heavy).
+    const candidate = {
+      fit: fit('yellow', { positives: ['Close on level.'] }),
+      evidence: evidence('limited'),
+      interest: interest('strong', { positives: ['Open to relocating and available now.'] }),
+    }
+    const urgent = computeRecruiterVerdict({ ...candidate, problem: 'urgent' })
+    const raise = computeRecruiterVerdict({ ...candidate, problem: 'raise_level' })
+    const rank = { pass: 0, longshot: 1, consider: 2, pursue: 3 }
+    expect(rank[urgent.tier]).toBeGreaterThan(rank[raise.tier])
+    // …and Urgent leads the explanation with the interest selling point.
+    expect(urgent.highlights[0]).toBe('Open to relocating and available now.')
+  })
+
+  it('"Raise team level" rewards a strong-fit player and leads with the fit highlight', () => {
+    const r = computeRecruiterVerdict({
+      fit: fit('green', { positives: ['Plays at a comparable league level to your team.'] }),
+      evidence: evidence('limited'),
+      interest: interest('possible', { positives: ['Open to discuss.'] }),
+      problem: 'raise_level',
+    })
+    // fit-led order (level lives in fit), and a thin video file no longer
+    // sinks a level-appropriate player the way the old proven-heavy profile did.
+    expect(r.highlights[0]).toBe('Plays at a comparable league level to your team.')
+    expect(r.weightedFor).toBe('Raise team level')
+    expect(['pursue', 'consider']).toContain(r.tier)
+  })
+
+  it('"Young talent" does not punish thin proven the way the default would', () => {
+    const candidate = {
+      fit: fit('green', { positives: ['Right category.'] }),
+      evidence: evidence('limited'),
+      interest: interest('strong', { positives: ['Keen and available.'] }),
+    }
+    const dflt = computeRecruiterVerdict(candidate)
+    const young = computeRecruiterVerdict({ ...candidate, problem: 'young_talent' })
+    const rank = { pass: 0, longshot: 1, consider: 2, pursue: 3 }
+    expect(rank[young.tier]).toBeGreaterThanOrEqual(rank[dflt.tier])
+  })
+
+  it('grey-fit cap still holds regardless of problem weighting', () => {
+    const r = computeRecruiterVerdict({
+      fit: fit('grey', { caveats: ['Different category.'] }),
+      evidence: evidence('strong'),
+      interest: interest('strong', { positives: ['Keen.'] }),
+      problem: 'urgent',
+    })
+    expect(['longshot', 'pass']).toContain(r.tier) // never pursue/consider
+  })
+})

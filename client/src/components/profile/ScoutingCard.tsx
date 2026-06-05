@@ -53,6 +53,7 @@ import {
   useActiveRecruitingTargetCompensation,
   useActiveRecruitingTargetLocation,
   useActiveRecruitingTargetStartDate,
+  useActiveRecruitingTargetProblem,
 } from '@/hooks/useRecruitingContext'
 
 interface ScoutingCardProfile {
@@ -228,16 +229,19 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
   const scopeCompensation = useActiveRecruitingTargetCompensation()
   const scopeLocation = useActiveRecruitingTargetLocation()
   const scopeStartDate = useActiveRecruitingTargetStartDate()
+  const scopeProblem = useActiveRecruitingTargetProblem()
   const hasOpeningScope = Boolean(scopeLevel || scopeCompensation || scopeLocation || scopeStartDate)
 
   // Increment #5 — the explanation-led synthesis verdict that leads the
   // card. Fuses whichever Fit applies (player Club Fit / coach Coach Fit)
-  // with the Proven + Interested lenses into one qualitative read.
+  // with the Proven + Interested lenses into one qualitative read. #6 — the
+  // recruitment problem reshapes the cross-lens weighting + lead highlight.
   const verdict = computeRecruiterVerdict({
     fit: profile.role === 'coach' ? coachFit : clubFit,
     evidence,
     interest,
     hasOpeningScope,
+    problem: scopeProblem,
   })
 
   // Two parallel fetches — career_history (counts + most-recent per
