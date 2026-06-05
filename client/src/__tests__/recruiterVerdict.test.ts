@@ -119,6 +119,23 @@ describe('computeRecruiterVerdict', () => {
     expect(r.highlights).not.toContain('Plays at a listed club & league (provable level).')
   })
 
+  it('thin-evidence caveat drops "video" for coach candidates', () => {
+    const playerV = computeRecruiterVerdict({
+      fit: fit('yellow', { positives: ['x'] }),
+      evidence: evidence('limited'),
+      interest: null,
+    })
+    const coachV = computeRecruiterVerdict({
+      fit: fit('yellow', { positives: ['x'] }),
+      evidence: evidence('limited'),
+      interest: null,
+      candidateRole: 'coach',
+    })
+    expect(playerV.caveats).toContain('Limited video & references on file so far.')
+    expect(coachV.caveats).toContain('Limited references & track record on file so far.')
+    expect(coachV.caveats.join(' ')).not.toMatch(/video/i)
+  })
+
   it('over-qualification note (interest caveat) is a caveat, not a highlight', () => {
     const r = computeRecruiterVerdict({
       fit: fit('green', { positives: ['Right level.'] }),

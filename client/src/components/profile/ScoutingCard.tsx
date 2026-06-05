@@ -237,6 +237,7 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
     interest,
     hasOpeningScope,
     problem: scopeProblem,
+    candidateRole: profile.role,
   })
 
   // Two parallel fetches — career_history (counts + most-recent per

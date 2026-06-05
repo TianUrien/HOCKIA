@@ -71,6 +71,10 @@ export interface RecruiterVerdictInput {
    *  weighting + which highlight leads, so the recommendation reflects what
    *  the recruiter is actually solving. Null/unknown → balanced default. */
   problem?: string | null
+  /** Candidate role ('player' | 'coach') — only used to word the thin-
+   *  evidence caveat correctly (coaches have no video, so "video" mustn't
+   *  appear). Defaults to player wording. */
+  candidateRole?: string | null
 }
 
 export interface RecruiterVerdict {
@@ -214,10 +218,14 @@ export function computeRecruiterVerdict(input: RecruiterVerdictInput): Recruiter
   if (interest?.isApplicable && interest.caveats[0]) caveats.push(interest.caveats[0])
   if (fit.caveats[0]) caveats.push(fit.caveats[0])
   if (evidence?.isApplicable && evidence.level === 'limited') {
-    // Specifically the Proven-lens evidence VOLUME (video + references),
-    // not their playing level — a proven-level player can still have thin
-    // verifiable evidence on file, so keep this distinct from "level".
-    caveats.push('Limited video & references on file so far.')
+    // The Proven-lens evidence VOLUME, not their playing level — a proven-
+    // level candidate can still have thin verifiable evidence. Coaches have
+    // no video-upload surface, so don't mention video for them.
+    caveats.push(
+      input.candidateRole === 'coach'
+        ? 'Limited references & track record on file so far.'
+        : 'Limited video & references on file so far.',
+    )
   }
 
   return {
