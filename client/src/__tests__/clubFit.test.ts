@@ -172,6 +172,20 @@ describe('computeClubFit', () => {
     expect(result.score).toBeLessThan(0.66)
   })
 
+  it('confirmed category mismatch is forced grey even when other components are strong', () => {
+    // A man under a women's-team scope, fully open + active + same band:
+    // soft components alone would reach yellow/green, but the category
+    // mismatch is disqualifying — a man can't fill a women's-team opening.
+    const result = computeClubFit(
+      { ...womensClub, competition_level_band: 3 },
+      { ...baseFemalePlayer, playing_category: 'adult_men', competition_level_band: 3 },
+    )
+    expect(result.components.gender_match).toBe(0)
+    expect(result.state).toBe('grey')
+    // The mismatch is tagged as a caveat (drives the #5 verdict icon).
+    expect(result.caveats.some((c) => /different from your team's category/i.test(c))).toBe(true)
+  })
+
   it('matching level_band on top pushes score into green', () => {
     // P1.2: proximity now uses level_band_global (1..10 curated, global)
     // instead of tier+country. Same band = 1.0 proximity.

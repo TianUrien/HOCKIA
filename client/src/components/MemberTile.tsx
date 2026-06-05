@@ -5,7 +5,7 @@ import { RoleBadge, TierBadge, VerifiedBadge, DualNationalityDisplay } from '@/c
 import type { ProfileTier } from '@/lib/profileTier'
 import SignInPromptModal from '@/components/SignInPromptModal'
 import { useAuthStore } from '@/lib/auth'
-import { useWorldClubLogo, getPlayerLeagueName } from '@/hooks/useWorldClubLogo'
+import { useWorldClubLogo, getPlayerLeagueName, getClubLevelBand } from '@/hooks/useWorldClubLogo'
 import HockeyContextLine from '@/components/recruiting/HockeyContextLine'
 import QuickActionsRow from '@/components/recruiting/QuickActionsRow'
 import { getImageUrl } from '@/lib/imageUrl'
@@ -15,7 +15,7 @@ import ProvenSignal from './recruiting/ProvenSignal'
 import InterestSignal from './recruiting/InterestSignal'
 import { useCoachFit } from '@/hooks/useCoachFit'
 import { useEvidence } from '@/hooks/useEvidence'
-import { useInterest } from '@/hooks/useInterest'
+import { useInterest, categoryToBandTarget } from '@/hooks/useInterest'
 
 const BRAND_CATEGORY_LABELS: Record<string, string> = {
   equipment: 'Equipment',
@@ -317,7 +317,16 @@ export default function MemberTile(props: MemberTileProps) {
                 role: props.role,
                 playing_category: props.playing_category ?? null,
                 current_world_club_id: props.current_world_club_id ?? null,
-                competition_level_band: props.competition_level_band ?? null,
+                // #5: resolve the league band from the warm prefetch cache
+                // (PeopleListView warms it before render) so grid Fit uses
+                // the SAME band as the deep-profile Fit — no more grid↔
+                // profile tier divergence for the same player.
+                competition_level_band:
+                  props.competition_level_band ??
+                  getClubLevelBand(
+                    props.current_world_club_id ?? null,
+                    categoryToBandTarget(props.playing_category ?? null),
+                  ),
                 open_to_play: props.open_to_play ?? null,
                 open_to_coach: props.open_to_coach ?? null,
                 open_to_opportunities: props.open_to_opportunities ?? null,

@@ -13,6 +13,7 @@ import { describe, expect, it } from 'vitest'
 import { computeEvidence, evidenceLevelLabel } from '@/lib/evidence'
 
 const player = (over: Record<string, unknown> = {}) => ({ role: 'player' as const, ...over })
+const coach = (over: Record<string, unknown> = {}) => ({ role: 'coach' as const, ...over })
 
 describe('computeEvidence', () => {
   it('NOT applicable for a candidate with no evidence at all', () => {
@@ -91,5 +92,28 @@ describe('computeEvidence', () => {
     expect(evidenceLevelLabel('strong')).toBe('Strong evidence')
     expect(evidenceLevelLabel('moderate')).toBe('Some evidence')
     expect(evidenceLevelLabel('limited')).toBe('Limited evidence')
+  })
+
+  // ── Coaches: no video model (no upload surface) ──────────────────
+  it('coach evidence ignores video signals entirely', () => {
+    // Even with player video fields set, a coach gets no video credit and
+    // no video reason — they have no way to upload footage.
+    const r = computeEvidence(coach({ full_game_video_count: 5, highlight_video_url: 'https://v/x' }))
+    expect(r.isApplicable).toBe(false) // video is the only "signal" → nothing applies
+    expect(r.items.some((i) => i.key === 'video')).toBe(false)
+  })
+
+  it('coach reaches strong on references + verified + club (no video needed)', () => {
+    const r = computeEvidence(coach({ accepted_reference_count: 3, is_verified: true, current_world_club_id: 'wc-1' }))
+    expect(r.level).toBe('strong') // 0.5 + 0.25 + 0.25 = 1.0
+    expect(r.reasons.join(' ')).not.toMatch(/footage|video|reel/i)
+    expect(r.reasons.join(' ')).toMatch(/Coaches at a listed club/i)
+  })
+
+  it('coach with no references/verification/club is limited — but never cites video', () => {
+    const r = computeEvidence(coach({ current_world_club_id: 'wc-1' }))
+    expect(r.isApplicable).toBe(true)
+    expect(r.level).toBe('limited') // 0.25 only
+    expect(r.reasons.join(' ')).not.toMatch(/video|footage|reel/i)
   })
 })

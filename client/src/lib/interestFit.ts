@@ -39,6 +39,13 @@ export interface InterestResult {
   /** 0..1 weighted over the measurable components. */
   score: number
   reasons: string[]
+  /** Reasons split by polarity for the #5 recruiter verdict — interest
+   *  lines genuinely mix selling points ("open to relocating") with
+   *  concerns ("wants paid; this is a development role"), so the verdict
+   *  can't infer polarity from the overall level. The chip keeps using the
+   *  flat `reasons`. */
+  positives: string[]
+  caveats: string[]
 }
 
 export interface InterestCandidateFields {
@@ -80,7 +87,14 @@ export interface ComputeInterestOptions {
 const WEIGHTS = { mobility: 0.35, level: 0.3, compensation: 0.2, availability: 0.15 } as const
 const LEVEL_THRESHOLDS = { strong: 0.66, possible: 0.4 } as const
 
-const NOT_APPLICABLE: InterestResult = { isApplicable: false, level: 'low', score: 0, reasons: [] }
+const NOT_APPLICABLE: InterestResult = {
+  isApplicable: false,
+  level: 'low',
+  score: 0,
+  reasons: [],
+  positives: [],
+  caveats: [],
+}
 
 /** Normalize a country name for comparison: lowercase + trim, and fold the
  *  UK home nations to "united kingdom" (opportunities use "England" but
@@ -129,6 +143,13 @@ export function computeInterest(
   }
 
   const reasons: string[] = []
+  const positives: string[] = []
+  const caveats: string[] = []
+  const add = (text: string, tone: 'positive' | 'caveat' | 'neutral' = 'neutral') => {
+    reasons.push(text)
+    if (tone === 'positive') positives.push(text)
+    else if (tone === 'caveat') caveats.push(text)
+  }
   const measured: Array<{ score: number; weight: number }> = []
 
   // ── Mobility ──
@@ -146,45 +167,45 @@ export function computeInterest(
 
     if (oppNorm && excludedNorms.includes(oppNorm)) {
       mobility = 0
-      reasons.push(`Excluded ${oppRaw} from the countries they'd consider.`)
+      add(`Excluded ${oppRaw} from the countries they'd consider.`, 'caveat')
     } else if (willingness === 'home_only') {
       if (homeNorm && oppNorm) {
         if (homeNorm === oppNorm) {
           mobility = 1
-          reasons.push('Opportunity is in their home country.')
+          add('Opportunity is in their home country.', 'positive')
         } else {
           mobility = 0
-          reasons.push(`Only wants to stay in ${homeName ?? 'their home country'}.`)
+          add(`Only wants to stay in ${homeName ?? 'their home country'}.`, 'caveat')
         }
       } else {
         mobility = 0.5
-        reasons.push('Prefers to stay in their home country.')
+        add('Prefers to stay in their home country.')
       }
     } else if (willingness === 'relocate' || willingness === 'open_to_discuss') {
       const base = willingness === 'relocate' ? 1 : 0.75
       if (openNorms.length > 0) {
         if (oppNorm && openNorms.includes(oppNorm)) {
           mobility = base
-          reasons.push(`Open to relocating to ${oppRaw}.`)
+          add(`Open to relocating to ${oppRaw}.`, 'positive')
         } else {
           mobility = base * 0.5
-          reasons.push(`Open to relocating, though ${oppRaw} isn't in their listed countries.`)
+          add(`Open to relocating, though ${oppRaw} isn't in their listed countries.`)
         }
       } else {
         mobility = base
-        reasons.push(willingness === 'relocate' ? 'Open to relocating.' : 'Open to discussing relocation.')
+        add(willingness === 'relocate' ? 'Open to relocating.' : 'Open to discussing relocation.', 'positive')
       }
     } else {
       // Countries listed but no explicit willingness pill.
       if (oppNorm && openNorms.includes(oppNorm)) {
         mobility = 0.85
-        reasons.push(`Lists ${oppRaw} among countries they'd consider.`)
+        add(`Lists ${oppRaw} among countries they'd consider.`, 'positive')
       } else if (openNorms.length > 0) {
         mobility = 0.4
-        reasons.push(`${oppRaw} isn't among their listed countries.`)
+        add(`${oppRaw} isn't among their listed countries.`, 'caveat')
       } else {
         mobility = 0.6
-        reasons.push(`Hasn't excluded ${oppRaw}.`)
+        add(`Hasn't excluded ${oppRaw}.`)
       }
     }
     measured.push({ score: clamp01(mobility), weight: WEIGHTS.mobility })
@@ -207,23 +228,27 @@ export function computeInterest(
       const oppLabel = levelSoughtLabel(options.targetLevel)?.toLowerCase() ?? 'this level'
 
       if (absDiff === 0) {
-        reasons.push(
+        add(
           proven
             ? `Has proven ${oppLabel} — matches what you're recruiting.`
             : `Targeting ${oppLabel} — matches what you're recruiting.`,
+          'positive',
         )
       } else if (diff > 0) {
         const phrase = absDiff === 1 ? 'A step up from' : 'Well above'
-        reasons.push(
+        // A stretch upward is ambiguous for interest (ambition vs reach) →
+        // neutral, not a selling point.
+        add(
           proven
             ? `${phrase} the level they've proven.`
             : `${phrase} the level they say they're targeting.`,
         )
       } else {
-        reasons.push(
+        add(
           proven
             ? `Below the level they've proven${absDiff >= 2 ? ' — likely over-qualified' : ''}.`
             : `Below the level they say they're targeting.`,
+          'caveat',
         )
       }
 
@@ -233,10 +258,10 @@ export function computeInterest(
       if (proven && declaredRank != null) {
         if (declaredRank < oppLevelRank) {
           levelScore *= 0.85
-          reasons.push('Though they say they want a lower level than this opening.')
+          add('Though they say they want a lower level than this opening.', 'caveat')
         } else if (declaredRank > oppLevelRank + 1) {
           levelScore *= 0.9
-          reasons.push('They say they want a higher level than this opening.')
+          add('They say they want a higher level than this opening.', 'caveat')
         }
       }
       measured.push({ score: clamp01(levelScore), weight: WEIGHTS.level })
@@ -270,7 +295,7 @@ export function computeInterest(
       compScore = 0.9
       compReason = 'Open to a development role; this one is paid.'
     }
-    reasons.push(compReason)
+    add(compReason, compScore >= 0.66 ? 'positive' : compScore <= 0.4 ? 'caveat' : 'neutral')
     measured.push({ score: compScore, weight: WEIGHTS.compensation })
   }
 
@@ -279,10 +304,10 @@ export function computeInterest(
   const startDate = options.targetStartDate || null
   if (availFrom && startDate) {
     if (availFrom <= startDate) {
-      reasons.push(`Available from ${formatAvailableFrom(availFrom)} — in time for the start.`)
+      add(`Available from ${formatAvailableFrom(availFrom)} — in time for the start.`, 'positive')
       measured.push({ score: 1, weight: WEIGHTS.availability })
     } else {
-      reasons.push(`Available from ${formatAvailableFrom(availFrom)}, after the ${formatAvailableFrom(startDate)} start.`)
+      add(`Available from ${formatAvailableFrom(availFrom)}, after the ${formatAvailableFrom(startDate)} start.`, 'caveat')
       measured.push({ score: 0.3, weight: WEIGHTS.availability })
     }
   }
@@ -294,7 +319,7 @@ export function computeInterest(
   const level: InterestLevel =
     score >= LEVEL_THRESHOLDS.strong ? 'strong' : score >= LEVEL_THRESHOLDS.possible ? 'possible' : 'low'
 
-  return { isApplicable: true, level, score, reasons }
+  return { isApplicable: true, level, score, reasons, positives, caveats }
 }
 
 /** UI label for an interest level. */

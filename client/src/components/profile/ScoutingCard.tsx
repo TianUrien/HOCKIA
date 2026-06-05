@@ -41,10 +41,17 @@ import InterestSignal from '@/components/recruiting/InterestSignal'
 import { useIsProfileSaved } from '@/hooks/useSavedProfiles'
 import ClubFitChip from '@/components/recruiting/ClubFitChip'
 import ProvenSignal from '@/components/recruiting/ProvenSignal'
+import { useClubFit } from '@/hooks/useClubFit'
 import { useCoachFit } from '@/hooks/useCoachFit'
 import { useEvidence } from '@/hooks/useEvidence'
+import { computeRecruiterVerdict } from '@/lib/recruiterVerdict'
+import RecruiterVerdictCard from '@/components/recruiting/RecruiterVerdictCard'
 import AIOpinionPanel from '@/components/recruiting/AIOpinionPanel'
 import MoreActionsMenu from '@/components/recruiting/MoreActionsMenu'
+import {
+  useHasActiveRecruitingScope,
+  useActiveRecruitingTargetProblem,
+} from '@/hooks/useRecruitingContext'
 
 interface ScoutingCardProfile {
   id: string
@@ -191,6 +198,46 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
     accepted_reference_count: profile.accepted_reference_count,
     is_verified: profile.is_verified ?? null,
     current_world_club_id: profile.current_world_club_id,
+  })
+  // Player Club Fit at the card level (the chip computes its own copy, but
+  // the #5 verdict needs the result here). NOT_APPLICABLE for coaches.
+  const clubFit = useClubFit(
+    profile.role === 'player'
+      ? {
+          id: profile.id,
+          role: profile.role,
+          playing_category: profile.playing_category,
+          current_world_club_id: profile.current_world_club_id,
+          competition_level_band: provenBand,
+          open_to_play: profile.open_to_play,
+          open_to_coach: profile.open_to_coach,
+          open_to_opportunities: profile.open_to_opportunities,
+          last_active_at: profile.last_active_at,
+          position: profile.position ?? null,
+          secondary_position: profile.secondary_position ?? null,
+          specialist_skills: profile.specialist_skills ?? null,
+        }
+      : null,
+  )
+  // "For your scope" when the recruiter has an active context (opportunity
+  // OR custom) they chose; "general fit" only when there's none (profile-
+  // derived defaults). Using the active-context signal — not whether
+  // level/compensation/location happen to be set — so a coach opening (or
+  // any minimal opening) still reads as scoped.
+  const hasOpeningScope = useHasActiveRecruitingScope()
+  const scopeProblem = useActiveRecruitingTargetProblem()
+
+  // Increment #5 — the explanation-led synthesis verdict that leads the
+  // card. Fuses whichever Fit applies (player Club Fit / coach Coach Fit)
+  // with the Proven + Interested lenses into one qualitative read. #6 — the
+  // recruitment problem reshapes the cross-lens weighting + lead highlight.
+  const verdict = computeRecruiterVerdict({
+    fit: profile.role === 'coach' ? coachFit : clubFit,
+    evidence,
+    interest,
+    hasOpeningScope,
+    problem: scopeProblem,
+    candidateRole: profile.role,
   })
 
   // Two parallel fetches — career_history (counts + most-recent per
@@ -376,6 +423,32 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
   // ── RENDER ─────────────────────────────────────────────────────────
   return (
     <section className="bg-white rounded-2xl border border-gray-200/80 shadow-sm p-5 md:p-6">
+      {/* Increment #5 — explanation-led lead. The synthesized verdict
+          (qualitative tier + ranked highlights/caveats) tops the card,
+          with the HOCKIA AI panel narrating the same read directly beneath.
+          Both are recruiter + scope gated (render null otherwise), so for
+          non-recruiters the card still opens on the availability headline. */}
+      {verdict.isApplicable && (
+        <div className="mb-3 space-y-3">
+          <RecruiterVerdictCard verdict={verdict} />
+          <AIOpinionPanel
+            candidate={{
+              id: profile.id,
+              role: profile.role,
+              playing_category: profile.playing_category,
+              current_world_club_id: profile.current_world_club_id,
+              open_to_play: profile.open_to_play,
+              open_to_coach: profile.open_to_coach,
+              open_to_opportunities: profile.open_to_opportunities,
+              last_active_at: profile.last_active_at,
+              // #6b — coach-candidate path: gates the panel on Coach Fit.
+              coach_specialization: profile.coach_specialization,
+              coaching_categories: profile.coaching_categories,
+            }}
+          />
+        </div>
+      )}
+
       {/* Zone 1 — Availability status, the headline. The Club Fit chip
           sits to the right (recruiter-only — hidden for non-club viewers
           and for clubs without a declared team category). */}
@@ -385,22 +458,10 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
           <p className={`text-xs font-bold tracking-wide ${status.labelClass}`}>{status.label}</p>
           <p className="text-xs text-gray-600 mt-0.5 truncate">{status.sub}</p>
         </div>
-        <ClubFitChip
-          className="flex-shrink-0 whitespace-nowrap"
-          candidate={{
-            id: profile.id,
-            role: profile.role,
-            playing_category: profile.playing_category,
-            current_world_club_id: profile.current_world_club_id,
-            open_to_play: profile.open_to_play,
-            open_to_coach: profile.open_to_coach,
-            open_to_opportunities: profile.open_to_opportunities,
-            last_active_at: profile.last_active_at,
-            position: profile.position ?? null,
-            secondary_position: profile.secondary_position ?? null,
-            specialist_skills: profile.specialist_skills ?? null,
-          }}
-        />
+        {/* #5: render the SAME clubFit result the verdict consumes (via
+            fitResult) instead of letting the chip recompute its own — keeps
+            the chip and the lead verdict from ever disagreeing. */}
+        <ClubFitChip className="flex-shrink-0 whitespace-nowrap" fitResult={clubFit} />
         {/* Phase 2C — Coach Fit chip for coach profiles (null otherwise). */}
         <ClubFitChip
           className="flex-shrink-0 whitespace-nowrap"
@@ -446,24 +507,8 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
         </div>
       )}
 
-      {/* Section F (G.7) — HOCKIA AI fit opinion. Recruiter-only,
-          flag-gated, and hidden when Fit isn't applicable (no scope,
-          self-view, missing inputs). Same candidate shape as the chip
-          above so the gating stays in sync. */}
-      <div className="mt-3">
-        <AIOpinionPanel
-          candidate={{
-            id: profile.id,
-            role: profile.role,
-            playing_category: profile.playing_category,
-            current_world_club_id: profile.current_world_club_id,
-            open_to_play: profile.open_to_play,
-            open_to_coach: profile.open_to_coach,
-            open_to_opportunities: profile.open_to_opportunities,
-            last_active_at: profile.last_active_at,
-          }}
-        />
-      </div>
+      {/* (Increment #5 moved the HOCKIA AI panel up to narrate the verdict
+          at the top of the card — see the lead block above.) */}
 
       {/* Zone 2 — Career evidence. Only non-empty rows render. */}
       {hasAnyEvidence && (

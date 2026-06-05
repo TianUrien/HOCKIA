@@ -62,6 +62,13 @@ vi.mock('@/hooks/useClubFit', () => ({
   useClubFit: () => clubFitState,
 }))
 
+// #6b — useAIOpinion now also calls useCoachFit (for coach candidates).
+// Mock it as NOT_APPLICABLE so the existing player-candidate tests are
+// unaffected and no recruiting_context fetch leaks.
+vi.mock('@/hooks/useCoachFit', () => ({
+  useCoachFit: () => ({ isApplicable: false, state: 'grey', score: 0, reasons: [], positives: [], caveats: [], target: null }),
+}))
+
 import { useAIOpinion } from '@/hooks/useAIOpinion'
 import type { FitCandidateFields } from '@/lib/clubFit'
 

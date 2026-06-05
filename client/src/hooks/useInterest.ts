@@ -61,7 +61,7 @@ export function useInterest(
 
   return useMemo(() => {
     if (!candidate) {
-      return { isApplicable: false, level: 'low' as const, score: 0, reasons: [] }
+      return { isApplicable: false, level: 'low' as const, score: 0, reasons: [], positives: [], caveats: [] }
     }
     // Resolve the proven band: prefer an explicitly-supplied band (carousel
     // RPC), else derive from the linked club's league via the warm cache.

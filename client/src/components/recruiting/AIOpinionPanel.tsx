@@ -31,8 +31,7 @@ import {
   ThumbsDown,
 } from 'lucide-react'
 import { useAIOpinion } from '@/hooks/useAIOpinion'
-import type { AIOpinionFeedbackRating } from '@/hooks/useAIOpinion'
-import type { FitCandidateFields } from '@/lib/clubFit'
+import type { AIOpinionFeedbackRating, AIOpinionCandidate } from '@/hooks/useAIOpinion'
 import {
   trackAIOpinionViewed,
   trackAIOpinionRegenerated,
@@ -42,7 +41,7 @@ import {
 } from '@/lib/analytics'
 
 interface AIOpinionPanelProps {
-  candidate: FitCandidateFields
+  candidate: AIOpinionCandidate
   className?: string
 }
 
@@ -168,7 +167,7 @@ export default function AIOpinionPanel({ candidate, className = '' }: AIOpinionP
             HOCKIA AI · fit opinion
           </p>
           <p className="text-[10px] text-gray-500 mt-0.5">
-            Private to you. Based on the player's profile facts vs your team scope.
+            Private to you. Based on the {candidate.role === 'coach' ? 'coach' : 'player'}&apos;s profile facts vs your team scope.
           </p>
         </div>
       </header>

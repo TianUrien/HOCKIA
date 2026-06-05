@@ -56,15 +56,24 @@ export interface EvidenceCandidateFields {
   current_world_club_id?: string | null
 }
 
-// Weights — video is the dominant hockey evidence (a coach wants to
-// WATCH), references next (who vouches), then verification + provable
-// level. Full match footage outweighs a highlight reel.
+// Weights — video is the dominant hockey evidence for a PLAYER (a coach
+// wants to WATCH), references next (who vouches), then verification +
+// provable level. Full match footage outweighs a highlight reel.
 const W_FULL_MATCH = 0.4
 const W_HIGHLIGHT = 0.28
 const W_REFERENCES_MAX = 0.3 // scaled by min(count, REF_CAP)/REF_CAP
 const W_VERIFIED = 0.15
 const W_LEVEL = 0.15
 const REF_CAP = 3
+
+// Coach weights — coaches have NO video-upload surface, so match footage
+// can't apply (penalising them for it implies a missing artifact they
+// can't provide). Their evidence is who vouches (references), an
+// admin-verified badge, and an on-record club/league. Re-normalised to sum
+// to 1.0 so a well-evidenced coach can still reach "strong".
+const W_COACH_REFERENCES_MAX = 0.5
+const W_COACH_VERIFIED = 0.25
+const W_COACH_LEVEL = 0.25
 
 const LEVEL_THRESHOLDS = { strong: 0.66, moderate: 0.33 } as const
 
@@ -91,30 +100,37 @@ export function computeEvidence(
   // Evidence is only meaningful for people we recruit (players + coaches).
   if (candidate.role !== 'player' && candidate.role !== 'coach') return none
 
+  // Coaches have no video-upload surface, so the evidence model swaps to
+  // coach-appropriate signals (references + verified + provable club) and
+  // never reads or mentions video.
+  const isCoach = candidate.role === 'coach'
+
   const items: EvidenceItem[] = []
   const reasons: string[] = []
   let score = 0
 
-  // ── Video (strongest hockey signal) ──
-  const fullMatch = candidate.full_game_video_count ?? 0
-  if (fullMatch > 0) {
-    score += W_FULL_MATCH
-    items.push({
-      key: 'video',
-      label: 'Match video',
-      detail: fullMatch > 1 ? `Full match footage (${fullMatch})` : 'Full match footage',
-    })
-    reasons.push(fullMatch > 1 ? `Full match footage available (${fullMatch} games).` : 'Full match footage available.')
-  } else if (candidate.highlight_video_url) {
-    score += W_HIGHLIGHT
-    items.push({ key: 'video', label: 'Highlight reel', detail: 'Highlight reel available' })
-    reasons.push('Highlight reel available.')
+  // ── Video (PLAYERS only — coaches can't upload footage) ──
+  if (!isCoach) {
+    const fullMatch = candidate.full_game_video_count ?? 0
+    if (fullMatch > 0) {
+      score += W_FULL_MATCH
+      items.push({
+        key: 'video',
+        label: 'Match video',
+        detail: fullMatch > 1 ? `Full match footage (${fullMatch})` : 'Full match footage',
+      })
+      reasons.push(fullMatch > 1 ? `Full match footage available (${fullMatch} games).` : 'Full match footage available.')
+    } else if (candidate.highlight_video_url) {
+      score += W_HIGHLIGHT
+      items.push({ key: 'video', label: 'Highlight reel', detail: 'Highlight reel available' })
+      reasons.push('Highlight reel available.')
+    }
   }
 
   // ── References (who vouches) ──
   const refs = candidate.accepted_reference_count ?? 0
   if (refs > 0) {
-    score += W_REFERENCES_MAX * (Math.min(refs, REF_CAP) / REF_CAP)
+    score += (isCoach ? W_COACH_REFERENCES_MAX : W_REFERENCES_MAX) * (Math.min(refs, REF_CAP) / REF_CAP)
     items.push({
       key: 'references',
       label: refs > 1 ? `${refs} references` : '1 reference',
@@ -125,16 +141,24 @@ export function computeEvidence(
 
   // ── Verified badge ──
   if (candidate.is_verified) {
-    score += W_VERIFIED
+    score += isCoach ? W_COACH_VERIFIED : W_VERIFIED
     items.push({ key: 'verified', label: 'Verified', detail: 'Verified profile' })
     reasons.push('Admin-verified profile.')
   }
 
   // ── Provable level (linked club → league) ──
   if (candidate.current_world_club_id) {
-    score += W_LEVEL
-    items.push({ key: 'level', label: 'Proven level', detail: 'Plays at a listed club & league' })
-    reasons.push('Plays at a listed club & league (provable level).')
+    score += isCoach ? W_COACH_LEVEL : W_LEVEL
+    items.push({
+      key: 'level',
+      label: 'Proven level',
+      detail: isCoach ? 'Coaches at a listed club & league' : 'Plays at a listed club & league',
+    })
+    reasons.push(
+      isCoach
+        ? 'Coaches at a listed club & league (provable level).'
+        : 'Plays at a listed club & league (provable level).',
+    )
   }
 
   if (items.length === 0) return none
