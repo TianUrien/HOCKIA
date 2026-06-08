@@ -153,8 +153,21 @@ export default defineConfig(({ mode }) => {
       }
     },
     define: {
-      'process.env.SUPABASE_URL': JSON.stringify(mergedEnv.SUPABASE_URL ?? ''),
-      'process.env.SUPABASE_ANON_KEY': JSON.stringify(mergedEnv.SUPABASE_ANON_KEY ?? ''),
+      // These feed supabase.ts's `process.env.*` branch, which is DEAD CODE
+      // in the browser/WebView (typeof process === 'undefined' there — we
+      // don't polyfill process), so the active client always resolves via
+      // VITE_SUPABASE_URL. But the inlined string still lands in the bundle,
+      // and the root E2E `.env` sets the bare SUPABASE_URL to STAGING — so a
+      // production `vite build` (the iOS/App Store binary) would otherwise
+      // carry the staging URL + anon key as inert strings. In production
+      // mode, inline the prod VITE_* values instead so the store binary is
+      // genuinely prod-only. Non-prod (dev/E2E) keeps the bare values.
+      'process.env.SUPABASE_URL': JSON.stringify(
+        (mode === 'production' ? mergedEnv.VITE_SUPABASE_URL : mergedEnv.SUPABASE_URL) ?? '',
+      ),
+      'process.env.SUPABASE_ANON_KEY': JSON.stringify(
+        (mode === 'production' ? mergedEnv.VITE_SUPABASE_ANON_KEY : mergedEnv.SUPABASE_ANON_KEY) ?? '',
+      ),
       'import.meta.env.VITE_VERCEL_GIT_COMMIT_SHA': JSON.stringify(mergedEnv.VERCEL_GIT_COMMIT_SHA ?? ''),
     },
     envPrefix: ['VITE_', 'SUPABASE_'],
