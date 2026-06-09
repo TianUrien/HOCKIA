@@ -116,20 +116,22 @@ export default function ClubBentoGrid({
           />
         </>
       ) : (
-        // Owner order: Club information → My Posted Opportunities →
-        // Saved Candidates → Club Members → My Network → Media.
-        // Saved Candidates sits next to Posted Opportunities so the
-        // two recruitment surfaces (applicants pipeline + private
-        // shortlist) pair visually.
+        // Owner order: Saved Candidates → My Posted Opportunities →
+        // Club Information → Club Members → My Network → Media.
+        // The RecruitmentSummaryCard above the bento already surfaces
+        // open roles + applicants + post/manage, so recruitment leads
+        // here (above Club Information) WITHOUT echoing that summary
+        // directly beneath it: Saved Candidates (the private shortlist)
+        // leads, then the full Posted Opportunities management tile.
         <>
-          <ClubBasicInfoCard profile={profile} readOnly={false} onEdit={onEdit} />
+          <SavedCandidatesCard />
           <CoachPostedOpportunitiesCard
             ownerProfileId={profile.id}
             onCreateOpportunity={onCreateOpportunity}
             onManageOpportunities={onManageOpportunities}
             bodyCopy="Publish player and coach roles and review applications in one place."
           />
-          <SavedCandidatesCard />
+          <ClubBasicInfoCard profile={profile} readOnly={false} onEdit={onEdit} />
           <ClubMembersCard
             ownerProfileId={profile.id}
             onViewMembers={() => onOpenTab('members')}
