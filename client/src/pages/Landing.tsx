@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react'
 import { Button, InAppBrowserWarning, PublicNav } from '@/components'
+import HockiaSocials from '@/components/HockiaSocials'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 
@@ -256,6 +257,9 @@ export default function Landing() {
                 Sign in
               </Link>
             </p>
+
+            {/* Follow us — official HOCKIA channels (mobile hero). */}
+            <HockiaSocials tone="onDark" className="justify-center pt-1" />
           </div>
         </div>
       </div>
@@ -304,6 +308,9 @@ export default function Landing() {
                 </Link>
               </p>
             </div>
+
+            {/* Follow us — official HOCKIA channels (desktop hero). */}
+            <HockiaSocials tone="onDark" className="mt-10" />
           </div>
         </div>
       </div>

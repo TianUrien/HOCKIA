@@ -1,9 +1,11 @@
+import HockiaSocials from './HockiaSocials'
+
 export default function Footer() {
   const currentYear = new Date().getFullYear()
 
   return (
-    <footer 
-      role="contentinfo" 
+    <footer
+      role="contentinfo"
       className="w-full bg-white/80 backdrop-blur-md border-t border-gray-200/50 dark:bg-gray-900/80 dark:border-gray-700/50"
       style={{
         paddingBottom: 'max(1rem, env(safe-area-inset-bottom))',
@@ -56,6 +58,9 @@ export default function Footer() {
               Contact support
             </a>
           </div>
+
+          {/* Follow us — official HOCKIA channels, kept out of the main nav. */}
+          <HockiaSocials tone="muted" />
         </div>
       </div>
     </footer>
