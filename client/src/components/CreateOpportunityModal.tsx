@@ -559,7 +559,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
         </div>
 
         {/* Content - Scrollable */}
-        <div ref={scrollContentRef} className="flex-1 overflow-y-auto p-6 space-y-6">
+        <div ref={scrollContentRef} className="flex-1 overflow-y-auto overflow-x-hidden p-6 space-y-6">
           {submitError && (
             <div
               role="alert"
@@ -952,13 +952,13 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                   value={newRequirement}
                   onChange={(e) => setNewRequirement(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && addRequirement()}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#10b981] focus:border-transparent"
+                  className="flex-1 min-w-0 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#10b981] focus:border-transparent"
                   placeholder="Add a requirement..."
                 />
                 <button
                   type="button"
                   onClick={addRequirement}
-                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2 min-h-[44px]"
+                  className="flex-shrink-0 whitespace-nowrap px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2 min-h-[44px]"
                 >
                   <Plus className="w-4 h-4" />
                   Add Requirement
@@ -1057,13 +1057,13 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                   value={newCustomBenefit}
                   onChange={(e) => setNewCustomBenefit(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && addCustomBenefit()}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#10b981] focus:border-transparent"
+                  className="flex-1 min-w-0 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#10b981] focus:border-transparent"
                   placeholder="e.g., Professional coaching and skill development"
                 />
                 <button
                   type="button"
                   onClick={addCustomBenefit}
-                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2 min-h-[44px]"
+                  className="flex-shrink-0 whitespace-nowrap px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2 min-h-[44px]"
                 >
                   <Plus className="w-4 h-4" />
                   Add Custom Benefit
