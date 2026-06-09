@@ -18,6 +18,7 @@ import {
   EyeOff
 } from 'lucide-react'
 import { useNavigate, Link } from 'react-router-dom'
+import Footer from '@/components/Footer'
 import { useAuthStore } from '@/lib/auth'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
@@ -1061,6 +1062,9 @@ export default function SettingsPage() {
 
         </div>
       </main>
+
+      {/* Footer with legal links + official HOCKIA social channels. */}
+      <Footer />
 
       {/* Delete Account Modal */}
       <DeleteAccountModal
