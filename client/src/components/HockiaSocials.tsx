@@ -13,7 +13,7 @@ const HOCKIA_SOCIALS = [
   },
   {
     label: 'LinkedIn',
-    href: 'https://www.linkedin.com/search/results/all/?keywords=HOCKIA&origin=ENTITY_SEARCH_HOME_HISTORY&heroEntityKey=urn%3Ali%3Aorganization%3A121913912&position=0',
+    href: 'https://www.linkedin.com/company/hockia/',
     Icon: Linkedin,
   },
   {
