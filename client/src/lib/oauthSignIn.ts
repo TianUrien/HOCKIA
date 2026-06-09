@@ -67,6 +67,13 @@ export async function startOAuthSignIn(provider: OAuthProvider): Promise<void> {
     })
     if (error) throw error
   } catch (err) {
+    // OAuthCancelled is an EXPECTED, benign event — it fires when the user
+    // starts a fresh sign-in before an in-flight one finishes, so the older
+    // attempt is deliberately superseded (see nativeOAuth cancelInFlight).
+    // The newer attempt proceeds normally; don't pollute Sentry with it.
+    if (err instanceof Error && err.name === 'OAuthCancelled') {
+      throw err
+    }
     reportAuthFlowError('oauth_start', err, { provider, platform })
     throw err
   }
