@@ -442,7 +442,7 @@ export default function MemberTile(props: MemberTileProps) {
           taps inside the row. Hidden for anon viewers + own-profile. */}
       {showQuickActions && (
         <div
-          className="px-3 py-2 border-t border-gray-100 bg-gray-50/40"
+          className="mt-auto px-3 py-2 border-t border-gray-100 bg-gray-50/40"
           onClick={(e) => e.stopPropagation()}
         >
           <QuickActionsRow
