@@ -104,7 +104,7 @@ export default function MoreActionsMenu({
       {overflowOpen && (
         <div
           role="menu"
-          className="absolute right-0 top-full mt-1 z-30 w-52 rounded-xl border border-gray-200 bg-white shadow-xl py-1"
+          className="absolute top-full mt-1 z-30 w-52 rounded-xl border border-gray-200 bg-white shadow-xl py-1 -right-2 origin-top-right max-w-[calc(100vw-1rem)]"
         >
           <button
             type="button"

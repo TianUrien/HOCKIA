@@ -208,16 +208,18 @@ export default function MobileBottomNav() {
             {/* Floating HOCKIA AI button — solid purple gradient with
                 white icon. Matches the DiscoverPage's own Hockia AI
                 header chip + empty-state badge styling so the surface
-                stays visually consistent end-to-end. Stronger shadow
-                + ring keeps it readable against the white nav bar. */}
+                stays visually consistent end-to-end. Positioned fixed
+                (not absolute) so it's centred on the viewport and never
+                overlaps card content. Sits 72px above the bottom nav
+                (56px nav + 16px gap, adjusting for safe-area). */}
             <button
               type="button"
               onClick={() => handleNavigate('/discover')}
               aria-label="Open Hockia AI"
               aria-hidden={fabHidden || undefined}
               tabIndex={fabHidden ? -1 : 0}
-              className={`absolute bottom-full left-1/2 mb-4
-                         w-12 h-12 rounded-full
+              className={`fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] left-1/2
+                         w-12 h-12 rounded-full z-50
                          bg-gradient-to-br from-[#8026FA] to-[#924CEC]
                          flex items-center justify-center
                          shadow-lg shadow-[#8026FA]/40 ring-2 ring-white

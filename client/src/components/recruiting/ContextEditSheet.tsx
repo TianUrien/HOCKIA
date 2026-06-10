@@ -267,8 +267,11 @@ export default function ContextEditSheet({ isOpen, onClose }: ContextEditSheetPr
             >
               <button
                 type="button"
+                role="radio"
                 onClick={handleClearActive}
                 disabled={busy || !active}
+                aria-label="No context: Fit chips and featured players use your profile"
+                aria-checked={!active ? 'true' : 'false'}
                 className="flex-1 flex items-center gap-3 text-left disabled:opacity-100"
               >
                 <span
@@ -343,8 +346,11 @@ export default function ContextEditSheet({ isOpen, onClose }: ContextEditSheetPr
                     >
                       <button
                         type="button"
+                        role="radio"
                         onClick={() => handlePickOpportunity(opp)}
                         disabled={busy}
+                        aria-label={`Recruiting context: ${opp.title}${opp.location_city ? ` — ${opp.location_city}` : ''}${opp.target ? ` — ${opp.target}` : ''}`}
+                        aria-checked={isActive || undefined}
                         className="flex-1 min-w-0 flex items-center gap-3 text-left disabled:opacity-50"
                       >
                         <span
@@ -399,8 +405,11 @@ export default function ContextEditSheet({ isOpen, onClose }: ContextEditSheetPr
                 >
                   <button
                     type="button"
+                    role="radio"
                     onClick={() => handleActivate(row)}
                     disabled={busy}
+                    aria-label={`Recruiting context: ${row.label || row.target_category}${row.region ? ` — ${row.region}` : ''}`}
+                    aria-checked={isActive || undefined}
                     className="flex-1 flex items-center gap-3 text-left disabled:opacity-50"
                   >
                     <span
