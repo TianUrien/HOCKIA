@@ -16,7 +16,7 @@ import { MemberTileSkeleton } from '@/components/Skeleton'
 import { MemberPreviewModal } from './MemberPreviewModal'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
-import { computeClubFit } from '@/lib/clubFit'
+import { computeClubFit, type ClubFitState } from '@/lib/clubFit'
 import { computeCoachFit } from '@/lib/coachFit'
 import { deriveTargetCategory } from '@/lib/recruitingContext'
 import { useActiveRecruitingTarget, useActiveRecruitingTargetRole, useActiveRecruitingTargetPosition, useActiveRecruitingEuRequired, useActiveRecruitingTargetSpecialists } from '@/hooks/useRecruitingContext'
@@ -677,6 +677,69 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     return result
   }, [allMembers, filters, sort, currentUserProfile, applyContextFit, contextTarget, contextTargetRole, contextTargetPosition, contextTargetSpecialists, euFilterActive, euCountryIds])
 
+  // Recruiter Match is "active" only while an active scope ranks PLAYERS by
+  // fit — a coach scope ranks coaches, so the player match bar stays off.
+  const playerMatchActive =
+    applyContextFit && !!contextTarget && contextTargetRole !== 'coach'
+
+  // Real "Top X%" percentile per player, over the scoped set. Mirrors the
+  // ranking math above so each tile's percentile matches its own Club Fit
+  // score. Small-N guard: below MIN_RANKABLE a percentile is meaningless
+  // ("Top 50%" of 2 people), so we pass null and the bar shows %+label only.
+  const matchById = useMemo(() => {
+    const map = new Map<string, { topPercent: number | null; score: number; state: ClubFitState }>()
+    if (!playerMatchActive || !currentUserProfile) return map
+    const viewerCtx = {
+      role: currentUserProfile.role,
+      womens_league_division: (currentUserProfile as { womens_league_division?: string | null }).womens_league_division ?? null,
+      mens_league_division: (currentUserProfile as { mens_league_division?: string | null }).mens_league_division ?? null,
+      current_world_club_id: currentUserProfile.current_world_club_id ?? null,
+    }
+    const fitOptions = {
+      overrideTarget: contextTarget,
+      targetRole: contextTargetRole,
+      targetPosition: contextTargetPosition,
+      targetSpecialists: contextTargetSpecialists,
+    }
+    const scored = filteredMembers
+      .filter((m) => m.role === 'player')
+      .map((m) => {
+        const r = computeClubFit(viewerCtx, {
+          id: m.id,
+          role: m.role,
+          playing_category: m.playing_category ?? null,
+          current_world_club_id: m.current_world_club_id ?? null,
+          open_to_play: m.open_to_play ?? null,
+          open_to_coach: m.open_to_coach ?? null,
+          open_to_opportunities: m.open_to_opportunities ?? null,
+          last_active_at: m.last_active_at ?? null,
+          position: m.position ?? null,
+          secondary_position: m.secondary_position ?? null,
+          specialist_skills: m.specialist_skills ?? null,
+        }, fitOptions)
+        return { id: m.id, score: r.score, state: r.state, applicable: r.isApplicable }
+      })
+      .filter((s) => s.applicable)
+    const N = scored.length
+    const MIN_RANKABLE = 6
+    // Rank desc; ties share the better rank (count-strictly-greater + 1).
+    const ranked = [...scored].sort((a, b) => b.score - a.score)
+    let rankPos = 0
+    let prevScore = Number.POSITIVE_INFINITY
+    ranked.forEach((s, i) => {
+      if (s.score < prevScore) {
+        rankPos = i + 1
+        prevScore = s.score
+      }
+      map.set(s.id, {
+        topPercent: N >= MIN_RANKABLE ? Math.max(1, Math.ceil((rankPos / N) * 100)) : null,
+        score: s.score,
+        state: s.state,
+      })
+    })
+    return map
+  }, [playerMatchActive, currentUserProfile, filteredMembers, contextTarget, contextTargetRole, contextTargetPosition, contextTargetSpecialists])
+
   // Emit filtered count upward whenever it changes. Combined with the
   // total-count effect this lets the parent choose: total when not
   // narrowing, filtered when narrowing.
@@ -867,6 +930,10 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
                 umpireLevel={member.umpire_level ?? null}
                 federation={member.federation ?? null}
                 profileCompletenessPct={member.profile_completeness_pct ?? null}
+                recruiterMatchActive={playerMatchActive}
+                matchScore={matchById.get(member.id)?.score ?? null}
+                matchState={matchById.get(member.id)?.state ?? null}
+                matchTopPercent={matchById.get(member.id)?.topPercent ?? null}
                 onPreview={() => setPreviewMember(member)}
               />
             ))}
