@@ -18,8 +18,12 @@ interface DualNationalityDisplayProps {
    *     just two flags + EU pill, since two long nationality names on a
    *     ~150px tile width truncate to "Aus, Engli EU" which reads worse
    *     than "🇦🇺🇬🇧 EU".
+   *   - 'code' — ultra-compact flag + ISO3 code for the premium recruiter
+   *     card ("🇳🇱 NLD · 🇦🇷 ARG · EU"). One trailing EU chip means the
+   *     PERSON has EU eligibility (recruiter-relevant), not a per-country
+   *     label.
    */
-  mode?: 'full' | 'compact' | 'card' | 'tile'
+  mode?: 'full' | 'compact' | 'card' | 'tile' | 'code'
   /** Additional CSS classes */
   className?: string
 }
@@ -70,6 +74,17 @@ export default function DualNationalityDisplay({
   if (mode === 'tile') {
     return (
       <TileDisplay
+        primaryCountry={primaryCountry}
+        secondaryCountry={secondaryCountry}
+        isEuCountry={isEuCountry}
+        className={className}
+      />
+    )
+  }
+
+  if (mode === 'code') {
+    return (
+      <CodeDisplay
         primaryCountry={primaryCountry}
         secondaryCountry={secondaryCountry}
         isEuCountry={isEuCountry}
@@ -177,6 +192,37 @@ function TileDisplay({ primaryCountry, secondaryCountry, isEuCountry, className 
         )
       })}
     </div>
+  )
+}
+
+/**
+ * Ultra-compact flag + ISO3 code, for the premium recruiter card.
+ * "🇳🇱 NLD · 🇦🇷 ARG · EU" — a single trailing EU chip indicates the
+ * person holds EU eligibility (the recruiter-relevant fact), so it's
+ * intentionally NOT attached per-country here.
+ */
+function CodeDisplay({ primaryCountry, secondaryCountry, isEuCountry, className }: CompactDisplayProps) {
+  const nationalities: Country[] = []
+  if (primaryCountry) nationalities.push(primaryCountry)
+  if (secondaryCountry) nationalities.push(secondaryCountry)
+  if (nationalities.length === 0) return null
+  const anyEu = nationalities.some((c) => isEuCountry(c.id))
+
+  return (
+    <span className={`inline-flex flex-wrap items-center gap-x-1 gap-y-0.5 text-xs text-gray-700 ${className}`}>
+      {nationalities.map((country, i) => (
+        <span key={country.id} className="inline-flex items-center gap-1 whitespace-nowrap">
+          <Flag code={country.code} countryName={country.name} fallbackEmoji={country.flag_emoji} size="sm" />
+          <span className="font-medium">{country.code_alpha3}</span>
+          {(i < nationalities.length - 1 || anyEu) && <span className="mx-0.5 text-gray-300">·</span>}
+        </span>
+      ))}
+      {anyEu && (
+        <span className="inline-flex items-center rounded bg-blue-50 px-1 py-px text-[10px] font-semibold text-blue-700">
+          EU
+        </span>
+      )}
+    </span>
   )
 }
 

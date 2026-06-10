@@ -17,7 +17,6 @@ import { useIsProfileSaved } from '@/hooks/useSavedProfiles'
 import { useFriendship } from '@/hooks/useFriendship'
 import { useToastStore } from '@/lib/toast'
 import { trackDbEvent } from '@/lib/trackDbEvent'
-import MoreActionsMenu from './MoreActionsMenu'
 
 interface RecruiterCardActionsProps {
   playerId: string
@@ -62,9 +61,6 @@ export default function RecruiterCardActions({ playerId, playerName, onMessage }
         ariaLabel={`Message ${playerName}`}
       />
       <AddFriendItem playerId={playerId} playerName={playerName} />
-      <div className="flex items-center justify-center px-1.5">
-        <MoreActionsMenu playerId={playerId} playerName={playerName} compact />
-      </div>
     </div>
   )
 }
@@ -122,18 +118,17 @@ function ActionItem({ label, icon: Icon, ariaLabel, onClick, active = false, dis
       aria-label={ariaLabel}
       title={ariaLabel}
       className={[
-        'flex flex-1 items-center justify-center gap-1.5 py-3 text-xs font-medium transition-colors',
+        'flex flex-1 flex-col items-center justify-center gap-1 py-2.5 text-[10px] font-medium transition-colors',
+        'sm:flex-row sm:gap-1.5 sm:text-xs',
         'focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#8026FA]/40',
         active ? 'text-[#8026FA]' : 'text-gray-600 hover:text-[#8026FA] hover:bg-[#8026FA]/5',
         disabled && !active ? 'opacity-50 cursor-default hover:bg-transparent hover:text-gray-600' : '',
       ].join(' ')}
     >
+      {/* Icon over label on the narrow 2-up mobile cards (keeps the full
+          word readable), icon beside label on wider desktop cards. */}
       <Icon className={`h-4 w-4 flex-shrink-0 ${iconSpin ? 'animate-spin' : ''}`} />
-      {/* Two-up mobile cards are too narrow for four text labels — show
-          icon-only there (icons are standard: save/message/add-person),
-          full text from sm: up where 2-up cards are wide enough. Matches
-          the reference (icon footer on mobile, text footer on desktop). */}
-      <span className="hidden sm:inline">{label}</span>
+      <span>{label}</span>
     </button>
   )
 }
