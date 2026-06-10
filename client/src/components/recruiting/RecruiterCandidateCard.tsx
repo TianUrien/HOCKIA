@@ -216,14 +216,16 @@ export default function RecruiterCandidateCard({ member, matchScore, matchState,
         </div>
 
         {/* ── PROFILE ── always rendered so the row never collapses and
-            knocks the cards out of alignment. ── */}
-        <div className="flex items-center gap-2 border-t border-gray-100 px-3.5 py-3">
-          <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-[#8026FA]/10 text-[#8026FA]">
-            <FileText className="h-4 w-4" />
+            knocks the cards out of alignment. Deliberately understated —
+            smaller icon + lighter type so it SUPPORTS the match section
+            rather than competing with it. ── */}
+        <div className="flex items-center gap-2 border-t border-gray-100 px-3.5 py-2.5">
+          <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md bg-[#8026FA]/10 text-[#8026FA]">
+            <FileText className="h-3.5 w-3.5" />
           </span>
           <div className="min-w-0">
-            <div className="text-sm font-semibold leading-tight text-[#8026FA] tabular-nums">{completeness}% complete</div>
-            <div className="text-[11px] leading-tight text-gray-500">{profileStatus(completeness)}</div>
+            <div className="text-[13px] font-medium leading-tight text-[#8026FA] tabular-nums">{completeness}% complete</div>
+            <div className="text-[10px] leading-tight text-gray-500">{profileStatus(completeness)}</div>
           </div>
         </div>
 
