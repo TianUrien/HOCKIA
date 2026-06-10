@@ -7,21 +7,23 @@
  *
  *   WHO      avatar (+ open dot) · NEW · name · role
  *   IDENTITY compact nationality (flag + ISO3 + EU) · club (own line)
- *   MATCH    RECRUITER MATCH — label + % + slider
+ *   VERDICT  RECRUITER VERDICT — tier headline + lead reason (the SAME
+ *            computeRecruiterVerdict the full profile leads with, so the grid
+ *            never says "Strong match" while the profile says "Longshot")
  *   PROFILE  NN% complete · short status
  *   ACT      Save · Message · Add friend
  *
- * Everything else (league, open-to-play, interest, evidence) lives on the
- * full profile — surfaced when the recruiter opens it, kept off the scan
- * card so it stays calm. Score + state arrive precomputed from the list.
+ * Everything else (league, open-to-play, full highlights/caveats, evidence
+ * breakdown) lives on the Preview + full profile. The verdict arrives
+ * precomputed from the list (pure, no extra fetch).
  */
-import { Shield, ShieldCheck, FileText, Sparkles } from 'lucide-react'
+import { Shield, ShieldCheck, FileText, CheckCircle2, Eye, CircleDashed, MinusCircle, Check, AlertTriangle } from 'lucide-react'
 import { RoleBadge, VerifiedBadge, DualNationalityDisplay } from '@/components'
 import { getImageUrl } from '@/lib/imageUrl'
 import RolePlaceholder from '@/components/RolePlaceholder'
 import RecruiterCardActions from './RecruiterCardActions'
 import { computeEvidence, evidenceLevelLabel } from '@/lib/evidence'
-import type { ClubFitState } from '@/lib/clubFit'
+import type { RecruiterVerdict, VerdictTier } from '@/lib/recruiterVerdict'
 
 /** Fields the card reads — a structural subset of the Community member row,
  *  so PeopleListView can pass `member` straight through. */
@@ -52,23 +54,21 @@ export interface RecruiterCardMember {
 
 interface RecruiterCandidateCardProps {
   member: RecruiterCardMember
-  /** Real Club Fit score (0..1) + state, precomputed by the list. */
-  matchScore: number
-  matchState: ClubFitState
+  /** The full explanation-led verdict (tier + highlights/caveats), precomputed
+   *  by the list — the SAME synthesis the full profile leads with. */
+  verdict: RecruiterVerdict
   onPreview: () => void
 }
 
 const NEW_WINDOW_MS = 14 * 24 * 60 * 60 * 1000
 
-/** Match tier for display — adds an "Excellent" band above Strong, and a
- *  blue "Good" band, matching the reference. Purely presentational; the
- *  ranking thresholds in clubFit.ts are unchanged. */
-function matchTier(score: number): { label: string; text: string; fill: string; thumb: string } {
-  const pct = score * 100
-  if (pct >= 80) return { label: 'Excellent match', text: 'text-[#6d28d9]', fill: 'bg-gradient-to-r from-[#8026FA] to-[#6d28d9]', thumb: 'bg-[#6d28d9]' }
-  if (pct >= 66) return { label: 'Strong match', text: 'text-[#8026FA]', fill: 'bg-gradient-to-r from-[#8026FA] to-[#924CEC]', thumb: 'bg-[#8026FA]' }
-  if (pct >= 40) return { label: 'Good match', text: 'text-blue-600', fill: 'bg-gradient-to-r from-blue-500 to-blue-600', thumb: 'bg-blue-600' }
-  return { label: 'Limited match', text: 'text-gray-500', fill: 'bg-gray-400', thumb: 'bg-gray-400' }
+/** Compact verdict styling — mirrors RecruiterVerdictCard (the profile lead)
+ *  so the two surfaces read identically. Verb-led tiers, never a "%". */
+const VERDICT_STYLE: Record<VerdictTier, { icon: typeof CheckCircle2; iconClass: string; headlineClass: string }> = {
+  pursue: { icon: CheckCircle2, iconClass: 'text-[#8026FA]', headlineClass: 'text-[#5b16b8]' },
+  consider: { icon: Eye, iconClass: 'text-gray-700', headlineClass: 'text-gray-900' },
+  longshot: { icon: CircleDashed, iconClass: 'text-gray-400', headlineClass: 'text-gray-600' },
+  pass: { icon: MinusCircle, iconClass: 'text-gray-400', headlineClass: 'text-gray-500' },
 }
 
 /** One short, recruiter-facing word on profile depth — no long sentence. */
@@ -78,11 +78,11 @@ function profileStatus(pct: number): string {
   return 'Needs more info'
 }
 
-export default function RecruiterCandidateCard({ member, matchScore, matchState, onPreview }: RecruiterCandidateCardProps) {
-  void matchState // tier is derived from the score; kept for parity with the list
-
-  const tier = matchTier(matchScore)
-  const pct = Math.round(Math.max(0, Math.min(1, matchScore)) * 100)
+export default function RecruiterCandidateCard({ member, verdict, onPreview }: RecruiterCandidateCardProps) {
+  const vStyle = VERDICT_STYLE[verdict.tier]
+  const VerdictIcon = vStyle.icon
+  const leadHighlight = verdict.highlights[0] ?? null
+  const leadCaveat = verdict.caveats[0] ?? null
   const completeness = member.profile_completeness_pct ?? 0
   // Availability dot — role-aware: players use open_to_play, coaches
   // open_to_coach; open_to_opportunities lights it for either.
@@ -123,7 +123,7 @@ export default function RecruiterCandidateCard({ member, matchScore, matchState,
         type="button"
         onClick={onPreview}
         className="group block w-full flex-1 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#8026FA]"
-        aria-label={`${member.full_name?.trim()} — ${tier.label}, ${pct}% recruiter match. Tap to open profile.`}
+        aria-label={`${member.full_name?.trim()} — ${verdict.headline} (recruiter verdict). Tap to preview.`}
       >
         {/* ── WHO + IDENTITY ── */}
         <div className="p-3.5">
@@ -196,38 +196,44 @@ export default function RecruiterCandidateCard({ member, matchScore, matchState,
           </div>
         </div>
 
-        {/* ── MATCH ── */}
+        {/* ── VERDICT ── the explanation-led lead (same synthesis the full
+            profile shows). Tier headline + one reason; the full
+            highlights/caveats live in the Preview. Reason rows are reserved
+            (h-4, truncate) so every card stays the same height + aligned. ── */}
         <div className="border-t border-gray-100 px-3.5 py-3">
-          <div
-            className="text-[10px] font-semibold uppercase tracking-wide text-gray-400"
-            title={
-              member.role === 'coach'
-                ? 'How well this coach fits your active recruiting scope — coaching role and team category.'
-                : 'How well this player fits your active recruiting scope — league level, position, category and availability.'
-            }
-          >
-            Recruiter match
-          </div>
-          <div className="mt-1 flex items-center justify-between gap-1">
-            <span className={`inline-flex min-w-0 items-center gap-1 whitespace-nowrap text-[13px] font-semibold ${tier.text}`}>
-              <Sparkles className="h-3.5 w-3.5 flex-shrink-0" aria-hidden="true" />
-              <span className="truncate">{tier.label}</span>
+          <div className="flex items-center justify-between gap-1">
+            <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+              Recruiter verdict
             </span>
-            <span className={`flex-shrink-0 text-[13px] font-bold tabular-nums ${tier.text}`}>{pct}%</span>
+            <span className="text-[9px] font-medium uppercase tracking-wide text-gray-300">
+              {verdict.scoped ? 'for your scope' : 'general fit'}
+            </span>
           </div>
-          {/* Slim 4px track + 12px handle — refined, still clearly readable
-              on a 2-up mobile card. */}
-          <div className="relative mt-2 h-1 rounded-full bg-gray-200" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label={`Recruiter match ${pct}%`}>
-            <div className={`h-1 rounded-full ${tier.fill}`} style={{ width: `${pct}%` }} />
-            <span
-              className={`absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full ring-2 ring-white ${tier.thumb}`}
-              style={{ left: `clamp(6px, ${pct}%, calc(100% - 6px))` }}
-              aria-hidden="true"
-            />
+          <div className="mt-1 flex items-center gap-1.5">
+            <VerdictIcon className={`h-4 w-4 flex-shrink-0 ${vStyle.iconClass}`} aria-hidden="true" />
+            <span className={`truncate text-[14px] font-bold ${vStyle.headlineClass}`}>{verdict.headline}</span>
           </div>
-          <div className="mt-1 flex justify-between text-[9px] font-medium text-gray-400">
-            <span>0%</span>
-            <span>100%</span>
+          {/* Lead highlight (✓) + lead caveat (⚠) — each a reserved single line
+              so the section height is constant whether or not reasons exist. */}
+          <div className="mt-1.5 flex h-4 items-center gap-1.5 text-[11px] leading-none">
+            {leadHighlight ? (
+              <>
+                <Check className="h-3 w-3 flex-shrink-0 text-[#8026FA]" aria-hidden="true" />
+                <span className="truncate text-gray-700">{leadHighlight}</span>
+              </>
+            ) : (
+              <span className="text-gray-300">&nbsp;</span>
+            )}
+          </div>
+          <div className="mt-1 flex h-4 items-center gap-1.5 text-[11px] leading-none">
+            {leadCaveat ? (
+              <>
+                <AlertTriangle className="h-3 w-3 flex-shrink-0 text-amber-500" aria-hidden="true" />
+                <span className="truncate text-gray-500">{leadCaveat}</span>
+              </>
+            ) : (
+              <span className="text-gray-300">&nbsp;</span>
+            )}
           </div>
         </div>
 

@@ -28,7 +28,7 @@
 
 import { useEffect, useRef, useCallback, useState } from 'react'
 import {
-  X, ChevronRight, MapPin, Building2, Shield, Check, ShieldCheck, Sparkles, AlertCircle, Target,
+  X, ChevronRight, MapPin, Building2, Shield, Check, ShieldCheck, Target,
 } from 'lucide-react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '@/lib/auth'
@@ -42,9 +42,13 @@ import { RoleBadge, VerifiedBadge, DualNationalityDisplay, AvailabilityPill } fr
 import { computeEvidence, evidenceChecklist, evidenceLevelLabel } from '@/lib/evidence'
 import { useClubFit } from '@/hooks/useClubFit'
 import { useCoachFit } from '@/hooks/useCoachFit'
+import { useEvidence } from '@/hooks/useEvidence'
+import { useInterest } from '@/hooks/useInterest'
+import { computeRecruiterVerdict } from '@/lib/recruiterVerdict'
+import RecruiterVerdictCard from './RecruiterVerdictCard'
 import { getSpecializationLabel } from '@/lib/coachSpecializations'
 import { isOpenToAny } from '@/lib/hockeyCategories'
-import { useRecruitingContext } from '@/hooks/useRecruitingContext'
+import { useRecruitingContext, useHasActiveRecruitingScope, useActiveRecruitingTargetProblem } from '@/hooks/useRecruitingContext'
 import { useWorldClubLogo, getClubLevelBand } from '@/hooks/useWorldClubLogo'
 import { categoryToBandTarget } from '@/hooks/useInterest'
 import { trackDbEvent } from '@/lib/trackDbEvent'
@@ -53,23 +57,10 @@ import type { Profile } from '@/components/community/PeopleListView'
 
 interface CandidatePreviewSheetProps {
   member: Profile | null
-  /** Match score 0..1 (precomputed by the list — authoritative headline %, so
-   *  the preview's number always matches the card the recruiter tapped). */
-  matchScore?: number
   onClose: () => void
 }
 
 const ACTIVE_WINDOW_MS = 90 * 24 * 60 * 60 * 1000
-
-/** Display tier for the headline match — mirrors RecruiterCandidateCard so the
- *  card and the preview read identically. */
-function matchTier(score: number): { label: string; text: string; fill: string } {
-  const pct = score * 100
-  if (pct >= 80) return { label: 'Excellent match', text: 'text-[#6d28d9]', fill: 'bg-gradient-to-r from-[#8026FA] to-[#6d28d9]' }
-  if (pct >= 66) return { label: 'Strong match', text: 'text-[#8026FA]', fill: 'bg-gradient-to-r from-[#8026FA] to-[#924CEC]' }
-  if (pct >= 40) return { label: 'Good match', text: 'text-blue-600', fill: 'bg-gradient-to-r from-blue-500 to-blue-600' }
-  return { label: 'Limited match', text: 'text-gray-500', fill: 'bg-gray-400' }
-}
 
 /** Short, human summary of the active scope for the "evaluated for" line. */
 function contextSummary(active: { label: string | null; target_category: string | null; region: string | null } | null): string {
@@ -97,7 +88,7 @@ function strengthExplanation(
   return { tier: 'Limited profile', tone: 'text-gray-600', why: gap ? `Still missing ${gap}.` : 'Key details still missing.' }
 }
 
-export function CandidatePreviewSheet({ member, matchScore = 0, onClose }: CandidatePreviewSheetProps) {
+export function CandidatePreviewSheet({ member, onClose }: CandidatePreviewSheetProps) {
   const navigate = useNavigate()
   const location = useLocation()
   const { user } = useAuthStore()
@@ -119,6 +110,10 @@ export function CandidatePreviewSheet({ member, matchScore = 0, onClose }: Candi
           role: member.role,
           playing_category: member.playing_category ?? null,
           current_world_club_id: member.current_world_club_id ?? null,
+          // Resolve the proven band so competition_proximity matches the grid
+          // + profile (which both pass it) — else the preview verdict could
+          // diverge on the level dimension.
+          competition_level_band: getClubLevelBand(member.current_world_club_id ?? null, categoryToBandTarget(member.playing_category ?? null)),
           open_to_play: member.open_to_play ?? null,
           open_to_coach: member.open_to_coach ?? null,
           open_to_opportunities: member.open_to_opportunities ?? null,
@@ -140,6 +135,48 @@ export function CandidatePreviewSheet({ member, matchScore = 0, onClose }: Candi
       : null,
   )
   const fit = isCoach ? coachFit : clubFit
+
+  // Proven + Interested lenses + the recruitment-problem weighting, fused into
+  // the SAME explanation-led verdict the full profile (ScoutingCard) and the
+  // grid card lead with — so all three surfaces read one tier for one candidate.
+  const evidence = useEvidence(
+    member
+      ? {
+          role: member.role,
+          highlight_video_url: member.highlight_video_url ?? null,
+          full_game_video_count: member.full_game_video_count ?? null,
+          accepted_reference_count: member.accepted_reference_count ?? null,
+          is_verified: member.is_verified ?? null,
+          current_world_club_id: member.current_world_club_id ?? null,
+        }
+      : null,
+  )
+  const interest = useInterest(
+    member
+      ? {
+          role: member.role,
+          relocation_willingness: member.relocation_willingness ?? null,
+          relocation_countries_open: member.relocation_countries_open ?? null,
+          relocation_countries_excluded: member.relocation_countries_excluded ?? null,
+          available_from: member.available_from ?? null,
+          home_country_id: member.base_country_id ?? member.nationality_country_id ?? null,
+          current_world_club_id: member.current_world_club_id ?? null,
+          playing_category: member.playing_category ?? null,
+          level_target: member.level_target ?? null,
+          opportunity_preference: member.opportunity_preference ?? null,
+        }
+      : null,
+  )
+  const hasOpeningScope = useHasActiveRecruitingScope()
+  const scopeProblem = useActiveRecruitingTargetProblem()
+  const verdict = computeRecruiterVerdict({
+    fit,
+    evidence,
+    interest,
+    hasOpeningScope,
+    problem: scopeProblem,
+    candidateRole: member?.role ?? null,
+  })
 
   const clubLogo = useWorldClubLogo(member?.current_world_club_id ?? null)
 
@@ -211,13 +248,6 @@ export function CandidatePreviewSheet({ member, matchScore = 0, onClose }: Candi
 
   const heroImageUrl = member.avatar_url ? getImageUrl(member.avatar_url, 'avatar-lg') : null
   const completeness = member.profile_completeness_pct ?? 0
-  // Headline %: the list precomputes it and passes it in (so the preview
-  // matches the card the recruiter tapped). The carousel doesn't precompute a
-  // score, so fall back to this sheet's own useClubFit result — same scope,
-  // same math.
-  const effectiveScore = matchScore > 0 ? matchScore : fit.isApplicable ? fit.score : 0
-  const tier = matchTier(effectiveScore)
-  const pct = Math.round(Math.max(0, Math.min(1, effectiveScore)) * 100)
 
   // Role-appropriate sub-title under the role badge: players show their
   // position(s); coaches show their coaching specialization (never a player
@@ -278,8 +308,6 @@ export function CandidatePreviewSheet({ member, matchScore = 0, onClose }: Candi
 
   const strength = strengthExplanation(completeness, evRows)
   const scope = contextSummary(active)
-  const positives = fit.positives.slice(0, 3)
-  const caveats = fit.caveats.slice(0, 2)
 
   return (
     <>
@@ -379,43 +407,19 @@ export function CandidatePreviewSheet({ member, matchScore = 0, onClose }: Candi
           </div>
 
           <div className="space-y-3 p-4">
-            {/* ── RECRUITER MATCH + WHY ── (only when a scope actually
-                produces a fit — guards the rare no-context open). */}
-            {(fit.isApplicable || matchScore > 0) && (
-            <div className="rounded-xl border border-[#8026FA]/15 bg-[#8026FA]/[0.03] p-3.5">
-              {scope && (
-                <div className="mb-2 flex items-center gap-1.5 text-[11px] text-gray-500">
-                  <Target className="h-3 w-3 flex-shrink-0 text-[#8026FA]" />
-                  <span className="truncate">Evaluated for <span className="font-medium text-gray-700">{scope}</span></span>
-                </div>
-              )}
-              <div className="flex items-center justify-between gap-2">
-                <span className={`inline-flex items-center gap-1.5 text-sm font-semibold ${tier.text}`}>
-                  <Sparkles className="h-4 w-4 flex-shrink-0" />
-                  {tier.label}
-                </span>
-                <span className={`text-base font-bold tabular-nums ${tier.text}`}>{pct}%</span>
+            {/* ── RECRUITER VERDICT ── the SAME explanation-led synthesis the
+                grid card and the full profile lead with (tier + highlights +
+                caveats), so one candidate reads one verdict everywhere. */}
+            {verdict.isApplicable && (
+              <div>
+                {scope && (
+                  <div className="mb-1.5 flex items-center gap-1.5 text-[11px] text-gray-500">
+                    <Target className="h-3 w-3 flex-shrink-0 text-[#8026FA]" />
+                    <span className="truncate">Evaluated for <span className="font-medium text-gray-700">{scope}</span></span>
+                  </div>
+                )}
+                <RecruiterVerdictCard verdict={verdict} />
               </div>
-              <div className="relative mt-2 h-1.5 rounded-full bg-gray-200">
-                <div className={`h-1.5 rounded-full ${tier.fill}`} style={{ width: `${pct}%` }} />
-              </div>
-              {(positives.length > 0 || caveats.length > 0) && (
-                <ul className="mt-3 space-y-1.5">
-                  {positives.map((p) => (
-                    <li key={p} className="flex items-start gap-1.5 text-xs text-gray-700">
-                      <Check className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-emerald-600" />
-                      <span>{p}</span>
-                    </li>
-                  ))}
-                  {caveats.map((c) => (
-                    <li key={c} className="flex items-start gap-1.5 text-xs text-gray-500">
-                      <AlertCircle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-amber-500" />
-                      <span>{c}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
             )}
 
             {/* ── CURRENT HOCKEY CONTEXT ── */}
