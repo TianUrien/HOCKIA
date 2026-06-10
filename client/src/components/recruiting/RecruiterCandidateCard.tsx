@@ -195,7 +195,11 @@ export default function RecruiterCandidateCard({ member, matchScore, matchState,
         <div className="border-t border-gray-100 px-3.5 py-3">
           <div
             className="text-[10px] font-semibold uppercase tracking-wide text-gray-400"
-            title="How well this player fits your active recruiting scope — league level, position, category and availability."
+            title={
+              member.role === 'coach'
+                ? 'How well this coach fits your active recruiting scope — coaching role and team category.'
+                : 'How well this player fits your active recruiting scope — league level, position, category and availability.'
+            }
           >
             Recruiter match
           </div>

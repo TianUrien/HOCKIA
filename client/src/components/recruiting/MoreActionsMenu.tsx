@@ -104,7 +104,13 @@ export default function MoreActionsMenu({
       {overflowOpen && (
         <div
           role="menu"
-          className="absolute top-full mt-1 z-30 w-52 rounded-xl border border-gray-200 bg-white shadow-xl py-1 -right-2 origin-top-right max-w-[calc(100vw-1rem)]"
+          // Right-aligned (extends leftward) + width clamped to the viewport.
+          // right-0 keeps the menu's right edge on the wrapper's right edge so
+          // it never spills past the viewport's right side; the menu opens
+          // toward the left where there's room. (The ⋯ menu no longer renders
+          // on the dense Community grid — QuickActionsRow defaults showMoreMenu
+          // off — so this surfaces only on roomier profile action bars.)
+          className="absolute top-full mt-1 z-30 w-52 max-w-[calc(100vw-1rem)] rounded-xl border border-gray-200 bg-white shadow-xl py-1 right-0 origin-top-right"
         >
           <button
             type="button"

@@ -58,6 +58,12 @@ export function useScrollRestore(ready = true) {
     let attempts = 0
     const maxAttempts = 20 // ~1 second with 50ms backoff
     let delayMs = 50
+    // Track the in-flight rAF / timeout so the cleanup can cancel them. Without
+    // this, a POP into a slow/paginating list leaves a chain of timers running
+    // (up to ~1s); navigating away again before it settles would let an
+    // orphaned timer fire window.scrollTo on the NEW view — hijacking its
+    // scroll position. Cancelling on unmount / key change prevents that.
+    let timerId: ReturnType<typeof setTimeout> | undefined
 
     const attemptScroll = () => {
       const canScroll = document.documentElement.scrollHeight >= savedY + window.innerHeight * 0.5
@@ -84,10 +90,15 @@ export function useScrollRestore(ready = true) {
       // Exponential backoff: 50ms, 100ms, 150ms... prevents thrashing
       // on rapidly-growing DOM while giving it enough time to render.
       delayMs = Math.min(delayMs + 50, 200)
-      setTimeout(attemptScroll, delayMs)
+      timerId = setTimeout(attemptScroll, delayMs)
     }
 
     // Use rAF to ensure DOM has processed current renders before checking height
-    requestAnimationFrame(() => attemptScroll())
+    const rafId = requestAnimationFrame(() => attemptScroll())
+
+    return () => {
+      cancelAnimationFrame(rafId)
+      if (timerId !== undefined) clearTimeout(timerId)
+    }
   }, [navigationType, location.key, ready])
 }

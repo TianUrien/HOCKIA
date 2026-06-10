@@ -289,12 +289,6 @@ export default function CommunityPage() {
   // "has initialised" flag, is idempotent under StrictMode AND
   // correctly detects real chip transitions including
   // undefined → 'player'.
-  //
-  // CRITICAL FIX (QA bug): when scopeReshaping is true and the user
-  // clicks a role tab that differs from the scopedRole, set
-  // showEveryone = true to escape the scope and show that role. This
-  // allows recruiters to browse other roles without clearing their
-  // active context (Fit ranking still applies, just to the new role).
   const hasInitializedRoleRef = useRef(false)
   const prevRoleFilterRef = useRef<typeof memberRoleFilter>(memberRoleFilter)
   useEffect(() => {
@@ -322,16 +316,27 @@ export default function CommunityPage() {
     updateFilter('nationality', '')
     updateFilter('brandCategory', null)
     updateFilter('role', memberRoleFilter ?? 'all')
+  }, [memberRoleFilter, updateFilter, setSearchQuery])
 
-    // When scopeReshaping is active and the user clicks a role tab
-    // that differs from the scoped role, escape the scope so the grid
-    // reflects the clicked tab. This unblocks role filtering while
-    // scoped — the recruiter can browse coaches/clubs without clearing
-    // their player-recruitment context.
-    if (scopeReshaping && chipRoleFilter && chipRoleFilter !== scopedRole) {
+  // Escape the scope's hard role filter when the user explicitly taps a role
+  // tab that differs from the sought role — and RE-focus when they tap back to
+  // it. This MUST be its own effect, NOT folded into the role-sync effect
+  // above: while scoped, `memberRoleFilter` is pinned to `scopedRole`, so
+  // tapping a different chip changes `chipRoleFilter` but NOT
+  // `memberRoleFilter` — the role-sync effect's "did the filter change?" guard
+  // early-returns and would never flip showEveryone (the original QA bug). We
+  // watch chipRoleFilter ↔ scopedRole directly. The 'all' tab (chipRoleFilter
+  // undefined) is intentionally left alone so a freshly-scoped recruiter
+  // landing on /community still gets the focused "Top … for your search" view
+  // instead of auto-escaping to everyone.
+  useEffect(() => {
+    if (scopedRole === null) return
+    if (chipRoleFilter && chipRoleFilter !== scopedRole && !showEveryone) {
       setShowEveryone(true)
+    } else if (chipRoleFilter === scopedRole && showEveryone) {
+      setShowEveryone(false)
     }
-  }, [memberRoleFilter, updateFilter, setSearchQuery, scopeReshaping, chipRoleFilter, scopedRole])
+  }, [scopedRole, chipRoleFilter, showEveryone])
 
   const handleRefresh = useCallback(async () => {
     setRefreshKey(k => k + 1)
