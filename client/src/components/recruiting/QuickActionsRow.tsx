@@ -21,10 +21,7 @@
  */
 
 import { useNavigate, useLocation } from 'react-router-dom'
-import {
-  Bookmark, BookmarkCheck, MessageSquare, Send, BarChart3,
-} from 'lucide-react'
-import { useAuthStore } from '@/lib/auth'
+import { Bookmark, BookmarkCheck, MessageSquare } from 'lucide-react'
 import { useIsProfileSaved } from '@/hooks/useSavedProfiles'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import MoreActionsMenu from './MoreActionsMenu'
@@ -53,13 +50,10 @@ export default function QuickActionsRow({
   onMessage,
   className = '',
 }: QuickActionsRowProps) {
-  const { profile: viewer } = useAuthStore()
   const navigate = useNavigate()
   const location = useLocation()
   const savedState = useIsProfileSaved(playerId)
 
-  const viewerRole = viewer?.role
-  const isRecruiter = viewerRole === 'club' || viewerRole === 'coach'
   if (savedState.isOwnProfile) return null
   if (!savedState.isAuthenticated) {
     // Anonymous viewer — render nothing. Auth-gated CTAs would just
@@ -106,32 +100,9 @@ export default function QuickActionsRow({
         text="Message"
       />
 
-      {/* Invite + Compare are recruiter-only placeholders (Spec G.5 /
-          Phase 2). Hidden for non-recruiters; disabled with tooltips
-          for recruiters until the underlying flows ship. */}
-      {isRecruiter && (
-        <ActionButton
-          compact={compact}
-          disabled
-          onClick={() => {}}
-          label={`Invite ${playerName} to apply (coming soon)`}
-          title="Coming soon — invite players directly to your open opportunities"
-          icon={Send}
-          text="Invite"
-        />
-      )}
-
-      {isRecruiter && (
-        <ActionButton
-          compact={compact}
-          disabled
-          onClick={() => {}}
-          label="Compare (Phase 2)"
-          title="Phase 2"
-          icon={BarChart3}
-          text="Compare"
-        />
-      )}
+      {/* Invite + Compare were non-functional "coming soon" placeholders —
+          removed from the card to cut confusion. They'll reappear on the
+          profile detail page when those flows actually ship. */}
 
       <MoreActionsMenu
         playerId={playerId}

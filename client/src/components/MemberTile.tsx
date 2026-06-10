@@ -347,18 +347,11 @@ export default function MemberTile(props: MemberTileProps) {
                 title="Open to opportunities"
               />
             )}
-            {/* Profile completeness badge — sits at the bottom-right of
-                the avatar matching the reference image. Only shown when
-                a real numeric % is provided (not 0 from a default). */}
-            {typeof props.profileCompletenessPct === 'number' && props.profileCompletenessPct > 0 && (
-              <span
-                className="absolute -bottom-0.5 right-0 inline-flex items-center rounded-full bg-[#8026FA] px-1.5 py-0.5 text-[10px] font-bold text-white ring-2 ring-white tabular-nums"
-                aria-label={`Profile ${props.profileCompletenessPct}% complete`}
-                title={`Profile ${props.profileCompletenessPct}% complete`}
-              >
-                {props.profileCompletenessPct}%
-              </span>
-            )}
+            {/* The bare completeness % badge that used to sit on the avatar
+                was removed — an unlabeled number next to the photo read
+                ambiguously (match? rating?). Completeness now lives only in
+                the clearly-labeled "Profile complete" section of the
+                recruiter card. */}
           </div>
         </div>
 

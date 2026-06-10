@@ -21,10 +21,19 @@ describe('RecruiterMatchBar', () => {
     render(<RecruiterMatchBar score={0.68} state="green" topPercent={15} completenessPct={72} />)
     expect(screen.getByText(/Strong match/)).toBeInTheDocument()
     expect(screen.getByText(/· 68%/)).toBeInTheDocument()
-    expect(screen.getByText('Top 15%')).toBeInTheDocument()
+    // top-quartile candidates get the qualitative flag (no bare number)
+    expect(screen.getByText('Among best matches')).toBeInTheDocument()
+    expect(screen.queryByText(/Top \d+%/)).not.toBeInTheDocument()
     // recruiter-facing completeness copy (never "your visibility")
     expect(screen.getByText('Good amount of information')).toBeInTheDocument()
     expect(screen.getByText('Profile looks solid.')).toBeInTheDocument()
+  })
+
+  it('flags "Among best matches" only for the top quartile', () => {
+    const { rerender } = render(<RecruiterMatchBar score={0.5} state="yellow" topPercent={25} />)
+    expect(screen.getByText('Among best matches')).toBeInTheDocument()
+    rerender(<RecruiterMatchBar score={0.5} state="yellow" topPercent={40} />)
+    expect(screen.queryByText('Among best matches')).not.toBeInTheDocument()
   })
 
   it('maps states to distinct match labels', () => {
@@ -34,9 +43,9 @@ describe('RecruiterMatchBar', () => {
     expect(screen.getByText(/Limited match/)).toBeInTheDocument()
   })
 
-  it('hides "Top X%" when no percentile is supplied (small-N guard upstream)', () => {
+  it('hides the best-match flag when no percentile is supplied (small-N guard upstream)', () => {
     render(<RecruiterMatchBar score={0.8} state="green" topPercent={null} />)
-    expect(screen.queryByText(/^Top /)).not.toBeInTheDocument()
+    expect(screen.queryByText('Among best matches')).not.toBeInTheDocument()
   })
 
   it('hides the completeness section when pct is 0 or omitted', () => {

@@ -23,13 +23,22 @@ interface RecruiterMatchBarProps {
   /** Real Club Fit score, 0..1. */
   score: number
   state: ClubFitState
-  /** Real percentile over the scoped set (e.g. 15 → "Top 15%"). Null when
-   *  the parent judged the set too small to rank meaningfully. */
+  /** Real percentile over the scoped set (e.g. 15 = ranked in the best
+   *  15%). Used only to decide whether to flag "Among best matches" — the
+   *  number itself is no longer shown (it read as an unexplained score).
+   *  Null when the parent judged the set too small to rank. */
   topPercent?: number | null
   /** Player profile completeness 0..100 — drives the recruiter-facing
    *  qualitative hint. Null/omitted hides the hint line. */
   completenessPct?: number | null
 }
+
+// A candidate is flagged "Among best matches" only when genuinely in the
+// top quartile of the scoped search — otherwise the label is meaningless.
+const BEST_MATCH_MAX_PERCENTILE = 25
+
+const MATCH_TOOLTIP =
+  'How well this player fits your active recruiting scope — league level, position, category and availability. Ranked against the other candidates in this search.'
 
 const STATE_STYLE: Record<ClubFitState, { fill: string; text: string; label: string }> = {
   green: { fill: 'bg-[#8026FA]', text: 'text-[#8026FA]', label: 'Strong match' },
@@ -55,14 +64,15 @@ export default function RecruiterMatchBar({
 }: RecruiterMatchBarProps) {
   const style = STATE_STYLE[state]
   const pct = Math.round(Math.max(0, Math.min(1, score)) * 100)
+  const isBestMatch = typeof topPercent === 'number' && topPercent <= BEST_MATCH_MAX_PERCENTILE
 
   return (
     <div className="space-y-1">
-      <div className="flex items-center justify-between text-[9px] font-medium uppercase tracking-wide text-gray-400">
-        <span>Recruiter match</span>
-        {typeof topPercent === 'number' && (
-          <span className={style.text}>Top {topPercent}%</span>
-        )}
+      <div
+        className="text-[9px] font-medium uppercase tracking-wide text-gray-400"
+        title={MATCH_TOOLTIP}
+      >
+        Recruiter match
       </div>
 
       <div
@@ -80,12 +90,20 @@ export default function RecruiterMatchBar({
         {style.label} <span className="tabular-nums font-bold">· {pct}%</span>
       </div>
 
+      {isBestMatch && (
+        <div className={`text-[10px] font-semibold leading-none ${style.text}`}>
+          Among best matches
+        </div>
+      )}
+
       {typeof completenessPct === 'number' && completenessPct > 0 && (() => {
         const copy = completenessCopy(completenessPct)
         return (
           <div className="pt-1">
             <div className="flex items-center justify-between text-[9px] font-medium uppercase tracking-wide text-gray-400">
-              <span>Profile complete</span>
+              <span title="How much of this player's profile is filled in. More detail means a more reliable evaluation.">
+                Profile complete
+              </span>
               <span className="tabular-nums">{completenessPct}%</span>
             </div>
             <div className="text-[11px] font-semibold leading-tight text-gray-700">{copy.headline}</div>
