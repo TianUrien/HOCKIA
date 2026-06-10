@@ -12,9 +12,10 @@ import { getImageUrl } from '@/lib/imageUrl'
 import RolePlaceholder from './RolePlaceholder'
 import ClubFitChip from './recruiting/ClubFitChip'
 import RecruiterMatchBar from './recruiting/RecruiterMatchBar'
-import ProvenSignal from './recruiting/ProvenSignal'
+import EvidenceSignal from './recruiting/EvidenceSignal'
 import InterestSignal from './recruiting/InterestSignal'
 import { useCoachFit } from '@/hooks/useCoachFit'
+import { evidenceChecklist } from '@/lib/evidence'
 import type { ClubFitState } from '@/lib/clubFit'
 import { useEvidence } from '@/hooks/useEvidence'
 import { useInterest, categoryToBandTarget } from '@/hooks/useInterest'
@@ -77,6 +78,8 @@ interface MemberTileProps {
   highlight_video_url?: string | null
   full_game_video_count?: number | null
   accepted_reference_count?: number | null
+  /** Phase 2 evidence checklist — career history presence (✓/✗ row). */
+  career_entry_count?: number | null
   /** Increment #2.2 (Interested lens) — candidate intent for the 🤝 signal
    *  vs the active opportunity scope. */
   relocation_willingness?: string | null
@@ -203,6 +206,25 @@ export default function MemberTile(props: MemberTileProps) {
     playing_category: props.playing_category ?? null,
     level_target: props.level_target ?? null,
     opportunity_preference: props.opportunity_preference ?? null,
+  })
+
+  // Phase 2 — recruiter evidence checklist (present/missing signals) for the
+  // expandable evidence popover. Built from fields the grid already fetches;
+  // league presence reuses the resolved Club Fit band so it matches the
+  // proven-level signal. Empty for non-person roles.
+  const evidenceChecklistRows = evidenceChecklist({
+    role: props.role,
+    highlight_video_url: props.highlight_video_url ?? null,
+    full_game_video_count: props.full_game_video_count ?? null,
+    accepted_reference_count: props.accepted_reference_count ?? null,
+    is_verified: props.isVerified ?? null,
+    current_world_club_id: props.current_world_club_id ?? null,
+    current_club: props.current_team ?? null,
+    career_entry_count: props.career_entry_count ?? null,
+    open_to_play: props.open_to_play ?? null,
+    open_to_coach: props.open_to_coach ?? null,
+    competition_level_band:
+      playerFitCandidate?.competition_level_band ?? props.competition_level_band ?? null,
   })
 
   const isBrand = props.role === 'brand'
@@ -383,10 +405,11 @@ export default function MemberTile(props: MemberTileProps) {
             />
           )}
 
-          {/* Proven lens (Increment #1) — recruiter-only evidence
-              confidence: tier pill + glanceable facts. Renders nothing
-              for non-recruiter viewers or candidates with no evidence. */}
-          <ProvenSignal result={evidence} />
+          {/* Proven lens (Increment #1, expandable in Phase 2) —
+              recruiter-only evidence pill + glanceable facts; tap to open
+              the full present/missing checklist. Renders nothing for
+              non-recruiter viewers or candidates with no evidence. */}
+          <EvidenceSignal result={evidence} checklist={evidenceChecklistRows} />
 
           {/* Interested lens (Increment #2.2) — recruiter + active-scope
               only; renders nothing otherwise. */}

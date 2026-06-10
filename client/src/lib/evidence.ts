@@ -170,6 +170,62 @@ export function computeEvidence(
   return { isApplicable: true, level, score, items, reasons }
 }
 
+/** One row of the recruiter evidence checklist — present OR missing, so a
+ *  recruiter can see at a glance WHAT backs (or doesn't back) a candidate.
+ *  Unlike EvidenceItem (positives only), this enumerates the full set. */
+export interface EvidenceChecklistRow {
+  key: string
+  label: string
+  present: boolean
+}
+
+/** Candidate fields the checklist reads — a superset of the scoring fields,
+ *  adding the signals that don't affect the confidence score but still help
+ *  a recruiter decide whether to open the profile. All already fetched by
+ *  the Community grid (no DB change). */
+export interface EvidenceChecklistFields extends EvidenceCandidateFields {
+  current_club?: string | null
+  career_entry_count?: number | null
+  open_to_play?: boolean | null
+  open_to_coach?: boolean | null
+  /** Resolved 1..10 league band — present (non-null) ⇒ league on record. */
+  competition_level_band?: number | null
+}
+
+/**
+ * Full evidence checklist for a candidate — present and missing signals,
+ * recruiter-facing. Video rows are dropped for coaches (no upload surface),
+ * mirroring computeEvidence so we never mark a coach "missing" an artifact
+ * they can't provide. Order = recruiter priority (watchable proof first).
+ */
+export function evidenceChecklist(
+  candidate: EvidenceChecklistFields | null | undefined,
+): EvidenceChecklistRow[] {
+  if (!candidate || (candidate.role !== 'player' && candidate.role !== 'coach')) return []
+  const isCoach = candidate.role === 'coach'
+  const refs = candidate.accepted_reference_count ?? 0
+  const rows: EvidenceChecklistRow[] = []
+
+  if (!isCoach) {
+    rows.push({ key: 'full_match', label: 'Full match footage', present: (candidate.full_game_video_count ?? 0) > 0 })
+    rows.push({ key: 'highlight', label: 'Highlight video', present: Boolean(candidate.highlight_video_url) })
+  }
+  rows.push({
+    key: 'references',
+    label: refs > 0 ? `${refs} reference${refs === 1 ? '' : 's'}` : 'References',
+    present: refs > 0,
+  })
+  rows.push({ key: 'club', label: 'Current club', present: Boolean(candidate.current_world_club_id || candidate.current_club?.trim()) })
+  rows.push({ key: 'league', label: 'League on record', present: candidate.competition_level_band != null })
+  rows.push({ key: 'career', label: 'Career history', present: (candidate.career_entry_count ?? 0) > 0 })
+  rows.push({
+    key: 'open',
+    label: isCoach ? 'Open to coach' : 'Open to play',
+    present: Boolean(isCoach ? candidate.open_to_coach : candidate.open_to_play),
+  })
+  return rows
+}
+
 /** UI label for an evidence level — single source of truth. */
 export function evidenceLevelLabel(level: EvidenceLevel): string {
   switch (level) {

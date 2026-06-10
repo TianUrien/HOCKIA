@@ -917,6 +917,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
                 highlight_video_url={member.highlight_video_url ?? null}
                 full_game_video_count={member.full_game_video_count ?? null}
                 accepted_reference_count={member.accepted_reference_count ?? null}
+                career_entry_count={member.career_entry_count ?? null}
                 relocation_willingness={member.relocation_willingness ?? null}
                 relocation_countries_open={member.relocation_countries_open ?? null}
                 relocation_countries_excluded={member.relocation_countries_excluded ?? null}
