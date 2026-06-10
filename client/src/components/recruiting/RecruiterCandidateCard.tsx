@@ -199,11 +199,13 @@ export default function RecruiterCandidateCard({ member, matchScore, matchState,
             </span>
             <span className={`flex-shrink-0 text-[13px] font-bold tabular-nums ${tier.text}`}>{pct}%</span>
           </div>
-          <div className="relative mt-2 h-2 rounded-full bg-gray-200" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label={`Recruiter match ${pct}%`}>
-            <div className={`h-2 rounded-full ${tier.fill}`} style={{ width: `${pct}%` }} />
+          {/* Slim 4px track + 12px handle — refined, still clearly readable
+              on a 2-up mobile card. */}
+          <div className="relative mt-2 h-1 rounded-full bg-gray-200" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label={`Recruiter match ${pct}%`}>
+            <div className={`h-1 rounded-full ${tier.fill}`} style={{ width: `${pct}%` }} />
             <span
-              className={`absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full ring-2 ring-white ${tier.thumb}`}
-              style={{ left: `clamp(7px, ${pct}%, calc(100% - 7px))` }}
+              className={`absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full ring-2 ring-white ${tier.thumb}`}
+              style={{ left: `clamp(6px, ${pct}%, calc(100% - 6px))` }}
               aria-hidden="true"
             />
           </div>
