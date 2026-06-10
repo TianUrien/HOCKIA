@@ -36,6 +36,10 @@ export interface RecruiterCardMember {
   current_club: string | null
   current_world_club_id?: string | null
   open_to_play?: boolean | null
+  /** Coaches signal availability via open_to_coach (no open_to_play surface);
+   *  either flag — or the generic open_to_opportunities — lights the dot. */
+  open_to_coach?: boolean | null
+  open_to_opportunities?: boolean | null
   is_verified?: boolean | null
   verified_at?: string | null
   profile_completeness_pct?: number | null
@@ -80,6 +84,9 @@ export default function RecruiterCandidateCard({ member, matchScore, matchState,
   const tier = matchTier(matchScore)
   const pct = Math.round(Math.max(0, Math.min(1, matchScore)) * 100)
   const completeness = member.profile_completeness_pct ?? 0
+  // Availability dot — role-aware: players use open_to_play, coaches
+  // open_to_coach; open_to_opportunities lights it for either.
+  const isOpen = Boolean(member.open_to_play || member.open_to_coach || member.open_to_opportunities)
 
   const isNew = (() => {
     if (!member.created_at) return false
@@ -135,7 +142,7 @@ export default function RecruiterCandidateCard({ member, matchScore, matchState,
                   <div className="absolute inset-0"><RolePlaceholder role={member.role} label="" /></div>
                 )}
               </div>
-              {member.open_to_play && (
+              {isOpen && (
                 <span
                   className="absolute right-0 top-0 h-3.5 w-3.5 rounded-full bg-emerald-500 ring-2 ring-white"
                   aria-label="Open to opportunities"

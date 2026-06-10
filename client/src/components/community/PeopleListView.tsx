@@ -717,6 +717,48 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     return map
   }, [playerMatchActive, currentUserProfile, filteredMembers, contextTarget, contextTargetRole, contextTargetPosition, contextTargetSpecialists])
 
+  // Coach equivalent of playerMatchActive — a COACH scope that names a
+  // specific coaching role (target_position carries the coach enum) ranks
+  // coaches by Coach Fit, so the recruiter card should render for coaches too.
+  // Without a sought role there's nothing to rank specialization on, so the
+  // enhanced card stays off (coaches keep the neutral tile — no misleading
+  // match), mirroring computeCoachFit's applicability contract.
+  const coachMatchActive =
+    applyContextFit && contextTargetRole === 'coach' && Boolean(contextTargetPosition)
+
+  // Real Coach Fit score + state per scoped coach, fed to the SAME recruiter
+  // card the player path uses (the card is role-agnostic — score + state in,
+  // evidence computed from the row, which evidence.ts already adapts for
+  // coaches by dropping video and using references/verified/level).
+  const coachMatchById = useMemo(() => {
+    const map = new Map<string, { score: number; state: ClubFitState }>()
+    if (!coachMatchActive || !currentUserProfile) return map
+    const viewerCtx = {
+      role: currentUserProfile.role,
+      womens_league_division: (currentUserProfile as { womens_league_division?: string | null }).womens_league_division ?? null,
+      mens_league_division: (currentUserProfile as { mens_league_division?: string | null }).mens_league_division ?? null,
+      current_world_club_id: currentUserProfile.current_world_club_id ?? null,
+    }
+    const fitOptions = {
+      overrideTarget: contextTarget,
+      targetRole: contextTargetRole,
+      targetSpecialization: contextTargetPosition,
+    }
+    filteredMembers
+      .filter((m) => m.role === 'coach')
+      .forEach((m) => {
+        const r = computeCoachFit(viewerCtx, {
+          id: m.id,
+          role: m.role,
+          coach_specialization: m.coach_specialization ?? null,
+          coaching_categories: m.coaching_categories ?? null,
+        }, fitOptions)
+        // CoachFitState is the same union as ClubFitState — safe to store.
+        if (r.isApplicable) map.set(m.id, { score: r.score, state: r.state as ClubFitState })
+      })
+    return map
+  }, [coachMatchActive, currentUserProfile, filteredMembers, contextTarget, contextTargetRole, contextTargetPosition])
+
   // Emit filtered count upward whenever it changes. Combined with the
   // total-count effect this lets the parent choose: total when not
   // narrowing, filtered when narrowing.
@@ -890,7 +932,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
       ) : (
         <>
           <div className={[
-            playerMatchActive
+            (playerMatchActive || coachMatchActive)
               ? 'grid grid-cols-2 auto-rows-fr gap-3 sm:gap-4 mb-6 sm:mb-8'
               // No-context grid: auto-rows-fr makes every tile in a row the
               // same length. The tile's key rows (avatar → name → role →
@@ -904,9 +946,11 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
             isReshaping ? 'opacity-40' : 'opacity-100',
           ].join(' ')}>
             {displayedMembers.map((member) => {
-              // Scoped recruiter view → the premium evaluation card for
-              // players we have a match for; everyone else keeps the
-              // compact tile.
+              // Scoped recruiter view → the premium evaluation card for the
+              // candidates the active scope ranks (players under a player
+              // scope, coaches under a coach scope); everyone else keeps the
+              // compact tile. The card is role-agnostic; only the score
+              // source differs (Club Fit vs Coach Fit).
               const md = matchById.get(member.id)
               if (playerMatchActive && member.role === 'player' && md) {
                 return (
@@ -916,6 +960,18 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
                     matchScore={md.score}
                     matchState={md.state}
                     onPreview={() => setCandidatePreview({ member, score: md.score })}
+                  />
+                )
+              }
+              const cmd = coachMatchById.get(member.id)
+              if (coachMatchActive && member.role === 'coach' && cmd) {
+                return (
+                  <RecruiterCandidateCard
+                    key={member.id}
+                    member={member}
+                    matchScore={cmd.score}
+                    matchState={cmd.state}
+                    onPreview={() => setCandidatePreview({ member, score: cmd.score })}
                   />
                 )
               }

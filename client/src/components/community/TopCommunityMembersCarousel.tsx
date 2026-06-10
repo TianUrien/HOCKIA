@@ -152,12 +152,12 @@ interface TopCommunityMembersCarouselProps {
    *  rails — New on HOCKIA, themed/role-tab lanes — stay free of
    *  recruitment signals (onboarding/profile-building intent). */
   showEvidence?: boolean
-  /** When true, tapping a PLAYER card opens the rich scoped recruiter
-   *  evaluation sheet (CandidatePreviewSheet) instead of the general
-   *  MemberPreviewModal — matching the All-Members grid under an active
-   *  player scope. Non-player cards always use the general modal. Set by
-   *  CommunityPage on the "Top players for your search" instance. */
-  scopedPlayerPreview?: boolean
+  /** The role the active recruiting scope seeks ('player' | 'coach' | null).
+   *  When a card's role matches it, the rich scoped recruiter evaluation
+   *  sheet (CandidatePreviewSheet) opens instead of the general
+   *  MemberPreviewModal — matching the All-Members grid under that scope.
+   *  Set by CommunityPage on the "Top … for your search" instance. */
+  scopedRecruiterRole?: 'player' | 'coach' | null
 }
 
 /** Map a carousel row onto the Profile shape the Preview components read.
@@ -230,7 +230,7 @@ export function TopCommunityMembersCarousel({
   filterPlayingCategories,
   onViewAll,
   showEvidence = false,
-  scopedPlayerPreview = false,
+  scopedRecruiterRole = null,
 }: TopCommunityMembersCarouselProps) {
   const { profile: viewerProfile, loading: authLoading } = useAuthStore()
   // QA F5: get_top_community_members RPC requires auth; firing it as
@@ -253,9 +253,10 @@ export function TopCommunityMembersCarousel({
     () => (previewRow ? topRowToProfile(previewRow) : null),
     [previewRow],
   )
-  // Scoped player → rich recruiter evaluation sheet; everyone else → the
-  // general modal. Mirrors PeopleListView's split exactly.
-  const useScopedSheet = scopedPlayerPreview && previewRow?.role === 'player'
+  // Scoped candidate whose role matches the sought role (player under a player
+  // scope, coach under a coach scope) → rich recruiter evaluation sheet;
+  // everyone else → the general modal. Mirrors PeopleListView's split exactly.
+  const useScopedSheet = scopedRecruiterRole != null && previewRow?.role === scopedRecruiterRole
 
   // Resolve header copy: explicit overrides win; otherwise default to
   // role-aware ("Featured players") + criterion-aware helper.

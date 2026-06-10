@@ -486,9 +486,10 @@ export default function CommunityPage() {
                   filterPlayingCategories={filterPlayingCategories}
                   onViewAll={handleViewAllScroll}
                   showEvidence
-                  // Player-scope → tapping a card opens the rich recruiter
-                  // evaluation sheet, mirroring the All-Members grid.
-                  scopedPlayerPreview={scopedRole === 'player'}
+                  // Tapping a candidate whose role matches the scope opens the
+                  // rich recruiter evaluation sheet (player OR coach), mirroring
+                  // the All-Members grid.
+                  scopedRecruiterRole={scopedRole}
                 />
               )}
               {!isNarrowed && !scopeReshaping && activeTab === 'all' && (

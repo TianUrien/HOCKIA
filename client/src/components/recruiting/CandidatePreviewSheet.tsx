@@ -41,6 +41,9 @@ import RolePlaceholder from '@/components/RolePlaceholder'
 import { RoleBadge, VerifiedBadge, DualNationalityDisplay, AvailabilityPill } from '@/components'
 import { computeEvidence, evidenceChecklist, evidenceLevelLabel } from '@/lib/evidence'
 import { useClubFit } from '@/hooks/useClubFit'
+import { useCoachFit } from '@/hooks/useCoachFit'
+import { getSpecializationLabel } from '@/lib/coachSpecializations'
+import { isOpenToAny } from '@/lib/hockeyCategories'
 import { useRecruitingContext } from '@/hooks/useRecruitingContext'
 import { useWorldClubLogo, getClubLevelBand } from '@/hooks/useWorldClubLogo'
 import { categoryToBandTarget } from '@/hooks/useInterest'
@@ -103,12 +106,13 @@ export function CandidatePreviewSheet({ member, matchScore = 0, onClose }: Candi
   const contentRef = useRef<HTMLDivElement>(null)
   const [isViewing, setIsViewing] = useState(false)
 
-  // Full Club Fit (reasons/positives/caveats) for the "why this matches"
-  // section. Reads the active context from the store, so the reasons are
-  // computed against the SAME scope the card ranked by — consistent with the
-  // headline % (computed band-less in the list; we surface positives/caveats,
-  // never the neutral "league unavailable" lines).
-  const fit = useClubFit(
+  // Fit (reasons/positives/caveats) for the "why this matches" section — Club
+  // Fit for players, Coach Fit for coaches. Both hooks read the active context
+  // from the store, return the SAME shape, and self-gate to null candidates,
+  // so the reasons reflect the scope the card ranked by. Both are called
+  // unconditionally (hooks rule); only one gets a non-null candidate.
+  const isCoach = member?.role === 'coach'
+  const clubFit = useClubFit(
     member && member.role === 'player'
       ? {
           id: member.id,
@@ -125,6 +129,17 @@ export function CandidatePreviewSheet({ member, matchScore = 0, onClose }: Candi
         }
       : null,
   )
+  const coachFit = useCoachFit(
+    member && member.role === 'coach'
+      ? {
+          id: member.id,
+          role: member.role,
+          coach_specialization: member.coach_specialization ?? null,
+          coaching_categories: member.coaching_categories ?? null,
+        }
+      : null,
+  )
+  const fit = isCoach ? coachFit : clubFit
 
   const clubLogo = useWorldClubLogo(member?.current_world_club_id ?? null)
 
@@ -187,7 +202,9 @@ export function CandidatePreviewSheet({ member, matchScore = 0, onClose }: Candi
     const returnTo = location.pathname + location.search
     setIsViewing(true)
     onClose()
-    navigate(`/players/id/${member?.id}?ref=community_preview`, { state: { returnTo } })
+    // Role-aware route: coaches resolve under /coaches, players under /players.
+    const base = member?.role === 'coach' ? '/coaches' : '/players'
+    navigate(`${base}/id/${member?.id}?ref=community_preview`, { state: { returnTo } })
   }, [user, member?.id, member?.role, location, navigate, onClose, addToast])
 
   if (!member) return null
@@ -202,9 +219,24 @@ export function CandidatePreviewSheet({ member, matchScore = 0, onClose }: Candi
   const tier = matchTier(effectiveScore)
   const pct = Math.round(Math.max(0, Math.min(1, effectiveScore)) * 100)
 
+  // Role-appropriate sub-title under the role badge: players show their
+  // position(s); coaches show their coaching specialization (never a player
+  // position).
   const positions = [member.position, member.secondary_position]
     .filter((v, i, self): v is string => Boolean(v) && self.findIndex((x) => x === v) === i)
     .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
+  const coachSpecLabel = isCoach && member.coach_specialization
+    ? getSpecializationLabel(member.coach_specialization, member.coach_specialization_custom ?? null)
+    : null
+  const subtitle = isCoach ? coachSpecLabel : positions.length > 0 ? positions.join(' · ') : null
+  // Coaching team categories (Men/Women/Mixed etc.) for the coach context row.
+  const coachingCategoriesLabel = (() => {
+    if (!isCoach) return null
+    const cats = member.coaching_categories
+    if (!cats || cats.length === 0) return null
+    if (isOpenToAny(cats)) return 'All team categories'
+    return cats.map((c) => c.replace(/_/g, ' ')).join(', ')
+  })()
 
   // Evidence — level + full present/missing breakdown (the reason behind the
   // level, which the card only hints at). Recent-activity row is appended
@@ -306,7 +338,7 @@ export function CandidatePreviewSheet({ member, matchScore = 0, onClose }: Candi
                     <div className="absolute inset-0"><RolePlaceholder role={member.role} label="" /></div>
                   )}
                 </div>
-                {(member.open_to_play || member.open_to_opportunities) && (
+                {(member.open_to_play || member.open_to_coach || member.open_to_opportunities) && (
                   <span className="absolute -right-0.5 -top-0.5 h-4 w-4 rounded-full bg-emerald-500 ring-2 ring-white" title="Open to opportunities" />
                 )}
               </div>
@@ -319,10 +351,11 @@ export function CandidatePreviewSheet({ member, matchScore = 0, onClose }: Candi
                 </div>
                 <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                   <RoleBadge role={member.role} />
-                  {positions.length > 0 && (
-                    <span className="text-xs font-medium text-gray-600">{positions.join(' · ')}</span>
+                  {subtitle && (
+                    <span className="text-xs font-medium text-gray-600">{subtitle}</span>
                   )}
                   {member.open_to_play && <AvailabilityPill variant="play" size="sm" />}
+                  {isCoach && member.open_to_coach && <AvailabilityPill variant="coach" size="sm" />}
                 </div>
                 <div className="mt-2 space-y-1">
                   {(member.nationality_country_id || member.nationality) && (
@@ -399,17 +432,38 @@ export function CandidatePreviewSheet({ member, matchScore = 0, onClose }: Candi
                     {member.current_club || 'Club not listed'}
                   </span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Shield className="h-4 w-4 flex-shrink-0 text-gray-400" />
-                  <span className={hasLeague ? 'text-gray-800' : 'text-gray-400'}>
-                    {hasLeague ? 'League on record' : 'League not on record'}
-                  </span>
-                </div>
-                {member.playing_category && (
-                  <div className="flex items-center gap-2">
-                    <Target className="h-4 w-4 flex-shrink-0 text-gray-400" />
-                    <span className="capitalize text-gray-800">{member.playing_category.replace(/_/g, ' ')}</span>
-                  </div>
+                {/* Coaches: surface the team categories they coach. Players:
+                    league-on-record + playing category. */}
+                {isCoach ? (
+                  <>
+                    {coachSpecLabel && (
+                      <div className="flex items-center gap-2">
+                        <ShieldCheck className="h-4 w-4 flex-shrink-0 text-gray-400" />
+                        <span className="text-gray-800">{coachSpecLabel}</span>
+                      </div>
+                    )}
+                    {coachingCategoriesLabel && (
+                      <div className="flex items-center gap-2">
+                        <Target className="h-4 w-4 flex-shrink-0 text-gray-400" />
+                        <span className="capitalize text-gray-800">{coachingCategoriesLabel}</span>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <Shield className="h-4 w-4 flex-shrink-0 text-gray-400" />
+                      <span className={hasLeague ? 'text-gray-800' : 'text-gray-400'}>
+                        {hasLeague ? 'League on record' : 'League not on record'}
+                      </span>
+                    </div>
+                    {member.playing_category && (
+                      <div className="flex items-center gap-2">
+                        <Target className="h-4 w-4 flex-shrink-0 text-gray-400" />
+                        <span className="capitalize text-gray-800">{member.playing_category.replace(/_/g, ' ')}</span>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </div>
