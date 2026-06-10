@@ -224,12 +224,12 @@ export default function RecruiterCandidateCard({ member, matchScore, matchState,
           >
             Recruiter match
           </div>
-          <div className="mt-1 flex items-center justify-between">
-            <span className={`inline-flex items-center gap-1 text-sm font-semibold ${tier.text}`}>
-              <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
-              {tier.label}
+          <div className="mt-1 flex items-center justify-between gap-1">
+            <span className={`inline-flex min-w-0 items-center gap-1 whitespace-nowrap text-[13px] font-semibold ${tier.text}`}>
+              <Sparkles className="h-3.5 w-3.5 flex-shrink-0" aria-hidden="true" />
+              <span className="truncate">{tier.label}</span>
             </span>
-            <span className={`text-sm font-bold tabular-nums ${tier.text}`}>{pct}%</span>
+            <span className={`flex-shrink-0 text-[13px] font-bold tabular-nums ${tier.text}`}>{pct}%</span>
           </div>
           <div className="relative mt-2 h-2 rounded-full bg-gray-200" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label={`Recruiter match ${pct}%`}>
             <div className={`h-2 rounded-full ${tier.fill}`} style={{ width: `${pct}%` }} />

@@ -120,6 +120,7 @@ function ActionItem({ label, icon: Icon, ariaLabel, onClick, active = false, dis
       onClick={onClick}
       disabled={disabled}
       aria-label={ariaLabel}
+      title={ariaLabel}
       className={[
         'flex flex-1 items-center justify-center gap-1.5 py-3 text-xs font-medium transition-colors',
         'focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#8026FA]/40',
@@ -127,8 +128,12 @@ function ActionItem({ label, icon: Icon, ariaLabel, onClick, active = false, dis
         disabled && !active ? 'opacity-50 cursor-default hover:bg-transparent hover:text-gray-600' : '',
       ].join(' ')}
     >
-      <Icon className={`h-4 w-4 ${iconSpin ? 'animate-spin' : ''}`} />
-      <span>{label}</span>
+      <Icon className={`h-4 w-4 flex-shrink-0 ${iconSpin ? 'animate-spin' : ''}`} />
+      {/* Two-up mobile cards are too narrow for four text labels — show
+          icon-only there (icons are standard: save/message/add-person),
+          full text from sm: up where 2-up cards are wide enough. Matches
+          the reference (icon footer on mobile, text footer on desktop). */}
+      <span className="hidden sm:inline">{label}</span>
     </button>
   )
 }
