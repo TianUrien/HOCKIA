@@ -269,31 +269,33 @@ describe('MemberTile — role coverage', () => {
 // ── Nationality + EU rendering ─────────────────────────────────────
 
 describe('MemberTile — nationality display', () => {
-  it('shows single nationality name (no EU pill for non-EU)', () => {
+  // Tile uses compact 'code' mode (flag + ISO3 + EU) for one-line nationality
+  // so cards in the grid stay aligned. Assertions check the ISO3 codes.
+  it('shows single nationality code (no EU pill for non-EU)', () => {
     renderTile({
       nationality_country_id: 20, // Argentina
       nationality2_country_id: null,
     })
-    expect(screen.getByText('Argentinian')).toBeInTheDocument()
+    expect(screen.getByText('ARG')).toBeInTheDocument()
     expect(screen.queryByText('EU')).not.toBeInTheDocument()
   })
 
-  it('shows single nationality + EU pill when nationality is EU', () => {
+  it('shows single nationality code + EU pill when nationality is EU', () => {
     renderTile({
       nationality_country_id: 10, // Netherlands
       nationality2_country_id: null,
     })
-    expect(screen.getByText('Dutch')).toBeInTheDocument()
+    expect(screen.getByText('NLD')).toBeInTheDocument()
     expect(screen.getByText('EU')).toBeInTheDocument()
   })
 
-  it('shows BOTH nationality names for dual nationality', () => {
+  it('shows BOTH nationality codes for dual nationality', () => {
     renderTile({
       nationality_country_id: 20, // Argentina
       nationality2_country_id: 10, // Netherlands → triggers EU
     })
-    expect(screen.getByText('Argentinian')).toBeInTheDocument()
-    expect(screen.getByText('Dutch')).toBeInTheDocument()
+    expect(screen.getByText('ARG')).toBeInTheDocument()
+    expect(screen.getByText('NLD')).toBeInTheDocument()
     expect(screen.getByText('EU')).toBeInTheDocument()
   })
 

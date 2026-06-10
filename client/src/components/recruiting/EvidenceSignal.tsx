@@ -18,21 +18,12 @@
  */
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Video, Users, BadgeCheck, Trophy, ShieldCheck, Check, X } from 'lucide-react'
-import type { ComponentType } from 'react'
+import { ShieldCheck, Check, X } from 'lucide-react'
 import {
   evidenceLevelLabel,
-  type EvidenceItem,
   type EvidenceResult,
   type EvidenceChecklistRow,
 } from '@/lib/evidence'
-
-const ITEM_ICON: Record<EvidenceItem['key'], ComponentType<{ className?: string }>> = {
-  video: Video,
-  references: Users,
-  verified: BadgeCheck,
-  level: Trophy,
-}
 
 // Single-active-popover registry — opening one closes any other (matches
 // ClubFitChip so the two never stack).
@@ -130,18 +121,9 @@ export default function EvidenceSignal({ result, checklist = [], className = '' 
         {expandable && <span className="text-slate-400" aria-hidden="true">⌄</span>}
       </span>
 
-      {/* Glanceable present-items row (unchanged from ProvenSignal). */}
-      <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[10px] text-gray-500">
-        {result.items.map((item) => {
-          const Icon = ITEM_ICON[item.key]
-          return (
-            <span key={item.key} className="inline-flex items-center gap-0.5" title={item.detail}>
-              <Icon className="w-3 h-3 text-gray-400" />
-              {item.label}
-            </span>
-          )
-        })}
-      </div>
+      {/* The glanceable present-items row was removed — it added variable
+          height that knocked the grid cards out of vertical rhythm, and it
+          duplicated the tap-to-expand checklist. The pill + popover carry it. */}
 
       {open && expandable && (
         <ChecklistPopover

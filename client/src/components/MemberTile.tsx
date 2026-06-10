@@ -372,15 +372,16 @@ export default function MemberTile(props: MemberTileProps) {
               only; renders nothing otherwise. */}
           <InterestSignal result={interest} variant="compact" />
 
-          {/* Row 3: nationality (tile mode — full names + flags, EU pill
-              as a small chip; flex-wrap so dual-nat doesn't truncate). */}
+          {/* Row 3: nationality — compact single-line code mode
+              ("🇳🇱 NLD · 🇦🇷 ARG · EU"). Single line keeps cards in the grid
+              aligned (dual nationality no longer wraps to a 2nd row). */}
           {(props.nationality_country_id || props.nationality) && (
             <div className="text-xs text-gray-600">
               <DualNationalityDisplay
                 primaryCountryId={props.nationality_country_id}
                 secondaryCountryId={props.nationality2_country_id}
                 fallbackText={props.nationality}
-                mode="tile"
+                mode="code"
                 className="text-gray-600"
               />
             </div>
