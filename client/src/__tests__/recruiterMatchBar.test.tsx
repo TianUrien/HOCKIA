@@ -23,7 +23,8 @@ describe('RecruiterMatchBar', () => {
     expect(screen.getByText(/· 68%/)).toBeInTheDocument()
     expect(screen.getByText('Top 15%')).toBeInTheDocument()
     // recruiter-facing completeness copy (never "your visibility")
-    expect(screen.getByText('Detailed profile')).toBeInTheDocument()
+    expect(screen.getByText('Good amount of information')).toBeInTheDocument()
+    expect(screen.getByText('Profile looks solid.')).toBeInTheDocument()
   })
 
   it('maps states to distinct match labels', () => {
@@ -38,18 +39,20 @@ describe('RecruiterMatchBar', () => {
     expect(screen.queryByText(/^Top /)).not.toBeInTheDocument()
   })
 
-  it('hides the completeness hint when pct is 0 or omitted', () => {
+  it('hides the completeness section when pct is 0 or omitted', () => {
     render(<RecruiterMatchBar score={0.8} state="green" completenessPct={0} />)
-    expect(screen.queryByText('Detailed profile')).not.toBeInTheDocument()
+    expect(screen.queryByText('Profile complete')).not.toBeInTheDocument()
+    expect(screen.queryByText('Good amount of information')).not.toBeInTheDocument()
     expect(screen.queryByText('Some key info missing')).not.toBeInTheDocument()
-    expect(screen.queryByText('Limited profile info')).not.toBeInTheDocument()
   })
 
   it('uses banded completeness copy', () => {
     const { rerender } = render(<RecruiterMatchBar score={0.5} state="yellow" completenessPct={55} />)
     expect(screen.getByText('Some key info missing')).toBeInTheDocument()
+    expect(screen.getByText('May want more before deciding.')).toBeInTheDocument()
     rerender(<RecruiterMatchBar score={0.5} state="yellow" completenessPct={30} />)
-    expect(screen.getByText('Limited profile info')).toBeInTheDocument()
+    expect(screen.getByText('Limited information')).toBeInTheDocument()
+    expect(screen.getByText('Hard to assess from the profile alone.')).toBeInTheDocument()
   })
 
   it('exposes an accessible progressbar with the rounded value', () => {

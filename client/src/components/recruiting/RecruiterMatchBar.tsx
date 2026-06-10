@@ -37,12 +37,14 @@ const STATE_STYLE: Record<ClubFitState, { fill: string; text: string; label: str
   grey: { fill: 'bg-gray-400', text: 'text-gray-500', label: 'Limited match' },
 }
 
-/** Recruiter-facing read on profile completeness — describes the PROFILE,
- *  never instructs the player. */
-function completenessHint(pct: number): string {
-  if (pct >= 70) return 'Detailed profile'
-  if (pct >= 45) return 'Some key info missing'
-  return 'Limited profile info'
+/** Recruiter-facing read on profile completeness — a headline + a short
+ *  qualifier, mirroring the reference card ("Good amount of information /
+ *  Profile looks solid"). Always describes the PROFILE for the recruiter's
+ *  decision; never the player-facing "improve your visibility". */
+function completenessCopy(pct: number): { headline: string; sub: string } {
+  if (pct >= 70) return { headline: 'Good amount of information', sub: 'Profile looks solid.' }
+  if (pct >= 45) return { headline: 'Some key info missing', sub: 'May want more before deciding.' }
+  return { headline: 'Limited information', sub: 'Hard to assess from the profile alone.' }
 }
 
 export default function RecruiterMatchBar({
@@ -78,11 +80,19 @@ export default function RecruiterMatchBar({
         {style.label} <span className="tabular-nums font-bold">· {pct}%</span>
       </div>
 
-      {typeof completenessPct === 'number' && completenessPct > 0 && (
-        <div className="text-[10px] leading-none text-gray-500">
-          {completenessHint(completenessPct)}
-        </div>
-      )}
+      {typeof completenessPct === 'number' && completenessPct > 0 && (() => {
+        const copy = completenessCopy(completenessPct)
+        return (
+          <div className="pt-1">
+            <div className="flex items-center justify-between text-[9px] font-medium uppercase tracking-wide text-gray-400">
+              <span>Profile complete</span>
+              <span className="tabular-nums">{completenessPct}%</span>
+            </div>
+            <div className="text-[11px] font-semibold leading-tight text-gray-700">{copy.headline}</div>
+            <div className="text-[10px] leading-tight text-gray-500">{copy.sub}</div>
+          </div>
+        )
+      })()}
     </div>
   )
 }
