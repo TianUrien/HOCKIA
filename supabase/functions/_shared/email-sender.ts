@@ -124,6 +124,53 @@ function isRecipientAllowed(to: string, logger: Logger): boolean {
 }
 
 // ============================================================================
+// Suppression list (bounce / complaint / unsubscribe)
+// ============================================================================
+// Audit (High): transactional mail had NO suppression — only outreach
+// campaigns filtered email_sends.status. Continuing to mail hard-bounces and
+// spam-complainers tanks sender reputation (and deliverability for ALL mail,
+// including auth/magic-link) and is a CAN-SPAM/GDPR problem. resend-webhook
+// already records these statuses onto email_sends.status.
+const SUPPRESSED_STATUSES = ['bounced', 'complained', 'unsubscribed']
+
+// Match on exact + lowercased address (emails are normally stored lowercase;
+// we avoid ILIKE because an underscore in a local-part would act as a wildcard).
+function recipientVariants(email: string): string[] {
+  return Array.from(new Set([email, email.toLowerCase()]))
+}
+
+async function isSuppressed(supabase: SupabaseClient, to: string, logger: Logger): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('email_sends')
+    .select('id')
+    .in('status', SUPPRESSED_STATUSES)
+    .in('recipient_email', recipientVariants(to))
+    .limit(1)
+  if (error) {
+    // Fail OPEN: a suppression-lookup failure must not silently drop
+    // transactional mail (incl. auth). The whitelist guard still applies.
+    logger.warn('Suppression check failed; allowing send', { error: error.message, recipient: to })
+    return false
+  }
+  return (data?.length ?? 0) > 0
+}
+
+async function getSuppressedSet(supabase: SupabaseClient, emails: string[], logger: Logger): Promise<Set<string>> {
+  if (emails.length === 0) return new Set()
+  const variants = Array.from(new Set(emails.flatMap(recipientVariants)))
+  const { data, error } = await supabase
+    .from('email_sends')
+    .select('recipient_email')
+    .in('status', SUPPRESSED_STATUSES)
+    .in('recipient_email', variants)
+  if (error) {
+    logger.warn('Batch suppression check failed; allowing all', { error: error.message })
+    return new Set()
+  }
+  return new Set((data ?? []).map((r: { recipient_email: string }) => r.recipient_email.toLowerCase()))
+}
+
+// ============================================================================
 // Record send to database
 // ============================================================================
 
@@ -205,6 +252,14 @@ export async function sendTrackedEmail(params: {
     campaignId, recipientId, recipientRole, recipientCountry, logger, isTest } = params
 
   if (!isRecipientAllowed(to, logger)) {
+    return { success: true }
+  }
+
+  if (await isSuppressed(supabase, to, logger)) {
+    logger.info('Recipient suppressed (bounced/complained/unsubscribed), skipping email', {
+      recipient: to,
+      templateKey,
+    })
     return { success: true }
   }
 
@@ -456,10 +511,23 @@ export async function sendTrackedBatch(params: {
   const allFailed: string[] = []
   const allResendIds: string[] = []
 
-  // Filter through whitelist
-  const filtered = recipients.filter(r => isRecipientAllowed(r.email, logger))
+  // Filter through whitelist, then drop suppressed recipients
+  // (bounced/complained/unsubscribed) so we never re-mail addresses that
+  // damage sender reputation.
+  const whitelisted = recipients.filter(r => isRecipientAllowed(r.email, logger))
+  const suppressedSet = await getSuppressedSet(supabase, whitelisted.map(r => r.email), logger)
+  const filtered = whitelisted.filter(r => {
+    if (suppressedSet.has(r.email.toLowerCase())) {
+      logger.info('Recipient suppressed (bounced/complained/unsubscribed), skipping batch email', {
+        recipient: r.email,
+        templateKey,
+      })
+      return false
+    }
+    return true
+  })
   if (filtered.length === 0) {
-    logger.info('No recipients after whitelist filtering')
+    logger.info('No recipients after whitelist + suppression filtering')
     return {
       success: true, sent: [], failed: [], resendEmailIds: [],
       stats: { totalRecipients: 0, sent: 0, failed: 0, durationMs: 0, batchApiCalls: 0 },

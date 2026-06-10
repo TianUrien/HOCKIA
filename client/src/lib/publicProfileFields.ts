@@ -39,7 +39,11 @@ export const PUBLIC_PROFILE_FIELDS_LIST = [
   // Matching Increment #3 — player specialist tags (shown on profile +
   // recruiter ScoutingCard).
   'specialist_skills',
-  'contact_email',
+  // contact_email is REVOKED from anon (migration 20260610100000). Select the
+  // masked generated column (NULL unless contact_email_public) aliased back to
+  // `contact_email`, so display + the "has contact" snapshot signal honour
+  // consent for both anon and authenticated viewers of a public profile.
+  'contact_email:contact_email_masked',
   'contact_email_public',
   'social_links',
   'is_test_account',
@@ -95,7 +99,8 @@ export const PUBLIC_CLUB_FIELDS_LIST = [
   'year_founded',
   'womens_league_division',
   'mens_league_division',
-  'contact_email',
+  // Masked (see PUBLIC_PROFILE_FIELDS_LIST comment + migration 20260610100000).
+  'contact_email:contact_email_masked',
   'contact_email_public',
   'social_links',
   'is_test_account',
