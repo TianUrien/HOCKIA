@@ -648,6 +648,7 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
                 playerId={member.id}
                 playerName={member.full_name ?? 'this member'}
                 onMessage={() => void handleMessage()}
+                showAddFriend={member.role !== 'club' && member.role !== 'brand'}
                 className="w-full justify-center flex-wrap"
               />
             </div>

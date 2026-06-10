@@ -21,8 +21,10 @@
  */
 
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Bookmark, BookmarkCheck, MessageSquare } from 'lucide-react'
+import { Bookmark, BookmarkCheck, MessageSquare, UserPlus, UserCheck, Clock } from 'lucide-react'
 import { useIsProfileSaved } from '@/hooks/useSavedProfiles'
+import { useFriendship } from '@/hooks/useFriendship'
+import { useToastStore } from '@/lib/toast'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import MoreActionsMenu from './MoreActionsMenu'
 
@@ -40,6 +42,11 @@ interface QuickActionsRowProps {
    *  link.
    */
   onMessage?: () => void
+  /** Show an Add-friend action (Add friend / Requested / Friends) between
+   *  Message and ⋯. Used by the Preview so its actions match the recruiter
+   *  card's Save · Message · Add friend. Off by default to keep the compact
+   *  tiles uncluttered. */
+  showAddFriend?: boolean
   className?: string
 }
 
@@ -48,6 +55,7 @@ export default function QuickActionsRow({
   playerName,
   compact = false,
   onMessage,
+  showAddFriend = false,
   className = '',
 }: QuickActionsRowProps) {
   const navigate = useNavigate()
@@ -100,9 +108,9 @@ export default function QuickActionsRow({
         text="Message"
       />
 
-      {/* Invite + Compare were non-functional "coming soon" placeholders —
-          removed from the card to cut confusion. They'll reappear on the
-          profile detail page when those flows actually ship. */}
+      {showAddFriend && (
+        <AddFriendAction playerId={playerId} playerName={playerName} compact={compact} />
+      )}
 
       <MoreActionsMenu
         playerId={playerId}
@@ -110,6 +118,36 @@ export default function QuickActionsRow({
         compact={compact}
       />
     </div>
+  )
+}
+
+/** Add-friend action — its own component so useFriendship only fetches the
+ *  relationship when the consumer opts in (showAddFriend), not for every
+ *  compact tile. Reuses the same hook + states as FriendshipButton. */
+function AddFriendAction({ playerId, playerName, compact }: { playerId: string; playerName: string; compact: boolean }) {
+  const { addToast } = useToastStore()
+  const { mutating, isAuthenticated, isOwnProfile, isFriend, isOutgoingRequest, sendRequest } =
+    useFriendship(playerId)
+  if (isOwnProfile) return null
+  if (isFriend) {
+    return <ActionButton compact={compact} active disabled icon={UserCheck} text="Friends" label={`Friends with ${playerName}`} onClick={() => {}} />
+  }
+  if (isOutgoingRequest) {
+    return <ActionButton compact={compact} disabled icon={Clock} text="Requested" label={`Friend request sent to ${playerName}`} onClick={() => {}} />
+  }
+  return (
+    <ActionButton
+      compact={compact}
+      disabled={mutating}
+      icon={UserPlus}
+      text="Add friend"
+      label={`Add ${playerName} as a friend`}
+      onClick={() =>
+        isAuthenticated
+          ? void sendRequest()
+          : addToast('Sign in with your HOCKIA profile to connect.', 'error')
+      }
+    />
   )
 }
 
