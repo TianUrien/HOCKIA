@@ -9,6 +9,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { Loader2 } from 'lucide-react'
 import { useNavigationType, Link } from 'react-router-dom'
 import { MemberTile } from '@/components'
+import RecruiterCandidateCard from '@/components/recruiting/RecruiterCandidateCard'
 import { logger } from '@/lib/logger'
 import { isAuthExpiredError } from '@/lib/sentryHelpers'
 import { isOpenToAny } from '@/lib/hockeyCategories'
@@ -889,8 +890,26 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 auto-rows-fr gap-3 sm:gap-4 mb-6 sm:mb-8">
-            {displayedMembers.map((member) => (
+          <div className={playerMatchActive
+            ? 'grid grid-cols-1 sm:grid-cols-2 auto-rows-fr gap-4 mb-6 sm:mb-8'
+            : 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 auto-rows-fr gap-3 sm:gap-4 mb-6 sm:mb-8'}>
+            {displayedMembers.map((member) => {
+              // Scoped recruiter view → the premium evaluation card for
+              // players we have a match for; everyone else keeps the
+              // compact tile.
+              const md = matchById.get(member.id)
+              if (playerMatchActive && member.role === 'player' && md) {
+                return (
+                  <RecruiterCandidateCard
+                    key={member.id}
+                    member={member}
+                    matchScore={md.score}
+                    matchState={md.state}
+                    onPreview={() => setPreviewMember(member)}
+                  />
+                )
+              }
+              return (
               <MemberTile
                 key={member.id}
                 id={member.id}
@@ -937,7 +956,8 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
                 matchTopPercent={matchById.get(member.id)?.topPercent ?? null}
                 onPreview={() => setPreviewMember(member)}
               />
-            ))}
+              )
+            })}
           </div>
 
           {/* Infinite scroll sentinel */}
