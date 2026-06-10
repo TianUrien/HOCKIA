@@ -19,7 +19,6 @@ import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { computeClubFit, type ClubFitState } from '@/lib/clubFit'
 import { computeCoachFit } from '@/lib/coachFit'
-import { deriveTargetCategory } from '@/lib/recruitingContext'
 import { useActiveRecruitingTarget, useActiveRecruitingTargetRole, useActiveRecruitingTargetPosition, useActiveRecruitingEuRequired, useActiveRecruitingTargetSpecialists } from '@/hooks/useRecruitingContext'
 import { useCountries, isEuCountryCode } from '@/hooks/useCountries'
 import { requestCache } from '@/lib/requestCache'
@@ -598,27 +597,20 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
       })
     }
 
-    // Club Fit ranking: re-order by Fit score descending. This fires in
-    // two modes, both only on the default 'newest' sort (explicit
-    // 'completeness' is respected as-is) and only for a viewer who has a
-    // derivable target:
-    //   1. Default — the implicit "show me relevant people" ranking,
-    //      scored against the viewer's OWN profile target.
-    //   2. Context-fit (applyContextFit) — the recruiter explicitly
-    //      ticked "Apply context to this list", so we score against
-    //      their ACTIVE recruiting context's target + role instead,
-    //      matching the per-card Fit chips. Nobody is hidden; sort only.
-    const profileTarget = deriveTargetCategory(currentUserProfile)
+    // Club Fit ranking: re-order by Fit score descending — ONLY when an
+    // active recruiting context exists. Fit/match needs a real need to match
+    // against, so with no context we leave the chosen sort (newest /
+    // completeness) untouched — the list is honestly "newest", not silently
+    // fit-ranked. (Mirrors useClubFit gating the per-card fit display.)
     const useContextFit = applyContextFit && !!contextTarget
-    const viewerTarget = useContextFit ? contextTarget : profileTarget
     // Phase 2C — coach-fit ranking. A coach opportunity carries no gender,
-    // so contextTarget (category) is null and the player path above won't
-    // fire for it. Detect a coach scope that names a specific coaching
-    // role and rank coaches by coach fit instead. (Category may be null;
-    // coach fit is specialization-first.)
+    // so contextTarget (category) is null and the player path won't fire for
+    // it. Detect a coach scope that names a specific coaching role and rank
+    // coaches by coach fit instead. (Category may be null; coach fit is
+    // specialization-first.)
     const useCoachContextFit =
       applyContextFit && contextTargetRole === 'coach' && Boolean(contextTargetPosition)
-    if (sort === 'newest' && currentUserProfile && (viewerTarget || useCoachContextFit)) {
+    if (sort === 'newest' && currentUserProfile && (useContextFit || useCoachContextFit)) {
       const viewerCtx = {
         role: currentUserProfile.role,
         womens_league_division: (currentUserProfile as { womens_league_division?: string | null }).womens_league_division ?? null,

@@ -17,7 +17,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useNavigate, useSearchParams, useLocation } from 'react-router-dom'
-import { Search, Filter, Loader2 } from 'lucide-react'
+import { Search, Filter, Loader2, Sparkles } from 'lucide-react'
 import { Header } from '@/components'
 import { PullToRefresh } from '@/components/PullToRefresh'
 import {
@@ -341,6 +341,19 @@ export default function CommunityPage() {
               and anon viewers; when hidden, the page starts directly
               with the Members / Questions segmented control below. */}
           <ContextSwitcher className="mb-4" />
+
+          {/* Educational hint — Recruiter Match needs a real recruiting
+              context. Without one we never show fit/match language, so tell
+              the recruiter how to turn it on. Recruiter-only, no-context. */}
+          {isRecruiterViewer && !scopedRole && (
+            <div className="mb-4 flex items-start gap-2 rounded-xl border border-[#8026FA]/15 bg-[#8026FA]/[0.04] px-3.5 py-2.5 text-xs leading-snug text-gray-600">
+              <Sparkles className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#8026FA]" aria-hidden="true" />
+              <span>
+                Add a recruiting context to see <span className="font-semibold text-gray-800">Recruiter Match</span> ranking.
+                Until then, profiles are shown by completeness and activity.
+              </span>
+            </div>
+          )}
 
           {/* Members / Questions segmented control */}
           <div className="mb-4">
