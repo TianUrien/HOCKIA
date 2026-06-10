@@ -301,6 +301,10 @@ describe('activate', () => {
 
   it('sets error on RPC failure', async () => {
     rpcMock.mockResolvedValue({ data: null, error: new Error('rpc fail') })
+    // The error path now refresh()es to reconcile the optimistic flip
+    // back to server truth, so provide a select chain for that fetch.
+    const { chain } = buildSelectChain([buildRow({})])
+    fromMock.mockReturnValue(chain)
     useRecruitingContextStore.getState().setViewer(OWNER_A, 'club')
     await useRecruitingContextStore.getState().activate('target')
     expect(useRecruitingContextStore.getState().error).toBe('Could not switch context')

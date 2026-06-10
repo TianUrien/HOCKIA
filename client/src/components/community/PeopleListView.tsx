@@ -835,9 +835,32 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     )
   }
 
+  // Two distinct loading shapes:
+  //   - First load (no cards yet)  → full skeleton grid. Unavoidable; there
+  //     is genuinely nothing to show.
+  //   - Reshape (cards already on screen, a scope/role/sort change is
+  //     re-fetching) → keep the EXISTING cards mounted, gently dim them and
+  //     float an "Updating matches…" pill. This is the fix for the choppy
+  //     "page disappears and reappears" feel when applying a recruiting
+  //     context: the grid never blanks to skeletons mid-interaction, it
+  //     just crossfades to the re-ranked result.
+  const showSkeletons = isLoading && displayedMembers.length === 0
+  const isReshaping = isLoading && displayedMembers.length > 0
+
   return (
     <div>
-      {isLoading ? (
+      {/* Subtle, fixed "Updating matches…" pill — visible during a reshape
+          even if the user has scrolled. Auto-hides the instant new data
+          lands. Replaces the old hard skeleton flash. */}
+      {isReshaping && (
+        <div className="pointer-events-none fixed left-1/2 top-20 z-30 -translate-x-1/2 animate-fade-in">
+          <span className="inline-flex items-center gap-2 rounded-full border border-[#8026FA]/20 bg-white/95 px-4 py-2 text-xs font-medium text-gray-700 shadow-lg backdrop-blur">
+            <Loader2 className="h-3.5 w-3.5 animate-spin text-[#8026FA]" />
+            Updating matches…
+          </span>
+        </div>
+      )}
+      {showSkeletons ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
           {[...Array(15)].map((_, i) => (
             <MemberTileSkeleton key={i} />
@@ -866,13 +889,20 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
         </div>
       ) : (
         <>
-          <div className={playerMatchActive
-            ? 'grid grid-cols-2 auto-rows-fr gap-3 sm:gap-4 mb-6 sm:mb-8'
-            // No-context grid: auto-rows-fr makes every tile in a row the
-            // same length. The tile's key rows (avatar → name → role →
-            // nationality) stay top-aligned and its footer is pinned to the
-            // bottom (mt-auto), so cards match length AND line up.
-            : 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 auto-rows-fr gap-3 sm:gap-4 mb-6 sm:mb-8'}>
+          <div className={[
+            playerMatchActive
+              ? 'grid grid-cols-2 auto-rows-fr gap-3 sm:gap-4 mb-6 sm:mb-8'
+              // No-context grid: auto-rows-fr makes every tile in a row the
+              // same length. The tile's key rows (avatar → name → role →
+              // nationality) stay top-aligned and its footer is pinned to the
+              // bottom (mt-auto), so cards match length AND line up.
+              : 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 auto-rows-fr gap-3 sm:gap-4 mb-6 sm:mb-8',
+            // Crossfade during a reshape: dim the outgoing cards while the
+            // re-ranked set loads, then fade back to full opacity. No blank
+            // skeleton swap, so the page never visually resets.
+            'transition-opacity duration-300 ease-out',
+            isReshaping ? 'opacity-40' : 'opacity-100',
+          ].join(' ')}>
             {displayedMembers.map((member) => {
               // Scoped recruiter view → the premium evaluation card for
               // players we have a match for; everyone else keeps the
