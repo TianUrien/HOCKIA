@@ -147,7 +147,7 @@ export default function MobileBottomNav() {
 
       {/* Bottom Navigation */}
       <nav 
-        className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-lg border-t border-gray-200/50 shadow-lg pb-[max(env(safe-area-inset-bottom),0.5rem)] [transform:translate3d(0,0,0)]"
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/[0.97] backdrop-blur-lg border-t border-gray-200/50 shadow-lg pb-[max(env(safe-area-inset-bottom),0.5rem)] [transform:translate3d(0,0,0)] [backface-visibility:hidden]"
       >
         <div className="flex items-center justify-between px-2 pt-2 gap-1">
           {navItems.map((item) => {

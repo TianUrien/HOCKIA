@@ -56,10 +56,13 @@ export default function Header() {
     }
   }, [])
 
+  // GPU-promote the fixed header (translate3d + backface-visibility) so
+  // iOS/WKWebView doesn't tear or flicker it during momentum scroll — the
+  // bottom nav already does this; the header was the missing half.
   return (
     <header
       ref={headerRef}
-      className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 pt-[env(safe-area-inset-top)]"
+      className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 pt-[env(safe-area-inset-top)] [transform:translate3d(0,0,0)] [backface-visibility:hidden]"
     >
       <nav className="max-w-7xl mx-auto px-4 md:px-6 py-4">
         <div className="flex items-center justify-between">
