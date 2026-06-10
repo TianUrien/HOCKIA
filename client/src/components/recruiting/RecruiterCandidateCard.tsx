@@ -234,22 +234,26 @@ export default function RecruiterCandidateCard({ member, matchScore, matchState,
         {/* ── PROFILE ── always rendered so the row never collapses and
             knocks the cards out of alignment. Deliberately understated —
             smaller icon + lighter type so it SUPPORTS the match section
-            rather than competing with it. ── */}
+            rather than competing with it. The two text lines are
+            single-line (truncate) so a longer label like "Needs more info"
+            can't wrap to a second line at narrow widths and make this card
+            taller than its neighbours (the 320px misalignment). ── */}
         <div className="flex items-center gap-2 border-t border-gray-100 px-3.5 py-2.5">
           <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md bg-[#8026FA]/10 text-[#8026FA]">
             <FileText className="h-3.5 w-3.5" />
           </span>
           <div className="min-w-0">
-            <div className="text-[13px] font-medium leading-tight text-[#8026FA] tabular-nums">{completeness}% complete</div>
-            <div className="text-[10px] leading-tight text-gray-500">{profileStatus(completeness)}</div>
+            <div className="truncate text-[13px] font-medium leading-tight text-[#8026FA] tabular-nums">{completeness}% complete</div>
+            <div className="truncate text-[10px] leading-tight text-gray-500">{profileStatus(completeness)}</div>
           </div>
         </div>
 
         {/* ── EVIDENCE — compact level signal only; tap the card to open
-            Preview for the full present/missing breakdown. ── */}
+            Preview for the full present/missing breakdown. Single-line so
+            "Limited/Missing evidence" can't wrap at narrow widths. ── */}
         <div className="flex items-center gap-1.5 border-t border-gray-100 px-3.5 py-2.5 text-[11px] font-medium">
           <ShieldCheck className={`h-3.5 w-3.5 flex-shrink-0 ${evidenceColor}`} aria-hidden="true" />
-          <span className={evidenceColor}>{evidenceLabel}</span>
+          <span className={`truncate ${evidenceColor}`}>{evidenceLabel}</span>
         </div>
       </button>
 
