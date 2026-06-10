@@ -1,23 +1,25 @@
 /**
- * QuickActionsRow — Spec G.5.
+ * QuickActionsRow — community action row for member/player discovery.
  *
- * Per-player action row for Community cards + profile pages.
- * Buttons:
+ * Per-member action row for Community cards + profile pages.
+ * Default buttons (enabled):
  *   - Save / Saved — toggles the default shortlist (uses
  *     useIsProfileSaved which we extended in P1.5 to write into the
  *     default shortlist + create one on first save).
- *   - Message — navigates to /messages?new={playerId} (existing
+ *   - Message — navigates to /messages?new={memberId} (existing
  *     MessagesPage handles the "new conversation" deep link), unless
  *     a consumer passes a custom onMessage handler.
- *   - Invite to apply — DISABLED for now (recruiter-only; needs the
- *     opportunity_invitations table). Shows a "Coming soon" tooltip.
- *   - Compare — explicitly deferred to Phase 2 per spec.
- *   - ⋯ overflow — Move to list / Add note (rendered by the shared
- *     MoreActionsMenu so other recruiter surfaces can reuse it).
+ *   - Add friend / Requested / Friends — send or view friendship status
+ *     (enabled by default for Community; shows live states via useFriendship).
  *
- * Visibility: hidden for own-profile or anonymous viewers. Invite +
- * Compare are recruiter-only (club/coach). Save + Message + ⋯ are
- * available to any authenticated non-self viewer.
+ * Optional buttons (showMoreMenu):
+ *   - ⋯ overflow — Move to list / Add note (rendered by the shared
+ *     MoreActionsMenu; off by default for cleaner Community cards,
+ *     can be enabled for surfaces that need list management).
+ *
+ * Visibility: hidden for own-profile or anonymous viewers. Save + Message +
+ * Add friend are available to any authenticated non-self viewer. More menu
+ * hidden by default (can be enabled with showMoreMenu).
  */
 
 import { useNavigate, useLocation } from 'react-router-dom'
@@ -43,10 +45,13 @@ interface QuickActionsRowProps {
    */
   onMessage?: () => void
   /** Show an Add-friend action (Add friend / Requested / Friends) between
-   *  Message and ⋯. Used by the Preview so its actions match the recruiter
-   *  card's Save · Message · Add friend. Off by default to keep the compact
-   *  tiles uncluttered. */
+   *  Message and ⋯. Used by Community cards and Preview. Default true for
+   *  community discovery, false for other surfaces. */
   showAddFriend?: boolean
+  /** Show the three-dot More menu (Move to list / Add note). Community cards
+   *  hide this by default for a cleaner action row. Recruiter surfaces with
+   *  more hidden actions can enable it. Default false. */
+  showMoreMenu?: boolean
   className?: string
 }
 
@@ -55,7 +60,8 @@ export default function QuickActionsRow({
   playerName,
   compact = false,
   onMessage,
-  showAddFriend = false,
+  showAddFriend = true,
+  showMoreMenu = false,
   className = '',
 }: QuickActionsRowProps) {
   const navigate = useNavigate()
@@ -112,11 +118,13 @@ export default function QuickActionsRow({
         <AddFriendAction playerId={playerId} playerName={playerName} compact={compact} />
       )}
 
-      <MoreActionsMenu
-        playerId={playerId}
-        playerName={playerName}
-        compact={compact}
-      />
+      {showMoreMenu && (
+        <MoreActionsMenu
+          playerId={playerId}
+          playerName={playerName}
+          compact={compact}
+        />
+      )}
     </div>
   )
 }

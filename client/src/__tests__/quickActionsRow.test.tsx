@@ -48,6 +48,19 @@ vi.mock('@/hooks/useSavedProfiles', () => ({
   useIsProfileSaved: () => savedState,
 }))
 
+// useFriendship — mocked for AddFriendAction since it's now shown by default
+vi.mock('@/hooks/useFriendship', () => ({
+  useFriendship: () => ({
+    loading: false,
+    mutating: false,
+    isAuthenticated: true,
+    isOwnProfile: false,
+    isFriend: false,
+    isOutgoingRequest: false,
+    sendRequest: vi.fn(),
+  }),
+}))
+
 vi.mock('@/lib/trackDbEvent', () => ({ trackDbEvent: vi.fn() }))
 
 // Stub MoreActionsMenu so we can assert it's mounted without pulling
@@ -99,12 +112,13 @@ describe('QuickActionsRow', () => {
     expect(container.firstChild).toBeNull()
   })
 
-  it('renders Save + Message + ⋯ for an authenticated non-self player viewer', () => {
+  it('renders Save + Message + Add friend by default (no More menu)', () => {
     setViewer({ role: 'player' })
     renderRow()
     expect(screen.getByRole('button', { name: /save jordan hall/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /message jordan hall/i })).toBeInTheDocument()
-    expect(screen.getByTestId('more-actions-menu')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /add jordan hall as a friend/i })).toBeInTheDocument()
+    expect(screen.queryByTestId('more-actions-menu')).not.toBeInTheDocument()
   })
 
   it('never renders the removed Invite/Compare placeholders for non-recruiters', () => {
@@ -119,10 +133,11 @@ describe('QuickActionsRow', () => {
     const { unmount } = renderRow()
     expect(screen.queryByRole('button', { name: /invite/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /compare/i })).not.toBeInTheDocument()
-    // Still has the three working actions.
+    // Renders Save + Message + Add friend by default, no More menu
     expect(screen.getByRole('button', { name: /save jordan hall/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /message jordan hall/i })).toBeInTheDocument()
-    expect(screen.getByTestId('more-actions-menu')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /add jordan hall as a friend/i })).toBeInTheDocument()
+    expect(screen.queryByTestId('more-actions-menu')).not.toBeInTheDocument()
     unmount()
 
     setViewer({ role: 'coach' })
