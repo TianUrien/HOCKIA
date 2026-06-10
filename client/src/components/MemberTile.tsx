@@ -11,12 +11,10 @@ import QuickActionsRow from '@/components/recruiting/QuickActionsRow'
 import { getImageUrl } from '@/lib/imageUrl'
 import RolePlaceholder from './RolePlaceholder'
 import ClubFitChip from './recruiting/ClubFitChip'
-import RecruiterMatchBar from './recruiting/RecruiterMatchBar'
 import EvidenceSignal from './recruiting/EvidenceSignal'
 import InterestSignal from './recruiting/InterestSignal'
 import { useCoachFit } from '@/hooks/useCoachFit'
 import { evidenceChecklist } from '@/lib/evidence'
-import type { ClubFitState } from '@/lib/clubFit'
 import { useEvidence } from '@/hooks/useEvidence'
 import { useInterest, categoryToBandTarget } from '@/hooks/useInterest'
 
@@ -107,19 +105,6 @@ interface MemberTileProps {
    * Community passes this to open the preview modal instead — the preview
    * itself then handles the auth-gated CTAs. */
   onPreview?: () => void
-  /** Recruiter-match mode — true ONLY when an active recruiting scope is
-   *  ranking players by fit (CommunityPage scopeReshaping). Swaps the
-   *  compact 3-bar Club Fit chip for the horizontal RecruiterMatchBar.
-   *  Off by default, so non-scoped + non-recruiter tiles are unchanged. */
-  recruiterMatchActive?: boolean
-  /** Candidate's real Club Fit score (0..1) + state, computed once by
-   *  PeopleListView with the full position/specialist fields, so the bar's
-   *  % and "Top X%" derive from the same number. Null off-scope. */
-  matchScore?: number | null
-  matchState?: ClubFitState | null
-  /** Real percentile of this candidate over the scoped set (e.g. 15 →
-   *  "Top 15%"). Null when the parent judged the set too small to rank. */
-  matchTopPercent?: number | null
 }
 
 export default function MemberTile(props: MemberTileProps) {
@@ -159,15 +144,6 @@ export default function MemberTile(props: MemberTileProps) {
           last_active_at: props.last_active_at ?? null,
         }
       : null
-  // The scoped RecruiterMatchBar reads the score + state PeopleListView
-  // already computed for ranking (with the full position/specialist
-  // fields), so the displayed % and the "Top X%" percentile are always
-  // derived from the SAME number. The default (non-scoped) path still
-  // renders the ClubFitChip, which computes its own fit from the candidate.
-  const showRecruiterMatchBar =
-    Boolean(props.recruiterMatchActive) &&
-    props.matchState != null &&
-    typeof props.matchScore === 'number'
   // Phase 2C — Coach Fit for this candidate vs the active scope. Returns
   // NOT_APPLICABLE (chip renders null) for non-coaches or non-coach scopes.
   const coachFit = useCoachFit(
@@ -375,28 +351,16 @@ export default function MemberTile(props: MemberTileProps) {
           <div className="flex items-center gap-1.5 flex-wrap">
             <RoleBadge role={props.role} />
             {modifierPill}
-            {/* Default (non-scoped) player Fit — the compact 3-bar chip.
-                Suppressed when the scoped RecruiterMatchBar takes over so
-                the two never double up. */}
-            {!showRecruiterMatchBar && <ClubFitChip candidate={playerFitCandidate} />}
+            {/* Player Fit — the compact 3-bar chip (recruiter-only; null
+                for non-recruiter viewers or non-player candidates). The
+                scoped recruiter view uses RecruiterCandidateCard instead of
+                this tile, so the tile always shows the chip. */}
+            <ClubFitChip candidate={playerFitCandidate} />
             {/* Phase 2C — Coach Fit chip. Renders only for coach
                 candidates under a coach-seeking scope (returns null
                 otherwise); the player chip above is null for coaches. */}
             <ClubFitChip kind="coach" fitResult={coachFit} />
           </div>
-
-          {/* Recruiter Match — horizontal bar with real % + real "Top X%"
-              percentile, shown only while a recruiting scope is ranking
-              players by fit. Pairs the match read with a recruiter-facing
-              completeness hint (the screenshot's evaluation cluster). */}
-          {showRecruiterMatchBar && (
-            <RecruiterMatchBar
-              score={props.matchScore as number}
-              state={props.matchState as ClubFitState}
-              topPercent={props.matchTopPercent ?? null}
-              completenessPct={props.profileCompletenessPct ?? null}
-            />
-          )}
 
           {/* Proven lens (Increment #1, expandable in Phase 2) —
               recruiter-only evidence pill + glanceable facts; tap to open

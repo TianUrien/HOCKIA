@@ -683,12 +683,11 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
   const playerMatchActive =
     applyContextFit && !!contextTarget && contextTargetRole !== 'coach'
 
-  // Real "Top X%" percentile per player, over the scoped set. Mirrors the
-  // ranking math above so each tile's percentile matches its own Club Fit
-  // score. Small-N guard: below MIN_RANKABLE a percentile is meaningless
-  // ("Top 50%" of 2 people), so we pass null and the bar shows %+label only.
+  // Real Club Fit score + state per scoped player, fed to the recruiter
+  // card (which displays the % and the slider). Computed with the full
+  // position/specialist fields so the card's number matches the ranking.
   const matchById = useMemo(() => {
-    const map = new Map<string, { topPercent: number | null; score: number; state: ClubFitState }>()
+    const map = new Map<string, { score: number; state: ClubFitState }>()
     if (!playerMatchActive || !currentUserProfile) return map
     const viewerCtx = {
       role: currentUserProfile.role,
@@ -702,9 +701,9 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
       targetPosition: contextTargetPosition,
       targetSpecialists: contextTargetSpecialists,
     }
-    const scored = filteredMembers
+    filteredMembers
       .filter((m) => m.role === 'player')
-      .map((m) => {
+      .forEach((m) => {
         const r = computeClubFit(viewerCtx, {
           id: m.id,
           role: m.role,
@@ -718,26 +717,8 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
           secondary_position: m.secondary_position ?? null,
           specialist_skills: m.specialist_skills ?? null,
         }, fitOptions)
-        return { id: m.id, score: r.score, state: r.state, applicable: r.isApplicable }
+        if (r.isApplicable) map.set(m.id, { score: r.score, state: r.state })
       })
-      .filter((s) => s.applicable)
-    const N = scored.length
-    const MIN_RANKABLE = 6
-    // Rank desc; ties share the better rank (count-strictly-greater + 1).
-    const ranked = [...scored].sort((a, b) => b.score - a.score)
-    let rankPos = 0
-    let prevScore = Number.POSITIVE_INFINITY
-    ranked.forEach((s, i) => {
-      if (s.score < prevScore) {
-        rankPos = i + 1
-        prevScore = s.score
-      }
-      map.set(s.id, {
-        topPercent: N >= MIN_RANKABLE ? Math.max(1, Math.ceil((rankPos / N) * 100)) : null,
-        score: s.score,
-        state: s.state,
-      })
-    })
     return map
   }, [playerMatchActive, currentUserProfile, filteredMembers, contextTarget, contextTargetRole, contextTargetPosition, contextTargetSpecialists])
 
@@ -950,10 +931,6 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
                 umpireLevel={member.umpire_level ?? null}
                 federation={member.federation ?? null}
                 profileCompletenessPct={member.profile_completeness_pct ?? null}
-                recruiterMatchActive={playerMatchActive}
-                matchScore={matchById.get(member.id)?.score ?? null}
-                matchState={matchById.get(member.id)?.state ?? null}
-                matchTopPercent={matchById.get(member.id)?.topPercent ?? null}
                 onPreview={() => setPreviewMember(member)}
               />
               )
