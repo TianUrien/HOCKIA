@@ -157,11 +157,16 @@ export default function RecruiterCandidateCard({ member, matchScore, matchState,
             )}
           </div>
 
-          <div className="mt-2.5 flex items-center gap-1">
-            <h3 className="truncate text-[15px] font-semibold leading-tight text-gray-900" title={member.full_name?.trim()}>
+          {/* Name row — h-5 reserved + min-w-0 so a long name truncates to a
+              single line (instead of pushing the badge or reflowing the row
+              height), keeping every card's name band identical. */}
+          <div className="mt-2.5 flex h-5 items-center gap-1">
+            <h3 className="min-w-0 truncate text-[15px] font-semibold leading-tight text-gray-900" title={member.full_name?.trim()}>
               {member.full_name?.trim()}
             </h3>
-            <VerifiedBadge verified={member.is_verified ?? false} verifiedAt={member.verified_at ?? null} size="sm" />
+            <span className="flex-shrink-0">
+              <VerifiedBadge verified={member.is_verified ?? false} verifiedAt={member.verified_at ?? null} size="sm" />
+            </span>
           </div>
 
           <div className="mt-1.5">

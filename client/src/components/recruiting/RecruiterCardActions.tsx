@@ -118,7 +118,11 @@ function ActionItem({ label, icon: Icon, ariaLabel, onClick, active = false, dis
       aria-label={ariaLabel}
       title={ariaLabel}
       className={[
-        'flex flex-1 flex-col items-center justify-center gap-1 py-2.5 text-[10px] font-medium transition-colors',
+        // Fixed row height (min-h-[52px]) so the footer is the SAME height on
+        // every card regardless of which label/state shows — a wrapping
+        // "Add friend" used to make this taller than a 1-word "Friends"/
+        // "Requested", knocking the bottom action row out of alignment.
+        'flex min-h-[52px] flex-1 flex-col items-center justify-center gap-1 py-2.5 text-[10px] font-medium transition-colors',
         'sm:flex-row sm:gap-1.5 sm:text-xs',
         'focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#8026FA]/40',
         active ? 'text-[#8026FA]' : 'text-gray-600 hover:text-[#8026FA] hover:bg-[#8026FA]/5',
@@ -126,9 +130,11 @@ function ActionItem({ label, icon: Icon, ariaLabel, onClick, active = false, dis
       ].join(' ')}
     >
       {/* Icon over label on the narrow 2-up mobile cards (keeps the full
-          word readable), icon beside label on wider desktop cards. */}
+          word readable), icon beside label on wider desktop cards.
+          whitespace-nowrap guarantees a single line — no wrap-induced
+          height variance between "Add friend" and "Friends"/"Requested". */}
       <Icon className={`h-4 w-4 flex-shrink-0 ${iconSpin ? 'animate-spin' : ''}`} />
-      <span>{label}</span>
+      <span className="whitespace-nowrap">{label}</span>
     </button>
   )
 }
