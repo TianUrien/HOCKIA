@@ -209,7 +209,9 @@ function CodeDisplay({ primaryCountry, secondaryCountry, isEuCountry, className 
   const anyEu = nationalities.some((c) => isEuCountry(c.id))
 
   return (
-    <span className={`inline-flex flex-wrap items-center gap-x-1 gap-y-0.5 text-xs text-gray-700 ${className}`}>
+    // Single line, no wrap — on a 2-up card the EU chip must never drop to
+    // a second row (that's what knocked the cards out of vertical alignment).
+    <span className={`inline-flex items-center gap-x-1 overflow-hidden text-xs text-gray-700 ${className}`}>
       {nationalities.map((country, i) => (
         <span key={country.id} className="inline-flex items-center gap-1 whitespace-nowrap">
           <Flag code={country.code} countryName={country.name} fallbackEmoji={country.flag_emoji} size="sm" />

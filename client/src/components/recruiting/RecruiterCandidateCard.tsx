@@ -161,23 +161,27 @@ export default function RecruiterCandidateCard({ member, matchScore, matchState,
             <RoleBadge role={member.role} />
           </div>
 
-          {/* Identity — nationality (own line) then club (own line). */}
-          {(member.nationality_country_id || member.nationality) && (
-            <div className="mt-2.5">
+          {/* Identity — nationality then club, each ALWAYS exactly one
+              reserved line (placeholder when absent, truncate when long) so
+              a card with less data lines up with a richer neighbour. */}
+          <div className="mt-2.5 flex h-[18px] items-center overflow-hidden">
+            {member.nationality_country_id || member.nationality ? (
               <DualNationalityDisplay
                 primaryCountryId={member.nationality_country_id}
                 secondaryCountryId={member.nationality2_country_id}
                 fallbackText={member.nationality}
                 mode="code"
               />
-            </div>
-          )}
-          {member.current_club && (
-            <div className="mt-1 flex items-center gap-1.5 text-xs text-gray-500">
-              <Shield className="h-3 w-3 flex-shrink-0 text-gray-400" />
-              <span className="truncate">{member.current_club}</span>
-            </div>
-          )}
+            ) : (
+              <span className="text-xs text-gray-300">Nationality not listed</span>
+            )}
+          </div>
+          <div className="mt-1 flex h-[18px] items-center gap-1.5 text-xs">
+            <Shield className="h-3 w-3 flex-shrink-0 text-gray-400" />
+            <span className={`truncate ${member.current_club ? 'text-gray-500' : 'text-gray-300'}`}>
+              {member.current_club || 'Club not listed'}
+            </span>
+          </div>
         </div>
 
         {/* ── MATCH ── */}
@@ -209,18 +213,17 @@ export default function RecruiterCandidateCard({ member, matchScore, matchState,
           </div>
         </div>
 
-        {/* ── PROFILE ── */}
-        {completeness > 0 && (
-          <div className="flex items-center gap-2 border-t border-gray-100 px-3.5 py-3">
-            <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-[#8026FA]/10 text-[#8026FA]">
-              <FileText className="h-4 w-4" />
-            </span>
-            <div className="min-w-0">
-              <div className="text-sm font-semibold leading-tight text-[#8026FA] tabular-nums">{completeness}% complete</div>
-              <div className="text-[11px] leading-tight text-gray-500">{profileStatus(completeness)}</div>
-            </div>
+        {/* ── PROFILE ── always rendered so the row never collapses and
+            knocks the cards out of alignment. ── */}
+        <div className="flex items-center gap-2 border-t border-gray-100 px-3.5 py-3">
+          <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-[#8026FA]/10 text-[#8026FA]">
+            <FileText className="h-4 w-4" />
+          </span>
+          <div className="min-w-0">
+            <div className="text-sm font-semibold leading-tight text-[#8026FA] tabular-nums">{completeness}% complete</div>
+            <div className="text-[11px] leading-tight text-gray-500">{profileStatus(completeness)}</div>
           </div>
-        )}
+        </div>
 
         {/* ── EVIDENCE — compact level signal only; tap the card to open
             Preview for the full present/missing breakdown. ── */}
