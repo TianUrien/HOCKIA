@@ -76,7 +76,7 @@ describe('EvidenceSignal', () => {
       />,
     )
     expect(screen.queryByRole('tooltip')).not.toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: /Evidence: Some evidence/i }))
+    await user.click(screen.getByRole('button', { name: /Evidence: Enough evidence/i }))
     const popover = await screen.findByRole('tooltip')
     expect(within(popover).getByText('Highlight video')).toBeInTheDocument()
     expect(within(popover).getByText('2 references')).toBeInTheDocument()

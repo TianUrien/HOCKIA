@@ -232,7 +232,7 @@ export function evidenceLevelLabel(level: EvidenceLevel): string {
     case 'strong':
       return 'Strong evidence'
     case 'moderate':
-      return 'Some evidence'
+      return 'Enough evidence'
     case 'limited':
       return 'Limited evidence'
   }

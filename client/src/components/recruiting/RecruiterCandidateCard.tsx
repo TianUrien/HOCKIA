@@ -15,11 +15,12 @@
  * full profile — surfaced when the recruiter opens it, kept off the scan
  * card so it stays calm. Score + state arrive precomputed from the list.
  */
-import { Shield, FileText, Sparkles } from 'lucide-react'
+import { Shield, ShieldCheck, FileText, Sparkles } from 'lucide-react'
 import { RoleBadge, VerifiedBadge, DualNationalityDisplay } from '@/components'
 import { getImageUrl } from '@/lib/imageUrl'
 import RolePlaceholder from '@/components/RolePlaceholder'
 import RecruiterCardActions from './RecruiterCardActions'
+import { computeEvidence, evidenceLevelLabel } from '@/lib/evidence'
 import type { ClubFitState } from '@/lib/clubFit'
 
 /** Fields the card reads — a structural subset of the Community member row,
@@ -33,11 +34,16 @@ export interface RecruiterCardMember {
   nationality_country_id?: number | null
   nationality2_country_id?: number | null
   current_club: string | null
+  current_world_club_id?: string | null
   open_to_play?: boolean | null
   is_verified?: boolean | null
   verified_at?: string | null
   profile_completeness_pct?: number | null
   created_at?: string | null
+  /** Evidence-level signal (compact). The full breakdown lives in Preview. */
+  highlight_video_url?: string | null
+  full_game_video_count?: number | null
+  accepted_reference_count?: number | null
 }
 
 interface RecruiterCandidateCardProps {
@@ -82,6 +88,27 @@ export default function RecruiterCandidateCard({ member, matchScore, matchState,
   })()
 
   const heroImageUrl = member.avatar_url ? getImageUrl(member.avatar_url, 'avatar-md') : null
+
+  // Evidence LEVEL only — a quick signal. The full present/missing
+  // breakdown lives in the Preview (card = signal, preview = detail).
+  // Computed directly (the card is already recruiter-only by placement),
+  // and a candidate with zero signals reads "Missing evidence".
+  const evidence = computeEvidence({
+    role: member.role,
+    highlight_video_url: member.highlight_video_url ?? null,
+    full_game_video_count: member.full_game_video_count ?? null,
+    accepted_reference_count: member.accepted_reference_count ?? null,
+    is_verified: member.is_verified ?? null,
+    current_world_club_id: member.current_world_club_id ?? null,
+  })
+  const evidenceLabel = evidence.isApplicable ? evidenceLevelLabel(evidence.level) : 'Missing evidence'
+  const evidenceColor = !evidence.isApplicable
+    ? 'text-gray-400'
+    : evidence.level === 'strong'
+      ? 'text-emerald-600'
+      : evidence.level === 'moderate'
+        ? 'text-gray-700'
+        : 'text-gray-500'
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white transition-shadow hover:shadow-md">
@@ -194,6 +221,13 @@ export default function RecruiterCandidateCard({ member, matchScore, matchState,
             </div>
           </div>
         )}
+
+        {/* ── EVIDENCE — compact level signal only; tap the card to open
+            Preview for the full present/missing breakdown. ── */}
+        <div className="flex items-center gap-1.5 border-t border-gray-100 px-3.5 py-2.5 text-[11px] font-medium">
+          <ShieldCheck className={`h-3.5 w-3.5 flex-shrink-0 ${evidenceColor}`} aria-hidden="true" />
+          <span className={evidenceColor}>{evidenceLabel}</span>
+        </div>
       </button>
 
       {/* ── ACT (sibling of the clickable area — no nested buttons) ── */}
