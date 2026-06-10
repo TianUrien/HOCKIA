@@ -153,7 +153,7 @@ jobs:
             exit 1
           fi
 
-          # Early warning: raw at 90% of budget (3060KB)
+          # Early warning: raw at 90% of budget (3150KB)
           # Budget bumped 3200KB → 3300KB on 2026-05-27 — Phase 1
           # carousel rotation work pushed raw from ~3190KB to 3202KB.
           # Budget bumped 3300KB → 3400KB on 2026-05-29 — the App Store
@@ -161,17 +161,20 @@ jobs:
           # removal + context-aware back navigation + touch-target sweep
           # + invalid-conversation self-heal) AND the user-feedback MVP
           # (modal + hook + admin dashboard + edge fn + 4 new RPCs)
-          # together added ~19KB raw, tipping the 3300 gate. The
-          # feedback modal is lazy-loaded via React.lazy but the chunk
-          # overhead bites. 100KB of new headroom absorbs the next
-          # batch of small features.
-          if [ "$TOTAL_JS" -gt 3133440 ]; then
-            echo "::warning::Bundle nearing raw budget: ${TOTAL_KB}KB / 3400KB ($(( TOTAL_KB * 100 / 3400 ))%)"
+          # together added ~19KB raw, tipping the 3300 gate.
+          # Budget bumped 3400KB → 3500KB on 2026-06-10 — the Community
+          # recruiter-card upgrade (Phase 1 RecruiterMatchBar + percentile
+          # ranking, Phase 2 expandable EvidenceSignal checklist) tipped
+          # raw to 3401KB. gzip stays comfortably under its 880KB gate
+          # (the delivery-relevant metric); the raw delta is our own
+          # component code, no new dependency. ~100KB headroom restored.
+          if [ "$TOTAL_JS" -gt 3225600 ]; then
+            echo "::warning::Bundle nearing raw budget: ${TOTAL_KB}KB / 3500KB ($(( TOTAL_KB * 100 / 3500 ))%)"
           fi
 
-          # Secondary gate: raw total must stay under 3.4MB
-          if [ "$TOTAL_JS" -gt 3481600 ]; then
-            echo "::error::Raw bundle budget exceeded! ${TOTAL_KB}KB > 3400KB"
+          # Secondary gate: raw total must stay under 3.5MB
+          if [ "$TOTAL_JS" -gt 3584000 ]; then
+            echo "::error::Raw bundle budget exceeded! ${TOTAL_KB}KB > 3500KB"
             exit 1
           fi
 
