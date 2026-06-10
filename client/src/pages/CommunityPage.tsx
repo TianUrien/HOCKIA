@@ -486,6 +486,9 @@ export default function CommunityPage() {
                   filterPlayingCategories={filterPlayingCategories}
                   onViewAll={handleViewAllScroll}
                   showEvidence
+                  // Player-scope → tapping a card opens the rich recruiter
+                  // evaluation sheet, mirroring the All-Members grid.
+                  scopedPlayerPreview={scopedRole === 'player'}
                 />
               )}
               {!isNarrowed && !scopeReshaping && activeTab === 'all' && (

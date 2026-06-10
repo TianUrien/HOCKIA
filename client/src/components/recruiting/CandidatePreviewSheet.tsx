@@ -194,8 +194,13 @@ export function CandidatePreviewSheet({ member, matchScore = 0, onClose }: Candi
 
   const heroImageUrl = member.avatar_url ? getImageUrl(member.avatar_url, 'avatar-lg') : null
   const completeness = member.profile_completeness_pct ?? 0
-  const tier = matchTier(matchScore)
-  const pct = Math.round(Math.max(0, Math.min(1, matchScore)) * 100)
+  // Headline %: the list precomputes it and passes it in (so the preview
+  // matches the card the recruiter tapped). The carousel doesn't precompute a
+  // score, so fall back to this sheet's own useClubFit result — same scope,
+  // same math.
+  const effectiveScore = matchScore > 0 ? matchScore : fit.isApplicable ? fit.score : 0
+  const tier = matchTier(effectiveScore)
+  const pct = Math.round(Math.max(0, Math.min(1, effectiveScore)) * 100)
 
   const positions = [member.position, member.secondary_position]
     .filter((v, i, self): v is string => Boolean(v) && self.findIndex((x) => x === v) === i)
@@ -341,7 +346,9 @@ export function CandidatePreviewSheet({ member, matchScore = 0, onClose }: Candi
           </div>
 
           <div className="space-y-3 p-4">
-            {/* ── RECRUITER MATCH + WHY ── */}
+            {/* ── RECRUITER MATCH + WHY ── (only when a scope actually
+                produces a fit — guards the rare no-context open). */}
+            {(fit.isApplicable || matchScore > 0) && (
             <div className="rounded-xl border border-[#8026FA]/15 bg-[#8026FA]/[0.03] p-3.5">
               {scope && (
                 <div className="mb-2 flex items-center gap-1.5 text-[11px] text-gray-500">
@@ -376,6 +383,7 @@ export function CandidatePreviewSheet({ member, matchScore = 0, onClose }: Candi
                 </ul>
               )}
             </div>
+            )}
 
             {/* ── CURRENT HOCKEY CONTEXT ── */}
             <div className="rounded-xl border border-gray-200 p-3.5">
