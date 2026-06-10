@@ -865,7 +865,11 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
         <>
           <div className={playerMatchActive
             ? 'grid grid-cols-2 auto-rows-fr gap-3 sm:gap-4 mb-6 sm:mb-8'
-            : 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 auto-rows-fr gap-3 sm:gap-4 mb-6 sm:mb-8'}>
+            // No-context grid: items-start lets each tile size to its own
+            // content (no forced equal height), so a sparse card never looks
+            // half-empty next to a richer one. Footers won't line up across a
+            // row, but no card gapes.
+            : 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 items-start gap-3 sm:gap-4 mb-6 sm:mb-8'}>
             {displayedMembers.map((member) => {
               // Scoped recruiter view → the premium evaluation card for
               // players we have a match for; everyone else keeps the
