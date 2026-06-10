@@ -15,6 +15,7 @@ import { isAuthExpiredError } from '@/lib/sentryHelpers'
 import { isOpenToAny } from '@/lib/hockeyCategories'
 import { MemberTileSkeleton } from '@/components/Skeleton'
 import { MemberPreviewModal } from './MemberPreviewModal'
+import { CandidatePreviewSheet } from '@/components/recruiting/CandidatePreviewSheet'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { computeClubFit, type ClubFitState } from '@/lib/clubFit'
@@ -194,6 +195,8 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
   const [allMembers, setAllMembers] = useState<Profile[]>([])
   const [displayedMembers, setDisplayedMembers] = useState<Profile[]>([])
   const [previewMember, setPreviewMember] = useState<Profile | null>(null)
+  // For recruiter candidate evaluation: track the member + their match score for the lightweight preview sheet
+  const [candidatePreview, setCandidatePreview] = useState<{ member: Profile; score: number } | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSearching, setIsSearching] = useState(false)
   const [page, setPage] = usePageState('community-page', 1)
@@ -882,7 +885,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
                     member={member}
                     matchScore={md.score}
                     matchState={md.state}
-                    onPreview={() => setPreviewMember(member)}
+                    onPreview={() => setCandidatePreview({ member, score: md.score })}
                   />
                 )
               }
@@ -946,6 +949,12 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
       <MemberPreviewModal
         member={previewMember}
         onClose={() => setPreviewMember(null)}
+      />
+
+      <CandidatePreviewSheet
+        member={candidatePreview?.member ?? null}
+        matchScore={candidatePreview?.score ?? 0}
+        onClose={() => setCandidatePreview(null)}
       />
     </div>
   )
