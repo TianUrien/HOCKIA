@@ -280,11 +280,11 @@ export default function MemberTile(props: MemberTileProps) {
 
   return (
     <>
-      <div className="flex flex-col h-full bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-md hover:border-gray-300 transition-all">
+      <div className="flex flex-col bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-md hover:border-gray-300 transition-all">
       <button
         type="button"
         onClick={handleClick}
-        className="group block w-full text-left flex-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8026FA] focus-visible:ring-offset-2"
+        className="group block w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8026FA] focus-visible:ring-offset-2"
         aria-label={(() => {
           const name = props.full_name?.trim() ?? ''
           const pct = props.profileCompletenessPct
@@ -362,21 +362,15 @@ export default function MemberTile(props: MemberTileProps) {
             <ClubFitChip kind="coach" fitResult={coachFit} />
           </div>
 
-          {/* Proven lens (Increment #1, expandable in Phase 2) —
-              recruiter-only evidence pill + glanceable facts; tap to open
-              the full present/missing checklist. Renders nothing for
-              non-recruiter viewers or candidates with no evidence. */}
-          <EvidenceSignal result={evidence} checklist={evidenceChecklistRows} />
-
-          {/* Interested lens (Increment #2.2) — recruiter + active-scope
-              only; renders nothing otherwise. */}
-          <InterestSignal result={interest} variant="compact" />
-
-          {/* Row 3: nationality — compact single-line code mode
-              ("🇳🇱 NLD · 🇦🇷 ARG · EU"). Single line keeps cards in the grid
-              aligned (dual nationality no longer wraps to a 2nd row). */}
-          {(props.nationality_country_id || props.nationality) && (
-            <div className="text-xs text-gray-600">
+          {/* Nationality — directly under the role tag and ALWAYS one
+              reserved line, so the avatar → name → role → nationality block
+              holds the SAME vertical positions on every card regardless of
+              role. A club/umpire with less data lines up with a player;
+              role-specific detail (evidence, club/league) sits below and
+              never shifts these key rows. Compact single-line code mode
+              ("🇳🇱 NLD · 🇦🇷 ARG · EU"). */}
+          <div className="flex h-5 items-center overflow-hidden text-xs text-gray-600">
+            {(props.nationality_country_id || props.nationality) ? (
               <DualNationalityDisplay
                 primaryCountryId={props.nationality_country_id}
                 secondaryCountryId={props.nationality2_country_id}
@@ -384,8 +378,17 @@ export default function MemberTile(props: MemberTileProps) {
                 mode="code"
                 className="text-gray-600"
               />
-            </div>
-          )}
+            ) : null}
+          </div>
+
+          {/* ── Role-specific detail BELOW the aligned block — may differ or
+              be absent by role; never shifts the key rows above. ── */}
+
+          {/* Proven lens — recruiter-only evidence pill (tap to expand). */}
+          <EvidenceSignal result={evidence} checklist={evidenceChecklistRows} />
+
+          {/* Interested lens — recruiter + active-scope only. */}
+          <InterestSignal result={interest} variant="compact" />
 
           {/* P1.4 Hockey context line — players only (club ·
               competition · position with per-segment "Not added yet"
