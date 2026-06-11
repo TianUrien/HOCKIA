@@ -126,7 +126,7 @@ function computePlayerSignals(p: Profile): ProfileSnapshotSignal[] {
     },
     {
       id: 'journey',
-      label: 'Career journey',
+      label: 'Career history',
       present: careerCount > 0,
       detail: careerCount > 0 ? pluralize(careerCount, 'entry', 'entries') : undefined,
       ownerActionId: 'tab:journey',
@@ -180,7 +180,7 @@ function computeCoachSignals(p: Profile): ProfileSnapshotSignal[] {
     },
     {
       id: 'journey',
-      label: 'Career journey',
+      label: 'Career history',
       present: careerCount > 0,
       detail: careerCount > 0 ? pluralize(careerCount, 'entry', 'entries') : undefined,
       ownerActionId: 'tab:journey',

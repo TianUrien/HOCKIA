@@ -626,11 +626,11 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     const useContextFit = applyContextFit && !!contextTarget
     // Phase 2C — coach-fit ranking. A coach opportunity carries no gender,
     // so contextTarget (category) is null and the player path won't fire for
-    // it. Detect a coach scope that names a specific coaching role and rank
-    // coaches by coach fit instead. (Category may be null; coach fit is
-    // specialization-first.)
+    // it. ANY active coach scope ranks coaches by Coach Fit (no specific role
+    // required — computeCoachFit falls back to category + track record when
+    // the scope names no specialization, mirroring the player path).
     const useCoachContextFit =
-      applyContextFit && contextTargetRole === 'coach' && Boolean(contextTargetPosition)
+      applyContextFit && contextTargetRole === 'coach'
     if (sort === 'newest' && currentUserProfile && (useContextFit || useCoachContextFit)) {
       const viewerCtx = {
         role: currentUserProfile.role,
@@ -781,14 +781,14 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     return map
   }, [playerMatchActive, currentUserProfile, filteredMembers, contextTarget, contextTargetRole, contextTargetPosition, contextTargetSpecialists, interestScopeOptions, hasOpeningScope, contextProblem])
 
-  // Coach equivalent of playerMatchActive — a COACH scope that names a
-  // specific coaching role (target_position carries the coach enum) ranks
-  // coaches by Coach Fit, so the recruiter card should render for coaches too.
-  // Without a sought role there's nothing to rank specialization on, so the
-  // enhanced card stays off (coaches keep the neutral tile — no misleading
-  // match), mirroring computeCoachFit's applicability contract.
+  // Coach equivalent of playerMatchActive — ANY active COACH scope ranks
+  // coaches by Coach Fit, so the recruiter card renders for coaches just like
+  // players. When the scope names a specific coaching role (target_position
+  // carries the coach enum) it drives specialization match; when it doesn't,
+  // computeCoachFit falls back to a neutral fit on category + track record so
+  // coaches still get a verdict (no longer gated on a sought role).
   const coachMatchActive =
-    applyContextFit && contextTargetRole === 'coach' && Boolean(contextTargetPosition)
+    applyContextFit && contextTargetRole === 'coach'
 
   // The FULL recruiter verdict per scoped coach — same synthesis as the
   // player path (Coach Fit + Proven evidence + Interested), so coach cards

@@ -140,7 +140,7 @@ describe('JourneyTab', () => {
   it('validates required fields and saves a new entry', async () => {
     renderJourneyTab()
 
-    const addButtons = await screen.findAllByRole('button', { name: /add journey entry/i })
+    const addButtons = await screen.findAllByRole('button', { name: /add entry/i })
     await user.click(addButtons[0])
 
     const saveButton = await screen.findByRole('button', { name: /save entry/i })
@@ -164,7 +164,7 @@ describe('JourneyTab', () => {
       entry_type: 'club',
       start_date: expect.any(String),
     })
-    expect(addToast).toHaveBeenCalledWith('Journey entry saved.', 'success')
+    expect(addToast).toHaveBeenCalledWith('Entry saved.', 'success')
   })
 
   it('edits an existing entry and updates Supabase', async () => {
@@ -207,6 +207,6 @@ describe('JourneyTab', () => {
     })
 
     expect(journeySupabase.updateSpy.mock.calls[0][0]).toMatchObject({ club_name: 'Brussels Wolves Elite' })
-    expect(addToast).toHaveBeenCalledWith('Journey entry saved.', 'success')
+    expect(addToast).toHaveBeenCalledWith('Entry saved.', 'success')
   })
 })

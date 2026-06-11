@@ -63,7 +63,7 @@ const FUNNEL_STEPS: FunnelStep[] = [
   { key: 'onboarding_completed', label: 'Onboarding Complete', icon: UserCheck, color: 'blue' },
   { key: 'has_avatar', label: 'Has Avatar', icon: Image, color: 'indigo' },
   { key: 'has_video', label: 'Has Video Highlight', icon: Video, color: 'violet' },
-  { key: 'has_journey_entry', label: 'Has Journey Entry', icon: FileText, color: 'pink' },
+  { key: 'has_journey_entry', label: 'Has Career Entry', icon: FileText, color: 'pink' },
   { key: 'has_gallery_photo', label: 'Has Gallery Photo', icon: Image, color: 'rose' },
   { key: 'applied_to_vacancy', label: 'Applied to Vacancy', icon: FileText, color: 'green' },
 ]

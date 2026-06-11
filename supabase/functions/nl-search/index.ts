@@ -496,8 +496,8 @@ function buildProfileHighlights(
     }
   }
 
-  // 6. Journey depth.
-  if (career.length >= 3) add(`${career.length} Journey entries`)
+  // 6. Career history depth.
+  if (career.length >= 3) add(`${career.length} career history entries`)
 
   // 7. Open to new opportunities.
   if (result.open_to_opportunities) add('Open to new opportunities')

@@ -3,10 +3,13 @@
  *
  * Contract:
  *   - NOT_APPLICABLE unless: viewer is club/coach, candidate is a coach,
- *     scope seeks a coach (targetRole === 'coach'), AND a specific coaching
- *     role is sought (targetSpecialization set).
- *   - Specialization is the dominant signal (0.8); category is a tiebreak
- *     (0.2). Vocabularies are aligned by stripping a trailing '_coach'.
+ *     and the scope seeks a coach (targetRole === 'coach').
+ *   - When a specific coaching role IS sought, specialization is the dominant
+ *     signal (0.8) + category a tiebreak (0.2). When NONE is sought (an open
+ *     coach search) the fit falls back to category + a neutral default so
+ *     coaches still get a verdict (parity with the player path) — never
+ *     penalized to grey unless they genuinely coach a different category.
+ *   - Vocabularies are aligned by stripping a trailing '_coach'.
  *   - State thresholds match Club Fit: green ≥ 0.66, yellow ≥ 0.40.
  */
 
@@ -43,8 +46,32 @@ describe('computeCoachFit', () => {
     expect(computeCoachFit(club, headCoach, { ...COACH_SCOPE, targetRole: 'player' }).isApplicable).toBe(false)
   })
 
-  it('NOT_APPLICABLE when no specific coaching role is sought', () => {
-    expect(computeCoachFit(club, headCoach, { ...COACH_SCOPE, targetSpecialization: null }).isApplicable).toBe(false)
+  it('open coach search (no role sought) is APPLICABLE and leans on category', () => {
+    // headCoach coaches adult_men; an open Men's scope → category match → green.
+    const openScope = { targetRole: 'coach', targetSpecialization: null, overrideTarget: 'Men' as const }
+    const r = computeCoachFit(club, headCoach, openScope)
+    expect(r.isApplicable).toBe(true)
+    expect(r.components.specialization_match).toBe(0)
+    expect(r.components.category_match).toBe(1)
+    expect(r.state).toBe('green')
+  })
+
+  it('open coach search with no category target → neutral yellow (never grey)', () => {
+    // Nothing to rank on → neutral fit so the verdict leans on evidence +
+    // interest (a coach must still be reachable as Pursue/Worth considering).
+    const openScope = { targetRole: 'coach', targetSpecialization: null, overrideTarget: null }
+    const r = computeCoachFit(club, headCoach, openScope)
+    expect(r.isApplicable).toBe(true)
+    expect(r.state).toBe('yellow')
+  })
+
+  it('open coach search + genuine category mismatch → grey', () => {
+    // Coach lists only women's categories; open Men's scope → real mismatch.
+    const womensCoach = { ...headCoach, coaching_categories: ['adult_women'] }
+    const openScope = { targetRole: 'coach', targetSpecialization: null, overrideTarget: 'Men' as const }
+    const r = computeCoachFit(club, womensCoach, openScope)
+    expect(r.isApplicable).toBe(true)
+    expect(r.state).toBe('grey')
   })
 
   it('specialization match + category match → strong (green, 1.0)', () => {

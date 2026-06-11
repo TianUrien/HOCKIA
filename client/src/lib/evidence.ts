@@ -217,10 +217,10 @@ export function evidenceChecklist(
   })
   rows.push({ key: 'club', label: 'Current club', present: Boolean(candidate.current_world_club_id || candidate.current_club?.trim()) })
   rows.push({ key: 'league', label: 'League on record', present: candidate.competition_level_band != null })
-  // Labelled "Journey" to match the product language used on the full
-  // profile (JourneyTab/JourneyCard) — same data (career_history /
-  // career_entry_count), one consistent name across surfaces.
-  rows.push({ key: 'career', label: 'Journey', present: (candidate.career_entry_count ?? 0) > 0 })
+  // Labelled "Career History" — the recruiter-facing product language used
+  // across HOCKIA (matches the data: career_history / career_entry_count).
+  // The row KEY stays 'career'; only the display label is user-facing.
+  rows.push({ key: 'career', label: 'Career History', present: (candidate.career_entry_count ?? 0) > 0 })
   rows.push({
     key: 'open',
     label: isCoach ? 'Open to coach' : 'Open to play',

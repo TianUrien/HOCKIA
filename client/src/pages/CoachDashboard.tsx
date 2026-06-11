@@ -183,7 +183,7 @@ export default function CoachDashboard({
   const ownerTabTitle: Record<TabType, string> = {
     profile: 'Coach dashboard',
     media: 'Media',
-    journey: 'Journey',
+    journey: 'Career History',
     references: 'References',
     friends: 'Connections',
     comments: 'Comments',
@@ -194,7 +194,7 @@ export default function CoachDashboard({
   const visitorTabSuffix: Record<TabType, string | null> = {
     profile: null,
     media: 'Media',
-    journey: 'Journey',
+    journey: 'Career History',
     references: 'References',
     friends: 'Connections',
     comments: 'Comments',
@@ -673,7 +673,7 @@ export default function CoachDashboard({
                   <JourneyTab
                     profileId={profile.id}
                     readOnly={readOnly}
-                    {...(readOnly ? { variant: 'inline' as const, title: 'Journey' } : {})}
+                    {...(readOnly ? { variant: 'inline' as const, title: 'Career History' } : {})}
                   />
                 </div>
               )}

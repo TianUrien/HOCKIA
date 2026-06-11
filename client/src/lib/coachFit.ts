@@ -170,8 +170,11 @@ export function computeCoachFit(
 
   const target = options?.overrideTarget ?? null
   const soughtSpec = normalizeSpec(options?.targetSpecialization)
-  // No specific coaching role sought → nothing to rank specialization on.
-  if (!soughtSpec) return NOT_APPLICABLE
+  // An "open" coach search (no specific role named) is still a valid recruiter
+  // context — we just can't rank on specialization, so the verdict leans on
+  // team category + the candidate's track record + availability instead. This
+  // mirrors the player path, which never requires a position to produce a fit.
+  const hasSpecTarget = Boolean(soughtSpec)
 
   const reasons: string[] = []
   const positives: string[] = []
@@ -182,19 +185,26 @@ export function computeCoachFit(
     else if (tone === 'caveat') caveats.push(text)
   }
 
-  // ── Specialization match (dominant signal) ──
-  const candidateSpec = normalizeSpec(candidate.coach_specialization)
-  const specialization_match = candidateSpec && candidateSpec === soughtSpec ? 1 : 0
-  const soughtLabel = humanizeCoachSpecialization(options!.targetSpecialization!)
-  if (specialization_match === 1) {
-    pushReason(`Specializes as ${soughtLabel} — matches the role you're recruiting.`, 'positive')
-  } else if (candidate.coach_specialization) {
-    pushReason(
-      `Specializes as ${humanizeCoachSpecialization(candidate.coach_specialization)} — not ${soughtLabel}.`,
-      'caveat',
-    )
+  // ── Specialization match (dominant signal — only when a role is sought) ──
+  let specialization_match = 0
+  if (hasSpecTarget) {
+    const candidateSpec = normalizeSpec(candidate.coach_specialization)
+    specialization_match = candidateSpec && candidateSpec === soughtSpec ? 1 : 0
+    const soughtLabel = humanizeCoachSpecialization(options!.targetSpecialization!)
+    if (specialization_match === 1) {
+      pushReason(`Specializes as ${soughtLabel} — matches the role you're recruiting.`, 'positive')
+    } else if (candidate.coach_specialization) {
+      pushReason(
+        `Specializes as ${humanizeCoachSpecialization(candidate.coach_specialization)} — not ${soughtLabel}.`,
+        'caveat',
+      )
+    } else {
+      pushReason('Coaching specialization not added yet — no role match info.')
+    }
   } else {
-    pushReason('Coaching specialization not added yet — no role match info.')
+    // Open coach search — no role to rank on. Neutral note (NOT a caveat —
+    // the recruiter didn't ask for a specific role).
+    pushReason('Open coach search — ranked on team category, track record, and availability.')
   }
 
   // ── Category match (tiebreak) ──
@@ -215,12 +225,28 @@ export function computeCoachFit(
     }
   }
 
-  const score = WEIGHTS.specialization * specialization_match + WEIGHTS.category * category_match
-
+  let score: number
   let state: CoachFitState
-  if (score >= STATE_THRESHOLDS.green) state = 'green'
-  else if (score >= STATE_THRESHOLDS.yellow) state = 'yellow'
-  else state = 'grey'
+  if (hasSpecTarget) {
+    score = WEIGHTS.specialization * specialization_match + WEIGHTS.category * category_match
+    state = score >= STATE_THRESHOLDS.green ? 'green' : score >= STATE_THRESHOLDS.yellow ? 'yellow' : 'grey'
+  } else {
+    // No role sought: never penalize to 'grey' (which caps the verdict at
+    // longshot). Category is a soft signal; neutral 'yellow' when there's
+    // nothing to rank on, so the verdict leans on evidence + interest.
+    if (target && category_match === 1) {
+      state = 'green'
+      score = 0.8
+    } else if (target && Array.isArray(candidate.coaching_categories) && candidate.coaching_categories.length > 0) {
+      // A genuine category mismatch (coach lists categories, none match) is a
+      // real fit concern.
+      state = 'grey'
+      score = 0.2
+    } else {
+      state = 'yellow'
+      score = 0.5
+    }
+  }
 
   return {
     isApplicable: true,

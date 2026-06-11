@@ -66,18 +66,18 @@ import JourneyTab from '@/components/JourneyTab'
 describe('JourneyTab — inline + readOnly empty-state suppression', () => {
   it('renders nothing when there are no entries (inline + readOnly)', async () => {
     const { container } = render(
-      <JourneyTab profileId="profile-1" readOnly variant="inline" title="Journey" />
+      <JourneyTab profileId="profile-1" readOnly variant="inline" title="Career History" />
     )
 
     // After the supabase fetch resolves with an empty list, the
-    // inline+readOnly branch returns null. There should be no "Journey"
+    // inline+readOnly branch returns null. There should be no "Career History"
     // heading anywhere in the rendered output.
     await waitFor(() => {
-      expect(screen.queryByRole('heading', { name: /^journey$/i })).toBeNull()
+      expect(screen.queryByRole('heading', { name: /^career history$/i })).toBeNull()
     })
 
     // Container should be empty (or render only the wrapper React adds).
-    expect(container.textContent ?? '').not.toMatch(/journey/i)
+    expect(container.textContent ?? '').not.toMatch(/career history/i)
   })
 
   it('still renders the heading in tab variant (default)', async () => {
@@ -88,7 +88,7 @@ describe('JourneyTab — inline + readOnly empty-state suppression', () => {
     // In tab mode, the heading shows even when empty (existing behavior —
     // empty-state placeholder lives below the heading).
     await waitFor(() => {
-      expect(screen.queryByRole('heading', { name: /^journey$/i })).not.toBeNull()
+      expect(screen.queryByRole('heading', { name: /^career history$/i })).not.toBeNull()
     })
   })
 })
