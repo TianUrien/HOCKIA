@@ -183,6 +183,24 @@ export function CandidatePreviewSheet({ member, onClose }: CandidatePreviewSheet
   useBodyScrollLock(member !== null)
   useFocusTrap({ containerRef: contentRef, isActive: member !== null })
 
+  // Animated exit — keep the sheet rendered through a slide-out by deferring
+  // the parent's onClose until the animation finishes, so it animates OUT
+  // instead of vanishing. (member stays non-null during the 200ms, so the
+  // content + scroll-lock + focus-trap hold through the exit.) Drag-dismiss
+  // keeps calling onClose directly — the drag gesture IS the exit.
+  const [closing, setClosing] = useState(false)
+  const closeTimerRef = useRef<number | null>(null)
+  const requestClose = useCallback(() => {
+    if (closing) return
+    setClosing(true)
+    const reduce =
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    closeTimerRef.current = window.setTimeout(() => onClose(), reduce ? 0 : 200)
+  }, [closing, onClose])
+  useEffect(() => () => { if (closeTimerRef.current) window.clearTimeout(closeTimerRef.current) }, [])
+
   // Drag-to-dismiss (mobile bottom-sheet). Touch-only, so naturally no-ops on
   // desktop; the width gate guards touch tablets in the centered layout.
   const [translateY, setTranslateY] = useState(0)
@@ -191,6 +209,7 @@ export function CandidatePreviewSheet({ member, onClose }: CandidatePreviewSheet
   useEffect(() => {
     setTranslateY(0)
     setIsDragging(false)
+    setClosing(false)
   }, [member?.id])
 
   const handleDragStart = (e: React.TouchEvent<HTMLDivElement>) => {
@@ -213,11 +232,11 @@ export function CandidatePreviewSheet({ member, onClose }: CandidatePreviewSheet
   useEffect(() => {
     if (!member) return
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape') requestClose()
     }
     document.addEventListener('keydown', handleKey)
     return () => document.removeEventListener('keydown', handleKey)
-  }, [member, onClose])
+  }, [member, requestClose])
 
   // Analytics: fire profile_preview (NON-notifying) on open, never
   // profile_view. Keeps the recruiter's peek private until they escalate.
@@ -312,7 +331,7 @@ export function CandidatePreviewSheet({ member, onClose }: CandidatePreviewSheet
   return (
     <>
       {/* Backdrop */}
-      <div className="fixed inset-0 z-40 bg-black/50 animate-fade-in" onClick={onClose} aria-hidden="true" />
+      <div className={`fixed inset-0 z-40 bg-black/50 ${closing ? 'animate-fade-out' : 'animate-fade-in'}`} onClick={requestClose} aria-hidden="true" />
 
       {/* Sheet — bottom on mobile, right-docked panel on desktop */}
       <div
@@ -324,7 +343,7 @@ export function CandidatePreviewSheet({ member, onClose }: CandidatePreviewSheet
         <div
           ref={contentRef}
           tabIndex={-1}
-          className="pointer-events-auto relative w-full md:max-w-md bg-white rounded-t-2xl md:rounded-2xl shadow-2xl max-h-[92vh] md:max-h-[88vh] overflow-y-auto animate-slide-in-up"
+          className={`pointer-events-auto relative w-full md:max-w-md bg-white rounded-t-2xl md:rounded-2xl shadow-2xl max-h-[92vh] md:max-h-[88vh] overflow-y-auto ${closing ? 'animate-slide-out-down' : 'animate-slide-in-up'}`}
           onClick={(e) => e.stopPropagation()}
           style={{
             transform: translateY > 0 ? `translateY(${translateY}px)` : undefined,
@@ -346,8 +365,8 @@ export function CandidatePreviewSheet({ member, onClose }: CandidatePreviewSheet
               <h2 id="candidate-preview-name" className="text-sm font-semibold text-gray-900">Candidate preview</h2>
               <button
                 type="button"
-                onClick={onClose}
-                className="-mr-1 flex h-8 w-8 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 transition-colors"
+                onClick={requestClose}
+                className="-mr-1 flex h-8 w-8 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 transition-colors active:scale-95"
                 aria-label="Close preview"
               >
                 <X className="h-4 w-4" />

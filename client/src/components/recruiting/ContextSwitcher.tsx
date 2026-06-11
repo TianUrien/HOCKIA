@@ -93,7 +93,7 @@ export default function ContextSwitcher({ className = '' }: ContextSwitcherProps
         onClick={() => setSheetOpen(true)}
         className={[
           'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full min-w-0',
-          'text-xs font-medium border transition-colors',
+          'text-xs font-medium border transition active:scale-[0.97]',
           isEmpty
             ? 'border-dashed border-gray-300 text-gray-600 hover:border-[#8026FA]/50 hover:text-[#8026FA] hover:bg-[#8026FA]/5'
             : 'border-[#8026FA]/30 bg-[#8026FA]/5 text-[#8026FA] hover:bg-[#8026FA]/10',
@@ -103,17 +103,21 @@ export default function ContextSwitcher({ className = '' }: ContextSwitcherProps
         aria-label={isEmpty ? ariaEmpty : `Recruiting context: ${summary}. Tap to change or clear.`}
       >
         <Target className="w-3.5 h-3.5 flex-shrink-0" />
-        {isEmpty ? (
-          <span>
-            {emptyLabel}
-            {emptyHint && <span className="text-gray-400"> {emptyHint}</span>}
-          </span>
-        ) : (
-          <>
-            <span className="text-gray-500 flex-shrink-0">Scoped to:</span>
-            <span className="font-semibold truncate min-w-0" title={summary}>{summary}</span>
-          </>
-        )}
+        {/* Keyed so the label softly fades in when the scope swaps
+            (empty ↔ scoped, or context ↔ context) instead of hard-cutting. */}
+        <span key={isEmpty ? 'empty' : summary} className="inline-flex min-w-0 items-center gap-1.5 animate-fade-in">
+          {isEmpty ? (
+            <span>
+              {emptyLabel}
+              {emptyHint && <span className="text-gray-400"> {emptyHint}</span>}
+            </span>
+          ) : (
+            <>
+              <span className="text-gray-500 flex-shrink-0">Scoped to:</span>
+              <span className="font-semibold truncate min-w-0" title={summary}>{summary}</span>
+            </>
+          )}
+        </span>
         <ChevronDown className="w-3 h-3 opacity-60 flex-shrink-0" />
       </button>
       {!isEmpty && (
@@ -124,7 +128,7 @@ export default function ContextSwitcher({ className = '' }: ContextSwitcherProps
           className={[
             'inline-flex items-center gap-1 px-2 py-1.5 rounded-full',
             'text-[11px] font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100',
-            'transition-colors disabled:opacity-50',
+            'transition active:scale-95 disabled:opacity-50',
             'focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-300',
           ].join(' ')}
           aria-label="Clear active recruiting context"

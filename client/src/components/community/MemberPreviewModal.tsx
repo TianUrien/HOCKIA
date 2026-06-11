@@ -113,12 +113,29 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
   const [isDragging, setIsDragging] = useState(false)
   const dragStartYRef = useRef(0)
 
-  // Reset drag state whenever the modal opens for a new member or closes.
-  // Resetting on close is a no-op (component returns null) but keeps the
-  // effect simple and lint-clean.
+  // Animated exit — defer the parent's onClose until the slide-out plays so
+  // the sheet animates OUT instead of vanishing. Drag-dismiss keeps calling
+  // onClose directly; the drag gesture is the exit.
+  const [closing, setClosing] = useState(false)
+  const closeTimerRef = useRef<number | null>(null)
+  const requestClose = useCallback(() => {
+    if (closing) return
+    setClosing(true)
+    const reduce =
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    closeTimerRef.current = window.setTimeout(() => onClose(), reduce ? 0 : 200)
+  }, [closing, onClose])
+  useEffect(() => () => { if (closeTimerRef.current) window.clearTimeout(closeTimerRef.current) }, [])
+
+  // Reset drag + closing state whenever the modal opens for a new member or
+  // closes. Resetting on close is a no-op (component returns null) but keeps
+  // the effect simple and lint-clean.
   useEffect(() => {
     setTranslateY(0)
     setIsDragging(false)
+    setClosing(false)
   }, [member?.id])
 
   const handleDragStart = (e: React.TouchEvent<HTMLDivElement>) => {
@@ -185,13 +202,13 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
   useEffect(() => {
     if (!member) return
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape') requestClose()
     }
     document.addEventListener('keydown', handleKey)
     return () => {
       document.removeEventListener('keydown', handleKey)
     }
-  }, [member, onClose])
+  }, [member, requestClose])
 
   if (!member) return null
 
@@ -289,8 +306,8 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 z-40 bg-black/50 animate-fade-in"
-        onClick={onClose}
+        className={`fixed inset-0 z-40 bg-black/50 ${closing ? 'animate-fade-out' : 'animate-fade-in'}`}
+        onClick={requestClose}
         aria-hidden="true"
       />
 
@@ -304,7 +321,7 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
         <div
           ref={contentRef}
           tabIndex={-1}
-          className="pointer-events-auto relative w-full md:max-w-md bg-white rounded-t-2xl md:rounded-2xl shadow-xl max-h-[90vh] overflow-y-auto animate-slide-in-up"
+          className={`pointer-events-auto relative w-full md:max-w-md bg-white rounded-t-2xl md:rounded-2xl shadow-xl max-h-[90vh] overflow-y-auto ${closing ? 'animate-slide-out-down' : 'animate-slide-in-up'}`}
           onClick={e => e.stopPropagation()}
           style={{
             transform: translateY > 0 ? `translateY(${translateY}px)` : undefined,
@@ -338,8 +355,8 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
                 clutters the hero image area. */}
             <button
               type="button"
-              onClick={onClose}
-              className="absolute top-2.5 right-3 w-9 h-9 rounded-full bg-white shadow-md ring-1 ring-gray-200 flex items-center justify-center text-gray-900 hover:bg-gray-50 active:bg-gray-100 transition-colors"
+              onClick={requestClose}
+              className="absolute top-2.5 right-3 w-9 h-9 rounded-full bg-white shadow-md ring-1 ring-gray-200 flex items-center justify-center text-gray-900 hover:bg-gray-50 active:bg-gray-100 transition-colors active:scale-95"
               aria-label="Close preview"
             >
               <X className="w-4 h-4" strokeWidth={2.5} />

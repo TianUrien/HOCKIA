@@ -557,18 +557,22 @@ export default function CommunityPage() {
               {scopedRole && (
                 <div className="mb-3 flex items-center justify-between gap-3 rounded-xl border border-[#8026FA]/20 bg-[#8026FA]/[0.04] px-4 py-2.5">
                   <p className="min-w-0 text-xs text-gray-700">
-                    {scopeReshaping ? (
-                      <>
-                        Showing <span className="font-semibold">{scopedRole === 'coach' ? 'coaches' : 'players'}</span> ranked for your recruiting scope.
-                      </>
-                    ) : (
-                      <>Showing everyone — your scope still personalises ranking.</>
-                    )}
+                    {/* Keyed so the banner copy crossfades when toggling between
+                        scoped and everyone, instead of snapping. */}
+                    <span key={scopeReshaping ? 'scoped' : 'everyone'} className="inline-block animate-fade-in">
+                      {scopeReshaping ? (
+                        <>
+                          Showing <span className="font-semibold">{scopedRole === 'coach' ? 'coaches' : 'players'}</span> ranked for your recruiting scope.
+                        </>
+                      ) : (
+                        <>Showing everyone — your scope still personalises ranking.</>
+                      )}
+                    </span>
                   </p>
                   <button
                     type="button"
                     onClick={() => setShowEveryone((v) => !v)}
-                    className="flex-shrink-0 whitespace-nowrap text-xs font-semibold text-[#8026FA] hover:underline"
+                    className="flex-shrink-0 whitespace-nowrap text-xs font-semibold text-[#8026FA] transition active:scale-95 hover:underline"
                   >
                     {scopeReshaping ? 'Show everyone' : `Show ${scopedRole === 'coach' ? 'coaches' : 'players'} only`}
                   </button>
