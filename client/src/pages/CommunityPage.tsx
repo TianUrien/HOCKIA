@@ -481,43 +481,65 @@ export default function CommunityPage() {
                   by the SOUGHT ROLE (coach-scope → featured coaches,
                   player-scope → featured players) — matching All Members.
                   Otherwise the existing theme/role-tab behaviour applies. */}
-              {!isNarrowed && scopeReshaping && (
-                <TopCommunityMembersCarousel
-                  key={`scoped-${scopedRole}-${refreshKey}`}
-                  roleFilter={scopedRole!}
-                  sortCriterion={scopedRole === 'player' ? 'availability_activity' : 'completeness'}
-                  title={scopedRole === 'coach' ? 'Top coaches for your search' : 'Top players for your search'}
-                  subtitle="Ranked for your active recruiting scope"
-                  filterPlayingCategories={filterPlayingCategories}
-                  onViewAll={handleViewAllScroll}
-                  showEvidence
-                  // Tapping a candidate whose role matches the scope opens the
-                  // rich recruiter evaluation sheet (player OR coach), mirroring
-                  // the All-Members grid.
-                  scopedRecruiterRole={scopedRole}
-                />
-              )}
-              {!isNarrowed && !scopeReshaping && activeTab === 'all' && (
-                <TopCommunityMembersCarousel
-                  key={`featured-${themeIndex}-${refreshKey}`}
-                  roleFilter={featured.lane}
-                  sortCriterion={featured.criterion}
-                  onlyOpen={featured.onlyOpen}
-                  title={featured.title}
-                  subtitle={featured.subtitle}
-                  filterPlayingCategories={filterPlayingCategories}
-                  onViewAll={handleViewAllScroll}
-                />
-              )}
-              {!isNarrowed && !scopeReshaping && activeTab !== 'all' && memberRoleFilter && (
-                <TopCommunityMembersCarousel
-                  key={`top-${activeTab}-${refreshKey}`}
-                  roleFilter={memberRoleFilter}
-                  sortCriterion={memberRoleFilter === 'player' ? 'availability_activity' : 'completeness'}
-                  filterPlayingCategories={filterPlayingCategories}
-                  onViewAll={handleViewAllScroll}
-                />
-              )}
+              {/* Featured ↔ scoped carousel swap. Wrapped + keyed so the new
+                  lane FADES IN on a context/tab change instead of hard-cutting
+                  (Phase 3). The wrapper key excludes refreshKey so a pull-to-
+                  refresh doesn't re-fade; the inner carousels keep their own
+                  keys for fetch/refresh remounts. The carousel's own mb-6
+                  margin collapses through the (border/padding-free) wrapper, so
+                  spacing to "All members" is unchanged. animate-fade-in is
+                  opacity-only and already collapses to ~0ms under
+                  prefers-reduced-motion. */}
+              <div
+                key={
+                  isNarrowed
+                    ? 'carousel-narrowed'
+                    : scopeReshaping
+                      ? `carousel-scoped-${scopedRole}`
+                      : activeTab === 'all'
+                        ? `carousel-featured-${themeIndex}`
+                        : `carousel-top-${activeTab}`
+                }
+                className="animate-fade-in"
+              >
+                {!isNarrowed && scopeReshaping && (
+                  <TopCommunityMembersCarousel
+                    key={`scoped-${scopedRole}-${refreshKey}`}
+                    roleFilter={scopedRole!}
+                    sortCriterion={scopedRole === 'player' ? 'availability_activity' : 'completeness'}
+                    title={scopedRole === 'coach' ? 'Top coaches for your search' : 'Top players for your search'}
+                    subtitle="Ranked for your active recruiting scope"
+                    filterPlayingCategories={filterPlayingCategories}
+                    onViewAll={handleViewAllScroll}
+                    showEvidence
+                    // Tapping a candidate whose role matches the scope opens the
+                    // rich recruiter evaluation sheet (player OR coach), mirroring
+                    // the All-Members grid.
+                    scopedRecruiterRole={scopedRole}
+                  />
+                )}
+                {!isNarrowed && !scopeReshaping && activeTab === 'all' && (
+                  <TopCommunityMembersCarousel
+                    key={`featured-${themeIndex}-${refreshKey}`}
+                    roleFilter={featured.lane}
+                    sortCriterion={featured.criterion}
+                    onlyOpen={featured.onlyOpen}
+                    title={featured.title}
+                    subtitle={featured.subtitle}
+                    filterPlayingCategories={filterPlayingCategories}
+                    onViewAll={handleViewAllScroll}
+                  />
+                )}
+                {!isNarrowed && !scopeReshaping && activeTab !== 'all' && memberRoleFilter && (
+                  <TopCommunityMembersCarousel
+                    key={`top-${activeTab}-${refreshKey}`}
+                    roleFilter={memberRoleFilter}
+                    sortCriterion={memberRoleFilter === 'player' ? 'availability_activity' : 'completeness'}
+                    filterPlayingCategories={filterPlayingCategories}
+                    onViewAll={handleViewAllScroll}
+                  />
+                )}
+              </div>
 
               {/* All Members section header. Count = filtered list size
                   when narrowing (search/OTO/drawer active), total
