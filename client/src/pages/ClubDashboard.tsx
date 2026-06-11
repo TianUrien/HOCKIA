@@ -16,6 +16,7 @@ import SignInPromptModal from '@/components/SignInPromptModal'
 import ClubHeroCard from '@/components/dashboard/bento/ClubHeroCard'
 import ContextSwitcher from '@/components/recruiting/ContextSwitcher'
 import ClubBentoGrid from '@/components/dashboard/bento/ClubBentoGrid'
+import RecruitmentSummaryCard from '@/components/dashboard/bento/RecruitmentSummaryCard'
 import { ProfileViewersSection } from '@/components/ProfileViewersSection'
 import type { Profile } from '@/lib/supabase'
 import { supabase } from '@/lib/supabase'
@@ -484,6 +485,18 @@ export default function ClubDashboard({
           onMembersClick={() => handleTabChange('members')}
           authProfileRole={authProfile?.role}
         />
+
+        {/* Recruitment gateway — club-only, owner-only. Sits right under the
+            hero so posting/managing roles is reachable without scrolling
+            past the profile cards (the full Posted Opportunities tile stays
+            lower as the detailed management surface). */}
+        {!readOnly && isLanding && (
+          <RecruitmentSummaryCard
+            ownerId={profile.id}
+            onCreateOpportunity={handleCreateOpportunity}
+            onManageOpportunities={() => handleTabChange('opportunities')}
+          />
+        )}
 
         {!readOnly && isLanding && (
           <div id="profile-viewers" className="scroll-mt-20">

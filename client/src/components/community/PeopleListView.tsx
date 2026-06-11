@@ -9,24 +9,35 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { Loader2 } from 'lucide-react'
 import { useNavigationType, Link } from 'react-router-dom'
 import { MemberTile } from '@/components'
+import RecruiterCandidateCard from '@/components/recruiting/RecruiterCandidateCard'
 import { logger } from '@/lib/logger'
 import { isAuthExpiredError } from '@/lib/sentryHelpers'
 import { isOpenToAny } from '@/lib/hockeyCategories'
 import { MemberTileSkeleton } from '@/components/Skeleton'
 import { MemberPreviewModal } from './MemberPreviewModal'
+import { CandidatePreviewSheet } from '@/components/recruiting/CandidatePreviewSheet'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { computeClubFit } from '@/lib/clubFit'
 import { computeCoachFit } from '@/lib/coachFit'
-import { deriveTargetCategory } from '@/lib/recruitingContext'
-import { useActiveRecruitingTarget, useActiveRecruitingTargetRole, useActiveRecruitingTargetPosition, useActiveRecruitingEuRequired, useActiveRecruitingTargetSpecialists } from '@/hooks/useRecruitingContext'
+import { computeEvidence } from '@/lib/evidence'
+import { computeInterest } from '@/lib/interestFit'
+import { computeRecruiterVerdict, type RecruiterVerdict } from '@/lib/recruiterVerdict'
+import {
+  useActiveRecruitingTarget, useActiveRecruitingTargetRole, useActiveRecruitingTargetPosition,
+  useActiveRecruitingEuRequired, useActiveRecruitingTargetSpecialists,
+  useActiveRecruitingTargetLocation, useActiveRecruitingTargetStartDate,
+  useActiveRecruitingTargetLevel, useActiveRecruitingTargetCompensation,
+  useHasActiveRecruitingScope, useActiveRecruitingTargetProblem,
+} from '@/hooks/useRecruitingContext'
 import { useCountries, isEuCountryCode } from '@/hooks/useCountries'
+import { categoryToBandTarget } from '@/hooks/useInterest'
 import { requestCache } from '@/lib/requestCache'
 import { monitor } from '@/lib/monitor'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { usePageState } from '@/hooks/usePageState'
 import { useScrollRestore } from '@/hooks/useScrollRestore'
-import { prefetchWorldClubLogos } from '@/hooks/useWorldClubLogo'
+import { prefetchWorldClubLogos, getClubLevelBand } from '@/hooks/useWorldClubLogo'
 import { getMemberTier } from '@/lib/profileTier'
 import { logSearchAppearances } from '@/lib/searchAppearances'
 import type { CommunityFiltersState } from './communityFilters'
@@ -176,6 +187,14 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
   const contextTargetRole = useActiveRecruitingTargetRole()
   const contextTargetPosition = useActiveRecruitingTargetPosition()
   const contextTargetSpecialists = useActiveRecruitingTargetSpecialists()
+  // Interested-lens + verdict scope inputs — the same values ScoutingCard and
+  // useInterest read, so the grid card's verdict matches the profile's exactly.
+  const contextTargetLocation = useActiveRecruitingTargetLocation()
+  const contextTargetStartDate = useActiveRecruitingTargetStartDate()
+  const contextTargetLevel = useActiveRecruitingTargetLevel()
+  const contextTargetCompensation = useActiveRecruitingTargetCompensation()
+  const hasOpeningScope = useHasActiveRecruitingScope()
+  const contextProblem = useActiveRecruitingTargetProblem()
   // Phase 2D — EU eligibility hard filter. When the active scope's linked
   // opportunity requires an EU passport, candidates whose declared
   // nationality is non-EU drop out of the scoped grid. Candidates with NO
@@ -183,7 +202,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
   // philosophy as opportunityEligibility.ts). Only applies while the scope
   // is reshaping the grid; widening to "Show everyone" lifts it.
   const euRequired = useActiveRecruitingEuRequired()
-  const { countries } = useCountries()
+  const { countries, getCountryById } = useCountries()
   const euCountryIds = useMemo(
     () => new Set(countries.filter((c) => isEuCountryCode(c.code)).map((c) => c.id)),
     [countries],
@@ -194,6 +213,8 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
   const [allMembers, setAllMembers] = useState<Profile[]>([])
   const [displayedMembers, setDisplayedMembers] = useState<Profile[]>([])
   const [previewMember, setPreviewMember] = useState<Profile | null>(null)
+  // For recruiter candidate evaluation: track the member + their match score for the lightweight preview sheet
+  const [candidatePreview, setCandidatePreview] = useState<{ member: Profile } | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSearching, setIsSearching] = useState(false)
   const [page, setPage] = usePageState('community-page', 1)
@@ -597,27 +618,20 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
       })
     }
 
-    // Club Fit ranking: re-order by Fit score descending. This fires in
-    // two modes, both only on the default 'newest' sort (explicit
-    // 'completeness' is respected as-is) and only for a viewer who has a
-    // derivable target:
-    //   1. Default — the implicit "show me relevant people" ranking,
-    //      scored against the viewer's OWN profile target.
-    //   2. Context-fit (applyContextFit) — the recruiter explicitly
-    //      ticked "Apply context to this list", so we score against
-    //      their ACTIVE recruiting context's target + role instead,
-    //      matching the per-card Fit chips. Nobody is hidden; sort only.
-    const profileTarget = deriveTargetCategory(currentUserProfile)
+    // Club Fit ranking: re-order by Fit score descending — ONLY when an
+    // active recruiting context exists. Fit/match needs a real need to match
+    // against, so with no context we leave the chosen sort (newest /
+    // completeness) untouched — the list is honestly "newest", not silently
+    // fit-ranked. (Mirrors useClubFit gating the per-card fit display.)
     const useContextFit = applyContextFit && !!contextTarget
-    const viewerTarget = useContextFit ? contextTarget : profileTarget
     // Phase 2C — coach-fit ranking. A coach opportunity carries no gender,
-    // so contextTarget (category) is null and the player path above won't
-    // fire for it. Detect a coach scope that names a specific coaching
-    // role and rank coaches by coach fit instead. (Category may be null;
-    // coach fit is specialization-first.)
+    // so contextTarget (category) is null and the player path won't fire for
+    // it. Detect a coach scope that names a specific coaching role and rank
+    // coaches by coach fit instead. (Category may be null; coach fit is
+    // specialization-first.)
     const useCoachContextFit =
       applyContextFit && contextTargetRole === 'coach' && Boolean(contextTargetPosition)
-    if (sort === 'newest' && currentUserProfile && (viewerTarget || useCoachContextFit)) {
+    if (sort === 'newest' && currentUserProfile && (useContextFit || useCoachContextFit)) {
       const viewerCtx = {
         role: currentUserProfile.role,
         womens_league_division: (currentUserProfile as { womens_league_division?: string | null }).womens_league_division ?? null,
@@ -676,6 +690,164 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
 
     return result
   }, [allMembers, filters, sort, currentUserProfile, applyContextFit, contextTarget, contextTargetRole, contextTargetPosition, contextTargetSpecialists, euFilterActive, euCountryIds])
+
+  // Recruiter Match is "active" only while an active scope ranks PLAYERS by
+  // fit — a coach scope ranks coaches, so the player match bar stays off.
+  const playerMatchActive =
+    applyContextFit && !!contextTarget && contextTargetRole !== 'coach'
+
+  // Interested-lens scope options — shared by the player + coach verdict
+  // builders. Identical to what useInterest injects, so the grid card's
+  // verdict matches the profile's (ScoutingCard) exactly.
+  const interestScopeOptions = useMemo(
+    () => ({
+      targetRole: contextTargetRole,
+      targetLocationCountry: contextTargetLocation,
+      targetStartDate: contextTargetStartDate,
+      targetLevel: contextTargetLevel,
+      targetCompensation: contextTargetCompensation,
+      countryName: (id: number) => getCountryById(id)?.name,
+    }),
+    [contextTargetRole, contextTargetLocation, contextTargetStartDate, contextTargetLevel, contextTargetCompensation, getCountryById],
+  )
+
+  // The FULL recruiter verdict per scoped player — the same explanation-led
+  // synthesis (Fit + Proven + Interested + recruitment problem) the profile's
+  // RecruiterVerdictCard leads with. Computed once here from the already-
+  // fetched row (pure, no extra fetch) so the grid card, the preview, and the
+  // full profile all read the SAME tier — fixing the "Strong match 70%" on the
+  // grid vs "Longshot" on the profile contradiction.
+  const matchById = useMemo(() => {
+    const map = new Map<string, { verdict: RecruiterVerdict }>()
+    if (!playerMatchActive || !currentUserProfile) return map
+    const viewerCtx = {
+      role: currentUserProfile.role,
+      womens_league_division: (currentUserProfile as { womens_league_division?: string | null }).womens_league_division ?? null,
+      mens_league_division: (currentUserProfile as { mens_league_division?: string | null }).mens_league_division ?? null,
+      current_world_club_id: currentUserProfile.current_world_club_id ?? null,
+    }
+    const fitOptions = {
+      overrideTarget: contextTarget,
+      targetRole: contextTargetRole,
+      targetPosition: contextTargetPosition,
+      targetSpecialists: contextTargetSpecialists,
+    }
+    filteredMembers
+      .filter((m) => m.role === 'player')
+      .forEach((m) => {
+        const provenBand = getClubLevelBand(m.current_world_club_id ?? null, categoryToBandTarget(m.playing_category ?? null))
+        const fit = computeClubFit(viewerCtx, {
+          id: m.id,
+          role: m.role,
+          playing_category: m.playing_category ?? null,
+          current_world_club_id: m.current_world_club_id ?? null,
+          competition_level_band: provenBand,
+          open_to_play: m.open_to_play ?? null,
+          open_to_coach: m.open_to_coach ?? null,
+          open_to_opportunities: m.open_to_opportunities ?? null,
+          last_active_at: m.last_active_at ?? null,
+          position: m.position ?? null,
+          secondary_position: m.secondary_position ?? null,
+          specialist_skills: m.specialist_skills ?? null,
+        }, fitOptions)
+        if (!fit.isApplicable) return
+        const evidence = computeEvidence({
+          role: m.role,
+          highlight_video_url: m.highlight_video_url ?? null,
+          full_game_video_count: m.full_game_video_count ?? null,
+          accepted_reference_count: m.accepted_reference_count ?? null,
+          is_verified: m.is_verified ?? null,
+          current_world_club_id: m.current_world_club_id ?? null,
+        })
+        const interest = computeInterest({
+          role: m.role,
+          relocation_willingness: m.relocation_willingness ?? null,
+          relocation_countries_open: m.relocation_countries_open ?? null,
+          relocation_countries_excluded: m.relocation_countries_excluded ?? null,
+          available_from: m.available_from ?? null,
+          home_country_id: m.base_country_id ?? m.nationality_country_id ?? null,
+          proven_level_band: provenBand,
+          level_target: m.level_target ?? null,
+          opportunity_preference: m.opportunity_preference ?? null,
+        }, interestScopeOptions)
+        const verdict = computeRecruiterVerdict({
+          fit, evidence, interest,
+          hasOpeningScope,
+          problem: contextProblem,
+          candidateRole: 'player',
+        })
+        if (verdict.isApplicable) map.set(m.id, { verdict })
+      })
+    return map
+  }, [playerMatchActive, currentUserProfile, filteredMembers, contextTarget, contextTargetRole, contextTargetPosition, contextTargetSpecialists, interestScopeOptions, hasOpeningScope, contextProblem])
+
+  // Coach equivalent of playerMatchActive — a COACH scope that names a
+  // specific coaching role (target_position carries the coach enum) ranks
+  // coaches by Coach Fit, so the recruiter card should render for coaches too.
+  // Without a sought role there's nothing to rank specialization on, so the
+  // enhanced card stays off (coaches keep the neutral tile — no misleading
+  // match), mirroring computeCoachFit's applicability contract.
+  const coachMatchActive =
+    applyContextFit && contextTargetRole === 'coach' && Boolean(contextTargetPosition)
+
+  // The FULL recruiter verdict per scoped coach — same synthesis as the
+  // player path (Coach Fit + Proven evidence + Interested), so coach cards
+  // read the SAME tier as the coach profile. evidence.ts + interestFit.ts
+  // already adapt to coaches (no video; coach-appropriate intent).
+  const coachMatchById = useMemo(() => {
+    const map = new Map<string, { verdict: RecruiterVerdict }>()
+    if (!coachMatchActive || !currentUserProfile) return map
+    const viewerCtx = {
+      role: currentUserProfile.role,
+      womens_league_division: (currentUserProfile as { womens_league_division?: string | null }).womens_league_division ?? null,
+      mens_league_division: (currentUserProfile as { mens_league_division?: string | null }).mens_league_division ?? null,
+      current_world_club_id: currentUserProfile.current_world_club_id ?? null,
+    }
+    const fitOptions = {
+      overrideTarget: contextTarget,
+      targetRole: contextTargetRole,
+      targetSpecialization: contextTargetPosition,
+    }
+    filteredMembers
+      .filter((m) => m.role === 'coach')
+      .forEach((m) => {
+        const fit = computeCoachFit(viewerCtx, {
+          id: m.id,
+          role: m.role,
+          coach_specialization: m.coach_specialization ?? null,
+          coaching_categories: m.coaching_categories ?? null,
+        }, fitOptions)
+        if (!fit.isApplicable) return
+        const evidence = computeEvidence({
+          role: m.role,
+          highlight_video_url: m.highlight_video_url ?? null,
+          full_game_video_count: m.full_game_video_count ?? null,
+          accepted_reference_count: m.accepted_reference_count ?? null,
+          is_verified: m.is_verified ?? null,
+          current_world_club_id: m.current_world_club_id ?? null,
+        })
+        const provenBand = getClubLevelBand(m.current_world_club_id ?? null, categoryToBandTarget(m.playing_category ?? null))
+        const interest = computeInterest({
+          role: m.role,
+          relocation_willingness: m.relocation_willingness ?? null,
+          relocation_countries_open: m.relocation_countries_open ?? null,
+          relocation_countries_excluded: m.relocation_countries_excluded ?? null,
+          available_from: m.available_from ?? null,
+          home_country_id: m.base_country_id ?? m.nationality_country_id ?? null,
+          proven_level_band: provenBand,
+          level_target: m.level_target ?? null,
+          opportunity_preference: m.opportunity_preference ?? null,
+        }, interestScopeOptions)
+        const verdict = computeRecruiterVerdict({
+          fit, evidence, interest,
+          hasOpeningScope,
+          problem: contextProblem,
+          candidateRole: 'coach',
+        })
+        if (verdict.isApplicable) map.set(m.id, { verdict })
+      })
+    return map
+  }, [coachMatchActive, currentUserProfile, filteredMembers, contextTarget, contextTargetRole, contextTargetPosition, interestScopeOptions, hasOpeningScope, contextProblem])
 
   // Emit filtered count upward whenever it changes. Combined with the
   // total-count effect this lets the parent choose: total when not
@@ -795,9 +967,32 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     )
   }
 
+  // Two distinct loading shapes:
+  //   - First load (no cards yet)  → full skeleton grid. Unavoidable; there
+  //     is genuinely nothing to show.
+  //   - Reshape (cards already on screen, a scope/role/sort change is
+  //     re-fetching) → keep the EXISTING cards mounted, gently dim them and
+  //     float an "Updating matches…" pill. This is the fix for the choppy
+  //     "page disappears and reappears" feel when applying a recruiting
+  //     context: the grid never blanks to skeletons mid-interaction, it
+  //     just crossfades to the re-ranked result.
+  const showSkeletons = isLoading && displayedMembers.length === 0
+  const isReshaping = isLoading && displayedMembers.length > 0
+
   return (
     <div>
-      {isLoading ? (
+      {/* Subtle, fixed "Updating matches…" pill — visible during a reshape
+          even if the user has scrolled. Auto-hides the instant new data
+          lands. Replaces the old hard skeleton flash. */}
+      {isReshaping && (
+        <div className="pointer-events-none fixed left-1/2 top-20 z-30 -translate-x-1/2 animate-fade-in">
+          <span className="inline-flex items-center gap-2 rounded-full border border-[#8026FA]/20 bg-white/95 px-4 py-2 text-xs font-medium text-gray-700 shadow-lg backdrop-blur">
+            <Loader2 className="h-3.5 w-3.5 animate-spin text-[#8026FA]" />
+            Updating matches…
+          </span>
+        </div>
+      )}
+      {showSkeletons ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
           {[...Array(15)].map((_, i) => (
             <MemberTileSkeleton key={i} />
@@ -826,8 +1021,49 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 auto-rows-fr gap-3 sm:gap-4 mb-6 sm:mb-8">
-            {displayedMembers.map((member) => (
+          <div className={[
+            (playerMatchActive || coachMatchActive)
+              ? 'grid grid-cols-2 auto-rows-fr gap-3 sm:gap-4 mb-6 sm:mb-8'
+              // No-context grid: auto-rows-fr makes every tile in a row the
+              // same length. The tile's key rows (avatar → name → role →
+              // nationality) stay top-aligned and its footer is pinned to the
+              // bottom (mt-auto), so cards match length AND line up.
+              : 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 auto-rows-fr gap-3 sm:gap-4 mb-6 sm:mb-8',
+            // Crossfade during a reshape: dim the outgoing cards while the
+            // re-ranked set loads, then fade back to full opacity. No blank
+            // skeleton swap, so the page never visually resets.
+            'transition-opacity duration-300 ease-out',
+            isReshaping ? 'opacity-40' : 'opacity-100',
+          ].join(' ')}>
+            {displayedMembers.map((member) => {
+              // Scoped recruiter view → the premium evaluation card for the
+              // candidates the active scope ranks (players under a player
+              // scope, coaches under a coach scope); everyone else keeps the
+              // compact tile. The card is role-agnostic; only the score
+              // source differs (Club Fit vs Coach Fit).
+              const md = matchById.get(member.id)
+              if (playerMatchActive && member.role === 'player' && md) {
+                return (
+                  <RecruiterCandidateCard
+                    key={member.id}
+                    member={member}
+                    verdict={md.verdict}
+                    onPreview={() => setCandidatePreview({ member })}
+                  />
+                )
+              }
+              const cmd = coachMatchById.get(member.id)
+              if (coachMatchActive && member.role === 'coach' && cmd) {
+                return (
+                  <RecruiterCandidateCard
+                    key={member.id}
+                    member={member}
+                    verdict={cmd.verdict}
+                    onPreview={() => setCandidatePreview({ member })}
+                  />
+                )
+              }
+              return (
               <MemberTile
                 key={member.id}
                 id={member.id}
@@ -854,6 +1090,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
                 highlight_video_url={member.highlight_video_url ?? null}
                 full_game_video_count={member.full_game_video_count ?? null}
                 accepted_reference_count={member.accepted_reference_count ?? null}
+                career_entry_count={member.career_entry_count ?? null}
                 relocation_willingness={member.relocation_willingness ?? null}
                 relocation_countries_open={member.relocation_countries_open ?? null}
                 relocation_countries_excluded={member.relocation_countries_excluded ?? null}
@@ -869,7 +1106,8 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
                 profileCompletenessPct={member.profile_completeness_pct ?? null}
                 onPreview={() => setPreviewMember(member)}
               />
-            ))}
+              )
+            })}
           </div>
 
           {/* Infinite scroll sentinel */}
@@ -885,6 +1123,11 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
       <MemberPreviewModal
         member={previewMember}
         onClose={() => setPreviewMember(null)}
+      />
+
+      <CandidatePreviewSheet
+        member={candidatePreview?.member ?? null}
+        onClose={() => setCandidatePreview(null)}
       />
     </div>
   )

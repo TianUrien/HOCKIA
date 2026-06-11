@@ -90,7 +90,7 @@ describe('computeEvidence', () => {
 
   it('level labels are stable', () => {
     expect(evidenceLevelLabel('strong')).toBe('Strong evidence')
-    expect(evidenceLevelLabel('moderate')).toBe('Some evidence')
+    expect(evidenceLevelLabel('moderate')).toBe('Enough evidence')
     expect(evidenceLevelLabel('limited')).toBe('Limited evidence')
   })
 

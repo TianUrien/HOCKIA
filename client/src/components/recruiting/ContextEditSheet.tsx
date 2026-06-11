@@ -149,31 +149,48 @@ export default function ContextEditSheet({ isOpen, onClose }: ContextEditSheetPr
     onClose()
   }
 
+  // Dismiss the sheet a short beat after a selection so the highlighted
+  // choice is visible for ~quarter-second before the sheet closes — the
+  // selection reads as "applied" rather than an abrupt cut. The mutation
+  // itself runs in the background (the store's optimistic flip already
+  // moved the highlight + updated the chip/ranking inputs), so we never
+  // block the close on the network round-trip.
+  const closeAfterSelect = () => {
+    window.setTimeout(handleClose, 240)
+  }
+
   const handleActivate = async (row: RecruitingContextRow) => {
-    if (row.id === active?.id) return
-    setBusy(true)
+    if (row.id === active?.id) {
+      handleClose()
+      return
+    }
+    closeAfterSelect()
     await activate(row.id)
-    setBusy(false)
   }
 
   const handleClearActive = async () => {
-    if (!active) return
-    setBusy(true)
+    if (!active) {
+      handleClose()
+      return
+    }
+    closeAfterSelect()
     await clearActive()
-    setBusy(false)
   }
 
   const handlePickOpportunity = async (opp: OwnedOpportunity) => {
-    // No-op if the active context already points at this opportunity.
-    if (active?.opportunity_id === opp.id) return
-    setBusy(true)
+    // No-op if the active context already points at this opportunity —
+    // just close (selecting the current scope is a confirm, not a change).
+    if (active?.opportunity_id === opp.id) {
+      handleClose()
+      return
+    }
+    closeAfterSelect()
     const row = await activateForOpportunity({
       opportunityId: opp.id,
       target: opp.target,
       region: opp.location_city ?? null,
       label: opp.title,
     })
-    setBusy(false)
     // F3 fix: the auto-scope path on ApplicantsList /
     // OpportunityDetailPage toasts; the manual-picker path was silent
     // (QA F3). Surface the same toast so both flows feel consistent.
@@ -197,7 +214,9 @@ export default function ContextEditSheet({ isOpen, onClose }: ContextEditSheetPr
       label: draftLabel.trim() || null,
     })
     setBusy(false)
-    resetForm()
+    // Close after creating + activating so the new scope is reflected on
+    // the Community page behind the sheet without a manual "Done" tap.
+    handleClose()
   }
 
   const handleDelete = async (row: RecruitingContextRow) => {
@@ -259,7 +278,7 @@ export default function ContextEditSheet({ isOpen, onClose }: ContextEditSheetPr
           <ul className="space-y-2">
             <li
               className={[
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-colors',
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-all duration-200',
                 !active
                   ? 'border-[#8026FA] bg-[#8026FA]/5'
                   : 'border-gray-200 hover:border-gray-300',
@@ -267,8 +286,11 @@ export default function ContextEditSheet({ isOpen, onClose }: ContextEditSheetPr
             >
               <button
                 type="button"
+                role="radio"
                 onClick={handleClearActive}
                 disabled={busy || !active}
+                aria-label="No context: Fit chips and featured players use your profile"
+                aria-checked={!active ? 'true' : 'false'}
                 className="flex-1 flex items-center gap-3 text-left disabled:opacity-100"
               >
                 <span
@@ -335,7 +357,7 @@ export default function ContextEditSheet({ isOpen, onClose }: ContextEditSheetPr
                     <li
                       key={opp.id}
                       className={[
-                        'flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-colors',
+                        'flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-all duration-200',
                         isActive
                           ? 'border-[#8026FA] bg-[#8026FA]/5'
                           : 'border-gray-200 hover:border-gray-300',
@@ -343,9 +365,12 @@ export default function ContextEditSheet({ isOpen, onClose }: ContextEditSheetPr
                     >
                       <button
                         type="button"
+                        role="radio"
                         onClick={() => handlePickOpportunity(opp)}
                         disabled={busy}
-                        className="flex-1 min-w-0 flex items-center gap-3 text-left disabled:opacity-50"
+                        aria-label={`Recruiting context: ${opp.title}${opp.location_city ? ` — ${opp.location_city}` : ''}${opp.target ? ` — ${opp.target}` : ''}`}
+                        aria-checked={isActive || undefined}
+                        className="flex-1 min-w-0 flex items-center gap-3 text-left"
                       >
                         <span
                           className={[
@@ -391,7 +416,7 @@ export default function ContextEditSheet({ isOpen, onClose }: ContextEditSheetPr
                 <li
                   key={row.id}
                   className={[
-                    'group flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-colors',
+                    'group flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-all duration-200',
                     isActive
                       ? 'border-[#8026FA] bg-[#8026FA]/5'
                       : 'border-gray-200 hover:border-gray-300',
@@ -399,9 +424,12 @@ export default function ContextEditSheet({ isOpen, onClose }: ContextEditSheetPr
                 >
                   <button
                     type="button"
+                    role="radio"
                     onClick={() => handleActivate(row)}
                     disabled={busy}
-                    className="flex-1 flex items-center gap-3 text-left disabled:opacity-50"
+                    aria-label={`Recruiting context: ${row.label || row.target_category}${row.region ? ` — ${row.region}` : ''}`}
+                    aria-checked={isActive || undefined}
+                    className="flex-1 flex items-center gap-3 text-left"
                   >
                     <span
                       className={[

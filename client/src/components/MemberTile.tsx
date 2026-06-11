@@ -11,9 +11,10 @@ import QuickActionsRow from '@/components/recruiting/QuickActionsRow'
 import { getImageUrl } from '@/lib/imageUrl'
 import RolePlaceholder from './RolePlaceholder'
 import ClubFitChip from './recruiting/ClubFitChip'
-import ProvenSignal from './recruiting/ProvenSignal'
+import EvidenceSignal from './recruiting/EvidenceSignal'
 import InterestSignal from './recruiting/InterestSignal'
 import { useCoachFit } from '@/hooks/useCoachFit'
+import { evidenceChecklist } from '@/lib/evidence'
 import { useEvidence } from '@/hooks/useEvidence'
 import { useInterest, categoryToBandTarget } from '@/hooks/useInterest'
 
@@ -75,6 +76,8 @@ interface MemberTileProps {
   highlight_video_url?: string | null
   full_game_video_count?: number | null
   accepted_reference_count?: number | null
+  /** Phase 2 evidence checklist — career history presence (✓/✗ row). */
+  career_entry_count?: number | null
   /** Increment #2.2 (Interested lens) — candidate intent for the 🤝 signal
    *  vs the active opportunity scope. */
   relocation_willingness?: string | null
@@ -116,6 +119,31 @@ export default function MemberTile(props: MemberTileProps) {
   // work the same across player/coach/club/brand/umpire.
   const showQuickActions = Boolean(user) && user?.id !== props.id
   const clubLogo = useWorldClubLogo(props.current_world_club_id ?? null)
+  // Player Club Fit candidate shape — built once so both the chip (default
+  // mode) and the RecruiterMatchBar (scoped mode) read the SAME fields.
+  // Only meaningful for player candidates; null otherwise so useClubFit
+  // returns NOT_APPLICABLE without inventing a signal.
+  const playerFitCandidate =
+    props.role === 'player'
+      ? {
+          id: props.id,
+          role: props.role,
+          playing_category: props.playing_category ?? null,
+          current_world_club_id: props.current_world_club_id ?? null,
+          // Resolve the league band from the warm prefetch cache so grid
+          // Fit uses the SAME band as the deep-profile Fit.
+          competition_level_band:
+            props.competition_level_band ??
+            getClubLevelBand(
+              props.current_world_club_id ?? null,
+              categoryToBandTarget(props.playing_category ?? null),
+            ),
+          open_to_play: props.open_to_play ?? null,
+          open_to_coach: props.open_to_coach ?? null,
+          open_to_opportunities: props.open_to_opportunities ?? null,
+          last_active_at: props.last_active_at ?? null,
+        }
+      : null
   // Phase 2C — Coach Fit for this candidate vs the active scope. Returns
   // NOT_APPLICABLE (chip renders null) for non-coaches or non-coach scopes.
   const coachFit = useCoachFit(
@@ -154,6 +182,25 @@ export default function MemberTile(props: MemberTileProps) {
     playing_category: props.playing_category ?? null,
     level_target: props.level_target ?? null,
     opportunity_preference: props.opportunity_preference ?? null,
+  })
+
+  // Phase 2 — recruiter evidence checklist (present/missing signals) for the
+  // expandable evidence popover. Built from fields the grid already fetches;
+  // league presence reuses the resolved Club Fit band so it matches the
+  // proven-level signal. Empty for non-person roles.
+  const evidenceChecklistRows = evidenceChecklist({
+    role: props.role,
+    highlight_video_url: props.highlight_video_url ?? null,
+    full_game_video_count: props.full_game_video_count ?? null,
+    accepted_reference_count: props.accepted_reference_count ?? null,
+    is_verified: props.isVerified ?? null,
+    current_world_club_id: props.current_world_club_id ?? null,
+    current_club: props.current_team ?? null,
+    career_entry_count: props.career_entry_count ?? null,
+    open_to_play: props.open_to_play ?? null,
+    open_to_coach: props.open_to_coach ?? null,
+    competition_level_band:
+      playerFitCandidate?.competition_level_band ?? props.competition_level_band ?? null,
   })
 
   const isBrand = props.role === 'brand'
@@ -233,11 +280,11 @@ export default function MemberTile(props: MemberTileProps) {
 
   return (
     <>
-      <div className="flex flex-col h-full bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-md hover:border-gray-300 transition-all">
+      <div className="flex flex-col bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-md hover:border-gray-300 transition-all">
       <button
         type="button"
         onClick={handleClick}
-        className="group block w-full text-left flex-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8026FA] focus-visible:ring-offset-2"
+        className="group block w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8026FA] focus-visible:ring-offset-2"
         aria-label={(() => {
           const name = props.full_name?.trim() ?? ''
           const pct = props.profileCompletenessPct
@@ -276,18 +323,11 @@ export default function MemberTile(props: MemberTileProps) {
                 title="Open to opportunities"
               />
             )}
-            {/* Profile completeness badge — sits at the bottom-right of
-                the avatar matching the reference image. Only shown when
-                a real numeric % is provided (not 0 from a default). */}
-            {typeof props.profileCompletenessPct === 'number' && props.profileCompletenessPct > 0 && (
-              <span
-                className="absolute -bottom-0.5 right-0 inline-flex items-center rounded-full bg-[#8026FA] px-1.5 py-0.5 text-[10px] font-bold text-white ring-2 ring-white tabular-nums"
-                aria-label={`Profile ${props.profileCompletenessPct}% complete`}
-                title={`Profile ${props.profileCompletenessPct}% complete`}
-              >
-                {props.profileCompletenessPct}%
-              </span>
-            )}
+            {/* The bare completeness % badge that used to sit on the avatar
+                was removed — an unlabeled number next to the photo read
+                ambiguously (match? rating?). Completeness now lives only in
+                the clearly-labeled "Profile complete" section of the
+                recruiter card. */}
           </div>
         </div>
 
@@ -311,56 +351,44 @@ export default function MemberTile(props: MemberTileProps) {
           <div className="flex items-center gap-1.5 flex-wrap">
             <RoleBadge role={props.role} />
             {modifierPill}
-            <ClubFitChip
-              candidate={{
-                id: props.id,
-                role: props.role,
-                playing_category: props.playing_category ?? null,
-                current_world_club_id: props.current_world_club_id ?? null,
-                // #5: resolve the league band from the warm prefetch cache
-                // (PeopleListView warms it before render) so grid Fit uses
-                // the SAME band as the deep-profile Fit — no more grid↔
-                // profile tier divergence for the same player.
-                competition_level_band:
-                  props.competition_level_band ??
-                  getClubLevelBand(
-                    props.current_world_club_id ?? null,
-                    categoryToBandTarget(props.playing_category ?? null),
-                  ),
-                open_to_play: props.open_to_play ?? null,
-                open_to_coach: props.open_to_coach ?? null,
-                open_to_opportunities: props.open_to_opportunities ?? null,
-                last_active_at: props.last_active_at ?? null,
-              }}
-            />
+            {/* Player Fit — the compact 3-bar chip (recruiter-only; null
+                for non-recruiter viewers or non-player candidates). The
+                scoped recruiter view uses RecruiterCandidateCard instead of
+                this tile, so the tile always shows the chip. */}
+            <ClubFitChip candidate={playerFitCandidate} />
             {/* Phase 2C — Coach Fit chip. Renders only for coach
                 candidates under a coach-seeking scope (returns null
                 otherwise); the player chip above is null for coaches. */}
             <ClubFitChip kind="coach" fitResult={coachFit} />
           </div>
 
-          {/* Proven lens (Increment #1) — recruiter-only evidence
-              confidence: tier pill + glanceable facts. Renders nothing
-              for non-recruiter viewers or candidates with no evidence. */}
-          <ProvenSignal result={evidence} />
-
-          {/* Interested lens (Increment #2.2) — recruiter + active-scope
-              only; renders nothing otherwise. */}
-          <InterestSignal result={interest} variant="compact" />
-
-          {/* Row 3: nationality (tile mode — full names + flags, EU pill
-              as a small chip; flex-wrap so dual-nat doesn't truncate). */}
-          {(props.nationality_country_id || props.nationality) && (
-            <div className="text-xs text-gray-600">
+          {/* Nationality — directly under the role tag and ALWAYS one
+              reserved line, so the avatar → name → role → nationality block
+              holds the SAME vertical positions on every card regardless of
+              role. A club/umpire with less data lines up with a player;
+              role-specific detail (evidence, club/league) sits below and
+              never shifts these key rows. Compact single-line code mode
+              ("🇳🇱 NLD · 🇦🇷 ARG · EU"). */}
+          <div className="flex h-5 items-center overflow-hidden text-xs text-gray-600">
+            {(props.nationality_country_id || props.nationality) ? (
               <DualNationalityDisplay
                 primaryCountryId={props.nationality_country_id}
                 secondaryCountryId={props.nationality2_country_id}
                 fallbackText={props.nationality}
-                mode="tile"
+                mode="code"
                 className="text-gray-600"
               />
-            </div>
-          )}
+            ) : null}
+          </div>
+
+          {/* ── Role-specific detail BELOW the aligned block — may differ or
+              be absent by role; never shifts the key rows above. ── */}
+
+          {/* Proven lens — recruiter-only evidence pill (tap to expand). */}
+          <EvidenceSignal result={evidence} checklist={evidenceChecklistRows} />
+
+          {/* Interested lens — recruiter + active-scope only. */}
+          <InterestSignal result={interest} variant="compact" />
 
           {/* P1.4 Hockey context line — players only (club ·
               competition · position with per-segment "Not added yet"
@@ -414,7 +442,7 @@ export default function MemberTile(props: MemberTileProps) {
           taps inside the row. Hidden for anon viewers + own-profile. */}
       {showQuickActions && (
         <div
-          className="px-3 py-2 border-t border-gray-100 bg-gray-50/40"
+          className="mt-auto px-3 py-2 border-t border-gray-100 bg-gray-50/40"
           onClick={(e) => e.stopPropagation()}
         >
           <QuickActionsRow

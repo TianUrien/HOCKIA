@@ -59,7 +59,9 @@ const clubRequired = [
   'year_founded',
   'mens_league_division',
   'womens_league_division',
-  'contact_email',
+  // contact_email is selected as the masked generated column aliased back to
+  // `contact_email` (anon can't read the raw column — migration 20260610100000).
+  'contact_email:contact_email_masked',
   'last_active_at',
   'show_last_active',
 ]

@@ -20,11 +20,11 @@ import { useMemo } from 'react'
 import { useAuthStore } from '@/lib/auth'
 import {
   computeClubFit,
+  NOT_APPLICABLE,
   type ClubFitResult,
   type FitCandidateFields,
 } from '@/lib/clubFit'
 import {
-  deriveTargetCategory,
   type RecruitingContextProfileFields,
 } from '@/lib/recruitingContext'
 import type { Profile } from '@/lib/supabase'
@@ -60,15 +60,15 @@ export function useClubFit(
   const targetPosition = useActiveRecruitingTargetPosition()
   const targetSpecialists = useActiveRecruitingTargetSpecialists()
   return useMemo(() => {
-    const profileTarget = deriveTargetCategory({
-      role: viewerProfile?.role ?? null,
-      womens_league_division: (viewerProfile as { womens_league_division?: string | null } | null | undefined)?.womens_league_division ?? null,
-      mens_league_division: (viewerProfile as { mens_league_division?: string | null } | null | undefined)?.mens_league_division ?? null,
-      current_world_club_id: viewerProfile?.current_world_club_id ?? null,
-    })
-    const effectiveTarget = overrideTarget ?? profileTarget
+    // Fit/match requires an ACTIVE recruiting context. With no context there
+    // is no specific need to match against (position, level, category,
+    // location, EU…), so we surface NO fit — the club's profile-derived
+    // category alone is too generic to honestly label a "fit". This gates
+    // every fit display that flows through this hook (Community tiles,
+    // carousel, preview, player profiles, shortlists, AI opinion).
+    if (!overrideTarget) return NOT_APPLICABLE
     return computeClubFit(
-      toViewerProfile(viewerProfile, effectiveTarget),
+      toViewerProfile(viewerProfile, overrideTarget),
       candidate,
       { overrideTarget, targetRole, targetPosition, targetSpecialists },
     )

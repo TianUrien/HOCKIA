@@ -33,17 +33,26 @@ interface ContextSwitcherProps {
 
 export default function ContextSwitcher({ className = '' }: ContextSwitcherProps) {
   const { profile: viewer } = useAuthStore()
-  const { active, loading, clearActive } = useRecruitingContext()
+  const { active, available, loading, clearActive } = useRecruitingContext()
   const [sheetOpen, setSheetOpen] = useState(false)
   const [clearing, setClearing] = useState(false)
 
   const viewerRole = viewer?.role
   if (viewerRole !== 'club' && viewerRole !== 'coach') return null
-  // F4 (QA): during cold-load fetch, render an invisible placeholder
+  // F4 (QA): during the COLD-load fetch, render an invisible placeholder
   // matching the chip's intrinsic height so the surrounding layout
   // doesn't reflow when the real chip pops in. Was a 2-3s empty gap
   // above the Community tabs.
-  if (loading && !active) {
+  //
+  // The `available.length === 0` guard is critical: it scopes the
+  // placeholder to the genuine first load (no rows yet). A POST-selection
+  // refresh() also flips loading=true, but by then we already hold rows —
+  // so without this guard the chip would VANISH into the placeholder mid-
+  // selection and reappear, producing the "selection goes away then comes
+  // back" flicker. With it, the chip stays mounted and smoothly swaps
+  // between its empty and scoped states (optimistic store flip already
+  // updated `active`).
+  if (loading && !active && available.length === 0) {
     return <div className={['inline-flex h-[30px]', className].join(' ')} aria-hidden="true" />
   }
 

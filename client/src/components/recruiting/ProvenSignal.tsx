@@ -1,6 +1,6 @@
 /**
  * ProvenSignal — the "Proven" lens UI (Increment #1). A confidence tier
- * pill ("Strong evidence" / "Some evidence" / "Limited evidence") plus a
+ * pill ("Strong evidence" / "Enough evidence" / "Limited evidence") plus a
  * glanceable row of the concrete evidence facts (📹 match video · 👥 refs
  * · ✓ verified · 🏆 proven level). Renders nothing when no evidence
  * applies (recruiter gating + presence handled by useEvidence /

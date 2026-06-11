@@ -219,6 +219,15 @@ export const useRecruitingContextStore = create<RecruitingContextStoreState>((se
   activate: async (id) => {
     const { ownerId, eligibleRole, refresh } = get()
     if (!ownerId || !eligibleRole) return
+    // Optimistic local flip — move the active highlight to the picked
+    // row the instant the user taps, before the RPC round-trips. This
+    // is what makes context selection feel immediate: the chip + picker
+    // update with zero perceptible delay, and the trailing refresh()
+    // silently reconciles against server truth. On failure we refresh()
+    // to roll back to the real state.
+    set((s) => ({
+      rows: s.rows.map((r) => ({ ...r, is_active: r.id === id })),
+    }))
     // Atomic RPC — deactivate-others + activate-target in one txn.
     // Failure rolls back the deactivate, so the owner is never left
     // with zero active contexts.
@@ -227,6 +236,10 @@ export const useRecruitingContextStore = create<RecruitingContextStoreState>((se
     })
     if (rpcError) {
       reportSupabaseError('useRecruitingContext.activate', rpcError)
+      // Reconcile the optimistic flip back to server truth FIRST (refresh
+      // resets error:null at its start), THEN surface the error so it
+      // survives for the toast/sheet.
+      await refresh()
       set({ error: 'Could not switch context' })
       return
     }
@@ -288,6 +301,15 @@ export const useRecruitingContextStore = create<RecruitingContextStoreState>((se
   activateForOpportunity: async ({ opportunityId, target, region, label }) => {
     const { ownerId, eligibleRole, refresh } = get()
     if (!ownerId || !eligibleRole) return null
+    // Optimistic local flip — deactivate every other row and activate
+    // the matching opportunity row if it already exists locally, so the
+    // highlight moves the instant the user taps. For a brand-new opp
+    // scope (no local row yet) this just clears the old active; the
+    // trailing refresh() brings the freshly-created row in. Keeps the
+    // picker from dimming-and-snapping while the RPC round-trips.
+    set((s) => ({
+      rows: s.rows.map((r) => ({ ...r, is_active: r.opportunity_id === opportunityId })),
+    }))
     // Atomic find-or-create + activate RPC. The server enforces
     // ownership of the opportunity and dedupes via the partial
     // unique index on (owner_id, opportunity_id).
@@ -302,6 +324,9 @@ export const useRecruitingContextStore = create<RecruitingContextStoreState>((se
     )
     if (rpcError) {
       reportSupabaseError('useRecruitingContext.activateForOpportunity', rpcError)
+      // Reconcile the optimistic flip first (refresh resets error:null),
+      // then surface the error so it survives.
+      await refresh()
       set({ error: 'Could not scope to this opportunity' })
       return null
     }

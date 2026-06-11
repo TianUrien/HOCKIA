@@ -1,31 +1,32 @@
 /**
- * QuickActionsRow — Spec G.5.
+ * QuickActionsRow — community action row for member/player discovery.
  *
- * Per-player action row for Community cards + profile pages.
- * Buttons:
+ * Per-member action row for Community cards + profile pages.
+ * Default buttons (enabled):
  *   - Save / Saved — toggles the default shortlist (uses
  *     useIsProfileSaved which we extended in P1.5 to write into the
  *     default shortlist + create one on first save).
- *   - Message — navigates to /messages?new={playerId} (existing
+ *   - Message — navigates to /messages?new={memberId} (existing
  *     MessagesPage handles the "new conversation" deep link), unless
  *     a consumer passes a custom onMessage handler.
- *   - Invite to apply — DISABLED for now (recruiter-only; needs the
- *     opportunity_invitations table). Shows a "Coming soon" tooltip.
- *   - Compare — explicitly deferred to Phase 2 per spec.
- *   - ⋯ overflow — Move to list / Add note (rendered by the shared
- *     MoreActionsMenu so other recruiter surfaces can reuse it).
+ *   - Add friend / Requested / Friends — send or view friendship status
+ *     (enabled by default for Community; shows live states via useFriendship).
  *
- * Visibility: hidden for own-profile or anonymous viewers. Invite +
- * Compare are recruiter-only (club/coach). Save + Message + ⋯ are
- * available to any authenticated non-self viewer.
+ * Optional buttons (showMoreMenu):
+ *   - ⋯ overflow — Move to list / Add note (rendered by the shared
+ *     MoreActionsMenu; off by default for cleaner Community cards,
+ *     can be enabled for surfaces that need list management).
+ *
+ * Visibility: hidden for own-profile or anonymous viewers. Save + Message +
+ * Add friend are available to any authenticated non-self viewer. More menu
+ * hidden by default (can be enabled with showMoreMenu).
  */
 
 import { useNavigate, useLocation } from 'react-router-dom'
-import {
-  Bookmark, BookmarkCheck, MessageSquare, Send, BarChart3,
-} from 'lucide-react'
-import { useAuthStore } from '@/lib/auth'
+import { Bookmark, BookmarkCheck, MessageSquare, UserPlus, UserCheck, Clock } from 'lucide-react'
 import { useIsProfileSaved } from '@/hooks/useSavedProfiles'
+import { useFriendship } from '@/hooks/useFriendship'
+import { useToastStore } from '@/lib/toast'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import MoreActionsMenu from './MoreActionsMenu'
 
@@ -43,6 +44,14 @@ interface QuickActionsRowProps {
    *  link.
    */
   onMessage?: () => void
+  /** Show an Add-friend action (Add friend / Requested / Friends) between
+   *  Message and ⋯. Used by Community cards and Preview. Default true for
+   *  community discovery, false for other surfaces. */
+  showAddFriend?: boolean
+  /** Show the three-dot More menu (Move to list / Add note). Community cards
+   *  hide this by default for a cleaner action row. Recruiter surfaces with
+   *  more hidden actions can enable it. Default false. */
+  showMoreMenu?: boolean
   className?: string
 }
 
@@ -51,15 +60,14 @@ export default function QuickActionsRow({
   playerName,
   compact = false,
   onMessage,
+  showAddFriend = true,
+  showMoreMenu = false,
   className = '',
 }: QuickActionsRowProps) {
-  const { profile: viewer } = useAuthStore()
   const navigate = useNavigate()
   const location = useLocation()
   const savedState = useIsProfileSaved(playerId)
 
-  const viewerRole = viewer?.role
-  const isRecruiter = viewerRole === 'club' || viewerRole === 'coach'
   if (savedState.isOwnProfile) return null
   if (!savedState.isAuthenticated) {
     // Anonymous viewer — render nothing. Auth-gated CTAs would just
@@ -106,39 +114,48 @@ export default function QuickActionsRow({
         text="Message"
       />
 
-      {/* Invite + Compare are recruiter-only placeholders (Spec G.5 /
-          Phase 2). Hidden for non-recruiters; disabled with tooltips
-          for recruiters until the underlying flows ship. */}
-      {isRecruiter && (
-        <ActionButton
-          compact={compact}
-          disabled
-          onClick={() => {}}
-          label={`Invite ${playerName} to apply (coming soon)`}
-          title="Coming soon — invite players directly to your open opportunities"
-          icon={Send}
-          text="Invite"
-        />
+      {showAddFriend && (
+        <AddFriendAction playerId={playerId} playerName={playerName} compact={compact} />
       )}
 
-      {isRecruiter && (
-        <ActionButton
+      {showMoreMenu && (
+        <MoreActionsMenu
+          playerId={playerId}
+          playerName={playerName}
           compact={compact}
-          disabled
-          onClick={() => {}}
-          label="Compare (Phase 2)"
-          title="Phase 2"
-          icon={BarChart3}
-          text="Compare"
         />
       )}
-
-      <MoreActionsMenu
-        playerId={playerId}
-        playerName={playerName}
-        compact={compact}
-      />
     </div>
+  )
+}
+
+/** Add-friend action — its own component so useFriendship only fetches the
+ *  relationship when the consumer opts in (showAddFriend), not for every
+ *  compact tile. Reuses the same hook + states as FriendshipButton. */
+function AddFriendAction({ playerId, playerName, compact }: { playerId: string; playerName: string; compact: boolean }) {
+  const { addToast } = useToastStore()
+  const { mutating, isAuthenticated, isOwnProfile, isFriend, isOutgoingRequest, sendRequest } =
+    useFriendship(playerId)
+  if (isOwnProfile) return null
+  if (isFriend) {
+    return <ActionButton compact={compact} active disabled icon={UserCheck} text="Friends" label={`Friends with ${playerName}`} onClick={() => {}} />
+  }
+  if (isOutgoingRequest) {
+    return <ActionButton compact={compact} disabled icon={Clock} text="Requested" label={`Friend request sent to ${playerName}`} onClick={() => {}} />
+  }
+  return (
+    <ActionButton
+      compact={compact}
+      disabled={mutating}
+      icon={UserPlus}
+      text="Add friend"
+      label={`Add ${playerName} as a friend`}
+      onClick={() =>
+        isAuthenticated
+          ? void sendRequest()
+          : addToast('Sign in with your HOCKIA profile to connect.', 'error')
+      }
+    />
   )
 }
 

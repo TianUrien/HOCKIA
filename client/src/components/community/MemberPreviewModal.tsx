@@ -29,6 +29,8 @@ import {
   ExternalLink,
   Languages as LanguagesIcon,
   Activity,
+  Check,
+  ShieldCheck,
 } from 'lucide-react'
 import { RoleBadge, TierBadge, VerifiedBadge, AvailabilityPill, DualNationalityDisplay } from '@/components'
 import ClubFitChip from '@/components/recruiting/ClubFitChip'
@@ -40,7 +42,9 @@ import { useFocusTrap } from '@/hooks/useFocusTrap'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import { useIsProfileSaved } from '@/hooks/useSavedProfiles'
 import QuickActionsRow from '@/components/recruiting/QuickActionsRow'
-import { useWorldClubLogo } from '@/hooks/useWorldClubLogo'
+import { useWorldClubLogo, getClubLevelBand } from '@/hooks/useWorldClubLogo'
+import { categoryToBandTarget } from '@/hooks/useInterest'
+import { computeEvidence, evidenceLevelLabel, evidenceChecklist } from '@/lib/evidence'
 import { getImageUrl } from '@/lib/imageUrl'
 import { logger } from '@/lib/logger'
 import { trackDbEvent } from '@/lib/trackDbEvent'
@@ -70,7 +74,8 @@ interface MemberPreviewModalProps {
 }
 
 export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps) {
-  const { user } = useAuthStore()
+  const { user, profile } = useAuthStore()
+  const isRecruiterViewer = profile?.role === 'club' || profile?.role === 'coach'
   const navigate = useNavigate()
   const location = useLocation()
   const { addToast } = useToastStore()
@@ -520,6 +525,60 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
               )}
             </div>
 
+            {/* Evidence breakdown — recruiter-only, player/coach. The
+                Community card shows only the LEVEL; here in the Preview we
+                show the full present/missing breakdown behind it. */}
+            {isRecruiterViewer && (member.role === 'player' || member.role === 'coach') && (() => {
+              const evInput = {
+                role: member.role,
+                highlight_video_url: member.highlight_video_url ?? null,
+                full_game_video_count: member.full_game_video_count ?? null,
+                accepted_reference_count: member.accepted_reference_count ?? null,
+                is_verified: member.is_verified ?? null,
+                current_world_club_id: member.current_world_club_id ?? null,
+              }
+              const ev = computeEvidence(evInput)
+              const rows = evidenceChecklist({
+                ...evInput,
+                current_club: member.current_club ?? null,
+                career_entry_count: (member as { career_entry_count?: number | null }).career_entry_count ?? null,
+                open_to_play: member.open_to_play ?? null,
+                open_to_coach: member.open_to_coach ?? null,
+                competition_level_band: getClubLevelBand(
+                  member.current_world_club_id ?? null,
+                  categoryToBandTarget(member.playing_category ?? null),
+                ),
+              })
+              const label = ev.isApplicable ? evidenceLevelLabel(ev.level) : 'Missing evidence'
+              const color = !ev.isApplicable
+                ? 'text-gray-400'
+                : ev.level === 'strong'
+                  ? 'text-emerald-600'
+                  : ev.level === 'moderate'
+                    ? 'text-gray-700'
+                    : 'text-gray-500'
+              return (
+                <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+                  <div className="mb-2 flex items-center gap-1.5">
+                    <ShieldCheck className={`h-4 w-4 ${color}`} />
+                    <span className={`text-sm font-semibold ${color}`}>{label}</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
+                    {rows.map((r) => (
+                      <div key={r.key} className="flex items-center gap-1.5 text-xs">
+                        {r.present ? (
+                          <Check className="h-3.5 w-3.5 flex-shrink-0 text-emerald-600" />
+                        ) : (
+                          <X className="h-3.5 w-3.5 flex-shrink-0 text-gray-300" />
+                        )}
+                        <span className={r.present ? 'text-gray-700' : 'text-gray-400'}>{r.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )
+            })()}
+
             {/* Bio excerpt */}
             {bioText && (
               <p className="text-sm text-gray-700 leading-relaxed line-clamp-4 whitespace-pre-line">
@@ -589,6 +648,7 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
                 playerId={member.id}
                 playerName={member.full_name ?? 'this member'}
                 onMessage={() => void handleMessage()}
+                showAddFriend={member.role !== 'club' && member.role !== 'brand'}
                 className="w-full justify-center flex-wrap"
               />
             </div>

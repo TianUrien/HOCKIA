@@ -52,20 +52,53 @@ export function useScrollRestore(ready = true) {
       return
     }
 
-    // Retry until the document is tall enough to scroll to the saved position
-    const attemptScroll = (attempts = 0) => {
+    // For list views with pagination/lazy loading, the DOM might not be tall
+    // enough immediately. We retry with exponential backoff up to 1 second,
+    // then scroll anyway to avoid losing the position forever.
+    let attempts = 0
+    const maxAttempts = 20 // ~1 second with 50ms backoff
+    let delayMs = 50
+    // Track the in-flight rAF / timeout so the cleanup can cancel them. Without
+    // this, a POP into a slow/paginating list leaves a chain of timers running
+    // (up to ~1s); navigating away again before it settles would let an
+    // orphaned timer fire window.scrollTo on the NEW view — hijacking its
+    // scroll position. Cancelling on unmount / key change prevents that.
+    let timerId: ReturnType<typeof setTimeout> | undefined
+
+    const attemptScroll = () => {
       const canScroll = document.documentElement.scrollHeight >= savedY + window.innerHeight * 0.5
-      if (canScroll || attempts >= 10) {
+      if (canScroll) {
         // behavior: 'instant' overrides `scroll-smooth` on <html>. Without
         // it the user sees the page animate back to position on every
         // browser back/forward — same flash as the modal-close case.
         window.scrollTo({ top: savedY, left: 0, behavior: 'instant' })
         hasRestoredRef.current = true
-      } else {
-        setTimeout(() => attemptScroll(attempts + 1), 50)
+        return
       }
+
+      attempts += 1
+      if (attempts >= maxAttempts) {
+        // Max retries reached — scroll anyway. This handles cases where the
+        // list is still paginating (DOM grows as user scrolls). Scrolling
+        // positions the user back in the right zone even if the exact
+        // scroll-to-content isn't available yet.
+        window.scrollTo({ top: savedY, left: 0, behavior: 'instant' })
+        hasRestoredRef.current = true
+        return
+      }
+
+      // Exponential backoff: 50ms, 100ms, 150ms... prevents thrashing
+      // on rapidly-growing DOM while giving it enough time to render.
+      delayMs = Math.min(delayMs + 50, 200)
+      timerId = setTimeout(attemptScroll, delayMs)
     }
 
-    requestAnimationFrame(() => attemptScroll())
+    // Use rAF to ensure DOM has processed current renders before checking height
+    const rafId = requestAnimationFrame(() => attemptScroll())
+
+    return () => {
+      cancelAnimationFrame(rafId)
+      if (timerId !== undefined) clearTimeout(timerId)
+    }
   }, [navigationType, location.key, ready])
 }

@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { Building2, ChevronRight, ShieldCheck } from 'lucide-react'
 import Avatar from '../Avatar'
 import RoleBadge from '../RoleBadge'
@@ -12,6 +11,9 @@ import { useEvidence } from '@/hooks/useEvidence'
 import { useInterest } from '@/hooks/useInterest'
 import HockeyContextLine from '../recruiting/HockeyContextLine'
 import QuickActionsRow from '../recruiting/QuickActionsRow'
+import { MemberPreviewModal } from './MemberPreviewModal'
+import { CandidatePreviewSheet } from '../recruiting/CandidatePreviewSheet'
+import type { Profile } from './PeopleListView'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { requestCache } from '@/lib/requestCache'
@@ -150,6 +152,56 @@ interface TopCommunityMembersCarouselProps {
    *  rails — New on HOCKIA, themed/role-tab lanes — stay free of
    *  recruitment signals (onboarding/profile-building intent). */
   showEvidence?: boolean
+  /** The role the active recruiting scope seeks ('player' | 'coach' | null).
+   *  When a card's role matches it, the rich scoped recruiter evaluation
+   *  sheet (CandidatePreviewSheet) opens instead of the general
+   *  MemberPreviewModal — matching the All-Members grid under that scope.
+   *  Set by CommunityPage on the "Top … for your search" instance. */
+  scopedRecruiterRole?: 'player' | 'coach' | null
+}
+
+/** Map a carousel row onto the Profile shape the Preview components read.
+ *  TopMemberRow is a near-superset already; the handful of fields the RPC
+ *  doesn't return (secondary_position, umpiring_categories, career history,
+ *  bio…) are absent from the preview and fall back to null/undefined — the
+ *  full profile still has them when the recruiter opens it. */
+function topRowToProfile(m: TopMemberRow): Profile {
+  return {
+    id: m.id,
+    avatar_url: m.avatar_url,
+    full_name: m.full_name?.trim() || m.username?.trim() || 'HOCKIA Member',
+    role: m.role,
+    nationality: m.nationality,
+    nationality_country_id: m.nationality_country_id,
+    nationality2_country_id: m.nationality2_country_id,
+    base_location: m.base_location,
+    position: m.position,
+    secondary_position: null,
+    current_club: m.current_club,
+    current_world_club_id: m.current_world_club_id,
+    gender: m.gender,
+    playing_category: m.playing_category,
+    coaching_categories: m.coaching_categories,
+    umpiring_categories: null,
+    created_at: '',
+    open_to_play: m.open_to_play ?? undefined,
+    open_to_coach: m.open_to_coach ?? undefined,
+    open_to_opportunities: m.open_to_opportunities ?? undefined,
+    last_active_at: m.last_active_at,
+    accepted_reference_count: m.accepted_reference_count ?? undefined,
+    coach_specialization: m.coach_specialization,
+    base_country_id: m.base_country_id,
+    relocation_willingness: m.relocation_willingness,
+    relocation_countries_open: m.relocation_countries_open,
+    relocation_countries_excluded: m.relocation_countries_excluded,
+    available_from: m.available_from,
+    level_target: m.level_target,
+    opportunity_preference: m.opportunity_preference,
+    highlight_video_url: m.highlight_video_url,
+    full_game_video_count: m.full_game_video_count,
+    is_verified: m.is_verified,
+    profile_completeness_pct: m.profile_completeness_pct,
+  }
 }
 
 const DEFAULT_LIMIT = 20
@@ -178,8 +230,8 @@ export function TopCommunityMembersCarousel({
   filterPlayingCategories,
   onViewAll,
   showEvidence = false,
+  scopedRecruiterRole = null,
 }: TopCommunityMembersCarouselProps) {
-  const navigate = useNavigate()
   const { profile: viewerProfile, loading: authLoading } = useAuthStore()
   // QA F5: get_top_community_members RPC requires auth; firing it as
   // anon returns 401 + logs "[TopCommunityMembersCarousel] fetch
@@ -190,6 +242,21 @@ export function TopCommunityMembersCarousel({
   const [members, setMembers] = useState<TopMemberRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  // Tapping a card opens the Preview (NOT the full profile) so the carousel
+  // behaves exactly like the All-Members grid: peek first, then the recruiter
+  // chooses to open the full profile (which is the notifying step). Opening a
+  // modal preserves scroll — no route change.
+  const [previewRow, setPreviewRow] = useState<TopMemberRow | null>(null)
+  // Memoize the mapped Profile by row identity so the preview's open-analytics
+  // effect (keyed on the member object) fires once per open, not per render.
+  const previewProfile = useMemo<Profile | null>(
+    () => (previewRow ? topRowToProfile(previewRow) : null),
+    [previewRow],
+  )
+  // Scoped candidate whose role matches the sought role (player under a player
+  // scope, coach under a coach scope) → rich recruiter evaluation sheet;
+  // everyone else → the general modal. Mirrors PeopleListView's split exactly.
+  const useScopedSheet = scopedRecruiterRole != null && previewRow?.role === scopedRecruiterRole
 
   // Resolve header copy: explicit overrides win; otherwise default to
   // role-aware ("Featured players") + criterion-aware helper.
@@ -280,21 +347,6 @@ export function TopCommunityMembersCarousel({
     // categories doesn't re-fire the effect.
   }, [roleFilter, sortCriterion, limit, onlyOpen, filterCategoryKey, filterPlayingCategories, authLoading, isAnon])
 
-  const openMember = (m: TopMemberRow) => {
-    const base =
-      m.role === 'club'
-        ? '/clubs'
-        : m.role === 'umpire'
-          ? '/umpires'
-          : m.role === 'coach'
-            ? '/coaches'
-            : m.role === 'brand'
-              ? '/brands'
-              : '/players'
-    const slug = m.username ? m.username : `id/${m.id}`
-    navigate(`${base}/${slug}?ref=community-top`)
-  }
-
   // Hide section entirely when nothing to show + not loading + no
   // error. Avoids a stray section header floating over empty space.
   if (!loading && !error && members.length === 0) return null
@@ -342,10 +394,22 @@ export function TopCommunityMembersCarousel({
           className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-2 snap-x snap-mandatory scrollbar-hide [scrollbar-width:none] md:mx-0 md:px-0"
         >
           {members.map((m) => (
-            <MemberCard key={m.id} member={m} onClick={() => openMember(m)} showEvidence={showEvidence} />
+            <MemberCard key={m.id} member={m} onClick={() => setPreviewRow(m)} showEvidence={showEvidence} />
           ))}
         </div>
       )}
+
+      {/* Preview layer — same components the All-Members grid uses. Scoped
+          player → CandidatePreviewSheet (rich recruiter eval); everyone else
+          → MemberPreviewModal. Both are modals, so closing preserves scroll. */}
+      <MemberPreviewModal
+        member={useScopedSheet ? null : previewProfile}
+        onClose={() => setPreviewRow(null)}
+      />
+      <CandidatePreviewSheet
+        member={useScopedSheet ? previewProfile : null}
+        onClose={() => setPreviewRow(null)}
+      />
     </section>
   )
 }
@@ -462,7 +526,7 @@ function MemberCard({ member, onClick, showEvidence = false }: MemberCardProps) 
       type="button"
       onClick={onClick}
       className="flex-1 p-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8026FA]/40 flex flex-col text-center"
-      aria-label={`${fullName}, ${member.profile_completeness_pct}% profile complete. Tap to open profile.`}
+      aria-label={`${fullName}, ${member.profile_completeness_pct}% profile complete. Tap to preview.`}
     >
       {/* Avatar slot — fixed centered */}
       <div className="flex justify-center">

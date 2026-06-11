@@ -132,7 +132,9 @@ const STATE_THRESHOLDS = {
   yellow: 0.4,
 } as const
 
-const NOT_APPLICABLE: ClubFitResult = {
+/** Shared "no fit" result. Exported so hooks can return it directly when
+ *  fit shouldn't be computed at all (e.g. no active recruiting context). */
+export const NOT_APPLICABLE: ClubFitResult = {
   isApplicable: false,
   state: 'grey',
   score: 0,

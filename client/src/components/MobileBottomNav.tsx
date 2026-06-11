@@ -147,7 +147,7 @@ export default function MobileBottomNav() {
 
       {/* Bottom Navigation */}
       <nav 
-        className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-lg border-t border-gray-200/50 shadow-lg pb-[max(env(safe-area-inset-bottom),0.5rem)] [transform:translate3d(0,0,0)]"
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/[0.97] backdrop-blur-lg border-t border-gray-200/50 shadow-lg pb-[max(env(safe-area-inset-bottom),0.5rem)] [transform:translate3d(0,0,0)] [backface-visibility:hidden]"
       >
         <div className="flex items-center justify-between px-2 pt-2 gap-1">
           {navItems.map((item) => {
@@ -197,38 +197,14 @@ export default function MobileBottomNav() {
             )
           })}
 
-          {/* Dashboard slot — relative wrapper anchors the floating HOCKIA AI
-              button so it stays vertically centred over the avatar regardless
-              of viewport width. AI is intentionally NOT a sixth nav item:
-              it's an intelligent shortcut that links into the Discover chat
-              experience and sits visually above the Dashboard area, not in
-              line with the primary nav. Inherits visibility from the parent
-              nav, so it hides whenever the bottom nav hides (incl. /discover). */}
+          {/* Dashboard slot. AI is intentionally NOT a sixth nav item:
+              it's an intelligent shortcut into the Discover chat. The
+              floating button is rendered OUTSIDE this <nav> (see below the
+              </nav>) so its `fixed` positioning anchors to the viewport,
+              not to the nav — the nav's `transform: translate3d` would
+              otherwise make IT the containing block and drag the button
+              down onto this Dashboard slot (the bug we keep regressing). */}
           <div className="relative">
-            {/* Floating HOCKIA AI button — solid purple gradient with
-                white icon. Matches the DiscoverPage's own Hockia AI
-                header chip + empty-state badge styling so the surface
-                stays visually consistent end-to-end. Stronger shadow
-                + ring keeps it readable against the white nav bar. */}
-            <button
-              type="button"
-              onClick={() => handleNavigate('/discover')}
-              aria-label="Open Hockia AI"
-              aria-hidden={fabHidden || undefined}
-              tabIndex={fabHidden ? -1 : 0}
-              className={`absolute bottom-full left-1/2 mb-4
-                         w-12 h-12 rounded-full
-                         bg-gradient-to-br from-[#8026FA] to-[#924CEC]
-                         flex items-center justify-center
-                         shadow-lg shadow-[#8026FA]/40 ring-2 ring-white
-                         transition-all duration-300 ease-out
-                         ${fabHidden
-                           ? '-translate-x-1/2 translate-y-24 opacity-0 pointer-events-none'
-                           : '-translate-x-1/2 translate-y-0 opacity-100 active:scale-95'}`}
-            >
-              <Sparkles className="w-5 h-5 text-white" strokeWidth={2.25} />
-            </button>
-
             {/* Avatar = Dashboard nav item. Tap navigates directly to
                 /dashboard/profile (mock convention). Settings + Sign out
                 used to live in a dropdown anchored here; those moved to
@@ -289,6 +265,33 @@ export default function MobileBottomNav() {
           </div>
         </div>
       </nav>
+
+      {/* Floating HOCKIA AI button — rendered as a viewport-fixed SIBLING of
+          the nav (NOT a child) so the nav's `transform: translate3d` can't
+          capture its `fixed` positioning. Anchored to the bottom-right,
+          lifted clear above the nav bar with the safe-area inset folded in,
+          so it never sits on the Dashboard icon or the nav row at any
+          viewport width. z-50 keeps it above the z-40 nav. Hides on
+          scroll-down (fabHidden) and reappears on scroll-up / at rest, so it
+          stays out of the way of card content while scrolling. */}
+      <button
+        type="button"
+        onClick={() => handleNavigate('/discover')}
+        aria-label="Open Hockia AI"
+        aria-hidden={fabHidden ? 'true' : undefined}
+        tabIndex={fabHidden ? -1 : 0}
+        className={`lg:hidden fixed right-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-50
+                   w-12 h-12 rounded-full
+                   bg-gradient-to-br from-[#8026FA] to-[#924CEC]
+                   flex items-center justify-center
+                   shadow-lg shadow-[#8026FA]/40 ring-2 ring-white
+                   transition-all duration-300 ease-out
+                   ${fabHidden
+                     ? 'translate-y-24 opacity-0 pointer-events-none'
+                     : 'translate-y-0 opacity-100 active:scale-95'}`}
+      >
+        <Sparkles className="w-5 h-5 text-white" strokeWidth={2.25} />
+      </button>
     </>
   )
 }

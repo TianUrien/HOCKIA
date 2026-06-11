@@ -5,8 +5,7 @@
  *   - Returns null for anonymous viewers
  *   - Returns null when viewer is the profile's own user
  *   - Renders Save + Message + ⋯ for authenticated non-self players
- *   - Hides recruiter-only Invite + Compare for non-recruiter viewers
- *   - Shows Invite + Compare (disabled) for club/coach viewers
+ *   - Never renders the removed Invite/Compare placeholders (any role)
  *   - Save click delegates to useIsProfileSaved.toggle
  *   - Message click uses onMessage override when provided
  *   - Message click falls back to navigate('/messages?new=<id>') otherwise
@@ -47,6 +46,19 @@ const savedState = {
 }
 vi.mock('@/hooks/useSavedProfiles', () => ({
   useIsProfileSaved: () => savedState,
+}))
+
+// useFriendship — mocked for AddFriendAction since it's now shown by default
+vi.mock('@/hooks/useFriendship', () => ({
+  useFriendship: () => ({
+    loading: false,
+    mutating: false,
+    isAuthenticated: true,
+    isOwnProfile: false,
+    isFriend: false,
+    isOutgoingRequest: false,
+    sendRequest: vi.fn(),
+  }),
 }))
 
 vi.mock('@/lib/trackDbEvent', () => ({ trackDbEvent: vi.fn() }))
@@ -100,35 +112,38 @@ describe('QuickActionsRow', () => {
     expect(container.firstChild).toBeNull()
   })
 
-  it('renders Save + Message + ⋯ for an authenticated non-self player viewer', () => {
+  it('renders Save + Message + Add friend by default (no More menu)', () => {
     setViewer({ role: 'player' })
     renderRow()
     expect(screen.getByRole('button', { name: /save jordan hall/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /message jordan hall/i })).toBeInTheDocument()
-    expect(screen.getByTestId('more-actions-menu')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /add jordan hall as a friend/i })).toBeInTheDocument()
+    expect(screen.queryByTestId('more-actions-menu')).not.toBeInTheDocument()
   })
 
-  it('hides Invite + Compare for non-recruiter viewers', () => {
+  it('never renders the removed Invite/Compare placeholders for non-recruiters', () => {
     setViewer({ role: 'player' })
     renderRow()
     expect(screen.queryByRole('button', { name: /invite/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /compare/i })).not.toBeInTheDocument()
   })
 
-  it('shows disabled Invite + Compare for club viewers', () => {
+  it('never renders Invite/Compare for recruiter (club/coach) viewers either', () => {
     setViewer({ role: 'club' })
-    renderRow()
-    const invite = screen.getByRole('button', { name: /invite jordan hall to apply/i })
-    const compare = screen.getByRole('button', { name: /compare \(phase 2\)/i })
-    expect(invite).toBeDisabled()
-    expect(compare).toBeDisabled()
-  })
+    const { unmount } = renderRow()
+    expect(screen.queryByRole('button', { name: /invite/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /compare/i })).not.toBeInTheDocument()
+    // Renders Save + Message + Add friend by default, no More menu
+    expect(screen.getByRole('button', { name: /save jordan hall/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /message jordan hall/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /add jordan hall as a friend/i })).toBeInTheDocument()
+    expect(screen.queryByTestId('more-actions-menu')).not.toBeInTheDocument()
+    unmount()
 
-  it('shows disabled Invite + Compare for coach viewers', () => {
     setViewer({ role: 'coach' })
     renderRow()
-    expect(screen.getByRole('button', { name: /invite jordan hall/i })).toBeDisabled()
-    expect(screen.getByRole('button', { name: /compare \(phase 2\)/i })).toBeDisabled()
+    expect(screen.queryByRole('button', { name: /invite/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /compare/i })).not.toBeInTheDocument()
   })
 
   it('renders "Saved" label + active state when already saved', () => {
