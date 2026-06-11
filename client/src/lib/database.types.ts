@@ -6426,6 +6426,7 @@ export type Database = {
         Returns: {
           accepted_friend_count: number
           accepted_reference_count: number
+          career_entry_count: number
           avatar_url: string
           base_location: string
           coach_specialization: string

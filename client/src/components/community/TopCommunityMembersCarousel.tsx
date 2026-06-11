@@ -73,6 +73,11 @@ interface TopMemberRow {
   open_to_opportunities: boolean | null
   is_verified: boolean | null
   accepted_reference_count: number | null
+  /** Denormalized count of career_history (Journey) entries. Drives the
+   *  evidence checklist's "Journey" row in the carousel-sourced Preview.
+   *  RPC now projects this (20260611100000); previously dropped → the
+   *  Preview always showed Journey as MISSING for carousel candidates. */
+  career_entry_count: number | null
   last_active_at: string | null
   profile_completeness_pct: number
   /** Phase 3e — drives Club Fit gender_match + filtering. RPC now
@@ -162,9 +167,9 @@ interface TopCommunityMembersCarouselProps {
 
 /** Map a carousel row onto the Profile shape the Preview components read.
  *  TopMemberRow is a near-superset already; the handful of fields the RPC
- *  doesn't return (secondary_position, umpiring_categories, career history,
- *  bio…) are absent from the preview and fall back to null/undefined — the
- *  full profile still has them when the recruiter opens it. */
+ *  doesn't return (secondary_position, umpiring_categories, bio…) are
+ *  absent from the preview and fall back to null/undefined — the full
+ *  profile still has them when the recruiter opens it. */
 function topRowToProfile(m: TopMemberRow): Profile {
   return {
     id: m.id,
@@ -189,6 +194,7 @@ function topRowToProfile(m: TopMemberRow): Profile {
     open_to_opportunities: m.open_to_opportunities ?? undefined,
     last_active_at: m.last_active_at,
     accepted_reference_count: m.accepted_reference_count ?? undefined,
+    career_entry_count: m.career_entry_count,
     coach_specialization: m.coach_specialization,
     base_country_id: m.base_country_id,
     relocation_willingness: m.relocation_willingness,

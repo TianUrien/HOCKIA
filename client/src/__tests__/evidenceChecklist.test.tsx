@@ -38,7 +38,30 @@ describe('evidenceChecklist', () => {
     expect(byKey.club.present).toBe(true) // current_club text counts
     expect(byKey.league.present).toBe(true) // band resolved
     expect(byKey.career.present).toBe(false)
+    expect(byKey.career.label).toBe('Journey') // product language, not "Career history"
     expect(byKey.open.present).toBe(true)
+  })
+
+  it('marks Journey present when the member has career_history entries', () => {
+    // Regression: carousel-sourced previews dropped career_entry_count (the
+    // RPC omitted it), so a player with real journey entries (e.g. 6) showed
+    // "Journey: MISSING". The checklist must honour any count > 0.
+    const rows = evidenceChecklist({
+      role: 'player',
+      accepted_reference_count: 1,
+      career_entry_count: 6,
+      open_to_play: true,
+    })
+    const career = rows.find((r) => r.key === 'career')
+    expect(career?.label).toBe('Journey')
+    expect(career?.present).toBe(true)
+  })
+
+  it('keeps the Journey row for coaches with career history', () => {
+    const rows = evidenceChecklist({ role: 'coach', career_entry_count: 3, open_to_coach: true })
+    const career = rows.find((r) => r.key === 'career')
+    expect(career?.present).toBe(true)
+    expect(career?.label).toBe('Journey')
   })
 
   it('drops video rows for coaches and uses "Open to coach"', () => {

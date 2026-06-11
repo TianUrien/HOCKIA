@@ -217,7 +217,10 @@ export function evidenceChecklist(
   })
   rows.push({ key: 'club', label: 'Current club', present: Boolean(candidate.current_world_club_id || candidate.current_club?.trim()) })
   rows.push({ key: 'league', label: 'League on record', present: candidate.competition_level_band != null })
-  rows.push({ key: 'career', label: 'Career history', present: (candidate.career_entry_count ?? 0) > 0 })
+  // Labelled "Journey" to match the product language used on the full
+  // profile (JourneyTab/JourneyCard) — same data (career_history /
+  // career_entry_count), one consistent name across surfaces.
+  rows.push({ key: 'career', label: 'Journey', present: (candidate.career_entry_count ?? 0) > 0 })
   rows.push({
     key: 'open',
     label: isCoach ? 'Open to coach' : 'Open to play',
