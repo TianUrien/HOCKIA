@@ -3,6 +3,7 @@ import { Home, Users, Briefcase, Globe, Sparkles } from 'lucide-react'
 import Avatar from './Avatar'
 import { NotificationBadge } from '@/components'
 import { useNavigation } from '@/hooks/useNavigation'
+import { useAnyModalOpen } from '@/hooks/useAnyModalOpen'
 
 interface NavItem {
   id: string
@@ -27,6 +28,10 @@ export default function MobileBottomNav() {
   // chip or gallery text) and reappears on scroll-up, near the top, or once
   // scrolling stops. The bottom nav itself stays put; only the FAB reacts.
   const [fabHidden, setFabHidden] = useState(false)
+  // Also hide the FAB whenever a modal/dialog is open so it never sits ON TOP
+  // of modal content/actions (e.g. covering Edit Profile's "Save Changes").
+  const anyModalOpen = useAnyModalOpen()
+  const hideFab = fabHidden || anyModalOpen
 
   // rAF-coalesced scroll listener — compares scrollY frame-to-frame to derive
   // direction. Hide on downward scroll past a small threshold; show on any
@@ -278,15 +283,15 @@ export default function MobileBottomNav() {
         type="button"
         onClick={() => handleNavigate('/discover')}
         aria-label="Open Hockia AI"
-        aria-hidden={fabHidden ? 'true' : undefined}
-        tabIndex={fabHidden ? -1 : 0}
+        aria-hidden={hideFab ? 'true' : undefined}
+        tabIndex={hideFab ? -1 : 0}
         className={`lg:hidden fixed right-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-50
                    w-12 h-12 rounded-full
                    bg-gradient-to-br from-[#8026FA] to-[#924CEC]
                    flex items-center justify-center
                    shadow-lg shadow-[#8026FA]/40 ring-2 ring-white
                    transition-all duration-300 ease-out
-                   ${fabHidden
+                   ${hideFab
                      ? 'translate-y-24 opacity-0 pointer-events-none'
                      : 'translate-y-0 opacity-100 active:scale-95'}`}
       >
