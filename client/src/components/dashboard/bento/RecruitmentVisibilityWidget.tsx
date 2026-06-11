@@ -287,7 +287,7 @@ function buildCoachItems(profile: Profile): VisibilityItem[] {
     {
       id: 'coaching-experience',
       label: 'Coaching experience',
-      hint: 'Past roles in your Journey — clubs want to see the teams you have built and developed.',
+      hint: 'Past roles in your career history — clubs want to see the teams you have built and developed.',
       actionLabel: 'Add',
       completed: hasExperience,
       bucket: {

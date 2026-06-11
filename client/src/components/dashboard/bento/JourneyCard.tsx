@@ -142,9 +142,9 @@ export default function JourneyCard({ profileId, readOnly, role = 'player', care
   return (
     <DashboardCard
       icon={Flag}
-      title="Journey"
-      subtitle="Career history and achievements"
-      ctaLabel={isEmpty && readOnly ? undefined : isEmpty ? 'Add to your journey' : 'View journey'}
+      title="Career History"
+      subtitle="Clubs, teams, and achievements"
+      ctaLabel={isEmpty && readOnly ? undefined : isEmpty ? 'Add entry' : 'View all'}
       onCtaClick={onViewJourney}
       testId="journey-card"
     >

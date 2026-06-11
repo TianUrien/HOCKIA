@@ -210,8 +210,8 @@ export function useProfileStrength(profile: Profile | null): ProfileStrengthResu
       },
       {
         id: 'journey',
-        label: 'Share a moment in your Journey',
-        description: 'Add your career history, milestones, or achievements',
+        label: 'Add to your career history',
+        description: 'Add your clubs, milestones, or achievements',
         unlockCopy: 'Shows where you have played and what you have achieved.',
         weight: 10,
         completed: journeyCount > 0,

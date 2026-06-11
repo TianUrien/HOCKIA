@@ -5,8 +5,8 @@ import type { FreshnessNudge } from '@/lib/profileFreshness'
 
 const sampleNudge: FreshnessNudge = {
   id: 'journey-stale',
-  message: 'Your last Journey update was 5 weeks ago.',
-  ctaLabel: 'Update Journey',
+  message: 'Your last career history update was 5 weeks ago.',
+  ctaLabel: 'Update career history',
   action: { type: 'tab', tab: 'journey' },
   daysSince: 35,
 }
@@ -28,13 +28,13 @@ describe('FreshnessCard', () => {
   it('renders the nudge message and CTA when a nudge is passed', () => {
     render(<FreshnessCard nudge={sampleNudge} />)
     expect(screen.getByText(sampleNudge.message)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /update journey/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /update career history/i })).toBeInTheDocument()
   })
 
   it('fires onAction with the nudge when the CTA is clicked', () => {
     const onAction = vi.fn()
     render(<FreshnessCard nudge={sampleNudge} onAction={onAction} />)
-    fireEvent.click(screen.getByRole('button', { name: /update journey/i }))
+    fireEvent.click(screen.getByRole('button', { name: /update career history/i }))
     expect(onAction).toHaveBeenCalledWith(sampleNudge)
   })
 

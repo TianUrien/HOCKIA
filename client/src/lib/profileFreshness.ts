@@ -102,8 +102,8 @@ function buildNudge(
     case 'journey-stale':
       return {
         id,
-        message: `Your last Journey update was ${period} ago — add a recent moment to keep clubs current.`,
-        ctaLabel: 'Update Journey',
+        message: `Your last career history update was ${period} ago — add a recent moment to keep clubs current.`,
+        ctaLabel: 'Update career history',
         action: { type: 'tab', tab: 'journey' },
         daysSince,
       }

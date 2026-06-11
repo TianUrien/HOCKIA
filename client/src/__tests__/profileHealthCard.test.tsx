@@ -29,7 +29,7 @@ const mixedBuckets: TestBucket[] = [
   { id: 'profile-photo', label: 'Add a profile photo', completed: true },
   { id: 'highlight-video', label: 'Add your highlight video', noun: 'a highlight video', completed: false },
   { id: 'full-match-footage', label: 'Upload full match footage', noun: 'full match footage', completed: false },
-  { id: 'journey', label: 'Share a moment in your Journey', completed: true },
+  { id: 'journey', label: 'Add to your career history', completed: true },
   { id: 'media-gallery', label: 'Add a photo or video to your Gallery', completed: false },
   { id: 'friends', label: 'Make your first connection', completed: true },
   { id: 'references', label: 'Get a trusted reference', noun: 'trusted references', completed: false },
@@ -67,7 +67,7 @@ describe('ProfileHealthCard', () => {
     // Completed
     expect(screen.getByText('Basic info completed')).toBeInTheDocument()
     expect(screen.getByText('Add a profile photo')).toBeInTheDocument()
-    expect(screen.getByText('Share a moment in your Journey')).toBeInTheDocument()
+    expect(screen.getByText('Add to your career history')).toBeInTheDocument()
     expect(screen.getByText('Make your first connection')).toBeInTheDocument()
     // Missing
     expect(screen.getByText('Add your highlight video')).toBeInTheDocument()

@@ -202,7 +202,7 @@ export function useUmpireProfileStrength({ profile }: UseUmpireProfileStrengthOp
       },
       {
         id: 'appointments',
-        label: 'Officiating Journey',
+        label: 'Career History',
         hint: 'Log at least one appointment, milestone, certification, or panel.',
         unlockCopy: 'Concrete history is the strongest credibility signal beyond the badge.',
         weight: 10,

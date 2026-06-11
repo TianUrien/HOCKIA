@@ -98,7 +98,7 @@ const entryTypeMeta: Record<JourneyType, EntryTypeMeta> = {
     icon: GraduationCap,
   },
   other: {
-    label: 'Journey',
+    label: 'Other',
     dotClass: 'bg-slate-500/95 text-white',
     badgeClass: 'bg-gray-100 text-gray-700',
     icon: Sparkles,
@@ -194,7 +194,7 @@ export default function JourneyTab({
   profileId,
   readOnly = false,
   variant = 'tab',
-  title = 'Journey',
+  title = 'Career History',
 }: JourneyTabProps) {
   const { user } = useAuthStore()
   const { addToast } = useToastStore()
@@ -352,7 +352,7 @@ export default function JourneyTab({
       setJourney(normalized)
     } catch (error) {
       logger.error('Error fetching journey entries:', error)
-      addToast('Failed to load Journey timeline.', 'error')
+      addToast('Failed to load career history.', 'error')
     } finally {
       setIsLoading(false)
     }
@@ -388,7 +388,7 @@ export default function JourneyTab({
       setActiveEntryDraft(parsedDraft)
       setActiveDraftContext(parsedContext)
       journeyDraftRestoredRef.current = true
-      addToast('Journey draft restored.', 'info')
+      addToast('Draft restored.', 'info')
     } catch (error) {
       logger.error('Failed to restore journey draft', error)
       window.localStorage.removeItem(contextKey)
@@ -422,7 +422,7 @@ export default function JourneyTab({
 
   const startNewEntryForm = () => {
     if (!canManage || !user) {
-      addToast('Please sign in to manage your Journey.', 'info')
+      addToast('Please sign in to manage your career history.', 'info')
       return
     }
 
@@ -723,10 +723,10 @@ export default function JourneyTab({
 
       await fetchJourney()
       resetFormState()
-      addToast('Journey entry saved.', 'success')
+      addToast('Entry saved.', 'success')
     } catch (error) {
       logger.error('Error saving journey entry:', error)
-      addToast('Failed to save journey. Please try again.', 'error')
+      addToast('Failed to save. Please try again.', 'error')
     } finally {
       setSavingEntryId(null)
     }
@@ -754,10 +754,10 @@ export default function JourneyTab({
       clearJourneyDraftStorage({ type: 'edit', entryId })
       await fetchJourney()
       resetFormState()
-      addToast('Journey entry removed.', 'success')
+      addToast('Entry removed.', 'success')
     } catch (error) {
       logger.error('Error deleting journey entry:', error)
-      addToast('Failed to delete journey entry. Please try again.', 'error')
+      addToast('Failed to delete entry. Please try again.', 'error')
     } finally {
       setSavingEntryId(null)
     }
@@ -1019,7 +1019,7 @@ export default function JourneyTab({
             <div className="mt-2 flex flex-col gap-4 sm:flex-row sm:items-start">
               <StorageImage
                 src={entry.image_url}
-                alt="Journey logo preview"
+                alt="Entry logo preview"
                 className="h-full w-full object-cover"
                 containerClassName="h-20 w-20 rounded-xl"
                 fallbackClassName="h-20 w-20 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50"
@@ -1159,9 +1159,9 @@ export default function JourneyTab({
               <div className="space-y-6">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div>
-                    <p className="text-sm font-semibold text-indigo-600">New journey entry</p>
+                    <p className="text-sm font-semibold text-indigo-600">New career history entry</p>
                     <h3 className="text-xl font-semibold text-gray-900">Share a new milestone</h3>
-                    <p className="text-sm text-gray-500">Fill out the form below to add it to your journey.</p>
+                    <p className="text-sm text-gray-500">Fill out the form below to add it to your career history.</p>
                   </div>
                   <button
                     type="button"
@@ -1178,7 +1178,7 @@ export default function JourneyTab({
               <>
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <div>
-                    <p className="text-sm font-semibold text-indigo-600">Journey timeline</p>
+                    <p className="text-sm font-semibold text-indigo-600">Career history</p>
                     <h3 className="text-xl font-semibold text-gray-900">Add a new entry</h3>
                     <p className="text-sm text-gray-500">Highlight a club, tournament, camp, or other milestone.</p>
                   </div>
@@ -1188,7 +1188,7 @@ export default function JourneyTab({
                     className="inline-flex items-center gap-2 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <Plus className="h-4 w-4" />
-                    Add Journey Entry
+                    Add Entry
                   </Button>
                 </div>
                 {isEditingExistingEntry && (
@@ -1204,16 +1204,16 @@ export default function JourneyTab({
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 text-blue-600">
               <Sparkles className="h-7 w-7" />
             </div>
-            <h3 className="mb-2 text-xl font-semibold text-gray-900">No Journey entries yet</h3>
+            <h3 className="mb-2 text-xl font-semibold text-gray-900">No career history yet</h3>
             <p className="mb-6 text-gray-600">
               {readOnly
-                ? 'This profile has not shared any Journey milestones yet.'
+                ? 'This profile has not shared any career history yet.'
                 : 'Capture your biggest milestones so clubs and coaches can understand your path.'}
             </p>
             {!readOnly && (
               <Button onClick={startNewEntryForm} className="inline-flex items-center gap-2">
                 <Plus className="h-4 w-4" />
-                Add Journey Entry
+                Add Entry
               </Button>
             )}
           </div>
@@ -1271,7 +1271,7 @@ export default function JourneyTab({
                                 onClick={() => setEntryToDelete(entry)}
                                 className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500"
                                 title="Delete entry"
-                                aria-label="Delete journey entry"
+                                aria-label="Delete entry"
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
                               </button>
@@ -1290,7 +1290,7 @@ export default function JourneyTab({
                                     : null
                               }
                               fallbackSrc={entry.image_url}
-                              alt="Journey logo"
+                              alt="Entry logo"
                               className="h-full w-full object-cover rounded-xl"
                               containerClassName="h-10 w-10 min-w-[2.5rem] rounded-xl sm:h-12 sm:w-12 sm:min-w-[3rem]"
                               fallbackClassName="h-10 w-10 rounded-xl bg-gray-50 sm:h-12 sm:w-12"
@@ -1378,7 +1378,7 @@ export default function JourneyTab({
               className="inline-flex items-center gap-2 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <Plus className="h-4 w-4" />
-              Add Journey Entry
+              Add Entry
             </Button>
           </div>
         )}
@@ -1419,7 +1419,7 @@ export default function JourneyTab({
           if (!entryToDelete) return
           await handleDeleteEntry(entryToDelete.id)
         }}
-        title="Delete this journey entry?"
+        title="Delete this entry?"
         message={
           entryToDelete
             ? `"${entryToDelete.club_name || 'Untitled entry'}" will be removed from your career history. This can't be undone.`
