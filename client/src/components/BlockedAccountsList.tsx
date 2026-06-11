@@ -36,15 +36,39 @@ export default function BlockedAccountsList() {
   const fetchBlocked = async () => {
     setLoading(true)
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error }: { data: BlockedUser[] | null; error: unknown } = await (supabase as any)
+      // Two-step fetch instead of a PostgREST embed: user_blocks_blocked_id_fkey
+      // references auth.users (not public.profiles) since 202603251200, so
+      // `profiles!user_blocks_blocked_id_fkey(...)` 400s with PGRST200 and the
+      // list silently rendered "No blocked accounts" while a block was active.
+      // Resolve the blocked profiles in a separate query (blocked_id == the
+      // user id == profiles.id in HOCKIA).
+      const { data: blocks, error: blocksError } = await supabase
         .from('user_blocks')
-        .select('blocked_id, created_at, profile:profiles!user_blocks_blocked_id_fkey(full_name, username, avatar_url, role)')
+        .select('blocked_id, created_at')
         .eq('blocker_id', user!.id)
         .order('created_at', { ascending: false })
+      if (blocksError) throw blocksError
 
-      if (error) throw error
-      setBlockedUsers((data ?? []) as BlockedUser[])
+      const ids = (blocks ?? []).map((b) => b.blocked_id)
+      const profilesById = new Map<string, BlockedUser['profile']>()
+      if (ids.length > 0) {
+        const { data: profiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, full_name, username, avatar_url, role')
+          .in('id', ids)
+        if (profilesError) throw profilesError
+        for (const p of profiles ?? []) {
+          profilesById.set(p.id, { full_name: p.full_name, username: p.username, avatar_url: p.avatar_url, role: p.role })
+        }
+      }
+
+      setBlockedUsers(
+        (blocks ?? []).map((b) => ({
+          blocked_id: b.blocked_id,
+          created_at: b.created_at,
+          profile: profilesById.get(b.blocked_id) ?? null,
+        })),
+      )
     } catch (err) {
       logger.error('Failed to fetch blocked users:', err)
     } finally {
