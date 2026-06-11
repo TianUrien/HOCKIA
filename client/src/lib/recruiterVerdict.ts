@@ -82,6 +82,11 @@ export interface RecruiterVerdict {
    *  card renders the lead only then — mirrors the AI Opinion gate. */
   isApplicable: boolean
   tier: VerdictTier
+  /** 0..1 verdict strength for the card's visual bar — the internal lens
+   *  points normalized and kept CONSISTENT with the tier (the grey-fit cap
+   *  also caps this), so a bar can never contradict the headline. It is a
+   *  qualitative fill, never surfaced as a "%". */
+  strength: number
   /** Glanceable tier label, e.g. "Worth a look". */
   headline: string
   /** Ranked positive reasons pulled from the lenses (0–3). */
@@ -100,6 +105,7 @@ export interface RecruiterVerdict {
 const NOT_APPLICABLE: RecruiterVerdict = {
   isApplicable: false,
   tier: 'pass',
+  strength: 0,
   headline: '',
   highlights: [],
   caveats: [],
@@ -166,6 +172,30 @@ const PURSUE_AT = 2.6
 const CONSIDER_AT = 1.4
 const LONGSHOT_AT = 0.4
 
+// Visual strength for the card's bar — the internal points mapped to 0..1,
+// anchored to the tier thresholds so the fill bucket ALWAYS agrees with the
+// tier word (pass ≈ 6–30%, longshot ≈ 30–55%, consider ≈ 55–80%, pursue ≈
+// 80–100%). Piecewise-linear between anchors. Never shown as a number.
+const STRENGTH_ANCHORS: ReadonlyArray<readonly [number, number]> = [
+  [-0.8, 0.06],
+  [LONGSHOT_AT, 0.3],
+  [CONSIDER_AT, 0.55],
+  [PURSUE_AT, 0.8],
+  [4.8, 1.0],
+]
+function pointsToStrength(points: number): number {
+  const a = STRENGTH_ANCHORS
+  if (points <= a[0][0]) return a[0][1]
+  for (let i = 1; i < a.length; i++) {
+    if (points <= a[i][0]) {
+      const [x0, y0] = a[i - 1]
+      const [x1, y1] = a[i]
+      return y0 + ((points - x0) / (x1 - x0)) * (y1 - y0)
+    }
+  }
+  return a[a.length - 1][1]
+}
+
 /**
  * Synthesize the recruiter verdict from the computed lens results. Returns
  * NOT_APPLICABLE (card shows no lead) unless Fit is applicable — i.e. the
@@ -193,6 +223,12 @@ export function computeRecruiterVerdict(input: RecruiterVerdictInput): Recruiter
   // "doesn't fit what you're recruiting". Cap at longshot so they still
   // surface (the recruiter may be flexible) without a misleading headline.
   if (fit.state === 'grey' && (tier === 'pursue' || tier === 'consider')) tier = 'longshot'
+
+  // Verdict strength for the card's bar. Capped to stay consistent with the
+  // tier: a grey fit that was just downgraded to longshot must not show a
+  // near-full bar, so its points are pulled below the consider threshold.
+  const cappedPoints = fit.state === 'grey' && points >= CONSIDER_AT ? CONSIDER_AT - 0.01 : points
+  const strength = pointsToStrength(cappedPoints)
 
   // Highlights — strongest SELLING POINTS from each lens's polarity-tagged
   // `positives` (so a mixed-tone lens never contributes a concern here).
@@ -231,6 +267,7 @@ export function computeRecruiterVerdict(input: RecruiterVerdictInput): Recruiter
   return {
     isApplicable: true,
     tier,
+    strength,
     headline: HEADLINES[tier],
     highlights,
     caveats: caveats.slice(0, 2),

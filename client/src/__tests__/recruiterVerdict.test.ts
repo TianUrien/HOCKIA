@@ -231,3 +231,37 @@ describe('computeRecruiterVerdict — problem re-weighting (#6)', () => {
     expect(['longshot', 'pass']).toContain(r.tier) // never pursue/consider
   })
 })
+
+// ── Strength bar — a 0..1 fill that always agrees with the tier word ──
+describe('computeRecruiterVerdict — strength bar', () => {
+  it('NOT_APPLICABLE verdict has strength 0', () => {
+    expect(computeRecruiterVerdict({ fit: null, evidence: null, interest: null }).strength).toBe(0)
+  })
+
+  it('strength rises monotonically with the tier and stays in [0,1]', () => {
+    const pursue = computeRecruiterVerdict({ fit: fit('green', { positives: ['x'] }), evidence: evidence('strong'), interest: interest('strong', { positives: ['y'] }) })
+    const consider = computeRecruiterVerdict({ fit: fit('green', { positives: ['x'] }), evidence: null, interest: null })
+    const longshot = computeRecruiterVerdict({ fit: fit('yellow', { positives: ['x'] }), evidence: null, interest: null })
+    const pass = computeRecruiterVerdict({ fit: fit('yellow', { positives: ['x'] }), evidence: null, interest: interest('low', { caveats: ['z'] }) })
+    expect([pursue.tier, consider.tier, longshot.tier, pass.tier]).toEqual(['pursue', 'consider', 'longshot', 'pass'])
+    expect(pursue.strength).toBeGreaterThan(consider.strength)
+    expect(consider.strength).toBeGreaterThan(longshot.strength)
+    expect(longshot.strength).toBeGreaterThan(pass.strength)
+    for (const v of [pursue, consider, longshot, pass]) {
+      expect(v.strength).toBeGreaterThanOrEqual(0)
+      expect(v.strength).toBeLessThanOrEqual(1)
+    }
+  })
+
+  it('a grey-fit cap also caps the bar (a capped longshot never shows a near-full fill)', () => {
+    // Raw points clear pursue, but the grey cap pulls the tier to longshot —
+    // the bar must stay in the longshot band, not near-full.
+    const capped = computeRecruiterVerdict({
+      fit: fit('grey', { caveats: ['Different category.'] }),
+      evidence: evidence('strong'),
+      interest: interest('strong', { positives: ['Keen.'] }),
+    })
+    expect(capped.tier).toBe('longshot')
+    expect(capped.strength).toBeLessThan(0.55) // below the "consider" band
+  })
+})

@@ -64,11 +64,11 @@ const NEW_WINDOW_MS = 14 * 24 * 60 * 60 * 1000
 
 /** Compact verdict styling — mirrors RecruiterVerdictCard (the profile lead)
  *  so the two surfaces read identically. Verb-led tiers, never a "%". */
-const VERDICT_STYLE: Record<VerdictTier, { icon: typeof CheckCircle2; iconClass: string; headlineClass: string }> = {
-  pursue: { icon: CheckCircle2, iconClass: 'text-[#8026FA]', headlineClass: 'text-[#5b16b8]' },
-  consider: { icon: Eye, iconClass: 'text-gray-700', headlineClass: 'text-gray-900' },
-  longshot: { icon: CircleDashed, iconClass: 'text-gray-400', headlineClass: 'text-gray-600' },
-  pass: { icon: MinusCircle, iconClass: 'text-gray-400', headlineClass: 'text-gray-500' },
+const VERDICT_STYLE: Record<VerdictTier, { icon: typeof CheckCircle2; iconClass: string; headlineClass: string; barClass: string }> = {
+  pursue: { icon: CheckCircle2, iconClass: 'text-[#8026FA]', headlineClass: 'text-[#5b16b8]', barClass: 'bg-[#8026FA]' },
+  consider: { icon: Eye, iconClass: 'text-gray-700', headlineClass: 'text-gray-900', barClass: 'bg-[#8026FA]/55' },
+  longshot: { icon: CircleDashed, iconClass: 'text-gray-400', headlineClass: 'text-gray-600', barClass: 'bg-gray-400' },
+  pass: { icon: MinusCircle, iconClass: 'text-gray-400', headlineClass: 'text-gray-500', barClass: 'bg-gray-300' },
 }
 
 /** One short, recruiter-facing word on profile depth — no long sentence. */
@@ -212,6 +212,17 @@ export default function RecruiterCandidateCard({ member, verdict, onPreview }: R
           <div className="mt-1 flex items-center gap-1.5">
             <VerdictIcon className={`h-4 w-4 flex-shrink-0 ${vStyle.iconClass}`} aria-hidden="true" />
             <span className={`truncate text-[14px] font-bold ${vStyle.headlineClass}`}>{verdict.headline}</span>
+          </div>
+          {/* Verdict-strength bar — fill driven by verdict.strength, colour by
+              tier. It's the SAME synthesis the headline reads, normalized, so
+              the bar can never disagree with the tier word (and a grey-fit cap
+              caps the fill). A qualitative strength, never labelled a "%". */}
+          <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
+            <div
+              className={`h-full rounded-full ${vStyle.barClass} transition-[width] duration-300`}
+              style={{ width: `${Math.round(verdict.strength * 100)}%` }}
+              aria-hidden="true"
+            />
           </div>
           {/* Lead highlight (✓) + lead caveat (⚠) — each a reserved single line
               so the section height is constant whether or not reasons exist. */}
