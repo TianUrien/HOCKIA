@@ -39,6 +39,8 @@ const defaultProps = {
   isUnreadMarker: false,
   onRetry: vi.fn(),
   onDeleteFailed: vi.fn(),
+  onEditSave: vi.fn().mockResolvedValue(true),
+  onDelete: vi.fn().mockResolvedValue(true),
 }
 
 describe('MessageBubble — shared post rendering', () => {
@@ -148,8 +150,10 @@ describe('MessageBubble — shared post rendering', () => {
     const bubble = container.querySelector('.from-purple-500')
     expect(bubble).not.toBeNull()
 
-    // The card inside should have sender styling
-    const card = screen.getByRole('button')
-    expect(card.className).toContain('bg-white/10')
+    // The card inside should have sender styling. (Own messages also render a
+    // "Message options" trigger button, so disambiguate from that.)
+    const card = screen.getAllByRole('button').find(b => b.className.includes('bg-white/10'))
+    expect(card).toBeTruthy()
+    expect(card!.className).toContain('bg-white/10')
   })
 })

@@ -1690,6 +1690,8 @@ export type Database = {
         Row: {
           content: string
           conversation_id: string
+          deleted_at: string | null
+          edited_at: string | null
           id: string
           idempotency_key: string | null
           metadata: Json | null
@@ -1700,6 +1702,8 @@ export type Database = {
         Insert: {
           content: string
           conversation_id: string
+          deleted_at?: string | null
+          edited_at?: string | null
           id?: string
           idempotency_key?: string | null
           metadata?: Json | null
@@ -1710,6 +1714,8 @@ export type Database = {
         Update: {
           content?: string
           conversation_id?: string
+          deleted_at?: string | null
+          edited_at?: string | null
           id?: string
           idempotency_key?: string | null
           metadata?: Json | null
@@ -5593,6 +5599,14 @@ export type Database = {
       archive_old_messages: {
         Args: { p_batch?: number; p_retention_days?: number }
         Returns: number
+      }
+      delete_message: {
+        Args: { p_message_id: string }
+        Returns: Database["public"]["Tables"]["messages"]["Row"]
+      }
+      edit_message: {
+        Args: { p_content: string; p_message_id: string }
+        Returns: Database["public"]["Tables"]["messages"]["Row"]
       }
       block_user: { Args: { p_blocked_id: string }; Returns: undefined }
       check_application_rate_limit: {

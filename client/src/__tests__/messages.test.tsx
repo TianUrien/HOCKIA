@@ -107,7 +107,9 @@ const resolvedChatState = {
   queueReadReceipt: vi.fn(),
   markConversationAsRead: vi.fn(),
   retryMessage: vi.fn(),
-  deleteFailedMessage: vi.fn()
+  deleteFailedMessage: vi.fn(),
+  editMessage: vi.fn().mockResolvedValue(true),
+  deleteMessage: vi.fn().mockResolvedValue(true)
 }
 
 beforeEach(() => {
