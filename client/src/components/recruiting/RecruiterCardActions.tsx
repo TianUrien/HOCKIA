@@ -55,7 +55,7 @@ export default function RecruiterCardActions({ playerId, playerName, onMessage }
         ariaLabel={saved.isSaved ? `Remove ${playerName} from saved` : `Save ${playerName}`}
       />
       <ActionItem
-        label="Message"
+        label="Chat"
         icon={MessageSquare}
         onClick={handleMessage}
         ariaLabel={`Message ${playerName}`}
@@ -122,8 +122,9 @@ function ActionItem({ label, icon: Icon, ariaLabel, onClick, active = false, dis
         // every card regardless of which label/state shows — a wrapping
         // "Add friend" used to make this taller than a 1-word "Friends"/
         // "Requested", knocking the bottom action row out of alignment.
-        'flex min-h-[52px] flex-1 flex-col items-center justify-center gap-1 py-2.5 text-[10px] font-medium transition-colors',
-        'sm:flex-row sm:gap-1.5 sm:text-xs',
+        // Icon stacked above the label on every width (the 2-up community
+        // cards stay narrow), giving each button a ≥44px square tap target.
+        'flex min-h-[52px] flex-1 flex-col items-center justify-center gap-1 py-2.5 text-[10.5px] font-medium transition-colors',
         'focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#8026FA]/40',
         active ? 'text-[#8026FA]' : 'text-gray-600 hover:text-[#8026FA] hover:bg-[#8026FA]/5',
         disabled && !active ? 'opacity-50 cursor-default hover:bg-transparent hover:text-gray-600' : '',
