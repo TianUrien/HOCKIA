@@ -401,6 +401,52 @@ html {
     animation: scaleIn 0.25s ease-out;
   }
 
+  /* Exit animations — paired reverses of the enter animations so modals,
+     sheets, and previews animate OUT (not just in). Slightly faster than the
+     enters and use `forwards` so the element holds its end state (opacity 0)
+     until React unmounts it (no flash-back at the end of the animation). */
+  @keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+  }
+
+  @keyframes slideOutDown {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(20px); }
+  }
+
+  @keyframes scaleOut {
+    from { opacity: 1; transform: scale(1); }
+    to { opacity: 0; transform: scale(0.96); }
+  }
+
+  .animate-fade-out {
+    animation: fadeOut 0.2s ease-in forwards;
+  }
+
+  .animate-slide-out-down {
+    animation: slideOutDown 0.2s cubic-bezier(0.4, 0, 1, 1) forwards;
+  }
+
+  .animate-scale-out {
+    animation: scaleOut 0.18s ease-in forwards;
+  }
+
+  /* Honour reduced-motion across all modal/sheet enter + exit motion:
+     collapse to an instant change (≈0ms + forwards) so nothing slides or
+     scales, but the element still reaches its end state (no exit flash). */
+  @media (prefers-reduced-motion: reduce) {
+    .animate-fade-in,
+    .animate-fade-out,
+    .animate-slide-in-up,
+    .animate-slide-in-down,
+    .animate-slide-out-down,
+    .animate-scale-in,
+    .animate-scale-out {
+      animation-duration: 0.01ms !important;
+    }
+  }
+
   /* Brief purple outline "ping" that draws the eye to a freshly-scrolled
      element. Used by the Hero checklist when an action (e.g. "Update"
      on Open-to-Play) navigates the user back to the Bento Grid — the

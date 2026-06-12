@@ -122,7 +122,7 @@ export default function RecruiterCandidateCard({ member, verdict, onPreview }: R
       <button
         type="button"
         onClick={onPreview}
-        className="group block w-full flex-1 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#8026FA]"
+        className="group block w-full flex-1 text-left transition-transform duration-100 active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#8026FA]"
         aria-label={`${member.full_name?.trim()} — ${verdict.headline} (recruiter verdict). Tap to preview.`}
       >
         {/* ── WHO + IDENTITY ── */}
