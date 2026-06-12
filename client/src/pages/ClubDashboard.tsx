@@ -530,7 +530,7 @@ export default function ClubDashboard({
 
               {activeTab === 'members' && (
                 <div className="animate-fade-in">
-                  <ClubMembersTab profileId={profile.id} />
+                  <ClubMembersTab profileId={profile.id} isOwner={isOwnProfile && !readOnly} />
                 </div>
               )}
 

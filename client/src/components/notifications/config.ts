@@ -16,6 +16,7 @@ import {
   ShieldCheck,
   UserCheck,
   UserPlus,
+  Users,
   UserX,
 } from 'lucide-react'
 import type { NotificationKind, NotificationRecord } from '@/lib/api/notifications'
@@ -279,6 +280,23 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
     getTitle: (notification) => `${getActorName(notification)} accepted your ambassador invitation`,
     getDescription: () => 'They now appear on your brand profile.',
     getRoute: () => '/dashboard/profile?tab=ambassadors',
+  },
+  club_invitation_received: {
+    icon: Users,
+    badgeText: 'Club invite',
+    accentClassName: 'bg-violet-50 text-violet-600',
+    getTitle: (notification) => `${getActorName(notification)} invited you to join their club`,
+    getDescription: (notification) => notification.actor?.baseLocation ?? null,
+    // Route to the inviting club's profile so the invitee can see who it is.
+    getRoute: (notification) => (notification.actor?.id ? `/clubs/id/${notification.actor.id}` : null),
+  },
+  club_invitation_accepted: {
+    icon: UserCheck,
+    badgeText: 'Club update',
+    accentClassName: 'bg-violet-50 text-violet-600',
+    getTitle: (notification) => `${getActorName(notification)} joined your club`,
+    getDescription: () => 'They now appear in your Members.',
+    getRoute: () => '/dashboard/profile',
   },
   profile_viewed: {
     icon: Eye,

@@ -104,6 +104,7 @@ interface NotificationState {
   channel: RealtimeChannel | null
   pendingFriendshipId: string | null
   pendingAmbassadorRequestId: string | null
+  pendingClubInviteId: string | null
   pendingCommentHighlights: Set<string>
   commentHighlightVersion: number
   heartbeatIntervalId: number | null
@@ -120,6 +121,7 @@ interface NotificationState {
   claimCommentHighlights: () => string[]
   respondToFriendRequest: (params: { friendshipId: string; action: 'accept' | 'decline' }) => Promise<boolean>
   respondToAmbassadorRequest: (params: { ambassadorId: string; action: 'accept' | 'decline' }) => Promise<boolean>
+  respondToClubInvite: (params: { clubMemberId: string; action: 'accept' | 'decline' }) => Promise<boolean>
   dismissBySource: (kind: NotificationKind, sourceId: string | null) => void
 }
 
@@ -412,6 +414,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => {
     userId: null,
     channel: null,
     pendingFriendshipId: null,
+    pendingClubInviteId: null,
     pendingAmbassadorRequestId: null,
     pendingCommentHighlights: new Set<string>(),
     commentHighlightVersion: 0,
@@ -446,6 +449,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => {
           notifications: [],
           unreadCount: 0,
           pendingAmbassadorRequestId: null,
+          pendingClubInviteId: null,
           pendingReadIds: new Set<string>(),
           pendingCommentHighlights: new Set<string>(),
           commentHighlightVersion: 0,
@@ -735,6 +739,49 @@ export const useNotificationStore = create<NotificationState>((set, get) => {
         return true
       } finally {
         set((state) => (state.pendingAmbassadorRequestId === ambassadorId ? { pendingAmbassadorRequestId: null } : {}))
+      }
+    },
+
+    respondToClubInvite: async ({ clubMemberId, action }) => {
+      if (!clubMemberId) {
+        return false
+      }
+
+      set({ pendingClubInviteId: clubMemberId })
+
+      try {
+        const { data, error } = await supabase.rpc('respond_to_club_invite', {
+          p_club_member_id: clubMemberId,
+          p_accept: action === 'accept',
+        })
+
+        if (error) {
+          logger.error('[NOTIFICATIONS] Failed to respond to club invite', error)
+          return false
+        }
+
+        const result = data as { success: boolean; error?: string }
+        if (!result.success) {
+          logger.error('[NOTIFICATIONS] Club invite response failed', result.error)
+          return false
+        }
+
+        // Optimistically remove the notification from local state
+        set((state) => ({
+          pendingClubInviteId: null,
+          notifications: state.notifications.filter((item) => item.sourceEntityId !== clubMemberId),
+          unreadCount: state.notifications.filter(
+            (item) => item.sourceEntityId !== clubMemberId && !item.readAt && !item.clearedAt
+          ).length,
+        }))
+
+        setTimeout(() => {
+          void get().refresh({ bypassCache: true })
+        }, 500)
+
+        return true
+      } finally {
+        set((state) => (state.pendingClubInviteId === clubMemberId ? { pendingClubInviteId: null } : {}))
       }
     },
 

@@ -1023,7 +1023,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
         <>
           <div className={[
             (playerMatchActive || coachMatchActive)
-              ? 'grid grid-cols-2 auto-rows-fr gap-3 sm:gap-4 mb-6 sm:mb-8'
+              ? 'grid grid-cols-2 auto-rows-fr gap-2.5 sm:gap-3 mb-6 sm:mb-8'
               // No-context grid: auto-rows-fr makes every tile in a row the
               // same length. The tile's key rows (avatar → name → role →
               // nationality) stay top-aligned and its footer is pinned to the

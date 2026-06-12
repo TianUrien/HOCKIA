@@ -294,8 +294,8 @@ describe('MemberTile — nationality display', () => {
       nationality_country_id: 20, // Argentina
       nationality2_country_id: 10, // Netherlands → triggers EU
     })
-    expect(screen.getByText('ARG')).toBeInTheDocument()
-    expect(screen.getByText('NLD')).toBeInTheDocument()
+    // Codes render joined with a slash on one line: "ARG/NLD".
+    expect(screen.getByText('ARG/NLD')).toBeInTheDocument()
     expect(screen.getByText('EU')).toBeInTheDocument()
   })
 

@@ -15,6 +15,7 @@ import { trackDbEvent } from '@/lib/trackDbEvent'
 
 const FRIEND_REQUEST_KINDS = new Set<NotificationKind>(['friend_request_received'])
 const AMBASSADOR_REQUEST_KINDS = new Set<NotificationKind>(['ambassador_request_received'])
+const CLUB_INVITE_KINDS = new Set<NotificationKind>(['club_invitation_received'])
 const QUICK_FILTERS = [
   { id: 'all', label: 'All' },
   { id: 'unread', label: 'Unread' },
@@ -43,6 +44,8 @@ export default function NotificationsDrawer() {
   const pendingFriendshipId = useNotificationStore((state) => state.pendingFriendshipId)
   const respondToAmbassadorRequest = useNotificationStore((state) => state.respondToAmbassadorRequest)
   const pendingAmbassadorRequestId = useNotificationStore((state) => state.pendingAmbassadorRequestId)
+  const respondToClubInvite = useNotificationStore((state) => state.respondToClubInvite)
+  const pendingClubInviteId = useNotificationStore((state) => state.pendingClubInviteId)
 
   useFocusTrap({ containerRef: drawerRef, isActive: isOpen })
 
@@ -134,6 +137,19 @@ export default function NotificationsDrawer() {
     )
   }
 
+  const handleClubInvite = async (clubMemberId: string, action: 'accept' | 'decline') => {
+    const success = await respondToClubInvite({ clubMemberId, action })
+    if (!success) {
+      addToast('Could not update the club invitation. Please try again.', 'error')
+      return
+    }
+
+    addToast(
+      action === 'accept' ? 'You joined the club.' : 'Club invitation declined.',
+      'success'
+    )
+  }
+
   const resolvePublicProfilePath = (actor?: NotificationRecord['actor']) => {
     if (!actor?.id) {
       return null
@@ -215,6 +231,44 @@ export default function NotificationsDrawer() {
         return
       }
       void handleAmbassadorRequest(ambassadorId, action)
+    }
+
+    return (
+      <div className="mt-3 flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={onActionClick('accept')}
+          disabled={disabled}
+          className="inline-flex flex-1 items-center justify-center rounded-full bg-[#0866FF] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0a58d0] disabled:opacity-60 sm:flex-none"
+        >
+          Accept
+        </button>
+        <button
+          type="button"
+          onClick={onActionClick('decline')}
+          disabled={disabled}
+          className="inline-flex flex-1 items-center justify-center rounded-full border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:opacity-60 sm:flex-none"
+        >
+          Decline
+        </button>
+      </div>
+    )
+  }
+
+  const renderClubInviteActions = (notification: NotificationRecord) => {
+    if (!CLUB_INVITE_KINDS.has(notification.kind)) {
+      return null
+    }
+
+    const clubMemberId = notification.sourceEntityId
+    const disabled = !clubMemberId || pendingClubInviteId === clubMemberId
+
+    const onActionClick = (action: 'accept' | 'decline') => (event: ReactMouseEvent<HTMLButtonElement>) => {
+      event.stopPropagation()
+      if (!clubMemberId) {
+        return
+      }
+      void handleClubInvite(clubMemberId, action)
     }
 
     return (
@@ -327,6 +381,7 @@ export default function NotificationsDrawer() {
           </div>
           {renderFriendRequestActions(notification)}
           {renderAmbassadorRequestActions(notification)}
+          {renderClubInviteActions(notification)}
         </div>
       </div>
     )

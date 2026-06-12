@@ -191,7 +191,7 @@ describe('ClubMembersTab', () => {
     renderTab()
 
     expect(await screen.findByText('No members yet')).toBeInTheDocument()
-    expect(screen.getByText(/Players and coaches who assign this club/)).toBeInTheDocument()
+    expect(screen.getByText(/Players and coaches who join this club/)).toBeInTheDocument()
   })
 
   // ── Error handling ───────────────────────────────────────────────

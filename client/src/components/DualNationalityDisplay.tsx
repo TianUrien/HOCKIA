@@ -209,18 +209,22 @@ function CodeDisplay({ primaryCountry, secondaryCountry, isEuCountry, className 
   const anyEu = nationalities.some((c) => isEuCountry(c.id))
 
   return (
-    // Single line, no wrap — on a 2-up card the EU chip must never drop to
-    // a second row (that's what knocked the cards out of vertical alignment).
-    <span className={`inline-flex items-center gap-x-1 overflow-hidden text-xs text-gray-700 ${className}`}>
-      {nationalities.map((country, i) => (
-        <span key={country.id} className="inline-flex items-center gap-1 whitespace-nowrap">
-          <Flag code={country.code} countryName={country.name} fallbackEmoji={country.flag_emoji} size="sm" />
-          <span className="font-medium">{country.code_alpha3}</span>
-          {(i < nationalities.length - 1 || anyEu) && <span className="mx-0.5 text-gray-300">·</span>}
-        </span>
-      ))}
+    // Single line, no wrap — on a 2-up card the EU tag must never drop to a
+    // second row (that's what knocked the cards out of vertical alignment).
+    // Flags grouped together, ISO-3 codes joined with a slash, then the EU
+    // tag — e.g. "🇦🇷🇮🇹 ARG/ITA  EU". The EU tag is flex-shrink-0 so it can
+    // never be truncated; the codes truncate first if width is tight.
+    <span className={`inline-flex items-center gap-x-1 overflow-hidden text-[11px] text-gray-500 ${className}`}>
+      <span className="inline-flex flex-shrink-0 items-center gap-0.5 whitespace-nowrap">
+        {nationalities.map((country) => (
+          <Flag key={country.id} code={country.code} countryName={country.name} fallbackEmoji={country.flag_emoji} size="sm" />
+        ))}
+      </span>
+      <span className="truncate font-medium text-gray-600">
+        {nationalities.map((c) => c.code_alpha3).join('/')}
+      </span>
       {anyEu && (
-        <span className="inline-flex items-center rounded bg-blue-50 px-1 py-px text-[10px] font-semibold text-blue-700">
+        <span className="inline-flex flex-shrink-0 items-center rounded-[3px] border border-gray-300 px-1 text-[10px] font-semibold leading-[1.5] text-gray-500">
           EU
         </span>
       )}

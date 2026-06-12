@@ -113,7 +113,7 @@ export default function ContextSwitcher({ className = '' }: ContextSwitcherProps
             </span>
           ) : (
             <>
-              <span className="text-gray-500 flex-shrink-0">Scoped to:</span>
+              <span className="text-gray-500 flex-shrink-0">Match for:</span>
               <span className="font-semibold truncate min-w-0" title={summary}>{summary}</span>
             </>
           )}
