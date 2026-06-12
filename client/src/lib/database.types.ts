@@ -667,6 +667,68 @@ export type Database = {
           },
         ]
       }
+      club_invite_links: {
+        Row: {
+          club_profile_id: string
+          created_at: string
+          created_by: string | null
+          expires_at: string | null
+          id: string
+          join_count: number
+          revoked_at: string | null
+          token: string
+        }
+        Insert: {
+          club_profile_id: string
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          join_count?: number
+          revoked_at?: string | null
+          token: string
+        }
+        Update: {
+          club_profile_id?: string
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          join_count?: number
+          revoked_at?: string | null
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "club_invite_links_club_profile_id_fkey"
+            columns: ["club_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "club_invite_links_club_profile_id_fkey"
+            columns: ["club_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "club_invite_links_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "club_invite_links_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       club_media: {
         Row: {
           alt_text: string | null
@@ -718,6 +780,91 @@ export type Database = {
           {
             foreignKeyName: "club_media_club_id_fkey"
             columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      club_members: {
+        Row: {
+          accepted_at: string | null
+          club_profile_id: string
+          created_at: string
+          id: string
+          invited_by: string | null
+          invited_via: string
+          member_profile_id: string
+          member_role: string | null
+          responded_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          club_profile_id: string
+          created_at?: string
+          id?: string
+          invited_by?: string | null
+          invited_via?: string
+          member_profile_id: string
+          member_role?: string | null
+          responded_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          club_profile_id?: string
+          created_at?: string
+          id?: string
+          invited_by?: string | null
+          invited_via?: string
+          member_profile_id?: string
+          member_role?: string | null
+          responded_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "club_members_club_profile_id_fkey"
+            columns: ["club_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "club_members_club_profile_id_fkey"
+            columns: ["club_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "club_members_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "club_members_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "club_members_member_profile_id_fkey"
+            columns: ["member_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "club_members_member_profile_id_fkey"
+            columns: ["member_profile_id"]
             isOneToOne: false
             referencedRelation: "profiles_pending_country_review"
             referencedColumns: ["id"]
@@ -1792,6 +1939,7 @@ export type Database = {
           benefits: string[]
           closed_at: string | null
           club_id: string
+          compensation: string | null
           contact_email: string | null
           contact_phone: string | null
           created_at: string
@@ -1801,6 +1949,7 @@ export type Database = {
           eu_passport_required: boolean
           gender: Database["public"]["Enums"]["opportunity_gender"] | null
           id: string
+          level_sought: string | null
           location_city: string
           location_country: string
           opportunity_type: Database["public"]["Enums"]["opportunity_type"]
@@ -1808,12 +1957,10 @@ export type Database = {
           position: Database["public"]["Enums"]["opportunity_position"] | null
           priority: Database["public"]["Enums"]["opportunity_priority"] | null
           published_at: string | null
-          requirements: string[]
-          specialist_skills_wanted: string[]
-          level_sought: string | null
-          compensation: string | null
           recruitment_problem: string | null
+          requirements: string[]
           search_vector: unknown
+          specialist_skills_wanted: string[]
           start_date: string | null
           status: Database["public"]["Enums"]["opportunity_status"]
           title: string
@@ -1826,6 +1973,7 @@ export type Database = {
           benefits?: string[]
           closed_at?: string | null
           club_id: string
+          compensation?: string | null
           contact_email?: string | null
           contact_phone?: string | null
           created_at?: string
@@ -1835,6 +1983,7 @@ export type Database = {
           eu_passport_required?: boolean
           gender?: Database["public"]["Enums"]["opportunity_gender"] | null
           id?: string
+          level_sought?: string | null
           location_city: string
           location_country: string
           opportunity_type?: Database["public"]["Enums"]["opportunity_type"]
@@ -1842,12 +1991,10 @@ export type Database = {
           position?: Database["public"]["Enums"]["opportunity_position"] | null
           priority?: Database["public"]["Enums"]["opportunity_priority"] | null
           published_at?: string | null
-          requirements?: string[]
-          specialist_skills_wanted?: string[]
-          level_sought?: string | null
-          compensation?: string | null
           recruitment_problem?: string | null
+          requirements?: string[]
           search_vector?: unknown
+          specialist_skills_wanted?: string[]
           start_date?: string | null
           status?: Database["public"]["Enums"]["opportunity_status"]
           title: string
@@ -1860,6 +2007,7 @@ export type Database = {
           benefits?: string[]
           closed_at?: string | null
           club_id?: string
+          compensation?: string | null
           contact_email?: string | null
           contact_phone?: string | null
           created_at?: string
@@ -1869,6 +2017,7 @@ export type Database = {
           eu_passport_required?: boolean
           gender?: Database["public"]["Enums"]["opportunity_gender"] | null
           id?: string
+          level_sought?: string | null
           location_city?: string
           location_country?: string
           opportunity_type?: Database["public"]["Enums"]["opportunity_type"]
@@ -1876,12 +2025,10 @@ export type Database = {
           position?: Database["public"]["Enums"]["opportunity_position"] | null
           priority?: Database["public"]["Enums"]["opportunity_priority"] | null
           published_at?: string | null
-          requirements?: string[]
-          specialist_skills_wanted?: string[]
-          level_sought?: string | null
-          compensation?: string | null
           recruitment_problem?: string | null
+          requirements?: string[]
           search_vector?: unknown
+          specialist_skills_wanted?: string[]
           start_date?: string | null
           status?: Database["public"]["Enums"]["opportunity_status"]
           title?: string
@@ -2813,6 +2960,8 @@ export type Database = {
           accepted_friend_count: number
           accepted_reference_count: number
           availability_confirmed_at: string | null
+          availability_duration: string | null
+          available_from: string | null
           avatar_url: string | null
           base_city: string | null
           base_country_id: number | null
@@ -2832,6 +2981,7 @@ export type Database = {
           coach_specialization_custom: string | null
           coaching_categories: string[] | null
           contact_email: string | null
+          contact_email_masked: string | null
           contact_email_public: boolean
           created_at: string
           current_club: string | null
@@ -2858,6 +3008,7 @@ export type Database = {
           last_profile_view_email_at: string | null
           last_profile_view_pulse_at: string | null
           league_division: string | null
+          level_target: string | null
           mens_league_division: string | null
           mens_league_id: number | null
           nationality: string | null
@@ -2877,23 +3028,20 @@ export type Database = {
           open_to_coach: boolean
           open_to_opportunities: boolean
           open_to_play: boolean
-          relocation_willingness: string | null
-          relocation_countries_open: number[]
-          specialist_skills: string[]
-          relocation_countries_excluded: number[]
-          level_target: string | null
           opportunity_preference: string | null
-          available_from: string | null
-          availability_duration: string | null
           playing_category: string | null
           position: string | null
           post_count: number
           profile_completeness_pct: number
+          relocation_countries_excluded: number[]
+          relocation_countries_open: number[]
+          relocation_willingness: string | null
           role: string
           search_vector: unknown
           secondary_position: string | null
           show_last_active: boolean
           social_links: Json | null
+          specialist_skills: string[]
           umpire_appointment_count: number
           umpire_level: string | null
           umpire_since: number | null
@@ -2913,6 +3061,8 @@ export type Database = {
           accepted_friend_count?: number
           accepted_reference_count?: number
           availability_confirmed_at?: string | null
+          availability_duration?: string | null
+          available_from?: string | null
           avatar_url?: string | null
           base_city?: string | null
           base_country_id?: number | null
@@ -2932,6 +3082,7 @@ export type Database = {
           coach_specialization_custom?: string | null
           coaching_categories?: string[] | null
           contact_email?: string | null
+          contact_email_masked?: string | null
           contact_email_public?: boolean
           created_at?: string
           current_club?: string | null
@@ -2958,6 +3109,7 @@ export type Database = {
           last_profile_view_email_at?: string | null
           last_profile_view_pulse_at?: string | null
           league_division?: string | null
+          level_target?: string | null
           mens_league_division?: string | null
           mens_league_id?: number | null
           nationality?: string | null
@@ -2977,23 +3129,20 @@ export type Database = {
           open_to_coach?: boolean
           open_to_opportunities?: boolean
           open_to_play?: boolean
-          relocation_willingness?: string | null
-          relocation_countries_open?: number[]
-          specialist_skills?: string[]
-          relocation_countries_excluded?: number[]
-          level_target?: string | null
           opportunity_preference?: string | null
-          available_from?: string | null
-          availability_duration?: string | null
           playing_category?: string | null
           position?: string | null
           post_count?: number
           profile_completeness_pct?: number
+          relocation_countries_excluded?: number[]
+          relocation_countries_open?: number[]
+          relocation_willingness?: string | null
           role: string
           search_vector?: unknown
           secondary_position?: string | null
           show_last_active?: boolean
           social_links?: Json | null
+          specialist_skills?: string[]
           umpire_appointment_count?: number
           umpire_level?: string | null
           umpire_since?: number | null
@@ -3013,6 +3162,8 @@ export type Database = {
           accepted_friend_count?: number
           accepted_reference_count?: number
           availability_confirmed_at?: string | null
+          availability_duration?: string | null
+          available_from?: string | null
           avatar_url?: string | null
           base_city?: string | null
           base_country_id?: number | null
@@ -3032,6 +3183,7 @@ export type Database = {
           coach_specialization_custom?: string | null
           coaching_categories?: string[] | null
           contact_email?: string | null
+          contact_email_masked?: string | null
           contact_email_public?: boolean
           created_at?: string
           current_club?: string | null
@@ -3058,6 +3210,7 @@ export type Database = {
           last_profile_view_email_at?: string | null
           last_profile_view_pulse_at?: string | null
           league_division?: string | null
+          level_target?: string | null
           mens_league_division?: string | null
           mens_league_id?: number | null
           nationality?: string | null
@@ -3077,23 +3230,20 @@ export type Database = {
           open_to_coach?: boolean
           open_to_opportunities?: boolean
           open_to_play?: boolean
-          relocation_willingness?: string | null
-          relocation_countries_open?: number[]
-          specialist_skills?: string[]
-          relocation_countries_excluded?: number[]
-          level_target?: string | null
           opportunity_preference?: string | null
-          available_from?: string | null
-          availability_duration?: string | null
           playing_category?: string | null
           position?: string | null
           post_count?: number
           profile_completeness_pct?: number
+          relocation_countries_excluded?: number[]
+          relocation_countries_open?: number[]
+          relocation_willingness?: string | null
           role?: string
           search_vector?: unknown
           secondary_position?: string | null
           show_last_active?: boolean
           social_links?: Json | null
+          specialist_skills?: string[]
           umpire_appointment_count?: number
           umpire_level?: string | null
           umpire_since?: number | null
@@ -3321,6 +3471,7 @@ export type Database = {
         Row: {
           competition_id: number | null
           created_at: string
+          eu_required: boolean
           id: string
           is_active: boolean
           label: string | null
@@ -3328,21 +3479,21 @@ export type Database = {
           owner_id: string
           region: string | null
           target_category: string | null
-          eu_required: boolean
-          target_position: string | null
-          target_location_country: string | null
-          target_specialists: string[]
-          target_level: string | null
           target_compensation: string | null
+          target_level: string | null
+          target_location_country: string | null
+          target_position: string | null
           target_problem: string | null
-          target_start_date: string | null
           target_role: string | null
+          target_specialists: string[]
+          target_start_date: string | null
           type: string
           updated_at: string
         }
         Insert: {
           competition_id?: number | null
           created_at?: string
+          eu_required?: boolean
           id?: string
           is_active?: boolean
           label?: string | null
@@ -3350,21 +3501,21 @@ export type Database = {
           owner_id: string
           region?: string | null
           target_category?: string | null
-          eu_required?: boolean
-          target_position?: string | null
-          target_location_country?: string | null
-          target_specialists?: string[]
-          target_level?: string | null
           target_compensation?: string | null
+          target_level?: string | null
+          target_location_country?: string | null
+          target_position?: string | null
           target_problem?: string | null
-          target_start_date?: string | null
           target_role?: string | null
+          target_specialists?: string[]
+          target_start_date?: string | null
           type: string
           updated_at?: string
         }
         Update: {
           competition_id?: number | null
           created_at?: string
+          eu_required?: boolean
           id?: string
           is_active?: boolean
           label?: string | null
@@ -3372,15 +3523,14 @@ export type Database = {
           owner_id?: string
           region?: string | null
           target_category?: string | null
-          eu_required?: boolean
-          target_position?: string | null
-          target_location_country?: string | null
-          target_specialists?: string[]
-          target_level?: string | null
           target_compensation?: string | null
+          target_level?: string | null
+          target_location_country?: string | null
+          target_position?: string | null
           target_problem?: string | null
-          target_start_date?: string | null
           target_role?: string | null
+          target_specialists?: string[]
+          target_start_date?: string | null
           type?: string
           updated_at?: string
         }
@@ -4686,6 +4836,10 @@ export type Database = {
       }
     }
     Functions: {
+      _apply_join_current_club: {
+        Args: { p_club_profile_id: string; p_member_id: string }
+        Returns: undefined
+      }
       _club_fit_context_hash: {
         Args: { p_opportunity_id: string; p_region: string; p_target: string }
         Returns: string
@@ -4748,6 +4902,7 @@ export type Database = {
         Returns: {
           competition_id: number | null
           created_at: string
+          eu_required: boolean
           id: string
           is_active: boolean
           label: string | null
@@ -4755,15 +4910,14 @@ export type Database = {
           owner_id: string
           region: string | null
           target_category: string | null
-          eu_required: boolean
-          target_position: string | null
-          target_location_country: string | null
-          target_specialists: string[]
-          target_level: string | null
           target_compensation: string | null
+          target_level: string | null
+          target_location_country: string | null
+          target_position: string | null
           target_problem: string | null
-          target_start_date: string | null
           target_role: string | null
+          target_specialists: string[]
+          target_start_date: string | null
           type: string
           updated_at: string
         }
@@ -5600,14 +5754,6 @@ export type Database = {
         Args: { p_batch?: number; p_retention_days?: number }
         Returns: number
       }
-      delete_message: {
-        Args: { p_message_id: string }
-        Returns: Database["public"]["Tables"]["messages"]["Row"]
-      }
-      edit_message: {
-        Args: { p_content: string; p_message_id: string }
-        Returns: Database["public"]["Tables"]["messages"]["Row"]
-      }
       block_user: { Args: { p_blocked_id: string }; Returns: undefined }
       check_application_rate_limit: {
         Args: { p_user_id: string }
@@ -5682,6 +5828,8 @@ export type Database = {
           accepted_friend_count: number
           accepted_reference_count: number
           availability_confirmed_at: string | null
+          availability_duration: string | null
+          available_from: string | null
           avatar_url: string | null
           base_city: string | null
           base_country_id: number | null
@@ -5701,6 +5849,7 @@ export type Database = {
           coach_specialization_custom: string | null
           coaching_categories: string[] | null
           contact_email: string | null
+          contact_email_masked: string | null
           contact_email_public: boolean
           created_at: string
           current_club: string | null
@@ -5727,6 +5876,7 @@ export type Database = {
           last_profile_view_email_at: string | null
           last_profile_view_pulse_at: string | null
           league_division: string | null
+          level_target: string | null
           mens_league_division: string | null
           mens_league_id: number | null
           nationality: string | null
@@ -5746,15 +5896,20 @@ export type Database = {
           open_to_coach: boolean
           open_to_opportunities: boolean
           open_to_play: boolean
+          opportunity_preference: string | null
           playing_category: string | null
           position: string | null
           post_count: number
           profile_completeness_pct: number
+          relocation_countries_excluded: number[]
+          relocation_countries_open: number[]
+          relocation_willingness: string | null
           role: string
           search_vector: unknown
           secondary_position: string | null
           show_last_active: boolean
           social_links: Json | null
+          specialist_skills: string[]
           umpire_appointment_count: number
           umpire_level: string | null
           umpire_since: number | null
@@ -5810,6 +5965,7 @@ export type Database = {
         Returns: {
           competition_id: number | null
           created_at: string
+          eu_required: boolean
           id: string
           is_active: boolean
           label: string | null
@@ -5817,15 +5973,14 @@ export type Database = {
           owner_id: string
           region: string | null
           target_category: string | null
-          eu_required: boolean
-          target_position: string | null
-          target_location_country: string | null
-          target_specialists: string[]
-          target_level: string | null
           target_compensation: string | null
+          target_level: string | null
+          target_location_country: string | null
+          target_position: string | null
           target_problem: string | null
-          target_start_date: string | null
           target_role: string | null
+          target_specialists: string[]
+          target_start_date: string | null
           type: string
           updated_at: string
         }
@@ -5876,6 +6031,7 @@ export type Database = {
         }
         Returns: Json
       }
+      create_club_invite_link: { Args: never; Returns: Json }
       create_post_comment: {
         Args: { p_content: string; p_post_id: string }
         Returns: Json
@@ -5886,6 +6042,8 @@ export type Database = {
           accepted_friend_count: number
           accepted_reference_count: number
           availability_confirmed_at: string | null
+          availability_duration: string | null
+          available_from: string | null
           avatar_url: string | null
           base_city: string | null
           base_country_id: number | null
@@ -5905,6 +6063,7 @@ export type Database = {
           coach_specialization_custom: string | null
           coaching_categories: string[] | null
           contact_email: string | null
+          contact_email_masked: string | null
           contact_email_public: boolean
           created_at: string
           current_club: string | null
@@ -5931,6 +6090,7 @@ export type Database = {
           last_profile_view_email_at: string | null
           last_profile_view_pulse_at: string | null
           league_division: string | null
+          level_target: string | null
           mens_league_division: string | null
           mens_league_id: number | null
           nationality: string | null
@@ -5950,15 +6110,20 @@ export type Database = {
           open_to_coach: boolean
           open_to_opportunities: boolean
           open_to_play: boolean
+          opportunity_preference: string | null
           playing_category: string | null
           position: string | null
           post_count: number
           profile_completeness_pct: number
+          relocation_countries_excluded: number[]
+          relocation_countries_open: number[]
+          relocation_willingness: string | null
           role: string
           search_vector: unknown
           secondary_position: string | null
           show_last_active: boolean
           social_links: Json | null
+          specialist_skills: string[]
           umpire_appointment_count: number
           umpire_level: string | null
           umpire_since: number | null
@@ -6015,6 +6180,27 @@ export type Database = {
       current_profile_role: { Args: never; Returns: string }
       delete_brand_post: { Args: { p_post_id: string }; Returns: Json }
       delete_brand_product: { Args: { p_product_id: string }; Returns: Json }
+      delete_message: {
+        Args: { p_message_id: string }
+        Returns: {
+          content: string
+          conversation_id: string
+          deleted_at: string | null
+          edited_at: string | null
+          id: string
+          idempotency_key: string | null
+          metadata: Json | null
+          read_at: string | null
+          sender_id: string
+          sent_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "messages"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       delete_post_comment: { Args: { p_comment_id: string }; Returns: Json }
       delete_rows_where_clause: {
         Args: {
@@ -6075,6 +6261,27 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      edit_message: {
+        Args: { p_content: string; p_message_id: string }
+        Returns: {
+          content: string
+          conversation_id: string
+          deleted_at: string | null
+          edited_at: string | null
+          id: string
+          idempotency_key: string | null
+          metadata: Json | null
+          read_at: string | null
+          sender_id: string
+          sent_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "messages"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       engagement_heartbeat_interval_seconds: { Args: never; Returns: number }
       enqueue_availability_check_ins: { Args: never; Returns: number }
       enqueue_message_digests: { Args: never; Returns: undefined }
@@ -6122,6 +6329,7 @@ export type Database = {
           benefits: string[]
           closed_at: string
           club_id: string
+          compensation: string
           contact_email: string
           contact_phone: string
           created_at: string
@@ -6130,6 +6338,7 @@ export type Database = {
           duration_text: string
           gender: Database["public"]["Enums"]["opportunity_gender"]
           id: string
+          level_sought: string
           location_city: string
           location_country: string
           opportunity_type: Database["public"]["Enums"]["opportunity_type"]
@@ -6138,7 +6347,9 @@ export type Database = {
           position: Database["public"]["Enums"]["opportunity_position"]
           priority: Database["public"]["Enums"]["opportunity_priority"]
           published_at: string
+          recruitment_problem: string
           requirements: string[]
+          specialist_skills_wanted: string[]
           start_date: string
           status: Database["public"]["Enums"]["opportunity_status"]
           title: string
@@ -6248,16 +6459,23 @@ export type Database = {
           state: string
         }[]
       }
+      get_club_invitations: {
+        Args: { p_club_profile_id: string }
+        Returns: Json
+      }
+      get_club_invite_preview: { Args: { p_token: string }; Returns: Json }
       get_club_members: {
         Args: { p_limit?: number; p_offset?: number; p_profile_id: string }
         Returns: {
           avatar_url: string
           base_location: string
+          club_member_id: string
           created_at: string
           current_club: string
           current_world_club_id: string
           full_name: string
           id: string
+          is_roster_member: boolean
           is_test_account: boolean
           nationality: string
           nationality_country_id: number
@@ -6440,16 +6658,16 @@ export type Database = {
         Returns: {
           accepted_friend_count: number
           accepted_reference_count: number
-          career_entry_count: number
+          available_from: string
           avatar_url: string
+          base_country_id: number
           base_location: string
+          career_entry_count: number
           coach_specialization: string
           coaching_categories: string[]
           competition_level_band: number
           current_club: string
           current_competition_name: string
-          available_from: string
-          base_country_id: number
           current_world_club_id: string
           full_game_video_count: number
           full_name: string
@@ -6458,22 +6676,22 @@ export type Database = {
           id: string
           is_verified: boolean
           last_active_at: string
+          level_target: string
           nationality: string
-          relocation_countries_excluded: number[]
-          relocation_countries_open: number[]
-          relocation_willingness: string
           nationality_country_id: number
           nationality2_country_id: number
           open_to_coach: boolean
           open_to_opportunities: boolean
           open_to_play: boolean
+          opportunity_preference: string
           playing_category: string
           position: string
           profile_completeness_pct: number
+          relocation_countries_excluded: number[]
+          relocation_countries_open: number[]
+          relocation_willingness: string
           role: string
           username: string
-          level_target: string
-          opportunity_preference: string
         }[]
       }
       get_user_conversations: {
@@ -6506,6 +6724,10 @@ export type Database = {
       }
       has_accepted_terms: { Args: { p_version?: string }; Returns: boolean }
       health_check: { Args: never; Returns: boolean }
+      invite_club_member: {
+        Args: { p_member_profile_id: string }
+        Returns: Json
+      }
       is_blocked_pair: {
         Args: { p_user_a: string; p_user_b: string }
         Returns: boolean
@@ -6518,10 +6740,12 @@ export type Database = {
         Returns: boolean
       }
       is_user_blocked: { Args: { p_other_id: string }; Returns: boolean }
+      join_club_via_link: { Args: { p_token: string }; Returns: Json }
       leave_brand_ambassadorship: {
         Args: { p_brand_ambassador_id: string }
         Returns: Json
       }
+      leave_club: { Args: { p_club_profile_id: string }; Returns: Json }
       log_error: {
         Args: {
           p_correlation_id?: string
@@ -6685,6 +6909,10 @@ export type Database = {
         Args: { p_brand_id: string; p_player_id: string }
         Returns: Json
       }
+      remove_club_member: {
+        Args: { p_member_profile_id: string }
+        Returns: Json
+      }
       remove_reference: {
         Args: { p_reference_id: string }
         Returns: {
@@ -6779,6 +7007,11 @@ export type Database = {
         Args: { p_accept: boolean; p_brand_ambassador_id: string }
         Returns: Json
       }
+      respond_to_club_invite: {
+        Args: { p_accept: boolean; p_club_member_id: string }
+        Returns: Json
+      }
+      revoke_club_invite_link: { Args: never; Returns: Json }
       search_clubs_for_transfer: {
         Args: { p_limit?: number; p_query: string }
         Returns: Json
@@ -6836,6 +7069,7 @@ export type Database = {
         Returns: {
           competition_id: number | null
           created_at: string
+          eu_required: boolean
           id: string
           is_active: boolean
           label: string | null
@@ -6843,15 +7077,14 @@ export type Database = {
           owner_id: string
           region: string | null
           target_category: string | null
-          eu_required: boolean
-          target_position: string | null
-          target_location_country: string | null
-          target_specialists: string[]
-          target_level: string | null
           target_compensation: string | null
+          target_level: string | null
+          target_location_country: string | null
+          target_position: string | null
           target_problem: string | null
-          target_start_date: string | null
           target_role: string | null
+          target_specialists: string[]
+          target_start_date: string | null
           type: string
           updated_at: string
         }
@@ -7042,6 +7275,8 @@ export type Database = {
         | "ambassador_request_accepted"
         | "profile_viewed"
         | "user_post_comment_received"
+        | "club_invitation_received"
+        | "club_invitation_accepted"
       profile_reference_status: "pending" | "accepted" | "declined" | "revoked"
       question_category:
         | "trials_club_selection"
@@ -7243,6 +7478,8 @@ export const Constants = {
         "ambassador_request_accepted",
         "profile_viewed",
         "user_post_comment_received",
+        "club_invitation_received",
+        "club_invitation_accepted",
       ],
       profile_reference_status: ["pending", "accepted", "declined", "revoked"],
       question_category: [

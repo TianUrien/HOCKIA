@@ -137,6 +137,7 @@ const AdminAttribution = lazyWithRetry(() => import('@/features/admin/pages/Admi
 
 // Public investor dashboard (no auth required)
 const PublicInvestorDashboard = lazyWithRetry(() => import('@/pages/PublicInvestorDashboard'))
+const ClubInviteLanding = lazyWithRetry(() => import('@/pages/ClubInviteLanding'))
 
 // 404 page
 const NotFoundPage = lazyWithRetry(() => import('@/pages/NotFoundPage'))
@@ -405,6 +406,9 @@ function App() {
 
                 {/* Public Investor Dashboard (shareable link) */}
                 <Route path="/investors/:token" element={<PublicInvestorDashboard />} />
+
+                {/* Club invite link (public — sign-in prompted for guests) */}
+                <Route path="/invite/club/:token" element={<ClubInviteLanding />} />
                 
                 {/* Protected Routes (require authentication) - Lazy loaded */}
                 <Route path="/complete-profile" element={<ErrorBoundary fallback={<RouteErrorFallback />}><CompleteProfile /></ErrorBoundary>} />
