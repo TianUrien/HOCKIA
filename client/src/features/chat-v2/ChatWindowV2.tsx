@@ -46,6 +46,8 @@ export default function ChatWindowV2({
     loadOlderMessages,
     retryMessage,
     deleteFailedMessage,
+    editMessage,
+    deleteMessage,
     queueReadReceipt,
     markConversationAsRead
   } = useChat({
@@ -271,6 +273,8 @@ export default function ChatWindowV2({
               queueReadReceipt={queueReadReceipt}
               retryMessage={retryMessage}
               deleteFailedMessage={deleteFailedMessage}
+              editMessage={editMessage}
+              deleteMessage={deleteMessage}
               isLoadingMore={isLoadingMore}
               unreadMetadata={unreadMetadata}
             />

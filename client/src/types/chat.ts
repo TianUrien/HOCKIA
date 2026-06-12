@@ -22,6 +22,10 @@ export interface Message {
   content: string
   sent_at: string
   read_at: NullableDate
+  /** Set when the author edited the message; drives the "edited" label. */
+  edited_at?: NullableDate
+  /** Set when the author soft-deleted the message; UI shows a "Message deleted" tombstone. */
+  deleted_at?: NullableDate
   metadata?: MessageMetadata | null
 }
 

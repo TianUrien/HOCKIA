@@ -469,6 +469,104 @@ export function useChat({
     syncMessagesState(prev => prev.filter(msg => msg.id !== messageId))
   }, [syncMessagesState])
 
+  // Edit a delivered message the current user authored. Optimistic: swap the
+  // content + stamp edited_at immediately, reconcile with the server row, and
+  // roll back to the prior content on failure. The realtime UPDATE handler
+  // echoes the same change to the other participant.
+  const editMessage = useCallback(async (messageId: string, nextContent: string) => {
+    const trimmed = nextContent.trim()
+    if (!trimmed) {
+      addToast('Message cannot be empty.', 'error')
+      return false
+    }
+    if (trimmed.length > 1000) {
+      addToast('Message is too long. Maximum 1000 characters.', 'error')
+      return false
+    }
+
+    const previous = messagesRef.current.find(msg => msg.id === messageId)
+    if (!previous) return false
+    if (previous.content === trimmed) {
+      return true
+    }
+
+    const optimisticEditedAt = new Date().toISOString()
+    syncMessagesState(prev =>
+      prev.map(msg => (msg.id === messageId ? { ...msg, content: trimmed, edited_at: optimisticEditedAt } : msg))
+    )
+
+    try {
+      const { data, error } = await supabase.rpc('edit_message', {
+        p_message_id: messageId,
+        p_content: trimmed
+      })
+      if (error) throw error
+      if (data) {
+        const persisted = data as unknown as Message
+        syncMessagesState(prev =>
+          prev.map(msg => (msg.id === messageId ? { ...msg, ...persisted, status: 'delivered' as MessageDeliveryStatus } : msg))
+        )
+      }
+      return true
+    } catch (error) {
+      logger.error('Error editing message:', error)
+      reportSupabaseError('messaging_chat.edit_message', error, {
+        conversationId: conversation.id,
+        messageId
+      }, {
+        feature: 'messaging_chat',
+        operation: 'edit_message'
+      })
+      syncMessagesState(prev =>
+        prev.map(msg => (msg.id === messageId ? { ...msg, content: previous.content, edited_at: previous.edited_at ?? null } : msg))
+      )
+      addToast(extractErrorMessage(error, 'Failed to edit message. Please try again.'), 'error')
+      return false
+    }
+  }, [addToast, conversation.id, syncMessagesState])
+
+  // Soft-delete a message the current user authored. Optimistic: blank the
+  // content + stamp deleted_at so the bubble flips to the "Message deleted"
+  // tombstone immediately; reconcile with the server row and roll back on
+  // failure.
+  const deleteMessage = useCallback(async (messageId: string) => {
+    const previous = messagesRef.current.find(msg => msg.id === messageId)
+    if (!previous) return false
+
+    const optimisticDeletedAt = new Date().toISOString()
+    syncMessagesState(prev =>
+      prev.map(msg => (msg.id === messageId ? { ...msg, content: '', metadata: null, deleted_at: optimisticDeletedAt } : msg))
+    )
+
+    try {
+      const { data, error } = await supabase.rpc('delete_message', {
+        p_message_id: messageId
+      })
+      if (error) throw error
+      if (data) {
+        const persisted = data as unknown as Message
+        syncMessagesState(prev =>
+          prev.map(msg => (msg.id === messageId ? { ...msg, ...persisted, status: 'delivered' as MessageDeliveryStatus } : msg))
+        )
+      }
+      return true
+    } catch (error) {
+      logger.error('Error deleting message:', error)
+      reportSupabaseError('messaging_chat.delete_message', error, {
+        conversationId: conversation.id,
+        messageId
+      }, {
+        feature: 'messaging_chat',
+        operation: 'delete_message'
+      })
+      syncMessagesState(prev =>
+        prev.map(msg => (msg.id === messageId ? { ...msg, content: previous.content, metadata: previous.metadata ?? null, deleted_at: previous.deleted_at ?? null } : msg))
+      )
+      addToast(extractErrorMessage(error, 'Failed to delete message. Please try again.'), 'error')
+      return false
+    }
+  }, [addToast, conversation.id, syncMessagesState])
+
   const sendMessage = useCallback(async (content: string, options?: { reuseOptimisticId?: string; metadata?: MessageMetadata | null }) => {
     if (!content.trim() || sending) return false
 
@@ -857,6 +955,8 @@ export function useChat({
     sendMessage,
     retryMessage,
     deleteFailedMessage,
+    editMessage,
+    deleteMessage,
     loadOlderMessages,
     queueReadReceipt,
     markConversationAsRead

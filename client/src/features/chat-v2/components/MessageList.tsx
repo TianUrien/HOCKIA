@@ -13,6 +13,8 @@ interface MessageListProps {
   queueReadReceipt: (message: ChatMessage) => void
   retryMessage: (id: string) => void
   deleteFailedMessage: (id: string) => void
+  editMessage: (id: string, content: string) => Promise<boolean>
+  deleteMessage: (id: string) => Promise<boolean>
   isLoadingMore: boolean
   unreadMetadata: {
     firstUnreadId: string | null
@@ -27,6 +29,8 @@ export function MessageList({
   queueReadReceipt,
   retryMessage,
   deleteFailedMessage,
+  editMessage,
+  deleteMessage,
   isLoadingMore,
   unreadMetadata
 }: MessageListProps) {
@@ -125,6 +129,8 @@ export function MessageList({
             isUnreadMarker={meta[index].isUnreadMarker}
             onRetry={retryMessage}
             onDeleteFailed={deleteFailedMessage}
+            onEditSave={editMessage}
+            onDelete={deleteMessage}
           />
         </div>
       ))}

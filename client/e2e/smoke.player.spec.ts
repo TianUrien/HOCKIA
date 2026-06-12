@@ -79,6 +79,48 @@ test.describe('@smoke player', () => {
     await expect(messageList.getByText(message)).toBeVisible({ timeout: 20000 })
   })
 
+  test('player can edit and delete their own message', async ({ page }) => {
+    await page.goto(`/clubs/${E2E_CLUB_USERNAME}`)
+    await expect(page.getByRole('heading', { level: 1, name: /e2e test fc/i })).toBeVisible({ timeout: 20000 })
+    await page.getByRole('button', { name: 'Message', exact: true }).click()
+    await expect(page).toHaveURL(/\/messages/i, { timeout: 20000 })
+
+    // Send a fresh message we own (and will clean up by deleting it).
+    const original = `E2E edit/delete ${Date.now()}`
+    await page.getByPlaceholder(/type a message/i).fill(original)
+    await page.keyboard.press('Enter')
+
+    const messageList = page.getByTestId('chat-message-list')
+    await expect(messageList.getByText(original)).toBeVisible({ timeout: 20000 })
+
+    // Scope every action to THIS message's row (unique text), so accumulated
+    // test messages in the shared conversation never make `.last()` ambiguous.
+    const rowFor = (text: string) => messageList.locator('.chat-message-wrapper', { hasText: text })
+    const edited = `${original} UPDATED`
+
+    // EDIT
+    await rowFor(original).getByTestId('message-options-trigger').click()
+    await page.getByTestId('message-edit-action').click()
+    await page.getByTestId('message-edit-editor').getByLabel('Edit message').fill(edited)
+    await page.getByTestId('message-edit-save').click()
+
+    // Editor closes and the bubble shows the edited text + the "edited" label
+    // (exact match — the message text itself must not collide with the label).
+    await expect(page.getByTestId('message-edit-editor')).toHaveCount(0)
+    await expect(rowFor(edited).getByText('edited', { exact: true })).toBeVisible({ timeout: 20000 })
+
+    // DELETE — confirm, then assert the tombstone (also cleans up the row).
+    await rowFor(edited).getByTestId('message-options-trigger').click()
+    await page.getByTestId('message-delete-action').click()
+    const confirm = page.getByTestId('message-delete-confirm')
+    await expect(confirm).toBeVisible()
+    await confirm.getByRole('button', { name: 'Delete' }).click()
+    await expect(confirm).toBeHidden()
+
+    await expect(rowFor(edited)).toHaveCount(0)
+    await expect(messageList.getByTestId('message-deleted').last()).toBeVisible({ timeout: 20000 })
+  })
+
   test('player can message a brand from its profile', async ({ page }) => {
     await page.goto('/brands/e2e-test-brand')
 
