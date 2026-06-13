@@ -74,7 +74,11 @@ export default function CommunityPage() {
   // actionable for them; a club wants "Featured players" first
   // because that's their recruitment surface. The viewer's own role
   // goes LAST in their stack — they've already seen themselves.
-  const { profile: viewerProfile } = useAuthStore()
+  const { profile: viewerProfile, loading: authLoading } = useAuthStore()
+  // Logged-out visitors get the sign-in gate inside PeopleListView; hide the
+  // "All members" header above it so it doesn't show a never-resolving
+  // "Loading…" (the member fetch is auth-gated, so totalCount stays null).
+  const isAnonViewer = !authLoading && !viewerProfile
   // Sprint 2 recruiting context: the active ContextSwitcher target
   // overrides the implicit profile-derived target. So a multi-team
   // Mixed club can scope Fit + carousel filters to "Women" without
@@ -544,7 +548,10 @@ export default function CommunityPage() {
               {/* All Members section header. Count = filtered list size
                   when narrowing (search/OTO/drawer active), total
                   otherwise. Fixes the QA-flagged "badge says 13 but
-                  grid shows 1" desync. */}
+                  grid shows 1" desync. Hidden for logged-out viewers — the
+                  member fetch is auth-gated, so the count would sit at
+                  "Loading…" forever above the sign-in card. */}
+              {!isAnonViewer && (
               <section id="community-all-members" className="scroll-mt-20 mb-3 flex items-end justify-between gap-3 flex-wrap">
                 <div className="min-w-0">
                   <h2 className="text-lg font-bold text-gray-900 whitespace-nowrap">All members</h2>
@@ -571,6 +578,7 @@ export default function CommunityPage() {
                   </select>
                 </label>
               </section>
+              )}
 
               {/* Scoped-state banner — when a scope reshapes the page, make
                   it explicit that results are role-filtered + ranked for

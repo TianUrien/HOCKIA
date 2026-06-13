@@ -984,7 +984,12 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
   //     "page disappears and reappears" feel when applying a recruiting
   //     context: the grid never blanks to skeletons mid-interaction, it
   //     just crossfades to the re-ranked result.
-  const showSkeletons = isLoading && displayedMembers.length === 0
+  // "Busy" covers every transition (fetch, server search, auth settle) so the
+  // "No members found" empty state only renders once genuinely settled — never
+  // as a flash while a re-fetch is in flight (e.g. right after clearing a
+  // recruiting scope, which re-fetches under a new role filter).
+  const isBusy = isLoading || isSearching || authLoading
+  const showSkeletons = isBusy && displayedMembers.length === 0
   const isReshaping = isLoading && displayedMembers.length > 0
 
   return (
@@ -1006,7 +1011,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
             <MemberTileSkeleton key={i} />
           ))}
         </div>
-      ) : displayedMembers.length === 0 ? (
+      ) : (!isBusy && displayedMembers.length === 0) ? (
         <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
           <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <span className="text-3xl">🔍</span>
