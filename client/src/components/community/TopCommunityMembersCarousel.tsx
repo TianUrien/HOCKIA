@@ -1,8 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Building2, ChevronRight, ShieldCheck } from 'lucide-react'
-import Avatar from '../Avatar'
-import RoleBadge from '../RoleBadge'
-import DualNationalityDisplay from '../DualNationalityDisplay'
+import { ChevronRight } from 'lucide-react'
 import RecruiterCandidateCard, { type RecruiterCardMember } from '../recruiting/RecruiterCandidateCard'
 import { computeClubFit } from '@/lib/clubFit'
 import { computeCoachFit } from '@/lib/coachFit'
@@ -18,8 +15,6 @@ import {
 import { categoryToBandTarget } from '@/hooks/useInterest'
 import { getClubLevelBand } from '@/hooks/useWorldClubLogo'
 import { useCountries } from '@/hooks/useCountries'
-import HockeyContextLine from '../recruiting/HockeyContextLine'
-import QuickActionsRow from '../recruiting/QuickActionsRow'
 import { MemberPreviewModal } from './MemberPreviewModal'
 import { CandidatePreviewSheet } from '../recruiting/CandidatePreviewSheet'
 import type { Profile } from './PeopleListView'
@@ -80,6 +75,8 @@ interface TopMemberRow {
   open_to_play: boolean | null
   open_to_coach: boolean | null
   open_to_opportunities: boolean | null
+  /** Phase 2 (2b') — dedicated umpire availability flag (RPC-projected). */
+  available_for_appointments: boolean | null
   is_verified: boolean | null
   accepted_reference_count: number | null
   /** Denormalized count of career_history (Journey) entries. Drives the
@@ -121,6 +118,14 @@ interface TopMemberRow {
   // Self-declared intent (#2.1) — Interested-lens level + compensation (#4b).
   level_target: string | null
   opportunity_preference: string | null
+  // QA-fix — unified-card parity in the rail: the card's umpire/club substance
+  // lines + the scoped preview's bio need these. Previously dropped by the RPC
+  // → umpire showed "No details yet" + the preview had no bio. RPC now projects
+  // them (20260613130000).
+  bio: string | null
+  umpire_level: string | null
+  federation: string | null
+  year_founded: number | null
 }
 
 interface TopCommunityMembersCarouselProps {
@@ -201,6 +206,7 @@ function topRowToProfile(m: TopMemberRow): Profile {
     open_to_play: m.open_to_play ?? undefined,
     open_to_coach: m.open_to_coach ?? undefined,
     open_to_opportunities: m.open_to_opportunities ?? undefined,
+    available_for_appointments: m.available_for_appointments,
     last_active_at: m.last_active_at,
     accepted_reference_count: m.accepted_reference_count ?? undefined,
     career_entry_count: m.career_entry_count,
@@ -216,6 +222,11 @@ function topRowToProfile(m: TopMemberRow): Profile {
     full_game_video_count: m.full_game_video_count,
     is_verified: m.is_verified,
     profile_completeness_pct: m.profile_completeness_pct,
+    // QA-fix — the scoped preview (CandidatePreviewSheet) reads member.bio.
+    bio: m.bio,
+    umpire_level: m.umpire_level,
+    federation: m.federation,
+    year_founded: m.year_founded,
   }
 }
 
@@ -573,152 +584,57 @@ interface MemberCardProps {
   verdict?: RecruiterVerdict
 }
 
-const ONLINE_WINDOW_MS = 5 * 60 * 1000
-
 function MemberCard({ member, onClick, showEvidence = false, verdict }: MemberCardProps) {
-  // Carousel-card auth gate mirrors MemberTile — anon viewers + the
-  // card's own owner don't see the QuickActionsRow strip.
-  const { profile: viewerProfile } = useAuthStore()
-  const showQuickActions = Boolean(viewerProfile) && viewerProfile?.id !== member.id
-
   // .trim() guards legacy rows with trailing whitespace in full_name.
   const fullName = member.full_name?.trim() || member.username?.trim() || 'HOCKIA Member'
 
-  // ── SCOPED ("Top … for your search") → reuse the exact All-Members grid
-  //    card so the verdict chip / match bar / % read identically across the
-  //    grid, the carousel, and the profile. Purple lives only in its match
-  //    zone. The verdict is precomputed by the parent (which also ranks the
-  //    rail by it); the signal-free discovery rails fall through below. ──
-  if (showEvidence && verdict?.isApplicable) {
-    const cardMember: RecruiterCardMember = {
-      id: member.id,
-      avatar_url: member.avatar_url,
-      full_name: fullName,
-      role: member.role,
-      position: member.position,
-      nationality: member.nationality,
-      nationality_country_id: member.nationality_country_id,
-      nationality2_country_id: member.nationality2_country_id,
-      current_club: member.current_club,
-      current_world_club_id: member.current_world_club_id,
-      last_active_at: member.last_active_at,
-      is_verified: member.is_verified,
-      profile_completeness_pct: member.profile_completeness_pct,
-      highlight_video_url: member.highlight_video_url,
-      full_game_video_count: member.full_game_video_count,
-      accepted_reference_count: member.accepted_reference_count,
-    }
-    return (
-      <div className="snap-center flex-shrink-0 w-52" data-testid={`top-member-card-${member.id}`}>
-        <RecruiterCandidateCard member={cardMember} verdict={verdict} onPreview={onClick} />
-      </div>
-    )
+  // ONE unified card for both rails — identical to the All-Members grid card so
+  // the verdict chip / match bar / % (scoped) and the identity + availability +
+  // proof (discovery) read identically across the grid, the carousel, and the
+  // profile. The verdict is precomputed by the parent (which also ranks the
+  // scoped rail by it); discovery rails pass none → the card's NEUTRAL mode.
+  // The RPC server-joins the league name, so we pass it as `competition_name`
+  // (the grid derives it from its prefetch cache instead).
+  const cardMember: RecruiterCardMember = {
+    id: member.id,
+    avatar_url: member.avatar_url,
+    full_name: fullName,
+    role: member.role,
+    position: member.position,
+    nationality: member.nationality,
+    nationality_country_id: member.nationality_country_id,
+    nationality2_country_id: member.nationality2_country_id,
+    current_club: member.current_club,
+    current_world_club_id: member.current_world_club_id,
+    base_location: member.base_location,
+    playing_category: member.playing_category,
+    competition_name: member.current_competition_name,
+    open_to_play: member.open_to_play,
+    open_to_coach: member.open_to_coach,
+    open_to_opportunities: member.open_to_opportunities,
+    available_for_appointments: member.available_for_appointments,
+    coach_specialization: member.coach_specialization,
+    last_active_at: member.last_active_at,
+    is_verified: member.is_verified,
+    profile_completeness_pct: member.profile_completeness_pct,
+    highlight_video_url: member.highlight_video_url,
+    full_game_video_count: member.full_game_video_count,
+    accepted_reference_count: member.accepted_reference_count,
+    career_entry_count: member.career_entry_count,
+    // QA-fix — umpire substance line (level) + location (federation), club
+    // substance ("Established YYYY"). Were blank in the rail before.
+    umpire_level: member.umpire_level,
+    federation: member.federation,
+    year_founded: member.year_founded,
   }
 
-  // ── DISCOVERY rail (Featured / themed / role-tab lanes) — de-purpled to the
-  //    new card language: plain avatar + online dot (no purple completeness
-  //    ring or "% Complete"), role badge (role-coloured, never purple), and no
-  //    fit/proven/interest chips. Recruitment signals belong only to the
-  //    scoped instance above. ──
-  const initials = fullName
-    .split(' ')
-    .map((s) => s[0])
-    .filter(Boolean)
-    .slice(0, 2)
-    .join('')
-    .toUpperCase()
-  const isOpen =
-    Boolean(member.open_to_play) || Boolean(member.open_to_coach) || Boolean(member.open_to_opportunities)
-  const isOnline = member.last_active_at
-    ? Date.now() - new Date(member.last_active_at).getTime() < ONLINE_WINDOW_MS
-    : false
-  const hasNationality = Boolean(member.nationality_country_id || member.nationality)
-  const currentClub = member.current_club?.trim()
-
   return (
-    <div
-      className="relative snap-center flex-shrink-0 w-52 rounded-2xl border border-gray-200/80 bg-white shadow-sm hover:shadow-md transition-shadow flex flex-col overflow-hidden"
-      data-testid={`top-member-card-${member.id}`}
-    >
-      {/* Role pill — top-left tag, consistent with the recruiter (grid) card. */}
-      <div className="pointer-events-none absolute left-2 top-2 z-10">
-        <RoleBadge role={member.role} className="px-1.5 py-0.5 text-[10px]" />
-      </div>
-      <button
-        type="button"
-        onClick={onClick}
-        className="flex-1 p-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8026FA]/40 flex flex-col text-center"
-        aria-label={`${fullName}. Tap to preview.`}
-      >
-        {/* Avatar + online dot */}
-        <div className="flex justify-center">
-          <div className="relative">
-            <Avatar src={member.avatar_url} initials={initials || '?'} alt={fullName} size="lg" role={member.role} />
-            <span
-              className={`absolute bottom-0.5 right-0.5 h-[11px] w-[11px] rounded-full ring-2 ring-white ${isOnline ? 'bg-[#1D9E75]' : 'bg-[#B4B2A9]'}`}
-              aria-hidden="true"
-            />
-            <span className="sr-only">{isOnline ? 'Online' : 'Offline'}</span>
-          </div>
-        </div>
-
-        {/* Name — up to 2 lines */}
-        <p className="mt-2 text-sm font-semibold text-gray-900 line-clamp-2 leading-tight min-h-[2.5em]" title={fullName}>
-          {fullName}
-        </p>
-
-        {/* Nationality — code mode, consistent with the grid + scoped card */}
-        <div className="mt-1.5 min-h-[2.5em] flex items-start justify-center">
-          {hasNationality && (
-            <DualNationalityDisplay
-              primaryCountryId={member.nationality_country_id}
-              secondaryCountryId={member.role === 'club' ? null : member.nationality2_country_id}
-              fallbackText={member.nationality}
-              mode="code"
-              className="justify-center"
-            />
-          )}
-        </div>
-
-        <div className="my-1.5 border-t border-gray-100" />
-
-        {member.role === 'player' ? (
-          <HockeyContextLine
-            clubName={currentClub}
-            competitionName={member.current_competition_name}
-            position={member.position}
-            className="min-h-[1.25em] text-center"
-          />
-        ) : (
-          <div className="text-[11px] text-gray-600 min-h-[1.25em] inline-flex items-center justify-center gap-1 truncate">
-            {currentClub && (
-              <>
-                <Building2 className="h-3 w-3 text-gray-400 flex-shrink-0" aria-hidden="true" />
-                <span className="truncate" title={currentClub}>{currentClub}</span>
-              </>
-            )}
-          </div>
-        )}
-
-        {/* Open to opportunities pill (reserved height keeps cards aligned) */}
-        <div className="mt-2 min-h-[28px] flex items-end justify-center">
-          {isOpen && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
-              <ShieldCheck className="h-3 w-3" />
-              Open to opportunities
-            </span>
-          )}
-        </div>
-      </button>
-
-      {showQuickActions && (
-        <div
-          className="px-3 py-2 border-t border-gray-100 bg-gray-50/40 flex justify-center"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <QuickActionsRow playerId={member.id} playerName={fullName} compact />
-        </div>
-      )}
+    <div className="snap-center flex-shrink-0 w-52" data-testid={`top-member-card-${member.id}`}>
+      <RecruiterCandidateCard
+        member={cardMember}
+        verdict={showEvidence && verdict?.isApplicable ? verdict : undefined}
+        onPreview={onClick}
+      />
     </div>
   )
 }

@@ -2959,6 +2959,7 @@ export type Database = {
         Row: {
           accepted_friend_count: number
           accepted_reference_count: number
+          available_for_appointments: boolean | null
           availability_confirmed_at: string | null
           availability_duration: string | null
           available_from: string | null
@@ -3059,6 +3060,7 @@ export type Database = {
         }
         Insert: {
           accepted_friend_count?: number
+          available_for_appointments?: boolean | null
           accepted_reference_count?: number
           availability_confirmed_at?: string | null
           availability_duration?: string | null
@@ -3160,6 +3162,7 @@ export type Database = {
         }
         Update: {
           accepted_friend_count?: number
+          available_for_appointments?: boolean | null
           accepted_reference_count?: number
           availability_confirmed_at?: string | null
           availability_duration?: string | null
@@ -6658,6 +6661,11 @@ export type Database = {
         Returns: {
           accepted_friend_count: number
           accepted_reference_count: number
+          available_for_appointments: boolean
+          bio: string | null
+          umpire_level: string | null
+          federation: string | null
+          year_founded: number | null
           available_from: string
           avatar_url: string
           base_country_id: number

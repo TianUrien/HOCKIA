@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { supabase } from '@/lib/supabase'
 import { requestCache } from '@/lib/requestCache'
 import type { CoachProfileShape } from '@/pages/CoachDashboard'
-import type { Profile } from '@/lib/supabase'
 
 export interface ProfileBucket {
   id: string
@@ -28,14 +27,11 @@ interface UseCoachProfileStrengthOptions {
 /**
  * Coach-specific profile strength calculation.
  *
- * Buckets:
- * - Basic Info (15%): full_name, nationality, base_location, date_of_birth, coaching_categories
- * - Specialization (10%): coach_specialization selected
- * - Profile Photo (15%): avatar_url present
- * - Professional Bio (15%): bio field filled
- * - Experience/Journey (20%): at least 1 career_history entry
- * - Media Gallery (10%): at least 1 gallery_photos entry
- * - References (15%): at least 1 accepted reference
+ * 2d-bis: buckets mirror the canonical SQL formula (coach branch) EXACTLY so
+ * the owner's dashboard % equals the public Community-card %. Ten buckets
+ * summing to 100:
+ *   nat+loc 10 · coaching focus 10 · photo 10 · bio 10 · current club 10 ·
+ *   career history 15 · gallery 5 · friends 5 · references 15 · open-to-coach 10
  */
 export function useCoachProfileStrength({ profile }: UseCoachProfileStrengthOptions) {
   const [galleryCount, setGalleryCount] = useState<number | null>(null)
@@ -47,6 +43,7 @@ export function useCoachProfileStrength({ profile }: UseCoachProfileStrengthOpti
   // Only gallery_photos still requires a query since it's not denormalized.
   const journeyCount: number = profile?.career_entry_count ?? 0
   const referenceCount: number = profile?.accepted_reference_count ?? 0
+  const friendCount: number = profile?.accepted_friend_count ?? 0
 
   // Fetch gallery count (only remaining query needed). Deduped via
   // requestCache so multiple consumers on the same dashboard render
@@ -102,21 +99,14 @@ export function useCoachProfileStrength({ profile }: UseCoachProfileStrengthOpti
     void fetchCounts()
   }, [fetchCounts])
 
-  // Check if all basic info fields are filled
+  // Canonical "nationality + base location" bucket (compute_profile_
+  // completeness_pct, coach branch): (nationality_country_id OR nationality)
+  // AND base_location. full_name / DOB / categories are NOT part of it.
   const isBasicInfoComplete = useCallback(() => {
     if (!profile) return false
-    const { full_name, nationality, nationality_country_id, base_location, date_of_birth } = profile
-    const coachingCategories = (profile as Partial<Profile>).coaching_categories
-    // Accept either new country_id field OR legacy nationality text field
+    const { nationality, nationality_country_id, base_location } = profile
     const hasNationality = Boolean(nationality_country_id || nationality?.trim())
-    const hasCategories = Array.isArray(coachingCategories) && coachingCategories.length > 0
-    return Boolean(
-      full_name?.trim() &&
-        hasNationality &&
-        base_location?.trim() &&
-        date_of_birth?.trim() &&
-        hasCategories
-    )
+    return Boolean(hasNationality && base_location?.trim())
   }, [profile])
 
   // Check profile photo
@@ -125,10 +115,11 @@ export function useCoachProfileStrength({ profile }: UseCoachProfileStrengthOpti
     return Boolean(profile.avatar_url?.trim())
   }, [profile])
 
-  // Check specialization
-  const hasSpecialization = useCallback(() => {
+  // Canonical "coaching focus" bucket: coaching_categories OR coach_specialization.
+  const hasCoachingFocus = useCallback(() => {
     if (!profile) return false
-    return Boolean((profile as Partial<Profile>).coach_specialization)
+    const cats = profile.coaching_categories
+    return Boolean((Array.isArray(cats) && cats.length > 0) || profile.coach_specialization)
   }, [profile])
 
   // Check professional bio
@@ -137,43 +128,47 @@ export function useCoachProfileStrength({ profile }: UseCoachProfileStrengthOpti
     return Boolean(profile.bio?.trim())
   }, [profile])
 
-  // Build buckets
+  // Build buckets — mirror the canonical SQL formula (coach branch) EXACTLY so
+  // the owner % equals the public card % (2d-bis): nat+loc 10 · focus 10 ·
+  // photo 10 · bio 10 · current club 10 · career 15 · gallery 5 · friends 5 ·
+  // references 15 · open-to-coach 10 = 100.
   const buckets: ProfileBucket[] = useMemo(() => {
     const basicComplete = isBasicInfoComplete()
-    const specializationComplete = hasSpecialization()
+    const focusComplete = hasCoachingFocus()
     const photoComplete = hasProfilePhoto()
     const bioComplete = hasProfessionalBio()
     const journeyComplete = (journeyCount ?? 0) >= 1
     const galleryComplete = (galleryCount ?? 0) >= 1
     const referencesComplete = (referenceCount ?? 0) >= 1
+    const friendsComplete = (friendCount ?? 0) >= 1
 
     return [
       {
         id: 'basic',
-        label: 'Basic Info',
-        hint: 'Complete name, nationality, location, DOB, and coaching categories',
-        unlockCopy: 'Clubs filter for coaches by nationality, location, and availability.',
-        weight: 15,
+        label: 'Add your nationality and location',
+        hint: 'Add your nationality and base location',
+        unlockCopy: 'Clubs filter for coaches by location when they search.',
+        weight: 10,
         completed: basicComplete,
         actionId: 'edit-profile',
         actionLabel: 'Edit Profile',
       },
       {
         id: 'specialization',
-        label: 'Specialization',
-        hint: 'Select your coaching specialization',
-        unlockCopy: 'Head coach, assistant, coaching staff — clubs search by specialization.',
+        label: 'Set your coaching focus',
+        hint: 'Add your coaching specialization or the categories you coach',
+        unlockCopy: 'Head coach, assistant, age groups — clubs search by coaching focus.',
         weight: 10,
-        completed: specializationComplete,
+        completed: focusComplete,
         actionId: 'edit-profile',
-        actionLabel: 'Set Specialization',
+        actionLabel: 'Set Focus',
       },
       {
         id: 'photo',
         label: 'Profile Photo',
         hint: 'Upload a profile photo',
         unlockCopy: 'Helps clubs put a face to your name.',
-        weight: 15,
+        weight: 10,
         completed: photoComplete,
         actionId: 'edit-profile',
         actionLabel: 'Add Photo',
@@ -183,17 +178,27 @@ export function useCoachProfileStrength({ profile }: UseCoachProfileStrengthOpti
         label: 'Professional Bio',
         hint: 'Add a bio about your coaching background',
         unlockCopy: 'Gives clubs a feel for your coaching style and experience.',
-        weight: 15,
+        weight: 10,
         completed: bioComplete,
         actionId: 'edit-profile',
         actionLabel: 'Add Bio',
+      },
+      {
+        id: 'current-club',
+        label: 'Add your current club',
+        hint: 'Add the club or team you currently coach',
+        unlockCopy: 'Shows clubs your current team and level.',
+        weight: 10,
+        completed: Boolean(profile?.current_club?.trim()),
+        actionId: 'edit-profile',
+        actionLabel: 'Add Club',
       },
       {
         id: 'journey',
         label: 'Career History',
         hint: 'Add at least one experience entry',
         unlockCopy: 'Shows where you have coached and the teams you have developed.',
-        weight: 20,
+        weight: 15,
         completed: journeyComplete,
         actionId: 'journey-tab',
         actionLabel: 'Add Experience',
@@ -203,10 +208,20 @@ export function useCoachProfileStrength({ profile }: UseCoachProfileStrengthOpti
         label: 'Media Gallery',
         hint: 'Upload at least one gallery photo',
         unlockCopy: 'Match photos, training sessions, moments from your career.',
-        weight: 10,
+        weight: 5,
         completed: galleryComplete,
         actionId: 'gallery-tab',
         actionLabel: 'Add Media',
+      },
+      {
+        id: 'friends',
+        label: 'Make your first connection',
+        hint: 'Add a friend to start building your network',
+        unlockCopy: 'Clubs can see the players and coaches you are connected with.',
+        weight: 5,
+        completed: friendsComplete,
+        actionId: 'friends-tab',
+        actionLabel: 'Add Connection',
       },
       {
         id: 'references',
@@ -218,8 +233,18 @@ export function useCoachProfileStrength({ profile }: UseCoachProfileStrengthOpti
         actionId: 'friends-tab',
         actionLabel: 'Get Reference',
       },
+      {
+        id: 'availability',
+        label: 'Mark yourself open to coach',
+        hint: 'Let clubs know you are open to coaching opportunities',
+        unlockCopy: 'Recruiters filter for "Open to Coach" — set it to appear in their searches.',
+        weight: 10,
+        completed: profile?.open_to_coach === true,
+        actionId: 'profile-tab',
+        actionLabel: 'Set Availability',
+      },
     ]
-  }, [isBasicInfoComplete, hasSpecialization, hasProfilePhoto, hasProfessionalBio, journeyCount, galleryCount, referenceCount])
+  }, [isBasicInfoComplete, hasCoachingFocus, hasProfilePhoto, hasProfessionalBio, journeyCount, galleryCount, referenceCount, friendCount, profile?.current_club, profile?.open_to_coach])
 
   // Calculate total percentage
   const percentage = useMemo(() => {

@@ -2729,6 +2729,17 @@ Deno.serve(async (req) => {
       if (data?.length) countryIds = data.map(c => c.id)
     }
 
+    // Phase 2 (2e): resolve relocation-target country names → IDs (the
+    // candidate's open-relocation list is matched against these).
+    let relocationCountryIds: number[] | null = null
+    if (parsed.relocation_to_countries?.length) {
+      const orConditions = parsed.relocation_to_countries.map(c =>
+        `name.ilike.%${c}%,common_name.ilike.%${c}%`
+      ).join(',')
+      const { data } = await adminClient.from('countries').select('id').or(orConditions)
+      if (data?.length) relocationCountryIds = data.map(c => c.id)
+    }
+
     // ── Phase 0 server-side role enforcement ────────────────────────────
     // For HIGH-confidence keyword-router intents, IGNORE the LLM's role
     // extraction and force the role we detected. This is the fix for the
@@ -2845,6 +2856,18 @@ Deno.serve(async (req) => {
       p_country_ids: countryIds,
       p_search_text: parsed.text_query || null,
       p_coach_specializations: parsed.coach_specializations || null,
+      // Phase 2 (2e) — candidate intent (NULL-neutral in discover_profiles).
+      p_relocation_willingness: parsed.relocation_willingness || null,
+      p_relocation_to_country_ids: relocationCountryIds,
+      p_level_target: parsed.level_target || null,
+      p_opportunity_preference: parsed.opportunity_preference || null,
+      // Guard the date cast: only pass a well-formed ISO date, else the RPC's
+      // date param would error on a malformed LLM value.
+      p_available_by:
+        typeof parsed.available_from === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(parsed.available_from)
+          ? parsed.available_from
+          : null,
+      p_specialist_skills: parsed.specialist_skills || null,
       p_sort_by: parsed.sort_by || 'relevance',
     }
 

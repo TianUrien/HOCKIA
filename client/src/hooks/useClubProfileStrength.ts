@@ -33,6 +33,12 @@ type ClubProfile = Pick<
 > & {
   womens_league_division?: string | null
   mens_league_division?: string | null
+  // 2d-bis canonical inputs — optional so a looser ClubProfileShape (where
+  // these are optional/absent) stays assignable.
+  contact_email_public?: boolean | null
+  bio?: string | null
+  post_count?: number | null
+  accepted_friend_count?: number | null
 }
 
 interface UseClubProfileStrengthOptions {
@@ -42,11 +48,11 @@ interface UseClubProfileStrengthOptions {
 /**
  * Club-specific profile strength calculation.
  *
- * Buckets (v1 - no vacancies or players/friends):
- * - Basic Info (35%): nationality, base_location, year_founded, women/men league (optional), website OR contact_email
- * - Club Logo (25%): avatar_url present
- * - Club Bio (20%): club_bio field filled
- * - Photo Gallery (20%): at least 1 club_media entry
+ * 2d-bis: buckets mirror the canonical SQL formula (club branch) EXACTLY so
+ * the owner's dashboard % equals the public Community-card %. Nine buckets
+ * summing to 100:
+ *   logo 15 · about (club_bio/bio) 20 · location 10 · country 5 ·
+ *   year founded 10 · contact/website 10 · media 15 · posts 10 · friends 5
  */
 export function useClubProfileStrength({ profile }: UseClubProfileStrengthOptions) {
   const [galleryCount, setGalleryCount] = useState<number | null>(null)
@@ -79,64 +85,39 @@ export function useClubProfileStrength({ profile }: UseClubProfileStrengthOption
     void fetchCounts()
   }, [fetchCounts])
 
-  /**
-   * Basic Info is complete when:
-   * - nationality (country) is filled
-   * - base_location (city) is filled
-   * - year_founded is filled
-    * - women/men league divisions are optional
-   * - website OR contact_email (at least one) exists
-   */
-  const isBasicInfoComplete = useCallback(() => {
-    if (!profile) return false
-    const { nationality, nationality_country_id, base_location, year_founded, website, contact_email } = profile
-
-    // Accept either new country_id field OR legacy nationality text field
-    const hasCountry = Boolean(nationality_country_id || nationality?.trim())
-    const hasCity = Boolean(base_location?.trim())
-    const hasYearFounded = Boolean(year_founded)
-    const hasContactMethod = Boolean(website?.trim() || contact_email?.trim())
-
-    // All required fields must be present
-    return hasCountry && hasCity && hasYearFounded && hasContactMethod
-  }, [profile])
-
   // Check club logo
   const hasClubLogo = useCallback(() => {
     if (!profile) return false
     return Boolean(profile.avatar_url?.trim())
   }, [profile])
 
-  // Check club bio
+  // Canonical "about" bucket: club_bio OR bio.
   const hasClubBio = useCallback(() => {
     if (!profile) return false
-    return Boolean(profile.club_bio?.trim())
+    return Boolean(profile.club_bio?.trim() || profile.bio?.trim())
   }, [profile])
 
-  // Build buckets
+  // Build buckets — mirror the canonical SQL formula (club branch) EXACTLY so
+  // the owner % equals the public card % (2d-bis). The old single "basic 35"
+  // is split into the four canonical buckets (location 10 · country 5 · year 10
+  // · contact 10), and posts + friends are added.
   const buckets: ProfileStrengthBucket[] = useMemo(() => {
-    const basicComplete = isBasicInfoComplete()
     const logoComplete = hasClubLogo()
     const bioComplete = hasClubBio()
     const galleryComplete = (galleryCount ?? 0) >= 1
+    // Canonical contact bucket: contact_email counts only when public; else website.
+    const hasContact = Boolean(
+      (profile?.contact_email?.trim() && profile?.contact_email_public === true) ||
+        profile?.website?.trim(),
+    )
 
     return [
-      {
-        id: 'basic',
-        label: 'Basic Info',
-        hint: 'Complete country, city, year founded, and add website or contact email',
-        unlockCopy: 'Players filter by country, city, and league when looking for opportunities.',
-        weight: 35,
-        completed: basicComplete,
-        actionId: 'edit-profile',
-        actionLabel: 'Edit Profile',
-      },
       {
         id: 'logo',
         label: 'Club Logo',
         hint: 'Upload your club logo',
         unlockCopy: 'A recognisable logo makes your club stand out in searches.',
-        weight: 25,
+        weight: 15,
         completed: logoComplete,
         actionId: 'edit-profile',
         actionLabel: 'Add Logo',
@@ -152,17 +133,77 @@ export function useClubProfileStrength({ profile }: UseClubProfileStrengthOption
         actionLabel: 'Add Description',
       },
       {
+        id: 'location',
+        label: 'Add your city',
+        hint: 'Set the club\'s base location',
+        unlockCopy: 'Players filter by location when looking for a club.',
+        weight: 10,
+        completed: Boolean(profile?.base_location?.trim()),
+        actionId: 'edit-profile',
+        actionLabel: 'Add Location',
+      },
+      {
+        id: 'country',
+        label: 'Add your country',
+        hint: 'Set the club\'s country',
+        unlockCopy: 'Helps players in your country find you.',
+        weight: 5,
+        completed: Boolean(profile?.nationality_country_id),
+        actionId: 'edit-profile',
+        actionLabel: 'Add Country',
+      },
+      {
+        id: 'year-founded',
+        label: 'Add the year founded',
+        hint: 'When was the club established?',
+        unlockCopy: 'Adds credibility and history to your profile.',
+        weight: 10,
+        completed: Boolean(profile?.year_founded),
+        actionId: 'edit-profile',
+        actionLabel: 'Add Year',
+      },
+      {
+        id: 'contact',
+        label: 'Add a contact method',
+        hint: 'Add a public contact email or a website',
+        unlockCopy: 'Lets players and recruiters reach out about opportunities.',
+        weight: 10,
+        completed: hasContact,
+        actionId: 'edit-profile',
+        actionLabel: 'Add Contact',
+      },
+      {
         id: 'gallery',
         label: 'Photo Gallery',
         hint: 'Upload at least one photo to your gallery',
         unlockCopy: 'Show your ground, training sessions, and match days.',
-        weight: 20,
+        weight: 15,
         completed: galleryComplete,
         actionId: 'gallery-section',
         actionLabel: 'Add Photos',
       },
+      {
+        id: 'posts',
+        label: 'Share your first post',
+        hint: 'Post an update to your club feed',
+        unlockCopy: 'An active club feed shows players you are alive and recruiting.',
+        weight: 10,
+        completed: (profile?.post_count ?? 0) > 0,
+        actionId: 'edit-profile',
+        actionLabel: 'Create Post',
+      },
+      {
+        id: 'friends',
+        label: 'Make your first connection',
+        hint: 'Connect with players or coaches',
+        unlockCopy: 'Builds your club network on HOCKIA.',
+        weight: 5,
+        completed: (profile?.accepted_friend_count ?? 0) > 0,
+        actionId: 'edit-profile',
+        actionLabel: 'Add Connection',
+      },
     ]
-  }, [isBasicInfoComplete, hasClubLogo, hasClubBio, galleryCount])
+  }, [hasClubLogo, hasClubBio, galleryCount, profile?.base_location, profile?.nationality_country_id, profile?.year_founded, profile?.contact_email, profile?.contact_email_public, profile?.website, profile?.post_count, profile?.accepted_friend_count])
 
   // Calculate total percentage
   const percentage = useMemo(() => {

@@ -39,6 +39,13 @@ export interface ParsedFilters {
   leagues?: string[]
   countries?: string[]
   coach_specializations?: string[]
+  // Phase 2 (2e) — candidate intent filters (NULL-neutral in discover_profiles).
+  relocation_willingness?: string
+  relocation_to_countries?: string[]
+  level_target?: string
+  opportunity_preference?: string
+  available_from?: string
+  specialist_skills?: string[]
   text_query?: string
   sort_by?: string
   summary?: string
@@ -116,7 +123,7 @@ export interface LLMCallMeta {
  * quality/latency comparisons across prompt iterations don't require git
  * archaeology.
  */
-export const PROMPT_VERSION = '2026-05-27.club-team-leagues'
+export const PROMPT_VERSION = '2026-06-13.intent-filters'
 
 const EMPTY_META: LLMCallMeta = { retry_count: 0, usage: null }
 
@@ -428,6 +435,12 @@ FILTER EXTRACTION RULES (for search_profiles only):
 - Umpires are a first-class HOCKIA role. Surface them when the user asks for them (with words like "umpire", "umpires", "official", "officials", "referee", "referees", or related terms like "umpire coach", "umpire manager", "technical delegate"). When the intent is unclear, do not silently mix umpires into searches for players, coaches, clubs, or brands — but always treat umpires as a valid scouting target in their own right.
 - For "playing in [country]" or "based in [country]", use the countries array for league/club country context, and locations for where they live.
 - When the user mentions "good feedback", "strong references", "well-regarded", "reputation", "endorsed", "reviewed", "testimonials", "comments about", or any qualitative assessment, set include_qualitative=true. This triggers a deeper analysis of profile comments and endorsements for the top results.
+- CANDIDATE INTENT filters (player/coach self-declared intent — extract only when the query states it):
+    "willing to relocate" / "open to moving / a move" → relocation_willingness=relocate; "won't relocate" / "local only" / "home only" → relocation_willingness=home_only. When a destination is named ("relocate to Spain") also set relocation_to_countries=["Spain"].
+    "available in/from <month or date>" → available_from as an ISO date (YYYY-MM-DD); resolve a bare month name to the 1st of its NEXT occurrence.
+    "paid roles only" → opportunity_preference=paid; "development role/opportunity" → opportunity_preference=development; "open to either" → either.
+    "targeting top/elite level" / "wants to step up" → level_target=top; "competitive" → level_target=competitive; "development" → level_target=development. (This is the CANDIDATE's target, distinct from target_category which is the team/match category.)
+    Specialisms — "drag flicker", "penalty corner specialist", "playmaker", "target forward", "defensive leader", "sweeper keeper", "pressing specialist", "indoor specialist" → specialist_skills with the matching enum value(s); set roles=["player"] since these are player skills.
 - Always generate a human-readable summary field.
 
 CONVERSATION CONTEXT:
@@ -562,6 +575,35 @@ const SEARCH_TOOL = {
         type: 'array',
         items: { type: 'string', enum: ['head_coach', 'assistant_coach', 'goalkeeper_coach', 'youth_coach', 'strength_conditioning', 'performance_analyst', 'sports_scientist', 'other'] },
         description: 'Coach specialization filter. Use when searching for specific types of coaches (e.g., "find me an S&C coach" → ["strength_conditioning"]).',
+      },
+      relocation_willingness: {
+        type: 'string',
+        enum: ['relocate', 'home_only', 'open_to_discuss'],
+        description: 'Candidate relocation intent. "willing to relocate / open to moving" → relocate; "won\'t move / local only / home only" → home_only; "open to discussing a move" → open_to_discuss.',
+      },
+      relocation_to_countries: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'Country names the candidate would relocate TO, e.g. "open to relocating to Spain" → ["Spain"]. Matched against the candidate\'s open-relocation list (and excludes anyone who ruled that country out).',
+      },
+      level_target: {
+        type: 'string',
+        enum: ['top', 'competitive', 'development', 'any'],
+        description: 'Level the CANDIDATE is targeting (self-declared, not the team\'s level). "aiming for top/elite" → top; "competitive" → competitive; "development/grassroots" → development.',
+      },
+      opportunity_preference: {
+        type: 'string',
+        enum: ['paid', 'development', 'either'],
+        description: 'Candidate compensation preference. "paid roles" → paid; "development opportunity" → development; "open to either" → either.',
+      },
+      available_from: {
+        type: 'string',
+        description: 'Earliest date the candidate is needed, as an ISO date YYYY-MM-DD. "available in January" → the 1st of the next January; "from March 2027" → 2027-03-01. Used as an upper bound: candidates available on/before this date (or with no date set) match.',
+      },
+      specialist_skills: {
+        type: 'array',
+        items: { type: 'string', enum: ['drag_flicker', 'penalty_corner', 'playmaker', 'target_forward', 'defensive_leader', 'sweeper_keeper', 'pressing', 'indoor'] },
+        description: 'Player specialisms. "drag flicker" → drag_flicker; "penalty corner specialist" → penalty_corner; "playmaker" → playmaker; "target forward" → target_forward; "defensive leader" → defensive_leader; "sweeper keeper" → sweeper_keeper; "pressing specialist" → pressing; "indoor specialist" → indoor. These are PLAYER skills — set roles=["player"] when used.',
       },
       text_query: {
         type: 'string',

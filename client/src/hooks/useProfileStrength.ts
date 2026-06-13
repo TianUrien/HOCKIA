@@ -42,15 +42,15 @@ export type ProfileStrengthResult = {
 }
 
 /**
- * Checks if the basic info bucket is complete for a player.
- * Requires: nationality (or nationality_country_id), base_location, and at least one position.
+ * Checks the canonical "nationality + base location" bucket for a player.
+ * Mirrors compute_profile_completeness_pct: (nationality_country_id OR
+ * nationality) AND base_location. Position is a SEPARATE canonical bucket.
  */
 function isBasicInfoComplete(profile: Profile): boolean {
   // Accept either new country_id field OR legacy nationality text field
   const hasNationality = Boolean(profile.nationality_country_id || profile.nationality?.trim())
   const hasLocation = Boolean(profile.base_location?.trim())
-  const hasPosition = Boolean(profile.position?.trim())
-  return hasNationality && hasLocation && hasPosition
+  return hasNationality && hasLocation
 }
 
 /**
@@ -70,27 +70,13 @@ function hasHighlightVideo(profile: Profile): boolean {
 /**
  * Hook to calculate profile strength/completion for Player profiles.
  *
- * The strength is calculated from 9 weighted buckets, biased toward
- * recruitment-grade content (highlight + full-match video, references,
- * availability) over identity basics:
- *
- * - Basic Info (10%): nationality, base_location, position
- * - Profile Photo (10%): avatar_url
- * - Highlight Video (20%): highlight_video_url
- * - Full Match Footage (15%): at least one player_full_game_videos row
- * - Journey (10%): at least one career_history entry
- * - Media Gallery (5%): at least one gallery_photos entry
- *   (was 10%, reduced 2026-05-08 to make room for Availability — gallery
- *   is lower-impact than the other buckets as a recruiter signal)
- * - Friends (10%): at least one accepted friend connection
- * - References (15%): at least one approved reference
- * - Availability (5%): open_to_play === true
- *   (added 2026-05-08 — recruiters filter directly on this boolean. A
- *   player marked Open is actively recruitable; one not marked might
- *   not even be visible to a "show me available defenders" query.
- *   Lower weight than content buckets because it's a single toggle.)
- *
- * Total = 100%.
+ * 2d-bis: the buckets mirror the canonical SQL formula
+ * (compute_profile_completeness_pct, player branch) EXACTLY, so the owner's
+ * dashboard % equals the public Community-card %. Twelve weighted buckets
+ * summing to 100:
+ *   nat+loc 10 · position 5 · photo 10 · bio 5 · current club 5 ·
+ *   highlight video 15 · full-match footage 10 · career history 10 ·
+ *   gallery 5 · friends 5 · references 15 · open-to-play 5
  */
 export function useProfileStrength(profile: Profile | null): ProfileStrengthResult {
   const [loading, setLoading] = useState(true)
@@ -165,14 +151,28 @@ export function useProfileStrength(profile: Profile | null): ProfileStrengthResu
       return []
     }
 
+    // Buckets mirror the canonical SQL formula (compute_profile_completeness_pct,
+    // player branch) EXACTLY so the owner's dashboard % equals the public card %
+    // (2d-bis). Weights: nat+loc 10 · position 5 · photo 10 · bio 5 · club 5 ·
+    // highlight 15 · full-match 10 · gallery 5 · career 10 · friends 5 · refs 15
+    // · open_to_play 5 = 100.
     return [
       {
         id: 'basic-info',
-        label: 'Basic info completed',
-        description: 'Add your nationality, location, and playing position',
-        unlockCopy: 'Clubs filter by position and location when they search for players.',
+        label: 'Add your nationality and location',
+        description: 'Add your nationality and base location',
+        unlockCopy: 'Clubs filter by location when they search for players.',
         weight: 10,
         completed: isBasicInfoComplete(profile),
+        action: { type: 'edit-profile' },
+      },
+      {
+        id: 'position',
+        label: 'Add your playing position',
+        description: 'Set your primary position so clubs can scout you',
+        unlockCopy: 'Recruiters filter by position — set it to appear in their searches.',
+        weight: 5,
+        completed: Boolean(profile.position?.trim()),
         action: { type: 'edit-profile' },
       },
       {
@@ -185,12 +185,31 @@ export function useProfileStrength(profile: Profile | null): ProfileStrengthResu
         action: { type: 'edit-profile' },
       },
       {
+        id: 'bio',
+        label: 'Write a short bio',
+        noun: 'a bio',
+        description: 'Tell clubs about your game in your own words',
+        unlockCopy: 'A short bio lets clubs hear about your game from you.',
+        weight: 5,
+        completed: Boolean(profile.bio?.trim()),
+        action: { type: 'edit-profile' },
+      },
+      {
+        id: 'current-club',
+        label: 'Add your current club',
+        description: 'Show clubs where you currently play',
+        unlockCopy: 'Shows recruiters your current level and team.',
+        weight: 5,
+        completed: Boolean(profile.current_club?.trim()),
+        action: { type: 'edit-profile' },
+      },
+      {
         id: 'highlight-video',
         label: 'Add your highlight video',
         noun: 'a highlight video',
         description: 'Show clubs what you can do on the pitch',
         unlockCopy: 'Clubs see how you play, not just read about it.',
-        weight: 20,
+        weight: 15,
         completed: hasHighlightVideo(profile),
         action: { type: 'add-video' },
       },
@@ -204,7 +223,7 @@ export function useProfileStrength(profile: Profile | null): ProfileStrengthResu
         noun: 'full match footage',
         description: 'Add at least one full game video so recruiters can see you play across a whole match',
         unlockCopy: 'Recruiters value full match footage above curated reels — it shows your work over a real game.',
-        weight: 15,
+        weight: 10,
         completed: fullGameVideoCount > 0,
         action: { type: 'tab', tab: 'media' },
       },
@@ -233,7 +252,7 @@ export function useProfileStrength(profile: Profile | null): ProfileStrengthResu
         label: 'Make your first connection',
         description: 'Add a friend to start building your trusted circle',
         unlockCopy: 'Coaches and clubs can see the teammates you play with.',
-        weight: 10,
+        weight: 5,
         completed: friendCount > 0,
         action: { type: 'tab', tab: 'friends' },
       },

@@ -8,7 +8,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { Loader2 } from 'lucide-react'
 import { useNavigationType, Link } from 'react-router-dom'
-import { MemberTile } from '@/components'
 import RecruiterCandidateCard from '@/components/recruiting/RecruiterCandidateCard'
 import { logger } from '@/lib/logger'
 import { isAuthExpiredError } from '@/lib/sentryHelpers'
@@ -38,7 +37,6 @@ import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { usePageState } from '@/hooks/usePageState'
 import { useScrollRestore } from '@/hooks/useScrollRestore'
 import { prefetchWorldClubLogos, getClubLevelBand } from '@/hooks/useWorldClubLogo'
-import { getMemberTier } from '@/lib/profileTier'
 import { logSearchAppearances } from '@/lib/searchAppearances'
 import type { CommunityFiltersState } from './communityFilters'
 
@@ -101,6 +99,10 @@ export interface Profile {
   brand_website_url?: string | null
   brand_instagram_url?: string | null
   brand_logo_url?: string | null
+  // Denormalised brand engagement counts (on the brands row) — power the
+  // unified card's neutral substance line ("N ambassadors · N followers").
+  brand_follower_count?: number | null
+  brand_ambassador_count?: number | null
   // Admin-granted verified badge — unified on profiles for every role.
   is_verified?: boolean | null
   verified_at?: string | null
@@ -112,10 +114,12 @@ export interface Profile {
   languages?: string[] | null
   last_officiated_at?: string | null
   umpire_appointment_count?: number | null
+  // Phase 2 (2b') — dedicated umpire availability flag (drives the card chip).
+  available_for_appointments?: boolean | null
 }
 
 const PROFILES_SELECT =
-  'id, avatar_url, full_name, role, nationality, nationality_country_id, nationality2_country_id, base_location, position, secondary_position, current_club, current_world_club_id, gender, playing_category, coaching_categories, umpiring_categories, created_at, is_test_account, open_to_play, open_to_coach, open_to_opportunities, last_active_at, accepted_reference_count, coach_specialization, coach_specialization_custom, base_country_id, relocation_willingness, relocation_countries_open, relocation_countries_excluded, available_from, level_target, opportunity_preference, specialist_skills, highlight_video_url, full_game_video_count, bio, club_bio, year_founded, website, contact_email, career_entry_count, accepted_friend_count, is_verified, verified_at, umpire_level, federation, umpire_since, officiating_specialization, languages, last_officiated_at, umpire_appointment_count, profile_completeness_pct'
+  'id, avatar_url, full_name, role, nationality, nationality_country_id, nationality2_country_id, base_location, position, secondary_position, current_club, current_world_club_id, gender, playing_category, coaching_categories, umpiring_categories, created_at, is_test_account, open_to_play, open_to_coach, open_to_opportunities, last_active_at, accepted_reference_count, coach_specialization, coach_specialization_custom, base_country_id, relocation_willingness, relocation_countries_open, relocation_countries_excluded, available_from, level_target, opportunity_preference, specialist_skills, highlight_video_url, full_game_video_count, bio, club_bio, year_founded, website, contact_email, career_entry_count, accepted_friend_count, is_verified, verified_at, umpire_level, federation, umpire_since, officiating_specialization, languages, last_officiated_at, umpire_appointment_count, available_for_appointments, profile_completeness_pct'
 
 // CommunityFilters type moved to ./communityFilters.ts so the lifted
 // search bar / quick filters / drawer (now rendered by CommunityPage)
@@ -337,11 +341,11 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
           if (brandIds.length > 0) {
             const { data: brands } = await supabase
               .from('brands')
-              .select('profile_id, slug, category, bio, website_url, instagram_url, logo_url')
+              .select('profile_id, slug, category, bio, website_url, instagram_url, logo_url, follower_count, ambassador_count')
               .in('profile_id', brandIds)
             if (brands) {
               const brandMap = new Map(
-                (brands as { profile_id: string; slug: string; category: string; bio: string | null; website_url: string | null; instagram_url: string | null; logo_url: string | null }[]).map(
+                (brands as { profile_id: string; slug: string; category: string; bio: string | null; website_url: string | null; instagram_url: string | null; logo_url: string | null; follower_count: number | null; ambassador_count: number | null }[]).map(
                   (b) => [b.profile_id, b]
                 )
               )
@@ -354,6 +358,8 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
                   m.brand_website_url = brand?.website_url || null
                   m.brand_instagram_url = brand?.instagram_url || null
                   m.brand_logo_url = brand?.logo_url || null
+                  m.brand_follower_count = brand?.follower_count ?? null
+                  m.brand_ambassador_count = brand?.ambassador_count ?? null
                 }
               })
             }
@@ -460,11 +466,11 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
             if (brandIds.length > 0) {
               const { data: brands } = await supabase
                 .from('brands')
-                .select('profile_id, slug, category, bio, website_url, instagram_url, logo_url')
+                .select('profile_id, slug, category, bio, website_url, instagram_url, logo_url, follower_count, ambassador_count')
                 .in('profile_id', brandIds)
               if (brands) {
                 const brandMap = new Map(
-                  (brands as { profile_id: string; slug: string; category: string; bio: string | null; website_url: string | null; instagram_url: string | null; logo_url: string | null }[]).map(
+                  (brands as { profile_id: string; slug: string; category: string; bio: string | null; website_url: string | null; instagram_url: string | null; logo_url: string | null; follower_count: number | null; ambassador_count: number | null }[]).map(
                     (b) => [b.profile_id, b]
                   )
                 )
@@ -477,6 +483,8 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
                     m.brand_website_url = brand?.website_url || null
                     m.brand_instagram_url = brand?.instagram_url || null
                     m.brand_logo_url = brand?.logo_url || null
+                    m.brand_follower_count = brand?.follower_count ?? null
+                    m.brand_ambassador_count = brand?.ambassador_count ?? null
                   }
                 })
               }
@@ -1063,49 +1071,15 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
                   />
                 )
               }
+              // NEUTRAL mode — the SAME unified card, no recruiting scope.
+              // Opens the general member preview (the scoped branches above
+              // open the recruiter CandidatePreviewSheet instead).
               return (
-              <MemberTile
-                key={member.id}
-                id={member.id}
-                avatar_url={member.avatar_url}
-                full_name={member.full_name}
-                role={member.role}
-                brandSlug={member.brand_slug ?? undefined}
-                brandCategory={member.brand_category ?? undefined}
-                brandLogoUrl={member.brand_logo_url ?? null}
-                nationality={member.nationality}
-                nationality_country_id={member.nationality_country_id}
-                nationality2_country_id={member.role === 'club' ? null : member.nationality2_country_id}
-                base_location={member.base_location}
-                current_team={member.current_club}
-                current_world_club_id={member.current_world_club_id}
-                open_to_play={member.open_to_play}
-                open_to_coach={member.open_to_coach}
-                open_to_opportunities={member.open_to_opportunities}
-                playing_category={member.playing_category ?? null}
-                coach_specialization={member.coach_specialization ?? null}
-                coaching_categories={member.coaching_categories ?? null}
-                position={member.position ?? null}
-                last_active_at={member.last_active_at ?? null}
-                highlight_video_url={member.highlight_video_url ?? null}
-                full_game_video_count={member.full_game_video_count ?? null}
-                accepted_reference_count={member.accepted_reference_count ?? null}
-                career_entry_count={member.career_entry_count ?? null}
-                relocation_willingness={member.relocation_willingness ?? null}
-                relocation_countries_open={member.relocation_countries_open ?? null}
-                relocation_countries_excluded={member.relocation_countries_excluded ?? null}
-                available_from={member.available_from ?? null}
-                level_target={member.level_target ?? null}
-                opportunity_preference={member.opportunity_preference ?? null}
-                home_country_id={member.base_country_id ?? member.nationality_country_id ?? null}
-                tier={getMemberTier(member)}
-                isVerified={Boolean(member.is_verified)}
-                verifiedAt={member.verified_at ?? null}
-                umpireLevel={member.umpire_level ?? null}
-                federation={member.federation ?? null}
-                profileCompletenessPct={member.profile_completeness_pct ?? null}
-                onPreview={() => setPreviewMember(member)}
-              />
+                <RecruiterCandidateCard
+                  key={member.id}
+                  member={member}
+                  onPreview={() => setPreviewMember(member)}
+                />
               )
             })}
           </div>

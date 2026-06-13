@@ -1,5 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
-import { supabase } from '@/lib/supabase'
+import { useMemo } from 'react'
 import type { BrandDetail } from './useBrand'
 
 export interface ProfileStrengthBucket {
@@ -30,103 +29,44 @@ interface UseBrandProfileStrengthOptions {
 /**
  * Brand-specific profile strength calculation.
  *
- * Buckets:
- * - Brand Identity (25%): name, logo_url, category
- * - About (20%): bio field filled (min 50 chars)
- * - Contact Info (15%): website_url OR instagram_url
- * - Location (10%): country in profile
- * - Products (20%): at least one product added
- * - Ambassadors (10%): at least one brand ambassador
+ * 2d-bis: buckets mirror the canonical SQL formula (brand branch, which reads
+ * the brands table) EXACTLY so the owner's dashboard % equals the public
+ * Community-card %. Five buckets summing to 100:
+ *   logo 20 · about (bio) 20 · website/Instagram 20 · country 20 · ambassadors 20
+ *
+ * All inputs are on the `brand` prop (the brands row) + the ambassador count —
+ * no extra query, so no async loading. (The old formula also scored brand name,
+ * category, and products; the canonical formula doesn't — product_count isn't a
+ * brands column — so those are dropped to keep one number everywhere.)
  */
-export function useBrandProfileStrength({ brand, productCount = 0, ambassadorCount = 0 }: UseBrandProfileStrengthOptions) {
-  const [loading, setLoading] = useState(true)
-  const [profileCountry, setProfileCountry] = useState<string | null>(null)
-
-  const profileId = brand?.profile_id ?? null
-
-  // Fetch profile country for the brand owner
-  const fetchProfileData = useCallback(async () => {
-    if (!profileId) {
-      setProfileCountry(null)
-      setLoading(false)
-      return
-    }
-    setLoading(true)
-    try {
-      const { data } = await supabase
-        .from('profiles')
-        .select('nationality, nationality_country_id')
-        .eq('id', profileId)
-        .single()
-
-      const countryValue = data?.nationality_country_id ?? data?.nationality ?? null
-      setProfileCountry(countryValue != null ? String(countryValue) : null)
-    } finally {
-      setLoading(false)
-    }
-  }, [profileId])
-
-  useEffect(() => {
-    void fetchProfileData()
-  }, [fetchProfileData])
-
-  // Check brand identity (name, logo, category)
-  const isBrandIdentityComplete = useCallback(() => {
-    if (!brand) return false
-    const hasName = Boolean(brand.name?.trim())
-    const hasLogo = Boolean(brand.logo_url?.trim())
-    const hasCategory = Boolean(brand.category?.trim())
-    return hasName && hasLogo && hasCategory
-  }, [brand])
-
-  // Check about/bio (min 50 chars)
-  const hasAbout = useCallback(() => {
-    if (!brand) return false
-    return Boolean(brand.bio?.trim() && brand.bio.trim().length >= 50)
-  }, [brand])
-
-  // Check contact info (website or instagram)
-  const hasContactInfo = useCallback(() => {
-    if (!brand) return false
-    return Boolean(brand.website_url?.trim() || brand.instagram_url?.trim())
-  }, [brand])
-
-  // Check location
-  const hasLocation = useCallback(() => {
-    return Boolean(profileCountry)
-  }, [profileCountry])
-
-  // Check products
-  const hasProducts = productCount > 0
-
-  // Check ambassadors
-  const hasAmbassadors = ambassadorCount > 0
-
-  // Build buckets
+export function useBrandProfileStrength({ brand, ambassadorCount = 0 }: UseBrandProfileStrengthOptions) {
   const buckets: ProfileStrengthBucket[] = useMemo(() => {
-    const identityComplete = isBrandIdentityComplete()
-    const aboutComplete = hasAbout()
-    const contactComplete = hasContactInfo()
-    const locationComplete = hasLocation()
+    const hasLogo = Boolean(brand?.logo_url?.trim())
+    // Canonical scores bio when non-empty (NOT the old >=50-char gate).
+    const hasBio = Boolean(brand?.bio?.trim())
+    const hasContact = Boolean(brand?.website_url?.trim() || brand?.instagram_url?.trim())
+    // Canonical uses the BRAND's own country_id (brands table), not the owner's.
+    const hasCountry = Boolean(brand?.country_id)
+    const hasAmbassadors = ambassadorCount > 0
 
     return [
       {
-        id: 'identity',
-        label: 'Brand Identity',
-        hint: 'Add your brand name, logo, and category',
-        unlockCopy: 'A clear name, logo, and category is the foundation for people finding you.',
-        weight: 25,
-        completed: identityComplete,
+        id: 'logo',
+        label: 'Brand Logo',
+        hint: 'Upload your brand logo',
+        unlockCopy: 'A recognisable logo makes your brand stand out in searches.',
+        weight: 20,
+        completed: hasLogo,
         actionId: 'edit-profile',
-        actionLabel: 'Edit Brand',
+        actionLabel: 'Add Logo',
       },
       {
         id: 'about',
         label: 'About Your Brand',
-        hint: 'Write a description about your brand (min 50 characters)',
+        hint: 'Write a description about your brand',
         unlockCopy: 'Tell players and clubs what makes your brand worth following.',
         weight: 20,
-        completed: aboutComplete,
+        completed: hasBio,
         actionId: 'edit-profile',
         actionLabel: 'Add Description',
       },
@@ -135,45 +75,35 @@ export function useBrandProfileStrength({ brand, productCount = 0, ambassadorCou
         label: 'Contact Info',
         hint: 'Add your website or Instagram link',
         unlockCopy: 'A direct way for people to reach you outside HOCKIA.',
-        weight: 15,
-        completed: contactComplete,
+        weight: 20,
+        completed: hasContact,
         actionId: 'edit-profile',
         actionLabel: 'Add Contact',
       },
       {
-        id: 'location',
-        label: 'Location',
-        hint: 'Add your country in profile settings',
+        id: 'country',
+        label: 'Brand Country',
+        hint: 'Set your brand\'s country',
         unlockCopy: 'Players favour brands they can buy from locally or that ship to their region.',
-        weight: 10,
-        completed: locationComplete,
-        actionId: 'edit-profile',
-        actionLabel: 'Add Location',
-      },
-      {
-        id: 'products',
-        label: 'Products',
-        hint: 'Add at least one product to showcase',
-        unlockCopy: 'A brand page without products is just an About section — show what you make.',
         weight: 20,
-        completed: hasProducts,
-        actionId: 'add-product',
-        actionLabel: 'Add Product',
+        completed: hasCountry,
+        actionId: 'edit-profile',
+        actionLabel: 'Add Country',
       },
       {
         id: 'ambassadors',
         label: 'Ambassadors',
         hint: 'Add at least one brand ambassador',
         unlockCopy: 'Players associated with your brand bring their network with them.',
-        weight: 10,
+        weight: 20,
         completed: hasAmbassadors,
         actionId: 'add-ambassador',
         actionLabel: 'Add Ambassador',
       },
     ]
-  }, [isBrandIdentityComplete, hasAbout, hasContactInfo, hasLocation, hasProducts, hasAmbassadors])
+  }, [brand, ambassadorCount])
 
-  // Calculate total percentage
+  // Calculate total percentage (canonical buckets sum to 100).
   const percentage = useMemo(() => {
     return buckets.reduce((acc, b) => acc + (b.completed ? b.weight : 0), 0)
   }, [buckets])
@@ -183,9 +113,9 @@ export function useBrandProfileStrength({ brand, productCount = 0, ambassadorCou
     percentage,
     /** Individual bucket states */
     buckets,
-    /** True while fetching data */
-    loading,
-    /** Re-fetch data (call after updates) */
-    refresh: fetchProfileData,
+    /** No async work — strength derives from the `brand` prop. */
+    loading: false,
+    /** No-op: the % derives from the `brand` prop; refetch the brand upstream. */
+    refresh: async () => {},
   }
 }

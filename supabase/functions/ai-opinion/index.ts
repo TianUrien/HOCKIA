@@ -42,7 +42,7 @@ import { getServiceClient } from '../_shared/supabase-client.ts'
 // Bump PROMPT_VERSION when the system prompt or output schema changes
 // in a way that should invalidate cached opinions. ai_opinions cache
 // keys include this — bumping forces a full regenerate next read.
-const PROMPT_VERSION = 'v1.7'
+const PROMPT_VERSION = 'v1.8'
 const MODEL = 'claude-sonnet-4-6'
 const VERDICT_MAX_CHARS = 280
 const QUOTA_PER_DAY = 50
@@ -86,6 +86,10 @@ interface FitContext {
   // #6b — coach candidate's own specialization + categories.
   player_coach_specialization: string | null
   player_coaching_categories: string[] | null
+  // Phase 2 (2c) — player's held specialisms + the opening's wanted
+  // specialisms (a held specialism the opening seeks is a positive fit signal).
+  player_specialist_skills: string[] | null
+  viewer_target_specialists: string[] | null
   viewer_target: 'Men' | 'Women' | 'Mixed' | null
   viewer_band: number | null
   // #5 Part 2 — the active opportunity scope (level_sought / compensation /
@@ -182,6 +186,10 @@ function computeContextHash(viewerId: string, playerId: string, fit: FitContext)
     stp: fit.scope_target_position,
     pcs: fit.player_coach_specialization,
     pcc: fit.player_coaching_categories,
+    // Phase 2 (2c) — specialism intent. Sort so a mere reorder of the TEXT[]
+    // doesn't false-drift the hash (and force a needless regenerate).
+    pss: [...(fit.player_specialist_skills ?? [])].sort(),
+    vts: [...(fit.viewer_target_specialists ?? [])].sort(),
   })
   return sha256(payload)
 }
@@ -210,12 +218,16 @@ interface ProfileRow {
   available_from: string | null
   // #6b — coach candidate's specialization (coaching_categories above).
   coach_specialization: string | null
+  // Phase 2 (2c) — player's held specialisms (drag_flicker, penalty_corner,
+  // playmaker, …). Already scored by clubFit's position_match; surfaced here so
+  // the AI verdict can cite a specialism the opening wants.
+  specialist_skills: string[] | null
 }
 
 async function fetchProfile(supabase: ReturnType<typeof getServiceClient>, id: string): Promise<ProfileRow | null> {
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, role, full_name, current_world_club_id, playing_category, coaching_categories, open_to_play, open_to_coach, open_to_opportunities, last_active_at, accepted_reference_count, career_entry_count, highlight_video_url, full_game_video_count, current_club, level_target, opportunity_preference, relocation_willingness, available_from, coach_specialization')
+    .select('id, role, full_name, current_world_club_id, playing_category, coaching_categories, open_to_play, open_to_coach, open_to_opportunities, last_active_at, accepted_reference_count, career_entry_count, highlight_video_url, full_game_video_count, current_club, level_target, opportunity_preference, relocation_willingness, available_from, coach_specialization, specialist_skills')
     .eq('id', id)
     .maybeSingle()
   if (error) throw error
@@ -268,6 +280,9 @@ interface RecruitingScope {
   // specific coaching role (opportunity.position holds the coach enum).
   role: string | null
   position: string | null
+  // Phase 2 (2c) — specialisms the opening wants (from
+  // opportunities.specialist_skills_wanted, derived onto recruiting_context).
+  specialists: string[] | null
 }
 
 async function resolveScope(
@@ -279,7 +294,7 @@ async function resolveScope(
   // opt-in via ContextSwitcher).
   const { data: ctx } = await supabase
     .from('recruiting_context')
-    .select('target_category, target_level, target_compensation, target_location_country, target_start_date, target_problem, target_role, target_position')
+    .select('target_category, target_level, target_compensation, target_location_country, target_start_date, target_problem, target_role, target_position, target_specialists')
     .eq('owner_id', viewerId)
     .eq('is_active', true)
     .maybeSingle()
@@ -292,6 +307,7 @@ async function resolveScope(
     target_problem: string | null
     target_role: string | null
     target_position: string | null
+    target_specialists: string[] | null
   } | null
   const scope: RecruitingScope = {
     target: (row?.target_category as 'Men' | 'Women' | 'Mixed' | null) ?? null,
@@ -302,6 +318,7 @@ async function resolveScope(
     problem: row?.target_problem ?? null,
     role: row?.target_role ?? null,
     position: row?.target_position ?? null,
+    specialists: row?.target_specialists ?? null,
   }
   if (scope.target) return scope
 
@@ -350,6 +367,10 @@ async function resolveScope(
 //   v1.7 (#6b): coach-candidate support — when the payload has a `coach`
 //     object (opportunity_scope.seeking='coach'), assess coaching-role +
 //     team-category match + experience + availability, not player level.
+//   v1.8 (Phase 2 2c): specialist-skills support — weigh the opening's
+//     specialists_sought vs the player's specialist_skills (a held specialism
+//     the opening wants is a positive fit signal). Adds pss/vts to the
+//     context_hash so a specialism edit invalidates the cached verdict.
 const SYSTEM_PROMPT = `You are HOCKIA AI's recruitment opinion engine. You produce short, evidence-based verdicts on player↔club AND coach↔team fit for field-hockey recruiters.
 
 RULES (non-negotiable):
@@ -383,6 +404,7 @@ OPPORTUNITY SCOPE (when opportunity_scope fields are present): the recruiter is 
 - level_sought (elite > high_performance > competitive > development): the level the opening targets. Compare it to the player's PROVEN level (competition_level_band) FIRST.
 - compensation (paid / unpaid_development / either) vs the player's opportunity_preference (paid / development / either): an "either" on either side is compatible; a player who wants paid being shown an unpaid/development role is a real mismatch worth flagging.
 - location_country + start_date vs the player's relocation_willingness + available_from: logistics that can make or break a deal.
+- specialists_sought (the opening's wanted specialisms, e.g. drag_flicker, penalty_corner, playmaker) vs the player's specialist_skills: a held specialism the opening explicitly wants is a strong positive fit signal worth leading with; the absence of a sought specialism is a soft gap, not a disqualifier. HUMANIZE every tag in prose (drag_flicker → "drag-flicking", penalty_corner → "penalty-corner work") — never print the raw token. Only weigh specialisms when specialists_sought is non-empty.
 When opportunity_scope fields are null, the recruiter hasn't scoped to an opening — do not invent level/compensation/logistics claims; stick to category + band + evidence.
 
 RECRUITMENT PROBLEM (when opportunity_scope.recruitment_problem is present): this is what the recruiter is solving — frame the verdict around it and lead with the dimension it cares about most:
@@ -450,6 +472,8 @@ function buildUserPrompt(viewer: ProfileRow, player: ProfileRow, fit: FitContext
       start_date: fit.viewer_target_start_date,
       // #6 — what the recruiter is solving; frame the verdict around it.
       recruitment_problem: fit.viewer_recruitment_problem,
+      // Phase 2 (2c) — specialisms the opening wants (humanize the tags).
+      specialists_sought: fit.viewer_target_specialists,
     },
     player: {
       role: player.role,
@@ -480,6 +504,8 @@ function buildUserPrompt(viewer: ProfileRow, player: ProfileRow, fit: FitContext
       opportunity_preference: fit.player_opportunity_preference,
       relocation_willingness: fit.player_relocation_willingness,
       available_from: fit.player_available_from,
+      // Phase 2 (2c) — held specialisms (humanize the tags in prose).
+      specialist_skills: fit.player_specialist_skills,
     },
   }, null, 2)
 }
@@ -678,6 +704,8 @@ serve(async (req: Request) => {
     scope_target_position: scope.position,
     player_coach_specialization: player.coach_specialization,
     player_coaching_categories: player.coaching_categories,
+    player_specialist_skills: player.specialist_skills,
+    viewer_target_specialists: scope.specialists,
     viewer_target: scope.target,
     viewer_band: viewerBand,
     viewer_target_level: scope.level,

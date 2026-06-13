@@ -12,7 +12,11 @@
  */
 
 import { describe, expect, it } from 'vitest'
-import { computeRecruiterVerdict } from '@/lib/recruiterVerdict'
+import {
+  computeRecruiterVerdict,
+  recruiterDisplayTier,
+  DISPLAY_TIER_LABELS,
+} from '@/lib/recruiterVerdict'
 
 const fit = (
   state: 'green' | 'yellow' | 'grey',
@@ -47,7 +51,7 @@ describe('computeRecruiterVerdict', () => {
       interest: interest('strong', { positives: ['Open to relocating.'] }),
     })
     expect(r.tier).toBe('pursue')
-    expect(r.headline).toBe('Pursue')
+    expect(r.headline).toBe('Excellent')
     expect(r.highlights).toEqual([
       'Plays Adult Men — matches your team category.',
       'Full match footage available.',
@@ -101,7 +105,7 @@ describe('computeRecruiterVerdict', () => {
       interest: interest('low', { caveats: ['Excluded that country.'] }),
     })
     expect(r.tier).toBe('pass') // yellow(1) + low(−0.8) = 0.2
-    expect(r.headline).toBe('Likely pass')
+    expect(r.headline).toBe('Out of scope')
     expect(r.caveats[0]).toBe('Excluded that country.')
   })
 
@@ -263,5 +267,41 @@ describe('computeRecruiterVerdict — strength bar', () => {
     })
     expect(capped.tier).toBe('longshot')
     expect(capped.strength).toBeLessThan(0.55) // below the "consider" band
+  })
+})
+
+// ── Display vocabulary — the four user-facing words, one source of truth ──
+// Every surface (grid card, preview sheet, full profile) reads
+// recruiterDisplayTier(); these tests lock the words and the 1:1 mapping so
+// the surfaces can never drift apart.
+describe('recruiterDisplayTier + DISPLAY_TIER_LABELS', () => {
+  it('exposes exactly the four-word vocabulary', () => {
+    expect(DISPLAY_TIER_LABELS).toEqual({
+      excellent: 'Excellent',
+      good: 'Good',
+      possible: 'Possible',
+      out: 'Out of scope',
+    })
+  })
+
+  it('maps each internal tier 1:1 to a display tier', () => {
+    const cases: Array<['pursue' | 'consider' | 'longshot' | 'pass', 'excellent' | 'good' | 'possible' | 'out']> = [
+      ['pursue', 'excellent'],
+      ['consider', 'good'],
+      ['longshot', 'possible'],
+      ['pass', 'out'],
+    ]
+    for (const [tier, display] of cases) {
+      expect(recruiterDisplayTier({ tier })).toBe(display)
+    }
+  })
+
+  it("a computed verdict's headline is exactly its display-tier label", () => {
+    const r = computeRecruiterVerdict({
+      fit: fit('green', { positives: ['x'] }),
+      evidence: evidence('strong'),
+      interest: interest('strong', { positives: ['y'] }),
+    })
+    expect(r.headline).toBe(DISPLAY_TIER_LABELS[recruiterDisplayTier(r)])
   })
 })

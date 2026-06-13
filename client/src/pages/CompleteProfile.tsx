@@ -911,6 +911,11 @@ export default function CompleteProfile() {
           // languages is a TEXT[] column; empty array would be valid but we
           // require ≥ 1 at validation time so this path always has entries.
           languages: formSnapshot.languages.length > 0 ? formSnapshot.languages : null,
+          // Default new umpires to available so they surface in the Community
+          // "Available" chip + availability-filtered search immediately
+          // (mirrors the player open_to_play / coach open_to_coach default).
+          // Toggle off later via the AvailabilityToggleStrip.
+          available_for_appointments: true,
         }
       } else if (userRole === 'club') {
         updateData = {
@@ -925,6 +930,9 @@ export default function CompleteProfile() {
           contact_email: formData.contactEmail,
           club_bio: formData.clubBio,
           club_history: formData.clubHistory,
+          // Default new clubs to "recruiting" so they surface in the Community
+          // availability chip + recruiter-facing search right away.
+          open_to_opportunities: true,
         }
       }
 

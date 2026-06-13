@@ -113,11 +113,35 @@ const NOT_APPLICABLE: RecruiterVerdict = {
   weightedFor: null,
 }
 
-const HEADLINES: Record<VerdictTier, string> = {
-  pursue: 'Pursue',
-  consider: 'Worth considering',
-  longshot: 'Longshot',
-  pass: 'Likely pass',
+/**
+ * Display vocabulary — the user-facing four words. Derived 1:1 from the
+ * internal action tier, so the grid card, the preview sheet, and the full
+ * profile ALL show the same word for the same candidate. This is the single
+ * source of truth: every surface must call `recruiterDisplayTier()` and never
+ * re-derive the label from the strength bar (the Phase-1 grid card used
+ * strength-% bands, which could disagree with the tier word at the
+ * boundaries — fixed here).
+ */
+export type VerdictDisplayTier = 'excellent' | 'good' | 'possible' | 'out'
+
+const DISPLAY_TIER_BY_VERDICT: Record<VerdictTier, VerdictDisplayTier> = {
+  pursue: 'excellent',
+  consider: 'good',
+  longshot: 'possible',
+  pass: 'out',
+}
+
+export const DISPLAY_TIER_LABELS: Record<VerdictDisplayTier, string> = {
+  excellent: 'Excellent',
+  good: 'Good',
+  possible: 'Possible',
+  out: 'Out of scope',
+}
+
+/** The canonical display tier for a verdict — every card/sheet/profile reads
+ *  this so the four-word vocabulary can never disagree across surfaces. */
+export function recruiterDisplayTier(verdict: Pick<RecruiterVerdict, 'tier'>): VerdictDisplayTier {
+  return DISPLAY_TIER_BY_VERDICT[verdict.tier]
 }
 
 // Fit is the spine; Interested carries real weight (a clear mismatch — an
@@ -268,7 +292,7 @@ export function computeRecruiterVerdict(input: RecruiterVerdictInput): Recruiter
     isApplicable: true,
     tier,
     strength,
-    headline: HEADLINES[tier],
+    headline: DISPLAY_TIER_LABELS[DISPLAY_TIER_BY_VERDICT[tier]],
     highlights,
     caveats: caveats.slice(0, 2),
     scoped: Boolean(input.hasOpeningScope),

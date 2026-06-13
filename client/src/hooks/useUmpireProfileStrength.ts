@@ -28,28 +28,15 @@ interface UseUmpireProfileStrengthOptions {
 /**
  * Umpire-specific profile strength calculation.
  *
- * Credentials still lead the weighting, but Phase C (officiating journey),
- * Phase E (peer references), and Phase F1 (gallery) now contribute — so the
- * percentage reflects the full-citizen umpire experience, not just badges.
+ * 2d-bis: buckets mirror the canonical SQL formula (umpire branch) EXACTLY so
+ * the owner's dashboard % equals the public Community-card %. Twelve buckets
+ * summing to 100 (no normalization — raw sum):
+ *   nat+loc 10 · level/categories 10 · federation 5 · specialization 5 ·
+ *   photo 10 · bio 10 · career 10 · gallery 5 · friends 5 · references 15 ·
+ *   available-for-appointments 5 · appointments 10
  *
- * Weights (sum to 110 — normalized to 0–100 via percentage = score/total*100):
- * - Umpire Level       (20): umpire_level
- * - Federation         (15): federation
- * - Specialization     (10): officiating_specialization
- * - Profile Photo      (10): avatar_url
- * - Bio                (10): bio
- * - Languages          (10): >=1 language
- * - Gallery            (10): >=1 gallery_photos row (requires a query)
- * - Years Officiating   (5): umpire_since
- * - Officiating Journey (10): >=1 umpire_appointments row
- * - Peer References    (10): >=1 accepted profile_references row
- *
- * Community-grid estimator (lib/profileTier.ts estimateMemberStrength) stays
- * at 100 without gallery because it runs on fields cheaply denormalized on
- * the profile row — a gallery count isn't. The resulting tier mismatch
- * between owner dashboard and community card is <=1 band in practice
- * (normalization absorbs most of it), matches the pre-existing player
- * pattern.
+ * (Was a /110 credentials-led formula with languages + years-officiating, which
+ * the canonical formula doesn't score — dropped here to keep one number.)
  */
 export function useUmpireProfileStrength({ profile }: UseUmpireProfileStrengthOptions) {
   const [galleryCount, setGalleryCount] = useState<number>(0)
@@ -107,26 +94,44 @@ export function useUmpireProfileStrength({ profile }: UseUmpireProfileStrengthOp
     void fetchGalleryCount()
   }, [fetchGalleryCount])
 
+  // Buckets mirror the canonical SQL formula (umpire branch) EXACTLY so the
+  // owner % equals the public card % (2d-bis): nat+loc 10 · level/categories 10
+  // · federation 5 · specialization 5 · photo 10 · bio 10 · career 10 ·
+  // gallery 5 · friends 5 · references 15 · available 5 · appointments 10 = 100.
   const buckets: ProfileBucket[] = useMemo(() => {
-    const level = Boolean(profile?.umpire_level?.trim())
+    const hasNationality = Boolean(profile?.nationality_country_id || profile?.nationality?.trim())
+    const basic = hasNationality && Boolean(profile?.base_location?.trim())
+    const levelOrCategories =
+      Boolean(profile?.umpire_level?.trim()) || ((profile?.umpiring_categories?.length ?? 0) > 0)
     const federation = Boolean(profile?.federation?.trim())
     const specialization = Boolean(profile?.officiating_specialization?.trim())
     const photo = Boolean(profile?.avatar_url?.trim())
     const bio = Boolean(profile?.bio?.trim())
-    const languages = (profile?.languages?.length ?? 0) >= 1
+    const career = (profile?.career_entry_count ?? 0) >= 1
     const gallery = galleryCount >= 1
-    const years = (profile?.umpire_since ?? 0) > 0
-    const appointments = (profile?.umpire_appointment_count ?? 0) >= 1
+    const friends = (profile?.accepted_friend_count ?? 0) >= 1
     const references = (profile?.accepted_reference_count ?? 0) >= 1
+    const available = profile?.available_for_appointments === true
+    const appointments = (profile?.umpire_appointment_count ?? 0) >= 1
 
     return [
       {
+        id: 'basic',
+        label: 'Add your nationality and location',
+        hint: 'Add your nationality and base location.',
+        unlockCopy: 'Assigners and clubs filter by location.',
+        weight: 10,
+        completed: basic,
+        actionId: 'edit-profile',
+        actionLabel: 'Edit Profile',
+      },
+      {
         id: 'umpire-level',
         label: 'Umpire Level',
-        hint: 'Add your certification level (e.g. FIH International, National).',
+        hint: 'Add your certification level or the categories you officiate.',
         unlockCopy: 'Level is the first thing clubs and fellow umpires look for.',
-        weight: 20,
-        completed: level,
+        weight: 10,
+        completed: levelOrCategories,
         actionId: 'edit-profile',
         actionLabel: 'Add Level',
       },
@@ -135,7 +140,7 @@ export function useUmpireProfileStrength({ profile }: UseUmpireProfileStrengthOp
         label: 'Federation',
         hint: 'Add the governing body you officiate under.',
         unlockCopy: 'Shows which national or international body certified you.',
-        weight: 15,
+        weight: 5,
         completed: federation,
         actionId: 'edit-profile',
         actionLabel: 'Add Federation',
@@ -145,7 +150,7 @@ export function useUmpireProfileStrength({ profile }: UseUmpireProfileStrengthOp
         label: 'Specialization',
         hint: 'Pick outdoor, indoor, or both.',
         unlockCopy: 'Helps match you with the right appointments and tournaments.',
-        weight: 10,
+        weight: 5,
         completed: specialization,
         actionId: 'edit-profile',
         actionLabel: 'Set Specialization',
@@ -171,65 +176,72 @@ export function useUmpireProfileStrength({ profile }: UseUmpireProfileStrengthOp
         actionLabel: 'Add Bio',
       },
       {
-        id: 'languages',
-        label: 'Languages',
-        hint: 'Add at least one language you officiate in.',
-        unlockCopy: 'Matters for international tournaments and mixed-language panels.',
+        id: 'career',
+        label: 'Career History',
+        hint: 'Add a career milestone, certification, or panel.',
+        unlockCopy: 'Concrete history is a strong credibility signal beyond the badge.',
         weight: 10,
-        completed: languages,
-        actionId: 'edit-profile',
-        actionLabel: 'Add Languages',
+        completed: career,
+        actionId: 'officiating-tab',
+        actionLabel: 'Add Entry',
       },
       {
         id: 'gallery',
         label: 'Gallery',
         hint: 'Upload at least one photo from an event you\u2019ve officiated.',
         unlockCopy: 'Match photos, venues, or team-with-fellow-officials moments.',
-        weight: 10,
+        weight: 5,
         completed: gallery,
         actionId: 'gallery-tab',
         actionLabel: 'Add Photo',
       },
       {
-        id: 'umpire-since',
-        label: 'Years Officiating',
-        hint: 'Add the year you first became certified.',
-        unlockCopy: 'Experience is a fast trust signal for assigners.',
+        id: 'friends',
+        label: 'Make your first connection',
+        hint: 'Connect with fellow officials, coaches, or clubs.',
+        unlockCopy: 'Builds your officiating network on HOCKIA.',
         weight: 5,
-        completed: years,
-        actionId: 'edit-profile',
-        actionLabel: 'Add Start Year',
-      },
-      {
-        id: 'appointments',
-        label: 'Career History',
-        hint: 'Log at least one appointment, milestone, certification, or panel.',
-        unlockCopy: 'Concrete history is the strongest credibility signal beyond the badge.',
-        weight: 10,
-        completed: appointments,
-        actionId: 'officiating-tab',
-        actionLabel: 'Add Entry',
+        completed: friends,
+        actionId: 'friends-tab',
+        actionLabel: 'Add Connection',
       },
       {
         id: 'references',
         label: 'Peer References',
         hint: 'Get at least one trusted reference from a coach, fellow umpire, or club.',
         unlockCopy: 'A peer vouching for you builds trust faster than any credential alone.',
-        weight: 10,
+        weight: 15,
         completed: references,
         actionId: 'friends-tab',
         actionLabel: 'Get Reference',
       },
+      {
+        id: 'availability',
+        label: 'Mark yourself available',
+        hint: 'Turn on "Available for appointments".',
+        unlockCopy: 'Clubs and federations filter for available umpires — set it to appear.',
+        weight: 5,
+        completed: available,
+        actionId: 'profile-tab',
+        actionLabel: 'Set Availability',
+      },
+      {
+        id: 'appointments',
+        label: 'Officiating Appointments',
+        hint: 'Log at least one match you have officiated.',
+        unlockCopy: 'A real appointment record is the strongest officiating signal.',
+        weight: 10,
+        completed: appointments,
+        actionId: 'officiating-tab',
+        actionLabel: 'Add Appointment',
+      },
     ]
   }, [profile, galleryCount])
 
-  /** Normalized 0–100 percentage across all buckets, so a fully-complete
-   * umpire scores exactly 100 regardless of the bucket total changing. */
+  /** Raw 0–100 percentage — the canonical buckets sum to 100, so no
+   *  normalization, and it matches the server profile_completeness_pct. */
   const percentage = useMemo(() => {
-    const total = buckets.reduce((acc, b) => acc + b.weight, 0)
-    if (total === 0) return 0
-    const score = buckets.reduce((acc, b) => acc + (b.completed ? b.weight : 0), 0)
-    return Math.round((score / total) * 100)
+    return buckets.reduce((acc, b) => acc + (b.completed ? b.weight : 0), 0)
   }, [buckets])
 
   return {

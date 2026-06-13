@@ -68,6 +68,7 @@ import { useToastStore } from '@/lib/toast'
 import { calculateAge, formatDateOfBirth } from '@/lib/utils'
 import { calculateTier } from '@/lib/profileTier'
 import { useUmpireProfileStrength } from '@/hooks/useUmpireProfileStrength'
+import AvailabilityToggleStrip from '@/components/AvailabilityToggleStrip'
 import { useReferenceFriendOptions } from '@/hooks/useReferenceFriendOptions'
 import { useTrustedReferences } from '@/hooks/useTrustedReferences'
 import { useTabDeepLinkScroll } from '@/hooks/useTabDeepLinkScroll'
@@ -425,6 +426,12 @@ export default function UmpireDashboard({
                   )
                 })()}
               </div>
+
+              {!readOnly && (
+                <div className="mt-4">
+                  <AvailabilityToggleStrip role="umpire" />
+                </div>
+              )}
 
               <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-gray-600">
                 {(profile.nationality_country_id || profile.nationality) && (

@@ -267,6 +267,9 @@ export function CandidatePreviewSheet({ member, onClose }: CandidatePreviewSheet
 
   const heroImageUrl = member.avatar_url ? getImageUrl(member.avatar_url, 'avatar-lg') : null
   const completeness = member.profile_completeness_pct ?? 0
+  // Players + coaches both use `bio` (club_bio/brand_bio are org-only, and the
+  // sheet only ever receives player/coach members). Already on the prop.
+  const bioText = member.bio?.trim() || null
 
   // Role-appropriate sub-title under the role badge: players show their
   // position(s); coaches show their coaching specialization (never a player
@@ -437,8 +440,16 @@ export function CandidatePreviewSheet({ member, onClose }: CandidatePreviewSheet
                     <span className="truncate">Evaluated for <span className="font-medium text-gray-700">{scope}</span></span>
                   </div>
                 )}
-                <RecruiterVerdictCard verdict={verdict} />
+                <RecruiterVerdictCard verdict={verdict} showMatchPercent />
               </div>
+            )}
+
+            {/* ── BIO ── the candidate's own words; already on the prop
+                (PROFILES_SELECT fetches bio), no extra round-trip. */}
+            {bioText && (
+              <p className="whitespace-pre-line text-sm leading-relaxed text-gray-700 line-clamp-5">
+                {bioText}
+              </p>
             )}
 
             {/* ── CURRENT HOCKEY CONTEXT ── */}
