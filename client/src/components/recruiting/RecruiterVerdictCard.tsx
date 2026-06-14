@@ -17,6 +17,11 @@ import type { RecruiterVerdict, VerdictTier } from '@/lib/recruiterVerdict'
 interface RecruiterVerdictCardProps {
   verdict: RecruiterVerdict
   className?: string
+  /** Surface the strength as an explicit "NN% match" number (in addition to
+   *  the bar). Off by default so the full profile keeps its explanation-led
+   *  read; the recruiter preview sheet opts in, matching the grid card which
+   *  already shows the %. */
+  showMatchPercent?: boolean
 }
 
 const TIER_STYLE: Record<
@@ -53,10 +58,11 @@ const TIER_STYLE: Record<
   },
 }
 
-export default function RecruiterVerdictCard({ verdict, className = '' }: RecruiterVerdictCardProps) {
+export default function RecruiterVerdictCard({ verdict, className = '', showMatchPercent = false }: RecruiterVerdictCardProps) {
   if (!verdict.isApplicable) return null
   const style = TIER_STYLE[verdict.tier]
   const Icon = style.icon
+  const matchPct = Math.round(verdict.strength * 100)
 
   return (
     <div
@@ -67,9 +73,15 @@ export default function RecruiterVerdictCard({ verdict, className = '' }: Recrui
       <div className="flex items-center gap-2">
         <Icon className={`w-4 h-4 flex-shrink-0 ${style.iconClass}`} aria-hidden="true" />
         <p className={`text-sm font-bold ${style.headlineClass}`}>{verdict.headline}</p>
-        <span className="ml-auto text-[10px] uppercase tracking-wide text-gray-400 font-medium">
-          {verdict.scoped ? 'for your scope' : 'general fit'}
-        </span>
+        {showMatchPercent ? (
+          <span className="ml-auto text-xs font-semibold text-[#8026FA]">
+            {matchPct}% <span className="font-normal text-gray-400">{verdict.scoped ? 'for your scope' : 'general fit'}</span>
+          </span>
+        ) : (
+          <span className="ml-auto text-[10px] uppercase tracking-wide text-gray-400 font-medium">
+            {verdict.scoped ? 'for your scope' : 'general fit'}
+          </span>
+        )}
       </div>
 
       {/* Verdict-strength bar — the SAME synthesis as the headline, normalized

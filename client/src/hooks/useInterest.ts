@@ -26,6 +26,7 @@ import {
   useActiveRecruitingTargetStartDate,
   useActiveRecruitingTargetLevel,
   useActiveRecruitingTargetCompensation,
+  useActiveRecruitingMustHaves,
 } from './useRecruitingContext'
 
 /** The candidate shape this hook accepts: the pure scorer's fields plus the
@@ -57,6 +58,7 @@ export function useInterest(
   const targetStartDate = useActiveRecruitingTargetStartDate()
   const targetLevel = useActiveRecruitingTargetLevel()
   const targetCompensation = useActiveRecruitingTargetCompensation()
+  const mustHaves = useActiveRecruitingMustHaves()
   const { getCountryById } = useCountries()
 
   return useMemo(() => {
@@ -78,6 +80,10 @@ export function useInterest(
         targetLevel,
         targetCompensation,
         countryName: (id) => getCountryById(id)?.name,
+        levelRequired: mustHaves.level,
+        compensationRequired: mustHaves.compensation,
+        locationRequired: mustHaves.location,
+        availabilityRequired: mustHaves.availability,
       },
     )
     if (!isRecruiter) return { ...result, isApplicable: false }
@@ -90,6 +96,7 @@ export function useInterest(
     targetStartDate,
     targetLevel,
     targetCompensation,
+    mustHaves,
     getCountryById,
   ])
 }

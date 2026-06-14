@@ -49,7 +49,7 @@ import { getImageUrl } from '@/lib/imageUrl'
 import { logger } from '@/lib/logger'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import { trackEvent } from '@/lib/analytics'
-import { getMemberTier } from '@/lib/profileTier'
+import { getMemberTier, calculateTier } from '@/lib/profileTier'
 import { getSpecializationLabel } from '@/lib/coachSpecializations'
 import { getUmpireActivity } from '@/lib/umpireActivity'
 import { resolveConversationRoute } from '@/lib/startConversation'
@@ -288,7 +288,12 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
   // initials block was the previous purple fallback; replaced by
   // RolePlaceholder. Computation removed.
 
-  const tier = getMemberTier(member)
+  // Prefer the server's canonical profile_completeness_pct (same value the grid
+  // card shows) so the preview tier and the card never disagree; fall back to
+  // the client estimator only when the column is absent (2d unification).
+  const tier = member.profile_completeness_pct != null
+    ? calculateTier(member.profile_completeness_pct)
+    : getMemberTier(member)
   const positions = [member.position, member.secondary_position]
     .filter((value, index, self): value is string => {
       if (!value) return false

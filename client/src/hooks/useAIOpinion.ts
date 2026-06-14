@@ -1,11 +1,14 @@
 /**
  * useAIOpinion — Section F AI Opinion Engine client hook.
  *
- * Pulls a cached opinion for (viewer, player) from the ai_opinions
- * table (RLS gates to own rows), and falls back to the ai-opinion
- * edge function on miss. The edge function does its own server-side
- * cache check + LLM call + quota-tracked persistence, so a fresh hook
- * mount within the 24h TTL never re-pays for the LLM.
+ * Calls the ai-opinion edge function for (viewer, player). The function
+ * does the hash-keyed cache check + LLM call + quota-tracked persistence
+ * server-side, so a fresh hook mount within the 24h TTL on the SAME scope
+ * returns the server's cached row (no LLM, no quota). The hook deliberately
+ * does NOT pre-read ai_opinions itself — that read can't key on
+ * context_hash (it includes server-derived inputs like league bands), so it
+ * would serve a STALE opinion across scope changes (e.g. flipping a
+ * must-have), which is exactly when the verdict must change.
  *
  * Recruiter-only contract: the hook self-gates on the same condition
  * as ClubFitChip — viewer.role must be club/coach AND
@@ -148,42 +151,14 @@ export function useAIOpinion(
       const seq = ++requestSeq.current
       setStatus({ kind: 'loading' })
 
-      // Local pre-flight: try the RLS-gated read first. The edge
-      // function will repeat this check server-side with the same
-      // context_hash, but the client read is free + fast. Skips the
-      // edge function entirely when fresh.
-      if (!forceRefresh) {
-        const { data: existing } = await supabase
-          .from('ai_opinions')
-          .select('id, verdict_short, citations, expires_at')
-          .eq('viewer_id', viewerId)
-          .eq('player_id', candidateId)
-          .gt('expires_at', new Date().toISOString())
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle()
-        if (seq !== requestSeq.current) return
-        if (existing) {
-          // Generated types treat the jsonb column as Json; the
-          // edge function enforces the AIOpinionCitation shape on
-          // write so a runtime cast is safe here.
-          const row = existing as unknown as { id: string; verdict_short: string; citations: AIOpinionCitation[] }
-          setStatus({
-            kind: 'ready',
-            data: { verdict_short: row.verdict_short, citations: row.citations },
-            cached: true,
-            quotaRemaining: null,
-            opinionId: row.id,
-          })
-          return
-        }
-      }
-
-      // Cache miss (or force refresh) — call the edge function.
-      // When forceRefresh=true (user clicked Regenerate), pass
-      // `force: true` so the server-side cache check is also bypassed.
-      // Without this the edge function would serve the same cached row
-      // and Regenerate would be a no-op (QA F8).
+      // Always call the edge function — it does the hash-keyed cache check
+      // server-side and returns its cached row (no LLM, no quota) on a hash
+      // hit. We must NOT pre-read ai_opinions on the client: that read can't
+      // filter by context_hash, so after the recruiter changes the active
+      // scope (e.g. flips a must-have) it would serve the previous scope's
+      // STALE opinion — the verdict-vs-narration drift Phase 3d exists to
+      // prevent. `force: true` (Regenerate) additionally bypasses the
+      // server-side cache so a manual refresh always re-runs the LLM (F8).
       try {
         const { data, error } = await supabase.functions.invoke('ai-opinion', {
           body: { player_id: candidateId, force: forceRefresh },

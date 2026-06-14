@@ -8,7 +8,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { Loader2 } from 'lucide-react'
 import { useNavigationType, Link } from 'react-router-dom'
-import { MemberTile } from '@/components'
 import RecruiterCandidateCard from '@/components/recruiting/RecruiterCandidateCard'
 import { logger } from '@/lib/logger'
 import { isAuthExpiredError } from '@/lib/sentryHelpers'
@@ -29,6 +28,7 @@ import {
   useActiveRecruitingTargetLocation, useActiveRecruitingTargetStartDate,
   useActiveRecruitingTargetLevel, useActiveRecruitingTargetCompensation,
   useHasActiveRecruitingScope, useActiveRecruitingTargetProblem,
+  useActiveRecruitingMustHaves,
 } from '@/hooks/useRecruitingContext'
 import { useCountries, isEuCountryCode } from '@/hooks/useCountries'
 import { categoryToBandTarget } from '@/hooks/useInterest'
@@ -38,7 +38,6 @@ import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { usePageState } from '@/hooks/usePageState'
 import { useScrollRestore } from '@/hooks/useScrollRestore'
 import { prefetchWorldClubLogos, getClubLevelBand } from '@/hooks/useWorldClubLogo'
-import { getMemberTier } from '@/lib/profileTier'
 import { logSearchAppearances } from '@/lib/searchAppearances'
 import type { CommunityFiltersState } from './communityFilters'
 
@@ -101,6 +100,10 @@ export interface Profile {
   brand_website_url?: string | null
   brand_instagram_url?: string | null
   brand_logo_url?: string | null
+  // Denormalised brand engagement counts (on the brands row) — power the
+  // unified card's neutral substance line ("N ambassadors · N followers").
+  brand_follower_count?: number | null
+  brand_ambassador_count?: number | null
   // Admin-granted verified badge — unified on profiles for every role.
   is_verified?: boolean | null
   verified_at?: string | null
@@ -112,10 +115,12 @@ export interface Profile {
   languages?: string[] | null
   last_officiated_at?: string | null
   umpire_appointment_count?: number | null
+  // Phase 2 (2b') — dedicated umpire availability flag (drives the card chip).
+  available_for_appointments?: boolean | null
 }
 
 const PROFILES_SELECT =
-  'id, avatar_url, full_name, role, nationality, nationality_country_id, nationality2_country_id, base_location, position, secondary_position, current_club, current_world_club_id, gender, playing_category, coaching_categories, umpiring_categories, created_at, is_test_account, open_to_play, open_to_coach, open_to_opportunities, last_active_at, accepted_reference_count, coach_specialization, coach_specialization_custom, base_country_id, relocation_willingness, relocation_countries_open, relocation_countries_excluded, available_from, level_target, opportunity_preference, specialist_skills, highlight_video_url, full_game_video_count, bio, club_bio, year_founded, website, contact_email, career_entry_count, accepted_friend_count, is_verified, verified_at, umpire_level, federation, umpire_since, officiating_specialization, languages, last_officiated_at, umpire_appointment_count, profile_completeness_pct'
+  'id, avatar_url, full_name, role, nationality, nationality_country_id, nationality2_country_id, base_location, position, secondary_position, current_club, current_world_club_id, gender, playing_category, coaching_categories, umpiring_categories, created_at, is_test_account, open_to_play, open_to_coach, open_to_opportunities, last_active_at, accepted_reference_count, coach_specialization, coach_specialization_custom, base_country_id, relocation_willingness, relocation_countries_open, relocation_countries_excluded, available_from, level_target, opportunity_preference, specialist_skills, highlight_video_url, full_game_video_count, bio, club_bio, year_founded, website, contact_email, career_entry_count, accepted_friend_count, is_verified, verified_at, umpire_level, federation, umpire_since, officiating_specialization, languages, last_officiated_at, umpire_appointment_count, available_for_appointments, profile_completeness_pct'
 
 // CommunityFilters type moved to ./communityFilters.ts so the lifted
 // search bar / quick filters / drawer (now rendered by CommunityPage)
@@ -202,6 +207,14 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
   // philosophy as opportunityEligibility.ts). Only applies while the scope
   // is reshaping the grid; widening to "Show everyone" lifts it.
   const euRequired = useActiveRecruitingEuRequired()
+  // Phase 3 — per-criterion MUST-HAVE flags off the active scope. Threaded
+  // into the same computeClubFit / computeInterest options the verdict reads,
+  // so a must-have miss reads "Out of scope" identically here and on the
+  // profile. A fit-side miss (position/specialist) also sinks the candidate
+  // in the grid ranking (the sort floors a clubFit hard fail); interest-side
+  // misses still read "Out of scope" on the card even though the score-only
+  // sort doesn't model the Interested lens.
+  const contextMustHaves = useActiveRecruitingMustHaves()
   const { countries, getCountryById } = useCountries()
   const euCountryIds = useMemo(
     () => new Set(countries.filter((c) => isEuCountryCode(c.code)).map((c) => c.id)),
@@ -337,11 +350,11 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
           if (brandIds.length > 0) {
             const { data: brands } = await supabase
               .from('brands')
-              .select('profile_id, slug, category, bio, website_url, instagram_url, logo_url')
+              .select('profile_id, slug, category, bio, website_url, instagram_url, logo_url, follower_count, ambassador_count')
               .in('profile_id', brandIds)
             if (brands) {
               const brandMap = new Map(
-                (brands as { profile_id: string; slug: string; category: string; bio: string | null; website_url: string | null; instagram_url: string | null; logo_url: string | null }[]).map(
+                (brands as { profile_id: string; slug: string; category: string; bio: string | null; website_url: string | null; instagram_url: string | null; logo_url: string | null; follower_count: number | null; ambassador_count: number | null }[]).map(
                   (b) => [b.profile_id, b]
                 )
               )
@@ -354,6 +367,8 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
                   m.brand_website_url = brand?.website_url || null
                   m.brand_instagram_url = brand?.instagram_url || null
                   m.brand_logo_url = brand?.logo_url || null
+                  m.brand_follower_count = brand?.follower_count ?? null
+                  m.brand_ambassador_count = brand?.ambassador_count ?? null
                 }
               })
             }
@@ -460,11 +475,11 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
             if (brandIds.length > 0) {
               const { data: brands } = await supabase
                 .from('brands')
-                .select('profile_id, slug, category, bio, website_url, instagram_url, logo_url')
+                .select('profile_id, slug, category, bio, website_url, instagram_url, logo_url, follower_count, ambassador_count')
                 .in('profile_id', brandIds)
               if (brands) {
                 const brandMap = new Map(
-                  (brands as { profile_id: string; slug: string; category: string; bio: string | null; website_url: string | null; instagram_url: string | null; logo_url: string | null }[]).map(
+                  (brands as { profile_id: string; slug: string; category: string; bio: string | null; website_url: string | null; instagram_url: string | null; logo_url: string | null; follower_count: number | null; ambassador_count: number | null }[]).map(
                     (b) => [b.profile_id, b]
                   )
                 )
@@ -477,6 +492,8 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
                     m.brand_website_url = brand?.website_url || null
                     m.brand_instagram_url = brand?.instagram_url || null
                     m.brand_logo_url = brand?.logo_url || null
+                    m.brand_follower_count = brand?.follower_count ?? null
+                    m.brand_ambassador_count = brand?.ambassador_count ?? null
                   }
                 })
               }
@@ -642,37 +659,52 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
       // the score (and the role gate that suppresses player-fit for
       // coach-seeking contexts) matches exactly what the Fit chips show.
       const fitOptions = useContextFit
-        ? { overrideTarget: contextTarget, targetRole: contextTargetRole, targetPosition: contextTargetPosition, targetSpecialists: contextTargetSpecialists }
+        ? {
+            overrideTarget: contextTarget,
+            targetRole: contextTargetRole,
+            targetPosition: contextTargetPosition,
+            targetSpecialists: contextTargetSpecialists,
+            positionRequired: contextMustHaves.position,
+            specialistsRequired: contextMustHaves.specialists,
+          }
         : undefined
       result = [...result]
         .map((m) => {
           // Coach candidates under a coach scope are ranked by Coach Fit;
           // everyone else by Club Fit (NOT_APPLICABLE → 0).
-          const score =
-            useCoachContextFit && m.role === 'coach'
-              ? computeCoachFit(viewerCtx, {
-                  id: m.id,
-                  role: m.role,
-                  coach_specialization: m.coach_specialization ?? null,
-                  coaching_categories: m.coaching_categories ?? null,
-                }, {
-                  overrideTarget: contextTarget,
-                  targetRole: contextTargetRole,
-                  targetSpecialization: contextTargetPosition,
-                }).score
-              : computeClubFit(viewerCtx, {
-                  id: m.id,
-                  role: m.role,
-                  playing_category: m.playing_category ?? null,
-                  current_world_club_id: m.current_world_club_id ?? null,
-                  open_to_play: m.open_to_play ?? null,
-                  open_to_coach: m.open_to_coach ?? null,
-                  open_to_opportunities: m.open_to_opportunities ?? null,
-                  last_active_at: m.last_active_at ?? null,
-                  position: m.position ?? null,
-                  secondary_position: m.secondary_position ?? null,
-                  specialist_skills: m.specialist_skills ?? null,
-                }, fitOptions).score
+          let score: number
+          if (useCoachContextFit && m.role === 'coach') {
+            score = computeCoachFit(viewerCtx, {
+              id: m.id,
+              role: m.role,
+              coach_specialization: m.coach_specialization ?? null,
+              coaching_categories: m.coaching_categories ?? null,
+            }, {
+              overrideTarget: contextTarget,
+              targetRole: contextTargetRole,
+              targetSpecialization: contextTargetPosition,
+            }).score
+          } else {
+            const fit = computeClubFit(viewerCtx, {
+              id: m.id,
+              role: m.role,
+              playing_category: m.playing_category ?? null,
+              current_world_club_id: m.current_world_club_id ?? null,
+              open_to_play: m.open_to_play ?? null,
+              open_to_coach: m.open_to_coach ?? null,
+              open_to_opportunities: m.open_to_opportunities ?? null,
+              last_active_at: m.last_active_at ?? null,
+              position: m.position ?? null,
+              secondary_position: m.secondary_position ?? null,
+              specialist_skills: m.specialist_skills ?? null,
+            }, fitOptions)
+            // A must-have hard fail (e.g. not the required position/specialism)
+            // forces "Out of scope" on the card but leaves the soft score high
+            // (gender/league/availability still count). Floor it so the ranking
+            // can't float a hard-failed candidate above in-scope ones — keeping
+            // the grid order consistent with its own verdict card.
+            score = fit.hardFail ? -1 : fit.score
+          }
           return { m, score }
         })
         .sort((a, b) => {
@@ -689,7 +721,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     }
 
     return result
-  }, [allMembers, filters, sort, currentUserProfile, applyContextFit, contextTarget, contextTargetRole, contextTargetPosition, contextTargetSpecialists, euFilterActive, euCountryIds])
+  }, [allMembers, filters, sort, currentUserProfile, applyContextFit, contextTarget, contextTargetRole, contextTargetPosition, contextTargetSpecialists, contextMustHaves, euFilterActive, euCountryIds])
 
   // Recruiter Match is "active" only while an active scope ranks PLAYERS by
   // fit — a coach scope ranks coaches, so the player match bar stays off.
@@ -707,8 +739,12 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
       targetLevel: contextTargetLevel,
       targetCompensation: contextTargetCompensation,
       countryName: (id: number) => getCountryById(id)?.name,
+      levelRequired: contextMustHaves.level,
+      compensationRequired: contextMustHaves.compensation,
+      locationRequired: contextMustHaves.location,
+      availabilityRequired: contextMustHaves.availability,
     }),
-    [contextTargetRole, contextTargetLocation, contextTargetStartDate, contextTargetLevel, contextTargetCompensation, getCountryById],
+    [contextTargetRole, contextTargetLocation, contextTargetStartDate, contextTargetLevel, contextTargetCompensation, contextMustHaves, getCountryById],
   )
 
   // The FULL recruiter verdict per scoped player — the same explanation-led
@@ -731,6 +767,8 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
       targetRole: contextTargetRole,
       targetPosition: contextTargetPosition,
       targetSpecialists: contextTargetSpecialists,
+      positionRequired: contextMustHaves.position,
+      specialistsRequired: contextMustHaves.specialists,
     }
     filteredMembers
       .filter((m) => m.role === 'player')
@@ -779,7 +817,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
         if (verdict.isApplicable) map.set(m.id, { verdict })
       })
     return map
-  }, [playerMatchActive, currentUserProfile, filteredMembers, contextTarget, contextTargetRole, contextTargetPosition, contextTargetSpecialists, interestScopeOptions, hasOpeningScope, contextProblem])
+  }, [playerMatchActive, currentUserProfile, filteredMembers, contextTarget, contextTargetRole, contextTargetPosition, contextTargetSpecialists, contextMustHaves, interestScopeOptions, hasOpeningScope, contextProblem])
 
   // Coach equivalent of playerMatchActive — ANY active COACH scope ranks
   // coaches by Coach Fit, so the recruiter card renders for coaches just like
@@ -976,7 +1014,12 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
   //     "page disappears and reappears" feel when applying a recruiting
   //     context: the grid never blanks to skeletons mid-interaction, it
   //     just crossfades to the re-ranked result.
-  const showSkeletons = isLoading && displayedMembers.length === 0
+  // "Busy" covers every transition (fetch, server search, auth settle) so the
+  // "No members found" empty state only renders once genuinely settled — never
+  // as a flash while a re-fetch is in flight (e.g. right after clearing a
+  // recruiting scope, which re-fetches under a new role filter).
+  const isBusy = isLoading || isSearching || authLoading
+  const showSkeletons = isBusy && displayedMembers.length === 0
   const isReshaping = isLoading && displayedMembers.length > 0
 
   return (
@@ -998,7 +1041,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
             <MemberTileSkeleton key={i} />
           ))}
         </div>
-      ) : displayedMembers.length === 0 ? (
+      ) : (!isBusy && displayedMembers.length === 0) ? (
         <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
           <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <span className="text-3xl">🔍</span>
@@ -1063,49 +1106,15 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
                   />
                 )
               }
+              // NEUTRAL mode — the SAME unified card, no recruiting scope.
+              // Opens the general member preview (the scoped branches above
+              // open the recruiter CandidatePreviewSheet instead).
               return (
-              <MemberTile
-                key={member.id}
-                id={member.id}
-                avatar_url={member.avatar_url}
-                full_name={member.full_name}
-                role={member.role}
-                brandSlug={member.brand_slug ?? undefined}
-                brandCategory={member.brand_category ?? undefined}
-                brandLogoUrl={member.brand_logo_url ?? null}
-                nationality={member.nationality}
-                nationality_country_id={member.nationality_country_id}
-                nationality2_country_id={member.role === 'club' ? null : member.nationality2_country_id}
-                base_location={member.base_location}
-                current_team={member.current_club}
-                current_world_club_id={member.current_world_club_id}
-                open_to_play={member.open_to_play}
-                open_to_coach={member.open_to_coach}
-                open_to_opportunities={member.open_to_opportunities}
-                playing_category={member.playing_category ?? null}
-                coach_specialization={member.coach_specialization ?? null}
-                coaching_categories={member.coaching_categories ?? null}
-                position={member.position ?? null}
-                last_active_at={member.last_active_at ?? null}
-                highlight_video_url={member.highlight_video_url ?? null}
-                full_game_video_count={member.full_game_video_count ?? null}
-                accepted_reference_count={member.accepted_reference_count ?? null}
-                career_entry_count={member.career_entry_count ?? null}
-                relocation_willingness={member.relocation_willingness ?? null}
-                relocation_countries_open={member.relocation_countries_open ?? null}
-                relocation_countries_excluded={member.relocation_countries_excluded ?? null}
-                available_from={member.available_from ?? null}
-                level_target={member.level_target ?? null}
-                opportunity_preference={member.opportunity_preference ?? null}
-                home_country_id={member.base_country_id ?? member.nationality_country_id ?? null}
-                tier={getMemberTier(member)}
-                isVerified={Boolean(member.is_verified)}
-                verifiedAt={member.verified_at ?? null}
-                umpireLevel={member.umpire_level ?? null}
-                federation={member.federation ?? null}
-                profileCompletenessPct={member.profile_completeness_pct ?? null}
-                onPreview={() => setPreviewMember(member)}
-              />
+                <RecruiterCandidateCard
+                  key={member.id}
+                  member={member}
+                  onPreview={() => setPreviewMember(member)}
+                />
               )
             })}
           </div>

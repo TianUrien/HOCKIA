@@ -367,6 +367,14 @@ verify_jwt = false
 [functions.video-create-upload]
 verify_jwt = false
 
+# nl-search verifies the user JWT in-handler (auth.getUser) and self-401s
+# unauthenticated callers, so the gateway JWT check must be OFF. PINNED here
+# because it's the function the comment above flagged as unpinned — every
+# deploy was resetting it to the platform default (true), drifting staging
+# (true) away from prod (false). Pinning ends that drift.
+[functions.nl-search]
+verify_jwt = false
+
 # Experimental features may be deprecated any time
 [experimental]
 # Configures Postgres storage engine to use OrioleDB (S3)

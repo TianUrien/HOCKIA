@@ -399,8 +399,12 @@ export default function NotificationsDrawer() {
       />
       <aside
         ref={drawerRef}
-        role="dialog"
-        aria-modal={isOpen || undefined}
+        // The drawer stays mounted and slides off-screen via transform when
+        // closed, so a permanent role="dialog" made useAnyModalOpen() think a
+        // modal was always open — which hid the floating Hockia AI button on
+        // every mobile page. Expose role + aria-modal ONLY while open (a
+        // closed, off-screen, inert drawer is not a dialog).
+        {...(isOpen ? { role: 'dialog' as const, 'aria-modal': true } : {})}
         aria-labelledby="notifications-drawer-title"
         tabIndex={-1}
         className={cn(

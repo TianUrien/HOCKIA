@@ -446,4 +446,56 @@ describe('computeClubFit', () => {
       expect(withField.score).toBeCloseTo(without.score, 5)
     })
   })
+
+  // ── Phase 3 — MUST-HAVE hard caps ──────────────────────────────────
+  // A required criterion the candidate EXPLICITLY fails forces a hard fail
+  // (state grey + a reason for the verdict's Out-of-scope cap). A blank
+  // candidate field stays neutral — honest absence is never a fail.
+  describe('must-have hard caps (Phase 3)', () => {
+    const gkScope = { overrideTarget: 'Women' as const, targetPosition: 'goalkeeper', positionRequired: true }
+
+    it('required position + explicit mismatch → hardFail, state grey, named reason', () => {
+      const r = computeClubFit(womensClub, { ...baseFemalePlayer, position: 'midfielder', secondary_position: null }, gkScope)
+      expect(r.hardFail).toBe(true)
+      expect(r.state).toBe('grey')
+      expect(r.hardFailReasons?.[0]).toMatch(/Goalkeeper/)
+    })
+
+    it('required position but NO position on file → neutral (no hard fail)', () => {
+      const r = computeClubFit(womensClub, { ...baseFemalePlayer, position: null, secondary_position: null }, gkScope)
+      expect(r.hardFail).toBeFalsy()
+    })
+
+    it('required position the candidate plays → no hard fail', () => {
+      const r = computeClubFit(womensClub, { ...baseFemalePlayer, position: 'goalkeeper' }, gkScope)
+      expect(r.hardFail).toBeFalsy()
+    })
+
+    it('position mismatch is SOFT (no hard fail) unless positionRequired is set', () => {
+      const r = computeClubFit(
+        womensClub,
+        { ...baseFemalePlayer, position: 'midfielder' },
+        { overrideTarget: 'Women', targetPosition: 'goalkeeper' },
+      )
+      expect(r.hardFail).toBeFalsy()
+    })
+
+    const specScope = { overrideTarget: 'Women' as const, targetSpecialists: ['drag_flick'], specialistsRequired: true }
+
+    it('required specialist + lists skills but holds none → hard fail', () => {
+      const r = computeClubFit(womensClub, { ...baseFemalePlayer, specialist_skills: ['penalty_corner_defence'] }, specScope)
+      expect(r.hardFail).toBe(true)
+      expect(r.state).toBe('grey')
+    })
+
+    it('required specialist but NO specialist skills on file → neutral', () => {
+      const r = computeClubFit(womensClub, { ...baseFemalePlayer, specialist_skills: null }, specScope)
+      expect(r.hardFail).toBeFalsy()
+    })
+
+    it('required specialist the candidate holds → no hard fail', () => {
+      const r = computeClubFit(womensClub, { ...baseFemalePlayer, specialist_skills: ['drag_flick'] }, specScope)
+      expect(r.hardFail).toBeFalsy()
+    })
+  })
 })

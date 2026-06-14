@@ -29,6 +29,7 @@ import { useMyBrand } from '@/hooks/useMyBrand'
 import { useBrandAnalytics } from '@/hooks/useBrandAnalytics'
 import { useBrandAmbassadors } from '@/hooks/useBrandAmbassadors'
 import { useAuthStore } from '@/lib/auth'
+import AvailabilityToggleStrip from '@/components/AvailabilityToggleStrip'
 import { useToastStore } from '@/lib/toast'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
@@ -514,6 +515,12 @@ export default function BrandDashboard() {
               <div className="mt-2 flex flex-wrap items-center gap-3">
                 <RoleBadge role="brand" />
                 {!strengthLoading && <TierBadge tier={calculateTier(percentage)} />}
+              </div>
+
+              {/* Availability — one-tap "Open to partners" toggle (drives the
+                  Community card chip + partner-facing search). Owner-only page. */}
+              <div className="mt-4">
+                <AvailabilityToggleStrip role="brand" />
               </div>
             </div>
           </div>

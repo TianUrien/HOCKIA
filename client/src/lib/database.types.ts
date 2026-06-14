@@ -1966,6 +1966,12 @@ export type Database = {
           title: string
           updated_at: string
           version: number
+          availability_required: boolean
+          compensation_required: boolean
+          level_required: boolean
+          location_required: boolean
+          position_required: boolean
+          specialists_required: boolean
           world_club_id: string | null
         }
         Insert: {
@@ -2000,6 +2006,12 @@ export type Database = {
           title: string
           updated_at?: string
           version?: number
+          availability_required?: boolean
+          compensation_required?: boolean
+          level_required?: boolean
+          location_required?: boolean
+          position_required?: boolean
+          specialists_required?: boolean
           world_club_id?: string | null
         }
         Update: {
@@ -2034,6 +2046,12 @@ export type Database = {
           title?: string
           updated_at?: string
           version?: number
+          availability_required?: boolean
+          compensation_required?: boolean
+          level_required?: boolean
+          location_required?: boolean
+          position_required?: boolean
+          specialists_required?: boolean
           world_club_id?: string | null
         }
         Relationships: [
@@ -2959,6 +2977,7 @@ export type Database = {
         Row: {
           accepted_friend_count: number
           accepted_reference_count: number
+          available_for_appointments: boolean | null
           availability_confirmed_at: string | null
           availability_duration: string | null
           available_from: string | null
@@ -3059,6 +3078,7 @@ export type Database = {
         }
         Insert: {
           accepted_friend_count?: number
+          available_for_appointments?: boolean | null
           accepted_reference_count?: number
           availability_confirmed_at?: string | null
           availability_duration?: string | null
@@ -3160,6 +3180,7 @@ export type Database = {
         }
         Update: {
           accepted_friend_count?: number
+          available_for_appointments?: boolean | null
           accepted_reference_count?: number
           availability_confirmed_at?: string | null
           availability_duration?: string | null
@@ -3487,6 +3508,12 @@ export type Database = {
           target_role: string | null
           target_specialists: string[]
           target_start_date: string | null
+          availability_required: boolean
+          compensation_required: boolean
+          level_required: boolean
+          location_required: boolean
+          position_required: boolean
+          specialists_required: boolean
           type: string
           updated_at: string
         }
@@ -3509,6 +3536,12 @@ export type Database = {
           target_role?: string | null
           target_specialists?: string[]
           target_start_date?: string | null
+          availability_required?: boolean
+          compensation_required?: boolean
+          level_required?: boolean
+          location_required?: boolean
+          position_required?: boolean
+          specialists_required?: boolean
           type: string
           updated_at?: string
         }
@@ -3531,6 +3564,12 @@ export type Database = {
           target_role?: string | null
           target_specialists?: string[]
           target_start_date?: string | null
+          availability_required?: boolean
+          compensation_required?: boolean
+          level_required?: boolean
+          location_required?: boolean
+          position_required?: boolean
+          specialists_required?: boolean
           type?: string
           updated_at?: string
         }
@@ -6355,6 +6394,13 @@ export type Database = {
           title: string
           updated_at: string
           version: number
+          eu_passport_required: boolean
+          position_required: boolean
+          level_required: boolean
+          compensation_required: boolean
+          location_required: boolean
+          availability_required: boolean
+          specialists_required: boolean
         }[]
       }
       fetch_club_vacancies_with_counts: {
@@ -6658,6 +6704,11 @@ export type Database = {
         Returns: {
           accepted_friend_count: number
           accepted_reference_count: number
+          available_for_appointments: boolean
+          bio: string | null
+          umpire_level: string | null
+          federation: string | null
+          year_founded: number | null
           available_from: string
           avatar_url: string
           base_country_id: number

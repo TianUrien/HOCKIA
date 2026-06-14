@@ -8,15 +8,22 @@ import { cn } from '@/lib/utils'
 import InfoTooltip from './InfoTooltip'
 
 interface AvailabilityToggleStripProps {
-  role: 'player' | 'coach'
+  role: 'player' | 'coach' | 'club' | 'brand' | 'umpire'
 }
 
 /**
- * AvailabilityToggleStrip — one-tap toggles for open_to_play, open_to_coach,
- * open_to_opportunities. Shown on own dashboard only.
+ * AvailabilityToggleStrip — one-tap availability toggles, shown on own
+ * dashboard only. Role-aware:
+ *   player → open_to_play + open_to_opportunities
+ *   coach  → open_to_coach + open_to_opportunities
+ *   club   → open_to_opportunities ("Recruiting")
+ *   brand  → open_to_opportunities ("Open to partners")
+ *   umpire → available_for_appointments (the dedicated umpire flag)
  *
- * These booleans are high-value AI search fields but are buried in the
- * EditProfileModal. This strip makes them zero-friction.
+ * These booleans are high-value AI search fields + drive the Community card's
+ * availability chip, but are otherwise buried in the edit form. This strip
+ * makes them zero-friction. It owns the persistence so every surface mutates
+ * through one place.
  */
 export default function AvailabilityToggleStrip({ role }: AvailabilityToggleStripProps) {
   const { profile, setProfile } = useAuthStore()
@@ -34,31 +41,58 @@ export default function AvailabilityToggleStrip({ role }: AvailabilityToggleStri
     tooltip?: string
   }
 
-  const toggles: Toggle[] = [
-    ...(role === 'player' ? [{
-      id: 'open_to_play',
-      label: 'Open to Play',
-      active: Boolean(profile.open_to_play),
+  let toggles: Toggle[]
+  if (role === 'umpire') {
+    // Umpires use the dedicated available_for_appointments flag (the generic
+    // open_to_opportunities is player/coach-framed and isn't read for umpires).
+    toggles = [{
+      id: 'available_for_appointments',
+      label: 'Available for appointments',
+      active: Boolean(profile.available_for_appointments),
       activeGradient: 'from-emerald-400 to-green-500',
-      tooltip: 'Looking to join a team or club to play regular matches.',
-    }] : [{
-      id: 'open_to_coach',
-      label: 'Open to Coach',
-      active: Boolean(profile.open_to_coach),
-      activeGradient: 'from-violet-500 to-purple-600',
-      tooltip: 'Looking for a head, assistant, or youth coaching role.',
-    }]),
-    {
+      tooltip: 'Available to be appointed to matches by clubs and federations.',
+    }]
+  } else if (role === 'club' || role === 'brand') {
+    // Orgs have a single availability flag: open_to_opportunities.
+    toggles = [{
       id: 'open_to_opportunities',
-      label: 'Open to Opportunities',
+      label: role === 'club' ? 'Recruiting' : 'Open to partners',
       active: Boolean(profile.open_to_opportunities),
       activeGradient: 'from-blue-500 to-indigo-500',
       tooltip:
-        role === 'player'
-          ? 'Broader than playing — trials, transfers, sponsorships, or other offers.'
-          : 'Broader than coaching — consulting, clinics, sponsorships, or other offers.',
-    },
-  ]
+        role === 'club'
+          ? 'Actively recruiting players and coaches for your teams.'
+          : 'Open to ambassadors, sponsorships, and partnerships.',
+    }]
+  } else {
+    toggles = [
+      role === 'player'
+        ? {
+            id: 'open_to_play',
+            label: 'Open to Play',
+            active: Boolean(profile.open_to_play),
+            activeGradient: 'from-emerald-400 to-green-500',
+            tooltip: 'Looking to join a team or club to play regular matches.',
+          }
+        : {
+            id: 'open_to_coach',
+            label: 'Open to Coach',
+            active: Boolean(profile.open_to_coach),
+            activeGradient: 'from-violet-500 to-purple-600',
+            tooltip: 'Looking for a head, assistant, or youth coaching role.',
+          },
+      {
+        id: 'open_to_opportunities',
+        label: 'Open to Opportunities',
+        active: Boolean(profile.open_to_opportunities),
+        activeGradient: 'from-blue-500 to-indigo-500',
+        tooltip:
+          role === 'player'
+            ? 'Broader than playing — trials, transfers, sponsorships, or other offers.'
+            : 'Broader than coaching — consulting, clinics, sponsorships, or other offers.',
+      },
+    ]
+  }
 
   const handleToggle = async (field: string, currentValue: boolean) => {
     if (saving) return

@@ -12,7 +12,7 @@ import { getShareOrigin } from '@/lib/profileShare'
 import { useAuthStore } from '@/lib/auth'
 import { useCountries } from '@/hooks/useCountries'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
-import { checkOpportunityEligibility } from '@/lib/opportunityEligibility'
+import { checkOpportunityEligibility, opportunityMustHaveWarnings } from '@/lib/opportunityEligibility'
 
 interface VacancyDetailViewProps {
   vacancy: Vacancy
@@ -90,6 +90,14 @@ export default function VacancyDetailView({
   // submit; the server trigger is the hard backstop. Missing profile data
   // never blocks — it surfaces a "complete your profile" nudge instead.
   const eligibility = checkOpportunityEligibility(vacancy, profile, countries)
+  // Phase 3f — must-have advisory. The candidate can still apply (warn-only),
+  // but we flag the must-have criteria they explicitly miss so they know the
+  // recruiter would read them "Out of scope". Blank fields never warn.
+  const mustHaveWarnings = opportunityMustHaveWarnings(
+    vacancy,
+    profile,
+    (id: number) => countries.find((c) => c.id === id)?.name,
+  )
   // Publisher viewing their own listing — used to swap the dead-end
   // "Close" CTA for a "View applicants" deep link. QA-flagged the
   // detail sheet's only action being a literal Close button when the
@@ -535,6 +543,24 @@ export default function VacancyDetailView({
                   >
                     Complete profile
                   </button>
+                </div>
+              </div>
+            )}
+
+            {/* Must-have advisory (Phase 3f) — the candidate explicitly misses
+                one or more of this opening's must-have criteria. Warn-only:
+                Apply stays enabled, but they know the recruiter would read
+                them "Out of scope". */}
+            {onApply && !hasApplied && !isPublisher && eligibility.eligible && mustHaveWarnings.length > 0 && (
+              <div className="mt-3 flex items-start gap-2.5 px-4 py-3 rounded-xl border border-amber-200 bg-amber-50">
+                <Info className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                <div className="text-sm text-amber-900">
+                  <p className="font-semibold">You can still apply, but heads up:</p>
+                  <ul className="mt-1 list-disc pl-4 space-y-0.5 text-amber-800">
+                    {mustHaveWarnings.map((w, i) => (
+                      <li key={i}>{w}</li>
+                    ))}
+                  </ul>
                 </div>
               </div>
             )}

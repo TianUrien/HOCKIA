@@ -25,6 +25,7 @@ import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
 import { useNotificationStore } from '@/lib/notifications'
 import { useClubProfileStrength } from '@/hooks/useClubProfileStrength'
+import AvailabilityToggleStrip from '@/components/AvailabilityToggleStrip'
 import type { ProfileStrengthBucket } from '@/hooks/useProfileStrength'
 import { useSearchAppearances } from '@/hooks/useSearchAppearances'
 import { useTabDeepLinkScroll } from '@/hooks/useTabDeepLinkScroll'
@@ -485,6 +486,14 @@ export default function ClubDashboard({
           onMembersClick={() => handleTabChange('members')}
           authProfileRole={authProfile?.role}
         />
+
+        {/* Availability — one-tap "Recruiting" toggle (drives the Community
+            card chip + recruiter-facing search). Owner-only. */}
+        {isOwnProfile && !readOnly && (
+          <div className="rounded-2xl bg-white shadow-sm px-5 py-4">
+            <AvailabilityToggleStrip role="club" />
+          </div>
+        )}
 
         {/* Recruitment gateway — club-only, owner-only. Sits right under the
             hero so posting/managing roles is reachable without scrolling

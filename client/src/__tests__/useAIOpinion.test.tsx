@@ -8,10 +8,12 @@
  *     though the DB CHECK constraint would block, the UI should never
  *     trigger the call in the first place)
  *   - Fit not applicable (no recruiting target) → not_applicable
- *   - Cache hit on local SELECT → ready w/ cached=true, edge fn NOT called
- *   - Cache miss → edge fn called once, ready w/ cached=false
+ *   - The hook ALWAYS calls the edge function (no client-side pre-read of
+ *     ai_opinions — that read can't key on context_hash and would serve a
+ *     STALE opinion across scope changes). cached comes from the server.
+ *   - Server cache hit → ready w/ cached=true; fresh → ready w/ cached=false
  *   - quota_exceeded error from edge fn → status reflects it
- *   - regenerate() bypasses the local cache pre-flight and re-calls edge fn
+ *   - regenerate() re-invokes the edge fn with force:true (bypass server cache)
  *
  * The deeper LLM behaviour (prompt content, output quality) is tested
  * later via the edge function suite + the staging end-to-end QA pass.
@@ -151,14 +153,15 @@ describe('useAIOpinion', () => {
     expect(supabaseInvokeSpy).not.toHaveBeenCalled()
   })
 
-  it('returns cached opinion from local SELECT and does NOT call edge fn', async () => {
+  it('surfaces a SERVER-cached opinion via the edge fn (cached=true) without pre-reading ai_opinions', async () => {
     setRecruiterViewer()
-    supabaseFromBuilder.maybeSingle.mockResolvedValueOnce({
+    supabaseInvokeSpy.mockResolvedValueOnce({
       data: {
-        id: 'op-cached-1',
+        opinion_id: 'op-cached-1',
         verdict_short: 'Comparable competition level + open today.',
         citations: [{ field: 'competition_level_band', value: '6', claim: 'matches tier' }],
-        expires_at: new Date(Date.now() + 60_000).toISOString(),
+        cached: true,
+        quota_remaining: null,
       },
       error: null,
     })
@@ -172,14 +175,16 @@ describe('useAIOpinion', () => {
     expect(ready.opinionId).toBe('op-cached-1')
     expect(ready.data.verdict_short).toBe('Comparable competition level + open today.')
     expect(ready.data.citations).toHaveLength(1)
-    expect(supabaseInvokeSpy).not.toHaveBeenCalled()
+    // Always calls the edge fn (hash-keyed cache server-side); never a
+    // client-side ai_opinions pre-read (would serve stale across scopes).
+    expect(supabaseInvokeSpy).toHaveBeenCalledWith('ai-opinion', {
+      body: { player_id: 'player-1', force: false },
+    })
+    expect(supabaseFromSpy).not.toHaveBeenCalledWith('ai_opinions')
   })
 
-  it('calls the edge function when cache misses, surfacing cached=false', async () => {
+  it('calls the edge function and surfaces a fresh (cached=false) opinion', async () => {
     setRecruiterViewer()
-    // Local cache miss
-    supabaseFromBuilder.maybeSingle.mockResolvedValueOnce({ data: null, error: null })
-    // Edge function returns a fresh opinion
     supabaseInvokeSpy.mockResolvedValueOnce({
       data: {
         opinion_id: 'op-fresh-1',
@@ -210,7 +215,6 @@ describe('useAIOpinion', () => {
 
   it('maps a 429 quota_exceeded edge fn response to status.kind=quota_exceeded', async () => {
     setRecruiterViewer()
-    supabaseFromBuilder.maybeSingle.mockResolvedValueOnce({ data: null, error: null })
     // supabase-js's FunctionsHttpError shape — error has .context with status + body
     const httpError = Object.assign(new Error('FunctionsHttpError'), {
       context: {
@@ -234,7 +238,6 @@ describe('useAIOpinion', () => {
 
   it('maps a 403 not_applicable edge fn response to status.kind=not_applicable', async () => {
     setRecruiterViewer()
-    supabaseFromBuilder.maybeSingle.mockResolvedValueOnce({ data: null, error: null })
     const httpError = Object.assign(new Error('FunctionsHttpError'), {
       context: {
         status: 403,
@@ -251,15 +254,16 @@ describe('useAIOpinion', () => {
     expect(result.current.status.reason).toBe('no_target')
   })
 
-  it('regenerate() bypasses the local cache pre-flight and re-invokes the edge fn', async () => {
+  it('regenerate() re-invokes the edge fn with force:true (bypassing the server cache)', async () => {
     setRecruiterViewer()
-    // First mount: cache hit
-    supabaseFromBuilder.maybeSingle.mockResolvedValueOnce({
+    // Mount: the edge fn returns a server-cached opinion.
+    supabaseInvokeSpy.mockResolvedValueOnce({
       data: {
-        id: 'op-cached-regen',
+        opinion_id: 'op-cached-regen',
         verdict_short: 'Cached verdict',
         citations: [{ field: 'a', value: 'b', claim: 'c' }],
-        expires_at: new Date(Date.now() + 60_000).toISOString(),
+        cached: true,
+        quota_remaining: null,
       },
       error: null,
     })
@@ -267,10 +271,11 @@ describe('useAIOpinion', () => {
     await waitFor(() => {
       expect(result.current.status.kind).toBe('ready')
     })
-    expectCachedReady(result.current.status)
-    expect(supabaseInvokeSpy).not.toHaveBeenCalled()
+    expect(supabaseInvokeSpy).toHaveBeenCalledWith('ai-opinion', {
+      body: { player_id: 'player-1', force: false },
+    })
 
-    // Regenerate: edge fn returns fresh
+    // Regenerate: edge fn returns fresh.
     supabaseInvokeSpy.mockResolvedValueOnce({
       data: {
         opinion_id: 'op-regen-fresh',
@@ -284,11 +289,11 @@ describe('useAIOpinion', () => {
     await act(async () => {
       await result.current.regenerate()
     })
-    expect(supabaseInvokeSpy).toHaveBeenCalledTimes(1)
+    expect(supabaseInvokeSpy).toHaveBeenCalledTimes(2)
     // Critical: regenerate must send `force: true` so the edge function
     // skips its server-side cache check. Without this, QA F8 reproduces:
     // server serves the same cached row and Regenerate is a no-op.
-    expect(supabaseInvokeSpy).toHaveBeenCalledWith('ai-opinion', {
+    expect(supabaseInvokeSpy).toHaveBeenLastCalledWith('ai-opinion', {
       body: { player_id: 'player-1', force: true },
     })
     const ready = expectCachedReady(result.current.status)
@@ -299,12 +304,13 @@ describe('useAIOpinion', () => {
   // ── Phase 2 Slice A: feedback submission ─────────────────────────
   it('submitFeedback upserts a row keyed on (opinion_id, viewer_id)', async () => {
     setRecruiterViewer()
-    supabaseFromBuilder.maybeSingle.mockResolvedValueOnce({
+    supabaseInvokeSpy.mockResolvedValueOnce({
       data: {
-        id: 'op-feedback-1',
+        opinion_id: 'op-feedback-1',
         verdict_short: 'verdict',
         citations: [],
-        expires_at: new Date(Date.now() + 60_000).toISOString(),
+        cached: false,
+        quota_remaining: 50,
       },
       error: null,
     })
@@ -318,9 +324,8 @@ describe('useAIOpinion', () => {
       await result.current.submitFeedback('up')
     })
 
-    // First .from() call was the cache pre-flight; the feedback call is
-    // the second. Asserting both targets + the upsert payload locks in
-    // the schema contract.
+    // The only .from() call is the feedback upsert (the hook no longer
+    // pre-reads ai_opinions). Asserting the target + payload locks the schema.
     expect(supabaseFromSpy).toHaveBeenCalledWith('ai_opinion_feedback')
     expect(supabaseUpsertSpy).toHaveBeenCalledWith(
       {
@@ -335,12 +340,13 @@ describe('useAIOpinion', () => {
 
   it('submitFeedback("down", reason) trims and persists the reason text', async () => {
     setRecruiterViewer()
-    supabaseFromBuilder.maybeSingle.mockResolvedValueOnce({
+    supabaseInvokeSpy.mockResolvedValueOnce({
       data: {
-        id: 'op-feedback-2',
+        opinion_id: 'op-feedback-2',
         verdict_short: 'verdict',
         citations: [],
-        expires_at: new Date(Date.now() + 60_000).toISOString(),
+        cached: false,
+        quota_remaining: 50,
       },
       error: null,
     })
