@@ -1,39 +1,46 @@
 import { Zap } from 'lucide-react'
+import {
+  availabilityDescriptor,
+  type AvailabilityVariant,
+  type AvailabilityRole,
+  type AvailabilityFlags,
+} from '@/lib/availabilityLabel'
 
-type AvailabilityVariant = 'play' | 'coach'
 type AvailabilitySize = 'sm' | 'md'
 
 interface AvailabilityPillProps {
   variant: AvailabilityVariant
+  /** Optional explicit label override; defaults to the canonical label. */
+  label?: string
   size?: AvailabilitySize
   className?: string
 }
 
+// Per-variant styling. Labels come from availabilityLabel (single source of
+// truth) unless an explicit `label` is passed.
+const VARIANT_GRADIENT: Record<AvailabilityVariant, string> = {
+  play: 'bg-gradient-to-r from-emerald-400 to-green-500',
+  coach: 'bg-gradient-to-r from-violet-500 to-purple-600',
+  umpire: 'bg-gradient-to-r from-sky-400 to-blue-500',
+  partnerships: 'bg-gradient-to-r from-indigo-500 to-blue-600',
+  recruiting: 'bg-gradient-to-r from-blue-500 to-indigo-500',
+}
+const VARIANT_LABEL: Record<AvailabilityVariant, string> = {
+  play: 'Open to play',
+  coach: 'Open to coach',
+  umpire: 'Open to umpire',
+  partnerships: 'Open to partnerships',
+  recruiting: 'Recruiting',
+}
+
 /**
- * AvailabilityPill - Displays availability status for players and coaches
- * 
- * Used in:
- * - Community page member cards
- * - Public profile pages
- * - Dashboard headers
- * 
- * Style:
- * - Players (Open to Play): Green gradient
- * - Coaches (Open to Coach): Purple/violet gradient
+ * AvailabilityPill — the positive availability badge. ONLY positive,
+ * role-specific labels (never a "not looking" state). Used on community
+ * member cards, public profiles, dashboards, and search results.
  */
-export default function AvailabilityPill({ variant, size = 'md', className = '' }: AvailabilityPillProps) {
-  const isPlay = variant === 'play'
-  
-  const gradientClass = isPlay
-    ? 'bg-gradient-to-r from-emerald-400 to-green-500'
-    : 'bg-gradient-to-r from-violet-500 to-purple-600'
-  
-  const label = isPlay ? 'Open to Play' : 'Open to Coach'
-  
-  const sizeClasses = size === 'sm' 
-    ? 'px-2 py-0.5 text-[10px]' 
-    : 'px-3 py-1 text-xs'
-  
+export default function AvailabilityPill({ variant, label, size = 'md', className = '' }: AvailabilityPillProps) {
+  const text = label ?? VARIANT_LABEL[variant]
+  const sizeClasses = size === 'sm' ? 'px-2 py-0.5 text-[10px]' : 'px-3 py-1 text-xs'
   const iconSize = size === 'sm' ? 'w-2.5 h-2.5' : 'w-3 h-3'
 
   return (
@@ -43,48 +50,49 @@ export default function AvailabilityPill({ variant, size = 'md', className = '' 
         ${sizeClasses}
         rounded-full
         text-white font-medium
-        ${gradientClass}
+        ${VARIANT_GRADIENT[variant]}
         shadow-sm
         ${className}
       `}
     >
       <Zap className={iconSize} fill="currentColor" />
-      {label}
+      {text}
     </span>
   )
 }
 
-/**
- * Helper component that conditionally renders the appropriate pill
- * based on role and availability flags
- */
 interface ConditionalAvailabilityPillProps {
-  // Accepts any of the 5 HOCKIA roles. Only player + coach actually render
-  // a pill (the other three return null below) but typing the union loosely
-  // here lets generic profile-card components pass `profile.role` directly
-  // without needing `as any` casts.
-  role: 'player' | 'coach' | 'club' | 'brand' | 'umpire'
-  openToPlay?: boolean
-  openToCoach?: boolean
+  /** Any of the 5 HOCKIA roles. */
+  role: AvailabilityRole
+  open_to_play?: boolean | null
+  open_to_coach?: boolean | null
+  open_to_opportunities?: boolean | null
+  available_for_appointments?: boolean | null
+  size?: AvailabilitySize
   className?: string
 }
 
+/**
+ * Renders the role-specific positive availability pill, or nothing when the
+ * member has no positive signal. Drives the label off the shared helper so
+ * every surface reads identically.
+ */
 export function ConditionalAvailabilityPill({
   role,
-  openToPlay,
-  openToCoach,
+  open_to_play,
+  open_to_coach,
+  open_to_opportunities,
+  available_for_appointments,
+  size = 'md',
   className = '',
 }: ConditionalAvailabilityPillProps) {
-  // Players with open_to_play = true
-  if (role === 'player' && openToPlay) {
-    return <AvailabilityPill variant="play" className={className} />
+  const flags: AvailabilityFlags = {
+    open_to_play,
+    open_to_coach,
+    open_to_opportunities,
+    available_for_appointments,
   }
-  
-  // Coaches with open_to_coach = true
-  if (role === 'coach' && openToCoach) {
-    return <AvailabilityPill variant="coach" className={className} />
-  }
-  
-  // Clubs or inactive availability: render nothing
-  return null
+  const desc = availabilityDescriptor(role, flags)
+  if (!desc) return null
+  return <AvailabilityPill variant={desc.variant} label={desc.label} size={size} className={className} />
 }

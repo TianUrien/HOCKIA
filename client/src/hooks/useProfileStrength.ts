@@ -283,7 +283,7 @@ export function useProfileStrength(profile: Profile | null): ProfileStrengthResu
         // of leaving it as the default false. Action routes to the
         // Profile tab where AvailabilityToggleStrip lives.
         id: 'availability',
-        label: 'Mark yourself open to opportunities',
+        label: 'Mark yourself open to play',
         description: 'Let clubs and coaches know you\'re open to play',
         unlockCopy: 'Recruiters filter for "Open to Play" — without it, you may not appear in their searches.',
         weight: 5,

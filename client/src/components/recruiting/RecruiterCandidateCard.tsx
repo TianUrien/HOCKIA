@@ -25,6 +25,7 @@ import RecruiterCardActions from './RecruiterCardActions'
 import { computeEvidence } from '@/lib/evidence'
 import { getPlayerLeagueName } from '@/hooks/useWorldClubLogo'
 import { recruiterDisplayTier, type RecruiterVerdict, type VerdictDisplayTier } from '@/lib/recruiterVerdict'
+import { availabilityLabel } from '@/lib/availabilityLabel'
 
 /** Fields the card reads — a structural subset of the Community member row, so
  *  PeopleListView can pass `member` straight through. Most are optional so a
@@ -196,24 +197,13 @@ function substanceLine(member: RecruiterCardMember): string | null {
   }
 }
 
-/** Role-appropriate availability chip for the neutral middle zone. Green when
- *  the member is actively open; muted grey when not (persons) or hidden (orgs
- *  with no open flag, so the zone reads clean). */
-function availabilityChip(member: RecruiterCardMember): { label: string; tone: 'green' | 'grey' } | null {
-  switch (member.role) {
-    case 'player':
-      return member.open_to_play ? { label: 'Open to play', tone: 'green' } : { label: 'Not actively looking', tone: 'grey' }
-    case 'coach':
-      return member.open_to_coach ? { label: 'Open to coach', tone: 'green' } : { label: 'Not actively looking', tone: 'grey' }
-    case 'club':
-      return member.open_to_opportunities ? { label: 'Recruiting', tone: 'green' } : null
-    case 'brand':
-      return member.open_to_opportunities ? { label: 'Open to partners', tone: 'green' } : null
-    case 'umpire':
-      return member.available_for_appointments ? { label: 'Available', tone: 'green' } : null
-    default:
-      return null
-  }
+/** Role-appropriate availability chip for the neutral middle zone. ONLY a
+ *  positive, role-specific signal (green) when the member has explicitly opted
+ *  in; nothing otherwise — never a "not looking" state. Single source of truth:
+ *  availabilityLabel. */
+function availabilityChip(member: RecruiterCardMember): { label: string } | null {
+  const label = availabilityLabel(member.role, member)
+  return label ? { label } : null
 }
 
 /** Card-specific Proof checklist (NOT the full evidenceChecklist). Player = 5
@@ -427,17 +417,11 @@ export default function RecruiterCandidateCard({ member, verdict, onPreview }: R
           /* NEUTRAL — availability chip + the single load-bearing fact. */
           <div className="mt-2.5 flex w-full flex-col items-center">
             <div className="flex h-[22px] items-center">
-              {availability ? (
-                <span
-                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11.5px] font-medium ${
-                    availability.tone === 'green' ? 'bg-[#E7F6EF] text-[#13754F]' : 'bg-gray-100 text-gray-500'
-                  }`}
-                >
-                  {availability.tone === 'green' && <span className="h-1.5 w-1.5 rounded-full bg-[#1D9E75]" aria-hidden="true" />}
+              {availability && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-[#E7F6EF] px-2.5 py-0.5 text-[11.5px] font-medium text-[#13754F]">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#1D9E75]" aria-hidden="true" />
                   {availability.label}
                 </span>
-              ) : (
-                <span className="text-[11px] text-gray-300">—</span>
               )}
             </div>
             <p className="mt-1.5 flex h-[15px] w-full items-center justify-center px-2 text-[11px] leading-none">

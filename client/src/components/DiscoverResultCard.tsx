@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { ChevronDown, Globe2, Check } from 'lucide-react'
 import Avatar from '@/components/Avatar'
 import RoleBadge from '@/components/RoleBadge'
-import AvailabilityPill from '@/components/AvailabilityPill'
+import { ConditionalAvailabilityPill } from '@/components/AvailabilityPill'
+import { isOpenToAvailability } from '@/lib/availabilityLabel'
 import type { DiscoverResult } from '@/hooks/useDiscover'
 import { getSpecializationLabel } from '@/lib/coachSpecializations'
 
@@ -115,11 +116,15 @@ export default function DiscoverResultCard({ result }: DiscoverResultCardProps) 
 
   const fitPreset = result.fit_level ? FIT_LEVEL_PRESET[result.fit_level] : null
 
-  const availabilityPill = !isWorldClub && result.open_to_play
-    ? <AvailabilityPill variant="play" size="sm" />
-    : !isWorldClub && result.open_to_coach
-      ? <AvailabilityPill variant="coach" size="sm" />
-      : null
+  const availabilityPill = !isWorldClub && isOpenToAvailability(result.role, result) ? (
+    <ConditionalAvailabilityPill
+      role={result.role}
+      open_to_play={result.open_to_play}
+      open_to_coach={result.open_to_coach}
+      open_to_opportunities={result.open_to_opportunities}
+      size="sm"
+    />
+  ) : null
 
   // Compact-row meta line — dual nationality only. The current club moved
   // into the Key info drawer: next to two nationalities it never had room

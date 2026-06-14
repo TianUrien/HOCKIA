@@ -32,7 +32,9 @@ import {
   Check,
   ShieldCheck,
 } from 'lucide-react'
-import { RoleBadge, TierBadge, VerifiedBadge, AvailabilityPill, DualNationalityDisplay } from '@/components'
+import { RoleBadge, TierBadge, VerifiedBadge, DualNationalityDisplay } from '@/components'
+import { ConditionalAvailabilityPill } from '@/components/AvailabilityPill'
+import { availabilityLabel } from '@/lib/availabilityLabel'
 import ClubFitChip from '@/components/recruiting/ClubFitChip'
 import RolePlaceholder from '@/components/RolePlaceholder'
 import SignInPromptModal from '@/components/SignInPromptModal'
@@ -281,9 +283,8 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
 
   const heroSrc = isBrand ? (member.brand_logo_url ?? member.avatar_url) : member.avatar_url
   const heroImageUrl = heroSrc ? getImageUrl(heroSrc, 'avatar-lg') : null
-  const showGreenDot =
-    (member.role === 'player' && member.open_to_play) ||
-    (member.role === 'coach' && member.open_to_coach)
+  // Positive, role-specific availability signal (or null) — single source.
+  const availLabel = availabilityLabel(member.role, member)
 
   // initials block was the previous purple fallback; replaced by
   // RolePlaceholder. Computation removed.
@@ -385,11 +386,11 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
                 <RolePlaceholder role={member.role} label="" />
               </div>
             )}
-            {showGreenDot && (
+            {availLabel && (
               <span
                 className="absolute top-3 right-3 w-3.5 h-3.5 rounded-full bg-emerald-500 ring-2 ring-white"
-                aria-label="Open to opportunities"
-                title="Open to opportunities"
+                aria-label={availLabel}
+                title={availLabel}
               />
             )}
           </div>
@@ -415,12 +416,14 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
                     {member.umpire_level}
                   </span>
                 )}
-                {member.role === 'player' && member.open_to_play && (
-                  <AvailabilityPill variant="play" size="sm" />
-                )}
-                {member.role === 'coach' && member.open_to_coach && (
-                  <AvailabilityPill variant="coach" size="sm" />
-                )}
+                <ConditionalAvailabilityPill
+                  role={member.role}
+                  open_to_play={member.open_to_play}
+                  open_to_coach={member.open_to_coach}
+                  open_to_opportunities={member.open_to_opportunities}
+                  available_for_appointments={member.available_for_appointments}
+                  size="sm"
+                />
                 {member.role === 'brand' && member.brand_category && (
                   <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
                     {BRAND_CATEGORY_LABELS[member.brand_category] ?? member.brand_category}

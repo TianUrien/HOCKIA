@@ -17,7 +17,7 @@ interface AvailabilityToggleStripProps {
  *   player → open_to_play + open_to_opportunities
  *   coach  → open_to_coach + open_to_opportunities
  *   club   → open_to_opportunities ("Recruiting")
- *   brand  → open_to_opportunities ("Open to partners")
+ *   brand  → open_to_opportunities ("Open to partnerships")
  *   umpire → available_for_appointments (the dedicated umpire flag)
  *
  * These booleans are high-value AI search fields + drive the Community card's
@@ -47,16 +47,16 @@ export default function AvailabilityToggleStrip({ role }: AvailabilityToggleStri
     // open_to_opportunities is player/coach-framed and isn't read for umpires).
     toggles = [{
       id: 'available_for_appointments',
-      label: 'Available for appointments',
+      label: 'Open to umpire',
       active: Boolean(profile.available_for_appointments),
-      activeGradient: 'from-emerald-400 to-green-500',
+      activeGradient: 'from-sky-400 to-blue-500',
       tooltip: 'Available to be appointed to matches by clubs and federations.',
     }]
   } else if (role === 'club' || role === 'brand') {
     // Orgs have a single availability flag: open_to_opportunities.
     toggles = [{
       id: 'open_to_opportunities',
-      label: role === 'club' ? 'Recruiting' : 'Open to partners',
+      label: role === 'club' ? 'Recruiting' : 'Open to partnerships',
       active: Boolean(profile.open_to_opportunities),
       activeGradient: 'from-blue-500 to-indigo-500',
       tooltip:
