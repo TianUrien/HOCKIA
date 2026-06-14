@@ -9,7 +9,14 @@
  *   - Warn-only — this is advisory; it does not affect eligibility.
  */
 
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+
+// opportunityEligibility → useCountries → @/lib/supabase, whose module-load
+// env check throws without Supabase vars (CI has none). The helper under test
+// is pure (never calls supabase), so stub the module to keep the import chain
+// from evaluating the real client — same pattern as the other lib tests.
+vi.mock('@/lib/supabase', () => ({ supabase: {} }))
+
 import { opportunityMustHaveWarnings } from '@/lib/opportunityEligibility'
 import type { Vacancy, Profile } from '@/lib/supabase'
 
