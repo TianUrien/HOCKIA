@@ -28,6 +28,7 @@ import {
   useActiveRecruitingTargetLocation, useActiveRecruitingTargetStartDate,
   useActiveRecruitingTargetLevel, useActiveRecruitingTargetCompensation,
   useHasActiveRecruitingScope, useActiveRecruitingTargetProblem,
+  useActiveRecruitingMustHaves,
 } from '@/hooks/useRecruitingContext'
 import { useCountries, isEuCountryCode } from '@/hooks/useCountries'
 import { categoryToBandTarget } from '@/hooks/useInterest'
@@ -206,6 +207,14 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
   // philosophy as opportunityEligibility.ts). Only applies while the scope
   // is reshaping the grid; widening to "Show everyone" lifts it.
   const euRequired = useActiveRecruitingEuRequired()
+  // Phase 3 — per-criterion MUST-HAVE flags off the active scope. Threaded
+  // into the same computeClubFit / computeInterest options the verdict reads,
+  // so a must-have miss reads "Out of scope" identically here and on the
+  // profile. A fit-side miss (position/specialist) also sinks the candidate
+  // in the grid ranking (the sort floors a clubFit hard fail); interest-side
+  // misses still read "Out of scope" on the card even though the score-only
+  // sort doesn't model the Interested lens.
+  const contextMustHaves = useActiveRecruitingMustHaves()
   const { countries, getCountryById } = useCountries()
   const euCountryIds = useMemo(
     () => new Set(countries.filter((c) => isEuCountryCode(c.code)).map((c) => c.id)),
@@ -650,37 +659,52 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
       // the score (and the role gate that suppresses player-fit for
       // coach-seeking contexts) matches exactly what the Fit chips show.
       const fitOptions = useContextFit
-        ? { overrideTarget: contextTarget, targetRole: contextTargetRole, targetPosition: contextTargetPosition, targetSpecialists: contextTargetSpecialists }
+        ? {
+            overrideTarget: contextTarget,
+            targetRole: contextTargetRole,
+            targetPosition: contextTargetPosition,
+            targetSpecialists: contextTargetSpecialists,
+            positionRequired: contextMustHaves.position,
+            specialistsRequired: contextMustHaves.specialists,
+          }
         : undefined
       result = [...result]
         .map((m) => {
           // Coach candidates under a coach scope are ranked by Coach Fit;
           // everyone else by Club Fit (NOT_APPLICABLE → 0).
-          const score =
-            useCoachContextFit && m.role === 'coach'
-              ? computeCoachFit(viewerCtx, {
-                  id: m.id,
-                  role: m.role,
-                  coach_specialization: m.coach_specialization ?? null,
-                  coaching_categories: m.coaching_categories ?? null,
-                }, {
-                  overrideTarget: contextTarget,
-                  targetRole: contextTargetRole,
-                  targetSpecialization: contextTargetPosition,
-                }).score
-              : computeClubFit(viewerCtx, {
-                  id: m.id,
-                  role: m.role,
-                  playing_category: m.playing_category ?? null,
-                  current_world_club_id: m.current_world_club_id ?? null,
-                  open_to_play: m.open_to_play ?? null,
-                  open_to_coach: m.open_to_coach ?? null,
-                  open_to_opportunities: m.open_to_opportunities ?? null,
-                  last_active_at: m.last_active_at ?? null,
-                  position: m.position ?? null,
-                  secondary_position: m.secondary_position ?? null,
-                  specialist_skills: m.specialist_skills ?? null,
-                }, fitOptions).score
+          let score: number
+          if (useCoachContextFit && m.role === 'coach') {
+            score = computeCoachFit(viewerCtx, {
+              id: m.id,
+              role: m.role,
+              coach_specialization: m.coach_specialization ?? null,
+              coaching_categories: m.coaching_categories ?? null,
+            }, {
+              overrideTarget: contextTarget,
+              targetRole: contextTargetRole,
+              targetSpecialization: contextTargetPosition,
+            }).score
+          } else {
+            const fit = computeClubFit(viewerCtx, {
+              id: m.id,
+              role: m.role,
+              playing_category: m.playing_category ?? null,
+              current_world_club_id: m.current_world_club_id ?? null,
+              open_to_play: m.open_to_play ?? null,
+              open_to_coach: m.open_to_coach ?? null,
+              open_to_opportunities: m.open_to_opportunities ?? null,
+              last_active_at: m.last_active_at ?? null,
+              position: m.position ?? null,
+              secondary_position: m.secondary_position ?? null,
+              specialist_skills: m.specialist_skills ?? null,
+            }, fitOptions)
+            // A must-have hard fail (e.g. not the required position/specialism)
+            // forces "Out of scope" on the card but leaves the soft score high
+            // (gender/league/availability still count). Floor it so the ranking
+            // can't float a hard-failed candidate above in-scope ones — keeping
+            // the grid order consistent with its own verdict card.
+            score = fit.hardFail ? -1 : fit.score
+          }
           return { m, score }
         })
         .sort((a, b) => {
@@ -697,7 +721,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     }
 
     return result
-  }, [allMembers, filters, sort, currentUserProfile, applyContextFit, contextTarget, contextTargetRole, contextTargetPosition, contextTargetSpecialists, euFilterActive, euCountryIds])
+  }, [allMembers, filters, sort, currentUserProfile, applyContextFit, contextTarget, contextTargetRole, contextTargetPosition, contextTargetSpecialists, contextMustHaves, euFilterActive, euCountryIds])
 
   // Recruiter Match is "active" only while an active scope ranks PLAYERS by
   // fit — a coach scope ranks coaches, so the player match bar stays off.
@@ -715,8 +739,12 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
       targetLevel: contextTargetLevel,
       targetCompensation: contextTargetCompensation,
       countryName: (id: number) => getCountryById(id)?.name,
+      levelRequired: contextMustHaves.level,
+      compensationRequired: contextMustHaves.compensation,
+      locationRequired: contextMustHaves.location,
+      availabilityRequired: contextMustHaves.availability,
     }),
-    [contextTargetRole, contextTargetLocation, contextTargetStartDate, contextTargetLevel, contextTargetCompensation, getCountryById],
+    [contextTargetRole, contextTargetLocation, contextTargetStartDate, contextTargetLevel, contextTargetCompensation, contextMustHaves, getCountryById],
   )
 
   // The FULL recruiter verdict per scoped player — the same explanation-led
@@ -739,6 +767,8 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
       targetRole: contextTargetRole,
       targetPosition: contextTargetPosition,
       targetSpecialists: contextTargetSpecialists,
+      positionRequired: contextMustHaves.position,
+      specialistsRequired: contextMustHaves.specialists,
     }
     filteredMembers
       .filter((m) => m.role === 'player')
@@ -787,7 +817,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
         if (verdict.isApplicable) map.set(m.id, { verdict })
       })
     return map
-  }, [playerMatchActive, currentUserProfile, filteredMembers, contextTarget, contextTargetRole, contextTargetPosition, contextTargetSpecialists, interestScopeOptions, hasOpeningScope, contextProblem])
+  }, [playerMatchActive, currentUserProfile, filteredMembers, contextTarget, contextTargetRole, contextTargetPosition, contextTargetSpecialists, contextMustHaves, interestScopeOptions, hasOpeningScope, contextProblem])
 
   // Coach equivalent of playerMatchActive — ANY active COACH scope ranks
   // coaches by Coach Fit, so the recruiter card renders for coaches just like

@@ -34,7 +34,7 @@
  *     write will silently 403.
  */
 
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
@@ -580,6 +580,55 @@ export function useActiveRecruitingEuRequired(): boolean {
   }, [viewerId, viewerRole, ensureFetched])
 
   return euRequired
+}
+
+/** The active scope's per-criterion MUST-HAVE flags (Phase 3). Each is
+ *  derived server-side from the linked opportunity's `*_required` column.
+ *  A must-have criterion that EXPLICITLY mismatches hard-caps the candidate
+ *  to "Out of scope" in the recruiter verdict (a blank candidate field
+ *  stays neutral). All false on a custom / profile-derived scope. The lens
+ *  hooks (useClubFit reads position+specialists, useInterest reads the
+ *  other four) and the direct-compute Community surfaces consume this. */
+export interface RecruitingMustHaves {
+  position: boolean
+  level: boolean
+  compensation: boolean
+  location: boolean
+  availability: boolean
+  specialists: boolean
+}
+
+export function useActiveRecruitingMustHaves(): RecruitingMustHaves {
+  const { profile: viewer } = useAuthStore()
+  const viewerId = viewer?.id ?? null
+  const viewerRole = viewer?.role ?? null
+
+  const setViewer = useRecruitingContextStore((s) => s.setViewer)
+  const ensureFetched = useRecruitingContextStore((s) => s.ensureFetched)
+
+  // Read each flag as a PRIMITIVE off the active row — a fresh object from
+  // the store selector would change identity every render and loop forever
+  // (same hazard noted on the specialists selector). The object is assembled
+  // once below via useMemo over the six stable booleans.
+  const position = useRecruitingContextStore((s) => Boolean(s.rows.find((r) => r.is_active)?.position_required))
+  const level = useRecruitingContextStore((s) => Boolean(s.rows.find((r) => r.is_active)?.level_required))
+  const compensation = useRecruitingContextStore((s) => Boolean(s.rows.find((r) => r.is_active)?.compensation_required))
+  const location = useRecruitingContextStore((s) => Boolean(s.rows.find((r) => r.is_active)?.location_required))
+  const availability = useRecruitingContextStore((s) => Boolean(s.rows.find((r) => r.is_active)?.availability_required))
+  const specialists = useRecruitingContextStore((s) => Boolean(s.rows.find((r) => r.is_active)?.specialists_required))
+
+  useEffect(() => {
+    setViewer(viewerId, viewerRole)
+  }, [viewerId, viewerRole, setViewer])
+
+  useEffect(() => {
+    void ensureFetched()
+  }, [viewerId, viewerRole, ensureFetched])
+
+  return useMemo(
+    () => ({ position, level, compensation, location, availability, specialists }),
+    [position, level, compensation, location, availability, specialists],
+  )
 }
 
 /** Active scope's opportunity location_country (raw text) or null

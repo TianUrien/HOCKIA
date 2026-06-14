@@ -212,4 +212,96 @@ describe('computeInterest — compensation alignment (#4b)', () => {
     const r = computeInterest(base({ opportunity_preference: 'development' }), compScope('paid'))
     expect(r.score).toBeGreaterThanOrEqual(0.66)
   })
+
+  // ── Phase 3 — MUST-HAVE hard caps ──────────────────────────────────
+  // An EXPLICIT mismatch on a required interest criterion sets hardFail
+  // (the verdict caps it to Out of scope). A blank candidate field stays
+  // neutral — honest absence is never a fail.
+  describe('must-have hard caps (Phase 3)', () => {
+    // Local scope helper (sibling describes' levelScope/compScope aren't in
+    // scope here).
+    const lvlScope = (over: Record<string, unknown> = {}) => ({
+      targetRole: 'player',
+      targetLevel: 'competitive', // rank 2
+      countryName,
+      ...over,
+    })
+
+    it('required location + candidate excluded the opp country → hard fail', () => {
+      const r = computeInterest(
+        base({ relocation_willingness: 'relocate', relocation_countries_excluded: [30] }),
+        { ...playerScopeNL, locationRequired: true },
+      )
+      expect(r.hardFail).toBe(true)
+      expect(r.hardFailReasons?.[0]).toMatch(/Netherlands/)
+    })
+
+    it('required location + home-only candidate, opportunity elsewhere → hard fail', () => {
+      const r = computeInterest(
+        base({ relocation_willingness: 'home_only', home_country_id: 48 /* Argentina */ }),
+        { ...playerScopeNL, locationRequired: true },
+      )
+      expect(r.hardFail).toBe(true)
+    })
+
+    it('excluding the opp country is SOFT (no hard fail) unless locationRequired', () => {
+      const r = computeInterest(
+        base({ relocation_willingness: 'relocate', relocation_countries_excluded: [30] }),
+        playerScopeNL,
+      )
+      expect(r.hardFail).toBeFalsy()
+    })
+
+    it('required level + candidate proven below the opening → hard fail', () => {
+      const r = computeInterest(base({ proven_level_band: 9 /* development = rank 1 */ }), lvlScope({ levelRequired: true }))
+      expect(r.hardFail).toBe(true)
+      expect(r.hardFailReasons?.[0]).toMatch(/require/i)
+    })
+
+    it('required level but the candidate has NO level on file → neutral', () => {
+      const r = computeInterest(
+        base({ relocation_willingness: 'relocate' }),
+        lvlScope({ targetLocationCountry: 'Netherlands', levelRequired: true }),
+      )
+      expect(r.isApplicable).toBe(true)
+      expect(r.hardFail).toBeFalsy()
+    })
+
+    it('required level + only a SELF-DECLARED level below (no proven band) → neutral, not a hard fail', () => {
+      // proven outranks declared: a stated aspiration below the requirement is
+      // a soft signal, not an explicit actual-level mismatch — so it must NOT
+      // hard-cap to "Out of scope" (matches the AI narration + the card).
+      const r = computeInterest(base({ level_target: 'development' /* rank 1, below competitive */ }), lvlScope({ levelRequired: true }))
+      expect(r.isApplicable).toBe(true)
+      expect(r.hardFail).toBeFalsy()
+    })
+
+    it('required compensation + wants paid for an unpaid role → hard fail', () => {
+      const r = computeInterest(base({ opportunity_preference: 'paid' }), {
+        targetRole: 'player',
+        targetCompensation: 'unpaid_development',
+        countryName,
+        compensationRequired: true,
+      })
+      expect(r.hardFail).toBe(true)
+    })
+
+    it('required availability + available after the start → hard fail', () => {
+      const r = computeInterest(base({ available_from: '2026-09-01' }), {
+        ...playerScopeNL,
+        targetStartDate: '2026-03-01',
+        availabilityRequired: true,
+      })
+      expect(r.hardFail).toBe(true)
+    })
+
+    it('required availability + available before the start → no hard fail', () => {
+      const r = computeInterest(base({ available_from: '2026-01-01' }), {
+        ...playerScopeNL,
+        targetStartDate: '2026-03-01',
+        availabilityRequired: true,
+      })
+      expect(r.hardFail).toBeFalsy()
+    })
+  })
 })

@@ -79,6 +79,16 @@ const buildInitialFormData = (vacancy?: Vacancy | null, initialOpportunityType?:
   contact_phone: vacancy?.contact_phone || '',
   organization_name: vacancy?.organization_name || '',
   eu_passport_required: (vacancy as Record<string, unknown>)?.eu_passport_required === true,
+  // Phase 3c — per-criterion MUST-HAVE hardness. Seeded off the editing row
+  // so an edit round-trips its toggles (and drafts restore them, since the
+  // whole formData is serialized). Default false → "nice to have" = today's
+  // soft behavior, matching the migration's DEFAULT FALSE.
+  position_required: (vacancy as Record<string, unknown>)?.position_required === true,
+  level_required: (vacancy as Record<string, unknown>)?.level_required === true,
+  compensation_required: (vacancy as Record<string, unknown>)?.compensation_required === true,
+  location_required: (vacancy as Record<string, unknown>)?.location_required === true,
+  availability_required: (vacancy as Record<string, unknown>)?.availability_required === true,
+  specialists_required: (vacancy as Record<string, unknown>)?.specialists_required === true,
 })
 
 const getVacancyDraftKey = (profileId: string) => `vacancyDraft:new:${profileId}`
@@ -90,6 +100,77 @@ type VacancyDraftStorage = {
   formData: OpportunityFormData
   newRequirement: string
   newCustomBenefit: string
+}
+
+// Phase 3c — a must-have validation error ("pick a level before marking it
+// must-have") is keyed by the *_required flag. This maps each underlying
+// criterion field to its flag's error key so that filling the field clears
+// the paired error (position/location are always-required, so they have no
+// separate must-have error and aren't listed here).
+const MUST_HAVE_ERROR_BY_FIELD: Record<string, string> = {
+  level_sought: 'level_required',
+  compensation: 'compensation_required',
+  start_date: 'availability_required',
+  specialist_skills_wanted: 'specialists_required',
+}
+const MUST_HAVE_ERROR_KEYS = Object.values(MUST_HAVE_ERROR_BY_FIELD)
+
+/**
+ * Phase 3c — per-criterion MUST-HAVE / NICE-TO-HAVE toggle. A compact,
+ * accessible switch that sits beside an opportunity criterion. "Must have"
+ * (on) persists the criterion's `*_required` flag, which the recruiter
+ * verdict turns into a hard "Out of scope" cap on an explicit mismatch
+ * (Phase 3b); "Nice to have" (off, the default) keeps today's soft
+ * weighting. Proper `role="switch"` + `aria-checked` (the existing
+ * EU-passport toggle is a plain <button> missing both — deliberately NOT
+ * copied here) and a ≥44pt touch target (Apple HIG).
+ */
+function MustNiceToggle({
+  checked,
+  onChange,
+  criterionLabel,
+  error,
+}: {
+  checked: boolean
+  onChange: (next: boolean) => void
+  /** Lower-case noun used in the screen-reader label, e.g. "position". */
+  criterionLabel: string
+  error?: string
+}) {
+  const errorId = useId()
+  return (
+    <div className="mt-1.5">
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked ? 'true' : 'false'}
+        aria-label={`Mark ${criterionLabel} as a must-have`}
+        aria-describedby={error ? errorId : undefined}
+        onClick={() => onChange(!checked)}
+        className={`inline-flex min-h-[44px] items-center gap-2 rounded-lg px-1.5 text-xs font-medium transition-colors ${
+          checked ? 'text-emerald-700' : 'text-gray-500'
+        }`}
+      >
+        <span
+          className={`relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full transition-colors ${
+            checked ? 'bg-emerald-600' : 'bg-gray-300'
+          }`}
+        >
+          <span
+            className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
+              checked ? 'translate-x-[18px]' : 'translate-x-[3px]'
+            }`}
+          />
+        </span>
+        <span>{checked ? 'Must have' : 'Nice to have'}</span>
+      </button>
+      {error && (
+        <p id={errorId} className="mt-0.5 text-xs text-red-600">
+          {error}
+        </p>
+      )}
+    </div>
+  )
 }
 
 export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editingVacancy, initialOpportunityType }: CreateVacancyModalProps) {
@@ -324,6 +405,15 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
         next.position = undefined  // reset — coach has different position options
         next.gender = undefined
         next.specialist_skills_wanted = []  // coach opps have no specialist tags
+        // Phase 3c — the must-have toggles are a player-opportunity feature;
+        // clear every hardness flag so a stale must-have can't persist on a
+        // criterion that no longer renders (the payload also zeroes these).
+        next.position_required = false
+        next.level_required = false
+        next.compensation_required = false
+        next.location_required = false
+        next.availability_required = false
+        next.specialists_required = false
       }
       // Increment #3 — drop GK-only tags (Sweeper Keeper) when the position
       // moves away from goalkeeper, so a gated tag can't leak via stale state.
@@ -335,19 +425,24 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
 
     setErrors(prevErrors => {
       if (field === 'opportunity_type' && value === 'coach') {
-        if (!prevErrors.position && !prevErrors.gender && !prevErrors[field]) {
-          return prevErrors
-        }
         const updated = { ...prevErrors }
         delete updated.position
         delete updated.gender
         delete updated[field]
+        // Clear any must-have validation errors — the toggles are hidden for
+        // coach opps (Phase 3c).
+        for (const k of MUST_HAVE_ERROR_KEYS) delete updated[k]
         return updated
       }
 
-      if (prevErrors[field]) {
+      // A must-have validation error is keyed by the *_required flag; clear
+      // it when EITHER the flag toggles (field === the flag) or its
+      // underlying field is filled in (field === the paired criterion).
+      const pairedError = MUST_HAVE_ERROR_BY_FIELD[field]
+      if (prevErrors[field] || (pairedError && prevErrors[pairedError])) {
         const updated = { ...prevErrors }
         delete updated[field]
+        if (pairedError) delete updated[pairedError]
         return updated
       }
 
@@ -397,6 +492,21 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
     if (!formData.location_city?.trim()) newErrors.location_city = 'City is required'
     if (!formData.location_country?.trim()) newErrors.location_country = 'Country is required'
 
+    // Phase 3c — a MUST-HAVE on an unset OPTIONAL criterion is unsatisfiable
+    // (it would silently zero the candidate pool). Position + location are
+    // already required above, so only the optional criteria need this guard.
+    // Player opps only (the toggles don't render for coach opps).
+    if (formData.opportunity_type === 'player') {
+      if (formData.level_required && !formData.level_sought)
+        newErrors.level_required = 'Pick a level before marking it must-have.'
+      if (formData.compensation_required && !formData.compensation)
+        newErrors.compensation_required = 'Pick a compensation before marking it must-have.'
+      if (formData.availability_required && !formData.start_date)
+        newErrors.availability_required = 'Set a start date before marking it must-have.'
+      if (formData.specialists_required && !(formData.specialist_skills_wanted?.length))
+        newErrors.specialists_required = 'Add a specialist skill before marking it must-have.'
+    }
+
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -430,6 +540,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
       // status field intact so toggling fields in an edit doesn't
       // accidentally re-publish.
       const resolvedStatus = targetStatus ?? formData.status ?? 'draft'
+      const isPlayerOpp = formData.opportunity_type === 'player'
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const vacancyData: Record<string, any> = {
         club_id: user.id,
@@ -461,6 +572,15 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
         organization_name: formData.organization_name?.trim() || null,
         world_club_id: profile?.role === 'coach' ? profile.current_world_club_id ?? null : null,
         eu_passport_required: formData.eu_passport_required || false,
+        // Phase 3c — per-criterion MUST-HAVE hardness. Player opps only; a
+        // coach opp sends every flag false (the toggles never render there),
+        // so a hardness flag can't persist on a criterion that isn't shown.
+        position_required: isPlayerOpp && (formData.position_required || false),
+        level_required: isPlayerOpp && (formData.level_required || false),
+        compensation_required: isPlayerOpp && (formData.compensation_required || false),
+        location_required: isPlayerOpp && (formData.location_required || false),
+        availability_required: isPlayerOpp && (formData.availability_required || false),
+        specialists_required: isPlayerOpp && (formData.specialists_required || false),
       }
       // published_at is set on the row when the opportunity first goes
       // open — preserves the existing publish-from-draft analytics
@@ -707,6 +827,13 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                     )}
                   </select>
                   {errors.position && <p className="mt-1 text-sm text-red-600">{errors.position}</p>}
+                  {formData.opportunity_type === 'player' && (
+                    <MustNiceToggle
+                      criterionLabel="position"
+                      checked={!!formData.position_required}
+                      onChange={(v) => handleInputChange('position_required', v)}
+                    />
+                  )}
                 </div>
 
                 {/* Gender - Only for player opportunities */}
@@ -745,13 +872,21 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
               {/* Specialist skills wanted (Matching Increment #3) — player
                   opportunities only; optional. */}
               {formData.opportunity_type === 'player' && (
-                <SpecialistSkillsSelect
-                  label="Specialist skills wanted"
-                  hint="Optional — the specialism you most need. We'll surface players who match."
-                  value={formData.specialist_skills_wanted || []}
-                  onChange={(next) => handleInputChange('specialist_skills_wanted', next)}
-                  position={formData.position}
-                />
+                <div>
+                  <SpecialistSkillsSelect
+                    label="Specialist skills wanted"
+                    hint="Optional — the specialism you most need. We'll surface players who match."
+                    value={formData.specialist_skills_wanted || []}
+                    onChange={(next) => handleInputChange('specialist_skills_wanted', next)}
+                    position={formData.position}
+                  />
+                  <MustNiceToggle
+                    criterionLabel="specialist skills"
+                    checked={!!formData.specialists_required}
+                    onChange={(v) => handleInputChange('specialists_required', v)}
+                    error={errors.specialists_required}
+                  />
+                </div>
               )}
 
               {/* Recruiter intent (Matching Increment #4) — player opps only.
@@ -787,6 +922,12 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                           <option key={o.value} value={o.value}>{o.label}</option>
                         ))}
                       </select>
+                      <MustNiceToggle
+                        criterionLabel="level"
+                        checked={!!formData.level_required}
+                        onChange={(v) => handleInputChange('level_required', v)}
+                        error={errors.level_required}
+                      />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1.5">Compensation</label>
@@ -801,9 +942,15 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                           <option key={o.value} value={o.value}>{o.label}</option>
                         ))}
                       </select>
+                      <MustNiceToggle
+                        criterionLabel="compensation"
+                        checked={!!formData.compensation_required}
+                        onChange={(v) => handleInputChange('compensation_required', v)}
+                        error={errors.compensation_required}
+                      />
                     </div>
                   </div>
-                  <p className="text-[11px] text-gray-400">Level pre-fills from your club's level — change it if you're recruiting above or below.</p>
+                  <p className="text-[11px] text-gray-400">Level pre-fills from your club's level — change it if you're recruiting above or below. Mark any criterion "Must have" to require it — players who miss it read as "Out of scope".</p>
                 </div>
               )}
 
@@ -862,6 +1009,13 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                   required
                   error={errors.location_city || errors.location_country ? 'Location is required' : undefined}
                 />
+                {formData.opportunity_type === 'player' && (
+                  <MustNiceToggle
+                    criterionLabel="location"
+                    checked={!!formData.location_required}
+                    onChange={(v) => handleInputChange('location_required', v)}
+                  />
+                )}
               </div>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -877,6 +1031,14 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                     onChange={(e) => handleInputChange('start_date', e.target.value || null)}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#10b981] focus:border-transparent"
                   />
+                  {formData.opportunity_type === 'player' && (
+                    <MustNiceToggle
+                      criterionLabel="start date"
+                      checked={!!formData.availability_required}
+                      onChange={(v) => handleInputChange('availability_required', v)}
+                      error={errors.availability_required}
+                    />
+                  )}
                 </div>
 
                 {/* Duration */}

@@ -71,6 +71,15 @@ export interface ClubFitResult {
   caveats: string[]
   /** The target category this Fit was computed against. */
   target: TargetCategory | null
+  /** Phase 3 — a MUST-HAVE criterion (position / specialists) the recruiter
+   *  marked required that the candidate EXPLICITLY fails. When true the
+   *  verdict hard-caps to "Out of scope" (and the fit state is forced grey
+   *  for chip coherence). A blank candidate field never sets this — only a
+   *  confirmed mismatch does (honest-absence rule). Omitted = no hard fail. */
+  hardFail?: boolean
+  /** Human reasons for the hard fail, surfaced as the verdict's lead caveat
+   *  (e.g. "Plays Midfielder, not the Goalkeeper you require."). */
+  hardFailReasons?: string[]
 }
 
 /** Player profile fields the Fit math reads. */
@@ -239,6 +248,16 @@ export interface ComputeClubFitOptions {
    *  Empty/undefined = no specialist signal (position-only behaviour
    *  unchanged). */
   targetSpecialists?: string[] | null
+  /** Phase 3 — MUST-HAVE position. When true, a candidate whose PRIMARY
+   *  position is set and neither it nor their secondary matches
+   *  targetPosition is hard-failed ("Out of scope"). A player with no
+   *  position on file stays neutral. No effect without a targetPosition. */
+  positionRequired?: boolean
+  /** Phase 3 — MUST-HAVE specialists. When true, a candidate who lists
+   *  specialist skills but holds NONE of targetSpecialists is hard-failed.
+   *  A player with no specialist skills on file stays neutral. No effect
+   *  without targetSpecialists. */
+  specialistsRequired?: boolean
 }
 
 /**
@@ -416,6 +435,30 @@ export function computeClubFit(
         ? specialistFit
         : positionFit
 
+  // ── MUST-HAVE hard caps (Phase 3) ───────────────────────────────
+  // A criterion the recruiter marked REQUIRED forces "Out of scope" when
+  // the candidate EXPLICITLY mismatches. A blank candidate field stays
+  // neutral — never fails — so honest-absence profiles aren't buried.
+  //   position:    primary position is set AND doesn't match (positionFit 0).
+  //   specialists: the player lists skills but holds NONE of those sought.
+  const hardFailReasons: string[] = []
+  if (options?.positionRequired && hasTargetPosition && Boolean(candidate.position) && positionFit === 0) {
+    hardFailReasons.push(
+      `Plays ${humanizePosition(candidate.position!)}, not the ${humanizePosition(options.targetPosition!)} you require.`,
+    )
+  }
+  if (
+    options?.specialistsRequired &&
+    hasSpecialists &&
+    (candidate.specialist_skills?.length ?? 0) > 0 &&
+    matchedSpecialists.length === 0
+  ) {
+    hardFailReasons.push(
+      `Doesn't hold the required specialism${soughtSpecialists.length > 1 ? 's' : ''} (${soughtSpecialists.map(specialistSkillLabel).join(', ')}).`,
+    )
+  }
+  const hardFail = hardFailReasons.length > 0
+
   // ── Score + state ───────────────────────────────────────────────
   const components: ClubFitComponents = {
     gender_match,
@@ -452,8 +495,10 @@ export function computeClubFit(
   // men's-team scope) can't be a fit no matter how the soft components add
   // up. Force grey so the chip + the #5 verdict read it as "doesn't fit",
   // and so it reads identically on every surface regardless of whether the
-  // candidate's league band happened to resolve.
-  if (categoryMismatch) state = 'grey'
+  // candidate's league band happened to resolve. A MUST-HAVE hard fail
+  // (Phase 3) likewise forces grey so the fit chip can't read "Strong fit"
+  // while the verdict reads "Out of scope".
+  if (categoryMismatch || hardFail) state = 'grey'
 
   return {
     isApplicable: true,
@@ -464,6 +509,8 @@ export function computeClubFit(
     positives,
     caveats,
     target,
+    hardFail,
+    hardFailReasons,
   }
 }
 

@@ -43,6 +43,10 @@ export interface VerdictFitInput {
   state: 'green' | 'yellow' | 'grey'
   positives: string[]
   caveats: string[]
+  /** Phase 3 — a MUST-HAVE criterion the candidate explicitly fails. Forces
+   *  the verdict to "Out of scope" (tier 'pass'), overriding the soft score. */
+  hardFail?: boolean
+  hardFailReasons?: string[]
 }
 export interface VerdictEvidenceInput {
   isApplicable: boolean
@@ -55,6 +59,11 @@ export interface VerdictInterestInput {
   level: 'strong' | 'possible' | 'low'
   positives: string[]
   caveats: string[]
+  /** Phase 3 — a MUST-HAVE interest criterion the candidate explicitly
+   *  fails (e.g. wants paid for an unpaid role, can't relocate). Forces
+   *  the verdict to "Out of scope". */
+  hardFail?: boolean
+  hardFailReasons?: string[]
 }
 
 export interface RecruiterVerdictInput {
@@ -248,10 +257,29 @@ export function computeRecruiterVerdict(input: RecruiterVerdictInput): Recruiter
   // surface (the recruiter may be flexible) without a misleading headline.
   if (fit.state === 'grey' && (tier === 'pursue' || tier === 'consider')) tier = 'longshot'
 
+  // Phase 3 — MUST-HAVE hard cap. A criterion the recruiter marked REQUIRED
+  // that the candidate EXPLICITLY fails (wrong position, won't relocate to a
+  // required country, wants paid for an unpaid role…) forces "Out of scope",
+  // overriding every soft signal. Distinct from the grey-fit longshot cap
+  // above: a soft low fit stays "Possible"; only an explicit must-have miss
+  // drops to "Out of scope". Blank candidate fields never trigger this (the
+  // lenses only set hardFail on a confirmed mismatch).
+  const hardFailReasons: string[] = [
+    ...(fit.hardFail ? (fit.hardFailReasons ?? []) : []),
+    ...(interest?.isApplicable && interest.hardFail ? (interest.hardFailReasons ?? []) : []),
+  ]
+  const hardFailed = hardFailReasons.length > 0
+  if (hardFailed) tier = 'pass'
+
   // Verdict strength for the card's bar. Capped to stay consistent with the
-  // tier: a grey fit that was just downgraded to longshot must not show a
-  // near-full bar, so its points are pulled below the consider threshold.
-  const cappedPoints = fit.state === 'grey' && points >= CONSIDER_AT ? CONSIDER_AT - 0.01 : points
+  // tier: a grey fit downgraded to longshot must not show a near-full bar
+  // (pulled below the consider threshold), and a must-have hard fail pins the
+  // bar to the floor so it reads unambiguously "Out of scope".
+  const cappedPoints = hardFailed
+    ? STRENGTH_ANCHORS[0][0]
+    : fit.state === 'grey' && points >= CONSIDER_AT
+      ? CONSIDER_AT - 0.01
+      : points
   const strength = pointsToStrength(cappedPoints)
 
   // Highlights — strongest SELLING POINTS from each lens's polarity-tagged
@@ -271,10 +299,13 @@ export function computeRecruiterVerdict(input: RecruiterVerdictInput): Recruiter
         : [fitHi, provenHi, interestHi]
   const highlights = ordered.flat().slice(0, 3)
 
-  // Caveats — decision-relevant CONCERNS. A live Interested mismatch is the
-  // sharpest; then a Fit concern (category/level/availability); then a thin
-  // track record (a synthesized note — evidence reasons are never negative).
+  // Caveats — decision-relevant CONCERNS. A must-have failure (Phase 3) is
+  // the reason the card reads "Out of scope", so it LEADS. Then a live
+  // Interested mismatch (sharpest soft concern); then a Fit concern
+  // (category/level/availability); then a thin track record (a synthesized
+  // note — evidence reasons are never negative).
   const caveats: string[] = []
+  if (hardFailed) caveats.push(...hardFailReasons)
   if (interest?.isApplicable && interest.caveats[0]) caveats.push(interest.caveats[0])
   if (fit.caveats[0]) caveats.push(fit.caveats[0])
   if (evidence?.isApplicable && evidence.level === 'limited') {
@@ -287,6 +318,11 @@ export function computeRecruiterVerdict(input: RecruiterVerdictInput): Recruiter
         : 'Limited video & references on file so far.',
     )
   }
+  // De-duplicate before capping: a must-have hard-fail reason can be the
+  // exact SAME string as its lens's soft caveat (e.g. the paid-vs-unpaid
+  // compensation clash, whose hard + soft wording are identical), which
+  // would otherwise show the concern twice and waste one of the two slots.
+  const dedupedCaveats = caveats.filter((c, i) => caveats.indexOf(c) === i)
 
   return {
     isApplicable: true,
@@ -294,7 +330,7 @@ export function computeRecruiterVerdict(input: RecruiterVerdictInput): Recruiter
     strength,
     headline: DISPLAY_TIER_LABELS[DISPLAY_TIER_BY_VERDICT[tier]],
     highlights,
-    caveats: caveats.slice(0, 2),
+    caveats: dedupedCaveats.slice(0, 2),
     scoped: Boolean(input.hasOpeningScope),
     // Only label a RECOGNISED problem (one with a weight profile) — an
     // unknown value falls back to the default weighting and shows no note.

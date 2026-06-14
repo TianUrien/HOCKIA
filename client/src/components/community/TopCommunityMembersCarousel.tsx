@@ -11,6 +11,7 @@ import {
   useActiveRecruitingTargetSpecialists, useActiveRecruitingTargetLocation, useActiveRecruitingTargetStartDate,
   useActiveRecruitingTargetLevel, useActiveRecruitingTargetCompensation,
   useHasActiveRecruitingScope, useActiveRecruitingTargetProblem,
+  useActiveRecruitingMustHaves,
 } from '@/hooks/useRecruitingContext'
 import { categoryToBandTarget } from '@/hooks/useInterest'
 import { getClubLevelBand } from '@/hooks/useWorldClubLogo'
@@ -309,6 +310,7 @@ export function TopCommunityMembersCarousel({
   const contextTargetCompensation = useActiveRecruitingTargetCompensation()
   const hasOpeningScope = useHasActiveRecruitingScope()
   const contextProblem = useActiveRecruitingTargetProblem()
+  const contextMustHaves = useActiveRecruitingMustHaves()
   const { getCountryById } = useCountries()
 
   const verdictById = useMemo(() => {
@@ -327,6 +329,10 @@ export function TopCommunityMembersCarousel({
       targetLevel: contextTargetLevel,
       targetCompensation: contextTargetCompensation,
       countryName: (id: number) => getCountryById(id)?.name,
+      levelRequired: contextMustHaves.level,
+      compensationRequired: contextMustHaves.compensation,
+      locationRequired: contextMustHaves.location,
+      availabilityRequired: contextMustHaves.availability,
     }
     members.forEach((m) => {
       const fit =
@@ -352,7 +358,14 @@ export function TopCommunityMembersCarousel({
                 secondary_position: null,
                 specialist_skills: null,
               },
-              { overrideTarget: contextTarget, targetRole: contextTargetRole, targetPosition: contextTargetPosition, targetSpecialists: contextTargetSpecialists },
+              {
+                overrideTarget: contextTarget,
+                targetRole: contextTargetRole,
+                targetPosition: contextTargetPosition,
+                targetSpecialists: contextTargetSpecialists,
+                positionRequired: contextMustHaves.position,
+                specialistsRequired: contextMustHaves.specialists,
+              },
             )
       if (!fit.isApplicable) return
       const evidence = computeEvidence({
@@ -381,7 +394,7 @@ export function TopCommunityMembersCarousel({
       if (verdict.isApplicable) map.set(m.id, verdict)
     })
     return map
-  }, [showEvidence, viewerProfile, contextTarget, contextTargetRole, contextTargetPosition, contextTargetSpecialists, contextTargetLocation, contextTargetStartDate, contextTargetLevel, contextTargetCompensation, hasOpeningScope, contextProblem, getCountryById, members])
+  }, [showEvidence, viewerProfile, contextTarget, contextTargetRole, contextTargetPosition, contextTargetSpecialists, contextTargetLocation, contextTargetStartDate, contextTargetLevel, contextTargetCompensation, contextMustHaves, hasOpeningScope, contextProblem, getCountryById, members])
 
   // Scoped order: in-scope (Pursue/Consider) first, then by match % (strength)
   // desc, completeness, id — out-of-scope (Longshot/Pass) is demoted to the

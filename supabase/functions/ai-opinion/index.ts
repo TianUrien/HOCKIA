@@ -42,7 +42,7 @@ import { getServiceClient } from '../_shared/supabase-client.ts'
 // Bump PROMPT_VERSION when the system prompt or output schema changes
 // in a way that should invalidate cached opinions. ai_opinions cache
 // keys include this — bumping forces a full regenerate next read.
-const PROMPT_VERSION = 'v1.8'
+const PROMPT_VERSION = 'v1.9'
 const MODEL = 'claude-sonnet-4-6'
 const VERDICT_MAX_CHARS = 280
 const QUOTA_PER_DAY = 50
@@ -90,6 +90,20 @@ interface FitContext {
   // specialisms (a held specialism the opening seeks is a positive fit signal).
   player_specialist_skills: string[] | null
   viewer_target_specialists: string[] | null
+  // Phase 3d — per-criterion MUST-HAVE hardness off the active scope. A
+  // must-have the player EXPLICITLY fails = "out of scope" (mirrors the
+  // deterministic verdict's hard cap); a blank field stays neutral. All
+  // false for coach scopes (the toggles are player-opps-only).
+  scope_position_required: boolean
+  scope_level_required: boolean
+  scope_compensation_required: boolean
+  scope_location_required: boolean
+  scope_availability_required: boolean
+  scope_specialists_required: boolean
+  // Phase 3d — player's positions, so the AI can narrate a position
+  // (mis)match, incl. a must-have goalkeeper/etc. (the canonical case).
+  player_position: string | null
+  player_secondary_position: string | null
   viewer_target: 'Men' | 'Women' | 'Mixed' | null
   viewer_band: number | null
   // #5 Part 2 — the active opportunity scope (level_sought / compensation /
@@ -190,6 +204,18 @@ function computeContextHash(viewerId: string, playerId: string, fit: FitContext)
     // doesn't false-drift the hash (and force a needless regenerate).
     pss: [...(fit.player_specialist_skills ?? [])].sort(),
     vts: [...(fit.viewer_target_specialists ?? [])].sort(),
+    // Phase 3d — must-have hardness + player positions. A recruiter flipping
+    // a criterion to must-have changes the verdict (possibly to out-of-scope),
+    // so it must drift the hash; the player's position likewise feeds the
+    // position (mis)match narration.
+    posR: fit.scope_position_required,
+    lvlR: fit.scope_level_required,
+    compR: fit.scope_compensation_required,
+    locR: fit.scope_location_required,
+    availR: fit.scope_availability_required,
+    specR: fit.scope_specialists_required,
+    ppos: fit.player_position,
+    psec: fit.player_secondary_position,
   })
   return sha256(payload)
 }
@@ -222,12 +248,16 @@ interface ProfileRow {
   // playmaker, …). Already scored by clubFit's position_match; surfaced here so
   // the AI verdict can cite a specialism the opening wants.
   specialist_skills: string[] | null
+  // Phase 3d — player's primary + secondary position, so the AI can assess
+  // position fit against the opening's sought position (incl. must-have).
+  position: string | null
+  secondary_position: string | null
 }
 
 async function fetchProfile(supabase: ReturnType<typeof getServiceClient>, id: string): Promise<ProfileRow | null> {
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, role, full_name, current_world_club_id, playing_category, coaching_categories, open_to_play, open_to_coach, open_to_opportunities, last_active_at, accepted_reference_count, career_entry_count, highlight_video_url, full_game_video_count, current_club, level_target, opportunity_preference, relocation_willingness, available_from, coach_specialization, specialist_skills')
+    .select('id, role, full_name, current_world_club_id, playing_category, coaching_categories, open_to_play, open_to_coach, open_to_opportunities, last_active_at, accepted_reference_count, career_entry_count, highlight_video_url, full_game_video_count, current_club, level_target, opportunity_preference, relocation_willingness, available_from, coach_specialization, specialist_skills, position, secondary_position')
     .eq('id', id)
     .maybeSingle()
   if (error) throw error
@@ -283,6 +313,13 @@ interface RecruitingScope {
   // Phase 2 (2c) — specialisms the opening wants (from
   // opportunities.specialist_skills_wanted, derived onto recruiting_context).
   specialists: string[] | null
+  // Phase 3d — per-criterion MUST-HAVE hardness, derived onto recruiting_context.
+  position_required: boolean
+  level_required: boolean
+  compensation_required: boolean
+  location_required: boolean
+  availability_required: boolean
+  specialists_required: boolean
 }
 
 async function resolveScope(
@@ -294,7 +331,7 @@ async function resolveScope(
   // opt-in via ContextSwitcher).
   const { data: ctx } = await supabase
     .from('recruiting_context')
-    .select('target_category, target_level, target_compensation, target_location_country, target_start_date, target_problem, target_role, target_position, target_specialists')
+    .select('target_category, target_level, target_compensation, target_location_country, target_start_date, target_problem, target_role, target_position, target_specialists, position_required, level_required, compensation_required, location_required, availability_required, specialists_required')
     .eq('owner_id', viewerId)
     .eq('is_active', true)
     .maybeSingle()
@@ -308,6 +345,12 @@ async function resolveScope(
     target_role: string | null
     target_position: string | null
     target_specialists: string[] | null
+    position_required: boolean | null
+    level_required: boolean | null
+    compensation_required: boolean | null
+    location_required: boolean | null
+    availability_required: boolean | null
+    specialists_required: boolean | null
   } | null
   const scope: RecruitingScope = {
     target: (row?.target_category as 'Men' | 'Women' | 'Mixed' | null) ?? null,
@@ -319,6 +362,12 @@ async function resolveScope(
     role: row?.target_role ?? null,
     position: row?.target_position ?? null,
     specialists: row?.target_specialists ?? null,
+    position_required: row?.position_required ?? false,
+    level_required: row?.level_required ?? false,
+    compensation_required: row?.compensation_required ?? false,
+    location_required: row?.location_required ?? false,
+    availability_required: row?.availability_required ?? false,
+    specialists_required: row?.specialists_required ?? false,
   }
   if (scope.target) return scope
 
@@ -371,6 +420,13 @@ async function resolveScope(
 //     specialists_sought vs the player's specialist_skills (a held specialism
 //     the opening wants is a positive fit signal). Adds pss/vts to the
 //     context_hash so a specialism edit invalidates the cached verdict.
+//   v1.9 (Phase 3d): MUST-HAVE criteria — opportunity_scope.must_have_criteria
+//     lists the dimensions the recruiter REQUIRES. A player who EXPLICITLY
+//     fails a must-have is OUT OF SCOPE (mirrors the deterministic verdict's
+//     hard cap); a blank field stays neutral; a nice-to-have miss is a soft
+//     gap. Also adds position_sought vs the player's position so the canonical
+//     "must-have goalkeeper" case can be narrated. New hash inputs invalidate
+//     the cache when a recruiter flips a criterion's hardness.
 const SYSTEM_PROMPT = `You are HOCKIA AI's recruitment opinion engine. You produce short, evidence-based verdicts on player↔club AND coach↔team fit for field-hockey recruiters.
 
 RULES (non-negotiable):
@@ -401,11 +457,18 @@ BAND CONVENTION: competition_level_band uses a 1–10 scale where LOWER numbers 
 You are given a deterministic Fit calculation. Treat it as ground truth. Your job is to translate the inputs into recruiter-readable language.
 
 OPPORTUNITY SCOPE (when opportunity_scope fields are present): the recruiter is hiring for a specific opening. Weigh these against the player:
+- position_sought (goalkeeper / defender / midfielder / forward): the position the opening seeks. The player fits when their position OR secondary_position matches; a different primary with no matching secondary is a position gap. HUMANIZE the value (goalkeeper → "goalkeeper"). Only weigh position when position_sought is present; a player with no position on file is a missing-info case, not a mismatch.
 - level_sought (elite > high_performance > competitive > development): the level the opening targets. Compare it to the player's PROVEN level (competition_level_band) FIRST.
 - compensation (paid / unpaid_development / either) vs the player's opportunity_preference (paid / development / either): an "either" on either side is compatible; a player who wants paid being shown an unpaid/development role is a real mismatch worth flagging.
 - location_country + start_date vs the player's relocation_willingness + available_from: logistics that can make or break a deal.
 - specialists_sought (the opening's wanted specialisms, e.g. drag_flicker, penalty_corner, playmaker) vs the player's specialist_skills: a held specialism the opening explicitly wants is a strong positive fit signal worth leading with; the absence of a sought specialism is a soft gap, not a disqualifier. HUMANIZE every tag in prose (drag_flicker → "drag-flicking", penalty_corner → "penalty-corner work") — never print the raw token. Only weigh specialisms when specialists_sought is non-empty.
 When opportunity_scope fields are null, the recruiter hasn't scoped to an opening — do not invent level/compensation/logistics claims; stick to category + band + evidence.
+
+MUST-HAVE CRITERIA (when opportunity_scope.must_have_criteria is a non-empty list): the recruiter has marked those dimensions as REQUIRED, not merely preferred. This OVERRIDES the "soft gap" framing above for those dimensions:
+- If the player EXPLICITLY fails a must-have — a KNOWN mismatch, e.g. plays midfielder when position is required goalkeeper; proven (band) below a required level; wants paid for a required-unpaid role; excluded the required country or won't relocate there; can't start by a required start_date; holds specialisms but none of the required ones — then the player is OUT OF SCOPE for this opening. Lead the verdict by saying plainly they're out of scope and the single clearest reason, in the recruiter's second-person voice. One clear must-have failure is enough.
+- A BLANK / UNKNOWN field is NOT a must-have failure: a player with no position, no league band, or no stated preference on a required dimension is a missing-info case ("their position isn't on file"), never "out of scope". Cite the missing field with value="null".
+- A miss on a NICE-TO-HAVE dimension (one NOT in must_have_criteria) is never "out of scope" — keep the soft-gap framing for those.
+- When must_have_criteria is empty or absent, no dimension is required; use the normal soft weighting throughout.
 
 RECRUITMENT PROBLEM (when opportunity_scope.recruitment_problem is present): this is what the recruiter is solving — frame the verdict around it and lead with the dimension it cares about most:
 - replace_player ("replace a key player"): emphasise proven level + fit — a ready, like-for-like replacement.
@@ -459,6 +522,16 @@ function buildUserPrompt(viewer: ProfileRow, player: ProfileRow, fit: FitContext
     }, null, 2)
   }
 
+  // Phase 3d — the criteria the recruiter marked MUST-HAVE (only the true
+  // ones, so the LLM sees a focused "these are required" list).
+  const mustHaveCriteria: string[] = []
+  if (fit.scope_position_required) mustHaveCriteria.push('position')
+  if (fit.scope_level_required) mustHaveCriteria.push('level')
+  if (fit.scope_compensation_required) mustHaveCriteria.push('compensation')
+  if (fit.scope_location_required) mustHaveCriteria.push('location')
+  if (fit.scope_availability_required) mustHaveCriteria.push('availability')
+  if (fit.scope_specialists_required) mustHaveCriteria.push('specialists')
+
   return JSON.stringify({
     viewer_role: viewer.role,
     viewer_target_category: fit.viewer_target,
@@ -466,6 +539,8 @@ function buildUserPrompt(viewer: ProfileRow, player: ProfileRow, fit: FitContext
     // #5 Part 2 — the active opportunity scope (null when the recruiter
     // hasn't scoped to an opportunity; then skip level/comp/logistics).
     opportunity_scope: {
+      // #2B — the player position the opening seeks (goalkeeper/defender/…).
+      position_sought: fit.scope_target_position,
       level_sought: fit.viewer_target_level,
       compensation: fit.viewer_target_compensation,
       location_country: fit.viewer_target_location_country,
@@ -474,10 +549,16 @@ function buildUserPrompt(viewer: ProfileRow, player: ProfileRow, fit: FitContext
       recruitment_problem: fit.viewer_recruitment_problem,
       // Phase 2 (2c) — specialisms the opening wants (humanize the tags).
       specialists_sought: fit.viewer_target_specialists,
+      // Phase 3d — criteria the recruiter REQUIRES (must-have). An explicit
+      // miss on one of these = out of scope (see MUST-HAVE rule).
+      must_have_criteria: mustHaveCriteria,
     },
     player: {
       role: player.role,
       playing_category: fit.player_category,
+      // Phase 3d — positions, for the position (mis)match vs position_sought.
+      position: fit.player_position,
+      secondary_position: fit.player_secondary_position,
       // PROVEN level — derived from their real club's league band.
       competition_level_band: fit.player_band,
       current_club: player.current_club,
@@ -706,6 +787,14 @@ serve(async (req: Request) => {
     player_coaching_categories: player.coaching_categories,
     player_specialist_skills: player.specialist_skills,
     viewer_target_specialists: scope.specialists,
+    scope_position_required: scope.position_required,
+    scope_level_required: scope.level_required,
+    scope_compensation_required: scope.compensation_required,
+    scope_location_required: scope.location_required,
+    scope_availability_required: scope.availability_required,
+    scope_specialists_required: scope.specialists_required,
+    player_position: player.position,
+    player_secondary_position: player.secondary_position,
     viewer_target: scope.target,
     viewer_band: viewerBand,
     viewer_target_level: scope.level,

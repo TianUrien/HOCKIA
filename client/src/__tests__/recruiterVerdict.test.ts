@@ -305,3 +305,122 @@ describe('recruiterDisplayTier + DISPLAY_TIER_LABELS', () => {
     expect(r.headline).toBe(DISPLAY_TIER_LABELS[recruiterDisplayTier(r)])
   })
 })
+
+// ── Phase 3 — MUST-HAVE hard cap ────────────────────────────────────
+// A criterion the recruiter marked REQUIRED that the candidate explicitly
+// fails forces "Out of scope" (tier 'pass'), overriding every soft signal —
+// and distinct from the softer grey-fit longshot cap.
+describe('computeRecruiterVerdict — must-have hard cap (Phase 3)', () => {
+  it('a fit hard fail forces Out of scope even with a green fit + strong everything', () => {
+    const r = computeRecruiterVerdict({
+      fit: {
+        isApplicable: true,
+        state: 'grey', // the lens forces grey on a hard fail
+        positives: ['Proven elite level.'],
+        caveats: [],
+        hardFail: true,
+        hardFailReasons: ['Plays Midfielder, not the Goalkeeper you require.'],
+      },
+      evidence: evidence('strong'),
+      interest: interest('strong', { positives: ['Open to relocating.'] }),
+    })
+    expect(r.tier).toBe('pass')
+    expect(r.headline).toBe('Out of scope')
+    // the must-have reason LEADS the caveats
+    expect(r.caveats[0]).toBe('Plays Midfielder, not the Goalkeeper you require.')
+    // strength pinned to the floor so the bar can't contradict the headline
+    expect(r.strength).toBeLessThan(0.3)
+  })
+
+  it('an interest hard fail forces Out of scope (with an otherwise green fit)', () => {
+    const r = computeRecruiterVerdict({
+      fit: fit('green', { positives: ['Right level and category.'] }),
+      evidence: evidence('strong'),
+      interest: {
+        isApplicable: true,
+        level: 'low',
+        positives: [],
+        caveats: ['Wants paid; this is a development role.'],
+        hardFail: true,
+        hardFailReasons: ['Wants paid; this is a development role.'],
+      },
+    })
+    expect(r.tier).toBe('pass')
+    expect(r.caveats[0]).toBe('Wants paid; this is a development role.')
+  })
+
+  it('surfaces multiple must-have reasons (both lenses), capped at two caveats', () => {
+    const r = computeRecruiterVerdict({
+      fit: {
+        isApplicable: true,
+        state: 'grey',
+        positives: [],
+        caveats: [],
+        hardFail: true,
+        hardFailReasons: ['Plays Defender, not the Forward you require.'],
+      },
+      evidence: null,
+      interest: {
+        isApplicable: true,
+        level: 'low',
+        positives: [],
+        caveats: [],
+        hardFail: true,
+        hardFailReasons: ["Won't relocate to Spain — only wants Argentina."],
+      },
+    })
+    expect(r.tier).toBe('pass')
+    expect(r.caveats).toEqual([
+      'Plays Defender, not the Forward you require.',
+      "Won't relocate to Spain — only wants Argentina.",
+    ])
+  })
+
+  it('ignores a hard fail on a NON-applicable interest lens', () => {
+    const r = computeRecruiterVerdict({
+      fit: fit('green', { positives: ['Right level.'] }),
+      evidence: null,
+      interest: {
+        isApplicable: false,
+        level: 'low',
+        positives: [],
+        caveats: [],
+        hardFail: true,
+        hardFailReasons: ['should be ignored'],
+      },
+    })
+    expect(r.tier).not.toBe('pass')
+    expect(r.caveats).not.toContain('should be ignored')
+  })
+
+  it('a SOFT grey fit (no hard fail) stays Possible — only an explicit must-have miss drops to Out of scope', () => {
+    const soft = computeRecruiterVerdict({
+      fit: fit('grey', { caveats: ['Different league level.'] }),
+      evidence: evidence('strong'),
+      interest: interest('strong', { positives: ['Keen.'] }),
+    })
+    expect(soft.tier).toBe('longshot')
+    expect(soft.headline).toBe('Possible')
+  })
+
+  it('de-duplicates a must-have reason that equals its lens caveat (no doubled compensation caveat)', () => {
+    // The paid-vs-unpaid compensation clash is the one criterion whose
+    // hard-fail string is identical to its soft caveat — the verdict must
+    // not show it twice (and waste the second caveat slot).
+    const r = computeRecruiterVerdict({
+      fit: fit('green', { positives: ['Right level.'] }),
+      evidence: null,
+      interest: {
+        isApplicable: true,
+        level: 'low',
+        positives: [],
+        caveats: ['Wants paid; this is a development role.'],
+        hardFail: true,
+        hardFailReasons: ['Wants paid; this is a development role.'],
+      },
+    })
+    expect(r.tier).toBe('pass')
+    const occurrences = r.caveats.filter((c) => c === 'Wants paid; this is a development role.').length
+    expect(occurrences).toBe(1)
+  })
+})

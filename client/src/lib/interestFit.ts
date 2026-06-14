@@ -46,6 +46,13 @@ export interface InterestResult {
    *  flat `reasons`. */
   positives: string[]
   caveats: string[]
+  /** Phase 3 — a MUST-HAVE interest criterion (level / compensation /
+   *  location / availability) the recruiter marked required that the
+   *  candidate EXPLICITLY fails. When true the verdict hard-caps to "Out of
+   *  scope". A blank candidate field never sets this. Omitted = no fail. */
+  hardFail?: boolean
+  /** Human reasons for the hard fail, surfaced as the verdict's lead caveat. */
+  hardFailReasons?: string[]
 }
 
 export interface InterestCandidateFields {
@@ -79,6 +86,17 @@ export interface ComputeInterestOptions {
   targetCompensation?: string | null
   /** Resolve a countries.id to a display name (e.g. useCountries). */
   countryName: (id: number) => string | undefined
+  // ── Phase 3 MUST-HAVE flags. Each hard-fails ("Out of scope") only on an
+  // EXPLICIT mismatch; a blank candidate field stays neutral. ──
+  /** MUST-HAVE level: candidate's KNOWN level is below targetLevel → fail. */
+  levelRequired?: boolean
+  /** MUST-HAVE compensation: candidate wants paid but the role is unpaid → fail. */
+  compensationRequired?: boolean
+  /** MUST-HAVE location: candidate excluded the opportunity country, or is
+   *  home-only and the opportunity is elsewhere → fail. */
+  locationRequired?: boolean
+  /** MUST-HAVE availability: candidate's available_from is after start_date → fail. */
+  availabilityRequired?: boolean
 }
 
 // Level + compensation are now first-class recruiter-intent signals
@@ -151,6 +169,9 @@ export function computeInterest(
     else if (tone === 'caveat') caveats.push(text)
   }
   const measured: Array<{ score: number; weight: number }> = []
+  // Phase 3 — MUST-HAVE failures: an EXPLICIT mismatch on a required
+  // criterion. Surfaced to the verdict, which hard-caps to "Out of scope".
+  const hardFailReasons: string[] = []
 
   // ── Mobility ──
   const willingness = candidate.relocation_willingness ?? null
@@ -168,6 +189,7 @@ export function computeInterest(
     if (oppNorm && excludedNorms.includes(oppNorm)) {
       mobility = 0
       add(`Excluded ${oppRaw} from the countries they'd consider.`, 'caveat')
+      if (options.locationRequired) hardFailReasons.push(`Excluded ${oppRaw} — the location you require.`)
     } else if (willingness === 'home_only') {
       if (homeNorm && oppNorm) {
         if (homeNorm === oppNorm) {
@@ -176,6 +198,9 @@ export function computeInterest(
         } else {
           mobility = 0
           add(`Only wants to stay in ${homeName ?? 'their home country'}.`, 'caveat')
+          if (options.locationRequired) {
+            hardFailReasons.push(`Won't relocate to ${oppRaw} — only wants ${homeName ?? 'their home country'}.`)
+          }
         }
       } else {
         mobility = 0.5
@@ -243,6 +268,11 @@ export function computeInterest(
             ? `${phrase} the level they've proven.`
             : `${phrase} the level they say they're targeting.`,
         )
+        // MUST-HAVE level fails only on a PROVEN level below the requirement —
+        // a self-declared aspiration is a soft signal, not an explicit mismatch
+        // of ACTUAL level (proven outranks declared), and a band-less
+        // candidate's true level is unknown → neutral, never "Out of scope".
+        if (options.levelRequired && proven) hardFailReasons.push(`Below the ${oppLabel} level you require.`)
       } else {
         add(
           proven
@@ -290,6 +320,7 @@ export function computeInterest(
     } else if (candPref === 'paid' && oppComp === 'unpaid_development') {
       compScore = 0.1
       compReason = 'Wants paid; this is a development role.'
+      if (options.compensationRequired) hardFailReasons.push('Wants paid; this is a development role.')
     } else {
       // candidate development, opportunity paid — no conflict, a small plus.
       compScore = 0.9
@@ -309,6 +340,9 @@ export function computeInterest(
     } else {
       add(`Available from ${formatAvailableFrom(availFrom)}, after the ${formatAvailableFrom(startDate)} start.`, 'caveat')
       measured.push({ score: 0.3, weight: WEIGHTS.availability })
+      if (options.availabilityRequired) {
+        hardFailReasons.push(`Available from ${formatAvailableFrom(availFrom)}, after the ${formatAvailableFrom(startDate)} start you require.`)
+      }
     }
   }
 
@@ -319,7 +353,16 @@ export function computeInterest(
   const level: InterestLevel =
     score >= LEVEL_THRESHOLDS.strong ? 'strong' : score >= LEVEL_THRESHOLDS.possible ? 'possible' : 'low'
 
-  return { isApplicable: true, level, score, reasons, positives, caveats }
+  return {
+    isApplicable: true,
+    level,
+    score,
+    reasons,
+    positives,
+    caveats,
+    hardFail: hardFailReasons.length > 0,
+    hardFailReasons,
+  }
 }
 
 /** UI label for an interest level. */
