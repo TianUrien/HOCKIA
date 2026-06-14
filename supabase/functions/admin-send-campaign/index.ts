@@ -5,7 +5,6 @@ declare const Deno: {
   serve: (handler: (req: Request) => Response | Promise<Response>) => void
 }
 
-// @ts-expect-error Deno URL imports are resolved at runtime in Supabase Edge Functions.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { getServiceClient } from '../_shared/supabase-client.ts'
 import { captureException } from '../_shared/sentry.ts'
@@ -176,10 +175,18 @@ Deno.serve(async (req: Request) => {
       )
     }
 
+    const templateKey = campaign.template_key
+    if (!templateKey) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Campaign has no template_key' }),
+        { status: 400, headers: { ...headers, 'Content-Type': 'application/json' } }
+      )
+    }
+
     logger.info('Starting campaign send', {
       campaignId: campaign_id,
       campaignName: campaign.name,
-      templateKey: campaign.template_key,
+      templateKey,
       adminId: user.id,
     })
 
@@ -196,7 +203,7 @@ Deno.serve(async (req: Request) => {
     // Render template
     // ========================================================================
     const isOutreach = campaign.audience_source === 'outreach'
-    const rendered = await renderTemplate(serviceClient, campaign.template_key, {})
+    const rendered = await renderTemplate(serviceClient, templateKey, {})
     if (!rendered) {
       await updateCampaignStatus(serviceClient, logger, {
         campaignId: campaign_id,
@@ -215,13 +222,20 @@ Deno.serve(async (req: Request) => {
     let outreachContactMap: Map<string, { contact_name: string; club_name: string; country: string }> | null = null
 
     if (isOutreach) {
-      outreachTemplate = await getActiveTemplate(serviceClient, campaign.template_key)
+      outreachTemplate = await getActiveTemplate(serviceClient, templateKey)
     }
 
     // ========================================================================
     // Query recipients
     // ========================================================================
-    const audienceFilter = campaign.audience_filter || {}
+    const audienceFilter = (campaign.audience_filter ?? {}) as {
+      country?: string
+      contact_ids?: string[]
+      club?: string
+      status?: string
+      roles?: string[]
+      role?: string
+    }
     const filterCountry = audienceFilter.country || null
     let recipients: Array<{ email: string; recipientId: string | null; recipientRole: string; recipientCountry: string | null }>
 
@@ -365,7 +379,7 @@ Deno.serve(async (req: Request) => {
     if (abVariants) {
       for (const key of ['A', 'B'] as const) {
         const vKey = abVariants[key].template_key
-        if (vKey && vKey !== campaign.template_key) {
+        if (vKey && vKey !== templateKey) {
           const tmpl = await getActiveTemplate(serviceClient, vKey)
           if (tmpl) {
             variantTemplates[key] = tmpl
@@ -485,7 +499,7 @@ Deno.serve(async (req: Request) => {
       subject: rendered.subject,
       html: rendered.html,
       text: rendered.text,
-      templateKey: campaign.template_key,
+      templateKey,
       campaignId: campaign_id,
       logger,
       renderForRecipient,

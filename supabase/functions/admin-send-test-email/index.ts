@@ -5,7 +5,6 @@ declare const Deno: {
   serve: (handler: (req: Request) => Response | Promise<Response>) => void
 }
 
-// @ts-expect-error Deno URL imports are resolved at runtime in Supabase Edge Functions.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { getServiceClient } from '../_shared/supabase-client.ts'
 import { captureException } from '../_shared/sentry.ts'

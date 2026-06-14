@@ -6,8 +6,8 @@ declare const Deno: {
 }
 
 import { getServiceClient } from '../_shared/supabase-client.ts'
+import type { Database } from '../_shared/database.types.ts'
 import { captureException } from '../_shared/sentry.ts'
-// @ts-expect-error Deno URL imports are resolved at runtime in Supabase Edge Functions.
 import { Webhook } from 'https://esm.sh/svix@1.64.1'
 
 /**
@@ -158,7 +158,7 @@ Deno.serve(async (req: Request) => {
 
       // Only progress forward (or override with bounce/complaint)
       if (newPriority > currentPriority) {
-        const updates: Record<string, any> = { status: eventType }
+        const updates: Database['public']['Tables']['email_sends']['Update'] = { status: eventType }
 
         // Set timestamp columns
         if (eventType === 'delivered' && !sendRow.delivered_at) {

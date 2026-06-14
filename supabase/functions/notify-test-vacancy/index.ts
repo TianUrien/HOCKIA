@@ -177,11 +177,15 @@ Deno.serve(async (req: Request) => {
     const clubName = clubProfile.full_name || 'Unknown Club'
     const HOCKIA_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://inhockia.com'
 
+    const city = vacancy.location_city?.trim() || ''
+    const country = vacancy.location_country?.trim() || ''
+    const location = city && country ? `${city}, ${country}` : city || country || ''
+
     const templateVars = {
       club_name: clubName,
       vacancy_title: vacancy.title || 'Untitled',
       position: vacancy.position || '',
-      location: vacancy.location || '',
+      location,
       summary: vacancy.description?.slice(0, 200) || '',
       cta_url: `${HOCKIA_BASE_URL}/opportunities/${vacancy.id}`,
       settings_url: `${HOCKIA_BASE_URL}/settings`,

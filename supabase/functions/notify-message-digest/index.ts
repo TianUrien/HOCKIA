@@ -166,10 +166,18 @@ Deno.serve(async (req: Request) => {
 
     logger.info('Fetched notifications', { count: notifications.length })
 
+    // The notification metadata jsonb carries digest-specific fields the
+    // generated `Json` type cannot express; assert the real shape we read.
+    interface DigestMetadata {
+      sender_ids?: string[]
+      conversation_id?: string
+      message_count?: number
+    }
+
     // Collect unique sender IDs from all notifications
     const senderIdSet = new Set<string>()
     for (const notif of notifications) {
-      const senderIds = notif.metadata?.sender_ids as string[] | undefined
+      const senderIds = (notif.metadata as DigestMetadata | null)?.sender_ids
       if (senderIds) {
         for (const sid of senderIds) {
           senderIdSet.add(sid)
@@ -201,13 +209,13 @@ Deno.serve(async (req: Request) => {
 
     // Build conversation digest entries
     const conversations: ConversationDigest[] = notifications.map(notif => {
-      const metadata = notif.metadata as any
+      const metadata = notif.metadata as DigestMetadata | null
       const conversationId = (notif.source_entity_id || metadata?.conversation_id) as string
 
       // Determine the primary sender name
       // Use the most recent sender (actor_profile_id) or first from sender_ids
       const primarySenderId = notif.actor_profile_id
-        || (metadata?.sender_ids?.[0] as string | undefined)
+        || metadata?.sender_ids?.[0]
 
       const senderProfile = primarySenderId ? senderMap.get(primarySenderId) : null
       const senderName = senderProfile?.full_name?.trim() || 'Someone'
