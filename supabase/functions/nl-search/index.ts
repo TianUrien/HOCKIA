@@ -2837,6 +2837,89 @@ Deno.serve(async (req) => {
     const roleCounts = requestedOffset > 0 ? [] : extractRoleCounts(query)
     const isCompound = roleCounts.length >= 2
 
+    // ── Recruiting MUST-HAVE scope overlay (Phase 3 — must-have criteria) ──
+    // When the caller is a recruiter with an active opportunity scope, that
+    // opening's MUST-HAVE criteria hard-filter the search — but PER-DIMENSION:
+    // the typed query wins on any dimension it named; a must-have only fills a
+    // dimension the query left SILENT. (nl-search is otherwise stateless re:
+    // the scope.) Must-haves only exist on PLAYER opportunities, so the overlay
+    // is applied only to player searches (single ['player'] or the player
+    // sub-search of a compound query). The discover_profiles must-have filters
+    // are NULL-neutral, so a candidate blank on a dimension is always kept.
+    let mustHaveScope: {
+      role: string | null
+      position: string | null; position_required: boolean
+      compensation: string | null; compensation_required: boolean
+      location_country: string | null; location_required: boolean
+      start_date: string | null; availability_required: boolean
+      specialists: string[] | null; specialists_required: boolean
+    } | null = null
+    if (userContext?.role === 'club' || userContext?.role === 'coach') {
+      const { data: scopeRow } = await adminClient
+        .from('recruiting_context')
+        .select('target_role, target_position, target_compensation, target_location_country, target_start_date, target_specialists, position_required, compensation_required, location_required, availability_required, specialists_required')
+        .eq('owner_id', user.id)
+        .eq('is_active', true)
+        .maybeSingle()
+      const r = scopeRow as Record<string, unknown> | null
+      if (r) {
+        mustHaveScope = {
+          role: (r.target_role as string) ?? null,
+          position: (r.target_position as string) ?? null,
+          position_required: r.position_required === true,
+          compensation: (r.target_compensation as string) ?? null,
+          compensation_required: r.compensation_required === true,
+          location_country: (r.target_location_country as string) ?? null,
+          location_required: r.location_required === true,
+          start_date: (r.target_start_date as string) ?? null,
+          availability_required: r.availability_required === true,
+          specialists: (r.target_specialists as string[]) ?? null,
+          specialists_required: r.specialists_required === true,
+        }
+      }
+    }
+
+    // Per-dimension overlay — only set a must-have where the query is SILENT on
+    // that dimension (so an explicit query always wins). Player scopes only.
+    const mustHaveOverlay: Record<string, unknown> = {}
+    if (mustHaveScope?.role === 'player') {
+      if (mustHaveScope.position_required && mustHaveScope.position && !parsed.positions?.length) {
+        mustHaveOverlay.p_required_positions = [mustHaveScope.position]
+      }
+      // The comp clash only bites on an unpaid/development must-have.
+      if (mustHaveScope.compensation_required && mustHaveScope.compensation === 'unpaid_development' && !parsed.opportunity_preference) {
+        mustHaveOverlay.p_exclude_paid_seekers = true
+      }
+      if (
+        mustHaveScope.location_required && mustHaveScope.location_country &&
+        !parsed.locations?.length && !parsed.relocation_to_countries?.length && !parsed.countries?.length
+      ) {
+        // Fold UK home nations → "United Kingdom" (mirrors the client's
+        // normalizeCountry) so the directory lookup resolves.
+        const rawLoc = mustHaveScope.location_country.trim()
+        const loc = /^(england|scotland|wales|northern ireland)$/i.test(rawLoc) ? 'United Kingdom' : rawLoc
+        const { data: locData } = await adminClient
+          .from('countries')
+          .select('id')
+          .or(`name.ilike.%${loc}%,common_name.ilike.%${loc}%`)
+          .limit(1)
+        const locId = (locData as { id: number }[] | null)?.[0]?.id ?? null
+        if (locId != null) {
+          mustHaveOverlay.p_required_location_country_id = locId
+        } else {
+          // Don't silently swallow it — the location must-have is then NOT
+          // enforced in search (the candidate is still warned client-side).
+          console.warn(`[nl-search] must-have location "${rawLoc}" did not resolve to a country id; location filter skipped`)
+        }
+      }
+      if (mustHaveScope.availability_required && mustHaveScope.start_date && !parsed.available_from) {
+        mustHaveOverlay.p_available_by = mustHaveScope.start_date
+      }
+      if (mustHaveScope.specialists_required && mustHaveScope.specialists?.length && !parsed.specialist_skills?.length) {
+        mustHaveOverlay.p_specialist_skills = mustHaveScope.specialists
+      }
+    }
+
     const baseDiscoverParams = {
       p_positions: parsed.positions || null,
       // Phase 3e: prefer the new category param. Legacy p_gender is also
@@ -2887,6 +2970,11 @@ Deno.serve(async (req) => {
         const avail = baseDiscoverParams.p_availability
         const { data, error } = await adminClient.rpc('discover_profiles', {
           ...baseDiscoverParams,
+          // MUST-HAVE overlay only on the player sub-search.
+          ...(rc.role === 'player' ? mustHaveOverlay : {}),
+          // …but if THIS sub-search names a position ("1 goalkeeper"), that
+          // explicit ask wins — drop the must-have position filter for it.
+          ...(rc.role === 'player' && rc.position ? { p_required_positions: null } : {}),
           p_roles: [rc.role],
           // Position-aware compound: a sub-search with a specific position
           // ("1 goalkeeper") narrows to that position; otherwise the player
@@ -2915,6 +3003,10 @@ Deno.serve(async (req) => {
     } else {
       const { data, error } = await adminClient.rpc('discover_profiles', {
         ...baseDiscoverParams,
+        // MUST-HAVE overlay only on a pure player search (must-haves are
+        // player-opps; applying them to a coach/club/brand search would wrongly
+        // filter on player intent fields).
+        ...(effectiveRoles.length === 1 && effectiveRoles[0] === 'player' ? mustHaveOverlay : {}),
         p_roles: effectiveRoles,
         // Phase 1b — the explicit count governs the first page; "Show more"
         // load-more requests (offset > 0) page in default-sized batches.
