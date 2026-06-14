@@ -1,5 +1,6 @@
 // deno-lint-ignore-file no-explicit-any
 import { getServiceClient } from '../_shared/supabase-client.ts'
+import type { Database } from '../_shared/database.types.ts'
 import { captureException } from '../_shared/sentry.ts'
 import { corsHeaders } from '../_shared/cors.ts'
 import {
@@ -260,21 +261,24 @@ Deno.serve(async (req: Request) => {
       .from('public_opportunities')
       .select('*', { count: 'exact' })
 
-    // Apply filters
+    // Apply filters. validateQueryParams() has already checked each value
+    // against the VALID_* allowlists, which are subsets of the matching
+    // column enums, so these casts name the real runtime shape.
+    type Enums = Database['public']['Enums']
     if (query.position) {
-      dbQuery = dbQuery.eq('position', query.position)
+      dbQuery = dbQuery.eq('position', query.position as Enums['opportunity_position'])
     }
     if (query.gender) {
-      dbQuery = dbQuery.eq('gender', query.gender)
+      dbQuery = dbQuery.eq('gender', query.gender as Enums['opportunity_gender'])
     }
     if (query.country) {
       dbQuery = dbQuery.ilike('location_country', query.country)
     }
     if (query.opportunity_type) {
-      dbQuery = dbQuery.eq('opportunity_type', query.opportunity_type)
+      dbQuery = dbQuery.eq('opportunity_type', query.opportunity_type as Enums['opportunity_type'])
     }
     if (query.priority) {
-      dbQuery = dbQuery.eq('priority', query.priority)
+      dbQuery = dbQuery.eq('priority', query.priority as Enums['opportunity_priority'])
     }
 
     // Apply pagination and ordering

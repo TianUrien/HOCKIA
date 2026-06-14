@@ -7,6 +7,8 @@ declare const Deno: {
 }
 
 import { getServiceClient } from '../_shared/supabase-client.ts'
+import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import type { Database } from '../_shared/database.types.ts'
 import { corsHeaders } from '../_shared/cors.ts'
 import { captureException } from '../_shared/sentry.ts'
 import {
@@ -89,7 +91,7 @@ const RECIPIENT_PAGE_SIZE = 200
  * - Paginates to avoid timeout on large result sets
  */
 async function fetchEligibleRecipients(
-  supabase: any,
+  supabase: SupabaseClient<Database>,
   vacancy: VacancyRecord,
   logger: ReturnType<typeof createLogger>
 ): Promise<RecipientInfo[]> {

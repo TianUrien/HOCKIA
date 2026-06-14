@@ -13,6 +13,7 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { getServiceClient } from '../_shared/supabase-client.ts'
+import type { Database } from '../_shared/database.types.ts'
 import { getCorsHeaders } from '../_shared/cors.ts'
 import { captureException } from '../_shared/sentry.ts'
 import { parseSearchQuery, synthesizeQualitativeInsights, composeNoResults, answerPlatformHelp, PROMPT_VERSION, type LLMCallMeta, type ParsedFilters, type HistoryTurn, type ProfileQualitativeData, type UserContext } from '../_shared/llm-client.ts'
@@ -1863,7 +1864,7 @@ Deno.serve(async (req) => {
           userProfile.base_country_id,
           userProfile.nationality_country_id,
           userProfile.nationality2_country_id,
-        ].filter(Boolean)
+        ].filter((id): id is number => id != null)
 
         // Role-specific aggregate fetches run in parallel with country/club
         // resolution. Each is null-safe; failures degrade to 0/null rather
@@ -2166,7 +2167,7 @@ Deno.serve(async (req) => {
       }
     } catch (ctxError) {
       // Non-fatal: AI works generically without user context
-      captureException(ctxError, { functionName: 'nl-search', correlationId, note: 'user-context-fetch' })
+      captureException(ctxError, { functionName: 'nl-search', correlationId, extra: { note: 'user-context-fetch' } })
     }
 
     pendingUserRole = userContext?.role ?? null
@@ -2920,6 +2921,42 @@ Deno.serve(async (req) => {
       }
     }
 
+    // The generated discover_profiles Args type is stale (it predates the
+    // intent + must-have params) and types every optional arg as non-null,
+    // even though every SQL param is `DEFAULT NULL` and the function treats
+    // NULL as "no filter". This names the real runtime param shape so the
+    // null-neutral calls below type-check against the actual function.
+    type DiscoverProfilesParams = {
+      p_roles?: string[] | null
+      p_positions?: string[] | null
+      p_gender?: string | null
+      p_min_age?: number | null
+      p_max_age?: number | null
+      p_nationality_country_ids?: number[] | null
+      p_eu_passport?: boolean | null
+      p_base_country_ids?: number[] | null
+      p_base_location?: string | null
+      p_availability?: string | null
+      p_min_references?: number | null
+      p_min_career_entries?: number | null
+      p_league_ids?: number[] | null
+      p_country_ids?: number[] | null
+      p_search_text?: string | null
+      p_sort_by?: string | null
+      p_limit?: number | null
+      p_offset?: number | null
+      p_coach_specializations?: string[] | null
+      p_target_category?: string | null
+      p_relocation_willingness?: string | null
+      p_relocation_to_country_ids?: number[] | null
+      p_level_target?: string | null
+      p_opportunity_preference?: string | null
+      p_available_by?: string | null
+      p_specialist_skills?: string[] | null
+      p_required_positions?: string[] | null
+      p_exclude_paid_seekers?: boolean | null
+      p_required_location_country_id?: number | null
+    }
     const baseDiscoverParams = {
       p_positions: parsed.positions || null,
       // Phase 3e: prefer the new category param. Legacy p_gender is also
@@ -2968,7 +3005,7 @@ Deno.serve(async (req) => {
         // 'context') shouldn't silently narrow a multi-role search they
         // never explicitly scoped. Apply each filter only where it belongs.
         const avail = baseDiscoverParams.p_availability
-        const { data, error } = await adminClient.rpc('discover_profiles', {
+        const { data, error } = await adminClient.rpc('discover_profiles', ({
           ...baseDiscoverParams,
           // MUST-HAVE overlay only on the player sub-search.
           ...(rc.role === 'player' ? mustHaveOverlay : {}),
@@ -2992,7 +3029,7 @@ Deno.serve(async (req) => {
           p_gender: categorySource === 'context' ? null : baseDiscoverParams.p_gender,
           p_limit: rc.count,
           p_offset: 0,
-        })
+        } satisfies DiscoverProfilesParams as Database['public']['Functions']['discover_profiles']['Args']))
         if (error) { rpcError = error; break }
         const rows = (data as { results: any[] } | null)?.results ?? []
         merged.push(...rows)
@@ -3001,7 +3038,7 @@ Deno.serve(async (req) => {
       // its own requested count, so there is no single list to "show more".
       if (!rpcError) rpcResult = { results: merged, total: merged.length, has_more: false }
     } else {
-      const { data, error } = await adminClient.rpc('discover_profiles', {
+      const { data, error } = await adminClient.rpc('discover_profiles', ({
         ...baseDiscoverParams,
         // MUST-HAVE overlay only on a pure player search (must-haves are
         // player-opps; applying them to a coach/club/brand search would wrongly
@@ -3012,8 +3049,8 @@ Deno.serve(async (req) => {
         // load-more requests (offset > 0) page in default-sized batches.
         p_limit: requestedOffset > 0 ? DEFAULT_RESULT_LIMIT : resolveResultLimit(query),
         p_offset: requestedOffset,
-      })
-      rpcResult = data
+      } satisfies DiscoverProfilesParams as Database['public']['Functions']['discover_profiles']['Args']))
+      rpcResult = data as { results: any[]; total: number; has_more: boolean } | null
       rpcError = error
     }
 
@@ -3281,7 +3318,12 @@ Deno.serve(async (req) => {
     //
     // Telemetry vars retained at zero — the next clean-up pass can drop the
     // shortlist_* columns from discovery_events once nothing reads them.
-    const shortlistMeta: LLMCallMeta | null = null
+    // Annotated via `as` (not `: T = null`) so const-narrowing keeps the
+    // `LLMCallMeta | null` union instead of collapsing to bare `null`, which
+    // would make the optional-chained `shortlistMeta?.usage` accesses below
+    // resolve their non-null branch to `never`. Runtime value stays null —
+    // the shortlist LLM pass is retired and these telemetry fields stay zero.
+    const shortlistMeta = null as LLMCallMeta | null
     const shortlistMalformed = false
     const shortlistByProfileId = new Map<string, unknown>()
 

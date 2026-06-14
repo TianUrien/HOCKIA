@@ -280,7 +280,6 @@ Deno.serve(async (req: Request) => {
       templateKey: 'application_notification',
       recipientId: club.id,
       recipientRole: 'club',
-      recipientCountry: null,
       logger,
     })
 

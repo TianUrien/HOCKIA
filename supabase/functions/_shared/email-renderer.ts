@@ -13,7 +13,6 @@ declare const Deno: { env: { get(key: string): string | undefined } }
  *   footnote, note, conversation_list
  */
 
-// @ts-expect-error Deno URL imports are resolved at runtime in Supabase Edge Functions.
 import { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const HOCKIA_BASE_URL = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://inhockia.com'

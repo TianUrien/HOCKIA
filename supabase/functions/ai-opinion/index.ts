@@ -37,6 +37,7 @@
 import { serve } from 'https://deno.land/std@0.224.0/http/server.ts'
 import { getCorsHeaders } from '../_shared/cors.ts'
 import { getServiceClient } from '../_shared/supabase-client.ts'
+import type { Json } from '../_shared/database.types.ts'
 
 // ── Prompt version + constants ──────────────────────────────────────
 // Bump PROMPT_VERSION when the system prompt or output schema changes
@@ -280,7 +281,7 @@ async function fetchLevelBand(
     .eq('id', worldClubId)
     .maybeSingle()
   if (error || !data) return null
-  const club = data as { men_league_id: string | null; women_league_id: string | null }
+  const club = data as { men_league_id: number | null; women_league_id: number | null }
   const wantWomen = category === 'adult_women' || category === 'girls'
   const primaryId = wantWomen ? club.women_league_id : club.men_league_id
   const fallbackId = wantWomen ? club.men_league_id : club.women_league_id
@@ -834,7 +835,11 @@ serve(async (req: Request) => {
       .gt('expires_at', new Date().toISOString())
       .maybeSingle()
     if (cached) {
-      const c = cached as { id: string; verdict_short: string; citations: Citation[] }
+      // citations is a jsonb column (typed Json); at rest it's the
+      // {field,value,claim}[] we wrote on the persist path. Json doesn't
+      // structurally overlap Citation[], so narrow via Json first.
+      const c = cached as { id: string; verdict_short: string; citations: Json }
+      const citations = c.citations as unknown as Citation[]
       // F10 fix: include quota_remaining: null for shape consistency
       // with the fresh-generation path. The client union expects this
       // field on every ready response.
@@ -844,7 +849,7 @@ serve(async (req: Request) => {
       return new Response(JSON.stringify({
         opinion_id: c.id,
         verdict_short: c.verdict_short,
-        citations: c.citations,
+        citations,
         cached: true,
         quota_remaining: null,
       }), {
@@ -908,7 +913,10 @@ serve(async (req: Request) => {
       player_id: playerId,
       context_hash: contextHash,
       verdict_short: payload.verdict_short,
-      citations: payload.citations,
+      // citations is a jsonb column (typed Json). Citation lacks an index
+      // signature so isn't structurally a Json object literal; the array is
+      // valid JSON at runtime, so cast it to the column's Json type.
+      citations: payload.citations as unknown as Json,
       model: MODEL,
       prompt_version: PROMPT_VERSION,
       expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),

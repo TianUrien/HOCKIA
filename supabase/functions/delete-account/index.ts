@@ -368,8 +368,15 @@ Deno.serve(async (req) => {
         throw error
       }
 
-      applyDeletionSummary(deletedData, data ?? undefined)
-      logger.info('Relational cleanup complete', { counts: data })
+      // hard_delete_profile_relations returns a jsonb object of per-table
+      // delete counts (all numeric); the generated RPC type is the opaque
+      // `Json`, so narrow to the real flat count-map shape it produces.
+      const summary =
+        data && typeof data === 'object' && !Array.isArray(data)
+          ? (data as Record<string, number | null>)
+          : undefined
+      applyDeletionSummary(deletedData, summary)
+      logger.info('Relational cleanup complete', { counts: summary })
     } catch (dbError) {
       logger.error('Database cleanup failed', { error: dbError })
       throw new Error('Failed to delete profile data')
