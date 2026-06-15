@@ -18,6 +18,7 @@ import {
   ExternalLink,
 } from 'lucide-react'
 import { StatCard } from '../components/StatCard'
+import { pct } from '../utils/percent'
 import { DataTable } from '../components/DataTable'
 import type { Column } from '../components/DataTable'
 import {
@@ -246,6 +247,7 @@ export function AdminEngagement() {
           icon={Users}
           color="purple"
           loading={isLoading}
+          percent={{ value: pct(summary?.total_active_users_7d, summary?.total_users), label: 'of total users' }}
         />
         <StatCard
           label="Total Time (7d)"
@@ -278,6 +280,7 @@ export function AdminEngagement() {
           icon={Users}
           color="purple"
           loading={isLoading}
+          percent={{ value: pct(summary?.total_active_users_30d, summary?.total_users), label: 'of total users' }}
         />
         <StatCard
           label="Total Time (30d)"

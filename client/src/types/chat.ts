@@ -47,6 +47,19 @@ export interface ConversationParticipant {
   role: 'player' | 'coach' | 'club' | 'umpire' | 'brand'
 }
 
+/**
+ * Where a conversation was initiated — surfaced as the admin "Source" column.
+ * Must stay in lockstep with the CHECK constraint on conversations.origin
+ * (migration 20260615190000_admin_conversations.sql).
+ */
+export type ConversationOrigin =
+  | 'Community'
+  | 'Profile'
+  | 'Opportunity'
+  | 'Hockia AI'
+  | 'Direct'
+  | 'unknown'
+
 export interface Conversation {
   id: string
   participant_one_id: string
@@ -56,6 +69,12 @@ export interface Conversation {
   last_message_at: NullableDate
   otherParticipant?: ConversationParticipant
   isPending?: boolean
+  /**
+   * Entry point this conversation started from. Set ONLY when a brand-new row
+   * is created; existing conversations are never re-attributed. Defaults
+   * 'unknown' server-side for pre-instrumentation rows.
+   */
+  origin?: ConversationOrigin
 }
 
 export type ChatMessageEvent =

@@ -135,7 +135,7 @@ export default function MemberCard({
         navigate(`/messages?conversation=${existingConversation.id}`, { state: { returnTo } })
       } else {
         // No conversation yet - open messages in "new conversation" mode
-        navigate(`/messages?new=${id}`, { state: { returnTo } })
+        navigate(`/messages?new=${id}`, { state: { returnTo, messageOrigin: 'Community' } })
       }
     } catch (error) {
       logger.error('Error creating conversation:', error)

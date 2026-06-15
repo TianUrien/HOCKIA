@@ -15,6 +15,7 @@ import {
   BarChart3,
 } from 'lucide-react'
 import { StatCard } from '../components/StatCard'
+import { pct } from '../utils/percent'
 import { DataTable } from '../components/DataTable'
 import type { Column } from '../components/DataTable'
 import { FeatureAdoptionMatrix } from '../components/FeatureAdoptionMatrix'
@@ -212,6 +213,7 @@ export function AdminFeatureUsage() {
           icon={UserCheck}
           color="blue"
           loading={isLoading}
+          percent={{ value: pct(data?.profile_views?.unique_profiles_viewed, data?.profile_views?.total), label: 'of profile views' }}
         />
         <StatCard
           label="Unique Viewers"
@@ -219,6 +221,7 @@ export function AdminFeatureUsage() {
           icon={Users}
           color="green"
           loading={isLoading}
+          percent={{ value: pct(data?.profile_views?.unique_viewers, data?.profile_views?.total), label: 'of profile views' }}
         />
         <StatCard
           label="Top Source"

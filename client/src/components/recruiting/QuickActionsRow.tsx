@@ -24,6 +24,7 @@
 
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Bookmark, BookmarkCheck, MessageSquare, UserPlus, UserCheck, Clock } from 'lucide-react'
+import type { ConversationOrigin } from '@/types/chat'
 import { useIsProfileSaved } from '@/hooks/useSavedProfiles'
 import { useFriendship } from '@/hooks/useFriendship'
 import { useToastStore } from '@/lib/toast'
@@ -52,6 +53,10 @@ interface QuickActionsRowProps {
    *  hide this by default for a cleaner action row. Recruiter surfaces with
    *  more hidden actions can enable it. Default false. */
   showMoreMenu?: boolean
+  /** Where a conversation started from this row should be attributed. This
+   *  component's primary host is community discovery, so it defaults to
+   *  'Community'; recruiting hosts (CandidatePreviewSheet) pass 'Opportunity'. */
+  messageOrigin?: ConversationOrigin
   className?: string
 }
 
@@ -62,6 +67,7 @@ export default function QuickActionsRow({
   onMessage,
   showAddFriend = true,
   showMoreMenu = false,
+  messageOrigin = 'Community',
   className = '',
 }: QuickActionsRowProps) {
   const navigate = useNavigate()
@@ -86,7 +92,7 @@ export default function QuickActionsRow({
     // hosted this quick-actions row (typically /community or a
     // profile). Without this, back drops the user on the inbox.
     const returnTo = location.pathname + location.search
-    navigate(`/messages?new=${playerId}`, { state: { returnTo } })
+    navigate(`/messages?new=${playerId}`, { state: { returnTo, messageOrigin } })
     trackDbEvent('quick_action.message_clicked', 'profile', playerId)
   }
 

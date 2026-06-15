@@ -179,7 +179,7 @@ describe('PublicReferencesSection', () => {
     await waitFor(() => {
       expect(navigateMock).toHaveBeenCalledWith(
         '/messages?new=coach-9',
-        { state: { returnTo: '/players/id/test' } },
+        { state: { returnTo: '/players/id/test', messageOrigin: 'Profile' } },
       )
     })
   })

@@ -92,6 +92,73 @@ export interface TopCountry {
   user_count: number
 }
 
+// ── Countries / Nationalities analytics (admin_get_country_analytics) ──
+export interface CountrySummary {
+  total_users: number
+  with_nationality: number
+  with_nationality_pct: number | null
+  missing_nationality: number
+  missing_nationality_pct: number | null
+  dual_nationality: number
+  dual_nationality_pct: number | null
+  eu_eligible: number
+  eu_eligible_pct: number | null
+}
+
+export interface CountryRoleSummary {
+  role: string
+  total: number
+  eu_eligible: number
+  eu_eligible_pct: number | null
+  dual: number
+  dual_pct: number | null
+  missing: number
+  missing_pct: number | null
+}
+
+/** One country row — counts EVERY nationality (dual users appear under both),
+ *  so pct_total across rows can exceed 100%. */
+export interface CountryAnalyticsRow {
+  country_id: number
+  name: string
+  code: string | null
+  flag_emoji: string | null
+  region: string | null
+  is_eu: boolean
+  count: number
+  pct_total: number | null
+  players: number
+  players_pct: number | null
+  coaches: number
+  coaches_pct: number | null
+  clubs: number
+  brands: number
+  umpires: number
+}
+
+export interface CountryRegionRow {
+  region: string
+  count: number
+  pct: number | null
+}
+
+export interface CountryAnalytics {
+  summary: CountrySummary
+  by_role: CountryRoleSummary[]
+  by_country: CountryAnalyticsRow[]
+  by_region: CountryRegionRow[]
+  generated_at: string
+}
+
+export interface CountryAnalyticsFilters {
+  role?: string
+  country_id?: number
+  active?: boolean
+  min_completeness?: number
+  open_to_play?: boolean
+  open_to_coach?: boolean
+}
+
 export interface AuthOrphan {
   user_id: string
   email: string
@@ -302,10 +369,10 @@ export interface CommandCenterStats {
 export interface RetentionCohort {
   signup_month: string
   cohort_size: number
-  d1_pct: number | null
   d7_pct: number | null
-  d14_pct: number | null
+  d15_pct: number | null
   d30_pct: number | null
+  d90_pct: number | null
 }
 
 export interface ActivationFunnelData {
@@ -530,13 +597,17 @@ export interface ExtendedDashboardStats {
   avg_apps_per_vacancy: number | null
   active_clubs_7d: number
   active_clubs_30d: number
+  /** non-test club accounts — denominator for "Active Clubs (30d)" share */
+  total_clubs: number
   vacancy_fill_rate: number | null
   
   // Player insights
   players_with_video: number
   players_with_video_pct: number | null
   players_applied_ever: number
+  players_applied_ever_pct: number | null
   players_applied_7d: number
+  players_applied_7d_pct: number | null
   avg_profile_score: number | null
   onboarding_rate: number | null
   
@@ -558,6 +629,8 @@ export interface ExtendedDashboardStats {
 export interface EngagementSummary {
   total_active_users_7d: number
   total_active_users_30d: number
+  /** non-test platform users — denominator for the active-user share */
+  total_users: number
   total_time_minutes_7d: number
   total_time_minutes_30d: number
   total_sessions_7d: number
@@ -881,6 +954,55 @@ export interface MessagingMetrics {
   top_conversations: ConversationDetail[] | null
   period_days: number | null
   generated_at: string
+}
+
+/** One directional cell of the who-messages-whom matrix. */
+export interface RolePairMatrixData {
+  sender_role: string
+  recipient_role: string
+  message_count: number
+  conversation_count: number
+}
+
+export interface MessagingNewConvPoint {
+  date: string
+  count: number
+}
+
+export interface MessagingRolePairs {
+  role_pairs: RolePairMatrixData[]
+  new_conversations_trend: MessagingNewConvPoint[]
+  period_days: number
+  generated_at: string
+}
+
+/**
+ * One row of the privacy-safe per-conversation table (admin_get_conversations).
+ * METADATA ONLY — never any message content. sender = initiator (first message).
+ */
+export interface ConversationRow {
+  conversation_id: string
+  sender_id: string
+  sender_name: string | null
+  sender_role: string
+  recipient_id: string
+  recipient_name: string | null
+  recipient_role: string
+  first_message_at: string | null
+  last_message_at: string | null
+  message_count: number
+  replied: boolean
+  time_to_first_reply_minutes: number | null
+  status: 'active' | 'unanswered' | 'inactive'
+  origin: string
+  /** same value on every row of a page — total matching the filters */
+  total_count: number
+}
+
+export interface ConversationFilters {
+  status?: string
+  origin?: string
+  role?: string
 }
 
 export interface FriendshipTrendItem {
@@ -1327,10 +1449,25 @@ export interface DiscoverySummary {
   total_queries: number
   unique_users: number
   avg_result_count: number
+  /** Legacy: result_count=0 AND intent='search' (over-counts — includes recommendations). */
   zero_result_queries: number
+  /** Every query that returned 0 cards (the failure_breakdown denominator). */
+  zero_result_total: number
+  /** Honest metric: searches that genuinely matched nothing (the 'real_no_result' bucket). */
+  true_zero_result_queries: number
   avg_response_time_ms: number
   error_count: number
 }
+
+export interface FailureBreakdownBucket {
+  count: number
+  percentage: number
+}
+
+/** Each 0-card query bucketed (mutually exclusive). Keys: real_no_result,
+ *  conversational, recommendation, clarifying, canned_redirect, knowledge,
+ *  error, other. Buckets with no rows are absent (default to 0 in the UI). */
+export type FailureBreakdown = Record<string, FailureBreakdownBucket>
 
 export interface DiscoveryIntentBreakdown {
   intent: string
@@ -1364,7 +1501,9 @@ export interface DiscoveryZeroResultQuery {
   user_id: string
   display_name: string | null
   query_text: string
+  intent: string
   parsed_filters: Record<string, unknown> | null
+  meta_kind: string | null
   created_at: string
 }
 
@@ -1383,6 +1522,7 @@ export interface DiscoveryRecentQuery {
 
 export interface DiscoveryAnalyticsData {
   summary: DiscoverySummary
+  failure_breakdown: FailureBreakdown
   intent_breakdown: DiscoveryIntentBreakdown[]
   filter_frequency: DiscoveryFilterFrequency[]
   daily_trend: DiscoveryDailyTrend[]

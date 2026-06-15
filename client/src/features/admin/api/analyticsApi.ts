@@ -12,6 +12,11 @@ import type {
   ConversionFunnels,
   CommunityAnalytics,
   MarketplaceHealth,
+  MessagingRolePairs,
+  ConversationRow,
+  ConversationFilters,
+  CountryAnalytics,
+  CountryAnalyticsFilters,
 } from '../types'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -68,6 +73,49 @@ export async function getMessagingHealth(days = 30): Promise<any> {
   const { data, error } = await adminRpc('admin_get_messaging_health', { p_days: days })
   if (error) throw new Error(`Failed to get messaging health: ${error.message}`)
   return data
+}
+
+export async function getMessagingRolePairs(days = 30): Promise<MessagingRolePairs> {
+  const { data, error } = await adminRpc('admin_get_messaging_role_pairs', { p_days: days })
+  if (error) throw new Error(`Failed to get messaging role pairs: ${error.message}`)
+  return data as MessagingRolePairs
+}
+
+/**
+ * Per-conversation metadata table (who messaged whom). Privacy-safe: the RPC
+ * returns NO message content. Returns the page of rows + the full filtered
+ * total (carried on every row as total_count) for pagination.
+ */
+export async function getConversations(
+  days = 30,
+  limit = 50,
+  offset = 0,
+  filters?: ConversationFilters,
+): Promise<{ rows: ConversationRow[]; total: number }> {
+  const { data, error } = await adminRpc('admin_get_conversations', {
+    p_days: days,
+    p_limit: limit,
+    p_offset: offset,
+    p_filters: filters && Object.keys(filters).length > 0 ? filters : null,
+  })
+  if (error) throw new Error(`Failed to get conversations: ${error.message}`)
+  const rows = (Array.isArray(data) ? data : []) as ConversationRow[]
+  return { rows, total: rows[0]?.total_count ?? 0 }
+}
+
+/**
+ * Countries / nationalities analytics. Per-country counts use the
+ * "count every nationality" method (dual holders appear under both), so
+ * country %s can exceed 100%. EU eligibility is per-user (≤100%).
+ */
+export async function getCountryAnalytics(
+  filters?: CountryAnalyticsFilters,
+): Promise<CountryAnalytics> {
+  const { data, error } = await adminRpc('admin_get_country_analytics', {
+    p_filters: filters && Object.keys(filters).length > 0 ? filters : null,
+  })
+  if (error) throw new Error(`Failed to get country analytics: ${error.message}`)
+  return data as CountryAnalytics
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

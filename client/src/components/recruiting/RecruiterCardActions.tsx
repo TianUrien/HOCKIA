@@ -40,7 +40,7 @@ export default function RecruiterCardActions({ playerId, playerName, onMessage }
       return
     }
     const returnTo = location.pathname + location.search
-    navigate(`/messages?new=${playerId}`, { state: { returnTo } })
+    navigate(`/messages?new=${playerId}`, { state: { returnTo, messageOrigin: 'Opportunity' } })
     trackDbEvent('quick_action.message_clicked', 'profile', playerId, { source: 'recruiter_card' })
   }
 

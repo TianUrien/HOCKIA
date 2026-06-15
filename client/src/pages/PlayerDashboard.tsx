@@ -459,7 +459,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
       if (existingConv?.id) {
         navigate(`/messages?conversation=${existingConv.id}`, { state: { returnTo } })
       } else {
-        navigate(`/messages?new=${profileData.id}`, { state: { returnTo } })
+        navigate(`/messages?new=${profileData.id}`, { state: { returnTo, messageOrigin: 'Profile' } })
       }
     } catch (error) {
       logger.error('Error starting conversation:', error)

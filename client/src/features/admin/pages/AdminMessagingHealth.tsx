@@ -16,7 +16,11 @@ import {
   Users,
 } from 'lucide-react'
 import { StatCard } from '../components/StatCard'
-import { getMessagingHealth } from '../api/analyticsApi'
+import { pct } from '../utils/percent'
+import { RolePairHeatmap } from '../components/RolePairHeatmap'
+import { ConversationsTable } from '../components/ConversationsTable'
+import { getMessagingHealth, getMessagingRolePairs } from '../api/analyticsApi'
+import type { MessagingRolePairs } from '../types'
 import { logger } from '@/lib/logger'
 import { getRoleColors } from '@/lib/roleColors'
 
@@ -32,6 +36,7 @@ function formatMinutes(minutes: number): string {
 export function AdminMessagingHealth() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [data, setData] = useState<any | null>(null)
+  const [rolePairs, setRolePairs] = useState<MessagingRolePairs | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [daysFilter, setDaysFilter] = useState<DaysFilter>(30)
@@ -41,8 +46,12 @@ export function AdminMessagingHealth() {
     setError(null)
 
     try {
-      const result = await getMessagingHealth(daysFilter)
+      const [result, pairs] = await Promise.all([
+        getMessagingHealth(daysFilter),
+        getMessagingRolePairs(daysFilter),
+      ])
       setData(result)
+      setRolePairs(pairs)
     } catch (err) {
       logger.error('[AdminMessagingHealth] Failed to fetch data:', err)
       setError(err instanceof Error ? err.message : 'Failed to load messaging health')
@@ -169,6 +178,7 @@ export function AdminMessagingHealth() {
           icon={MessageSquareOff}
           color="amber"
           loading={isLoading}
+          percent={{ value: pct(data?.summary?.unanswered_conversations, data?.summary?.active_conversations), label: 'of active conversations' }}
         />
       </div>
 
@@ -252,6 +262,68 @@ export function AdminMessagingHealth() {
             <p className="text-sm text-gray-400 text-center py-8">No response time data</p>
           )}
         </div>
+      </div>
+
+      {/* Who messages whom — directional role-pair matrix */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-1">Who messages whom</h2>
+        <p className="text-sm text-gray-500 mb-4">
+          Directional — rows send to columns. Reveals whether clubs/coaches reach out, or only
+          players do. Last {daysFilter} days.
+        </p>
+        <RolePairHeatmap data={rolePairs?.role_pairs ?? []} loading={isLoading} />
+      </div>
+
+      {/* Per-conversation table — the who-messaged-whom drill-down. Metadata
+          only; no message content is ever fetched or shown. */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-1">Conversations</h2>
+        <p className="text-sm text-gray-500 mb-4">
+          Who messaged whom, and whether they got a reply. Metadata only — message content is never
+          shown. Conversations started in the last {daysFilter} days.
+        </p>
+        <ConversationsTable days={daysFilter} />
+      </div>
+
+      {/* New conversations per day */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">New Conversations</h2>
+        {isLoading ? (
+          <div className="h-40 bg-gray-100 rounded-lg animate-pulse" />
+        ) : !rolePairs || rolePairs.new_conversations_trend.length === 0 ? (
+          <p className="text-sm text-gray-400 text-center py-8">No new conversations in this period</p>
+        ) : (
+          <>
+            <div className="h-40 flex items-end gap-1">
+              {(() => {
+                const trend = rolePairs.new_conversations_trend
+                const maxNew = Math.max(...trend.map((d) => d.count), 1)
+                return trend.map((day, index) => {
+                  const height = (day.count / maxNew) * 100
+                  const isToday = index === trend.length - 1
+                  return (
+                    <div
+                      key={day.date}
+                      className="flex-1 group relative h-full flex flex-col justify-end"
+                      title={`${day.date}: ${day.count} new conversation${day.count === 1 ? '' : 's'}`}
+                    >
+                      <div
+                        className={`w-full rounded-t transition-all ${
+                          isToday ? 'bg-emerald-600' : 'bg-emerald-400 hover:bg-emerald-500'
+                        }`}
+                        style={{ height: `${Math.max(height, 2)}%` }}
+                      />
+                    </div>
+                  )
+                })
+              })()}
+            </div>
+            <div className="flex justify-between mt-2 text-xs text-gray-500">
+              <span>{rolePairs.new_conversations_trend[0]?.date ?? ''}</span>
+              <span>Today</span>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Top Messengers Table */}

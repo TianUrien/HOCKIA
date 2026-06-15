@@ -7,7 +7,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js'
 import ConversationList from '@/components/ConversationList'
 import ChatWindowV2 from '@/features/chat-v2/ChatWindowV2'
-import type { ChatMessageEvent } from '@/types/chat'
+import type { ChatMessageEvent, ConversationOrigin } from '@/types/chat'
 import Header from '@/components/Header'
 import { ConversationSkeleton } from '@/components/Skeleton'
 import { NewMessageModal } from '@/components'
@@ -77,6 +77,7 @@ interface Conversation {
   unreadCount?: number
   isPending?: boolean
   sortTimestamp?: string | null
+  origin?: ConversationOrigin
 }
 
 export default function MessagesPage() {
@@ -403,6 +404,11 @@ export default function MessagesPage() {
         }
 
         const pendingId = `pending-${targetUserId}`
+        // Origin is passed by the entry point via navigation state (preserved
+        // across the ?new= → /messages/pending-<id> upgrades below). Sites that
+        // pass none fall back to 'Direct' (generic compose).
+        const messageOrigin =
+          (location.state as { messageOrigin?: ConversationOrigin } | null)?.messageOrigin ?? 'Direct'
         setPendingConversation({
           id: pendingId,
           participant_one_id: user.id,
@@ -418,7 +424,8 @@ export default function MessagesPage() {
             role: ((data.role ?? 'player') as 'player' | 'coach' | 'club' | 'umpire' | 'brand')
           },
           unreadCount: 0,
-          isPending: true
+          isPending: true,
+          origin: messageOrigin
         })
         setSelectedConversationId(pendingId)
         const nextParams = new URLSearchParams(searchParams)

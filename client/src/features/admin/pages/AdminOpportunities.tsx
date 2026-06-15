@@ -18,6 +18,7 @@ import {
   AlertTriangle,
 } from 'lucide-react'
 import { StatCard } from '../components/StatCard'
+import { pct } from '../utils/percent'
 import { DataTable } from '../components/DataTable'
 import type { Column } from '../components/DataTable'
 import { getVacancies, getExtendedDashboardStats } from '../api/adminApi'
@@ -269,6 +270,7 @@ export function AdminOpportunities() {
           icon={Building2}
           color="green"
           loading={isLoading}
+          percent={{ value: pct(stats?.active_clubs_30d, stats?.total_clubs), label: 'of all clubs' }}
         />
         <StatCard
           label="Fill Rate"

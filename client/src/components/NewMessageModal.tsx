@@ -132,7 +132,7 @@ export default function NewMessageModal({ isOpen, onClose }: NewMessageModalProp
 
   const handleSelectUser = (userId: string) => {
     // Navigate to messages with the new conversation parameter
-    navigate(`/messages?new=${userId}`)
+    navigate(`/messages?new=${userId}`, { state: { messageOrigin: 'Direct' } })
     handleClose()
   }
 

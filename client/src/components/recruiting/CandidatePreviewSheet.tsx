@@ -550,6 +550,7 @@ export function CandidatePreviewSheet({ member, onClose }: CandidatePreviewSheet
                 playerName={member.full_name}
                 compact
                 showAddFriend
+                messageOrigin="Opportunity"
                 className="w-full flex-wrap justify-center"
               />
             </div>

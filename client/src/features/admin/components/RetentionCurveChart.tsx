@@ -40,13 +40,15 @@ export function RetentionCurveChart({ cohorts, loading }: RetentionCurveChartPro
     )
   }
 
-  // Transform cohorts into chart data: [{period: 'D1', 'Jan 2026': 45, ...}, ...]
-  const periods = ['D1', 'D7', 'D14', 'D30']
-  const pctKeys = ['d1_pct', 'd7_pct', 'd14_pct', 'd30_pct'] as const
+  // Transform cohorts into chart data: [{period: 'D7', 'Jan 2026': 45, ...}, ...]
+  // Each marker's value is null until a cohort is old enough to measure it, so
+  // recent cohorts' curves truncate (D90 only appears once a cohort is ~90d old).
+  const periods = ['D7', 'D15', 'D30', 'D90']
+  const pctKeys = ['d7_pct', 'd15_pct', 'd30_pct', 'd90_pct'] as const
 
   const chartData = periods.map((period, i) => {
     const point: Record<string, string | number | null> = { period }
-    cohorts.slice(0, 3).forEach((c) => {
+    cohorts.slice(0, 4).forEach((c) => {
       const label = new Date(c.signup_month).toLocaleDateString('en-US', { month: 'short', year: '2-digit' })
         + ` (${c.cohort_size})`
       point[label] = c[pctKeys[i]]
@@ -54,7 +56,7 @@ export function RetentionCurveChart({ cohorts, loading }: RetentionCurveChartPro
     return point
   })
 
-  const cohortLabels = cohorts.slice(0, 3).map((c) =>
+  const cohortLabels = cohorts.slice(0, 4).map((c) =>
     new Date(c.signup_month).toLocaleDateString('en-US', { month: 'short', year: '2-digit' })
       + ` (${c.cohort_size})`
   )
