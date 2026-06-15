@@ -10,6 +10,7 @@ export interface DashboardStats {
   total_players: number
   total_coaches: number
   total_clubs: number
+  total_umpires: number
   blocked_users: number
   test_accounts: number
 
@@ -233,6 +234,8 @@ export interface AuditLogEntry {
   action: string
   target_type: string
   target_id: string
+  target_name: string | null
+  target_email: string | null
   old_data: Record<string, unknown> | null
   new_data: Record<string, unknown> | null
   metadata: Record<string, unknown> | null

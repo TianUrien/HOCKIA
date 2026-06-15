@@ -247,7 +247,9 @@ export function AdminAuditLog() {
                         </span>
                         <span className="text-gray-400">•</span>
                         <span className="text-sm text-gray-500">
-                          {log.target_type}
+                          {log.target_name
+                            ? `${log.target_name}${log.target_email ? ` (${log.target_email})` : ''}`
+                            : log.target_type}
                         </span>
                       </div>
                       <div className="text-sm text-gray-500 mt-1">

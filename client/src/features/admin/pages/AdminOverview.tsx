@@ -250,12 +250,10 @@ export function AdminOverview() {
           {/* User Metrics */}
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Users</h2>
-            {/* Role split donut — %-of-total. A computed "Other roles"
-                remainder (total_users minus the 4 charted roles) keeps the
-                donut centre equal to the Total Users card, instead of summing
-                only the charted roles. Umpires currently fall into this
-                remainder; Slice B adds `total_umpires` to give them their own
-                slice. */}
+            {/* Role split donut — %-of-total, all 5 roles. A computed
+                "Other roles" remainder (total_users minus the 5 roles) keeps
+                the donut centre equal to the Total Users card and absorbs any
+                roleless / incomplete users; it hides itself when 0. */}
             <div className="bg-white rounded-xl border border-gray-200 p-6 mb-4">
               <CategoryBreakdownChart
                 segments={[
@@ -263,6 +261,7 @@ export function AdminOverview() {
                   { label: 'Coaches', value: stats?.total_coaches ?? 0, color: '#3b82f6' },
                   { label: 'Clubs', value: stats?.total_clubs ?? 0, color: '#f59e0b' },
                   { label: 'Brands', value: stats?.total_brands ?? 0, color: '#e11d48' },
+                  { label: 'Umpires', value: stats?.total_umpires ?? 0, color: '#6366f1' },
                   {
                     label: 'Other roles',
                     value: Math.max(
@@ -271,7 +270,8 @@ export function AdminOverview() {
                         ((stats?.total_players ?? 0) +
                           (stats?.total_coaches ?? 0) +
                           (stats?.total_clubs ?? 0) +
-                          (stats?.total_brands ?? 0)),
+                          (stats?.total_brands ?? 0) +
+                          (stats?.total_umpires ?? 0)),
                     ),
                     color: '#94a3b8',
                   },
@@ -280,7 +280,7 @@ export function AdminOverview() {
                 loading={isLoading}
               />
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
               <StatCard
                 label="Total Users"
                 value={stats?.total_users ?? 0}
@@ -321,6 +321,13 @@ export function AdminOverview() {
                 value={stats?.total_clubs ?? 0}
                 icon={Building2}
                 color="amber"
+                loading={isLoading}
+              />
+              <StatCard
+                label="Umpires"
+                value={stats?.total_umpires ?? 0}
+                icon={UserCheck}
+                color="rose"
                 loading={isLoading}
               />
               <StatCard
