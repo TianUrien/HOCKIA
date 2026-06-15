@@ -13,6 +13,8 @@ import type {
   CommunityAnalytics,
   MarketplaceHealth,
   MessagingRolePairs,
+  ConversationRow,
+  ConversationFilters,
 } from '../types'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -75,6 +77,28 @@ export async function getMessagingRolePairs(days = 30): Promise<MessagingRolePai
   const { data, error } = await adminRpc('admin_get_messaging_role_pairs', { p_days: days })
   if (error) throw new Error(`Failed to get messaging role pairs: ${error.message}`)
   return data as MessagingRolePairs
+}
+
+/**
+ * Per-conversation metadata table (who messaged whom). Privacy-safe: the RPC
+ * returns NO message content. Returns the page of rows + the full filtered
+ * total (carried on every row as total_count) for pagination.
+ */
+export async function getConversations(
+  days = 30,
+  limit = 50,
+  offset = 0,
+  filters?: ConversationFilters,
+): Promise<{ rows: ConversationRow[]; total: number }> {
+  const { data, error } = await adminRpc('admin_get_conversations', {
+    p_days: days,
+    p_limit: limit,
+    p_offset: offset,
+    p_filters: filters && Object.keys(filters).length > 0 ? filters : null,
+  })
+  if (error) throw new Error(`Failed to get conversations: ${error.message}`)
+  const rows = (Array.isArray(data) ? data : []) as ConversationRow[]
+  return { rows, total: rows[0]?.total_count ?? 0 }
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

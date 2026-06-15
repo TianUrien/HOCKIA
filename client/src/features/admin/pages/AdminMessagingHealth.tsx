@@ -18,6 +18,7 @@ import {
 import { StatCard } from '../components/StatCard'
 import { pct } from '../utils/percent'
 import { RolePairHeatmap } from '../components/RolePairHeatmap'
+import { ConversationsTable } from '../components/ConversationsTable'
 import { getMessagingHealth, getMessagingRolePairs } from '../api/analyticsApi'
 import type { MessagingRolePairs } from '../types'
 import { logger } from '@/lib/logger'
@@ -271,6 +272,17 @@ export function AdminMessagingHealth() {
           players do. Last {daysFilter} days.
         </p>
         <RolePairHeatmap data={rolePairs?.role_pairs ?? []} loading={isLoading} />
+      </div>
+
+      {/* Per-conversation table — the who-messaged-whom drill-down. Metadata
+          only; no message content is ever fetched or shown. */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-1">Conversations</h2>
+        <p className="text-sm text-gray-500 mb-4">
+          Who messaged whom, and whether they got a reply. Metadata only — message content is never
+          shown. Conversations started in the last {daysFilter} days.
+        </p>
+        <ConversationsTable days={daysFilter} />
       </div>
 
       {/* New conversations per day */}

@@ -909,6 +909,35 @@ export interface MessagingRolePairs {
   generated_at: string
 }
 
+/**
+ * One row of the privacy-safe per-conversation table (admin_get_conversations).
+ * METADATA ONLY — never any message content. sender = initiator (first message).
+ */
+export interface ConversationRow {
+  conversation_id: string
+  sender_id: string
+  sender_name: string | null
+  sender_role: string
+  recipient_id: string
+  recipient_name: string | null
+  recipient_role: string
+  first_message_at: string | null
+  last_message_at: string | null
+  message_count: number
+  replied: boolean
+  time_to_first_reply_minutes: number | null
+  status: 'active' | 'unanswered' | 'inactive'
+  origin: string
+  /** same value on every row of a page — total matching the filters */
+  total_count: number
+}
+
+export interface ConversationFilters {
+  status?: string
+  origin?: string
+  role?: string
+}
+
 export interface FriendshipTrendItem {
   date: string
   friendship_count: number
