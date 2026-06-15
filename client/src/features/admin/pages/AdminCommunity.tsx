@@ -130,7 +130,10 @@ export function AdminCommunity() {
           icon={MessageSquare}
           color="blue"
           loading={isLoading}
-          percent={{ value: pct(data?.summary.total_answers, data?.summary.total_questions), label: 'per questions asked' }}
+          /* No %: answers ÷ questions exceeds 100% (multiple answers per
+             question) and would mislead in a percentage slot. The "Response
+             Rate" card below carries the meaningful ≤100% metric (share of
+             questions that got an answer). */
           trend={data ? {
             value: aTrend,
             label: 'vs prev period',
