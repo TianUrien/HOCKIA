@@ -1,16 +1,21 @@
-import { Link, useNavigate } from 'react-router-dom'
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Briefcase, MapPin, BadgeCheck } from 'lucide-react'
 import { Avatar, StorageImage } from '@/components'
 import { getTimeAgo } from '@/lib/utils'
 import type { OpportunityPostedFeedItem } from '@/types/homeFeed'
 import { opportunityGenderToTeamLabel } from '@/lib/hockeyCategories'
+import OpportunityDetailOverlay from '@/components/OpportunityDetailOverlay'
 
 interface OpportunityPostedCardProps {
   item: OpportunityPostedFeedItem
 }
 
 export function OpportunityPostedCard({ item }: OpportunityPostedCardProps) {
-  const navigate = useNavigate()
+  // Open the opportunity as an overlay over the Home feed (the feed stays
+  // mounted underneath, so closing reveals it exactly where it was — no route
+  // change, no unmount, no scroll jump). Deep links still use the route.
+  const [showDetail, setShowDetail] = useState(false)
   const timeAgo = getTimeAgo(item.created_at, true)
 
   return (
@@ -118,7 +123,8 @@ export function OpportunityPostedCard({ item }: OpportunityPostedCardProps) {
 
         {/* CTA */}
         <button
-          onClick={() => navigate(`/opportunities/${item.opportunity_id}`)}
+          type="button"
+          onClick={() => setShowDetail(true)}
           className="w-full px-4 py-2.5 bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white rounded-lg font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
         >
           Apply Now
@@ -127,6 +133,13 @@ export function OpportunityPostedCard({ item }: OpportunityPostedCardProps) {
           </svg>
         </button>
       </div>
+
+      {showDetail && (
+        <OpportunityDetailOverlay
+          opportunityId={item.opportunity_id}
+          onClose={() => setShowDetail(false)}
+        />
+      )}
     </div>
   )
 }
