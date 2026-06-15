@@ -69,7 +69,7 @@ export default function DiscoverFilterChips({ filters }: DiscoverFilterChipsProp
   if (filters.availability) {
     const label = filters.availability === 'open_to_play' ? 'Open to play'
       : filters.availability === 'open_to_coach' ? 'Open to coach'
-      : 'Open to opportunities'
+      : 'Open to offers'
     chips.push({ label, color: 'bg-emerald-100 text-emerald-800' })
   }
 

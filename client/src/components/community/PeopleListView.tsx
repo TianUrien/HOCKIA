@@ -7,7 +7,7 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { Loader2 } from 'lucide-react'
-import { useNavigationType, Link } from 'react-router-dom'
+import { useNavigationType } from 'react-router-dom'
 import RecruiterCandidateCard from '@/components/recruiting/RecruiterCandidateCard'
 import { logger } from '@/lib/logger'
 import { isAuthExpiredError } from '@/lib/sentryHelpers'
@@ -18,6 +18,7 @@ import { CandidatePreviewSheet } from '@/components/recruiting/CandidatePreviewS
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { computeClubFit } from '@/lib/clubFit'
+import { isOpenToAvailability } from '@/lib/availabilityLabel'
 import { computeCoachFit } from '@/lib/coachFit'
 import { computeEvidence } from '@/lib/evidence'
 import { computeInterest } from '@/lib/interestFit'
@@ -120,7 +121,7 @@ export interface Profile {
 }
 
 const PROFILES_SELECT =
-  'id, avatar_url, full_name, role, nationality, nationality_country_id, nationality2_country_id, base_location, position, secondary_position, current_club, current_world_club_id, gender, playing_category, coaching_categories, umpiring_categories, created_at, is_test_account, open_to_play, open_to_coach, open_to_opportunities, last_active_at, accepted_reference_count, coach_specialization, coach_specialization_custom, base_country_id, relocation_willingness, relocation_countries_open, relocation_countries_excluded, available_from, level_target, opportunity_preference, specialist_skills, highlight_video_url, full_game_video_count, bio, club_bio, year_founded, website, contact_email, career_entry_count, accepted_friend_count, is_verified, verified_at, umpire_level, federation, umpire_since, officiating_specialization, languages, last_officiated_at, umpire_appointment_count, available_for_appointments, profile_completeness_pct'
+  'id, avatar_url, full_name, role, nationality, nationality_country_id, nationality2_country_id, base_location, position, secondary_position, current_club, current_world_club_id, gender, playing_category, coaching_categories, umpiring_categories, created_at, is_test_account, open_to_play, open_to_coach, open_to_opportunities, last_active_at, accepted_reference_count, coach_specialization, coach_specialization_custom, base_country_id, relocation_willingness, relocation_countries_open, relocation_countries_excluded, available_from, level_target, opportunity_preference, specialist_skills, highlight_video_url, full_game_video_count, bio, club_bio, year_founded, website, career_entry_count, accepted_friend_count, is_verified, verified_at, umpire_level, federation, umpire_since, officiating_specialization, languages, last_officiated_at, umpire_appointment_count, available_for_appointments, profile_completeness_pct'
 
 // CommunityFilters type moved to ./communityFilters.ts so the lifted
 // search bar / quick filters / drawer (now rendered by CommunityPage)
@@ -251,7 +252,10 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
   // authLoading + dedupe-wrapped so a single cold load doesn't fire
   // it twice under StrictMode / Suspense replay.
   useEffect(() => {
-    if (authLoading || isAnon) return
+    // Logged-out browse: anon viewers count too. The anon RLS policy
+    // ("Anon can view active onboarded profiles") scopes the head query to
+    // onboarded, non-test rows — same shape authenticated viewers get.
+    if (authLoading) return
     let cancelled = false
     const cacheKey = `community-count-${roleFilter ?? 'all'}-${hideTestAccounts ? 'no-test' : 'all'}`
     const run = async () => {
@@ -417,15 +421,17 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
 
   // Initial load — gated on authLoading so we don't fire as 'anon'
   // and then immediately re-fire as 'std' once the profile resolves.
-  // QA F5: also skip entirely for anon viewers (RLS would 401 the
-  // query and the error path logs to Sentry).
+  // Anon viewers DO load (logged-out community browse): the fetch runs in
+  // the 'anon' viewerScope and the anon RLS policy + column grants return
+  // the public, neutral-ranked member set (no recruiter fit — viewerCtx is
+  // only built when currentUserProfile is present).
   useEffect(() => {
-    if (authLoading || isAnon) {
+    if (authLoading) {
       setIsLoading(false)
       return
     }
     fetchMembers()
-  }, [authLoading, isAnon, fetchMembers])
+  }, [authLoading, fetchMembers])
 
   // Perform server-side search
   const performServerSearch = useCallback(async (query: string) => {
@@ -600,10 +606,10 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
       result = result.filter(m => m.nationality?.toLowerCase().includes(nat))
     }
     if (filters.availability === 'open') {
-      result = result.filter(m =>
-        (m.role === 'player' && m.open_to_play) ||
-        (m.role === 'coach' && m.open_to_coach)
-      )
+      // Role-complete "open" filter — players (open_to_play), coaches
+      // (open_to_coach), umpires (available_for_appointments), brands/clubs
+      // (open_to_opportunities). Single source: availabilityLabel helper.
+      result = result.filter(m => isOpenToAvailability(m.role, m))
     }
 
     // Phase 2D — EU eligibility HARD filter. When the active scope requires
@@ -972,38 +978,9 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
   // all live in the lifted CommunityFiltersState now (state prop).
   // The empty-state CTA below calls state.clearFilters directly.
 
-  // Anon viewers: surface a sign-in prompt instead of letting the
-  // empty grid (from the gated-out fetch above) look broken. Profile
-  // visibility is auth-gated by RLS; no public browse mode today.
-  if (isAnon) {
-    return (
-      <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
-        <div className="w-16 h-16 bg-gradient-to-br from-[#8026FA]/10 to-[#924CEC]/10 rounded-full flex items-center justify-center mx-auto mb-4">
-          <span className="text-3xl">👋</span>
-        </div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">
-          Sign in to browse the HOCKIA community
-        </h3>
-        <p className="text-gray-500 mb-5 max-w-sm mx-auto">
-          Create a free account to discover players, coaches, clubs, brands, and umpires.
-        </p>
-        <div className="inline-flex items-center gap-2">
-          <Link
-            to="/signin"
-            className="px-5 py-2 rounded-lg bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white font-medium hover:opacity-90 transition-opacity"
-          >
-            Sign in
-          </Link>
-          <Link
-            to="/signup"
-            className="px-5 py-2 rounded-lg border border-[#8026FA]/30 text-[#8026FA] font-medium hover:bg-[#8026FA]/5 transition-colors"
-          >
-            Create account
-          </Link>
-        </div>
-      </div>
-    )
-  }
+  // Logged-out browse: anon viewers see the SAME member grid (read-only).
+  // Discovery is intentionally not blocked here — every ACTION (save,
+  // message, friend, apply) is gated downstream by a SignInPromptModal.
 
   // Two distinct loading shapes:
   //   - First load (no cards yet)  → full skeleton grid. Unavoidable; there

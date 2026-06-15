@@ -27,4 +27,14 @@ describe('CompletionArc', () => {
       'Profile complete: 42%',
     )
   })
+
+  it('reserves its footprint with a skeleton while loading (no flashed percentage)', () => {
+    render(<CompletionArc percentage={75} loading caption="Profile complete" />)
+    // The (still-understated) percentage is withheld behind a skeleton so it
+    // never flashes a wrong number that "catches up" once data lands.
+    expect(screen.queryByText('75%')).not.toBeInTheDocument()
+    // Caption + testid stay mounted so the footprint and a11y hook persist.
+    expect(screen.getByText('Profile complete')).toBeInTheDocument()
+    expect(screen.getByTestId('completion-arc')).toHaveAttribute('aria-label', 'Profile complete')
+  })
 })

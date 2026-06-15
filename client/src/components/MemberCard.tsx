@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { MessageCircle, User, Globe, MapPin, Shield, Building2, Activity } from 'lucide-react'
-import { Avatar, RoleBadge, TierBadge, VerifiedBadge, NationalityCardDisplay, AvailabilityPill } from '@/components'
+import { Avatar, RoleBadge, TierBadge, VerifiedBadge, NationalityCardDisplay } from '@/components'
+import { ConditionalAvailabilityPill } from '@/components/AvailabilityPill'
 import type { ProfileTier } from '@/lib/profileTier'
 import SignInPromptModal from '@/components/SignInPromptModal'
 import { useAuthStore } from '@/lib/auth'
@@ -30,6 +31,8 @@ interface MemberCardProps {
   created_at: string
   open_to_play?: boolean
   open_to_coach?: boolean
+  open_to_opportunities?: boolean
+  available_for_appointments?: boolean | null
   accepted_reference_count?: number
   coach_specialization?: string | null
   coach_specialization_custom?: string | null
@@ -68,6 +71,8 @@ export default function MemberCard({
   current_world_club_id,
   open_to_play,
   open_to_coach,
+  open_to_opportunities,
+  available_for_appointments,
   accepted_reference_count,
   coach_specialization,
   coach_specialization_custom,
@@ -186,8 +191,15 @@ export default function MemberCard({
             {role === 'brand' && brandCategory && (
               <span className="text-xs text-gray-500 capitalize">{brandCategory}</span>
             )}
-            {role === 'player' && open_to_play && <AvailabilityPill variant="play" size="sm" className="!shadow-none" />}
-            {role === 'coach' && open_to_coach && <AvailabilityPill variant="coach" size="sm" className="!shadow-none" />}
+            <ConditionalAvailabilityPill
+              role={role}
+              open_to_play={open_to_play}
+              open_to_coach={open_to_coach}
+              open_to_opportunities={open_to_opportunities}
+              available_for_appointments={available_for_appointments}
+              size="sm"
+              className="!shadow-none"
+            />
             {tier && <TierBadge tier={tier} size="sm" />}
             {(accepted_reference_count ?? 0) > 0 && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-[10px] font-medium">

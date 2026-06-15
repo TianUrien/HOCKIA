@@ -366,17 +366,17 @@ describe('MemberTile — layout robustness', () => {
 
   it('shows green dot when player is open_to_play', () => {
     renderTile({ role: 'player', open_to_play: true })
-    expect(screen.getByLabelText('Open to opportunities')).toBeInTheDocument()
+    expect(screen.getByLabelText('Open to play')).toBeInTheDocument()
   })
 
   it('shows green dot when coach is open_to_coach', () => {
     renderTile({ role: 'coach', open_to_coach: true })
-    expect(screen.getByLabelText('Open to opportunities')).toBeInTheDocument()
+    expect(screen.getByLabelText('Open to coach')).toBeInTheDocument()
   })
 
   it('hides green dot when player is not open_to_play', () => {
     renderTile({ role: 'player', open_to_play: false })
-    expect(screen.queryByLabelText('Open to opportunities')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Open to play')).not.toBeInTheDocument()
   })
 
   it('renders verified badge when isVerified=true', () => {

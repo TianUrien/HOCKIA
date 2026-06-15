@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { MapPin, Building2, Shield } from 'lucide-react'
 import { RoleBadge, TierBadge, VerifiedBadge, DualNationalityDisplay } from '@/components'
 import type { ProfileTier } from '@/lib/profileTier'
+import { availabilityDescriptor } from '@/lib/availabilityLabel'
 import SignInPromptModal from '@/components/SignInPromptModal'
 import { useAuthStore } from '@/lib/auth'
 import { useWorldClubLogo, getPlayerLeagueName, getClubLevelBand } from '@/hooks/useWorldClubLogo'
@@ -206,9 +207,13 @@ export default function MemberTile(props: MemberTileProps) {
   const isBrand = props.role === 'brand'
   const heroSrc = isBrand ? (props.brandLogoUrl ?? props.avatar_url) : props.avatar_url
   const heroImageUrl = heroSrc ? getImageUrl(heroSrc, 'avatar-md') : null
-  const showGreenDot =
-    (props.role === 'player' && props.open_to_play) ||
-    (props.role === 'coach' && props.open_to_coach)
+  // Positive availability dot — role-specific via the shared helper (player→
+  // open_to_play, coach→open_to_coach, club/brand→open_to_opportunities).
+  const availDot = availabilityDescriptor(props.role, {
+    open_to_play: props.open_to_play,
+    open_to_coach: props.open_to_coach,
+    open_to_opportunities: props.open_to_opportunities,
+  })
 
   // Initials block was the previous fallback when no avatar — now replaced
   // by RolePlaceholder. Computation removed; the role + name are surfaced
@@ -316,11 +321,11 @@ export default function MemberTile(props: MemberTileProps) {
                 </div>
               )}
             </div>
-            {showGreenDot && (
+            {availDot && (
               <span
                 className="absolute top-1 right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 ring-2 ring-white"
-                aria-label="Open to opportunities"
-                title="Open to opportunities"
+                aria-label={availDot.label}
+                title={availDot.label}
               />
             )}
             {/* The bare completeness % badge that used to sit on the avatar

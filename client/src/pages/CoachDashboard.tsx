@@ -21,6 +21,7 @@ import SignInPromptModal from '@/components/SignInPromptModal'
 import ClubLinkPrompt from '@/components/ClubLinkPrompt'
 import HeroIdentityCard from '@/components/dashboard/bento/HeroIdentityCard'
 import RecruitmentVisibilityWidget from '@/components/dashboard/bento/RecruitmentVisibilityWidget'
+import RecruitmentSummaryCard from '@/components/dashboard/bento/RecruitmentSummaryCard'
 import RecruitmentPrefsNudge from '@/components/dashboard/RecruitmentPrefsNudge'
 import CoachBentoGrid from '@/components/dashboard/bento/CoachBentoGrid'
 import ScoutingCard from '@/components/profile/ScoutingCard'
@@ -603,6 +604,21 @@ export default function CoachDashboard({
         {/* Matching Increment #2 — dismissible recruitment-preferences nudge. */}
         {!readOnly && isLanding && (
           <RecruitmentPrefsNudge profile={profile as Profile} onAdd={() => setShowEditModal(true)} />
+        )}
+
+        {/* Recruitment gateway — coach owner, own landing only. Mirrors the
+            Club Dashboard placement so the primary recurring recruiter action
+            (post a role / check applicants) is reachable above "Who Viewed
+            Your Profile" without scrolling past the profile cards. The hook
+            shares CoachPostedOpportunitiesCard's cache key — no extra query
+            for recruiter coaches; non-recruiters see the empty-state CTA and
+            handleCreateOpportunity flips coach_recruits_for_team on first use. */}
+        {!readOnly && isLanding && (
+          <RecruitmentSummaryCard
+            ownerId={profile.id}
+            onCreateOpportunity={() => void handleCreateOpportunity()}
+            onManageOpportunities={handleManageOpportunities}
+          />
         )}
 
         {!readOnly && isLanding && (

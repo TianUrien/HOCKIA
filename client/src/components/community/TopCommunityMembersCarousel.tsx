@@ -433,10 +433,11 @@ export function TopCommunityMembersCarousel({
   const filterCategoryKey = filterPlayingCategories?.join('|') ?? ''
 
   useEffect(() => {
-    // Skip the fetch entirely while auth is settling, or when there's
-    // no viewer (anon). The RPC requires auth; running it as anon just
-    // produces a 401 + Sentry noise.
-    if (authLoading || isAnon) {
+    // Skip only while auth is settling. Anon viewers DO fetch (logged-out
+    // community browse): get_top_community_members grants EXECUTE to anon and
+    // self-filters to onboarded, non-blocked, non-test rows, so the featured
+    // rail renders the same public set a signed-out visitor can browse.
+    if (authLoading) {
       setLoading(false)
       return
     }

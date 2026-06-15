@@ -45,6 +45,7 @@ import { useClubFit } from '@/hooks/useClubFit'
 import { useCoachFit } from '@/hooks/useCoachFit'
 import { useEvidence } from '@/hooks/useEvidence'
 import { computeRecruiterVerdict } from '@/lib/recruiterVerdict'
+import { availabilityLabel } from '@/lib/availabilityLabel'
 import RecruiterVerdictCard from '@/components/recruiting/RecruiterVerdictCard'
 import AIOpinionPanel from '@/components/recruiting/AIOpinionPanel'
 import MoreActionsMenu from '@/components/recruiting/MoreActionsMenu'
@@ -298,13 +299,12 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
   }, [profile.id])
 
   // ── ZONE 1: AVAILABILITY HEADLINE ─────────────────────────────────
-  // Three states. Active-today bucket is the only one that ever
-  // claims "Available now" — anything older drops to "Open to
-  // opportunities" or "Not currently open". This is the single most
-  // important recruitment signal on the page.
-  const isOpen = Boolean(
-    profile.open_to_play || profile.open_to_coach || profile.open_to_opportunities,
-  )
+  // ONLY a positive signal. The role's OWN flag drives it (player→open_to_play,
+  // coach→open_to_coach) via the single-source availabilityLabel; when the
+  // person hasn't opted in we show NO headline at all — never a negative
+  // "not currently open" state (which reads as discouraging). Active-today
+  // upgrades to "Available now"; otherwise the role-specific "Open to play/coach".
+  const availLabel = availabilityLabel(profile.role, profile)
   const lastActiveMs = profile.last_active_at
     ? Date.now() - new Date(profile.last_active_at).getTime()
     : null
@@ -312,30 +312,22 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
   const isActiveToday = showActivity && lastActiveMs! < DAY_MS
 
   const status = (() => {
-    if (isOpen && isActiveToday) {
+    if (!availLabel) return null // positive-or-hidden — no negative state
+    if (isActiveToday) {
       return {
         label: 'AVAILABLE NOW',
-        sub: 'Open to opportunities · Active today',
+        sub: `${availLabel} · Active today`,
         dotClass: 'bg-emerald-500',
         wrapperClass: 'bg-emerald-50 border-emerald-100',
         labelClass: 'text-emerald-800',
       }
     }
-    if (isOpen) {
-      return {
-        label: 'OPEN TO OPPORTUNITIES',
-        sub: showActivity ? activityBucketSub(lastActiveMs!) : 'Availability set',
-        dotClass: 'bg-amber-500',
-        wrapperClass: 'bg-amber-50 border-amber-100',
-        labelClass: 'text-amber-800',
-      }
-    }
     return {
-      label: 'NOT CURRENTLY OPEN',
-      sub: showActivity ? activityBucketSub(lastActiveMs!) : 'Availability not set',
-      dotClass: 'bg-gray-400',
-      wrapperClass: 'bg-gray-50 border-gray-100',
-      labelClass: 'text-gray-700',
+      label: availLabel.toUpperCase(),
+      sub: showActivity ? activityBucketSub(lastActiveMs!) : 'Availability set',
+      dotClass: 'bg-emerald-500',
+      wrapperClass: 'bg-emerald-50 border-emerald-100',
+      labelClass: 'text-emerald-800',
     }
   })()
 
@@ -449,26 +441,36 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
         </div>
       )}
 
-      {/* Zone 1 — Availability status, the headline. The Club Fit chip
-          sits to the right (recruiter-only — hidden for non-club viewers
-          and for clubs without a declared team category). */}
-      <div className={`flex items-center gap-3 rounded-xl border px-4 py-3 ${status.wrapperClass}`}>
-        <span className={`h-2.5 w-2.5 rounded-full ${status.dotClass}`} aria-hidden="true" />
-        <div className="min-w-0 flex-1">
-          <p className={`text-xs font-bold tracking-wide ${status.labelClass}`}>{status.label}</p>
-          <p className="text-xs text-gray-600 mt-0.5 truncate">{status.sub}</p>
+      {/* Zone 1 — POSITIVE availability headline (or hidden), plus the
+          recruiter Fit chips on the right. We only render the row when there's
+          a positive availability signal OR an applicable Fit chip — a not-open
+          candidate shows no negative headline, but a recruiter still sees the
+          Fit chip. */}
+      {(status || clubFit.isApplicable || coachFit.isApplicable) && (
+        <div className={`flex items-center gap-3 rounded-xl border px-4 py-3 ${status ? status.wrapperClass : 'bg-gray-50 border-gray-100'}`}>
+          {status ? (
+            <>
+              <span className={`h-2.5 w-2.5 rounded-full ${status.dotClass}`} aria-hidden="true" />
+              <div className="min-w-0 flex-1">
+                <p className={`text-xs font-bold tracking-wide ${status.labelClass}`}>{status.label}</p>
+                <p className="text-xs text-gray-600 mt-0.5 truncate">{status.sub}</p>
+              </div>
+            </>
+          ) : (
+            <div className="min-w-0 flex-1" />
+          )}
+          {/* #5: render the SAME clubFit result the verdict consumes (via
+              fitResult) instead of letting the chip recompute its own — keeps
+              the chip and the lead verdict from ever disagreeing. */}
+          <ClubFitChip className="flex-shrink-0 whitespace-nowrap" fitResult={clubFit} />
+          {/* Phase 2C — Coach Fit chip for coach profiles (null otherwise). */}
+          <ClubFitChip
+            className="flex-shrink-0 whitespace-nowrap"
+            kind="coach"
+            fitResult={coachFit}
+          />
         </div>
-        {/* #5: render the SAME clubFit result the verdict consumes (via
-            fitResult) instead of letting the chip recompute its own — keeps
-            the chip and the lead verdict from ever disagreeing. */}
-        <ClubFitChip className="flex-shrink-0 whitespace-nowrap" fitResult={clubFit} />
-        {/* Phase 2C — Coach Fit chip for coach profiles (null otherwise). */}
-        <ClubFitChip
-          className="flex-shrink-0 whitespace-nowrap"
-          kind="coach"
-          fitResult={coachFit}
-        />
-      </div>
+      )}
 
       {/* Proven lens (Increment #1) — recruiter-only evidence confidence
           (tier pill + facts). Renders nothing when no evidence applies. */}

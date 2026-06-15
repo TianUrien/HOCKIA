@@ -301,8 +301,18 @@ export default function ClubHeroCard({
 
           <div className="flex flex-wrap items-center gap-2.5">
             <RoleBadge role="club" />
-            {!readOnly && !completionLoading && (
-              <TierBadge tier={calculateTier(completionPercentage)} />
+            {!readOnly && (
+              completionLoading ? (
+                // Reserve the badge's row footprint while strength loads so the
+                // meta row doesn't reflow — and so we never flash a tier
+                // computed from the still-understated percentage.
+                <span
+                  className="inline-block h-5 w-20 rounded-full bg-gray-200 animate-pulse"
+                  aria-hidden="true"
+                />
+              ) : (
+                <TierBadge tier={calculateTier(completionPercentage)} />
+              )
             )}
             <LastActivePill lastActiveAt={lastActiveAt} showLastActive={showLastActive} />
             <SocialLinksDisplay
@@ -313,11 +323,15 @@ export default function ClubHeroCard({
         </div>
       </div>
 
-      {/* Progress block — owner only */}
-      {!readOnly && !completionLoading && (
+      {/* Progress block — owner only. Rendered from first paint (NOT gated on
+          completionLoading) so the hero reserves its full height immediately;
+          the arc + percentage show a skeleton until the strength fetch lands,
+          which prevents the ~1s in-place growth that shoved the cards below
+          (RecruitmentSummaryCard et al.) down on initial load. */}
+      {!readOnly && (
         <div className="mt-6 pt-6 border-t border-gray-100">
           <div className="flex items-center gap-5">
-            <CompletionArc percentage={completionPercentage} />
+            <CompletionArc percentage={completionPercentage} loading={completionLoading} />
             <div className="flex-1 min-w-0">
               <h3 className="text-base font-semibold text-gray-900 leading-tight">
                 Club profile complete

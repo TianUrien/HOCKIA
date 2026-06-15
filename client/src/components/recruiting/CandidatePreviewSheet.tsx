@@ -38,7 +38,9 @@ import { useFocusTrap } from '@/hooks/useFocusTrap'
 import QuickActionsRow from './QuickActionsRow'
 import { getImageUrl } from '@/lib/imageUrl'
 import RolePlaceholder from '@/components/RolePlaceholder'
-import { RoleBadge, VerifiedBadge, DualNationalityDisplay, AvailabilityPill } from '@/components'
+import { RoleBadge, VerifiedBadge, DualNationalityDisplay } from '@/components'
+import { ConditionalAvailabilityPill } from '@/components/AvailabilityPill'
+import { availabilityLabel } from '@/lib/availabilityLabel'
 import { computeEvidence, evidenceChecklist, evidenceLevelLabel } from '@/lib/evidence'
 import { useClubFit } from '@/hooks/useClubFit'
 import { useCoachFit } from '@/hooks/useCoachFit'
@@ -281,6 +283,8 @@ export function CandidatePreviewSheet({ member, onClose }: CandidatePreviewSheet
     ? getSpecializationLabel(member.coach_specialization, member.coach_specialization_custom ?? null)
     : null
   const subtitle = isCoach ? coachSpecLabel : positions.length > 0 ? positions.join(' · ') : null
+  // Positive, role-specific availability label (or null) — single source.
+  const availLabel = availabilityLabel(member.role, member)
   // Coaching team categories (Men/Women/Mixed etc.) for the coach context row.
   const coachingCategoriesLabel = (() => {
     if (!isCoach) return null
@@ -388,8 +392,8 @@ export function CandidatePreviewSheet({ member, onClose }: CandidatePreviewSheet
                     <div className="absolute inset-0"><RolePlaceholder role={member.role} label="" /></div>
                   )}
                 </div>
-                {(member.open_to_play || member.open_to_coach || member.open_to_opportunities) && (
-                  <span className="absolute -right-0.5 -top-0.5 h-4 w-4 rounded-full bg-emerald-500 ring-2 ring-white" title="Open to opportunities" />
+                {availLabel && (
+                  <span className="absolute -right-0.5 -top-0.5 h-4 w-4 rounded-full bg-emerald-500 ring-2 ring-white" title={availLabel} />
                 )}
               </div>
               <div className="min-w-0 flex-1 pt-0.5">
@@ -404,8 +408,13 @@ export function CandidatePreviewSheet({ member, onClose }: CandidatePreviewSheet
                   {subtitle && (
                     <span className="text-xs font-medium text-gray-600">{subtitle}</span>
                   )}
-                  {member.open_to_play && <AvailabilityPill variant="play" size="sm" />}
-                  {isCoach && member.open_to_coach && <AvailabilityPill variant="coach" size="sm" />}
+                  <ConditionalAvailabilityPill
+                    role={member.role}
+                    open_to_play={member.open_to_play}
+                    open_to_coach={member.open_to_coach}
+                    open_to_opportunities={member.open_to_opportunities}
+                    size="sm"
+                  />
                 </div>
                 <div className="mt-2 space-y-1">
                   {(member.nationality_country_id || member.nationality) && (
