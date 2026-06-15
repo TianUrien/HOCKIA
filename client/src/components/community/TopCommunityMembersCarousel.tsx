@@ -127,6 +127,13 @@ interface TopMemberRow {
   umpire_level: string | null
   federation: string | null
   year_founded: number | null
+  // Carousel↔grid parity (20260615220000): secondary_position + specialist_skills
+  // feed the scoped Club Fit (previously NULL → divergent recruiter match);
+  // umpiring_categories + verified_at feed the Preview.
+  secondary_position: string | null
+  specialist_skills: string[] | null
+  umpiring_categories: string[] | null
+  verified_at: string | null
 }
 
 interface TopCommunityMembersCarouselProps {
@@ -181,10 +188,11 @@ interface TopCommunityMembersCarouselProps {
 }
 
 /** Map a carousel row onto the Profile shape the Preview components read.
- *  TopMemberRow is a near-superset already; the handful of fields the RPC
- *  doesn't return (secondary_position, umpiring_categories, bio…) are
- *  absent from the preview and fall back to null/undefined — the full
- *  profile still has them when the recruiter opens it. */
+ *  The RPC now projects the recruiter-relevant fields (secondary_position,
+ *  specialist_skills, umpiring_categories, verified_at — 20260615220000) so a
+ *  member opened from the carousel matches one opened from the All Members grid
+ *  (same Club Fit score, same Preview). A few rarely-rendered fields (umpire_since,
+ *  brand links) are still absent and fall back to null until the full profile loads. */
 function topRowToProfile(m: TopMemberRow): Profile {
   return {
     id: m.id,
@@ -196,13 +204,14 @@ function topRowToProfile(m: TopMemberRow): Profile {
     nationality2_country_id: m.nationality2_country_id,
     base_location: m.base_location,
     position: m.position,
-    secondary_position: null,
+    secondary_position: m.secondary_position,
+    specialist_skills: m.specialist_skills,
     current_club: m.current_club,
     current_world_club_id: m.current_world_club_id,
     gender: m.gender,
     playing_category: m.playing_category,
     coaching_categories: m.coaching_categories,
-    umpiring_categories: null,
+    umpiring_categories: m.umpiring_categories,
     created_at: '',
     open_to_play: m.open_to_play ?? undefined,
     open_to_coach: m.open_to_coach ?? undefined,
@@ -222,6 +231,7 @@ function topRowToProfile(m: TopMemberRow): Profile {
     highlight_video_url: m.highlight_video_url,
     full_game_video_count: m.full_game_video_count,
     is_verified: m.is_verified,
+    verified_at: m.verified_at,
     profile_completeness_pct: m.profile_completeness_pct,
     // QA-fix — the scoped preview (CandidatePreviewSheet) reads member.bio.
     bio: m.bio,
@@ -355,8 +365,8 @@ export function TopCommunityMembersCarousel({
                 open_to_opportunities: m.open_to_opportunities,
                 last_active_at: m.last_active_at,
                 position: m.position,
-                secondary_position: null,
-                specialist_skills: null,
+                secondary_position: m.secondary_position,
+                specialist_skills: m.specialist_skills,
               },
               {
                 overrideTarget: contextTarget,
