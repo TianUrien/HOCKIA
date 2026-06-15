@@ -205,6 +205,9 @@ export default function VacancyDetailView({
 
   return (
     <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={vacancy.title ? `${vacancy.title} — opportunity details` : 'Opportunity details'}
       className={`fixed inset-0 z-50 overflow-y-auto transition-opacity duration-200 ease-out ${isVisible ? 'bg-black/50' : 'bg-black/0'}`}
     >
       {/* The padded wrapper is what visually fills the dimmed area, so the
