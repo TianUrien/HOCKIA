@@ -1725,6 +1725,10 @@ export interface CommunityAnalytics {
     total_answers: number
     unique_answerers: number
     prev_total_answers: number
+    /** true distinct users who asked OR answered (deduped) */
+    unique_contributors: number
+    /** non-test platform users — denominator for participation rate */
+    total_users: number
     response_rate: number
   }
   questions_by_role: Array<{ role: string; count: number }>

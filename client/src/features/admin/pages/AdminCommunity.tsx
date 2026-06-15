@@ -146,10 +146,11 @@ export function AdminCommunity() {
         />
         <StatCard
           label="Unique Contributors"
-          value={(data?.summary.unique_askers ?? 0) + (data?.summary.unique_answerers ?? 0)}
+          value={data?.summary.unique_contributors ?? 0}
           icon={Users}
           color="amber"
           loading={isLoading}
+          percent={{ value: pct(data?.summary.unique_contributors, data?.summary.total_users), label: 'of total users' }}
         />
       </div>
 
