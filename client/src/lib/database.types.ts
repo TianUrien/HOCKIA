@@ -6712,6 +6712,10 @@ export type Database = {
           umpire_level: string | null
           federation: string | null
           year_founded: number | null
+          secondary_position: string | null
+          specialist_skills: string[] | null
+          umpiring_categories: string[] | null
+          verified_at: string | null
           available_from: string
           avatar_url: string
           base_country_id: number
