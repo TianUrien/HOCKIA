@@ -883,6 +883,26 @@ export interface MessagingMetrics {
   generated_at: string
 }
 
+/** One directional cell of the who-messages-whom matrix. */
+export interface RolePairMatrixData {
+  sender_role: string
+  recipient_role: string
+  message_count: number
+  conversation_count: number
+}
+
+export interface MessagingNewConvPoint {
+  date: string
+  count: number
+}
+
+export interface MessagingRolePairs {
+  role_pairs: RolePairMatrixData[]
+  new_conversations_trend: MessagingNewConvPoint[]
+  period_days: number
+  generated_at: string
+}
+
 export interface FriendshipTrendItem {
   date: string
   friendship_count: number

@@ -12,6 +12,7 @@ import type {
   ConversionFunnels,
   CommunityAnalytics,
   MarketplaceHealth,
+  MessagingRolePairs,
 } from '../types'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -68,6 +69,12 @@ export async function getMessagingHealth(days = 30): Promise<any> {
   const { data, error } = await adminRpc('admin_get_messaging_health', { p_days: days })
   if (error) throw new Error(`Failed to get messaging health: ${error.message}`)
   return data
+}
+
+export async function getMessagingRolePairs(days = 30): Promise<MessagingRolePairs> {
+  const { data, error } = await adminRpc('admin_get_messaging_role_pairs', { p_days: days })
+  if (error) throw new Error(`Failed to get messaging role pairs: ${error.message}`)
+  return data as MessagingRolePairs
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
