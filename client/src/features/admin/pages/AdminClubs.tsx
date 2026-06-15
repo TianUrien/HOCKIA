@@ -17,6 +17,7 @@ import {
   ExternalLink,
 } from 'lucide-react'
 import { StatCard } from '../components/StatCard'
+import { pct } from '../utils/percent'
 import { DataTable } from '../components/DataTable'
 import type { Column } from '../components/DataTable'
 import { getClubActivity, getClubSummary } from '../api/adminApi'
@@ -197,6 +198,7 @@ export function AdminClubs() {
           icon={Briefcase}
           color="blue"
           loading={isLoading}
+          percent={{ value: pct(summary?.clubs_with_vacancies, summary?.total_clubs), label: 'of all clubs' }}
         />
         <StatCard
           label="Active (30d)"
@@ -204,6 +206,7 @@ export function AdminClubs() {
           icon={TrendingUp}
           color="green"
           loading={isLoading}
+          percent={{ value: pct(summary?.active_clubs_30d, summary?.total_clubs), label: 'of all clubs' }}
         />
         <StatCard
           label="Avg Vacancies/Club"

@@ -536,7 +536,9 @@ export interface ExtendedDashboardStats {
   players_with_video: number
   players_with_video_pct: number | null
   players_applied_ever: number
+  players_applied_ever_pct: number | null
   players_applied_7d: number
+  players_applied_7d_pct: number | null
   avg_profile_score: number | null
   onboarding_rate: number | null
   

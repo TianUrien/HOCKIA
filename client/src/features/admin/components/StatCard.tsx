@@ -19,6 +19,13 @@ interface StatCardProps {
     label: string
     direction: 'up' | 'down' | 'neutral'
   }
+  /** "X% of <denominator>" context line under the value. value comes from
+   *  the `pct()` helper; pass null (e.g. denominator is 0) to hide it. The
+   *  founder wants every count read with its denominator, not in isolation. */
+  percent?: {
+    value: number | null
+    label: string
+  }
   color?: 'purple' | 'blue' | 'green' | 'amber' | 'red' | 'gray' | 'rose'
   loading?: boolean
 }
@@ -66,6 +73,7 @@ export function StatCard({
   value,
   icon: Icon,
   trend,
+  percent,
   color = 'purple',
   loading = false,
 }: StatCardProps) {
@@ -98,7 +106,14 @@ export function StatCard({
       <div className="text-2xl font-bold text-gray-900 mb-1">
         {typeof value === 'number' ? value.toLocaleString() : value}
       </div>
-      
+
+      {percent && percent.value !== null && (
+        <div className="text-xs text-gray-500 mb-0.5">
+          <span className="font-semibold text-gray-700">{percent.value}%</span>{' '}
+          {percent.label}
+        </div>
+      )}
+
       {trend && (
         <div className="flex items-center gap-1 text-xs">
           {trend.direction === 'up' && (

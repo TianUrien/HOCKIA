@@ -218,6 +218,7 @@ export function AdminPlayers() {
           icon={FileText}
           color="blue"
           loading={isLoading}
+          percent={{ value: stats?.players_applied_ever_pct ?? null, label: 'of all players' }}
         />
         <StatCard
           label="Applied (7d)"
@@ -225,6 +226,7 @@ export function AdminPlayers() {
           icon={TrendingUp}
           color="green"
           loading={isLoading}
+          percent={{ value: stats?.players_applied_7d_pct ?? null, label: 'of all players' }}
         />
         <StatCard
           label="Avg Profile Score"

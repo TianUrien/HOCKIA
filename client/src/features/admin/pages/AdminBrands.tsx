@@ -16,6 +16,7 @@ import {
   ExternalLink,
 } from 'lucide-react'
 import { StatCard } from '../components/StatCard'
+import { pct } from '../utils/percent'
 import { DataTable } from '../components/DataTable'
 import type { Column } from '../components/DataTable'
 import { getBrandActivity, getBrandSummary } from '../api/adminApi'
@@ -195,6 +196,7 @@ export function AdminBrands() {
           icon={Package}
           color="blue"
           loading={isLoading}
+          percent={{ value: pct(summary?.brands_with_products, summary?.total_brands), label: 'of all brands' }}
         />
         <StatCard
           label="Verified"
@@ -202,6 +204,7 @@ export function AdminBrands() {
           icon={BadgeCheck}
           color="green"
           loading={isLoading}
+          percent={{ value: pct(summary?.verified_brands, summary?.total_brands), label: 'of all brands' }}
         />
         <StatCard
           label="Total Content"

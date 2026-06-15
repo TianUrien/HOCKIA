@@ -29,6 +29,7 @@ import {
   Share2,
 } from 'lucide-react'
 import { StatCard } from '../components/StatCard'
+import { pct } from '../utils/percent'
 import { CategoryBreakdownChart } from '../components/CategoryBreakdownChart'
 import { CommandCenterKPICard } from '../components/CommandCenterKPICard'
 import { CommandCenterGrowthChart } from '../components/CommandCenterGrowthChart'
@@ -308,6 +309,7 @@ export function AdminOverview() {
                 icon={UserCheck}
                 color="blue"
                 loading={isLoading}
+                percent={{ value: pct(stats?.total_players, stats?.total_users), label: 'of total users' }}
               />
               <StatCard
                 label="Coaches"
@@ -315,6 +317,7 @@ export function AdminOverview() {
                 icon={UserCheck}
                 color="green"
                 loading={isLoading}
+                percent={{ value: pct(stats?.total_coaches, stats?.total_users), label: 'of total users' }}
               />
               <StatCard
                 label="Clubs"
@@ -322,6 +325,7 @@ export function AdminOverview() {
                 icon={Building2}
                 color="amber"
                 loading={isLoading}
+                percent={{ value: pct(stats?.total_clubs, stats?.total_users), label: 'of total users' }}
               />
               <StatCard
                 label="Umpires"
@@ -329,6 +333,7 @@ export function AdminOverview() {
                 icon={UserCheck}
                 color="rose"
                 loading={isLoading}
+                percent={{ value: pct(stats?.total_umpires, stats?.total_users), label: 'of total users' }}
               />
               <StatCard
                 label="Brands"
@@ -336,6 +341,7 @@ export function AdminOverview() {
                 icon={Store}
                 color="purple"
                 loading={isLoading}
+                percent={{ value: pct(stats?.total_brands, stats?.total_users), label: 'of total users' }}
               />
             </div>
           </section>
@@ -355,6 +361,7 @@ export function AdminOverview() {
                 icon={TrendingUp}
                 color="purple"
                 loading={isLoading}
+                percent={{ value: pct(stats?.signups_7d, stats?.total_users), label: 'of total users' }}
               />
               <StatCard
                 label="Last 30 Days"
@@ -362,6 +369,7 @@ export function AdminOverview() {
                 icon={TrendingUp}
                 color="blue"
                 loading={isLoading}
+                percent={{ value: pct(stats?.signups_30d, stats?.total_users), label: 'of total users' }}
               />
               <StatCard
                 label="Onboarding Complete"
@@ -369,6 +377,7 @@ export function AdminOverview() {
                 icon={UserCheck}
                 color="green"
                 loading={isLoading}
+                percent={{ value: pct(stats?.onboarding_completed, stats?.total_users), label: 'of total users' }}
               />
               <StatCard
                 label="Onboarding Pending"
@@ -376,6 +385,7 @@ export function AdminOverview() {
                 icon={UserX}
                 color="amber"
                 loading={isLoading}
+                percent={{ value: pct(stats?.onboarding_pending, stats?.total_users), label: 'of total users' }}
               />
               <Link
                 to="/admin/directory?zero_activity=1"
@@ -421,6 +431,7 @@ export function AdminOverview() {
                 icon={Briefcase}
                 color="green"
                 loading={isLoading}
+                percent={{ value: pct(stats?.open_vacancies, stats?.total_vacancies), label: 'of all vacancies' }}
               />
               <StatCard
                 label="Total Applications"
@@ -435,6 +446,7 @@ export function AdminOverview() {
                 icon={FileText}
                 color="amber"
                 loading={isLoading}
+                percent={{ value: pct(stats?.applications_7d, stats?.total_applications), label: 'of all applications' }}
               />
             </div>
           </section>
@@ -457,6 +469,7 @@ export function AdminOverview() {
                 icon={Store}
                 color="purple"
                 loading={isLoading}
+                percent={{ value: pct(stats?.total_brand_entities, stats?.total_brands), label: 'of brand accounts' }}
               />
               <StatCard
                 label="New Brand Entities (7d)"
@@ -464,6 +477,7 @@ export function AdminOverview() {
                 icon={TrendingUp}
                 color="blue"
                 loading={isLoading}
+                percent={{ value: pct(stats?.brands_7d, stats?.total_brand_entities), label: 'of brand entities' }}
               />
               <StatCard
                 label="Brand Products"
@@ -513,6 +527,7 @@ export function AdminOverview() {
                 icon={UserX}
                 color="red"
                 loading={isLoading}
+                percent={{ value: pct(stats?.blocked_users, stats?.total_users), label: 'of total users' }}
               />
             </div>
           </section>
@@ -527,6 +542,7 @@ export function AdminOverview() {
                 icon={Bell}
                 color="purple"
                 loading={isLoading}
+                percent={{ value: pct(stats?.push_subscribers, stats?.total_users), label: 'of total users' }}
               />
               <StatCard
                 label="Push Activation Rate"
@@ -545,6 +561,7 @@ export function AdminOverview() {
                 icon={Smartphone}
                 color="green"
                 loading={isLoading}
+                percent={{ value: pct(stats?.pwa_installs, stats?.total_users), label: 'of total users' }}
               />
               <StatCard
                 label="iOS / Android / Desktop"
@@ -560,24 +577,28 @@ export function AdminOverview() {
                 value={stats?.push_subscribers_player ?? 0}
                 color="blue"
                 loading={isLoading}
+                percent={{ value: pct(stats?.push_subscribers_player, stats?.total_players), label: 'of players' }}
               />
               <StatCard
                 label="Coaches (Push)"
                 value={stats?.push_subscribers_coach ?? 0}
                 color="green"
                 loading={isLoading}
+                percent={{ value: pct(stats?.push_subscribers_coach, stats?.total_coaches), label: 'of coaches' }}
               />
               <StatCard
                 label="Clubs (Push)"
                 value={stats?.push_subscribers_club ?? 0}
                 color="amber"
                 loading={isLoading}
+                percent={{ value: pct(stats?.push_subscribers_club, stats?.total_clubs), label: 'of clubs' }}
               />
               <StatCard
                 label="Brands (Push)"
                 value={stats?.push_subscribers_brand ?? 0}
                 color="rose"
                 loading={isLoading}
+                percent={{ value: pct(stats?.push_subscribers_brand, stats?.total_brands), label: 'of brands' }}
               />
             </div>
           </section>
@@ -611,6 +632,7 @@ export function AdminOverview() {
                   icon={Smartphone}
                   color="blue"
                   loading={isLoading}
+                  percent={{ value: pct(stats?.device_users_ios, stats?.total_users), label: 'of total users' }}
                 />
               </Link>
               <Link to="/admin/devices/android" className="block transition hover:-translate-y-0.5 hover:shadow-md rounded-xl">
@@ -620,6 +642,7 @@ export function AdminOverview() {
                   icon={Smartphone}
                   color="green"
                   loading={isLoading}
+                  percent={{ value: pct(stats?.device_users_android, stats?.total_users), label: 'of total users' }}
                 />
               </Link>
               <Link to="/admin/devices/desktop" className="block transition hover:-translate-y-0.5 hover:shadow-md rounded-xl">
@@ -629,6 +652,7 @@ export function AdminOverview() {
                   icon={Smartphone}
                   color="purple"
                   loading={isLoading}
+                  percent={{ value: pct(stats?.device_users_desktop, stats?.total_users), label: 'of total users' }}
                 />
               </Link>
               <Link to="/admin/devices/pwa" className="block transition hover:-translate-y-0.5 hover:shadow-md rounded-xl">
@@ -638,6 +662,7 @@ export function AdminOverview() {
                   icon={Smartphone}
                   color="amber"
                   loading={isLoading}
+                  percent={{ value: pct(stats?.device_users_pwa, stats?.total_users), label: 'of total users' }}
                 />
               </Link>
               <Link to="/admin/devices/multi" className="block transition hover:-translate-y-0.5 hover:shadow-md rounded-xl">
@@ -647,6 +672,7 @@ export function AdminOverview() {
                   icon={Smartphone}
                   color="rose"
                   loading={isLoading}
+                  percent={{ value: pct(stats?.device_users_multi_platform, stats?.total_users), label: 'of total users' }}
                 />
               </Link>
             </div>
