@@ -37,6 +37,36 @@ const ACTION_ICONS: Record<string, React.ReactNode> = {
   revoke_admin: <Shield className="w-4 h-4 text-gray-500" />,
 }
 
+/**
+ * Short human-readable summary of what changed between the before/after
+ * snapshots, surfaced in the COLLAPSED audit row so entries aren't all
+ * identical ("Updated Profile • profile"). Shows up to 3 changed fields as
+ * "key: old → new". Full diffs remain in the expanded view.
+ */
+function summarizeChanges(
+  oldData?: Record<string, unknown> | null,
+  newData?: Record<string, unknown> | null,
+): string | null {
+  if (!oldData && !newData) return null
+  const keys = new Set([...Object.keys(oldData ?? {}), ...Object.keys(newData ?? {})])
+  const fmt = (v: unknown) =>
+    v === null || v === undefined || v === ''
+      ? '—'
+      : typeof v === 'object'
+        ? JSON.stringify(v)
+        : String(v)
+  const parts: string[] = []
+  for (const k of keys) {
+    const before = (oldData ?? {})[k]
+    const after = (newData ?? {})[k]
+    if (JSON.stringify(before) !== JSON.stringify(after)) {
+      parts.push(`${k}: ${fmt(before)} → ${fmt(after)}`)
+      if (parts.length >= 3) break
+    }
+  }
+  return parts.length ? parts.join(' · ') : null
+}
+
 const ACTION_LABELS: Record<string, string> = {
   block_user: 'Blocked User',
   unblock_user: 'Unblocked User',
@@ -197,6 +227,7 @@ export function AdminAuditLog() {
           <div className="divide-y divide-gray-100">
             {logs.map((log) => {
               const isExpanded = expandedRows.has(log.id)
+              const changeSummary = summarizeChanges(log.old_data, log.new_data)
               return (
                 <div key={log.id}>
                   <button
@@ -223,6 +254,11 @@ export function AdminAuditLog() {
                         by {log.admin_name || log.admin_email || 'Unknown admin'} •{' '}
                         {formatAdminDateTime(log.created_at)}
                       </div>
+                      {changeSummary && (
+                        <div className="text-xs text-gray-600 mt-1 font-mono truncate">
+                          {changeSummary}
+                        </div>
+                      )}
                     </div>
 
                     {/* Expand indicator */}

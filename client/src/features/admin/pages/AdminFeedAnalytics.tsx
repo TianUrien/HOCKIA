@@ -214,7 +214,7 @@ export function AdminFeedAnalytics() {
                 return (
                   <div
                     key={day.day}
-                    className="flex-1 group relative flex items-end gap-px"
+                    className="flex-1 group relative flex items-end gap-px h-full"
                     title={`${day.day}: ${day.posts} posts, ${day.likes} likes, ${day.comments} comments`}
                   >
                     <div

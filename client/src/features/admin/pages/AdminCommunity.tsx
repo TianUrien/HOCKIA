@@ -174,7 +174,7 @@ export function AdminCommunity() {
                   return (
                     <div
                       key={day.day}
-                      className="flex-1 group relative flex items-end gap-px"
+                      className="flex-1 group relative flex items-end gap-px h-full"
                       title={`${day.day}: ${day.questions} questions, ${day.answers} answers`}
                     >
                       {/* Questions bar (purple) */}

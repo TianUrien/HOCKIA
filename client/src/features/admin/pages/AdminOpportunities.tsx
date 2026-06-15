@@ -250,7 +250,7 @@ export function AdminOpportunities() {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          label="Total Vacancies"
+          label={daysFilter ? `Opportunities · last ${daysFilter}d` : 'Opportunities · all time'}
           value={totalCount}
           icon={Briefcase}
           color="purple"

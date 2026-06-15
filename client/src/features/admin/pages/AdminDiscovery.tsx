@@ -159,7 +159,11 @@ export function AdminDiscovery() {
       label: 'Time',
       render: (_value, row) => (
         <span className="font-mono text-sm text-gray-500">
-          {row.response_time_ms != null ? `${row.response_time_ms}ms` : '-'}
+          {row.response_time_ms != null
+            ? (row.response_time_ms >= 1000
+                ? `${(row.response_time_ms / 1000).toFixed(1)}s`
+                : `${row.response_time_ms}ms`)
+            : '-'}
         </span>
       ),
     },
@@ -343,7 +347,11 @@ export function AdminDiscovery() {
         />
         <StatCard
           label="Avg Response"
-          value={summary?.avg_response_time_ms ? `${summary.avg_response_time_ms}ms` : '0ms'}
+          value={summary?.avg_response_time_ms
+            ? (summary.avg_response_time_ms >= 1000
+                ? `${(summary.avg_response_time_ms / 1000).toFixed(1)}s`
+                : `${summary.avg_response_time_ms}ms`)
+            : '0ms'}
           icon={Zap}
           color="amber"
           loading={isLoading}
@@ -470,7 +478,7 @@ export function AdminDiscovery() {
               return (
                 <div
                   key={day.date}
-                  className="flex-1 group relative"
+                  className="flex-1 group relative h-full flex flex-col justify-end"
                   title={`${day.date}: ${day.queries} queries, ${day.unique_users} users`}
                 >
                   <div

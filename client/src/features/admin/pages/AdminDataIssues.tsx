@@ -221,12 +221,14 @@ export function AdminDataIssues() {
               <span className="text-sm font-medium">{tab.label}</span>
               <span
                 className={`px-2 py-0.5 text-xs rounded-full ${
-                  tab.count > 0
-                    ? 'bg-red-100 text-red-700'
-                    : 'bg-gray-100 text-gray-500'
+                  isLoading
+                    ? 'bg-gray-100 text-gray-400'
+                    : tab.count > 0
+                      ? 'bg-red-100 text-red-700'
+                      : 'bg-gray-100 text-gray-500'
                 }`}
               >
-                {tab.count}
+                {isLoading ? '·' : tab.count}
               </span>
             </button>
           ))}

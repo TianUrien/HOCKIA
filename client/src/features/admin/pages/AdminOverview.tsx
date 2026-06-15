@@ -29,6 +29,7 @@ import {
   Share2,
 } from 'lucide-react'
 import { StatCard } from '../components/StatCard'
+import { CategoryBreakdownChart } from '../components/CategoryBreakdownChart'
 import { CommandCenterKPICard } from '../components/CommandCenterKPICard'
 import { CommandCenterGrowthChart } from '../components/CommandCenterGrowthChart'
 import { RetentionCurveChart } from '../components/RetentionCurveChart'
@@ -249,6 +250,36 @@ export function AdminOverview() {
           {/* User Metrics */}
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Users</h2>
+            {/* Role split donut — %-of-total. A computed "Other roles"
+                remainder (total_users minus the 4 charted roles) keeps the
+                donut centre equal to the Total Users card, instead of summing
+                only the charted roles. Umpires currently fall into this
+                remainder; Slice B adds `total_umpires` to give them their own
+                slice. */}
+            <div className="bg-white rounded-xl border border-gray-200 p-6 mb-4">
+              <CategoryBreakdownChart
+                segments={[
+                  { label: 'Players', value: stats?.total_players ?? 0, color: '#8b5cf6' },
+                  { label: 'Coaches', value: stats?.total_coaches ?? 0, color: '#3b82f6' },
+                  { label: 'Clubs', value: stats?.total_clubs ?? 0, color: '#f59e0b' },
+                  { label: 'Brands', value: stats?.total_brands ?? 0, color: '#e11d48' },
+                  {
+                    label: 'Other roles',
+                    value: Math.max(
+                      0,
+                      (stats?.total_users ?? 0) -
+                        ((stats?.total_players ?? 0) +
+                          (stats?.total_coaches ?? 0) +
+                          (stats?.total_clubs ?? 0) +
+                          (stats?.total_brands ?? 0)),
+                    ),
+                    color: '#94a3b8',
+                  },
+                ]}
+                centerLabel="Users"
+                loading={isLoading}
+              />
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
               <StatCard
                 label="Total Users"
@@ -551,6 +582,19 @@ export function AdminOverview() {
               <Link to="/admin/devices" className="text-sm text-purple-600 hover:text-purple-700 font-medium">
                 View all →
               </Link>
+            </div>
+            {/* Platform split donut — iOS / Android / Desktop share. PWA and
+                multi-platform are orthogonal dimensions, kept as cards below. */}
+            <div className="bg-white rounded-xl border border-gray-200 p-6 mb-4">
+              <CategoryBreakdownChart
+                segments={[
+                  { label: 'iOS', value: stats?.device_users_ios ?? 0, color: '#3b82f6' },
+                  { label: 'Android', value: stats?.device_users_android ?? 0, color: '#22c55e' },
+                  { label: 'Desktop', value: stats?.device_users_desktop ?? 0, color: '#8b5cf6' },
+                ]}
+                centerLabel="Devices"
+                loading={isLoading}
+              />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
               <Link to="/admin/devices/ios" className="block transition hover:-translate-y-0.5 hover:shadow-md rounded-xl">
