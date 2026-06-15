@@ -250,8 +250,12 @@ export function AdminOverview() {
           {/* User Metrics */}
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Users</h2>
-            {/* Role split donut — %-of-total. Umpires pending `total_umpires`
-                in admin_get_dashboard_stats (0 today, so hidden regardless). */}
+            {/* Role split donut — %-of-total. A computed "Other roles"
+                remainder (total_users minus the 4 charted roles) keeps the
+                donut centre equal to the Total Users card, instead of summing
+                only the charted roles. Umpires currently fall into this
+                remainder; Slice B adds `total_umpires` to give them their own
+                slice. */}
             <div className="bg-white rounded-xl border border-gray-200 p-6 mb-4">
               <CategoryBreakdownChart
                 segments={[
@@ -259,6 +263,18 @@ export function AdminOverview() {
                   { label: 'Coaches', value: stats?.total_coaches ?? 0, color: '#3b82f6' },
                   { label: 'Clubs', value: stats?.total_clubs ?? 0, color: '#f59e0b' },
                   { label: 'Brands', value: stats?.total_brands ?? 0, color: '#e11d48' },
+                  {
+                    label: 'Other roles',
+                    value: Math.max(
+                      0,
+                      (stats?.total_users ?? 0) -
+                        ((stats?.total_players ?? 0) +
+                          (stats?.total_coaches ?? 0) +
+                          (stats?.total_clubs ?? 0) +
+                          (stats?.total_brands ?? 0)),
+                    ),
+                    color: '#94a3b8',
+                  },
                 ]}
                 centerLabel="Users"
                 loading={isLoading}
