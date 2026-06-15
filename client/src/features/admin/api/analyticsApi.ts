@@ -15,6 +15,8 @@ import type {
   MessagingRolePairs,
   ConversationRow,
   ConversationFilters,
+  CountryAnalytics,
+  CountryAnalyticsFilters,
 } from '../types'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -99,6 +101,21 @@ export async function getConversations(
   if (error) throw new Error(`Failed to get conversations: ${error.message}`)
   const rows = (Array.isArray(data) ? data : []) as ConversationRow[]
   return { rows, total: rows[0]?.total_count ?? 0 }
+}
+
+/**
+ * Countries / nationalities analytics. Per-country counts use the
+ * "count every nationality" method (dual holders appear under both), so
+ * country %s can exceed 100%. EU eligibility is per-user (≤100%).
+ */
+export async function getCountryAnalytics(
+  filters?: CountryAnalyticsFilters,
+): Promise<CountryAnalytics> {
+  const { data, error } = await adminRpc('admin_get_country_analytics', {
+    p_filters: filters && Object.keys(filters).length > 0 ? filters : null,
+  })
+  if (error) throw new Error(`Failed to get country analytics: ${error.message}`)
+  return data as CountryAnalytics
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

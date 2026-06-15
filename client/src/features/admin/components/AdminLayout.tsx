@@ -83,6 +83,7 @@ const NAV_SECTIONS: NavSection[] = [
     key: 'users',
     items: [
       { path: '/admin/users', icon: UserCheck, label: 'Role Analytics' },
+      { path: '/admin/countries', icon: Globe2, label: 'Countries' },
       { path: '/admin/directory', icon: Users, label: 'User Directory' },
     ],
   },

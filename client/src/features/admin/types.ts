@@ -92,6 +92,73 @@ export interface TopCountry {
   user_count: number
 }
 
+// ── Countries / Nationalities analytics (admin_get_country_analytics) ──
+export interface CountrySummary {
+  total_users: number
+  with_nationality: number
+  with_nationality_pct: number | null
+  missing_nationality: number
+  missing_nationality_pct: number | null
+  dual_nationality: number
+  dual_nationality_pct: number | null
+  eu_eligible: number
+  eu_eligible_pct: number | null
+}
+
+export interface CountryRoleSummary {
+  role: string
+  total: number
+  eu_eligible: number
+  eu_eligible_pct: number | null
+  dual: number
+  dual_pct: number | null
+  missing: number
+  missing_pct: number | null
+}
+
+/** One country row — counts EVERY nationality (dual users appear under both),
+ *  so pct_total across rows can exceed 100%. */
+export interface CountryAnalyticsRow {
+  country_id: number
+  name: string
+  code: string | null
+  flag_emoji: string | null
+  region: string | null
+  is_eu: boolean
+  count: number
+  pct_total: number | null
+  players: number
+  players_pct: number | null
+  coaches: number
+  coaches_pct: number | null
+  clubs: number
+  brands: number
+  umpires: number
+}
+
+export interface CountryRegionRow {
+  region: string
+  count: number
+  pct: number | null
+}
+
+export interface CountryAnalytics {
+  summary: CountrySummary
+  by_role: CountryRoleSummary[]
+  by_country: CountryAnalyticsRow[]
+  by_region: CountryRegionRow[]
+  generated_at: string
+}
+
+export interface CountryAnalyticsFilters {
+  role?: string
+  country_id?: number
+  active?: boolean
+  min_completeness?: number
+  open_to_play?: boolean
+  open_to_coach?: boolean
+}
+
 export interface AuthOrphan {
   user_id: string
   email: string

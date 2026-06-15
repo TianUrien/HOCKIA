@@ -134,6 +134,7 @@ const AdminCommunity = lazyWithRetry(() => import('@/features/admin/pages/AdminC
 const AdminMonthlyReport = lazyWithRetry(() => import('@/features/admin/pages/AdminMonthlyReport').then(m => ({ default: m.AdminMonthlyReport })))
 const AdminMessagingHealth = lazyWithRetry(() => import('@/features/admin/pages/AdminMessagingHealth').then(m => ({ default: m.AdminMessagingHealth })))
 const AdminAttribution = lazyWithRetry(() => import('@/features/admin/pages/AdminAttribution').then(m => ({ default: m.AdminAttribution })))
+const AdminCountries = lazyWithRetry(() => import('@/features/admin/pages/AdminCountries').then(m => ({ default: m.AdminCountries })))
 
 // Public investor dashboard (no auth required)
 const PublicInvestorDashboard = lazyWithRetry(() => import('@/pages/PublicInvestorDashboard'))
@@ -527,6 +528,7 @@ function App() {
                   {/* search-quality page removed Phase 2A — old URL caught by redirect above */}
                   <Route path="messaging-health" element={<AdminMessagingHealth />} />
                   <Route path="attribution" element={<AdminAttribution />} />
+                  <Route path="countries" element={<AdminCountries />} />
                   {/* Phase 2D: Funnels & Health / Onboarding Funnel / Churn
                       consolidated into a tabbed Product Health page. Old
                       per-page URLs redirect into the matching tab so
