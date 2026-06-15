@@ -302,10 +302,10 @@ export interface CommandCenterStats {
 export interface RetentionCohort {
   signup_month: string
   cohort_size: number
-  d1_pct: number | null
   d7_pct: number | null
-  d14_pct: number | null
+  d15_pct: number | null
   d30_pct: number | null
+  d90_pct: number | null
 }
 
 export interface ActivationFunnelData {

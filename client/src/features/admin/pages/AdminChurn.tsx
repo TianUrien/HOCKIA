@@ -294,14 +294,14 @@ export function AdminChurn() {
                 <tr className="border-b border-gray-200">
                   <th className="text-left py-3 px-2 font-medium text-gray-500">Role</th>
                   <th className="text-right py-3 px-2 font-medium text-gray-500">Users</th>
-                  <th className="text-right py-3 px-2 font-medium text-gray-500">Day 1</th>
-                  <th className="text-right py-3 px-2 font-medium text-gray-500">Week 1</th>
-                  <th className="text-right py-3 px-2 font-medium text-gray-500">Week 2</th>
-                  <th className="text-right py-3 px-2 font-medium text-gray-500">Week 3-4</th>
+                  <th className="text-right py-3 px-2 font-medium text-gray-500">D7</th>
+                  <th className="text-right py-3 px-2 font-medium text-gray-500">D15</th>
+                  <th className="text-right py-3 px-2 font-medium text-gray-500">D30</th>
+                  <th className="text-right py-3 px-2 font-medium text-gray-500">D90</th>
                 </tr>
               </thead>
               <tbody>
-                {retentionByRole.map((row: { role: string; total_users: number; day_1_pct: number; week_1_pct: number; week_2_pct: number; week_3_4_pct: number }) => {
+                {retentionByRole.map((row: { role: string; total_users: number; d7_pct: number | null; d15_pct: number | null; d30_pct: number | null; d90_pct: number | null }) => {
                   const colors = getRoleColors(row.role)
 
                   return (
@@ -323,17 +323,17 @@ export function AdminChurn() {
                       <td className="py-3 px-2 text-right font-mono text-gray-900">
                         {Number(row.total_users).toLocaleString()}
                       </td>
-                      <td className={`py-3 px-2 text-right font-mono font-medium ${retentionColor(Number(row.day_1_pct))}`}>
-                        {row.day_1_pct}%
+                      <td className={`py-3 px-2 text-right font-mono font-medium ${row.d7_pct == null ? 'text-gray-300' : retentionColor(Number(row.d7_pct))}`}>
+                        {row.d7_pct == null ? '—' : `${row.d7_pct}%`}
                       </td>
-                      <td className={`py-3 px-2 text-right font-mono font-medium ${retentionColor(Number(row.week_1_pct))}`}>
-                        {row.week_1_pct}%
+                      <td className={`py-3 px-2 text-right font-mono font-medium ${row.d15_pct == null ? 'text-gray-300' : retentionColor(Number(row.d15_pct))}`}>
+                        {row.d15_pct == null ? '—' : `${row.d15_pct}%`}
                       </td>
-                      <td className={`py-3 px-2 text-right font-mono font-medium ${retentionColor(Number(row.week_2_pct))}`}>
-                        {row.week_2_pct}%
+                      <td className={`py-3 px-2 text-right font-mono font-medium ${row.d30_pct == null ? 'text-gray-300' : retentionColor(Number(row.d30_pct))}`}>
+                        {row.d30_pct == null ? '—' : `${row.d30_pct}%`}
                       </td>
-                      <td className={`py-3 px-2 text-right font-mono font-medium ${retentionColor(Number(row.week_3_4_pct))}`}>
-                        {row.week_3_4_pct}%
+                      <td className={`py-3 px-2 text-right font-mono font-medium ${row.d90_pct == null ? 'text-gray-300' : retentionColor(Number(row.d90_pct))}`}>
+                        {row.d90_pct == null ? '—' : `${row.d90_pct}%`}
                       </td>
                     </tr>
                   )
