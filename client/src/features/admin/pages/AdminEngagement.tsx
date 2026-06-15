@@ -319,7 +319,7 @@ export function AdminEngagement() {
               return (
                 <div
                   key={day.date}
-                  className="flex-1 group relative"
+                  className="flex-1 group relative h-full flex flex-col justify-end"
                   title={`${day.date}: ${day.active_users} users, ${formatTime(day.total_minutes)}`}
                 >
                   <div

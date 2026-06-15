@@ -314,7 +314,7 @@ export function AdminFeatureUsage() {
               return (
                 <div
                   key={day.date}
-                  className="flex-1 group relative"
+                  className="flex-1 group relative h-full flex flex-col justify-end"
                   title={`${day.date}: ${day.views} views`}
                 >
                   <div

@@ -92,7 +92,7 @@ export function AdminEmail() {
   const [engCountry, setEngCountry] = useState<string>('')
   const [engSince, setEngSince] = useState<string>('')
   const [engUntil, setEngUntil] = useState<string>('')
-  const [engPage, setEngPage] = useState(0)
+  const [engPage, setEngPage] = useState(1)
 
   // Countries for engagement filter
   const [countries, setCountries] = useState<WorldCountry[]>([])
@@ -112,7 +112,7 @@ export function AdminEmail() {
   const [contactRole, setContactRole] = useState<string>('')
   const [contactCountry, setContactCountry] = useState<string>('')
   const [contactSearch, setContactSearch] = useState<string>('')
-  const [contactPage, setContactPage] = useState(0)
+  const [contactPage, setContactPage] = useState(1)
 
   // Data hooks
   const overview = useEmailOverview(daysFilter)
@@ -126,7 +126,7 @@ export function AdminEmail() {
     since: engSince || undefined,
     until: engUntil || undefined,
     limit: 50,
-    offset: engPage * 50,
+    offset: (engPage - 1) * 50,
   })
   const contactsSummary = useEmailContactsSummary()
   const contacts = useEmailContacts({
@@ -134,7 +134,7 @@ export function AdminEmail() {
     country: contactCountry || undefined,
     search: contactSearch || undefined,
     limit: 50,
-    offset: contactPage * 50,
+    offset: (contactPage - 1) * 50,
   })
 
   useEffect(() => {
@@ -715,7 +715,7 @@ export function AdminEmail() {
                 type="button"
                 onClick={() => {
                   setContactRole(contactRole === seg.role ? '' : seg.role)
-                  setContactPage(0)
+                  setContactPage(1)
                 }}
                 className={`rounded-xl border p-4 text-left transition-all ${
                   contactRole === seg.role
@@ -752,7 +752,7 @@ export function AdminEmail() {
                 type="text"
                 placeholder="Search name or email..."
                 value={contactSearch}
-                onChange={(e) => { setContactSearch(e.target.value); setContactPage(0) }}
+                onChange={(e) => { setContactSearch(e.target.value); setContactPage(1) }}
                 className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 w-56 focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
             </div>
@@ -760,7 +760,7 @@ export function AdminEmail() {
               <label className="text-sm text-gray-600">Country:</label>
               <select
                 value={contactCountry}
-                onChange={(e) => { setContactCountry(e.target.value); setContactPage(0) }}
+                onChange={(e) => { setContactCountry(e.target.value); setContactPage(1) }}
                 aria-label="Contact country filter"
                 className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-purple-500"
               >
@@ -901,7 +901,7 @@ export function AdminEmail() {
               <label className="text-sm text-gray-600">Template:</label>
               <select
                 value={engTemplateKey}
-                onChange={(e) => { setEngTemplateKey(e.target.value); setEngPage(0) }}
+                onChange={(e) => { setEngTemplateKey(e.target.value); setEngPage(1) }}
                 className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-purple-500"
               >
                 <option value="">All</option>
@@ -914,7 +914,7 @@ export function AdminEmail() {
               <label className="text-sm text-gray-600">Status:</label>
               <select
                 value={engStatus}
-                onChange={(e) => { setEngStatus(e.target.value); setEngPage(0) }}
+                onChange={(e) => { setEngStatus(e.target.value); setEngPage(1) }}
                 className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-purple-500"
               >
                 <option value="">All</option>
@@ -930,7 +930,7 @@ export function AdminEmail() {
               <label className="text-sm text-gray-600">Role:</label>
               <select
                 value={engRole}
-                onChange={(e) => { setEngRole(e.target.value); setEngPage(0) }}
+                onChange={(e) => { setEngRole(e.target.value); setEngPage(1) }}
                 className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-purple-500"
               >
                 <option value="">All</option>
@@ -944,7 +944,7 @@ export function AdminEmail() {
               <label className="text-sm text-gray-600">Country:</label>
               <select
                 value={engCountry}
-                onChange={(e) => { setEngCountry(e.target.value); setEngPage(0) }}
+                onChange={(e) => { setEngCountry(e.target.value); setEngPage(1) }}
                 className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-purple-500"
               >
                 <option value="">All</option>
@@ -959,7 +959,7 @@ export function AdminEmail() {
                 type="date"
                 aria-label="Filter from date"
                 value={engSince}
-                onChange={(e) => { setEngSince(e.target.value); setEngPage(0) }}
+                onChange={(e) => { setEngSince(e.target.value); setEngPage(1) }}
                 className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
             </div>
@@ -969,7 +969,7 @@ export function AdminEmail() {
                 type="date"
                 aria-label="Filter to date"
                 value={engUntil}
-                onChange={(e) => { setEngUntil(e.target.value); setEngPage(0) }}
+                onChange={(e) => { setEngUntil(e.target.value); setEngPage(1) }}
                 className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
             </div>
