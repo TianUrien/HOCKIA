@@ -19,6 +19,7 @@ import {
   BookOpen,
 } from 'lucide-react'
 import { StatCard } from '../components/StatCard'
+import { pct } from '../utils/percent'
 import { DataTable } from '../components/DataTable'
 import type { Column } from '../components/DataTable'
 import { getDiscoveryAnalytics } from '../api/adminApi'
@@ -380,6 +381,7 @@ export function AdminDiscovery() {
           icon={AlertTriangle}
           color="red"
           loading={isLoading}
+          percent={{ value: pct(summary?.true_zero_result_queries, summary?.total_queries), label: 'of all queries' }}
         />
         <StatCard
           label="Errors"
@@ -387,6 +389,7 @@ export function AdminDiscovery() {
           icon={XCircle}
           color="red"
           loading={isLoading}
+          percent={{ value: pct(summary?.error_count, summary?.total_queries), label: 'of all queries' }}
         />
         <StatCard
           label="Search Queries"
@@ -394,6 +397,7 @@ export function AdminDiscovery() {
           icon={Search}
           color="purple"
           loading={isLoading}
+          percent={{ value: pct(intentBreakdown.find(i => i.intent === 'search')?.count, summary?.total_queries), label: 'of all queries' }}
         />
       </div>
 

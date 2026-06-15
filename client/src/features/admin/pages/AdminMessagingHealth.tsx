@@ -16,6 +16,7 @@ import {
   Users,
 } from 'lucide-react'
 import { StatCard } from '../components/StatCard'
+import { pct } from '../utils/percent'
 import { RolePairHeatmap } from '../components/RolePairHeatmap'
 import { getMessagingHealth, getMessagingRolePairs } from '../api/analyticsApi'
 import type { MessagingRolePairs } from '../types'
@@ -176,6 +177,7 @@ export function AdminMessagingHealth() {
           icon={MessageSquareOff}
           color="amber"
           loading={isLoading}
+          percent={{ value: pct(data?.summary?.unanswered_conversations, data?.summary?.active_conversations), label: 'of active conversations' }}
         />
       </div>
 

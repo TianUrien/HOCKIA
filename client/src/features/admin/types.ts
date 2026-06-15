@@ -530,6 +530,8 @@ export interface ExtendedDashboardStats {
   avg_apps_per_vacancy: number | null
   active_clubs_7d: number
   active_clubs_30d: number
+  /** non-test club accounts — denominator for "Active Clubs (30d)" share */
+  total_clubs: number
   vacancy_fill_rate: number | null
   
   // Player insights
@@ -560,6 +562,8 @@ export interface ExtendedDashboardStats {
 export interface EngagementSummary {
   total_active_users_7d: number
   total_active_users_30d: number
+  /** non-test platform users — denominator for the active-user share */
+  total_users: number
   total_time_minutes_7d: number
   total_time_minutes_30d: number
   total_sessions_7d: number

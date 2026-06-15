@@ -13,6 +13,7 @@ import {
   AlertTriangle,
 } from 'lucide-react'
 import { StatCard } from '../components/StatCard'
+import { pct } from '../utils/percent'
 import { getCommunityAnalytics } from '../api/analyticsApi'
 import type { CommunityAnalytics } from '../types'
 import { logger } from '@/lib/logger'
@@ -129,6 +130,7 @@ export function AdminCommunity() {
           icon={MessageSquare}
           color="blue"
           loading={isLoading}
+          percent={{ value: pct(data?.summary.total_answers, data?.summary.total_questions), label: 'per questions asked' }}
           trend={data ? {
             value: aTrend,
             label: 'vs prev period',

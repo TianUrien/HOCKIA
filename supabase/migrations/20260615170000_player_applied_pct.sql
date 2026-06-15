@@ -12,6 +12,10 @@
 -- every other player metric on the page. Counting raw applicant_id would let
 -- test / non-player applicants push the rate over 100% (staging showed 117%).
 --
+-- Also adds total_clubs (non-test club accounts) so the Opportunities page
+-- can show "Active Clubs (30d)" as a share of all clubs — same sweep, same
+-- function, so it rides along here rather than in a separate migration.
+--
 -- JSON return → CREATE OR REPLACE is safe (no signature change). Full body
 -- reproduced so the replace is atomic.
 -- ─────────────────────────────────────────────────────────────────────
@@ -42,13 +46,27 @@ BEGIN
         GROUP BY o.id
       ) sub
     ),
+    -- Active clubs now exclude test-account clubs (joined via profiles), so
+    -- the count matches the non-test total_clubs denominator below and the
+    -- "Active Clubs (30d)" share can't exceed 100% (staging [QA] clubs were
+    -- pushing it to 200%). Consistent with 20260427180000's leakage fix.
     'active_clubs_7d', (
-      SELECT COUNT(DISTINCT club_id) FROM opportunities
-      WHERE created_at > now() - interval '7 days'
+      SELECT COUNT(DISTINCT o.club_id) FROM opportunities o
+      JOIN profiles p ON p.id = o.club_id
+      WHERE o.created_at > now() - interval '7 days'
+        AND NOT p.is_test_account
     ),
     'active_clubs_30d', (
-      SELECT COUNT(DISTINCT club_id) FROM opportunities
-      WHERE created_at > now() - interval '30 days'
+      SELECT COUNT(DISTINCT o.club_id) FROM opportunities o
+      JOIN profiles p ON p.id = o.club_id
+      WHERE o.created_at > now() - interval '30 days'
+        AND NOT p.is_test_account
+    ),
+    -- Denominator for "Active Clubs (30d)" on the Opportunities page
+    -- (what share of clubs actually posted an opportunity recently).
+    'total_clubs', (
+      SELECT COUNT(*) FROM profiles
+      WHERE role = 'club' AND NOT is_test_account
     ),
     'vacancy_fill_rate', (
       SELECT ROUND(
