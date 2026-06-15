@@ -17,6 +17,13 @@ interface CompletionArcProps {
   caption?: string
   /** Pixel width of the arc. Height = width / 2 + label space. */
   size?: number
+  /**
+   * Reserve the arc's exact footprint while the strength data is still
+   * loading: renders the empty track + a skeleton for the percentage instead
+   * of an understated number. Same DOM dimensions as the resolved state, so
+   * the host card never reflows when the data arrives.
+   */
+  loading?: boolean
   className?: string
 }
 
@@ -24,6 +31,7 @@ export default function CompletionArc({
   percentage,
   caption = 'Profile complete',
   size = 140,
+  loading = false,
   className,
 }: CompletionArcProps) {
   // Clamp + round so the SVG arithmetic is always well-defined.
@@ -45,7 +53,7 @@ export default function CompletionArc({
     <div
       className={cn('inline-flex flex-col items-center', className)}
       data-testid="completion-arc"
-      aria-label={`${caption}: ${pct}%`}
+      aria-label={loading ? caption : `${caption}: ${pct}%`}
     >
       <svg
         width={size}
@@ -63,17 +71,20 @@ export default function CompletionArc({
           strokeWidth={strokeWidth}
           strokeLinecap="round"
         />
-        {/* Progress arc */}
-        <path
-          d={`M ${strokeWidth / 2} ${cy} A ${radius} ${radius} 0 0 1 ${size - strokeWidth / 2} ${cy}`}
-          fill="none"
-          stroke="url(#completion-arc-gradient)"
-          strokeWidth={strokeWidth}
-          strokeLinecap="round"
-          strokeDasharray={halfCircumference}
-          strokeDashoffset={dashOffset}
-          style={{ transition: 'stroke-dashoffset 600ms ease-out' }}
-        />
+        {/* Progress arc — suppressed while loading so we never paint an
+            understated fill that would visibly "catch up" once data lands. */}
+        {!loading && (
+          <path
+            d={`M ${strokeWidth / 2} ${cy} A ${radius} ${radius} 0 0 1 ${size - strokeWidth / 2} ${cy}`}
+            fill="none"
+            stroke="url(#completion-arc-gradient)"
+            strokeWidth={strokeWidth}
+            strokeLinecap="round"
+            strokeDasharray={halfCircumference}
+            strokeDashoffset={dashOffset}
+            style={{ transition: 'stroke-dashoffset 600ms ease-out' }}
+          />
+        )}
         <defs>
           <linearGradient id="completion-arc-gradient" x1="0" y1="0" x2="1" y2="0">
             <stop offset="0%" stopColor="#8026FA" />
@@ -83,9 +94,13 @@ export default function CompletionArc({
       </svg>
 
       <div className="-mt-7 text-center">
-        <div className="text-2xl font-bold text-[#8026FA] tabular-nums leading-none">
-          {pct}%
-        </div>
+        {loading ? (
+          <div className="mx-auto h-6 w-12 rounded-md bg-gray-200 animate-pulse" aria-hidden="true" />
+        ) : (
+          <div className="text-2xl font-bold text-[#8026FA] tabular-nums leading-none">
+            {pct}%
+          </div>
+        )}
         <div className="mt-1 text-[11px] font-medium text-gray-500">{caption}</div>
       </div>
     </div>
