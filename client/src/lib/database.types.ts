@@ -6716,6 +6716,12 @@ export type Database = {
           specialist_skills: string[] | null
           umpiring_categories: string[] | null
           verified_at: string | null
+          umpire_since: number | null
+          officiating_specialization: string | null
+          languages: string[] | null
+          last_officiated_at: string | null
+          coach_specialization_custom: string | null
+          club_bio: string | null
           available_from: string
           avatar_url: string
           base_country_id: number

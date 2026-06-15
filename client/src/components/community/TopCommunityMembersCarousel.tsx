@@ -134,6 +134,23 @@ interface TopMemberRow {
   specialist_skills: string[] | null
   umpiring_categories: string[] | null
   verified_at: string | null
+  // Role-specific Preview parity (RPC-projected, 20260615230000).
+  umpire_since: number | null
+  officiating_specialization: string | null
+  languages: string[] | null
+  last_officiated_at: string | null
+  coach_specialization_custom: string | null
+  club_bio: string | null
+  // Brand metadata — NOT from the RPC; enriched client-side from the `brands`
+  // table after fetch (mirrors PeopleListView), so kept optional.
+  brand_slug?: string | null
+  brand_category?: string | null
+  brand_bio?: string | null
+  brand_website_url?: string | null
+  brand_instagram_url?: string | null
+  brand_logo_url?: string | null
+  brand_follower_count?: number | null
+  brand_ambassador_count?: number | null
 }
 
 interface TopCommunityMembersCarouselProps {
@@ -238,6 +255,22 @@ function topRowToProfile(m: TopMemberRow): Profile {
     umpire_level: m.umpire_level,
     federation: m.federation,
     year_founded: m.year_founded,
+    // Role-specific Preview parity (umpire / coach / club).
+    umpire_since: m.umpire_since,
+    officiating_specialization: m.officiating_specialization,
+    languages: m.languages,
+    last_officiated_at: m.last_officiated_at,
+    coach_specialization_custom: m.coach_specialization_custom,
+    club_bio: m.club_bio,
+    // Brand metadata (enriched from the `brands` table after fetch).
+    brand_slug: m.brand_slug ?? null,
+    brand_category: m.brand_category ?? null,
+    brand_bio: m.brand_bio ?? null,
+    brand_website_url: m.brand_website_url ?? null,
+    brand_instagram_url: m.brand_instagram_url ?? null,
+    brand_logo_url: m.brand_logo_url ?? null,
+    brand_follower_count: m.brand_follower_count ?? null,
+    brand_ambassador_count: m.brand_ambassador_count ?? null,
   }
 }
 
@@ -495,7 +528,40 @@ export function TopCommunityMembersCarousel({
             }
             // Scoped: keep the wide pool (ranking + display cap applied
             // client-side via displayMembers). Discovery: cap at `limit`.
-            return result.slice(0, showEvidence ? SCOPED_POOL_LIMIT : limit)
+            const sliced = result.slice(0, showEvidence ? SCOPED_POOL_LIMIT : limit)
+
+            // Brand cards need brands-table metadata the profiles-based RPC
+            // can't project — enrich them here, mirroring PeopleListView so the
+            // carousel-sourced brand Preview matches the grid's.
+            const brandIds = sliced.filter((m) => m.role === 'brand').map((m) => m.id)
+            if (brandIds.length > 0) {
+              const { data: brands } = await supabase
+                .from('brands')
+                .select('profile_id, slug, category, bio, website_url, instagram_url, logo_url, follower_count, ambassador_count')
+                .in('profile_id', brandIds)
+              if (brands) {
+                const brandMap = new Map(
+                  (brands as Array<{
+                    profile_id: string; slug: string | null; category: string | null; bio: string | null
+                    website_url: string | null; instagram_url: string | null; logo_url: string | null
+                    follower_count: number | null; ambassador_count: number | null
+                  }>).map((b) => [b.profile_id, b]),
+                )
+                sliced.forEach((m) => {
+                  if (m.role !== 'brand') return
+                  const b = brandMap.get(m.id)
+                  m.brand_slug = b?.slug ?? null
+                  m.brand_category = b?.category ?? null
+                  m.brand_bio = b?.bio ?? null
+                  m.brand_website_url = b?.website_url ?? null
+                  m.brand_instagram_url = b?.instagram_url ?? null
+                  m.brand_logo_url = b?.logo_url ?? null
+                  m.brand_follower_count = b?.follower_count ?? null
+                  m.brand_ambassador_count = b?.ambassador_count ?? null
+                })
+              }
+            }
+            return sliced
           },
           30000, // 30s cache — survives StrictMode double-invoke + replay
         )
