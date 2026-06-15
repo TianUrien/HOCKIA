@@ -1327,10 +1327,25 @@ export interface DiscoverySummary {
   total_queries: number
   unique_users: number
   avg_result_count: number
+  /** Legacy: result_count=0 AND intent='search' (over-counts — includes recommendations). */
   zero_result_queries: number
+  /** Every query that returned 0 cards (the failure_breakdown denominator). */
+  zero_result_total: number
+  /** Honest metric: searches that genuinely matched nothing (the 'real_no_result' bucket). */
+  true_zero_result_queries: number
   avg_response_time_ms: number
   error_count: number
 }
+
+export interface FailureBreakdownBucket {
+  count: number
+  percentage: number
+}
+
+/** Each 0-card query bucketed (mutually exclusive). Keys: real_no_result,
+ *  conversational, recommendation, clarifying, canned_redirect, knowledge,
+ *  error, other. Buckets with no rows are absent (default to 0 in the UI). */
+export type FailureBreakdown = Record<string, FailureBreakdownBucket>
 
 export interface DiscoveryIntentBreakdown {
   intent: string
@@ -1364,7 +1379,9 @@ export interface DiscoveryZeroResultQuery {
   user_id: string
   display_name: string | null
   query_text: string
+  intent: string
   parsed_filters: Record<string, unknown> | null
+  meta_kind: string | null
   created_at: string
 }
 
@@ -1383,6 +1400,7 @@ export interface DiscoveryRecentQuery {
 
 export interface DiscoveryAnalyticsData {
   summary: DiscoverySummary
+  failure_breakdown: FailureBreakdown
   intent_breakdown: DiscoveryIntentBreakdown[]
   filter_frequency: DiscoveryFilterFrequency[]
   daily_trend: DiscoveryDailyTrend[]

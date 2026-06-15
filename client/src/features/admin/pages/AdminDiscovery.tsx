@@ -50,6 +50,20 @@ const INTENT_ICONS: Record<string, typeof Search> = {
   error: XCircle,
 }
 
+// Zero-result categories (mutually exclusive, from the RPC's classifier).
+const FAILURE_KIND_META: Record<string, { label: string; color: string }> = {
+  real_no_result: { label: 'No matching profiles (real miss)', color: 'bg-red-500' },
+  recommendation: { label: 'Applicant recommendation', color: 'bg-purple-500' },
+  conversational: { label: 'Conversational / advice', color: 'bg-blue-500' },
+  clarifying: { label: 'Clarifying question', color: 'bg-amber-500' },
+  canned_redirect: { label: 'Feature redirect', color: 'bg-slate-500' },
+  knowledge: { label: 'Knowledge / Q&A', color: 'bg-green-500' },
+  error: { label: 'System error', color: 'bg-rose-600' },
+  other: { label: 'Other', color: 'bg-gray-400' },
+}
+// Real failures first.
+const FAILURE_KIND_ORDER = ['real_no_result', 'recommendation', 'conversational', 'clarifying', 'canned_redirect', 'knowledge', 'error', 'other']
+
 const FILTER_COLORS: Record<string, string> = {
   roles: 'bg-blue-500',
   positions: 'bg-purple-500',
@@ -244,7 +258,7 @@ export function AdminDiscovery() {
       render: (_value, row) => {
         if (!row.parsed_filters) return <span className="text-gray-400 text-sm">-</span>
         const activeFilters = Object.entries(row.parsed_filters)
-          .filter(([, v]) => v != null && v !== '' && !(Array.isArray(v) && v.length === 0) && v !== false)
+          .filter(([k, v]) => k !== '_meta' && v != null && v !== '' && !(Array.isArray(v) && v.length === 0) && v !== false)
           .map(([k]) => k)
         if (activeFilters.length === 0) return <span className="text-gray-400 text-sm">-</span>
         return (
@@ -361,8 +375,8 @@ export function AdminDiscovery() {
       {/* Secondary Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <StatCard
-          label="Zero Results"
-          value={summary?.zero_result_queries ?? 0}
+          label="True Zero Results"
+          value={summary?.true_zero_result_queries ?? 0}
           icon={AlertTriangle}
           color="red"
           loading={isLoading}
@@ -382,6 +396,49 @@ export function AdminDiscovery() {
           loading={isLoading}
         />
       </div>
+
+      {/* Why zero results? — every 0-card query categorised (mutually exclusive) */}
+      {(summary?.zero_result_total ?? 0) > 0 && (
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-1 gap-3 flex-wrap">
+            <h2 className="text-lg font-semibold text-gray-900">Why zero results?</h2>
+            <span className="text-xs text-gray-400">
+              {summary?.true_zero_result_queries ?? 0} of {summary?.zero_result_total ?? 0} are real search misses
+            </span>
+          </div>
+          <p className="text-xs text-gray-400 mb-4">
+            Most “0 cards” responses are correct — greetings, advice, applicant recommendations, clarifying
+            questions. Only “No matching profiles” are genuine search/supply gaps worth acting on.
+          </p>
+          {isLoading ? (
+            <div className="space-y-3">
+              {[1, 2, 3, 4].map(i => <div key={i} className="h-6 bg-gray-100 rounded animate-pulse" />)}
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {FAILURE_KIND_ORDER.map((key) => {
+                const bucket = data?.failure_breakdown?.[key]
+                if (!bucket || bucket.count === 0) return null
+                const meta = FAILURE_KIND_META[key] ?? FAILURE_KIND_META.other
+                return (
+                  <div key={key}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm font-medium text-gray-700">{meta.label}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-mono text-gray-600">{bucket.count}</span>
+                        <span className="text-xs text-gray-400">({bucket.percentage}%)</span>
+                      </div>
+                    </div>
+                    <div className="w-full bg-gray-100 rounded-full h-2.5">
+                      <div className={`h-2.5 rounded-full ${meta.color}`} style={{ width: `${bucket.percentage}%` }} />
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Intent Breakdown + Filter Frequency */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
