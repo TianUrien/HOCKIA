@@ -103,14 +103,15 @@ export default function OpportunityDetailPage() {
         return
       }
 
+      // Status is the single source of truth for closed/open — matching the
+      // Opportunities list + in-app OpportunityDetailView. An opportunity is
+      // closed ONLY when its creator changes the status; a passed
+      // application_deadline does NOT auto-close it (the club/coach may still be
+      // accepting). This stops the Home-feed "Apply Now" from dead-ending on a
+      // still-open opportunity whose deadline merely lapsed. A passed deadline
+      // is surfaced as informational text, not a block.
       if (opportunityData.status !== 'open') {
         setIsClosed(true)
-      } else if (opportunityData.application_deadline) {
-        // Check if deadline has passed (treat as closed even if status wasn't updated)
-        const deadline = new Date(opportunityData.application_deadline)
-        if (deadline < new Date()) {
-          setIsClosed(true)
-        }
       }
 
       // Check if this is a test opportunity and current user is not a test account
