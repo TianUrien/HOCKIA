@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef } from 'react'
 import { useLocation, useNavigationType } from 'react-router-dom'
 
 /** In-memory map — fast writes on scroll, survives within a single SPA session */
@@ -40,6 +40,23 @@ export function useScrollRestore(ready = true) {
       SCROLL_POSITIONS.set(key, window.scrollY)
     }
   }, [location.key])
+
+  // Fast path — restore BEFORE the browser paints, when the DOM is already
+  // tall enough (e.g. react-query rendered a cached list synchronously on
+  // remount). This eliminates the visible "paint at the top, then jump down to
+  // the saved position" flash that the rAF-based restore below produces (the
+  // rAF runs after the first paint, so the user sees one frame at the top).
+  // When the content isn't ready yet (cold load / pagination), this no-ops and
+  // the retry effect below takes over.
+  useLayoutEffect(() => {
+    if (navigationType !== 'POP' || hasRestoredRef.current || !ready) return
+    const savedY = SCROLL_POSITIONS.get(location.key)
+    if (savedY == null || savedY === 0) return
+    if (document.documentElement.scrollHeight >= savedY + window.innerHeight * 0.5) {
+      window.scrollTo({ top: savedY, left: 0, behavior: 'instant' })
+      hasRestoredRef.current = true
+    }
+  }, [navigationType, location.key, ready])
 
   // Restore scroll position on POP navigation when ready
   useEffect(() => {
