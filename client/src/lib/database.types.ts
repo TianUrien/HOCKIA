@@ -985,6 +985,7 @@ export type Database = {
           created_at: string
           id: string
           last_message_at: string | null
+          origin: string
           participant_one_id: string
           participant_two_id: string
           updated_at: string
@@ -994,6 +995,7 @@ export type Database = {
           created_at?: string
           id?: string
           last_message_at?: string | null
+          origin?: string
           participant_one_id: string
           participant_two_id: string
           updated_at?: string
@@ -1003,6 +1005,7 @@ export type Database = {
           created_at?: string
           id?: string
           last_message_at?: string | null
+          origin?: string
           participant_one_id?: string
           participant_two_id?: string
           updated_at?: string

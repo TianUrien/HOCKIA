@@ -31,12 +31,14 @@ export async function sendSharedPostMessage(
     if (existing) {
       conversationId = existing.id
     } else {
-      // 2. Create new conversation
+      // 2. Create new conversation. Sharing a post is a social-feed action →
+      // attribute it to Community (only set on this brand-new row).
       const { data: created, error: createError } = await supabase
         .from('conversations')
         .insert({
           participant_one_id: currentUserId,
           participant_two_id: recipientUserId,
+          origin: 'Community',
         })
         .select('id')
         .single()

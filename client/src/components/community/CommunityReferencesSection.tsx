@@ -178,7 +178,7 @@ export default function CommunityReferencesSection({
       // (the community references view).
       const returnTo = location.pathname + location.search
       if (data?.id) navigate(`/messages?conversation=${data.id}`, { state: { returnTo } })
-      else navigate(`/messages?new=${targetId}`, { state: { returnTo } })
+      else navigate(`/messages?new=${targetId}`, { state: { returnTo, messageOrigin: 'Community' } })
     } catch (error) {
       logger.error('Failed to open messages', error)
       addToast('Unable to start conversation. Please try again.', 'error')

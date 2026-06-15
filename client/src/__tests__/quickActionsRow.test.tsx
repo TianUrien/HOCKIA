@@ -174,10 +174,11 @@ describe('QuickActionsRow', () => {
     renderRow()
     await userEvent.click(screen.getByRole('button', { name: /message jordan hall/i }))
     // Second arg carries returnTo state for context-aware back nav
-    // — defaults to '/' since MemoryRouter starts at root path.
+    // — defaults to '/' since MemoryRouter starts at root path. messageOrigin
+    // defaults to 'Community' (this row's primary host is community discovery).
     expect(navigateMock).toHaveBeenCalledWith(
       '/messages?new=player-9',
-      { state: { returnTo: '/' } },
+      { state: { returnTo: '/', messageOrigin: 'Community' } },
     )
   })
 })

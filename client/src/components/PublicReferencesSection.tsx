@@ -110,7 +110,7 @@ export default function PublicReferencesSection({ profileId, profileName }: Publ
       if (data?.id) {
         navigate(`/messages?conversation=${data.id}`, { state: { returnTo } })
       } else {
-        navigate(`/messages?new=${targetId}`, { state: { returnTo } })
+        navigate(`/messages?new=${targetId}`, { state: { returnTo, messageOrigin: 'Profile' } })
       }
     } catch (error) {
       logger.error('Failed to open messages', error)

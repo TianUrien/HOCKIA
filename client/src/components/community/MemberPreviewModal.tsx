@@ -269,7 +269,7 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
       // /community). Conversation back button reads this so closing
       // the chat returns the user to where they were browsing.
       const returnTo = location.pathname + location.search
-      navigate(route, { state: { returnTo } })
+      navigate(route, { state: { returnTo, messageOrigin: 'Community' } })
     } catch (error) {
       if (activeMemberIdRef.current !== targetId) return
       logger.error('Error starting conversation from preview:', error)

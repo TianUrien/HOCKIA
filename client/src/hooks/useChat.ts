@@ -14,7 +14,7 @@ import { checkMessageRateLimit, formatRateLimitError } from '@/lib/rateLimit'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import { trackMessageSend, trackConversationStart } from '@/lib/analytics'
 import { extractErrorMessage } from '@/lib/utils'
-import type { ChatMessage, Message, Conversation, ChatMessageEvent, MessageDeliveryStatus, MessageMetadata } from '@/types/chat'
+import type { ChatMessage, Message, Conversation, ChatMessageEvent, MessageDeliveryStatus, MessageMetadata, ConversationOrigin } from '@/types/chat'
 
 const MESSAGES_PAGE_SIZE = 50
 
@@ -616,7 +616,11 @@ export function useChat({
               .from('conversations')
               .insert({
                 participant_one_id: currentUserId,
-                participant_two_id: otherParticipantId
+                participant_two_id: otherParticipantId,
+                // Stamp the entry point on the NEW row only. The unique-violation
+                // fallback below SELECTs the existing row and never overwrites it,
+                // so a conversation's origin is frozen at first creation.
+                origin: conversation.origin ?? 'Direct'
               })
               .select()
 
@@ -632,6 +636,8 @@ export function useChat({
           activeConversationId = createdConversation.id
           newlyCreatedConversation = {
             ...createdConversation,
+            // DB types origin as a plain text column; narrow to the union.
+            origin: createdConversation.origin as ConversationOrigin,
             otherParticipant: conversation.otherParticipant,
             isPending: false
           }
@@ -681,6 +687,8 @@ export function useChat({
           activeConversationId = existingConversation.id
           newlyCreatedConversation = {
             ...existingConversation,
+            // Existing row's stored origin (frozen at its creation); narrow it.
+            origin: existingConversation.origin as ConversationOrigin,
             otherParticipant: conversation.otherParticipant,
             isPending: false
           }
@@ -761,8 +769,12 @@ export function useChat({
       }
 
       if (newlyCreatedConversation) {
-        trackDbEvent('conversation_start', 'conversation', newlyCreatedConversation.id, { context: 'direct_message' })
-        trackConversationStart('direct_message')
+        // Report the real entry point. For the create branch this is the value
+        // we just inserted; for the unique-violation branch it's the existing
+        // row's stored origin (so re-opens report where it ORIGINALLY started).
+        const startOrigin = newlyCreatedConversation.origin ?? 'Direct'
+        trackDbEvent('conversation_start', 'conversation', newlyCreatedConversation.id, { context: startOrigin })
+        trackConversationStart(startOrigin)
         onConversationCreated(newlyCreatedConversation)
       }
       

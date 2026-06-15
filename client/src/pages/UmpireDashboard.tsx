@@ -190,7 +190,7 @@ export default function UmpireDashboard({
       if (existingConv?.id) {
         navigate(`/messages?conversation=${existingConv.id}`)
       } else {
-        navigate(`/messages?new=${profile.id}`)
+        navigate(`/messages?new=${profile.id}`, { state: { messageOrigin: 'Profile' } })
       }
     } catch (error) {
       logger.error('Error starting conversation:', error)
