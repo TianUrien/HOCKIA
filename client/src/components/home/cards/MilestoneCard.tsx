@@ -109,6 +109,7 @@ export function MilestoneCard({ item }: MilestoneCardProps) {
         {item.milestone_type === 'first_gallery_image' && item.image_url && (
           <StorageImage
             src={item.image_url}
+            imageSize="feed-full"
             alt="Gallery"
             className="w-full h-auto max-h-80 object-cover rounded-lg"
             containerClassName="mt-4 rounded-lg overflow-hidden"

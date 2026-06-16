@@ -11,6 +11,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { optimizeAvatarImage, validateImage } from '@/lib/imageOptimization'
+import { getImageUrl } from '@/lib/imageUrl'
 import { invalidateProfile } from '@/lib/profile'
 import { deleteStorageObject } from '@/lib/storage'
 import { isNativePlatform, pickImageNative } from '@/lib/nativeImagePicker'
@@ -1359,7 +1360,7 @@ export default function CompleteProfile() {
                   className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-100 to-indigo-100 flex items-center justify-center cursor-pointer hover:from-purple-200 hover:to-indigo-200 transition-all overflow-hidden border-2 border-white shadow-md"
                 >
                   {avatarUrl ? (
-                    <img src={avatarUrl} alt="Avatar preview" className="w-full h-full object-cover" />
+                    <img src={getImageUrl(avatarUrl, 'avatar-md') ?? avatarUrl} alt="Avatar preview" className="w-full h-full object-cover" loading="eager" decoding="async" />
                   ) : (
                     <Camera className="w-8 h-8 text-purple-600" />
                   )}

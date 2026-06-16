@@ -28,10 +28,14 @@ interface SizeConfig {
   quality: number
 }
 
-// Widths account for 2× device pixel ratio
+// Widths account for 2× device pixel ratio. Qualities are tuned per surface:
+// small, most-viewed avatars stay crisp (the Community card / list avatar is
+// the app's most-seen image — premium feel matters there); larger hero/media
+// presets were already high. WebP (added below) is sharper-per-byte than JPEG,
+// so these look as good or better at a smaller size.
 const SIZE_CONFIG: Record<ImageSize, SizeConfig> = {
-  'avatar-sm':  { width: 80,   quality: 60 },
-  'avatar-md':  { width: 160,  quality: 70 },
+  'avatar-sm':  { width: 80,   quality: 72 },
+  'avatar-md':  { width: 160,  quality: 72 },
   'avatar-lg':  { width: 320,  quality: 75 },
   'avatar-xl':  { width: 480,  quality: 80 },
   'feed-thumb': { width: 400,  quality: 70 },
@@ -67,7 +71,11 @@ export function getImageUrl(
 
   const config = SIZE_CONFIG[size]
   const renderUrl = url.replace(SUPABASE_STORAGE_PATH, SUPABASE_RENDER_PATH)
-  return `${renderUrl}?width=${config.width}&resize=contain&quality=${config.quality}`
+  // format=webp: ~30% smaller than JPEG at equivalent quality, and it
+  // PRESERVES transparency (so PNG club/brand logos keep their alpha channel).
+  // If a transform ever fails, StorageImage.fallbackSrc falls back to the
+  // original full-size file, so this never breaks an image.
+  return `${renderUrl}?width=${config.width}&resize=contain&quality=${config.quality}&format=webp`
 }
 
 /** Map Avatar component sizes to ImageSize presets */

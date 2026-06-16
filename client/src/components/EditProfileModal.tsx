@@ -899,6 +899,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                   {formData.avatar_url ? (
                     <StorageImage
                       src={formData.avatar_url}
+                      imageSize="avatar-lg"
                       alt="Preview"
                       className="w-full h-full object-cover"
                       containerClassName="w-full h-full"

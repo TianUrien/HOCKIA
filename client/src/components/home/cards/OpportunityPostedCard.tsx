@@ -83,6 +83,7 @@ export function OpportunityPostedCard({ item }: OpportunityPostedCardProps) {
                 {item.world_club_avatar ? (
                   <StorageImage
                     src={item.world_club_avatar}
+                    imageSize="card-thumb"
                     alt={item.world_club_name}
                     className="w-5 h-5 rounded-full object-cover flex-shrink-0"
                     containerClassName="w-5 h-5 flex-shrink-0"

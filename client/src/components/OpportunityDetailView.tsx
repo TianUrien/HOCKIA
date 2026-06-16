@@ -238,7 +238,7 @@ export default function VacancyDetailView({
               <div className="relative flex flex-col items-center text-center">
                 <button type="button" onClick={handleClubClick} className="flex flex-col items-center hover:opacity-80 transition-opacity">
                   {displayClubLogo ? (
-                    <StorageImage src={displayClubLogo} alt={displayClubName} className="w-20 h-20 rounded-xl object-cover shadow-sm" />
+                    <StorageImage src={displayClubLogo} alt={displayClubName} imageSize="avatar-md" className="w-20 h-20 rounded-xl object-cover shadow-sm" />
                   ) : (
                     <Avatar initials={displayClubName.split(' ').map(n => n[0]).join('').slice(0, 2)} size="xl" className="rounded-xl" role="club" />
                   )}
@@ -266,7 +266,7 @@ export default function VacancyDetailView({
                       <span className="text-gray-400 text-sm">↳</span>
                       <button type="button" onClick={handleWorldClubClick} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/60 border border-gray-200 hover:bg-white transition-colors">
                         {worldClub.avatarUrl ? (
-                          <StorageImage src={worldClub.avatarUrl} alt={worldClub.clubName} className="w-4 h-4 rounded-full object-cover" />
+                          <StorageImage src={worldClub.avatarUrl} alt={worldClub.clubName} imageSize="card-thumb" className="w-4 h-4 rounded-full object-cover" />
                         ) : (
                           <Award className="w-3.5 h-3.5 text-gray-400" />
                         )}
