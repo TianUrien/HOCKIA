@@ -296,6 +296,9 @@ export default function UmpireDashboard({
               alt={profile.full_name ?? 'Umpire'}
               initials={initials}
               size="xl"
+              // Above-the-fold LCP element on /umpires/id/:id
+              loading="eager"
+              fetchPriority="high"
               enablePreview
               previewTitle={profile.full_name ?? undefined}
               role="umpire"

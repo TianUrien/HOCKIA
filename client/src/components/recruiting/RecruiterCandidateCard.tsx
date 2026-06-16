@@ -85,6 +85,10 @@ interface RecruiterCandidateCardProps {
    *  null) → NEUTRAL mode (no active recruiting scope for this member). */
   verdict?: RecruiterVerdict | null
   onPreview: () => void
+  /** Eager-load + high fetch-priority the avatar. Set true ONLY for the
+   *  first row of the Community grid / carousel (the most-viewed image
+   *  surface) so it paints instantly; everyone else stays lazy. */
+  priority?: boolean
 }
 
 const ONLINE_WINDOW_MS = 5 * 60 * 1000
@@ -273,7 +277,7 @@ function shieldColor(level: 'strong' | 'moderate' | 'limited', isApplicable: boo
   }
 }
 
-export default function RecruiterCandidateCard({ member, verdict, onPreview }: RecruiterCandidateCardProps) {
+export default function RecruiterCandidateCard({ member, verdict, onPreview, priority = false }: RecruiterCandidateCardProps) {
   const name = member.full_name?.trim() || 'Unknown'
   const initials = name.split(' ').map((w) => w[0]).filter(Boolean).join('').slice(0, 2).toUpperCase() || '?'
 
@@ -345,7 +349,8 @@ export default function RecruiterCandidateCard({ member, verdict, onPreview }: R
                 src={heroImageUrl}
                 alt=""
                 className={`h-full w-full ${isBrand ? 'object-contain p-1.5' : 'object-cover'}`}
-                loading="lazy"
+                loading={priority ? 'eager' : 'lazy'}
+                fetchPriority={priority ? 'high' : undefined}
                 decoding="async"
               />
             ) : (

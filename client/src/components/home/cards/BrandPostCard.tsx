@@ -55,15 +55,19 @@ export function BrandPostCard({ item }: BrandPostCardProps) {
         )}
       </div>
 
-      {/* Post Image — full-width / flush to card edges (Facebook style) */}
+      {/* Post Image — full-width / flush to card edges (Facebook style).
+          Reserved 4:3 box: zero layout shift as the image decodes (the feed's
+          house ratio, matching products/carousels). */}
       {item.post_image_url && (
-        <img
-          src={getImageUrl(item.post_image_url, 'feed-full') ?? undefined}
-          alt=""
-          className="w-full h-auto max-h-96 object-cover"
-          loading="lazy"
-          decoding="async"
-        />
+        <div className="aspect-[4/3] bg-gray-100 overflow-hidden">
+          <img
+            src={getImageUrl(item.post_image_url, 'feed-full') ?? undefined}
+            alt=""
+            className="w-full h-full object-cover"
+            loading="lazy"
+            decoding="async"
+          />
+        </div>
       )}
     </div>
   )

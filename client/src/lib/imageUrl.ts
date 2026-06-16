@@ -71,11 +71,16 @@ export function getImageUrl(
 
   const config = SIZE_CONFIG[size]
   const renderUrl = url.replace(SUPABASE_STORAGE_PATH, SUPABASE_RENDER_PATH)
-  // format=webp: ~30% smaller than JPEG at equivalent quality, and it
-  // PRESERVES transparency (so PNG club/brand logos keep their alpha channel).
-  // If a transform ever fails, StorageImage.fallbackSrc falls back to the
-  // original full-size file, so this never breaks an image.
-  return `${renderUrl}?width=${config.width}&resize=contain&quality=${config.quality}&format=webp`
+  // IMPORTANT: Supabase's webp render FLATTENS the alpha channel (it composites
+  // transparency onto a white background), so a webp transform turns a
+  // transparent PNG logo into a white box on any tinted/colored surface. PNG
+  // sources may carry transparency → omit format and let the render return PNG
+  // (alpha preserved, still right-sized). JPEG/other sources are never
+  // transparent → request webp for the ~30% size win. If a transform ever
+  // fails, StorageImage.fallbackSrc falls back to the original full-size file.
+  const isPng = url.split('?')[0].toLowerCase().endsWith('.png')
+  const formatParam = isPng ? '' : '&format=webp'
+  return `${renderUrl}?width=${config.width}&resize=contain&quality=${config.quality}${formatParam}`
 }
 
 /** Map Avatar component sizes to ImageSize presets */

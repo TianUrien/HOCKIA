@@ -131,16 +131,18 @@ export function BrandPostCard({
         <p className="text-gray-800 whitespace-pre-wrap">{post.content}</p>
       </div>
 
-      {/* Image */}
+      {/* Image — reserved 4:3 box kills layout shift as the photo decodes */}
       {post.image_url && (
         <div className="px-4 pb-4">
-          <img
-            src={getImageUrl(post.image_url, 'feed-full') ?? undefined}
-            alt="Post image"
-            className="w-full rounded-lg object-cover max-h-[400px]"
-            loading="lazy"
-            decoding="async"
-          />
+          <div className="aspect-[4/3] bg-gray-100 rounded-lg overflow-hidden">
+            <img
+              src={getImageUrl(post.image_url, 'feed-full') ?? undefined}
+              alt="Post image"
+              className="w-full h-full object-cover"
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
         </div>
       )}
     </div>

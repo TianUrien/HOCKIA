@@ -157,7 +157,7 @@ export const useOpportunityNotificationStore = create<OpportunityNotificationSta
         .from('opportunity_inbox_state')
         .select('last_seen_at')
         .eq('user_id', userId)
-        .single()
+        .maybeSingle()
       set({ lastSeenAt: inboxState?.last_seen_at ?? null })
     } catch {
       // No inbox state yet — all opportunities are "new"

@@ -477,7 +477,7 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
               {(member.role === 'player' || member.role === 'coach') && member.current_club && (
                 <div className="flex items-center gap-2 text-gray-700">
                   {clubLogo ? (
-                    <img src={clubLogo} alt="" className="w-4 h-4 rounded-sm object-cover flex-shrink-0" />
+                    <img src={getImageUrl(clubLogo, 'card-thumb') ?? clubLogo} alt="" loading="lazy" decoding="async" className="w-4 h-4 rounded-sm object-cover flex-shrink-0" />
                   ) : (
                     <Building2 className="w-4 h-4 text-gray-400 flex-shrink-0" />
                   )}

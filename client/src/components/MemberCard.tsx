@@ -10,6 +10,7 @@ import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { useToastStore } from '@/lib/toast'
 import { useWorldClubLogo } from '@/hooks/useWorldClubLogo'
+import { getImageUrl } from '@/lib/imageUrl'
 import { getSpecializationLabel } from '@/lib/coachSpecializations'
 import { getUmpireActivity } from '@/lib/umpireActivity'
 
@@ -285,7 +286,7 @@ export default function MemberCard({
             </div>
             <div className="flex items-center gap-2 mt-1.5 ml-[22px]">
               {clubLogo && (
-                <img src={clubLogo} alt="" className="w-7 h-7 rounded-lg object-cover flex-shrink-0" />
+                <img src={getImageUrl(clubLogo, 'card-thumb') ?? clubLogo} alt="" loading="lazy" decoding="async" className="w-7 h-7 rounded-lg object-cover flex-shrink-0" />
               )}
               <span className="text-gray-700 font-medium">{current_team}</span>
             </div>
