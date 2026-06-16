@@ -1055,7 +1055,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
             'transition-opacity duration-300 ease-out',
             isReshaping ? 'opacity-40' : 'opacity-100',
           ].join(' ')}>
-            {displayedMembers.map((member) => {
+            {displayedMembers.map((member, i) => {
               // Scoped recruiter view → the premium evaluation card for the
               // candidates the active scope ranks (players under a player
               // scope, coaches under a coach scope); everyone else keeps the
@@ -1069,6 +1069,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
                     member={member}
                     verdict={md.verdict}
                     onPreview={() => setCandidatePreview({ member })}
+                    priority={i < 4}
                   />
                 )
               }
@@ -1080,6 +1081,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
                     member={member}
                     verdict={cmd.verdict}
                     onPreview={() => setCandidatePreview({ member })}
+                    priority={i < 4}
                   />
                 )
               }
@@ -1091,6 +1093,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
                   key={member.id}
                   member={member}
                   onPreview={() => setPreviewMember(member)}
+                  priority={i < 4}
                 />
               )
             })}

@@ -111,8 +111,8 @@ export function MilestoneCard({ item }: MilestoneCardProps) {
             src={item.image_url}
             imageSize="feed-full"
             alt="Gallery"
-            className="w-full h-auto max-h-80 object-cover rounded-lg"
-            containerClassName="mt-4 rounded-lg overflow-hidden"
+            className="h-full w-full object-cover rounded-lg"
+            containerClassName="mt-4 aspect-[4/3] rounded-lg overflow-hidden"
             fallbackClassName="mt-4 h-48 rounded-lg"
             onImageError={() => setMediaError(true)}
           />

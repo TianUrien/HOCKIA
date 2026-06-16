@@ -637,8 +637,8 @@ export function TopCommunityMembersCarousel({
           aria-label="Top community members carousel"
           className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-2 snap-x snap-mandatory scrollbar-hide [scrollbar-width:none] md:mx-0 md:px-0"
         >
-          {displayMembers.map((m) => (
-            <MemberCard key={m.id} member={m} onClick={() => setPreviewRow(m)} showEvidence={showEvidence} verdict={verdictById.get(m.id)} />
+          {displayMembers.map((m, i) => (
+            <MemberCard key={m.id} member={m} onClick={() => setPreviewRow(m)} showEvidence={showEvidence} verdict={verdictById.get(m.id)} priority={i < 3} />
           ))}
         </div>
       )}
@@ -672,9 +672,11 @@ interface MemberCardProps {
    *  the whole pool so the rail can RANK by match). Undefined / not-applicable
    *  on the signal-free discovery rails. */
   verdict?: RecruiterVerdict
+  /** Eager-load the avatar — set true for the first few above-the-fold cards. */
+  priority?: boolean
 }
 
-function MemberCard({ member, onClick, showEvidence = false, verdict }: MemberCardProps) {
+function MemberCard({ member, onClick, showEvidence = false, verdict, priority = false }: MemberCardProps) {
   // .trim() guards legacy rows with trailing whitespace in full_name.
   const fullName = member.full_name?.trim() || member.username?.trim() || 'HOCKIA Member'
 
@@ -724,6 +726,7 @@ function MemberCard({ member, onClick, showEvidence = false, verdict }: MemberCa
         member={cardMember}
         verdict={showEvidence && verdict?.isApplicable ? verdict : undefined}
         onPreview={onClick}
+        priority={priority}
       />
     </div>
   )

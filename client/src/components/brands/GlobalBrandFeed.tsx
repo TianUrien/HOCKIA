@@ -12,6 +12,7 @@ import { useBrandFeed, type FeedItem, type ProductFeedItem, type PostFeedItem } 
 import { FeedImageCarousel } from '@/components/home/FeedImageCarousel'
 import Skeleton from '@/components/Skeleton'
 import { getTimeAgo } from '@/lib/utils'
+import { getImageUrl } from '@/lib/imageUrl'
 
 export function GlobalBrandFeed() {
   const { items, isLoading, error, hasMore, loadMore } = useBrandFeed()
@@ -215,15 +216,18 @@ function PostFeedCard({ item }: { item: PostFeedItem }) {
         <p className="text-gray-800 whitespace-pre-wrap">{item.post_content}</p>
       </div>
 
-      {/* Image */}
+      {/* Image — right-sized (feed-full) + reserved 4:3 box (zero shift) */}
       {item.post_image_url && (
         <div className="px-4 pb-4">
-          <img
-            src={item.post_image_url}
-            alt="Post image"
-            className="w-full rounded-lg object-cover max-h-[400px]"
-            loading="lazy"
-          />
+          <div className="aspect-[4/3] bg-gray-100 rounded-lg overflow-hidden">
+            <img
+              src={getImageUrl(item.post_image_url, 'feed-full') ?? undefined}
+              alt="Post image"
+              className="w-full h-full object-cover"
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
         </div>
       )}
 
@@ -254,7 +258,9 @@ function FeedSkeleton() {
           <Skeleton width="25%" height={12} />
         </div>
       </div>
-      <Skeleton width="100%" height={250} />
+      <div className="px-4 pb-4">
+        <Skeleton variant="rectangular" className="aspect-[4/3] w-full" />
+      </div>
       <div className="p-4 space-y-2">
         <Skeleton width="60%" height={18} />
         <Skeleton width="100%" height={14} />

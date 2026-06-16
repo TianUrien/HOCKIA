@@ -13,6 +13,10 @@ interface AvatarProps {
   size?: 'sm' | 'md' | 'lg' | 'xl'
   className?: string
   loading?: 'lazy' | 'eager'
+  /** Fetch-priority hint. Set 'high' (+ loading="eager") on the single
+   *  above-the-fold header avatar of a route so it wins the LCP race.
+   *  Leave unset everywhere else — feed/community/menu avatars stay lazy. */
+  fetchPriority?: 'high' | 'low' | 'auto'
   enablePreview?: boolean
   previewTitle?: string
   previewInteraction?: 'auto' | 'pointer'
@@ -40,6 +44,7 @@ export default function Avatar({
   size = 'md',
   className,
   loading = 'lazy',
+  fetchPriority,
   enablePreview = false,
   previewTitle,
   previewInteraction = 'auto',
@@ -126,6 +131,7 @@ export default function Avatar({
               imageLoaded ? "opacity-100" : "opacity-0"
             )}
             loading={loading}
+            fetchPriority={fetchPriority}
             decoding="async"
             onLoad={() => setImageLoaded(true)}
             onError={() => setImageError(true)}

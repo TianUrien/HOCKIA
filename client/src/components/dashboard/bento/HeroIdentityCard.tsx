@@ -123,6 +123,9 @@ export default function HeroIdentityCard({
             // classes inside Avatar; aspect/rounded base stays.
             className="!w-20 !h-20 md:!w-24 md:!h-24 !text-2xl"
             alt={profile.full_name ?? undefined}
+            // Above-the-fold LCP element on /players/:username & /coaches/:username
+            loading="eager"
+            fetchPriority="high"
             enablePreview
             previewTitle={profile.full_name ?? undefined}
             role="player"

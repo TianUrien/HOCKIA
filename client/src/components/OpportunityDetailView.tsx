@@ -238,7 +238,7 @@ export default function VacancyDetailView({
               <div className="relative flex flex-col items-center text-center">
                 <button type="button" onClick={handleClubClick} className="flex flex-col items-center hover:opacity-80 transition-opacity">
                   {displayClubLogo ? (
-                    <StorageImage src={displayClubLogo} alt={displayClubName} imageSize="avatar-md" className="w-20 h-20 rounded-xl object-cover shadow-sm" />
+                    <StorageImage src={displayClubLogo} alt={displayClubName} imageSize="avatar-md" fetchPriority="high" className="w-20 h-20 rounded-xl object-cover shadow-sm" />
                   ) : (
                     <Avatar initials={displayClubName.split(' ').map(n => n[0]).join('').slice(0, 2)} size="xl" className="rounded-xl" role="club" />
                   )}
