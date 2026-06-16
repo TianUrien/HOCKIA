@@ -272,18 +272,21 @@ export function BrandForm({
         throw new Error(validation.error)
       }
 
-      // Optimize the image
+      // Optimize the image. optimizeAvatarImage outputs JPEG, or PNG when the
+      // source is PNG (preserving logo transparency) — so derive the extension
+      // and content-type from the actual blob instead of hardcoding webp, which
+      // mislabeled every logo and dropped the PNG/transparency distinction.
       const optimizedBlob = await optimizeAvatarImage(file)
 
       // Generate a unique filename
-      const fileExt = 'webp'
+      const fileExt = optimizedBlob.type === 'image/png' ? 'png' : 'jpg'
       const fileName = `${user.id}/brand-logo-${Date.now()}.${fileExt}`
 
       // Upload to storage
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(fileName, optimizedBlob, {
-          contentType: 'image/webp',
+          contentType: optimizedBlob.type,
           upsert: true,
           cacheControl: '31536000',
         })

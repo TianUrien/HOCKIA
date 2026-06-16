@@ -65,7 +65,11 @@ interface NormalizedMedia {
   updatedAt: string
 }
 
-const PROFILE_OPTIMIZE_OPTIONS: OptimizeOptions = {
+// Shared gallery photo optimization (profile AND club galleries). These are
+// photographs (match/training/facility shots), not logos, so JPEG output is
+// correct — transparent assets live in the `avatars` bucket, never here.
+// 1200px caps to the lightbox preset; q0.85 keeps photos crisp at display size.
+const GALLERY_OPTIMIZE_OPTIONS: OptimizeOptions = {
   maxWidth: 1200,
   maxHeight: 1200,
   maxSizeMB: 1,
@@ -82,8 +86,9 @@ const MODE_CONFIG: Record<GalleryMode, ModeConfig> = {
     description: 'Manage your club photos',
     emptyStateDescription: 'No photos yet',
     addButtonLabel: 'Add Photos',
-    optimizeUploads: false,
-    maxFileSizeMB: 50,
+    optimizeUploads: true,
+    optimizeOptions: GALLERY_OPTIMIZE_OPTIONS,
+    maxFileSizeMB: 10,
   },
   profile: {
     bucket: 'gallery',
@@ -95,8 +100,8 @@ const MODE_CONFIG: Record<GalleryMode, ModeConfig> = {
     emptyStateDescription: 'No photos yet. Start building your gallery!',
     addButtonLabel: 'Add Photo',
     optimizeUploads: true,
-    optimizeOptions: PROFILE_OPTIMIZE_OPTIONS,
-    maxFileSizeMB: 50,
+    optimizeOptions: GALLERY_OPTIMIZE_OPTIONS,
+    maxFileSizeMB: 10,
   }
 }
 

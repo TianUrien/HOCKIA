@@ -464,7 +464,7 @@ export function validateImage(file: File, options: ImageValidationOptions): { va
   if (file.size > maxBytes) {
     return {
       valid: false,
-      error: `Image is too large. Max ${maxFileSizeMB}MB.`,
+      error: `Please upload an image smaller than ${maxFileSizeMB} MB.`,
     }
   }
 
