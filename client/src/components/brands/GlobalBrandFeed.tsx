@@ -107,8 +107,10 @@ function ProductFeedCard({ item }: { item: ProductFeedItem }) {
         <Link to={`/brands/${item.brand_slug}`} className="flex-shrink-0">
           {item.brand_logo_url ? (
             <img
-              src={item.brand_logo_url}
+              src={getImageUrl(item.brand_logo_url, 'avatar-sm') ?? item.brand_logo_url}
               alt={item.brand_name}
+              loading="lazy"
+              decoding="async"
               className="w-10 h-10 rounded-full object-cover border border-gray-200"
             />
           ) : (
@@ -185,8 +187,10 @@ function PostFeedCard({ item }: { item: PostFeedItem }) {
         <Link to={`/brands/${item.brand_slug}`} className="flex-shrink-0">
           {item.brand_logo_url ? (
             <img
-              src={item.brand_logo_url}
+              src={getImageUrl(item.brand_logo_url, 'avatar-sm') ?? item.brand_logo_url}
               alt={item.brand_name}
+              loading="lazy"
+              decoding="async"
               className="w-10 h-10 rounded-full object-cover border border-gray-200"
             />
           ) : (

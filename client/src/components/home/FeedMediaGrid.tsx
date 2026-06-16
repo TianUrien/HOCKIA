@@ -39,7 +39,7 @@ function MediaItem({
         onClick={onClick}
       >
         {item.thumb_url ? (
-          <img src={getImageUrl(item.thumb_url, imageSize) ?? undefined} alt={alt} loading="lazy" decoding="async" className="w-full h-full object-cover" />
+          <img src={getImageUrl(item.thumb_url, imageSize) ?? undefined} alt={alt} loading="lazy" decoding="async" className="w-full h-full object-cover" onError={(e) => { if (item.thumb_url && e.currentTarget.src !== item.thumb_url) e.currentTarget.src = item.thumb_url }} />
         ) : (
           <div className="w-full h-full bg-gray-900" />
         )}
@@ -65,6 +65,7 @@ function MediaItem({
         loading="lazy"
         decoding="async"
         className="w-full h-full object-cover transition-transform duration-200 hover:scale-[1.02]"
+        onError={(e) => { if (item.url && e.currentTarget.src !== item.url) e.currentTarget.src = item.url }}
       />
     </button>
   )

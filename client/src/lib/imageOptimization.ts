@@ -41,7 +41,14 @@ export async function optimizeImage(
   options: OptimizeOptions = {}
 ): Promise<File> {
   const opts = { ...DEFAULT_OPTIONS, ...options }
-  
+
+  // Preserve PNG (and its alpha) when the source is PNG and the caller didn't
+  // force a type. Canvas → JPEG composites transparency onto BLACK, so a
+  // transparent PNG logo/graphic would upload as a black-backed image.
+  if (!options.mimeType && file.type === 'image/png') {
+    opts.mimeType = 'image/png'
+  }
+
   // Skip optimization for non-image files
   if (!file.type.startsWith('image/')) {
     logger.warn('File is not an image, skipping optimization:', file.type)

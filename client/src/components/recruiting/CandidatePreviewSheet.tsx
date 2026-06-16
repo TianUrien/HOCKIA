@@ -467,7 +467,7 @@ export function CandidatePreviewSheet({ member, onClose }: CandidatePreviewSheet
               <div className="space-y-1.5 text-sm">
                 <div className="flex items-center gap-2">
                   {clubLogo ? (
-                    <img src={clubLogo} alt="" className="h-4 w-4 flex-shrink-0 rounded-sm object-cover" />
+                    <img src={getImageUrl(clubLogo, 'card-thumb') ?? clubLogo} alt="" loading="lazy" decoding="async" className="h-4 w-4 flex-shrink-0 rounded-sm object-cover" />
                   ) : (
                     <Building2 className="h-4 w-4 flex-shrink-0 text-gray-400" />
                   )}
