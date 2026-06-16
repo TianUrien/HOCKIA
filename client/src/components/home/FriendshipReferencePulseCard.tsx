@@ -1,9 +1,8 @@
 import { Shield, X } from 'lucide-react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import Avatar from '@/components/Avatar'
 import { useAuthStore } from '@/lib/auth'
 import { recordReferenceNudgeDismiss } from '@/lib/referenceNudgeDismissal'
-import { profilePath } from '@/lib/profileNavigation'
 import type { PulseItem } from '@/hooks/useMyPulse'
 
 /**
@@ -46,7 +45,6 @@ export function FriendshipReferencePulseCard({
   onDismiss,
 }: FriendshipReferencePulseCardProps) {
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
   const profile = useAuthStore((state) => state.profile)
 
   const friendId = readString(item.metadata, 'friend_id')
@@ -63,16 +61,12 @@ export function FriendshipReferencePulseCard({
     // Suppress the same friend on RecentlyConnectedCard so the user
     // doesn't see the prompt twice once they've actioned it from Pulse.
     if (profile?.id) recordReferenceNudgeDismiss(profile.id, friendId)
-    // Deep-link to the owner's References tab with the friend pre-selected.
-    // References was split out of Friends 2026-05-08; this matches the URL
-    // shape RecentlyConnectedCard's onAsk uses on the dashboards.
-    const path = profilePath(profile?.role, profile?.username, profile?.id)
-    if (!path) return
-    const next = new URLSearchParams(searchParams)
-    next.set('tab', 'references')
-    next.set('ask', friendId)
-    next.delete('section')
-    navigate(`${path}?${next.toString()}`)
+    // Deep-link to the owner DASHBOARD references tab with the friend
+    // pre-selected (ReferencesTab reads ?ask=). Same route the references
+    // notification uses (notifications/config.ts). NOT profilePath() — that
+    // resolves to the PUBLIC /players/:username profile, which has no
+    // references tab and silently drops ?ask=.
+    navigate(`/dashboard/profile?tab=references&ask=${encodeURIComponent(friendId)}`)
   }
 
   const handleDismiss = (event: React.MouseEvent<HTMLButtonElement>) => {
