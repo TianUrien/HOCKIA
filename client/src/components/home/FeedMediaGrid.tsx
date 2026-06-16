@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import { Play } from 'lucide-react'
-import { getImageUrl } from '@/lib/imageUrl'
+import { getImageUrl, getLqipUrl } from '@/lib/imageUrl'
 import type { ImageSize } from '@/lib/imageUrl'
 import type { PostMediaItem } from '@/types/homeFeed'
 
@@ -29,6 +29,11 @@ function MediaItem({
   alt: string
 }) {
   const mediaType = item.media_type ?? 'image'
+  const [imgLoaded, setImgLoaded] = useState(false)
+  // LQIP blur-up ONLY on the full-width single image (a heavy, above-fold,
+  // placeholder-less surface). Grid thumbs (feed-thumb) get null → no extra
+  // request, preserving Phase 1's request-reduction win.
+  const lqip = imageSize === 'feed-full' ? getLqipUrl(item.url) : null
 
   if (mediaType === 'video') {
     return (
@@ -56,16 +61,24 @@ function MediaItem({
     <button
       type="button"
       aria-label={`View image — ${alt}`}
-      className={`overflow-hidden cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8026FA] ${className}`}
+      className={`relative overflow-hidden cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8026FA] ${className}`}
       onClick={onClick}
     >
+      {lqip && !imgLoaded && (
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 scale-105 bg-cover bg-center blur-md"
+          style={{ backgroundImage: `url("${lqip}")` }}
+        />
+      )}
       <img
         src={getImageUrl(item.url, imageSize) ?? undefined}
         alt={alt}
         loading="lazy"
         decoding="async"
-        className="w-full h-full object-cover transition-transform duration-200 hover:scale-[1.02]"
-        onError={(e) => { if (item.url && e.currentTarget.src !== item.url) e.currentTarget.src = item.url }}
+        className={`relative w-full h-full object-cover transition-[transform,opacity] duration-300 hover:scale-[1.02] ${lqip && !imgLoaded ? 'opacity-0' : 'opacity-100'}`}
+        onLoad={() => setImgLoaded(true)}
+        onError={(e) => { setImgLoaded(true); if (item.url && e.currentTarget.src !== item.url) e.currentTarget.src = item.url }}
       />
     </button>
   )

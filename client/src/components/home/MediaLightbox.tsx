@@ -4,7 +4,7 @@ import { X, ChevronLeft, ChevronRight, Play, Pause, Volume2, VolumeX, Maximize }
 import { useFocusTrap } from '@/hooks/useFocusTrap'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import { useSwipeGesture } from '@/hooks/useSwipeGesture'
-import { getImageUrl } from '@/lib/imageUrl'
+import { getImageUrl, getLqipUrl } from '@/lib/imageUrl'
 import type { PostMediaItem } from '@/types/homeFeed'
 
 interface MediaLightboxProps {
@@ -173,7 +173,7 @@ export function MediaLightbox({ images, initialIndex, onClose }: MediaLightboxPr
           {images.map((media, i) => (
             <div
               key={media.url}
-              className="w-full h-full flex-shrink-0 flex items-center justify-center px-4"
+              className="relative w-full h-full flex-shrink-0 flex items-center justify-center overflow-hidden px-4"
             >
               {(media.media_type ?? 'image') === 'video' ? (
                 <LightboxVideoSlide
@@ -183,21 +183,10 @@ export function MediaLightbox({ images, initialIndex, onClose }: MediaLightboxPr
                   isDragging={isDraggingRef}
                 />
               ) : (
-                <img
-                  src={getImageUrl(media.url, 'lightbox') ?? undefined}
+                <LightboxImageSlide
+                  media={media}
                   alt={`Post media ${i + 1}${hasMultiple ? ` of ${images.length}` : ''}`}
-                  className="max-w-full max-h-[85vh] object-contain select-none pointer-events-none"
-                  draggable={false}
-                  loading={Math.abs(i - currentIndex) <= 1 ? 'eager' : 'lazy'}
-                  decoding="async"
-                  onError={(e) => {
-                    // Transform failed (cold cache / unsupported source) — fall
-                    // back to the original full-size file so the lightbox never
-                    // shows a broken image. Guard prevents an error loop.
-                    if (media.url && e.currentTarget.src !== media.url) {
-                      e.currentTarget.src = media.url
-                    }
-                  }}
+                  eager={Math.abs(i - currentIndex) <= 1}
                 />
               )}
             </div>
@@ -234,6 +223,59 @@ export function MediaLightbox({ images, initialIndex, onClose }: MediaLightboxPr
       </div>
     </div>,
     document.body
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Lightbox Image Slide
+// ---------------------------------------------------------------------------
+// Renders the contained image with a LQIP blur-up: a tiny (~24px) cover-fit
+// blurred backdrop paints near-instantly (so a cold lightbox is never a black
+// screen), then the full image fades in over it on load. The slide wrapper is
+// relative + overflow-hidden so the scaled blur halo is clipped. Falls back to
+// the original on a transform error (guarded against a loop).
+// ---------------------------------------------------------------------------
+
+function LightboxImageSlide({
+  media,
+  alt,
+  eager,
+}: {
+  media: PostMediaItem
+  alt: string
+  eager: boolean
+}) {
+  const [loaded, setLoaded] = useState(false)
+  const lqip = getLqipUrl(media.url)
+
+  return (
+    <>
+      {lqip && !loaded && (
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 scale-110 bg-cover bg-center blur-2xl"
+          style={{ backgroundImage: `url("${lqip}")` }}
+        />
+      )}
+      <img
+        src={getImageUrl(media.url, 'lightbox') ?? undefined}
+        alt={alt}
+        className={`relative max-w-full max-h-[85vh] object-contain select-none pointer-events-none transition-opacity duration-300 ${lqip && !loaded ? 'opacity-0' : 'opacity-100'}`}
+        draggable={false}
+        loading={eager ? 'eager' : 'lazy'}
+        decoding="async"
+        onLoad={() => setLoaded(true)}
+        onError={(e) => {
+          // Transform failed (cold cache / unsupported source) — fall back to
+          // the original full-size file so the lightbox never shows a broken
+          // image. Guard prevents an error loop.
+          setLoaded(true)
+          if (media.url && e.currentTarget.src !== media.url) {
+            e.currentTarget.src = media.url
+          }
+        }}
+      />
+    </>
   )
 }
 

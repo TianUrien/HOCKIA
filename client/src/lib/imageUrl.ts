@@ -83,6 +83,27 @@ export function getImageUrl(
   return `${renderUrl}?width=${config.width}&resize=contain&quality=${config.quality}${formatParam}`
 }
 
+/**
+ * Build a tiny (~24px) low-quality image placeholder URL for a blur-up effect.
+ *
+ * Standalone — deliberately NOT an ImageSize preset, so it can never be passed
+ * as a real display size and the blast radius stays at its two call sites
+ * (feed single-image + lightbox). Returns null for falsy input OR a non-Supabase
+ * URL (no tiny variant available → caller keeps its normal placeholder).
+ *
+ * @example getLqipUrl(url) // → …/render/image/public/…?width=24&resize=contain&quality=30&format=webp
+ */
+export function getLqipUrl(url: string | null | undefined): string | null {
+  if (!url) return null
+  if (!url.includes(SUPABASE_STORAGE_PATH)) return null
+
+  const renderUrl = url.replace(SUPABASE_STORAGE_PATH, SUPABASE_RENDER_PATH)
+  // Mirror getImageUrl: webp flattens PNG alpha, so omit format for PNG sources.
+  const isPng = url.split('?')[0].toLowerCase().endsWith('.png')
+  const formatParam = isPng ? '' : '&format=webp'
+  return `${renderUrl}?width=24&resize=contain&quality=30${formatParam}`
+}
+
 /** Map Avatar component sizes to ImageSize presets */
 export const AVATAR_SIZE_MAP: Record<string, ImageSize> = {
   sm: 'avatar-sm',
