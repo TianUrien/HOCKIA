@@ -1019,6 +1019,7 @@ export default function JourneyTab({
             <div className="mt-2 flex flex-col gap-4 sm:flex-row sm:items-start">
               <StorageImage
                 src={entry.image_url}
+                imageSize="card-thumb"
                 alt="Entry logo preview"
                 className="h-full w-full object-cover"
                 containerClassName="h-20 w-20 rounded-xl"
@@ -1289,6 +1290,7 @@ export default function JourneyTab({
                                     ? deriveThumbUrl(entry.image_url)
                                     : null
                               }
+                              imageSize="card-thumb"
                               fallbackSrc={entry.image_url}
                               alt="Entry logo"
                               className="h-full w-full object-cover rounded-xl"

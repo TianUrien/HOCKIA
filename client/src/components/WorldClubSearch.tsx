@@ -388,6 +388,7 @@ export default function WorldClubSearch({
                       {club.avatar_url ? (
                         <StorageImage
                           src={club.avatar_url}
+                          imageSize="card-thumb"
                           alt=""
                           className="h-full w-full rounded-lg object-cover"
                           containerClassName="h-8 w-8 min-w-[2rem] rounded-lg"

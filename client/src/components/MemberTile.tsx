@@ -418,9 +418,11 @@ export default function MemberTile(props: MemberTileProps) {
             <div className="flex items-center gap-1.5 text-xs text-gray-500 min-w-0 pt-2 border-t border-gray-100">
               {roleNative.kind === 'team' && clubLogo ? (
                 <img
-                  src={clubLogo}
+                  src={getImageUrl(clubLogo, 'card-thumb') ?? clubLogo}
                   alt=""
                   className="w-3.5 h-3.5 rounded-sm object-cover flex-shrink-0"
+                  loading="lazy"
+                  decoding="async"
                 />
               ) : roleNative.kind === 'federation' ? (
                 <Shield className="w-3 h-3 flex-shrink-0 text-gray-400" />
