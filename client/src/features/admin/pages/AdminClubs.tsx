@@ -138,7 +138,7 @@ export function AdminClubs() {
       label: '',
       render: (_, row) => (
         <Link
-          to={`/admin/directory?id=${row.club_id}`}
+          to={`/admin/directory?profile=${row.club_id}`}
           className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors inline-flex"
         >
           <ExternalLink className="w-4 h-4 text-gray-400" />

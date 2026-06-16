@@ -146,7 +146,7 @@ export function useOpportunityDetail(id: string | undefined) {
           .select('id')
           .eq('opportunity_id', id)
           .eq('applicant_id', user.id)
-          .single()
+          .maybeSingle()
         setHasApplied(!!applicationData)
       }
     } catch (error) {
@@ -179,7 +179,7 @@ export function useOpportunityDetail(id: string | undefined) {
       .select('id')
       .eq('opportunity_id', id)
       .eq('applicant_id', user.id)
-      .single()
+      .maybeSingle()
     setHasApplied(!!data)
   }, [id, user, profile?.role])
 

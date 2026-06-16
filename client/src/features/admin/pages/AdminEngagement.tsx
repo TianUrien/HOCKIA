@@ -190,7 +190,7 @@ export function AdminEngagement() {
       label: '',
       render: (_value, row) => (
         <Link
-          to={`/admin/directory?search=${encodeURIComponent(row.email)}`}
+          to={`/admin/directory?query=${encodeURIComponent(row.email)}`}
           className="text-purple-600 hover:text-purple-800"
           title="View user details"
         >

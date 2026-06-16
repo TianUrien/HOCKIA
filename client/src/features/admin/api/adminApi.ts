@@ -150,6 +150,7 @@ export async function searchProfiles(params: ProfileSearchParams): Promise<{
     p_is_blocked: params.is_blocked ?? null,
     p_is_test_account: params.is_test_account ?? null,
     p_onboarding_completed: params.onboarding_completed ?? null,
+    p_zero_activity: params.zero_activity ?? null,
     p_limit: params.limit || 50,
     p_offset: params.offset || 0,
   })

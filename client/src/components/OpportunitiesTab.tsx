@@ -308,9 +308,11 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
 
   const handleApply = (vacancy: Vacancy) => {
     if (!user) {
-      // Redirect to login with return URL
+      // Sign in with a return URL. /signin (AuthScreen) reads ?next= and
+      // restores it post-auth; /signup?redirect= was a dead param (nothing
+      // read it, so the user never returned to the opportunity).
       const returnUrl = window.location.pathname
-      navigate(`/signup?redirect=${encodeURIComponent(returnUrl)}`)
+      navigate(`/signin?next=${encodeURIComponent(returnUrl)}`)
       return
     }
 

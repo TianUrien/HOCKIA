@@ -17,6 +17,19 @@ import { CATEGORY_LABELS, CATEGORY_COLORS } from '@/types/questions'
 import { formatDistanceToNow } from 'date-fns'
 import type { Answer } from '@/types/questions'
 
+/** Role-aware public-profile path for a community author. /members/id/:id only
+ *  resolves player/coach (it 404s for club/umpire/brand authors), so route by
+ *  role to the correct /<role>/id/:id page (brand → BrandIdRedirect → slug). */
+function authorPath(role: string | null | undefined, id: string): string {
+  switch (role) {
+    case 'club': return `/clubs/id/${id}`
+    case 'umpire': return `/umpires/id/${id}`
+    case 'coach': return `/coaches/id/${id}`
+    case 'brand': return `/brands/id/${id}`
+    default: return `/players/id/${id}`
+  }
+}
+
 export default function QuestionDetailPage() {
   const { questionId } = useParams<{ questionId: string }>()
   const navigate = useNavigate()
@@ -210,7 +223,7 @@ export default function QuestionDetailPage() {
 
           {/* Author info */}
           <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
-            <Link to={`/members/id/${question.author.id}`} className="shrink-0">
+            <Link to={authorPath(question.author.role, question.author.id)} className="shrink-0">
               <Avatar
                 src={question.author.avatar_url}
                 alt={question.author.full_name || 'User'}
@@ -222,7 +235,7 @@ export default function QuestionDetailPage() {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <Link
-                  to={`/members/id/${question.author.id}`}
+                  to={authorPath(question.author.role, question.author.id)}
                   className="font-medium text-gray-900 hover:text-purple-600 transition-colors truncate"
                 >
                   {question.author.full_name || 'Unknown'}
@@ -321,7 +334,7 @@ export default function QuestionDetailPage() {
                           {answer.body}
                         </p>
                         <div className="flex items-center gap-3 mt-4 pt-3 border-t border-gray-100">
-                          <Link to={`/members/id/${answer.author.id}`} className="shrink-0">
+                          <Link to={authorPath(answer.author.role, answer.author.id)} className="shrink-0">
                             <Avatar
                               src={answer.author.avatar_url}
                               alt={answer.author.full_name || 'User'}
@@ -333,7 +346,7 @@ export default function QuestionDetailPage() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                               <Link
-                                to={`/members/id/${answer.author.id}`}
+                                to={authorPath(answer.author.role, answer.author.id)}
                                 className="text-sm font-medium text-gray-900 hover:text-purple-600 transition-colors truncate"
                               >
                                 {answer.author.full_name || 'Unknown'}
