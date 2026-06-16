@@ -360,13 +360,15 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
     const fetchWorldClaim = async () => {
       setLoadingWorld(true)
       try {
-        // Check if this club is claimed in world_clubs
+        // Check if this club is claimed in world_clubs. maybeSingle (not
+        // single): a club that hasn't claimed a world club legitimately
+        // returns 0 rows — .single() makes PostgREST 406 on that normal case.
         const { data: claimData } = await supabase
           .from('world_clubs')
           .select('id, province_id, country_id')
           .eq('claimed_profile_id', profile.id)
           .eq('is_claimed', true)
-          .single()
+          .maybeSingle()
 
         if (claimData) {
           setWorldClaim(claimData)
@@ -376,7 +378,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
             .from('world_countries_with_directory')
             .select('has_regions')
             .eq('country_id', claimData.country_id)
-            .single()
+            .maybeSingle()
 
           const hasRegions = countryInfo?.has_regions ?? false
           setCountryHasRegions(hasRegions)

@@ -190,6 +190,14 @@ export function MediaLightbox({ images, initialIndex, onClose }: MediaLightboxPr
                   draggable={false}
                   loading={Math.abs(i - currentIndex) <= 1 ? 'eager' : 'lazy'}
                   decoding="async"
+                  onError={(e) => {
+                    // Transform failed (cold cache / unsupported source) — fall
+                    // back to the original full-size file so the lightbox never
+                    // shows a broken image. Guard prevents an error loop.
+                    if (media.url && e.currentTarget.src !== media.url) {
+                      e.currentTarget.src = media.url
+                    }
+                  }}
                 />
               )}
             </div>

@@ -598,6 +598,7 @@ export default function GalleryManager({
                 <StorageImage
                   src={item.url}
                   imageSize="gallery"
+                  fallbackSrc={item.url}
                   alt={item.altText || item.fileName}
                   className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                   containerClassName="h-full w-full"
