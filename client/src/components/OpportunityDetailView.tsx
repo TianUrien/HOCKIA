@@ -254,7 +254,7 @@ export default function VacancyDetailView({
               </div>
               <div className="relative flex flex-col items-center text-center">
                 <button type="button" onClick={handleClubClick} className="flex flex-col items-center hover:opacity-80 transition-opacity">
-                  <Avatar src={clubLogo} initials={clubName.split(' ').map(n => n[0]).join('').slice(0, 2)} size="lg" role="club" />
+                  <Avatar src={clubLogo} initials={clubName.split(' ').map(n => n[0]).join('').slice(0, 2)} size="lg" loading="eager" fetchPriority="high" role="club" />
                   <div className="mt-2 flex items-center gap-1.5">
                     <span className="text-lg font-bold text-gray-900">{clubName}</span>
                     <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide bg-[#F0FDFA] text-[#0D9488] border border-teal-100">Coach</span>
