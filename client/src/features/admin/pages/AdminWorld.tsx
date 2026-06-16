@@ -524,7 +524,7 @@ export default function AdminWorld() {
                         <td className="px-4 py-3">
                           {club.is_claimed && club.claimed_profile_id ? (
                             <a
-                              href={`/admin/directory?search=${club.claimed_profile_id}`}
+                              href={`/admin/directory?profile=${club.claimed_profile_id}`}
                               className="inline-flex items-center gap-1 text-sm text-purple-600 hover:text-purple-700"
                             >
                               <span className="truncate max-w-[120px]">

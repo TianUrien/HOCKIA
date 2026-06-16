@@ -509,7 +509,7 @@ function RestrictedVideoState({ showSignIn }: { showSignIn: boolean }) {
       </p>
       {showSignIn && (
         <p className="mt-3 text-sm text-gray-500">
-          <Link to="/auth" className="text-indigo-600 hover:text-indigo-700 font-medium">
+          <Link to={`/signin?next=${encodeURIComponent(window.location.pathname)}`} className="text-indigo-600 hover:text-indigo-700 font-medium">
             Sign in
           </Link>{' '}
           as a club or coach to view.

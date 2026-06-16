@@ -172,7 +172,7 @@ export default function OpportunityDetailPage() {
           .select('id')
           .eq('opportunity_id', id)
           .eq('applicant_id', user.id)
-          .single()
+          .maybeSingle()
 
         setHasApplied(!!applicationData)
       }
@@ -273,7 +273,7 @@ export default function OpportunityDetailPage() {
       .select('id')
       .eq('opportunity_id', id)
       .eq('applicant_id', user.id)
-      .single()
+      .maybeSingle()
 
     setHasApplied(!!data)
   }
