@@ -53,6 +53,7 @@ export function AdminDirectory() {
   const [roleFilter, setRoleFilter] = useState<string>('')
   const [statusFilter, setStatusFilter] = useState<string>('')
   const [testFilter, setTestFilter] = useState<string>('')
+  const [zeroActivityFilter, setZeroActivityFilter] = useState(false)
   const [page, setPage] = useState(1)
 
   // Profile detail drawer
@@ -82,6 +83,7 @@ export function AdminDirectory() {
         is_blocked: statusFilter === 'blocked' ? true : statusFilter === 'active' || statusFilter === 'incomplete' ? false : undefined,
         onboarding_completed: statusFilter === 'active' ? true : statusFilter === 'incomplete' ? false : undefined,
         is_test_account: testFilter === 'test' ? true : testFilter === 'real' ? false : undefined,
+        zero_activity: zeroActivityFilter || undefined,
         limit: PAGE_SIZE,
         offset: (page - 1) * PAGE_SIZE,
       }
@@ -95,7 +97,7 @@ export function AdminDirectory() {
     } finally {
       setIsLoading(false)
     }
-  }, [searchQuery, roleFilter, statusFilter, testFilter, page])
+  }, [searchQuery, roleFilter, statusFilter, testFilter, zeroActivityFilter, page])
 
   useEffect(() => {
     document.title = 'User Directory | HOCKIA Admin'
@@ -129,7 +131,13 @@ export function AdminDirectory() {
       setSearchQuery(queryParam)
       setSearchParams({}, { replace: true })
     }
-  }, [searchParams, setSearchParams, selectedProfile, searchQuery])
+
+    // Zero-activity drill-down from the Overview tile (?zero_activity=1).
+    if (searchParams.get('zero_activity') === '1' && !zeroActivityFilter) {
+      setZeroActivityFilter(true)
+      setSearchParams({}, { replace: true })
+    }
+  }, [searchParams, setSearchParams, selectedProfile, searchQuery, zeroActivityFilter])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -458,6 +466,20 @@ export function AdminDirectory() {
             <option value="real">Real Users</option>
             <option value="test">Test Accounts</option>
           </select>
+
+          <button
+            type="button"
+            onClick={() => { setZeroActivityFilter((v) => !v); setPage(1) }}
+            aria-pressed={zeroActivityFilter}
+            title="Signed up ≥7 days ago with zero value-actions (apply, message, post, friend request, reference, profile update)"
+            className={`px-3 py-2 border rounded-lg font-medium transition-colors ${
+              zeroActivityFilter
+                ? 'bg-purple-600 text-white border-purple-600 hover:bg-purple-700'
+                : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            Zero-activity
+          </button>
 
           <button
             type="submit"

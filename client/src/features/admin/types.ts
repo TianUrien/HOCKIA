@@ -316,6 +316,8 @@ export interface ProfileSearchParams {
   is_blocked?: boolean
   is_test_account?: boolean
   onboarding_completed?: boolean
+  /** Non-test profiles that signed up >= 7 days ago with zero value-actions. */
+  zero_activity?: boolean
   limit?: number
   offset?: number
 }
