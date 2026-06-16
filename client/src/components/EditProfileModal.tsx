@@ -1404,7 +1404,10 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                       value={formData.available_from}
                       onChange={(e) => setFormData({ ...formData, available_from: e.target.value })}
                       aria-label="Available from"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#8026FA] focus:border-transparent"
+                      // h-10 + bg-white: iOS renders a native date input taller
+                      // than the sibling <select>; a fixed height + matching bg
+                      // keeps the two columns aligned (and not grey on iOS).
+                      className="w-full h-10 px-3 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-[#8026FA] focus:border-transparent"
                     />
                   </div>
                   <div>
@@ -1413,7 +1416,7 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                       value={formData.availability_duration}
                       onChange={(e) => setFormData({ ...formData, availability_duration: e.target.value })}
                       aria-label="Availability duration"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#8026FA] focus:border-transparent"
+                      className="w-full h-10 px-3 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-[#8026FA] focus:border-transparent"
                     >
                       <option value="">Not set</option>
                       {AVAILABILITY_DURATION_OPTIONS.map((o) => (

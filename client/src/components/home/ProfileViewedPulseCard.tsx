@@ -1,7 +1,5 @@
 import { Eye, X } from 'lucide-react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
-import { useAuthStore } from '@/lib/auth'
-import { profilePath } from '@/lib/profileNavigation'
+import { useNavigate } from 'react-router-dom'
 import type { PulseItem } from '@/hooks/useMyPulse'
 
 /**
@@ -16,9 +14,13 @@ import type { PulseItem } from '@/hooks/useMyPulse'
  *   - "2 coaches viewed your profile this week"
  *   - "1 club and 1 coach viewed your profile this week"
  *
- * Tap "See viewers" → deep-links to the user's own dashboard with the
- * ProfileViewersSection visible (it already mounts on every owner-side
- * dashboard tab=profile).
+ * Tap "See viewers" → deep-links to the user's own dashboard viewers
+ * section: /dashboard/profile?tab=profile&section=viewers (the exact route
+ * the profile-viewed notification uses; ProfileViewersSection mounts on the
+ * owner dashboard and the section=viewers anchor scrolls to it). NOTE: this
+ * must NOT use profilePath() — that resolves to the PUBLIC /players/:username
+ * profile (the "you are viewing your network profile" page), which has no
+ * viewers list.
  */
 
 interface ProfileViewedPulseCardProps {
@@ -63,8 +65,6 @@ export function ProfileViewedPulseCard({
   onDismiss,
 }: ProfileViewedPulseCardProps) {
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
-  const profile = useAuthStore((state) => state.profile)
 
   const uniqueClubs = readNumber(item.metadata, 'unique_clubs')
   const uniqueCoaches = readNumber(item.metadata, 'unique_coaches')
@@ -81,11 +81,9 @@ export function ProfileViewedPulseCard({
 
   const handleSee = () => {
     onClick(item.id)
-    const path = profilePath(profile?.role, profile?.username, profile?.id)
-    if (!path) return
-    const next = new URLSearchParams(searchParams)
-    next.set('tab', 'profile')
-    navigate(`${path}?${next.toString()}`)
+    // Owner dashboard viewers section — NOT the public profile. Same route
+    // the profile-viewed notification uses (notifications/config.ts).
+    navigate('/dashboard/profile?tab=profile&section=viewers')
   }
 
   const handleDismiss = (event: React.MouseEvent<HTMLButtonElement>) => {

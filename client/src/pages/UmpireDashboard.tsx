@@ -23,7 +23,7 @@
  * entry_type extension on umpire_appointments.
  */
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, MapPin, Calendar, Shield, Flag, Edit2, Eye, Languages as LanguagesIcon, Activity, MessageCircle, Award } from 'lucide-react'
 import Header from '@/components/Header'
@@ -128,6 +128,19 @@ export default function UmpireDashboard({
   const [searchParams, setSearchParams] = useSearchParams()
   const [showEditModal, setShowEditModal] = useState(false)
   const [sendingMessage, setSendingMessage] = useState(false)
+
+  // ?action=edit deep-link from Home cards (AvailabilityCheckIn 'Not now')
+  // opens the editor. Owner view only — never in the read-only public profile
+  // render. Ref-guarded so it fires once and a later searchParams change can't
+  // reopen it.
+  const editDeepLinkRef = useRef(false)
+  useEffect(() => {
+    if (readOnly || editDeepLinkRef.current) return
+    if (searchParams.get('action') === 'edit') {
+      editDeepLinkRef.current = true
+      setShowEditModal(true)
+    }
+  }, [readOnly, searchParams])
   const [showSignInPrompt, setShowSignInPrompt] = useState(false)
 
   // Tab state, synced with ?tab= query param so notification deep-links

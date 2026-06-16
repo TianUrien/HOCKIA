@@ -69,14 +69,11 @@ export function profilePath(
 }
 
 /**
- * Convenience for the "open my own edit flow" deep link. Adds
- * `?action=edit` to the profile path. Same null-fallback semantics.
+ * The owner's "edit my profile" deep link. Lands on the role-dispatched owner
+ * dashboard (/dashboard/profile — DashboardRouter picks the right dashboard)
+ * and opens EditProfileModal via the `?action=edit` handler each dashboard
+ * installs. Role-agnostic on purpose: the editor lives on the dashboard, NOT
+ * on the public /players/:username profile (which is read-only and ignored the
+ * param entirely — the bug this replaced).
  */
-export function ownProfileEditPath(
-  role: RoleLike,
-  username: string | null | undefined,
-  id: string | null | undefined,
-): string | null {
-  const base = profilePath(role, username, id)
-  return base ? `${base}?action=edit` : null
-}
+export const OWN_PROFILE_EDIT_PATH = '/dashboard/profile?action=edit'

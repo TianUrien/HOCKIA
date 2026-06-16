@@ -60,6 +60,18 @@ export default function BrandDashboard() {
   const [showEditModal, setShowEditModal] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  // ?action=edit deep-link from Home cards opens the editor. BrandDashboard is
+  // owner-only (no read-only public render), so no readOnly guard. Ref-guarded
+  // so it fires once and a later searchParams change can't reopen it.
+  const editDeepLinkRef = useRef(false)
+  useEffect(() => {
+    if (editDeepLinkRef.current) return
+    if (searchParams.get('action') === 'edit') {
+      editDeepLinkRef.current = true
+      setShowEditModal(true)
+    }
+  }, [searchParams])
+
   // Products
   const { products, isLoading: productsLoading, createProduct, updateProduct, deleteProduct } = useBrandProducts(brand?.id)
   const [showAddProductModal, setShowAddProductModal] = useState(false)
