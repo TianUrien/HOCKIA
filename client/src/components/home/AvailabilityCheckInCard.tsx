@@ -4,7 +4,7 @@ import { CheckCircle2, Edit2, Sparkles, X, Zap } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
-import { ownProfileEditPath } from '@/lib/profileNavigation'
+import { OWN_PROFILE_EDIT_PATH } from '@/lib/profileNavigation'
 import type { PulseItem } from '@/hooks/useMyPulse'
 
 /**
@@ -85,9 +85,10 @@ function buildCopy(role: Role, recruitsForTeam: boolean): CheckInCopy {
   }
 }
 
-// profileEditPath helper removed in favour of the shared
-// `ownProfileEditPath` from `@/lib/profileNavigation`, which falls back
-// to `/players/id/<uuid>` when username is null (every account today).
+// "Not now" opens the owner's edit flow via OWN_PROFILE_EDIT_PATH
+// (/dashboard/profile?action=edit) — the dashboard's ?action=edit handler
+// opens EditProfileModal. The old /players/:username?action=edit was a dead
+// link (the public profile is read-only and ignored the param).
 
 export function AvailabilityCheckInCard({
   item,
@@ -144,8 +145,7 @@ export function AvailabilityCheckInCard({
 
   const handleNotNow = () => {
     onClick(item.id)
-    const path = ownProfileEditPath(role, profile?.username, profile?.id)
-    if (path) navigate(path)
+    navigate(OWN_PROFILE_EDIT_PATH)
   }
 
   const handleDismiss = (event: React.MouseEvent<HTMLButtonElement>) => {

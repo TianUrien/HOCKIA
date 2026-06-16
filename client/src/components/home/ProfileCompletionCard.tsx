@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Camera, Building2, UserPlus, Shield, X } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
 import { useProfileStrength } from '@/hooks/useProfileStrength'
+import { OWN_PROFILE_EDIT_PATH } from '@/lib/profileNavigation'
 import type { Profile } from '@/lib/supabase'
 
 interface CompletionStep {
@@ -68,7 +69,7 @@ export default function ProfileCompletionCard() {
         icon: <Camera className="w-5 h-5 text-[#8026FA]" />,
         title: 'Add a profile photo',
         description: 'Profiles with photos are more likely to be shortlisted by clubs.',
-        action: () => navigate(`/players/${p.username}?action=edit`),
+        action: () => navigate(OWN_PROFILE_EDIT_PATH),
         actionLabel: 'Add Photo',
         completed: false,
       })
@@ -81,7 +82,7 @@ export default function ProfileCompletionCard() {
         icon: <Building2 className="w-5 h-5 text-[#8026FA]" />,
         title: 'Link your current club',
         description: 'Coaches in your league will find you faster in search.',
-        action: () => navigate(`/players/${p.username}?action=edit`),
+        action: () => navigate(OWN_PROFILE_EDIT_PATH),
         actionLabel: 'Link Club',
         completed: false,
       })

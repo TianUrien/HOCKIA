@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowLeft } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
@@ -200,6 +200,19 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
     }
   }, [sectionFromRoute, sectionIsValid, readOnly, routeParams.username, routeParams.id, navigate])
   const [showEditModal, setShowEditModal] = useState(false)
+
+  // ?action=edit deep-link from Home cards (ProfileCompletion 'Add Photo' /
+  // 'Link Club', AvailabilityCheckIn 'Not now') opens the editor. Owner view
+  // only — never in the read-only public profile render. Ref-guarded so it
+  // fires once and a later searchParams change can't reopen it.
+  const editDeepLinkRef = useRef(false)
+  useEffect(() => {
+    if (readOnly || editDeepLinkRef.current) return
+    if (searchParams.get('action') === 'edit') {
+      editDeepLinkRef.current = true
+      setShowEditModal(true)
+    }
+  }, [readOnly, searchParams])
   const [showAddVideoModal, setShowAddVideoModal] = useState(false)
   const [showSignInPrompt, setShowSignInPrompt] = useState(false)
   const [sendingMessage, setSendingMessage] = useState(false)

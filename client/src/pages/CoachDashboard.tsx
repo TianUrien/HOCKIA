@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowLeft } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
@@ -251,6 +251,19 @@ export default function CoachDashboard({
 
   const [showEditModal, setShowEditModal] = useState(false)
   const [showSignInPrompt, setShowSignInPrompt] = useState(false)
+
+  // ?action=edit deep-link from Home cards (AvailabilityCheckIn 'Not now')
+  // opens the editor. Owner view only — never in the read-only public profile
+  // render. Ref-guarded so it fires once and a later searchParams change can't
+  // reopen it.
+  const editDeepLinkRef = useRef(false)
+  useEffect(() => {
+    if (readOnly || editDeepLinkRef.current) return
+    if (searchParams.get('action') === 'edit') {
+      editDeepLinkRef.current = true
+      setShowEditModal(true)
+    }
+  }, [readOnly, searchParams])
   const [sendingMessage, setSendingMessage] = useState(false)
   const [triggerCreateVacancy, setTriggerCreateVacancy] = useState(false)
   const claimCommentHighlights = useNotificationStore((state) => state.claimCommentHighlights)
