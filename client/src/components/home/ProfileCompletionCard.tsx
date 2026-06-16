@@ -107,7 +107,11 @@ export default function ProfileCompletionCard() {
         icon: <Shield className="w-5 h-5 text-[#8026FA]" />,
         title: 'Get your first reference',
         description: 'Players with references rank higher in every search.',
-        action: () => navigate(`/players/${p.username}?tab=friends`),
+        // Owner dashboard References tab — NOT /players/:username?tab=friends:
+        // that's the public profile (no references tab), the ?tab=friends is
+        // stale (references split out of friends 2026-05-08), and the raw
+        // username 404s when null (the default for most accounts).
+        action: () => navigate('/dashboard/profile?tab=references'),
         actionLabel: 'Ask for Reference',
         completed: false,
       })
