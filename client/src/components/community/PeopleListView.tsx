@@ -638,7 +638,11 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     // they have no nationality on file at all (incomplete profile is never
     // a reason to hide someone — mirrors opportunityEligibility.ts). Gated
     // on euFilterActive so it only bites in the focused scoped view.
-    if (euFilterActive) {
+    // EU eligibility — OR-combine the scope-driven hard filter (euFilterActive =
+    // scopeReshaping && euRequired) with the user-facing "EU-eligible only"
+    // toggle, so the toggle works WITH OR WITHOUT an active recruiter scope.
+    // One implementation (isEuEligible) → the two can never disagree.
+    if (euFilterActive || filters.euOnly) {
       result = result.filter((m) => isEuEligible(m.nationality_country_id, m.nationality2_country_id, euCountryIds))
     }
 

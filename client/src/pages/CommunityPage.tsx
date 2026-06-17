@@ -35,6 +35,7 @@ import {
 import type { CommunityTab } from '@/components/community'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { useAuthStore } from '@/lib/auth'
+import { availabilityFilterLabel } from '@/lib/availabilityLabel'
 import {
   deriveTargetCategory,
   playingCategoriesForTarget,
@@ -316,6 +317,7 @@ export default function CommunityPage() {
     updateFilter('location', '')
     updateFilter('locationCountryIds', [])
     updateFilter('nationalityCountryIds', [])
+    updateFilter('euOnly', false)
     updateFilter('brandCategory', null)
     updateFilter('role', memberRoleFilter ?? 'all')
   }, [memberRoleFilter, updateFilter, setSearchQuery])
@@ -439,7 +441,7 @@ export default function CommunityPage() {
                   }`}
                 >
                   <span className="w-1.5 h-1.5 rounded-full bg-current flex-shrink-0" />
-                  Open to opportunities
+                  {availabilityFilterLabel(filters.role)}
                 </button>
                 <button
                   type="button"

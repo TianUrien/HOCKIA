@@ -194,6 +194,22 @@ export function CommunityFiltersDrawer({ state }: CommunityFiltersDrawerProps) {
         />
       </div>
 
+      {/* EU-eligible — derived from nationality (dual-aware). Orgs have no nationality. */}
+      {filters.role !== 'club' && filters.role !== 'brand' && (
+        <div>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={filters.euOnly}
+              onChange={() => updateFilter('euOnly', !filters.euOnly)}
+              className="w-4 h-4 text-purple-600 rounded"
+            />
+            <span className="text-sm font-medium text-gray-700">EU-eligible only</span>
+          </label>
+          <p className="text-xs text-gray-500 mt-1 ml-6">Has at least one EU nationality.</p>
+        </div>
+      )}
+
       <div className="flex justify-end pt-2 border-t border-gray-100">
         <button
           type="button"

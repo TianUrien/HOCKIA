@@ -37,6 +37,10 @@ export interface CommunityFilters {
    * nationality2_country_id. Replaces the old freetext demonym substring, which
    * was primary-only and FK-blind (missed every secondary nationality). */
   nationalityCountryIds: number[]
+  /** User-facing "EU-eligible only" — keeps members with >=1 EU nationality
+   * (derived, dual-aware, keep-unknown via isEuEligible). OR-combines with the
+   * scope-driven EU hard-filter; works with or without an active recruiter scope. */
+  euOnly: boolean
   availability: AvailabilityFilter
   brandCategory: string | null
 }
@@ -49,6 +53,7 @@ export const defaultFilters = (role: RoleFilter = 'all'): CommunityFilters => ({
   location: '',
   locationCountryIds: [],
   nationalityCountryIds: [],
+  euOnly: false,
   availability: 'all',
   brandCategory: null,
 })
@@ -143,6 +148,7 @@ export function useCommunityFiltersState(
       filters.location.trim() !== '' ||
       filters.locationCountryIds.length > 0 ||
       filters.nationalityCountryIds.length > 0 ||
+      filters.euOnly ||
       filters.availability !== 'all'
     )
   }, [filters, roleFilter])
