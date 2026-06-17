@@ -13,6 +13,7 @@ interface SupabaseState {
   upsertArgs: unknown
   upsertOptions: unknown
   rpcArgs: unknown
+  session: { user: { id: string } } | null
 }
 const supabaseState: SupabaseState = {
   upsertResult: { error: null },
@@ -20,10 +21,15 @@ const supabaseState: SupabaseState = {
   upsertArgs: null,
   upsertOptions: null,
   rpcArgs: null,
+  session: { user: { id: 'viewer-1' } },
 }
 
 vi.mock('@/lib/supabase', () => ({
   supabase: {
+    auth: {
+      getSession: () =>
+        Promise.resolve({ data: { session: supabaseState.session }, error: null }),
+    },
     from: () => ({
       upsert: (rows: unknown, options?: unknown) => {
         supabaseState.upsertArgs = rows
@@ -44,6 +50,7 @@ beforeEach(() => {
   supabaseState.upsertArgs = null
   supabaseState.upsertOptions = null
   supabaseState.rpcArgs = null
+  supabaseState.session = { user: { id: 'viewer-1' } }
 })
 
 afterEach(() => {
@@ -69,6 +76,18 @@ describe('logSearchAppearances', () => {
 
   it('no-ops when profileIds is empty', async () => {
     await logSearchAppearances({ viewerId, profileIds: [], filters: baseFilters })
+    expect(supabaseState.upsertArgs).toBeNull()
+  })
+
+  it('no-ops when there is no live authenticated session (avoids the anon RLS 403)', async () => {
+    supabaseState.session = null
+    await logSearchAppearances({ viewerId, profileIds: ['a', 'b'], filters: baseFilters })
+    expect(supabaseState.upsertArgs).toBeNull()
+  })
+
+  it('no-ops when the live session user is not the viewer', async () => {
+    supabaseState.session = { user: { id: 'someone-else' } }
+    await logSearchAppearances({ viewerId, profileIds: ['a', 'b'], filters: baseFilters })
     expect(supabaseState.upsertArgs).toBeNull()
   })
 
