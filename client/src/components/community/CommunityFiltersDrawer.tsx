@@ -1,19 +1,19 @@
+import { useEffect } from 'react'
+import { createPortal } from 'react-dom'
+import { X } from 'lucide-react'
 import { CATEGORY_LABELS, PLAYING_CATEGORIES } from '@/lib/hockeyCategories'
 import { COACH_SPECIALIZATIONS } from '@/lib/coachSpecializations'
 import CountryMultiSelect from '@/components/CountryMultiSelect'
-import type { CommunityFiltersState } from './communityFilters'
+import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
+import type { CommunityFiltersState, RoleFilter } from './communityFilters'
 
 /**
- * CommunityFiltersDrawer
+ * CommunityFiltersDrawer — a portal-rendered mobile BOTTOM SHEET (Phase 3 pt2).
  *
- * The drawer pane lifted out of PeopleListView so it can live above
- * the Top Community Members carousel alongside the search bar and the
- * Open-to-Opportunities + Filters quick-action row.
- *
- * Visibility is controlled by the lifted CommunityFiltersState
- * (`showFilters`) so toggling the Filters button in CommunityPage
- * opens this pane. On desktop the panel could be made sticky, but
- * the May 2026 layout favours mobile-first inline expansion.
+ * Which fields render is driven by COMMUNITY_FILTER_CONFIG (per role) so the UI
+ * never offers a filter the data can't back. Sticky header (Clear all) + sticky
+ * footer ("Show N results"), height-capped scroll body, iOS safe-area, 44pt
+ * targets. Mirrors the MemberPreviewModal sheet pattern the community already uses.
  */
 
 const PLAYER_POSITIONS = ['goalkeeper', 'defender', 'midfielder', 'forward']
@@ -31,11 +31,29 @@ const BRAND_CATEGORIES: { value: string; label: string }[] = [
   { value: 'other', label: 'Other' },
 ]
 
-interface CommunityFiltersDrawerProps {
-  state: CommunityFiltersState
+type FilterField =
+  | 'brandCategory' | 'coachRole' | 'position' | 'category'
+  | 'officiating' | 'location' | 'nationality' | 'eu'
+
+/** Single source of role-awareness: which filter fields show per role tab.
+ *  Grounded in real data — clubs/brands have no nationality/EU; only players/all
+ *  have position; coaches get coach role; umpires get officiating type. */
+const COMMUNITY_FILTER_CONFIG: Record<RoleFilter, FilterField[]> = {
+  all:    ['position', 'category', 'location', 'nationality', 'eu'],
+  player: ['position', 'category', 'location', 'nationality', 'eu'],
+  coach:  ['coachRole', 'category', 'location', 'nationality', 'eu'],
+  umpire: ['officiating', 'category', 'location', 'nationality', 'eu'],
+  club:   ['location'],
+  brand:  ['brandCategory', 'location'],
 }
 
-export function CommunityFiltersDrawer({ state }: CommunityFiltersDrawerProps) {
+interface CommunityFiltersDrawerProps {
+  state: CommunityFiltersState
+  /** Live count of members matching the current filters — shown in the footer CTA. */
+  resultCount?: number | null
+}
+
+export function CommunityFiltersDrawer({ state, resultCount }: CommunityFiltersDrawerProps) {
   const {
     filters,
     updateFilter,
@@ -46,232 +64,264 @@ export function CommunityFiltersDrawer({ state }: CommunityFiltersDrawerProps) {
     hasActiveFilters,
   } = state
 
+  useBodyScrollLock(showFilters)
+
+  useEffect(() => {
+    if (!showFilters) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setShowFilters(false) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [showFilters, setShowFilters])
+
   if (!showFilters) return null
 
-  return (
-    <aside className="mb-4 bg-white rounded-2xl border border-gray-200 shadow-sm p-5 space-y-5">
-      <div className="flex items-center justify-between">
-        <h2 className="text-base font-bold text-gray-900">Filters</h2>
-        <div className="flex items-center gap-3">
-          {hasActiveFilters && (
+  const fields = COMMUNITY_FILTER_CONFIG[filters.role] ?? COMMUNITY_FILTER_CONFIG.all
+  const ctaLabel = typeof resultCount === 'number'
+    ? `Show ${resultCount.toLocaleString()} ${resultCount === 1 ? 'result' : 'results'}`
+    : 'Done'
+
+  const sheet = (
+    <>
+      <div
+        className="fixed inset-0 z-40 bg-black/50 animate-fade-in"
+        onClick={() => setShowFilters(false)}
+        aria-hidden="true"
+      />
+      <div className="fixed inset-0 z-50 flex items-end justify-center md:items-center md:p-6 pointer-events-none">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Filters"
+          className="pointer-events-auto w-full md:max-w-lg bg-white rounded-t-2xl md:rounded-2xl shadow-xl max-h-[85vh] flex flex-col animate-slide-in-up"
+        >
+          {/* Sticky header */}
+          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+            <h2 className="text-base font-bold text-gray-900">Filters</h2>
+            <div className="flex items-center gap-2">
+              {hasActiveFilters && (
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="text-sm text-[#8026FA] hover:text-[#6B20D4] font-medium min-h-[44px] px-2"
+                >
+                  Clear all
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setShowFilters(false)}
+                aria-label="Close filters"
+                className="text-gray-400 hover:text-gray-600 p-2 -mr-1"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Scrollable body */}
+          <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
+            {/* Brand category */}
+            {fields.includes('brandCategory') && (
+              <div>
+                <label htmlFor="brand-category-filter" className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                <select
+                  id="brand-category-filter"
+                  value={filters.brandCategory ?? ''}
+                  onChange={(e) => updateFilter('brandCategory', e.target.value || null)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
+                >
+                  <option value="">All categories</option>
+                  {BRAND_CATEGORIES.map((cat) => (
+                    <option key={cat.value} value={cat.value}>{cat.label}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Coaching role — matches coach_specialization, not position */}
+            {fields.includes('coachRole') && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Coaching Role</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {COACH_SPECIALIZATIONS.map((spec) => (
+                    <label key={spec.value} className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={filters.coachSpecializations.includes(spec.value)}
+                        onChange={() => updateFilter(
+                          'coachSpecializations',
+                          filters.coachSpecializations.includes(spec.value)
+                            ? filters.coachSpecializations.filter((s) => s !== spec.value)
+                            : [...filters.coachSpecializations, spec.value],
+                        )}
+                        className="w-4 h-4 text-purple-600 rounded"
+                      />
+                      <span className="text-sm text-gray-700">{spec.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Position (player / all) */}
+            {fields.includes('position') && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Position</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {PLAYER_POSITIONS.map((position) => (
+                    <label key={position} className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={filters.position.includes(position)}
+                        onChange={() => togglePosition(position)}
+                        className="w-4 h-4 text-purple-600 rounded"
+                      />
+                      <span className="text-sm text-gray-700 capitalize">{position}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Hockey category — coaches/umpires multi-select chips; players single radios */}
+            {fields.includes('category') && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                {filters.role === 'coach' || filters.role === 'umpire' ? (
+                  <div className="flex flex-wrap gap-2">
+                    {PLAYING_CATEGORIES.map((cat) => {
+                      const active = filters.categories.includes(cat)
+                      return (
+                        <button
+                          key={cat}
+                          type="button"
+                          onClick={() => updateFilter('categories', active
+                            ? filters.categories.filter((c) => c !== cat)
+                            : [...filters.categories, cat])}
+                          className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                            active ? 'bg-purple-600 text-white border-purple-600' : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                          }`}
+                        >
+                          {CATEGORY_LABELS[cat]}
+                        </button>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-3">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        checked={filters.categories.length === 0}
+                        onChange={() => updateFilter('categories', [])}
+                        className="w-4 h-4 text-purple-600"
+                      />
+                      <span className="text-sm text-gray-700">All</span>
+                    </label>
+                    {PLAYING_CATEGORIES.map((cat) => (
+                      <label key={cat} className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          checked={filters.categories.length === 1 && filters.categories[0] === cat}
+                          onChange={() => updateFilter('categories', [cat])}
+                          className="w-4 h-4 text-purple-600"
+                        />
+                        <span className="text-sm text-gray-700">{CATEGORY_LABELS[cat]}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Officiating type — umpire (officiating_specialization) */}
+            {fields.includes('officiating') && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Officiating</label>
+                <div className="flex flex-wrap gap-2">
+                  {(['outdoor', 'indoor', 'both'] as const).map((spec) => {
+                    const active = filters.officiatingSpecializations.includes(spec)
+                    return (
+                      <button
+                        key={spec}
+                        type="button"
+                        onClick={() => updateFilter('officiatingSpecializations', active
+                          ? filters.officiatingSpecializations.filter((s) => s !== spec)
+                          : [...filters.officiatingSpecializations, spec])}
+                        className={`px-3 py-1.5 rounded-full text-sm border capitalize transition-colors ${
+                          active ? 'bg-purple-600 text-white border-purple-600' : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        {spec}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Location — country (base_country_id) + free-text city narrower */}
+            {fields.includes('location') && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
+                <CountryMultiSelect
+                  value={filters.locationCountryIds}
+                  onChange={(ids) => updateFilter('locationCountryIds', ids)}
+                  placeholder="Add countries"
+                />
+                <input
+                  type="text"
+                  value={filters.location}
+                  onChange={(e) => updateFilter('location', e.target.value)}
+                  placeholder="City or region (optional)"
+                  className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                />
+              </div>
+            )}
+
+            {/* Nationality — dual-aware (either primary or secondary) */}
+            {fields.includes('nationality') && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Nationality</label>
+                <CountryMultiSelect
+                  value={filters.nationalityCountryIds}
+                  onChange={(ids) => updateFilter('nationalityCountryIds', ids)}
+                  placeholder="Add nationalities"
+                />
+              </div>
+            )}
+
+            {/* EU-eligible — derived from nationality (dual-aware) */}
+            {fields.includes('eu') && (
+              <div>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={filters.euOnly}
+                    onChange={() => updateFilter('euOnly', !filters.euOnly)}
+                    className="w-4 h-4 text-purple-600 rounded"
+                  />
+                  <span className="text-sm font-medium text-gray-700">EU-eligible only</span>
+                </label>
+                <p className="text-xs text-gray-500 mt-1 ml-6">Has at least one EU nationality.</p>
+              </div>
+            )}
+          </div>
+
+          {/* Sticky footer */}
+          <div className="px-5 py-4 border-t border-gray-100 pb-[max(1rem,env(safe-area-inset-bottom))]">
             <button
               type="button"
-              onClick={clearFilters}
-              className="text-sm text-[#8026FA] hover:text-[#6B20D4] font-medium"
+              onClick={() => setShowFilters(false)}
+              className="w-full min-h-[44px] rounded-full bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white text-sm font-semibold hover:opacity-90 transition-opacity"
             >
-              Clear all
+              {ctaLabel}
             </button>
-          )}
-          <button
-            type="button"
-            onClick={() => setShowFilters(false)}
-            aria-label="Close filters"
-            className="text-gray-400 hover:text-gray-600 text-xl leading-none"
-          >
-            ×
-          </button>
-        </div>
-      </div>
-
-      {/* Brand category — only on the Brands chip */}
-      {filters.role === 'brand' && (
-        <div>
-          <label htmlFor="brand-category-filter" className="block text-sm font-medium text-gray-700 mb-2">
-            Category
-          </label>
-          <select
-            id="brand-category-filter"
-            value={filters.brandCategory ?? ''}
-            onChange={(e) => updateFilter('brandCategory', e.target.value || null)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
-          >
-            <option value="">All categories</option>
-            {BRAND_CATEGORIES.map((cat) => (
-              <option key={cat.value} value={cat.value}>{cat.label}</option>
-            ))}
-          </select>
-        </div>
-      )}
-
-      {/* Coaching role (coach only) — matches coach_specialization, not position */}
-      {filters.role === 'coach' && (
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Coaching Role</label>
-          <div className="grid grid-cols-2 gap-2">
-            {COACH_SPECIALIZATIONS.map((spec) => (
-              <label key={spec.value} className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={filters.coachSpecializations.includes(spec.value)}
-                  onChange={() => updateFilter(
-                    'coachSpecializations',
-                    filters.coachSpecializations.includes(spec.value)
-                      ? filters.coachSpecializations.filter((s) => s !== spec.value)
-                      : [...filters.coachSpecializations, spec.value],
-                  )}
-                  className="w-4 h-4 text-purple-600 rounded"
-                />
-                <span className="text-sm text-gray-700">{spec.label}</span>
-              </label>
-            ))}
           </div>
         </div>
-      )}
-
-      {/* Position (player / all tab) */}
-      {filters.role !== 'coach' && filters.role !== 'club' && filters.role !== 'brand' && filters.role !== 'umpire' && (
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Position</label>
-          <div className="grid grid-cols-2 gap-2">
-            {PLAYER_POSITIONS.map((position) => (
-              <label key={position} className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={filters.position.includes(position)}
-                  onChange={() => togglePosition(position)}
-                  className="w-4 h-4 text-purple-600 rounded"
-                />
-                <span className="text-sm text-gray-700 capitalize">{position}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Hockey category — hidden for club + brand. Coaches/umpires hold
-          MULTIPLE categories → multi-select chips; players have one → single radios. */}
-      {filters.role !== 'club' && filters.role !== 'brand' && (
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
-          {filters.role === 'coach' || filters.role === 'umpire' ? (
-            <div className="flex flex-wrap gap-2">
-              {PLAYING_CATEGORIES.map((cat) => {
-                const active = filters.categories.includes(cat)
-                return (
-                  <button
-                    key={cat}
-                    type="button"
-                    onClick={() => updateFilter('categories', active
-                      ? filters.categories.filter((c) => c !== cat)
-                      : [...filters.categories, cat])}
-                    className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
-                      active
-                        ? 'bg-purple-600 text-white border-purple-600'
-                        : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                    }`}
-                  >
-                    {CATEGORY_LABELS[cat]}
-                  </button>
-                )
-              })}
-            </div>
-          ) : (
-            <div className="flex flex-wrap gap-3">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  checked={filters.categories.length === 0}
-                  onChange={() => updateFilter('categories', [])}
-                  className="w-4 h-4 text-purple-600"
-                />
-                <span className="text-sm text-gray-700">All</span>
-              </label>
-              {PLAYING_CATEGORIES.map((cat) => (
-                <label key={cat} className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    checked={filters.categories.length === 1 && filters.categories[0] === cat}
-                    onChange={() => updateFilter('categories', [cat])}
-                    className="w-4 h-4 text-purple-600"
-                  />
-                  <span className="text-sm text-gray-700">{CATEGORY_LABELS[cat]}</span>
-                </label>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Officiating type — umpire only (officiating_specialization) */}
-      {filters.role === 'umpire' && (
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Officiating</label>
-          <div className="flex flex-wrap gap-2">
-            {(['outdoor', 'indoor', 'both'] as const).map((spec) => {
-              const active = filters.officiatingSpecializations.includes(spec)
-              return (
-                <button
-                  key={spec}
-                  type="button"
-                  onClick={() => updateFilter('officiatingSpecializations', active
-                    ? filters.officiatingSpecializations.filter((s) => s !== spec)
-                    : [...filters.officiatingSpecializations, spec])}
-                  className={`px-3 py-1.5 rounded-full text-sm border capitalize transition-colors ${
-                    active
-                      ? 'bg-purple-600 text-white border-purple-600'
-                      : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  {spec}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Location — country (structured, base_country_id) + a free-text city narrower */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
-        <CountryMultiSelect
-          value={filters.locationCountryIds}
-          onChange={(ids) => updateFilter('locationCountryIds', ids)}
-          placeholder="Add countries"
-        />
-        <input
-          type="text"
-          value={filters.location}
-          onChange={(e) => updateFilter('location', e.target.value)}
-          placeholder="City or region (optional)"
-          className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-        />
       </div>
-
-      {/* Nationality — dual-aware (matches either primary or secondary nationality) */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Nationality</label>
-        <CountryMultiSelect
-          value={filters.nationalityCountryIds}
-          onChange={(ids) => updateFilter('nationalityCountryIds', ids)}
-          placeholder="Add nationalities"
-        />
-      </div>
-
-      {/* EU-eligible — derived from nationality (dual-aware). Orgs have no nationality. */}
-      {filters.role !== 'club' && filters.role !== 'brand' && (
-        <div>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={filters.euOnly}
-              onChange={() => updateFilter('euOnly', !filters.euOnly)}
-              className="w-4 h-4 text-purple-600 rounded"
-            />
-            <span className="text-sm font-medium text-gray-700">EU-eligible only</span>
-          </label>
-          <p className="text-xs text-gray-500 mt-1 ml-6">Has at least one EU nationality.</p>
-        </div>
-      )}
-
-      <div className="flex justify-end pt-2 border-t border-gray-100">
-        <button
-          type="button"
-          onClick={() => setShowFilters(false)}
-          className="px-5 py-2 rounded-full bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white text-sm font-semibold hover:opacity-90"
-        >
-          Done
-        </button>
-      </div>
-    </aside>
+    </>
   )
+
+  return createPortal(sheet, document.body)
 }

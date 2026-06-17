@@ -457,7 +457,7 @@ export default function CommunityPage() {
               </div>
 
               {/* Filters drawer (mobile) / panel (desktop) */}
-              <CommunityFiltersDrawer state={filtersState} />
+              <CommunityFiltersDrawer state={filtersState} resultCount={isNarrowed ? filteredCount : totalCount} />
 
               {/* Role chips */}
               <div className="mb-4 sm:mb-5">
