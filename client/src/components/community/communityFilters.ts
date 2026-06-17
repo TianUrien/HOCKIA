@@ -24,10 +24,15 @@ export interface CommunityFilters {
    * Distinct from `position`: the old drawer matched coaching role against the
    * player `position` column, which a coach never has → it filtered everyone out. */
   coachSpecializations: string[]
-  /** Phase 3 hockey category filter. Replaces the old Men/Women gender radio.
-   * Routed to playing_category for player rows, and array-overlap (or 'any'
-   * sentinel) for coach + umpire rows. Skipped entirely for club + brand. */
-  category: 'all' | PlayingCategory
+  /** Hockey category filter (multi-select; empty = all). Routed to
+   * playing_category for player rows (any-of), and array-overlap (or 'any'
+   * sentinel) for coach + umpire rows. Skipped entirely for club + brand.
+   * Player UI is single-select (writes a 1-element array); coach/umpire UI is
+   * multi-select chips (their categories are arrays — a coach can hold several). */
+  categories: PlayingCategory[]
+  /** Umpire officiating type — matches officiating_specialization (outdoor /
+   * indoor / both). Umpire role only. */
+  officiatingSpecializations: string[]
   /** Free-text city/region match on base_location (kept as a secondary narrower). */
   location: string
   /** Structured location match on base_country_id (the "country" half of the
@@ -49,7 +54,8 @@ export const defaultFilters = (role: RoleFilter = 'all'): CommunityFilters => ({
   role,
   position: [],
   coachSpecializations: [],
-  category: 'all',
+  categories: [],
+  officiatingSpecializations: [],
   location: '',
   locationCountryIds: [],
   nationalityCountryIds: [],
@@ -116,7 +122,8 @@ export function useCommunityFiltersState(
       if (key === 'role') {
         next.position = []
         next.coachSpecializations = []
-        next.category = 'all'
+        next.categories = []
+        next.officiatingSpecializations = []
         if (value !== 'brand') next.brandCategory = null
       }
       return next
@@ -144,7 +151,8 @@ export function useCommunityFiltersState(
       filters.brandCategory !== null ||
       filters.position.length > 0 ||
       filters.coachSpecializations.length > 0 ||
-      filters.category !== 'all' ||
+      filters.categories.length > 0 ||
+      filters.officiatingSpecializations.length > 0 ||
       filters.location.trim() !== '' ||
       filters.locationCountryIds.length > 0 ||
       filters.nationalityCountryIds.length > 0 ||

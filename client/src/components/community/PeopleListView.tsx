@@ -355,11 +355,11 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
           if (brandIds.length > 0) {
             const { data: brands } = await supabase
               .from('brands')
-              .select('profile_id, slug, category, bio, website_url, instagram_url, logo_url, follower_count, ambassador_count')
+              .select('profile_id, slug, category, country_id, bio, website_url, instagram_url, logo_url, follower_count, ambassador_count')
               .in('profile_id', brandIds)
             if (brands) {
               const brandMap = new Map(
-                (brands as { profile_id: string; slug: string; category: string; bio: string | null; website_url: string | null; instagram_url: string | null; logo_url: string | null; follower_count: number | null; ambassador_count: number | null }[]).map(
+                (brands as { profile_id: string; slug: string; category: string; country_id: number | null; bio: string | null; website_url: string | null; instagram_url: string | null; logo_url: string | null; follower_count: number | null; ambassador_count: number | null }[]).map(
                   (b) => [b.profile_id, b]
                 )
               )
@@ -368,6 +368,9 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
                   const brand = brandMap.get(m.id)
                   m.brand_slug = brand?.slug || null
                   m.brand_category = brand?.category || null
+                  // Brands store location on brands.country_id, not profiles.base_country_id.
+                  // Map it across so the Location (country) filter works for brands too.
+                  if (typeof brand?.country_id === 'number') m.base_country_id = brand.country_id
                   m.brand_bio = brand?.bio || null
                   m.brand_website_url = brand?.website_url || null
                   m.brand_instagram_url = brand?.instagram_url || null
@@ -591,25 +594,44 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
         filters.coachSpecializations.includes(m.coach_specialization)
       )
     }
-    if (filters.category !== 'all') {
-      const target = filters.category
+    if (filters.categories.length > 0) {
+      // Multi-select (any-of): player playing_category in set; coach/umpire
+      // category arrays overlap the set (or the 'any' sentinel). Club + brand
+      // have no category → excluded when a category filter is active.
+      const targets = new Set<string>(filters.categories)
       result = result.filter((m) => {
-        if (m.role === 'player') return m.playing_category === target
+        if (m.role === 'player') return !!m.playing_category && targets.has(m.playing_category)
         if (m.role === 'coach') {
           return isOpenToAny(m.coaching_categories) ||
-            (Array.isArray(m.coaching_categories) && m.coaching_categories.includes(target))
+            (Array.isArray(m.coaching_categories) && m.coaching_categories.some((c) => targets.has(c)))
         }
         if (m.role === 'umpire') {
           return isOpenToAny(m.umpiring_categories) ||
-            (Array.isArray(m.umpiring_categories) && m.umpiring_categories.includes(target))
+            (Array.isArray(m.umpiring_categories) && m.umpiring_categories.some((c) => targets.has(c)))
         }
-        // Club + brand have no category — exclude when a category filter is active.
         return false
       })
     }
-    if (filters.locationCountryIds.length > 0) {
+    if (filters.officiatingSpecializations.length > 0) {
       result = result.filter(m =>
-        typeof m.base_country_id === 'number' && filters.locationCountryIds.includes(m.base_country_id)
+        m.role === 'umpire' && !!m.officiating_specialization &&
+        filters.officiatingSpecializations.includes(m.officiating_specialization)
+      )
+    }
+    if (filters.locationCountryIds.length > 0) {
+      // Structured base_country_id match, OR (recall fallback) the country name
+      // appearing in the free-text base_location — so legacy members whose
+      // base_country_id was never set still surface when their location text
+      // names the country (e.g. "Sydney, Australia").
+      const idSet = new Set(filters.locationCountryIds)
+      const names = filters.locationCountryIds
+        .map((id) => getCountryById(id))
+        .filter((c): c is NonNullable<typeof c> => Boolean(c))
+        .flatMap((c) => [c.name, c.common_name].filter((n): n is string => Boolean(n)))
+        .map((n) => n.toLowerCase())
+      result = result.filter(m =>
+        (typeof m.base_country_id === 'number' && idSet.has(m.base_country_id)) ||
+        (!!m.base_location && names.some((n) => m.base_location!.toLowerCase().includes(n)))
       )
     }
     if (filters.location.trim()) {
@@ -954,7 +976,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
           search_query_present: searchQuery.trim().length > 0,
           role: filters.role !== 'all' ? filters.role : null,
           position: filters.position.length > 0 ? filters.position : null,
-          gender: filters.category !== 'all' ? filters.category : null,
+          gender: filters.categories.length > 0 ? filters.categories.join(',') : null,
           location: filters.location.trim() || (filters.locationCountryIds.length > 0 ? filters.locationCountryIds.join(',') : null),
           nationality: filters.nationalityCountryIds.length > 0 ? filters.nationalityCountryIds.join(',') : null,
           availability: filters.availability !== 'all' ? filters.availability : null,

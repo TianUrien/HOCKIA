@@ -138,31 +138,84 @@ export function CommunityFiltersDrawer({ state }: CommunityFiltersDrawerProps) {
         </div>
       )}
 
-      {/* Hockey category — hidden for club + brand */}
+      {/* Hockey category — hidden for club + brand. Coaches/umpires hold
+          MULTIPLE categories → multi-select chips; players have one → single radios. */}
       {filters.role !== 'club' && filters.role !== 'brand' && (
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
-          <div className="flex flex-wrap gap-3">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                checked={filters.category === 'all'}
-                onChange={() => updateFilter('category', 'all')}
-                className="w-4 h-4 text-purple-600"
-              />
-              <span className="text-sm text-gray-700">All</span>
-            </label>
-            {PLAYING_CATEGORIES.map((cat) => (
-              <label key={cat} className="flex items-center gap-2 cursor-pointer">
+          {filters.role === 'coach' || filters.role === 'umpire' ? (
+            <div className="flex flex-wrap gap-2">
+              {PLAYING_CATEGORIES.map((cat) => {
+                const active = filters.categories.includes(cat)
+                return (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => updateFilter('categories', active
+                      ? filters.categories.filter((c) => c !== cat)
+                      : [...filters.categories, cat])}
+                    className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                      active
+                        ? 'bg-purple-600 text-white border-purple-600'
+                        : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    {CATEGORY_LABELS[cat]}
+                  </button>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-3">
+              <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="radio"
-                  checked={filters.category === cat}
-                  onChange={() => updateFilter('category', cat)}
+                  checked={filters.categories.length === 0}
+                  onChange={() => updateFilter('categories', [])}
                   className="w-4 h-4 text-purple-600"
                 />
-                <span className="text-sm text-gray-700">{CATEGORY_LABELS[cat]}</span>
+                <span className="text-sm text-gray-700">All</span>
               </label>
-            ))}
+              {PLAYING_CATEGORIES.map((cat) => (
+                <label key={cat} className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    checked={filters.categories.length === 1 && filters.categories[0] === cat}
+                    onChange={() => updateFilter('categories', [cat])}
+                    className="w-4 h-4 text-purple-600"
+                  />
+                  <span className="text-sm text-gray-700">{CATEGORY_LABELS[cat]}</span>
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Officiating type — umpire only (officiating_specialization) */}
+      {filters.role === 'umpire' && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Officiating</label>
+          <div className="flex flex-wrap gap-2">
+            {(['outdoor', 'indoor', 'both'] as const).map((spec) => {
+              const active = filters.officiatingSpecializations.includes(spec)
+              return (
+                <button
+                  key={spec}
+                  type="button"
+                  onClick={() => updateFilter('officiatingSpecializations', active
+                    ? filters.officiatingSpecializations.filter((s) => s !== spec)
+                    : [...filters.officiatingSpecializations, spec])}
+                  className={`px-3 py-1.5 rounded-full text-sm border capitalize transition-colors ${
+                    active
+                      ? 'bg-purple-600 text-white border-purple-600'
+                      : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  {spec}
+                </button>
+              )
+            })}
           </div>
         </div>
       )}
