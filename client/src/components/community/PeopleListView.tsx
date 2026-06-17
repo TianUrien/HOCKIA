@@ -310,8 +310,27 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
   // in-flight HIT → dedupe returns existing promise (no fn call, no
   // measure); cache MISS + no in-flight → fn runs once (measure once).
   const fetchMembers = useCallback(async () => {
-    const roleKey = roleFilter ?? 'all'
-    const cacheKey = `community-members-${viewerScope}-${roleKey}`
+    // Phase 5 — server-side hard filtering via community_search_members. The
+    // structured drawer filters (role + the toggle/select filters) run SERVER
+    // side, so the result is the WHOLE filtered pool (cap 500, fit-neutral
+    // created_at DESC) — lifting the old "filter the newest 200 client-side"
+    // ceiling. Free-text search + city stay client narrowers; filteredMembers
+    // re-applies the drawer predicates idempotently (defensive parity). Test-
+    // account visibility is decided server-side by is_staging_env().
+    const rpcParams = {
+      p_role: filters.role === 'all' ? null : filters.role,
+      p_positions: filters.position.length ? filters.position : null,
+      p_coach_specializations: filters.coachSpecializations.length ? filters.coachSpecializations : null,
+      p_categories: filters.categories.length ? filters.categories : null,
+      p_officiating_specializations: filters.officiatingSpecializations.length ? filters.officiatingSpecializations : null,
+      p_nationality_country_ids: filters.nationalityCountryIds.length ? filters.nationalityCountryIds : null,
+      p_eu_required: (filters.euOnly || euFilterActive) ? true : null,
+      p_location_country_ids: filters.locationCountryIds.length ? filters.locationCountryIds : null,
+      p_availability_open: filters.availability === 'open' ? true : null,
+      p_brand_category: filters.brandCategory || null,
+      p_limit: 500,
+    }
+    const cacheKey = `community-members-${viewerScope}-${JSON.stringify(rpcParams)}`
 
     // Fastest path: data already cached at the module level → hand
     // it back synchronously, never touch isLoading or measure.
@@ -327,28 +346,10 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
       const members = await requestCache.dedupe(
         cacheKey,
         async () => monitor.measure('fetch_community_members', async () => {
-          let query = supabase
-            .from('profiles')
-            .select(PROFILES_SELECT)
-            .eq('onboarding_completed', true) // Only show fully onboarded users
-
-          // Narrow server-side when a role route is active — otherwise the
-          // 200-row ceiling silently truncates under-represented roles.
-          if (roleFilter) {
-            query = query.eq('role', roleFilter)
-          }
-
-          // If current user is NOT a test account, exclude test accounts from results
-          if (hideTestAccounts) {
-            query = query.or('is_test_account.is.null,is_test_account.eq.false')
-          }
-
-          const { data, error } = await query
-            .order('created_at', { ascending: false })
-            .limit(200) // Load reasonable batch for client-side filtering
-
+          const { data, error } = await supabase.rpc('community_search_members', rpcParams)
           if (error) throw error
-          const members = ((data || []) as unknown) as Profile[]
+          const payload = (data ?? {}) as unknown as { results?: Profile[] }
+          const members = payload.results ?? []
 
           // Resolve brand slugs + completion fields for brand cards
           const brandIds = members.filter(m => m.role === 'brand').map(m => m.id)
@@ -419,7 +420,9 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     } finally {
       setIsLoading(false)
     }
-  }, [hideTestAccounts, viewerScope, roleFilter])
+  }, [viewerScope, filters.role, filters.position, filters.coachSpecializations, filters.categories,
+      filters.officiatingSpecializations, filters.nationalityCountryIds, filters.euOnly,
+      filters.locationCountryIds, filters.availability, filters.brandCategory, euFilterActive])
 
   // Role sync moved to CommunityPage (it owns the filter state now).
 
