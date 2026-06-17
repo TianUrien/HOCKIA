@@ -624,9 +624,10 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
       // base_country_id was never set still surface when their location text
       // names the country (e.g. "Sydney, Australia").
       const idSet = new Set(filters.locationCountryIds)
-      const names = filters.locationCountryIds
-        .map((id) => getCountryById(id))
-        .filter((c): c is NonNullable<typeof c> => Boolean(c))
+      // Use the stable `countries` list (not getCountryById, which is recreated
+      // each render and would force this memo to recompute every render).
+      const names = countries
+        .filter((c) => idSet.has(c.id))
         .flatMap((c) => [c.name, c.common_name].filter((n): n is string => Boolean(n)))
         .map((n) => n.toLowerCase())
       result = result.filter(m =>
@@ -767,7 +768,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     }
 
     return result
-  }, [allMembers, filters, sort, currentUserProfile, applyContextFit, contextTarget, contextTargetRole, contextTargetPosition, contextTargetSpecialists, contextMustHaves, euFilterActive, euCountryIds])
+  }, [allMembers, filters, sort, currentUserProfile, applyContextFit, contextTarget, contextTargetRole, contextTargetPosition, contextTargetSpecialists, contextMustHaves, euFilterActive, euCountryIds, countries])
 
   // Recruiter Match is "active" only while an active scope ranks PLAYERS by
   // fit — a coach scope ranks coaches, so the player match bar stays off.
