@@ -6253,6 +6253,25 @@ export type Database = {
         }
         Returns: number
       }
+      community_search_members: {
+        Args: {
+          p_role?: string | null
+          p_positions?: string[] | null
+          p_coach_specializations?: string[] | null
+          p_categories?: string[] | null
+          p_officiating_specializations?: string[] | null
+          p_nationality_country_ids?: number[] | null
+          p_eu_required?: boolean | null
+          p_location_country_ids?: number[] | null
+          p_location_text?: string | null
+          p_availability_open?: boolean | null
+          p_brand_category?: string | null
+          p_search_text?: string | null
+          p_limit?: number
+          p_offset?: number
+        }
+        Returns: Json
+      }
       delete_user_post: { Args: { p_post_id: string }; Returns: Json }
       discover_profiles: {
         Args: {

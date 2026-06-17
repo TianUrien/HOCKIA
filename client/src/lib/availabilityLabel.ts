@@ -69,6 +69,23 @@ export function availabilityLabel(role: AvailabilityRole, flags: AvailabilityFla
 }
 
 /**
+ * Label for the community "open to …" quick-filter CHIP, by the active role tab
+ * (no per-member flags — it's a filter toggle, not a member badge). The old chip
+ * always said "Open to opportunities", which over-promised for players/coaches
+ * whose availability flag is open_to_play / open_to_coach.
+ */
+export function availabilityFilterLabel(role: AvailabilityRole): string {
+  switch (role) {
+    case 'player': return 'Open to play'
+    case 'coach': return 'Open to coach'
+    case 'umpire': return 'Open to umpire'
+    case 'club': return 'Recruiting'
+    case 'brand': return 'Open to partnerships'
+    default: return 'Open to opportunities' // 'all' / mixed roles
+  }
+}
+
+/**
  * Whether the member shows a positive availability signal — drives the green
  * "open" dot on avatars. True only when there's a role-specific positive label.
  */

@@ -35,6 +35,7 @@ import {
 import type { CommunityTab } from '@/components/community'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { useAuthStore } from '@/lib/auth'
+import { availabilityFilterLabel } from '@/lib/availabilityLabel'
 import {
   deriveTargetCategory,
   playingCategoriesForTarget,
@@ -311,9 +312,13 @@ export default function CommunityPage() {
     setSearchQuery('')
     updateFilter('availability', 'all')
     updateFilter('position', [])
-    updateFilter('category', 'all')
+    updateFilter('coachSpecializations', [])
+    updateFilter('categories', [])
+    updateFilter('officiatingSpecializations', [])
     updateFilter('location', '')
-    updateFilter('nationality', '')
+    updateFilter('locationCountryIds', [])
+    updateFilter('nationalityCountryIds', [])
+    updateFilter('euOnly', false)
     updateFilter('brandCategory', null)
     updateFilter('role', memberRoleFilter ?? 'all')
   }, [memberRoleFilter, updateFilter, setSearchQuery])
@@ -437,7 +442,7 @@ export default function CommunityPage() {
                   }`}
                 >
                   <span className="w-1.5 h-1.5 rounded-full bg-current flex-shrink-0" />
-                  Open to opportunities
+                  {availabilityFilterLabel(filters.role)}
                 </button>
                 <button
                   type="button"
@@ -452,7 +457,7 @@ export default function CommunityPage() {
               </div>
 
               {/* Filters drawer (mobile) / panel (desktop) */}
-              <CommunityFiltersDrawer state={filtersState} />
+              <CommunityFiltersDrawer state={filtersState} resultCount={isNarrowed ? filteredCount : totalCount} />
 
               {/* Role chips */}
               <div className="mb-4 sm:mb-5">

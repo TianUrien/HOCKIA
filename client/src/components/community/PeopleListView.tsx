@@ -32,6 +32,8 @@ import {
   useActiveRecruitingMustHaves,
 } from '@/hooks/useRecruitingContext'
 import { useCountries, isEuCountryCode } from '@/hooks/useCountries'
+import { isEuEligible } from '@/lib/euEligibility'
+import { expandCountryEquivalents } from '@/lib/countryEquivalents'
 import { categoryToBandTarget } from '@/hooks/useInterest'
 import { requestCache } from '@/lib/requestCache'
 import { monitor } from '@/lib/monitor'
@@ -309,8 +311,27 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
   // in-flight HIT → dedupe returns existing promise (no fn call, no
   // measure); cache MISS + no in-flight → fn runs once (measure once).
   const fetchMembers = useCallback(async () => {
-    const roleKey = roleFilter ?? 'all'
-    const cacheKey = `community-members-${viewerScope}-${roleKey}`
+    // Phase 5 — server-side hard filtering via community_search_members. The
+    // structured drawer filters (role + the toggle/select filters) run SERVER
+    // side, so the result is the WHOLE filtered pool (cap 500, fit-neutral
+    // created_at DESC) — lifting the old "filter the newest 200 client-side"
+    // ceiling. Free-text search + city stay client narrowers; filteredMembers
+    // re-applies the drawer predicates idempotently (defensive parity). Test-
+    // account visibility is decided server-side by is_staging_env().
+    const rpcParams = {
+      p_role: filters.role === 'all' ? null : filters.role,
+      p_positions: filters.position.length ? filters.position : null,
+      p_coach_specializations: filters.coachSpecializations.length ? filters.coachSpecializations : null,
+      p_categories: filters.categories.length ? filters.categories : null,
+      p_officiating_specializations: filters.officiatingSpecializations.length ? filters.officiatingSpecializations : null,
+      p_nationality_country_ids: filters.nationalityCountryIds.length ? filters.nationalityCountryIds : null,
+      p_eu_required: (filters.euOnly || euFilterActive) ? true : null,
+      p_location_country_ids: filters.locationCountryIds.length ? filters.locationCountryIds : null,
+      p_availability_open: filters.availability === 'open' ? true : null,
+      p_brand_category: filters.brandCategory || null,
+      p_limit: 500,
+    }
+    const cacheKey = `community-members-${viewerScope}-${JSON.stringify(rpcParams)}`
 
     // Fastest path: data already cached at the module level → hand
     // it back synchronously, never touch isLoading or measure.
@@ -326,39 +347,21 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
       const members = await requestCache.dedupe(
         cacheKey,
         async () => monitor.measure('fetch_community_members', async () => {
-          let query = supabase
-            .from('profiles')
-            .select(PROFILES_SELECT)
-            .eq('onboarding_completed', true) // Only show fully onboarded users
-
-          // Narrow server-side when a role route is active — otherwise the
-          // 200-row ceiling silently truncates under-represented roles.
-          if (roleFilter) {
-            query = query.eq('role', roleFilter)
-          }
-
-          // If current user is NOT a test account, exclude test accounts from results
-          if (hideTestAccounts) {
-            query = query.or('is_test_account.is.null,is_test_account.eq.false')
-          }
-
-          const { data, error } = await query
-            .order('created_at', { ascending: false })
-            .limit(200) // Load reasonable batch for client-side filtering
-
+          const { data, error } = await supabase.rpc('community_search_members', rpcParams)
           if (error) throw error
-          const members = ((data || []) as unknown) as Profile[]
+          const payload = (data ?? {}) as unknown as { results?: Profile[] }
+          const members = payload.results ?? []
 
           // Resolve brand slugs + completion fields for brand cards
           const brandIds = members.filter(m => m.role === 'brand').map(m => m.id)
           if (brandIds.length > 0) {
             const { data: brands } = await supabase
               .from('brands')
-              .select('profile_id, slug, category, bio, website_url, instagram_url, logo_url, follower_count, ambassador_count')
+              .select('profile_id, slug, category, country_id, bio, website_url, instagram_url, logo_url, follower_count, ambassador_count')
               .in('profile_id', brandIds)
             if (brands) {
               const brandMap = new Map(
-                (brands as { profile_id: string; slug: string; category: string; bio: string | null; website_url: string | null; instagram_url: string | null; logo_url: string | null; follower_count: number | null; ambassador_count: number | null }[]).map(
+                (brands as { profile_id: string; slug: string; category: string; country_id: number | null; bio: string | null; website_url: string | null; instagram_url: string | null; logo_url: string | null; follower_count: number | null; ambassador_count: number | null }[]).map(
                   (b) => [b.profile_id, b]
                 )
               )
@@ -367,6 +370,10 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
                   const brand = brandMap.get(m.id)
                   m.brand_slug = brand?.slug || null
                   m.brand_category = brand?.category || null
+                  // Brands store location on brands.country_id, not profiles.base_country_id.
+                  // Map it across so the Location (country) filter works for brands too.
+                  // Mirror the RPC's COALESCE(profile, brand) — profile location wins.
+                  if (m.base_country_id == null && typeof brand?.country_id === 'number') m.base_country_id = brand.country_id
                   m.brand_bio = brand?.bio || null
                   m.brand_website_url = brand?.website_url || null
                   m.brand_instagram_url = brand?.instagram_url || null
@@ -415,7 +422,9 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     } finally {
       setIsLoading(false)
     }
-  }, [hideTestAccounts, viewerScope, roleFilter])
+  }, [viewerScope, filters.role, filters.position, filters.coachSpecializations, filters.categories,
+      filters.officiatingSpecializations, filters.nationalityCountryIds, filters.euOnly,
+      filters.locationCountryIds, filters.availability, filters.brandCategory, euFilterActive])
 
   // Role sync moved to CommunityPage (it owns the filter state now).
 
@@ -581,29 +590,73 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
         (m.secondary_position && filters.position.includes(m.secondary_position.toLowerCase()))
       )
     }
-    if (filters.category !== 'all') {
-      const target = filters.category
+    if (filters.coachSpecializations.length > 0) {
+      // Coach-role filter matches coach_specialization (NOT position — a coach
+      // has no `position`, so the old position-based coaching filter dropped
+      // every coach).
+      result = result.filter(m =>
+        m.role === 'coach' && !!m.coach_specialization &&
+        filters.coachSpecializations.includes(m.coach_specialization)
+      )
+    }
+    if (filters.categories.length > 0) {
+      // Multi-select (any-of): player playing_category in set; coach/umpire
+      // category arrays overlap the set (or the 'any' sentinel). Club + brand
+      // have no category → excluded when a category filter is active.
+      const targets = new Set<string>(filters.categories)
       result = result.filter((m) => {
-        if (m.role === 'player') return m.playing_category === target
+        if (m.role === 'player') return !!m.playing_category && targets.has(m.playing_category)
         if (m.role === 'coach') {
           return isOpenToAny(m.coaching_categories) ||
-            (Array.isArray(m.coaching_categories) && m.coaching_categories.includes(target))
+            (Array.isArray(m.coaching_categories) && m.coaching_categories.some((c) => targets.has(c)))
         }
         if (m.role === 'umpire') {
           return isOpenToAny(m.umpiring_categories) ||
-            (Array.isArray(m.umpiring_categories) && m.umpiring_categories.includes(target))
+            (Array.isArray(m.umpiring_categories) && m.umpiring_categories.some((c) => targets.has(c)))
         }
-        // Club + brand have no category — exclude when a category filter is active.
         return false
       })
+    }
+    if (filters.officiatingSpecializations.length > 0) {
+      result = result.filter(m =>
+        m.role === 'umpire' && !!m.officiating_specialization &&
+        filters.officiatingSpecializations.includes(m.officiating_specialization)
+      )
+    }
+    if (filters.locationCountryIds.length > 0) {
+      // Structured base_country_id match, OR (recall fallback) the country name
+      // appearing in the free-text base_location — so legacy members whose
+      // base_country_id was never set still surface when their location text
+      // names the country (e.g. "Sydney, Australia").
+      // Expand GB <-> England the same way the server RPC does
+      // (expand_country_equivalents), so this defensive re-filter never drops
+      // England-coded members when "United Kingdom" is selected (or vice versa).
+      const locIds = expandCountryEquivalents(filters.locationCountryIds, countries)
+      const idSet = new Set(locIds)
+      // Use the stable `countries` list (not getCountryById, which is recreated
+      // each render and would force this memo to recompute every render).
+      const names = countries
+        .filter((c) => idSet.has(c.id))
+        .flatMap((c) => [c.name, c.common_name].filter((n): n is string => Boolean(n)))
+        .map((n) => n.toLowerCase())
+      result = result.filter(m =>
+        (typeof m.base_country_id === 'number' && idSet.has(m.base_country_id)) ||
+        (!!m.base_location && names.some((n) => m.base_location!.toLowerCase().includes(n)))
+      )
     }
     if (filters.location.trim()) {
       const loc = filters.location.toLowerCase()
       result = result.filter(m => m.base_location?.toLowerCase().includes(loc))
     }
-    if (filters.nationality.trim()) {
-      const nat = filters.nationality.toLowerCase()
-      result = result.filter(m => m.nationality?.toLowerCase().includes(nat))
+    if (filters.nationalityCountryIds.length > 0) {
+      // Dual-aware: match EITHER primary or secondary nationality FK. The old
+      // freetext demonym match was primary-only and missed every dual national.
+      // Expand GB <-> England to match the server RPC (expand_country_equivalents).
+      const natIds = expandCountryEquivalents(filters.nationalityCountryIds, countries)
+      result = result.filter(m =>
+        (typeof m.nationality_country_id === 'number' && natIds.includes(m.nationality_country_id)) ||
+        (typeof m.nationality2_country_id === 'number' && natIds.includes(m.nationality2_country_id))
+      )
     }
     if (filters.availability === 'open') {
       // Role-complete "open" filter — players (open_to_play), coaches
@@ -619,13 +672,12 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     // they have no nationality on file at all (incomplete profile is never
     // a reason to hide someone — mirrors opportunityEligibility.ts). Gated
     // on euFilterActive so it only bites in the focused scoped view.
-    if (euFilterActive) {
-      result = result.filter((m) => {
-        const ids = [m.nationality_country_id, m.nationality2_country_id]
-          .filter((id): id is number => typeof id === 'number')
-        if (ids.length === 0) return true // unknown nationality → keep
-        return ids.some((id) => euCountryIds.has(id))
-      })
+    // EU eligibility — OR-combine the scope-driven hard filter (euFilterActive =
+    // scopeReshaping && euRequired) with the user-facing "EU-eligible only"
+    // toggle, so the toggle works WITH OR WITHOUT an active recruiter scope.
+    // One implementation (isEuEligible) → the two can never disagree.
+    if (euFilterActive || filters.euOnly) {
+      result = result.filter((m) => isEuEligible(m.nationality_country_id, m.nationality2_country_id, euCountryIds))
     }
 
     // Sort. 'newest' is the natural fetch order (created_at DESC); no
@@ -727,7 +779,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     }
 
     return result
-  }, [allMembers, filters, sort, currentUserProfile, applyContextFit, contextTarget, contextTargetRole, contextTargetPosition, contextTargetSpecialists, contextMustHaves, euFilterActive, euCountryIds])
+  }, [allMembers, filters, sort, currentUserProfile, applyContextFit, contextTarget, contextTargetRole, contextTargetPosition, contextTargetSpecialists, contextMustHaves, euFilterActive, euCountryIds, countries])
 
   // Recruiter Match is "active" only while an active scope ranks PLAYERS by
   // fit — a coach scope ranks coaches, so the player match bar stays off.
@@ -936,9 +988,9 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
           search_query_present: searchQuery.trim().length > 0,
           role: filters.role !== 'all' ? filters.role : null,
           position: filters.position.length > 0 ? filters.position : null,
-          gender: filters.category !== 'all' ? filters.category : null,
-          location: filters.location.trim() || null,
-          nationality: filters.nationality.trim() || null,
+          gender: filters.categories.length > 0 ? filters.categories.join(',') : null,
+          location: filters.location.trim() || (filters.locationCountryIds.length > 0 ? filters.locationCountryIds.join(',') : null),
+          nationality: filters.nationalityCountryIds.length > 0 ? filters.nationalityCountryIds.join(',') : null,
           availability: filters.availability !== 'all' ? filters.availability : null,
         },
       })

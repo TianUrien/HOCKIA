@@ -60,6 +60,17 @@ export async function logSearchAppearances(params: {
   const { viewerId, profileIds, filters } = params
   if (!viewerId || profileIds.length === 0) return
 
+  // The table's RLS is WITH CHECK (auth.uid() = viewer_id): this insert only
+  // succeeds with a LIVE authenticated session whose user IS the viewer. A
+  // cached profile in the app store is not enough — a stale/expired access
+  // token was landing these fire-and-forget writes at Postgres as `anon`, so
+  // auth.uid() was NULL and the policy 403'd on every render. getSession()
+  // reads (and refreshes an expired) token, so the upsert below carries a
+  // valid JWT. No live session / id mismatch → skip silently; appearance
+  // logging is best-effort and must never spam the console or throw.
+  const { data: { session } } = await supabase.auth.getSession()
+  if (session?.user?.id !== viewerId) return
+
   const rows = profileIds
     .filter((id) => id !== viewerId)
     .map((profile_id) => ({

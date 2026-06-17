@@ -20,12 +20,32 @@ export type SortOption = 'newest' | 'completeness'
 export interface CommunityFilters {
   role: RoleFilter
   position: string[]
-  /** Phase 3 hockey category filter. Replaces the old Men/Women gender radio.
-   * Routed to playing_category for player rows, and array-overlap (or 'any'
-   * sentinel) for coach + umpire rows. Skipped entirely for club + brand. */
-  category: 'all' | PlayingCategory
+  /** Coach specialization filter (coach role only) — matches coach_specialization.
+   * Distinct from `position`: the old drawer matched coaching role against the
+   * player `position` column, which a coach never has → it filtered everyone out. */
+  coachSpecializations: string[]
+  /** Hockey category filter (multi-select; empty = all). Routed to
+   * playing_category for player rows (any-of), and array-overlap (or 'any'
+   * sentinel) for coach + umpire rows. Skipped entirely for club + brand.
+   * Player UI is single-select (writes a 1-element array); coach/umpire UI is
+   * multi-select chips (their categories are arrays — a coach can hold several). */
+  categories: PlayingCategory[]
+  /** Umpire officiating type — matches officiating_specialization (outdoor /
+   * indoor / both). Umpire role only. */
+  officiatingSpecializations: string[]
+  /** Free-text city/region match on base_location (kept as a secondary narrower). */
   location: string
-  nationality: string
+  /** Structured location match on base_country_id (the "country" half of the
+   * old "City or country" placeholder, which the freetext never honoured). */
+  locationCountryIds: number[]
+  /** Dual-aware nationality match on nationality_country_id OR
+   * nationality2_country_id. Replaces the old freetext demonym substring, which
+   * was primary-only and FK-blind (missed every secondary nationality). */
+  nationalityCountryIds: number[]
+  /** User-facing "EU-eligible only" — keeps members with >=1 EU nationality
+   * (derived, dual-aware, keep-unknown via isEuEligible). OR-combines with the
+   * scope-driven EU hard-filter; works with or without an active recruiter scope. */
+  euOnly: boolean
   availability: AvailabilityFilter
   brandCategory: string | null
 }
@@ -33,9 +53,13 @@ export interface CommunityFilters {
 export const defaultFilters = (role: RoleFilter = 'all'): CommunityFilters => ({
   role,
   position: [],
-  category: 'all',
+  coachSpecializations: [],
+  categories: [],
+  officiatingSpecializations: [],
   location: '',
-  nationality: '',
+  locationCountryIds: [],
+  nationalityCountryIds: [],
+  euOnly: false,
   availability: 'all',
   brandCategory: null,
 })
@@ -97,7 +121,9 @@ export function useCommunityFiltersState(
       const next = { ...prev, [key]: value }
       if (key === 'role') {
         next.position = []
-        next.category = 'all'
+        next.coachSpecializations = []
+        next.categories = []
+        next.officiatingSpecializations = []
         if (value !== 'brand') next.brandCategory = null
       }
       return next
@@ -124,9 +150,13 @@ export function useCommunityFiltersState(
       filters.role !== expectedRole ||
       filters.brandCategory !== null ||
       filters.position.length > 0 ||
-      filters.category !== 'all' ||
+      filters.coachSpecializations.length > 0 ||
+      filters.categories.length > 0 ||
+      filters.officiatingSpecializations.length > 0 ||
       filters.location.trim() !== '' ||
-      filters.nationality.trim() !== '' ||
+      filters.locationCountryIds.length > 0 ||
+      filters.nationalityCountryIds.length > 0 ||
+      filters.euOnly ||
       filters.availability !== 'all'
     )
   }, [filters, roleFilter])
