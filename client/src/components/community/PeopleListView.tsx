@@ -33,6 +33,7 @@ import {
 } from '@/hooks/useRecruitingContext'
 import { useCountries, isEuCountryCode } from '@/hooks/useCountries'
 import { isEuEligible } from '@/lib/euEligibility'
+import { expandCountryEquivalents } from '@/lib/countryEquivalents'
 import { categoryToBandTarget } from '@/hooks/useInterest'
 import { requestCache } from '@/lib/requestCache'
 import { monitor } from '@/lib/monitor'
@@ -371,7 +372,8 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
                   m.brand_category = brand?.category || null
                   // Brands store location on brands.country_id, not profiles.base_country_id.
                   // Map it across so the Location (country) filter works for brands too.
-                  if (typeof brand?.country_id === 'number') m.base_country_id = brand.country_id
+                  // Mirror the RPC's COALESCE(profile, brand) — profile location wins.
+                  if (m.base_country_id == null && typeof brand?.country_id === 'number') m.base_country_id = brand.country_id
                   m.brand_bio = brand?.bio || null
                   m.brand_website_url = brand?.website_url || null
                   m.brand_instagram_url = brand?.instagram_url || null
@@ -626,7 +628,11 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
       // appearing in the free-text base_location — so legacy members whose
       // base_country_id was never set still surface when their location text
       // names the country (e.g. "Sydney, Australia").
-      const idSet = new Set(filters.locationCountryIds)
+      // Expand GB <-> England the same way the server RPC does
+      // (expand_country_equivalents), so this defensive re-filter never drops
+      // England-coded members when "United Kingdom" is selected (or vice versa).
+      const locIds = expandCountryEquivalents(filters.locationCountryIds, countries)
+      const idSet = new Set(locIds)
       // Use the stable `countries` list (not getCountryById, which is recreated
       // each render and would force this memo to recompute every render).
       const names = countries
@@ -645,9 +651,11 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     if (filters.nationalityCountryIds.length > 0) {
       // Dual-aware: match EITHER primary or secondary nationality FK. The old
       // freetext demonym match was primary-only and missed every dual national.
+      // Expand GB <-> England to match the server RPC (expand_country_equivalents).
+      const natIds = expandCountryEquivalents(filters.nationalityCountryIds, countries)
       result = result.filter(m =>
-        (typeof m.nationality_country_id === 'number' && filters.nationalityCountryIds.includes(m.nationality_country_id)) ||
-        (typeof m.nationality2_country_id === 'number' && filters.nationalityCountryIds.includes(m.nationality2_country_id))
+        (typeof m.nationality_country_id === 'number' && natIds.includes(m.nationality_country_id)) ||
+        (typeof m.nationality2_country_id === 'number' && natIds.includes(m.nationality2_country_id))
       )
     }
     if (filters.availability === 'open') {
