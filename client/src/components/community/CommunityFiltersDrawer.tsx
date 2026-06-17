@@ -1,4 +1,6 @@
 import { CATEGORY_LABELS, PLAYING_CATEGORIES } from '@/lib/hockeyCategories'
+import { COACH_SPECIALIZATIONS } from '@/lib/coachSpecializations'
+import CountryMultiSelect from '@/components/CountryMultiSelect'
 import type { CommunityFiltersState } from './communityFilters'
 
 /**
@@ -15,7 +17,6 @@ import type { CommunityFiltersState } from './communityFilters'
  */
 
 const PLAYER_POSITIONS = ['goalkeeper', 'defender', 'midfielder', 'forward']
-const COACH_POSITIONS = ['head coach', 'assistant coach', 'youth coach']
 
 const BRAND_CATEGORIES: { value: string; label: string }[] = [
   { value: 'equipment', label: 'Equipment' },
@@ -92,14 +93,37 @@ export function CommunityFiltersDrawer({ state }: CommunityFiltersDrawerProps) {
         </div>
       )}
 
-      {/* Position / coaching role — hidden for club, brand, umpire */}
-      {filters.role !== 'club' && filters.role !== 'brand' && filters.role !== 'umpire' && (
+      {/* Coaching role (coach only) — matches coach_specialization, not position */}
+      {filters.role === 'coach' && (
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            {filters.role === 'coach' ? 'Coaching Role' : 'Position'}
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Coaching Role</label>
           <div className="grid grid-cols-2 gap-2">
-            {(filters.role === 'coach' ? COACH_POSITIONS : PLAYER_POSITIONS).map((position) => (
+            {COACH_SPECIALIZATIONS.map((spec) => (
+              <label key={spec.value} className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={filters.coachSpecializations.includes(spec.value)}
+                  onChange={() => updateFilter(
+                    'coachSpecializations',
+                    filters.coachSpecializations.includes(spec.value)
+                      ? filters.coachSpecializations.filter((s) => s !== spec.value)
+                      : [...filters.coachSpecializations, spec.value],
+                  )}
+                  className="w-4 h-4 text-purple-600 rounded"
+                />
+                <span className="text-sm text-gray-700">{spec.label}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Position (player / all tab) */}
+      {filters.role !== 'coach' && filters.role !== 'club' && filters.role !== 'brand' && filters.role !== 'umpire' && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Position</label>
+          <div className="grid grid-cols-2 gap-2">
+            {PLAYER_POSITIONS.map((position) => (
               <label key={position} className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
@@ -143,27 +167,30 @@ export function CommunityFiltersDrawer({ state }: CommunityFiltersDrawerProps) {
         </div>
       )}
 
-      {/* Location */}
+      {/* Location — country (structured, base_country_id) + a free-text city narrower */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
+        <CountryMultiSelect
+          value={filters.locationCountryIds}
+          onChange={(ids) => updateFilter('locationCountryIds', ids)}
+          placeholder="Add countries"
+        />
         <input
           type="text"
           value={filters.location}
           onChange={(e) => updateFilter('location', e.target.value)}
-          placeholder="City or country"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+          placeholder="City or region (optional)"
+          className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
         />
       </div>
 
-      {/* Nationality */}
+      {/* Nationality — dual-aware (matches either primary or secondary nationality) */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">Nationality</label>
-        <input
-          type="text"
-          value={filters.nationality}
-          onChange={(e) => updateFilter('nationality', e.target.value)}
-          placeholder="e.g. Dutch, Australian"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+        <CountryMultiSelect
+          value={filters.nationalityCountryIds}
+          onChange={(ids) => updateFilter('nationalityCountryIds', ids)}
+          placeholder="Add nationalities"
         />
       </div>
 

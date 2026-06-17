@@ -20,12 +20,23 @@ export type SortOption = 'newest' | 'completeness'
 export interface CommunityFilters {
   role: RoleFilter
   position: string[]
+  /** Coach specialization filter (coach role only) — matches coach_specialization.
+   * Distinct from `position`: the old drawer matched coaching role against the
+   * player `position` column, which a coach never has → it filtered everyone out. */
+  coachSpecializations: string[]
   /** Phase 3 hockey category filter. Replaces the old Men/Women gender radio.
    * Routed to playing_category for player rows, and array-overlap (or 'any'
    * sentinel) for coach + umpire rows. Skipped entirely for club + brand. */
   category: 'all' | PlayingCategory
+  /** Free-text city/region match on base_location (kept as a secondary narrower). */
   location: string
-  nationality: string
+  /** Structured location match on base_country_id (the "country" half of the
+   * old "City or country" placeholder, which the freetext never honoured). */
+  locationCountryIds: number[]
+  /** Dual-aware nationality match on nationality_country_id OR
+   * nationality2_country_id. Replaces the old freetext demonym substring, which
+   * was primary-only and FK-blind (missed every secondary nationality). */
+  nationalityCountryIds: number[]
   availability: AvailabilityFilter
   brandCategory: string | null
 }
@@ -33,9 +44,11 @@ export interface CommunityFilters {
 export const defaultFilters = (role: RoleFilter = 'all'): CommunityFilters => ({
   role,
   position: [],
+  coachSpecializations: [],
   category: 'all',
   location: '',
-  nationality: '',
+  locationCountryIds: [],
+  nationalityCountryIds: [],
   availability: 'all',
   brandCategory: null,
 })
@@ -97,6 +110,7 @@ export function useCommunityFiltersState(
       const next = { ...prev, [key]: value }
       if (key === 'role') {
         next.position = []
+        next.coachSpecializations = []
         next.category = 'all'
         if (value !== 'brand') next.brandCategory = null
       }
@@ -124,9 +138,11 @@ export function useCommunityFiltersState(
       filters.role !== expectedRole ||
       filters.brandCategory !== null ||
       filters.position.length > 0 ||
+      filters.coachSpecializations.length > 0 ||
       filters.category !== 'all' ||
       filters.location.trim() !== '' ||
-      filters.nationality.trim() !== '' ||
+      filters.locationCountryIds.length > 0 ||
+      filters.nationalityCountryIds.length > 0 ||
       filters.availability !== 'all'
     )
   }, [filters, roleFilter])

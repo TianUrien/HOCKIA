@@ -32,6 +32,7 @@ import {
   useActiveRecruitingMustHaves,
 } from '@/hooks/useRecruitingContext'
 import { useCountries, isEuCountryCode } from '@/hooks/useCountries'
+import { isEuEligible } from '@/lib/euEligibility'
 import { categoryToBandTarget } from '@/hooks/useInterest'
 import { requestCache } from '@/lib/requestCache'
 import { monitor } from '@/lib/monitor'
@@ -581,6 +582,15 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
         (m.secondary_position && filters.position.includes(m.secondary_position.toLowerCase()))
       )
     }
+    if (filters.coachSpecializations.length > 0) {
+      // Coach-role filter matches coach_specialization (NOT position — a coach
+      // has no `position`, so the old position-based coaching filter dropped
+      // every coach).
+      result = result.filter(m =>
+        m.role === 'coach' && !!m.coach_specialization &&
+        filters.coachSpecializations.includes(m.coach_specialization)
+      )
+    }
     if (filters.category !== 'all') {
       const target = filters.category
       result = result.filter((m) => {
@@ -597,13 +607,22 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
         return false
       })
     }
+    if (filters.locationCountryIds.length > 0) {
+      result = result.filter(m =>
+        typeof m.base_country_id === 'number' && filters.locationCountryIds.includes(m.base_country_id)
+      )
+    }
     if (filters.location.trim()) {
       const loc = filters.location.toLowerCase()
       result = result.filter(m => m.base_location?.toLowerCase().includes(loc))
     }
-    if (filters.nationality.trim()) {
-      const nat = filters.nationality.toLowerCase()
-      result = result.filter(m => m.nationality?.toLowerCase().includes(nat))
+    if (filters.nationalityCountryIds.length > 0) {
+      // Dual-aware: match EITHER primary or secondary nationality FK. The old
+      // freetext demonym match was primary-only and missed every dual national.
+      result = result.filter(m =>
+        (typeof m.nationality_country_id === 'number' && filters.nationalityCountryIds.includes(m.nationality_country_id)) ||
+        (typeof m.nationality2_country_id === 'number' && filters.nationalityCountryIds.includes(m.nationality2_country_id))
+      )
     }
     if (filters.availability === 'open') {
       // Role-complete "open" filter — players (open_to_play), coaches
@@ -620,12 +639,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     // a reason to hide someone — mirrors opportunityEligibility.ts). Gated
     // on euFilterActive so it only bites in the focused scoped view.
     if (euFilterActive) {
-      result = result.filter((m) => {
-        const ids = [m.nationality_country_id, m.nationality2_country_id]
-          .filter((id): id is number => typeof id === 'number')
-        if (ids.length === 0) return true // unknown nationality → keep
-        return ids.some((id) => euCountryIds.has(id))
-      })
+      result = result.filter((m) => isEuEligible(m.nationality_country_id, m.nationality2_country_id, euCountryIds))
     }
 
     // Sort. 'newest' is the natural fetch order (created_at DESC); no
@@ -937,8 +951,8 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
           role: filters.role !== 'all' ? filters.role : null,
           position: filters.position.length > 0 ? filters.position : null,
           gender: filters.category !== 'all' ? filters.category : null,
-          location: filters.location.trim() || null,
-          nationality: filters.nationality.trim() || null,
+          location: filters.location.trim() || (filters.locationCountryIds.length > 0 ? filters.locationCountryIds.join(',') : null),
+          nationality: filters.nationalityCountryIds.length > 0 ? filters.nationalityCountryIds.join(',') : null,
           availability: filters.availability !== 'all' ? filters.availability : null,
         },
       })
