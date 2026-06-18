@@ -16,7 +16,7 @@ import { invalidateProfile } from '@/lib/profile'
 import { deleteStorageObject } from '@/lib/storage'
 import { isNativePlatform, pickImageNative } from '@/lib/nativeImagePicker'
 import { toSentryError } from '@/lib/sentryHelpers'
-import { trackOnboardingComplete } from '@/lib/analytics'
+import { trackOnboardingComplete, trackOnboardingStart, trackRoleSelected } from '@/lib/analytics'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import { COACH_SPECIALIZATIONS, type CoachSpecialization } from '@/lib/coachSpecializations'
 import { validateOnboardingStep, type WizardStep } from '@/lib/onboardingValidation'
@@ -165,6 +165,15 @@ export default function CompleteProfile() {
   const userRole = (profile?.role as UserRole | null) ?? fallbackRole ?? (user?.user_metadata?.role as UserRole | undefined) ?? null
   const contactEmailFallback = profile?.contact_email ?? profile?.email ?? user?.email ?? fallbackEmail ?? ''
 
+  // Fire onboarding_start once, when the role is known (the wizard begins) —
+  // pairs with onboarding_complete to measure the onboarding funnel drop-off.
+  const onboardingStartFiredRef = useRef(false)
+  useEffect(() => {
+    if (onboardingStartFiredRef.current || !userRole) return
+    onboardingStartFiredRef.current = true
+    trackOnboardingStart(userRole)
+  }, [userRole])
+
   // Wizard-draft localStorage key. Scoped by user id AND role so a tester
   // switching between accounts on the same browser doesn't see another
   // user's draft, and a user who switches role mid-flow doesn't see a
@@ -243,6 +252,7 @@ export default function CompleteProfile() {
 
     // Acquire mutex BEFORE any async operation
     profileCreationMutexRef.current = true
+    trackRoleSelected(selectedRole)
     setCreatingProfile(true)
     setError('')
 

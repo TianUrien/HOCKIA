@@ -31,6 +31,13 @@ export function enableGA4() {
   // Never load GA4 on native iOS/Android (Apple Guideline 5.1.2)
   if (Capacitor.isNativePlatform()) return
 
+  // Don't load GA for automated browsers — Playwright/Selenium e2e set
+  // navigator.webdriver=true. The e2e suite runs against production and was
+  // firing thousands of GA hits (test routes like /clubs/e2e-test-fc), drowning
+  // real users in bot noise — the single biggest distortion in the GA data.
+  // Gating the script load here stops every automated hit at the source.
+  if (typeof navigator !== 'undefined' && navigator.webdriver) return
+
   const GA_ID = import.meta.env.VITE_GA_MEASUREMENT_ID ?? 'G-NE620GQKTX'
 
   // Don't load twice
@@ -54,6 +61,12 @@ export function enableGA4() {
   // App.tsx's route useEffect, including the first render after
   // consent is granted.
   gtag('config', GA_ID, { send_page_view: false })
+
+  // Default everyone to logged-out so EVERY event before login carries the
+  // logged_in property — the single most useful dimension for "why don't
+  // logged-out visitors convert". setUserProperties flips it to 'true' on
+  // login; clearUserProperties resets it to 'false' on logout.
+  gtag('set', 'user_properties', { logged_in: 'false' })
 
   // Expose gtag globally for analytics.ts
   ;(window as unknown as Record<string, unknown>).gtag = gtag

@@ -6,6 +6,7 @@ import { ConditionalAvailabilityPill } from '@/components/AvailabilityPill'
 import type { ProfileTier } from '@/lib/profileTier'
 import SignInPromptModal from '@/components/SignInPromptModal'
 import { useAuthStore } from '@/lib/auth'
+import { trackProtectedActionBlocked } from '@/lib/analytics'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { useToastStore } from '@/lib/toast'
@@ -109,6 +110,7 @@ export default function MemberCard({
     if (!user) {
       setSignInAction('message')
       setShowSignInPrompt(true)
+      trackProtectedActionBlocked('message')
       return
     }
 
@@ -151,6 +153,7 @@ export default function MemberCard({
     if (!user) {
       setSignInAction('view')
       setShowSignInPrompt(true)
+      trackProtectedActionBlocked('view_profile')
       return
     }
     // Navigate to correct public profile based on role

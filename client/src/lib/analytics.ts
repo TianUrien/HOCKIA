@@ -117,6 +117,7 @@ export async function setUserProperties(userId: string, role: string): Promise<v
   window.gtag?.('set', 'user_properties', {
     user_id: hashedId,
     user_role: role, // 'player', 'coach', 'club'
+    logged_in: 'true',
   })
 
   window.gtag?.('config', GA_MEASUREMENT_ID, {
@@ -133,6 +134,7 @@ export function clearUserProperties(): void {
   window.gtag?.('set', 'user_properties', {
     user_id: null,
     user_role: null,
+    logged_in: 'false',
   })
 }
 
@@ -158,12 +160,43 @@ export function trackSignUp(role: string): void {
   })
 }
 
+/** Track the moment a user picks their role (onboarding role picker) — the step
+ *  before the wizard. Pairs with onboarding_start/complete to see role drop-off. */
+export function trackRoleSelected(role: string): void {
+  trackEvent({
+    action: 'role_selected',
+    category: 'onboarding',
+    label: role,
+  })
+}
+
 /** Track login */
 export function trackLogin(method: string): void {
   trackEvent({
     action: 'login',
     category: 'authentication',
     label: method,
+  })
+}
+
+/** Track a FAILED login attempt — the half the funnel was missing. `reason` is a
+ *  coarse, non-PII bucket (bad_credentials / unverified / no_user / exception). */
+export function trackLoginFailed(method: string, reason: string): void {
+  trackEvent({
+    action: 'login_failed',
+    category: 'authentication',
+    label: method,
+    reason,
+  })
+}
+
+/** Track onboarding flow start (the profile wizard opens). Pairs with
+ *  onboarding_complete to measure the onboarding funnel's drop-off. */
+export function trackOnboardingStart(role: string): void {
+  trackEvent({
+    action: 'onboarding_start',
+    category: 'onboarding',
+    label: role,
   })
 }
 
@@ -289,6 +322,23 @@ export function trackCtaClick(buttonName: string, page: string): void {
     category: 'engagement',
     label: buttonName,
     page,
+  })
+}
+
+/**
+ * Track a logged-out user hitting a gated action — the high-intent moment the
+ * sign-in prompt appears (View Profile, Message, Apply, Ask a question). This is
+ * the funnel signal the GA audit flagged as missing: it reveals where logged-out
+ * interest peaks and where the sign-up conversion opportunity actually is.
+ * `from_page` is the SANITIZED current path (no UUIDs leak to GA).
+ */
+export function trackProtectedActionBlocked(action: string): void {
+  if (typeof window === 'undefined' || isNative) return
+  trackEvent({
+    action: 'protected_action_blocked',
+    category: 'conversion',
+    label: action,
+    from_page: sanitizePath(window.location.pathname),
   })
 }
 

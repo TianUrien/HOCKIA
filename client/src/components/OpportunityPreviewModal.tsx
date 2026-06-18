@@ -24,6 +24,7 @@ import SignInPromptModal from './SignInPromptModal'
 import type { Vacancy } from '../lib/supabase'
 import type { WorldClubInfo } from './OpportunityCard'
 import { useAuthStore } from '@/lib/auth'
+import { trackProtectedActionBlocked } from '@/lib/analytics'
 
 export interface OpportunityPreviewClubInfo {
   id: string
@@ -67,6 +68,7 @@ export default function OpportunityPreviewModal({
   const handleApplyClick = () => {
     if (!user) {
       setShowSignInPrompt(true)
+      trackProtectedActionBlocked('apply_opportunity')
     } else if (canShowApplyButton) {
       setShowApplyModal(true)
     }

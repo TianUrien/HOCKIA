@@ -12,6 +12,7 @@ import { AskQuestionModal } from './AskQuestionModal'
 import SignInPromptModal from '@/components/SignInPromptModal'
 import { useQuestions } from '@/hooks/useQuestions'
 import { useAuthStore } from '@/lib/auth'
+import { trackProtectedActionBlocked } from '@/lib/analytics'
 import {
   QUESTION_CATEGORIES,
   CATEGORY_LABELS,
@@ -84,6 +85,7 @@ export function QuestionsListView() {
   const handleAskQuestionClick = () => {
     if (!user) {
       setShowSignInPrompt(true)
+      trackProtectedActionBlocked('ask_question')
     } else {
       setIsModalOpen(true)
     }
