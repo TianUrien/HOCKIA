@@ -295,6 +295,23 @@ export function trackCtaClick(buttonName: string, page: string): void {
 }
 
 /**
+ * Track a logged-out user hitting a gated action — the high-intent moment the
+ * sign-in prompt appears (View Profile, Message, Apply, Ask a question). This is
+ * the funnel signal the GA audit flagged as missing: it reveals where logged-out
+ * interest peaks and where the sign-up conversion opportunity actually is.
+ * `from_page` is the SANITIZED current path (no UUIDs leak to GA).
+ */
+export function trackProtectedActionBlocked(action: string): void {
+  if (typeof window === 'undefined' || isNative) return
+  trackEvent({
+    action: 'protected_action_blocked',
+    category: 'conversion',
+    label: action,
+    from_page: sanitizePath(window.location.pathname),
+  })
+}
+
+/**
  * Track external profile-share intent (user opened the share modal).
  * Role only — no profile_id / username / email goes to GA.
  */

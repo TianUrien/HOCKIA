@@ -6,6 +6,7 @@ import type { ProfileTier } from '@/lib/profileTier'
 import { availabilityDescriptor } from '@/lib/availabilityLabel'
 import SignInPromptModal from '@/components/SignInPromptModal'
 import { useAuthStore } from '@/lib/auth'
+import { trackProtectedActionBlocked } from '@/lib/analytics'
 import { useWorldClubLogo, getPlayerLeagueName, getClubLevelBand } from '@/hooks/useWorldClubLogo'
 import HockeyContextLine from '@/components/recruiting/HockeyContextLine'
 import QuickActionsRow from '@/components/recruiting/QuickActionsRow'
@@ -228,6 +229,7 @@ export default function MemberTile(props: MemberTileProps) {
     }
     if (!user) {
       setShowSignInPrompt(true)
+      trackProtectedActionBlocked('view_member')
       return
     }
     if (props.role === 'brand') {

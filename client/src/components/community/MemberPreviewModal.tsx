@@ -50,7 +50,7 @@ import { computeEvidence, evidenceLevelLabel, evidenceChecklist } from '@/lib/ev
 import { getImageUrl } from '@/lib/imageUrl'
 import { logger } from '@/lib/logger'
 import { trackDbEvent } from '@/lib/trackDbEvent'
-import { trackEvent } from '@/lib/analytics'
+import { trackEvent, trackProtectedActionBlocked } from '@/lib/analytics'
 import { getMemberTier, calculateTier } from '@/lib/profileTier'
 import { getSpecializationLabel } from '@/lib/coachSpecializations'
 import { getUmpireActivity } from '@/lib/umpireActivity'
@@ -230,6 +230,7 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
     if (!user) {
       setSignInAction('view')
       setShowSignInPrompt(true)
+      trackProtectedActionBlocked('view_profile')
       return
     }
     trackEvent({
@@ -245,6 +246,7 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
     if (!user) {
       setSignInAction('message')
       setShowSignInPrompt(true)
+      trackProtectedActionBlocked('message')
       return
     }
     if (user.id === member.id) {
