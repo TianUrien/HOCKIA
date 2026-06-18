@@ -34,7 +34,7 @@ const BRAND_CATEGORIES: { value: string; label: string }[] = [
 
 type FilterField =
   | 'brandCategory' | 'coachRole' | 'position' | 'category'
-  | 'officiating' | 'location' | 'nationality' | 'eu' | 'hasVideo' | 'evidence'
+  | 'officiating' | 'location' | 'nationality' | 'eu' | 'hasVideo' | 'evidence' | 'openOpportunities'
 
 /** Single source of role-awareness: which filter fields show per role tab.
  *  Grounded in real data — clubs/brands have no nationality/EU; only players/all
@@ -44,7 +44,7 @@ const COMMUNITY_FILTER_CONFIG: Record<RoleFilter, FilterField[]> = {
   player: ['position', 'category', 'location', 'nationality', 'eu', 'hasVideo', 'evidence'],
   coach:  ['coachRole', 'category', 'location', 'nationality', 'eu', 'evidence'],
   umpire: ['officiating', 'category', 'location', 'nationality', 'eu'],
-  club:   ['location'],
+  club:   ['location', 'openOpportunities'],
   brand:  ['brandCategory', 'location'],
 }
 
@@ -309,6 +309,36 @@ export function CommunityFiltersDrawer({ state, resultCount, videoCount, onSelec
                   placeholder="City or region (optional)"
                   className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 />
+              </div>
+            )}
+
+            {/* Open opportunities — club only. Segmented Any / For players / For
+                coaches (folds the separate recruiting-players/coaches asks into
+                one control); server-side via p_open_opportunity_type. */}
+            {fields.includes('openOpportunities') && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Open opportunities</label>
+                <div className="flex flex-wrap gap-2">
+                  {([['any', 'Any'], ['player', 'For players'], ['coach', 'For coaches']] as const).map(([val, label]) => {
+                    const active = filters.clubOpportunityType === val
+                    return (
+                      <button
+                        key={val}
+                        type="button"
+                        onClick={() => updateFilter('clubOpportunityType', active ? null : val)}
+                        aria-pressed={active ? 'true' : 'false'}
+                        className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                          active
+                            ? 'bg-purple-600 text-white border-purple-600'
+                            : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    )
+                  })}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Clubs with an open opportunity right now.</p>
               </div>
             )}
 

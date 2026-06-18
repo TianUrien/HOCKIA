@@ -240,3 +240,15 @@ export function evidenceLevelLabel(level: EvidenceLevel): string {
       return 'Limited evidence'
   }
 }
+
+/** 4-bucket DISPLAY label for the card pill — adds the gentle "Minimal evidence"
+ *  for a player/coach with no signals yet (isApplicable=false). Never hidden:
+ *  measures how much there is to review, NOT skill. */
+export function evidenceDisplayLabel(result: EvidenceResult): string {
+  return result.isApplicable ? evidenceLevelLabel(result.level) : 'Minimal evidence'
+}
+
+/** Non-rating tooltip copy — the guardrail that keeps the pill read as
+ *  information-completeness, not a public quality score. */
+export const EVIDENCE_TOOLTIP =
+  'Evidence Level reflects how much verifiable information this profile provides for evaluation — video, references, a provable level. It does not rate skill or talent.'

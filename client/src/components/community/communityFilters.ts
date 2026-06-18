@@ -74,6 +74,10 @@ export interface CommunityFilters {
   evidenceEnoughOnly: boolean
   availability: AvailabilityFilter
   brandCategory: string | null
+  /** Club "Open opportunities" — null = off; 'any' = has any open opportunity;
+   * 'player'/'coach' = split by opportunity_type. Server-side via the RPC
+   * (p_open_opportunity_type). Club tab only. */
+  clubOpportunityType: 'any' | 'player' | 'coach' | null
 }
 
 export const defaultFilters = (role: RoleFilter = 'all'): CommunityFilters => ({
@@ -90,6 +94,7 @@ export const defaultFilters = (role: RoleFilter = 'all'): CommunityFilters => ({
   evidenceEnoughOnly: false,
   availability: 'all',
   brandCategory: null,
+  clubOpportunityType: null,
 })
 
 export interface CommunityFiltersState {
@@ -154,6 +159,7 @@ export function useCommunityFiltersState(
         next.officiatingSpecializations = []
         next.hasVideo = false
         next.evidenceEnoughOnly = false
+        next.clubOpportunityType = null
         if (value !== 'brand') next.brandCategory = null
       }
       return next
@@ -179,6 +185,7 @@ export function useCommunityFiltersState(
     return (
       filters.role !== expectedRole ||
       filters.brandCategory !== null ||
+      filters.clubOpportunityType !== null ||
       filters.position.length > 0 ||
       filters.coachSpecializations.length > 0 ||
       filters.categories.length > 0 ||
