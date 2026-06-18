@@ -34,7 +34,7 @@ export function roleToPath(role: RoleFilter): string {
 
 export type AvailabilityFilter = 'all' | 'open'
 
-export type SortOption = 'newest' | 'completeness'
+export type SortOption = 'newest' | 'completeness' | 'evidence'
 
 export interface CommunityFilters {
   role: RoleFilter
@@ -65,6 +65,13 @@ export interface CommunityFilters {
    * (derived, dual-aware, keep-unknown via isEuEligible). OR-combines with the
    * scope-driven EU hard-filter; works with or without an active recruiter scope. */
   euOnly: boolean
+  /** Player-only "Has video" narrow — highlight_video_url OR full_game_video_count>0.
+   * Coverage is thin, so the drawer ships it default-off + count-labelled. */
+  hasVideo: boolean
+  /** Player/coach "Enough evidence or more" — opt-in narrow to candidates whose
+   * weighted evidence (lib/evidence.ts computeEvidence) is Strong or Enough.
+   * Reuses the existing Proven-lens model; never the default (keep-unknown). */
+  evidenceEnoughOnly: boolean
   availability: AvailabilityFilter
   brandCategory: string | null
 }
@@ -79,6 +86,8 @@ export const defaultFilters = (role: RoleFilter = 'all'): CommunityFilters => ({
   locationCountryIds: [],
   nationalityCountryIds: [],
   euOnly: false,
+  hasVideo: false,
+  evidenceEnoughOnly: false,
   availability: 'all',
   brandCategory: null,
 })
@@ -143,6 +152,8 @@ export function useCommunityFiltersState(
         next.coachSpecializations = []
         next.categories = []
         next.officiatingSpecializations = []
+        next.hasVideo = false
+        next.evidenceEnoughOnly = false
         if (value !== 'brand') next.brandCategory = null
       }
       return next
@@ -176,6 +187,8 @@ export function useCommunityFiltersState(
       filters.locationCountryIds.length > 0 ||
       filters.nationalityCountryIds.length > 0 ||
       filters.euOnly ||
+      filters.hasVideo ||
+      filters.evidenceEnoughOnly ||
       filters.availability !== 'all'
     )
   }, [filters, roleFilter])

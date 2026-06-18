@@ -139,6 +139,7 @@ export default function CommunityPage() {
   }, [location.pathname])
   const [totalCount, setTotalCount] = useState<number | null>(null)
   const [filteredCount, setFilteredCount] = useState<number | null>(null)
+  const [videoCount, setVideoCount] = useState<number | null>(null)
   const [searchLoading] = useState(false)
 
   // Determine active tab from URL param — default to 'all' (open ecosystem view)
@@ -323,6 +324,15 @@ export default function CommunityPage() {
     updateFilter('role', memberRoleFilter ?? 'all')
   }, [memberRoleFilter, updateFilter])
 
+  // Evidence sort only applies to player/coach (orgs have no evidence model).
+  // Snap back to "newest" when the role changes to one that can't support it,
+  // so the sort <select> value always matches a rendered option.
+  useEffect(() => {
+    if (sort === 'evidence' && filters.role !== 'player' && filters.role !== 'coach') {
+      setSort('newest')
+    }
+  }, [sort, filters.role, setSort])
+
   // Escape the scope's hard role filter when the user explicitly taps a role
   // tab that differs from the sought role — and RE-focus when they tap back to
   // it. This MUST be its own effect, NOT folded into the role-sync effect
@@ -459,6 +469,7 @@ export default function CommunityPage() {
               <CommunityFiltersDrawer
                 state={filtersState}
                 resultCount={isNarrowed ? filteredCount : totalCount}
+                videoCount={videoCount}
                 onSelectRole={(role) => navigate(roleToPath(role))}
               />
 
@@ -598,11 +609,14 @@ export default function CommunityPage() {
                   <select
                     value={sort}
                     onChange={(e) => setSort(e.target.value as SortOption)}
-                    title={sort === 'newest' ? 'Sorted by most-recent join date' : 'Sorted by profile completeness, highest first'}
+                    title={sort === 'newest' ? 'Sorted by most-recent join date' : sort === 'evidence' ? 'Sorted by strongest verifiable evidence first' : 'Sorted by profile completeness, highest first'}
                     className="text-xs font-semibold text-[#8026FA] bg-transparent border-0 focus:outline-none focus:ring-0 pr-1 cursor-pointer"
                   >
                     <option value="newest">Newest members</option>
                     <option value="completeness">Profile completeness</option>
+                    {(filters.role === 'player' || filters.role === 'coach') && (
+                      <option value="evidence">Evidence (strongest first)</option>
+                    )}
                   </select>
                 </label>
               </section>
@@ -643,6 +657,7 @@ export default function CommunityPage() {
                   state={filtersState}
                   onTotalCountChange={setTotalCount}
                   onFilteredCountChange={setFilteredCount}
+                  onVideoCountChange={setVideoCount}
                   scopeReshaping={scopeReshaping}
                 />
               </div>

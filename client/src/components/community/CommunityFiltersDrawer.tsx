@@ -34,15 +34,15 @@ const BRAND_CATEGORIES: { value: string; label: string }[] = [
 
 type FilterField =
   | 'brandCategory' | 'coachRole' | 'position' | 'category'
-  | 'officiating' | 'location' | 'nationality' | 'eu'
+  | 'officiating' | 'location' | 'nationality' | 'eu' | 'hasVideo' | 'evidence'
 
 /** Single source of role-awareness: which filter fields show per role tab.
  *  Grounded in real data — clubs/brands have no nationality/EU; only players/all
  *  have position; coaches get coach role; umpires get officiating type. */
 const COMMUNITY_FILTER_CONFIG: Record<RoleFilter, FilterField[]> = {
   all:    ['position', 'category', 'location', 'nationality', 'eu'],
-  player: ['position', 'category', 'location', 'nationality', 'eu'],
-  coach:  ['coachRole', 'category', 'location', 'nationality', 'eu'],
+  player: ['position', 'category', 'location', 'nationality', 'eu', 'hasVideo', 'evidence'],
+  coach:  ['coachRole', 'category', 'location', 'nationality', 'eu', 'evidence'],
   umpire: ['officiating', 'category', 'location', 'nationality', 'eu'],
   club:   ['location'],
   brand:  ['brandCategory', 'location'],
@@ -52,12 +52,14 @@ interface CommunityFiltersDrawerProps {
   state: CommunityFiltersState
   /** Live count of members matching the current filters — shown in the footer CTA. */
   resultCount?: number | null
+  /** Players-with-video count for the count-labelled "Has video (N)" toggle. */
+  videoCount?: number | null
   /** Set the member type (role). Navigates the same /community/<role> URL the
    *  external role chips use, so both affordances write the one source of truth. */
   onSelectRole: (role: RoleFilter) => void
 }
 
-export function CommunityFiltersDrawer({ state, resultCount, onSelectRole }: CommunityFiltersDrawerProps) {
+export function CommunityFiltersDrawer({ state, resultCount, videoCount, onSelectRole }: CommunityFiltersDrawerProps) {
   const {
     filters,
     updateFilter,
@@ -335,6 +337,43 @@ export function CommunityFiltersDrawer({ state, resultCount, onSelectRole }: Com
                   <span className="text-sm font-medium text-gray-700">EU-eligible only</span>
                 </label>
                 <p className="text-xs text-gray-500 mt-1 ml-6">Has at least one EU nationality.</p>
+              </div>
+            )}
+
+            {/* Has video — player-only, count-labelled (coverage is thin, so a
+                bare toggle could read as a broken grid; the count makes it a
+                deliberate narrow). Default off. */}
+            {fields.includes('hasVideo') && (
+              <div>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={filters.hasVideo}
+                    onChange={() => updateFilter('hasVideo', !filters.hasVideo)}
+                    className="w-4 h-4 text-purple-600 rounded"
+                  />
+                  <span className="text-sm font-medium text-gray-700">
+                    Has video{typeof videoCount === 'number' ? ` (${videoCount})` : ''}
+                  </span>
+                </label>
+                <p className="text-xs text-gray-500 mt-1 ml-6">Players with a highlight or full-game video.</p>
+              </div>
+            )}
+
+            {/* Enough evidence or more — player/coach opt-in narrow over the
+                weighted Proven-lens evidence model. Never the default view. */}
+            {fields.includes('evidence') && (
+              <div>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={filters.evidenceEnoughOnly}
+                    onChange={() => updateFilter('evidenceEnoughOnly', !filters.evidenceEnoughOnly)}
+                    className="w-4 h-4 text-purple-600 rounded"
+                  />
+                  <span className="text-sm font-medium text-gray-700">Enough evidence or more</span>
+                </label>
+                <p className="text-xs text-gray-500 mt-1 ml-6">Strong or Enough verifiable evidence (video, references, level).</p>
               </div>
             )}
           </div>
