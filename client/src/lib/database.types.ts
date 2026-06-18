@@ -6269,6 +6269,7 @@ export type Database = {
           p_search_text?: string | null
           p_limit?: number
           p_offset?: number
+          p_open_opportunity_type?: string | null
         }
         Returns: Json
       }

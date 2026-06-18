@@ -347,6 +347,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
       p_location_country_ids: filters.locationCountryIds.length ? filters.locationCountryIds : null,
       p_availability_open: filters.availability === 'open' ? true : null,
       p_brand_category: filters.brandCategory || null,
+      p_open_opportunity_type: filters.clubOpportunityType,
       p_limit: 500,
     }
     const cacheKey = `community-members-${viewerScope}-${JSON.stringify(rpcParams)}`
@@ -442,7 +443,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     }
   }, [viewerScope, filters.role, filters.position, filters.coachSpecializations, filters.categories,
       filters.officiatingSpecializations, filters.nationalityCountryIds, filters.euOnly,
-      filters.locationCountryIds, filters.availability, filters.brandCategory, euFilterActive])
+      filters.locationCountryIds, filters.availability, filters.brandCategory, filters.clubOpportunityType, euFilterActive])
 
   // Role sync moved to CommunityPage (it owns the filter state now).
 

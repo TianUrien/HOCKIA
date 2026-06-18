@@ -67,6 +67,12 @@ export function getActiveFilterChips(
   if (filters.brandCategory) {
     chips.push({ id: 'brandCategory', label: titleCase(filters.brandCategory), onRemove: () => update('brandCategory', null) })
   }
+  if (filters.clubOpportunityType) {
+    const label = filters.clubOpportunityType === 'player' ? 'Hiring players'
+      : filters.clubOpportunityType === 'coach' ? 'Hiring coaches'
+      : 'Open opportunities'
+    chips.push({ id: 'clubOpportunity', label, onRemove: () => update('clubOpportunityType', null) })
+  }
 
   return chips
 }

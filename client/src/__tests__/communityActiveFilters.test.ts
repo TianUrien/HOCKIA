@@ -65,6 +65,15 @@ describe('getActiveFilterChips', () => {
     expect(update).toHaveBeenCalledWith('evidenceEnoughOnly', false)
   })
 
+  it('emits a removable club "Open opportunities" chip with a role-aware label', () => {
+    const update = vi.fn()
+    const filters = { ...defaultFilters('club'), clubOpportunityType: 'player' as const }
+    const chip = getActiveFilterChips(filters, COUNTRIES, update).find((c) => c.id === 'clubOpportunity')!
+    expect(chip.label).toBe('Hiring players')
+    chip.onRemove()
+    expect(update).toHaveBeenCalledWith('clubOpportunityType', null)
+  })
+
   it('onRemove resets a scalar facet to its default', () => {
     const update = vi.fn()
     const filters = { ...defaultFilters('player'), euOnly: true }
