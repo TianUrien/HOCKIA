@@ -139,6 +139,7 @@ export default function CommunityPage() {
   }, [location.pathname])
   const [totalCount, setTotalCount] = useState<number | null>(null)
   const [filteredCount, setFilteredCount] = useState<number | null>(null)
+  const [videoCount, setVideoCount] = useState<number | null>(null)
   const [searchLoading] = useState(false)
 
   // Determine active tab from URL param — default to 'all' (open ecosystem view)
@@ -459,6 +460,7 @@ export default function CommunityPage() {
               <CommunityFiltersDrawer
                 state={filtersState}
                 resultCount={isNarrowed ? filteredCount : totalCount}
+                videoCount={videoCount}
                 onSelectRole={(role) => navigate(roleToPath(role))}
               />
 
@@ -643,6 +645,7 @@ export default function CommunityPage() {
                   state={filtersState}
                   onTotalCountChange={setTotalCount}
                   onFilteredCountChange={setFilteredCount}
+                  onVideoCountChange={setVideoCount}
                   scopeReshaping={scopeReshaping}
                 />
               </div>

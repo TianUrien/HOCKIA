@@ -65,6 +65,9 @@ export interface CommunityFilters {
    * (derived, dual-aware, keep-unknown via isEuEligible). OR-combines with the
    * scope-driven EU hard-filter; works with or without an active recruiter scope. */
   euOnly: boolean
+  /** Player-only "Has video" narrow — highlight_video_url OR full_game_video_count>0.
+   * Coverage is thin, so the drawer ships it default-off + count-labelled. */
+  hasVideo: boolean
   availability: AvailabilityFilter
   brandCategory: string | null
 }
@@ -79,6 +82,7 @@ export const defaultFilters = (role: RoleFilter = 'all'): CommunityFilters => ({
   locationCountryIds: [],
   nationalityCountryIds: [],
   euOnly: false,
+  hasVideo: false,
   availability: 'all',
   brandCategory: null,
 })
@@ -143,6 +147,7 @@ export function useCommunityFiltersState(
         next.coachSpecializations = []
         next.categories = []
         next.officiatingSpecializations = []
+        next.hasVideo = false
         if (value !== 'brand') next.brandCategory = null
       }
       return next
@@ -176,6 +181,7 @@ export function useCommunityFiltersState(
       filters.locationCountryIds.length > 0 ||
       filters.nationalityCountryIds.length > 0 ||
       filters.euOnly ||
+      filters.hasVideo ||
       filters.availability !== 'all'
     )
   }, [filters, roleFilter])

@@ -46,6 +46,16 @@ describe('getActiveFilterChips', () => {
     expect(update).toHaveBeenCalledWith('position', ['forward'])
   })
 
+  it('emits a removable "Has video" chip and clears it on remove', () => {
+    const update = vi.fn()
+    const filters = { ...defaultFilters('player'), hasVideo: true }
+    const chips = getActiveFilterChips(filters, COUNTRIES, update)
+    const chip = chips.find((c) => c.id === 'hasVideo')!
+    expect(chip.label).toBe('Has video')
+    chip.onRemove()
+    expect(update).toHaveBeenCalledWith('hasVideo', false)
+  })
+
   it('onRemove resets a scalar facet to its default', () => {
     const update = vi.fn()
     const filters = { ...defaultFilters('player'), euOnly: true }

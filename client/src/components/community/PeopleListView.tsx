@@ -151,6 +151,8 @@ interface PeopleListViewProps {
    *  the total. Fixes the QA-flagged 'badge says 13 but grid shows 1'
    *  desync. */
   onFilteredCountChange?: (n: number) => void
+  /** Count of players-with-video in the current pool — drives "Has video (N)". */
+  onVideoCountChange?: (n: number) => void
   /** True when an active recruiting scope is reshaping the grid (the
    *  focused, role-hard-filtered view — NOT the "Show everyone" escape).
    *  Phase 2D: gates the EU-eligibility hard filter so it applies only in
@@ -158,7 +160,11 @@ interface PeopleListViewProps {
   scopeReshaping?: boolean
 }
 
-export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilteredCountChange, scopeReshaping = false }: PeopleListViewProps) {
+/** Player has at least one video proof signal (highlight or full-game). */
+const hasVideoMember = (m: Profile) =>
+  !!m.highlight_video_url || (m.full_game_video_count ?? 0) > 0
+
+export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilteredCountChange, onVideoCountChange, scopeReshaping = false }: PeopleListViewProps) {
   const navigationType = useNavigationType()
   // `loading` flips false once the auth session + profile resolve.
   // Gating the fetch on it prevents the historical double-fire:
@@ -679,6 +685,9 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     if (euFilterActive || filters.euOnly) {
       result = result.filter((m) => isEuEligible(m.nationality_country_id, m.nationality2_country_id, euCountryIds))
     }
+    if (filters.hasVideo) {
+      result = result.filter(hasVideoMember)
+    }
 
     // Sort. 'newest' is the natural fetch order (created_at DESC); no
     // re-sort needed — slicing keeps that order intact. 'completeness'
@@ -951,6 +960,14 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
   useEffect(() => {
     onFilteredCountChange?.(filteredMembers.length)
   }, [filteredMembers.length, onFilteredCountChange])
+
+  // Count of players-with-video in the current pool. filteredMembers.filter is
+  // idempotent here: when the toggle is OFF it counts the video subset of the
+  // (otherwise-filtered) results; when ON, filteredMembers is already the video
+  // set, so the count equals what's shown — a stable "Has video (N)" either way.
+  useEffect(() => {
+    onVideoCountChange?.(filteredMembers.filter(hasVideoMember).length)
+  }, [filteredMembers, onVideoCountChange])
 
   // Update displayed members when filter (or sort) changes. Sort
   // changes shouldn't truncate to first page — QA flagged that
