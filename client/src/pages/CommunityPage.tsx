@@ -17,7 +17,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useNavigate, useSearchParams, useLocation } from 'react-router-dom'
-import { Search, Filter, Loader2, Sparkles } from 'lucide-react'
+import { Search, Filter, Loader2, Sparkles, X } from 'lucide-react'
 import { Header } from '@/components'
 import { PullToRefresh } from '@/components/PullToRefresh'
 import {
@@ -30,12 +30,15 @@ import { TopCommunityMembersCarousel } from '@/components/community/TopCommunity
 import { CommunityFiltersDrawer } from '@/components/community/CommunityFiltersDrawer'
 import {
   useCommunityFiltersState,
+  roleToPath,
   type SortOption,
 } from '@/components/community/communityFilters'
 import type { CommunityTab } from '@/components/community'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { useAuthStore } from '@/lib/auth'
 import { availabilityFilterLabel } from '@/lib/availabilityLabel'
+import { useCountries } from '@/hooks/useCountries'
+import { getActiveFilterChips } from '@/lib/communityActiveFilters'
 import {
   deriveTargetCategory,
   playingCategoriesForTarget,
@@ -230,7 +233,12 @@ export default function CommunityPage() {
   // on first mount via the hook's initial value; the sync effects
   // below keep them aligned afterwards.
   const filtersState = useCommunityFiltersState(memberRoleFilter, searchParams.get('q') ?? '')
-  const { searchQuery, setSearchQuery, filters, updateFilter, hasActiveFilters, isNarrowed, sort, setSort, showFilters, setShowFilters, setApplyContextFit } = filtersState
+  const { searchQuery, setSearchQuery, filters, updateFilter, clearFilters, isNarrowed, sort, setSort, showFilters, setShowFilters, setApplyContextFit } = filtersState
+  const { countries } = useCountries()
+  // Removable active-filter chips shown below the search bar; its length is also
+  // the "Filters · N" badge count. Role is intentionally excluded (the chip row
+  // already shows it). Rebuilt each render so onRemove closes over current state.
+  const activeFilterChips = getActiveFilterChips(filters, countries, updateFilter)
 
   // Auto-apply context-fit ranking whenever a scope is active (the opt-in
   // "Best matches first" toggle is gone — a scope now reshapes by default).
@@ -273,23 +281,21 @@ export default function CommunityPage() {
     }
   }, [searchParams]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Sync filters.role with the URL-driven chip AND clear everything
-  // else. QA flagged that search + Open-to-Opportunities + drawer
-  // filters silently carried over across chip clicks — producing
-  // "0 visible / 13 in count" mismatches. Tapping a chip is a
-  // "start over with this role" action.
+  // Sync filters.role with the URL-driven member type. Both the visible role
+  // chips AND the drawer's "Member type" section navigate the same
+  // /community/<role> URL → memberRoleFilter → filters.role is the ONE source of
+  // truth. On a real role change we do a SELECTIVE reset (below): updateFilter(
+  // 'role') clears only the role-INCOMPATIBLE fields; shared facets (search,
+  // location, nationality, EU, availability) carry across. The old "clear
+  // everything" was blunt-but-safe; relaxed now that active filters are visible
+  // + individually removable below the search bar.
   //
-  // Uses a previous-value ref (not an "isFirstRun" ref) so the
-  // detection is StrictMode-safe. The "isFirstRun" pattern fails
-  // because React StrictMode runs effects twice in dev: the first
-  // run flips the ref, the second run then sees the flipped ref and
-  // runs the clearing path with no actual chip change — which then
-  // called setSearchQuery('') and silently wiped a deep-linked ?q=
-  // from the URL. (QA-flagged "hard reload strips q" bug.) Comparing
-  // prev → current memberRoleFilter on a real value, with a separate
-  // "has initialised" flag, is idempotent under StrictMode AND
-  // correctly detects real chip transitions including
-  // undefined → 'player'.
+  // Uses a previous-value ref (not an "isFirstRun" ref) so detection is
+  // StrictMode-safe: StrictMode double-invokes effects in dev, and an
+  // "isFirstRun" flag would run the reset path on the second invocation with no
+  // real change. Comparing prev → current memberRoleFilter with a separate
+  // "has initialised" flag is idempotent under StrictMode and still catches real
+  // transitions (including undefined → 'player').
   const hasInitializedRoleRef = useRef(false)
   const prevRoleFilterRef = useRef<typeof memberRoleFilter>(memberRoleFilter)
   useEffect(() => {
@@ -308,20 +314,14 @@ export default function CommunityPage() {
 
     prevRoleFilterRef.current = memberRoleFilter
 
-    // Real chip change — clear everything, then set role.
-    setSearchQuery('')
-    updateFilter('availability', 'all')
-    updateFilter('position', [])
-    updateFilter('coachSpecializations', [])
-    updateFilter('categories', [])
-    updateFilter('officiatingSpecializations', [])
-    updateFilter('location', '')
-    updateFilter('locationCountryIds', [])
-    updateFilter('nationalityCountryIds', [])
-    updateFilter('euOnly', false)
-    updateFilter('brandCategory', null)
+    // Real role change — SELECTIVE reset. updateFilter('role') clears the role-
+    // incompatible fields (position/coachSpecializations/categories/officiating/
+    // brandCategory — feeding them to an incompatible role silently empties the
+    // grid); shared facets (search/location/nationality/EU/availability)
+    // deliberately persist, so a recruiter keeps "France + Open-to" while
+    // flipping Players↔Coaches.
     updateFilter('role', memberRoleFilter ?? 'all')
-  }, [memberRoleFilter, updateFilter, setSearchQuery])
+  }, [memberRoleFilter, updateFilter])
 
   // Escape the scope's hard role filter when the user explicitly taps a role
   // tab that differs from the sought role — and RE-focus when they tap back to
@@ -451,18 +451,47 @@ export default function CommunityPage() {
                   className="flex items-center gap-1.5 whitespace-nowrap px-4 min-h-[44px] text-sm font-medium text-gray-700 bg-gray-100 rounded-full hover:bg-gray-200 active:bg-gray-300 transition-colors flex-shrink-0"
                 >
                   <Filter className="w-4 h-4" />
-                  Filters
-                  {hasActiveFilters && <span className="w-2 h-2 bg-[#8026FA] rounded-full" />}
+                  Filters{activeFilterChips.length > 0 ? ` · ${activeFilterChips.length}` : ''}
                 </button>
               </div>
 
               {/* Filters drawer (mobile) / panel (desktop) */}
-              <CommunityFiltersDrawer state={filtersState} resultCount={isNarrowed ? filteredCount : totalCount} />
+              <CommunityFiltersDrawer
+                state={filtersState}
+                resultCount={isNarrowed ? filteredCount : totalCount}
+                onSelectRole={(role) => navigate(roleToPath(role))}
+              />
 
               {/* Role chips */}
               <div className="mb-4 sm:mb-5">
                 <CommunityRoleChips activeTab={activeTab} />
               </div>
+
+              {/* Active filter chips — removable narrowing summary (role excluded;
+                  the chip row above already shows it). Count mirrors "Filters · N". */}
+              {activeFilterChips.length > 0 && (
+                <div className="flex flex-wrap items-center gap-2 mb-4">
+                  {activeFilterChips.map((chip) => (
+                    <button
+                      key={chip.id}
+                      type="button"
+                      onClick={chip.onRemove}
+                      aria-label={`Remove filter ${chip.label}`}
+                      className="inline-flex items-center gap-1 pl-3 pr-2 py-1 rounded-full text-xs font-medium bg-purple-50 text-[#6B20D4] border border-purple-200 hover:bg-purple-100 transition-colors"
+                    >
+                      {chip.label}
+                      <X className="w-3 h-3" />
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={clearFilters}
+                    className="text-xs text-gray-500 hover:text-gray-700 font-medium underline underline-offset-2 ml-0.5"
+                  >
+                    Clear all
+                  </button>
+                </div>
+              )}
 
               {/* "Featured this week" carousel — hidden when narrowing.
                   Slice C (2026-05-27) collapsed three stacked lanes

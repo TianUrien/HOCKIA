@@ -13,6 +13,25 @@ import type { PlayingCategory } from '@/lib/hockeyCategories'
 
 export type RoleFilter = 'all' | 'player' | 'coach' | 'club' | 'brand' | 'umpire'
 
+/**
+ * Member-type options — the single source of truth for both the visible role
+ * chips and the "Member type" section inside the Filters drawer. Both write the
+ * SAME state by navigating to the role's URL (the URL → filters.role is the one
+ * source of truth), so the two affordances can never diverge.
+ */
+export const MEMBER_TYPES: { role: RoleFilter; label: string; path: string }[] = [
+  { role: 'all', label: 'All', path: '/community' },
+  { role: 'player', label: 'Players', path: '/community/players' },
+  { role: 'coach', label: 'Coaches', path: '/community/coaches' },
+  { role: 'club', label: 'Clubs', path: '/community/clubs' },
+  { role: 'umpire', label: 'Umpires', path: '/community/umpires' },
+  { role: 'brand', label: 'Brands', path: '/community/brands' },
+]
+
+export function roleToPath(role: RoleFilter): string {
+  return MEMBER_TYPES.find((m) => m.role === role)?.path ?? '/community'
+}
+
 export type AvailabilityFilter = 'all' | 'open'
 
 export type SortOption = 'newest' | 'completeness'
