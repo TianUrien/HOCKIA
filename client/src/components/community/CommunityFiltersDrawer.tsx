@@ -5,6 +5,7 @@ import { CATEGORY_LABELS, PLAYING_CATEGORIES } from '@/lib/hockeyCategories'
 import { COACH_SPECIALIZATIONS } from '@/lib/coachSpecializations'
 import CountryMultiSelect from '@/components/CountryMultiSelect'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
+import { MEMBER_TYPES } from './communityFilters'
 import type { CommunityFiltersState, RoleFilter } from './communityFilters'
 
 /**
@@ -51,9 +52,12 @@ interface CommunityFiltersDrawerProps {
   state: CommunityFiltersState
   /** Live count of members matching the current filters — shown in the footer CTA. */
   resultCount?: number | null
+  /** Set the member type (role). Navigates the same /community/<role> URL the
+   *  external role chips use, so both affordances write the one source of truth. */
+  onSelectRole: (role: RoleFilter) => void
 }
 
-export function CommunityFiltersDrawer({ state, resultCount }: CommunityFiltersDrawerProps) {
+export function CommunityFiltersDrawer({ state, resultCount, onSelectRole }: CommunityFiltersDrawerProps) {
   const {
     filters,
     updateFilter,
@@ -120,6 +124,33 @@ export function CommunityFiltersDrawer({ state, resultCount }: CommunityFiltersD
 
           {/* Scrollable body */}
           <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
+            {/* Member type — sets the role. Same state + URL the external role
+                chips drive, so the two affordances never diverge. Rendered first
+                and unconditionally (the one field that SETS role, not gated on it). */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Member type</label>
+              <div className="flex flex-wrap gap-2">
+                {MEMBER_TYPES.map((mt) => {
+                  const active = filters.role === mt.role
+                  return (
+                    <button
+                      key={mt.role}
+                      type="button"
+                      onClick={() => onSelectRole(mt.role)}
+                      aria-pressed={active ? 'true' : 'false'}
+                      className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                        active
+                          ? 'bg-purple-600 text-white border-purple-600'
+                          : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      {mt.label}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
             {/* Brand category */}
             {fields.includes('brandCategory') && (
               <div>
