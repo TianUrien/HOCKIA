@@ -117,6 +117,7 @@ export async function setUserProperties(userId: string, role: string): Promise<v
   window.gtag?.('set', 'user_properties', {
     user_id: hashedId,
     user_role: role, // 'player', 'coach', 'club'
+    logged_in: 'true',
   })
 
   window.gtag?.('config', GA_MEASUREMENT_ID, {
@@ -133,6 +134,7 @@ export function clearUserProperties(): void {
   window.gtag?.('set', 'user_properties', {
     user_id: null,
     user_role: null,
+    logged_in: 'false',
   })
 }
 
