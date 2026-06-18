@@ -22,7 +22,7 @@ import { Check, Minus, AlertCircle, ShieldCheck } from 'lucide-react'
 import { DualNationalityDisplay, RoleBadge } from '@/components'
 import { getImageUrl } from '@/lib/imageUrl'
 import RecruiterCardActions from './RecruiterCardActions'
-import { computeEvidence } from '@/lib/evidence'
+import { computeEvidence, evidenceDisplayLabel, EVIDENCE_TOOLTIP } from '@/lib/evidence'
 import { getPlayerLeagueName } from '@/hooks/useWorldClubLogo'
 import { recruiterDisplayTier, type RecruiterVerdict, type VerdictDisplayTier } from '@/lib/recruiterVerdict'
 import { availabilityLabel } from '@/lib/availabilityLabel'
@@ -446,9 +446,9 @@ export default function RecruiterCandidateCard({ member, verdict, onPreview, pri
             </span>
           )}
           {proof ? (
-            <span className="inline-flex items-center gap-1 text-gray-600">
+            <span className="inline-flex items-center gap-1 text-gray-600" title={EVIDENCE_TOOLTIP}>
               <ShieldCheck className="h-3.5 w-3.5 flex-shrink-0" style={{ color: shieldColor(evidence.level, evidence.isApplicable) }} aria-hidden="true" />
-              Proof {proof.present}/{proof.total}
+              {evidenceDisplayLabel(evidence)}
             </span>
           ) : member.is_verified ? (
             <span className="inline-flex items-center gap-1 text-gray-600">
