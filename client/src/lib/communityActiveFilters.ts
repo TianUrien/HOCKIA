@@ -58,6 +58,9 @@ export function getActiveFilterChips(
   if (filters.hasVideo) {
     chips.push({ id: 'hasVideo', label: 'Has video', onRemove: () => update('hasVideo', false) })
   }
+  if (filters.evidenceEnoughOnly) {
+    chips.push({ id: 'evidence', label: 'Enough evidence+', onRemove: () => update('evidenceEnoughOnly', false) })
+  }
   if (filters.availability === 'open') {
     chips.push({ id: 'availability', label: availabilityFilterLabel(filters.role), onRemove: () => update('availability', 'all') })
   }

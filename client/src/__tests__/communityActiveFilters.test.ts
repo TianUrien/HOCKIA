@@ -56,6 +56,15 @@ describe('getActiveFilterChips', () => {
     expect(update).toHaveBeenCalledWith('hasVideo', false)
   })
 
+  it('emits a removable "Enough evidence+" chip and clears it on remove', () => {
+    const update = vi.fn()
+    const filters = { ...defaultFilters('player'), evidenceEnoughOnly: true }
+    const chip = getActiveFilterChips(filters, COUNTRIES, update).find((c) => c.id === 'evidence')!
+    expect(chip.label).toBe('Enough evidence+')
+    chip.onRemove()
+    expect(update).toHaveBeenCalledWith('evidenceEnoughOnly', false)
+  })
+
   it('onRemove resets a scalar facet to its default', () => {
     const update = vi.fn()
     const filters = { ...defaultFilters('player'), euOnly: true }

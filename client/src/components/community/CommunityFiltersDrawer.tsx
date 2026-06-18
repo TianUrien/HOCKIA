@@ -34,15 +34,15 @@ const BRAND_CATEGORIES: { value: string; label: string }[] = [
 
 type FilterField =
   | 'brandCategory' | 'coachRole' | 'position' | 'category'
-  | 'officiating' | 'location' | 'nationality' | 'eu' | 'hasVideo'
+  | 'officiating' | 'location' | 'nationality' | 'eu' | 'hasVideo' | 'evidence'
 
 /** Single source of role-awareness: which filter fields show per role tab.
  *  Grounded in real data — clubs/brands have no nationality/EU; only players/all
  *  have position; coaches get coach role; umpires get officiating type. */
 const COMMUNITY_FILTER_CONFIG: Record<RoleFilter, FilterField[]> = {
   all:    ['position', 'category', 'location', 'nationality', 'eu'],
-  player: ['position', 'category', 'location', 'nationality', 'eu', 'hasVideo'],
-  coach:  ['coachRole', 'category', 'location', 'nationality', 'eu'],
+  player: ['position', 'category', 'location', 'nationality', 'eu', 'hasVideo', 'evidence'],
+  coach:  ['coachRole', 'category', 'location', 'nationality', 'eu', 'evidence'],
   umpire: ['officiating', 'category', 'location', 'nationality', 'eu'],
   club:   ['location'],
   brand:  ['brandCategory', 'location'],
@@ -357,6 +357,23 @@ export function CommunityFiltersDrawer({ state, resultCount, videoCount, onSelec
                   </span>
                 </label>
                 <p className="text-xs text-gray-500 mt-1 ml-6">Players with a highlight or full-game video.</p>
+              </div>
+            )}
+
+            {/* Enough evidence or more — player/coach opt-in narrow over the
+                weighted Proven-lens evidence model. Never the default view. */}
+            {fields.includes('evidence') && (
+              <div>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={filters.evidenceEnoughOnly}
+                    onChange={() => updateFilter('evidenceEnoughOnly', !filters.evidenceEnoughOnly)}
+                    className="w-4 h-4 text-purple-600 rounded"
+                  />
+                  <span className="text-sm font-medium text-gray-700">Enough evidence or more</span>
+                </label>
+                <p className="text-xs text-gray-500 mt-1 ml-6">Strong or Enough verifiable evidence (video, references, level).</p>
               </div>
             )}
           </div>

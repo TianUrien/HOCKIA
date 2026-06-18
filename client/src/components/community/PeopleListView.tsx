@@ -164,6 +164,18 @@ interface PeopleListViewProps {
 const hasVideoMember = (m: Profile) =>
   !!m.highlight_video_url || (m.full_game_video_count ?? 0) > 0
 
+/** Reuse the Proven-lens evidence model (lib/evidence.ts) for the evidence sort
+ *  + the "Enough evidence or more" toggle — one source of truth, hockey-weighted. */
+const memberEvidence = (m: Profile) =>
+  computeEvidence({
+    role: m.role,
+    highlight_video_url: m.highlight_video_url ?? null,
+    full_game_video_count: m.full_game_video_count ?? null,
+    accepted_reference_count: m.accepted_reference_count ?? null,
+    is_verified: m.is_verified ?? null,
+    current_world_club_id: m.current_world_club_id ?? null,
+  })
+
 export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilteredCountChange, onVideoCountChange, scopeReshaping = false }: PeopleListViewProps) {
   const navigationType = useNavigationType()
   // `loading` flips false once the auth session + profile resolve.
@@ -688,6 +700,13 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     if (filters.hasVideo) {
       result = result.filter(hasVideoMember)
     }
+    if (filters.evidenceEnoughOnly) {
+      // Opt-in narrow to Strong/Enough evidence (the existing weighted model).
+      result = result.filter((m) => {
+        const lvl = memberEvidence(m).level
+        return lvl === 'strong' || lvl === 'moderate'
+      })
+    }
 
     // Sort. 'newest' is the natural fetch order (created_at DESC); no
     // re-sort needed — slicing keeps that order intact. 'completeness'
@@ -695,6 +714,19 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     // stable pagination across renders.
     if (sort === 'completeness') {
       result = [...result].sort((a, b) => {
+        const ap = a.profile_completeness_pct ?? 0
+        const bp = b.profile_completeness_pct ?? 0
+        if (bp !== ap) return bp - ap
+        return a.id.localeCompare(b.id)
+      })
+    }
+    if (sort === 'evidence') {
+      // Strongest evidence first (the weighted Proven-lens score), with
+      // completeness then id as stable tiebreakers.
+      result = [...result].sort((a, b) => {
+        const as = memberEvidence(a).score
+        const bs = memberEvidence(b).score
+        if (bs !== as) return bs - as
         const ap = a.profile_completeness_pct ?? 0
         const bp = b.profile_completeness_pct ?? 0
         if (bp !== ap) return bp - ap
