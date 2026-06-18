@@ -30,7 +30,7 @@ import { sendMagicLink, type MagicLinkRole } from '@/lib/magicLink'
 import { checkLoginRateLimit, checkSignupRateLimit, formatRateLimitError } from '@/lib/rateLimit'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
-import { trackLogin, trackSignUp, trackSignUpStart } from '@/lib/analytics'
+import { trackLogin, trackLoginFailed, trackSignUp, trackSignUpStart } from '@/lib/analytics'
 import { reportAuthFlowError } from '@/lib/sentryHelpers'
 
 export interface AuthScreenProps {
@@ -249,14 +249,17 @@ export default function AuthScreen({ mode, role, onBack }: AuthScreenProps) {
           emailDomain: email.split('@')[1] ?? null,
         })
         if (signInError.message.toLowerCase().includes('email not confirmed')) {
+          trackLoginFailed('password', 'unverified')
           navigate(`/verify-email?email=${encodeURIComponent(email)}&reason=unverified_signin`)
           return
         }
+        trackLoginFailed('password', 'bad_credentials')
         setError('Incorrect email or password.')
         return
       }
 
       if (!data.user) {
+        trackLoginFailed('password', 'no_user')
         setError('Something went wrong. Please try again.')
         return
       }
@@ -264,6 +267,7 @@ export default function AuthScreen({ mode, role, onBack }: AuthScreenProps) {
       trackLogin('password')
       // Auth store's onAuthStateChange will redirect via the effect above.
     } catch (err) {
+      trackLoginFailed('password', 'exception')
       reportAuthFlowError('password_signin.catch', err, {
         emailDomain: email.split('@')[1] ?? null,
       })

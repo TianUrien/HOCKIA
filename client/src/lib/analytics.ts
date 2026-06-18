@@ -160,12 +160,43 @@ export function trackSignUp(role: string): void {
   })
 }
 
+/** Track the moment a user picks their role (onboarding role picker) — the step
+ *  before the wizard. Pairs with onboarding_start/complete to see role drop-off. */
+export function trackRoleSelected(role: string): void {
+  trackEvent({
+    action: 'role_selected',
+    category: 'onboarding',
+    label: role,
+  })
+}
+
 /** Track login */
 export function trackLogin(method: string): void {
   trackEvent({
     action: 'login',
     category: 'authentication',
     label: method,
+  })
+}
+
+/** Track a FAILED login attempt — the half the funnel was missing. `reason` is a
+ *  coarse, non-PII bucket (bad_credentials / unverified / no_user / exception). */
+export function trackLoginFailed(method: string, reason: string): void {
+  trackEvent({
+    action: 'login_failed',
+    category: 'authentication',
+    label: method,
+    reason,
+  })
+}
+
+/** Track onboarding flow start (the profile wizard opens). Pairs with
+ *  onboarding_complete to measure the onboarding funnel's drop-off. */
+export function trackOnboardingStart(role: string): void {
+  trackEvent({
+    action: 'onboarding_start',
+    category: 'onboarding',
+    label: role,
   })
 }
 
