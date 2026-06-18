@@ -128,37 +128,35 @@ jobs:
       - name: Bundle size budget
         working-directory: ./client
         run: |
+          # ── Initial-load gzip budget (the metric that actually matters) ──
+          # Budget the gzip of ONLY the chunks index.html eagerly loads (entry +
+          # modulepreload) — what a player/coach/recruiter downloads on first
+          # paint. Lazy route/admin chunks (recharts + the admin dashboards alone
+          # are ~107KB gzip, plus every code-split page) are fetched ON DEMAND and
+          # must NOT count. The old "sum all 125 chunks" gzip metric double-counted
+          # ~486KB of never-on-first-load code and was the phantom "877/880KB
+          # binding constraint" that drove the 850→880→900 bumps — chasing a
+          # number that punished code-splitting. Investigated 2026-06-18: the
+          # charts chunk is already lazy + admin-only; the eager set was 407KB gzip
+          # when this metric replaced the all-chunks gate.
+          EAGER_FILES=$(grep -oE 'assets/[a-zA-Z0-9_-]+\.js' dist/index.html | sort -u | sed 's#^#dist/#')
+          EAGER_GZIP=$(cat $EAGER_FILES | gzip -c | wc -c)
+          EAGER_KB=$((EAGER_GZIP / 1024))
           TOTAL_JS=$(cat dist/assets/*.js | wc -c)
           TOTAL_KB=$((TOTAL_JS / 1024))
-          GZIP_TOTAL=$(cat dist/assets/*.js | gzip -c | wc -c)
-          GZIP_KB=$((GZIP_TOTAL / 1024))
-          echo "JS bundle: ${TOTAL_KB}KB raw / ${GZIP_KB}KB gzip"
+          echo "Initial-load JS: ${EAGER_KB}KB gzip (eager chunks) | ${TOTAL_KB}KB raw across all chunks"
 
-          # Early warning: gzip at ~90% of budget (810KB)
-          # Budget bumped 850KB → 880KB on 2026-06-01 — native player
-          # video (Cloudflare Stream): the upload modal + native HTML5
-          # player + sections tipped gzip from 801KB → 852KB. hls.js was
-          # deliberately NOT added (it would've been ~140KB gzip and blown
-          # the budget); the player uses native <video> HLS on Safari/iOS
-          # and the Cloudflare iframe elsewhere, so the delta is just our
-          # own component code. 28KB headroom for the queued UX
-          # consolidation pass.
-          if [ "$GZIP_TOTAL" -gt 829440 ]; then
-            echo "::warning::Bundle nearing gzip budget: ${GZIP_KB}KB / 900KB ($(( GZIP_KB * 100 / 900 ))%)"
+          # Early warning at ~94% of the 480KB initial-load budget
+          if [ "$EAGER_GZIP" -gt 460800 ]; then
+            echo "::warning::Initial-load bundle nearing budget: ${EAGER_KB}KB / 480KB ($(( EAGER_KB * 100 / 480 ))%)"
           fi
 
-          # Primary gate: gzip total must stay under 900KB
-          # Budget bumped 880KB → 900KB on 2026-06-18 — the Community filter
-          # redesign (Phases 1-5: the server-side ceiling-lift community_search_
-          # members RPC client + mobile bottom-sheet + role-aware field config)
-          # and the unified-filter UX (Member-type inside the drawer, removable
-          # active-filter chips, Filters·N badge) added ~our own component code
-          # (NO new dependency) and tipped the at-99% gzip gate. The dedicated
-          # bundle-trim pass (the 372KB charts chunk — lazy-route the admin
-          # dashboards) is now genuinely OWED — the next bundle task before
-          # further feature work.
-          if [ "$GZIP_TOTAL" -gt 921600 ]; then
-            echo "::error::Gzip bundle budget exceeded! ${GZIP_KB}KB > 900KB"
+          # Primary gate: initial-load gzip must stay under 480KB. Features belong
+          # in lazy route chunks (not the eager set), so this grows slowly; a rise
+          # means something heavy leaked into the entry/shared graph — investigate
+          # rather than bump.
+          if [ "$EAGER_GZIP" -gt 491520 ]; then
+            echo "::error::Initial-load bundle budget exceeded! ${EAGER_KB}KB > 480KB"
             exit 1
           fi
 
@@ -181,10 +179,12 @@ jobs:
           # feature work (AI-opinion observability, admin sweeps, the
           # opportunities overlay, the image-perf Phases 0-3) ate the prior
           # ~100KB; Phase 3 Tranche 1's CLS/priority component code (no new
-          # dependency) tipped raw just over 3500KB. NOTE: gzip is now at
-          # 877/880KB (99%) — the binding constraint. A dedicated bundle-trim
-          # pass (the 372KB charts chunk is the prime target) is owed before
-          # further feature work; this is the LAST raw bump without one.
+          # dependency) tipped raw just over 3500KB. NOTE (2026-06-18): the gzip
+          # "binding constraint" was a MEASUREMENT bug, not bloat — recharts / the
+          # admin charts are already lazy + admin-only. The gzip gate now budgets
+          # the INITIAL load (above), so this raw 3.6MB all-chunks check is just
+          # the remaining total-bloat backstop (catches a heavy dep even in a lazy
+          # chunk); it is no longer the binding constraint.
           if [ "$TOTAL_JS" -gt 3317760 ]; then
             echo "::warning::Bundle nearing raw budget: ${TOTAL_KB}KB / 3600KB ($(( TOTAL_KB * 100 / 3600 ))%)"
           fi
