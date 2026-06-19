@@ -38,6 +38,7 @@ import type {
   RetentionCohort,
   ActivationFunnelData,
   RegistrationFunnelData,
+  Ga4FunnelData,
   UserGrowthPoint,
   MonthlyReportData,
   DevicePlatformFilter,
@@ -1906,6 +1907,26 @@ export async function getRegistrationFunnel(
   })
   if (error) throw new Error(`Failed to get registration funnel: ${error.message}`)
   return data as RegistrationFunnelData
+}
+
+/**
+ * GA4 anonymous top-of-funnel (Phase 1C). Calls the ga4-funnel edge function
+ * (admin-gated). Returns a not-configured sentinel until the GA4 secrets are set.
+ */
+export async function getGa4Funnel(days = 30): Promise<Ga4FunnelData> {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) throw new Error('No active session')
+  const response = await fetch(`${SUPABASE_URL}/functions/v1/ga4-funnel`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session.access_token}`,
+      'apikey': SUPABASE_ANON_KEY,
+    },
+    body: JSON.stringify({ days }),
+  })
+  if (!response.ok) throw new Error(`GA4 funnel request failed: ${response.status}`)
+  return await response.json() as Ga4FunnelData
 }
 
 export async function getUserGrowthChart(days = 30): Promise<UserGrowthPoint[]> {

@@ -36,6 +36,7 @@ import { CommandCenterGrowthChart } from '../components/CommandCenterGrowthChart
 import { RetentionCurveChart } from '../components/RetentionCurveChart'
 import { ActivationFunnel } from '../components/ActivationFunnel'
 import { RegistrationFunnel } from '../components/RegistrationFunnel'
+import { Ga4TopFunnel } from '../components/Ga4TopFunnel'
 import { ActivationByRoleCard } from '../components/ActivationByRoleCard'
 import { NotificationCtrCard } from '../components/NotificationCtrCard'
 import { HealthSignals } from '../components/HealthSignals'
@@ -225,9 +226,13 @@ export function AdminOverview() {
       <CommandCenterGrowthChart data={growthData} loading={ccLoading} />
 
       {/* ============================================================= */}
-      {/* REGISTRATION (ACQUISITION) FUNNEL — web/PWA, Supabase truth    */}
+      {/* ACQUISITION FUNNEL — GA4 anonymous top (Phase 1C, estimate)    */}
+      {/* flowing into the Supabase registered half (exact).            */}
       {/* ============================================================= */}
-      <RegistrationFunnel />
+      <div className="space-y-3">
+        <Ga4TopFunnel />
+        <RegistrationFunnel />
+      </div>
 
       {/* ============================================================= */}
       {/* RETENTION + FUNNEL (2-column)                                  */}

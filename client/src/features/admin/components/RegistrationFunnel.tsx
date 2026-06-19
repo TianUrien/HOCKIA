@@ -4,8 +4,8 @@
  * Source = Supabase only (profiles + the first-party `events` table), so the
  * numbers are EXACT and bot-free (test accounts excluded). The anonymous
  * top-of-funnel (visits → CTA → signup wall → signup started) lives only in
- * GA4 and is a later phase; this card owns what we can count precisely:
- * account creation onward.
+ * GA4 (the Ga4TopFunnel card above this one); this card owns what we can count
+ * precisely: account creation onward.
  *
  * Steps are cumulative-union in the RPC (each step ⊇ the next), so step
  * conversion + drop-off are always in [0, 100%].
@@ -230,8 +230,8 @@ export function RegistrationFunnel() {
 
           <p className="mt-5 text-[11px] text-gray-400 leading-relaxed">
             “Role selected” is ~100% because role is chosen at signup — it’s not a drop-off point.
-            The anonymous top of funnel (visits → sign-up CTA → wall → signup started) comes from
-            GA4 in a later phase.
+            The anonymous top of funnel (visits → sign-up CTA → wall → signup started) is the
+            GA4 estimate card above.
           </p>
         </>
       )}
