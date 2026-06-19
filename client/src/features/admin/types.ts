@@ -409,6 +409,23 @@ export interface RegistrationFunnelData {
   }>
 }
 
+/** GA4 anonymous top-of-funnel (Phase 1C) — an ESTIMATE from the GA4 Data API,
+ *  distinct from the exact Supabase RegistrationFunnelData. `configured` is false
+ *  until the GA4 service-account secrets are set; `error` is a retryable GA failure. */
+export interface Ga4FunnelData {
+  configured: boolean
+  days?: number
+  freshnessNote?: string
+  error?: string
+  counts: {
+    page_view_landing: number
+    signup_cta_click: number
+    protected_action_blocked: number
+    signup_wall_action_clicked: number
+    sign_up_start: number
+  } | null
+}
+
 export interface UserGrowthPoint {
   day: string
   new_users: number
