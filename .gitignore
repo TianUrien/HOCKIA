@@ -35,6 +35,7 @@ client/.vite/
 # Android signing keys (NEVER commit)
 *.jks
 *.keystore
+key.properties
 
 # iOS build artifacts
 client/ios/App/App/public/
