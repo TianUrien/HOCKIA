@@ -343,6 +343,36 @@ export function trackProtectedActionBlocked(action: string): void {
 }
 
 /**
+ * A logged-out user clicked a primary "sign up / get started" CTA. `location`
+ * labels where it was (landing_hero, nav, signin_prompt, …). Top-of-funnel
+ * intent — pairs with sign_up_start / sign_up. `from_page` is sanitized (no PII).
+ */
+export function trackSignupCtaClick(location: string): void {
+  if (typeof window === 'undefined' || isNative) return
+  trackEvent({
+    action: 'signup_cta_click',
+    category: 'conversion',
+    label: location,
+    from_page: sanitizePath(window.location.pathname),
+  })
+}
+
+/**
+ * The sign-in/sign-up wall (SignInPromptModal) was acted on — which button the
+ * user chose. Completes the wall funnel: protected_action_blocked (shown) →
+ * signup_wall_action_clicked (acted).
+ */
+export function trackSignupWallAction(action: 'sign_in' | 'sign_up'): void {
+  if (typeof window === 'undefined' || isNative) return
+  trackEvent({
+    action: 'signup_wall_action_clicked',
+    category: 'conversion',
+    label: action,
+    from_page: sanitizePath(window.location.pathname),
+  })
+}
+
+/**
  * Track external profile-share intent (user opened the share modal).
  * Role only — no profile_id / username / email goes to GA.
  */

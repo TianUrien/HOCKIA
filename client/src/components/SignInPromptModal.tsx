@@ -2,6 +2,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { LogIn, UserPlus } from 'lucide-react'
 import Modal from './Modal'
 import Button from './Button'
+import { trackSignupWallAction } from '@/lib/analytics'
 
 interface SignInPromptModalProps {
   isOpen: boolean
@@ -24,12 +25,14 @@ export default function SignInPromptModal({
   const location = useLocation()
 
   const handleSignIn = () => {
+    trackSignupWallAction('sign_in')
     // Navigate to landing with return URL stored in state
     navigate('/', { state: { from: location.pathname } })
     onClose()
   }
 
   const handleSignUp = () => {
+    trackSignupWallAction('sign_up')
     // Navigate to signup with return URL stored in state
     navigate('/signup', { state: { from: location.pathname } })
     onClose()

@@ -385,6 +385,30 @@ export interface ActivationFunnelData {
   messaged: number
 }
 
+/** Web/PWA registration (acquisition) funnel — Supabase source-of-truth,
+ *  bot/test excluded. Steps are cumulative-union (monotonic). */
+export interface RegistrationFunnelData {
+  window_days: number | null
+  role: string | null
+  funnel: {
+    account_created: number
+    role_selected: number
+    onboarding_started: number
+    onboarding_completed: number
+    activated: number
+  }
+  by_role: Record<string, {
+    account_created: number
+    onboarding_completed: number
+    completion_rate: number
+  }>
+  by_country: Array<{
+    country: string
+    account_created: number
+    onboarding_completed: number
+  }>
+}
+
 export interface UserGrowthPoint {
   day: string
   new_users: number

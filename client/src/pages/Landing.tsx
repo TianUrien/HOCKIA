@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { trackSignupCtaClick } from '@/lib/analytics'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react'
 import { Button, InAppBrowserWarning, PublicNav } from '@/components'
@@ -240,7 +241,7 @@ export default function Landing() {
               type="button"
               variant="primary"
               className="w-full !h-14 !rounded-2xl text-base font-semibold shadow-xl"
-              onClick={() => navigate('/signup')}
+              onClick={() => { trackSignupCtaClick('landing_hero'); navigate('/signup') }}
             >
               <span className="inline-flex items-center gap-2">
                 Get Started
@@ -290,7 +291,7 @@ export default function Landing() {
                 type="button"
                 variant="primary"
                 className="!h-14 !rounded-2xl text-base font-semibold px-8 shadow-xl"
-                onClick={() => navigate('/signup')}
+                onClick={() => { trackSignupCtaClick('landing_hero'); navigate('/signup') }}
               >
                 <span className="inline-flex items-center gap-2">
                   Get Started

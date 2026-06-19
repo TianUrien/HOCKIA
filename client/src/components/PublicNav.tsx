@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { trackSignupCtaClick } from '@/lib/analytics'
 import { Menu, X, Globe, Users, Briefcase, LogIn, UserPlus } from 'lucide-react'
 
 interface PublicNavProps {
@@ -81,6 +82,7 @@ export default function PublicNav({ transparent = true }: PublicNavProps) {
             </Link>
             <Link
               to="/signup"
+              onClick={() => trackSignupCtaClick('nav')}
               className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-opacity shadow-lg"
             >
               <UserPlus className="w-4 h-4" />
@@ -148,7 +150,7 @@ export default function PublicNav({ transparent = true }: PublicNavProps) {
               
               <Link
                 to="/signup"
-                onClick={() => setIsMobileMenuOpen(false)}
+                onClick={() => { setIsMobileMenuOpen(false); trackSignupCtaClick('nav_mobile') }}
                 className="flex items-center justify-center gap-2 mx-4 mt-2 px-5 py-3 bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white text-base font-semibold rounded-lg hover:opacity-90 transition-opacity shadow-lg"
               >
                 <UserPlus className="w-5 h-5" />
