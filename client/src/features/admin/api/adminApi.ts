@@ -37,6 +37,7 @@ import type {
   CommandCenterStats,
   RetentionCohort,
   ActivationFunnelData,
+  RegistrationFunnelData,
   UserGrowthPoint,
   MonthlyReportData,
   DevicePlatformFilter,
@@ -1888,6 +1889,23 @@ export async function getActivationFunnel(days?: number): Promise<ActivationFunn
   const { data, error } = await adminRpc('admin_get_activation_funnel', { p_days: days ?? null })
   if (error) throw new Error(`Failed to get activation funnel: ${error.message}`)
   return data as ActivationFunnelData
+}
+
+/**
+ * Web/PWA registration funnel: account created → role selected → onboarding
+ * started → onboarding completed → activated (first real action). Supabase
+ * source-of-truth, bot/test excluded. days NULL = all time, role NULL = all.
+ */
+export async function getRegistrationFunnel(
+  days?: number | null,
+  role?: string | null,
+): Promise<RegistrationFunnelData> {
+  const { data, error } = await adminRpc('admin_get_registration_funnel', {
+    p_days: days ?? null,
+    p_role: role ?? null,
+  })
+  if (error) throw new Error(`Failed to get registration funnel: ${error.message}`)
+  return data as RegistrationFunnelData
 }
 
 export async function getUserGrowthChart(days = 30): Promise<UserGrowthPoint[]> {

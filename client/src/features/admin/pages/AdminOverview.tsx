@@ -35,6 +35,7 @@ import { CommandCenterKPICard } from '../components/CommandCenterKPICard'
 import { CommandCenterGrowthChart } from '../components/CommandCenterGrowthChart'
 import { RetentionCurveChart } from '../components/RetentionCurveChart'
 import { ActivationFunnel } from '../components/ActivationFunnel'
+import { RegistrationFunnel } from '../components/RegistrationFunnel'
 import { ActivationByRoleCard } from '../components/ActivationByRoleCard'
 import { NotificationCtrCard } from '../components/NotificationCtrCard'
 import { HealthSignals } from '../components/HealthSignals'
@@ -222,6 +223,11 @@ export function AdminOverview() {
       {/* USER GROWTH CHART                                              */}
       {/* ============================================================= */}
       <CommandCenterGrowthChart data={growthData} loading={ccLoading} />
+
+      {/* ============================================================= */}
+      {/* REGISTRATION (ACQUISITION) FUNNEL — web/PWA, Supabase truth    */}
+      {/* ============================================================= */}
+      <RegistrationFunnel />
 
       {/* ============================================================= */}
       {/* RETENTION + FUNNEL (2-column)                                  */}
