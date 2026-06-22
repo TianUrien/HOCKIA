@@ -838,9 +838,9 @@ export default function SettingsPage() {
                     <p className="text-gray-900 font-medium text-sm">Push Notifications</p>
                     <p className="text-xs text-gray-500 mt-0.5">
                       {!push.isSupported
-                        ? 'Not supported in this browser'
+                        ? 'Not supported on this device'
                         : push.permission === 'denied'
-                          ? 'Blocked — enable in browser settings'
+                          ? 'Blocked — enable notifications in your device settings'
                           : 'Receive notifications even when the app is closed'}
                     </p>
                   </div>

@@ -33,7 +33,9 @@ const isWebPushSupported =
 export function usePushSubscription() {
   const { user } = useAuthStore()
   const [permission, setPermission] = useState<NotificationPermission>(
-    typeof Notification !== 'undefined' ? Notification.permission : 'denied'
+    isNative
+      ? 'default' // native permission is read from the Capacitor plugin (effect below)
+      : typeof Notification !== 'undefined' ? Notification.permission : 'denied'
   )
   const [isSubscribed, setIsSubscribed] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -78,11 +80,33 @@ export function usePushSubscription() {
     return () => { cancelled = true }
   }, [isSupported, user])
 
-  // Sync permission state when it might change
+  // Sync permission state (WEB only). The web Notification.permission API
+  // reports 'denied' inside the iOS/Android WebView, which would wrongly mark
+  // native push as "blocked" — so native reads the real permission from the
+  // Capacitor plugin instead (effect below).
   useEffect(() => {
+    if (isNative) return
     if (typeof Notification !== 'undefined') {
       setPermission(Notification.permission)
     }
+  }, [isSubscribed])
+
+  // Native: read the actual notification permission from the Capacitor plugin
+  // (granted / denied / prompt) so the Settings toggle + PushPrompt aren't
+  // wrongly disabled on iOS/Android. Without this, permission is stuck at
+  // 'denied' (the web API) and no native device can ever register a token.
+  useEffect(() => {
+    if (!isNative) return
+    let cancelled = false
+    import('@capacitor/push-notifications')
+      .then(async ({ PushNotifications }) => {
+        const { receive } = await PushNotifications.checkPermissions()
+        if (!cancelled) {
+          setPermission(receive === 'granted' ? 'granted' : receive === 'denied' ? 'denied' : 'default')
+        }
+      })
+      .catch(() => { /* plugin unavailable — keep optimistic 'default' */ })
+    return () => { cancelled = true }
   }, [isSubscribed])
 
   const subscribe = useCallback(async () => {
