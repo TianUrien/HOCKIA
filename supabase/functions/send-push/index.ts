@@ -5,6 +5,7 @@ import { corsHeaders } from '../_shared/cors.ts'
 import { captureException } from '../_shared/sentry.ts'
 import { buildPushPayload } from './push-payload.ts'
 import { sendFcmNotification, isFcmConfigured } from './fcm.ts'
+import { sendApnsNotification, isApnsConfigured } from './apns.ts'
 
 /**
  * ============================================================================
@@ -33,6 +34,7 @@ if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
 
 const hasVapid = !!(VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY)
 const hasFcm = isFcmConfigured()
+const hasApns = isApnsConfigured()
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
@@ -40,8 +42,8 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    if (!hasVapid && !hasFcm) {
-      console.error('[send-push] Neither VAPID nor FCM configured')
+    if (!hasVapid && !hasFcm && !hasApns) {
+      console.error('[send-push] No push provider configured (VAPID/FCM/APNs)')
       return new Response(
         JSON.stringify({ error: 'Push not configured' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -119,11 +121,23 @@ Deno.serve(async (req: Request) => {
     let cleaned = 0
 
     for (const sub of subscriptions) {
-      const isFcmSub = !!sub.fcm_token && sub.platform !== 'web'
+      const isNativeSub = !!sub.fcm_token && sub.platform !== 'web'
+      const isIosSub = isNativeSub && sub.platform === 'ios'
 
       try {
-        if (isFcmSub && hasFcm) {
-          // ── FCM (native iOS/Android) ──
+        if (isIosSub) {
+          // ── APNs (native iOS — registers an APNs token, not an FCM token) ──
+          if (!hasApns) continue // iOS requires APNs; skip until configured
+          const success = await sendApnsNotification(sub.fcm_token!, pushPayload)
+          if (success) {
+            sent++
+          } else {
+            await supabase.from('push_subscriptions').delete().eq('id', sub.id)
+            cleaned++
+            console.log(`[send-push] Cleaned invalid APNs token ${sub.id}`)
+          }
+        } else if (isNativeSub && hasFcm) {
+          // ── FCM (native Android) ──
           const success = await sendFcmNotification(sub.fcm_token!, pushPayload)
           if (success) {
             sent++
