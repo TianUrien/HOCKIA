@@ -26,12 +26,10 @@ import Header from '@/components/Header'
 import DeleteAccountModal from '@/components/DeleteAccountModal'
 import BlockedAccountsList from '@/components/BlockedAccountsList'
 import StagingQaResetCard from '@/components/StagingQaResetCard'
+import AboutAppCard from '@/components/AboutAppCard'
 import { usePushSubscription } from '@/hooks/usePushSubscription'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { trackPushSubscribe, trackPushUnsubscribe } from '@/lib/analytics'
-
-// App version - could be pulled from package.json in the future
-const APP_VERSION = '1.0.0'
 
 export default function SettingsPage() {
   useDocumentTitle('Settings')
@@ -1029,15 +1027,7 @@ export default function SettingsPage() {
             
             {expandedSection === 'about' && (
               <div className="px-4 pb-4 space-y-1">
-                {/* Version */}
-                <div className="flex items-center justify-between px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    <Info className="w-5 h-5 text-gray-500" />
-                    <span className="text-gray-700">Version</span>
-                  </div>
-                  <span className="text-gray-500 text-sm">{APP_VERSION}</span>
-                </div>
-                
+                <AboutAppCard />
                 <LinkRow to="/developers" icon={Code} label="For Developers" />
               </div>
             )}
