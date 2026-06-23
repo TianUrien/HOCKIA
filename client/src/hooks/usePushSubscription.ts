@@ -130,25 +130,38 @@ export function usePushSubscription() {
         }
         setPermission('granted')
 
-        // Register will trigger the 'registration' event with the FCM token
-        await PushNotifications.register()
-
-        // Listen for the registration token
+        // Attach the registration listeners BEFORE register(), and AWAIT
+        // addListener so they're actually wired up first. Otherwise the
+        // 'registration' event (the device token) can fire before the listener
+        // exists and is missed — leaving the toggle stuck "loading" until the
+        // 15s timeout, with no token ever saved. (This was the iOS push bug:
+        // the permission prompt appeared but enabling never completed.)
+        let resolveToken!: (value: string) => void
+        let rejectToken!: (err: Error) => void
         const tokenPromise = new Promise<string>((resolve, reject) => {
-          const timeout = setTimeout(() => reject(new Error('FCM registration timeout')), 15000)
+          resolveToken = resolve
+          rejectToken = reject
+        })
+        const timeout = setTimeout(() => rejectToken(new Error('Push registration timeout')), 15000)
 
-          PushNotifications.addListener('registration', (token) => {
-            clearTimeout(timeout)
-            resolve(token.value)
-          })
-
-          PushNotifications.addListener('registrationError', (err) => {
-            clearTimeout(timeout)
-            reject(new Error(err.error))
-          })
+        const regHandle = await PushNotifications.addListener('registration', (token) => {
+          clearTimeout(timeout)
+          resolveToken(token.value)
+        })
+        const errHandle = await PushNotifications.addListener('registrationError', (err) => {
+          clearTimeout(timeout)
+          rejectToken(new Error(err.error))
         })
 
-        const fcmToken = await tokenPromise
+        let fcmToken: string
+        try {
+          // register() triggers the 'registration' event carrying the token.
+          await PushNotifications.register()
+          fcmToken = await tokenPromise
+        } finally {
+          await regHandle.remove()
+          await errHandle.remove()
+        }
         const platform = detectPlatform()
 
         // Upsert FCM token to database
