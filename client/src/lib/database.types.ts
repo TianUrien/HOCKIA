@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_version_requirements: {
+        Row: {
+          platform: string
+          min_version: string
+          latest_version: string
+          store_url: string
+          updated_at: string
+        }
+        Insert: {
+          platform: string
+          min_version: string
+          latest_version: string
+          store_url: string
+          updated_at?: string
+        }
+        Update: {
+          platform?: string
+          min_version?: string
+          latest_version?: string
+          store_url?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       admin_audit_logs: {
         Row: {
           action: string

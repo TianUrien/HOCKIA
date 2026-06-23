@@ -11,6 +11,7 @@ import UploadIndicator from '@/components/UploadIndicator'
 import { ProfileImagePreviewProvider } from '@/components/ProfileImagePreviewProvider'
 import InstallPrompt from '@/components/InstallPrompt'
 import PushPrompt from '@/components/PushPrompt'
+import NativeUpdatePrompt from '@/components/NativeUpdatePrompt'
 import { useEngagementTracking } from '@/hooks/useEngagementTracking'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
@@ -346,6 +347,7 @@ function App() {
           <UploadIndicator />
           <InstallPrompt />
           <PushPrompt />
+          <NativeUpdatePrompt />
           <EngagementTracker />
           <AnalyticsTracker />
           <DbPageViewTracker />
