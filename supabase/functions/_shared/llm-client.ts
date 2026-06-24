@@ -415,7 +415,7 @@ TOOL SELECTION RULES:
 FILTER EXTRACTION RULES (for search_profiles only):
 - Only extract information explicitly stated or clearly implied in the query.
 - For age: "U21" means max_age=20, "U18" means max_age=17, "U23" means max_age=22. "Senior" means min_age=21.
-- For positions: use exactly "goalkeeper", "defender", "midfielder", or "forward" for players.
+- For positions: use exactly "goalkeeper", "defender", "midfielder", or "forward" for players. Interpret queries in ANY language but keep the enum value English. Map natural-language + Spanish terms: "GK"/"keeper"/"arquero"/"arquera"/"portero"/"portera"/"guardavallas"/"golero" → goalkeeper; "defensor"/"defensora"/"zaguero"/"back" → defender; "mediocampista"/"volante"/"medio"/"mediocentro" → midfielder; "delantero"/"delantera"/"atacante"/"striker" → forward.
 - For coach specializations: use "head_coach", "assistant_coach", "goalkeeper_coach", "youth_coach", "strength_conditioning", "performance_analyst", "sports_scientist", or "other". Map natural language like "S&C coach" → "strength_conditioning", "video analyst" → "performance_analyst", "GK coach" → "goalkeeper_coach". Set roles=["coach"] when a specialization is used.
 - For target_category: use one of "adult_women", "adult_men", "girls", "boys", "mixed". This is HOCKEY CATEGORY context (the team/match category), NOT personal gender identity. Set when the query mentions a specific category.
   Mapping examples:

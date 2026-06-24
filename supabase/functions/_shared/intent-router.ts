@@ -231,6 +231,12 @@ const PLAYERS = [
   /\bstrikers?\b/i,
   /\b(?:goalkeepers?|gks?|keepers?)\b/i,
   /\bplayer ambassadors?\b/i,
+  // Spanish position + player vocabulary (Argentine + general).
+  /\bjugador(?:es|as?)?\b/i,
+  /\b(?:arquer[oa]s?|porter[oa]s?|guardavallas)\b/i,
+  /\b(?:defensor(?:es|as?)?|zaguer[oa]s?)\b/i,
+  /\b(?:mediocampistas?|volantes?)\b/i,
+  /\b(?:delanter[oa]s?|atacantes?)\b/i,
 ]
 
 const COACHES = [

@@ -175,7 +175,10 @@ function parseCountToken(token: string): number | null {
 /** Hockey position nouns Hockia AI counts by ("10 defenders") — a
  *  defender is a player, but the user names them by position. Singular
  *  and plural both accepted. */
-const POSITION_NOUNS = 'goalkeepers?|defenders?|midfielders?|forwards?|strikers?|attackers?'
+const POSITION_NOUNS =
+  'goalkeepers?|defenders?|midfielders?|forwards?|strikers?|attackers?' +
+  // Spanish position vocabulary (Argentine + general) — same canonical positions.
+  '|arquer[oa]s?|porter[oa]s?|guardavallas|defensor(?:es|as?)?|zaguer[oa]s?|mediocampistas?|volantes?|delanter[oa]s?|atacantes?'
 
 /**
  * Try to extract an explicit result count from the raw query.
@@ -232,6 +235,15 @@ const POSITION_TO_ROLE: Record<string, string> = {
   forward: 'forward', forwards: 'forward',
   striker: 'striker', strikers: 'striker',
   attacker: 'attacker', attackers: 'attacker',
+  // Spanish synonyms (Argentine + general) → canonical English position.
+  arquero: 'goalkeeper', arquera: 'goalkeeper', arqueros: 'goalkeeper', arqueras: 'goalkeeper',
+  portero: 'goalkeeper', portera: 'goalkeeper', porteros: 'goalkeeper', porteras: 'goalkeeper',
+  guardavallas: 'goalkeeper',
+  defensor: 'defender', defensora: 'defender', defensores: 'defender', defensoras: 'defender',
+  zaguero: 'defender', zaguera: 'defender', zagueros: 'defender', zagueras: 'defender',
+  mediocampista: 'midfielder', mediocampistas: 'midfielder', volante: 'midfielder', volantes: 'midfielder',
+  delantero: 'forward', delantera: 'forward', delanteros: 'forward', delanteras: 'forward',
+  atacante: 'forward', atacantes: 'forward',
 }
 
 /** Canonical role → [singular, plural] label. */
