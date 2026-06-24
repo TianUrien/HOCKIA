@@ -98,6 +98,43 @@ describe('computeRecruiterVerdict', () => {
     expect(r.caveats).toContain('Plays Adult Women — different from your team category.')
   })
 
+  it('grey fit from a POSITION mismatch (goalkeeper scope, midfielder) → never Excellent (the Arquera bug)', () => {
+    // The exact production bug: a strong-profile midfielder/defender read
+    // "Excellent" for a goalkeeper scope. clubFit now forces grey on a
+    // confirmed position mismatch; this proves the verdict caps it at
+    // "Possible" even with strong evidence + interest.
+    const r = computeRecruiterVerdict({
+      fit: fit('grey', { caveats: ['Primary position is Midfielder — not Goalkeeper.'] }),
+      evidence: evidence('strong', { reasons: ['Highlight video available.'] }),
+      interest: interest('strong', { positives: ['Open to relocating.'] }),
+      hasOpeningScope: true,
+    })
+    expect(r.tier).toBe('longshot')
+    expect(recruiterDisplayTier(r)).toBe('possible')
+    expect(DISPLAY_TIER_LABELS[recruiterDisplayTier(r)]).toBe('Possible')
+    expect(r.headline).not.toBe('Excellent')
+    expect(r.caveats).toContain('Primary position is Midfielder — not Goalkeeper.')
+  })
+
+  it('required position mismatch (must-have) → Out of scope, not just Possible', () => {
+    const r = computeRecruiterVerdict({
+      fit: {
+        isApplicable: true,
+        state: 'grey',
+        positives: [],
+        caveats: ['Primary position is Midfielder — not Goalkeeper.'],
+        hardFail: true,
+        hardFailReasons: ['Plays Midfielder, not the Goalkeeper you require.'],
+      },
+      evidence: evidence('strong'),
+      interest: interest('strong'),
+      hasOpeningScope: true,
+    })
+    expect(r.tier).toBe('pass')
+    expect(DISPLAY_TIER_LABELS[recruiterDisplayTier(r)]).toBe('Out of scope')
+    expect(r.caveats).toContain('Plays Midfielder, not the Goalkeeper you require.')
+  })
+
   it('mediocre fit + active mismatch → Likely pass, interest caveat listed first', () => {
     const r = computeRecruiterVerdict({
       fit: fit('yellow', { positives: ['Close on level.'], caveats: ['Different league level.'] }),

@@ -43,7 +43,7 @@ import type { Json } from '../_shared/database.types.ts'
 // Bump PROMPT_VERSION when the system prompt or output schema changes
 // in a way that should invalidate cached opinions. ai_opinions cache
 // keys include this — bumping forces a full regenerate next read.
-const PROMPT_VERSION = 'v1.9'
+const PROMPT_VERSION = 'v2.0'
 const MODEL = 'claude-sonnet-4-6'
 const VERDICT_MAX_CHARS = 280
 const QUOTA_PER_DAY = 50
@@ -428,6 +428,13 @@ async function resolveScope(
 //     gap. Also adds position_sought vs the player's position so the canonical
 //     "must-have goalkeeper" case can be narrated. New hash inputs invalidate
 //     the cache when a recruiter flips a criterion's hardness.
+//   v2.0 (position-mismatch trust fix): a CONFIRMED position mismatch (sought
+//     position set, player's primary on file, neither primary nor secondary
+//     plays it) is a fundamental role miss that caps the verdict to "possible"
+//     even when position is only nice-to-have — parity with the deterministic
+//     clubFit grey-force, so the AI prose can't narrate a strong/excellent fit
+//     for, e.g., a midfielder under a goalkeeper scope. Bumped to invalidate
+//     cached opinions written under the old soft-gap framing.
 const SYSTEM_PROMPT = `You are HOCKIA AI's recruitment opinion engine. You produce short, evidence-based verdicts on player↔club AND coach↔team fit for field-hockey recruiters.
 
 RULES (non-negotiable):
@@ -458,7 +465,7 @@ BAND CONVENTION: competition_level_band uses a 1–10 scale where LOWER numbers 
 You are given a deterministic Fit calculation. Treat it as ground truth. Your job is to translate the inputs into recruiter-readable language.
 
 OPPORTUNITY SCOPE (when opportunity_scope fields are present): the recruiter is hiring for a specific opening. Weigh these against the player:
-- position_sought (goalkeeper / defender / midfielder / forward): the position the opening seeks. The player fits when their position OR secondary_position matches; a different primary with no matching secondary is a position gap. HUMANIZE the value (goalkeeper → "goalkeeper"). Only weigh position when position_sought is present; a player with no position on file is a missing-info case, not a mismatch.
+- position_sought (goalkeeper / defender / midfielder / forward): the position the opening seeks. The player fits when their position OR secondary_position matches. A CONFIRMED position mismatch — their primary position is on file and NEITHER it nor their secondary plays the sought position — is a fundamental role miss, NOT a soft gap: position is core to recruitment, so even when position is only nice-to-have (not a must-have), such a player is AT MOST a "possible / worth a look" fit and must NEVER be led as a strong or excellent fit, however good their category / level / evidence / availability. A goalkeeper opening cannot read a midfielder as a strong match. HUMANIZE the value (goalkeeper → "goalkeeper"). Only weigh position when position_sought is present; a player with no position on file is a missing-info case, not a mismatch.
 - level_sought (elite > high_performance > competitive > development): the level the opening targets. Compare it to the player's PROVEN level (competition_level_band) FIRST.
 - compensation (paid / unpaid_development / either) vs the player's opportunity_preference (paid / development / either): an "either" on either side is compatible; a player who wants paid being shown an unpaid/development role is a real mismatch worth flagging.
 - location_country + start_date vs the player's relocation_willingness + available_from: logistics that can make or break a deal.

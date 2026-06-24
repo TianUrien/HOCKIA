@@ -498,7 +498,22 @@ export function computeClubFit(
   // candidate's league band happened to resolve. A MUST-HAVE hard fail
   // (Phase 3) likewise forces grey so the fit chip can't read "Strong fit"
   // while the verdict reads "Out of scope".
-  if (categoryMismatch || hardFail) state = 'grey'
+  //
+  // A CONFIRMED position mismatch is treated the same way: when the scope
+  // names a target position and the candidate's PRIMARY position is on file
+  // but neither it nor their secondary plays it (positionFit 0), that's a
+  // fundamental role miss for THIS scope — as disqualifying as a category
+  // mismatch. Without this, position is only a soft 25% signal, so a strong
+  // profile (good evidence + eager + right category) could still read
+  // "Excellent" for a goalkeeper scope on a midfielder — the exact trust bug
+  // this guards against. The grey state caps the recruiter verdict at
+  // "Possible" (never Excellent/Good); marking the position MUST-HAVE
+  // escalates the same mismatch to "Out of scope" via hardFail above.
+  // Honest-absence (no position on file) stays neutral, and a secondary-
+  // position match (positionFit 0.5) is a partial fit — neither is grey-forced.
+  const positionMismatch =
+    hasTargetPosition && Boolean(candidate.position) && positionFit === 0
+  if (categoryMismatch || hardFail || positionMismatch) state = 'grey'
 
   return {
     isApplicable: true,

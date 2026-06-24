@@ -798,12 +798,23 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
               secondary_position: m.secondary_position ?? null,
               specialist_skills: m.specialist_skills ?? null,
             }, fitOptions)
-            // A must-have hard fail (e.g. not the required position/specialism)
-            // forces "Out of scope" on the card but leaves the soft score high
-            // (gender/league/availability still count). Floor it so the ranking
-            // can't float a hard-failed candidate above in-scope ones — keeping
-            // the grid order consistent with its own verdict card.
-            score = fit.hardFail ? -1 : fit.score
+            // A must-have hard fail OR a confirmed soft mismatch (wrong
+            // position/category) forces grey — "Out of scope" / "Lower fit" on
+            // the card — but leaves the soft score high (gender/league/
+            // availability still count). Demote BOTH so the ranking can't float
+            // a doesn't-fit candidate above genuine in-scope ones: a hard fail to
+            // the floor, a soft grey just below every non-grey fit. Keeps the
+            // grid order consistent with its own verdict card (which caps a grey
+            // fit at "Possible"). Without the grey demotion, the exact Arquera
+            // bug recurs in the RANKING: a "Possible" wrong-position midfielder
+            // (soft score still ~0.75) out-ranks the real goalkeeper the
+            // recruiter wants. NOT_APPLICABLE (no signal, score 0) is left as-is —
+            // only a CONFIRMED applicable mismatch is demoted.
+            score = fit.hardFail
+              ? -1
+              : fit.isApplicable && fit.state === 'grey'
+                ? fit.score - 1
+                : fit.score
           }
           return { m, score }
         })

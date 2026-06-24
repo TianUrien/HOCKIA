@@ -405,6 +405,58 @@ describe('computeClubFit', () => {
     })
   })
 
+  // ── Confirmed position mismatch forces grey (recruiter-trust fix) ──
+  // The Arquera/Goalkeeper bug: a midfielder/defender read "Excellent" for a
+  // goalkeeper scope because position was only a soft 25% signal. A CONFIRMED
+  // mismatch (primary position on file, neither it nor the secondary plays the
+  // sought position) is now a disqualifier — state grey — so the recruiter
+  // verdict can never read Excellent/Good. Honest-absence + secondary matches
+  // are deliberately NOT grey-forced. Mirrors the category-mismatch rule.
+  describe('confirmed position mismatch → grey (trust fix)', () => {
+    // A strong-profile candidate (open, active, right category) that WITHOUT
+    // the fix lands yellow (0.45) under a position scope — proving the fix flips
+    // it to grey rather than the candidate being grey for other reasons.
+    const mid = { ...baseFemalePlayer, position: 'midfielder', secondary_position: 'defender' }
+
+    it('goalkeeper scope + midfielder/defender (NOT required) → state grey, named caveat, no hardFail', () => {
+      const r = computeClubFit(womensClub, mid, { overrideTarget: 'Women', targetPosition: 'goalkeeper' })
+      expect(r.components.position_match).toBe(0)
+      expect(r.state).toBe('grey') // was 'yellow' before the fix → the "Excellent" bug
+      expect(r.hardFail).toBeFalsy() // soft disqualifier (grey), not a must-have "Out of scope"
+      expect(r.caveats.some((c) => /not Goalkeeper/i.test(c))).toBe(true)
+    })
+
+    it('goalkeeper scope + actual goalkeeper → NOT grey-forced (full match holds)', () => {
+      const keeper = { ...baseFemalePlayer, position: 'goalkeeper', secondary_position: null }
+      const r = computeClubFit(womensClub, keeper, { overrideTarget: 'Women', targetPosition: 'goalkeeper' })
+      expect(r.components.position_match).toBe(1)
+      expect(r.state).not.toBe('grey')
+    })
+
+    it('midfielder scope + midfielder/defender → NOT grey (primary matches)', () => {
+      const r = computeClubFit(womensClub, mid, { overrideTarget: 'Women', targetPosition: 'midfielder' })
+      expect(r.components.position_match).toBe(1)
+      expect(r.state).not.toBe('grey')
+    })
+
+    it('defender scope + midfielder/defender → NOT grey (secondary is a partial fit)', () => {
+      const r = computeClubFit(womensClub, mid, { overrideTarget: 'Women', targetPosition: 'defender' })
+      expect(r.components.position_match).toBe(0.5)
+      expect(r.state).not.toBe('grey')
+    })
+
+    it('honest absence (no position on file) → neutral, NOT grey-forced', () => {
+      const noPos = { ...baseFemalePlayer, position: null, secondary_position: null }
+      const r = computeClubFit(womensClub, noPos, { overrideTarget: 'Women', targetPosition: 'goalkeeper' })
+      expect(r.state).not.toBe('grey') // missing info never buries a profile
+    })
+
+    it('no target position on the scope → mismatch logic inert (unchanged)', () => {
+      const r = computeClubFit(womensClub, mid, { overrideTarget: 'Women' })
+      expect(r.state).not.toBe('grey')
+    })
+  })
+
   describe('specialist match (Phase 3.2) — folded into position_match', () => {
     const holder = { ...baseFemalePlayer, id: 'h', specialist_skills: ['drag_flicker', 'playmaker'] }
     const nonHolder = { ...baseFemalePlayer, id: 'n', specialist_skills: ['indoor'] }
