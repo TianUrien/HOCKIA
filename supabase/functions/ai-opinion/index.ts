@@ -43,7 +43,7 @@ import type { Json } from '../_shared/database.types.ts'
 // Bump PROMPT_VERSION when the system prompt or output schema changes
 // in a way that should invalidate cached opinions. ai_opinions cache
 // keys include this — bumping forces a full regenerate next read.
-const PROMPT_VERSION = 'v2.0'
+const PROMPT_VERSION = 'v2.1'
 const MODEL = 'claude-sonnet-4-6'
 const VERDICT_MAX_CHARS = 280
 const QUOTA_PER_DAY = 50
@@ -435,6 +435,12 @@ async function resolveScope(
 //     clubFit grey-force, so the AI prose can't narrate a strong/excellent fit
 //     for, e.g., a midfielder under a goalkeeper scope. Bumped to invalidate
 //     cached opinions written under the old soft-gap framing.
+//   v2.1 (goalkeeper specialist rule): a goalkeeper scope is treated as
+//     implicitly position-required — 'position' is injected into
+//     must_have_criteria when scope_target_position='goalkeeper', so a confirmed
+//     non-goalkeeper reads "out of scope" (not just "possible"), parity with the
+//     clubFit implicit-required rule. Outfield scopes unchanged. Bumped to
+//     invalidate cached goalkeeper-scope opinions.
 const SYSTEM_PROMPT = `You are HOCKIA AI's recruitment opinion engine. You produce short, evidence-based verdicts on player↔club AND coach↔team fit for field-hockey recruiters.
 
 RULES (non-negotiable):
@@ -533,7 +539,12 @@ function buildUserPrompt(viewer: ProfileRow, player: ProfileRow, fit: FitContext
   // Phase 3d — the criteria the recruiter marked MUST-HAVE (only the true
   // ones, so the LLM sees a focused "these are required" list).
   const mustHaveCriteria: string[] = []
-  if (fit.scope_position_required) mustHaveCriteria.push('position')
+  // Goalkeeper is a SPECIALIST position — treat it as implicitly position-
+  // required so a confirmed non-goalkeeper reads "out of scope" in the prose,
+  // parity with the deterministic clubFit rule (even when the recruiter didn't
+  // formally mark position must-have). Outfield positions stay flexible.
+  const goalkeeperScope = (fit.scope_target_position ?? '').trim().toLowerCase() === 'goalkeeper'
+  if (fit.scope_position_required || goalkeeperScope) mustHaveCriteria.push('position')
   if (fit.scope_level_required) mustHaveCriteria.push('level')
   if (fit.scope_compensation_required) mustHaveCriteria.push('compensation')
   if (fit.scope_location_required) mustHaveCriteria.push('location')

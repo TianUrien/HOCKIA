@@ -441,10 +441,28 @@ export function computeClubFit(
   // neutral — never fails — so honest-absence profiles aren't buried.
   //   position:    primary position is set AND doesn't match (positionFit 0).
   //   specialists: the player lists skills but holds NONE of those sought.
+  //
+  // GOALKEEPER is a SPECIALIST position. Unlike outfield positions — a
+  // midfielder can cover defender, a forward can adapt — a confirmed non-
+  // goalkeeper is not a realistic goalkeeper. So a goalkeeper scope treats
+  // position as IMPLICITLY required: a confirmed mismatch hard-fails to "Out of
+  // scope" even when the recruiter never marked position must-have. Outfield
+  // scopes stay flexible (a confirmed mismatch is grey/"Possible", not out of
+  // scope) unless the recruiter explicitly requires the position. A secondary-
+  // position goalkeeper (positionFit 0.5) is NOT failed, and a player with no
+  // position on file stays neutral (honest-absence), never out of scope.
+  // target_position is the canonical 'goalkeeper' enum here (the GK/Spanish
+  // synonyms — arquero/arquera/portero/guardavallas — are normalised to it
+  // upstream), so an exact compare is correct.
+  const isGoalkeeperScope =
+    hasTargetPosition && options!.targetPosition!.trim().toLowerCase() === 'goalkeeper'
+  const positionRequiredEffective = Boolean(options?.positionRequired) || isGoalkeeperScope
   const hardFailReasons: string[] = []
-  if (options?.positionRequired && hasTargetPosition && Boolean(candidate.position) && positionFit === 0) {
+  if (positionRequiredEffective && hasTargetPosition && Boolean(candidate.position) && positionFit === 0) {
     hardFailReasons.push(
-      `Plays ${humanizePosition(candidate.position!)}, not the ${humanizePosition(options.targetPosition!)} you require.`,
+      isGoalkeeperScope && !options?.positionRequired
+        ? `Plays ${humanizePosition(candidate.position!)} — not a goalkeeper. Goalkeeper is a specialist position, so this isn't a position fit.`
+        : `Plays ${humanizePosition(candidate.position!)}, not the ${humanizePosition(options!.targetPosition!)} you require.`,
     )
   }
   if (

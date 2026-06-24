@@ -446,7 +446,14 @@ export function TopCommunityMembersCarousel({
   const displayMembers = useMemo(() => {
     if (!showEvidence || verdictById.size === 0) return members
     const inScope = (v: RecruiterVerdict | undefined) => Boolean(v && (v.tier === 'pursue' || v.tier === 'consider'))
+    // Out-of-scope candidates (tier 'pass' — a must-have hard fail, or a
+    // confirmed non-goalkeeper for a goalkeeper scope) are EXCLUDED from the
+    // scoped "top candidates" rail entirely, not merely demoted: a non-keeper
+    // must never be presented as a top candidate for a goalkeeper search. Soft
+    // near-misses (longshot / "Possible") still fill slots. If the filter empties
+    // the rail, the render shows an explicit "no exact matches" state below.
     return [...members]
+      .filter((m) => verdictById.get(m.id)?.tier !== 'pass')
       .sort((a, b) => {
         const va = verdictById.get(a.id)
         const vb = verdictById.get(b.id)
@@ -630,6 +637,17 @@ export function TopCommunityMembersCarousel({
       ) : error ? (
         <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50/60 p-4 text-center">
           <p className="text-sm text-gray-500">{error}</p>
+        </div>
+      ) : displayMembers.length === 0 ? (
+        // Scoped rail with every candidate out of scope — show an honest empty
+        // state rather than misleading fillers. (For a goalkeeper scope this is
+        // the "non-keepers excluded, no real keepers" case.)
+        <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50/60 p-4 text-center">
+          <p className="text-sm text-gray-500">
+            {contextTargetPosition === 'goalkeeper'
+              ? 'No exact goalkeeper matches found in your community yet.'
+              : 'No in-scope candidates found for this search yet.'}
+          </p>
         </div>
       ) : (
         <div

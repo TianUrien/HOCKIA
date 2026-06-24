@@ -418,12 +418,15 @@ describe('computeClubFit', () => {
     // it to grey rather than the candidate being grey for other reasons.
     const mid = { ...baseFemalePlayer, position: 'midfielder', secondary_position: 'defender' }
 
-    it('goalkeeper scope + midfielder/defender (NOT required) → state grey, named caveat, no hardFail', () => {
-      const r = computeClubFit(womensClub, mid, { overrideTarget: 'Women', targetPosition: 'goalkeeper' })
+    // Outfield example: a confirmed mismatch is a SOFT grey ("Possible"), not a
+    // hard fail. (Goalkeeper is intentionally stricter — see the specialist-rule
+    // block below — so an OUTFIELD scope is used here.)
+    it('forward scope + midfielder/defender (NOT required) → state grey, named caveat, no hardFail', () => {
+      const r = computeClubFit(womensClub, mid, { overrideTarget: 'Women', targetPosition: 'forward' })
       expect(r.components.position_match).toBe(0)
-      expect(r.state).toBe('grey') // was 'yellow' before the fix → the "Excellent" bug
-      expect(r.hardFail).toBeFalsy() // soft disqualifier (grey), not a must-have "Out of scope"
-      expect(r.caveats.some((c) => /not Goalkeeper/i.test(c))).toBe(true)
+      expect(r.state).toBe('grey') // confirmed mismatch → "Possible", was 'yellow'/Excellent before
+      expect(r.hardFail).toBeFalsy() // outfield soft disqualifier (grey), not "Out of scope"
+      expect(r.caveats.some((c) => /not Forward/i.test(c))).toBe(true)
     })
 
     it('goalkeeper scope + actual goalkeeper → NOT grey-forced (full match holds)', () => {
@@ -454,6 +457,68 @@ describe('computeClubFit', () => {
     it('no target position on the scope → mismatch logic inert (unchanged)', () => {
       const r = computeClubFit(womensClub, mid, { overrideTarget: 'Women' })
       expect(r.state).not.toBe('grey')
+    })
+  })
+
+  // ── Goalkeeper specialist rule — implicit position-required ────────
+  // Goalkeeper is a specialist position: a confirmed non-goalkeeper is "Out of
+  // scope" (hardFail → verdict "Out of scope") for a goalkeeper scope even when
+  // position is NOT a marked must-have. Outfield scopes stay flexible (soft
+  // "Possible"). A secondary-keeper + honest-absence are never failed.
+  describe('goalkeeper specialist rule (implicit position-required)', () => {
+    const gkSoft = { overrideTarget: 'Women' as const, targetPosition: 'goalkeeper' } // positionRequired NOT set
+    const midDef = { ...baseFemalePlayer, position: 'midfielder', secondary_position: 'defender' }
+
+    it('Case 1: goalkeeper scope + midfielder/defender → Out of scope (hardFail), not just Possible', () => {
+      const r = computeClubFit(womensClub, midDef, gkSoft)
+      expect(r.hardFail).toBe(true)
+      expect(r.state).toBe('grey')
+      expect(r.hardFailReasons?.[0]).toMatch(/specialist position/i)
+    })
+
+    it('Case 2: goalkeeper scope + goalkeeper PRIMARY → valid (no hardFail, full match)', () => {
+      const keeper = { ...baseFemalePlayer, position: 'goalkeeper', secondary_position: null }
+      const r = computeClubFit(womensClub, keeper, gkSoft)
+      expect(r.hardFail).toBeFalsy()
+      expect(r.components.position_match).toBe(1)
+      expect(r.state).not.toBe('grey')
+    })
+
+    it('Case 3: goalkeeper scope + goalkeeper SECONDARY → valid/partial (no hardFail)', () => {
+      const secondaryKeeper = { ...baseFemalePlayer, position: 'defender', secondary_position: 'goalkeeper' }
+      const r = computeClubFit(womensClub, secondaryKeeper, gkSoft)
+      expect(r.hardFail).toBeFalsy()
+      expect(r.components.position_match).toBe(0.5)
+      expect(r.state).not.toBe('grey')
+    })
+
+    it('honest absence (no position) under a goalkeeper scope → neutral, NOT out of scope', () => {
+      const noPos = { ...baseFemalePlayer, position: null, secondary_position: null }
+      const r = computeClubFit(womensClub, noPos, gkSoft)
+      expect(r.hardFail).toBeFalsy()
+    })
+
+    it('Case 4: DEFENDER scope + midfielder/defender → flexible match (secondary), not out of scope', () => {
+      const r = computeClubFit(womensClub, midDef, { overrideTarget: 'Women', targetPosition: 'defender' })
+      expect(r.hardFail).toBeFalsy()
+      expect(r.components.position_match).toBe(0.5)
+    })
+
+    it('Case 5: MIDFIELDER scope + midfielder/defender → valid (primary match)', () => {
+      const r = computeClubFit(womensClub, midDef, { overrideTarget: 'Women', targetPosition: 'midfielder' })
+      expect(r.hardFail).toBeFalsy()
+      expect(r.components.position_match).toBe(1)
+    })
+
+    it('outfield stays flexible: FORWARD scope + midfielder/defender → soft "Possible" (grey), NOT out of scope', () => {
+      const r = computeClubFit(womensClub, midDef, { overrideTarget: 'Women', targetPosition: 'forward' })
+      expect(r.hardFail).toBeFalsy() // outfield → never implicitly required
+      expect(r.state).toBe('grey') // still a confirmed mismatch → "Possible"
+    })
+
+    it('an explicit positionRequired on an OUTFIELD scope still hard-fails (unchanged)', () => {
+      const r = computeClubFit(womensClub, midDef, { overrideTarget: 'Women', targetPosition: 'forward', positionRequired: true })
+      expect(r.hardFail).toBe(true)
     })
   })
 
@@ -523,11 +588,12 @@ describe('computeClubFit', () => {
       expect(r.hardFail).toBeFalsy()
     })
 
-    it('position mismatch is SOFT (no hard fail) unless positionRequired is set', () => {
+    it('an OUTFIELD position mismatch is SOFT (no hard fail) unless positionRequired is set', () => {
+      // Goalkeeper is the exception (implicit must-have); use an outfield scope here.
       const r = computeClubFit(
         womensClub,
-        { ...baseFemalePlayer, position: 'midfielder' },
-        { overrideTarget: 'Women', targetPosition: 'goalkeeper' },
+        { ...baseFemalePlayer, position: 'midfielder', secondary_position: null },
+        { overrideTarget: 'Women', targetPosition: 'forward' },
       )
       expect(r.hardFail).toBeFalsy()
     })
