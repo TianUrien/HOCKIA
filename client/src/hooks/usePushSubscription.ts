@@ -3,7 +3,6 @@ import { Capacitor } from '@capacitor/core'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
-import { detectPlatform } from '@/lib/detectPlatform'
 
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined
 
@@ -162,7 +161,10 @@ export function usePushSubscription() {
           await regHandle.remove()
           await errHandle.remove()
         }
-        const platform = detectPlatform()
+        // Authoritative native platform ('ios' | 'android') — the send-push
+        // backend routes on this (ios → APNs, android → FCM). Capacitor's value
+        // is reliable; the UA can misreport (e.g. iPad reporting as a Mac).
+        const platform = Capacitor.getPlatform()
 
         // Upsert FCM token to database
         // Cast needed because fcm_token/platform columns are added via migration
