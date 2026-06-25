@@ -46,4 +46,20 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         return ApplicationDelegateProxy.shared.application(application, continue: userActivity, restorationHandler: restorationHandler)
     }
 
+    // MARK: - Push Notifications (APNs)
+    // REQUIRED by @capacitor/push-notifications. iOS delivers the APNs device
+    // token to these AppDelegate callbacks; we forward them to Capacitor, which
+    // then fires the JS 'registration' / 'registrationError' events. WITHOUT
+    // these, register() succeeds natively but the token NEVER reaches JavaScript —
+    // the Settings toggle hangs on "loading" and no token is ever saved. Their
+    // absence is why 0 native push tokens were registered across every prior
+    // build (1.3.0–1.3.3), regardless of the JS-side fixes.
+    func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        NotificationCenter.default.post(name: .capacitorDidRegisterForRemoteNotifications, object: deviceToken)
+    }
+
+    func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+        NotificationCenter.default.post(name: .capacitorDidFailToRegisterForRemoteNotifications, object: error)
+    }
+
 }
