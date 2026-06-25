@@ -36,6 +36,11 @@ const hasVapid = !!(VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY)
 const hasFcm = isFcmConfigured()
 const hasApns = isApnsConfigured()
 
+// Cold-start diagnostic — the APNs path had never executed in prod, so this
+// proves hasApns=true in the RUNNING function env (not just that the secret
+// exists in the store). Logged once per cold start; cheap and safe to keep.
+console.log(`[send-push] providers: vapid=${hasVapid} fcm=${hasFcm} apns=${hasApns}`)
+
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
