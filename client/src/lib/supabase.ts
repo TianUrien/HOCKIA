@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { Capacitor } from '@capacitor/core'
 import type { Database } from './database.types'
 
 // Get environment variables – prefer process.env to align with shared config, fall back to Vite env entries
@@ -42,6 +43,27 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     storageKey: AUTH_STORAGE_KEY,
   }
 })
+
+// ── Native session keep-alive ──────────────────────────────────────────────
+// In an iOS/Android Capacitor WKWebView, JS timers are suspended while the app
+// is backgrounded, so supabase-js's autoRefreshToken ticker stops and the
+// access-token can expire. The next authenticated call (e.g. the HOCKIA AI
+// nl-search edge function) then sends a STALE token and gets a 401 ("I had
+// trouble connecting"). Tie token refresh to native app state — refresh while
+// foregrounded, stop while backgrounded — so the token is fresh whenever the
+// user acts. Web is unaffected (supabase-js's visibilitychange handling fires
+// normally there). The 401-retry in useDiscover covers the just-resumed race.
+if (Capacitor.isNativePlatform()) {
+  void supabase.auth.startAutoRefresh()
+  void import('@capacitor/app')
+    .then(({ App }) => {
+      void App.addListener('appStateChange', ({ isActive }) => {
+        if (isActive) void supabase.auth.startAutoRefresh()
+        else void supabase.auth.stopAutoRefresh()
+      })
+    })
+    .catch(() => { /* @capacitor/app unavailable — the timer-based refresh still runs */ })
+}
 
 export const SUPABASE_URL = supabaseUrl
 export const SUPABASE_ANON_KEY = supabaseAnonKey

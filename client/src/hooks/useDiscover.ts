@@ -4,6 +4,22 @@ import { logger } from '@/lib/logger'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
 import { useAuthStore } from '@/lib/auth'
 
+/** Invoke nl-search, refreshing the session ONCE on a 401 then retrying. A native
+ *  Capacitor session can go stale after the app is backgrounded (the refresh
+ *  timer is suspended), so the first call may send an expired token and the edge
+ *  function's getUser() returns 401. Refreshing + retrying self-heals it instead
+ *  of surfacing "I had trouble connecting". A genuinely dead session (refresh
+ *  throws) falls through to the normal error path. */
+async function invokeNlSearch(body: Record<string, unknown>) {
+  let res = await supabase.functions.invoke('nl-search', { body })
+  const status = (res.error as { context?: Response } | null)?.context?.status
+  if (res.error && status === 401) {
+    await supabase.auth.refreshSession().catch(() => { /* dead session → retry 401s → normal error path */ })
+    res = await supabase.functions.invoke('nl-search', { body })
+  }
+  return res
+}
+
 export interface DiscoverResult {
   id: string
   full_name: string | null
@@ -331,9 +347,7 @@ export const useDiscoverChat = create<DiscoverChatStore>((set, get) => ({
 
     try {
       const excludedIds = collectShownProfileIds(get().messages)
-      const { data, error } = await supabase.functions.invoke('nl-search', {
-        body: { query: trimmed, history, recovery_context: recoveryContext, excluded_ids: excludedIds },
-      })
+      const { data, error } = await invokeNlSearch({ query: trimmed, history, recovery_context: recoveryContext, excluded_ids: excludedIds })
 
       if (error) {
         let serverMessage = ''
@@ -447,14 +461,12 @@ export const useDiscoverChat = create<DiscoverChatStore>((set, get) => ({
 
     const excludedIds = collectShownProfileIds(get().messages)
     try {
-      const { data, error } = await supabase.functions.invoke('nl-search', {
-        body: {
-          query: msg.search_query,
-          history,
-          recovery_context: { user_role: userRole },
-          offset,
-          excluded_ids: excludedIds,
-        },
+      const { data, error } = await invokeNlSearch({
+        query: msg.search_query,
+        history,
+        recovery_context: { user_role: userRole },
+        offset,
+        excluded_ids: excludedIds,
       })
       if (error) throw new Error(error.message || 'Failed to load more results')
 
