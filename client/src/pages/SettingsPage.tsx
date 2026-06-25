@@ -28,6 +28,7 @@ import BlockedAccountsList from '@/components/BlockedAccountsList'
 import StagingQaResetCard from '@/components/StagingQaResetCard'
 import AboutAppCard from '@/components/AboutAppCard'
 import { usePushSubscription } from '@/hooks/usePushSubscription'
+import { useToastStore } from '@/lib/toast'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { trackPushSubscribe, trackPushUnsubscribe } from '@/lib/analytics'
 
@@ -77,6 +78,7 @@ export default function SettingsPage() {
 
   // Push notification subscription
   const push = usePushSubscription()
+  const { addToast } = useToastStore()
 
   // Sign out loading state
   const [signOutLoading, setSignOutLoading] = useState(false)
@@ -253,7 +255,14 @@ export default function SettingsPage() {
       setNotificationSuccess(true)
       setTimeout(() => setNotificationSuccess(false), 3000)
     } catch (error) {
+      // Surface a clear error instead of leaving the toggle silently reverted —
+      // the toggle's own `loading` always resets (finally in subscribe/unsubscribe),
+      // so it never stays stuck, but the user still deserves to know it failed.
       logger.error('Failed to toggle push notifications:', error)
+      addToast(
+        "Couldn't update push notifications. Please try again — if it keeps failing, check Notifications for HOCKIA in your iOS Settings.",
+        'error',
+      )
     }
   }
 
