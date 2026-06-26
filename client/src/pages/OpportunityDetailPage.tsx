@@ -45,6 +45,7 @@ export default function OpportunityDetailPage() {
   const [worldClub, setWorldClub] = useState<{ id: string; clubName: string; avatarUrl: string | null; countryName: string | null; flagEmoji: string | null; leagueName: string | null } | null>(null)
   const [hasApplied, setHasApplied] = useState(false)
   const [applicationStatus, setApplicationStatus] = useState<string | null>(null)
+  const [applicationId, setApplicationId] = useState<string | null>(null)
   const [showApplyModal, setShowApplyModal] = useState(false)
   const [showSignInPrompt, setShowSignInPrompt] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
@@ -177,6 +178,7 @@ export default function OpportunityDetailPage() {
 
         setHasApplied(!!applicationData)
         setApplicationStatus((applicationData as { status?: string } | null)?.status ?? null)
+        setApplicationId((applicationData as { id?: string } | null)?.id ?? null)
       }
     } catch (error) {
       logger.error('Error fetching opportunity details:', error)
@@ -279,6 +281,7 @@ export default function OpportunityDetailPage() {
 
     setHasApplied(!!data)
     setApplicationStatus((data as { status?: string } | null)?.status ?? null)
+    setApplicationId((data as { id?: string } | null)?.id ?? null)
   }
 
   if (isLoading) {
@@ -400,6 +403,7 @@ export default function OpportunityDetailPage() {
             onApply={canShowApplyButton ? handleApplyClick : undefined}
             hasApplied={hasApplied}
             applicationStatus={applicationStatus}
+            applicationId={applicationId}
           />
         </div>
       </div>
