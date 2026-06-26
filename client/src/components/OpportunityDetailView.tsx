@@ -13,6 +13,7 @@ import { useAuthStore } from '@/lib/auth'
 import { useCountries } from '@/hooks/useCountries'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import { checkOpportunityEligibility, opportunityMustHaveWarnings } from '@/lib/opportunityEligibility'
+import { playerApplicationStatusBadge } from '@/lib/applicationStatus'
 
 interface VacancyDetailViewProps {
   vacancy: Vacancy
@@ -26,6 +27,10 @@ interface VacancyDetailViewProps {
   onClose: () => void
   onApply?: () => void
   hasApplied?: boolean
+  /** The viewing player's OWN application status (shortlisted/maybe/rejected).
+   *  Renders a clear, human badge under "Application Submitted"; pending/unknown
+   *  shows no badge (the submitted pill already conveys it). */
+  applicationStatus?: string | null
   hideClubProfileButton?: boolean
 }
 
@@ -78,6 +83,7 @@ export default function VacancyDetailView({
   onClose,
   onApply,
   hasApplied = false,
+  applicationStatus = null,
   hideClubProfileButton = false,
 }: VacancyDetailViewProps) {
   const navigate = useNavigate()
@@ -487,9 +493,19 @@ export default function VacancyDetailView({
                   View applicants
                 </Button>
               ) : hasApplied ? (
-                <div className="flex-1 flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl font-semibold text-sm border border-[#8026FA]/15 bg-[#8026FA]/5 text-[#8026FA]">
-                  <CheckCircle className="w-4 h-4" />
-                  Application Submitted
+                <div className="flex-1 flex flex-col items-center justify-center gap-1.5 px-4 py-3 rounded-xl border border-[#8026FA]/15 bg-[#8026FA]/5">
+                  <div className="flex items-center gap-2 font-semibold text-sm text-[#8026FA]">
+                    <CheckCircle className="w-4 h-4" />
+                    Application Submitted
+                  </div>
+                  {(() => {
+                    const badge = playerApplicationStatusBadge(applicationStatus)
+                    return badge ? (
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${badge.className}`}>
+                        {badge.label}
+                      </span>
+                    ) : null
+                  })()}
                 </div>
               ) : onApply && !eligibility.eligible ? (
                 // Ineligible — the opportunity stays fully readable, but

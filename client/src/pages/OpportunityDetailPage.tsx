@@ -44,6 +44,7 @@ export default function OpportunityDetailPage() {
   const [club, setClub] = useState<{ id: string; full_name: string | null; avatar_url: string | null; role: string | null; current_club: string | null; womens_league_division: string | null; mens_league_division: string | null } | null>(null)
   const [worldClub, setWorldClub] = useState<{ id: string; clubName: string; avatarUrl: string | null; countryName: string | null; flagEmoji: string | null; leagueName: string | null } | null>(null)
   const [hasApplied, setHasApplied] = useState(false)
+  const [applicationStatus, setApplicationStatus] = useState<string | null>(null)
   const [showApplyModal, setShowApplyModal] = useState(false)
   const [showSignInPrompt, setShowSignInPrompt] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
@@ -169,12 +170,13 @@ export default function OpportunityDetailPage() {
       if (user && (profile?.role === 'player' || profile?.role === 'coach')) {
         const { data: applicationData } = await supabase
           .from('opportunity_applications')
-          .select('id')
+          .select('id, status')
           .eq('opportunity_id', id)
           .eq('applicant_id', user.id)
           .maybeSingle()
 
         setHasApplied(!!applicationData)
+        setApplicationStatus((applicationData as { status?: string } | null)?.status ?? null)
       }
     } catch (error) {
       logger.error('Error fetching opportunity details:', error)
@@ -270,12 +272,13 @@ export default function OpportunityDetailPage() {
 
     const { data } = await supabase
       .from('opportunity_applications')
-      .select('id')
+      .select('id, status')
       .eq('opportunity_id', id)
       .eq('applicant_id', user.id)
       .maybeSingle()
 
     setHasApplied(!!data)
+    setApplicationStatus((data as { status?: string } | null)?.status ?? null)
   }
 
   if (isLoading) {
@@ -396,6 +399,7 @@ export default function OpportunityDetailPage() {
             onClose={handleClose}
             onApply={canShowApplyButton ? handleApplyClick : undefined}
             hasApplied={hasApplied}
+            applicationStatus={applicationStatus}
           />
         </div>
       </div>

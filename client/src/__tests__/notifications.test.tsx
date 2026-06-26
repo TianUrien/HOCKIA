@@ -305,13 +305,19 @@ describe('getNotificationConfig', () => {
     expect(config.getRoute?.(notification)).toBe('/dashboard/opportunities/opp-2/applicants')
   })
 
-  it('returns vacancy_application_status config with status', () => {
-    const notification = createNotification({
-      kind: 'vacancy_application_status',
-      metadata: { status: 'accepted', vacancy_title: 'Defender' },
-    })
-    const config = getNotificationConfig(notification)
-    expect(config.getTitle(notification)).toBe('Application accepted')
+  it('returns vacancy_application_status config with human, club-named copy (no raw enum)', () => {
+    const meta = { club_name: 'CASI', vacancy_title: 'Arquera — Club Atlético de San Isidro (CASI)' }
+    const maybe = createNotification({ kind: 'vacancy_application_status', metadata: { ...meta, status: 'maybe' } })
+    const mc = getNotificationConfig(maybe)
+    expect(mc.getTitle(maybe)).toBe('CASI reviewed your application')
+    expect(mc.getDescription?.(maybe)).toBe('Your application for Arquera is under consideration.')
+    expect(mc.getTitle(maybe)).not.toContain('maybe') // no raw enum value leaks
+
+    const shortlisted = createNotification({ kind: 'vacancy_application_status', metadata: { ...meta, status: 'shortlisted' } })
+    expect(getNotificationConfig(shortlisted).getTitle(shortlisted)).toBe('CASI shortlisted you')
+
+    const rejected = createNotification({ kind: 'vacancy_application_status', metadata: { ...meta, status: 'rejected' } })
+    expect(getNotificationConfig(rejected).getTitle(rejected)).toBe('CASI updated your application')
   })
 
   // Routing contracts for the post-References/Friends-split notification
