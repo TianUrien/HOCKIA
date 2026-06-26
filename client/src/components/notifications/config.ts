@@ -39,6 +39,29 @@ const getMetadataString = (notification: NotificationRecord, key: string): strin
   return typeof value === 'string' ? value : null
 }
 
+/** Human, player-facing copy for an application status update. The raw enum
+ *  status (shortlisted / maybe / rejected) was leaking into the UI as
+ *  "Application maybe"; this maps it to clear product language naming the club
+ *  and the opportunity. MIRRORED in supabase/functions/send-push/push-payload.ts
+ *  (the push body) — keep both in sync. */
+const applicationStatusCopy = (notification: NotificationRecord): { title: string; body: string } => {
+  const status = getMetadataString(notification, 'status')
+  const club = getMetadataString(notification, 'club_name') ?? 'The club'
+  const vacancyTitle = getMetadataString(notification, 'vacancy_title')
+  // Opportunity titles follow "Position — Club"; lead with just the position.
+  const position = vacancyTitle ? vacancyTitle.split(/\s+[—–-]\s+/)[0].trim() : 'the opportunity'
+  switch (status) {
+    case 'shortlisted':
+      return { title: `${club} shortlisted you`, body: `You're being considered for ${position}.` }
+    case 'maybe':
+      return { title: `${club} reviewed your application`, body: `Your application for ${position} is under consideration.` }
+    case 'rejected':
+      return { title: `${club} updated your application`, body: `You weren't selected for ${position} this time.` }
+    default:
+      return { title: `${club} updated your application`, body: `Your application for ${position} was updated.` }
+  }
+}
+
 const commentRoute = '/dashboard/profile?tab=comments'
 const friendsRoute = '/dashboard/profile?tab=friends'
 // `section=incoming` deep-links to the Incoming Requests block on the
@@ -225,16 +248,8 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
     icon: ClipboardCheck,
     badgeText: 'Application update',
     accentClassName: 'bg-purple-50 text-purple-600',
-    getTitle: (notification) => {
-      const status = getMetadataString(notification, 'status')
-      return status ? `Application ${status}` : 'Application updated'
-    },
-    getDescription: (notification) => {
-      const club = getMetadataString(notification, 'club_name')
-      const title = getMetadataString(notification, 'vacancy_title')
-      if (club && title) return `${club} — ${title}`
-      return club ?? title
-    },
+    getTitle: (notification) => applicationStatusCopy(notification).title,
+    getDescription: (notification) => applicationStatusCopy(notification).body,
     // Recipient is the applicant, not the club, so route to the public
     // opportunity detail page (the applicant's view) — not the club's
     // applicants list. The previous opportunityApplicantsRoute would

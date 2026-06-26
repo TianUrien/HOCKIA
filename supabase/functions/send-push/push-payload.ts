@@ -205,14 +205,36 @@ export function buildPushPayload(
     }
     case 'vacancy_application_status': {
       const status = getString(metadata, 'status')
+      const club = getString(metadata, 'club_name') ?? 'The club'
       const vacancyTitle = getString(metadata, 'vacancy_title')
       const opportunityId = getString(metadata, 'opportunity_id')
+      // Opportunity titles follow "Position — Club"; lead with just the position.
+      const position = vacancyTitle ? vacancyTitle.split(/\s+[—–-]\s+/)[0].trim() : 'the opportunity'
+      // Human, player-facing copy — MIRRORS client config.ts applicationStatusCopy.
+      let title: string
+      let body: string
+      switch (status) {
+        case 'shortlisted':
+          title = `${club} shortlisted you`
+          body = `You're being considered for ${position}.`
+          break
+        case 'maybe':
+          title = `${club} reviewed your application`
+          body = `Your application for ${position} is under consideration.`
+          break
+        case 'rejected':
+          title = `${club} updated your application`
+          body = `You weren't selected for ${position} this time.`
+          break
+        default:
+          title = `${club} updated your application`
+          body = `Your application for ${position} was updated.`
+      }
       return {
-        title: 'Application Update',
-        body: status ? `Application ${status}` : 'Your application was updated',
+        title,
+        body,
         // Deep-link to the specific opportunity (applicant's view), not
-        // the listing page. Falls back to the listing if metadata is
-        // missing.
+        // the listing page. Falls back to the listing if metadata is missing.
         url: opportunityId ? `/opportunities/${opportunityId}` : '/opportunities',
         tag: vacancyTitle ? `app-${vacancyTitle}` : 'application-status',
       }
