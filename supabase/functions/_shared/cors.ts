@@ -9,14 +9,33 @@ const ALLOWED_ORIGINS = [
   'http://localhost:5173',
   'http://localhost:3000',
   'http://127.0.0.1:5173',
+  // Native Capacitor app shells — the WKWebView/WebView Origin is a tuple
+  // origin scheme://host: iOS = hockia://app.inhockia.com (Capacitor lowercases
+  // the iosScheme), Android = https://app.inhockia.com, and the Capacitor
+  // default (if a build ever drops the custom host) is capacitor://localhost.
+  // WITHOUT these the native app's edge-function calls are CORS-blocked by the
+  // WebView (it enforces CORS; there is no @capacitor/http bridge), which broke
+  // HOCKIA AI + every other edge function on iOS.
+  'hockia://app.inhockia.com',
+  'https://app.inhockia.com',
+  'capacitor://localhost',
 ]
 
 /** Check if an origin is allowed (static list + Vercel preview deployments). */
 function isAllowedOrigin(origin: string): boolean {
   if (ALLOWED_ORIGINS.includes(origin)) return true
   try {
-    const { hostname } = new URL(origin)
-    if (hostname.endsWith('.vercel.app') && hostname.startsWith('hockia-')) return true
+    const url = new URL(origin)
+    const host = url.hostname.toLowerCase()
+    const scheme = url.protocol.replace(':', '').toLowerCase()
+    // Vercel preview deployments
+    if (host.endsWith('.vercel.app') && host.startsWith('hockia-')) return true
+    // Native Capacitor app: match by HOST regardless of scheme so a scheme
+    // rename/casing change (HOCKIA vs hockia) or a custom-host build can't
+    // silently re-break native edge calls. CORS is not the auth boundary here
+    // (verify_jwt + getUser + RLS are) — the native app is a first-party client.
+    if (host === 'app.inhockia.com') return true
+    if (host === 'localhost' && (scheme === 'capacitor' || scheme === 'ionic')) return true
   } catch { /* invalid URL */ }
   return false
 }

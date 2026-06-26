@@ -1456,7 +1456,12 @@ async function runKeywordFallback(params: {
 Deno.serve(async (req) => {
   const correlationId = crypto.randomUUID().slice(0, 8)
   const origin = req.headers.get('origin')
+  // TEMP diagnostic (CORS native-origin verification): log the exact Origin the
+  // caller sends + whether CORS echoes it. Lets us confirm the iOS WKWebView's
+  // literal origin (expected hockia://app.inhockia.com) and catch an Origin:null
+  // edge case from a device. Remove once the native CORS fix is confirmed.
   const headers = getCorsHeaders(origin)
+  console.log(`[nl-search ${correlationId}] ${req.method} origin=${JSON.stringify(origin)} allow=${headers['Access-Control-Allow-Origin']}`)
   const startTime = Date.now()
   const llmProvider = Deno.env.get('LLM_PROVIDER') || 'gemini'
 
