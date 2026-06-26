@@ -272,7 +272,7 @@ export default function ApplicantsList() {
             *,
             applicant:applicant_id (
               id, full_name, avatar_url, position, secondary_position,
-              base_location, nationality, username
+              base_location, nationality, username, role
             )
           `)
           .eq('opportunity_id', opportunityId)

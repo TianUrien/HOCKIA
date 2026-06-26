@@ -41,6 +41,8 @@ interface OpportunityPreviewModalProps {
   clubInfo: OpportunityPreviewClubInfo | undefined
   worldClub: WorldClubInfo | null
   hasApplied: boolean
+  /** The viewing player's OWN application status — drives the status badge. */
+  applicationStatus?: string | null
   onClose: () => void
   /** Called when the user successfully applies — parent should mark the
    *  vacancy as applied in its own state so the Apply CTA hides. */
@@ -52,6 +54,7 @@ export default function OpportunityPreviewModal({
   clubInfo,
   worldClub,
   hasApplied,
+  applicationStatus = null,
   onClose,
   onApplicationSuccess,
 }: OpportunityPreviewModalProps) {
@@ -98,6 +101,7 @@ export default function OpportunityPreviewModal({
         onClose={onClose}
         onApply={canShowApplyButton ? handleApplyClick : undefined}
         hasApplied={hasApplied}
+        applicationStatus={applicationStatus}
       />
 
       <SignInPromptModal

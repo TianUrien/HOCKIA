@@ -32,8 +32,6 @@ interface VacancyDetailViewProps {
    *  Renders a clear, human badge under "Application Submitted"; pending/unknown
    *  shows no badge (the submitted pill already conveys it). */
   applicationStatus?: string | null
-  /** The viewing player's OWN application id — powers the application timeline. */
-  applicationId?: string | null
   hideClubProfileButton?: boolean
 }
 
@@ -87,7 +85,6 @@ export default function VacancyDetailView({
   onApply,
   hasApplied = false,
   applicationStatus = null,
-  applicationId = null,
   hideClubProfileButton = false,
 }: VacancyDetailViewProps) {
   const navigate = useNavigate()
@@ -557,9 +554,10 @@ export default function VacancyDetailView({
 
             {/* Application timeline (Phase 3-5) — for the applicant only: when they
                 applied, whether the club viewed them, each status change, and the
-                kind AI explanation of the current status. */}
-            {hasApplied && applicationId && (
-              <ApplicationTimeline applicationId={applicationId} currentStatus={applicationStatus} />
+                kind AI explanation. Self-resolves from the opportunity id, so it
+                works on every entry point (page, overlay, list, tab). */}
+            {hasApplied && (
+              <ApplicationTimeline opportunityId={vacancy.id} />
             )}
 
             {/* Eligibility nudge — shown when the user CAN apply but their

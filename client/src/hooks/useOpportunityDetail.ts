@@ -40,6 +40,10 @@ export function useOpportunityDetail(id: string | undefined) {
   const [club, setClub] = useState<OpportunityDetailClub | null>(null)
   const [worldClub, setWorldClub] = useState<OpportunityDetailWorldClub | null>(null)
   const [hasApplied, setHasApplied] = useState(false)
+  // The applicant's OWN application id + status — powers the status badge and the
+  // application timeline on the in-app overlay/modal path (not just the full page).
+  const [applicationId, setApplicationId] = useState<string | null>(null)
+  const [applicationStatus, setApplicationStatus] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
   const [isClosed, setIsClosed] = useState(false)
@@ -143,11 +147,13 @@ export function useOpportunityDetail(id: string | undefined) {
       if (user && (profile?.role === 'player' || profile?.role === 'coach')) {
         const { data: applicationData } = await supabase
           .from('opportunity_applications')
-          .select('id')
+          .select('id, status')
           .eq('opportunity_id', id)
           .eq('applicant_id', user.id)
           .maybeSingle()
         setHasApplied(!!applicationData)
+        setApplicationId((applicationData as { id?: string } | null)?.id ?? null)
+        setApplicationStatus((applicationData as { status?: string } | null)?.status ?? null)
       }
     } catch (error) {
       logger.error('Error fetching opportunity details:', error)
@@ -176,11 +182,13 @@ export function useOpportunityDetail(id: string | undefined) {
     if (!id || !user || !['player', 'coach'].includes(profile?.role ?? '')) return
     const { data } = await supabase
       .from('opportunity_applications')
-      .select('id')
+      .select('id, status')
       .eq('opportunity_id', id)
       .eq('applicant_id', user.id)
       .maybeSingle()
     setHasApplied(!!data)
+    setApplicationId((data as { id?: string } | null)?.id ?? null)
+    setApplicationStatus((data as { status?: string } | null)?.status ?? null)
   }, [id, user, profile?.role])
 
   return {
@@ -188,6 +196,8 @@ export function useOpportunityDetail(id: string | undefined) {
     club,
     worldClub,
     hasApplied,
+    applicationId,
+    applicationStatus,
     isLoading,
     notFound,
     isClosed,

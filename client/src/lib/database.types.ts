@@ -2208,6 +2208,7 @@ export type Database = {
       }
       opportunity_applications: {
         Row: {
+          ai_feedback: Json | null
           applicant_id: string
           applied_at: string
           id: string
@@ -2217,6 +2218,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          ai_feedback?: Json | null
           applicant_id: string
           applied_at?: string
           id?: string
@@ -2226,6 +2228,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          ai_feedback?: Json | null
           applicant_id?: string
           applied_at?: string
           id?: string

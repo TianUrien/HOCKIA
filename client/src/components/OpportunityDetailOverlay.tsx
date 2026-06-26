@@ -31,7 +31,7 @@ export default function OpportunityDetailOverlay({
   onClose,
   onApplied,
 }: OpportunityDetailOverlayProps) {
-  const { opportunity, club, worldClub, hasApplied, isLoading, notFound, setHasApplied } =
+  const { opportunity, club, worldClub, hasApplied, applicationStatus, isLoading, notFound, setHasApplied } =
     useOpportunityDetail(opportunityId)
 
   let content: React.ReactNode
@@ -81,6 +81,7 @@ export default function OpportunityDetailOverlay({
         clubInfo={club}
         worldClub={worldClub}
         hasApplied={hasApplied}
+        applicationStatus={applicationStatus}
         onClose={onClose}
         onApplicationSuccess={(id) => {
           setHasApplied(true)

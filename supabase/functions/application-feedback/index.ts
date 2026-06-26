@@ -145,11 +145,20 @@ async function callClaude(ctx: StatusContext): Promise<string> {
   return message
 }
 
-// The opportunity title is a free-text string like "Arquera — CASI"; the position
-// is the part before the dash (matches the player-facing notification copy).
-function derivePosition(title: string): string {
-  const head = title.split(/\s+[—–-]\s+/)[0]?.trim()
-  return head || title || 'this role'
+// The structured opportunities.position enum is the source of truth ('goalkeeper'
+// -> 'Goalkeeper', 'head_coach' -> 'Head Coach').
+function humanizePosition(pos: string | null | undefined): string | null {
+  if (!pos) return null
+  return pos.split('_').map((w) => (w ? w.charAt(0).toUpperCase() + w.slice(1) : w)).join(' ')
+}
+
+// Last-resort only: SOME titles look like "Arquera — CASI" (Position — Club). Only
+// trust the head when a real separator is present — most titles are free text
+// ("Senior Women's First XI Opportunity") where the whole string is NOT a position.
+function derivePosition(title: string): string | null {
+  const parts = title.split(/\s+[—–-]\s+/)
+  if (parts.length < 2) return null
+  return parts[0]?.trim() || null
 }
 
 function jsonResponse(body: unknown, status: number, corsHeaders: Record<string, string>): Response {
@@ -189,7 +198,7 @@ serve(async (req: Request) => {
     // 3) Fetch application + verify ownership.
     const { data: app } = await supabase
       .from('opportunity_applications')
-      .select('id, opportunity_id, applicant_id, status, metadata')
+      .select('id, opportunity_id, applicant_id, status, metadata, ai_feedback')
       .eq('id', applicationId)
       .maybeSingle()
     if (!app) return jsonResponse({ error: 'not_found' }, 404, corsHeaders)
@@ -207,19 +216,26 @@ serve(async (req: Request) => {
       return jsonResponse({ message: null, status, cached: false }, 200, corsHeaders)
     }
 
-    // 3a) Cache hit (same status AND reason)?
+    // 3a) Cache hit? Lives in its OWN column (ai_feedback), never in metadata, so
+    //     the club's metadata.status_reason writes can't collide with it. Only a
+    //     genuine AI message counts as a hit — a cached fallback (source!=='ai')
+    //     is re-attempted so a transient Claude outage doesn't poison the cache.
     const cache =
-      metadata.ai_feedback && typeof metadata.ai_feedback === 'object' && !Array.isArray(metadata.ai_feedback)
-        ? (metadata.ai_feedback as Record<string, unknown>)
+      app.ai_feedback && typeof app.ai_feedback === 'object' && !Array.isArray(app.ai_feedback)
+        ? (app.ai_feedback as Record<string, unknown>)
         : null
-    if (cache && cache.status === status && (cache.reason ?? null) === reason && typeof cache.message === 'string') {
+    if (
+      cache && cache.source === 'ai' &&
+      cache.status === status && (cache.reason ?? null) === reason &&
+      typeof cache.message === 'string'
+    ) {
       return jsonResponse({ message: cache.message, status, cached: true }, 200, corsHeaders)
     }
 
     // 4) Context: opportunity title + club name.
     const { data: opp } = await supabase
       .from('opportunities')
-      .select('id, title, club_id')
+      .select('id, title, club_id, position')
       .eq('id', app.opportunity_id)
       .maybeSingle()
     const title = opp?.title ?? 'this role'
@@ -235,24 +251,30 @@ serve(async (req: Request) => {
     const ctx: StatusContext = {
       status,
       reason,
-      position: derivePosition(title),
+      // Structured enum first; only fall back to a title-derived position when the
+      // title actually has a "Position — Club" separator; else a neutral phrase.
+      position: humanizePosition(opp?.position) ?? derivePosition(title) ?? 'this role',
       clubName,
       opportunityTitle: title,
     }
 
-    // 5) Generate (AI first, deterministic fallback on any failure).
+    // 5) Generate (AI first, deterministic fallback on any failure). Tag the
+    //    source so a fallback is never served as a permanent cache hit.
     let message: string
+    let source: 'ai' | 'fallback'
     try {
       message = await callClaude(ctx)
+      source = 'ai'
     } catch (err) {
       console.warn('application-feedback: AI fallback —', String(err))
       message = fallbackMessage(ctx)
+      source = 'fallback'
     }
 
-    // 6) Cache back into metadata. This updates metadata ONLY (not status), so the
-    //    status-history trigger (AFTER UPDATE OF status) does not fire.
-    const nextMeta = { ...metadata, ai_feedback: { message, status, reason } } as unknown as Json
-    await supabase.from('opportunity_applications').update({ metadata: nextMeta }).eq('id', applicationId)
+    // 6) Cache into the dedicated ai_feedback column (not metadata, not status), so
+    //    nothing else's writes collide and no trigger fires.
+    const feedback = { message, status, reason, source } as unknown as Json
+    await supabase.from('opportunity_applications').update({ ai_feedback: feedback }).eq('id', applicationId)
 
     return jsonResponse({ message, status, cached: false }, 200, corsHeaders)
   } catch (err) {

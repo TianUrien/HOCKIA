@@ -1,19 +1,24 @@
 import { useEffect, useState } from 'react'
 import { Send, Eye, CheckCircle, Clock, Sparkles } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
-import { playerApplicationStatusBadge } from '@/lib/applicationStatus'
+import { playerApplicationStatusBadge, applicationReasonPlayerCopy } from '@/lib/applicationStatus'
 
 /**
  * Player-facing application timeline (Phase 3-5 of application-clarity).
  *
- * Shows, for the player's OWN application: when they applied, whether/when the
- * club viewed it (application_views), each status change (application_status_history),
- * and — for the current status — the kind AI explanation from the
- * application-feedback edge function. All reads are RLS-gated to the applicant.
+ * Shows, for the player's OWN application to this opportunity: when they applied,
+ * whether/when the club viewed it (application_views), each status change
+ * (application_status_history), and — for the current status — the kind AI
+ * explanation from the application-feedback edge function. All reads are RLS-gated
+ * to the applicant.
  *
- * Self-fetching so the parent only passes the application id + current status.
- * Degrades gracefully: a failed history/views/AI fetch just omits that piece.
+ * Takes only `opportunityId` and resolves the application itself, so it works on
+ * EVERY entry point (standalone page, home-feed overlay, opportunities list/tab) —
+ * none of which reliably has the application id in hand. Degrades gracefully: a
+ * failed AI fetch falls back to deterministic client copy; a failed history/views
+ * fetch just omits that piece.
  */
 interface HistoryRow {
   id: string
@@ -23,8 +28,7 @@ interface HistoryRow {
 }
 
 interface ApplicationTimelineProps {
-  applicationId: string
-  currentStatus: string | null
+  opportunityId: string
 }
 
 interface TimelineNode {
@@ -55,71 +59,94 @@ function formatDate(value: string): string {
   return new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
-export default function ApplicationTimeline({ applicationId, currentStatus }: ApplicationTimelineProps) {
+export default function ApplicationTimeline({ opportunityId }: ApplicationTimelineProps) {
+  const { user } = useAuthStore()
+  const [currentStatus, setCurrentStatus] = useState<string | null>(null)
   const [appliedAt, setAppliedAt] = useState<string | null>(null)
   const [history, setHistory] = useState<HistoryRow[]>([])
   const [firstViewedAt, setFirstViewedAt] = useState<string | null>(null)
   const [aiMessage, setAiMessage] = useState<string | null>(null)
+  const [resolved, setResolved] = useState(false)
   const [loading, setLoading] = useState(true)
 
-  // History + views + applied_at.
   useEffect(() => {
+    if (!user) return
     let cancelled = false
     setLoading(true)
+    setResolved(false)
     void (async () => {
-      const [appRes, historyRes, viewsRes] = await Promise.all([
-        supabase.from('opportunity_applications').select('applied_at').eq('id', applicationId).maybeSingle(),
+      // Resolve the player's OWN application for this opportunity.
+      const { data: app } = await supabase
+        .from('opportunity_applications')
+        .select('id, status, applied_at')
+        .eq('opportunity_id', opportunityId)
+        .eq('applicant_id', user.id)
+        .maybeSingle()
+      if (cancelled) return
+      if (!app) {
+        setLoading(false)
+        return
+      }
+      const appId = app.id
+      const status = (app.status as string | null) ?? null
+      setResolved(true)
+      setCurrentStatus(status)
+      setAppliedAt(app.applied_at ?? null)
+
+      const [historyRes, viewsRes] = await Promise.all([
         supabase
           .from('application_status_history')
           .select('id, new_status, reason, created_at')
-          .eq('application_id', applicationId)
+          .eq('application_id', appId)
           .order('created_at', { ascending: true }),
         supabase
           .from('application_views')
           .select('first_viewed_at')
-          .eq('application_id', applicationId)
+          .eq('application_id', appId)
           .order('first_viewed_at', { ascending: true })
           .limit(1),
       ])
       if (cancelled) return
-      setAppliedAt((appRes.data as { applied_at?: string } | null)?.applied_at ?? null)
-      setHistory((historyRes.data ?? []) as HistoryRow[])
+      const hist = (historyRes.data ?? []) as HistoryRow[]
+      setHistory(hist)
       setFirstViewedAt((viewsRes.data?.[0] as { first_viewed_at?: string } | undefined)?.first_viewed_at ?? null)
       setLoading(false)
-    })()
-    return () => {
-      cancelled = true
-    }
-  }, [applicationId])
 
-  // AI explanation for the current status (only once the club has responded).
-  useEffect(() => {
-    if (!currentStatus || !RESPONDED.includes(currentStatus)) {
-      setAiMessage(null)
-      return
-    }
-    let cancelled = false
-    void (async () => {
+      // AI explanation for the current status (only once the club has responded).
+      if (!status || !RESPONDED.includes(status)) {
+        setAiMessage(null)
+        return
+      }
+      // The reason behind the most recent responded status — used for the
+      // deterministic client fallback if the edge function is unreachable.
+      const latestReason = [...hist].reverse().find((h) => playerApplicationStatusBadge(h.new_status))?.reason ?? null
+      const fallback = applicationReasonPlayerCopy(latestReason)
       try {
         const { data, error } = await supabase.functions.invoke('application-feedback', {
-          body: { application_id: applicationId },
+          body: { application_id: appId },
         })
         if (cancelled) return
         if (error) {
           logger.warn('application-feedback invoke failed', error)
+          setAiMessage(fallback)
           return
         }
         const msg = (data as { message?: string | null } | null)?.message
-        if (typeof msg === 'string' && msg.trim()) setAiMessage(msg)
+        setAiMessage(typeof msg === 'string' && msg.trim() ? msg : fallback)
       } catch (err) {
-        if (!cancelled) logger.warn('application-feedback error', err)
+        if (!cancelled) {
+          logger.warn('application-feedback error', err)
+          setAiMessage(fallback)
+        }
       }
     })()
     return () => {
       cancelled = true
     }
-  }, [applicationId, currentStatus])
+  }, [opportunityId, user])
 
+  // No application resolved (e.g. not actually applied) → render nothing.
+  if (!loading && !resolved) return null
   if (loading) {
     return <div className="mt-3 h-20 animate-pulse rounded-xl bg-gray-100" />
   }

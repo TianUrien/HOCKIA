@@ -130,7 +130,9 @@ export type ConversationInsert = Database['public']['Tables']['conversations']['
 export type ConversationUpdate = Database['public']['Tables']['conversations']['Update']
 
 // Complex joined types
-export type OpportunityApplicationWithApplicant = OpportunityApplication & {
+// ai_feedback is a server-only AI-cache column (written by the application-feedback
+// edge fn); it is never fetched or used in the club's applicant list, so omit it.
+export type OpportunityApplicationWithApplicant = Omit<OpportunityApplication, 'ai_feedback'> & {
   // `role` added 2026-05-01 so ApplicantCard can render the role-tinted
   // avatar placeholder when the applicant has no photo yet (no longer
   // falls back to the generic purple-gradient block).
