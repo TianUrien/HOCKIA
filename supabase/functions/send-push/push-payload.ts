@@ -208,8 +208,17 @@ export function buildPushPayload(
       const club = getString(metadata, 'club_name') ?? 'The club'
       const vacancyTitle = getString(metadata, 'vacancy_title')
       const opportunityId = getString(metadata, 'opportunity_id')
-      // Opportunity titles follow "Position — Club"; lead with just the position.
-      const position = vacancyTitle ? vacancyTitle.split(/\s+[—–-]\s+/)[0].trim() : 'the opportunity'
+      // Prefer the structured position enum ('head_coach' -> 'Head Coach'); the
+      // title split is a last resort and only when the title has a real
+      // "Position — Club" separator (most titles are free text where the whole
+      // string is NOT a position). Mirrors client config.ts applicationStatusCopy.
+      const positionEnum = getString(metadata, 'position')
+      const humanPos = positionEnum
+        ? positionEnum.split('_').map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w)).join(' ')
+        : null
+      const titleParts = vacancyTitle ? vacancyTitle.split(/\s+[—–-]\s+/) : []
+      const titleHead = titleParts.length >= 2 ? (titleParts[0]?.trim() || null) : null
+      const position = humanPos ?? titleHead ?? 'the opportunity'
       // Human, player-facing copy — MIRRORS client config.ts applicationStatusCopy.
       let title: string
       let body: string

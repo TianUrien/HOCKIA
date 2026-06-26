@@ -10,12 +10,14 @@
  *   2. Read the current status + reason straight from opportunity_applications
  *      (status + metadata.status_reason). `pending` → no message (the UI shows a
  *      neutral "under review" line; no LLM call).
- *   3. Cache lives in metadata.ai_feedback = { message, status, reason }. A hit
- *      (same status AND reason) returns instantly. A status/reason change
- *      naturally invalidates it because the stored pair no longer matches.
+ *   3. Cache lives in its OWN column (ai_feedback) = { message, status, reason,
+ *      source }, NOT in metadata — so the club's metadata.status_reason writes can
+ *      never collide with it. A hit requires source==='ai' AND same status AND
+ *      reason; a status/reason change naturally invalidates it, and a cached
+ *      fallback (source!=='ai') is re-attempted rather than served forever.
  *   4. Miss → Claude Sonnet writes a 1–2 sentence message, guard-railed for tone
  *      + length. ANY failure (no key, API error, banned vocabulary, bad shape)
- *      falls back to deterministic copy. The result is cached back to metadata.
+ *      falls back to deterministic copy (tagged source:'fallback').
  *
  * Tone contract (system prompt AND fallback): never blame the player, never imply
  * they aren't good enough, stay honest (no false hope), and offer ONE constructive

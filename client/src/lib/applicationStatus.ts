@@ -97,3 +97,31 @@ export function applicationReasonPlayerCopy(code: string | null | undefined): st
       return null
   }
 }
+
+/**
+ * Always-present, kind, generic explanation shown when the application-feedback
+ * edge function is UNREACHABLE (so the timeline is never a blank status node).
+ * Status-based — unlike applicationReasonPlayerCopy, which is reason-based and
+ * returns null for shortlisted / no-reason. The edge function's own fallbackMessage
+ * is the richer (club- and position-aware) version; this is the client's last resort.
+ */
+export function applicationStatusFallbackMessage(
+  status: string | null | undefined,
+  reason: string | null | undefined,
+): string | null {
+  const reasonCopy = applicationReasonPlayerCopy(reason)
+  switch (status) {
+    case 'shortlisted':
+      return "Good news — you've been shortlisted. Keep your profile sharp while the club reviews."
+    case 'maybe':
+      return reasonCopy
+        ? `You're still under consideration. ${reasonCopy}`
+        : "You're still under consideration — no decision yet."
+    case 'rejected':
+      return reasonCopy
+        ? `You weren't selected this time. ${reasonCopy} Keep going — the right fit is out there.`
+        : "You weren't selected this time. It often comes down to fit, not ability — keep applying."
+    default:
+      return null
+  }
+}

@@ -39,6 +39,17 @@ const getMetadataString = (notification: NotificationRecord, key: string): strin
   return typeof value === 'string' ? value : null
 }
 
+/** 'head_coach' -> 'Head Coach'. */
+const humanizePosition = (pos: string | null): string | null =>
+  pos ? pos.split('_').map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w)).join(' ') : null
+/** A free-text title only yields a position when it has a real "Position — Club"
+ *  separator; most titles are free text where the whole string is NOT a position. */
+const titleHeadPosition = (title: string | null): string | null => {
+  if (!title) return null
+  const parts = title.split(/\s+[—–-]\s+/)
+  return parts.length >= 2 ? (parts[0]?.trim() || null) : null
+}
+
 /** Human, player-facing copy for an application status update. The raw enum
  *  status (shortlisted / maybe / rejected) was leaking into the UI as
  *  "Application maybe"; this maps it to clear product language naming the club
@@ -48,8 +59,12 @@ const applicationStatusCopy = (notification: NotificationRecord): { title: strin
   const status = getMetadataString(notification, 'status')
   const club = getMetadataString(notification, 'club_name') ?? 'The club'
   const vacancyTitle = getMetadataString(notification, 'vacancy_title')
-  // Opportunity titles follow "Position — Club"; lead with just the position.
-  const position = vacancyTitle ? vacancyTitle.split(/\s+[—–-]\s+/)[0].trim() : 'the opportunity'
+  // Prefer the structured position enum; the title split is a last resort and only
+  // when the title actually has a "Position — Club" separator (else: neutral phrase).
+  const position =
+    humanizePosition(getMetadataString(notification, 'position')) ??
+    titleHeadPosition(vacancyTitle) ??
+    'the opportunity'
   switch (status) {
     case 'shortlisted':
       return { title: `${club} shortlisted you`, body: `You're being considered for ${position}.` }

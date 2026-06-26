@@ -3,7 +3,7 @@ import { Send, Eye, CheckCircle, Clock, Sparkles } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
-import { playerApplicationStatusBadge, applicationReasonPlayerCopy } from '@/lib/applicationStatus'
+import { playerApplicationStatusBadge, applicationStatusFallbackMessage } from '@/lib/applicationStatus'
 
 /**
  * Player-facing application timeline (Phase 3-5 of application-clarity).
@@ -120,7 +120,7 @@ export default function ApplicationTimeline({ opportunityId }: ApplicationTimeli
       // The reason behind the most recent responded status — used for the
       // deterministic client fallback if the edge function is unreachable.
       const latestReason = [...hist].reverse().find((h) => playerApplicationStatusBadge(h.new_status))?.reason ?? null
-      const fallback = applicationReasonPlayerCopy(latestReason)
+      const fallback = applicationStatusFallbackMessage(status, latestReason)
       try {
         const { data, error } = await supabase.functions.invoke('application-feedback', {
           body: { application_id: appId },
@@ -179,6 +179,22 @@ export default function ApplicationTimeline({ opportunityId }: ApplicationTimeli
   const dated = nodes
     .filter((n) => n.date)
     .sort((a, b) => new Date(a.date as string).getTime() - new Date(b.date as string).getTime())
+  // Orphan guard: responded but no history-derived status node (e.g. the history
+  // fetch failed) — synthesize one from currentStatus so the status + AI message
+  // still render rather than the explanation vanishing.
+  if (responded && statusNodes.length === 0 && currentStatus) {
+    const badge = playerApplicationStatusBadge(currentStatus)
+    if (badge) {
+      dated.push({
+        key: 'current-status',
+        icon: currentStatus === 'rejected' ? Clock : CheckCircle,
+        label: badge.label,
+        date: null,
+        dotClass: statusDotClass(currentStatus),
+        message: aiMessage,
+      })
+    }
+  }
   if (!responded) {
     dated.push({ key: 'awaiting', icon: Clock, label: "Awaiting the club's decision", date: null, dotClass: 'bg-gray-300' })
   }
