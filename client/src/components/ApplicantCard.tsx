@@ -1,10 +1,13 @@
 import { useState, useRef, useEffect } from 'react'
-import { MapPin, Star, HelpCircle, XCircle, ChevronDown, Minus, ShieldCheck } from 'lucide-react'
+import { MapPin, Star, HelpCircle, XCircle, ChevronDown, Minus, ShieldCheck, ArrowLeft } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import Avatar from './Avatar'
+import { supabase } from '@/lib/supabase'
 import type { OpportunityApplicationWithApplicant } from '@/lib/supabase'
 import type { Database } from '@/lib/database.types'
 import { getInitials } from '@/lib/utils'
+import { logger } from '@/lib/logger'
+import { APPLICATION_STATUS_REASONS } from '@/lib/applicationStatus'
 
 type ApplicationStatus = Database['public']['Enums']['application_status']
 
@@ -50,7 +53,7 @@ export interface ApplicantReferenceInfo {
 
 interface ApplicantCardProps {
   application: OpportunityApplicationWithApplicant
-  onStatusChange?: (applicationId: string, status: ApplicationStatus) => void
+  onStatusChange?: (applicationId: string, status: ApplicationStatus, reason?: string) => void
   isUpdating?: boolean
   referenceInfo?: ApplicantReferenceInfo | null
 }
@@ -58,6 +61,8 @@ interface ApplicantCardProps {
 export default function ApplicantCard({ application, onStatusChange, isUpdating, referenceInfo }: ApplicantCardProps) {
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
+  // When set, the status menu shows the optional "why?" reason step for that tier.
+  const [reasonFor, setReasonFor] = useState<ShortlistTier | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
   const { applicant } = application
   const displayName = applicant.full_name?.trim() || applicant.username?.trim() || 'Applicant'
@@ -75,6 +80,13 @@ export default function ApplicantCard({ application, onStatusChange, isUpdating,
 
 
   const handleViewProfile = () => {
+    // Record that the club opened this applicant ("viewed your application").
+    // Fire-and-forget — tracking must never block or fail navigation.
+    void supabase
+      .rpc('record_application_view', { p_application_id: application.id })
+      .then(({ error }) => {
+        if (error) logger.warn('record_application_view failed', error)
+      })
     if (applicant.username) {
       navigate(`/players/${applicant.username}?ref=applicants`)
     } else {
@@ -82,10 +94,28 @@ export default function ApplicantCard({ application, onStatusChange, isUpdating,
     }
   }
 
+  const closeMenu = () => {
+    setMenuOpen(false)
+    setReasonFor(null)
+  }
+
   const handleSelect = (tier: ShortlistTier | 'pending') => {
     if (!onStatusChange || isUpdating) return
+    // "Maybe" / "Not a fit" open an optional reason step so the player can be told
+    // WHY, kindly. The reason has to be chosen BEFORE the status commits — the
+    // history trigger captures the reason only at the moment the status changes.
+    if (tier === 'maybe' || tier === 'rejected') {
+      setReasonFor(tier)
+      return
+    }
     onStatusChange(application.id, tier)
-    setMenuOpen(false)
+    closeMenu()
+  }
+
+  const handleSelectReason = (reason?: string) => {
+    if (!onStatusChange || isUpdating || !reasonFor) return
+    onStatusChange(application.id, reasonFor, reason)
+    closeMenu()
   }
 
   // Close menu on outside click
@@ -94,6 +124,7 @@ export default function ApplicantCard({ application, onStatusChange, isUpdating,
     const handleClick = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setMenuOpen(false)
+        setReasonFor(null)
       }
     }
     document.addEventListener('mousedown', handleClick)
@@ -175,7 +206,7 @@ export default function ApplicantCard({ application, onStatusChange, isUpdating,
             <div className="relative" ref={menuRef}>
               <button
                 type="button"
-                onClick={() => setMenuOpen((prev) => !prev)}
+                onClick={() => { setMenuOpen((prev) => !prev); setReasonFor(null) }}
                 disabled={isUpdating}
                 className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all disabled:opacity-50 sm:text-sm ${
                   currentTier
@@ -198,35 +229,76 @@ export default function ApplicantCard({ application, onStatusChange, isUpdating,
               </button>
 
               {menuOpen && (
-                <div className="absolute left-0 z-20 mt-1 w-40 max-w-[calc(100vw-2rem)] rounded-lg border border-gray-200 bg-white py-1 shadow-lg sm:left-auto sm:right-0">
-                  {TIER_OPTIONS.map((opt) => {
-                    const Icon = opt.icon
-                    const isActive = application.status === opt.tier
-                    return (
-                      <button
-                        type="button"
-                        key={opt.tier}
-                        onClick={() => handleSelect(opt.tier)}
-                        className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors hover:bg-gray-50 ${
-                          isActive ? opt.menuActiveClass + ' font-medium' : 'text-gray-700'
-                        }`}
-                      >
-                        <Icon className="h-4 w-4 flex-shrink-0" />
-                        {opt.label}
-                      </button>
-                    )
-                  })}
-                  {currentTier && (
+                <div className="absolute left-0 z-20 mt-1 w-60 max-w-[calc(100vw-2rem)] rounded-lg border border-gray-200 bg-white py-1 shadow-lg sm:left-auto sm:right-0">
+                  {reasonFor ? (
                     <>
+                      {/* Optional "why?" step. The player is only ever shown a kind,
+                          translated message — never the raw label chosen here. */}
+                      <div className="flex items-center gap-1.5 px-3 py-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setReasonFor(null)}
+                          className="flex items-center text-gray-400 transition-colors hover:text-gray-600"
+                          aria-label="Back to status options"
+                        >
+                          <ArrowLeft className="h-3.5 w-3.5" />
+                        </button>
+                        <span className="text-xs font-medium text-gray-500">
+                          Reason for &ldquo;{reasonFor === 'maybe' ? 'Maybe' : 'Not a fit'}&rdquo; · optional
+                        </span>
+                      </div>
+                      <div className="my-1 border-t border-gray-100" />
+                      {APPLICATION_STATUS_REASONS.map((reason) => (
+                        <button
+                          type="button"
+                          key={reason.code}
+                          onClick={() => handleSelectReason(reason.code)}
+                          className="flex w-full items-center px-3 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50"
+                        >
+                          {reason.label}
+                        </button>
+                      ))}
                       <div className="my-1 border-t border-gray-100" />
                       <button
                         type="button"
-                        onClick={() => handleSelect('pending')}
-                        className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-400 transition-colors hover:bg-gray-50"
+                        onClick={() => handleSelectReason()}
+                        className="flex w-full items-center px-3 py-2 text-left text-sm text-gray-400 transition-colors hover:bg-gray-50"
                       >
-                        <Minus className="h-4 w-4 flex-shrink-0" />
-                        Clear
+                        Skip — just set status
                       </button>
+                    </>
+                  ) : (
+                    <>
+                      {TIER_OPTIONS.map((opt) => {
+                        const Icon = opt.icon
+                        const isActive = application.status === opt.tier
+                        return (
+                          <button
+                            type="button"
+                            key={opt.tier}
+                            onClick={() => handleSelect(opt.tier)}
+                            className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors hover:bg-gray-50 ${
+                              isActive ? opt.menuActiveClass + ' font-medium' : 'text-gray-700'
+                            }`}
+                          >
+                            <Icon className="h-4 w-4 flex-shrink-0" />
+                            {opt.label}
+                          </button>
+                        )
+                      })}
+                      {currentTier && (
+                        <>
+                          <div className="my-1 border-t border-gray-100" />
+                          <button
+                            type="button"
+                            onClick={() => handleSelect('pending')}
+                            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-400 transition-colors hover:bg-gray-50"
+                          >
+                            <Minus className="h-4 w-4 flex-shrink-0" />
+                            Clear
+                          </button>
+                        </>
+                      )}
                     </>
                   )}
                 </div>

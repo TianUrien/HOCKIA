@@ -121,26 +121,34 @@ describe('ApplicantCard — tier pill dropdown', () => {
     expect(onChange).toHaveBeenCalledWith('app-1', 'shortlisted')
   })
 
-  it('calls onStatusChange with "maybe" when "Maybe" is selected', async () => {
+  it('"Maybe" opens the optional reason step, not an immediate status change', async () => {
     const user = userEvent.setup()
     const onChange = vi.fn()
     renderCard({ status: 'pending' }, onChange)
 
     await user.click(screen.getByText('Unsorted'))
-    await user.click(screen.getByRole('button', { name: /maybe/i }))
+    await user.click(screen.getByRole('button', { name: /^maybe$/i }))
 
-    expect(onChange).toHaveBeenCalledWith('app-1', 'maybe')
+    // Status is NOT committed yet — the reason sub-menu is shown first.
+    expect(onChange).not.toHaveBeenCalled()
+    expect(screen.getByText(/reason for/i)).toBeInTheDocument()
+
+    // Skipping the reason commits the status with no reason.
+    await user.click(screen.getByRole('button', { name: /skip — just set status/i }))
+    expect(onChange).toHaveBeenCalledWith('app-1', 'maybe', undefined)
   })
 
-  it('calls onStatusChange with "rejected" when "Not a fit" is selected', async () => {
+  it('"Not a fit" + a picked reason commits the status with the reason code', async () => {
     const user = userEvent.setup()
     const onChange = vi.fn()
     renderCard({ status: 'pending' }, onChange)
 
     await user.click(screen.getByText('Unsorted'))
     await user.click(screen.getByRole('button', { name: /not a fit/i }))
+    expect(onChange).not.toHaveBeenCalled()
 
-    expect(onChange).toHaveBeenCalledWith('app-1', 'rejected')
+    await user.click(screen.getByRole('button', { name: /position already filled/i }))
+    expect(onChange).toHaveBeenCalledWith('app-1', 'rejected', 'position_filled')
   })
 
   it('shows "Clear" option and resets to pending when tier is already set', async () => {
@@ -259,7 +267,7 @@ describe('ApplicantsList source — tier grouping', () => {
 
   it('uses optimistic status update with error rollback', () => {
     expect(APPLICANTS_LIST_SOURCE).toContain('Optimistic update')
-    expect(APPLICANTS_LIST_SOURCE).toContain("update({ status: newStatus })")
+    expect(APPLICANTS_LIST_SOURCE).toContain("update({ status: newStatus, metadata: nextMeta })")
     expect(APPLICANTS_LIST_SOURCE).toContain("Failed to update status")
   })
 })

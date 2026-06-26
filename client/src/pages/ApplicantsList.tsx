@@ -224,22 +224,34 @@ export default function ApplicantsList() {
     fetchData()
   }, [opportunityId, user])
 
-  const handleStatusChange = useCallback(async (applicationId: string, newStatus: ApplicationStatus) => {
+  const handleStatusChange = useCallback(async (applicationId: string, newStatus: ApplicationStatus, reason?: string) => {
     setUpdatingId(applicationId)
+
+    // Merge the optional reason into the application's existing metadata without
+    // clobbering other keys. status_reason is set to the reason, or cleared to
+    // null when none is given so a later change can't inherit a stale reason. It
+    // must travel in the SAME update as the status — the history trigger captures
+    // the reason only at the instant the status changes.
+    const current = applications.find((app) => app.id === applicationId)
+    const baseMeta =
+      current?.metadata && typeof current.metadata === 'object' && !Array.isArray(current.metadata)
+        ? (current.metadata as Record<string, Json>)
+        : {}
+    const nextMeta: Json = { ...baseMeta, status_reason: reason ?? null }
 
     // Optimistic update
     setApplications((prev) =>
-      prev.map((app) => (app.id === applicationId ? { ...app, status: newStatus } : app))
+      prev.map((app) => (app.id === applicationId ? { ...app, status: newStatus, metadata: nextMeta } : app))
     )
 
     try {
       const { error: updateError } = await supabase
         .from('opportunity_applications')
-        .update({ status: newStatus })
+        .update({ status: newStatus, metadata: nextMeta })
         .eq('id', applicationId)
 
       if (updateError) throw updateError
-      trackDbEvent('applicant_status_change', 'application', applicationId, { new_status: newStatus })
+      trackDbEvent('applicant_status_change', 'application', applicationId, { new_status: newStatus, reason: reason ?? null })
     } catch (err) {
       // Revert optimistic update
       setApplications((prev) =>
@@ -273,7 +285,7 @@ export default function ApplicantsList() {
     } finally {
       setUpdatingId(null)
     }
-  }, [addToast, opportunityId])
+  }, [addToast, opportunityId, applications])
 
   // Derive unique positions from applicants for filter dropdown
   const availablePositions = useMemo(() => {

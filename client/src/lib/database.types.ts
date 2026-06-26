@@ -14,6 +14,107 @@ export type Database = {
   }
   public: {
     Tables: {
+      application_status_history: {
+        Row: {
+          application_id: string
+          changed_by: string | null
+          created_at: string
+          id: string
+          new_status: Database["public"]["Enums"]["application_status"]
+          old_status: Database["public"]["Enums"]["application_status"] | null
+          reason: string | null
+        }
+        Insert: {
+          application_id: string
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          new_status: Database["public"]["Enums"]["application_status"]
+          old_status?: Database["public"]["Enums"]["application_status"] | null
+          reason?: string | null
+        }
+        Update: {
+          application_id?: string
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          new_status?: Database["public"]["Enums"]["application_status"]
+          old_status?: Database["public"]["Enums"]["application_status"] | null
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "application_status_history_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "opportunity_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "application_status_history_changed_by_fkey"
+            columns: ["changed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "application_status_history_changed_by_fkey"
+            columns: ["changed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      application_views: {
+        Row: {
+          application_id: string
+          first_viewed_at: string
+          id: string
+          last_viewed_at: string
+          view_count: number
+          viewer_id: string
+        }
+        Insert: {
+          application_id: string
+          first_viewed_at?: string
+          id?: string
+          last_viewed_at?: string
+          view_count?: number
+          viewer_id: string
+        }
+        Update: {
+          application_id?: string
+          first_viewed_at?: string
+          id?: string
+          last_viewed_at?: string
+          view_count?: number
+          viewer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "application_views_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "opportunity_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "application_views_viewer_id_fkey"
+            columns: ["viewer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "application_views_viewer_id_fkey"
+            columns: ["viewer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       app_version_requirements: {
         Row: {
           platform: string
@@ -4902,6 +5003,10 @@ export type Database = {
       }
     }
     Functions: {
+      record_application_view: {
+        Args: { p_application_id: string }
+        Returns: undefined
+      }
       _apply_join_current_club: {
         Args: { p_club_profile_id: string; p_member_id: string }
         Returns: undefined
