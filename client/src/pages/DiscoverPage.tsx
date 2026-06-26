@@ -210,7 +210,7 @@ export default function DiscoverPage() {
       style={{ height: '100dvh' }}
     >
       {/* ── Chat header ──────────────────────────────────────────── */}
-      <header className="flex items-center gap-3 h-14 px-3 border-b border-gray-200 bg-white flex-shrink-0 pt-[env(safe-area-inset-top)]">
+      <header className="flex items-center gap-3 min-h-14 px-3 border-b border-gray-200 bg-white flex-shrink-0 pt-[env(safe-area-inset-top)]">
         <button
           type="button"
           onClick={() => navigate(-1)}
