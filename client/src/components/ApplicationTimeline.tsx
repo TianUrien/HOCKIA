@@ -153,6 +153,15 @@ export default function ApplicationTimeline({ opportunityId }: ApplicationTimeli
 
   const responded = Boolean(currentStatus && RESPONDED.includes(currentStatus))
 
+  // Fixed NARRATIVE order: Applied → club viewed → CURRENT status. We deliberately
+  // show ONLY the current status (the most recent responded change), never the full
+  // history: a club that revised its decision must not show the player a stack of
+  // contradictory outcomes (e.g. "Shortlisted" AND "Not selected"), and an
+  // improving/declining trail reads as unkind. The "viewed" milestone is pinned
+  // after "Applied" rather than sorted by timestamp so it never lands below the
+  // outcome (clubs sometimes re-open a profile after deciding).
+  const currentStatusRow = [...history].reverse().find((h) => playerApplicationStatusBadge(h.new_status))
+
   const nodes: TimelineNode[] = []
   if (appliedAt) {
     nodes.push({ key: 'applied', icon: Send, label: 'You applied', date: appliedAt, dotClass: 'bg-[#8026FA]' })
@@ -160,54 +169,31 @@ export default function ApplicationTimeline({ opportunityId }: ApplicationTimeli
   if (firstViewedAt) {
     nodes.push({ key: 'viewed', icon: Eye, label: 'The club viewed your application', date: firstViewedAt, dotClass: 'bg-sky-400' })
   }
-  const statusNodes = history.filter((h) => playerApplicationStatusBadge(h.new_status))
-  statusNodes.forEach((h, i) => {
-    const badge = playerApplicationStatusBadge(h.new_status)
-    if (!badge) return
-    const isLatest = i === statusNodes.length - 1
-    nodes.push({
-      key: h.id,
-      icon: h.new_status === 'rejected' ? Clock : CheckCircle,
-      label: badge.label,
-      date: h.created_at,
-      dotClass: statusDotClass(h.new_status),
-      message: isLatest ? aiMessage : null,
-    })
-  })
-
-  // Order dated nodes chronologically; the undated "awaiting" tail stays last.
-  const dated = nodes
-    .filter((n) => n.date)
-    .sort((a, b) => new Date(a.date as string).getTime() - new Date(b.date as string).getTime())
-  // Orphan guard: responded but no history-derived status node (e.g. the history
-  // fetch failed) — synthesize one from currentStatus so the status + AI message
-  // still render rather than the explanation vanishing.
-  if (responded && statusNodes.length === 0 && currentStatus) {
+  if (responded && currentStatus) {
     const badge = playerApplicationStatusBadge(currentStatus)
     if (badge) {
-      dated.push({
-        key: 'current-status',
+      nodes.push({
+        key: 'status',
         icon: currentStatus === 'rejected' ? Clock : CheckCircle,
         label: badge.label,
-        date: null,
+        date: currentStatusRow?.created_at ?? null,
         dotClass: statusDotClass(currentStatus),
         message: aiMessage,
       })
     }
-  }
-  if (!responded) {
-    dated.push({ key: 'awaiting', icon: Clock, label: "Awaiting the club's decision", date: null, dotClass: 'bg-gray-300' })
+  } else if (!responded) {
+    nodes.push({ key: 'awaiting', icon: Clock, label: "Awaiting the club's decision", date: null, dotClass: 'bg-gray-300' })
   }
 
-  if (dated.length === 0) return null
+  if (nodes.length === 0) return null
 
   return (
     <div className="mt-3 rounded-xl border border-gray-100 bg-gray-50/60 p-4">
       <h4 className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Your application</h4>
       <ol>
-        {dated.map((node, idx) => {
+        {nodes.map((node, idx) => {
           const Icon = node.icon
-          const isLast = idx === dated.length - 1
+          const isLast = idx === nodes.length - 1
           return (
             <li key={node.key} className="relative flex gap-3 pb-4 last:pb-0">
               {!isLast && <span className="absolute left-[11px] top-6 h-[calc(100%-1rem)] w-px bg-gray-200" aria-hidden />}
