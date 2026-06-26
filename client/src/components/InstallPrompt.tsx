@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { Capacitor } from '@capacitor/core'
 import { X, Download, Share, Plus } from 'lucide-react'
 import { trackPwaInstall, trackPwaInstallDismiss } from '@/lib/analytics'
 import { supabase } from '@/lib/supabase'
@@ -60,6 +61,12 @@ export default function InstallPrompt() {
   const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent)
   const isIOSSafari = isIOS && isSafari
 
+  // Inside the native (Capacitor) app this banner must NEVER show — a native build
+  // updates through the App Store (see NativeUpdatePrompt), not Add-to-Home-Screen.
+  // Until now it was avoided only because the WKWebView UA lacks "Safari"; this is
+  // the explicit, robust guard.
+  const isNative = Capacitor.isNativePlatform()
+
   // Check localStorage for dismissal
   useEffect(() => {
     const dismissed = localStorage.getItem('pwa-install-dismissed')
@@ -95,14 +102,14 @@ export default function InstallPrompt() {
 
   // Signal visibility to other components (PushPrompt reads this)
   useEffect(() => {
-    const isVisible = !isDismissed && installState !== 'installed' && installState !== 'idle'
+    const isVisible = !isNative && !isDismissed && installState !== 'installed' && installState !== 'idle'
     if (isVisible) {
       localStorage.setItem('pwa-install-visible', '1')
     } else {
       localStorage.removeItem('pwa-install-visible')
     }
     return () => localStorage.removeItem('pwa-install-visible')
-  }, [isDismissed, installState])
+  }, [isNative, isDismissed, installState])
 
   // Listen for the install prompt
   useEffect(() => {
@@ -149,8 +156,9 @@ export default function InstallPrompt() {
     trackPwaInstallDismiss()
   }, [])
 
-  // Don't show if dismissed, already installed, or no install option
-  if (isDismissed || installState === 'installed' || installState === 'idle') {
+  // Never inside the native app; and not if dismissed, already installed, or no
+  // install option.
+  if (isNative || isDismissed || installState === 'installed' || installState === 'idle') {
     return null
   }
 
