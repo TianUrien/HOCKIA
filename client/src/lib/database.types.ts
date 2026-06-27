@@ -5006,6 +5006,21 @@ export type Database = {
       }
     }
     Functions: {
+      should_show_app_rating_prompt: { Args: never; Returns: Json }
+      record_app_rating_prompt_shown: { Args: never; Returns: undefined }
+      record_app_rating_prompt_dismissed: { Args: never; Returns: undefined }
+      submit_app_rating: {
+        Args: {
+          p_rating_value: number
+          p_feedback_text?: string
+          p_platform?: string
+          p_app_version?: string
+          p_build_number?: string
+          p_environment?: string
+          p_trigger_reason?: string
+        }
+        Returns: string
+      }
       record_application_view: {
         Args: { p_application_id: string }
         Returns: undefined

@@ -12,6 +12,7 @@ import { ProfileImagePreviewProvider } from '@/components/ProfileImagePreviewPro
 import InstallPrompt from '@/components/InstallPrompt'
 import PushPrompt from '@/components/PushPrompt'
 import NativeUpdatePrompt from '@/components/NativeUpdatePrompt'
+import AppRatingPrompt from '@/components/AppRatingPrompt'
 import { useEngagementTracking } from '@/hooks/useEngagementTracking'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
@@ -348,6 +349,7 @@ function App() {
           <InstallPrompt />
           <PushPrompt />
           <NativeUpdatePrompt />
+          <AppRatingPrompt />
           <EngagementTracker />
           <AnalyticsTracker />
           <DbPageViewTracker />
