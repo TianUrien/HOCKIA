@@ -18,6 +18,16 @@ import type { ApplicantReferenceInfo } from '@/components/ApplicantCard'
 import type { OpportunityApplicationWithApplicant } from '@/lib/supabase'
 import type { Database } from '@/lib/database.types'
 
+// ApplicantCard now imports the real supabase client (record_application_view on
+// "View Profile"). Mock it so loading the component never trips supabase.ts's
+// env-var guard, which throws when VITE_SUPABASE_* is absent (e.g. in CI). Matches
+// the mock pattern used across these tests.
+vi.mock('@/lib/supabase', () => ({
+  supabase: {
+    rpc: vi.fn(() => Promise.resolve({ data: null, error: null })),
+  },
+}))
+
 type ApplicationStatus = Database['public']['Enums']['application_status']
 
 // --- Source paths for source-validation tests ---
