@@ -2263,3 +2263,71 @@ export async function updateFeedback(opts: {
   if (error) throw new Error(`Failed to update feedback: ${error.message}`)
   return data as FeedbackRow
 }
+
+// ── App Ratings (internal 1-5 star prompt) ───────────────────────────────────
+export interface AppRatingsMetrics {
+  summary: {
+    avg_rating: number | null
+    total_ratings: number
+    prompts_shown: number
+    unique_users_shown: number
+    prompts_dismissed: number
+    conversion_rate: number
+    dismissal_rate: number
+  }
+  distribution: { rating: number; count: number }[]
+  daily: { day: string; submitted: number; shown: number; dismissed: number }[]
+  by_role: { user_role: string; count: number; avg: number }[]
+  by_platform: { platform: string; count: number; avg: number }[]
+  by_version: { app_version: string; count: number; avg: number }[]
+  by_country: { country: string; count: number; avg: number }[]
+  eligible_not_prompted: number
+  window_days: number
+  generated_at: string
+}
+
+export async function getAppRatingsMetrics(days: number = 30): Promise<AppRatingsMetrics> {
+  const { data, error } = await adminRpc('admin_get_app_ratings_metrics', { p_days: days })
+  if (error) throw new Error(`Failed to get app ratings metrics: ${error.message}`)
+  return data as AppRatingsMetrics
+}
+
+export interface AppRatingRow {
+  id: string
+  rating_value: number
+  feedback_text: string | null
+  user_role: string | null
+  platform: string | null
+  app_version: string | null
+  build_number: string | null
+  environment: string | null
+  prompt_trigger_reason: string | null
+  submitted_at: string
+  user_name: string | null
+  country_name: string | null
+}
+
+export interface AppRatingsListPage {
+  rows: AppRatingRow[]
+  total: number
+  limit: number
+  offset: number
+}
+
+export async function getAppRatingsList(opts: {
+  limit?: number
+  offset?: number
+  stars?: number | null
+  platform?: string | null
+  role?: string | null
+} = {}): Promise<AppRatingsListPage> {
+  const { data, error } = await adminRpc('admin_get_app_ratings_list', {
+    p_limit: opts.limit ?? 25,
+    p_offset: opts.offset ?? 0,
+    p_stars: opts.stars ?? null,
+    p_platform: opts.platform ?? null,
+    p_role: opts.role ?? null,
+  })
+  if (error) throw new Error(`Failed to get app ratings list: ${error.message}`)
+  return data as AppRatingsListPage
+}
