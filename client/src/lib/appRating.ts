@@ -14,13 +14,14 @@ import { logger } from '@/lib/logger'
 const IS_AUTOMATED = typeof navigator !== 'undefined' && (navigator as Navigator).webdriver === true
 
 /**
- * Feature flag. ON everywhere EXCEPT production (so we can test on localhost →
- * staging and on staging), and OFF on production unless VITE_ENABLE_APP_RATING is
- * explicitly 'true'. Lets us dial prod on deliberately later, and kill it instantly.
+ * Feature flag. ON in every environment — including production — and on native
+ * (iOS/Android) builds, so the rating prompt is available everywhere. The only OFF
+ * states: the explicit kill switch VITE_ENABLE_APP_RATING='false' (instant
+ * rollback via a redeploy/rebuild), and automated browsers (e2e). Eligibility is
+ * still fully gated server-side (onboarding + 7 active days, once/day, etc.).
  */
 export const APP_RATING_ENABLED =
-  !IS_AUTOMATED &&
-  (import.meta.env.VITE_ENABLE_APP_RATING === 'true' || getEnvironment() !== 'production')
+  !IS_AUTOMATED && import.meta.env.VITE_ENABLE_APP_RATING !== 'false'
 
 export interface RatingDecision {
   show: boolean
