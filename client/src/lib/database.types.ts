@@ -5019,7 +5019,7 @@ export type Database = {
           p_environment?: string
           p_trigger_reason?: string
         }
-        Returns: string
+        Returns: Json
       }
       record_application_view: {
         Args: { p_application_id: string }

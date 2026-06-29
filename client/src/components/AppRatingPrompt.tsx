@@ -41,12 +41,14 @@ export default function AppRatingPrompt() {
   const [comment, setComment] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [submitError, setSubmitError] = useState(false)
   const [closed, setClosed] = useState(false)
   const queriedRef = useRef(false)
   const shownRef = useRef(false)
 
-  // Ask the server once per session, on the first calm surface (and not while the
-  // PWA install banner is up — don't stack prompts).
+  // Ask the server once per session, on the first calm surface. Stacking with other
+  // bottom prompts is handled reactively by the coordinator (otherActive), so the
+  // query itself isn't gated on it.
   useEffect(() => {
     if (!APP_RATING_ENABLED || !calm || closed || queriedRef.current) return
     queriedRef.current = true
@@ -79,11 +81,14 @@ export default function AppRatingPrompt() {
   const handleSubmit = async () => {
     if (rating < 1 || submitting) return
     setSubmitting(true)
+    setSubmitError(false)
     const ok = await submitRating(rating, comment, decision.trigger)
     setSubmitting(false)
     if (ok) {
       setSubmitted(true)
       window.setTimeout(() => setClosed(true), 2600)
+    } else {
+      setSubmitError(true)
     }
   }
 
@@ -114,13 +119,21 @@ export default function AppRatingPrompt() {
             Your feedback helps us improve the field hockey community.
           </p>
 
-          <div className="mt-3 flex items-center gap-1.5" onMouseLeave={() => setHover(0)}>
+          <div
+            className="mt-3 flex items-center gap-1.5"
+            role="radiogroup"
+            aria-label="Rate HOCKIA from 1 to 5 stars"
+            onMouseLeave={() => setHover(0)}
+          >
             {[1, 2, 3, 4, 5].map((n) => (
               <button
                 key={n}
                 type="button"
+                role="radio"
+                aria-checked={n === rating ? 'true' : 'false'}
                 onClick={() => setRating(n)}
                 onMouseEnter={() => setHover(n)}
+                onFocus={() => setHover(n)}
                 className="p-1 transition-transform hover:scale-110"
                 aria-label={`${n} star${n > 1 ? 's' : ''}`}
               >
@@ -161,6 +174,11 @@ export default function AppRatingPrompt() {
                   Not now
                 </button>
               </div>
+              {submitError && (
+                <p className="mt-2 text-xs text-rose-600" role="alert">
+                  Couldn’t send your feedback — please try again.
+                </p>
+              )}
             </div>
           )}
 

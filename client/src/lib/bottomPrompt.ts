@@ -2,10 +2,13 @@ import { useEffect, useReducer } from 'react'
 
 /**
  * Coordinates the fixed bottom-corner prompts (Install / Push / Native update /
- * App rating) so they never stack on top of each other. Each prompt registers
- * whether it's currently visible; the lowest-priority one (the rating card) reads
- * `otherActive` and defers while any other is showing. In-memory + subscription
- * based, so it's reactive within the same tab (unlike a localStorage flag).
+ * App rating). Each prompt registers whether it's currently visible; the
+ * lowest-priority one (the rating card) reads `otherActive` and defers while any
+ * other is showing — so the rating card never stacks on the others. The other three
+ * keep their own existing guards between themselves (Install hides inside the native
+ * app, Push defers to Install via the pwa-install-visible flag, a force-update is a
+ * blocking modal). In-memory + subscription based, so it's reactive within the same
+ * tab (unlike a localStorage flag).
  */
 const active = new Set<string>()
 const listeners = new Set<() => void>()

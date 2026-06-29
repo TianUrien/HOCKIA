@@ -86,9 +86,14 @@ export async function submitRating(
       logger.warn('submit_app_rating failed', error)
       return false
     }
-    trackDbEvent('app_rating_prompt_submitted', undefined, (data as string | null) ?? undefined, {
-      rating: ratingValue,
-    })
+    // The RPC returns {rating_id, inserted}. Only count a GENUINE new rating in the
+    // funnel — an idempotent no-op (user already rated) returns inserted:false.
+    const result = data as { rating_id?: string; inserted?: boolean } | null
+    if (result?.inserted) {
+      trackDbEvent('app_rating_prompt_submitted', undefined, result.rating_id ?? undefined, {
+        rating: ratingValue,
+      })
+    }
     return true
   } catch (err) {
     logger.warn('submit_app_rating error', err)
