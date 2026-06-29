@@ -6,6 +6,7 @@ import { Button, InAppBrowserWarning, PublicNav } from '@/components'
 import HockiaSocials from '@/components/HockiaSocials'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
+import { useImmersiveChrome } from '@/hooks/useImmersiveChrome'
 
 /**
  * Landing — hero-only surface.
@@ -40,6 +41,9 @@ const RESUME_DELAY_MS = 8000
 const SWIPE_THRESHOLD = 50
 
 export default function Landing() {
+  // Dark welcome screen: paint the iOS safe-area/status-bar region black (no white
+  // strip) + light status-bar icons. Reverts to light app chrome on unmount.
+  useImmersiveChrome('#000000')
   const navigate = useNavigate()
   const location = useLocation()
   const { user, profile, profileStatus, loading: authLoading } = useAuthStore()

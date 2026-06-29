@@ -37,6 +37,8 @@
     "@capacitor/core": "^8.2.0",
     "@capacitor/ios": "^8.2.0",
     "@capacitor/push-notifications": "^8.0.2",
+    "@capacitor/status-bar": "^8.0.2",
+    "@capawesome/capacitor-badge": "^8.0.2",
     "@googlemaps/js-api-loader": "^2.0.2",
     "@hookform/resolvers": "^5.2.2",
     "@sentry/react": "^10.26.0",

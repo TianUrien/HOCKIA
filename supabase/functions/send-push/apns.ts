@@ -102,7 +102,7 @@ export async function sendApnsNotification(
     aps: {
       alert: { title: payload.title, body: payload.body },
       sound: 'default',
-      badge: 1,
+      badge: payload.badge ?? 1,
     },
     // Custom keys the app reads on tap (deep-link target + coalescing tag).
     url: payload.url,

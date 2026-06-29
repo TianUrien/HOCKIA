@@ -8,6 +8,8 @@ export interface PushPayload {
   body: string
   url: string
   tag?: string
+  /** OS app-icon badge count (recipient's unread total). Falls back to 1. */
+  badge?: number
 }
 
 // deno-lint-ignore no-explicit-any

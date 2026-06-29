@@ -116,8 +116,18 @@ Deno.serve(async (req: Request) => {
       }
     }
 
+    // Badge = recipient's current unread-notification count (this notification is
+    // already inserted, so it's included), so the OS icon badge reflects reality
+    // instead of a hardcoded 1. The client syncs/clears it from the same count.
+    const { count: unreadCount } = await supabase
+      .from('profile_notifications')
+      .select('id', { count: 'exact', head: true })
+      .eq('recipient_profile_id', recipientId)
+      .is('read_at', null)
+      .is('cleared_at', null)
+
     // Build push payload
-    const pushPayload = buildPushPayload(kind, metadata, actorName)
+    const pushPayload = { ...buildPushPayload(kind, metadata, actorName), badge: unreadCount ?? 1 }
     const payloadString = JSON.stringify(pushPayload)
 
     // Send to each device

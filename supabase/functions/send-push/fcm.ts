@@ -146,7 +146,7 @@ export async function sendFcmNotification(
         payload: {
           aps: {
             sound: 'default',
-            badge: 1,
+            badge: payload.badge ?? 1,
           },
         },
       },
