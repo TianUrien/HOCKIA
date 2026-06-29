@@ -157,7 +157,7 @@ export default function Landing() {
   }, [user, profile, profileStatus, authLoading, navigate, redirectTo])
 
   return (
-    <div className="min-h-[100dvh] relative overflow-hidden flex flex-col bg-black">
+    <div className="fixed inset-0 overflow-hidden flex flex-col bg-black">
       <InAppBrowserWarning context="login" />
 
       {/* ── Background image + overlay ── */}
@@ -168,7 +168,9 @@ export default function Landing() {
       </div>
 
       {/* ───────────────── MOBILE (<lg) ───────────────── */}
-      <div className="lg:hidden absolute inset-0 z-10 flex flex-col pt-6">
+      {/* Fixed full-screen root no longer inherits the body's safe-area padding,
+          so clear the notch here (status-bar inset + the original 1.5rem). */}
+      <div className="lg:hidden absolute inset-0 z-10 flex flex-col pt-[calc(env(safe-area-inset-top)_+_1.5rem)]">
         <PublicNav transparent />
 
         <div
