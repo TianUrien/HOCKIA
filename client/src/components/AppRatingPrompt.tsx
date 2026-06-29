@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useLocation } from 'react-router-dom'
 import { Star, X } from 'lucide-react'
+import { useBottomPrompt } from '@/lib/bottomPrompt'
 import {
   APP_RATING_ENABLED,
   shouldShowRatingPrompt,
@@ -31,6 +32,8 @@ function isCalmSurface(pathname: string): boolean {
 export default function AppRatingPrompt() {
   const location = useLocation()
   const calm = isCalmSurface(location.pathname)
+  // Lowest-priority bottom prompt — defer while Install/Push/Native-update show.
+  const otherActive = useBottomPrompt('rating', false)
 
   const [decision, setDecision] = useState<RatingDecision | null>(null)
   const [rating, setRating] = useState(0)
@@ -46,7 +49,6 @@ export default function AppRatingPrompt() {
   // PWA install banner is up — don't stack prompts).
   useEffect(() => {
     if (!APP_RATING_ENABLED || !calm || closed || queriedRef.current) return
-    if (typeof localStorage !== 'undefined' && localStorage.getItem('pwa-install-visible')) return
     queriedRef.current = true
     let cancelled = false
     void (async () => {
@@ -58,15 +60,16 @@ export default function AppRatingPrompt() {
     }
   }, [calm, closed])
 
-  // Record "shown" exactly once, when the card first renders.
+  // Record "shown" exactly once, when the card actually renders (not while deferred
+  // behind another prompt).
   useEffect(() => {
-    if (decision?.show && calm && !closed && !shownRef.current) {
+    if (decision?.show && calm && !closed && !otherActive && !shownRef.current) {
       shownRef.current = true
       recordRatingPromptShown()
     }
-  }, [decision, calm, closed])
+  }, [decision, calm, closed, otherActive])
 
-  if (!decision?.show || closed || !calm) return null
+  if (!decision?.show || closed || !calm || otherActive) return null
 
   const handleDismiss = () => {
     if (!submitted) recordRatingPromptDismissed()

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Bell, X } from 'lucide-react'
 import { usePushSubscription } from '@/hooks/usePushSubscription'
+import { useBottomPrompt } from '@/lib/bottomPrompt'
 import {
   trackPushSubscribe,
   trackPushPromptShown,
@@ -14,6 +15,7 @@ export default function PushPrompt() {
   const push = usePushSubscription()
   const [visible, setVisible] = useState(false)
   const hasTrackedShow = useRef(false)
+  useBottomPrompt('push', visible)
 
   // Determine visibility
   useEffect(() => {

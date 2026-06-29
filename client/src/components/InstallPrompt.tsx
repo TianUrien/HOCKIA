@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { detectPlatform } from '@/lib/detectPlatform'
+import { useBottomPrompt } from '@/lib/bottomPrompt'
 
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: string[]
@@ -66,6 +67,9 @@ export default function InstallPrompt() {
   // Until now it was avoided only because the WKWebView UA lacks "Safari"; this is
   // the explicit, robust guard.
   const isNative = Capacitor.isNativePlatform()
+
+  // Coordinate with the other bottom prompts so they never stack.
+  useBottomPrompt('install', !isNative && !isDismissed && installState !== 'installed' && installState !== 'idle')
 
   // Check localStorage for dismissal
   useEffect(() => {

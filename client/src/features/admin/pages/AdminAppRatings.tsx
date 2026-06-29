@@ -78,7 +78,12 @@ export function AdminAppRatings() {
   useEffect(() => { document.title = 'App Ratings | HOCKIA Admin' }, [])
   useEffect(() => { fetchMetrics() }, [fetchMetrics])
   useEffect(() => { fetchList() }, [fetchList])
-  useEffect(() => { setOffset(0) }, [starsFilter, platformFilter, roleFilter])
+
+  // Reset paging + change the filter in ONE batched update so the list fetches
+  // once (not twice — which would briefly render the stale offset/total).
+  const applyStars = (v: number | null) => { setStarsFilter(v); setOffset(0) }
+  const applyPlatform = (v: string | null) => { setPlatformFilter(v); setOffset(0) }
+  const applyRole = (v: string | null) => { setRoleFilter(v); setOffset(0) }
 
   const refresh = () => { fetchMetrics(); fetchList() }
 
@@ -132,8 +137,8 @@ export function AdminAppRatings() {
         <StatCard label="Avg rating" value={avgText} icon={Star} color="amber" loading={isLoadingMetrics} />
         <StatCard label="Ratings" value={s?.total_ratings ?? 0} icon={MessageSquare} color="purple" loading={isLoadingMetrics} />
         <StatCard label="Prompts shown" value={s?.prompts_shown ?? 0} icon={Eye} color="blue" loading={isLoadingMetrics} />
-        <StatCard label="Conversion" value={`${s?.conversion_rate ?? 0}%`} icon={TrendingUp} color="green" loading={isLoadingMetrics} />
-        <StatCard label="Dismissal" value={`${s?.dismissal_rate ?? 0}%`} icon={XCircle} color="rose" loading={isLoadingMetrics} />
+        <StatCard label="Conversion" value={`${Math.min(s?.conversion_rate ?? 0, 100)}%`} icon={TrendingUp} color="green" loading={isLoadingMetrics} />
+        <StatCard label="Dismissal" value={`${Math.min(s?.dismissal_rate ?? 0, 100)}%`} icon={XCircle} color="rose" loading={isLoadingMetrics} />
         <StatCard label="Eligible, not asked" value={metrics?.eligible_not_prompted ?? 0} icon={Users} color="gray" loading={isLoadingMetrics} />
       </div>
 
@@ -202,7 +207,7 @@ export function AdminAppRatings() {
               <button
                 key={st ?? 'all'}
                 type="button"
-                onClick={() => setStarsFilter(st)}
+                onClick={() => applyStars(st)}
                 className={[
                   'px-2.5 min-h-[32px] inline-flex items-center rounded-md font-medium transition',
                   starsFilter === st ? 'bg-purple-100 text-purple-700' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50',
@@ -217,7 +222,7 @@ export function AdminAppRatings() {
               <button
                 key={pf ?? 'all'}
                 type="button"
-                onClick={() => setPlatformFilter(pf)}
+                onClick={() => applyPlatform(pf)}
                 className={[
                   'px-2.5 min-h-[32px] inline-flex items-center rounded-md font-medium transition',
                   platformFilter === pf ? 'bg-purple-100 text-purple-700' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50',
@@ -232,7 +237,7 @@ export function AdminAppRatings() {
               <button
                 key={rl ?? 'all'}
                 type="button"
-                onClick={() => setRoleFilter(rl)}
+                onClick={() => applyRole(rl)}
                 className={[
                   'px-2.5 min-h-[32px] inline-flex items-center rounded-md font-medium transition',
                   roleFilter === rl ? 'bg-purple-100 text-purple-700' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50',

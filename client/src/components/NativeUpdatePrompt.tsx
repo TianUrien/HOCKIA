@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Download, X } from 'lucide-react'
 import { Browser } from '@capacitor/browser'
 import { useAppUpdateCheck } from '@/hooks/useAppUpdateCheck'
+import { useBottomPrompt } from '@/lib/bottomPrompt'
 
 const SOFT_DISMISS_KEY = 'native-update-prompt-dismissed-at'
 const SOFT_DISMISS_WINDOW_MS = 24 * 60 * 60 * 1000 // re-show the soft banner after a day
@@ -24,6 +25,8 @@ export default function NativeUpdatePrompt() {
       return false
     }
   })
+
+  useBottomPrompt('native-update', status !== 'ok' && (status === 'force' || !dismissed))
 
   const openStore = () => { void Browser.open({ url: storeUrl }) }
 
