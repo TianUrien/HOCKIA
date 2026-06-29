@@ -4,6 +4,7 @@ import Avatar from './Avatar'
 import { NotificationBadge } from '@/components'
 import { useNavigation } from '@/hooks/useNavigation'
 import { useAnyModalOpen } from '@/hooks/useAnyModalOpen'
+import { useBottomPrompt } from '@/lib/bottomPrompt'
 
 interface NavItem {
   id: string
@@ -31,7 +32,10 @@ export default function MobileBottomNav() {
   // Also hide the FAB whenever a modal/dialog is open so it never sits ON TOP
   // of modal content/actions (e.g. covering Edit Profile's "Save Changes").
   const anyModalOpen = useAnyModalOpen()
-  const hideFab = fabHidden || anyModalOpen
+  // ...and whenever a bottom-corner prompt (Install / Push / Native-update / App
+  // rating card) is showing — they share this corner, so the FAB defers to them.
+  const bottomPromptActive = useBottomPrompt('fab', false)
+  const hideFab = fabHidden || anyModalOpen || bottomPromptActive
 
   // rAF-coalesced scroll listener — compares scrollY frame-to-frame to derive
   // direction. Hide on downward scroll past a small threshold; show on any

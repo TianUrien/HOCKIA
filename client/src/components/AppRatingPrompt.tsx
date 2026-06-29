@@ -32,8 +32,6 @@ function isCalmSurface(pathname: string): boolean {
 export default function AppRatingPrompt() {
   const location = useLocation()
   const calm = isCalmSurface(location.pathname)
-  // Lowest-priority bottom prompt — defer while Install/Push/Native-update show.
-  const otherActive = useBottomPrompt('rating', false)
 
   const [decision, setDecision] = useState<RatingDecision | null>(null)
   const [rating, setRating] = useState(0)
@@ -45,6 +43,11 @@ export default function AppRatingPrompt() {
   const [closed, setClosed] = useState(false)
   const queriedRef = useRef(false)
   const shownRef = useRef(false)
+
+  // Lowest-priority bottom prompt: claim a slot while the card wants to show, so the
+  // AI FAB and other bottom prompts defer to it; we defer while a higher prompt is up.
+  const wantsToShow = Boolean(decision?.show) && !closed && calm
+  const otherActive = useBottomPrompt('rating', wantsToShow)
 
   // Ask the server once per session, on the first calm surface. Stacking with other
   // bottom prompts is handled reactively by the coordinator (otherActive), so the
