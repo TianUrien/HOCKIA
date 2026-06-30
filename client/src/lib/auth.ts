@@ -42,11 +42,23 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   profileFetchedAt: null,
   
   setUser: (user) => set({ user }),
-  setProfile: (profile) => set((state) => ({
-    profile,
-    profileStatus: profile ? 'loaded' : state.profileStatus,
-    profileFetchedAt: profile ? Date.now() : state.profileFetchedAt
-  })),
+  setProfile: (profile) => {
+    set((state) => ({
+      profile,
+      profileStatus: profile ? 'loaded' : state.profileStatus,
+      profileFetchedAt: profile ? Date.now() : state.profileFetchedAt
+    }))
+    // Any local profile mutation routed through the store must also bust the cached
+    // PUBLIC profile rows for this person — the force-refresh path (fetchProfile)
+    // does it too, but several one-tap surfaces (AvailabilityToggleStrip's
+    // Open-to-Play/Coach, ClubLinkPrompt's club link) write a PUBLIC column then call
+    // setProfile() WITHOUT a force-refresh. Doing it here makes "edit ⇒ owner sees it
+    // immediately" structural, so a new quick-edit surface can't silently bypass it.
+    // (Cheap ≤6 Map deletes; a no-op when the keys aren't cached.)
+    if (profile) {
+      invalidatePublicProfileCache({ id: profile.id, username: profile.username })
+    }
+  },
   setLoading: (loading) => set({ loading }),
   setHasCompletedOnboardingRedirect: (value) => set({ hasCompletedOnboardingRedirect: value }),
   
