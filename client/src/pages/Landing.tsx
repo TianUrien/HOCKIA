@@ -265,6 +265,14 @@ export default function Landing() {
               </Link>
             </p>
 
+            {/* Questions before signing up — subtle support link, not a CTA. */}
+            <a
+              href="mailto:team@inhockia.com?subject=HOCKIA enquiry"
+              className="text-center text-xs text-white/50 hover:text-white/80 transition-colors"
+            >
+              Questions? Contact us
+            </a>
+
             {/* Follow us — official HOCKIA channels (mobile hero). */}
             <HockiaSocials tone="onDark" className="justify-center pt-1" />
           </div>
@@ -315,6 +323,14 @@ export default function Landing() {
                 </Link>
               </p>
             </div>
+
+            {/* Questions before signing up — subtle support link, not a CTA. */}
+            <a
+              href="mailto:team@inhockia.com?subject=HOCKIA enquiry"
+              className="inline-block mt-6 text-sm text-white/50 hover:text-white/80 transition-colors"
+            >
+              Questions? Contact us
+            </a>
 
             {/* Follow us — official HOCKIA channels (desktop hero). */}
             <HockiaSocials tone="onDark" className="mt-10" />
