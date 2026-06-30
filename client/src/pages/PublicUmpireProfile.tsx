@@ -65,10 +65,10 @@ export default function PublicUmpireProfile() {
       : null
 
   const [profile, setProfile] = useState<PublicUmpireShape | null>(
-    () => (cacheKey ? requestCache.peek<PublicUmpireShape>(cacheKey) ?? null : null),
+    () => (cacheKey ? requestCache.peek<PublicUmpireShape>(cacheKey, PUBLIC_PROFILE_TTL) ?? null : null),
   )
   const [isLoading, setIsLoading] = useState(
-    () => !(cacheKey ? requestCache.peek<PublicUmpireShape>(cacheKey) : null),
+    () => !(cacheKey ? requestCache.peek<PublicUmpireShape>(cacheKey, PUBLIC_PROFILE_TTL) : null),
   )
   const [error, setError] = useState<string | null>(null)
 
@@ -94,7 +94,7 @@ export default function PublicUmpireProfile() {
 
       // Warm-cache fast path: render the previously-fetched row instantly so a
       // revisit doesn't flash a full-screen spinner. Per-viewer gating still runs.
-      const cached = requestCache.peek<PublicUmpireShape>(cacheKey)
+      const cached = requestCache.peek<PublicUmpireShape>(cacheKey, PUBLIC_PROFILE_TTL)
       if (cached) {
         setProfile(cached)
         setIsLoading(false)

@@ -85,10 +85,10 @@ export default function PublicPlayerProfile() {
       : null
 
   const [profile, setProfile] = useState<PublicProfile | null>(
-    () => (cacheKey ? requestCache.peek<PublicProfile>(cacheKey) ?? null : null),
+    () => (cacheKey ? requestCache.peek<PublicProfile>(cacheKey, PUBLIC_PROFILE_TTL) ?? null : null),
   )
   const [isLoading, setIsLoading] = useState(
-    () => !(cacheKey ? requestCache.peek<PublicProfile>(cacheKey) : null),
+    () => !(cacheKey ? requestCache.peek<PublicProfile>(cacheKey, PUBLIC_PROFILE_TTL) : null),
   )
   const [error, setError] = useState<string | null>(null)
 
@@ -121,7 +121,7 @@ export default function PublicPlayerProfile() {
       // Warm-cache fast path: render the previously-fetched row instantly so a
       // revisit doesn't flash a full-screen spinner. The per-viewer gating
       // (test/block) below still runs; it just no longer gates first paint.
-      const cached = requestCache.peek<PublicProfile>(cacheKey)
+      const cached = requestCache.peek<PublicProfile>(cacheKey, PUBLIC_PROFILE_TTL)
       if (cached) {
         setProfile(cached)
         setIsLoading(false)
