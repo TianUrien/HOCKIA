@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { logger } from '../lib/logger'
+import { requestCache } from '../lib/requestCache'
 import type { Profile } from '../lib/supabase'
 import PlayerDashboard, { type PlayerProfileShape } from './PlayerDashboard'
 import CoachDashboard from './CoachDashboard'
@@ -58,6 +59,13 @@ type PublicProfile = PublicPlayerProfileShape | PublicCoachProfileShape
 // into the test bundle (and to satisfy the react-refresh lint rule).
 import { PUBLIC_PROFILE_FIELDS } from '@/lib/publicProfileFields'
 
+// Cache the public profile row across navigation so revisiting a profile renders
+// instantly from memory instead of a full-screen spinner + refetch. Keyed per
+// profile (the row is viewer-independent); the per-viewer test/block gating still
+// runs each visit. 2-min TTL — profiles change rarely, and the owner edits via
+// their own dashboard, not this public page.
+const PUBLIC_PROFILE_TTL = 120_000
+
 export default function PublicPlayerProfile() {
   const { username, id } = useParams<{ username?: string; id?: string }>()
   const navigate = useNavigate()
@@ -88,74 +96,74 @@ export default function PublicPlayerProfile() {
   }
 
   useEffect(() => {
+    const cacheKey = username
+      ? `public-profile-uname-${username}`
+      : id
+        ? `public-profile-id-${id}`
+        : null
+
     const fetchProfile = async () => {
-      setIsLoading(true)
+      if (!cacheKey) {
+        setError('Invalid profile URL')
+        setIsLoading(false)
+        return
+      }
+
+      // Warm-cache fast path: render the previously-fetched row instantly so a
+      // revisit doesn't flash a full-screen spinner. The per-viewer gating
+      // (test/block) below still runs; it just no longer gates first paint.
+      const cached = requestCache.peek<PublicProfile>(cacheKey)
+      if (cached) {
+        setProfile(cached)
+        setIsLoading(false)
+      } else {
+        setIsLoading(true)
+      }
       setError(null)
 
       try {
-        // Fetch by username (preferred) or fallback to ID
-        if (username) {
-          const { data, error: fetchError } = await supabase
-            .from('profiles')
-            .select(PUBLIC_PROFILE_FIELDS)
-            .in('role', ['player', 'coach']) // Support both players and coaches
-            .eq('username', username)
-            .single()
-
-          if (fetchError) {
-            if (fetchError.code === 'PGRST116') {
-              setError('Profile not found.')
-            } else {
+        // The profiles row is viewer-independent, so it's cached per-profile and
+        // shared across navigations. Not-found is returned as null (cheap negative
+        // cache); transient errors throw and are NOT cached.
+        const typed = await requestCache.dedupe<PublicProfile | null>(
+          cacheKey,
+          async () => {
+            const base = supabase
+              .from('profiles')
+              .select(PUBLIC_PROFILE_FIELDS)
+              .in('role', ['player', 'coach']) // Support both players and coaches
+            const { data, error: fetchError } = await (
+              username ? base.eq('username', username) : base.eq('id', id!)
+            ).single()
+            if (fetchError) {
+              if (fetchError.code === 'PGRST116') return null
               throw fetchError
             }
-            return
-          }
+            return data as unknown as PublicProfile
+          },
+          PUBLIC_PROFILE_TTL,
+        )
 
-          const typed = data as unknown as PublicProfile
-
-          // Check if this is a test profile and current user is not a test account
-          if (typed.is_test_account && !isCurrentUserTestAccount && !isStaging) {
-            setError('Profile not found.')
-            return
-          }
-
-          // Block check
-          if (currentUserProfile && await checkBlocked(currentUserProfile.id, typed.id)) return
-
-          setProfile(typed)
-        } else if (id) {
-          const { data, error: fetchError } = await supabase
-            .from('profiles')
-            .select(PUBLIC_PROFILE_FIELDS)
-            .in('role', ['player', 'coach']) // Support both players and coaches
-            .eq('id', id)
-            .single()
-
-          if (fetchError) {
-            if (fetchError.code === 'PGRST116') {
-              setError('Profile not found.')
-            } else {
-              throw fetchError
-            }
-            return
-          }
-
-          const typed = data as unknown as PublicProfile
-
-          // Check if this is a test profile and current user is not a test account
-          if (typed.is_test_account && !isCurrentUserTestAccount && !isStaging) {
-            setError('Profile not found.')
-            return
-          }
-
-          // Block check
-          if (currentUserProfile && await checkBlocked(currentUserProfile.id, typed.id)) return
-
-          setProfile(typed)
-        } else {
-          setError('Invalid profile URL')
+        if (!typed) {
+          setProfile(null)
+          setError('Profile not found.')
           return
         }
+
+        // Test-profile gating (per viewer)
+        if (typed.is_test_account && !isCurrentUserTestAccount && !isStaging) {
+          setProfile(null)
+          setError('Profile not found.')
+          return
+        }
+
+        // Block check (per viewer pair) — checkBlocked sets the error itself.
+        if (currentUserProfile && await checkBlocked(currentUserProfile.id, typed.id)) {
+          setProfile(null)
+          return
+        }
+
+        setProfile(typed)
       } catch (err) {
         logger.error('Error fetching profile:', err)
         setError('Failed to load profile. Please try again.')

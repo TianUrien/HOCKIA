@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { logger } from '../lib/logger'
+import { requestCache } from '../lib/requestCache'
 import type { Profile } from '../lib/supabase'
 import ClubDashboard from './ClubDashboard'
 import { useAuthStore } from '../lib/auth'
@@ -37,6 +38,10 @@ type PublicClubProfile = Partial<Profile> &
 // in PublicPlayerProfile.tsx for rationale).
 import { PUBLIC_CLUB_FIELDS } from '@/lib/publicProfileFields'
 
+// Cache the public club row across navigation (instant revisit, no spinner). Keyed
+// per club; the per-viewer test/block gating still runs each visit. 2-min TTL.
+const PUBLIC_PROFILE_TTL = 120_000
+
 export default function PublicClubProfile() {
   const { username, id } = useParams<{ username?: string; id?: string }>()
   const navigate = useNavigate()
@@ -61,74 +66,72 @@ export default function PublicClubProfile() {
   }
 
   useEffect(() => {
+    const cacheKey = username
+      ? `public-club-uname-${username}`
+      : id
+        ? `public-club-id-${id}`
+        : null
+
     const fetchProfile = async () => {
-      setIsLoading(true)
+      if (!cacheKey) {
+        setError('Invalid profile URL')
+        setIsLoading(false)
+        return
+      }
+
+      // Warm-cache fast path: render the previously-fetched row instantly so a
+      // revisit doesn't flash a full-screen spinner. Per-viewer gating still runs.
+      const cached = requestCache.peek<PublicClubProfile>(cacheKey)
+      if (cached) {
+        setProfile(cached)
+        setIsLoading(false)
+      } else {
+        setIsLoading(true)
+      }
       setError(null)
 
       try {
-        // Fetch by username (preferred) or fallback to ID
-        if (username) {
-          const { data, error: fetchError } = await supabase
-            .from('profiles')
-            .select(PUBLIC_CLUB_FIELDS)
-            .eq('role', 'club')
-            .eq('username', username)
-            .single()
-
-          if (fetchError) {
-            if (fetchError.code === 'PGRST116') {
-              setError('Club profile not found.')
-            } else {
+        // Viewer-independent club row, cached per club and shared across navigations.
+        // Not-found returns null (negative cache); transient errors throw, not cached.
+        const typed = await requestCache.dedupe<PublicClubProfile | null>(
+          cacheKey,
+          async () => {
+            const base = supabase
+              .from('profiles')
+              .select(PUBLIC_CLUB_FIELDS)
+              .eq('role', 'club')
+            const { data, error: fetchError } = await (
+              username ? base.eq('username', username) : base.eq('id', id!)
+            ).single()
+            if (fetchError) {
+              if (fetchError.code === 'PGRST116') return null
               throw fetchError
             }
-            return
-          }
+            return data as unknown as PublicClubProfile
+          },
+          PUBLIC_PROFILE_TTL,
+        )
 
-          const typed = data as unknown as PublicClubProfile
-
-          // Check if this is a test profile and current user is not a test account
-          if (typed.is_test_account && !isCurrentUserTestAccount && !isStaging) {
-            setError('Club profile not found.')
-            return
-          }
-
-          // Block check
-          if (currentUserProfile && await checkBlocked(currentUserProfile.id, typed.id)) return
-
-          setProfile(typed)
-        } else if (id) {
-          const { data, error: fetchError } = await supabase
-            .from('profiles')
-            .select(PUBLIC_CLUB_FIELDS)
-            .eq('role', 'club')
-            .eq('id', id)
-            .single()
-
-          if (fetchError) {
-            if (fetchError.code === 'PGRST116') {
-              setError('Club profile not found.')
-            } else {
-              throw fetchError
-            }
-            return
-          }
-
-          const typed = data as unknown as PublicClubProfile
-
-          // Check if this is a test profile and current user is not a test account
-          if (typed.is_test_account && !isCurrentUserTestAccount && !isStaging) {
-            setError('Club profile not found.')
-            return
-          }
-
-          // Block check
-          if (currentUserProfile && await checkBlocked(currentUserProfile.id, typed.id)) return
-
-          setProfile(typed)
-        } else {
-          setError('Invalid profile URL')
+        if (!typed) {
+          setProfile(null)
+          setError('Club profile not found.')
           return
         }
+
+        // Test-profile gating (per viewer)
+        if (typed.is_test_account && !isCurrentUserTestAccount && !isStaging) {
+          setProfile(null)
+          setError('Club profile not found.')
+          return
+        }
+
+        // Block check (per viewer pair) — checkBlocked sets the error itself.
+        if (currentUserProfile && await checkBlocked(currentUserProfile.id, typed.id)) {
+          setProfile(null)
+          return
+        }
+
+        setProfile(typed)
       } catch (err) {
         logger.error('Error fetching club profile:', err)
         setError('Failed to load club profile. Please try again.')
