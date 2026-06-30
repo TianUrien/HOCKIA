@@ -34,12 +34,24 @@ export function usePostInteractions() {
   const queryClient = useQueryClient()
 
   // Home (`['home-feed', filterKey]`) and Dashboard (`['profile-posts',
-  // profileId]`) render user_posts from independent caches. Likes and
-  // comments fired on one surface used to leave the other showing stale
-  // counts until manual refresh. Invalidating both keeps them in sync.
+  // profileId]`) render user_posts from independent caches. COMMENT mutations
+  // refetch both: the card's optimistic `localCommentCount` is local-only and is
+  // lost on remount, so the feed cache's `comment_count` must actually change.
   const invalidatePostQueries = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['home-feed'] })
     queryClient.invalidateQueries({ queryKey: ['profile-posts'] })
+  }, [queryClient])
+
+  // LIKES are already reconciled into the active cache optimistically by the card's
+  // `onLikeUpdate` (updateItemLike → setQueryData: optimistic + server-correct +
+  // rollback), so the visible state is correct WITHOUT a refetch. Only mark the
+  // caches STALE (`refetchType: 'none'`) so the *other* (inactive) surface refreshes
+  // when next opened — never force an immediate refetch. The previous
+  // invalidateQueries() re-pulled EVERY loaded feed page on every single like, which
+  // was the single biggest needless refetch on Home.
+  const markPostQueriesStale = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['home-feed'], refetchType: 'none' })
+    queryClient.invalidateQueries({ queryKey: ['profile-posts'], refetchType: 'none' })
   }, [queryClient])
 
   const toggleLike = useCallback(async (postId: string): Promise<LikeResult> => {
@@ -57,7 +69,7 @@ export function usePostInteractions() {
       const result = data as unknown as LikeResult
       if (result.success) {
         trackDbEvent('post_like', 'post', postId, { liked: result.liked })
-        invalidatePostQueries()
+        markPostQueriesStale()
       }
       return result
     } catch (err) {
@@ -70,7 +82,7 @@ export function usePostInteractions() {
         error: err instanceof Error ? err.message : 'Failed to toggle like',
       }
     }
-  }, [invalidatePostQueries])
+  }, [markPostQueriesStale])
 
   const fetchComments = useCallback(async (
     postId: string,
