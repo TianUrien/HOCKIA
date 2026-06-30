@@ -54,8 +54,22 @@ export default function PublicUmpireProfile() {
   const isCurrentUserTestAccount = currentUserProfile?.is_test_account ?? false
   // Staging shows test accounts to everyone for QA.
   const isStaging = import.meta.env.VITE_SUPABASE_URL?.includes('ivjkdaylalhsteyyclvl')
-  const [profile, setProfile] = useState<PublicUmpireShape | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+
+  // Cache key for the public umpire row. Computed up front so the FIRST render can
+  // SEED from cache synchronously — otherwise a fresh mount (crossing routes) paints
+  // one full-screen spinner frame before the effect's peek runs.
+  const cacheKey = username
+    ? `public-umpire-uname-${username}`
+    : id
+      ? `public-umpire-id-${id}`
+      : null
+
+  const [profile, setProfile] = useState<PublicUmpireShape | null>(
+    () => (cacheKey ? requestCache.peek<PublicUmpireShape>(cacheKey) ?? null : null),
+  )
+  const [isLoading, setIsLoading] = useState(
+    () => !(cacheKey ? requestCache.peek<PublicUmpireShape>(cacheKey) : null),
+  )
   const [error, setError] = useState<string | null>(null)
 
   const checkBlocked = async (myId: string, otherId: string): Promise<boolean> => {
@@ -71,12 +85,6 @@ export default function PublicUmpireProfile() {
   }
 
   useEffect(() => {
-    const cacheKey = username
-      ? `public-umpire-uname-${username}`
-      : id
-        ? `public-umpire-id-${id}`
-        : null
-
     const fetchProfile = async () => {
       if (!cacheKey) {
         setError('Invalid profile URL')

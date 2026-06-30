@@ -73,8 +73,23 @@ export default function PublicPlayerProfile() {
   const isCurrentUserTestAccount = currentUserProfile?.is_test_account ?? false
   // Staging shows test accounts to everyone for QA.
   const isStaging = import.meta.env.VITE_SUPABASE_URL?.includes('ivjkdaylalhsteyyclvl')
-  const [profile, setProfile] = useState<PublicProfile | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+
+  // Cache key for the public profile row. Computed up front so the FIRST render can
+  // SEED from cache synchronously — otherwise a fresh mount (e.g. tapping "View
+  // Profile" from the Community preview, which crosses routes) paints one full-screen
+  // spinner frame before the effect's peek runs.
+  const cacheKey = username
+    ? `public-profile-uname-${username}`
+    : id
+      ? `public-profile-id-${id}`
+      : null
+
+  const [profile, setProfile] = useState<PublicProfile | null>(
+    () => (cacheKey ? requestCache.peek<PublicProfile>(cacheKey) ?? null : null),
+  )
+  const [isLoading, setIsLoading] = useState(
+    () => !(cacheKey ? requestCache.peek<PublicProfile>(cacheKey) : null),
+  )
   const [error, setError] = useState<string | null>(null)
 
   // Tab title resolves to the player/coach name once loaded; falls back
@@ -96,12 +111,6 @@ export default function PublicPlayerProfile() {
   }
 
   useEffect(() => {
-    const cacheKey = username
-      ? `public-profile-uname-${username}`
-      : id
-        ? `public-profile-id-${id}`
-        : null
-
     const fetchProfile = async () => {
       if (!cacheKey) {
         setError('Invalid profile URL')

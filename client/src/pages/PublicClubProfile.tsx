@@ -49,8 +49,22 @@ export default function PublicClubProfile() {
   const isCurrentUserTestAccount = currentUserProfile?.is_test_account ?? false
   // Staging shows test accounts to everyone for QA.
   const isStaging = import.meta.env.VITE_SUPABASE_URL?.includes('ivjkdaylalhsteyyclvl')
-  const [profile, setProfile] = useState<PublicClubProfile | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+
+  // Cache key for the public club row. Computed up front so the FIRST render can
+  // SEED from cache synchronously — otherwise a fresh mount (crossing routes) paints
+  // one full-screen spinner frame before the effect's peek runs.
+  const cacheKey = username
+    ? `public-club-uname-${username}`
+    : id
+      ? `public-club-id-${id}`
+      : null
+
+  const [profile, setProfile] = useState<PublicClubProfile | null>(
+    () => (cacheKey ? requestCache.peek<PublicClubProfile>(cacheKey) ?? null : null),
+  )
+  const [isLoading, setIsLoading] = useState(
+    () => !(cacheKey ? requestCache.peek<PublicClubProfile>(cacheKey) : null),
+  )
   const [error, setError] = useState<string | null>(null)
 
   const checkBlocked = async (myId: string, otherId: string): Promise<boolean> => {
@@ -66,12 +80,6 @@ export default function PublicClubProfile() {
   }
 
   useEffect(() => {
-    const cacheKey = username
-      ? `public-club-uname-${username}`
-      : id
-        ? `public-club-id-${id}`
-        : null
-
     const fetchProfile = async () => {
       if (!cacheKey) {
         setError('Invalid profile URL')
