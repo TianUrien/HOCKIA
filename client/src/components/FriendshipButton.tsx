@@ -16,7 +16,7 @@ interface FriendshipButtonProps {
 // justify-center + min-w-0 let the button sit in a flex-1 slot and shrink
 // (truncating its label) instead of overflowing into its neighbour.
 const BTN_BASE =
-  'inline-flex h-11 items-center justify-center gap-2 rounded-lg px-4 text-sm transition disabled:opacity-60'
+  'inline-flex h-11 items-center justify-center gap-1.5 rounded-lg px-3 text-sm transition disabled:opacity-60'
 
 export default function FriendshipButton({ profileId, className }: FriendshipButtonProps) {
   const { addToast } = useToastStore()
@@ -153,7 +153,7 @@ export default function FriendshipButton({ profileId, className }: FriendshipBut
 
     if (isOutgoingRequest) {
       return {
-        label: 'Request Sent',
+        label: 'Requested',
         icon: <Clock className="h-4 w-4 flex-shrink-0" />,
         className: 'border-gray-300 bg-gray-50 text-gray-600 hover:bg-gray-100',
         hasDropdown: true,
@@ -186,7 +186,7 @@ export default function FriendshipButton({ profileId, className }: FriendshipBut
     )
   }
 
-  // Dropdown menu for Friends and Request Sent states
+  // Dropdown menu for Friends and Requested states
   return (
     <div className={cn('relative', className)} ref={menuRef}>
       <button
@@ -195,7 +195,10 @@ export default function FriendshipButton({ profileId, className }: FriendshipBut
         onClick={() => setMenuOpen((prev) => !prev)}
         className={cn(BTN_BASE, 'w-full border font-semibold', config.className)}
       >
-        {mutating ? <Loader2 className="h-4 w-4 animate-spin flex-shrink-0" /> : config.icon}
+        {/* No leading status icon in the dropdown states: the colored pill + the
+            chevron already convey state (the "Following ▾" pattern), and dropping it
+            keeps the label fully readable in the tight mobile action row. */}
+        {mutating && <Loader2 className="h-4 w-4 animate-spin flex-shrink-0" />}
         <span className="truncate">{config.label}</span>
         <ChevronDown className={cn('h-4 w-4 flex-shrink-0 transition-transform', menuOpen && 'rotate-180')} />
       </button>
