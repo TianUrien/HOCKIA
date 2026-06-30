@@ -39,6 +39,15 @@ describe('ContactModal', () => {
     await waitFor(() => expect(writeText).toHaveBeenCalledWith(SUPPORT_EMAIL))
   })
 
+  it('shows a manual-select hint when copy fails on every path', async () => {
+    Object.assign(navigator, { clipboard: undefined })
+    document.execCommand = vi.fn().mockReturnValue(false)
+    render(<ContactModal />)
+    openModal()
+    fireEvent.click(screen.getByRole('button', { name: /copy email address/i }))
+    await waitFor(() => expect(screen.getByText(/couldn.t copy automatically/i)).toBeTruthy())
+  })
+
   it('closes via the X button', () => {
     render(<ContactModal />)
     openModal()

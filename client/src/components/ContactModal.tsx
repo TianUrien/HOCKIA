@@ -14,12 +14,19 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { X, Mail, Copy, Check } from 'lucide-react'
 import { SUPPORT_EMAIL, openSupportEmail, copySupportEmail, useContactModal } from '@/lib/contact'
+import { useFocusTrap } from '@/hooks/useFocusTrap'
 
 export default function ContactModal() {
   const isOpen = useContactModal((s) => s.isOpen)
   const close = useContactModal((s) => s.close)
   const dialogRef = useRef<HTMLDivElement>(null)
+  const copyTimer = useRef<number | undefined>(undefined)
   const [copied, setCopied] = useState(false)
+  const [copyFailed, setCopyFailed] = useState(false)
+
+  // Trap Tab inside the dialog + restore focus to the trigger on close — the same
+  // shared hook every other modal uses (handles initial focus too).
+  useFocusTrap({ containerRef: dialogRef, isActive: isOpen })
 
   // Escape to close
   useEffect(() => {
@@ -40,13 +47,13 @@ export default function ContactModal() {
     return () => document.removeEventListener('pointerdown', onPointer)
   }, [isOpen, close])
 
-  // Move focus into the dialog on open; reset the "Copied!" affordance on close.
+  // Reset transient affordances + clear any pending copy timer on close.
   useEffect(() => {
-    if (isOpen) {
-      const id = window.setTimeout(() => dialogRef.current?.focus(), 50)
-      return () => window.clearTimeout(id)
+    if (!isOpen) {
+      setCopied(false)
+      setCopyFailed(false)
+      window.clearTimeout(copyTimer.current)
     }
-    setCopied(false)
   }, [isOpen])
 
   if (!isOpen) return null
@@ -54,10 +61,13 @@ export default function ContactModal() {
 
   const handleCopy = async () => {
     const ok = await copySupportEmail()
-    if (ok) {
-      setCopied(true)
-      window.setTimeout(() => setCopied(false), 2000)
-    }
+    window.clearTimeout(copyTimer.current)
+    setCopied(ok)
+    setCopyFailed(!ok)
+    copyTimer.current = window.setTimeout(() => {
+      setCopied(false)
+      setCopyFailed(false)
+    }, ok ? 2000 : 4000)
   }
 
   return createPortal(
@@ -65,12 +75,12 @@ export default function ContactModal() {
       role="dialog"
       aria-modal="true"
       aria-labelledby="contact-modal-title"
-      className="fixed inset-0 z-[9999] flex items-end justify-center bg-gray-900/50 sm:items-center"
+      className="fixed inset-0 z-[10000] flex items-end justify-center bg-gray-900/50 sm:items-center"
     >
       <div
         ref={dialogRef}
         tabIndex={-1}
-        className="w-full max-w-sm bg-white shadow-2xl rounded-t-2xl sm:rounded-2xl animate-fade-in outline-none pb-[env(safe-area-inset-bottom)] sm:pb-0"
+        className="w-full max-w-sm max-h-[90vh] overflow-y-auto bg-white shadow-2xl rounded-t-2xl sm:rounded-2xl animate-fade-in outline-none pb-[env(safe-area-inset-bottom)] sm:pb-0"
         data-testid="contact-modal"
       >
         {/* Header */}
@@ -114,6 +124,12 @@ export default function ContactModal() {
               {copied ? 'Copied' : 'Copy'}
             </button>
           </div>
+
+          {copyFailed && (
+            <p className="mt-2 text-xs text-amber-600" role="status">
+              Couldn&apos;t copy automatically — tap the address above to select it.
+            </p>
+          )}
 
           {/* Primary action — opens the mail app (mobile + desktops with a handler). */}
           <button
