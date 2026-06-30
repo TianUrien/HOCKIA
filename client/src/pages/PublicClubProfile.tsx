@@ -4,6 +4,7 @@ import { ArrowLeft } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { logger } from '../lib/logger'
 import { requestCache } from '../lib/requestCache'
+import { PUBLIC_PROFILE_TTL, publicProfileCacheKey } from '../lib/publicProfileCache'
 import type { Profile } from '../lib/supabase'
 import ClubDashboard from './ClubDashboard'
 import { useAuthStore } from '../lib/auth'
@@ -38,10 +39,6 @@ type PublicClubProfile = Partial<Profile> &
 // in PublicPlayerProfile.tsx for rationale).
 import { PUBLIC_CLUB_FIELDS } from '@/lib/publicProfileFields'
 
-// Cache the public club row across navigation (instant revisit, no spinner). Keyed
-// per club; the per-viewer test/block gating still runs each visit. 2-min TTL.
-const PUBLIC_PROFILE_TTL = 120_000
-
 export default function PublicClubProfile() {
   const { username, id } = useParams<{ username?: string; id?: string }>()
   const navigate = useNavigate()
@@ -53,11 +50,7 @@ export default function PublicClubProfile() {
   // Cache key for the public club row. Computed up front so the FIRST render can
   // SEED from cache synchronously — otherwise a fresh mount (crossing routes) paints
   // one full-screen spinner frame before the effect's peek runs.
-  const cacheKey = username
-    ? `public-club-uname-${username}`
-    : id
-      ? `public-club-id-${id}`
-      : null
+  const cacheKey = publicProfileCacheKey('public-club', { username, id })
 
   const [profile, setProfile] = useState<PublicClubProfile | null>(
     () => (cacheKey ? requestCache.peek<PublicClubProfile>(cacheKey, PUBLIC_PROFILE_TTL) ?? null : null),

@@ -13,6 +13,7 @@ import { ArrowLeft } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { logger } from '../lib/logger'
 import { requestCache } from '../lib/requestCache'
+import { PUBLIC_PROFILE_TTL, publicProfileCacheKey } from '../lib/publicProfileCache'
 import type { Profile } from '../lib/supabase'
 import UmpireDashboard, { type UmpireProfileShape } from './UmpireDashboard'
 import { useAuthStore } from '../lib/auth'
@@ -43,10 +44,6 @@ type PublicUmpireShape = Partial<Profile> &
 // in PublicPlayerProfile.tsx for rationale).
 import { PUBLIC_UMPIRE_FIELDS } from '@/lib/publicProfileFields'
 
-// Cache the public umpire row across navigation (instant revisit, no spinner). Keyed
-// per umpire; the per-viewer test/block gating still runs each visit. 2-min TTL.
-const PUBLIC_PROFILE_TTL = 120_000
-
 export default function PublicUmpireProfile() {
   const { username, id } = useParams<{ username?: string; id?: string }>()
   const navigate = useNavigate()
@@ -58,11 +55,7 @@ export default function PublicUmpireProfile() {
   // Cache key for the public umpire row. Computed up front so the FIRST render can
   // SEED from cache synchronously — otherwise a fresh mount (crossing routes) paints
   // one full-screen spinner frame before the effect's peek runs.
-  const cacheKey = username
-    ? `public-umpire-uname-${username}`
-    : id
-      ? `public-umpire-id-${id}`
-      : null
+  const cacheKey = publicProfileCacheKey('public-umpire', { username, id })
 
   const [profile, setProfile] = useState<PublicUmpireShape | null>(
     () => (cacheKey ? requestCache.peek<PublicUmpireShape>(cacheKey, PUBLIC_PROFILE_TTL) ?? null : null),

@@ -6,6 +6,7 @@ import type { Profile, ProfileInsert } from './supabase'
 import { supabase, AUTH_STORAGE_KEY } from './supabase'
 import { getAuthRedirectUrl } from './siteUrl'
 import { requestCache, generateCacheKey } from './requestCache'
+import { invalidatePublicProfileCache } from './publicProfileCache'
 import { monitor } from './monitor'
 import { logger } from './logger'
 import { useUnreadStore } from './unread'
@@ -195,6 +196,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (data) {
         logger.debug('[AUTH_STORE] Profile fetched', { userId, duration })
         set({ profile: data, profileStatus: 'loaded', profileFetchedAt: resolvedAt })
+        // A force-refresh means the owner just changed their profile — bust the
+        // cached PUBLIC profile rows (both id + username keys) for this person so
+        // their own session reflects the edit immediately instead of waiting out the
+        // 2-min TTL. (Other devices stay TTL-bounded; client caches can't cross.)
+        if (forceRefresh) {
+          invalidatePublicProfileCache({ id: data.id, username: data.username })
+        }
         // Set GA4 user properties for analytics tracking. Fire-and-
         // forget — setUserProperties is async now (sha256 hashing the
         // userId via Web Crypto before passing to gtag), and login

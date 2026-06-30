@@ -4,6 +4,7 @@ import { ArrowLeft } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { logger } from '../lib/logger'
 import { requestCache } from '../lib/requestCache'
+import { PUBLIC_PROFILE_TTL, publicProfileCacheKey } from '../lib/publicProfileCache'
 import type { Profile } from '../lib/supabase'
 import PlayerDashboard, { type PlayerProfileShape } from './PlayerDashboard'
 import CoachDashboard from './CoachDashboard'
@@ -59,13 +60,6 @@ type PublicProfile = PublicPlayerProfileShape | PublicCoachProfileShape
 // into the test bundle (and to satisfy the react-refresh lint rule).
 import { PUBLIC_PROFILE_FIELDS } from '@/lib/publicProfileFields'
 
-// Cache the public profile row across navigation so revisiting a profile renders
-// instantly from memory instead of a full-screen spinner + refetch. Keyed per
-// profile (the row is viewer-independent); the per-viewer test/block gating still
-// runs each visit. 2-min TTL — profiles change rarely, and the owner edits via
-// their own dashboard, not this public page.
-const PUBLIC_PROFILE_TTL = 120_000
-
 export default function PublicPlayerProfile() {
   const { username, id } = useParams<{ username?: string; id?: string }>()
   const navigate = useNavigate()
@@ -78,11 +72,7 @@ export default function PublicPlayerProfile() {
   // SEED from cache synchronously — otherwise a fresh mount (e.g. tapping "View
   // Profile" from the Community preview, which crosses routes) paints one full-screen
   // spinner frame before the effect's peek runs.
-  const cacheKey = username
-    ? `public-profile-uname-${username}`
-    : id
-      ? `public-profile-id-${id}`
-      : null
+  const cacheKey = publicProfileCacheKey('public-profile', { username, id })
 
   const [profile, setProfile] = useState<PublicProfile | null>(
     () => (cacheKey ? requestCache.peek<PublicProfile>(cacheKey, PUBLIC_PROFILE_TTL) ?? null : null),
