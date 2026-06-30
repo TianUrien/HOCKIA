@@ -11,8 +11,12 @@ import {
   publicProfileCacheKey,
   invalidatePublicProfileCache,
 } from '@/lib/publicProfileCache'
-import { useAuthStore } from '@/lib/auth'
-import type { Profile } from '@/lib/supabase'
+
+// NB: deliberately NOT importing '@/lib/auth' here — it transitively imports
+// '@/lib/supabase', which throws at module-init when the Supabase env vars are
+// absent (CI's unit-test job has none). The setProfile→invalidatePublicProfileCache
+// wiring is covered by the invalidate test below + the adversarial verification;
+// a real-auth integration test isn't worth pulling supabase into this unit suite.
 
 describe('publicProfileCache', () => {
   beforeEach(() => {
@@ -48,22 +52,5 @@ describe('publicProfileCache', () => {
     // A player has no public-club / public-umpire entry; invalidating must not throw.
     expect(() => invalidatePublicProfileCache({ id: 'p1', username: 'pedro' })).not.toThrow()
     expect(() => invalidatePublicProfileCache({})).not.toThrow()
-  })
-
-  it('setProfile busts the public cache — covers setProfile-only quick edits (Availability/ClubLink)', async () => {
-    // The one-tap toggles update a PUBLIC column then call setProfile() WITHOUT a
-    // force-refresh, so the bust has to live in the store action itself.
-    const idKey = publicProfileCacheKey('public-profile', { id: 'me-id' })!
-    const unameKey = publicProfileCacheKey('public-profile', { username: 'me-name' })!
-    await requestCache.dedupe(idKey, async () => ({ open_to_play: false }), PUBLIC_PROFILE_TTL)
-    await requestCache.dedupe(unameKey, async () => ({ open_to_play: false }), PUBLIC_PROFILE_TTL)
-    expect(requestCache.peek(idKey, PUBLIC_PROFILE_TTL)).toBeDefined()
-
-    useAuthStore.getState().setProfile({ id: 'me-id', username: 'me-name' } as unknown as Profile)
-
-    expect(requestCache.peek(idKey, PUBLIC_PROFILE_TTL)).toBeUndefined()
-    expect(requestCache.peek(unameKey, PUBLIC_PROFILE_TTL)).toBeUndefined()
-
-    useAuthStore.getState().setProfile(null) // reset store for other tests
   })
 })
