@@ -1,3 +1,4 @@
+import { create } from 'zustand'
 import { logger } from './logger'
 
 /**
@@ -27,3 +28,52 @@ export function openSupportEmail(): void {
     logger.warn('[CONTACT] Failed to open mail composer', err)
   }
 }
+
+/**
+ * Copy the support address to the clipboard. Works on every platform (unlike
+ * `mailto:`, which on desktop browsers needs a registered mail handler or it
+ * silently no-ops). Returns true on success so the UI can show "Copied!".
+ */
+export async function copySupportEmail(): Promise<boolean> {
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(SUPPORT_EMAIL)
+      return true
+    }
+  } catch (err) {
+    logger.warn('[CONTACT] Clipboard copy failed', err)
+  }
+  // Legacy fallback for browsers without the async Clipboard API.
+  try {
+    const el = document.createElement('textarea')
+    el.value = SUPPORT_EMAIL
+    el.setAttribute('readonly', '')
+    el.style.position = 'absolute'
+    el.style.left = '-9999px'
+    document.body.appendChild(el)
+    el.select()
+    const ok = document.execCommand('copy')
+    document.body.removeChild(el)
+    return ok
+  } catch (err) {
+    logger.warn('[CONTACT] Legacy clipboard copy failed', err)
+    return false
+  }
+}
+
+/**
+ * Lightweight global state for the Contact modal. The "Contact Us" entries on the
+ * logged-out landing (hamburger + hero) just call `open()`; the modal itself is
+ * mounted once at the app root so a single instance serves every trigger.
+ */
+interface ContactModalState {
+  isOpen: boolean
+  open: () => void
+  close: () => void
+}
+
+export const useContactModal = create<ContactModalState>((set) => ({
+  isOpen: false,
+  open: () => set({ isOpen: true }),
+  close: () => set({ isOpen: false }),
+}))

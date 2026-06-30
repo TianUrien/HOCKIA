@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { trackSignupCtaClick } from '@/lib/analytics'
 import { Menu, X, Globe, Users, Briefcase, LogIn, UserPlus, Mail } from 'lucide-react'
-import { CONTACT_MAILTO, openSupportEmail } from '@/lib/contact'
+import { useContactModal } from '@/lib/contact'
 
 interface PublicNavProps {
   /** Whether to use transparent background (for hero sections) */
@@ -21,6 +21,7 @@ interface PublicNavProps {
  */
 export default function PublicNav({ transparent = true }: PublicNavProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const openContact = useContactModal((s) => s.open)
 
   const navLinks = [
     { href: '/world', label: 'Hockey World', icon: Globe },
@@ -159,10 +160,10 @@ export default function PublicNav({ transparent = true }: PublicNavProps) {
               </Link>
 
               {/* Support / business contact — intentionally subtle, not a CTA. */}
-              <a
-                href={CONTACT_MAILTO}
-                onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); openSupportEmail() }}
-                className={`flex items-center gap-3 px-4 py-3 mt-1 rounded-lg text-sm font-medium transition-colors ${
+              <button
+                type="button"
+                onClick={() => { setIsMobileMenuOpen(false); openContact() }}
+                className={`flex w-full items-center gap-3 px-4 py-3 mt-1 rounded-lg text-left text-sm font-medium transition-colors ${
                   transparent
                     ? 'text-white/60 hover:text-white hover:bg-white/10'
                     : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
@@ -170,7 +171,7 @@ export default function PublicNav({ transparent = true }: PublicNavProps) {
               >
                 <Mail className="w-4 h-4" />
                 Contact Us
-              </a>
+              </button>
             </div>
           </div>
         )}

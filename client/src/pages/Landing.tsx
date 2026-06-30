@@ -7,7 +7,7 @@ import HockiaSocials from '@/components/HockiaSocials'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { useImmersiveChrome } from '@/hooks/useImmersiveChrome'
-import { CONTACT_MAILTO, openSupportEmail } from '@/lib/contact'
+import { useContactModal } from '@/lib/contact'
 
 /**
  * Landing — hero-only surface.
@@ -46,6 +46,7 @@ export default function Landing() {
   // strip) + light status-bar icons. Reverts to light app chrome on unmount.
   useImmersiveChrome('#000000')
   const navigate = useNavigate()
+  const openContact = useContactModal((s) => s.open)
   const location = useLocation()
   const { user, profile, profileStatus, loading: authLoading } = useAuthStore()
 
@@ -267,13 +268,13 @@ export default function Landing() {
             </p>
 
             {/* Questions before signing up — subtle support link, not a CTA. */}
-            <a
-              href={CONTACT_MAILTO}
-              onClick={(e) => { e.preventDefault(); openSupportEmail() }}
+            <button
+              type="button"
+              onClick={openContact}
               className="text-center text-xs text-white/50 hover:text-white/80 transition-colors"
             >
               Questions? Contact us
-            </a>
+            </button>
 
             {/* Follow us — official HOCKIA channels (mobile hero). */}
             <HockiaSocials tone="onDark" className="justify-center pt-1" />
@@ -327,13 +328,13 @@ export default function Landing() {
             </div>
 
             {/* Questions before signing up — subtle support link, not a CTA. */}
-            <a
-              href={CONTACT_MAILTO}
-              onClick={(e) => { e.preventDefault(); openSupportEmail() }}
-              className="inline-block mt-6 text-sm text-white/50 hover:text-white/80 transition-colors"
+            <button
+              type="button"
+              onClick={openContact}
+              className="mt-6 text-sm text-white/50 hover:text-white/80 transition-colors"
             >
               Questions? Contact us
-            </a>
+            </button>
 
             {/* Follow us — official HOCKIA channels (desktop hero). */}
             <HockiaSocials tone="onDark" className="mt-10" />

@@ -13,6 +13,7 @@ import InstallPrompt from '@/components/InstallPrompt'
 import PushPrompt from '@/components/PushPrompt'
 import NativeUpdatePrompt from '@/components/NativeUpdatePrompt'
 import AppRatingPrompt from '@/components/AppRatingPrompt'
+import ContactModal from '@/components/ContactModal'
 import { useEngagementTracking } from '@/hooks/useEngagementTracking'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
@@ -351,6 +352,7 @@ function App() {
           <PushPrompt />
           <NativeUpdatePrompt />
           <AppRatingPrompt />
+          <ContactModal />
           <EngagementTracker />
           <AnalyticsTracker />
           <DbPageViewTracker />
