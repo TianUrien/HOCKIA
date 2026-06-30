@@ -206,6 +206,16 @@ export default function PostPage() {
   // to render.
   const handleDelete = () => navigate('/home', { replace: true })
 
+  // Keep the like button live on the standalone post page. UserPostCard fires
+  // onLikeUpdate optimistically (then reconciles with the server / rolls back on
+  // error), so mirror it into our local item — without this, liking here changed
+  // nothing visible (this page has its own state, not the feed cache).
+  const handleLikeUpdate = (postId: string, liked: boolean, likeCount: number) => {
+    setItem((prev) =>
+      prev && prev.post_id === postId ? { ...prev, has_liked: liked, like_count: likeCount } : prev,
+    )
+  }
+
   return (
     <Layout>
       <Header />
@@ -219,7 +229,7 @@ export default function PostPage() {
             <ArrowLeft className="h-4 w-4" />
             Back
           </button>
-          <UserPostCard item={item} onDelete={handleDelete} />
+          <UserPostCard item={item} onLikeUpdate={handleLikeUpdate} onDelete={handleDelete} />
         </div>
       </div>
     </Layout>
