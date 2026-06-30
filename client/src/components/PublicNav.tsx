@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { trackSignupCtaClick } from '@/lib/analytics'
 import { Menu, X, Globe, Users, Briefcase, LogIn, UserPlus, Mail } from 'lucide-react'
+import { CONTACT_MAILTO, openSupportEmail } from '@/lib/contact'
 
 interface PublicNavProps {
   /** Whether to use transparent background (for hero sections) */
@@ -159,8 +160,8 @@ export default function PublicNav({ transparent = true }: PublicNavProps) {
 
               {/* Support / business contact — intentionally subtle, not a CTA. */}
               <a
-                href="mailto:team@inhockia.com?subject=HOCKIA enquiry"
-                onClick={() => setIsMobileMenuOpen(false)}
+                href={CONTACT_MAILTO}
+                onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); openSupportEmail() }}
                 className={`flex items-center gap-3 px-4 py-3 mt-1 rounded-lg text-sm font-medium transition-colors ${
                   transparent
                     ? 'text-white/60 hover:text-white hover:bg-white/10'

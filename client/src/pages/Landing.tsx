@@ -7,6 +7,7 @@ import HockiaSocials from '@/components/HockiaSocials'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { useImmersiveChrome } from '@/hooks/useImmersiveChrome'
+import { CONTACT_MAILTO, openSupportEmail } from '@/lib/contact'
 
 /**
  * Landing — hero-only surface.
@@ -267,7 +268,8 @@ export default function Landing() {
 
             {/* Questions before signing up — subtle support link, not a CTA. */}
             <a
-              href="mailto:team@inhockia.com?subject=HOCKIA enquiry"
+              href={CONTACT_MAILTO}
+              onClick={(e) => { e.preventDefault(); openSupportEmail() }}
               className="text-center text-xs text-white/50 hover:text-white/80 transition-colors"
             >
               Questions? Contact us
@@ -326,7 +328,8 @@ export default function Landing() {
 
             {/* Questions before signing up — subtle support link, not a CTA. */}
             <a
-              href="mailto:team@inhockia.com?subject=HOCKIA enquiry"
+              href={CONTACT_MAILTO}
+              onClick={(e) => { e.preventDefault(); openSupportEmail() }}
               className="inline-block mt-6 text-sm text-white/50 hover:text-white/80 transition-colors"
             >
               Questions? Contact us
