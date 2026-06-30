@@ -246,6 +246,15 @@ jobs:
     runs-on: ubuntu-latest
     # Only run when secrets are available (not on forks)
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+    # Serialize across concurrent runs (the main + staging double-push) so two runs
+    # never mutate the SHARED staging-DB fixtures at once — the cause of the flaky
+    # "duplicate key ... profile_friendships_pair_unique" failures. Constant group
+    # (not ref-scoped) so main, staging and PR runs all queue behind one another;
+    # cancel-in-progress:false because we want BOTH branches' runs to complete, just
+    # not overlap. Non-DB jobs (lint/build/unit) stay fully parallel.
+    concurrency:
+      group: staging-db-tests
+      cancel-in-progress: false
 
     steps:
       - name: Checkout repository
@@ -285,6 +294,12 @@ jobs:
     needs: build
     # Only run E2E tests if secrets are available (not on forks)
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+    # Same rationale as db-tests: the smoke suite writes to the shared staging DB
+    # (E2E_ALLOW_WRITES=1), so serialize across runs. Its OWN group (not shared with
+    # db-tests) so the two never deadlock on GitHub's one-pending-per-group rule.
+    concurrency:
+      group: staging-e2e-tests
+      cancel-in-progress: false
     
     steps:
       - name: Checkout repository
