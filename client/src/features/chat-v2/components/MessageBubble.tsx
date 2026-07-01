@@ -65,7 +65,15 @@ export function MessageBubble({
     const el = triggerRef.current
     if (!el) return
     const rect = el.getBoundingClientRect()
-    const right = Math.max(8, window.innerWidth - rect.right)
+    // Right-anchor the menu to the trigger, but clamp so it can't overflow the
+    // viewport's left edge. For the sender's OWN (right-aligned) bubble the ⋯
+    // trigger sits at the LEFT of the bubble, so an unclamped right-anchor
+    // pushed the w-36 (144px) menu off-screen left — clipping "Edit"/"Delete".
+    const MENU_WIDTH = 144
+    const right = Math.min(
+      Math.max(8, window.innerWidth - rect.right),
+      window.innerWidth - MENU_WIDTH - 8
+    )
     const MENU_EST_HEIGHT = 96
     if (rect.top > MENU_EST_HEIGHT + 12) {
       setMenuPos({ bottom: window.innerHeight - rect.top + 6, right })
