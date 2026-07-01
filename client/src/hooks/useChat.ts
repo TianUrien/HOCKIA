@@ -707,6 +707,9 @@ export function useChat({
           read_at: null,
           status: 'sending',
           metadata: options?.metadata ?? null,
+          // Carry the key so the realtime INSERT echo of this same message can
+          // find + replace this optimistic entry instead of appending a dup.
+          idempotency_key: idempotencyKey,
         }
 
         syncMessagesState(prev => [...prev, optimisticMessage!])
@@ -859,12 +862,31 @@ export function useChat({
           filter: `conversation_id=eq.${conversation.id}`
         },
         payload => {
-          const newMessage: ChatMessage = { ...(payload.new as Message), status: 'delivered' }
+          const raw = payload.new as Message & { idempotency_key?: string | null }
+          const newMessage: ChatMessage = { ...raw, status: 'delivered' }
 
           let didInsert = false
           syncMessagesState(prev => {
+            // Already reconciled under the real row id — nothing to do.
             if (prev.some(msg => msg.id === newMessage.id)) {
               return prev
+            }
+            // Our own just-sent message may still be sitting in state under its
+            // optimistic id (`optimistic-<idempotencyKey>`) when this realtime
+            // INSERT echo beats the insert().select() reconciliation. Match by
+            // idempotency_key and replace it in place rather than appending a
+            // second copy (the duplicate this guards against). The trailing
+            // insert().select() map on the now-absent optimistic id no-ops.
+            if (newMessage.idempotency_key) {
+              const optimisticId = `optimistic-${newMessage.idempotency_key}`
+              const idx = prev.findIndex(
+                msg => msg.id === optimisticId || msg.idempotency_key === newMessage.idempotency_key
+              )
+              if (idx !== -1) {
+                const next = [...prev]
+                next[idx] = newMessage
+                return next
+              }
             }
             didInsert = true
             return [...prev, newMessage]

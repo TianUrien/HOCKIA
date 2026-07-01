@@ -391,13 +391,20 @@ Deno.serve(async (req) => {
     const durationMs = Math.round(performance.now() - startedAt)
     logger.info('Account deletion completed', { durationMs, warnings })
 
-    const success = warnings.length === 0
+    // Reaching here means relational cleanup AND auth-user deletion both
+    // succeeded (each throws above on failure) — the account itself is gone.
+    // Leftover storage objects are best-effort: they're re-queued for async
+    // cleanup, so they must NOT flip the result to success:false, which the
+    // client surfaces as "deletion failed" while the user is already signed
+    // out of a now-deleted account (stranded, unable to retry). Report the
+    // storage shortfall via status:'partial' + warnings instead.
+    const status: 'complete' | 'partial' = warnings.length === 0 ? 'complete' : 'partial'
 
     const response: DeleteAccountResponse = {
-      success,
+      success: true,
       correlationId,
       durationMs,
-      status: success ? 'complete' : 'partial',
+      status,
       warnings: warnings.length ? warnings : undefined,
       deletedData,
     }

@@ -96,7 +96,13 @@ export default function DeleteAccountModal({ isOpen, onClose, userEmail }: Delet
         throw new Error(String(errorMsg))
       }
 
-      if (result && !result.success) {
+      // A 'complete' or 'partial' status both mean the account itself was
+      // deleted (storage-only leftovers get re-queued for async cleanup).
+      // Treat either as success even if `success` is somehow false, so the
+      // user is never told "deletion failed" while already signed out of a
+      // deleted account. Only a genuine failure (no status) throws.
+      const deletionReached = result.status === 'complete' || result.status === 'partial'
+      if (result && !result.success && !deletionReached) {
         throw new Error(String(result.error || 'Failed to delete account'))
       }
 

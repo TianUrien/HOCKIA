@@ -33,6 +33,14 @@ export interface ChatMessage extends Message {
   client_generated_id?: string
   status?: MessageDeliveryStatus
   error?: string | null
+  /**
+   * The per-send idempotency key. Present at runtime on both the optimistic
+   * copy (which is keyed `optimistic-<idempotency_key>`) and the persisted /
+   * realtime rows. Used to reconcile the sender's own realtime INSERT against
+   * its still-optimistic entry so a message never renders twice when the
+   * realtime echo beats the insert().select() response.
+   */
+  idempotency_key?: string | null
 }
 
 export interface ConversationParticipant {

@@ -145,6 +145,37 @@ const useSavedProfileIdsStore = create<SavedProfileIdsStoreState>((set, get) => 
   },
 }))
 
+// ── Imperative sync hooks for callers OUTSIDE useIsProfileSaved ───────
+//
+// The card "Saved" heart reads its filled/empty state from the shared
+// saved-ids set above. useIsProfileSaved.toggle keeps that set in sync,
+// but the shortlist mutations (add/remove a player from a list, delete a
+// whole list) write to saved_profiles through a DIFFERENT path and used to
+// leave the set untouched — so the heart on a card went stale until a full
+// remount refetched. Because saved_profiles is UNIQUE(owner_id,
+// saved_profile_id), a player is saved to at most one list, so set
+// membership is unambiguous and a targeted add/remove is exact.
+
+/** A player was added to some list → mark them saved (idempotent). */
+export function markSavedProfileId(profileId: string): void {
+  useSavedProfileIdsStore.getState().addLocally(profileId)
+}
+
+/** A player's only saved row was removed → mark them unsaved. */
+export function unmarkSavedProfileId(profileId: string): void {
+  useSavedProfileIdsStore.getState().removeLocally(profileId)
+}
+
+/**
+ * Re-sync the whole saved-ids set from the DB. Used when the delta can't be
+ * computed locally — deleting a shortlist cascade-removes an unknown set of
+ * saved_profiles rows (FK ON DELETE CASCADE). No-op when signed out (the
+ * store's refresh short-circuits on a null owner).
+ */
+export async function resyncSavedProfileIds(): Promise<void> {
+  await useSavedProfileIdsStore.getState().refresh()
+}
+
 /**
  * Per-profile Save state for use on a single-player surface (MemberTile,
  * MemberPreviewModal, ProfilePage). Tracks whether the current user has

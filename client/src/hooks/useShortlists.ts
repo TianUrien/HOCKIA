@@ -27,6 +27,7 @@ import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
 import { trackDbEvent } from '@/lib/trackDbEvent'
+import { markSavedProfileId, unmarkSavedProfileId, resyncSavedProfileIds } from '@/hooks/useSavedProfiles'
 import type { Database } from '@/lib/database.types'
 
 export type ShortlistRow = Database['public']['Tables']['shortlists']['Row']
@@ -247,6 +248,9 @@ export function useShortlists(): UseShortlistsResult {
       return
     }
     await refresh()
+    // Deleting the list cascade-removed its saved_profiles rows, so any card
+    // "Saved" heart for those players is now stale — re-derive the set.
+    await resyncSavedProfileIds()
   }, [viewerId, lists, refresh, addToast])
 
   const setDefault = useCallback(async (id: string) => {
@@ -367,13 +371,18 @@ export function useShortlistItems(shortlistId: string | null | undefined): UseSh
         shortlist_id: shortlistId,
       })
     if (insertError) {
-      // 23505 = unique violation (already in this list); silently no-op.
+      // 23505 = unique violation (already saved); silently no-op — but the
+      // player IS saved, so keep the heart in sync before bailing.
       if (insertError.code !== '23505') {
         reportSupabaseError('useShortlistItems.add', insertError)
         addToast('Could not add to shortlist', 'error')
+        return
       }
+      markSavedProfileId(playerId)
       return
     }
+    // Card "Saved" heart reads the shared saved-ids set — mark it filled.
+    markSavedProfileId(playerId)
     trackDbEvent('shortlist.item_added', 'shortlist', shortlistId, { player_id: playerId })
     await refresh()
   }, [viewerId, shortlistId, refresh, addToast])
@@ -383,6 +392,7 @@ export function useShortlistItems(shortlistId: string | null | undefined): UseSh
     // Optimistic local removal so the row disappears instantly; revert
     // on error.
     const previous = items
+    const removedProfileId = items.find((it) => it.id === itemId)?.saved_profile_id ?? null
     setItems((cur) => cur.filter((it) => it.id !== itemId))
     const { error: deleteError } = await supabase
       .from('saved_profiles')
@@ -395,6 +405,9 @@ export function useShortlistItems(shortlistId: string | null | undefined): UseSh
       setItems(previous)
       return
     }
+    // saved_profiles is UNIQUE(owner_id, saved_profile_id) → this was the
+    // player's only saved row, so the card "Saved" heart must clear too.
+    if (removedProfileId) unmarkSavedProfileId(removedProfileId)
     trackDbEvent('shortlist.item_removed', 'shortlist_item', itemId)
   }, [viewerId, items, addToast])
 
