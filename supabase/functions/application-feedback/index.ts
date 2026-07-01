@@ -29,7 +29,10 @@ import { getCorsHeaders } from '../_shared/cors.ts'
 import { getServiceClient } from '../_shared/supabase-client.ts'
 import type { Json } from '../_shared/database.types.ts'
 
-const MODEL = 'claude-sonnet-4-6'
+// Env-driven so the model swaps/rolls back per-environment via the CLAUDE_MODEL
+// secret + redeploy. Default stays the prior prod model so a deploy can't
+// silently upgrade prod (staging opts into claude-sonnet-5 via the secret).
+const MODEL = Deno.env.get('CLAUDE_MODEL') || 'claude-sonnet-4-6'
 const MESSAGE_MAX_CHARS = 320
 // Clearly-harsh terms. If any slips into the LLM output we drop it and fall back
 // to the deterministic copy — kept narrow to avoid false positives on kind prose.

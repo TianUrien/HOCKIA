@@ -44,7 +44,10 @@ import type { Json } from '../_shared/database.types.ts'
 // in a way that should invalidate cached opinions. ai_opinions cache
 // keys include this — bumping forces a full regenerate next read.
 const PROMPT_VERSION = 'v2.1'
-const MODEL = 'claude-sonnet-4-6'
+// Env-driven so the model swaps/rolls back per-environment via the CLAUDE_MODEL
+// secret + redeploy. Default stays the prior prod model so a deploy can't
+// silently upgrade prod (staging opts into claude-sonnet-5 via the secret).
+const MODEL = Deno.env.get('CLAUDE_MODEL') || 'claude-sonnet-4-6'
 const VERDICT_MAX_CHARS = 280
 const QUOTA_PER_DAY = 50
 

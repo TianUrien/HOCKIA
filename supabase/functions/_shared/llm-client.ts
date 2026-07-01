@@ -15,6 +15,15 @@
 
 import { renderFeatureKnowledge } from './hockia-features.ts'
 
+/**
+ * Claude model ID for the 'claude' provider path. Env-driven so the model can
+ * be swapped or rolled back per-environment via `supabase secrets set
+ * CLAUDE_MODEL=...` + redeploy — no code change. The DEFAULT stays the prior
+ * prod model on purpose: deploying this code can never silently upgrade prod;
+ * the newer model is opted into by setting the secret (staging → claude-sonnet-5).
+ */
+const CLAUDE_MODEL = Deno.env.get('CLAUDE_MODEL') || 'claude-sonnet-4-6'
+
 export interface ParsedFilters {
   roles?: string[]
   positions?: string[]
@@ -840,7 +849,7 @@ async function callClaude(
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
+        model: CLAUDE_MODEL,
         max_tokens: 1024,
         system: systemBlocks,
         tools: [
@@ -1172,7 +1181,7 @@ async function synthesizeWithClaude(profiles: ProfileQualitativeData[], userQuer
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
+        model: CLAUDE_MODEL,
         max_tokens: 512,
         system: SYNTHESIS_SYSTEM_PROMPT,
         messages: [{ role: 'user', content: buildSynthesisUserMessage(profiles, userQuery) }],
@@ -1526,7 +1535,7 @@ async function composeShortlistWithClaude(
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
+        model: CLAUDE_MODEL,
         max_tokens: 2048,
         system: SHORTLIST_SYSTEM_PROMPT,
         tools: [
@@ -1796,7 +1805,7 @@ async function composeNoResultsWithClaude(ctx: NoResultsContext): Promise<{ resu
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
+        model: CLAUDE_MODEL,
         max_tokens: 1024,
         system: [
           { type: 'text', text: NO_RESULTS_SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } },
@@ -2025,7 +2034,7 @@ async function answerPlatformHelpWithClaude(ctx: PlatformHelpContext): Promise<{
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
+        model: CLAUDE_MODEL,
         max_tokens: 1024,
         system: [
           { type: 'text', text: PLATFORM_HELP_SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } },
