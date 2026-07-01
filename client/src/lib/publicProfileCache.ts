@@ -51,3 +51,50 @@ export function invalidatePublicProfileCache(params: { id?: string | null; usern
     if (params.username) requestCache.invalidate(unameKey(prefix, params.username))
   }
 }
+
+// ── Per-viewer block-pair cache ────────────────────────────────────────────────
+// The public profile row is viewer-independent, but whether a given viewer may SEE
+// it is not (block / test-account gating). Seeding the cached row on first paint
+// (the perf win) must NOT render a blocked or hidden profile. The test gate is
+// synchronous (both inputs are known), but the block gate is an async is_blocked_pair
+// RPC. So we cache the block RESULT per (viewer,target) pair and only seed the cached
+// profile when a recent check said NOT blocked — otherwise we fall through to the
+// async check (a brief spinner) instead of flashing a blocked profile.
+const blockPairKey = (viewerId: string, targetId: string) => `block-pair-${viewerId}-${targetId}`
+
+/** Cached block result for a pair: false = not blocked, true = blocked, undefined = unknown. */
+export function peekBlockedPair(viewerId: string, targetId: string): boolean | undefined {
+  return requestCache.peek<boolean>(blockPairKey(viewerId, targetId), PUBLIC_PROFILE_TTL)
+}
+
+/** Remember an is_blocked_pair result so the next visit can gate the seed synchronously
+ *  (overwrites — the block status can flip). */
+export function rememberBlockedPair(viewerId: string, targetId: string, blocked: boolean): void {
+  requestCache.set(blockPairKey(viewerId, targetId), blocked)
+}
+
+/** Drop the cached block result for a pair (call on block/unblock so it re-checks). */
+export function invalidateBlockedPair(viewerId: string, targetId: string): void {
+  requestCache.invalidate(blockPairKey(viewerId, targetId))
+}
+
+/**
+ * Return the cached public-profile row ONLY if it is safe to paint from cache for
+ * this viewer — i.e. the test-account gate passes AND (for a logged-in viewer) a
+ * recent is_blocked_pair check confirmed the pair is NOT blocked. Returns null when
+ * there's no cache, the row is a hidden test account, or the block status is
+ * blocked/unknown — in which case the caller must show a loader and run the async
+ * gate before rendering. Anonymous viewers can't be in a block pair, so only the
+ * test gate applies to them.
+ */
+export function safeSeedPublicProfile<T extends { id: string; is_test_account?: boolean | null }>(
+  cacheKey: string | null,
+  gate: { viewerId?: string | null; viewerIsTest?: boolean; isStaging?: boolean },
+): T | null {
+  if (!cacheKey) return null
+  const cached = requestCache.peek<T>(cacheKey, PUBLIC_PROFILE_TTL)
+  if (!cached) return null
+  if (cached.is_test_account && !gate.viewerIsTest && !gate.isStaging) return null
+  if (gate.viewerId && peekBlockedPair(gate.viewerId, cached.id) !== false) return null
+  return cached
+}

@@ -4,7 +4,7 @@ import { ArrowLeft } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { logger } from '../lib/logger'
 import { requestCache } from '../lib/requestCache'
-import { PUBLIC_PROFILE_TTL, publicProfileCacheKey } from '../lib/publicProfileCache'
+import { PUBLIC_PROFILE_TTL, publicProfileCacheKey, safeSeedPublicProfile, rememberBlockedPair } from '../lib/publicProfileCache'
 import type { Profile } from '../lib/supabase'
 import ClubDashboard from './ClubDashboard'
 import { useAuthStore } from '../lib/auth'
@@ -52,27 +52,29 @@ export default function PublicClubProfile() {
   // one full-screen spinner frame before the effect's peek runs.
   const cacheKey = publicProfileCacheKey('public-club', { username, id })
 
-  const [profile, setProfile] = useState<PublicClubProfile | null>(
-    () => (cacheKey ? requestCache.peek<PublicClubProfile>(cacheKey, PUBLIC_PROFILE_TTL) ?? null : null),
-  )
-  const [isLoading, setIsLoading] = useState(
-    () => !(cacheKey ? requestCache.peek<PublicClubProfile>(cacheKey, PUBLIC_PROFILE_TTL) : null),
-  )
+  // Only seed the cached row when it's SAFE to paint for this viewer — test gate +
+  // (for a logged-in viewer) a recent block check said not-blocked.
+  const seededProfile = safeSeedPublicProfile<PublicClubProfile>(cacheKey, {
+    viewerId: currentUserProfile?.id,
+    viewerIsTest: isCurrentUserTestAccount,
+    isStaging,
+  })
+  const [profile, setProfile] = useState<PublicClubProfile | null>(seededProfile)
+  const [isLoading, setIsLoading] = useState(!seededProfile)
   const [error, setError] = useState<string | null>(null)
 
+  // Pure: returns block status, sets no state (so a late check from a previous
+  // profile can't stamp an error onto the one you navigated to).
   const checkBlocked = async (myId: string, otherId: string): Promise<boolean> => {
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data } = await (supabase as any).rpc('is_blocked_pair', { p_user_a: myId, p_user_b: otherId })
-      if (data) {
-        setError('This profile is not available.')
-        return true
-      }
-    } catch { /* fail open */ }
-    return false
+      return !!data
+    } catch { /* fail open */ return false }
   }
 
   useEffect(() => {
+    let cancelled = false
     const fetchProfile = async () => {
       if (!cacheKey) {
         setError('Invalid profile URL')
@@ -80,9 +82,13 @@ export default function PublicClubProfile() {
         return
       }
 
-      // Warm-cache fast path: render the previously-fetched row instantly so a
-      // revisit doesn't flash a full-screen spinner. Per-viewer gating still runs.
-      const cached = requestCache.peek<PublicClubProfile>(cacheKey, PUBLIC_PROFILE_TTL)
+      // Warm-cache fast path — paint from cache ONLY when it's safe for this viewer
+      // (test gate + cached-not-blocked); otherwise show the loader and gate below.
+      const cached = safeSeedPublicProfile<PublicClubProfile>(cacheKey, {
+        viewerId: currentUserProfile?.id,
+        viewerIsTest: isCurrentUserTestAccount,
+        isStaging,
+      })
       if (cached) {
         setProfile(cached)
         setIsLoading(false)
@@ -112,6 +118,7 @@ export default function PublicClubProfile() {
           },
           PUBLIC_PROFILE_TTL,
         )
+        if (cancelled) return
 
         if (!typed) {
           setProfile(null)
@@ -126,22 +133,31 @@ export default function PublicClubProfile() {
           return
         }
 
-        // Block check (per viewer pair) — checkBlocked sets the error itself.
-        if (currentUserProfile && await checkBlocked(currentUserProfile.id, typed.id)) {
-          setProfile(null)
-          return
+        // Block check (per viewer pair). Remember the result so the NEXT visit gates
+        // the cache seed synchronously and never flashes a blocked profile.
+        if (currentUserProfile) {
+          const blocked = await checkBlocked(currentUserProfile.id, typed.id)
+          if (cancelled) return
+          rememberBlockedPair(currentUserProfile.id, typed.id, blocked)
+          if (blocked) {
+            setProfile(null)
+            setError('This profile is not available.')
+            return
+          }
         }
 
         setProfile(typed)
       } catch (err) {
+        if (cancelled) return
         logger.error('Error fetching club profile:', err)
         setError('Failed to load club profile. Please try again.')
       } finally {
-        setIsLoading(false)
+        if (!cancelled) setIsLoading(false)
       }
     }
 
     fetchProfile()
+    return () => { cancelled = true }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [username, id, isCurrentUserTestAccount, currentUserProfile?.id])
 

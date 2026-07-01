@@ -150,6 +150,16 @@ class RequestCache {
   }
 
   /**
+   * Synchronously write a value into the cache (overwriting any existing entry),
+   * stamped now. Use for known-good values you already have in hand (e.g. a just-
+   * resolved block-pair result) so the next peek/seed sees it immediately — unlike
+   * dedupe(), which won't overwrite a still-fresh entry.
+   */
+  set<T>(key: string, value: T) {
+    this.cache.set(key, { data: value, timestamp: Date.now() })
+  }
+
+  /**
    * Invalidate cache for a specific key or pattern
    */
   invalidate(keyOrPattern: string | RegExp) {

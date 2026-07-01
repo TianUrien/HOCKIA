@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
 import { logger } from '@/lib/logger'
+import { rememberBlockedPair, invalidatePublicProfileCache } from '@/lib/publicProfileCache'
 import ReportUserModal from './ReportUserModal'
 
 const MENU_WIDTH = 192 // w-48
@@ -126,6 +127,10 @@ export default function ProfileActionMenu({ targetId, targetName }: ProfileActio
       const { error: err } = await (supabase as any).rpc('block_user', { p_blocked_id: targetId })
       if (err) throw err
       setBlocked(true)
+      // Record the block + bust the target's cached row so its public profile can
+      // never be served warm from cache to us on a revisit (it re-checks + hides).
+      rememberBlockedPair(user.id, targetId, true)
+      invalidatePublicProfileCache({ id: targetId })
       addToast(`${targetName} has been blocked`, 'success')
       // Navigate away — this profile is now unavailable to us
       navigate(-1)
@@ -145,6 +150,8 @@ export default function ProfileActionMenu({ targetId, targetName }: ProfileActio
       const { error: err } = await (supabase as any).rpc('unblock_user', { p_blocked_id: targetId })
       if (err) throw err
       setBlocked(false)
+      // Clear the cached block result so this profile becomes viewable again.
+      rememberBlockedPair(user.id, targetId, false)
       addToast(`${targetName} has been unblocked`, 'success')
     } catch (err) {
       logger.error('Unblock failed:', err)

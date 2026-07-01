@@ -10,6 +10,9 @@ import {
   PUBLIC_PROFILE_TTL,
   publicProfileCacheKey,
   invalidatePublicProfileCache,
+  safeSeedPublicProfile,
+  rememberBlockedPair,
+  invalidateBlockedPair,
 } from '@/lib/publicProfileCache'
 
 // NB: deliberately NOT importing '@/lib/auth' here — it transitively imports
@@ -52,5 +55,47 @@ describe('publicProfileCache', () => {
     // A player has no public-club / public-umpire entry; invalidating must not throw.
     expect(() => invalidatePublicProfileCache({ id: 'p1', username: 'pedro' })).not.toThrow()
     expect(() => invalidatePublicProfileCache({})).not.toThrow()
+  })
+})
+
+describe('safeSeedPublicProfile — block/test gating of the cache seed (privacy)', () => {
+  const key = publicProfileCacheKey('public-profile', { id: 'target-1' })!
+  const seed = (isTest = false) =>
+    requestCache.dedupe(key, async () => ({ id: 'target-1', is_test_account: isTest }), PUBLIC_PROFILE_TTL)
+
+  beforeEach(() => {
+    requestCache.clear()
+  })
+
+  it('returns null when nothing is cached', () => {
+    expect(safeSeedPublicProfile(key, { viewerId: 'v1' })).toBeNull()
+  })
+
+  it('anonymous viewer: seeds a cached non-test row (no block pair possible)', async () => {
+    await seed()
+    expect(safeSeedPublicProfile(key, {})).not.toBeNull()
+  })
+
+  it('logged-in viewer: does NOT seed until a not-blocked result is recorded', async () => {
+    await seed()
+    expect(safeSeedPublicProfile(key, { viewerId: 'v1' })).toBeNull() // block status unknown
+    rememberBlockedPair('v1', 'target-1', false)
+    expect(safeSeedPublicProfile(key, { viewerId: 'v1' })).not.toBeNull() // confirmed not blocked
+  })
+
+  it('logged-in viewer: NEVER seeds a blocked row (the regression this fixes)', async () => {
+    await seed()
+    rememberBlockedPair('v1', 'target-1', true)
+    expect(safeSeedPublicProfile(key, { viewerId: 'v1' })).toBeNull()
+    invalidateBlockedPair('v1', 'target-1') // back to unknown → still refuses to seed
+    expect(safeSeedPublicProfile(key, { viewerId: 'v1' })).toBeNull()
+  })
+
+  it('never seeds a hidden test-account row to a non-test viewer (staging/test viewer may)', async () => {
+    await seed(true)
+    rememberBlockedPair('v1', 'target-1', false)
+    expect(safeSeedPublicProfile(key, { viewerId: 'v1', viewerIsTest: false })).toBeNull()
+    expect(safeSeedPublicProfile(key, { viewerId: 'v1', viewerIsTest: true })).not.toBeNull()
+    expect(safeSeedPublicProfile(key, { viewerId: 'v1', isStaging: true })).not.toBeNull()
   })
 })
