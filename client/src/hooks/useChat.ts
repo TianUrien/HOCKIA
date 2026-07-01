@@ -716,7 +716,17 @@ export function useChat({
         setNewMessage('')
         clearMessageDraft(currentUserId, conversationDraftKey)
       } else {
-        updateMessageStatus(optimisticId, 'sending')
+        // Retry: reuse the on-screen bubble but send under a NEW idempotency
+        // key. Stamp it onto the existing entry so THIS attempt's realtime
+        // echo reconciles against this bubble (by idempotency_key) instead of
+        // appending a duplicate.
+        syncMessagesState(prev =>
+          prev.map(msg =>
+            msg.id === optimisticId
+              ? { ...msg, status: 'sending', error: null, idempotency_key: idempotencyKey }
+              : msg
+          )
+        )
       }
       
       const conversationIdForMetrics = activeConversationId
@@ -731,28 +741,46 @@ export function useChat({
             data: { conversationId: conversationIdForMetrics, idempotencyKey },
             level: 'info'
           })
-          const result = await withRetry(async () => {
-            const res = await supabase
+          let persistedRow: Message | null = null
+          try {
+            const result = await withRetry(async () => {
+              const res = await supabase
+                .from('messages')
+                .insert({
+                  conversation_id: conversationIdForMetrics,
+                  sender_id: currentUserId,
+                  content: messageContent,
+                  idempotency_key: idempotencyKey,
+                  ...(options?.metadata ? { metadata: options.metadata as unknown as import('@/lib/database.types').Json } : {}),
+                })
+                .select()
+
+              if (res.error) throw res.error
+              return res
+            })
+            persistedRow = (result.data?.[0] as Message | undefined) ?? null
+          } catch (insertError) {
+            // A timed-out-but-committed first attempt makes withRetry re-issue
+            // the SAME idempotency_key, which the global unique index rejects
+            // with 23505. That is NOT a real failure — the row IS committed —
+            // so recover it by its key instead of marking the message failed.
+            // A failure here would prompt the user to retry, inserting a
+            // genuine duplicate row under a new key. Mirrors the
+            // conversation-create unique-violation fallback above.
+            const parsedInsertError = insertError as { code?: string; message?: string; details?: string }
+            if (!isUniqueViolationError(parsedInsertError)) throw insertError
+            const { data: existing, error: lookupError } = await supabase
               .from('messages')
-              .insert({
-                conversation_id: conversationIdForMetrics,
-                sender_id: currentUserId,
-                content: messageContent,
-                idempotency_key: idempotencyKey,
-                ...(options?.metadata ? { metadata: options.metadata as unknown as import('@/lib/database.types').Json } : {}),
-              })
-              .select()
+              .select('*')
+              .eq('idempotency_key', idempotencyKey)
+              .maybeSingle()
+            if (lookupError || !existing) throw insertError
+            persistedRow = existing as Message
+          }
 
-            if (res.error) throw res.error
-            return res
-          })
-
-          const { data, error } = result
-          if (error) throw error
-
-          if (data && data[0]) {
+          if (persistedRow) {
             logger.debug('Message sent successfully, replacing optimistic message')
-            const persisted: ChatMessage = { ...(data[0] as Message), status: 'delivered' }
+            const persisted: ChatMessage = { ...persistedRow, status: 'delivered' }
             deliveredMessage = persisted
             syncMessagesState(prev => prev.map(msg => (msg.id === optimisticId ? persisted : msg)))
           }

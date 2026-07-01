@@ -156,24 +156,44 @@ const useSavedProfileIdsStore = create<SavedProfileIdsStoreState>((set, get) => 
 // saved_profile_id), a player is saved to at most one list, so set
 // membership is unambiguous and a targeted add/remove is exact.
 
+// These are owner-scoped: they only touch the set when the store is already
+// tracking `ownerId`. That prevents a mark from polluting a null/other-owner
+// set (which setOwner would later wipe anyway), and — when the store isn't
+// yet owned by this viewer — correctly no-ops, since no heart is displayed
+// for that viewer to go stale; the eventual first mount fetches the truth.
+
 /** A player was added to some list → mark them saved (idempotent). */
-export function markSavedProfileId(profileId: string): void {
-  useSavedProfileIdsStore.getState().addLocally(profileId)
+export function markSavedProfileId(ownerId: string, profileId: string): void {
+  const store = useSavedProfileIdsStore.getState()
+  if (store.ownerId === ownerId) store.addLocally(profileId)
 }
 
 /** A player's only saved row was removed → mark them unsaved. */
-export function unmarkSavedProfileId(profileId: string): void {
-  useSavedProfileIdsStore.getState().removeLocally(profileId)
+export function unmarkSavedProfileId(ownerId: string, profileId: string): void {
+  const store = useSavedProfileIdsStore.getState()
+  if (store.ownerId === ownerId) store.removeLocally(profileId)
 }
 
 /**
  * Re-sync the whole saved-ids set from the DB. Used when the delta can't be
  * computed locally — deleting a shortlist cascade-removes an unknown set of
- * saved_profiles rows (FK ON DELETE CASCADE). No-op when signed out (the
- * store's refresh short-circuits on a null owner).
+ * saved_profiles rows (FK ON DELETE CASCADE). Only refetches when the store
+ * is already owned by this viewer; otherwise no-op (nothing displayed to go
+ * stale, and it must not blow away a set it doesn't own).
  */
-export async function resyncSavedProfileIds(): Promise<void> {
-  await useSavedProfileIdsStore.getState().refresh()
+export async function resyncSavedProfileIds(ownerId: string): Promise<void> {
+  const store = useSavedProfileIdsStore.getState()
+  if (store.ownerId === ownerId) await store.refresh()
+}
+
+/** Test-only: reset the module singleton between test files. */
+export function __resetSavedProfileIdsForTests(): void {
+  useSavedProfileIdsStore.setState({
+    ownerId: null,
+    ids: new Set<string>(),
+    status: 'idle',
+    fetchedForOwner: null,
+  })
 }
 
 /**

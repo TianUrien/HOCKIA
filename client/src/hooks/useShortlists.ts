@@ -250,7 +250,7 @@ export function useShortlists(): UseShortlistsResult {
     await refresh()
     // Deleting the list cascade-removed its saved_profiles rows, so any card
     // "Saved" heart for those players is now stale — re-derive the set.
-    await resyncSavedProfileIds()
+    await resyncSavedProfileIds(viewerId)
   }, [viewerId, lists, refresh, addToast])
 
   const setDefault = useCallback(async (id: string) => {
@@ -378,11 +378,11 @@ export function useShortlistItems(shortlistId: string | null | undefined): UseSh
         addToast('Could not add to shortlist', 'error')
         return
       }
-      markSavedProfileId(playerId)
+      markSavedProfileId(viewerId, playerId)
       return
     }
     // Card "Saved" heart reads the shared saved-ids set — mark it filled.
-    markSavedProfileId(playerId)
+    markSavedProfileId(viewerId, playerId)
     trackDbEvent('shortlist.item_added', 'shortlist', shortlistId, { player_id: playerId })
     await refresh()
   }, [viewerId, shortlistId, refresh, addToast])
@@ -407,7 +407,7 @@ export function useShortlistItems(shortlistId: string | null | undefined): UseSh
     }
     // saved_profiles is UNIQUE(owner_id, saved_profile_id) → this was the
     // player's only saved row, so the card "Saved" heart must clear too.
-    if (removedProfileId) unmarkSavedProfileId(removedProfileId)
+    if (removedProfileId) unmarkSavedProfileId(viewerId, removedProfileId)
     trackDbEvent('shortlist.item_removed', 'shortlist_item', itemId)
   }, [viewerId, items, addToast])
 

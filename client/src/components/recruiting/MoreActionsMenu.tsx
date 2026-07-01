@@ -24,6 +24,7 @@ import { useToastStore } from '@/lib/toast'
 import { supabase } from '@/lib/supabase'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
+import { markSavedProfileId } from '@/hooks/useSavedProfiles'
 import MoveToShortlistMenu from './MoveToShortlistMenu'
 
 interface MoreActionsMenuProps {
@@ -172,8 +173,10 @@ function MoveToAddMenu({ open, onClose, playerId, playerName }: MoveToAddMenuPro
         shortlist_id: shortlistId,
       })
     if (error) {
-      // 23505 = already in this list → friendly toast.
+      // 23505 = already in this list → friendly toast. Either way the player
+      // IS saved, so keep the co-rendered card "Saved" heart in sync.
       if (error.code === '23505') {
+        markSavedProfileId(viewer.id, playerId)
         addToast(`${playerName} is already in ${shortlistName}`, 'success')
         return
       }
@@ -181,6 +184,8 @@ function MoveToAddMenu({ open, onClose, playerId, playerName }: MoveToAddMenuPro
       addToast('Could not add to that list', 'error')
       return
     }
+    // Card "Saved" heart reads the shared saved-ids set — mark it filled.
+    markSavedProfileId(viewer.id, playerId)
     trackDbEvent('shortlist.item_added', 'shortlist', shortlistId, {
       player_id: playerId,
       source: 'more_actions_menu',

@@ -96,13 +96,12 @@ export default function DeleteAccountModal({ isOpen, onClose, userEmail }: Delet
         throw new Error(String(errorMsg))
       }
 
-      // A 'complete' or 'partial' status both mean the account itself was
-      // deleted (storage-only leftovers get re-queued for async cleanup).
-      // Treat either as success even if `success` is somehow false, so the
-      // user is never told "deletion failed" while already signed out of a
-      // deleted account. Only a genuine failure (no status) throws.
-      const deletionReached = result.status === 'complete' || result.status === 'partial'
-      if (result && !result.success && !deletionReached) {
+      // The edge fn returns success:true once the account is actually deleted
+      // (both 'complete' and 'partial' — storage-only leftovers are re-queued
+      // for async cleanup). Only a genuine failure returns success:false, so
+      // trust that field directly. (Do NOT let `status` override it — an error
+      // response carrying a status must not read as success.)
+      if (result && !result.success) {
         throw new Error(String(result.error || 'Failed to delete account'))
       }
 
@@ -110,8 +109,16 @@ export default function DeleteAccountModal({ isOpen, onClose, userEmail }: Delet
         clearAllProfileDraftsForUser(profile.id)
       }
 
-      // Success - sign out and redirect
-      await signOut()
+      // The account is already deleted server-side. A global sign-out revokes
+      // sessions for the now-nonexistent user and can return an error → auth
+      // store's signOut throws. That must NOT resurrect a "deletion failed"
+      // banner on a successful delete, so swallow it (signOut has already
+      // cleared the local session and reported to Sentry) and still redirect.
+      try {
+        await signOut()
+      } catch (signOutError) {
+        logger.debug('signOut after account deletion errored (expected for a deleted user)', signOutError)
+      }
       
       // Show success message
       const successToast = document.createElement('div')

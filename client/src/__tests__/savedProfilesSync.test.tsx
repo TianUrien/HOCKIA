@@ -35,13 +35,15 @@ import {
   useIsProfileSaved,
   markSavedProfileId,
   unmarkSavedProfileId,
-  resyncSavedProfileIds,
+  __resetSavedProfileIdsForTests,
 } from '@/hooks/useSavedProfiles'
+
+// Matches the auth mock's profile.id → the store's owner once a heart mounts.
+const OWNER = 'viewer-1'
 
 describe('saved-ids sync helpers drive the card heart', () => {
   beforeEach(() => {
-    // Reset the module singleton to an empty, unowned state between cases.
-    resyncSavedProfileIds()
+    __resetSavedProfileIdsForTests()
   })
 
   it('markSavedProfileId fills the heart; unmarkSavedProfileId clears it', async () => {
@@ -51,13 +53,13 @@ describe('saved-ids sync helpers drive the card heart', () => {
     await waitFor(() => expect(result.current.loading).toBe(false))
     expect(result.current.isSaved).toBe(false)
 
-    // Adding the player to a list (from ShortlistDetail / MoveToShortlistMenu)
-    // must flip the heart without a refetch.
-    act(() => markSavedProfileId('player-9'))
+    // Adding the player to a list (from ShortlistDetail / MoveToShortlistMenu /
+    // MoreActionsMenu) must flip the heart without a refetch.
+    act(() => markSavedProfileId(OWNER, 'player-9'))
     expect(result.current.isSaved).toBe(true)
 
     // Removing their only saved row (or deleting the list) must clear it.
-    act(() => unmarkSavedProfileId('player-9'))
+    act(() => unmarkSavedProfileId(OWNER, 'player-9'))
     expect(result.current.isSaved).toBe(false)
   })
 
@@ -65,8 +67,18 @@ describe('saved-ids sync helpers drive the card heart', () => {
     const other = renderHook(() => useIsProfileSaved('player-A'))
     await waitFor(() => expect(other.result.current.loading).toBe(false))
 
-    act(() => markSavedProfileId('player-B'))
+    act(() => markSavedProfileId(OWNER, 'player-B'))
     // player-A was never touched.
     expect(other.result.current.isSaved).toBe(false)
+  })
+
+  it('ignores a mark scoped to a different owner (owner-scoped guard)', async () => {
+    const { result } = renderHook(() => useIsProfileSaved('player-9'))
+    await waitFor(() => expect(result.current.loading).toBe(false))
+
+    // Store is owned by viewer-1; a mark for a different owner must no-op so it
+    // can't pollute this viewer's set (which setOwner would later wipe anyway).
+    act(() => markSavedProfileId('someone-else', 'player-9'))
+    expect(result.current.isSaved).toBe(false)
   })
 })
