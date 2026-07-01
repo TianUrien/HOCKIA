@@ -170,15 +170,20 @@ export async function sendFcmNotification(
 
   const errorBody = await res.text()
 
-  // Token invalid/expired/unregistered — caller should clean up
+  // Only a genuinely DEAD token should be cleaned up (caller deletes on false).
+  // UNREGISTERED / NOT_FOUND mean the token is gone (app uninstalled, token
+  // rotated). INVALID_ARGUMENT is NOT token-fatal — it signals a malformed
+  // REQUEST (our payload), so returning false here would delete a VALID token
+  // for our own bug, and a broken payload would mass-delete every token. Treat
+  // INVALID_ARGUMENT (and anything else) as a send failure that PRESERVES the
+  // token (the caller's catch counts it as failed, not cleaned).
   if (res.status === 404 || res.status === 400) {
-    const isInvalidToken =
+    const isDeadToken =
       errorBody.includes('UNREGISTERED') ||
-      errorBody.includes('INVALID_ARGUMENT') ||
       errorBody.includes('NOT_FOUND')
 
-    if (isInvalidToken) {
-      console.log(`[fcm] Token invalid/unregistered: ${fcmToken.slice(0, 20)}...`)
+    if (isDeadToken) {
+      console.log(`[fcm] Token unregistered/not-found: ${fcmToken.slice(0, 20)}...`)
       return false
     }
   }

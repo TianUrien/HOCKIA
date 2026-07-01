@@ -130,7 +130,16 @@ export function useHomeFeed(filters?: UseHomeFeedFilters): UseHomeFeedResult {
   // user's profile id), so we can't filter them client-side without an
   // RPC change to expose the brand's owning profile_id. Server-side
   // filtering via the new author_profile_id column is the longer-term fix.
+  const seenFeedItemIds = new Set<string>()
   const items = pages.flatMap(p => p.items).filter(item => {
+    // Dedup across page boundaries. get_home_feed uses OFFSET pagination
+    // ordered by created_at DESC with no tiebreaker, so two posts sharing the
+    // exact timestamp can be re-ordered between page queries and surface the
+    // same row on two pages. feed_item_id is the stable per-item key.
+    // (A deterministic id tiebreaker in the RPC's ORDER BY is the deeper fix.)
+    if (seenFeedItemIds.has(item.feed_item_id)) return false
+    seenFeedItemIds.add(item.feed_item_id)
+
     const candidateIds: string[] = []
     if ('author_id' in item && typeof item.author_id === 'string') candidateIds.push(item.author_id)
     if ('profile_id' in item && typeof item.profile_id === 'string') candidateIds.push(item.profile_id)
