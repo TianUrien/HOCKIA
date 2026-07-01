@@ -364,6 +364,10 @@ export function TopCommunityMembersCarousel({
       womens_league_division: (viewerProfile as { womens_league_division?: string | null }).womens_league_division ?? null,
       mens_league_division: (viewerProfile as { mens_league_division?: string | null }).mens_league_division ?? null,
       current_world_club_id: viewerProfile.current_world_club_id ?? null,
+      // Viewer's own league band so competition_proximity can compare (relies on the
+      // shared clubLeagueCache, which PeopleListView warms with the viewer's club on
+      // the same Community page).
+      competition_level_band: getClubLevelBand(viewerProfile.current_world_club_id ?? null, contextTarget),
     }
     const interestScopeOptions = {
       targetRole: contextTargetRole,

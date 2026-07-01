@@ -411,10 +411,14 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
 
       // Batch-prefetch world club logos BEFORE rendering to avoid N+1
       // queries in MemberCard. Runs on cache hits too (cheap if
-      // already warm).
-      const worldClubIds = members
-        .map(m => m.current_world_club_id)
-        .filter((id): id is string => !!id)
+      // already warm). Includes the VIEWER's OWN club so Club Fit's
+      // competition_proximity has the recruiter's league band to compare
+      // against (without this the viewer band is null → that 40% component
+      // scores 0 for every candidate).
+      const worldClubIds = [
+        ...members.map(m => m.current_world_club_id),
+        useAuthStore.getState().profile?.current_world_club_id ?? null,
+      ].filter((id): id is string => !!id)
       if (worldClubIds.length > 0) {
         await prefetchWorldClubLogos(worldClubIds)
       }
@@ -538,10 +542,12 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
           20000 // 20 second cache for searches
         )
 
-        // Batch-prefetch world club logos BEFORE rendering (same pattern as fetchMembers)
-        const worldClubIds = members
-          .map(m => m.current_world_club_id)
-          .filter((id): id is string => !!id)
+        // Batch-prefetch world club logos BEFORE rendering (same pattern as
+        // fetchMembers) — includes the viewer's own club for Club Fit proximity.
+        const worldClubIds = [
+          ...members.map(m => m.current_world_club_id),
+          useAuthStore.getState().profile?.current_world_club_id ?? null,
+        ].filter((id): id is string => !!id)
         if (worldClubIds.length > 0) {
           await prefetchWorldClubLogos(worldClubIds)
         }
@@ -754,6 +760,8 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
         womens_league_division: (currentUserProfile as { womens_league_division?: string | null }).womens_league_division ?? null,
         mens_league_division: (currentUserProfile as { mens_league_division?: string | null }).mens_league_division ?? null,
         current_world_club_id: currentUserProfile.current_world_club_id ?? null,
+        // Viewer's own league band (scope-targeted) so competition_proximity can compare.
+        competition_level_band: getClubLevelBand(currentUserProfile.current_world_club_id ?? null, contextTarget),
       }
       // In context-fit mode, pass the context target + role through so
       // the score (and the role gate that suppresses player-fit for
@@ -790,6 +798,9 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
               role: m.role,
               playing_category: m.playing_category ?? null,
               current_world_club_id: m.current_world_club_id ?? null,
+              // Resolve the candidate's league band too, so the SORT ranks on the
+              // same Club Fit input the verdict card displays (matchById already does).
+              competition_level_band: getClubLevelBand(m.current_world_club_id ?? null, categoryToBandTarget(m.playing_category ?? null)),
               open_to_play: m.open_to_play ?? null,
               open_to_coach: m.open_to_coach ?? null,
               open_to_opportunities: m.open_to_opportunities ?? null,
@@ -872,6 +883,8 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
       womens_league_division: (currentUserProfile as { womens_league_division?: string | null }).womens_league_division ?? null,
       mens_league_division: (currentUserProfile as { mens_league_division?: string | null }).mens_league_division ?? null,
       current_world_club_id: currentUserProfile.current_world_club_id ?? null,
+      // Viewer's own league band (scope-targeted) so competition_proximity can compare.
+      competition_level_band: getClubLevelBand(currentUserProfile.current_world_club_id ?? null, contextTarget),
     }
     const fitOptions = {
       overrideTarget: contextTarget,
