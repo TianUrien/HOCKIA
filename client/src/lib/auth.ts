@@ -507,6 +507,12 @@ export const initializeAuth = () => {
 
     await runSessionEffects(session)
     setLoading(false)
+  }).catch((error) => {
+    // Initial-load path had no rejection handler: if getSession or
+    // runSessionEffects threw, it surfaced as an unhandled promise rejection
+    // and left `loading` stuck true (blank app). Fail safe.
+    logger.error('[AUTH_STORE] Error during initial session load', { error })
+    setLoading(false)
   })
 
   // Listen for auth changes

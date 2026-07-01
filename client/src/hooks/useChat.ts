@@ -81,6 +81,9 @@ export function useChat({
   const pendingReadIdsRef = useRef(new Set<string>())
   const readFlushTimeoutRef = useRef<number | null>(null)
   const unmountedRef = useRef(false)
+  // Synchronous send re-entrancy guard (the `sending` STATE is set only after
+  // the awaited rate-limit check, too late to stop a rapid double-submit).
+  const sendingRef = useRef(false)
   
   const { addToast } = useToastStore()
   const initializeUnreadStore = useUnreadStore(state => state.initialize)
@@ -568,7 +571,7 @@ export function useChat({
   }, [addToast, conversation.id, syncMessagesState])
 
   const sendMessage = useCallback(async (content: string, options?: { reuseOptimisticId?: string; metadata?: MessageMetadata | null }) => {
-    if (!content.trim() || sending) return false
+    if (!content.trim() || sendingRef.current) return false
 
     const messageContent = content.trim()
     if (messageContent.length > 1000) {
@@ -576,15 +579,20 @@ export function useChat({
       return
     }
 
+    // Claim the send synchronously so a second fast Enter/click can't get past
+    // the guard while the rate-limit check below is still awaiting.
+    sendingRef.current = true
+
     // Rate limit check
     const rateCheck = await checkMessageRateLimit(currentUserId)
     if (rateCheck && !rateCheck.allowed) {
       addToast(formatRateLimitError(rateCheck), 'error')
+      sendingRef.current = false
       return false
     }
 
     setSending(true)
-    
+
     const otherParticipantId =
       conversation.participant_one_id === currentUserId
         ? conversation.participant_two_id
@@ -592,6 +600,7 @@ export function useChat({
 
     if (!otherParticipantId) {
       logger.error('Cannot determine recipient for conversation', { conversation })
+      sendingRef.current = false
       setSending(false)
       return
     }
@@ -851,6 +860,7 @@ export function useChat({
       addToast(extractErrorMessage(error, 'Failed to send message. Please try again.'), 'error')
       return false
     } finally {
+      sendingRef.current = false
       setSending(false)
     }
   }, [
@@ -860,7 +870,6 @@ export function useChat({
     currentUserId,
     onConversationCreated,
     onMessageSent,
-    sending,
     setNewMessage,
     syncMessagesState,
     updateMessageStatus

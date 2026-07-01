@@ -13,6 +13,17 @@ import { useAuthStore } from '@/lib/auth'
  * hiding closes the harassment vector where X blocks me but I keep
  * tracking X's content unaware. (Apple Guideline 1.2)
  */
+// Module-level signal so a block/unblock performed anywhere (ProfileActionMenu)
+// re-syncs every mounted useBlockedUsers. Without it, a just-blocked user's
+// content lingers in the feed until a manual reload, because each hook holds
+// its own local set fetched only on mount. (Apple Guideline 1.2)
+const blockListListeners = new Set<() => void>()
+
+/** Call after a successful block/unblock to re-derive the blocked-id set. */
+export function notifyBlockListChanged(): void {
+  blockListListeners.forEach((fn) => fn())
+}
+
 export function useBlockedUsers() {
   const { user } = useAuthStore()
   const [blockedIds, setBlockedIds] = useState<Set<string>>(new Set())
@@ -45,6 +56,14 @@ export function useBlockedUsers() {
 
   useEffect(() => {
     refresh()
+  }, [refresh])
+
+  // Re-fetch when a block/unblock happens elsewhere in the app.
+  useEffect(() => {
+    blockListListeners.add(refresh)
+    return () => {
+      blockListListeners.delete(refresh)
+    }
   }, [refresh])
 
   return { blockedIds, refresh }

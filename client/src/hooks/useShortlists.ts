@@ -258,6 +258,7 @@ export function useShortlists(): UseShortlistsResult {
     // Two-step swap: demote the current default, then promote the
     // target. The partial unique index `shortlists_one_default_per_owner`
     // would reject a second is_default=true row, so order matters.
+    const previousDefaultId = lists.find((l) => l.is_default)?.id ?? null
     const { error: demoteError } = await supabase
       .from('shortlists')
       .update({ is_default: false })
@@ -274,12 +275,23 @@ export function useShortlists(): UseShortlistsResult {
       .eq('owner_id', viewerId)
       .eq('id', id)
     if (promoteError) {
+      // Demote already cleared the old default; if promote fails we'd leave
+      // the owner with NO default list (quick-saves have nowhere to land).
+      // Restore the previous default so state is never left defaultless.
+      if (previousDefaultId && previousDefaultId !== id) {
+        await supabase
+          .from('shortlists')
+          .update({ is_default: true })
+          .eq('owner_id', viewerId)
+          .eq('id', previousDefaultId)
+      }
       reportSupabaseError('useShortlists.setDefault.promote', promoteError)
       addToast('Could not change default list', 'error')
+      await refresh()
       return
     }
     await refresh()
-  }, [viewerId, refresh, addToast])
+  }, [viewerId, lists, refresh, addToast])
 
   return { lists, loading, error, refresh, create, rename, remove, setDefault }
 }

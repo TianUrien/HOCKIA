@@ -7,6 +7,7 @@ import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
 import { logger } from '@/lib/logger'
 import { rememberBlockedPair, invalidatePublicProfileCache } from '@/lib/publicProfileCache'
+import { notifyBlockListChanged } from '@/hooks/useBlockedUsers'
 import ReportUserModal from './ReportUserModal'
 
 const MENU_WIDTH = 192 // w-48
@@ -131,6 +132,9 @@ export default function ProfileActionMenu({ targetId, targetName }: ProfileActio
       // never be served warm from cache to us on a revisit (it re-checks + hides).
       rememberBlockedPair(user.id, targetId, true)
       invalidatePublicProfileCache({ id: targetId })
+      // Re-sync the feed's blocked-id set so this user's posts drop out
+      // immediately instead of lingering until a reload.
+      notifyBlockListChanged()
       addToast(`${targetName} has been blocked`, 'success')
       // Navigate away — this profile is now unavailable to us
       navigate(-1)
@@ -152,6 +156,7 @@ export default function ProfileActionMenu({ targetId, targetName }: ProfileActio
       setBlocked(false)
       // Clear the cached block result so this profile becomes viewable again.
       rememberBlockedPair(user.id, targetId, false)
+      notifyBlockListChanged()
       addToast(`${targetName} has been unblocked`, 'success')
     } catch (err) {
       logger.error('Unblock failed:', err)
