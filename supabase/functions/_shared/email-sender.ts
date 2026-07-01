@@ -502,9 +502,14 @@ export async function sendTrackedBatch(params: {
    *  Used to personalize emails (e.g. greeting by name) which improves deliverability
    *  by making each email's content unique instead of byte-identical. */
   renderForRecipient?: (recipient: RecipientInfo) => { html: string; text: string; subject: string }
+  /** Optional metadata stamped onto every SUCCESS row in email_sends (jsonb).
+   *  Lets callers key precise idempotency/lookup off a stable id (e.g.
+   *  { vacancy_id }) instead of fuzzy subject matching. Omitted → {} (unchanged
+   *  for existing callers). Failure rows keep their own { error } metadata. */
+  metadata?: Record<string, unknown>
 }): Promise<BatchSendResult> {
   const { supabase, resendApiKey, recipients, subject, html, text,
-    templateKey, campaignId, logger, renderForRecipient } = params
+    templateKey, campaignId, logger, renderForRecipient, metadata } = params
 
   const startTime = Date.now()
   const allSent: string[] = []
@@ -594,6 +599,7 @@ export async function sendTrackedBatch(params: {
           subject: recipientSubject,
           status: 'sent',
           variant: r.variant || null,
+          metadata: metadata || {},
         }
       })
 

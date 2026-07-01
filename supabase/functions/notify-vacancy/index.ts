@@ -267,9 +267,12 @@ Deno.serve(async (req: Request) => {
     })
 
     // ==========================================================================
-    // IDEMPOTENCY CHECK: Prevent duplicate sends from webhook double-delivery
-    // If we already sent vacancy_notification emails for this vacancy in the
-    // last 10 minutes, skip to avoid spamming recipients.
+    // IDEMPOTENCY CHECK: Prevent duplicate sends from webhook double-delivery.
+    // Match on the stamped vacancy_id in metadata (see sendTrackedBatch call
+    // below), NOT an ilike on the subject — a `%title%` substring match
+    // over-suppressed a legitimate send whenever an UNRELATED recent vacancy's
+    // subject merely contained this title (e.g. two clubs both posting a
+    // generic "Goalkeeper", or "Coach" inside "Assistant Coach").
     // ==========================================================================
     const { count: alreadySentCount } = await supabase
       .from('email_sends')
@@ -277,7 +280,7 @@ Deno.serve(async (req: Request) => {
       .eq('template_key', 'vacancy_notification')
       .eq('status', 'sent')
       .gte('sent_at', new Date(Date.now() - 10 * 60 * 1000).toISOString())
-      .ilike('subject', `%${vacancy.title}%`)
+      .eq('metadata->>vacancy_id', vacancy.id)
 
     if (alreadySentCount && alreadySentCount > 0) {
       logger.info('Idempotency guard: vacancy notification already sent recently', {
@@ -377,6 +380,9 @@ Deno.serve(async (req: Request) => {
       text: baseText,
       templateKey: 'vacancy_notification',
       logger,
+      // Stamp the vacancy id on every success row so the idempotency check
+      // above can match precisely on a re-delivery (no fuzzy subject match).
+      metadata: { vacancy_id: vacancy.id },
       renderForRecipient: (r: RecipientInfo) => {
         const firstName = r.recipientName
           ? r.recipientName.split(' ')[0]
