@@ -210,8 +210,12 @@ Deno.serve(async (req: Request) => {
     const overflow = rows.length - shown.length
 
     // ── Mint single-use action tokens (send time, displayed rows only) ──
-    const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? ''
-    const actionBase = `${SUPABASE_URL}/functions/v1/application-action`
+    // Links land on the APP's public /email-action page (which drives the
+    // application-action JSON API): pages can't be served from *.supabase.co
+    // (the gateway forces text/plain + a sandbox CSP onto HTML there), and
+    // the app domain gives publishers logged-in continuity after acting.
+    const HOCKIA_BASE_URL_FOR_LINKS = Deno.env.get('PUBLIC_SITE_URL') ?? 'https://inhockia.com'
+    const actionBase = `${HOCKIA_BASE_URL_FOR_LINKS}/email-action`
     const expiresAt = new Date(nowMs + TOKEN_TTL_DAYS * 86_400_000).toISOString()
 
     const tokenRows: Array<Record<string, unknown>> = []

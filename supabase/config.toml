@@ -375,11 +375,13 @@ verify_jwt = false
 [functions.nl-search]
 verify_jwt = false
 
-# One-click triage links from the weekly application digest email. Recipients
-# click from their inbox — logged out, no JWT — so the gateway check must be
-# OFF. Auth is the capability URL itself: single-use hashed expiring tokens,
-# status='pending' precondition, GET never mutates (scanner-safe), IP
-# rate-limited in-handler.
+# JSON API behind the weekly digest's one-click triage links. The email links
+# land on the app's public /email-action page (HTML can't be served from
+# *.supabase.co — the gateway forces text/plain + a sandbox CSP), which calls
+# this fn logged-out — so the gateway JWT check must be OFF. Auth is the
+# capability token itself: single-use, hashed, expiring, status='pending'
+# precondition; GET is a read-only peek (scanner-safe); IP rate-limited
+# in-handler; CORS restricted to app origins.
 [functions.application-action]
 verify_jwt = false
 
