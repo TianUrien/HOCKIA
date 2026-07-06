@@ -81,6 +81,61 @@ export type Database = {
         }
         Relationships: []
       }
+      age_gate_email_queue: {
+        Row: {
+          attempts: number
+          created_at: string
+          id: string
+          kind: string
+          last_error: string | null
+          processed_at: string | null
+          profile_id: string
+          sweep_date: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          id?: string
+          kind: string
+          last_error?: string | null
+          processed_at?: string | null
+          profile_id: string
+          sweep_date?: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          id?: string
+          kind?: string
+          last_error?: string | null
+          processed_at?: string | null
+          profile_id?: string
+          sweep_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "age_gate_email_queue_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "age_gate_email_queue_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "age_gate_email_queue_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_opinion_feedback: {
         Row: {
           created_at: string
@@ -131,6 +186,13 @@ export type Database = {
             referencedRelation: "profiles_pending_country_review"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "ai_opinion_feedback_viewer_id_fkey"
+            columns: ["viewer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
         ]
       }
       ai_opinion_quota: {
@@ -162,6 +224,13 @@ export type Database = {
             columns: ["viewer_id"]
             isOneToOne: false
             referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_opinion_quota_viewer_id_fkey"
+            columns: ["viewer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
             referencedColumns: ["id"]
           },
         ]
@@ -219,6 +288,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "ai_opinions_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "ai_opinions_viewer_id_fkey"
             columns: ["viewer_id"]
             isOneToOne: false
@@ -230,6 +306,13 @@ export type Database = {
             columns: ["viewer_id"]
             isOneToOne: false
             referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_opinions_viewer_id_fkey"
+            columns: ["viewer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
             referencedColumns: ["id"]
           },
         ]
@@ -293,6 +376,13 @@ export type Database = {
             referencedRelation: "profiles_pending_country_review"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "app_rating_prompt_state_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
         ]
       }
       app_ratings: {
@@ -354,6 +444,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: true
             referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "app_ratings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles_self"
             referencedColumns: ["id"]
           },
         ]
@@ -446,6 +543,13 @@ export type Database = {
             referencedRelation: "profiles_pending_country_review"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "application_digest_queue_publisher_id_fkey"
+            columns: ["publisher_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
         ]
       }
       application_expiry_queue: {
@@ -495,6 +599,13 @@ export type Database = {
             columns: ["applicant_id"]
             isOneToOne: false
             referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "application_expiry_queue_applicant_id_fkey"
+            columns: ["applicant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
             referencedColumns: ["id"]
           },
         ]
@@ -578,6 +689,13 @@ export type Database = {
             referencedRelation: "profiles_pending_country_review"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "application_status_email_queue_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
         ]
       }
       application_status_history: {
@@ -633,6 +751,13 @@ export type Database = {
             referencedRelation: "profiles_pending_country_review"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "application_status_history_changed_by_fkey"
+            columns: ["changed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
         ]
       }
       application_views: {
@@ -680,6 +805,13 @@ export type Database = {
             columns: ["viewer_id"]
             isOneToOne: false
             referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "application_views_viewer_id_fkey"
+            columns: ["viewer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
             referencedColumns: ["id"]
           },
         ]
@@ -764,6 +896,13 @@ export type Database = {
             referencedRelation: "profiles_pending_country_review"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "brand_ambassadors_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
         ]
       }
       brand_followers: {
@@ -805,6 +944,13 @@ export type Database = {
             columns: ["follower_id"]
             isOneToOne: false
             referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "brand_followers_follower_id_fkey"
+            columns: ["follower_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
             referencedColumns: ["id"]
           },
         ]
@@ -978,6 +1124,13 @@ export type Database = {
             referencedRelation: "profiles_pending_country_review"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "brands_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
         ]
       }
       career_history: {
@@ -1060,6 +1213,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "career_history_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "career_history_world_club_id_fkey"
             columns: ["world_club_id"]
             isOneToOne: false
@@ -1112,6 +1272,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "club_fit_cache_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "club_fit_cache_player_id_fkey"
             columns: ["player_id"]
             isOneToOne: false
@@ -1123,6 +1290,13 @@ export type Database = {
             columns: ["player_id"]
             isOneToOne: false
             referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "club_fit_cache_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
             referencedColumns: ["id"]
           },
         ]
@@ -1174,6 +1348,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "club_invite_links_club_profile_id_fkey"
+            columns: ["club_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "club_invite_links_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
@@ -1185,6 +1366,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "club_invite_links_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
             referencedColumns: ["id"]
           },
         ]
@@ -1242,6 +1430,13 @@ export type Database = {
             columns: ["club_id"]
             isOneToOne: false
             referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "club_media_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
             referencedColumns: ["id"]
           },
         ]
@@ -1302,6 +1497,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "club_members_club_profile_id_fkey"
+            columns: ["club_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "club_members_invited_by_fkey"
             columns: ["invited_by"]
             isOneToOne: false
@@ -1316,6 +1518,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "club_members_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "club_members_member_profile_id_fkey"
             columns: ["member_profile_id"]
             isOneToOne: false
@@ -1327,6 +1536,13 @@ export type Database = {
             columns: ["member_profile_id"]
             isOneToOne: false
             referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "club_members_member_profile_id_fkey"
+            columns: ["member_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
             referencedColumns: ["id"]
           },
         ]
@@ -1375,6 +1591,13 @@ export type Database = {
             columns: ["author_id"]
             isOneToOne: false
             referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_answers_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
             referencedColumns: ["id"]
           },
           {
@@ -1438,6 +1661,13 @@ export type Database = {
             referencedRelation: "profiles_pending_country_review"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "community_questions_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
         ]
       }
       conversations: {
@@ -1487,6 +1717,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "conversations_participant_one_id_fkey"
+            columns: ["participant_one_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "conversations_participant_two_id_fkey"
             columns: ["participant_two_id"]
             isOneToOne: false
@@ -1498,6 +1735,13 @@ export type Database = {
             columns: ["participant_two_id"]
             isOneToOne: false
             referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_participant_two_id_fkey"
+            columns: ["participant_two_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
             referencedColumns: ["id"]
           },
         ]
@@ -1653,6 +1897,13 @@ export type Database = {
             referencedRelation: "profiles_pending_country_review"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "discovery_events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
         ]
       }
       email_action_tokens: {
@@ -1723,6 +1974,13 @@ export type Database = {
             columns: ["publisher_id"]
             isOneToOne: false
             referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_action_tokens_publisher_id_fkey"
+            columns: ["publisher_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
             referencedColumns: ["id"]
           },
         ]
@@ -1929,6 +2187,13 @@ export type Database = {
             referencedRelation: "profiles_pending_country_review"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "email_sends_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
         ]
       }
       email_template_versions: {
@@ -2100,6 +2365,13 @@ export type Database = {
             referencedRelation: "profiles_pending_country_review"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "error_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
         ]
       }
       events: {
@@ -2161,6 +2433,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
             referencedColumns: ["id"]
           },
         ]
@@ -2273,6 +2552,13 @@ export type Database = {
             referencedRelation: "profiles_pending_country_review"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "home_feed_items_author_profile_id_fkey"
+            columns: ["author_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
         ]
       }
       investor_share_tokens: {
@@ -2324,7 +2610,38 @@ export type Database = {
             referencedRelation: "profiles_pending_country_review"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "investor_share_tokens_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      juniors_waitlist: {
+        Row: {
+          created_at: string
+          date_of_birth: string | null
+          email: string
+          id: string
+          source: string
+        }
+        Insert: {
+          created_at?: string
+          date_of_birth?: string | null
+          email: string
+          id?: string
+          source?: string
+        }
+        Update: {
+          created_at?: string
+          date_of_birth?: string | null
+          email?: string
+          id?: string
+          source?: string
+        }
+        Relationships: []
       }
       message_digest_queue: {
         Row: {
@@ -2364,6 +2681,13 @@ export type Database = {
             columns: ["recipient_id"]
             isOneToOne: false
             referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_digest_queue_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
             referencedColumns: ["id"]
           },
         ]
@@ -2427,6 +2751,13 @@ export type Database = {
             referencedRelation: "profiles_pending_country_review"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
         ]
       }
       onboarding_reminder_queue: {
@@ -2464,6 +2795,13 @@ export type Database = {
             columns: ["recipient_id"]
             isOneToOne: false
             referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onboarding_reminder_queue_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
             referencedColumns: ["id"]
           },
         ]
@@ -2608,6 +2946,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "opportunities_club_id_fkey"
+            columns: ["club_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "opportunities_world_club_id_fkey"
             columns: ["world_club_id"]
             isOneToOne: false
@@ -2663,6 +3008,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "opportunity_applications_applicant_id_fkey"
+            columns: ["applicant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "opportunity_applications_opportunity_id_fkey"
             columns: ["opportunity_id"]
             isOneToOne: false
@@ -2707,6 +3059,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: true
             referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunity_inbox_state_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles_self"
             referencedColumns: ["id"]
           },
         ]
@@ -2769,6 +3128,13 @@ export type Database = {
             columns: ["publisher_id"]
             isOneToOne: false
             referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunity_renewal_queue_publisher_id_fkey"
+            columns: ["publisher_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
             referencedColumns: ["id"]
           },
         ]
@@ -2853,6 +3219,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "outreach_contacts_converted_profile_id_fkey"
+            columns: ["converted_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "outreach_contacts_world_club_id_fkey"
             columns: ["world_club_id"]
             isOneToOne: false
@@ -2931,6 +3304,13 @@ export type Database = {
             referencedRelation: "profiles_pending_country_review"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "player_full_game_videos_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
         ]
       }
       player_videos: {
@@ -3003,6 +3383,13 @@ export type Database = {
             referencedRelation: "profiles_pending_country_review"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "player_videos_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
         ]
       }
       post_comments: {
@@ -3043,6 +3430,13 @@ export type Database = {
             columns: ["author_id"]
             isOneToOne: false
             referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_comments_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
             referencedColumns: ["id"]
           },
           {
@@ -3093,6 +3487,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_likes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
             referencedColumns: ["id"]
           },
         ]
@@ -3171,6 +3572,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "profile_comments_author_profile_id_fkey"
+            columns: ["author_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "profile_comments_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: false
@@ -3182,6 +3590,13 @@ export type Database = {
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profile_comments_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
             referencedColumns: ["id"]
           },
         ]
@@ -3239,6 +3654,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "profile_friendships_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "profile_friendships_user_one_fkey"
             columns: ["user_one"]
             isOneToOne: false
@@ -3253,6 +3675,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "profile_friendships_user_one_fkey"
+            columns: ["user_one"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "profile_friendships_user_two_fkey"
             columns: ["user_two"]
             isOneToOne: false
@@ -3264,6 +3693,13 @@ export type Database = {
             columns: ["user_two"]
             isOneToOne: false
             referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profile_friendships_user_two_fkey"
+            columns: ["user_two"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
             referencedColumns: ["id"]
           },
         ]
@@ -3300,6 +3736,13 @@ export type Database = {
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profile_milestones_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
             referencedColumns: ["id"]
           },
         ]
@@ -3366,6 +3809,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "profile_notifications_actor_profile_id_fkey"
+            columns: ["actor_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "profile_notifications_recipient_profile_id_fkey"
             columns: ["recipient_profile_id"]
             isOneToOne: false
@@ -3377,6 +3827,13 @@ export type Database = {
             columns: ["recipient_profile_id"]
             isOneToOne: false
             referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profile_notifications_recipient_profile_id_fkey"
+            columns: ["recipient_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
             referencedColumns: ["id"]
           },
         ]
@@ -3443,6 +3900,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "profile_references_reference_id_fkey"
+            columns: ["reference_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "profile_references_requester_id_fkey"
             columns: ["requester_id"]
             isOneToOne: false
@@ -3457,6 +3921,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "profile_references_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "profile_references_revoked_by_fkey"
             columns: ["revoked_by"]
             isOneToOne: false
@@ -3468,6 +3939,13 @@ export type Database = {
             columns: ["revoked_by"]
             isOneToOne: false
             referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profile_references_revoked_by_fkey"
+            columns: ["revoked_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
             referencedColumns: ["id"]
           },
         ]
@@ -3513,6 +3991,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "profile_search_appearances_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "profile_search_appearances_viewer_id_fkey"
             columns: ["viewer_id"]
             isOneToOne: false
@@ -3524,6 +4009,13 @@ export type Database = {
             columns: ["viewer_id"]
             isOneToOne: false
             referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profile_search_appearances_viewer_id_fkey"
+            columns: ["viewer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
             referencedColumns: ["id"]
           },
         ]
@@ -3574,6 +4066,13 @@ export type Database = {
             referencedRelation: "profiles_pending_country_review"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "profile_view_email_queue_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
         ]
       }
       profiles: {
@@ -3610,8 +4109,10 @@ export type Database = {
           current_club: string | null
           current_world_club_id: string | null
           date_of_birth: string | null
+          dob_required_since: string | null
           email: string
           federation: string | null
+          frozen_minor_at: string | null
           full_game_video_count: number
           full_name: string | null
           gallery_photo_count: number
@@ -3653,6 +4154,7 @@ export type Database = {
           open_to_opportunities: boolean
           open_to_play: boolean
           opportunity_preference: string | null
+          org_attested_18plus_at: string | null
           playing_category: string | null
           position: string | null
           post_count: number
@@ -3714,8 +4216,10 @@ export type Database = {
           current_club?: string | null
           current_world_club_id?: string | null
           date_of_birth?: string | null
+          dob_required_since?: string | null
           email: string
           federation?: string | null
+          frozen_minor_at?: string | null
           full_game_video_count?: number
           full_name?: string | null
           gallery_photo_count?: number
@@ -3757,6 +4261,7 @@ export type Database = {
           open_to_opportunities?: boolean
           open_to_play?: boolean
           opportunity_preference?: string | null
+          org_attested_18plus_at?: string | null
           playing_category?: string | null
           position?: string | null
           post_count?: number
@@ -3818,8 +4323,10 @@ export type Database = {
           current_club?: string | null
           current_world_club_id?: string | null
           date_of_birth?: string | null
+          dob_required_since?: string | null
           email?: string
           federation?: string | null
+          frozen_minor_at?: string | null
           full_game_video_count?: number
           full_name?: string | null
           gallery_photo_count?: number
@@ -3861,6 +4368,7 @@ export type Database = {
           open_to_opportunities?: boolean
           open_to_play?: boolean
           opportunity_preference?: string | null
+          org_attested_18plus_at?: string | null
           playing_category?: string | null
           position?: string | null
           post_count?: number
@@ -3961,6 +4469,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "profiles_verified_by_fkey"
+            columns: ["verified_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "profiles_womens_league_id_fkey"
             columns: ["womens_league_id"]
             isOneToOne: false
@@ -4020,6 +4535,13 @@ export type Database = {
             referencedRelation: "profiles_pending_country_review"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "publisher_responsiveness_publisher_id_fkey"
+            columns: ["publisher_id"]
+            isOneToOne: true
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
         ]
       }
       push_subscriptions: {
@@ -4074,6 +4596,13 @@ export type Database = {
             referencedRelation: "profiles_pending_country_review"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "push_subscriptions_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
         ]
       }
       pwa_installs: {
@@ -4111,6 +4640,13 @@ export type Database = {
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pwa_installs_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
             referencedColumns: ["id"]
           },
         ]
@@ -4257,6 +4793,13 @@ export type Database = {
             referencedRelation: "profiles_pending_country_review"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "recruiting_context_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
         ]
       }
       reference_reminder_queue: {
@@ -4297,6 +4840,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "reference_reminder_queue_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: true
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "reference_reminder_queue_suggested_friend_id_fkey"
             columns: ["suggested_friend_id"]
             isOneToOne: false
@@ -4308,6 +4858,13 @@ export type Database = {
             columns: ["suggested_friend_id"]
             isOneToOne: false
             referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reference_reminder_queue_suggested_friend_id_fkey"
+            columns: ["suggested_friend_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
             referencedColumns: ["id"]
           },
         ]
@@ -4359,6 +4916,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "saved_profiles_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "saved_profiles_saved_profile_id_fkey"
             columns: ["saved_profile_id"]
             isOneToOne: false
@@ -4370,6 +4934,13 @@ export type Database = {
             columns: ["saved_profile_id"]
             isOneToOne: false
             referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saved_profiles_saved_profile_id_fkey"
+            columns: ["saved_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
             referencedColumns: ["id"]
           },
           {
@@ -4419,6 +4990,13 @@ export type Database = {
             columns: ["owner_id"]
             isOneToOne: false
             referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shortlists_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
             referencedColumns: ["id"]
           },
         ]
@@ -4550,6 +5128,13 @@ export type Database = {
             referencedRelation: "profiles_pending_country_review"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "umpire_appointments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
         ]
       }
       user_blocks: {
@@ -4616,6 +5201,13 @@ export type Database = {
             referencedRelation: "profiles_pending_country_review"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "user_devices_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
         ]
       }
       user_engagement_daily: {
@@ -4667,6 +5259,13 @@ export type Database = {
             referencedRelation: "profiles_pending_country_review"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "user_engagement_daily_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
         ]
       }
       user_engagement_heartbeats: {
@@ -4701,6 +5300,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_engagement_heartbeats_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
             referencedColumns: ["id"]
           },
         ]
@@ -4788,6 +5394,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "user_feedback_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "user_feedback_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -4799,6 +5412,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_feedback_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
             referencedColumns: ["id"]
           },
         ]
@@ -4861,6 +5481,13 @@ export type Database = {
             referencedRelation: "profiles_pending_country_review"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "user_posts_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
         ]
       }
       user_pulse_items: {
@@ -4913,6 +5540,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_pulse_items_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
             referencedColumns: ["id"]
           },
         ]
@@ -4972,6 +5606,13 @@ export type Database = {
             referencedRelation: "profiles_pending_country_review"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "user_reports_target_id_fkey"
+            columns: ["target_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
         ]
       }
       user_unread_counters: {
@@ -5003,6 +5644,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: true
             referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_unread_counters_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles_self"
             referencedColumns: ["id"]
           },
         ]
@@ -5042,6 +5690,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "user_unread_senders_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "user_unread_senders_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -5053,6 +5708,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_unread_senders_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
             referencedColumns: ["id"]
           },
         ]
@@ -5122,6 +5784,13 @@ export type Database = {
             columns: ["claimed_profile_id"]
             isOneToOne: false
             referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "world_clubs_claimed_profile_id_fkey"
+            columns: ["claimed_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
             referencedColumns: ["id"]
           },
           {
@@ -5376,6 +6045,429 @@ export type Database = {
           },
         ]
       }
+      profiles_self: {
+        Row: {
+          accepted_friend_count: number | null
+          accepted_reference_count: number | null
+          availability_confirmed_at: string | null
+          availability_duration: string | null
+          available_for_appointments: boolean | null
+          available_from: string | null
+          avatar_url: string | null
+          base_city: string | null
+          base_country_id: number | null
+          base_location: string | null
+          bio: string | null
+          blocked_at: string | null
+          blocked_by: string | null
+          blocked_reason: string | null
+          brand_representation: string | null
+          browse_anonymously: boolean | null
+          career_entry_count: number | null
+          category_confirmation_needed: boolean | null
+          club_bio: string | null
+          club_history: string | null
+          club_media_count: number | null
+          coach_recruits_for_team: boolean | null
+          coach_specialization: string | null
+          coach_specialization_custom: string | null
+          coaching_categories: string[] | null
+          contact_email: string | null
+          contact_email_masked: string | null
+          contact_email_public: boolean | null
+          created_at: string | null
+          current_club: string | null
+          current_world_club_id: string | null
+          date_of_birth: string | null
+          dob_required_since: string | null
+          email: string | null
+          federation: string | null
+          frozen_minor_at: string | null
+          full_game_video_count: number | null
+          full_name: string | null
+          gallery_photo_count: number | null
+          gender: string | null
+          highlight_video_url: string | null
+          highlight_visibility: string | null
+          id: string | null
+          is_blocked: boolean | null
+          is_test_account: boolean | null
+          is_verified: boolean | null
+          languages: string[] | null
+          last_active_at: string | null
+          last_check_in_prompt_at: string | null
+          last_meaningful_update_at: string | null
+          last_message_email_at: string | null
+          last_officiated_at: string | null
+          last_platform: string | null
+          last_profile_view_email_at: string | null
+          last_profile_view_pulse_at: string | null
+          league_division: string | null
+          level_target: string | null
+          mens_league_division: string | null
+          mens_league_id: number | null
+          nationality: string | null
+          nationality_country_id: number | null
+          nationality2_country_id: number | null
+          notify_applications: boolean | null
+          notify_friends: boolean | null
+          notify_messages: boolean | null
+          notify_opportunities: boolean | null
+          notify_profile_views: boolean | null
+          notify_push: boolean | null
+          notify_references: boolean | null
+          officiating_specialization: string | null
+          onboarding_completed: boolean | null
+          onboarding_completed_at: string | null
+          onboarding_started_at: string | null
+          open_to_coach: boolean | null
+          open_to_opportunities: boolean | null
+          open_to_play: boolean | null
+          opportunity_preference: string | null
+          org_attested_18plus_at: string | null
+          playing_category: string | null
+          position: string | null
+          post_count: number | null
+          profile_completeness_pct: number | null
+          relocation_countries_excluded: number[] | null
+          relocation_countries_open: number[] | null
+          relocation_willingness: string | null
+          role: string | null
+          search_vector: unknown
+          secondary_position: string | null
+          show_last_active: boolean | null
+          social_links: Json | null
+          specialist_skills: string[] | null
+          umpire_appointment_count: number | null
+          umpire_level: string | null
+          umpire_since: number | null
+          umpiring_categories: string[] | null
+          updated_at: string | null
+          username: string | null
+          verified_at: string | null
+          verified_by: string | null
+          version: number | null
+          website: string | null
+          womens_league_division: string | null
+          womens_league_id: number | null
+          world_region_id: number | null
+          year_founded: number | null
+        }
+        Insert: {
+          accepted_friend_count?: number | null
+          accepted_reference_count?: number | null
+          availability_confirmed_at?: string | null
+          availability_duration?: string | null
+          available_for_appointments?: boolean | null
+          available_from?: string | null
+          avatar_url?: string | null
+          base_city?: string | null
+          base_country_id?: number | null
+          base_location?: string | null
+          bio?: string | null
+          blocked_at?: string | null
+          blocked_by?: string | null
+          blocked_reason?: string | null
+          brand_representation?: string | null
+          browse_anonymously?: boolean | null
+          career_entry_count?: number | null
+          category_confirmation_needed?: boolean | null
+          club_bio?: string | null
+          club_history?: string | null
+          club_media_count?: number | null
+          coach_recruits_for_team?: boolean | null
+          coach_specialization?: string | null
+          coach_specialization_custom?: string | null
+          coaching_categories?: string[] | null
+          contact_email?: string | null
+          contact_email_masked?: string | null
+          contact_email_public?: boolean | null
+          created_at?: string | null
+          current_club?: string | null
+          current_world_club_id?: string | null
+          date_of_birth?: string | null
+          dob_required_since?: string | null
+          email?: string | null
+          federation?: string | null
+          frozen_minor_at?: string | null
+          full_game_video_count?: number | null
+          full_name?: string | null
+          gallery_photo_count?: number | null
+          gender?: string | null
+          highlight_video_url?: string | null
+          highlight_visibility?: string | null
+          id?: string | null
+          is_blocked?: boolean | null
+          is_test_account?: boolean | null
+          is_verified?: boolean | null
+          languages?: string[] | null
+          last_active_at?: string | null
+          last_check_in_prompt_at?: string | null
+          last_meaningful_update_at?: string | null
+          last_message_email_at?: string | null
+          last_officiated_at?: string | null
+          last_platform?: string | null
+          last_profile_view_email_at?: string | null
+          last_profile_view_pulse_at?: string | null
+          league_division?: string | null
+          level_target?: string | null
+          mens_league_division?: string | null
+          mens_league_id?: number | null
+          nationality?: string | null
+          nationality_country_id?: number | null
+          nationality2_country_id?: number | null
+          notify_applications?: boolean | null
+          notify_friends?: boolean | null
+          notify_messages?: boolean | null
+          notify_opportunities?: boolean | null
+          notify_profile_views?: boolean | null
+          notify_push?: boolean | null
+          notify_references?: boolean | null
+          officiating_specialization?: string | null
+          onboarding_completed?: boolean | null
+          onboarding_completed_at?: string | null
+          onboarding_started_at?: string | null
+          open_to_coach?: boolean | null
+          open_to_opportunities?: boolean | null
+          open_to_play?: boolean | null
+          opportunity_preference?: string | null
+          org_attested_18plus_at?: string | null
+          playing_category?: string | null
+          position?: string | null
+          post_count?: number | null
+          profile_completeness_pct?: number | null
+          relocation_countries_excluded?: number[] | null
+          relocation_countries_open?: number[] | null
+          relocation_willingness?: string | null
+          role?: string | null
+          search_vector?: unknown
+          secondary_position?: string | null
+          show_last_active?: boolean | null
+          social_links?: Json | null
+          specialist_skills?: string[] | null
+          umpire_appointment_count?: number | null
+          umpire_level?: string | null
+          umpire_since?: number | null
+          umpiring_categories?: string[] | null
+          updated_at?: string | null
+          username?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+          version?: number | null
+          website?: string | null
+          womens_league_division?: string | null
+          womens_league_id?: number | null
+          world_region_id?: number | null
+          year_founded?: number | null
+        }
+        Update: {
+          accepted_friend_count?: number | null
+          accepted_reference_count?: number | null
+          availability_confirmed_at?: string | null
+          availability_duration?: string | null
+          available_for_appointments?: boolean | null
+          available_from?: string | null
+          avatar_url?: string | null
+          base_city?: string | null
+          base_country_id?: number | null
+          base_location?: string | null
+          bio?: string | null
+          blocked_at?: string | null
+          blocked_by?: string | null
+          blocked_reason?: string | null
+          brand_representation?: string | null
+          browse_anonymously?: boolean | null
+          career_entry_count?: number | null
+          category_confirmation_needed?: boolean | null
+          club_bio?: string | null
+          club_history?: string | null
+          club_media_count?: number | null
+          coach_recruits_for_team?: boolean | null
+          coach_specialization?: string | null
+          coach_specialization_custom?: string | null
+          coaching_categories?: string[] | null
+          contact_email?: string | null
+          contact_email_masked?: string | null
+          contact_email_public?: boolean | null
+          created_at?: string | null
+          current_club?: string | null
+          current_world_club_id?: string | null
+          date_of_birth?: string | null
+          dob_required_since?: string | null
+          email?: string | null
+          federation?: string | null
+          frozen_minor_at?: string | null
+          full_game_video_count?: number | null
+          full_name?: string | null
+          gallery_photo_count?: number | null
+          gender?: string | null
+          highlight_video_url?: string | null
+          highlight_visibility?: string | null
+          id?: string | null
+          is_blocked?: boolean | null
+          is_test_account?: boolean | null
+          is_verified?: boolean | null
+          languages?: string[] | null
+          last_active_at?: string | null
+          last_check_in_prompt_at?: string | null
+          last_meaningful_update_at?: string | null
+          last_message_email_at?: string | null
+          last_officiated_at?: string | null
+          last_platform?: string | null
+          last_profile_view_email_at?: string | null
+          last_profile_view_pulse_at?: string | null
+          league_division?: string | null
+          level_target?: string | null
+          mens_league_division?: string | null
+          mens_league_id?: number | null
+          nationality?: string | null
+          nationality_country_id?: number | null
+          nationality2_country_id?: number | null
+          notify_applications?: boolean | null
+          notify_friends?: boolean | null
+          notify_messages?: boolean | null
+          notify_opportunities?: boolean | null
+          notify_profile_views?: boolean | null
+          notify_push?: boolean | null
+          notify_references?: boolean | null
+          officiating_specialization?: string | null
+          onboarding_completed?: boolean | null
+          onboarding_completed_at?: string | null
+          onboarding_started_at?: string | null
+          open_to_coach?: boolean | null
+          open_to_opportunities?: boolean | null
+          open_to_play?: boolean | null
+          opportunity_preference?: string | null
+          org_attested_18plus_at?: string | null
+          playing_category?: string | null
+          position?: string | null
+          post_count?: number | null
+          profile_completeness_pct?: number | null
+          relocation_countries_excluded?: number[] | null
+          relocation_countries_open?: number[] | null
+          relocation_willingness?: string | null
+          role?: string | null
+          search_vector?: unknown
+          secondary_position?: string | null
+          show_last_active?: boolean | null
+          social_links?: Json | null
+          specialist_skills?: string[] | null
+          umpire_appointment_count?: number | null
+          umpire_level?: string | null
+          umpire_since?: number | null
+          umpiring_categories?: string[] | null
+          updated_at?: string | null
+          username?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+          version?: number | null
+          website?: string | null
+          womens_league_division?: string | null
+          womens_league_id?: number | null
+          world_region_id?: number | null
+          year_founded?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_base_country_id_fkey"
+            columns: ["base_country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_base_country_id_fkey"
+            columns: ["base_country_id"]
+            isOneToOne: false
+            referencedRelation: "world_countries_with_directory"
+            referencedColumns: ["country_id"]
+          },
+          {
+            foreignKeyName: "profiles_current_world_club_id_fkey"
+            columns: ["current_world_club_id"]
+            isOneToOne: false
+            referencedRelation: "world_clubs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_mens_league_id_fkey"
+            columns: ["mens_league_id"]
+            isOneToOne: false
+            referencedRelation: "world_leagues"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_nationality_country_id_fkey"
+            columns: ["nationality_country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_nationality_country_id_fkey"
+            columns: ["nationality_country_id"]
+            isOneToOne: false
+            referencedRelation: "world_countries_with_directory"
+            referencedColumns: ["country_id"]
+          },
+          {
+            foreignKeyName: "profiles_nationality2_country_id_fkey"
+            columns: ["nationality2_country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_nationality2_country_id_fkey"
+            columns: ["nationality2_country_id"]
+            isOneToOne: false
+            referencedRelation: "world_countries_with_directory"
+            referencedColumns: ["country_id"]
+          },
+          {
+            foreignKeyName: "profiles_verified_by_fkey"
+            columns: ["verified_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_verified_by_fkey"
+            columns: ["verified_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_verified_by_fkey"
+            columns: ["verified_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_womens_league_id_fkey"
+            columns: ["womens_league_id"]
+            isOneToOne: false
+            referencedRelation: "world_leagues"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_world_region_id_fkey"
+            columns: ["world_region_id"]
+            isOneToOne: false
+            referencedRelation: "world_province_stats"
+            referencedColumns: ["province_id"]
+          },
+          {
+            foreignKeyName: "profiles_world_region_id_fkey"
+            columns: ["world_region_id"]
+            isOneToOne: false
+            referencedRelation: "world_provinces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       public_opportunities: {
         Row: {
           application_deadline: string | null
@@ -5442,6 +6534,13 @@ export type Database = {
             referencedRelation: "profiles_pending_country_review"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "user_unread_counters_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
         ]
       }
       user_unread_counts_secure: {
@@ -5473,6 +6572,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: true
             referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_unread_counters_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles_self"
             referencedColumns: ["id"]
           },
         ]
@@ -6473,6 +7579,7 @@ export type Database = {
         Args: { p_batch?: number; p_retention_days?: number }
         Returns: number
       }
+      attest_org_operator_adult: { Args: never; Returns: Json }
       block_user: { Args: { p_blocked_id: string }; Returns: undefined }
       check_application_rate_limit: {
         Args: { p_user_id: string }
@@ -6597,8 +7704,10 @@ export type Database = {
           current_club: string | null
           current_world_club_id: string | null
           date_of_birth: string | null
+          dob_required_since: string | null
           email: string
           federation: string | null
+          frozen_minor_at: string | null
           full_game_video_count: number
           full_name: string | null
           gallery_photo_count: number
@@ -6640,6 +7749,7 @@ export type Database = {
           open_to_opportunities: boolean
           open_to_play: boolean
           opportunity_preference: string | null
+          org_attested_18plus_at: string | null
           playing_category: string | null
           position: string | null
           post_count: number
@@ -6820,8 +7930,10 @@ export type Database = {
           current_club: string | null
           current_world_club_id: string | null
           date_of_birth: string | null
+          dob_required_since: string | null
           email: string
           federation: string | null
+          frozen_minor_at: string | null
           full_game_video_count: number
           full_name: string | null
           gallery_photo_count: number
@@ -6863,6 +7975,7 @@ export type Database = {
           open_to_opportunities: boolean
           open_to_play: boolean
           opportunity_preference: string | null
+          org_attested_18plus_at: string | null
           playing_category: string | null
           position: string | null
           post_count: number
@@ -6930,6 +8043,7 @@ export type Database = {
         Returns: Json
       }
       current_profile_role: { Args: never; Returns: string }
+      declare_date_of_birth: { Args: { p_dob: string }; Returns: Json }
       delete_brand_post: { Args: { p_post_id: string }; Returns: Json }
       delete_brand_product: { Args: { p_product_id: string }; Returns: Json }
       delete_message: {
@@ -7184,6 +8298,7 @@ export type Database = {
         }[]
       }
       follow_brand: { Args: { p_brand_id: string }; Returns: Json }
+      freeze_minor_account: { Args: { p_profile_id: string }; Returns: Json }
       generate_brand_slug: { Args: { p_name: string }; Returns: string }
       get_brand_ambassadors: {
         Args: {
@@ -7391,6 +8506,13 @@ export type Database = {
       get_post_comments: {
         Args: { p_limit?: number; p_offset?: number; p_post_id: string }
         Returns: Json
+      }
+      get_profile_ages: {
+        Args: { p_ids: string[] }
+        Returns: {
+          age: number
+          profile_id: string
+        }[]
       }
       get_profile_posts: {
         Args: { p_limit?: number; p_offset?: number; p_profile_id: string }
@@ -7650,6 +8772,20 @@ export type Database = {
       process_storage_cleanup_queue: {
         Args: { p_batch?: number; p_grace_period?: string }
         Returns: number
+      }
+      profile_is_hidden: {
+        Args: { p_frozen_minor_at: string; p_is_blocked: boolean }
+        Returns: boolean
+      }
+      profile_is_uncontactable: {
+        Args: {
+          p_date_of_birth: string
+          p_dob_required_since: string
+          p_frozen_minor_at: string
+          p_is_blocked: boolean
+          p_role: string
+        }
+        Returns: boolean
       }
       prune_old_heartbeats: {
         Args: { p_days_to_keep?: number }
@@ -7993,6 +9129,7 @@ export type Database = {
       }
       unblock_user: { Args: { p_blocked_id: string }; Returns: undefined }
       unfollow_brand: { Args: { p_brand_id: string }; Returns: Json }
+      unfreeze_adults: { Args: never; Returns: number }
       update_brand: {
         Args: {
           p_bio?: string
@@ -8059,6 +9196,7 @@ export type Database = {
         | "maybe"
         | "rejected"
         | "no_response"
+        | "withdrawn"
       comment_rating: "positive" | "neutral" | "negative"
       comment_status: "visible" | "hidden" | "reported" | "deleted"
       friendship_status:
@@ -8268,6 +9406,7 @@ export const Constants = {
         "maybe",
         "rejected",
         "no_response",
+        "withdrawn",
       ],
       comment_rating: ["positive", "neutral", "negative"],
       comment_status: ["visible", "hidden", "reported", "deleted"],
