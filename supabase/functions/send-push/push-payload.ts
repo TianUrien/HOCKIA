@@ -256,9 +256,10 @@ export function buildPushPayload(
       const count = typeof metadata?.count === 'number' ? metadata.count : 1
       return {
         title: 'Application update',
+        // Neutral about the club (teams often answer off-platform).
         body: count === 1
-          ? "An application closed — the club didn't respond in time. Fresh opportunities are open."
-          : `${count} applications closed without a response. Fresh opportunities are open.`,
+          ? 'An application is no longer active on HOCKIA. Fresh opportunities are open.'
+          : `${count} applications are no longer active on HOCKIA. Fresh opportunities are open.`,
         url: '/opportunities',
         // one per sweep day; replace any prior unread expiry push
         tag: 'applications-expired',

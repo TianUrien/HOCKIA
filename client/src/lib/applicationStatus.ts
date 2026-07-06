@@ -23,9 +23,11 @@ export function playerApplicationStatusBadge(
       // Soft, non-judgmental tone — a clear "no" without feeling punishing.
       return { label: 'Not selected', className: 'bg-rose-50 text-rose-700' }
     case 'no_response':
-      // Auto-expiry terminal state (Task 3b): honest about WHO dropped the
-      // ball — the club, never the player.
-      return { label: 'No response from the club', className: 'bg-gray-100 text-gray-600' }
+      // Auto-expiry terminal state (Task 3b). Copy is deliberately NEUTRAL
+      // about the club: many teams answer off-platform (15/21 opportunities
+      // carry WhatsApp/email contacts), so "no response" would blame them
+      // for a silence that may not exist. Never blame either side.
+      return { label: 'No longer active', className: 'bg-gray-100 text-gray-600' }
     default:
       return null
   }
@@ -128,7 +130,8 @@ export function applicationStatusFallbackMessage(
     case 'no_response':
       // No AI pass for expiries (application-feedback only covers real club
       // responses) — this deterministic line IS the player-facing message.
-      return "The club didn't respond in time, so this application closed automatically. That's on them, not you — put your energy into teams that reply."
+      // Neutral about the club: they may have answered off-platform.
+      return "This application is no longer active on HOCKIA. Applications close automatically after a while without an update here, so you're never left waiting — your energy is better spent on what's open now."
     default:
       return null
   }

@@ -16,8 +16,11 @@ import { fetchSuggestions, suggestionsHtml, suggestionsText } from '../_shared/o
  * per player per sweep, no matter how many of their applications expired —
  * the batching decision: never N separate "no response" emails).
  *
- * Copy contract: honest, kind, forward-looking — "the club didn't respond in
- * time" + 2-3 similar OPEN opportunities to redirect the player's energy.
+ * Copy contract: honest, kind, forward-looking, and NEUTRAL about the club —
+ * teams often answer off-platform (15/21 opportunities carry WhatsApp/email
+ * contacts), so the email says "no longer active on HOCKIA", never "the club
+ * didn't respond". Always + 2-3 similar OPEN opportunities to redirect the
+ * player's energy. (Strategic audit addendum #1, 2026-07-06.)
  * ============================================================================
  */
 
@@ -166,12 +169,12 @@ Deno.serve(async (req: Request) => {
         <div style="font-size:20px;font-weight:700;color:#111827;">Hi ${escapeHtml(firstName)},</div>
         <p style="font-size:15px;color:#374151;line-height:1.55;">
           ${single
-            ? `The team behind <strong>${escapeHtml(entries[0].title)}</strong> didn't respond in time, so your application is no longer pending.`
-            : `These applications closed because the teams didn't respond in time:`}
+            ? `Your application for <strong>${escapeHtml(entries[0].title)}</strong> is no longer active on HOCKIA.`
+            : `These applications are no longer active on HOCKIA:`}
         </p>
         ${single ? '' : `<ul style="padding-left:18px;margin:8px 0;">${listHtml}</ul>`}
         <p style="font-size:14px;color:#374151;line-height:1.55;">
-          That's on them, not you — an honest close beats waiting forever. Your energy is better spent where teams are actively responding:
+          Applications close automatically when there's no update on HOCKIA for a while, so you're never left waiting — some conversations simply continue elsewhere. Here's what's open right now:
         </p>
         ${suggestionsHtml(suggestions, HOCKIA_BASE_URL)}
         <div style="margin-top:20px;">
@@ -189,11 +192,11 @@ Deno.serve(async (req: Request) => {
       `Hi ${firstName},`,
       '',
       single
-        ? `The team behind "${entries[0].title}" didn't respond in time, so your application is no longer pending.`
-        : `These applications closed because the teams didn't respond in time:`,
+        ? `Your application for "${entries[0].title}" is no longer active on HOCKIA.`
+        : `These applications are no longer active on HOCKIA:`,
       ...(single ? [] : entries.map((e) => `- ${e.title} — ${e.publisher}`)),
       '',
-      "That's on them, not you — an honest close beats waiting forever.",
+      "Applications close automatically when there's no update on HOCKIA for a while, so you're never left waiting — some conversations simply continue elsewhere.",
       suggestionsText(suggestions, HOCKIA_BASE_URL),
       '',
       `Browse open opportunities: ${HOCKIA_BASE_URL}/opportunities`,

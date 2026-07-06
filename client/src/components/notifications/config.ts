@@ -277,17 +277,17 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
     badgeText: 'Application update',
     accentClassName: 'bg-gray-100 text-gray-600',
     // Per-player AGGREGATE from the auto-expiry sweep (Task 3b): one
-    // notification covering every application that closed that day. Honest,
-    // blame-the-silence-not-the-player copy; route to open opportunities to
-    // redirect the energy forward.
+    // notification covering every application that closed that day. Copy is
+    // NEUTRAL about the club (teams often answer off-platform — never blame
+    // either side); route to open opportunities to redirect the energy forward.
     getTitle: (notification) => {
       const count = Number(notification.metadata?.count ?? 1)
       return count === 1
-        ? 'An application closed without a response'
-        : `${count} applications closed without a response`
+        ? 'An application is no longer active'
+        : `${count} applications are no longer active`
     },
     getDescription: () =>
-      "The club didn't respond in time — that's on them, not you. Fresh opportunities are open now.",
+      "Applications close automatically after a while without an update on HOCKIA — never a reflection on you. Fresh opportunities are open now.",
     getRoute: () => '/opportunities',
   },
   profile_completed: {
