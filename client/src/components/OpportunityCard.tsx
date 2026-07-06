@@ -1,4 +1,5 @@
 import { MapPin, Calendar, Home, Car, Globe as GlobeIcon, Plane, Utensils, Briefcase, Shield, GraduationCap, Award, DollarSign, Dumbbell, ChevronRight } from 'lucide-react'
+import ResponsivenessBadge, { type ResponsivenessTier } from '@/components/ResponsivenessBadge'
 import { useNavigate } from 'react-router-dom'
 import type { Vacancy } from '../lib/supabase'
 import Avatar from './Avatar'
@@ -14,6 +15,8 @@ export interface WorldClubInfo {
 }
 
 interface OpportunityCardProps {
+  /** Precomputed publisher responsiveness tier (Task 2) — null = neutral, no badge. */
+  responsivenessTier?: ResponsivenessTier | null
   vacancy: Vacancy
   clubName: string
   clubLogo?: string | null
@@ -74,6 +77,7 @@ function getCardType(publisherRole: string | null | undefined, worldClub: WorldC
 export default function OpportunityCard({
   vacancy,
   clubName,
+  responsivenessTier = null,
   clubLogo,
   clubId,
   publisherRole,
@@ -241,6 +245,14 @@ export default function OpportunityCard({
                 {publisherOrganization}
               </span>
             </span>
+          </div>
+        )}
+
+        {/* ── Responsiveness badge (Task 2): players deciding where to apply
+             see how fast this publisher responds — and publishers know it. ── */}
+        {responsivenessTier && (
+          <div className="mt-3">
+            <ResponsivenessBadge tier={responsivenessTier} />
           </div>
         )}
 

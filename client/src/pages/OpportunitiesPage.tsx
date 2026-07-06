@@ -4,6 +4,8 @@ import { ChevronDown, Shield, X, Check, ArrowUpDown, Plus } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuthStore } from '../lib/auth'
 import type { Vacancy } from '../lib/supabase'
+import { fetchResponsivenessTiers } from '@/hooks/usePublisherResponsiveness'
+import type { ResponsivenessTier } from '@/components/ResponsivenessBadge'
 import Header from '../components/Header'
 import OpportunityCard from '../components/OpportunityCard'
 import OpportunityPreviewModal from '../components/OpportunityPreviewModal'
@@ -159,6 +161,7 @@ export default function OpportunitiesPage() {
     || (profile?.role === 'coach' && profile?.coach_recruits_for_team === true)
 
   const [vacancies, setVacancies] = useState<Vacancy[]>([])
+  const [responsivenessTiers, setResponsivenessTiers] = useState<Map<string, ResponsivenessTier>>(new Map())
   const [clubs, setClubs] = useState<Record<string, { id: string; full_name: string; avatar_url: string | null; role: string | null; current_club: string | null; womens_league_division: string | null; mens_league_division: string | null }>>({})
   const [worldClubsMap, setWorldClubsMap] = useState<Record<string, { id: string; clubName: string; avatarUrl: string | null; countryName: string | null; flagEmoji: string | null; leagueName: string | null }>>({})
   const [userApplications, setUserApplications] = useState<string[]>([])
@@ -347,6 +350,11 @@ export default function OpportunitiesPage() {
         )
 
         setVacancies((vacanciesData as Vacancy[]) || [])
+        // Responsiveness badges (Task 2): one tiny batch query per page —
+        // absence of a row/tier is the neutral state (no badge, never shame).
+        void fetchResponsivenessTiers(
+          ((vacanciesData as Vacancy[]) || []).map((v) => v.club_id).filter(Boolean) as string[],
+        ).then(setResponsivenessTiers)
         setClubs(clubsMap)
         setWorldClubsMap(wcMap)
       } catch (error) {
@@ -754,6 +762,7 @@ export default function OpportunitiesPage() {
                     publisherOrganization={org}
                     worldClub={vacancy.world_club_id ? worldClubsMap[vacancy.world_club_id] ?? null : null}
                     countryFlag={getFlagEmoji(vacancy.location_country)}
+                    responsivenessTier={responsivenessTiers.get(vacancy.club_id) ?? null}
                     onViewDetails={() => setPreviewVacancy(vacancy)}
                   />
                 )

@@ -3,6 +3,8 @@ import {
   MapPin, Calendar, Edit2, Eye, MessageCircle, Trophy, Mail,
   Users, UsersRound, ChevronRight, ChevronDown, ChevronUp, Camera, Check, Circle,
 } from 'lucide-react'
+import ResponsivenessBadge from '@/components/ResponsivenessBadge'
+import { usePublisherResponsiveness } from '@/hooks/usePublisherResponsiveness'
 import {
   Avatar,
   CountryDisplay,
@@ -107,6 +109,8 @@ export default function ClubHeroCard({
 }: ClubHeroCardProps) {
   const [checklistOpen, setChecklistOpen] = useState(false)
   const friendCount = profile.accepted_friend_count ?? 0
+  // Task 2 — public responsiveness tier (null = neutral, renders nothing)
+  const responsivenessTier = usePublisherResponsiveness(profile.id)
   const isVerified = (profile as { is_verified?: boolean }).is_verified
   const verifiedAt = (profile as { verified_at?: string | null }).verified_at ?? null
   const lastActiveAt = (profile as { last_active_at?: string | null }).last_active_at ?? null
@@ -162,6 +166,7 @@ export default function ClubHeroCard({
 
       {/* Credibility stats — Connections + Members */}
       <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2" data-testid="club-hero-stats">
+        <ResponsivenessBadge tier={responsivenessTier} />
         <CredibilityStat
           icon={Users}
           label="Connections"

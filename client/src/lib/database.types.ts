@@ -3898,6 +3898,45 @@ export type Database = {
           },
         ]
       }
+      publisher_responsiveness: {
+        Row: {
+          computed_at: string
+          median_hours: number | null
+          publisher_id: string
+          sample_count: number
+          tier: string | null
+        }
+        Insert: {
+          computed_at?: string
+          median_hours?: number | null
+          publisher_id: string
+          sample_count: number
+          tier?: string | null
+        }
+        Update: {
+          computed_at?: string
+          median_hours?: number | null
+          publisher_id?: string
+          sample_count?: number
+          tier?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "publisher_responsiveness_publisher_id_fkey"
+            columns: ["publisher_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "publisher_responsiveness_publisher_id_fkey"
+            columns: ["publisher_id"]
+            isOneToOne: true
+            referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       push_subscriptions: {
         Row: {
           auth: string | null
@@ -7814,6 +7853,7 @@ export type Database = {
         }[]
       }
       snapshot_product_health_score: { Args: never; Returns: undefined }
+      snapshot_publisher_responsiveness: { Args: never; Returns: undefined }
       staging_reset_onboarding: { Args: never; Returns: undefined }
       submit_app_rating: {
         Args: {
