@@ -336,18 +336,22 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     // ceiling. Free-text search + city stay client narrowers; filteredMembers
     // re-applies the drawer predicates idempotently (defensive parity). Test-
     // account visibility is decided server-side by is_staging_env().
+    // Unset filters are `undefined` (omitted from the request body), not
+    // `null`: every param has a SQL DEFAULT NULL so omission is semantically
+    // identical, and the current supabase CLI generates RPC args as
+    // optional-without-null, so explicit nulls no longer typecheck.
     const rpcParams = {
-      p_role: filters.role === 'all' ? null : filters.role,
-      p_positions: filters.position.length ? filters.position : null,
-      p_coach_specializations: filters.coachSpecializations.length ? filters.coachSpecializations : null,
-      p_categories: filters.categories.length ? filters.categories : null,
-      p_officiating_specializations: filters.officiatingSpecializations.length ? filters.officiatingSpecializations : null,
-      p_nationality_country_ids: filters.nationalityCountryIds.length ? filters.nationalityCountryIds : null,
-      p_eu_required: (filters.euOnly || euFilterActive) ? true : null,
-      p_location_country_ids: filters.locationCountryIds.length ? filters.locationCountryIds : null,
-      p_availability_open: filters.availability === 'open' ? true : null,
-      p_brand_category: filters.brandCategory || null,
-      p_open_opportunity_type: filters.clubOpportunityType,
+      p_role: filters.role === 'all' ? undefined : filters.role,
+      p_positions: filters.position.length ? filters.position : undefined,
+      p_coach_specializations: filters.coachSpecializations.length ? filters.coachSpecializations : undefined,
+      p_categories: filters.categories.length ? filters.categories : undefined,
+      p_officiating_specializations: filters.officiatingSpecializations.length ? filters.officiatingSpecializations : undefined,
+      p_nationality_country_ids: filters.nationalityCountryIds.length ? filters.nationalityCountryIds : undefined,
+      p_eu_required: (filters.euOnly || euFilterActive) ? true : undefined,
+      p_location_country_ids: filters.locationCountryIds.length ? filters.locationCountryIds : undefined,
+      p_availability_open: filters.availability === 'open' ? true : undefined,
+      p_brand_category: filters.brandCategory || undefined,
+      p_open_opportunity_type: filters.clubOpportunityType ?? undefined,
       p_limit: 500,
     }
     const cacheKey = `community-members-${viewerScope}-${JSON.stringify(rpcParams)}`
