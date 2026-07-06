@@ -199,6 +199,7 @@ Deno.serve(async (req: Request) => {
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 12px;">
     <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:12px;padding:28px;">
       <tr><td>
+        <img src="https://www.inhockia.com/hockia-logo-white.png" alt="HOCKIA" width="100" height="24" style="height:24px;width:100px;background:#8026FA;padding:8px 12px;border-radius:6px;margin-bottom:18px;" />
         <div style="font-size:20px;font-weight:700;color:#111827;">Hi ${escapeHtml(firstName)},</div>
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:6px;">
           ${entries.map(entryHtml).join('')}
