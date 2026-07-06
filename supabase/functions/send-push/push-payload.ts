@@ -251,6 +251,20 @@ export function buildPushPayload(
       }
     }
 
+    // ── Application auto-expiry (per-player aggregate from the daily sweep) ──
+    case 'applications_expired': {
+      const count = typeof metadata?.count === 'number' ? metadata.count : 1
+      return {
+        title: 'Application update',
+        body: count === 1
+          ? "An application closed — the club didn't respond in time. Fresh opportunities are open."
+          : `${count} applications closed without a response. Fresh opportunities are open.`,
+        url: '/opportunities',
+        // one per sweep day; replace any prior unread expiry push
+        tag: 'applications-expired',
+      }
+    }
+
     // ── Milestones ──
     case 'profile_completed':
       return {

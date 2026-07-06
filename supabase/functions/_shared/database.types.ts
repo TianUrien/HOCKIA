@@ -448,12 +448,64 @@ export type Database = {
           },
         ]
       }
+      application_expiry_queue: {
+        Row: {
+          applicant_id: string
+          application_ids: string[]
+          attempts: number
+          batch_ts: string
+          created_at: string
+          id: string
+          last_error: string | null
+          processed_at: string | null
+          sweep_date: string
+        }
+        Insert: {
+          applicant_id: string
+          application_ids: string[]
+          attempts?: number
+          batch_ts?: string
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          processed_at?: string | null
+          sweep_date: string
+        }
+        Update: {
+          applicant_id?: string
+          application_ids?: string[]
+          attempts?: number
+          batch_ts?: string
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          processed_at?: string | null
+          sweep_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "application_expiry_queue_applicant_id_fkey"
+            columns: ["applicant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "application_expiry_queue_applicant_id_fkey"
+            columns: ["applicant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       application_response_settings: {
         Row: {
           digest_enabled: boolean
           expiry_days: number
           id: boolean
           launch_date: string | null
+          status_emails_enabled: boolean
           sweep_enabled: boolean
           updated_at: string
         }
@@ -462,6 +514,7 @@ export type Database = {
           expiry_days?: number
           id?: boolean
           launch_date?: string | null
+          status_emails_enabled?: boolean
           sweep_enabled?: boolean
           updated_at?: string
         }
@@ -470,10 +523,59 @@ export type Database = {
           expiry_days?: number
           id?: boolean
           launch_date?: string | null
+          status_emails_enabled?: boolean
           sweep_enabled?: boolean
           updated_at?: string
         }
         Relationships: []
+      }
+      application_status_email_queue: {
+        Row: {
+          attempts: number
+          batch_ts: string
+          created_at: string
+          id: string
+          last_error: string | null
+          notification_ids: string[]
+          processed_at: string | null
+          recipient_id: string
+        }
+        Insert: {
+          attempts?: number
+          batch_ts?: string
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          notification_ids: string[]
+          processed_at?: string | null
+          recipient_id: string
+        }
+        Update: {
+          attempts?: number
+          batch_ts?: string
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          notification_ids?: string[]
+          processed_at?: string | null
+          recipient_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "application_status_email_queue_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "application_status_email_queue_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       application_status_history: {
         Row: {
@@ -6824,6 +6926,7 @@ export type Database = {
       }
       engagement_heartbeat_interval_seconds: { Args: never; Returns: number }
       enqueue_application_digests: { Args: never; Returns: undefined }
+      enqueue_application_status_emails: { Args: never; Returns: undefined }
       enqueue_availability_check_ins: { Args: never; Returns: number }
       enqueue_message_digests: { Args: never; Returns: undefined }
       enqueue_notification: {
@@ -6855,6 +6958,7 @@ export type Database = {
         Args: { p_ids: number[] }
         Returns: number[]
       }
+      expire_overdue_applications: { Args: never; Returns: undefined }
       extract_storage_path: {
         Args: { p_bucket: string; p_url: string }
         Returns: string
@@ -7696,6 +7800,19 @@ export type Database = {
       should_show_app_rating_prompt: { Args: never; Returns: Json }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
+      similar_open_opportunities: {
+        Args: { p_applicant: string; p_exclude?: string[]; p_limit?: number }
+        Returns: {
+          gender: string
+          location_city: string
+          location_country: string
+          opportunity_id: string
+          opportunity_type: string
+          position_text: string
+          publisher_name: string
+          title: string
+        }[]
+      }
       snapshot_product_health_score: { Args: never; Returns: undefined }
       staging_reset_onboarding: { Args: never; Returns: undefined }
       submit_app_rating: {

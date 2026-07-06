@@ -38,9 +38,12 @@ interface TimelineNode {
   date: string | null
   dotClass: string
   message?: string | null
+  subtext?: string | null
 }
 
-const RESPONDED = ['shortlisted', 'maybe', 'rejected']
+// 'no_response' is terminal like a response (renders a status node), but is
+// produced by the auto-expiry sweep, not the club — no AI pass exists for it.
+const RESPONDED = ['shortlisted', 'maybe', 'rejected', 'no_response']
 
 function statusDotClass(status: string): string {
   switch (status) {
@@ -50,6 +53,8 @@ function statusDotClass(status: string): string {
       return 'bg-amber-500'
     case 'rejected':
       return 'bg-rose-400'
+    case 'no_response':
+      return 'bg-gray-400'
     default:
       return 'bg-gray-300'
   }
@@ -59,6 +64,22 @@ function formatDate(value: string): string {
   return new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
+// Response-deadline config (Task 3b): single-row, publicly readable, cached per
+// session. Disabled sweep / NULL launch_date → feature dark, no deadline shown.
+let responseSettingsCache:
+  | { launch_date: string | null; expiry_days: number; sweep_enabled: boolean }
+  | null
+  | undefined
+async function fetchResponseSettings() {
+  if (responseSettingsCache !== undefined) return responseSettingsCache
+  const { data } = await supabase
+    .from('application_response_settings')
+    .select('launch_date, expiry_days, sweep_enabled')
+    .maybeSingle()
+  responseSettingsCache = data ?? null
+  return responseSettingsCache
+}
+
 export default function ApplicationTimeline({ opportunityId }: ApplicationTimelineProps) {
   const { user } = useAuthStore()
   const [currentStatus, setCurrentStatus] = useState<string | null>(null)
@@ -66,6 +87,7 @@ export default function ApplicationTimeline({ opportunityId }: ApplicationTimeli
   const [history, setHistory] = useState<HistoryRow[]>([])
   const [firstViewedAt, setFirstViewedAt] = useState<string | null>(null)
   const [aiMessage, setAiMessage] = useState<string | null>(null)
+  const [deadline, setDeadline] = useState<string | null>(null)
   const [resolved, setResolved] = useState(false)
   const [loading, setLoading] = useState(true)
 
@@ -93,6 +115,23 @@ export default function ApplicationTimeline({ opportunityId }: ApplicationTimeli
       setCurrentStatus(status)
       setAppliedAt(app.applied_at ?? null)
 
+      // Bounded waiting: while pending, show when the sweep will close this
+      // application — GREATEST(applied_at, launch_date) + expiry_days, the
+      // exact server-side clock (grandfathering included).
+      if (status === 'pending' && app.applied_at) {
+        const settings = await fetchResponseSettings()
+        if (cancelled) return
+        if (settings?.sweep_enabled && settings.launch_date) {
+          const start = Math.max(
+            new Date(app.applied_at).getTime(),
+            new Date(settings.launch_date).getTime(),
+          )
+          setDeadline(new Date(start + settings.expiry_days * 86_400_000).toISOString())
+        }
+      } else {
+        setDeadline(null)
+      }
+
       const [historyRes, viewsRes] = await Promise.all([
         supabase
           .from('application_status_history')
@@ -115,6 +154,12 @@ export default function ApplicationTimeline({ opportunityId }: ApplicationTimeli
       // AI explanation for the current status (only once the club has responded).
       if (!status || !RESPONDED.includes(status)) {
         setAiMessage(null)
+        return
+      }
+      if (status === 'no_response') {
+        // application-feedback only explains real club responses; the
+        // deterministic copy IS the message for auto-expiries.
+        setAiMessage(applicationStatusFallbackMessage(status, null))
         return
       }
       // The reason behind the most recent responded status — used for the
@@ -174,7 +219,7 @@ export default function ApplicationTimeline({ opportunityId }: ApplicationTimeli
     if (badge) {
       nodes.push({
         key: 'status',
-        icon: currentStatus === 'rejected' ? Clock : CheckCircle,
+        icon: currentStatus === 'rejected' || currentStatus === 'no_response' ? Clock : CheckCircle,
         label: badge.label,
         date: currentStatusRow?.created_at ?? null,
         dotClass: statusDotClass(currentStatus),
@@ -182,7 +227,14 @@ export default function ApplicationTimeline({ opportunityId }: ApplicationTimeli
       })
     }
   } else if (!responded) {
-    nodes.push({ key: 'awaiting', icon: Clock, label: "Awaiting the club's decision", date: null, dotClass: 'bg-gray-300' })
+    nodes.push({
+      key: 'awaiting',
+      icon: Clock,
+      label: "Awaiting the club's decision",
+      date: null,
+      dotClass: 'bg-gray-300',
+      subtext: deadline ? `The club has until ${formatDate(deadline)} to respond.` : null,
+    })
   }
 
   if (nodes.length === 0) return null
@@ -205,6 +257,7 @@ export default function ApplicationTimeline({ opportunityId }: ApplicationTimeli
                   <span className="text-sm font-medium text-gray-800">{node.label}</span>
                   {node.date && <span className="flex-shrink-0 text-xs text-gray-400">{formatDate(node.date)}</span>}
                 </div>
+                {node.subtext && <p className="mt-1 text-xs text-gray-500">{node.subtext}</p>}
                 {node.message && (
                   <p className="mt-1.5 flex gap-1.5 rounded-lg bg-white p-2.5 text-xs leading-relaxed text-gray-600 ring-1 ring-gray-100">
                     <Sparkles className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-[#8026FA]" />

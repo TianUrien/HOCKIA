@@ -22,6 +22,10 @@ export function playerApplicationStatusBadge(
     case 'rejected':
       // Soft, non-judgmental tone — a clear "no" without feeling punishing.
       return { label: 'Not selected', className: 'bg-rose-50 text-rose-700' }
+    case 'no_response':
+      // Auto-expiry terminal state (Task 3b): honest about WHO dropped the
+      // ball — the club, never the player.
+      return { label: 'No response from the club', className: 'bg-gray-100 text-gray-600' }
     default:
       return null
   }
@@ -121,6 +125,10 @@ export function applicationStatusFallbackMessage(
       return reasonCopy
         ? `You weren't selected this time. ${reasonCopy} Keep going — the right fit is out there.`
         : "You weren't selected this time. It often comes down to fit, not ability — keep applying."
+    case 'no_response':
+      // No AI pass for expiries (application-feedback only covers real club
+      // responses) — this deterministic line IS the player-facing message.
+      return "The club didn't respond in time, so this application closed automatically. That's on them, not you — put your energy into teams that reply."
     default:
       return null
   }
