@@ -32,7 +32,7 @@ import { hashToken } from '../_shared/action-tokens.ts'
 
 const RATE_LIMIT_PER_MIN = 60
 
-type Action = 'shortlisted' | 'maybe' | 'rejected'
+type Action = 'shortlisted' | 'maybe' | 'rejected' | 'renew'
 
 interface ActionInfo {
   outcome: string
@@ -40,6 +40,7 @@ interface ActionInfo {
   applicant_name?: string
   opportunity_id?: string
   opportunity_title?: string
+  new_deadline?: string
 }
 
 function json(status: number, body: ActionInfo, headers: Record<string, string>): Response {
@@ -106,8 +107,16 @@ Deno.serve(async (req: Request) => {
     const tokenHash = await hashToken(rawToken)
 
     if (req.method === 'POST') {
-      // ── Execute (atomic: validate + status change + token burn in one RPC) ──
-      const { data, error } = await supabase.rpc('apply_email_action', { p_token_hash: tokenHash })
+      // ── Execute (atomic: validate + mutation + token burn in one RPC).
+      //    Triage tokens act on an application, renew tokens on an
+      //    opportunity — the token's action picks the RPC. ──
+      const { data: tok } = await supabase
+        .from('email_action_tokens')
+        .select('action')
+        .eq('token_hash', tokenHash)
+        .maybeSingle()
+      const rpc = (tok as any)?.action === 'renew' ? 'apply_renewal_action' : 'apply_email_action'
+      const { data, error } = await supabase.rpc(rpc, { p_token_hash: tokenHash })
       if (error) {
         captureException(error, { functionName: 'application-action', correlationId })
         return json(500, { outcome: 'error' }, cors)
@@ -124,7 +133,8 @@ Deno.serve(async (req: Request) => {
           id, status, opportunity_id,
           opportunity:opportunities (id, title),
           applicant:profiles (full_name)
-        )
+        ),
+        opportunity:opportunities (id, title)
       `)
       .eq('token_hash', tokenHash)
       .maybeSingle()
@@ -133,12 +143,35 @@ Deno.serve(async (req: Request) => {
       captureException(peekError, { functionName: 'application-action', correlationId })
       return json(500, { outcome: 'error' }, cors)
     }
-    const app = (token as any)?.application
-    if (!token || !app) return json(200, { outcome: 'invalid' }, cors)
+    if (!token) return json(200, { outcome: 'invalid' }, cors)
 
-    const info: ActionInfo = {
+    const action = (token as any).action as Action
+    let info: ActionInfo
+
+    if (action === 'renew') {
+      const opp = (token as any).opportunity
+      if (!opp) return json(200, { outcome: 'invalid' }, cors)
+      info = {
+        outcome: 'ready',
+        action,
+        opportunity_id: opp.id,
+        opportunity_title: opp.title ?? undefined,
+      }
+      if ((token as any).used_at) return json(200, { ...info, outcome: 'used' }, cors)
+      if (new Date((token as any).expires_at).getTime() < Date.now()) {
+        return json(200, { ...info, outcome: 'expired' }, cors)
+      }
+      // No status precondition on the peek: the SPA auto-executes renew and
+      // the RPC decides (renewed / closed_by_publisher / …) atomically.
+      return json(200, info, cors)
+    }
+
+    const app = (token as any).application
+    if (!app) return json(200, { outcome: 'invalid' }, cors)
+
+    info = {
       outcome: 'ready',
-      action: (token as any).action as Action,
+      action,
       applicant_name: app.applicant?.full_name ?? undefined,
       opportunity_id: app.opportunity_id,
       opportunity_title: app.opportunity?.title ?? undefined,

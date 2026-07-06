@@ -177,7 +177,7 @@ Deno.serve(async (req: Request) => {
         id,
         applied_at,
         status,
-        opportunity:opportunities (id, title, status),
+        opportunity:opportunities (id, title, status, application_deadline),
         applicant:profiles (id, full_name, position)
       `)
       .in('id', queueRecord.application_ids ?? [])
@@ -189,8 +189,14 @@ Deno.serve(async (req: Request) => {
     }
 
     const nowMs = Date.now()
+    // Inventory hygiene: never ask the publisher to triage a listing that is
+    // closed OR past its application deadline (the daily closer usually
+    // catches these; this guards the mid-week race).
+    const todayIso = new Date().toISOString().slice(0, 10)
     const rows: PendingRow[] = (apps ?? [])
-      .filter((a: any) => a.opportunity?.status === 'open')
+      .filter((a: any) =>
+        a.opportunity?.status === 'open' &&
+        (!a.opportunity?.application_deadline || a.opportunity.application_deadline >= todayIso))
       .map((a: any) => ({
         id: a.id,
         applicant_name: a.applicant?.full_name?.trim() || 'An applicant',

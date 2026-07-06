@@ -503,6 +503,7 @@ export type Database = {
         Row: {
           digest_enabled: boolean
           expiry_days: number
+          hygiene_enabled: boolean
           id: boolean
           launch_date: string | null
           status_emails_enabled: boolean
@@ -512,6 +513,7 @@ export type Database = {
         Insert: {
           digest_enabled?: boolean
           expiry_days?: number
+          hygiene_enabled?: boolean
           id?: boolean
           launch_date?: string | null
           status_emails_enabled?: boolean
@@ -521,6 +523,7 @@ export type Database = {
         Update: {
           digest_enabled?: boolean
           expiry_days?: number
+          hygiene_enabled?: boolean
           id?: boolean
           launch_date?: string | null
           status_emails_enabled?: boolean
@@ -1654,31 +1657,34 @@ export type Database = {
       }
       email_action_tokens: {
         Row: {
-          action: Database["public"]["Enums"]["application_status"]
-          application_id: string
+          action: string
+          application_id: string | null
           created_at: string
           expires_at: string
           id: string
+          opportunity_id: string | null
           publisher_id: string
           token_hash: string
           used_at: string | null
         }
         Insert: {
-          action: Database["public"]["Enums"]["application_status"]
-          application_id: string
+          action: string
+          application_id?: string | null
           created_at?: string
           expires_at: string
           id?: string
+          opportunity_id?: string | null
           publisher_id: string
           token_hash: string
           used_at?: string | null
         }
         Update: {
-          action?: Database["public"]["Enums"]["application_status"]
-          application_id?: string
+          action?: string
+          application_id?: string | null
           created_at?: string
           expires_at?: string
           id?: string
+          opportunity_id?: string | null
           publisher_id?: string
           token_hash?: string
           used_at?: string | null
@@ -1689,6 +1695,20 @@ export type Database = {
             columns: ["application_id"]
             isOneToOne: false
             referencedRelation: "opportunity_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_action_tokens_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_action_tokens_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "public_opportunities"
             referencedColumns: ["id"]
           },
           {
@@ -2451,6 +2471,7 @@ export type Database = {
       opportunities: {
         Row: {
           application_deadline: string | null
+          auto_closed_at: string | null
           availability_required: boolean
           benefits: string[]
           closed_at: string | null
@@ -2491,6 +2512,7 @@ export type Database = {
         }
         Insert: {
           application_deadline?: string | null
+          auto_closed_at?: string | null
           availability_required?: boolean
           benefits?: string[]
           closed_at?: string | null
@@ -2531,6 +2553,7 @@ export type Database = {
         }
         Update: {
           application_deadline?: string | null
+          auto_closed_at?: string | null
           availability_required?: boolean
           benefits?: string[]
           closed_at?: string | null
@@ -2683,6 +2706,68 @@ export type Database = {
             foreignKeyName: "opportunity_inbox_state_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: true
+            referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      opportunity_renewal_queue: {
+        Row: {
+          attempts: number
+          created_at: string
+          id: string
+          last_error: string | null
+          opportunity_id: string
+          processed_at: string | null
+          publisher_id: string
+          sweep_date: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          opportunity_id: string
+          processed_at?: string | null
+          publisher_id: string
+          sweep_date?: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          opportunity_id?: string
+          processed_at?: string | null
+          publisher_id?: string
+          sweep_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opportunity_renewal_queue_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunity_renewal_queue_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "public_opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunity_renewal_queue_publisher_id_fkey"
+            columns: ["publisher_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunity_renewal_queue_publisher_id_fkey"
+            columns: ["publisher_id"]
+            isOneToOne: false
             referencedRelation: "profiles_pending_country_review"
             referencedColumns: ["id"]
           },
@@ -5460,6 +5545,7 @@ export type Database = {
           p_item_type: string
           p_metadata: Json
           p_priority: number
+          p_supersede?: boolean
           p_user_id: string
         }
         Returns: boolean
@@ -6382,6 +6468,7 @@ export type Database = {
         Returns: Json
       }
       apply_email_action: { Args: { p_token_hash: string }; Returns: Json }
+      apply_renewal_action: { Args: { p_token_hash: string }; Returns: Json }
       archive_old_messages: {
         Args: { p_batch?: number; p_retention_days?: number }
         Returns: number
@@ -6431,6 +6518,7 @@ export type Database = {
         }
         Returns: number
       }
+      close_expired_opportunities: { Args: never; Returns: number }
       club_has_applicant: {
         Args: { p_club_id: string; p_player_id: string }
         Returns: boolean

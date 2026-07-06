@@ -1,24 +1,24 @@
 /**
  * EmailActionPage — landing page for the weekly digest's one-click triage
- * links (/email-action?t=<token>). PUBLIC route: publishers click from their
- * inbox, often logged out; the token IS the authorization (single-use,
- * hashed, expiring, server-side status='pending' precondition).
+ * links AND the opportunity renewal link (/email-action?t=<token>). PUBLIC
+ * route: publishers click from their inbox, often logged out; the token IS
+ * the authorization (single-use, hashed, expiring, server-side precondition).
  *
  * Flow against the application-action edge fn (JSON API):
  *   GET peek (read-only) → decides what to render. Mail scanners that
  *   prefetch this page therefore change nothing.
- *   - ready + Good fit / Maybe → auto-execute via POST (one click total)
- *   - ready + Not a fit       → explicit confirm tap first (spec)
+ *   - ready + Good fit / Maybe / Renew → auto-execute via POST (one click)
+ *   - ready + Not a fit               → explicit confirm tap first (spec)
  *   - used / expired / already_handled / invalid → info states
  * Pages render here (app domain) because the Supabase gateway forces
  * text/plain + a sandbox CSP onto HTML served from *.supabase.co.
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { Loader2, Star, HelpCircle, X, CheckCircle2, Link2, Clock, ShieldAlert } from 'lucide-react'
+import { Loader2, Star, HelpCircle, X, CheckCircle2, Link2, Clock, ShieldAlert, RefreshCw } from 'lucide-react'
 import { SUPABASE_URL } from '@/lib/supabase'
 
-type Action = 'shortlisted' | 'maybe' | 'rejected'
+type Action = 'shortlisted' | 'maybe' | 'rejected' | 'renew'
 
 interface ActionInfo {
   outcome: string
@@ -26,6 +26,15 @@ interface ActionInfo {
   applicant_name?: string
   opportunity_id?: string
   opportunity_title?: string
+  new_deadline?: string
+}
+
+/** 'YYYY-MM-DD' → 'July 30' without the UTC-midnight timezone shift. */
+function formatDeadline(d: string | undefined): string | null {
+  if (!d) return null
+  const [y, m, day] = d.split('-').map(Number)
+  if (!y || !m || !day) return null
+  return new Date(y, m - 1, day).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
 }
 
 const ENDPOINT = `${SUPABASE_URL}/functions/v1/application-action`
@@ -103,11 +112,15 @@ function appLink(info: ActionInfo): string {
 
 function Card({ phase, onConfirmReject }: { phase: Phase; onConfirmReject: () => void }) {
   if (phase.kind === 'loading' || phase.kind === 'executing') {
+    const executingLabel =
+      phase.kind === 'executing' && phase.info.action === 'renew'
+        ? 'Renewing your opportunity…'
+        : 'Recording your response…'
     return (
       <>
         <Loader2 className="w-10 h-10 mx-auto animate-spin text-[#8026FA]" />
         <h1 className="text-lg font-bold text-gray-900 mt-4">
-          {phase.kind === 'executing' ? 'Recording your response…' : 'Checking your link…'}
+          {phase.kind === 'executing' ? executingLabel : 'Checking your link…'}
         </h1>
       </>
     )
@@ -156,6 +169,36 @@ function Card({ phase, onConfirmReject }: { phase: Phase; onConfirmReject: () =>
   )
 
   switch (info.outcome) {
+    case 'renewed': {
+      const until = formatDeadline(info.new_deadline)
+      return (
+        <>
+          <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto">
+            <RefreshCw className="w-6 h-6 text-[#8026FA]" />
+          </div>
+          <h1 className="text-lg font-bold text-gray-900 mt-4">Opportunity renewed</h1>
+          <p className="text-sm text-gray-600 mt-2">
+            {info.opportunity_title ?? 'Your opportunity'} is open again
+            {until ? ` and accepting applications until ${until}` : ''}.
+          </p>
+          {cta('Open in HOCKIA')}
+        </>
+      )
+    }
+    case 'closed_by_publisher':
+      return (
+        <>
+          <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto">
+            <CheckCircle2 className="w-6 h-6 text-gray-500" />
+          </div>
+          <h1 className="text-lg font-bold text-gray-900 mt-4">This opportunity stays closed</h1>
+          <p className="text-sm text-gray-600 mt-2">
+            {info.opportunity_title ?? 'This opportunity'} was closed from the app, so this link
+            didn&apos;t change anything. You can reopen it anytime from your dashboard.
+          </p>
+          {cta('Open in HOCKIA')}
+        </>
+      )
     case 'applied':
       switch (info.action) {
         case 'shortlisted':
@@ -219,7 +262,11 @@ function Card({ phase, onConfirmReject }: { phase: Phase; onConfirmReject: () =>
             <CheckCircle2 className="w-6 h-6 text-green-600" />
           </div>
           <h1 className="text-lg font-bold text-gray-900 mt-4">This link was already used</h1>
-          <p className="text-sm text-gray-600 mt-2">Your response was recorded the first time — nothing was changed.</p>
+          <p className="text-sm text-gray-600 mt-2">
+            {info.action === 'renew'
+              ? 'This opportunity was already renewed with this link — nothing was changed.'
+              : 'Your response was recorded the first time — nothing was changed.'}
+          </p>
           {cta('Open in HOCKIA')}
         </>
       )
