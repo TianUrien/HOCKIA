@@ -247,9 +247,14 @@ export async function sendTrackedEmail(params: {
   recipientCountry?: string
   logger: Logger
   isTest?: boolean
+  /** Optional metadata stamped onto the SUCCESS row in email_sends (jsonb).
+   *  Lets callers key precise idempotency/lookup off a stable id (e.g.
+   *  { digest, publisher_id, week_start }) instead of fuzzy subject matching.
+   *  Omitted → {} (unchanged for existing callers). */
+  metadata?: Record<string, unknown>
 }): Promise<SendResult> {
   const { supabase, resendApiKey, to, subject, html, text, templateKey,
-    campaignId, recipientId, recipientRole, recipientCountry, logger, isTest } = params
+    campaignId, recipientId, recipientRole, recipientCountry, logger, isTest, metadata } = params
 
   if (!isRecipientAllowed(to, logger)) {
     return { success: true }
@@ -340,7 +345,7 @@ export async function sendTrackedEmail(params: {
         await recordSend(supabase, {
           resendEmailId, templateKey, campaignId,
           recipientEmail: to, recipientId, recipientRole, recipientCountry,
-          subject,
+          subject, metadata,
         }, logger)
       }
 

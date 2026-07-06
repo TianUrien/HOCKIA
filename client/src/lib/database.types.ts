@@ -397,6 +397,57 @@ export type Database = {
         }
         Relationships: []
       }
+      application_digest_queue: {
+        Row: {
+          application_ids: string[]
+          attempts: number
+          batch_ts: string
+          created_at: string
+          id: string
+          last_error: string | null
+          processed_at: string | null
+          publisher_id: string
+          week_start: string
+        }
+        Insert: {
+          application_ids: string[]
+          attempts?: number
+          batch_ts?: string
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          processed_at?: string | null
+          publisher_id: string
+          week_start: string
+        }
+        Update: {
+          application_ids?: string[]
+          attempts?: number
+          batch_ts?: string
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          processed_at?: string | null
+          publisher_id?: string
+          week_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "application_digest_queue_publisher_id_fkey"
+            columns: ["publisher_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "application_digest_queue_publisher_id_fkey"
+            columns: ["publisher_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       application_response_settings: {
         Row: {
           digest_enabled: boolean
@@ -6189,6 +6240,7 @@ export type Database = {
         Args: { p_profile_id: string; p_reason?: string; p_updates: Json }
         Returns: Json
       }
+      apply_email_action: { Args: { p_token_hash: string }; Returns: Json }
       archive_old_messages: {
         Args: { p_batch?: number; p_retention_days?: number }
         Returns: number
@@ -6771,6 +6823,7 @@ export type Database = {
         }
       }
       engagement_heartbeat_interval_seconds: { Args: never; Returns: number }
+      enqueue_application_digests: { Args: never; Returns: undefined }
       enqueue_availability_check_ins: { Args: never; Returns: number }
       enqueue_message_digests: { Args: never; Returns: undefined }
       enqueue_notification: {
