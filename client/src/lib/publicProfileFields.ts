@@ -33,7 +33,9 @@ export const PUBLIC_PROFILE_FIELDS_LIST = [
   'gender',
   'playing_category',
   'coaching_categories',
-  'date_of_birth',
+  // date_of_birth is REVOKED from anon+authenticated (age-gate): raw
+  // birthdates are owner/admin/server-only. Viewers get server-computed
+  // age via the get_profile_ages RPC (attached as `server_age`).
   'position',
   'secondary_position',
   // Matching Increment #3 — player specialist tags (shown on profile +
@@ -129,7 +131,7 @@ export const PUBLIC_UMPIRE_FIELDS_LIST = [
   'nationality2_country_id',
   'gender',
   'umpiring_categories',
-  'date_of_birth',
+  // date_of_birth revoked (age-gate) — see note in PUBLIC_PROFILE_FIELDS.
   'social_links',
   'is_test_account',
   'is_verified',

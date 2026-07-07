@@ -33,7 +33,6 @@ type PublicProfileBase = Pick<
   | 'gender'
   | 'playing_category'
   | 'coaching_categories'
-  | 'date_of_birth'
   | 'position'
   | 'secondary_position'
   | 'specialist_skills'
@@ -48,6 +47,8 @@ type PublicProfileBase = Pick<
   is_test_account?: boolean
   is_verified?: boolean | null
   verified_at?: string | null
+  // Server-computed age (get_profile_ages) — raw DOB is owner-only.
+  server_age?: number | null
 }
 
 type PublicPlayerProfileShape = PublicProfileBase & { role: 'player' }
@@ -145,7 +146,11 @@ export default function PublicPlayerProfile() {
               if (fetchError.code === 'PGRST116') return null
               throw fetchError
             }
-            return data as unknown as PublicProfile
+            // Age is server-computed (raw DOB is owner-only post age-gate).
+            const profileId = (data as unknown as { id: string }).id
+            const { data: ages } = await supabase.rpc('get_profile_ages', { p_ids: [profileId] })
+            const serverAge = ages?.find((a) => a.profile_id === profileId)?.age ?? null
+            return { ...(data as object), server_age: serverAge } as unknown as PublicProfile
           },
           PUBLIC_PROFILE_TTL,
         )

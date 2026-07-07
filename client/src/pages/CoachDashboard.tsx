@@ -102,6 +102,9 @@ const resolveLegacySection = (section: string | undefined): TabType | null =>
 
 export type CoachProfileShape =
   Partial<Profile> &
+  // Server-computed age for visitor views (raw DOB is owner-only post
+  // age-gate; public fetches attach this from get_profile_ages).
+  { server_age?: number | null } &
   Pick<
     Profile,
     | 'id'
@@ -114,7 +117,6 @@ export type CoachProfileShape =
     | 'nationality_country_id'
     | 'nationality2_country_id'
     | 'gender'
-    | 'date_of_birth'
     | 'email'
     | 'contact_email'
     | 'contact_email_public'

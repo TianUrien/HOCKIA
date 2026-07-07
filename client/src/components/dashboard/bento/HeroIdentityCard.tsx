@@ -75,7 +75,9 @@ export default function HeroIdentityCard({
   // else's profile. Owner sees their own dashboard and brands don't save.
   const savedState = useIsProfileSaved(profile.id)
   const showSaveButton = readOnly && savedState.isAuthenticated && !savedState.isOwnProfile && !isVisitorView
-  const age = calculateAge(profile.date_of_birth)
+  // Visitors get server-computed age (raw DOB is owner-only post age-gate);
+  // the owner's dashboard still derives from their own date_of_birth.
+  const age = profile.server_age ?? calculateAge(profile.date_of_birth)
   const positions = [profile.position, profile.secondary_position].filter(
     (value, index, self): value is string => {
       if (!value) return false

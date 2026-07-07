@@ -78,6 +78,9 @@ import ShareProfileButton from '@/components/profile/ShareProfileButton'
 
 export type UmpireProfileShape =
   Partial<Profile> &
+  // Server-computed age for visitor views (raw DOB is owner-only post
+  // age-gate; the public page attaches this from get_profile_ages).
+  { server_age?: number | null } &
   Pick<
     Profile,
     | 'id'
@@ -89,7 +92,6 @@ export type UmpireProfileShape =
     | 'nationality_country_id'
     | 'nationality2_country_id'
     | 'gender'
-    | 'date_of_birth'
     | 'bio'
   >
 
@@ -260,7 +262,9 @@ export default function UmpireDashboard({
     ? profile.full_name.split(' ').map(n => n[0]).join('').slice(0, 2)
     : '?'
 
-  const age = profile.date_of_birth ? calculateAge(profile.date_of_birth) : null
+  // Visitors get server-computed age; the raw-DOB display below is
+  // owner-only by construction (only profiles_self carries date_of_birth).
+  const age = profile.server_age ?? (profile.date_of_birth ? calculateAge(profile.date_of_birth) : null)
   const dobDisplay = profile.date_of_birth ? formatDateOfBirth(profile.date_of_birth) : null
   const specLabel = specializationLabel(profile.officiating_specialization)
   const hasCertification =

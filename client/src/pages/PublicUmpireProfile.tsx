@@ -37,8 +37,11 @@ type PublicUmpireShape = Partial<Profile> &
     | 'nationality2_country_id'
     | 'gender'
     | 'umpiring_categories'
-    | 'date_of_birth'
-  > & { is_test_account?: boolean }
+  > & {
+    is_test_account?: boolean
+    // Server-computed age (get_profile_ages) — raw DOB is owner-only.
+    server_age?: number | null
+  }
 
 // SELECT list moved to `client/src/lib/publicProfileFields.ts` (see note
 // in PublicPlayerProfile.tsx for rationale).
@@ -119,7 +122,11 @@ export default function PublicUmpireProfile() {
               if (fetchError.code === 'PGRST116') return null
               throw fetchError
             }
-            return data as unknown as PublicUmpireShape
+            // Age is server-computed (raw DOB is owner-only post age-gate).
+            const profileId = (data as unknown as { id: string }).id
+            const { data: ages } = await supabase.rpc('get_profile_ages', { p_ids: [profileId] })
+            const serverAge = ages?.find((a) => a.profile_id === profileId)?.age ?? null
+            return { ...(data as object), server_age: serverAge } as unknown as PublicUmpireShape
           },
           PUBLIC_PROFILE_TTL,
         )

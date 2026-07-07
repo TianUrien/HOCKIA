@@ -75,6 +75,9 @@ const LEGACY_TAB_ALIASES: Record<string, TabType> = {
 
 export type PlayerProfileShape =
   Partial<Profile> &
+  // Server-computed age for visitor views (raw DOB is owner-only post
+  // age-gate; public fetches attach this from get_profile_ages).
+  { server_age?: number | null } &
   Pick<
     Profile,
     | 'id'
@@ -87,7 +90,6 @@ export type PlayerProfileShape =
     | 'nationality_country_id'
     | 'nationality2_country_id'
     | 'gender'
-    | 'date_of_birth'
     | 'position'
     | 'secondary_position'
     | 'current_club'

@@ -39,7 +39,8 @@ function Row({ label, children }: RowProps) {
 }
 
 export default function BasicInfoCard({ profile, readOnly, onEdit }: BasicInfoCardProps) {
-  const age = calculateAge(profile.date_of_birth)
+  // Visitors get server-computed age (raw DOB is owner-only post age-gate).
+  const age = profile.server_age ?? calculateAge(profile.date_of_birth)
   const positions = [profile.position, profile.secondary_position].filter(
     (value, index, self): value is string => {
       if (!value) return false
