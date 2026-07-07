@@ -4079,6 +4079,8 @@ export type Database = {
         Row: {
           accepted_friend_count: number
           accepted_reference_count: number
+          acquisition_meta: Json | null
+          acquisition_source: string | null
           availability_confirmed_at: string | null
           availability_duration: string | null
           available_for_appointments: boolean | null
@@ -4186,6 +4188,8 @@ export type Database = {
         Insert: {
           accepted_friend_count?: number
           accepted_reference_count?: number
+          acquisition_meta?: Json | null
+          acquisition_source?: string | null
           availability_confirmed_at?: string | null
           availability_duration?: string | null
           available_for_appointments?: boolean | null
@@ -4293,6 +4297,8 @@ export type Database = {
         Update: {
           accepted_friend_count?: number
           accepted_reference_count?: number
+          acquisition_meta?: Json | null
+          acquisition_source?: string | null
           availability_confirmed_at?: string | null
           availability_duration?: string | null
           available_for_appointments?: boolean | null
@@ -7299,6 +7305,17 @@ export type Database = {
           total_count: number
         }[]
       }
+      admin_get_response_time_stats: {
+        Args: never
+        Returns: {
+          median_hours: number
+          publishers_with_badge: number
+          responses_measured: number
+          tier_fast: number
+          tier_two_weeks: number
+          tier_week: number
+        }[]
+      }
       admin_get_retention_by_role: {
         Args: { p_cohort_weeks?: number; p_exclude_test?: boolean }
         Returns: Json
@@ -7326,6 +7343,16 @@ export type Database = {
       admin_get_search_quality: {
         Args: { p_days?: number; p_exclude_test?: boolean }
         Returns: Json
+      }
+      admin_get_signup_cohort_retention: {
+        Args: { p_weeks?: number }
+        Returns: {
+          acquisition_source: string
+          cohort_week: string
+          signups: number
+          week2_pct: number
+          week2_returners: number
+        }[]
       }
       admin_get_signup_trends: {
         Args: { p_days?: number }
@@ -7674,6 +7701,8 @@ export type Database = {
         Returns: {
           accepted_friend_count: number
           accepted_reference_count: number
+          acquisition_meta: Json | null
+          acquisition_source: string | null
           availability_confirmed_at: string | null
           availability_duration: string | null
           available_for_appointments: boolean | null
@@ -7900,6 +7929,8 @@ export type Database = {
         Returns: {
           accepted_friend_count: number
           accepted_reference_count: number
+          acquisition_meta: Json | null
+          acquisition_source: string | null
           availability_confirmed_at: string | null
           availability_duration: string | null
           available_for_appointments: boolean | null
@@ -8169,6 +8200,8 @@ export type Database = {
       enqueue_application_digests: { Args: never; Returns: undefined }
       enqueue_application_status_emails: { Args: never; Returns: undefined }
       enqueue_availability_check_ins: { Args: never; Returns: number }
+      enqueue_dob_reminders: { Args: never; Returns: number }
+      enqueue_dob_requests: { Args: never; Returns: number }
       enqueue_message_digests: { Args: never; Returns: undefined }
       enqueue_notification: {
         Args: {
@@ -8298,6 +8331,7 @@ export type Database = {
         }[]
       }
       follow_brand: { Args: { p_brand_id: string }; Returns: Json }
+      freeze_known_minors: { Args: never; Returns: number }
       freeze_minor_account: { Args: { p_profile_id: string }; Returns: Json }
       generate_brand_slug: { Args: { p_name: string }; Returns: string }
       get_brand_ambassadors: {

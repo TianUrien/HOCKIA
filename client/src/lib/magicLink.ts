@@ -38,6 +38,11 @@ export interface SendMagicLinkOptions {
    * can seed a placeholder profile. Uses the SIGNUP rate-limit bucket.
    */
   intent: MagicLinkIntent
+  /**
+   * Extra user_metadata for NEW signups (dob / org_attested / acquisition —
+   * written on first sign-in only; existing users keep their metadata).
+   */
+  metadata?: Record<string, unknown>
 }
 
 export interface SendMagicLinkResult {
@@ -92,7 +97,9 @@ export async function sendMagicLink(options: SendMagicLinkOptions): Promise<Send
         // data is written to user_metadata on FIRST sign-in only (existing
         // users keep their metadata), which is exactly what we want —
         // role shouldn't overwrite on re-login.
-        ...(role ? { data: { role } } : {}),
+        ...(role || options.metadata
+          ? { data: { ...(role ? { role } : {}), ...(options.metadata ?? {}) } }
+          : {}),
       },
     })
 

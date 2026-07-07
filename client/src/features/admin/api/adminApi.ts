@@ -43,6 +43,8 @@ import type {
   MonthlyReportData,
   DevicePlatformFilter,
   DeviceUsersResult,
+  CohortRetentionRow,
+  ResponseTimeStats,
 } from '../types'
 
 // Helper to call RPC functions that aren't in generated types yet
@@ -2330,4 +2332,22 @@ export async function getAppRatingsList(opts: {
   })
   if (error) throw new Error(`Failed to get app ratings list: ${error.message}`)
   return data as AppRatingsListPage
+}
+
+/**
+ * P6 — week-2 return per signup-week cohort × acquisition source.
+ * Exact (Supabase events; test accounts excluded).
+ */
+export async function getSignupCohortRetention(weeks = 12): Promise<CohortRetentionRow[]> {
+  const { data, error } = await adminRpc('admin_get_signup_cohort_retention', { p_weeks: weeks })
+  if (error) throw new Error(`Failed to get cohort retention: ${error.message}`)
+  return (data ?? []) as CohortRetentionRow[]
+}
+
+/** P6 — global median time-to-first-response + badge tier counts. */
+export async function getResponseTimeStats(): Promise<ResponseTimeStats> {
+  const { data, error } = await adminRpc('admin_get_response_time_stats')
+  if (error) throw new Error(`Failed to get response time stats: ${error.message}`)
+  const row = Array.isArray(data) ? data[0] : data
+  return row as ResponseTimeStats
 }

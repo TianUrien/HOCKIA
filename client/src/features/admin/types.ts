@@ -1837,3 +1837,21 @@ export interface DeviceUsersResult {
   offset: number
 }
 
+
+// ── P6: cohort retention + response-time stats ──
+export interface CohortRetentionRow {
+  cohort_week: string
+  acquisition_source: string
+  signups: number
+  week2_returners: number
+  week2_pct: number
+}
+
+export interface ResponseTimeStats {
+  median_hours: number | null
+  responses_measured: number
+  publishers_with_badge: number
+  tier_fast: number
+  tier_week: number
+  tier_two_weeks: number
+}

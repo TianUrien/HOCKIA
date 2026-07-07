@@ -36,6 +36,7 @@ import { CommandCenterGrowthChart } from '../components/CommandCenterGrowthChart
 import { RetentionCurveChart } from '../components/RetentionCurveChart'
 import { ActivationFunnel } from '../components/ActivationFunnel'
 import { RegistrationFunnel } from '../components/RegistrationFunnel'
+import { CohortRetention } from '../components/CohortRetention'
 import { Ga4TopFunnel } from '../components/Ga4TopFunnel'
 import { ActivationByRoleCard } from '../components/ActivationByRoleCard'
 import { NotificationCtrCard } from '../components/NotificationCtrCard'
@@ -232,6 +233,7 @@ export function AdminOverview() {
       <div className="space-y-3">
         <Ga4TopFunnel />
         <RegistrationFunnel />
+        <CohortRetention />
       </div>
 
       {/* ============================================================= */}

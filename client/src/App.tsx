@@ -32,6 +32,7 @@ import SettingsPage from '@/pages/SettingsPage'
 import OfflinePage from '@/pages/OfflinePage'
 import TermsGate from '@/components/TermsGate'
 import AgeGate from '@/components/AgeGate'
+import { captureAcquisition } from '@/lib/acquisition'
 
 // Auto-reload on stale chunk errors (after deploy, old hashed filenames 404).
 // Uses sessionStorage guard to prevent infinite reload loops.
@@ -195,6 +196,12 @@ function EngagementTracker() {
 // Google Analytics page view tracker
 function AnalyticsTracker() {
   const location = useLocation()
+
+  // P6 acquisition capture: record the first-touch UTM/referrer once per
+  // browser as early as any route renders (signup deep links included).
+  useEffect(() => {
+    captureAcquisition()
+  }, [])
 
   useEffect(() => {
     // Tag current route on every event sent to Sentry (critical for debugging
