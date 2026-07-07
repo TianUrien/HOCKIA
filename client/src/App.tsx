@@ -145,6 +145,7 @@ const AdminCountries = lazyWithRetry(() => import('@/features/admin/pages/AdminC
 const PublicInvestorDashboard = lazyWithRetry(() => import('@/pages/PublicInvestorDashboard'))
 const ClubInviteLanding = lazyWithRetry(() => import('@/pages/ClubInviteLanding'))
 const EmailActionPage = lazyWithRetry(() => import('@/pages/EmailActionPage'))
+const JuniorsWaitlistPage = lazyWithRetry(() => import('@/pages/JuniorsWaitlistPage'))
 
 // 404 page
 const NotFoundPage = lazyWithRetry(() => import('@/pages/NotFoundPage'))
@@ -424,6 +425,9 @@ function App() {
                 {/* Digest email one-click triage landing (public — the token
                     is the authorization; see EmailActionPage) */}
                 <Route path="/email-action" element={<EmailActionPage />} />
+                {/* Goodbye email's logged-out waitlist touchpoint (public —
+                    frozen minors cannot sign in; see JuniorsWaitlistPage) */}
+                <Route path="/juniors-waitlist" element={<JuniorsWaitlistPage />} />
                 
                 {/* Protected Routes (require authentication) - Lazy loaded */}
                 <Route path="/complete-profile" element={<ErrorBoundary fallback={<RouteErrorFallback />}><CompleteProfile /></ErrorBoundary>} />

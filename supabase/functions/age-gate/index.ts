@@ -70,6 +70,7 @@ Deno.serve(async (req: Request) => {
     if (body?.action === 'waitlist') {
       const email = String(body?.email ?? '').trim().toLowerCase()
       const dob = typeof body?.dob === 'string' && DOB_RE.test(body.dob) ? body.dob : null
+      const source = body?.source === 'goodbye_email' ? 'goodbye_email' : 'signup_gate'
       if (!EMAIL_RE.test(email) || email.length > 254) {
         return json(200, { outcome: 'invalid_email' }, cors)
       }
@@ -78,7 +79,7 @@ Deno.serve(async (req: Request) => {
       // email is already lower-cased above, so a rerun is a no-op.
       const { error } = await supabase
         .from('juniors_waitlist')
-        .insert({ email, date_of_birth: dob, source: 'signup_gate' } as any)
+        .insert({ email, date_of_birth: dob, source } as any)
       if (error && !/duplicate|unique/i.test(error.message)) {
         captureException(error, { functionName: 'age-gate', correlationId })
         return json(500, { outcome: 'error' }, cors)
