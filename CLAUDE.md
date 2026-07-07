@@ -51,6 +51,23 @@ For exceptions:
 - **Tighter than CRUD** (e.g. SELECT-only for one role): explicit
   REVOKE for the disallowed verbs.
 
+## The hidden-profile predicate is NOT inherited — apply it explicitly
+
+Profiles can be hidden (admin ban `is_blocked` OR frozen minor
+`frozen_minor_at`; see `public.profile_is_hidden` /
+`profile_is_uncontactable`). Base RLS enforces this ONLY for direct
+table reads as anon/authenticated. **SECURITY DEFINER functions and
+service-role reads bypass RLS entirely** — the 2026-07 integration audit
+found 8 surfaces that leaked this way.
+
+Standing invariant: **every new RPC, view, or service-role/edge-fn read
+that returns people or their content must apply the hidden predicate
+itself** (`AND NOT public.profile_is_hidden(p.is_blocked,
+p.frozen_minor_at)`; use `profile_is_uncontactable(...)` for
+discovery/contact surfaces). When fencing a surface that also COUNTS
+people (digests, "N viewed you"), exclude hidden rows from the count
+too — never a list/count mismatch.
+
 ## profiles uses COLUMN-LEVEL SELECT grants (age-gate, Jul 2026)
 
 `date_of_birth` is owner/admin/server-only: both `anon` AND
