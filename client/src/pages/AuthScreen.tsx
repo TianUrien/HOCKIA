@@ -146,7 +146,7 @@ export default function AuthScreen({ mode, role, onBack }: AuthScreenProps) {
       }
     }
     if (isOrgRole && !orgAttested) {
-      setError('Please confirm the 18+ operator statement to continue.')
+      setError("Please confirm you're 18+ and authorized to represent this organization.")
       return false
     }
     return true
