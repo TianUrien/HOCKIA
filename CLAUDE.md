@@ -51,5 +51,21 @@ For exceptions:
 - **Tighter than CRUD** (e.g. SELECT-only for one role): explicit
   REVOKE for the disallowed verbs.
 
+## profiles uses COLUMN-LEVEL SELECT grants (age-gate, Jul 2026)
+
+`date_of_birth` is owner/admin/server-only: both `anon` AND
+`authenticated` hold **column-level** SELECT grants on `public.profiles`
+(migration `20260707180000_age_gate_dob_revoke.sql`). Consequences:
+
+- **Every `ALTER TABLE public.profiles ADD COLUMN` MUST ship with an
+  explicit `GRANT SELECT (new_col) ON public.profiles TO authenticated;`**
+  (plus `anon` if the column is public). PostgREST `select=*` is literal —
+  one ungranted column breaks every `select('*')` on profiles app-wide.
+- Never "fix" DOB access by re-granting: owners read their own row via the
+  `profiles_self` view; visitors get server-computed age via
+  `get_profile_ages`. Also beware: a column REVOKE is a silent no-op
+  against a table-level grant — check `information_schema.column_privileges`
+  when auditing.
+
 RLS is still the actual gate on every public table — the GRANTs are
 the outer fence.

@@ -397,3 +397,8 @@ s3_region = "env(S3_REGION)"
 s3_access_key = "env(S3_ACCESS_KEY)"
 # Configures AWS_SECRET_ACCESS_KEY for S3 bucket
 s3_secret_key = "env(S3_SECRET_KEY)"
+# age-gate: anon-facing by design — blocked minors have no session (the
+# waitlist capture from the signup gate + the goodbye email's logged-out
+# link). IP rate-limited fail-closed inside the function.
+[functions.age-gate]
+verify_jwt = false

@@ -31,6 +31,7 @@ import DevelopersPage from '@/pages/DevelopersPage'
 import SettingsPage from '@/pages/SettingsPage'
 import OfflinePage from '@/pages/OfflinePage'
 import TermsGate from '@/components/TermsGate'
+import AgeGate from '@/components/AgeGate'
 
 // Auto-reload on stale chunk errors (after deploy, old hashed filenames 404).
 // Uses sessionStorage guard to prevent infinite reload loops.
@@ -362,6 +363,7 @@ function App() {
           <KeyboardShortcutsManager />
           {!isProduction && <SentryTestButton />}
           <TermsGate>
+          <AgeGate>
           <ProtectedRoute>
             <Layout>
               <Suspense fallback={<PageLoader />}>
@@ -567,6 +569,7 @@ function App() {
               </Suspense>
             </Layout>
           </ProtectedRoute>
+          </AgeGate>
           </TermsGate>
         </ProfileImagePreviewProvider>
       </BrowserRouter>

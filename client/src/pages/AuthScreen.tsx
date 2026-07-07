@@ -22,8 +22,10 @@ import { useNavigate, useLocation, Link } from 'react-router-dom'
 import * as Sentry from '@sentry/react'
 import { ArrowLeft, Mail, Lock, Eye, EyeOff, CheckCircle2 } from 'lucide-react'
 import { Input, Button } from '@/components'
-import { supabase } from '@/lib/supabase'
+import { supabase, SUPABASE_URL } from '@/lib/supabase'
 import { getAuthRedirectUrl } from '@/lib/siteUrl'
+import { calculateAge } from '@/lib/utils'
+import DateOfBirthPicker from '@/components/DateOfBirthPicker'
 import { startOAuthSignIn } from '@/lib/oauthSignIn'
 import { supportsReliableOAuth } from '@/lib/inAppBrowser'
 import { sendMagicLink, type MagicLinkRole } from '@/lib/magicLink'
@@ -106,6 +108,49 @@ export default function AuthScreen({ mode, role, onBack }: AuthScreenProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [userNotFound, setUserNotFound] = useState(false)
+  // ── Age gate (P3): DOB required at signup for person roles; 18+ operator
+  //    attestation checkbox for organizations. Under-18 → block + waitlist. ──
+  const [signupDob, setSignupDob] = useState('')
+  const [orgAttested, setOrgAttested] = useState(false)
+  const [minorBlocked, setMinorBlocked] = useState(false)
+  const isPersonRole = role === 'player' || role === 'coach' || role === 'umpire'
+  const isOrgRole = role === 'club' || role === 'brand'
+
+  /**
+   * Server-side gate for signup: validates the DOB / attestation BEFORE any
+   * account exists. Under-18 → juniors waitlist (edge fn; anon + rate
+   * limited) and the flow ends at the kind blocked screen — no account is
+   * ever created. Returns true when signup may proceed.
+   */
+  const passesAgeGate = async (): Promise<boolean> => {
+    if (isPersonRole) {
+      if (!signupDob) {
+        setError('Please enter your date of birth.')
+        return false
+      }
+      const age = calculateAge(signupDob)
+      if (age === null) {
+        setError('That date doesn’t look right — please check it.')
+        return false
+      }
+      if (age < 18) {
+        // Fire-and-forget: the blocked screen shows regardless; the waitlist
+        // write is best-effort (same email retried later is idempotent).
+        fetch(`${SUPABASE_URL}/functions/v1/age-gate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'waitlist', email: email.trim().toLowerCase(), dob: signupDob }),
+        }).catch(() => undefined)
+        setMinorBlocked(true)
+        return false
+      }
+    }
+    if (isOrgRole && !orgAttested) {
+      setError('Please confirm the 18+ operator statement to continue.')
+      return false
+    }
+    return true
+  }
   const [oauthWarning, setOauthWarning] = useState<string | null>(null)
 
   // Magic-link "check your inbox" state.
@@ -182,6 +227,9 @@ export default function AuthScreen({ mode, role, onBack }: AuthScreenProps) {
     setUserNotFound(false)
     setLoading(true)
     try {
+      // Age gate applies to the magic-link SIGNUP path too (the link click
+      // creates the account, so the gate must run before the send).
+      if (mode === 'signup' && !(await passesAgeGate())) return
       const intent = mode === 'signin' ? 'signin' : 'signup'
       const result = await sendMagicLink({
         email,
@@ -293,6 +341,8 @@ export default function AuthScreen({ mode, role, onBack }: AuthScreenProps) {
         return
       }
 
+      if (!(await passesAgeGate())) return
+
       const rateLimit = await checkSignupRateLimit(email)
       if (rateLimit && !rateLimit.allowed) {
         setError(formatRateLimitError(rateLimit))
@@ -300,12 +350,19 @@ export default function AuthScreen({ mode, role, onBack }: AuthScreenProps) {
       }
 
       trackSignUpStart('email')
+      // dob / org_attested ride the auth metadata so onboarding can persist
+      // them server-side (declare_date_of_birth / attest_org_operator_adult)
+      // on the first authenticated load.
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
           emailRedirectTo: getAuthRedirectUrl(),
-          data: { role },
+          data: {
+            role,
+            ...(isPersonRole && signupDob ? { dob: signupDob } : {}),
+            ...(isOrgRole && orgAttested ? { org_attested: true } : {}),
+          },
         },
       })
 
@@ -420,6 +477,30 @@ export default function AuthScreen({ mode, role, onBack }: AuthScreenProps) {
                   </button>
                 </div>
               </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    )
+  }
+
+  // ── Under-18 signup blocked: kind, no account created, waitlist saved ──
+  if (minorBlocked) {
+    return (
+      <div className="min-h-[100dvh] bg-gradient-to-b from-gray-50 to-white flex flex-col">
+        <AuthHeader onBack={handleBack} />
+        <main className="flex-1 flex items-center justify-center px-4 py-8">
+          <div className="w-full max-w-md">
+            <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-8 text-center">
+              <h1 className="text-2xl font-bold text-gray-900">HOCKIA is 18+ for now</h1>
+              <p className="text-sm text-gray-600 mt-4 leading-relaxed">
+                We&apos;re building a junior experience with the right protections
+                for young players. We&apos;ve saved your spot on the waitlist —
+                you&apos;ll be the first to know when it opens.
+              </p>
+              <p className="text-xs text-gray-400 mt-6">
+                Saved for <span className="font-medium text-gray-600">{email.trim().toLowerCase()}</span>
+              </p>
             </div>
           </div>
         </main>
@@ -544,6 +625,30 @@ export default function AuthScreen({ mode, role, onBack }: AuthScreenProps) {
                     </button>
                   </div>
                 </div>
+              )}
+
+              {isSignup && isPersonRole && (
+                <DateOfBirthPicker
+                  label="Date of birth"
+                  value={signupDob}
+                  onChange={setSignupDob}
+                  required
+                />
+              )}
+
+              {isSignup && isOrgRole && (
+                <label className="flex items-start gap-2.5 text-xs text-gray-600 leading-relaxed cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={orgAttested}
+                    onChange={(e) => setOrgAttested(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#8026FA] focus:ring-[#8026FA]"
+                  />
+                  <span>
+                    I confirm I am 18 or older and authorized to represent this
+                    organization.
+                  </span>
+                </label>
               )}
 
               {error && !userNotFound && (
