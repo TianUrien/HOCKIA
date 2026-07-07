@@ -1,0 +1,23 @@
+-- ⚠️ TEMPORARY — P0 incident mitigation 2026-07-07 (revert tracked).
+--
+-- INCIDENT: the DOB grant revoke (20260707180000/200000) broke every client
+-- still running the pre-July-7 bundle. The deploy-ordering constraint
+-- protected the Vercel WEB client, but Capacitor BUNDLES the SPA inside the
+-- native binary: all installed iOS/Android builds (≤1.3.7 / ≤vc11) still run
+-- `.from('profiles').select('*')` — which fails 42501 once any column is
+-- ungranted — so the auth store got NO profile and routed long-onboarded
+-- users into the onboarding wizard (founder's own CASI club account hit it).
+--
+-- MITIGATION: temporarily restore authenticated's date_of_birth grants.
+-- Privacy posture while temporary: anon stays fully revoked (no public
+-- scraping), and hidden (banned/frozen) rows stay invisible via RLS — the
+-- re-exposure is raw DOB of visible profiles to logged-in users only, i.e.
+-- the pre-July-7 status quo. UPDATE-grant freeze-bypass risk is nil in
+-- practice: all frozen accounts are auth-banned and cannot hold sessions.
+--
+-- REVERT CONDITION: once native builds carrying the profiles_self client
+-- (main ≥ 9101f37, i.e. iOS 1.3.8 / Android vc12) are the required minimum
+-- via app_version_requirements, re-run the two revokes (and re-verify with
+-- the adversarial read/write probes from the age-gate audit).
+GRANT SELECT (date_of_birth) ON public.profiles TO authenticated;
+GRANT UPDATE (date_of_birth) ON public.profiles TO authenticated;

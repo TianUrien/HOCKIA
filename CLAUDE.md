@@ -51,6 +51,18 @@ For exceptions:
 - **Tighter than CRUD** (e.g. SELECT-only for one role): explicit
   REVOKE for the disallowed verbs.
 
+## Native bundles pin OLD clients — gate breaking API changes on them
+
+Capacitor bundles the SPA **inside the native binary**: installed iOS/
+Android apps keep running their build's JS until a store release ships.
+"Deploy the web client first" is NOT enough for a breaking server-side
+change (grant revokes, removed columns/RPCs, changed response shapes) —
+the P0 on 2026-07-07 (DOB revoke → every native user's profile fetch
+42501 → onboarding loop) happened exactly this way. Before any
+API-breaking change: confirm the OLDEST client still in the field
+(app_version_requirements.min_version) tolerates it, or raise
+min_version + wait for adoption first.
+
 ## The hidden-profile predicate is NOT inherited — apply it explicitly
 
 Profiles can be hidden (admin ban `is_blocked` OR frozen minor
