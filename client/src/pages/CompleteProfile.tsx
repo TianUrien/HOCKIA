@@ -465,9 +465,9 @@ export default function CompleteProfile() {
     if (profile.avatar_url) {
       setAvatarUrl(profile.avatar_url)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- user_metadata.dob
-    // is set once at signup and never changes mid-session; keying the effect
-    // on `profile` alone preserves the existing merge semantics.
+    // user_metadata.dob is set once at signup and never changes mid-session;
+    // keying on `profile` alone preserves the existing merge semantics.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile])
 
   // Wizard draft hydration: on mount (per user+role), if there's a saved
