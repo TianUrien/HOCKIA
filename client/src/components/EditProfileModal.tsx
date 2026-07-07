@@ -696,7 +696,6 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
       optimisticUpdate.gender = playingCategoryToLegacyGender(playingCategory)
       optimisticUpdate.playing_category = playingCategory
       optimisticUpdate.category_confirmation_needed = false
-      optimisticUpdate.date_of_birth = formData.date_of_birth || null
       optimisticUpdate.current_club = formData.current_club || null
       optimisticUpdate.current_world_club_id = formData.current_world_club_id
       optimisticUpdate.bio = formData.bio || null
@@ -717,7 +716,6 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
         ? formData.coaching_categories
         : null
       optimisticUpdate.category_confirmation_needed = false
-      optimisticUpdate.date_of_birth = formData.date_of_birth || null
       optimisticUpdate.current_club = formData.current_club || null
       optimisticUpdate.current_world_club_id = formData.current_world_club_id
       optimisticUpdate.bio = formData.bio || null
@@ -739,7 +737,6 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
         ? formSnapshot.umpiring_categories
         : null
       optimisticUpdate.category_confirmation_needed = false
-      optimisticUpdate.date_of_birth = formSnapshot.date_of_birth || null
       optimisticUpdate.bio = formSnapshot.bio || null
       optimisticUpdate.umpire_level = formSnapshot.umpire_level.trim() || null
       optimisticUpdate.federation = formSnapshot.federation.trim() || null
@@ -793,6 +790,23 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
       logger.debug('Attempting to update profile with data:', optimisticUpdate)
       logger.debug('Profile ID:', profile.id)
       logger.debug('Role:', role)
+
+      // ── Age gate: DOB changes go ONLY through declare_date_of_birth
+      // (SECURITY DEFINER; direct UPDATE of the column is revoked — the
+      // server owns the under-18 freeze decision). Only fires when the
+      // person-role user actually changed their DOB. ──
+      const isPersonRole = role === 'player' || role === 'coach' || role === 'umpire'
+      const editedDob = (role === 'umpire' ? formSnapshot.date_of_birth : formData.date_of_birth) || ''
+      if (isPersonRole && editedDob && editedDob !== (profile.date_of_birth ?? '')) {
+        const { data: dobResult, error: dobError } = await supabase.rpc('declare_date_of_birth', { p_dob: editedDob })
+        if (dobError) throw dobError
+        const outcome = (dobResult as { outcome?: string } | null)?.outcome
+        if (outcome === 'invalid_dob') {
+          throw new Error('That date of birth doesn’t look right — please check it.')
+        }
+        // 'frozen' needs no special handling here: the profile refresh below
+        // re-reads the row and the AgeGate goodbye screen takes over.
+      }
 
       // Update profile in database. No `.select('*')` returning: RETURNING
       // respects column SELECT grants, which exclude date_of_birth after the

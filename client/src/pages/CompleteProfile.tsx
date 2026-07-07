@@ -411,7 +411,11 @@ export default function CompleteProfile() {
         next.clubHistory = profile.club_history ?? prev.clubHistory
       } else {
         next.fullName = profile.full_name ?? prev.fullName
-        next.dateOfBirth = profile.date_of_birth ?? prev.dateOfBirth
+        // Prefill priority: saved profile DOB → the DOB provided at signup
+        // (rides auth metadata from AuthScreen) → whatever is typed.
+        next.dateOfBirth =
+          profile.date_of_birth ??
+          ((user?.user_metadata?.dob as string | undefined) || prev.dateOfBirth)
 
         if (profile.role === 'player') {
           next.position = profile.position ?? prev.position
@@ -461,6 +465,9 @@ export default function CompleteProfile() {
     if (profile.avatar_url) {
       setAvatarUrl(profile.avatar_url)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- user_metadata.dob
+    // is set once at signup and never changes mid-session; keying the effect
+    // on `profile` alone preserves the existing merge semantics.
   }, [profile])
 
   // Wizard draft hydration: on mount (per user+role), if there's a saved
@@ -858,7 +865,6 @@ export default function CompleteProfile() {
           // User completed the new category UI explicitly — clear any
           // best-effort flag the migration set on existing rows.
           category_confirmation_needed: false,
-          date_of_birth: formData.dateOfBirth || null,
           current_club: formData.currentClub || null,
           current_world_club_id: formData.currentWorldClubId,
           // Default to "open" so new players show up in availability-filtered
@@ -881,7 +887,6 @@ export default function CompleteProfile() {
           gender: null,
           coaching_categories: coachingCategories,
           category_confirmation_needed: false,
-          date_of_birth: formData.dateOfBirth || null,
           current_club: formData.currentClub || null,
           current_world_club_id: formData.currentWorldClubId,
           coach_specialization: formData.coachSpecialization || null,
@@ -913,7 +918,6 @@ export default function CompleteProfile() {
           gender: null,
           umpiring_categories: umpiringCategories,
           category_confirmation_needed: false,
-          date_of_birth: formSnapshot.dateOfBirth || null,
           umpire_level: formSnapshot.umpireLevel.trim() || null,
           federation: formSnapshot.federation.trim() || null,
           umpire_since:
@@ -973,6 +977,31 @@ export default function CompleteProfile() {
           }, 'CompleteProfile.handleSubmit.createProfile')
           logger.error('Failed to create missing profile:', createError)
           throw new Error('Could not create your profile. Please try signing out and back in.')
+        }
+      }
+
+      // ── Age gate: DOB is written ONLY via declare_date_of_birth (SECURITY
+      // DEFINER — the under-18 branch freezes server-side; direct UPDATE of
+      // the column is revoked). Person roles require it; an under-18 answer
+      // ends onboarding here and the AgeGate goodbye screen takes over. ──
+      const isPersonRole = userRole === 'player' || userRole === 'coach' || userRole === 'umpire'
+      if (isPersonRole) {
+        const dob = formData.dateOfBirth || formSnapshot.dateOfBirth || ''
+        if (!dob) {
+          throw new Error('Please enter your date of birth — HOCKIA is an 18+ platform.')
+        }
+        const { data: dobResult, error: dobError } = await supabase.rpc('declare_date_of_birth', { p_dob: dob })
+        if (dobError) {
+          throw new Error('Could not save your date of birth. Please try again.')
+        }
+        const outcome = (dobResult as { outcome?: string } | null)?.outcome
+        if (outcome === 'invalid_dob') {
+          throw new Error('That date of birth doesn’t look right — please check it.')
+        }
+        if (outcome === 'frozen') {
+          // Under 18: account frozen server-side; do NOT complete onboarding.
+          await fetchProfile(user.id, { force: true })
+          return
         }
       }
 

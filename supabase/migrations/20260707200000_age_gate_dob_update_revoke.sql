@@ -1,0 +1,15 @@
+-- P3 age gate — DOB write path hardening.
+--
+-- Without this, a frozen minor could write an adult date_of_birth directly
+-- via PostgREST (RLS allows own-row updates) and the daily unfreeze cron
+-- would then release them — a self-service bypass of the freeze. All DOB
+-- writes now go through declare_date_of_birth() (SECURITY DEFINER), where
+-- the under-18 branch freezes atomically and cannot be skipped.
+--
+-- authenticated's UPDATE grant is already column-level (83/105 — verified;
+-- unlike the SELECT case, no table-level no-op trap here). INSERT with a
+-- DOB stays possible only for a user's own new row (RLS), which is
+-- equivalent to the signup self-declaration — acceptable per spec.
+-- Client counterparts: CompleteProfile + EditProfileModal stopped sending
+-- date_of_birth in update payloads and call the RPC instead.
+REVOKE UPDATE (date_of_birth) ON public.profiles FROM authenticated;
