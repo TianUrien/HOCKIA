@@ -794,15 +794,15 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
       logger.debug('Profile ID:', profile.id)
       logger.debug('Role:', role)
 
-      // Update profile in database
-      const { data, error: updateError } = await supabase
+      // Update profile in database. No `.select('*')` returning: RETURNING
+      // respects column SELECT grants, which exclude date_of_birth after the
+      // age-gate revoke — the invalidateProfile refresh below re-reads the
+      // authoritative row through the self view instead.
+      const { error: updateError } = await supabase
         .from('profiles')
         .update(optimisticUpdate)
         .eq('id', profileId)
-        .select('*')
-        .single()
 
-      logger.debug('Update response data:', data)
       logger.debug('Update error:', updateError)
 
       if (updateError) {
@@ -817,10 +817,6 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
           code: updateError.code
         })
         throw updateError
-      }
-
-      if (data) {
-        setProfile(data as Profile)
       }
 
       // Force refresh from server to pick up computed fields/triggers

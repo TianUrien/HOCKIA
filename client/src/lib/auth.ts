@@ -107,9 +107,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           level: 'info'
         })
 
+        // profiles_self (self-only view) instead of the base table: it is the
+        // one surface that still carries the owner's raw date_of_birth after
+        // the age-gate column revoke (PostgREST select=* fails on any
+        // ungranted column, so the base table would 42501 here).
         const runQuery = () =>
           supabase
-            .from('profiles')
+            .from('profiles_self')
             .select('*')
             .eq('id', userId)
             .single()
@@ -147,7 +151,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           })
           throw error
         }
-        return data
+        // The self view returns exactly one profiles row for auth.uid(), but
+        // generated view types are all-nullable — restore the table Row type.
+        return data as unknown as Profile
       }
 
       let data = await monitor.measure('fetch_profile', async () => {
@@ -177,11 +183,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             data: { userId },
             level: 'info'
           })
-          const { data: inserted, error: insertError } = await supabase
+          // No `.select('*')` returning: RETURNING respects column SELECT
+          // grants, which exclude date_of_birth after the age-gate revoke.
+          // Insert, then refetch through the self view.
+          const { error: insertError } = await supabase
             .from('profiles')
             .insert(insertPayload)
-            .select('*')
-            .single()
 
           if (insertError) {
             const pgInsertError = insertError as PostgrestError
@@ -197,7 +204,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
               })
             }
           } else {
-            data = inserted
+            requestCache.invalidate(cacheKey)
+            data = await requestCache.dedupe(cacheKey, fetchOnce)
           }
         } else {
           logger.error('[AUTH_STORE] Cannot create placeholder profile - missing metadata', { userId, hasUser: !!currentUser, roleMetadata, emailPresent: !!email })

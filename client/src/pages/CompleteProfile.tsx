@@ -976,13 +976,14 @@ export default function CompleteProfile() {
         }
       }
 
-      // Update profile
-      const { data: updatedProfile, error: updateError } = await supabase
+      // Update profile. No `.select('*')` returning: RETURNING respects
+      // column SELECT grants, which exclude date_of_birth after the
+      // age-gate revoke — the verify fetch below (profiles_self) is the
+      // read-back instead.
+      const { error: updateError } = await supabase
         .from('profiles')
         .update(updateData)
         .eq('id', user.id)
-        .select('*')
-        .single()
 
       if (updateError) {
         captureOnboardingError(updateError, {
@@ -993,15 +994,13 @@ export default function CompleteProfile() {
         throw new Error(`Failed to update profile: ${updateError.message}`)
       }
 
-      if (!updatedProfile) {
-        throw new Error('Profile update did not return data. Please try again.')
-      }
-
       logger.debug('Profile updated successfully')
 
-      // Fetch the updated profile to verify (additional safety)
+      // Fetch the updated profile to verify (additional safety). Read via
+      // the self-only view so the owner's date_of_birth stays readable
+      // after the age-gate column revoke.
       const { data: verifiedProfile, error: fetchError } = await supabase
-        .from('profiles')
+        .from('profiles_self')
         .select('*')
         .eq('id', user.id)
         .single()
