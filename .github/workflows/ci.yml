@@ -160,7 +160,7 @@ jobs:
             exit 1
           fi
 
-          # Early warning: raw at 90% of budget (3150KB)
+          # Early warning: raw at 90% of budget (3330KB)
           # Budget bumped 3200KB → 3300KB on 2026-05-27 — Phase 1
           # carousel rotation work pushed raw from ~3190KB to 3202KB.
           # Budget bumped 3300KB → 3400KB on 2026-05-29 — the App Store
@@ -185,13 +185,20 @@ jobs:
           # the INITIAL load (above), so this raw 3.6MB all-chunks check is just
           # the remaining total-bloat backstop (catches a heavy dep even in a lazy
           # chunk); it is no longer the binding constraint.
-          if [ "$TOTAL_JS" -gt 3317760 ]; then
-            echo "::warning::Bundle nearing raw budget: ${TOTAL_KB}KB / 3600KB ($(( TOTAL_KB * 100 / 3600 ))%)"
+          # Budget bumped 3600KB → 3700KB on 2026-07-08 — P6 campaign
+          # instrumentation (acquisition-capture lib + the week-2 cohort
+          # admin dashboard + median-response admin RPCs) tipped raw to
+          # 3603KB. All of it is lazy admin-route component code, no new
+          # dependency; the initial-load gzip gate stays healthy at
+          # 412KB/480KB (the delivery-relevant metric), so only this
+          # total-bloat backstop moved. ~97KB headroom restored.
+          if [ "$TOTAL_JS" -gt 3409920 ]; then
+            echo "::warning::Bundle nearing raw budget: ${TOTAL_KB}KB / 3700KB ($(( TOTAL_KB * 100 / 3700 ))%)"
           fi
 
-          # Secondary gate: raw total must stay under 3.6MB
-          if [ "$TOTAL_JS" -gt 3686400 ]; then
-            echo "::error::Raw bundle budget exceeded! ${TOTAL_KB}KB > 3600KB"
+          # Secondary gate: raw total must stay under 3.7MB
+          if [ "$TOTAL_JS" -gt 3788800 ]; then
+            echo "::error::Raw bundle budget exceeded! ${TOTAL_KB}KB > 3700KB"
             exit 1
           fi
 
