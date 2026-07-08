@@ -340,9 +340,9 @@ export function CandidatePreviewSheet({ member, onClose }: CandidatePreviewSheet
       {/* Backdrop */}
       <div className={`fixed inset-0 z-40 bg-black/50 ${closing ? 'animate-fade-out' : 'animate-fade-in'}`} onClick={requestClose} aria-hidden="true" />
 
-      {/* Sheet — bottom on mobile, right-docked panel on desktop */}
+      {/* Sheet — bottom sheet on mobile, centered modal on desktop */}
       <div
-        className="fixed inset-0 z-50 flex items-end justify-center md:items-center md:justify-end md:p-4 pointer-events-none"
+        className="fixed inset-0 z-50 flex items-end justify-center md:items-center md:p-4 pointer-events-none"
         role="dialog"
         aria-modal="true"
         aria-labelledby="candidate-preview-name"

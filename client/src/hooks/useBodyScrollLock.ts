@@ -22,6 +22,8 @@ let savedStyles: {
   bodyPosition: string
   bodyWidth: string
   bodyTop: string
+  bodyBottom: string
+  bodyHeight: string
 } | null = null
 
 export function useBodyScrollLock(enabled: boolean) {
@@ -43,6 +45,8 @@ export function useBodyScrollLock(enabled: boolean) {
         bodyPosition: body.style.position,
         bodyWidth: body.style.width,
         bodyTop: body.style.top,
+        bodyBottom: body.style.bottom,
+        bodyHeight: body.style.height,
       }
 
       root.setAttribute('data-chat-scroll-lock', 'true')
@@ -53,6 +57,19 @@ export function useBodyScrollLock(enabled: boolean) {
       body.style.position = 'fixed'
       body.style.width = '100%'
       body.style.top = `-${savedScrollY}px`
+      // Pin the body across the FULL viewport, not just its shifted box.
+      // globals.css sets `body { height: 100% }`, which — once the body is
+      // position:fixed — resolves against the viewport, collapsing the body
+      // to exactly one viewport tall. Shifted up by `top:-scrollY`, that
+      // leaves a `scrollY`-px strip at the bottom uncovered: no page content
+      // and no body background paint there, so it exposes the canvas and a
+      // modal's semi-transparent backdrop over it reads as a hard-edged band
+      // (the "black/white bottom half" behind centered modals). `bottom:0`
+      // with `height:auto` overrides that: the fixed body now spans from
+      // top:-scrollY down to the viewport bottom, its background fills the
+      // whole viewport, and every modal backdrop dims uniformly.
+      body.style.bottom = '0'
+      body.style.height = 'auto'
     }
 
     return () => {
@@ -65,6 +82,8 @@ export function useBodyScrollLock(enabled: boolean) {
           body.style.position = savedStyles.bodyPosition
           body.style.width = savedStyles.bodyWidth
           body.style.top = savedStyles.bodyTop
+          body.style.bottom = savedStyles.bodyBottom
+          body.style.height = savedStyles.bodyHeight
           savedStyles = null
         }
         root.removeAttribute('data-chat-scroll-lock')

@@ -78,6 +78,12 @@ html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     @apply scroll-smooth;
+    /* Defensive: the app is light-only, so give the page canvas an explicit
+       light base. The scroll-lock strip that used to expose this is fixed at
+       source in useBodyScrollLock (the fixed body now spans the full
+       viewport); this guarantees the canvas is never a dark UA fallback even
+       in edge cases where a fixed body briefly doesn't propagate its bg. */
+    background-color: #ffffff;
   }
 
   html,
