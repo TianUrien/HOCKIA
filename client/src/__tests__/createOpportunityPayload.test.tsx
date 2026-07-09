@@ -102,6 +102,12 @@ beforeEach(() => {
   updateMock.mockClear()
   updateEqMock.mockClear()
   addToast.mockClear()
+  // The modal debounce-saves a draft to localStorage (600ms) and RESTORES it on
+  // the next open — restored opportunity_type overrides the initialOpportunityType
+  // prop. jsdom localStorage persists across tests in this file, so on a slow
+  // runner (CI + coverage) an earlier player-mode test's draft leaks into the
+  // coach test and renders player switches. Flaked CI run 29057065232.
+  window.localStorage.clear()
 })
 
 describe('CreateOpportunityModal — must-have payload (Phase 3c)', () => {
