@@ -434,7 +434,9 @@ export function PostComposerModal({
     setError(null)
 
     // Dispatch to global upload manager — survives modal close, tab switch, navigation.
-    // The video goes to CLOUDFLARE (kind='reel'); the post stores only its video_id.
+    // The video goes to CLOUDFLARE as a Home video post (kind='post', its own
+    // product concept — not a Gallery reel, not recruitment evidence); the post
+    // stores only its video_id.
     const uploadId = useUploadManager.getState().startVideoUpload({
       file,
       onComplete: (result) => {

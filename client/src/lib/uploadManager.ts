@@ -7,12 +7,13 @@ import { logger } from './logger'
 // ---------------------------------------------------------------------------
 // Post video uploads go to CLOUDFLARE STREAM (not Supabase Storage).
 //
-// A Home "Add video" post is a social REEL: the bytes are tus-uploaded straight
-// to Cloudflare (they never touch our server), and Postgres stores only the
-// video record (player_videos, kind='reel'). The post then references it by
-// `video_id`. Playback is a signed, role-gated token minted at render — so a
-// post video is never an open public URL, and recruiter-only video can never
-// leak. Images still go to Supabase Storage.
+// A Home "Add video" post is a HOME VIDEO POST (player_videos.kind='post'): the
+// bytes are tus-uploaded straight to Cloudflare (they never touch our server) and
+// Postgres stores only the video record; the post references it by `video_id`.
+// It is its own product concept — distinct from a Gallery video (kind='reel')
+// and from recruitment evidence (kind='highlight'/'full_match'). Surfaces do not
+// overlap. Playback is a signed, role-gated token minted at render, so a post
+// video is never an open public URL. Images still go to Supabase Storage.
 //
 // This store stays GLOBAL so an upload survives closing the composer, tab
 // switches, and navigation — same contract as the old Supabase path.
@@ -170,13 +171,14 @@ export const useUploadManager = create<UploadManagerState>((set, get) => {
           if (isCancelled()) return
 
           // Step 2 — ask the edge fn for a Cloudflare resumable (tus) upload URL.
-          // kind='reel' → a social post video: it will NOT create a recruitment
-          // "New highlight" Pulse card (only highlight/full_match do).
+          // kind='post' → a HOME VIDEO POST: it renders as the feed post itself,
+          // never as a recruitment "New highlight" card (only highlight/full_match
+          // do that), and never in the Gallery (that's kind='reel').
           updateUpload(id, { status: 'uploading', progress: 0 })
           const { data, error: fnErr } = await supabase.functions.invoke('video-create-upload', {
             body: {
               title: deriveTitle(file),
-              kind: 'reel',
+              kind: 'post',
               visibility: 'public',
               fileSize: file.size,
             },

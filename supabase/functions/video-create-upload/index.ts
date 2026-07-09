@@ -33,10 +33,15 @@ import { getCorsHeaders } from '../_shared/cors.ts'
 // Upload guardrails (MVP). Highlights are the focus; full_match is allowed
 // but with a longer max duration. Size is enforced by Cloudflare via the
 // maxDurationSeconds constraint + account limits; we also pass a cap.
+// Product kinds (storage is Cloudflare for all; the SURFACE differs):
+//   highlight / full_match → recruitment evidence (Media/Profile, Pulse card)
+//   post                   → Home video post (feed only)
+//   reel                   → Gallery video (gallery only)
 const LIMITS = {
   highlight: { maxDurationSeconds: 600 },   // 10 min
-  full_match: { maxDurationSeconds: 7200 }, // 2 h (later-phase kind)
-  reel: { maxDurationSeconds: 180 },        // 3 min — Home/Gallery social reel
+  full_match: { maxDurationSeconds: 7200 }, // 2 h
+  post: { maxDurationSeconds: 180 },        // 3 min — Home video post
+  reel: { maxDurationSeconds: 180 },        // 3 min — Gallery video
 } as const
 
 type Kind = keyof typeof LIMITS
@@ -92,13 +97,18 @@ Deno.serve(async (req) => {
   if (!title || title.length > 120) return json({ error: 'invalid_title' }, 400)
   const description =
     typeof body.description === 'string' ? body.description.trim().slice(0, 500) : null
-  // Social reels are open to every role. RECRUITMENT kinds (highlight /
-  // full_match) stay player-only — otherwise any authenticated account could
-  // inject a "New highlight" recruitment Pulse card (the generator carries
-  // author_role verbatim and the feed does not role-filter it).
+  // Social kinds (Home post, Gallery reel) are open to every role. RECRUITMENT
+  // kinds (highlight / full_match) stay player-only — otherwise any authenticated
+  // account could inject a "New highlight" recruitment Pulse card (the generator
+  // carries author_role verbatim and the feed does not role-filter it).
   const isPlayer = (profile as { role?: string }).role === 'player'
-  const requested = body.kind === 'full_match' ? 'full_match' : body.kind === 'reel' ? 'reel' : 'highlight'
-  if (!isPlayer && requested !== 'reel') {
+  const requested: Kind =
+    body.kind === 'full_match' ? 'full_match'
+    : body.kind === 'post' ? 'post'
+    : body.kind === 'reel' ? 'reel'
+    : 'highlight'
+  const isSocialKind = requested === 'post' || requested === 'reel'
+  if (!isPlayer && !isSocialKind) {
     return json({ error: 'forbidden_kind' }, 403)
   }
   const kind: Kind = requested

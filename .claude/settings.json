@@ -85,7 +85,10 @@
       "Bash(git -C /Users/tianurien/Desktop/Code/HOCKIA log --oneline origin/main..origin/staging)",
       "Bash(sed -n '1,40p' client/src/__tests__/messages.test.tsx)",
       "Bash(sed -n '1,30p' client/e2e/messages.authenticated.spec.ts)",
-      "Bash(npx playwright *)"
+      "Bash(npx playwright *)",
+      "Bash(cat node_modules/@supabase/functions-js/dist/module/types.js)",
+      "Bash(grep -rn \"non-2xx\\\\|relay-error\\\\|x-relay-error\\\\|FunctionsHttpError\\\\|FunctionsRelayError\" node_modules/@supabase/functions-js/dist/module/)",
+      "Bash(git -c core.pager=cat diff HEAD -- supabase/functions/video-create-upload/index.ts)"
     ],
     "additionalDirectories": [
       "/Users/tianurien/Desktop/Code/HOCKIA-club/client/src/components/dashboard/bento",
