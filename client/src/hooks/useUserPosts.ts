@@ -8,7 +8,9 @@ import { trackDbEvent } from '@/lib/trackDbEvent'
 import { useAuthStore } from '@/lib/auth'
 
 export interface PostImage {
-  url: string
+  url?: string
+  /** player_videos.id — Cloudflare-backed video item (no url). */
+  video_id?: string
   thumb_url?: string | null
   media_type?: 'image' | 'video'
   width?: number | null

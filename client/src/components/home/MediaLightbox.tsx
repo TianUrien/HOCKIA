@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react'
 import { createPortal } from 'react-dom'
 import { X, ChevronLeft, ChevronRight, Play, Pause, Volume2, VolumeX, Maximize } from 'lucide-react'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
@@ -6,6 +6,10 @@ import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import { useSwipeGesture } from '@/hooks/useSwipeGesture'
 import { getImageUrl, getLqipUrl } from '@/lib/imageUrl'
 import type { PostMediaItem } from '@/types/homeFeed'
+
+// Cloudflare-backed video items play through the signed player (token minted at
+// render). Legacy Supabase-Storage MP4 items keep the raw <video> slide below.
+const NativeVideoPlayer = lazy(() => import('@/components/media/NativeVideoPlayer'))
 
 interface MediaLightboxProps {
   images: PostMediaItem[]
@@ -172,16 +176,28 @@ export function MediaLightbox({ images, initialIndex, onClose }: MediaLightboxPr
         >
           {images.map((media, i) => (
             <div
-              key={media.url}
+              key={media.video_id ?? media.url}
               className="relative w-full h-full flex-shrink-0 flex items-center justify-center overflow-hidden px-4"
             >
               {(media.media_type ?? 'image') === 'video' ? (
-                <LightboxVideoSlide
-                  src={media.url}
-                  poster={media.thumb_url}
-                  isActive={i === currentIndex}
-                  isDragging={isDraggingRef}
-                />
+                media.video_id ? (
+                  // Cloudflare reel — signed, role-gated playback (no public URL).
+                  <div className="w-full max-w-3xl" onClick={(e) => e.stopPropagation()}>
+                    <Suspense fallback={<div className="aspect-video w-full rounded-xl bg-white/10 animate-pulse" />}>
+                      <NativeVideoPlayer
+                        videoId={media.video_id}
+                        durationSeconds={media.duration ?? null}
+                      />
+                    </Suspense>
+                  </div>
+                ) : media.url ? (
+                  <LightboxVideoSlide
+                    src={media.url}
+                    poster={media.thumb_url}
+                    isActive={i === currentIndex}
+                    isDragging={isDraggingRef}
+                  />
+                ) : null
               ) : (
                 <LightboxImageSlide
                   media={media}

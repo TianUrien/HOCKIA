@@ -36,6 +36,7 @@ import { getCorsHeaders } from '../_shared/cors.ts'
 const LIMITS = {
   highlight: { maxDurationSeconds: 600 },   // 10 min
   full_match: { maxDurationSeconds: 7200 }, // 2 h (later-phase kind)
+  reel: { maxDurationSeconds: 180 },        // 3 min — Home/Gallery social reel
 } as const
 
 type Kind = keyof typeof LIMITS
@@ -66,14 +67,18 @@ Deno.serve(async (req) => {
   if (userErr || !userData.user) return json({ error: 'unauthenticated' }, 401)
   const userId = userData.user.id
 
-  // 2) Player-only feature — check role.
+  // 2) Any authenticated member may upload their OWN video. Social reels are
+  //    posted from Home by every role (player/coach/club/brand/umpire); the row
+  //    is always owned by the uploader, and playback stays gated by
+  //    video-playback-token. (Recruitment kinds are still surfaced only where
+  //    the product exposes them.)
   const { data: profile } = await supabase
     .from('profiles')
     .select('role')
     .eq('id', userId)
     .single()
-  if (!profile || (profile as { role?: string }).role !== 'player') {
-    return json({ error: 'forbidden_role' }, 403)
+  if (!profile) {
+    return json({ error: 'profile_not_found' }, 403)
   }
 
   // 3) Parse + validate body.
@@ -87,7 +92,16 @@ Deno.serve(async (req) => {
   if (!title || title.length > 120) return json({ error: 'invalid_title' }, 400)
   const description =
     typeof body.description === 'string' ? body.description.trim().slice(0, 500) : null
-  const kind: Kind = body.kind === 'full_match' ? 'full_match' : 'highlight'
+  // Social reels are open to every role. RECRUITMENT kinds (highlight /
+  // full_match) stay player-only — otherwise any authenticated account could
+  // inject a "New highlight" recruitment Pulse card (the generator carries
+  // author_role verbatim and the feed does not role-filter it).
+  const isPlayer = (profile as { role?: string }).role === 'player'
+  const requested = body.kind === 'full_match' ? 'full_match' : body.kind === 'reel' ? 'reel' : 'highlight'
+  if (!isPlayer && requested !== 'reel') {
+    return json({ error: 'forbidden_kind' }, 403)
+  }
+  const kind: Kind = requested
   const visibility = body.visibility === 'recruiters' ? 'recruiters' : 'public'
   const maxDurationSeconds = LIMITS[kind].maxDurationSeconds
   // tus requires the total byte length up front (Upload-Length).

@@ -135,8 +135,18 @@ export interface SigningMetadata {
   person_position: string | null
 }
 
+/**
+ * A post media item is either:
+ *  - an IMAGE (Supabase Storage): has `url`
+ *  - a CLOUDFLARE video/reel: has `video_id` (no url — playback is a signed
+ *    token minted at render, so no public URL is ever stored)
+ *  - a LEGACY Supabase-Storage video: has `url` + `thumb_url` (old posts /
+ *    old native bundles). Renderers discriminate on `video_id ?? url`.
+ */
 export interface PostMediaItem {
-  url: string
+  url?: string
+  /** player_videos.id — present only for Cloudflare-backed video items. */
+  video_id?: string
   thumb_url?: string | null
   media_type?: 'image' | 'video'
   width?: number | null

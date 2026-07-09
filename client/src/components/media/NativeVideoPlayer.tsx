@@ -39,8 +39,11 @@ interface NativeVideoPlayerProps {
 
 function formatDuration(s?: number | null): string | null {
   if (!s || s <= 0) return null
-  const m = Math.floor(s / 60)
-  const sec = s % 60
+  // Post reels carry a client-measured FLOAT duration (e.g. 36.8) while
+  // player_videos.duration_seconds is an int — floor so we never render "0:36.8".
+  const total = Math.floor(s)
+  const m = Math.floor(total / 60)
+  const sec = total % 60
   return `${m}:${sec.toString().padStart(2, '0')}`
 }
 

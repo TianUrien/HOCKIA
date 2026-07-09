@@ -46,7 +46,9 @@ function MediaItem({
         {item.thumb_url ? (
           <img src={getImageUrl(item.thumb_url, imageSize) ?? undefined} alt={alt} loading="lazy" decoding="async" className="w-full h-full object-cover" onError={(e) => { if (item.thumb_url && e.currentTarget.src !== item.thumb_url) e.currentTarget.src = item.thumb_url }} />
         ) : (
-          <div className="w-full h-full bg-gray-900" />
+          // Cloudflare reels store no poster (the signed poster is minted at
+          // playback), so show the branded tile rather than a black box.
+          <div className="w-full h-full bg-gradient-to-br from-[#1a1030] via-[#2a1a4a] to-[#8026FA]/40" />
         )}
         <div className="absolute inset-0 flex items-center justify-center bg-black/20">
           <div className="w-12 h-12 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center">
@@ -130,7 +132,7 @@ export function FeedMediaGrid({ media, onImageClick, altPrefix = 'Post' }: FeedM
       <div className="grid grid-cols-2 gap-1 overflow-hidden">
         {displayItems.map((item, i) => (
           <MediaItem
-            key={item.url}
+            key={item.video_id ?? item.url}
             item={item}
             className="aspect-square"
             alt={altFor(i, count)}
@@ -179,7 +181,7 @@ export function FeedMediaGrid({ media, onImageClick, altPrefix = 'Post' }: FeedM
       <div className="grid grid-cols-2 grid-rows-2 gap-1 overflow-hidden">
         {displayItems.map((item, i) => (
           <MediaItem
-            key={item.url}
+            key={item.video_id ?? item.url}
             item={item}
             className="aspect-square"
             alt={altFor(i, count)}
@@ -197,7 +199,7 @@ export function FeedMediaGrid({ media, onImageClick, altPrefix = 'Post' }: FeedM
       <div className="grid grid-cols-2 gap-1">
         {displayItems.slice(0, 2).map((item, i) => (
           <MediaItem
-            key={item.url}
+            key={item.video_id ?? item.url}
             item={item}
             className="aspect-[4/3]"
             alt={altFor(i, sorted.length)}
@@ -212,7 +214,7 @@ export function FeedMediaGrid({ media, onImageClick, altPrefix = 'Post' }: FeedM
           const isLast = actualIndex === 4 && overflowCount > 0 && !overflowExpanded
 
           return (
-            <div key={item.url} className="relative">
+            <div key={item.video_id ?? item.url} className="relative">
               <MediaItem
                 item={item}
                 className="aspect-square"

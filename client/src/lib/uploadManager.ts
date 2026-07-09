@@ -1,11 +1,26 @@
 import { create } from 'zustand'
-import type { Upload as TusUpload } from 'tus-js-client'
-import { createTusUpload } from './tusUpload'
+import { Upload as TusUpload } from 'tus-js-client'
 import { supabase } from './supabase'
-import { validateVideoFull, extractVideoThumbnail } from './imageOptimization'
+import { validateVideoFull } from './imageOptimization'
 import { logger } from './logger'
 
-const BUCKET = 'user-posts'
+// ---------------------------------------------------------------------------
+// Post video uploads go to CLOUDFLARE STREAM (not Supabase Storage).
+//
+// A Home "Add video" post is a social REEL: the bytes are tus-uploaded straight
+// to Cloudflare (they never touch our server), and Postgres stores only the
+// video record (player_videos, kind='reel'). The post then references it by
+// `video_id`. Playback is a signed, role-gated token minted at render — so a
+// post video is never an open public URL, and recruiter-only video can never
+// leak. Images still go to Supabase Storage.
+//
+// This store stays GLOBAL so an upload survives closing the composer, tab
+// switches, and navigation — same contract as the old Supabase path.
+// ---------------------------------------------------------------------------
+
+const POLL_MS = 4000
+const POLL_TIMEOUT_MS = 10 * 60 * 1000 // 10 min ceiling
+const CF_CHUNK_SIZE = 50 * 1024 * 1024 // Cloudflare tus requires a fixed chunk size
 
 // ---------------------------------------------------------------------------
 // Types
@@ -14,14 +29,15 @@ const BUCKET = 'user-posts'
 export type UploadStatus =
   | 'validating'
   | 'uploading'
+  | 'processing' // bytes are up; Cloudflare is transcoding
   | 'paused'
   | 'completed'
   | 'error'
   | 'cancelled'
 
 export interface VideoUploadResult {
-  videoUrl: string
-  thumbUrl: string | null
+  /** player_videos.id — the post stores this, NOT a URL. */
+  videoId: string
   width: number | null
   height: number | null
   duration: number | null
@@ -43,10 +59,9 @@ export interface UploadEntry {
 interface UploadManagerState {
   uploads: Record<string, UploadEntry>
 
-  /** Kick off a video upload. Returns the upload ID. */
+  /** Kick off a Cloudflare video upload. Returns the upload ID. */
   startVideoUpload: (params: {
     file: File
-    userId: string
     onComplete: (result: VideoUploadResult) => void
   }) => string
 
@@ -60,7 +75,7 @@ interface UploadManagerState {
 // Helpers
 // ---------------------------------------------------------------------------
 
-/** Translate raw storage/network errors into user-friendly messages */
+/** Translate raw upload/network errors into user-friendly messages */
 function formatUploadError(raw: string): string {
   const lower = raw.toLowerCase()
   if (
@@ -74,11 +89,15 @@ function formatUploadError(raw: string): string {
     return 'This file type is not supported. Use MP4, MOV, or WebM.'
   if (lower.includes('network error') || lower.includes('failed to fetch'))
     return 'Network error — please check your connection and try again.'
-  if (lower.includes('bucket not found'))
-    return 'Upload service is temporarily unavailable. Please try again later.'
-  if (lower.includes('duplicate') || lower.includes('already exists'))
-    return 'A file with this name already exists. Please try again.'
+  if (lower.includes('provider_not_configured'))
+    return 'Video uploads are temporarily unavailable. Please try again later.'
   return raw
+}
+
+/** video-create-upload requires a 1–120 char title; derive one from the file. */
+function deriveTitle(file: File): string {
+  const base = file.name.replace(/\.[^.]+$/, '').trim()
+  return (base || 'Video').slice(0, 120)
 }
 
 // ---------------------------------------------------------------------------
@@ -86,7 +105,6 @@ function formatUploadError(raw: string): string {
 // ---------------------------------------------------------------------------
 
 export const useUploadManager = create<UploadManagerState>((set, get) => {
-  // --- Internal: patch a single upload entry ---
   const updateUpload = (id: string, patch: Partial<UploadEntry>) => {
     set((state) => {
       const existing = state.uploads[id]
@@ -105,7 +123,6 @@ export const useUploadManager = create<UploadManagerState>((set, get) => {
       const { uploads } = get()
       for (const entry of Object.values(uploads)) {
         if (document.visibilityState === 'hidden' && entry.status === 'uploading' && entry.tusUpload) {
-          // Pause without terminating server session (abort(false) keeps the TUS URL)
           entry.tusUpload.abort(false)
           updateUpload(entry.id, { status: 'paused' })
           logger.info('[UploadManager] Paused upload (tab hidden):', entry.id)
@@ -121,7 +138,7 @@ export const useUploadManager = create<UploadManagerState>((set, get) => {
   return {
     uploads: {},
 
-    startVideoUpload: ({ file, userId, onComplete }) => {
+    startVideoUpload: ({ file, onComplete }) => {
       bindVisibility()
 
       const id = `${Date.now()}_${Math.random().toString(36).slice(2, 6)}`
@@ -139,103 +156,105 @@ export const useUploadManager = create<UploadManagerState>((set, get) => {
 
       set((state) => ({ uploads: { ...state.uploads, [id]: entry } }))
 
+      const isCancelled = () => get().uploads[id]?.status === 'cancelled'
+
       // Fire-and-forget async pipeline
       ;(async () => {
         try {
-          // Step 1: Validate
+          // Step 1 — client-side validation (size / type / duration)
           const validation = await validateVideoFull(file)
           if (!validation.valid) {
             updateUpload(id, { status: 'error', error: validation.error || 'Invalid video' })
             return
           }
-          if (get().uploads[id]?.status === 'cancelled') return
+          if (isCancelled()) return
 
+          // Step 2 — ask the edge fn for a Cloudflare resumable (tus) upload URL.
+          // kind='reel' → a social post video: it will NOT create a recruitment
+          // "New highlight" Pulse card (only highlight/full_match do).
           updateUpload(id, { status: 'uploading', progress: 0 })
+          const { data, error: fnErr } = await supabase.functions.invoke('video-create-upload', {
+            body: {
+              title: deriveTitle(file),
+              kind: 'reel',
+              visibility: 'public',
+              fileSize: file.size,
+            },
+          })
+          if (fnErr) {
+            // functions.invoke throws a FunctionsHttpError whose message is the
+            // static "non-2xx status code" — the real reason is only in the
+            // response body on error.context. Read it so users see something useful.
+            const ctx = (fnErr as { context?: Response }).context
+            let reason = ''
+            try {
+              reason = ctx ? ((await ctx.clone().json()) as { error?: string }).error ?? '' : ''
+            } catch { /* body not JSON — fall through to the generic message */ }
+            throw new Error(reason || 'Could not start the upload. Please try again.')
+          }
+          const created = data as { videoId?: string; tusUploadUrl?: string } | null
+          if (!created?.videoId || !created?.tusUploadUrl) {
+            throw new Error('Could not start the upload. Please try again.')
+          }
+          if (isCancelled()) return
 
-          // Step 2: Thumbnail + TUS video upload in parallel
-          const ext = file.name.split('.').pop()?.toLowerCase() || 'mp4'
-          const random = Math.random().toString(36).slice(2, 8)
-          const videoFileName = `${userId}/${Date.now()}_${random}.${ext}`
-
-          // Thumbnail (best-effort, non-blocking)
-          const thumbPromise = extractVideoThumbnail(file)
-            .then(async (thumbFile) => {
-              const thumbRandom = Math.random().toString(36).slice(2, 8)
-              const thumbName = `${userId}/${Date.now()}_${thumbRandom}_poster.jpg`
-              const { error: thumbErr } = await supabase.storage
-                .from(BUCKET)
-                .upload(thumbName, thumbFile, {
-                  contentType: 'image/jpeg',
-                  upsert: false,
-                  cacheControl: '31536000',
-                })
-              if (thumbErr) {
-                logger.warn('[UploadManager] Thumbnail upload failed (non-critical):', thumbErr)
-                return null
-              }
-              const { data } = supabase.storage.from(BUCKET).getPublicUrl(thumbName)
-              return data.publicUrl
-            })
-            .catch((err) => {
-              logger.warn('[UploadManager] Thumbnail extraction failed (non-critical):', err)
-              return null
-            })
-
-          // TUS video upload
-          const videoPromise = new Promise<string>((resolve, reject) => {
-            const tusUpload = createTusUpload({
-              file,
-              fileName: videoFileName,
-              onProgress: (pct) => {
-                updateUpload(id, { progress: Math.round(pct) })
+          // Step 3 — push bytes straight to Cloudflare (never through our server)
+          await new Promise<void>((resolve, reject) => {
+            const tus = new TusUpload(file, {
+              uploadUrl: created.tusUploadUrl,
+              chunkSize: CF_CHUNK_SIZE,
+              retryDelays: [0, 3000, 6000, 12000],
+              metadata: { filename: file.name, filetype: file.type },
+              onProgress: (sent, total) => {
+                updateUpload(id, { progress: Math.round((sent / total) * 100) })
               },
-              onSuccess: (publicUrl) => {
-                resolve(publicUrl)
-              },
-              onError: (error) => {
-                reject(error)
-              },
+              onError: (err) => reject(err),
+              onSuccess: () => resolve(),
             })
-
-            // Store the TUS reference for pause/resume/cancel
-            updateUpload(id, { tusUpload })
-
-            // Don't start if cancelled during validation
-            if (get().uploads[id]?.status === 'cancelled') {
+            updateUpload(id, { tusUpload: tus })
+            if (isCancelled()) {
               reject(new Error('Cancelled'))
               return
             }
-
-            tusUpload.start()
+            tus.start()
           })
+          if (isCancelled()) return
+          updateUpload(id, { progress: 100, status: 'processing', tusUpload: null })
 
-          // Wait for both
-          const [thumbUrl, videoUrl] = await Promise.all([thumbPromise, videoPromise])
+          // Step 4 — Cloudflare transcodes; the webhook flips player_videos to
+          // 'ready'. Poll so we only hand the composer a PLAYABLE video.
+          const startedAt = Date.now()
+          for (;;) {
+            if (isCancelled()) return
+            if (Date.now() - startedAt > POLL_TIMEOUT_MS) {
+              throw new Error('Still processing — check back in a few minutes.')
+            }
+            await new Promise((r) => setTimeout(r, POLL_MS))
+            const { data: row } = await supabase
+              .from('player_videos')
+              .select('status')
+              .eq('id', created.videoId)
+              .single()
+            const status = (row as { status?: string } | null)?.status
+            if (status === 'ready') break
+            if (status === 'errored') {
+              throw new Error('Cloudflare could not process this video. Try a different file.')
+            }
+          }
 
           const result: VideoUploadResult = {
-            videoUrl,
-            thumbUrl,
+            videoId: created.videoId,
             width: validation.width ?? null,
             height: validation.height ?? null,
             duration: validation.duration ?? null,
           }
 
-          updateUpload(id, {
-            status: 'completed',
-            progress: 100,
-            result,
-            tusUpload: null,
-          })
-
-          // Fire the completion callback
-          const currentEntry = get().uploads[id]
-          currentEntry?.onComplete?.(result)
+          updateUpload(id, { status: 'completed', progress: 100, result, tusUpload: null })
+          get().uploads[id]?.onComplete?.(result)
         } catch (err) {
-          const currentEntry = get().uploads[id]
-          if (currentEntry?.status === 'cancelled') return
-
+          if (isCancelled()) return
           const message = err instanceof Error ? err.message : 'Upload failed'
-          logger.error('[UploadManager] Upload pipeline error:', err)
+          logger.error('[UploadManager] Cloudflare upload pipeline error:', err)
           updateUpload(id, {
             status: 'error',
             error: formatUploadError(message),
@@ -250,17 +269,14 @@ export const useUploadManager = create<UploadManagerState>((set, get) => {
     cancelUpload: (uploadId) => {
       const entry = get().uploads[uploadId]
       if (!entry) return
-      // abort(true) terminates server-side TUS session
-      if (entry.tusUpload) {
-        entry.tusUpload.abort(true)
-      }
+      if (entry.tusUpload) entry.tusUpload.abort(true)
       updateUpload(uploadId, { status: 'cancelled', tusUpload: null })
     },
 
     pauseUpload: (uploadId) => {
       const entry = get().uploads[uploadId]
       if (!entry || entry.status !== 'uploading' || !entry.tusUpload) return
-      entry.tusUpload.abort(false) // Pause without terminating
+      entry.tusUpload.abort(false)
       updateUpload(uploadId, { status: 'paused' })
     },
 

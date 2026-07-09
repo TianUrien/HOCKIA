@@ -161,6 +161,9 @@ export function PostComposerModal({
         editingPost.images
           ? editingPost.images.map((img, i) => ({
               url: img.url,
+              // MUST carry video_id through — a Cloudflare reel has no url, so
+              // dropping this silently destroys the video when a post is edited.
+              video_id: (img as UploadedMedia).video_id,
               thumb_url: (img as UploadedMedia).thumb_url ?? null,
               media_type: (img as UploadedMedia).media_type ?? 'image',
               width: (img as UploadedMedia).width ?? null,
@@ -204,8 +207,7 @@ export function PostComposerModal({
         setMedia((prev) => [
           ...prev,
           {
-            url: entry.result!.videoUrl,
-            thumb_url: entry.result!.thumbUrl,
+            video_id: entry.result!.videoId,
             media_type: 'video' as const,
             width: entry.result!.width,
             height: entry.result!.height,
@@ -431,16 +433,15 @@ export function PostComposerModal({
     setUploadProgress(0)
     setError(null)
 
-    // Dispatch to global upload manager — survives modal close, tab switch, navigation
+    // Dispatch to global upload manager — survives modal close, tab switch, navigation.
+    // The video goes to CLOUDFLARE (kind='reel'); the post stores only its video_id.
     const uploadId = useUploadManager.getState().startVideoUpload({
       file,
-      userId: user.id,
       onComplete: (result) => {
         setMedia((prev) => [
           ...prev,
           {
-            url: result.videoUrl,
-            thumb_url: result.thumbUrl,
+            video_id: result.videoId,
             media_type: 'video' as const,
             width: result.width,
             height: result.height,

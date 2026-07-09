@@ -54,6 +54,10 @@ export default function NativeVideosSection({ playerUserId, readOnly, hasLegacyH
         .from('player_videos')
         .select('id, title, description, visibility, status, playback_id, thumbnail_url, duration_seconds')
         .eq('user_id', playerUserId)
+        // RECRUITMENT gallery only. Social reels (kind='reel', posted from Home)
+        // are feed content — they must never appear in the highlight / full-match
+        // evidence section.
+        .in('kind', ['highlight', 'full_match'])
         .order('created_at', { ascending: false })
       if (error) throw error
       setVideos((data ?? []) as unknown as PlayerVideoRow[])

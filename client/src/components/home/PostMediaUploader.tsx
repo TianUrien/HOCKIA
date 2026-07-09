@@ -2,7 +2,9 @@ import { useRef, useCallback } from 'react'
 import { ImagePlus, X, Loader2, Film, Play } from 'lucide-react'
 
 export interface UploadedMedia {
-  url: string
+  url?: string
+  /** player_videos.id — Cloudflare-backed video item (no url). */
+  video_id?: string
   thumb_url?: string | null
   media_type: 'image' | 'video'
   width?: number | null
@@ -158,7 +160,7 @@ export function PostMediaUploader({
       <div className={`grid ${gridClass} gap-2`}>
         {media.map((item, i) => (
           <div
-            key={item.url}
+            key={item.video_id ?? item.url}
             className={`relative rounded-lg overflow-hidden bg-gray-100 group ${
               media.length === 1 ? 'aspect-[16/9]' : 'aspect-square'
             }`}

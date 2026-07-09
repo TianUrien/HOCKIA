@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo } from 'react'
+import { useState, useCallback, useEffect, useMemo, lazy, Suspense } from 'react'
 import { Link } from 'react-router-dom'
 import { MoreHorizontal, Pencil, Trash2, Flag } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
@@ -14,6 +14,10 @@ import { PostComposerModal } from '../PostComposerModal'
 import ReportUserModal from '@/components/ReportUserModal'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import type { UserPostFeedItem } from '@/types/homeFeed'
+
+// Signed Cloudflare player (mints a playback token from video_id). Lazy so its
+// HLS path stays off the entry bundle.
+const NativeVideoPlayer = lazy(() => import('@/components/media/NativeVideoPlayer'))
 
 interface UserPostCardProps {
   item: UserPostFeedItem
@@ -66,6 +70,13 @@ export function UserPostCard({ item, onLikeUpdate, onDelete }: UserPostCardProps
     () => item.images ? [...item.images].sort((a, b) => a.order - b.order) : [],
     [item.images]
   )
+
+  // A post whose ONLY media item is a Cloudflare reel plays inline (one tap).
+  const soloCloudflareVideo = useMemo(() => {
+    if (sortedImages.length !== 1) return null
+    const only = sortedImages[0]
+    return only.media_type === 'video' && only.video_id ? only : null
+  }, [sortedImages])
 
   const handleMediaClick = useCallback((gridIndex: number) => {
     if (gridIndex >= 0 && gridIndex < sortedImages.length) {
@@ -231,8 +242,18 @@ export function UserPostCard({ item, onLikeUpdate, onDelete }: UserPostCardProps
           </div>
         )}
 
-        {/* Media grid — flush to card edges (Facebook style). */}
-        {sortedImages.length > 0 && (
+        {/* A single Cloudflare reel plays INLINE (one tap) via the signed player —
+            no lightbox detour. Mixed media / legacy MP4s keep the grid. */}
+        {soloCloudflareVideo ? (
+          <div className="px-3 pb-2">
+            <Suspense fallback={<div className="aspect-video w-full rounded-xl bg-gray-100 animate-pulse" />}>
+              <NativeVideoPlayer
+                videoId={soloCloudflareVideo.video_id!}
+                durationSeconds={soloCloudflareVideo.duration ?? null}
+              />
+            </Suspense>
+          </div>
+        ) : sortedImages.length > 0 ? (
           <div className="pb-2">
             <FeedMediaGrid
               media={sortedImages}
@@ -240,7 +261,7 @@ export function UserPostCard({ item, onLikeUpdate, onDelete }: UserPostCardProps
               onImageClick={handleMediaClick}
             />
           </div>
-        )}
+        ) : null}
 
         {/* Interaction bar */}
         <PostInteractionBar
