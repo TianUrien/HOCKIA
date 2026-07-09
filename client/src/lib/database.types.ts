@@ -6662,6 +6662,15 @@ export type Database = {
         }
         Returns: boolean
       }
+      _log_feed_gen_failure: {
+        Args: {
+          p_context?: Json
+          p_fn: string
+          p_message: string
+          p_sqlstate: string
+        }
+        Returns: undefined
+      }
       _maybe_insert_snapshot_gain_celebration: {
         Args: { p_metadata?: Json; p_signal: string; p_user_id: string }
         Returns: undefined
@@ -8233,6 +8242,7 @@ export type Database = {
         Returns: number[]
       }
       expire_overdue_applications: { Args: never; Returns: undefined }
+      expire_stale_open_to_play_cards: { Args: never; Returns: number }
       extract_storage_path: {
         Args: { p_bucket: string; p_url: string }
         Returns: string
@@ -8946,6 +8956,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      resolve_world_club_by_name: {
+        Args: { p_country_id?: number; p_name: string }
+        Returns: string
+      }
       respond_reference: {
         Args: {
           p_accept: boolean
@@ -9198,6 +9212,7 @@ export type Database = {
         Returns: boolean
       }
       validate_social_links: { Args: { links: Json }; Returns: boolean }
+      video_posts_enabled: { Args: never; Returns: boolean }
       withdraw_reference: {
         Args: { p_reference_id: string }
         Returns: {

@@ -31,6 +31,7 @@ function makeBuilder(table: string) {
 
   const builder = {
     select: () => builder,
+    update: () => builder,
     eq: (column: string, value: unknown) => {
       record.eqs.push([column, value])
       return builder
@@ -64,15 +65,25 @@ vi.mock('@/lib/toast', () => ({
 }))
 
 // Avoid pulling tus-js-client into jsdom; the hook is exercised elsewhere.
+// `upload` is hoisted-stable so the upload-path test can assert on its args.
+const uploadHookMocks = vi.hoisted(() => ({
+  upload: vi.fn().mockResolvedValue('video-9'),
+}))
 vi.mock('@/hooks/useNativeVideoUpload', () => ({
   useNativeVideoUpload: () => ({
     phase: 'idle',
     progress: 0,
     error: null,
-    upload: vi.fn(),
+    upload: uploadHookMocks.upload,
     cancel: vi.fn(),
     reset: vi.fn(),
   }),
+}))
+
+vi.mock('@/lib/imageOptimization', () => ({
+  validateImage: vi.fn().mockReturnValue({ valid: true }),
+  validateVideoFull: vi.fn().mockResolvedValue({ valid: true, duration: 30, width: 640, height: 480 }),
+  optimizeImage: vi.fn(async (f: File) => f),
 }))
 
 const READY_REEL = {
@@ -142,6 +153,24 @@ describe('Gallery ↔ video-kind separation', () => {
       expect(queries.some((q) => q.table === 'club_media')).toBe(true)
     })
     expect(queries.some((q) => q.table === 'player_videos')).toBe(false)
+  })
+
+  it('uploads a Gallery video as kind=reel, visibility=public (never post/highlight)', async () => {
+    const { fireEvent } = await import('@testing-library/react')
+    uploadHookMocks.upload.mockClear()
+
+    // Owner view: entityId matches the mocked auth user.
+    render(<GalleryManager mode="profile" entityId="user-1" />)
+
+    const input = await screen.findByLabelText('Upload video')
+    fireEvent.change(input, {
+      target: { files: [new File(['x'], 'training.mp4', { type: 'video/mp4' })] },
+    })
+
+    await waitFor(() => expect(uploadHookMocks.upload).toHaveBeenCalled())
+    const [, opts] = uploadHookMocks.upload.mock.calls[0]
+    // The fence on the WRITE path: a Gallery upload is always a reel.
+    expect(opts).toMatchObject({ kind: 'reel', visibility: 'public' })
   })
 
   it('reports only the PHOTO count to the parent (profile strength)', async () => {

@@ -84,6 +84,23 @@ export function PostComposerModal({
   // an empty start). Drives the "Draft restored — Discard" affordance.
   const [draftRestored, setDraftRestored] = useState(false)
 
+  // Cloudflare video posts are launch-flagged server-side (app_settings
+  // 'video_posts_enabled'; create_user_post rejects new video items while
+  // off). Mirror the flag in the UI so the button never dead-ends. Fail-OPEN
+  // here: if the RPC flakes we show the button and let the server refuse —
+  // fail-closed would spuriously hide a live feature on a network blip.
+  const [videoPostsEnabled, setVideoPostsEnabled] = useState(true)
+  useEffect(() => {
+    if (!isOpen) return
+    let cancelled = false
+    void supabase
+      .rpc('video_posts_enabled')
+      .then(({ data, error }) => {
+        if (!cancelled && !error && typeof data === 'boolean') setVideoPostsEnabled(data)
+      })
+    return () => { cancelled = true }
+  }, [isOpen])
+
   // Transfer mode state
   const [mode, setMode] = useState<'post' | 'transfer'>('post')
   const [clubSearch, setClubSearch] = useState('')
@@ -1256,7 +1273,11 @@ export function PostComposerModal({
               </div>
             </div>
 
-            {/* Media uploader (images + video) */}
+            {/* Media uploader (images + video). Video is a REGULAR-POST
+                feature only: announcement cards (transfer/signing) cannot
+                play video and their RPCs reject Cloudflare video items — so
+                in transfer mode the button never appears. Also hidden while
+                the video_posts_enabled launch flag is off. */}
             <PostMediaUploader
               media={media}
               onAddImage={handleMediaAddImage}
@@ -1266,6 +1287,7 @@ export function PostComposerModal({
               isUploading={isUploading}
               uploadProgress={uploadProgress}
               maxItems={5}
+              allowVideo={mode !== 'transfer' && videoPostsEnabled}
             />
 
             {/* Submit */}

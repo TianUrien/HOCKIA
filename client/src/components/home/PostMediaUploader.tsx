@@ -22,6 +22,11 @@ interface PostMediaUploaderProps {
   isUploading: boolean
   uploadProgress?: number | null
   maxItems?: number
+  /** Hide the video path entirely. False on announcements (transfer/signing):
+   *  their cards can't play video and the RPCs reject Cloudflare video items —
+   *  offering the button would produce a dead tile or a server error. Also
+   *  false while the video_posts_enabled launch flag is off. */
+  allowVideo?: boolean
 }
 
 function formatDuration(seconds: number): string {
@@ -39,6 +44,7 @@ export function PostMediaUploader({
   isUploading,
   uploadProgress,
   maxItems = 5,
+  allowVideo = true,
 }: PostMediaUploaderProps) {
   const imageInputRef = useRef<HTMLInputElement>(null)
   const videoInputRef = useRef<HTMLInputElement>(null)
@@ -71,14 +77,16 @@ export function PostMediaUploader({
         className="hidden"
         aria-label="Select image file"
       />
-      <input
-        ref={videoInputRef}
-        type="file"
-        accept=".mp4,.mov,.webm"
-        onChange={handleVideoChange}
-        className="hidden"
-        aria-label="Select video file"
-      />
+      {allowVideo && (
+        <input
+          ref={videoInputRef}
+          type="file"
+          accept=".mp4,.mov,.webm"
+          onChange={handleVideoChange}
+          className="hidden"
+          aria-label="Select video file"
+        />
+      )}
     </>
   )
 
@@ -96,19 +104,23 @@ export function PostMediaUploader({
             <ImagePlus className="w-6 h-6" />
             <span className="text-sm">Add photos</span>
           </button>
-          <button
-            type="button"
-            onClick={() => videoInputRef.current?.click()}
-            disabled={isUploading}
-            className="flex-1 py-8 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center gap-2 text-gray-400 hover:border-purple-400 hover:text-purple-500 transition-colors disabled:opacity-50"
-          >
-            <Film className="w-6 h-6" />
-            <span className="text-sm">Add video</span>
-          </button>
+          {allowVideo && (
+            <button
+              type="button"
+              onClick={() => videoInputRef.current?.click()}
+              disabled={isUploading}
+              className="flex-1 py-8 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center gap-2 text-gray-400 hover:border-purple-400 hover:text-purple-500 transition-colors disabled:opacity-50"
+            >
+              <Film className="w-6 h-6" />
+              <span className="text-sm">Add video</span>
+            </button>
+          )}
           {fileInputs}
         </div>
         <p className="text-xs text-gray-400 mt-1.5">
-          Photos: up to 10 MB each · Video: up to 100 MB, 3 min max · Up to {maxItems} items
+          {allowVideo
+            ? `Photos: up to 10 MB each · Video: up to 100 MB, 3 min max · Up to ${maxItems} items`
+            : `Photos: up to 10 MB each · Up to ${maxItems} items`}
         </p>
       </div>
     )
@@ -230,7 +242,7 @@ export function PostMediaUploader({
               <ImagePlus className="w-5 h-5" />
               <span className="text-[10px]">Photo</span>
             </button>
-            {!hasVideo && (
+            {allowVideo && !hasVideo && (
               <button
                 type="button"
                 onClick={() => videoInputRef.current?.click()}
