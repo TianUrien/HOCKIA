@@ -25,11 +25,17 @@ export type UploadPhase =
   | 'ready'
   | 'error'
 
+/** The product surface a video belongs to. See migration 20260709150000.
+ *  highlight / full_match = recruitment evidence (player-only, Media tab)
+ *  reel                   = Gallery video (gallery only)
+ *  post                   = Home video post (feed only; uploaded via uploadManager) */
+export type VideoKind = 'highlight' | 'full_match' | 'reel' | 'post'
+
 interface UploadOptions {
   title: string
   description?: string
   visibility?: 'public' | 'recruiters'
-  kind?: 'highlight' | 'full_match'
+  kind?: VideoKind
 }
 
 const MAX_BYTES = 1_073_741_824 // 1 GB

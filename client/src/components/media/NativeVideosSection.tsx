@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Film, Plus, Trash2, Loader2, Clock } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { useToastStore } from '@/lib/toast'
 import Button from '../Button'
 import NativeVideoPlayer from './NativeVideoPlayer'
 import UploadVideoModal from './UploadVideoModal'
@@ -41,6 +42,7 @@ interface NativeVideosSectionProps {
 }
 
 export default function NativeVideosSection({ playerUserId, readOnly, hasLegacyHighlight = false, onAddLink }: NativeVideosSectionProps) {
+  const { addToast } = useToastStore()
   const [videos, setVideos] = useState<PlayerVideoRow[]>([])
   const [loading, setLoading] = useState(true)
   const [uploadOpen, setUploadOpen] = useState(false)
@@ -75,12 +77,19 @@ export default function NativeVideosSection({ playerUserId, readOnly, hasLegacyH
     if (!deleteTarget) return
     setDeleting(true)
     try {
-      const { error } = await supabase.from('player_videos').delete().eq('id', deleteTarget.id)
+      // video-delete removes the Cloudflare asset too. A plain row delete (what
+      // this used to do) left the asset alive and billable forever.
+      const { error } = await supabase.functions.invoke('video-delete', {
+        body: { videoId: deleteTarget.id },
+      })
       if (error) throw error
       setVideos((prev) => prev.filter((v) => v.id !== deleteTarget.id))
       setDeleteTarget(null)
     } catch (err) {
+      // Previously silent: the modal closed, the row stayed, and the user was
+      // never told why.
       logger.error('[NativeVideosSection] delete failed', err)
+      addToast('Could not delete the video. Please try again.', 'error')
     } finally {
       setDeleting(false)
     }

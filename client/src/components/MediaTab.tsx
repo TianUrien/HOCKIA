@@ -185,7 +185,9 @@ export default function MediaTab({ profileId, readOnly = false, renderHeader, sh
   }
 
   const canManageGallery = Boolean(!readOnly && targetUserId && targetUserId === user?.id)
-  const galleryEmptyCopy = canManageGallery ? 'No photos yet. Start building your gallery!' : 'No photos in gallery yet.'
+  const galleryEmptyCopy = canManageGallery
+    ? 'No photos or videos yet. Start building your gallery!'
+    : 'Nothing in the gallery yet.'
 
   return (
     <div className="space-y-8">
@@ -275,13 +277,16 @@ export default function MediaTab({ profileId, readOnly = false, renderHeader, sh
         <FullGameVideosSection playerUserId={targetUserId} readOnly={readOnly} />
       )}
 
+      {/* Gallery — the user's own media: photos + videos (player_videos
+          kind='reel'). Distinct from the recruitment evidence above
+          (highlight / full_match) and from Home video posts (kind='post'). */}
       {showGallery && (
         <GalleryManager
           mode="profile"
           entityId={targetUserId}
           readOnly={!canManageGallery}
           title="Gallery"
-          description="Share photos from matches, training, and your career"
+          description="Share photos and videos from matches, training, and your career"
           emptyStateDescription={galleryEmptyCopy}
           addButtonLabel="Add Photo"
         />

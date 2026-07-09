@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Upload, Trash2, GripVertical, Edit2, X, Check, ArrowUp, ArrowDown, Loader2, ImageIcon } from 'lucide-react'
+import { Upload, Trash2, GripVertical, Edit2, X, Check, ArrowUp, ArrowDown, Loader2, ImageIcon, Play, Film, Clock, AlertCircle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { useAuthStore } from '@/lib/auth'
@@ -10,9 +10,11 @@ import MediaLightbox from './MediaLightbox'
 import Skeleton from './Skeleton'
 import StorageImage from './StorageImage'
 import { deleteStorageObject } from '@/lib/storage'
-import { optimizeImage, type OptimizeOptions, validateImage } from '@/lib/imageOptimization'
+import { optimizeImage, type OptimizeOptions, validateImage, validateVideoFull } from '@/lib/imageOptimization'
+import { useNativeVideoUpload } from '@/hooks/useNativeVideoUpload'
 
 const FILE_INPUT_ACCEPT = '.jpg,.jpeg,.png,image/jpeg,image/png'
+const VIDEO_INPUT_ACCEPT = '.mp4,.mov,.webm,video/mp4,video/quicktime,video/webm'
 const MAX_BATCH_UPLOAD = 10
 
 export type GalleryMode = 'club' | 'profile'
@@ -25,9 +27,10 @@ interface GalleryManagerProps {
   description?: string
   emptyStateDescription?: string
   addButtonLabel?: string
-  /** Fired with the current photo count whenever the gallery changes
+  /** Fired with the current PHOTO count whenever the gallery changes
    *  (load, upload, delete). Lets a parent dashboard recompute profile
-   *  completeness without waiting for a route change. */
+   *  completeness without waiting for a route change. Videos are excluded
+   *  so the profile-strength meaning of this number never shifts. */
   onCountChange?: (count: number) => void
 }
 
@@ -50,12 +53,21 @@ interface ModeConfig {
   optimizeUploads: boolean
   optimizeOptions?: OptimizeOptions
   maxFileSizeMB: number
+  /** Profile galleries hold photos AND videos (player_videos kind='reel').
+   *  Club galleries are photo-only (club_media is a different table whose
+   *  owner column is a club id, not a user id). */
+  supportsVideo: boolean
 }
+
+type MediaItemType = 'photo' | 'video'
 
 interface NormalizedMedia {
   id: string
+  type: MediaItemType
   ownerId: string
-  url: string
+  /** Photo source. NULL for a video: a Cloudflare asset has no durable URL —
+   *  NativeVideoPlayer mints a signed one per view. */
+  url: string | null
   fileName: string
   fileSize: number | null
   caption: string | null
@@ -63,6 +75,23 @@ interface NormalizedMedia {
   orderIndex: number
   createdAt: string
   updatedAt: string
+  /** Video-only. */
+  status?: string
+  durationSeconds?: number | null
+}
+
+/** A Gallery video row. Deliberately a narrow shape — we never select `kind`
+ *  back out, because the query already pins it. */
+interface GalleryVideoRow {
+  id: string
+  user_id: string
+  title: string
+  description: string | null
+  status: string
+  duration_seconds: number | null
+  display_order: number | null
+  created_at: string
+  updated_at: string
 }
 
 // Shared gallery photo optimization (profile AND club galleries). These are
@@ -89,6 +118,7 @@ const MODE_CONFIG: Record<GalleryMode, ModeConfig> = {
     optimizeUploads: true,
     optimizeOptions: GALLERY_OPTIMIZE_OPTIONS,
     maxFileSizeMB: 10,
+    supportsVideo: false,
   },
   profile: {
     bucket: 'gallery',
@@ -96,12 +126,49 @@ const MODE_CONFIG: Record<GalleryMode, ModeConfig> = {
     ownerColumn: 'user_id',
     urlField: 'photo_url',
     title: 'Gallery',
-    description: 'Share photos from matches, training, and your career',
-    emptyStateDescription: 'No photos yet. Start building your gallery!',
+    description: 'Share photos and videos from matches, training, and your career',
+    emptyStateDescription: 'No photos or videos yet. Start building your gallery!',
     addButtonLabel: 'Add Photo',
     optimizeUploads: true,
     optimizeOptions: GALLERY_OPTIMIZE_OPTIONS,
     maxFileSizeMB: 10,
+    supportsVideo: true,
+  }
+}
+
+/** player_videos.title has a 1–120 char CHECK. Derive one from the file name. */
+function deriveVideoTitle(file: File): string {
+  const base = file.name.replace(/\.[^.]+$/, '').trim()
+  return (base || 'Video').slice(0, 120)
+}
+
+/** Floor, never round — a 36.8s clip must read 0:36, not 0:37. */
+function formatDuration(seconds: number): string {
+  const total = Math.floor(seconds)
+  const m = Math.floor(total / 60)
+  const s = total % 60
+  return `${m}:${s.toString().padStart(2, '0')}`
+}
+
+/** video-delete's machine codes, in the user's language. */
+const VIDEO_DELETE_MESSAGES: Record<string, string> = {
+  video_in_use: 'This video is used by one of your posts. Delete the post first.',
+  forbidden: 'You can only delete your own videos.',
+  not_found: 'That video no longer exists.',
+  unauthenticated: 'Please sign in again and retry.',
+}
+const VIDEO_DELETE_FALLBACK = 'Failed to delete video. Please try again.'
+
+/** functions.invoke throws a FunctionsHttpError whose message is the static
+ *  "non-2xx status code" — the real reason is only in the response body, and
+ *  it's a machine code, never something to show a user verbatim. */
+async function videoDeleteErrorMessage(err: unknown): Promise<string> {
+  const ctx = (err as { context?: Response }).context
+  try {
+    const body = ctx ? ((await ctx.clone().json()) as { error?: string }) : null
+    return (body?.error && VIDEO_DELETE_MESSAGES[body.error]) || VIDEO_DELETE_FALLBACK
+  } catch {
+    return VIDEO_DELETE_FALLBACK
   }
 }
 
@@ -119,6 +186,7 @@ export default function GalleryManager({
   const { user } = useAuthStore()
   const targetEntityId = entityId || user?.id
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const videoInputRef = useRef<HTMLInputElement>(null)
   const { addToast } = useToastStore()
 
   const [media, setMedia] = useState<NormalizedMedia[]>([])
@@ -133,11 +201,30 @@ export default function GalleryManager({
   const [previewMedia, setPreviewMedia] = useState<NormalizedMedia | null>(null)
   const [isUploadDragActive, setIsUploadDragActive] = useState(false)
 
-  // Surface the photo count to the parent on every change (load,
-  // upload, delete) so dashboards can keep profile completeness fresh.
+  const {
+    phase: videoPhase,
+    progress: videoProgress,
+    error: videoError,
+    upload: uploadVideo,
+    cancel: cancelVideo,
+    reset: resetVideo,
+  } = useNativeVideoUpload()
+
+  // A video upload takes minutes (transcode). Reading `media` from the closure
+  // afterwards would use a snapshot from before the upload started, so a photo
+  // added meanwhile would collide on the same order index.
+  const mediaRef = useRef<NormalizedMedia[]>([])
   useEffect(() => {
-    if (!isLoading) onCountChange?.(media.length)
-  }, [media.length, isLoading, onCountChange])
+    mediaRef.current = media
+  }, [media])
+
+  const photoCount = media.filter((m) => m.type === 'photo').length
+
+  // Surface the photo count to the parent on every change (load, upload,
+  // delete) so dashboards can keep profile completeness fresh.
+  useEffect(() => {
+    if (!isLoading) onCountChange?.(photoCount)
+  }, [photoCount, isLoading, onCountChange])
   const [savingCaptionId, setSavingCaptionId] = useState<string | null>(null)
 
   const fetchMedia = useCallback(async () => {
@@ -145,25 +232,59 @@ export default function GalleryManager({
     setIsLoading(true)
     try {
       const ownerColumn = config.ownerColumn
-      const selectQuery = supabase
+
+      const photoPromise = supabase
         .from(config.table)
         .select('*')
         .eq(ownerColumn, targetEntityId)
         .order('order_index', { ascending: true })
         .order('created_at', { ascending: false })
 
-      const { data, error } = await selectQuery
-      if (error) throw error
+      // GALLERY VIDEOS ONLY — kind='reel'.
+      //
+      // ⚠ player_videos RLS is KIND-AGNOSTIC: its SELECT policy gates on
+      // status + visibility + ownership and never looks at `kind`. The product
+      // separation lives ENTIRELY in this filter. Drop it and a Home video post
+      // (kind='post') and a recruitment highlight / full_match would both bleed
+      // into the Gallery. Never widen it.
+      const videoPromise = config.supportsVideo
+        ? supabase
+            .from('player_videos')
+            .select('id, user_id, title, description, status, duration_seconds, display_order, created_at, updated_at')
+            .eq('user_id', targetEntityId)
+            .eq('kind', 'reel')
+            .order('display_order', { ascending: true })
+            .order('created_at', { ascending: false })
+        : null
 
-      const normalized = (data || []).map((item) => normalizeMedia(item, mode))
-      setMedia(normalized)
+      const [photoRes, videoRes] = await Promise.all([photoPromise, videoPromise])
+      if (photoRes.error) throw photoRes.error
+      if (videoRes?.error) throw videoRes.error
+
+      const photos = (photoRes.data || []).map((item) => normalizePhoto(item as ClubMedia | GalleryPhoto, mode))
+
+      // RLS already hides non-ready rows from visitors, but the OWNER's own
+      // rows come back regardless of status — and "readOnly && own profile" is
+      // Network View, where the owner is previewing what a visitor sees.
+      const videos = ((videoRes?.data ?? []) as unknown as GalleryVideoRow[])
+        .filter((v) => !readOnly || v.status === 'ready')
+        .map(normalizeVideo)
+
+      // One grid. Photos carry order_index, videos display_order; both are
+      // assigned from the same 0-based counter, so they interleave as arranged.
+      // Ties (a video whose order write was refused keeps the default 0) fall
+      // back to newest-first, and any reorder re-seats the whole list.
+      const merged = [...photos, ...videos].sort(
+        (a, b) => a.orderIndex - b.orderIndex || b.createdAt.localeCompare(a.createdAt),
+      )
+      setMedia(merged)
     } catch (error) {
       logger.error('Error fetching gallery media:', error)
       addToast('Unable to load gallery items. Please try again.', 'error')
     } finally {
       setIsLoading(false)
     }
-  }, [config.ownerColumn, config.table, mode, targetEntityId, addToast])
+  }, [config.ownerColumn, config.table, config.supportsVideo, mode, readOnly, targetEntityId, addToast])
 
   useEffect(() => {
     if (targetEntityId) {
@@ -176,6 +297,14 @@ export default function GalleryManager({
   const validateFile = (file: File): string | null => {
     const validation = validateImage(file, { maxFileSizeMB: config.maxFileSizeMB })
     return validation.valid ? null : validation.error || 'Invalid image'
+  }
+
+  /** Photos and videos share ONE 0-based order space (gallery_photos.order_index
+   *  and player_videos.display_order), which is what lets them interleave in a
+   *  single grid. Always read the freshest list. */
+  const nextOrderIndex = () => {
+    const current = mediaRef.current
+    return (current.length > 0 ? Math.max(...current.map((m) => m.orderIndex)) : -1) + 1
   }
 
   const handleFileUpload = async (files: FileList | null) => {
@@ -201,6 +330,8 @@ export default function GalleryManager({
       status: 'uploading',
     }))
     setUploadProgress(progressItems)
+
+    let orderCursor = nextOrderIndex()
 
     for (let i = 0; i < validFiles.length; i++) {
       const file = validFiles[i]
@@ -232,8 +363,7 @@ export default function GalleryManager({
           .from(config.bucket)
           .getPublicUrl(fileName)
 
-        const maxOrder = media.length > 0 ? Math.max(...media.map((m) => m.orderIndex)) : -1
-        const nextOrderIndex = maxOrder + 1
+        const orderIndex = orderCursor++
 
         if (mode === 'club') {
           const { error: dbError } = await supabase
@@ -243,7 +373,7 @@ export default function GalleryManager({
               file_url: urlData.publicUrl,
               file_name: file.name,
               file_size: processedFile.size,
-              order_index: nextOrderIndex,
+              order_index: orderIndex,
             })
 
           if (dbError) throw dbError
@@ -255,7 +385,7 @@ export default function GalleryManager({
               photo_url: urlData.publicUrl,
               file_name: file.name,
               file_size: processedFile.size,
-              order_index: nextOrderIndex,
+              order_index: orderIndex,
             })
 
           if (dbError) throw dbError
@@ -288,6 +418,49 @@ export default function GalleryManager({
     }
   }
 
+  // A Gallery video is kind='reel', always public: it is gallery content, not
+  // recruitment evidence (highlight/full_match) and not a Home post (post).
+  // Bytes go straight to Cloudflare via tus; Postgres stores only the row.
+  const handleVideoUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0 || !user || !targetEntityId || readOnly) return
+    if (!config.supportsVideo || targetEntityId !== user.id) return
+
+    const file = files[0]
+    if (videoInputRef.current) videoInputRef.current.value = ''
+
+    const validation = await validateVideoFull(file)
+    if (!validation.valid) {
+      addToast(validation.error || 'Invalid video', 'error')
+      return
+    }
+
+    const videoId = await uploadVideo(file, {
+      title: deriveVideoTitle(file),
+      kind: 'reel',
+      visibility: 'public',
+    })
+    // The hook renders its own error state; bail quietly.
+    if (!videoId) return
+
+    // Order index AFTER the upload — see mediaRef. The row is born with
+    // display_order=0, which would tie with the first photo.
+    const { data: ordered, error: orderErr } = await supabase
+      .from('player_videos')
+      .update({ display_order: nextOrderIndex() })
+      .eq('id', videoId)
+      .select('id')
+
+    await fetchMedia()
+    resetVideo()
+
+    if (orderErr || !ordered || ordered.length === 0) {
+      logger.error('Error setting gallery video order:', orderErr)
+      addToast('Video added, but we could not save its position. Drag it where you want it.', 'error')
+      return
+    }
+    addToast('Video added to your gallery.', 'success')
+  }
+
   const requestDelete = (mediaItem: NormalizedMedia) => {
     setPendingDelete(mediaItem)
   }
@@ -297,25 +470,35 @@ export default function GalleryManager({
 
     setDeletingId(pendingDelete.id)
     try {
-      await deleteStorageObject({
-        bucket: config.bucket,
-        publicUrl: pendingDelete.url,
-        context: `${mode}-gallery:delete`,
-      })
+      if (pendingDelete.type === 'video') {
+        // video-delete removes the Cloudflare asset AND the row. A plain row
+        // delete would orphan the asset forever.
+        const { error } = await supabase.functions.invoke('video-delete', {
+          body: { videoId: pendingDelete.id },
+        })
+        if (error) throw new Error(await videoDeleteErrorMessage(error))
+      } else {
+        await deleteStorageObject({
+          bucket: config.bucket,
+          publicUrl: pendingDelete.url ?? '',
+          context: `${mode}-gallery:delete`,
+        })
 
-      const { error: dbError } = await supabase
-        .from(config.table)
-        .delete()
-        .eq('id', pendingDelete.id)
+        const { error: dbError } = await supabase
+          .from(config.table)
+          .delete()
+          .eq('id', pendingDelete.id)
 
-      if (dbError) throw dbError
+        if (dbError) throw dbError
+      }
 
       await fetchMedia()
-      addToast('Photo removed from gallery.', 'success')
+      addToast(pendingDelete.type === 'video' ? 'Video removed from gallery.' : 'Photo removed from gallery.', 'success')
       setPendingDelete(null)
     } catch (error) {
       logger.error('Error deleting media:', error)
-      addToast('Failed to delete photo. Please try again.', 'error')
+      const message = error instanceof Error ? error.message : null
+      addToast(message || 'Failed to delete. Please try again.', 'error')
     } finally {
       setDeletingId(null)
     }
@@ -342,14 +525,27 @@ export default function GalleryManager({
     setMedia(normalized)
 
     try {
-      await Promise.all(
+      // .select('id') is load-bearing: an RLS-rejected UPDATE returns
+      // { data: [], error: null } — success-shaped. Without reading the rows
+      // back, a silently-refused reorder would look like it worked until the
+      // next refetch snapped everything back.
+      const results = await Promise.all(
         normalized.map((item) =>
-          supabase
-            .from(config.table)
-            .update({ order_index: item.orderIndex, updated_at: new Date().toISOString() })
-            .eq('id', item.id)
+          item.type === 'video'
+            ? supabase
+                .from('player_videos')
+                .update({ display_order: item.orderIndex })
+                .eq('id', item.id)
+                .select('id')
+            : supabase
+                .from(config.table)
+                .update({ order_index: item.orderIndex, updated_at: new Date().toISOString() })
+                .eq('id', item.id)
+                .select('id')
         )
       )
+      const rejected = results.find((r) => r.error || !r.data || r.data.length === 0)
+      if (rejected) throw rejected.error ?? new Error('Reorder was rejected')
     } catch (error) {
       logger.error('Error updating order:', error)
       addToast('Failed to update order. Refresh and try again.', 'error')
@@ -399,20 +595,32 @@ export default function GalleryManager({
     setAltText(item.altText || '')
   }
 
-  const saveCaption = async (itemId: string) => {
+  const saveCaption = async (item: NormalizedMedia) => {
     if (readOnly) return
-    setSavingCaptionId(itemId)
+    setSavingCaptionId(item.id)
     try {
-      const { error } = await supabase
-        .from(config.table)
-        .update({
-          caption: captionText.trim() || null,
-          alt_text: altText.trim() || null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', itemId)
+      // Videos have no alt_text; their caption lives in player_videos.description
+      // (title stays the derived file name, which the CHECK requires non-empty).
+      const query =
+        item.type === 'video'
+          ? supabase
+              .from('player_videos')
+              .update({ description: captionText.trim() || null })
+              .eq('id', item.id)
+              .select('id')
+          : supabase
+              .from(config.table)
+              .update({
+                caption: captionText.trim() || null,
+                alt_text: altText.trim() || null,
+                updated_at: new Date().toISOString(),
+              })
+              .eq('id', item.id)
+              .select('id')
 
+      const { data, error } = await query
       if (error) throw error
+      if (!data || data.length === 0) throw new Error('Caption update was rejected')
 
       setEditingCaption(null)
       await fetchMedia()
@@ -428,6 +636,12 @@ export default function GalleryManager({
     setEditingCaption(null)
     setCaptionText('')
     setAltText('')
+  }
+
+  const openPreview = (item: NormalizedMedia) => {
+    // A still-processing or failed video has nothing to play.
+    if (item.type === 'video' && item.status !== 'ready') return
+    setPreviewMedia(item)
   }
 
   const handleUploadDragEnter = (e: React.DragEvent) => {
@@ -470,6 +684,9 @@ export default function GalleryManager({
   const resolvedEmptyState = emptyStateDescription ?? config.emptyStateDescription
   const resolvedAddButtonLabel = addButtonLabel ?? config.addButtonLabel
 
+  const canAddVideo = config.supportsVideo && !readOnly && targetEntityId === user?.id
+  const videoBusy = videoPhase === 'creating' || videoPhase === 'uploading' || videoPhase === 'processing'
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -478,7 +695,7 @@ export default function GalleryManager({
           <p className="mt-1 text-gray-600 sm:mt-0 sm:text-sm">{resolvedDescription}</p>
         </div>
         {!readOnly && (
-          <>
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
             <button
               onClick={() => fileInputRef.current?.click()}
               className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#8026FA] to-[#924CEC] px-6 py-3 font-medium text-white transition-opacity hover:opacity-90 sm:w-auto"
@@ -487,6 +704,17 @@ export default function GalleryManager({
               <Upload className="h-5 w-5" />
               {resolvedAddButtonLabel}
             </button>
+            {canAddVideo && (
+              <button
+                onClick={() => videoInputRef.current?.click()}
+                disabled={videoBusy}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-[#8026FA] px-6 py-3 font-medium text-[#8026FA] transition-colors hover:bg-[#f5f3ff] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                type="button"
+              >
+                <Film className="h-5 w-5" />
+                Add Video
+              </button>
+            )}
             <input
               ref={fileInputRef}
               type="file"
@@ -496,9 +724,64 @@ export default function GalleryManager({
               className="hidden"
               aria-label="Upload photos"
             />
-          </>
+            {canAddVideo && (
+              <input
+                ref={videoInputRef}
+                type="file"
+                accept={VIDEO_INPUT_ACCEPT}
+                onChange={(e) => void handleVideoUpload(e.target.files)}
+                className="hidden"
+                aria-label="Upload video"
+              />
+            )}
+          </div>
         )}
       </div>
+
+      {/* Gallery video upload — one at a time; bytes stream to Cloudflare, then
+          we wait for transcoding so the tile is never a dead frame. */}
+      {(videoBusy || videoPhase === 'error') && (
+        <div className="rounded-lg border border-gray-200 bg-white p-4">
+          {videoPhase === 'error' ? (
+            <div className="flex items-start gap-3">
+              <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-500" />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-gray-900">Video upload failed</p>
+                <p className="mt-0.5 text-sm text-red-600">{videoError}</p>
+              </div>
+              <button type="button" onClick={resetVideo} className="text-sm font-medium text-gray-500 hover:text-gray-700">
+                Dismiss
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <span className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                  <Loader2 className="h-4 w-4 animate-spin text-[#8026FA]" />
+                  {videoPhase === 'creating' && 'Preparing upload…'}
+                  {videoPhase === 'uploading' && 'Uploading video…'}
+                  {videoPhase === 'processing' && 'Processing video — this can take a minute.'}
+                </span>
+                {videoPhase === 'uploading' && (
+                  <span className="flex items-center gap-3">
+                    <span className="text-sm text-gray-500">{videoProgress}%</span>
+                    <button type="button" onClick={cancelVideo} className="text-sm font-medium text-gray-500 hover:text-gray-700">
+                      Cancel
+                    </button>
+                  </span>
+                )}
+              </div>
+              <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
+                <progress
+                  value={videoPhase === 'processing' ? 100 : videoProgress}
+                  max={100}
+                  className="progress-bar h-2 w-full rounded-full text-[#8026FA]"
+                />
+              </div>
+            </>
+          )}
+        </div>
+      )}
 
       {uploadProgress.length > 0 && (
         <div className="space-y-2">
@@ -559,6 +842,11 @@ export default function GalleryManager({
           <p className="text-sm text-gray-500">
             JPG/JPEG or PNG • Max {config.maxFileSizeMB}MB per file • Up to {MAX_BATCH_UPLOAD} files at once
           </p>
+          {canAddVideo && (
+            <p className="mt-2 text-sm text-gray-500">
+              Videos: MP4, MOV or WebM • Up to 3 minutes — use <span className="font-medium text-[#8026FA]">Add Video</span>
+            </p>
+          )}
         </div>
       )}
 
@@ -587,25 +875,29 @@ export default function GalleryManager({
                 className="relative aspect-[3/4] overflow-hidden bg-gray-100"
                 role="button"
                 tabIndex={0}
-                onClick={() => setPreviewMedia(item)}
+                onClick={() => openPreview(item)}
                 onKeyDown={(event) => {
                   if (event.key === 'Enter' || event.key === ' ') {
                     event.preventDefault()
-                    setPreviewMedia(item)
+                    openPreview(item)
                   }
                 }}
               >
-                <StorageImage
-                  src={item.url}
-                  imageSize="gallery"
-                  fallbackSrc={item.url}
-                  alt={item.altText || item.fileName}
-                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                  containerClassName="h-full w-full"
-                  fallbackClassName="h-full w-full aspect-[3/4]"
-                  fallback={<ImageIcon className="h-8 w-8 text-gray-400" />}
-                  showLoading={true}
-                />
+                {item.type === 'video' ? (
+                  <VideoTile item={item} />
+                ) : (
+                  <StorageImage
+                    src={item.url ?? ''}
+                    imageSize="gallery"
+                    fallbackSrc={item.url ?? ''}
+                    alt={item.altText || item.fileName}
+                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    containerClassName="h-full w-full"
+                    fallbackClassName="h-full w-full aspect-[3/4]"
+                    fallback={<ImageIcon className="h-8 w-8 text-gray-400" />}
+                    showLoading={true}
+                  />
+                )}
                 {!readOnly && (
                   <div className="pointer-events-none absolute left-2 top-2 rounded-lg bg-white/80 p-2 shadow-lg backdrop-blur">
                     <GripVertical className="w-4 h-4 text-gray-600" />
@@ -621,8 +913,8 @@ export default function GalleryManager({
                     onKeyDown={(event) => event.stopPropagation()}
                     disabled={deletingId === item.id}
                     className="absolute right-2 top-2 rounded-lg bg-red-500 p-2 text-white shadow-lg transition-colors hover:bg-red-600 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-red-600 disabled:cursor-not-allowed disabled:opacity-50"
-                    title="Delete photo"
-                    aria-label="Delete photo"
+                    title={item.type === 'video' ? 'Delete video' : 'Delete photo'}
+                    aria-label={item.type === 'video' ? 'Delete video' : 'Delete photo'}
                     type="button"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -640,16 +932,18 @@ export default function GalleryManager({
                       placeholder="Caption (optional, max 200 chars)"
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
                     />
-                    <input
-                      type="text"
-                      value={altText}
-                      onChange={(e) => setAltText(e.target.value)}
-                      placeholder="Alt text for accessibility (optional)"
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    />
+                    {item.type === 'photo' && (
+                      <input
+                        type="text"
+                        value={altText}
+                        onChange={(e) => setAltText(e.target.value)}
+                        placeholder="Alt text for accessibility (optional)"
+                        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      />
+                    )}
                     <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
                       <button
-                        onClick={() => saveCaption(item.id)}
+                        onClick={() => saveCaption(item)}
                         className="flex-1 rounded-lg bg-green-500 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-green-600 disabled:cursor-not-allowed disabled:bg-green-400 sm:flex-none sm:min-w-[120px]"
                         disabled={savingCaptionId === item.id}
                         type="button"
@@ -691,7 +985,7 @@ export default function GalleryManager({
                             type="button"
                           >
                             <ArrowUp className="h-4 w-4" />
-                            <span className="sr-only">Move photo earlier</span>
+                            <span className="sr-only">Move item earlier</span>
                           </button>
                           <button
                             onClick={() => moveMedia(item.id, 'down')}
@@ -700,7 +994,7 @@ export default function GalleryManager({
                             type="button"
                           >
                             <ArrowDown className="h-4 w-4" />
-                            <span className="sr-only">Move photo later</span>
+                            <span className="sr-only">Move item later</span>
                           </button>
                         </div>
                         <button
@@ -753,39 +1047,106 @@ export default function GalleryManager({
         isOpen={Boolean(pendingDelete)}
         onClose={() => setPendingDelete(null)}
         onConfirm={confirmDelete}
-        confirmLabel="Delete Photo"
+        confirmLabel={pendingDelete?.type === 'video' ? 'Delete Video' : 'Delete Photo'}
         confirmTone="danger"
         confirmLoading={Boolean(deletingId)}
         loadingLabel="Deleting..."
-        title="Remove photo from gallery?"
-        description="This will permanently delete the image from your gallery."
+        title={pendingDelete?.type === 'video' ? 'Remove video from gallery?' : 'Remove photo from gallery?'}
+        description={
+          pendingDelete?.type === 'video'
+            ? 'This permanently deletes the video. It cannot be recovered.'
+            : 'This will permanently delete the image from your gallery.'
+        }
         icon={<Trash2 className="h-6 w-6" />}
         body={pendingDelete ? (
           <div className="space-y-3 text-sm text-gray-600">
             <p>Deleting this media removes it from every profile surface.</p>
-            <img
-              src={pendingDelete.url}
-              alt={pendingDelete.altText || pendingDelete.fileName}
-              className="h-48 w-full rounded-lg object-cover"
-              loading="lazy"
-            />
+            {pendingDelete.type === 'video' ? (
+              <div className="flex h-48 w-full items-center justify-center rounded-lg bg-gradient-to-br from-[#1a1030] via-[#2a1a4a] to-[#8026FA]/40">
+                <Film className="h-10 w-10 text-white/80" />
+              </div>
+            ) : (
+              <img
+                src={pendingDelete.url ?? undefined}
+                alt={pendingDelete.altText || pendingDelete.fileName}
+                className="h-48 w-full rounded-lg object-cover"
+                loading="lazy"
+              />
+            )}
           </div>
         ) : undefined}
       />
 
       <MediaLightbox
-        media={previewMedia ? { id: previewMedia.id, url: previewMedia.url, alt: previewMedia.altText || previewMedia.fileName } : null}
+        media={
+          previewMedia
+            ? previewMedia.type === 'video'
+              ? {
+                  id: previewMedia.id,
+                  videoId: previewMedia.id,
+                  alt: previewMedia.caption || previewMedia.fileName,
+                  isOwner: !readOnly,
+                }
+              : {
+                  id: previewMedia.id,
+                  url: previewMedia.url,
+                  alt: previewMedia.altText || previewMedia.fileName,
+                }
+            : null
+        }
         onClose={() => setPreviewMedia(null)}
       />
     </div>
   )
 }
 
-function normalizeMedia(record: ClubMedia | GalleryPhoto, mode: GalleryMode): NormalizedMedia {
+/** Grid tile for a Gallery video. We deliberately do NOT mount the player here:
+ *  each player fetches its own signed token, so a 12-video gallery would fire 12
+ *  edge-fn calls on mount. The poster is a branded gradient; the signed thumbnail
+ *  and the stream are minted when the lightbox opens. */
+function VideoTile({ item }: { item: NormalizedMedia }) {
+  if (item.status === 'errored') {
+    return (
+      <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-gray-100 px-3 text-center text-gray-500">
+        <AlertCircle className="h-6 w-6 text-red-400" />
+        <span className="text-xs">Processing failed — delete and re-upload</span>
+      </div>
+    )
+  }
+
+  if (item.status !== 'ready') {
+    return (
+      <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-gray-100 text-gray-500">
+        <Clock className="h-6 w-6 animate-pulse" />
+        <span className="text-xs">Processing…</span>
+      </div>
+    )
+  }
+
+  return (
+    <div className="relative flex h-full w-full items-center justify-center bg-gradient-to-br from-[#1a1030] via-[#2a1a4a] to-[#8026FA]/40 transition-transform duration-300 group-hover:scale-105">
+      <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white/95 shadow-lg">
+        <Play className="ml-0.5 h-6 w-6 text-[#8026FA]" fill="currentColor" />
+      </span>
+      <span className="absolute bottom-2 left-2 flex items-center gap-1 rounded bg-black/60 px-1.5 py-0.5 text-[11px] font-medium text-white">
+        <Film className="h-3 w-3" />
+        Video
+      </span>
+      {item.durationSeconds != null && (
+        <span className="absolute bottom-2 right-2 rounded bg-black/70 px-1.5 py-0.5 text-[11px] font-medium text-white">
+          {formatDuration(item.durationSeconds)}
+        </span>
+      )}
+    </div>
+  )
+}
+
+function normalizePhoto(record: ClubMedia | GalleryPhoto, mode: GalleryMode): NormalizedMedia {
   if (mode === 'club') {
     const item = record as ClubMedia
     return {
       id: item.id,
+      type: 'photo',
       ownerId: item.club_id,
       url: item.file_url,
       fileName: item.file_name,
@@ -801,6 +1162,7 @@ function normalizeMedia(record: ClubMedia | GalleryPhoto, mode: GalleryMode): No
   const item = record as GalleryPhoto
   return {
     id: item.id,
+    type: 'photo',
     ownerId: item.user_id,
     url: item.photo_url,
     fileName: item.file_name || `photo_${item.id}.jpg`,
@@ -810,5 +1172,23 @@ function normalizeMedia(record: ClubMedia | GalleryPhoto, mode: GalleryMode): No
     orderIndex: item.order_index ?? 0,
     createdAt: item.created_at,
     updatedAt: item.updated_at || item.created_at,
+  }
+}
+
+function normalizeVideo(row: GalleryVideoRow): NormalizedMedia {
+  return {
+    id: row.id,
+    type: 'video',
+    ownerId: row.user_id,
+    url: null,
+    fileName: row.title,
+    fileSize: null,
+    caption: row.description,
+    altText: null,
+    orderIndex: row.display_order ?? 0,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at || row.created_at,
+    status: row.status,
+    durationSeconds: row.duration_seconds,
   }
 }

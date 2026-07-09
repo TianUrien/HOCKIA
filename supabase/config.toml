@@ -366,6 +366,10 @@ verify_jwt = false
 verify_jwt = false
 [functions.video-create-upload]
 verify_jwt = false
+#   - video-delete: verifies the JWT + row ownership in-handler before it
+#     touches Cloudflare; pinned false for the same anti-drift reason.
+[functions.video-delete]
+verify_jwt = false
 
 # nl-search verifies the user JWT in-handler (auth.getUser) and self-401s
 # unauthenticated callers, so the gateway JWT check must be OFF. PINNED here

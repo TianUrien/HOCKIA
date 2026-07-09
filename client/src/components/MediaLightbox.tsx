@@ -2,11 +2,18 @@ import { useEffect, useRef } from 'react'
 import { X } from 'lucide-react'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
+import NativeVideoPlayer from './media/NativeVideoPlayer'
 
 interface LightboxMedia {
   id: string
-  url: string
+  /** Photo source. Absent for a Gallery video (Cloudflare assets are signed
+   *  per-view and have no durable URL — the player mints one). */
+  url?: string | null
   alt?: string
+  /** player_videos.id — present only for a Gallery video (kind='reel'). */
+  videoId?: string
+  /** Lets the owner play their own video regardless of visibility. */
+  isOwner?: boolean
 }
 
 interface MediaLightboxProps {
@@ -56,22 +63,36 @@ export default function MediaLightbox({ media, onClose }: MediaLightboxProps) {
           <X className="h-5 w-5" />
           <span>Close</span>
         </button>
-        <img
-          src={media.url}
-          alt={media.alt || 'Media preview'}
-          className="h-full w-full rounded-xl object-contain"
-        />
+        {media.videoId ? (
+          // Gallery video. NativeVideoPlayer is the ONE signed player — it
+          // fetches a short-lived playback token, so a Cloudflare asset is
+          // never exposed as a raw URL.
+          <div className="flex h-full w-full items-center justify-center">
+            <div className="w-full">
+              <NativeVideoPlayer videoId={media.videoId} title={media.alt} isOwner={media.isOwner} />
+            </div>
+          </div>
+        ) : (
+          <img
+            src={media.url ?? undefined}
+            alt={media.alt || 'Media preview'}
+            className="h-full w-full rounded-xl object-contain"
+          />
+        )}
         {/* Caption + dismiss hint. QA-flagged the overlay as feeling
             like the page had navigated away — no caption, no metadata,
             and the only visible exit was a bare icon. The caption gives
             context; the hint makes the tap-to-close affordance explicit
-            (the backdrop is already an onClose target). */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 rounded-b-xl bg-gradient-to-t from-black/80 to-transparent px-4 pb-4 pt-10 text-center">
-          {media.alt && (
-            <p className="text-sm font-medium text-white">{media.alt}</p>
-          )}
-          <p className="mt-0.5 text-xs text-white/60">Tap anywhere to close</p>
-        </div>
+            (the backdrop is already an onClose target).
+            Suppressed for video: it would sit over the player controls. */}
+        {!media.videoId && (
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 rounded-b-xl bg-gradient-to-t from-black/80 to-transparent px-4 pb-4 pt-10 text-center">
+            {media.alt && (
+              <p className="text-sm font-medium text-white">{media.alt}</p>
+            )}
+            <p className="mt-0.5 text-xs text-white/60">Tap anywhere to close</p>
+          </div>
+        )}
       </div>
     </div>
   )
