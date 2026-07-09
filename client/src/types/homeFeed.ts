@@ -10,6 +10,10 @@ export type FeedItemType =
   | 'brand_post'
   | 'brand_product'
   | 'user_post'
+  | 'club_responded'
+  | 'media_added'
+  | 'video_added'
+  | 'open_to_play_confirmed'
 
 export type MilestoneType =
   | 'first_gallery_image'
@@ -169,6 +173,64 @@ export interface PostComment {
   created_at: string
 }
 
+// --- Phase-1 Pulse event types (P5) ---
+// The generator's metadata keys ARE these fields (get_home_feed passes
+// metadata through verbatim). See supabase/migrations/2026070813-16*.
+
+export interface ClubRespondedFeedItem extends BaseFeedItem {
+  item_type: 'club_responded'
+  club_id: string
+  club_name: string | null
+  club_avatar_url: string | null
+  week_start: string
+  response_count: number
+  responsiveness_tier: string | null
+  last_response_at: string | null
+}
+
+export interface MediaAddedFeedItem extends BaseFeedItem {
+  item_type: 'media_added'
+  uploader_id: string
+  uploader_name: string | null
+  uploader_role: 'player' | 'coach' | 'club' | 'umpire'
+  uploader_avatar_url: string | null
+  media_kind: 'photo'
+  day: string
+  count: number
+  sample_urls: string[]
+  last_added_at: string | null
+}
+
+export interface VideoAddedFeedItem extends BaseFeedItem {
+  item_type: 'video_added'
+  media_kind: 'video'
+  video_source: 'native'
+  video_id: string
+  kind: 'highlight' | 'full_match'
+  title: string | null
+  duration_seconds: number | null
+  visibility: string
+  uploader_id: string
+  uploader_name: string | null
+  uploader_role: 'player' | 'coach' | 'club' | 'umpire'
+  uploader_avatar_url: string | null
+}
+
+export interface OpenToPlayConfirmedFeedItem extends BaseFeedItem {
+  item_type: 'open_to_play_confirmed'
+  player_id: string
+  player_name: string | null
+  player_role: 'player' | 'coach' | 'club' | 'umpire'
+  player_avatar_url: string | null
+  country_id: number | null
+  position: string | null
+  playing_category: string | null
+  available_from: string | null
+  open_to_opportunities: boolean
+  confirmed_at: string | null
+  first_confirmed_at: string | null
+}
+
 // Union type for all feed items
 export type HomeFeedItem =
   | MemberJoinedFeedItem
@@ -178,3 +240,7 @@ export type HomeFeedItem =
   | BrandPostFeedItem
   | BrandProductFeedItem
   | UserPostFeedItem
+  | ClubRespondedFeedItem
+  | MediaAddedFeedItem
+  | VideoAddedFeedItem
+  | OpenToPlayConfirmedFeedItem

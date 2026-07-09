@@ -11,6 +11,10 @@ import {
   UserPostCard,
   TransferAnnouncementCard,
   SigningAnnouncementCard,
+  ClubRespondedCard,
+  MediaAddedCard,
+  VideoAddedCard,
+  OpenToPlayConfirmedCard,
 } from './cards'
 
 interface HomeFeedItemCardProps {
@@ -38,6 +42,14 @@ export const HomeFeedItemCard = memo(function HomeFeedItemCard({ item, onLikeUpd
       return <BrandPostCard item={item} />
     case 'brand_product':
       return <BrandProductCard item={item} />
+    case 'club_responded':
+      return <ClubRespondedCard item={item} />
+    case 'media_added':
+      return <MediaAddedCard item={item} />
+    case 'video_added':
+      return <VideoAddedCard item={item} />
+    case 'open_to_play_confirmed':
+      return <OpenToPlayConfirmedCard item={item} />
     case 'user_post':
       if (item.post_type === 'transfer' && item.metadata) {
         return <TransferAnnouncementCard item={item} onLikeUpdate={onLikeUpdate} onDelete={onDelete} />
