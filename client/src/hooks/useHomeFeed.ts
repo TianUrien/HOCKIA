@@ -145,6 +145,12 @@ export function useHomeFeed(filters?: UseHomeFeedFilters): UseHomeFeedResult {
     if ('profile_id' in item && typeof item.profile_id === 'string') candidateIds.push(item.profile_id)
     if ('club_id' in item && typeof item.club_id === 'string') candidateIds.push(item.club_id)
     if ('referee_id' in item && typeof item.referee_id === 'string') candidateIds.push(item.referee_id)
+    // Phase-1 Pulse cards carry the author under different keys:
+    //   media_added / video_added → uploader_id ; open_to_play_confirmed → player_id
+    // (club_responded uses club_id, already covered). Include them so blocking
+    // hides these cards INSTANTLY too, not only on the next server refetch.
+    if ('uploader_id' in item && typeof item.uploader_id === 'string') candidateIds.push(item.uploader_id)
+    if ('player_id' in item && typeof item.player_id === 'string') candidateIds.push(item.player_id)
     return !candidateIds.some(id => blockedIds.has(id))
   })
   const total = pages[pages.length - 1]?.total ?? 0
