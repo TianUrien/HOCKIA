@@ -49,9 +49,19 @@ const PUBLIC_ROUTES = ['/', '/signup', '/signin', '/verify-email', '/auth/callba
  * 
  * Uses shallow selectors to minimize re-renders
  */
+// Routes an authenticated-but-NOT-onboarded account may still reach: the
+// onboarding itself, auth plumbing, legal pages (linked from onboarding),
+// and the email-action/waitlist endpoints. Everything else redirects to
+// onboarding until it is completed.
+const ONBOARDING_EXEMPT_ROUTES = [
+  '/complete-profile', '/auth/callback', '/verify-email',
+  '/terms', '/privacy-policy', '/offline', '/email-action', '/juniors-waitlist',
+]
+
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const location = useLocation()
   const user = useAuthStore(state => state.user)
+  const profile = useAuthStore(state => state.profile)
   const loading = useAuthStore(state => state.loading)
 
   useEffect(() => {
@@ -73,6 +83,20 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
         </div>
       </div>
     )
+  }
+
+  // ONBOARDING GATE (Tian's age-gate decision 3, 2026-07-11): an authenticated
+  // account must finish onboarding — which contains the 18+ DOB step — before
+  // reaching ANY surface, public pages included. Leaving and returning resumes
+  // at onboarding. Applies only once the profile row has loaded (no redirect
+  // flicker mid-fetch); server-side RLS already keeps these accounts invisible
+  // and uncontactable, this closes the browse path.
+  if (user && profile && !profile.onboarding_completed) {
+    const isOnboardingExempt = ONBOARDING_EXEMPT_ROUTES.some(route =>
+      location.pathname === route || location.pathname.startsWith(route + '/'))
+    if (!isOnboardingExempt) {
+      return <Navigate to="/complete-profile" replace />
+    }
   }
 
   // Check if current route is public (exact match for /, prefix match for others)

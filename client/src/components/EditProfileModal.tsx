@@ -310,6 +310,23 @@ const AVAILABILITY_DURATION_OPTIONS = [
 ] as const
 
 /** Pill-button styling for the single-choice candidate-intent rows. */
+/** DOB is IMMUTABLE once declared (age-gate decision, 2026-07-11): the server
+ *  refuses changes ('already_set'), so once set the field renders read-only
+ *  with the support path spelled out instead of a picker that silently no-ops. */
+function LockedDobField({ dob }: { dob: string }) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">Date of Birth</label>
+      <p className="text-sm text-gray-900">
+        {new Date(dob + 'T00:00:00').toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })}
+      </p>
+      <p className="mt-1 text-xs text-gray-500">
+        Locked after registration. Contact HOCKIA support if it needs correcting.
+      </p>
+    </div>
+  )
+}
+
 const segmentedClass = (active: boolean) =>
   `px-3 py-1.5 rounded-full text-sm border transition-colors ${
     active
@@ -804,6 +821,10 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
         if (outcome === 'invalid_dob') {
           throw new Error('That date of birth doesn’t look right — please check it.')
         }
+        if (outcome === 'already_set') {
+          // Unreachable through the UI (the field locks once set) — defensive.
+          throw new Error('Your date of birth is locked — contact HOCKIA support to change it.')
+        }
         // 'frozen' needs no special handling here: the profile refresh below
         // re-reads the row and the AgeGate goodbye screen takes over.
       }
@@ -1112,11 +1133,15 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                   <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">Personal</p>
                 </div>
 
-                <DateOfBirthPicker
-                  label="Date of Birth (Optional)"
-                  value={formData.date_of_birth}
-                  onChange={(next) => setFormData({ ...formData, date_of_birth: next })}
-                />
+                {profile?.date_of_birth ? (
+                  <LockedDobField dob={profile.date_of_birth} />
+                ) : (
+                  <DateOfBirthPicker
+                    label="Date of Birth (Optional)"
+                    value={formData.date_of_birth}
+                    onChange={(next) => setFormData({ ...formData, date_of_birth: next })}
+                  />
+                )}
 
                 <WorldClubSearch
                   value={formData.current_club}
@@ -1281,11 +1306,15 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                   </div>
                 </div>
 
-                <DateOfBirthPicker
-                  label="Date of Birth (Optional)"
-                  value={formData.date_of_birth}
-                  onChange={(next) => setFormData({ ...formData, date_of_birth: next })}
-                />
+                {profile?.date_of_birth ? (
+                  <LockedDobField dob={profile.date_of_birth} />
+                ) : (
+                  <DateOfBirthPicker
+                    label="Date of Birth (Optional)"
+                    value={formData.date_of_birth}
+                    onChange={(next) => setFormData({ ...formData, date_of_birth: next })}
+                  />
+                )}
 
                 <WorldClubSearch
                   value={formData.current_club}

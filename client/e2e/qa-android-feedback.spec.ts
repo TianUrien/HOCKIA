@@ -34,22 +34,13 @@ const requireAuthFile = (relativePath: string): string => {
 }
 
 test.describe('@smoke android-feedback — DoB picker (Vincent\'s original ask)', () => {
-  test('Edit Profile modal renders three Day/Month/Year selects in place of the legacy date input', async ({ browser }) => {
-    const storageState = requireAuthFile('e2e/.auth/player.json')
-    const context = await browser.newContext({ storageState })
-    const page = await context.newPage()
+  test('signup form renders three Day/Month/Year selects with fast-scroll descending years', async ({ page }) => {
+    // PUBLIC path: /signup → Join as Player → the age-gate DOB picker renders
+    // pre-account. (Vincent's original fix is pinned here now — Edit Profile
+    // no longer shows a picker once a DOB exists; see the locked test below.)
+    await page.goto('/signup')
+    await page.getByRole('button', { name: /join as player/i }).click()
 
-    await page.goto('/dashboard/profile')
-    await page.waitForURL((url) => !url.pathname.includes('/complete-profile'), { timeout: 30_000 })
-
-    // Open the Edit Profile modal. The button label varies slightly across
-    // role headers — match by accessible name pattern.
-    const editButton = page.getByRole('button', { name: /edit/i }).first()
-    await editButton.click()
-
-    // The DateOfBirthPicker emits three <select aria-label> elements.
-    // `exact: true` matters — without it, "Day" also matches the
-    // "Active today" pill in the dashboard header.
     const daySelect = page.getByLabel('Day', { exact: true })
     const monthSelect = page.getByLabel('Month', { exact: true })
     const yearSelect = page.getByLabel('Year', { exact: true })
@@ -59,7 +50,6 @@ test.describe('@smoke android-feedback — DoB picker (Vincent\'s original ask)'
 
     // Critical for Vincent's pain point: year list must descend from a recent
     // year (current year - 4) so users scroll fast to an older birth year.
-    // Read all numeric option values and verify descending order.
     const yearValues = await yearSelect.evaluate((el) => {
       const select = el as HTMLSelectElement
       return Array.from(select.options)
@@ -72,20 +62,22 @@ test.describe('@smoke android-feedback — DoB picker (Vincent\'s original ask)'
       expect(yearValues[i]).toBeLessThan(yearValues[i - 1])
     }
 
-    // No legacy <input type="date"> for DoB should remain — Vincent's
-    // complaint was specifically about this control.
-    const legacyDateInputs = await page.locator('input[type="date"]').count()
-    // (Other date inputs may exist for forward-looking pickers like deadlines;
-    // those weren't in scope. The Edit Profile modal had two DoB inputs.)
-    // We can't assert exactly 0 globally, but we CAN assert the modal's DoB
-    // field isn't using one — by checking the three selects exist instead.
-    await expect(daySelect).toBeVisible()
-    expect(legacyDateInputs).toBeGreaterThanOrEqual(0) // sanity
+    // Selecting all three parts round-trips through internal state.
+    await yearSelect.selectOption('1985')
+    await monthSelect.selectOption('7')
+    await daySelect.selectOption('15')
+    await expect(yearSelect).toHaveValue('1985')
+    await expect(monthSelect).toHaveValue('7')
+    await expect(daySelect).toHaveValue('15')
 
-    await context.close()
+    // No legacy <input type="date"> DoB control (Vincent's complaint).
+    await expect(daySelect).toBeVisible()
   })
 
-  test('selecting all three parts emits an ISO date that survives modal close/reopen', async ({ browser }) => {
+  test('Edit Profile shows DOB LOCKED once set — no picker, support note instead', async ({ browser }) => {
+    // Age-gate decision (2026-07-11): DOB is immutable after registration —
+    // support-only changes. The seed player has a DOB, so the modal must
+    // render the read-only field, not the three selects.
     const storageState = requireAuthFile('e2e/.auth/player.json')
     const context = await browser.newContext({ storageState })
     const page = await context.newPage()
@@ -96,15 +88,10 @@ test.describe('@smoke android-feedback — DoB picker (Vincent\'s original ask)'
     const editButton = page.getByRole('button', { name: /edit/i }).first()
     await editButton.click()
 
-    // Pick a known date: Jul 15 1985 (matches our unit-test fixture).
-    await page.getByLabel('Year', { exact: true }).selectOption('1985')
-    await page.getByLabel('Month', { exact: true }).selectOption('7')
-    await page.getByLabel('Day', { exact: true }).selectOption('15')
-
-    // Re-read selects → values should round-trip through internal state.
-    await expect(page.getByLabel('Year', { exact: true })).toHaveValue('1985')
-    await expect(page.getByLabel('Month', { exact: true })).toHaveValue('7')
-    await expect(page.getByLabel('Day', { exact: true })).toHaveValue('15')
+    await expect(page.getByText(/locked after registration/i)).toBeVisible({ timeout: 10_000 })
+    await expect(page.getByLabel('Day', { exact: true })).toHaveCount(0)
+    await expect(page.getByLabel('Month', { exact: true })).toHaveCount(0)
+    await expect(page.getByLabel('Year', { exact: true })).toHaveCount(0)
 
     await context.close()
   })

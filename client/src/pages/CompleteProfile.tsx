@@ -1495,7 +1495,7 @@ export default function CompleteProfile() {
                       />
 
                       <DateOfBirthPicker
-                        label="Date of Birth (Optional)"
+                        label="Date of Birth"
                         icon={<Calendar className="w-5 h-5" />}
                         value={formData.dateOfBirth}
                         onChange={(next) => setFormData({ ...formData, dateOfBirth: next })}
