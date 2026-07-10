@@ -12,6 +12,7 @@ import StorageImage from './StorageImage'
 import { deleteStorageObject } from '@/lib/storage'
 import { optimizeImage, type OptimizeOptions, validateImage, validateVideoFull } from '@/lib/imageOptimization'
 import { useNativeVideoUpload } from '@/hooks/useNativeVideoUpload'
+import { useSignedVideoThumbnail } from '@/hooks/useSignedVideoThumbnail'
 
 const FILE_INPUT_ACCEPT = '.jpg,.jpeg,.png,image/jpeg,image/png'
 const VIDEO_INPUT_ACCEPT = '.mp4,.mov,.webm,video/mp4,video/quicktime,video/webm'
@@ -237,7 +238,7 @@ export default function GalleryManager({
         .from(config.table)
         .select('*')
         .eq(ownerColumn, targetEntityId)
-        .order('order_index', { ascending: true })
+        .order('order_index', { ascending: false })
         .order('created_at', { ascending: false })
 
       // GALLERY VIDEOS ONLY — kind='reel'.
@@ -253,7 +254,7 @@ export default function GalleryManager({
             .select('id, user_id, title, description, status, duration_seconds, display_order, created_at, updated_at')
             .eq('user_id', targetEntityId)
             .eq('kind', 'reel')
-            .order('display_order', { ascending: true })
+            .order('display_order', { ascending: false })
             .order('created_at', { ascending: false })
         : null
 
@@ -270,12 +271,18 @@ export default function GalleryManager({
         .filter((v) => !readOnly || v.status === 'ready')
         .map(normalizeVideo)
 
-      // One grid. Photos carry order_index, videos display_order; both are
-      // assigned from the same 0-based counter, so they interleave as arranged.
-      // Ties (a video whose order write was refused keeps the default 0) fall
-      // back to newest-first, and any reorder re-seats the whole list.
+      // One grid, NEWEST FIRST: higher order value = higher in the grid. New
+      // uploads take max+1 (top); existing rows were numbered oldest→newest, so
+      // descending shows the most recent media first. Photos carry order_index,
+      // videos display_order — the same counter, so they interleave as arranged.
+      // Duplicated order values are COMMON in production (38 tie groups at last
+      // count), so ties fall back to newest-first and finally to id — the grid
+      // must never swap items between two fetches of identical data.
       const merged = [...photos, ...videos].sort(
-        (a, b) => a.orderIndex - b.orderIndex || b.createdAt.localeCompare(a.createdAt),
+        (a, b) =>
+          b.orderIndex - a.orderIndex ||
+          b.createdAt.localeCompare(a.createdAt) ||
+          a.id.localeCompare(b.id),
       )
       setMedia(merged)
     } catch (error) {
@@ -301,7 +308,8 @@ export default function GalleryManager({
 
   /** Photos and videos share ONE 0-based order space (gallery_photos.order_index
    *  and player_videos.display_order), which is what lets them interleave in a
-   *  single grid. Always read the freshest list. */
+   *  single grid. Display is newest-first, so max+1 puts a new upload at the
+   *  TOP. Always read the freshest list. */
   const nextOrderIndex = () => {
     const current = mediaRef.current
     return (current.length > 0 ? Math.max(...current.map((m) => m.orderIndex)) : -1) + 1
@@ -331,7 +339,10 @@ export default function GalleryManager({
     }))
     setUploadProgress(progressItems)
 
-    let orderCursor = nextOrderIndex()
+    // Newest-first grid: higher value = higher position. Give the FIRST
+    // selected file the highest index of the batch so a multi-select shows in
+    // the order the user picked, with the whole batch above older media.
+    const batchTop = nextOrderIndex() + validFiles.length - 1
 
     for (let i = 0; i < validFiles.length; i++) {
       const file = validFiles[i]
@@ -363,7 +374,7 @@ export default function GalleryManager({
           .from(config.bucket)
           .getPublicUrl(fileName)
 
-        const orderIndex = orderCursor++
+        const orderIndex = batchTop - i
 
         if (mode === 'club') {
           const { error: dbError } = await supabase
@@ -517,9 +528,12 @@ export default function GalleryManager({
   }
 
   const persistOrder = async (updatedList: NormalizedMedia[]) => {
+    // Display is newest-first (higher value = higher in the grid), so the item
+    // the user dragged to the TOP gets the HIGHEST index. Ascending here would
+    // silently reverse the arrangement on the next fetch.
     const normalized = updatedList.map((item, index) => ({
       ...item,
-      orderIndex: index,
+      orderIndex: updatedList.length - 1 - index,
     }))
 
     setMedia(normalized)
@@ -875,6 +889,13 @@ export default function GalleryManager({
                 className="relative aspect-[3/4] overflow-hidden bg-gray-100"
                 role="button"
                 tabIndex={0}
+                // Photos are announced via their inner img alt; a video tile's
+                // poster is decorative (alt=""), so name the button itself.
+                aria-label={
+                  item.type === 'video'
+                    ? `Play video${item.caption ? `: ${item.caption}` : ''}`
+                    : undefined
+                }
                 onClick={() => openPreview(item)}
                 onKeyDown={(event) => {
                   if (event.key === 'Enter' || event.key === ' ') {
@@ -1100,11 +1121,43 @@ export default function GalleryManager({
   )
 }
 
-/** Grid tile for a Gallery video. We deliberately do NOT mount the player here:
- *  each player fetches its own signed token, so a 12-video gallery would fire 12
- *  edge-fn calls on mount. The poster is a branded gradient; the signed thumbnail
- *  and the stream are minted when the lightbox opens. */
+/** Grid tile for a Gallery video. Fetches only the signed THUMBNAIL — the
+ *  player (and its stream token) is mounted by the lightbox on tap. Cloudflare
+ *  generates the poster frame automatically for every video, so tiles are
+ *  visual without the user uploading anything; the branded gradient is only
+ *  the loading/failure fallback. */
 function VideoTile({ item }: { item: NormalizedMedia }) {
+  const tileRef = useRef<HTMLDivElement>(null)
+  // Mint only when the tile approaches the viewport: every mint is an edge-fn
+  // call PLUS a Cloudflare token API call, and CF rate-limits that API. A
+  // 30-video gallery must not fire 30 mints on first paint for tiles nobody
+  // scrolled to. Cached tiles skip the gate (no network involved).
+  const [inView, setInView] = useState(false)
+  const { thumb, onThumbError, onThumbLoad } = useSignedVideoThumbnail(
+    item.id,
+    item.status === 'ready' && inView,
+  )
+
+  useEffect(() => {
+    const el = tileRef.current
+    if (!el || inView || thumb) return
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) setInView(true)
+      },
+      { rootMargin: '200px' },
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [inView, thumb])
+
+  const handleThumbError = () => {
+    // The lazy <img> only attempts a load near the viewport, so an error means
+    // the tile is visible — keep the gate open for the hook's re-mint.
+    setInView(true)
+    onThumbError()
+  }
+
   if (item.status === 'errored') {
     return (
       <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-gray-100 px-3 text-center text-gray-500">
@@ -1124,8 +1177,23 @@ function VideoTile({ item }: { item: NormalizedMedia }) {
   }
 
   return (
-    <div className="relative flex h-full w-full items-center justify-center bg-gradient-to-br from-[#1a1030] via-[#2a1a4a] to-[#8026FA]/40 transition-transform duration-300 group-hover:scale-105">
-      <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white/95 shadow-lg">
+    <div ref={tileRef} className="relative flex h-full w-full items-center justify-center bg-gradient-to-br from-[#1a1030] via-[#2a1a4a] to-[#8026FA]/40 transition-transform duration-300 group-hover:scale-105">
+      {thumb && (
+        <>
+          <img
+            src={thumb}
+            alt=""
+            aria-hidden="true"
+            loading="lazy"
+            onError={handleThumbError}
+            onLoad={onThumbLoad}
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+          {/* Keeps the play button + badges legible over bright frames. */}
+          <span className="absolute inset-0 bg-black/20" aria-hidden="true" />
+        </>
+      )}
+      <span className="relative flex h-14 w-14 items-center justify-center rounded-full bg-white/95 shadow-lg">
         <Play className="ml-0.5 h-6 w-6 text-[#8026FA]" fill="currentColor" />
       </span>
       <span className="absolute bottom-2 left-2 flex items-center gap-1 rounded bg-black/60 px-1.5 py-0.5 text-[11px] font-medium text-white">

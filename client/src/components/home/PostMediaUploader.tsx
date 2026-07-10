@@ -1,5 +1,6 @@
 import { useRef, useCallback } from 'react'
 import { ImagePlus, X, Loader2, Film, Play } from 'lucide-react'
+import { useSignedVideoThumbnail } from '@/hooks/useSignedVideoThumbnail'
 
 export interface UploadedMedia {
   url?: string
@@ -33,6 +34,49 @@ function formatDuration(seconds: number): string {
   const m = Math.floor(seconds / 60)
   const s = Math.floor(seconds % 60)
   return `${m}:${s.toString().padStart(2, '0')}`
+}
+
+/** Composer preview for a video item. A Cloudflare item ({video_id}, no url)
+ *  is only handed to the composer once processing is READY, so its
+ *  auto-generated poster frame is fetchable immediately — showing it confirms
+ *  to the user the video processed correctly and how the post will look.
+ *  Legacy items keep their stored thumb_url; the dark Film tile is only the
+ *  loading/failure fallback. */
+function VideoPreview({ item, index }: { item: UploadedMedia; index: number }) {
+  const { thumb, onThumbError, onThumbLoad } = useSignedVideoThumbnail(item.video_id)
+  const isSigned = !item.thumb_url && Boolean(thumb)
+  const poster = item.thumb_url ?? thumb
+
+  return (
+    <>
+      {/* Video thumbnail or poster */}
+      {poster ? (
+        <img
+          src={poster}
+          alt={`Video ${index + 1}`}
+          onError={isSigned ? onThumbError : undefined}
+          onLoad={isSigned ? onThumbLoad : undefined}
+          className="w-full h-full object-cover"
+        />
+      ) : (
+        <div className="w-full h-full bg-gray-800 flex items-center justify-center">
+          <Film className="w-10 h-10 text-gray-400" />
+        </div>
+      )}
+      {/* Play icon overlay */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div className="w-12 h-12 rounded-full bg-black/50 flex items-center justify-center">
+          <Play className="w-6 h-6 text-white ml-0.5" fill="white" />
+        </div>
+      </div>
+      {/* Duration badge */}
+      {item.duration != null && (
+        <span className="absolute bottom-2 left-2 px-2 py-0.5 bg-black/70 text-white text-xs rounded-full font-medium">
+          {formatDuration(item.duration)}
+        </span>
+      )}
+    </>
+  )
 }
 
 export function PostMediaUploader({
@@ -178,32 +222,7 @@ export function PostMediaUploader({
             }`}
           >
             {item.media_type === 'video' ? (
-              <>
-                {/* Video thumbnail or poster */}
-                {item.thumb_url ? (
-                  <img
-                    src={item.thumb_url}
-                    alt={`Video ${i + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gray-800 flex items-center justify-center">
-                    <Film className="w-10 h-10 text-gray-400" />
-                  </div>
-                )}
-                {/* Play icon overlay */}
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div className="w-12 h-12 rounded-full bg-black/50 flex items-center justify-center">
-                    <Play className="w-6 h-6 text-white ml-0.5" fill="white" />
-                  </div>
-                </div>
-                {/* Duration badge */}
-                {item.duration != null && (
-                  <span className="absolute bottom-2 left-2 px-2 py-0.5 bg-black/70 text-white text-xs rounded-full font-medium">
-                    {formatDuration(item.duration)}
-                  </span>
-                )}
-              </>
+              <VideoPreview item={item} index={i} />
             ) : (
               <img
                 src={item.url}

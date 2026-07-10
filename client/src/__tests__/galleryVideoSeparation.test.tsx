@@ -1,5 +1,5 @@
-import { render, screen, waitFor } from '@testing-library/react'
-import { vi, describe, it, expect, beforeEach } from 'vitest'
+import { render, screen, waitFor, fireEvent } from '@testing-library/react'
+import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
 import GalleryManager from '@/components/GalleryManager'
 
 /**
@@ -17,6 +17,7 @@ import GalleryManager from '@/components/GalleryManager'
 interface QueryRecord {
   table: string
   eqs: Array<[string, unknown]>
+  updatePayload: Record<string, unknown> | null
 }
 
 const queries: QueryRecord[] = []
@@ -24,30 +25,55 @@ let photoRows: unknown[] = []
 let videoRows: unknown[] = []
 
 function makeBuilder(table: string) {
-  const record: QueryRecord = { table, eqs: [] }
+  const record: QueryRecord = { table, eqs: [], updatePayload: null }
   queries.push(record)
 
   const rows = () => (table === 'player_videos' ? videoRows : photoRows)
 
   const builder = {
     select: () => builder,
-    update: () => builder,
+    update: (payload: Record<string, unknown>) => {
+      record.updatePayload = payload
+      return builder
+    },
     eq: (column: string, value: unknown) => {
       record.eqs.push([column, value])
       return builder
     },
     order: () => builder,
     // Thenable so `await` / Promise.all resolve it like a real PostgrestBuilder.
+    // Updates resolve non-empty (the RLS-rejection check needs a row back).
     then: (resolve: (r: { data: unknown[]; error: null }) => unknown) =>
-      resolve({ data: rows(), error: null }),
+      resolve({ data: record.updatePayload ? [{ id: 'updated' }] : rows(), error: null }),
   }
   return builder
 }
 
+/** The global test shim's IntersectionObserver never fires. VideoTile mints
+ *  its thumbnail only when the tile nears the viewport, so most tests need an
+ *  observer that reports "visible" immediately. */
+function stubAutoFiringObserver() {
+  vi.stubGlobal('IntersectionObserver', class {
+    cb: IntersectionObserverCallback
+    constructor(cb: IntersectionObserverCallback) {
+      this.cb = cb
+    }
+    observe() {
+      this.cb([{ isIntersecting: true } as IntersectionObserverEntry], this as unknown as IntersectionObserver)
+    }
+    unobserve() {}
+    disconnect() {}
+    takeRecords() { return [] }
+  })
+}
+
+// VideoTile awaits functions.invoke for its signed thumbnail; default = no
+// thumbnail (branded fallback). Tests override per-case.
+const invokeMock = vi.hoisted(() => vi.fn())
 vi.mock('@/lib/supabase', () => ({
   supabase: {
     from: (table: string) => makeBuilder(table),
-    functions: { invoke: vi.fn() },
+    functions: { invoke: invokeMock },
     storage: { from: () => ({ upload: vi.fn(), list: vi.fn(), getPublicUrl: vi.fn() }) },
   },
 }))
@@ -102,6 +128,13 @@ beforeEach(() => {
   queries.length = 0
   photoRows = []
   videoRows = []
+  invokeMock.mockReset()
+  invokeMock.mockResolvedValue({ data: null, error: null })
+  stubAutoFiringObserver()
+})
+
+afterEach(() => {
+  vi.unstubAllGlobals()
 })
 
 describe('Gallery ↔ video-kind separation', () => {
@@ -156,7 +189,6 @@ describe('Gallery ↔ video-kind separation', () => {
   })
 
   it('uploads a Gallery video as kind=reel, visibility=public (never post/highlight)', async () => {
-    const { fireEvent } = await import('@testing-library/react')
     uploadHookMocks.upload.mockClear()
 
     // Owner view: entityId matches the mocked auth user.
@@ -171,6 +203,153 @@ describe('Gallery ↔ video-kind separation', () => {
     const [, opts] = uploadHookMocks.upload.mock.calls[0]
     // The fence on the WRITE path: a Gallery upload is always a reel.
     expect(opts).toMatchObject({ kind: 'reel', visibility: 'public' })
+
+    // And the new reel is seated at the TOP of the (empty) gallery: the
+    // display_order write happens and targets the uploaded video.
+    await waitFor(() => {
+      const orderWrite = queries.find(
+        (q) => q.table === 'player_videos' && q.updatePayload && 'display_order' in q.updatePayload,
+      )
+      expect(orderWrite).toBeDefined()
+      expect(orderWrite!.updatePayload).toMatchObject({ display_order: 0 })
+      expect(orderWrite!.eqs).toContainEqual(['id', 'video-9'])
+    })
+  })
+
+  it('shows the gallery NEWEST-FIRST (higher order value wins; created_at breaks ties)', async () => {
+    photoRows = [
+      { id: 'p-old', user_id: 'user-1', photo_url: 'https://x/old.jpg', file_name: 'old.jpg', file_size: 1, caption: 'OLDEST-PHOTO', alt_text: null, order_index: 0, created_at: '2026-01-01T00:00:00.000Z', updated_at: '2026-01-01T00:00:00.000Z' },
+      { id: 'p-new', user_id: 'user-1', photo_url: 'https://x/new.jpg', file_name: 'new.jpg', file_size: 1, caption: 'NEWEST-PHOTO', alt_text: null, order_index: 5, created_at: '2026-07-01T00:00:00.000Z', updated_at: '2026-07-01T00:00:00.000Z' },
+    ]
+    // The video sits between them in the order space.
+    videoRows = [{ ...READY_REEL, id: 'video-mid', display_order: 3, description: 'MIDDLE-VIDEO' }]
+
+    const { container } = render(<GalleryManager mode="profile" entityId="user-1" readOnly />)
+    await screen.findByText('NEWEST-PHOTO')
+
+    const text = container.textContent ?? ''
+    expect(text.indexOf('NEWEST-PHOTO')).toBeGreaterThan(-1)
+    expect(text.indexOf('NEWEST-PHOTO')).toBeLessThan(text.indexOf('MIDDLE-VIDEO'))
+    expect(text.indexOf('MIDDLE-VIDEO')).toBeLessThan(text.indexOf('OLDEST-PHOTO'))
+  })
+
+  it('renders the signed Cloudflare thumbnail on a video tile automatically', async () => {
+    invokeMock.mockResolvedValue({
+      data: { thumbnail: 'https://videodelivery.net/tok-abc/thumbnails/thumbnail.jpg' },
+      error: null,
+    })
+    videoRows = [{ ...READY_REEL, id: 'video-thumb' }]
+
+    const { container } = render(<GalleryManager mode="profile" entityId="user-1" readOnly />)
+    await screen.findByText('Video')
+
+    await waitFor(() => {
+      const img = container.querySelector('img[src="https://videodelivery.net/tok-abc/thumbnails/thumbnail.jpg"]')
+      expect(img).not.toBeNull()
+    })
+    expect(invokeMock).toHaveBeenCalledWith('video-playback-token', { body: { videoId: 'video-thumb' } })
+  })
+
+  it('persists a manual reorder as REVERSE indexes (top of grid = highest value)', async () => {
+    // Displayed A(5), B(3), C(0). Reverting persistOrder to ascending indexes
+    // would reverse every gallery on the next fetch while all other tests stay
+    // green — this test exists to kill exactly that mutation.
+    const base = { user_id: 'user-1', file_size: 1, alt_text: null, updated_at: '2026-05-01T00:00:00.000Z' }
+    photoRows = [
+      { ...base, id: 'a-id', photo_url: 'https://x/a.jpg', file_name: 'a.jpg', caption: 'A', order_index: 5, created_at: '2026-05-03T00:00:00.000Z' },
+      { ...base, id: 'b-id', photo_url: 'https://x/b.jpg', file_name: 'b.jpg', caption: 'B', order_index: 3, created_at: '2026-05-02T00:00:00.000Z' },
+      { ...base, id: 'c-id', photo_url: 'https://x/c.jpg', file_name: 'c.jpg', caption: 'C', order_index: 0, created_at: '2026-05-01T00:00:00.000Z' },
+    ]
+
+    // Owner view (entityId === mocked user id, not readOnly) → arrows render.
+    render(<GalleryManager mode="profile" entityId="user-1" />)
+    await screen.findByText('C')
+
+    // Move B (displayed 2nd) up → displayed becomes [B, A, C].
+    fireEvent.click(screen.getAllByText('Move item earlier')[1])
+
+    await waitFor(() => {
+      const writes = queries.filter((q) => q.updatePayload && 'order_index' in q.updatePayload)
+      expect(writes).toHaveLength(3)
+    })
+
+    const written = Object.fromEntries(
+      queries
+        .filter((q) => q.updatePayload && 'order_index' in q.updatePayload)
+        .map((q) => [q.eqs.find(([c]) => c === 'id')?.[1], q.updatePayload!.order_index]),
+    )
+    expect(written).toEqual({ 'b-id': 2, 'a-id': 1, 'c-id': 0 })
+  })
+
+  it('does NOT mint a thumbnail for tiles that never enter the viewport', async () => {
+    // Replace the auto-firing observer with an inert one (like offscreen tiles).
+    vi.stubGlobal('IntersectionObserver', class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+      takeRecords() { return [] }
+    })
+    videoRows = [{ ...READY_REEL, id: 'video-offscreen' }]
+
+    render(<GalleryManager mode="profile" entityId="user-1" readOnly />)
+    await screen.findByText('Video')
+
+    expect(invokeMock).not.toHaveBeenCalledWith('video-playback-token', expect.anything())
+  })
+
+  it('recovers from an expired signed thumbnail by minting a fresh one', async () => {
+    invokeMock
+      .mockResolvedValueOnce({ data: { thumbnail: 'https://videodelivery.net/tok-old/thumbnails/thumbnail.jpg' }, error: null })
+      .mockResolvedValueOnce({ data: { thumbnail: 'https://videodelivery.net/tok-new/thumbnails/thumbnail.jpg' }, error: null })
+    videoRows = [{ ...READY_REEL, id: 'video-expiry' }]
+
+    const { container } = render(<GalleryManager mode="profile" entityId="user-1" readOnly />)
+    await waitFor(() => {
+      expect(container.querySelector('img[src*="tok-old"]')).not.toBeNull()
+    })
+
+    // The signed URL expired (~1h TTL) — the <img> errors.
+    fireEvent.error(container.querySelector('img[src*="tok-old"]')!)
+
+    // A fresh token is minted once; the tile recovers instead of degrading.
+    await waitFor(() => {
+      expect(container.querySelector('img[src*="tok-new"]')).not.toBeNull()
+    })
+    expect(invokeMock).toHaveBeenCalledTimes(2)
+  })
+
+  it('renders ties (same order value, same timestamp) deterministically by id', async () => {
+    const tie = { user_id: 'user-1', file_size: 1, alt_text: null, order_index: 0, created_at: '2026-03-01T00:00:00.000Z', updated_at: '2026-03-01T00:00:00.000Z' }
+    photoRows = [
+      { ...tie, id: 'b-photo', photo_url: 'https://x/b.jpg', file_name: 'b.jpg', caption: 'TIE-B' },
+      { ...tie, id: 'a-photo', photo_url: 'https://x/a.jpg', file_name: 'a.jpg', caption: 'TIE-A' },
+    ]
+
+    const first = render(<GalleryManager mode="profile" entityId="user-1" readOnly />)
+    await first.findByText('TIE-A')
+    const order1 = (first.container.textContent ?? '').indexOf('TIE-A') < (first.container.textContent ?? '').indexOf('TIE-B')
+    first.unmount()
+
+    // Same data arriving in the opposite row order must render identically.
+    photoRows = [photoRows[1], photoRows[0]]
+    const second = render(<GalleryManager mode="profile" entityId="user-1" readOnly />)
+    await second.findByText('TIE-A')
+    const order2 = (second.container.textContent ?? '').indexOf('TIE-A') < (second.container.textContent ?? '').indexOf('TIE-B')
+
+    expect(order1).toBe(order2)
+    expect(order1).toBe(true) // id tiebreak: 'a-photo' < 'b-photo'
+  })
+
+  it('falls back to the branded tile when no thumbnail can be minted', async () => {
+    invokeMock.mockResolvedValue({ data: null, error: { message: 'nope' } })
+    videoRows = [{ ...READY_REEL, id: 'video-nothumb' }]
+
+    const { container } = render(<GalleryManager mode="profile" entityId="user-1" readOnly />)
+    await screen.findByText('Video')
+
+    // Play button + badges still render; no signed <img> appears.
+    expect(screen.getByText('0:36')).toBeInTheDocument()
+    expect(container.querySelector('img[src*="videodelivery"]')).toBeNull()
   })
 
   it('reports only the PHOTO count to the parent (profile strength)', async () => {
