@@ -115,6 +115,11 @@ async function fetchEligibleRecipients(
       .eq('is_test_account', false)
       .eq('onboarding_completed', true)
       .eq('notify_opportunities', true)
+      // Hidden profiles (admin ban / frozen minor) never receive emails. This
+      // client is service_role, so profiles RLS does NOT fence this query —
+      // the filter must live here.
+      .eq('is_blocked', false)
+      .is('frozen_minor_at', null)
       .not('email', 'is', null)
       .order('id', { ascending: true })
       .range(offset, offset + RECIPIENT_PAGE_SIZE - 1)
@@ -228,10 +233,10 @@ Deno.serve(async (req: Request) => {
     // Service role client (shared singleton)
     const supabase = getServiceClient()
 
-    // Fetch the club profile to check is_test_account
+    // Fetch the club profile to check is_test_account + hidden state
     const { data: clubProfile, error: profileError } = await supabase
       .from('profiles')
-      .select('id, full_name, is_test_account')
+      .select('id, full_name, is_test_account, is_blocked, frozen_minor_at')
       .eq('id', vacancy.club_id)
       .single()
 
@@ -248,12 +253,23 @@ Deno.serve(async (req: Request) => {
     // This ensures REAL MODE never processes test vacancies
     // ==========================================================================
     if (clubProfile.is_test_account) {
-      logger.info('Ignoring vacancy from TEST account (correct behavior)', { 
+      logger.info('Ignoring vacancy from TEST account (correct behavior)', {
         clubId: vacancy.club_id,
-        isTestAccount: true 
+        isTestAccount: true
       })
       return new Response(
         JSON.stringify({ message: 'Ignored - club is a test account' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Hidden publishers (admin ban / frozen minor) never trigger sends. Without
+    // this, a hidden publisher's listing flipping closed->open (e.g. a renewal
+    // token click) would mass-email every eligible player.
+    if (clubProfile.is_blocked === true || clubProfile.frozen_minor_at !== null) {
+      logger.info('Ignoring vacancy from hidden publisher', { clubId: vacancy.club_id })
+      return new Response(
+        JSON.stringify({ message: 'Ignored - publisher profile is hidden' }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }

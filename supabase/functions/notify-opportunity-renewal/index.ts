@@ -101,7 +101,7 @@ Deno.serve(async (req: Request) => {
     //    NOT gated on notify_applications — only email + test-account rule. ──
     const { data: publisher, error: pubError } = await supabase
       .from('profiles')
-      .select('id, email, full_name, role, is_test_account')
+      .select('id, email, full_name, role, is_test_account, is_blocked, frozen_minor_at')
       .eq('id', queueRecord.publisher_id)
       .single()
 
@@ -109,7 +109,10 @@ Deno.serve(async (req: Request) => {
       await recordFailure(`publisher fetch failed: ${pubError?.message}`)
       return json(500, { error: 'Failed to fetch publisher profile' })
     }
-    if ((publisher.is_test_account && !IS_STAGING) || !publisher.email) {
+    // Hidden publishers (admin ban / frozen minor) are fenced at enqueue time;
+    // this re-check covers a ban landing between the sweep and this send.
+    const publisherHidden = publisher.is_blocked === true || publisher.frozen_minor_at !== null
+    if ((publisher.is_test_account && !IS_STAGING) || !publisher.email || publisherHidden) {
       logger.info('Publisher not eligible, skipping', { publisherId: publisher.id })
       await markProcessed()
       return json(200, { message: 'Ignored - publisher not eligible' })

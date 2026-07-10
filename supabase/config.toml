@@ -371,6 +371,14 @@ verify_jwt = false
 [functions.video-delete]
 verify_jwt = false
 
+# Webhook-invoked notify fns run deployed with verify_jwt=true today (the
+# dashboard webhooks send authorized requests). Pinned so a redeploy can't
+# silently flip them to the platform default of the day.
+[functions.notify-vacancy]
+verify_jwt = true
+[functions.notify-opportunity-renewal]
+verify_jwt = true
+
 # nl-search verifies the user JWT in-handler (auth.getUser) and self-401s
 # unauthenticated callers, so the gateway JWT check must be OFF. PINNED here
 # because it's the function the comment above flagged as unpinned — every
