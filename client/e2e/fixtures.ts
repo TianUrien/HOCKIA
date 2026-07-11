@@ -385,7 +385,10 @@ export class QuestionsPage extends HockiaPage {
  */
 export class HomeFeedPage extends HockiaPage {
   async openHomeFeed() {
-    await this.page.goto('/home')
+    // Home is two tabs since the V2 redesign (Pulse default / Feed). The
+    // composer + community feed live on the Feed tab — deep-link straight to
+    // it so these feed-centric specs land where that content renders.
+    await this.page.goto('/home?tab=feed')
     await this.waitForLoadingToComplete()
   }
 

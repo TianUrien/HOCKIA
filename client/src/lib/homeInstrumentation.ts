@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useCallback, useRef } from 'react'
 import { supabase } from './supabase'
 import { trackDbEvent } from './trackDbEvent'
 import { useAuthStore } from './auth'
@@ -24,8 +24,18 @@ import { logger } from './logger'
 
 // One entry per (module|content) per session — survives re-renders, resets on
 // full reload. Impressions also dedupe server-side per hour; this just avoids
-// pointless network chatter.
-const seenThisSession = new Set<string>()
+// pointless network chatter. Scoped to the signed-in user: if the account
+// changes in the same tab (logout→login), the set is cleared so the next
+// user's first impressions aren't suppressed as "already seen".
+let seenThisSession = new Set<string>()
+let seenForUserId: string | null = null
+
+function resetSeenIfUserChanged(userId: string | null): void {
+  if (userId !== seenForUserId) {
+    seenThisSession = new Set<string>()
+    seenForUserId = userId
+  }
+}
 
 function sessionKey(kind: string, id: string): string {
   return `${kind}:${id}`
@@ -34,6 +44,7 @@ function sessionKey(kind: string, id: string): string {
 export function recordModuleImpression(moduleId: string, position: number): void {
   const { user, profile } = useAuthStore.getState()
   if (!user) return
+  resetSeenIfUserChanged(user.id)
   const key = sessionKey('module', moduleId)
   if (seenThisSession.has(key)) return
   seenThisSession.add(key)
@@ -61,6 +72,7 @@ function viewerCountryId(): number | null {
 }
 
 export function recordPostImpression(postId: string): void {
+  resetSeenIfUserChanged(useAuthStore.getState().user?.id ?? null)
   const key = sessionKey('post', postId)
   if (seenThisSession.has(key)) return
   seenThisSession.add(key)
@@ -69,6 +81,7 @@ export function recordPostImpression(postId: string): void {
 }
 
 export function recordProductView(productId: string, brandId: string): void {
+  resetSeenIfUserChanged(useAuthStore.getState().user?.id ?? null)
   const key = sessionKey('product', productId)
   if (seenThisSession.has(key)) return
   seenThisSession.add(key)
@@ -83,29 +96,40 @@ export function recordProductView(productId: string, brandId: string): void {
  * Fire `onVisible` exactly once when the element first approaches the
  * viewport (200px margin, house pattern). A card that renders but is never
  * scrolled to is NOT an impression.
+ *
+ * Returns a CALLBACK ref, not an object ref: the observer is wired the moment
+ * the node actually mounts, in whatever render state. A mount-only effect
+ * reading ref.current would miss modules that render a loading/empty branch
+ * WITHOUT the ref on first paint and only attach it once data arrives (the
+ * hero + applications do exactly that) — the effect would run once against a
+ * null ref and never re-fire.
  */
 export function useImpressionOnce(onVisible: () => void) {
-  const ref = useRef<HTMLDivElement | null>(null)
   const firedRef = useRef(false)
+  const observerRef = useRef<IntersectionObserver | null>(null)
   const onVisibleRef = useRef(onVisible)
   onVisibleRef.current = onVisible
 
-  useEffect(() => {
-    const el = ref.current
-    if (!el || firedRef.current) return
+  return useCallback((node: HTMLElement | null) => {
+    // Node detached (unmount or state swap) — tear down.
+    if (!node) {
+      observerRef.current?.disconnect()
+      observerRef.current = null
+      return
+    }
+    if (firedRef.current || observerRef.current) return
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting && !firedRef.current) {
           firedRef.current = true
           observer.disconnect()
+          observerRef.current = null
           onVisibleRef.current()
         }
       },
       { rootMargin: '200px' },
     )
-    observer.observe(el)
-    return () => observer.disconnect()
+    observer.observe(node)
+    observerRef.current = observer
   }, [])
-
-  return ref
 }

@@ -2,6 +2,15 @@ import { render, screen } from '@testing-library/react'
 import { vi } from 'vitest'
 import type { MemberJoinedFeedItem, UserPostFeedItem, MilestoneAchievedFeedItem, HomeFeedItem } from '@/types/homeFeed'
 
+// This test isolates the dispatcher's ROUTING. The post_impression sentinel
+// that wraps post-type cards is not the subject here, and its real form pulls
+// in supabase — inert it so routing stays independent of instrumentation (and
+// of any cross-file IntersectionObserver stub).
+vi.mock('@/lib/homeInstrumentation', () => ({
+  useImpressionOnce: () => ({ current: null }),
+  recordPostImpression: vi.fn(),
+}))
+
 // Mock all card components to isolate routing logic
 vi.mock('@/components/home/cards', () => ({
   MemberJoinedCard: ({ item }: { item: MemberJoinedFeedItem }) => (

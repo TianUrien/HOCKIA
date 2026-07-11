@@ -6,8 +6,6 @@ import * as Sentry from '@sentry/react'
 import { useHomeFeed } from '@/hooks/useHomeFeed'
 import { HomeFeedItemCard } from './HomeFeedItemCard'
 import { FeedSkeleton } from './FeedSkeleton'
-import ProfileCompletionCard from './ProfileCompletionCard'
-import { PulseSection } from './PulseSection'
 import type { HomeFeedItem } from '@/types/homeFeed'
 
 /**
@@ -94,15 +92,8 @@ export function HomeFeed({ prependItemRef }: HomeFeedProps) {
           states. These are text-shaped surfaces; keep horizontal padding so
           they don't bleed to the viewport edge like the post cards do. */}
       <div className="px-4 md:px-6">
-        {/* Pulse — "Since you last visited" surface (v5 plan Movement Layer).
-            Renders nothing today (no card types registered until 1B.3+);
-            lights up automatically when card generators ship. Mounted ABOVE
-            ProfileCompletionCard so the "what changed since you were here"
-            framing leads the page when there's something to show. */}
-        <PulseSection />
-
-        {/* Profile completion nudge */}
-        <ProfileCompletionCard />
+        {/* Pulse + profile-completion moved to the Pulse tab (Home redesign
+            V2 — Q2 fold-in). The Feed tab is now community content only. */}
 
         {/* Scroll anchor for new posts */}
         <div ref={feedTopRef} />
@@ -113,7 +104,7 @@ export function HomeFeed({ prependItemRef }: HomeFeedProps) {
             <button
               type="button"
               onClick={() => void handleShowNewItems()}
-              className="inline-flex items-center gap-1.5 px-4 py-2 bg-hockia-primary text-white text-sm font-medium rounded-full shadow-lg hover:bg-[#6B1FD4] active:scale-95 transition-all duration-200 animate-slideDown"
+              className="inline-flex items-center gap-1.5 px-4 py-2 bg-hockia-primary text-white text-sm font-medium rounded-full shadow-lg hover:opacity-90 active:scale-95 transition-all duration-200 animate-slideDown"
             >
               <ArrowUp className="w-4 h-4" />
               {newCount === 1

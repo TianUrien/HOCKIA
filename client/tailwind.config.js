@@ -15,8 +15,8 @@ export default {
     },
     extend: {
       colors: {
-        'hockia-primary': '#8026FA',
-        'hockia-secondary': '#924CEC',
+        'hockia-primary': '#6d28d9',
+        'hockia-secondary': '#7c3aed',
         'hockia-accent': '#ec4899',
         'hockia-success': '#10b981',
         'hockia-warning': '#f59e0b',
