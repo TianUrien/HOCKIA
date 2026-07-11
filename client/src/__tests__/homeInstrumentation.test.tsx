@@ -1,6 +1,12 @@
 import { render } from '@testing-library/react'
 import { useState } from 'react'
 import { vi, describe, it, expect, beforeEach } from 'vitest'
+
+// homeInstrumentation imports @/lib/supabase, which THROWS at import time
+// when the Vite env vars are absent (CI has no .env.local). Only
+// useImpressionOnce is exercised here and it never touches the client.
+vi.mock('@/lib/supabase', () => ({ supabase: {} }))
+
 import { useImpressionOnce } from '@/lib/homeInstrumentation'
 
 /**
