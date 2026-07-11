@@ -125,13 +125,13 @@ export default function MoveToShortlistMenu({
                   'w-full flex items-center justify-between gap-2 px-3 py-2 text-left text-sm transition-colors',
                   isCurrent
                     ? 'text-gray-400 cursor-not-allowed'
-                    : 'text-gray-900 hover:bg-[#8026FA]/5',
+                    : 'text-gray-900 hover:bg-hockia-primary/5',
                 ].join(' ')}
               >
                 <span className="truncate flex-1">
                   {list.name}
                   {list.is_default && (
-                    <span className="ml-1.5 text-[9px] uppercase tracking-wider text-[#8026FA] font-bold">
+                    <span className="ml-1.5 text-[9px] uppercase tracking-wider text-hockia-primary font-bold">
                       default
                     </span>
                   )}
@@ -160,13 +160,13 @@ export default function MoveToShortlistMenu({
                 if (e.key === 'Escape') { setCreating(false); setDraft('') }
               }}
               placeholder="New list name"
-              className="flex-1 min-w-0 px-2 py-1.5 border border-gray-200 rounded text-xs focus:ring-2 focus:ring-[#8026FA]/30 focus:border-[#8026FA] focus:outline-none"
+              className="flex-1 min-w-0 px-2 py-1.5 border border-gray-200 rounded text-xs focus:ring-2 focus:ring-hockia-primary/30 focus:border-hockia-primary focus:outline-none"
             />
             <button
               type="button"
               onClick={handleCreateAndPick}
               disabled={busy || !draft.trim()}
-              className="p-1.5 rounded text-[#8026FA] hover:bg-[#8026FA]/10 disabled:opacity-40"
+              className="p-1.5 rounded text-hockia-primary hover:bg-hockia-primary/10 disabled:opacity-40"
               aria-label="Create and add"
             >
               <Check className="w-4 h-4" />
@@ -176,7 +176,7 @@ export default function MoveToShortlistMenu({
           <button
             type="button"
             onClick={() => setCreating(true)}
-            className="w-full flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium text-[#8026FA] hover:bg-[#8026FA]/5 rounded"
+            className="w-full flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium text-hockia-primary hover:bg-hockia-primary/5 rounded"
           >
             <Plus className="w-3.5 h-3.5" />
             New list

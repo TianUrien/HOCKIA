@@ -28,7 +28,7 @@ export function CommunityTabSwitcher({ activeTab }: CommunityTabSwitcherProps) {
             onClick={() => navigate(tab.path)}
             className={`flex items-center gap-2 px-5 min-h-[44px] rounded-lg text-sm font-medium transition-all duration-200 ${
               isActive
-                ? 'bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white shadow-md'
+                ? 'bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white shadow-md'
                 : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
             }`}
             aria-pressed={isActive ? 'true' : 'false'}

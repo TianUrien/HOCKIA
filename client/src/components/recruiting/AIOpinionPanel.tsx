@@ -151,7 +151,7 @@ export default function AIOpinionPanel({ candidate, className = '' }: AIOpinionP
   return (
     <section
       className={[
-        'rounded-xl border border-[#8026FA]/20 bg-gradient-to-br from-[#8026FA]/[0.04] to-[#924CEC]/[0.04] p-4',
+        'rounded-xl border border-hockia-primary/20 bg-gradient-to-br from-hockia-primary/[0.04] to-hockia-secondary/[0.04] p-4',
         className,
       ].join(' ')}
       data-testid="ai-opinion-panel"
@@ -159,11 +159,11 @@ export default function AIOpinionPanel({ candidate, className = '' }: AIOpinionP
       aria-busy={status.kind === 'loading'}
     >
       <header className="flex items-start gap-2.5 mb-2">
-        <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-white text-[#8026FA] shadow-sm">
+        <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-white text-hockia-primary shadow-sm">
           <Sparkles className="h-4 w-4" />
         </span>
         <div className="flex-1 min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-[#8026FA]">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-hockia-primary">
             HOCKIA AI · fit opinion
           </p>
           <p className="text-[10px] text-gray-500 mt-0.5">
@@ -187,7 +187,7 @@ export default function AIOpinionPanel({ candidate, className = '' }: AIOpinionP
             <button
               type="button"
               onClick={() => void regenerate()}
-              className="mt-1 text-xs font-medium text-[#8026FA] hover:text-[#6B20D4]"
+              className="mt-1 text-xs font-medium text-hockia-primary hover:text-[#6B20D4]"
             >
               Try again
             </button>
@@ -217,13 +217,13 @@ export default function AIOpinionPanel({ candidate, className = '' }: AIOpinionP
           </p>
 
           {status.data.citations.length > 0 && (
-            <div className="mt-3 pt-3 border-t border-[#8026FA]/10">
+            <div className="mt-3 pt-3 border-t border-hockia-primary/10">
               <button
                 type="button"
                 onClick={() => setCitationsOpen((open) => !open)}
                 aria-expanded={citationsOpen ? 'true' : 'false'}
                 aria-controls="ai-opinion-citations"
-                className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#8026FA] hover:text-[#6B20D4]"
+                className="inline-flex items-center gap-1 text-[11px] font-semibold text-hockia-primary hover:text-[#6B20D4]"
               >
                 {citationsOpen ? 'Hide evidence' : `Why · ${status.data.citations.length} citation${status.data.citations.length === 1 ? '' : 's'}`}
                 {citationsOpen ? (
@@ -244,7 +244,7 @@ export default function AIOpinionPanel({ candidate, className = '' }: AIOpinionP
                       key={`${c.field}-${i}`}
                       className="text-xs text-gray-700 leading-snug"
                     >
-                      <span className="font-mono text-[10px] text-[#8026FA] mr-1.5">
+                      <span className="font-mono text-[10px] text-hockia-primary mr-1.5">
                         {c.field}
                       </span>
                       {c.claim}
@@ -255,7 +255,7 @@ export default function AIOpinionPanel({ candidate, className = '' }: AIOpinionP
             </div>
           )}
 
-          <footer className="mt-3 pt-2 border-t border-[#8026FA]/10 flex items-center justify-between text-[10px] text-gray-500">
+          <footer className="mt-3 pt-2 border-t border-hockia-primary/10 flex items-center justify-between text-[10px] text-gray-500">
             <span>
               {status.cached ? 'Cached' : 'Fresh'}
               {status.quotaRemaining !== null && !status.cached && (
@@ -280,8 +280,8 @@ export default function AIOpinionPanel({ candidate, className = '' }: AIOpinionP
                     className={[
                       'inline-flex h-5 w-5 items-center justify-center rounded-full transition',
                       rating === 'up'
-                        ? 'bg-[#8026FA]/15 text-[#8026FA]'
-                        : 'text-gray-400 hover:text-[#8026FA] hover:bg-[#8026FA]/10',
+                        ? 'bg-hockia-primary/15 text-hockia-primary'
+                        : 'text-gray-400 hover:text-hockia-primary hover:bg-hockia-primary/10',
                       submitting ? 'opacity-50' : '',
                     ].join(' ')}
                   >
@@ -309,7 +309,7 @@ export default function AIOpinionPanel({ candidate, className = '' }: AIOpinionP
               <button
                 type="button"
                 onClick={handleRegenerate}
-                className="inline-flex items-center gap-1 font-medium text-[#8026FA] hover:text-[#6B20D4]"
+                className="inline-flex items-center gap-1 font-medium text-hockia-primary hover:text-[#6B20D4]"
                 title="Regenerate the opinion (counts against your daily quota if not cached)"
               >
                 <RefreshCcw className="h-3 w-3" />

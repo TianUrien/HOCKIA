@@ -45,7 +45,7 @@ export default function SavedCandidatesPage() {
           <button
             type="button"
             onClick={() => navigate('/signin')}
-            className="px-6 py-3 rounded-lg bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white font-semibold hover:opacity-90"
+            className="px-6 py-3 rounded-lg bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white font-semibold hover:opacity-90"
           >
             Sign in
           </button>
@@ -69,7 +69,7 @@ export default function SavedCandidatesPage() {
 
         <header className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <BookmarkCheck className="w-6 h-6 text-[#8026FA]" />
+            <BookmarkCheck className="w-6 h-6 text-hockia-primary" />
             {noun}
           </h1>
           <p className="text-sm text-gray-600 mt-1">
@@ -118,7 +118,7 @@ function EmptyState({ isRecruiter }: { isRecruiter: boolean }) {
   return (
     <div className="rounded-xl border-2 border-dashed border-gray-300 bg-white p-8 text-center">
       <div className="w-16 h-16 rounded-full bg-purple-50 flex items-center justify-center mx-auto mb-4">
-        <BookmarkCheck className="w-7 h-7 text-[#8026FA]" />
+        <BookmarkCheck className="w-7 h-7 text-hockia-primary" />
       </div>
       <h2 className="text-lg font-semibold text-gray-900 mb-1">
         {isRecruiter ? 'No saved candidates yet' : 'No saved profiles yet'}
@@ -130,7 +130,7 @@ function EmptyState({ isRecruiter }: { isRecruiter: boolean }) {
       </p>
       <Link
         to="/community"
-        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white text-sm font-semibold hover:opacity-90"
+        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white text-sm font-semibold hover:opacity-90"
       >
         Browse Community
       </Link>

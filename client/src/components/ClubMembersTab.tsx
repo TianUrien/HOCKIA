@@ -158,7 +158,7 @@ export default function ClubMembersTab({ profileId, isOwner = false }: ClubMembe
         <button
           type="button"
           onClick={() => setInviteOpen(true)}
-          className="inline-flex items-center gap-1.5 rounded-full bg-[#8026FA] px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-[#6B20D4]"
+          className="inline-flex items-center gap-1.5 rounded-full bg-hockia-primary px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-[#6B20D4]"
           data-testid="invite-members-button"
         >
           <UserPlus className="w-4 h-4" />
@@ -277,7 +277,7 @@ export default function ClubMembersTab({ profileId, isOwner = false }: ClubMembe
             <button
               type="button"
               onClick={() => setInviteOpen(true)}
-              className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-[#8026FA] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#6B20D4]"
+              className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-hockia-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#6B20D4]"
             >
               <UserPlus className="w-4 h-4" />
               Invite members
@@ -347,7 +347,7 @@ export default function ClubMembersTab({ profileId, isOwner = false }: ClubMembe
             type="button"
             onClick={handleLoadMore}
             disabled={loadingMore}
-            className="px-8 py-3 rounded-lg bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+            className="px-8 py-3 rounded-lg bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             {loadingMore ? 'Loading...' : 'Load More'}
           </button>

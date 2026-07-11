@@ -104,7 +104,7 @@ export default function SearchResultsResponse({
               <button
                 type="button"
                 onClick={toggle}
-                className="flex items-center gap-1 w-full justify-center min-h-[44px] px-4 py-2.5 text-xs font-medium text-[#8026FA] hover:bg-[#8026FA]/5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#8026FA]/40"
+                className="flex items-center gap-1 w-full justify-center min-h-[44px] px-4 py-2.5 text-xs font-medium text-hockia-primary hover:bg-hockia-primary/5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-hockia-primary/40"
               >
                 <ChevronDown
                   className={`w-3.5 h-3.5 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`}
@@ -118,7 +118,7 @@ export default function SearchResultsResponse({
                 type="button"
                 onClick={handleLoadMore}
                 disabled={loadingMore}
-                className="flex items-center gap-1.5 w-full justify-center min-h-[44px] px-4 py-2.5 text-xs font-medium text-gray-600 hover:bg-gray-50 hover:text-[#8026FA] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#8026FA]/40 disabled:opacity-60 disabled:cursor-default"
+                className="flex items-center gap-1.5 w-full justify-center min-h-[44px] px-4 py-2.5 text-xs font-medium text-gray-600 hover:bg-gray-50 hover:text-hockia-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-hockia-primary/40 disabled:opacity-60 disabled:cursor-default"
               >
                 {loadingMore ? (
                   <>

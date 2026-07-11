@@ -53,13 +53,13 @@ export default function CannedRedirectCard({ message, cta: explicitCta }: Canned
             mt-3.5 inline-flex items-center gap-2
             min-h-[40px] px-4 py-2
             rounded-full
-            bg-gradient-to-br from-[#8026FA] to-[#924CEC]
+            bg-gradient-to-br from-hockia-primary to-hockia-secondary
             text-white text-[12px] font-semibold tracking-[0.01em]
-            shadow-sm shadow-[#8026FA]/20
-            hover:shadow-md hover:shadow-[#8026FA]/30
+            shadow-sm shadow-hockia-primary/20
+            hover:shadow-md hover:shadow-hockia-primary/30
             active:scale-[0.98] active:translate-y-px
             transition-all duration-150
-            focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8026FA]/40
+            focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/40
           "
         >
           <cta.icon className="w-3.5 h-3.5" aria-hidden="true" />

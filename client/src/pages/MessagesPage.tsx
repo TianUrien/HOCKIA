@@ -1059,7 +1059,7 @@ export default function MessagesPage() {
                 <button
                   type="button"
                   onClick={() => setIsNewMessageModalOpen(true)}
-                  className="inline-flex items-center gap-1.5 h-10 pl-3 pr-3.5 rounded-full bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white text-sm font-semibold hover:opacity-90 transition-opacity shadow-md"
+                  className="inline-flex items-center gap-1.5 h-10 pl-3 pr-3.5 rounded-full bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white text-sm font-semibold hover:opacity-90 transition-opacity shadow-md"
                   aria-label="New message"
                 >
                   <Plus className="w-4 h-4" />
@@ -1114,8 +1114,8 @@ export default function MessagesPage() {
                 </div>
               ) : filteredConversations.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full p-6 text-center">
-                  <div className="w-14 h-14 bg-gradient-to-r from-[#8026FA]/20 to-[#924CEC]/20 rounded-full flex items-center justify-center mb-3">
-                    <MessageCircle className="w-7 h-7 text-[#8026FA]" />
+                  <div className="w-14 h-14 bg-gradient-to-r from-hockia-primary/20 to-hockia-secondary/20 rounded-full flex items-center justify-center mb-3">
+                    <MessageCircle className="w-7 h-7 text-hockia-primary" />
                   </div>
                   <h3 className="text-base font-semibold text-gray-900 mb-1">No messages yet</h3>
                   <p className="text-sm text-gray-500 mb-4">
@@ -1124,7 +1124,7 @@ export default function MessagesPage() {
                   <button
                     type="button"
                     onClick={() => setIsNewMessageModalOpen(true)}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white text-sm font-medium hover:opacity-90 transition-opacity shadow-md"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white text-sm font-medium hover:opacity-90 transition-opacity shadow-md"
                   >
                     <Plus className="w-4 h-4" />
                     New Message

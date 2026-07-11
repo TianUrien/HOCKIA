@@ -61,7 +61,7 @@ export default function TrustBadge({
   // moved off amber to avoid the references-shield collision).
   const variantClasses = hasReferences
     ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
-    : 'bg-[#8026FA]/10 text-[#8026FA] hover:bg-[#8026FA]/15 border border-[#8026FA]/20'
+    : 'bg-hockia-primary/10 text-hockia-primary hover:bg-hockia-primary/15 border border-hockia-primary/20'
 
   // Standardise on "references" as the noun (consistent with the rest of
   // the app) and keep "vouch" as the verb. The empty-owner label is
@@ -100,7 +100,7 @@ export default function TrustBadge({
         aria-label={tooltip}
         className={cn(
           'inline-flex items-center rounded-full font-medium transition-colors',
-          'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8026FA]/40',
+          'focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/40',
           sizing,
           variantClasses,
         )}
@@ -155,7 +155,7 @@ function TrustBadgeInfoButton({ tooltip, size }: { tooltip: string; size: 'sm' |
         aria-label="What does this mean?"
         aria-expanded={open ? 'true' : 'false'}
         title="What does Trusted mean?"
-        className="inline-flex items-center justify-center rounded-full p-0.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8026FA]/40"
+        className="inline-flex items-center justify-center rounded-full p-0.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/40"
       >
         <Info className={iconSize} aria-hidden="true" />
       </button>

@@ -47,7 +47,7 @@ export default function UploadIndicator() {
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-100">
           <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-            <Upload className="w-4 h-4 text-[#8026FA]" />
+            <Upload className="w-4 h-4 text-hockia-primary" />
             <span>{statusLabel}</span>
           </div>
           <button
@@ -114,7 +114,7 @@ function UploadRow({
             <button
               type="button"
               onClick={handleAction}
-              className="p-1 text-gray-400 hover:text-[#8026FA] rounded"
+              className="p-1 text-gray-400 hover:text-hockia-primary rounded"
               aria-label={entry.status === 'uploading' ? 'Pause upload' : 'Resume upload'}
             >
               {entry.status === 'uploading' ? (
@@ -142,7 +142,7 @@ function UploadRow({
         <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
           <div
             className={`h-full rounded-full transition-all duration-300 ${
-              entry.status === 'paused' ? 'bg-amber-400' : 'bg-[#8026FA]'
+              entry.status === 'paused' ? 'bg-amber-400' : 'bg-hockia-primary'
             }`}
             style={{ width: `${entry.progress}%` }}
           />

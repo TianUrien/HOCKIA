@@ -30,17 +30,17 @@ const TIER_STYLE: Record<
 > = {
   pursue: {
     icon: CheckCircle2,
-    iconClass: 'text-[#8026FA]',
-    wrapClass: 'border-[#8026FA]/30 bg-gradient-to-br from-[#8026FA]/[0.06] to-[#924CEC]/[0.04]',
+    iconClass: 'text-hockia-primary',
+    wrapClass: 'border-hockia-primary/30 bg-gradient-to-br from-hockia-primary/[0.06] to-hockia-secondary/[0.04]',
     headlineClass: 'text-[#5b16b8]',
-    barClass: 'bg-[#8026FA]',
+    barClass: 'bg-hockia-primary',
   },
   consider: {
     icon: Eye,
     iconClass: 'text-gray-700',
     wrapClass: 'border-gray-200 bg-gray-50/70',
     headlineClass: 'text-gray-900',
-    barClass: 'bg-[#8026FA]/55',
+    barClass: 'bg-hockia-primary/55',
   },
   longshot: {
     icon: CircleDashed,
@@ -74,7 +74,7 @@ export default function RecruiterVerdictCard({ verdict, className = '', showMatc
         <Icon className={`w-4 h-4 flex-shrink-0 ${style.iconClass}`} aria-hidden="true" />
         <p className={`text-sm font-bold ${style.headlineClass}`}>{verdict.headline}</p>
         {showMatchPercent ? (
-          <span className="ml-auto text-xs font-semibold text-[#8026FA]">
+          <span className="ml-auto text-xs font-semibold text-hockia-primary">
             {matchPct}% <span className="font-normal text-gray-400">{verdict.scoped ? 'for your scope' : 'general fit'}</span>
           </span>
         ) : (
@@ -105,7 +105,7 @@ export default function RecruiterVerdictCard({ verdict, className = '', showMatc
         <ul className="mt-2 space-y-1">
           {verdict.highlights.map((h, i) => (
             <li key={`h-${i}`} className="flex gap-1.5 text-[13px] text-gray-700 leading-snug">
-              <Check className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-[#8026FA]" aria-hidden="true" />
+              <Check className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-hockia-primary" aria-hidden="true" />
               <span>{h}</span>
             </li>
           ))}

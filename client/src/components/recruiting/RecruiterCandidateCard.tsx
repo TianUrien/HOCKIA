@@ -338,7 +338,7 @@ export default function RecruiterCandidateCard({ member, verdict, onPreview, pri
       <button
         type="button"
         onClick={onPreview}
-        className="flex flex-1 flex-col items-center px-2.5 pt-3 pb-2 text-center transition-transform duration-100 active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#8026FA] rounded-t-xl"
+        className="flex flex-1 flex-col items-center px-2.5 pt-3 pb-2 text-center transition-transform duration-100 active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-hockia-primary rounded-t-xl"
         aria-label={ariaLabel}
       >
         {/* ── Avatar (+ online dot for persons) ── */}

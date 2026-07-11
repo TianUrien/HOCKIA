@@ -115,7 +115,7 @@ export default function PublicCommunityView({ profile }: PublicCommunityViewProp
         className="bg-white rounded-2xl border border-gray-200/80 shadow-sm p-5 md:p-6 scroll-mt-20"
       >
         <header className="flex items-center gap-2.5 mb-4">
-          <MessageSquare className="h-5 w-5 text-[#8026FA]" aria-hidden="true" />
+          <MessageSquare className="h-5 w-5 text-hockia-primary" aria-hidden="true" />
           <h2 className="text-base font-semibold text-gray-900">Comments</h2>
           {commentCount !== null && (
             <span className="ml-1 text-sm text-gray-500">({commentCount})</span>
@@ -141,7 +141,7 @@ export default function PublicCommunityView({ profile }: PublicCommunityViewProp
                 : `${rolePrefix}/id/${profile.id}`
               navigate(`${base}/comments`)
             }}
-            className="ml-auto text-sm font-medium text-[#8026FA] hover:text-[#6B20D4]"
+            className="ml-auto text-sm font-medium text-hockia-primary hover:text-[#6B20D4]"
           >
             View all
           </button>
@@ -170,7 +170,7 @@ interface StatProps {
 const ACCENT_CLASSES: Record<StatProps['accent'], { iconBg: string; iconColor: string }> = {
   emerald: { iconBg: 'bg-emerald-50', iconColor: 'text-emerald-600' },
   gray: { iconBg: 'bg-gray-100', iconColor: 'text-gray-500' },
-  purple: { iconBg: 'bg-[#8026FA]/10', iconColor: 'text-[#8026FA]' },
+  purple: { iconBg: 'bg-hockia-primary/10', iconColor: 'text-hockia-primary' },
 }
 
 function Stat({ icon: Icon, label, value, accent }: StatProps) {

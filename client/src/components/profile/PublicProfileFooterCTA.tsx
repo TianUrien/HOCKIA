@@ -18,7 +18,7 @@ export default function PublicProfileFooterCTA() {
       className="mx-auto mt-10 max-w-3xl px-4 pb-10 md:pb-14"
     >
       <div className="rounded-2xl border border-gray-200 bg-white p-6 text-center shadow-sm md:p-8">
-        <p className="text-sm font-semibold uppercase tracking-wide text-[#8026FA]">
+        <p className="text-sm font-semibold uppercase tracking-wide text-hockia-primary">
           Powered by HOCKIA
         </p>
         <h2 className="mt-2 text-lg font-bold text-gray-900 md:text-xl">
@@ -30,7 +30,7 @@ export default function PublicProfileFooterCTA() {
         </p>
         <Link
           to="/signup"
-          className="mt-5 inline-flex items-center justify-center rounded-lg bg-[#8026FA] px-5 py-2.5 text-sm font-medium text-white hover:bg-[#6B20D4]"
+          className="mt-5 inline-flex items-center justify-center rounded-lg bg-hockia-primary px-5 py-2.5 text-sm font-medium text-white hover:bg-[#6B20D4]"
         >
           Sign up
         </Link>

@@ -134,7 +134,7 @@ export default function SearchPage() {
                   onClick={() => handleTabChange(tab.key)}
                   className={`px-4 py-1.5 text-sm font-medium rounded-full whitespace-nowrap transition-colors ${
                     activeTab === tab.key
-                      ? 'bg-[#8026FA] text-white'
+                      ? 'bg-hockia-primary text-white'
                       : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
                   }`}
                 >
@@ -158,7 +158,7 @@ export default function SearchPage() {
           </div>
         ) : isLoading ? (
           <div className="flex items-center justify-center py-16">
-            <Loader2 className="w-6 h-6 animate-spin text-[#8026FA]" />
+            <Loader2 className="w-6 h-6 animate-spin text-hockia-primary" />
           </div>
         ) : results.length === 0 ? (
           <div className="text-center py-16 text-gray-500">
@@ -177,7 +177,7 @@ export default function SearchPage() {
                   type="button"
                   onClick={() => fetchNextPage()}
                   disabled={isFetchingNextPage}
-                  className="px-6 py-2 text-sm font-medium text-[#8026FA] bg-white border border-gray-200 rounded-full hover:bg-gray-50 transition-colors disabled:opacity-50"
+                  className="px-6 py-2 text-sm font-medium text-hockia-primary bg-white border border-gray-200 rounded-full hover:bg-gray-50 transition-colors disabled:opacity-50"
                 >
                   {isFetchingNextPage ? (
                     <Loader2 className="w-4 h-4 animate-spin" />

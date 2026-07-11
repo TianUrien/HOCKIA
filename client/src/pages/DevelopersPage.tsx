@@ -111,7 +111,7 @@ export default function DevelopersPage() {
         </button>
 
         {/* Hero Section */}
-        <div className="bg-gradient-to-br from-[#8026FA] to-[#924CEC] rounded-2xl shadow-lg p-8 md:p-12 mb-8 text-white">
+        <div className="bg-gradient-to-br from-hockia-primary to-hockia-secondary rounded-2xl shadow-lg p-8 md:p-12 mb-8 text-white">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
               <Code2 className="w-6 h-6" />

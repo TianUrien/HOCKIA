@@ -29,7 +29,7 @@ const CATEGORIES: Array<{
 }> = [
   { id: 'bug',       label: 'Something is broken',   description: 'A bug or error',           icon: Bug,           iconColor: 'text-rose-600' },
   { id: 'confusing', label: 'Something is confusing', description: 'Unclear UX or copy',      icon: HelpCircle,    iconColor: 'text-amber-600' },
-  { id: 'idea',      label: 'Idea or feature request', description: 'Something missing',     icon: Sparkles,      iconColor: 'text-[#8026FA]' },
+  { id: 'idea',      label: 'Idea or feature request', description: 'Something missing',     icon: Sparkles,      iconColor: 'text-hockia-primary' },
   { id: 'praise',    label: 'Love it',                description: 'Tell us what works',     icon: Heart,         iconColor: 'text-pink-500' },
   { id: 'other',     label: 'Other',                  description: 'Anything else',          icon: MessageSquare, iconColor: 'text-gray-600' },
 ]
@@ -152,7 +152,7 @@ export default function FeedbackModal({ open, onClose }: FeedbackModalProps) {
             <button
               type="button"
               onClick={handleClose}
-              className="mt-5 inline-flex items-center justify-center min-h-[44px] px-5 rounded-lg bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white text-sm font-semibold shadow-sm hover:opacity-90"
+              className="mt-5 inline-flex items-center justify-center min-h-[44px] px-5 rounded-lg bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white text-sm font-semibold shadow-sm hover:opacity-90"
             >
               Done
             </button>
@@ -178,7 +178,7 @@ export default function FeedbackModal({ open, onClose }: FeedbackModalProps) {
                         className={[
                           'w-full flex items-start gap-3 p-3 rounded-lg border text-left transition-colors min-h-[44px]',
                           selected
-                            ? 'border-[#8026FA] bg-[#8026FA]/[0.04]'
+                            ? 'border-hockia-primary bg-hockia-primary/[0.04]'
                             : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50',
                         ].join(' ')}
                       >
@@ -204,7 +204,7 @@ export default function FeedbackModal({ open, onClose }: FeedbackModalProps) {
                   onChange={(e) => setBody(e.target.value.slice(0, MAX_BODY_LENGTH))}
                   rows={5}
                   placeholder="What happened, what you expected, anything that would help us understand…"
-                  className="mt-1 w-full resize-none rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#8026FA] focus:outline-none focus:ring-1 focus:ring-[#8026FA]/40"
+                  className="mt-1 w-full resize-none rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-hockia-primary focus:outline-none focus:ring-1 focus:ring-hockia-primary/40"
                   data-testid="feedback-body"
                 />
                 <div className="mt-1 flex items-center justify-between text-[11px]">
@@ -228,7 +228,7 @@ export default function FeedbackModal({ open, onClose }: FeedbackModalProps) {
                   type="checkbox"
                   checked={isUrgent}
                   onChange={(e) => setIsUrgent(e.target.checked)}
-                  className="mt-0.5 w-4 h-4 rounded border-gray-300 text-[#8026FA] focus:ring-[#8026FA]/40"
+                  className="mt-0.5 w-4 h-4 rounded border-gray-300 text-hockia-primary focus:ring-hockia-primary/40"
                 />
                 <span>
                   <span className="block text-sm font-medium text-gray-900">
@@ -270,7 +270,7 @@ export default function FeedbackModal({ open, onClose }: FeedbackModalProps) {
                 type="button"
                 onClick={handleSubmit}
                 disabled={!canSubmit}
-                className="min-h-[44px] inline-flex items-center justify-center gap-2 px-5 rounded-lg bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white text-sm font-semibold shadow-sm hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+                className="min-h-[44px] inline-flex items-center justify-center gap-2 px-5 rounded-lg bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white text-sm font-semibold shadow-sm hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {status.kind === 'submitting' ? (
                   <>

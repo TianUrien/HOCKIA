@@ -186,7 +186,7 @@ export default function OpportunityCard({
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); onViewDetails() }}
-                className="line-clamp-2 w-full text-left text-gray-900 transition-colors hover:text-[#8026FA] group-hover:text-[#8026FA] rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8026FA] focus-visible:ring-offset-2"
+                className="line-clamp-2 w-full text-left text-gray-900 transition-colors hover:text-hockia-primary group-hover:text-hockia-primary rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary focus-visible:ring-offset-2"
               >
                 {vacancy.title}
               </button>
@@ -195,7 +195,7 @@ export default function OpportunityCard({
               <button
                 type="button"
                 onClick={handlePublisherClick}
-                className="max-w-full truncate text-[13px] font-semibold text-gray-700 hover:text-[#8026FA]"
+                className="max-w-full truncate text-[13px] font-semibold text-gray-700 hover:text-hockia-primary"
               >
                 {publisherName}
               </button>
@@ -213,7 +213,7 @@ export default function OpportunityCard({
           <button
             type="button"
             onClick={handleWorldClubClick}
-            className="mt-3 flex w-full items-center gap-2.5 rounded-xl border border-gray-100 bg-gray-50 px-3 py-2 text-left transition-colors hover:border-[#8026FA]/30 hover:bg-[#8026FA]/[0.04]"
+            className="mt-3 flex w-full items-center gap-2.5 rounded-xl border border-gray-100 bg-gray-50 px-3 py-2 text-left transition-colors hover:border-hockia-primary/30 hover:bg-hockia-primary/[0.04]"
           >
             <Avatar
               src={worldClub.avatarUrl}
@@ -262,7 +262,7 @@ export default function OpportunityCard({
             {pills.map((pill) => (
               <span
                 key={pill}
-                className="inline-flex items-center rounded-full border border-[#8026FA]/10 bg-[#8026FA]/[0.06] px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#8026FA]"
+                className="inline-flex items-center rounded-full border border-hockia-primary/10 bg-hockia-primary/[0.06] px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-hockia-primary"
               >
                 {pill}
               </span>

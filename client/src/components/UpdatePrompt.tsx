@@ -17,7 +17,7 @@ export default function UpdatePrompt({ onUpdate }: UpdatePromptProps) {
       role="alert"
       aria-live="polite"
     >
-      <div className="bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] shadow-lg">
+      <div className="bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] shadow-lg">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
@@ -29,7 +29,7 @@ export default function UpdatePrompt({ onUpdate }: UpdatePromptProps) {
           </div>
           <button
             onClick={onUpdate}
-            className="flex-shrink-0 px-4 py-1.5 bg-white text-[#8026FA] text-sm font-semibold rounded-full hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#8026FA]"
+            className="flex-shrink-0 px-4 py-1.5 bg-white text-hockia-primary text-sm font-semibold rounded-full hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-hockia-primary"
           >
             Refresh now
           </button>

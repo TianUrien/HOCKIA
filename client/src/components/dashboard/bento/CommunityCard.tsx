@@ -145,12 +145,12 @@ function Tile({ icon: Icon, label, count, loading = false, onClick }: TileProps)
       aria-label={ariaLabel}
       className={cn(
         'flex items-center gap-3 rounded-xl border border-gray-100 bg-gray-50/60 p-3 text-left',
-        'transition-colors hover:bg-[#8026FA]/[0.04] hover:border-[#8026FA]/30',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8026FA]/30',
+        'transition-colors hover:bg-hockia-primary/[0.04] hover:border-hockia-primary/30',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/30',
       )}
     >
       <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white shadow-sm flex-shrink-0">
-        <Icon className="h-4 w-4 text-[#8026FA]" />
+        <Icon className="h-4 w-4 text-hockia-primary" />
       </div>
       <div className="min-w-0 flex-1">
         <p className="text-base font-bold text-gray-900 tabular-nums leading-none">

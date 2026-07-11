@@ -40,7 +40,7 @@ export default function SpecialistSkillsSelect({ value, onChange, label, hint, p
               className={[
                 'px-3 py-1.5 rounded-full text-sm border transition-colors',
                 active
-                  ? 'border-[#8026FA] bg-[#8026FA]/10 text-[#5b16b8] font-medium'
+                  ? 'border-hockia-primary bg-hockia-primary/10 text-[#5b16b8] font-medium'
                   : 'border-gray-300 text-gray-600 hover:border-gray-400',
               ].join(' ')}
             >

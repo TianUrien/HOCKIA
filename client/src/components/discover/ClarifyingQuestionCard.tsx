@@ -32,12 +32,12 @@ export default function ClarifyingQuestionCard({
               inline-flex items-center
               min-h-[36px] px-4 py-2
               rounded-full
-              border border-[#8026FA]/30 bg-[#8026FA]/[0.06]
-              text-[12px] font-semibold text-[#8026FA] tracking-[0.01em]
-              hover:bg-[#8026FA]/10 hover:border-[#8026FA]/50
-              active:scale-[0.98] active:bg-[#8026FA]/20
+              border border-hockia-primary/30 bg-hockia-primary/[0.06]
+              text-[12px] font-semibold text-hockia-primary tracking-[0.01em]
+              hover:bg-hockia-primary/10 hover:border-hockia-primary/50
+              active:scale-[0.98] active:bg-hockia-primary/20
               transition-all duration-150
-              focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8026FA]/40
+              focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/40
             "
           >
             {option.label}

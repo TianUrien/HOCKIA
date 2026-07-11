@@ -94,7 +94,7 @@ export default function MagicLinkForm({ intent, role, variant, onSent, compact =
     const labelColor = variant === 'dark' ? 'text-white' : 'text-gray-900'
     const subColor = variant === 'dark' ? 'text-gray-300' : 'text-gray-600'
     const mutedColor = variant === 'dark' ? 'text-gray-400' : 'text-gray-500'
-    const linkColor = variant === 'dark' ? 'text-[#c084fc] hover:text-[#d8b4fe]' : 'text-[#8026FA] hover:text-[#6B20D4]'
+    const linkColor = variant === 'dark' ? 'text-[#c084fc] hover:text-[#d8b4fe]' : 'text-hockia-primary hover:text-[#6B20D4]'
 
     return (
       <div className={compact ? 'space-y-2' : 'space-y-3'}>
@@ -173,7 +173,7 @@ export default function MagicLinkForm({ intent, role, variant, onSent, compact =
           <button
             type="button"
             onClick={() => navigate('/signup')}
-            className={`font-semibold underline-offset-2 hover:underline ${variant === 'dark' ? 'text-[#c084fc]' : 'text-[#8026FA]'}`}
+            className={`font-semibold underline-offset-2 hover:underline ${variant === 'dark' ? 'text-[#c084fc]' : 'text-hockia-primary'}`}
           >
             Create an account →
           </button>

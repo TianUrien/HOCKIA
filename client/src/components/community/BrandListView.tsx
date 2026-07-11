@@ -126,7 +126,7 @@ export function BrandListView() {
       {hasMore && <div ref={sentinelRef} className="h-1" />}
       {hasMore && (
         <div className="mt-6 flex items-center justify-center">
-          <Loader2 className="w-6 h-6 text-[#8026FA] animate-spin" />
+          <Loader2 className="w-6 h-6 text-hockia-primary animate-spin" />
         </div>
       )}
     </>

@@ -474,7 +474,7 @@ export default function TrustedReferencesSection({
                       <button
                         type="button"
                         onClick={() => navigate('/community')}
-                        className="inline-flex items-center gap-1.5 rounded-full bg-[#8026FA] px-4 py-2 text-sm font-semibold text-white hover:bg-[#924CEC] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8026FA]/40"
+                        className="inline-flex items-center gap-1.5 rounded-full bg-hockia-primary px-4 py-2 text-sm font-semibold text-white hover:bg-hockia-secondary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/40"
                       >
                         <UserPlus className="h-4 w-4" aria-hidden="true" />
                         Find people on HOCKIA

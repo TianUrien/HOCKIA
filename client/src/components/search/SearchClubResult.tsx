@@ -37,7 +37,7 @@ export function SearchClubResult({ result }: SearchClubResultProps) {
         </div>
       </div>
       {result.is_claimed && (
-        <span className="text-[10px] font-medium text-[#8026FA] bg-[#8026FA]/10 px-2 py-0.5 rounded-full flex-shrink-0">
+        <span className="text-[10px] font-medium text-hockia-primary bg-hockia-primary/10 px-2 py-0.5 rounded-full flex-shrink-0">
           On HOCKIA
         </span>
       )}

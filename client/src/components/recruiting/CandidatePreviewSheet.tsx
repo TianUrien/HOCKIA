@@ -382,7 +382,7 @@ export function CandidatePreviewSheet({ member, onClose }: CandidatePreviewSheet
           </div>
 
           {/* ── IDENTITY (purple-tinted hero, big avatar — no flat grey) ── */}
-          <div className="bg-gradient-to-b from-[#8026FA]/[0.07] to-transparent px-5 pt-4 pb-3">
+          <div className="bg-gradient-to-b from-hockia-primary/[0.07] to-transparent px-5 pt-4 pb-3">
             <div className="flex items-start gap-3.5">
               <div className="relative h-20 w-20 flex-shrink-0">
                 <div className="absolute inset-0 overflow-hidden rounded-2xl bg-white ring-1 ring-gray-200 shadow-sm">
@@ -445,7 +445,7 @@ export function CandidatePreviewSheet({ member, onClose }: CandidatePreviewSheet
               <div>
                 {scope && (
                   <div className="mb-1.5 flex items-center gap-1.5 text-[11px] text-gray-500">
-                    <Target className="h-3 w-3 flex-shrink-0 text-[#8026FA]" />
+                    <Target className="h-3 w-3 flex-shrink-0 text-hockia-primary" />
                     <span className="truncate">Evaluated for <span className="font-medium text-gray-700">{scope}</span></span>
                   </div>
                 )}
@@ -515,10 +515,10 @@ export function CandidatePreviewSheet({ member, onClose }: CandidatePreviewSheet
             <div className="rounded-xl border border-gray-200 p-3.5">
               <div className="flex items-center justify-between gap-2">
                 <span className={`text-sm font-semibold ${strength.tone}`}>{strength.tier}</span>
-                <span className="text-sm font-bold tabular-nums text-[#8026FA]">{completeness}%</span>
+                <span className="text-sm font-bold tabular-nums text-hockia-primary">{completeness}%</span>
               </div>
               <div className="relative mt-2 h-1.5 rounded-full bg-gray-200">
-                <div className="h-1.5 rounded-full bg-gradient-to-r from-[#8026FA] to-[#924CEC]" style={{ width: `${completeness}%` }} />
+                <div className="h-1.5 rounded-full bg-gradient-to-r from-hockia-primary to-hockia-secondary" style={{ width: `${completeness}%` }} />
               </div>
               <p className="mt-2 text-xs leading-snug text-gray-600">{strength.why}</p>
             </div>
@@ -560,7 +560,7 @@ export function CandidatePreviewSheet({ member, onClose }: CandidatePreviewSheet
               type="button"
               onClick={handleViewFullProfile}
               disabled={isViewing}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#8026FA] to-[#924CEC] px-4 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90 active:opacity-85 disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-hockia-primary to-hockia-secondary px-4 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90 active:opacity-85 disabled:opacity-50"
             >
               View full profile
               <ChevronRight className="h-4 w-4" />

@@ -77,7 +77,7 @@ export default function CountryMultiSelect({
           {selected.map((c) => (
             <span
               key={c.id}
-              className="inline-flex items-center gap-1 rounded-full bg-[#8026FA]/10 text-[#5b16b8] text-xs font-medium pl-1.5 pr-1 py-0.5"
+              className="inline-flex items-center gap-1 rounded-full bg-hockia-primary/10 text-[#5b16b8] text-xs font-medium pl-1.5 pr-1 py-0.5"
             >
               <Flag code={c.code} countryName={c.name} size="sm" />
               {c.name}
@@ -86,7 +86,7 @@ export default function CountryMultiSelect({
                 onClick={() => remove(c.id)}
                 disabled={disabled}
                 aria-label={`Remove ${c.name}`}
-                className="ml-0.5 rounded-full hover:bg-[#8026FA]/20 p-0.5"
+                className="ml-0.5 rounded-full hover:bg-hockia-primary/20 p-0.5"
               >
                 <X className="w-3 h-3" />
               </button>
@@ -104,7 +104,7 @@ export default function CountryMultiSelect({
           aria-labelledby={label ? labelId : undefined}
           className={cn(
             'flex w-full items-center justify-between rounded-lg border border-gray-300 bg-white px-3 py-2 text-left text-sm',
-            'focus:outline-none focus:ring-2 focus:ring-[#8026FA]/40',
+            'focus:outline-none focus:ring-2 focus:ring-hockia-primary/40',
             disabled && 'opacity-50 cursor-not-allowed',
           )}
         >

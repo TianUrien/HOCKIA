@@ -125,8 +125,8 @@ function ActionItem({ label, icon: Icon, ariaLabel, onClick, active = false, dis
         // Icon stacked above the label on every width (the 2-up community
         // cards stay narrow), giving each button a ≥44px square tap target.
         'flex min-h-[52px] flex-1 flex-col items-center justify-center gap-1 py-2.5 text-[10.5px] font-medium transition-colors',
-        'focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#8026FA]/40',
-        active ? 'text-[#8026FA]' : 'text-gray-600 hover:text-[#8026FA] hover:bg-[#8026FA]/5',
+        'focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-hockia-primary/40',
+        active ? 'text-hockia-primary' : 'text-gray-600 hover:text-hockia-primary hover:bg-hockia-primary/5',
         disabled && !active ? 'opacity-50 cursor-default hover:bg-transparent hover:text-gray-600' : '',
       ].join(' ')}
     >

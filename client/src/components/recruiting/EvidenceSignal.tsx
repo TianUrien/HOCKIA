@@ -104,7 +104,7 @@ export default function EvidenceSignal({ result, checklist = [], className = '' 
         className={[
           'inline-flex items-center gap-1 self-start rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700',
           expandable
-            ? 'cursor-pointer hover:bg-slate-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8026FA]/40'
+            ? 'cursor-pointer hover:bg-slate-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/40'
             : '',
         ].join(' ')}
         title={result.reasons.length > 0 ? `${tier} — ${result.reasons.join(' · ')}` : tier}

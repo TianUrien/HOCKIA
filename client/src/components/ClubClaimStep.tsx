@@ -394,7 +394,7 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
           <div key={s} className="flex items-center">
             <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
               step === s 
-                ? 'bg-[#8026FA] text-white' 
+                ? 'bg-hockia-primary text-white' 
                 : i < currentStepIndex
                   ? 'bg-green-500 text-white'
                   : 'bg-gray-200 text-gray-500'
@@ -434,7 +434,7 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
                 <button
                   key={country.country_id ?? 0}
                   onClick={() => handleCountrySelect(country)}
-                  className="w-full flex items-center gap-4 p-4 bg-white border border-gray-200 rounded-xl hover:border-[#8026FA] hover:bg-[#8026FA]/5 transition-all"
+                  className="w-full flex items-center gap-4 p-4 bg-white border border-gray-200 rounded-xl hover:border-hockia-primary hover:bg-hockia-primary/5 transition-all"
                 >
                   <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-200 flex-shrink-0">
                     <img
@@ -504,7 +504,7 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
                 <button
                   key={region.id}
                   onClick={() => handleRegionSelect(region)}
-                  className="flex items-center gap-3 p-4 bg-white border border-gray-200 rounded-xl hover:border-[#8026FA] hover:bg-[#8026FA]/5 transition-all text-left"
+                  className="flex items-center gap-3 p-4 bg-white border border-gray-200 rounded-xl hover:border-hockia-primary hover:bg-hockia-primary/5 transition-all text-left"
                 >
                   <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center">
                     <MapPin className="w-5 h-5 text-blue-500" />
@@ -518,7 +518,7 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
           <div className="pt-2">
             <button
               onClick={handleRegionSkip}
-              className="flex items-center gap-3 w-full p-4 bg-white border-2 border-dashed border-gray-300 rounded-xl hover:border-[#8026FA] hover:bg-[#8026FA]/5 transition-all text-left"
+              className="flex items-center gap-3 w-full p-4 bg-white border-2 border-dashed border-gray-300 rounded-xl hover:border-hockia-primary hover:bg-hockia-primary/5 transition-all text-left"
             >
               <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
                 <Plus className="w-5 h-5 text-gray-600" />
@@ -569,7 +569,7 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
               placeholder="Search clubs..."
               value={clubSearch}
               onChange={(e) => setClubSearch(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#8026FA] focus:border-transparent"
+              className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-hockia-primary focus:border-transparent"
               autoComplete="off"
               enterKeyHint="search"
               autoCapitalize="none"
@@ -591,7 +591,7 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
                   className={`w-full flex items-center gap-3 p-4 bg-white border rounded-xl transition-all text-left ${
                     club.is_claimed 
                       ? 'border-gray-100 opacity-50 cursor-not-allowed' 
-                      : 'border-gray-200 hover:border-[#8026FA] hover:bg-[#8026FA]/5'
+                      : 'border-gray-200 hover:border-hockia-primary hover:bg-hockia-primary/5'
                   }`}
                 >
                   <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
@@ -611,7 +611,7 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
           {/* Create new club button */}
           <button
             onClick={handleCreateNew}
-            className="w-full flex items-center justify-center gap-2 p-4 border-2 border-dashed border-gray-300 rounded-xl text-gray-600 hover:border-[#8026FA] hover:text-[#8026FA] transition-all"
+            className="w-full flex items-center justify-center gap-2 p-4 border-2 border-dashed border-gray-300 rounded-xl text-gray-600 hover:border-hockia-primary hover:text-hockia-primary transition-all"
           >
             <Plus className="w-5 h-5" />
             <span>My club is not listed - create new</span>
@@ -665,7 +665,7 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
                 placeholder="Enter your club name"
                 value={newClubName}
                 onChange={(e) => setNewClubName(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#8026FA] focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-hockia-primary focus:border-transparent"
                 required
               />
             </div>
@@ -698,7 +698,7 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
                   aria-labelledby="womens-league-label"
                   value={womenLeagueId ?? ''}
                   onChange={(e) => setWomenLeagueId(e.target.value ? parseInt(e.target.value) : null)}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#8026FA] focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-hockia-primary focus:border-transparent"
                 >
                   <option value="">None / Not applicable</option>
                   {leagues.map(league => (
@@ -721,7 +721,7 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
                   aria-labelledby="mens-league-label"
                   value={menLeagueId ?? ''}
                   onChange={(e) => setMenLeagueId(e.target.value ? parseInt(e.target.value) : null)}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#8026FA] focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-hockia-primary focus:border-transparent"
                 >
                   <option value="">None / Not applicable</option>
                   {leagues.map(league => (
@@ -756,7 +756,7 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
             <Button
               onClick={() => setShowClaimConfirm(true)}
               disabled={loading || (isCreatingNew && !newClubName.trim())}
-              className="flex-1 bg-gradient-to-r from-[#8026FA] to-[#924CEC]"
+              className="flex-1 bg-gradient-to-r from-hockia-primary to-hockia-secondary"
             >
               {loading ? 'Processing...' : isCreatingNew ? 'Create & Claim Club' : 'Claim Club'}
             </Button>

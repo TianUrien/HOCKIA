@@ -56,7 +56,7 @@ export function SearchBar({ autoFocus = false, initialQuery = '', onQueryChange 
         value={query}
         onChange={(e) => handleChange(e.target.value)}
         placeholder="Search posts, people, clubs..."
-        className="w-full pl-10 pr-10 py-2.5 text-sm bg-gray-100 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-[#8026FA]/30 focus:border-[#8026FA] focus:bg-white transition-colors"
+        className="w-full pl-10 pr-10 py-2.5 text-sm bg-gray-100 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-hockia-primary/30 focus:border-hockia-primary focus:bg-white transition-colors"
         autoComplete="off"
         enterKeyHint="search"
         autoCapitalize="none"

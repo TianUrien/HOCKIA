@@ -712,7 +712,7 @@ export default function GalleryManager({
           <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#8026FA] to-[#924CEC] px-6 py-3 font-medium text-white transition-opacity hover:opacity-90 sm:w-auto"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-hockia-primary to-hockia-secondary px-6 py-3 font-medium text-white transition-opacity hover:opacity-90 sm:w-auto"
               type="button"
             >
               <Upload className="h-5 w-5" />
@@ -722,7 +722,7 @@ export default function GalleryManager({
               <button
                 onClick={() => videoInputRef.current?.click()}
                 disabled={videoBusy}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-[#8026FA] px-6 py-3 font-medium text-[#8026FA] transition-colors hover:bg-[#f5f3ff] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-hockia-primary px-6 py-3 font-medium text-hockia-primary transition-colors hover:bg-[#f5f3ff] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                 type="button"
               >
                 <Film className="h-5 w-5" />
@@ -771,7 +771,7 @@ export default function GalleryManager({
             <>
               <div className="mb-2 flex items-center justify-between gap-2">
                 <span className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                  <Loader2 className="h-4 w-4 animate-spin text-[#8026FA]" />
+                  <Loader2 className="h-4 w-4 animate-spin text-hockia-primary" />
                   {videoPhase === 'creating' && 'Preparing upload…'}
                   {videoPhase === 'uploading' && 'Uploading video…'}
                   {videoPhase === 'processing' && 'Processing video — this can take a minute.'}
@@ -789,7 +789,7 @@ export default function GalleryManager({
                 <progress
                   value={videoPhase === 'processing' ? 100 : videoProgress}
                   max={100}
-                  className="progress-bar h-2 w-full rounded-full text-[#8026FA]"
+                  className="progress-bar h-2 w-full rounded-full text-hockia-primary"
                 />
               </div>
             </>
@@ -837,7 +837,7 @@ export default function GalleryManager({
           onDragLeave={handleUploadDragLeave}
           onDrop={handleUploadDrop}
           className={`cursor-pointer rounded-xl border-2 border-dashed p-12 text-center transition-colors ${
-            isUploadDragActive ? 'border-[#924CEC] bg-[#f5f3ff]' : 'border-gray-300 hover:border-[#924CEC]'
+            isUploadDragActive ? 'border-hockia-secondary bg-[#f5f3ff]' : 'border-gray-300 hover:border-hockia-secondary'
           }`}
           onClick={() => fileInputRef.current?.click()}
           onKeyDown={(event) => {
@@ -858,7 +858,7 @@ export default function GalleryManager({
           </p>
           {canAddVideo && (
             <p className="mt-2 text-sm text-gray-500">
-              Videos: MP4, MOV or WebM • Up to 3 minutes — use <span className="font-medium text-[#8026FA]">Add Video</span>
+              Videos: MP4, MOV or WebM • Up to 3 minutes — use <span className="font-medium text-hockia-primary">Add Video</span>
             </p>
           )}
         </div>
@@ -983,7 +983,7 @@ export default function GalleryManager({
                       </button>
                       <button
                         onClick={cancelEdit}
-                        className="flex-1 rounded-lg border border-[#924CEC] px-3 py-2 text-sm font-medium text-[#924CEC] transition-colors hover:bg-[#f5f3ff] disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none sm:min-w-[120px]"
+                        className="flex-1 rounded-lg border border-hockia-secondary px-3 py-2 text-sm font-medium text-hockia-secondary transition-colors hover:bg-[#f5f3ff] disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none sm:min-w-[120px]"
                         disabled={savingCaptionId === item.id}
                         type="button"
                       >
@@ -1001,7 +1001,7 @@ export default function GalleryManager({
                         <div className="inline-flex overflow-hidden rounded-lg border border-gray-200 bg-white">
                           <button
                             onClick={() => moveMedia(item.id, 'up')}
-                            className="tap-target px-2 py-1 text-gray-500 transition-colors hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#924CEC] focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
+                            className="tap-target px-2 py-1 text-gray-500 transition-colors hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-secondary focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
                             disabled={index === 0}
                             type="button"
                           >
@@ -1010,7 +1010,7 @@ export default function GalleryManager({
                           </button>
                           <button
                             onClick={() => moveMedia(item.id, 'down')}
-                            className="tap-target px-2 py-1 text-gray-500 transition-colors hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#924CEC] focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
+                            className="tap-target px-2 py-1 text-gray-500 transition-colors hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-secondary focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
                             disabled={index === media.length - 1}
                             type="button"
                           >
@@ -1044,7 +1044,7 @@ export default function GalleryManager({
               onDragLeave={handleUploadDragLeave}
               onDrop={handleUploadDrop}
               className={`flex aspect-[3/4] flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed text-center transition-colors ${
-                isUploadDragActive ? 'border-[#924CEC] bg-[#f5f3ff] text-[#924CEC]' : 'border-gray-300 text-gray-500 hover:border-[#924CEC]'
+                isUploadDragActive ? 'border-hockia-secondary bg-[#f5f3ff] text-hockia-secondary' : 'border-gray-300 text-gray-500 hover:border-hockia-secondary'
               }`}
             >
               <Upload className="h-8 w-8" />
@@ -1083,7 +1083,7 @@ export default function GalleryManager({
           <div className="space-y-3 text-sm text-gray-600">
             <p>Deleting this media removes it from every profile surface.</p>
             {pendingDelete.type === 'video' ? (
-              <div className="flex h-48 w-full items-center justify-center rounded-lg bg-gradient-to-br from-[#1a1030] via-[#2a1a4a] to-[#8026FA]/40">
+              <div className="flex h-48 w-full items-center justify-center rounded-lg bg-gradient-to-br from-[#1a1030] via-[#2a1a4a] to-hockia-primary/40">
                 <Film className="h-10 w-10 text-white/80" />
               </div>
             ) : (
@@ -1177,7 +1177,7 @@ function VideoTile({ item }: { item: NormalizedMedia }) {
   }
 
   return (
-    <div ref={tileRef} className="relative flex h-full w-full items-center justify-center bg-gradient-to-br from-[#1a1030] via-[#2a1a4a] to-[#8026FA]/40 transition-transform duration-300 group-hover:scale-105">
+    <div ref={tileRef} className="relative flex h-full w-full items-center justify-center bg-gradient-to-br from-[#1a1030] via-[#2a1a4a] to-hockia-primary/40 transition-transform duration-300 group-hover:scale-105">
       {thumb && (
         <>
           <img
@@ -1194,7 +1194,7 @@ function VideoTile({ item }: { item: NormalizedMedia }) {
         </>
       )}
       <span className="relative flex h-14 w-14 items-center justify-center rounded-full bg-white/95 shadow-lg">
-        <Play className="ml-0.5 h-6 w-6 text-[#8026FA]" fill="currentColor" />
+        <Play className="ml-0.5 h-6 w-6 text-hockia-primary" fill="currentColor" />
       </span>
       <span className="absolute bottom-2 left-2 flex items-center gap-1 rounded bg-black/60 px-1.5 py-0.5 text-[11px] font-medium text-white">
         <Film className="h-3 w-3" />

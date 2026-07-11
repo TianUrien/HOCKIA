@@ -52,7 +52,7 @@ export default function AgeGate({ children }: { children: React.ReactNode }) {
           </p>
           <p className="text-sm text-gray-600 mt-3 leading-relaxed">
             Questions, or want your data removed? Write to{' '}
-            <a href="mailto:team@inhockia.com" className="text-[#8026FA] font-medium">
+            <a href="mailto:team@inhockia.com" className="text-hockia-primary font-medium">
               team@inhockia.com
             </a>{' '}
             — we answer every message.
@@ -124,7 +124,7 @@ export default function AgeGate({ children }: { children: React.ReactNode }) {
             type="button"
             onClick={handleConfirm}
             disabled={saving}
-            className="mt-5 w-full py-3 bg-[#8026FA] text-white font-semibold rounded-xl hover:bg-[#6b1fd4] transition-colors disabled:opacity-50"
+            className="mt-5 w-full py-3 bg-hockia-primary text-white font-semibold rounded-xl hover:bg-[#6b1fd4] transition-colors disabled:opacity-50"
           >
             {saving ? 'Saving…' : 'Confirm'}
           </button>
@@ -158,7 +158,7 @@ export default function AgeGate({ children }: { children: React.ReactNode }) {
                     logger.error('[AgeGate] attestation failed', err)
                   }
                 }}
-                className="flex-1 py-2 bg-[#8026FA] text-white text-sm font-semibold rounded-xl hover:bg-[#6b1fd4] transition-colors"
+                className="flex-1 py-2 bg-hockia-primary text-white text-sm font-semibold rounded-xl hover:bg-[#6b1fd4] transition-colors"
               >
                 I confirm
               </button>

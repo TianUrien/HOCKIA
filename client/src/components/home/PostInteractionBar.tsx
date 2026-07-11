@@ -82,12 +82,12 @@ export function PostInteractionBar({
           disabled={!user || isLiking}
           className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium transition-colors ${
             hasLiked
-              ? 'text-[#8026FA]'
+              ? 'text-hockia-primary'
               : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
           } disabled:opacity-50`}
         >
           <Heart
-            className={`w-4.5 h-4.5 ${hasLiked ? 'fill-[#8026FA]' : ''}`}
+            className={`w-4.5 h-4.5 ${hasLiked ? 'fill-hockia-primary' : ''}`}
           />
           <span>Like</span>
         </button>
@@ -97,7 +97,7 @@ export function PostInteractionBar({
           onClick={onToggleComments}
           className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium transition-colors ${
             showComments
-              ? 'text-[#8026FA]'
+              ? 'text-hockia-primary'
               : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
           }`}
         >

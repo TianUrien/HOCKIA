@@ -219,13 +219,13 @@ export default function DiscoverPage() {
         >
           <ChevronLeft className="w-5 h-5 text-gray-700" />
         </button>
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#8026FA] to-[#924CEC] flex items-center justify-center">
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-hockia-primary to-hockia-secondary flex items-center justify-center">
           <Sparkles className="w-4 h-4 text-white" />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
             <h1 className="text-[15px] font-semibold text-gray-900 leading-tight">Hockia AI</h1>
-            <span className="px-1.5 py-px rounded-full bg-[#8026FA]/10 text-[#8026FA] text-[9px] font-bold uppercase tracking-wide leading-tight">
+            <span className="px-1.5 py-px rounded-full bg-hockia-primary/10 text-hockia-primary text-[9px] font-bold uppercase tracking-wide leading-tight">
               Beta
             </span>
           </div>
@@ -235,7 +235,7 @@ export default function DiscoverPage() {
           <button
             type="button"
             onClick={clearChat}
-            className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-gray-500 hover:text-[#8026FA] hover:bg-[#8026FA]/5 rounded-full transition-colors"
+            className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-gray-500 hover:text-hockia-primary hover:bg-hockia-primary/5 rounded-full transition-colors"
           >
             <RotateCcw className="w-3 h-3" />
             New
@@ -251,12 +251,12 @@ export default function DiscoverPage() {
             // the example buttons so a slow first-frame doesn't let the user
             // click an unrelated example mid-seed.
             <div className="flex flex-col items-center justify-center min-h-[60vh]">
-              <Loader2 className="w-8 h-8 text-[#8026FA] animate-spin mb-3" />
+              <Loader2 className="w-8 h-8 text-hockia-primary animate-spin mb-3" />
               <p className="text-sm text-gray-500">Working on your question…</p>
             </div>
           ) : !hasMessages ? (
             <div className="flex flex-col items-center justify-center min-h-[60vh]">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#8026FA] to-[#924CEC] flex items-center justify-center mb-4 shadow-lg shadow-[#8026FA]/20">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-hockia-primary to-hockia-secondary flex items-center justify-center mb-4 shadow-lg shadow-hockia-primary/20">
                 <Sparkles className="w-7 h-7 text-white" />
               </div>
               <h2 className="text-2xl font-bold text-gray-900 mb-4">
@@ -280,7 +280,7 @@ export default function DiscoverPage() {
                     key={example}
                     data-testid="discover-example-query"
                     onClick={() => handleExampleClick(example)}
-                    className="w-full text-left p-3 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 hover:border-[#8026FA] hover:bg-[#8026FA]/5 transition-colors"
+                    className="w-full text-left p-3 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 hover:border-hockia-primary hover:bg-hockia-primary/5 transition-colors"
                   >
                     <span className="text-gray-400 mr-1">&ldquo;</span>
                     {example}
@@ -311,7 +311,7 @@ export default function DiscoverPage() {
               placeholder={hasMessages ? 'Follow up or ask something new…' : exampleQueries[placeholderIndex]}
               rows={1}
               disabled={isPending}
-              className="flex-1 resize-none rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 pr-12 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#8026FA]/30 focus:border-[#8026FA]/50 focus:bg-white transition-all disabled:opacity-60 min-h-[44px] max-h-[120px]"
+              className="flex-1 resize-none rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 pr-12 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-hockia-primary/30 focus:border-hockia-primary/50 focus:bg-white transition-all disabled:opacity-60 min-h-[44px] max-h-[120px]"
               enterKeyHint="send"
               autoCapitalize="sentences"
             />
@@ -319,7 +319,7 @@ export default function DiscoverPage() {
               type="button"
               onClick={handleSend}
               disabled={isPending || input.trim().length < 1}
-              className="absolute right-2 bottom-1.5 w-9 h-9 flex items-center justify-center rounded-full bg-gradient-to-br from-[#8026FA] to-[#924CEC] text-white shadow-sm disabled:opacity-40 disabled:shadow-none hover:shadow-md transition-all"
+              className="absolute right-2 bottom-1.5 w-9 h-9 flex items-center justify-center rounded-full bg-gradient-to-br from-hockia-primary to-hockia-secondary text-white shadow-sm disabled:opacity-40 disabled:shadow-none hover:shadow-md transition-all"
             >
               {isPending ? (
                 <Loader2 className="w-4 h-4 animate-spin" />

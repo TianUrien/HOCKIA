@@ -108,7 +108,7 @@ export default function RecruitmentVisibilityWidget({
       data-testid="recruitment-visibility-widget"
     >
       <header className="flex items-start gap-3">
-        <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-[#8026FA]/10 text-[#8026FA]">
+        <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-hockia-primary/10 text-hockia-primary">
           <Eye className="h-5 w-5" aria-hidden="true" />
         </span>
         <div className="min-w-0 flex-1">
@@ -356,7 +356,7 @@ function VisibilityRow({ item, onAction }: VisibilityRowProps) {
         <button
           type="button"
           onClick={onAction}
-          className="flex-shrink-0 inline-flex items-center rounded-md border border-[#8026FA]/30 bg-white px-2.5 py-1 text-xs font-medium text-[#8026FA] hover:bg-[#8026FA]/5 transition-colors"
+          className="flex-shrink-0 inline-flex items-center rounded-md border border-hockia-primary/30 bg-white px-2.5 py-1 text-xs font-medium text-hockia-primary hover:bg-hockia-primary/5 transition-colors"
         >
           {item.actionLabel}
         </button>

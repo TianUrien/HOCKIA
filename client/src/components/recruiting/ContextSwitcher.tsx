@@ -95,9 +95,9 @@ export default function ContextSwitcher({ className = '' }: ContextSwitcherProps
           'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full min-w-0',
           'text-xs font-medium border transition active:scale-[0.97]',
           isEmpty
-            ? 'border-dashed border-gray-300 text-gray-600 hover:border-[#8026FA]/50 hover:text-[#8026FA] hover:bg-[#8026FA]/5'
-            : 'border-[#8026FA]/30 bg-[#8026FA]/5 text-[#8026FA] hover:bg-[#8026FA]/10',
-          'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8026FA]/40',
+            ? 'border-dashed border-gray-300 text-gray-600 hover:border-hockia-primary/50 hover:text-hockia-primary hover:bg-hockia-primary/5'
+            : 'border-hockia-primary/30 bg-hockia-primary/5 text-hockia-primary hover:bg-hockia-primary/10',
+          'focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/40',
           className,
         ].join(' ')}
         aria-label={isEmpty ? ariaEmpty : `Recruiting context: ${summary}. Tap to change or clear.`}

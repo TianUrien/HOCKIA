@@ -108,10 +108,10 @@ export default function Avatar({
         // background so the role-tinted SVG isn't sandwiched on top of it.
         // Otherwise keep the legacy purple block as the bg for the initials
         // / "?" fallback (preserves prior look for callers without a role).
-        !showRolePlaceholder && 'bg-gradient-to-br from-[#8026FA] to-[#924CEC]',
+        !showRolePlaceholder && 'bg-gradient-to-br from-hockia-primary to-hockia-secondary',
         canPreview &&
           (previewInteraction === 'auto'
-            ? 'cursor-zoom-in focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-[#8026FA]'
+            ? 'cursor-zoom-in focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-hockia-primary'
             : 'cursor-zoom-in'),
         sizeClasses[size],
         className

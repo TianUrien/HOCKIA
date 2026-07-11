@@ -170,7 +170,7 @@ export default function WorldClubPage() {
             <button
               type="button"
               onClick={() => window.location.reload()}
-              className="rounded-lg bg-[#8026FA] px-4 py-2 text-sm font-medium text-white hover:bg-[#6B20D4]"
+              className="rounded-lg bg-hockia-primary px-4 py-2 text-sm font-medium text-white hover:bg-[#6B20D4]"
             >
               Try again
             </button>
@@ -196,7 +196,7 @@ export default function WorldClubPage() {
           <p className="max-w-md text-sm text-gray-500">
             This club may have been removed from the directory. Browse the World to find clubs by country and province.
           </p>
-          <Link to="/world" className="text-sm font-medium text-[#8026FA] hover:text-[#6B20D4]">
+          <Link to="/world" className="text-sm font-medium text-hockia-primary hover:text-[#6B20D4]">
             Go to World
           </Link>
         </div>
@@ -254,7 +254,7 @@ export default function WorldClubPage() {
                     <span className="inline-flex items-center gap-1.5">
                       <MapPin className="h-4 w-4 text-gray-400" />
                       {province?.name && (
-                        <Link to={provinceHref} className="hover:text-[#8026FA]">{province.name}</Link>
+                        <Link to={provinceHref} className="hover:text-hockia-primary">{province.name}</Link>
                       )}
                       {province?.name && country && <span>·</span>}
                       {country?.name && (
@@ -295,7 +295,7 @@ export default function WorldClubPage() {
                   </div>
                   <Link
                     to={claimedProfilePath}
-                    className="inline-flex flex-shrink-0 items-center gap-1.5 rounded-lg bg-[#8026FA] px-4 py-2 text-sm font-medium text-white hover:bg-[#6B20D4]"
+                    className="inline-flex flex-shrink-0 items-center gap-1.5 rounded-lg bg-hockia-primary px-4 py-2 text-sm font-medium text-white hover:bg-[#6B20D4]"
                   >
                     View profile
                     <ExternalLink className="h-3.5 w-3.5" />

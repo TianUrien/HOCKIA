@@ -72,7 +72,7 @@ export function QuestionCard({ question }: QuestionCardProps) {
           <button
             type="button"
             onClick={handleAnswerClick}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#8026FA] bg-[#8026FA]/5 hover:bg-[#8026FA]/10 rounded-full transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-hockia-primary bg-hockia-primary/5 hover:bg-hockia-primary/10 rounded-full transition-colors"
           >
             <PenLine className="w-3.5 h-3.5" />
             Answer

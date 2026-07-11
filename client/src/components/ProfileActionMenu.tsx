@@ -282,7 +282,7 @@ export default function ProfileActionMenu({ targetId, targetName }: ProfileActio
                 type="button"
                 onClick={handleUnblock}
                 disabled={loadingBlock}
-                className="flex-1 py-2.5 bg-[#8026FA] text-white rounded-lg text-sm font-medium hover:bg-[#6b1fd4] transition-colors disabled:opacity-50"
+                className="flex-1 py-2.5 bg-hockia-primary text-white rounded-lg text-sm font-medium hover:bg-[#6b1fd4] transition-colors disabled:opacity-50"
               >
                 {loadingBlock ? 'Unblocking...' : 'Unblock'}
               </button>

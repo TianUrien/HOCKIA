@@ -94,7 +94,7 @@ function CompactClubRow({ result, onSelect }: { result: SearchClubResult; onSele
         </div>
       </div>
       {result.is_claimed && (
-        <span className="text-[10px] font-medium text-[#8026FA] bg-[#8026FA]/10 px-2 py-0.5 rounded-full flex-shrink-0">
+        <span className="text-[10px] font-medium text-hockia-primary bg-hockia-primary/10 px-2 py-0.5 rounded-full flex-shrink-0">
           On HOCKIA
         </span>
       )}
@@ -370,7 +370,7 @@ export function SearchOverlay() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search players, clubs, posts..."
-                className="w-full pl-9 pr-9 py-2 text-sm bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-[#8026FA]/30 focus:bg-white focus:border-[#8026FA] border border-transparent transition-colors"
+                className="w-full pl-9 pr-9 py-2 text-sm bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-hockia-primary/30 focus:bg-white focus:border-hockia-primary border border-transparent transition-colors"
                 autoComplete="off"
                 autoFocus
                 enterKeyHint="search"
@@ -408,7 +408,7 @@ export function SearchOverlay() {
                     onClick={() => setActiveTab(tab.key)}
                     className={`px-3.5 py-1.5 text-xs font-medium rounded-full whitespace-nowrap transition-colors ${
                       activeTab === tab.key
-                        ? 'bg-[#8026FA] text-white'
+                        ? 'bg-hockia-primary text-white'
                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                     }`}
                   >
@@ -430,7 +430,7 @@ export function SearchOverlay() {
               // ── RESULTS state ──
               isLoading ? (
                 <div className="flex items-center justify-center py-16">
-                  <Loader2 className="w-6 h-6 animate-spin text-[#8026FA]" />
+                  <Loader2 className="w-6 h-6 animate-spin text-hockia-primary" />
                 </div>
               ) : results.length === 0 ? (
                 <div className="text-center py-16 text-gray-500">
@@ -446,7 +446,7 @@ export function SearchOverlay() {
                   <button
                     type="button"
                     onClick={handleSeeAllResults}
-                    className="w-full px-4 py-3.5 text-sm font-medium text-[#8026FA] hover:bg-gray-50 transition-colors text-center"
+                    className="w-full px-4 py-3.5 text-sm font-medium text-hockia-primary hover:bg-gray-50 transition-colors text-center"
                   >
                     See all results for &ldquo;{debouncedQuery}&rdquo;
                   </button>

@@ -169,7 +169,7 @@ export default function MobileBottomNav() {
                 onClick={() => handleNavigate(item.path)}
                 className={`flex flex-col items-center justify-center min-w-[48px] min-h-[44px] py-1 px-2 rounded-xl transition-all duration-200 ${
                   active 
-                    ? 'text-[#8026FA]' 
+                    ? 'text-hockia-primary' 
                     : 'text-gray-600 active:bg-gray-100'
                 }`}
                 aria-label={item.label}
@@ -187,7 +187,7 @@ export default function MobileBottomNav() {
                     <NotificationBadge count={opportunityCount} />
                   )}
                   {active && (
-                    <div className="absolute inset-0 bg-gradient-to-r from-[#8026FA] to-[#924CEC] opacity-20 rounded-full blur-md" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-hockia-primary to-hockia-secondary opacity-20 rounded-full blur-md" />
                   )}
                 </div>
                 {/* Labels hidden below 360px (iPhone SE 1st-gen and narrower)
@@ -228,7 +228,7 @@ export default function MobileBottomNav() {
               aria-current={location.pathname.startsWith('/dashboard') ? 'page' : undefined}
               className={`flex flex-col items-center justify-center min-w-[48px] min-h-[44px] py-1 px-2 rounded-xl transition-all duration-200 ${
                 location.pathname.startsWith('/dashboard')
-                  ? 'text-[#8026FA]'
+                  ? 'text-hockia-primary'
                   : 'text-gray-600 active:bg-gray-100'
               }`}
             >
@@ -256,7 +256,7 @@ export default function MobileBottomNav() {
                   // Dashboard slot is the same height (was ~4px taller).
                   className={`!w-6 !h-6 ${
                     location.pathname.startsWith('/dashboard')
-                      ? 'ring-2 ring-[#8026FA] ring-offset-2'
+                      ? 'ring-2 ring-hockia-primary ring-offset-2'
                       : ''
                   }`}
                 />
@@ -291,9 +291,9 @@ export default function MobileBottomNav() {
         tabIndex={hideFab ? -1 : 0}
         className={`lg:hidden fixed right-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-50
                    w-12 h-12 rounded-full
-                   bg-gradient-to-br from-[#8026FA] to-[#924CEC]
+                   bg-gradient-to-br from-hockia-primary to-hockia-secondary
                    flex items-center justify-center
-                   shadow-lg shadow-[#8026FA]/40 ring-2 ring-white
+                   shadow-lg shadow-hockia-primary/40 ring-2 ring-white
                    transition-all duration-300 ease-out
                    ${hideFab
                      ? 'translate-y-24 opacity-0 pointer-events-none'

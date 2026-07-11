@@ -41,7 +41,7 @@ export default function SocialLinksInput({ value, onChange, error }: SocialLinks
                 value={value[key] || ''}
                 onChange={(e) => handleChange(key, e.target.value)}
                 placeholder={placeholder}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8026FA] focus:border-transparent"
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-hockia-primary focus:border-transparent"
                 aria-label={`${label} URL`}
               />
             </div>

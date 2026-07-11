@@ -51,7 +51,7 @@ export default function RecommendationResponse({
               key={i}
               type="button"
               onClick={() => onAction(a)}
-              className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium text-[#8026FA] bg-[#8026FA]/5 hover:bg-[#8026FA]/10 transition-colors"
+              className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium text-hockia-primary bg-hockia-primary/5 hover:bg-hockia-primary/10 transition-colors"
             >
               {a.label}
             </button>

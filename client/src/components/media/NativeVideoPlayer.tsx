@@ -185,13 +185,13 @@ export default function NativeVideoPlayer({
             />
           ) : null}
           <span
-            className="absolute inset-0 bg-gradient-to-br from-[#1a1030] via-[#2a1a4a] to-[#8026FA]/40"
+            className="absolute inset-0 bg-gradient-to-br from-[#1a1030] via-[#2a1a4a] to-hockia-primary/40"
             aria-hidden="true"
             style={signedThumb ? { background: 'rgba(0,0,0,0.30)' } : undefined}
           />
           {state === 'loading' ? (
             <span className="relative flex h-14 w-14 items-center justify-center rounded-full bg-white/95 shadow-lg">
-              <Loader2 className="h-6 w-6 animate-spin text-[#8026FA]" />
+              <Loader2 className="h-6 w-6 animate-spin text-hockia-primary" />
             </span>
           ) : state === 'error' ? (
             <>
@@ -201,7 +201,7 @@ export default function NativeVideoPlayer({
           ) : (
             <>
               <span className="relative flex h-14 w-14 items-center justify-center rounded-full bg-white/95 shadow-lg transition-transform group-hover:scale-105 group-active:scale-95">
-                <Play className="ml-0.5 h-6 w-6 fill-[#8026FA] text-[#8026FA]" />
+                <Play className="ml-0.5 h-6 w-6 fill-hockia-primary text-hockia-primary" />
               </span>
               {title && <span className="relative px-4 text-center text-sm font-semibold">{title}</span>}
               {duration && (

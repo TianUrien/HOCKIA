@@ -381,8 +381,8 @@ export default function CommunityPage() {
               context. Without one we never show fit/match language, so tell
               the recruiter how to turn it on. Recruiter-only, no-context. */}
           {isRecruiterViewer && !scopedRole && (
-            <div className="mb-4 flex items-start gap-2 rounded-xl border border-[#8026FA]/15 bg-[#8026FA]/[0.04] px-3.5 py-2.5 text-xs leading-snug text-gray-600">
-              <Sparkles className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#8026FA]" aria-hidden="true" />
+            <div className="mb-4 flex items-start gap-2 rounded-xl border border-hockia-primary/15 bg-hockia-primary/[0.04] px-3.5 py-2.5 text-xs leading-snug text-gray-600">
+              <Sparkles className="mt-0.5 h-4 w-4 flex-shrink-0 text-hockia-primary" aria-hidden="true" />
               <span>
                 Add a recruiting context to see <span className="font-semibold text-gray-800">Recruiter Match</span> ranking.
                 Until then, profiles are shown by completeness and activity.
@@ -610,7 +610,7 @@ export default function CommunityPage() {
                     value={sort}
                     onChange={(e) => setSort(e.target.value as SortOption)}
                     title={sort === 'newest' ? 'Sorted by most-recent join date' : sort === 'evidence' ? 'Sorted by strongest verifiable evidence first' : 'Sorted by profile completeness, highest first'}
-                    className="text-xs font-semibold text-[#8026FA] bg-transparent border-0 focus:outline-none focus:ring-0 pr-1 cursor-pointer"
+                    className="text-xs font-semibold text-hockia-primary bg-transparent border-0 focus:outline-none focus:ring-0 pr-1 cursor-pointer"
                   >
                     <option value="newest">Newest members</option>
                     <option value="completeness">Profile completeness</option>
@@ -626,7 +626,7 @@ export default function CommunityPage() {
                   the active recruiting search, with a one-tap escape to
                   widen back to everyone (without clearing the scope). */}
               {scopedRole && (
-                <div className="mb-3 flex items-center justify-between gap-3 rounded-xl border border-[#8026FA]/20 bg-[#8026FA]/[0.04] px-4 py-2.5">
+                <div className="mb-3 flex items-center justify-between gap-3 rounded-xl border border-hockia-primary/20 bg-hockia-primary/[0.04] px-4 py-2.5">
                   <p className="min-w-0 text-xs text-gray-700">
                     {/* Keyed so the banner copy crossfades when toggling between
                         scoped and everyone, instead of snapping. */}
@@ -643,7 +643,7 @@ export default function CommunityPage() {
                   <button
                     type="button"
                     onClick={() => setShowEveryone((v) => !v)}
-                    className="flex-shrink-0 whitespace-nowrap text-xs font-semibold text-[#8026FA] transition active:scale-95 hover:underline"
+                    className="flex-shrink-0 whitespace-nowrap text-xs font-semibold text-hockia-primary transition active:scale-95 hover:underline"
                   >
                     {scopeReshaping ? 'Show everyone' : `Show ${scopedRole === 'coach' ? 'coaches' : 'players'} only`}
                   </button>

@@ -9,13 +9,14 @@ import {
   Legend,
 } from 'recharts'
 import type { RetentionCohort } from '../types'
+import { HOCKIA_PRIMARY } from '@/lib/brandTokens'
 
 interface RetentionCurveChartProps {
   cohorts: RetentionCohort[]
   loading?: boolean
 }
 
-const COHORT_COLORS = ['#8026FA', '#3b82f6', '#10b981']
+const COHORT_COLORS = [HOCKIA_PRIMARY, '#3b82f6', '#10b981']
 
 export function RetentionCurveChart({ cohorts, loading }: RetentionCurveChartProps) {
   if (loading) {

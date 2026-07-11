@@ -44,7 +44,7 @@ export default function ResendVerificationButton({ email }: ResendVerificationBu
             ? 'bg-green-100 text-green-700 cursor-not-allowed'
             : isLoading
             ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-            : 'bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white hover:opacity-90'
+            : 'bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white hover:opacity-90'
         }`}
       >
         {isLoading ? (

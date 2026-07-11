@@ -327,7 +327,7 @@ export default function Terms() {
                 <span>📧</span>
                 <a
                   href="mailto:team@inhockia.com"
-                  className="text-[#8026FA] hover:text-[#924CEC] transition-colors"
+                  className="text-hockia-primary hover:text-hockia-secondary transition-colors"
                 >
                   team@inhockia.com
                 </a>

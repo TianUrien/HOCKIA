@@ -209,7 +209,7 @@ export default function ApplicationTimeline({ opportunityId }: ApplicationTimeli
 
   const nodes: TimelineNode[] = []
   if (appliedAt) {
-    nodes.push({ key: 'applied', icon: Send, label: 'You applied', date: appliedAt, dotClass: 'bg-[#8026FA]' })
+    nodes.push({ key: 'applied', icon: Send, label: 'You applied', date: appliedAt, dotClass: 'bg-hockia-primary' })
   }
   if (firstViewedAt) {
     nodes.push({ key: 'viewed', icon: Eye, label: 'The club viewed your application', date: firstViewedAt, dotClass: 'bg-sky-400' })
@@ -260,7 +260,7 @@ export default function ApplicationTimeline({ opportunityId }: ApplicationTimeli
                 {node.subtext && <p className="mt-1 text-xs text-gray-500">{node.subtext}</p>}
                 {node.message && (
                   <p className="mt-1.5 flex gap-1.5 rounded-lg bg-white p-2.5 text-xs leading-relaxed text-gray-600 ring-1 ring-gray-100">
-                    <Sparkles className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-[#8026FA]" />
+                    <Sparkles className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-hockia-primary" />
                     <span>{node.message}</span>
                   </p>
                 )}

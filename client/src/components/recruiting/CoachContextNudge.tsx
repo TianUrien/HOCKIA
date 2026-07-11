@@ -82,12 +82,12 @@ export default function CoachContextNudge({ className = '' }: CoachContextNudgeP
     <>
       <div
         className={[
-          'flex items-start gap-3 rounded-xl border border-[#8026FA]/20 bg-gradient-to-r from-[#8026FA]/[0.04] to-[#924CEC]/[0.04] p-3 sm:p-3.5',
+          'flex items-start gap-3 rounded-xl border border-hockia-primary/20 bg-gradient-to-r from-hockia-primary/[0.04] to-hockia-secondary/[0.04] p-3 sm:p-3.5',
           className,
         ].join(' ')}
         data-testid="coach-context-nudge"
       >
-        <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-white text-[#8026FA] shadow-sm">
+        <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-white text-hockia-primary shadow-sm">
           <Target className="h-4 w-4" />
         </span>
         <div className="flex-1 min-w-0">
@@ -100,7 +100,7 @@ export default function CoachContextNudge({ className = '' }: CoachContextNudgeP
           <button
             type="button"
             onClick={() => setSheetOpen(true)}
-            className="mt-2 inline-flex items-center gap-1 rounded-md bg-[#8026FA] px-2.5 py-1 text-xs font-semibold text-white hover:bg-[#6B20D4] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8026FA]/40"
+            className="mt-2 inline-flex items-center gap-1 rounded-md bg-hockia-primary px-2.5 py-1 text-xs font-semibold text-white hover:bg-[#6B20D4] focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/40"
           >
             Set scope
           </button>

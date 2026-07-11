@@ -17,6 +17,7 @@ import type { AppRatingsMetrics, AppRatingsListPage, AppRatingRow } from '../api
 import { logger } from '@/lib/logger'
 import { formatAdminDate } from '../utils/formatDate'
 import { getRoleBadgeClasses } from '@/lib/roleColors'
+import { HOCKIA_PRIMARY } from '@/lib/brandTokens'
 
 type DaysFilter = 7 | 30 | 90
 const PAGE_SIZE = 25
@@ -156,7 +157,7 @@ export function AdminAppRatings() {
                   <XAxis dataKey="rating" tick={{ fontSize: 11, fill: '#6B7280' }} tickFormatter={(r) => `${r}★`} />
                   <YAxis tick={{ fontSize: 11, fill: '#6B7280' }} allowDecimals={false} />
                   <Tooltip contentStyle={{ borderRadius: '0.5rem', fontSize: '12px' }} />
-                  <Bar dataKey="count" fill="#8026FA" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="count" fill={HOCKIA_PRIMARY} radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

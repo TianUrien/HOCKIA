@@ -329,7 +329,7 @@ export default function ApplicantsList() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-[#8026FA] mb-4"></div>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-hockia-primary mb-4"></div>
           <p className="text-gray-600">Loading applicants...</p>
         </div>
       </div>
@@ -346,7 +346,7 @@ export default function ApplicantsList() {
           <button
             type="button"
             onClick={() => navigate('/dashboard/profile')}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white rounded-lg hover:opacity-90 transition-opacity"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white rounded-lg hover:opacity-90 transition-opacity"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Dashboard
@@ -395,7 +395,7 @@ export default function ApplicantsList() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search by name, location, nationality..."
-                  className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-8 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#8026FA] focus:outline-none focus:ring-1 focus:ring-[#8026FA]"
+                  className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-8 text-sm text-gray-900 placeholder:text-gray-400 focus:border-hockia-primary focus:outline-none focus:ring-1 focus:ring-hockia-primary"
                 />
                 {searchQuery && (
                   <button
@@ -413,7 +413,7 @@ export default function ApplicantsList() {
                   aria-label="Filter by position"
                   value={positionFilter}
                   onChange={(e) => setPositionFilter(e.target.value)}
-                  className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-[#8026FA] focus:outline-none focus:ring-1 focus:ring-[#8026FA]"
+                  className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-hockia-primary focus:outline-none focus:ring-1 focus:ring-hockia-primary"
                 >
                   <option value="">All positions</option>
                   {availablePositions.map((pos) => (
@@ -452,7 +452,7 @@ export default function ApplicantsList() {
             <button
               type="button"
               onClick={() => { setSearchQuery(''); setPositionFilter('') }}
-              className="mt-3 text-sm font-medium text-[#8026FA] hover:underline"
+              className="mt-3 text-sm font-medium text-hockia-primary hover:underline"
             >
               Clear filters
             </button>

@@ -32,7 +32,7 @@ export function CommunityModeSwitcher({ mode }: CommunityModeSwitcherProps) {
         onClick={() => handleModeChange('people')}
         className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-200 min-w-[100px] ${
           mode === 'people'
-            ? 'bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white shadow-md'
+            ? 'bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white shadow-md'
             : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
         }`}
         aria-pressed={mode === 'people' ? 'true' : 'false'}
@@ -43,7 +43,7 @@ export function CommunityModeSwitcher({ mode }: CommunityModeSwitcherProps) {
         onClick={() => handleModeChange('questions')}
         className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-200 min-w-[100px] ${
           mode === 'questions'
-            ? 'bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white shadow-md'
+            ? 'bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white shadow-md'
             : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
         }`}
         aria-pressed={mode === 'questions' ? 'true' : 'false'}

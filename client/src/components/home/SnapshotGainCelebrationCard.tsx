@@ -130,7 +130,7 @@ export function SnapshotGainCelebrationCard({
 
       <div className="flex items-start gap-3 pr-6">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-purple-100">
-          <Sparkles className="w-5 h-5 text-[#8026FA]" aria-hidden="true" />
+          <Sparkles className="w-5 h-5 text-hockia-primary" aria-hidden="true" />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-gray-900">{copy.title}</p>
@@ -138,7 +138,7 @@ export function SnapshotGainCelebrationCard({
           <button
             type="button"
             onClick={handleView}
-            className="mt-2 inline-flex items-center px-3 py-1.5 text-xs font-medium text-white bg-gradient-to-r from-[#8026FA] to-[#924CEC] rounded-lg hover:opacity-90 transition-opacity"
+            className="mt-2 inline-flex items-center px-3 py-1.5 text-xs font-medium text-white bg-gradient-to-r from-hockia-primary to-hockia-secondary rounded-lg hover:opacity-90 transition-opacity"
           >
             View snapshot
           </button>

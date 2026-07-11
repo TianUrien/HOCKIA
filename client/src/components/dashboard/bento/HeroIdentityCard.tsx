@@ -138,7 +138,7 @@ export default function HeroIdentityCard({
               type="button"
               onClick={onEdit}
               aria-label="Change profile photo"
-              className="absolute -bottom-0.5 -right-0.5 flex h-7 w-7 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-gray-200 text-[#8026FA] hover:bg-gray-50 transition-colors"
+              className="absolute -bottom-0.5 -right-0.5 flex h-7 w-7 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-gray-200 text-hockia-primary hover:bg-gray-50 transition-colors"
             >
               <Camera className="h-3.5 w-3.5" />
             </button>
@@ -227,7 +227,7 @@ export default function HeroIdentityCard({
                   type="button"
                   onClick={onMessage}
                   disabled={sendingMessage}
-                  className="flex-1 justify-center min-w-0 whitespace-nowrap inline-flex h-11 items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:text-[#8026FA] disabled:opacity-50"
+                  className="flex-1 justify-center min-w-0 whitespace-nowrap inline-flex h-11 items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:text-hockia-primary disabled:opacity-50"
                 >
                   {sendingMessage ? (
                     <>
@@ -247,12 +247,12 @@ export default function HeroIdentityCard({
                   type="button"
                   onClick={() => void savedState.toggle()}
                   disabled={savedState.mutating}
-                  className="inline-flex h-11 items-center gap-1.5 whitespace-nowrap rounded-lg border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:text-[#8026FA] disabled:opacity-50"
+                  className="inline-flex h-11 items-center gap-1.5 whitespace-nowrap rounded-lg border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:text-hockia-primary disabled:opacity-50"
                   title={savedState.isSaved ? 'Saved — tap to remove' : 'Save for later'}
                 >
                   {savedState.isSaved ? (
                     <>
-                      <BookmarkCheck className="w-4 h-4 fill-[#8026FA] text-[#8026FA]" />
+                      <BookmarkCheck className="w-4 h-4 fill-hockia-primary text-hockia-primary" />
                       Saved
                     </>
                   ) : (
@@ -407,7 +407,7 @@ export default function HeroIdentityCard({
               <MetaRow>
                 <a
                   href={`mailto:${publicContact.displayEmail}`}
-                  className="inline-flex items-center gap-1.5 hover:text-[#8026FA] transition-colors"
+                  className="inline-flex items-center gap-1.5 hover:text-hockia-primary transition-colors"
                 >
                   <Mail className="w-4 h-4 text-gray-400" />
                   <span>{publicContact.displayEmail}</span>
@@ -445,7 +445,7 @@ export default function HeroIdentityCard({
               </>
             )}
             {isRecruiterMode && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-[#8026FA]/10 px-2.5 py-1 text-[11px] font-semibold text-[#8026FA]">
+              <span className="inline-flex items-center gap-1 rounded-full bg-hockia-primary/10 px-2.5 py-1 text-[11px] font-semibold text-hockia-primary">
                 <Users className="h-3 w-3" />
                 Recruiting players
               </span>
@@ -507,11 +507,11 @@ function CredibilityStat({ icon: Icon, label, count, onClick, testId }: Credibil
       aria-label={ariaLabel}
       className={cn(
         'group inline-flex items-center gap-1.5 whitespace-nowrap text-sm transition-colors',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8026FA]/30 rounded',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/30 rounded',
         onClick ? 'cursor-pointer' : 'cursor-default',
       )}
     >
-      <Icon className="h-4 w-4 text-[#8026FA]" aria-hidden="true" />
+      <Icon className="h-4 w-4 text-hockia-primary" aria-hidden="true" />
       <span className="text-gray-600">{label}</span>
       <span className="font-bold text-gray-900 tabular-nums">{count}</span>
       {onClick && (

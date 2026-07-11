@@ -1,4 +1,5 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
+import { HOCKIA_PRIMARY } from '@/lib/brandTokens'
 
 interface TemplateBreakdown {
   template_key: string
@@ -55,7 +56,7 @@ export function EmailTemplateBreakdownChart({ data, loading }: EmailTemplateBrea
             contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb', fontSize: '13px' }}
           />
           <Legend wrapperStyle={{ fontSize: '12px' }} />
-          <Bar dataKey="sent" name="Sent" fill="#8026FA" radius={[0, 4, 4, 0]} />
+          <Bar dataKey="sent" name="Sent" fill={HOCKIA_PRIMARY} radius={[0, 4, 4, 0]} />
           <Bar dataKey="opened" name="Opened" fill="#3b82f6" radius={[0, 4, 4, 0]} />
           <Bar dataKey="clicked" name="Clicked" fill="#10b981" radius={[0, 4, 4, 0]} />
         </BarChart>

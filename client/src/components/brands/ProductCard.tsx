@@ -9,6 +9,7 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
 import { ExternalLink, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import { getImageUrl } from '@/lib/imageUrl'
+import { useImpressionOnce, recordProductView } from '@/lib/homeInstrumentation'
 import type { BrandProduct } from '@/hooks/useBrandProducts'
 
 interface ProductCardProps {
@@ -29,6 +30,13 @@ export function ProductCard({
   const scrollRef = useRef<HTMLDivElement>(null)
   const [currentSlide, setCurrentSlide] = useState(0)
   const [showMenu, setShowMenu] = useState(false)
+
+  // product_view (Home redesign §4): once per product per session, viewport-
+  // gated. Feeds the Brand reach module — owners viewing their own products
+  // are not "reach", so skip them.
+  const impressionRef = useImpressionOnce(() => {
+    if (!isOwner) recordProductView(product.id, product.brand_id)
+  })
 
   const images = product.images?.length
     ? [...product.images].sort((a, b) => a.order - b.order)
@@ -60,7 +68,10 @@ export function ProductCard({
   }, [showMenu])
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+    <div
+      ref={impressionRef}
+      className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+    >
       {/* Image carousel */}
       {images.length > 0 && (
         <div className="relative">

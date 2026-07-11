@@ -122,7 +122,7 @@ export default function DashboardCard({
         'transition-all duration-150',
         interactive
           ? 'cursor-pointer hover:shadow-md hover:border-gray-300 ' +
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8026FA]/40 focus-visible:ring-offset-2'
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/40 focus-visible:ring-offset-2'
           : 'hover:shadow-md',
         pressed && 'scale-[0.98]',
         fullWidth && 'md:col-span-2',
@@ -130,8 +130,8 @@ export default function DashboardCard({
       )}
     >
       <header className="flex items-start gap-3 mb-4">
-        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-[#8026FA]/10">
-          <Icon className="h-5 w-5 text-[#8026FA]" />
+        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-hockia-primary/10">
+          <Icon className="h-5 w-5 text-hockia-primary" />
         </div>
         <div className="min-w-0 flex-1">
           <h3 className="text-base font-semibold text-gray-900">{title}</h3>
@@ -152,7 +152,7 @@ export default function DashboardCard({
             // affordance and animates on card hover. tabIndex=-1 so keyboard users
             // get a single stop (the card) rather than a redundant one.
             tabIndex={-1}
-            className="inline-flex items-center gap-1 text-sm font-medium text-[#8026FA] transition-colors group-hover:text-[#6B20D4]"
+            className="inline-flex items-center gap-1 text-sm font-medium text-hockia-primary transition-colors group-hover:text-[#6B20D4]"
           >
             {ctaLabel}
             <ChevronRight

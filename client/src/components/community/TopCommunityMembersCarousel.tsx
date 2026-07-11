@@ -628,7 +628,7 @@ export function TopCommunityMembersCarousel({
           <button
             type="button"
             onClick={onViewAll}
-            className="flex items-center gap-0.5 text-sm font-semibold text-[#8026FA] hover:text-[#6B20D4] flex-shrink-0"
+            className="flex items-center gap-0.5 text-sm font-semibold text-hockia-primary hover:text-[#6B20D4] flex-shrink-0"
           >
             View all
             <ChevronRight className="h-4 w-4" aria-hidden="true" />

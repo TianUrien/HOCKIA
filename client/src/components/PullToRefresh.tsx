@@ -102,7 +102,7 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
             }}
           >
             <Loader2
-              className={`w-4 h-4 text-[#8026FA] ${isRefreshing ? 'animate-spin' : ''}`}
+              className={`w-4 h-4 text-hockia-primary ${isRefreshing ? 'animate-spin' : ''}`}
             />
           </div>
         </div>

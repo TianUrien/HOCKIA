@@ -101,7 +101,7 @@ export function QuestionsListView() {
         </div>
         <button
           onClick={handleAskQuestionClick}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white font-medium hover:opacity-90 transition-opacity shadow-md whitespace-nowrap"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white font-medium hover:opacity-90 transition-opacity shadow-md whitespace-nowrap"
         >
           <Plus className="w-5 h-5" />
           Ask a Question
@@ -209,7 +209,7 @@ export function QuestionsListView() {
             </p>
             <button
               onClick={handleAskQuestionClick}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white font-medium hover:opacity-90 transition-opacity"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white font-medium hover:opacity-90 transition-opacity"
             >
               <Plus className="w-5 h-5" />
               Ask a Question
@@ -229,7 +229,7 @@ export function QuestionsListView() {
           {hasMore && <div ref={sentinelRef} className="h-1" />}
           {hasMore && (
             <div className="flex justify-center py-6">
-              <Loader2 className="w-6 h-6 text-[#8026FA] animate-spin" />
+              <Loader2 className="w-6 h-6 text-hockia-primary animate-spin" />
             </div>
           )}
         </>

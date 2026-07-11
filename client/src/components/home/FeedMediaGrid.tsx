@@ -40,7 +40,7 @@ function MediaItem({
       <button
         type="button"
         aria-label={`Play video — ${alt}`}
-        className={`relative overflow-hidden cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8026FA] ${className}`}
+        className={`relative overflow-hidden cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary ${className}`}
         onClick={onClick}
       >
         {item.thumb_url ? (
@@ -48,7 +48,7 @@ function MediaItem({
         ) : (
           // Cloudflare reels store no poster (the signed poster is minted at
           // playback), so show the branded tile rather than a black box.
-          <div className="w-full h-full bg-gradient-to-br from-[#1a1030] via-[#2a1a4a] to-[#8026FA]/40" />
+          <div className="w-full h-full bg-gradient-to-br from-[#1a1030] via-[#2a1a4a] to-hockia-primary/40" />
         )}
         <div className="absolute inset-0 flex items-center justify-center bg-black/20">
           <div className="w-12 h-12 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center">
@@ -63,7 +63,7 @@ function MediaItem({
     <button
       type="button"
       aria-label={`View image — ${alt}`}
-      className={`relative overflow-hidden cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8026FA] ${className}`}
+      className={`relative overflow-hidden cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary ${className}`}
       onClick={onClick}
     >
       {lqip && !imgLoaded && (

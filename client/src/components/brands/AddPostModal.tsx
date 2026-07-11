@@ -287,7 +287,7 @@ export function AddPostModal({
             <button
               type="submit"
               disabled={isSubmitting || isUploading}
-              className="w-full py-2.5 px-4 bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white rounded-lg font-medium text-sm hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full py-2.5 px-4 bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white rounded-lg font-medium text-sm hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
               {isSubmitting ? 'Posting...' : isEdit ? 'Save Changes' : 'Publish Post'}

@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils'
+import { HOCKIA_PRIMARY, HOCKIA_SECONDARY } from '@/lib/brandTokens'
 
 /**
  * CompletionArc — half-circle progress arc for the Hero card.
@@ -87,8 +88,8 @@ export default function CompletionArc({
         )}
         <defs>
           <linearGradient id="completion-arc-gradient" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#8026FA" />
-            <stop offset="100%" stopColor="#924CEC" />
+            <stop offset="0%" stopColor={HOCKIA_PRIMARY} />
+            <stop offset="100%" stopColor={HOCKIA_SECONDARY} />
           </linearGradient>
         </defs>
       </svg>
@@ -97,7 +98,7 @@ export default function CompletionArc({
         {loading ? (
           <div className="mx-auto h-6 w-12 rounded-md bg-gray-200 animate-pulse" aria-hidden="true" />
         ) : (
-          <div className="text-2xl font-bold text-[#8026FA] tabular-nums leading-none">
+          <div className="text-2xl font-bold text-hockia-primary tabular-nums leading-none">
             {pct}%
           </div>
         )}

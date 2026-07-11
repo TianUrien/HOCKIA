@@ -87,10 +87,10 @@ export default function ShortlistDetailPage() {
 
         <header className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <BookmarkCheck className="w-6 h-6 text-[#8026FA]" />
+            <BookmarkCheck className="w-6 h-6 text-hockia-primary" />
             {listName ?? 'Shortlist'}
             {isDefault && (
-              <span className="inline-flex items-center gap-0.5 text-[10px] uppercase font-bold tracking-wider text-[#8026FA] bg-[#8026FA]/10 rounded-full px-2 py-0.5 ml-1">
+              <span className="inline-flex items-center gap-0.5 text-[10px] uppercase font-bold tracking-wider text-hockia-primary bg-hockia-primary/10 rounded-full px-2 py-0.5 ml-1">
                 <Star className="w-3 h-3 fill-current" />
                 Default
               </span>
@@ -202,7 +202,7 @@ function ShortlistItemRow({
             <button
               type="button"
               onClick={onOpen}
-              className="text-sm font-semibold text-gray-900 hover:text-[#8026FA] truncate text-left"
+              className="text-sm font-semibold text-gray-900 hover:text-hockia-primary truncate text-left"
             >
               {p.full_name}
             </button>
@@ -256,7 +256,7 @@ function ShortlistItemRow({
             onBlur={commitNote}
             rows={2}
             placeholder="Add a private note…"
-            className="w-full text-xs px-2.5 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#8026FA]/30 focus:border-[#8026FA] focus:outline-none resize-none"
+            className="w-full text-xs px-2.5 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-hockia-primary/30 focus:border-hockia-primary focus:outline-none resize-none"
           />
           {savingNote && (
             <p className="text-[10px] text-gray-400 mt-0.5">Saving…</p>
@@ -267,7 +267,7 @@ function ShortlistItemRow({
           <button
             type="button"
             onClick={onOpen}
-            className="p-1.5 rounded-md text-gray-400 hover:text-[#8026FA] hover:bg-[#8026FA]/10"
+            className="p-1.5 rounded-md text-gray-400 hover:text-hockia-primary hover:bg-hockia-primary/10"
             aria-label="Open profile"
             title="Open profile"
           >
@@ -276,7 +276,7 @@ function ShortlistItemRow({
           <button
             type="button"
             onClick={() => setMoveMenuOpen((v) => !v)}
-            className="p-1.5 rounded-md text-gray-400 hover:text-[#8026FA] hover:bg-[#8026FA]/10"
+            className="p-1.5 rounded-md text-gray-400 hover:text-hockia-primary hover:bg-hockia-primary/10"
             aria-label="Move to another shortlist"
             title="Move to…"
           >
@@ -314,7 +314,7 @@ function EmptyState() {
       </p>
       <Link
         to="/community"
-        className="inline-flex items-center px-4 py-2 rounded-lg bg-[#8026FA] text-white text-sm font-semibold hover:bg-[#6b1de0]"
+        className="inline-flex items-center px-4 py-2 rounded-lg bg-hockia-primary text-white text-sm font-semibold hover:bg-[#6b1de0]"
       >
         Browse Community
       </Link>

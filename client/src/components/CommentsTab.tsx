@@ -479,7 +479,7 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
             <p className="text-sm text-gray-600">{commentsSubtitleFor(profileRole)}</p>
           </div>
           <div className="inline-flex items-center gap-2 rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-700">
-            <MessageSquare className="h-4 w-4 text-[#8026FA]" />
+            <MessageSquare className="h-4 w-4 text-hockia-primary" />
             {comments.length} {comments.length === 1 ? 'comment' : 'comments'}
           </div>
         </div>
@@ -489,7 +489,7 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
         !existingComment && (
           <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
             <div className="flex items-center gap-3 mb-4">
-              <div className="bg-[#f5f3ff] text-[#8026FA] rounded-full p-2">
+              <div className="bg-[#f5f3ff] text-hockia-primary rounded-full p-2">
                 <MessageSquarePlus className="h-4 w-4" />
               </div>
               <div>
@@ -516,7 +516,7 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
                   placeholder={composerPlaceholderFor(profileRole)}
                   autoCapitalize="sentences"
                   spellCheck
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 focus:border-[#8026FA] focus:ring-[#8026FA]"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 focus:border-hockia-primary focus:ring-hockia-primary"
                 />
                 <div className="mt-1 flex justify-between text-xs text-gray-500">
                   <span>Min {MIN_LENGTH} characters</span>
@@ -531,8 +531,8 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
                   <label
                     key={option.value}
                     className={cn(
-                      'cursor-pointer rounded-xl border px-4 py-3 text-sm shadow-sm transition hover:border-[#8026FA] hover:shadow-md',
-                      composerRating === option.value ? 'border-[#8026FA] bg-[#f5f3ff] text-[#8026FA]' : 'border-gray-200 bg-white text-gray-700'
+                      'cursor-pointer rounded-xl border px-4 py-3 text-sm shadow-sm transition hover:border-hockia-primary hover:shadow-md',
+                      composerRating === option.value ? 'border-hockia-primary bg-[#f5f3ff] text-hockia-primary' : 'border-gray-200 bg-white text-gray-700'
                     )}
                   >
                     <input
@@ -556,7 +556,7 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
                 <button
                   type="submit"
                   disabled={creating}
-                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#8026FA] to-[#924CEC] px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-purple-500/25 transition disabled:opacity-60"
+                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-hockia-primary to-hockia-secondary px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-purple-500/25 transition disabled:opacity-60"
                 >
                   {creating ? 'Posting...' : 'Post Comment'}
                 </button>
@@ -575,7 +575,7 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
               <button
                 type="button"
                 onClick={() => setShowRequestFeedback(true)}
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white px-4 py-2 text-sm font-semibold shadow-sm hover:opacity-90 transition-opacity whitespace-nowrap flex-shrink-0"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white px-4 py-2 text-sm font-semibold shadow-sm hover:opacity-90 transition-opacity whitespace-nowrap flex-shrink-0"
               >
                 <Share2 className="h-4 w-4" />
                 Ask for feedback
@@ -655,7 +655,7 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
                         rows={4}
                         autoCapitalize="sentences"
                         spellCheck
-                        className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 focus:border-[#8026FA] focus:ring-[#8026FA]"
+                        className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 focus:border-hockia-primary focus:ring-hockia-primary"
                       />
                       <div className="flex justify-between text-xs text-gray-500">
                         <span>Min {MIN_LENGTH} characters</span>
@@ -667,8 +667,8 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
                           <label
                             key={option.value}
                             className={cn(
-                              'cursor-pointer rounded-xl border px-4 py-3 text-sm shadow-sm transition hover:border-[#8026FA] hover:shadow-md',
-                              editRating === option.value ? 'border-[#8026FA] bg-[#f5f3ff] text-[#8026FA]' : 'border-gray-200 bg-white text-gray-700'
+                              'cursor-pointer rounded-xl border px-4 py-3 text-sm shadow-sm transition hover:border-hockia-primary hover:shadow-md',
+                              editRating === option.value ? 'border-hockia-primary bg-[#f5f3ff] text-hockia-primary' : 'border-gray-200 bg-white text-gray-700'
                             )}
                           >
                             <input
@@ -696,7 +696,7 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
                         <button
                           type="submit"
                           disabled={editing}
-                          className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-[#8026FA] to-[#924CEC] px-4 py-2 text-sm font-semibold text-white shadow disabled:opacity-60"
+                          className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-hockia-primary to-hockia-secondary px-4 py-2 text-sm font-semibold text-white shadow disabled:opacity-60"
                         >
                           {editing ? 'Saving…' : 'Save changes'}
                         </button>

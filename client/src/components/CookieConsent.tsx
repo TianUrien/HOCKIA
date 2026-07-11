@@ -58,7 +58,7 @@ export default function CookieConsent() {
       <div className="max-w-3xl mx-auto bg-white/95 backdrop-blur border border-gray-200 rounded-xl shadow-lg pointer-events-auto px-3 py-2.5 sm:px-4 sm:py-3 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
         <p className="text-xs sm:text-sm text-gray-700 flex-1 leading-snug">
           We use cookies and analytics to improve your experience.{' '}
-          <a href="/privacy-policy" className="text-[#8026FA] underline hover:opacity-80 whitespace-nowrap">
+          <a href="/privacy-policy" className="text-hockia-primary underline hover:opacity-80 whitespace-nowrap">
             Privacy Policy
           </a>
         </p>
@@ -73,7 +73,7 @@ export default function CookieConsent() {
           <button
             type="button"
             onClick={handleAccept}
-            className="px-4 py-1.5 bg-[#8026FA] text-white text-xs sm:text-sm font-semibold rounded-lg hover:bg-[#6b1fd4] transition-colors"
+            className="px-4 py-1.5 bg-hockia-primary text-white text-xs sm:text-sm font-semibold rounded-lg hover:bg-[#6b1fd4] transition-colors"
           >
             Accept
           </button>

@@ -55,11 +55,11 @@ export default function NextStepCard<TBucket extends BucketLike>({
   const isComplete = !nextBucket
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-[#8026FA]/15 bg-gradient-to-br from-[#8026FA]/[0.06] via-white to-[#ec4899]/[0.05] p-5 md:p-6 shadow-sm">
+    <div className="relative overflow-hidden rounded-2xl border border-hockia-primary/15 bg-gradient-to-br from-hockia-primary/[0.06] via-white to-[#ec4899]/[0.05] p-5 md:p-6 shadow-sm">
       {/* Decorative corner accent */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-gradient-to-br from-[#8026FA]/10 to-[#ec4899]/10 blur-2xl"
+        className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-gradient-to-br from-hockia-primary/10 to-[#ec4899]/10 blur-2xl"
       />
 
       <div className="relative">
@@ -69,9 +69,9 @@ export default function NextStepCard<TBucket extends BucketLike>({
             the two surfaces don't repeat the same number side-by-side. */}
         <div className="mb-4">
           <p className="text-sm font-semibold text-gray-900 mb-2">Your profile</p>
-          <div className="h-1.5 overflow-hidden rounded-full bg-white/70 ring-1 ring-inset ring-[#8026FA]/10">
+          <div className="h-1.5 overflow-hidden rounded-full bg-white/70 ring-1 ring-inset ring-hockia-primary/10">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-[#8026FA] to-[#ec4899] transition-all duration-500 ease-out"
+              className="h-full rounded-full bg-gradient-to-r from-hockia-primary to-[#ec4899] transition-all duration-500 ease-out"
               style={{ width: `${percentage}%` }}
             />
           </div>
@@ -102,11 +102,11 @@ export default function NextStepCard<TBucket extends BucketLike>({
           </div>
         ) : (
           <div className="flex items-start gap-3 md:gap-4">
-            <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-[#8026FA] to-[#ec4899] text-white shadow-sm">
+            <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-hockia-primary to-[#ec4899] text-white shadow-sm">
               <Sparkles className="w-5 h-5" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-[#8026FA] mb-0.5">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-hockia-primary mb-0.5">
                 Next step
               </p>
               <h3 className="text-base font-semibold text-gray-900 leading-snug">
@@ -120,7 +120,7 @@ export default function NextStepCard<TBucket extends BucketLike>({
               <button
                 type="button"
                 onClick={() => onBucketAction?.(nextBucket)}
-                className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white px-4 py-2 text-sm font-semibold shadow-sm hover:opacity-90 transition-opacity"
+                className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white px-4 py-2 text-sm font-semibold shadow-sm hover:opacity-90 transition-opacity"
               >
                 Get started
                 <ArrowRight className="w-4 h-4" />

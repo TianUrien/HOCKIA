@@ -226,7 +226,7 @@ export function SharePostSheet({
               <input
                 type="search"
                 placeholder="Search by name or club..."
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pl-10 pr-4 text-sm placeholder:text-gray-400 focus:border-[#8026FA] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#8026FA]/20"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pl-10 pr-4 text-sm placeholder:text-gray-400 focus:border-hockia-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-hockia-primary/20"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 autoFocus
@@ -238,7 +238,7 @@ export function SharePostSheet({
               />
               {isSearching && (
                 <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                  <div className="w-4 h-4 border-2 border-[#8026FA] border-t-transparent rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-hockia-primary border-t-transparent rounded-full animate-spin" />
                 </div>
               )}
             </div>
@@ -253,7 +253,7 @@ export function SharePostSheet({
               <div className="max-h-56 overflow-y-auto divide-y divide-gray-100">
                 {isLoadingRecent && !searchTerm.trim() ? (
                   <div className="p-6 text-center">
-                    <div className="w-5 h-5 border-2 border-[#8026FA] border-t-transparent rounded-full animate-spin mx-auto" />
+                    <div className="w-5 h-5 border-2 border-hockia-primary border-t-transparent rounded-full animate-spin mx-auto" />
                   </div>
                 ) : showEmptyState ? (
                   <div className="p-5 text-center text-sm text-gray-500">
@@ -304,7 +304,7 @@ export function SharePostSheet({
                             disabled={isSending}
                             className={cn(
                               'flex items-center justify-center w-8 h-8 rounded-full transition-colors',
-                              'bg-[#8026FA] text-white hover:bg-[#6b1fd4] active:bg-[#5a18b5]',
+                              'bg-hockia-primary text-white hover:bg-[#6b1fd4] active:bg-[#5a18b5]',
                               'disabled:opacity-50',
                             )}
                           >

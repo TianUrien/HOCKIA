@@ -921,7 +921,7 @@ export function PostComposerModal({
                   onClick={() => setMode('transfer')}
                   className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-all ${
                     mode === 'transfer'
-                      ? 'bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white shadow-sm'
+                      ? 'bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white shadow-sm'
                       : 'text-gray-500 hover:text-gray-700'
                   }`}
                 >
@@ -1052,7 +1052,7 @@ export function PostComposerModal({
                           value={clubSearch}
                           onChange={(e) => handleClubSearch(e.target.value)}
                           placeholder="Search for a club..."
-                          className="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8026FA]/30 focus:border-[#8026FA]"
+                          className="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-hockia-primary/30 focus:border-hockia-primary"
                           autoComplete="off"
                           enterKeyHint="search"
                           autoCapitalize="none"
@@ -1098,7 +1098,7 @@ export function PostComposerModal({
                                 </div>
                               </div>
                               {club.is_claimed && (
-                                <span className="text-[10px] font-medium text-[#8026FA] bg-[#8026FA]/10 px-1.5 py-0.5 rounded flex-shrink-0">
+                                <span className="text-[10px] font-medium text-hockia-primary bg-hockia-primary/10 px-1.5 py-0.5 rounded flex-shrink-0">
                                   On HOCKIA
                                 </span>
                               )}
@@ -1123,7 +1123,7 @@ export function PostComposerModal({
                         setClubSearch('')
                         setClubResults([])
                       }}
-                      className="text-sm text-[#8026FA] hover:text-[#924CEC] font-medium"
+                      className="text-sm text-hockia-primary hover:text-hockia-secondary font-medium"
                     >
                       Club not listed? Enter manually
                     </button>
@@ -1175,7 +1175,7 @@ export function PostComposerModal({
                           setCustomClubName('')
                           setClubLogoUrl(null)
                         }}
-                        className="text-xs text-[#8026FA] hover:text-[#924CEC] font-medium"
+                        className="text-xs text-hockia-primary hover:text-hockia-secondary font-medium"
                       >
                         Back to search
                       </button>
@@ -1185,7 +1185,7 @@ export function PostComposerModal({
                       value={customClubName}
                       onChange={(e) => setCustomClubName(e.target.value)}
                       placeholder="Club name"
-                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8026FA]/30 focus:border-[#8026FA]"
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-hockia-primary/30 focus:border-hockia-primary"
                     />
 
                     {/* Logo upload */}
@@ -1295,7 +1295,7 @@ export function PostComposerModal({
               type="button"
               onClick={handleSubmit}
               disabled={isSubmitting || isUploading || isUploadingLogo || !canSubmit}
-              className="w-full py-2.5 px-4 bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white rounded-lg font-medium text-sm hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full py-2.5 px-4 bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white rounded-lg font-medium text-sm hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
               {isSubmitting

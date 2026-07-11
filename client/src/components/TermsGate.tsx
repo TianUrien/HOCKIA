@@ -86,11 +86,11 @@ export default function TermsGate({ children }: { children: React.ReactNode }) {
         <div className="flex-1 overflow-y-auto p-6 text-sm text-gray-700 space-y-4">
           <p>
             By using HOCKIA, you agree to our{' '}
-            <button onClick={() => navigate('/terms')} className="text-[#8026FA] underline font-medium">
+            <button onClick={() => navigate('/terms')} className="text-hockia-primary underline font-medium">
               Terms & Conditions
             </button>{' '}
             and{' '}
-            <button onClick={() => navigate('/privacy-policy')} className="text-[#8026FA] underline font-medium">
+            <button onClick={() => navigate('/privacy-policy')} className="text-hockia-primary underline font-medium">
               Privacy Policy
             </button>.
           </p>
@@ -119,7 +119,7 @@ export default function TermsGate({ children }: { children: React.ReactNode }) {
           <button
             onClick={handleAccept}
             disabled={loading}
-            className="w-full py-3 bg-[#8026FA] text-white font-semibold rounded-xl hover:bg-[#6b1fd4] transition-colors disabled:opacity-50"
+            className="w-full py-3 bg-hockia-primary text-white font-semibold rounded-xl hover:bg-[#6b1fd4] transition-colors disabled:opacity-50"
           >
             {loading ? 'Accepting...' : 'I Agree — Continue'}
           </button>

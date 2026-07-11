@@ -1136,8 +1136,8 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
           lands. Replaces the old hard skeleton flash. */}
       {isReshaping && (
         <div className="pointer-events-none fixed left-1/2 top-20 z-30 -translate-x-1/2 animate-fade-in">
-          <span className="inline-flex items-center gap-2 rounded-full border border-[#8026FA]/20 bg-white/95 px-4 py-2 text-xs font-medium text-gray-700 shadow-lg backdrop-blur">
-            <Loader2 className="h-3.5 w-3.5 animate-spin text-[#8026FA]" />
+          <span className="inline-flex items-center gap-2 rounded-full border border-hockia-primary/20 bg-white/95 px-4 py-2 text-xs font-medium text-gray-700 shadow-lg backdrop-blur">
+            <Loader2 className="h-3.5 w-3.5 animate-spin text-hockia-primary" />
             Updating matches…
           </span>
         </div>
@@ -1163,7 +1163,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
             <button
               type="button"
               onClick={clearFilters}
-              className="px-6 py-2 rounded-lg bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white font-medium hover:opacity-90 transition-opacity"
+              className="px-6 py-2 rounded-lg bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white font-medium hover:opacity-90 transition-opacity"
             >
               Clear Filters
             </button>
@@ -1233,7 +1233,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
           {hasMore && <div ref={sentinelRef} className="h-1" />}
           {hasMore && (
             <div className="flex justify-center py-6">
-              <Loader2 className="w-6 h-6 text-[#8026FA] animate-spin" />
+              <Loader2 className="w-6 h-6 text-hockia-primary animate-spin" />
             </div>
           )}
         </>

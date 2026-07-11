@@ -69,7 +69,7 @@ export default function JuniorsWaitlistPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
-              className="mt-5 w-full h-11 px-4 rounded-lg border border-gray-300 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-[#8026FA] focus:border-transparent text-center"
+              className="mt-5 w-full h-11 px-4 rounded-lg border border-gray-300 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-hockia-primary focus:border-transparent text-center"
             />
             {phase === 'error' && (
               <p className="text-sm text-red-600 mt-2" role="alert">
@@ -80,7 +80,7 @@ export default function JuniorsWaitlistPage() {
               type="button"
               onClick={join}
               disabled={phase === 'saving'}
-              className="mt-4 w-full py-3 bg-[#8026FA] text-white font-semibold rounded-xl hover:bg-[#6b1fd4] transition-colors disabled:opacity-50"
+              className="mt-4 w-full py-3 bg-hockia-primary text-white font-semibold rounded-xl hover:bg-[#6b1fd4] transition-colors disabled:opacity-50"
             >
               {phase === 'saving' ? <Loader2 className="w-4 h-4 animate-spin inline" /> : 'Keep me posted'}
             </button>

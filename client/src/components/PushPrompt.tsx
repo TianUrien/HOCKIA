@@ -89,7 +89,7 @@ export default function PushPrompt() {
           type="button"
           onClick={handleEnable}
           disabled={push.loading}
-          className="flex-1 py-2.5 px-4 bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white text-sm font-medium rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+          className="flex-1 py-2.5 px-4 bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white text-sm font-medium rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
         >
           <Bell className="w-4 h-4" />
           Enable Notifications

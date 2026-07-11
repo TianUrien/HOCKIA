@@ -51,12 +51,12 @@ export default function RecruitmentSummaryCard({
   return (
     <section
       aria-label="Recruitment"
-      className="rounded-2xl border border-[#8026FA]/20 bg-gradient-to-br from-[#8026FA]/[0.05] to-[#924CEC]/[0.04] p-4 sm:p-5 shadow-sm"
+      className="rounded-2xl border border-hockia-primary/20 bg-gradient-to-br from-hockia-primary/[0.05] to-hockia-secondary/[0.04] p-4 sm:p-5 shadow-sm"
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         {/* Left: title + stats (or empty-state copy) */}
         <div className="flex items-start gap-3 min-w-0">
-          <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-white text-[#8026FA] shadow-sm">
+          <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-white text-hockia-primary shadow-sm">
             <Briefcase className="h-5 w-5" />
           </span>
           <div className="min-w-0">
@@ -86,7 +86,7 @@ export default function RecruitmentSummaryCard({
           <button
             type="button"
             onClick={onCreateOpportunity}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#8026FA] to-[#924CEC] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 min-h-[44px]"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-hockia-primary to-hockia-secondary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 min-h-[44px]"
           >
             <Plus className="h-4 w-4" />
             Post an opportunity
@@ -95,7 +95,7 @@ export default function RecruitmentSummaryCard({
             <button
               type="button"
               onClick={onManageOpportunities}
-              className="inline-flex items-center justify-center gap-1 rounded-xl px-3 py-2 text-sm font-medium text-[#5b16b8] transition hover:bg-[#8026FA]/10 min-h-[44px]"
+              className="inline-flex items-center justify-center gap-1 rounded-xl px-3 py-2 text-sm font-medium text-[#5b16b8] transition hover:bg-hockia-primary/10 min-h-[44px]"
             >
               Manage recruitment
               <ArrowRight className="h-4 w-4" />

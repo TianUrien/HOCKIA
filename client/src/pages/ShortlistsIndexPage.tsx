@@ -42,7 +42,7 @@ export default function ShortlistsIndexPage() {
           <button
             type="button"
             onClick={() => navigate('/signin')}
-            className="px-6 py-3 rounded-lg bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white font-semibold hover:opacity-90"
+            className="px-6 py-3 rounded-lg bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white font-semibold hover:opacity-90"
           >
             Sign in
           </button>
@@ -79,7 +79,7 @@ export default function ShortlistsIndexPage() {
         <header className="mb-6 flex items-end justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <BookmarkCheck className="w-6 h-6 text-[#8026FA]" />
+              <BookmarkCheck className="w-6 h-6 text-hockia-primary" />
               Shortlists
             </h1>
             <p className="text-sm text-gray-600 mt-1">
@@ -90,7 +90,7 @@ export default function ShortlistsIndexPage() {
             <button
               type="button"
               onClick={() => setCreating(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#8026FA] text-white text-sm font-semibold hover:bg-[#6b1de0] transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-hockia-primary text-white text-sm font-semibold hover:bg-[#6b1de0] transition-colors"
             >
               <Plus className="w-4 h-4" />
               New list
@@ -99,14 +99,14 @@ export default function ShortlistsIndexPage() {
         </header>
 
         {creating && (
-          <div className="mb-4 flex items-center gap-2 rounded-xl border border-[#8026FA]/30 bg-[#8026FA]/5 p-3">
+          <div className="mb-4 flex items-center gap-2 rounded-xl border border-hockia-primary/30 bg-hockia-primary/5 p-3">
             <input
               autoFocus
               type="text"
               value={draftName}
               onChange={(e) => setDraftName(e.target.value)}
               placeholder="e.g. Women's pre-season trials"
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#8026FA]/30 focus:border-[#8026FA] focus:outline-none"
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-hockia-primary/30 focus:border-hockia-primary focus:outline-none"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') void handleCreate()
                 if (e.key === 'Escape') { setCreating(false); setDraftName('') }
@@ -116,7 +116,7 @@ export default function ShortlistsIndexPage() {
               type="button"
               onClick={handleCreate}
               disabled={busy || !draftName.trim()}
-              className="px-3 py-2 rounded-lg bg-[#8026FA] text-white text-sm font-semibold hover:bg-[#6b1de0] disabled:bg-gray-300 transition-colors"
+              className="px-3 py-2 rounded-lg bg-hockia-primary text-white text-sm font-semibold hover:bg-[#6b1de0] disabled:bg-gray-300 transition-colors"
             >
               {busy ? 'Creating…' : 'Create'}
             </button>
@@ -209,14 +209,14 @@ function ShortlistRow({ list, onOpen, onRename, onDelete, onSetDefault }: RowPro
               if (e.key === 'Enter') commitRename()
               if (e.key === 'Escape') { setDraft(list.name); setEditing(false) }
             }}
-            className="flex-1 min-w-0 px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-[#8026FA]/30 focus:border-[#8026FA] focus:outline-none"
+            className="flex-1 min-w-0 px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-hockia-primary/30 focus:border-hockia-primary focus:outline-none"
           />
         ) : (
           <Link to={`/dashboard/shortlists/${list.id}`} className="flex-1 min-w-0">
             <div className="flex items-center gap-2 min-w-0">
               <span className="font-semibold text-gray-900 truncate">{list.name}</span>
               {list.is_default && (
-                <span className="inline-flex items-center gap-0.5 text-[10px] uppercase font-bold tracking-wider text-[#8026FA] bg-[#8026FA]/10 rounded-full px-2 py-0.5">
+                <span className="inline-flex items-center gap-0.5 text-[10px] uppercase font-bold tracking-wider text-hockia-primary bg-hockia-primary/10 rounded-full px-2 py-0.5">
                   <Star className="w-3 h-3 fill-current" />
                   Default
                 </span>
@@ -235,7 +235,7 @@ function ShortlistRow({ list, onOpen, onRename, onDelete, onSetDefault }: RowPro
                 type="button"
                 onClick={commitRename}
                 aria-label="Save name"
-                className="p-1.5 rounded-md text-[#8026FA] hover:bg-[#8026FA]/10"
+                className="p-1.5 rounded-md text-hockia-primary hover:bg-hockia-primary/10"
               >
                 <Check className="w-4 h-4" />
               </button>
@@ -256,7 +256,7 @@ function ShortlistRow({ list, onOpen, onRename, onDelete, onSetDefault }: RowPro
                   onClick={onSetDefault}
                   aria-label="Make this the default list"
                   title="Make default — quick-saves land here"
-                  className="p-1.5 rounded-md text-gray-400 hover:text-[#8026FA] hover:bg-[#8026FA]/10"
+                  className="p-1.5 rounded-md text-gray-400 hover:text-hockia-primary hover:bg-hockia-primary/10"
                 >
                   <Star className="w-4 h-4" />
                 </button>
@@ -305,7 +305,7 @@ function EmptyState({ onCreate }: { onCreate: () => void }) {
       <button
         type="button"
         onClick={onCreate}
-        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#8026FA] text-white text-sm font-semibold hover:bg-[#6b1de0]"
+        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-hockia-primary text-white text-sm font-semibold hover:bg-[#6b1de0]"
       >
         <Plus className="w-4 h-4" />
         Create your first list

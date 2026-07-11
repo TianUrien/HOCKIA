@@ -470,7 +470,7 @@ export default function AuthScreen({ mode, role, onBack }: AuthScreenProps) {
                     type="button"
                     onClick={handleResendLink}
                     disabled={cooldown > 0 || loading}
-                    className="font-medium text-[#8026FA] hover:text-[#6B20D4] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    className="font-medium text-hockia-primary hover:text-[#6B20D4] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                   >
                     {cooldown > 0 ? `Resend in ${cooldown}s` : loading ? 'Resending…' : 'Resend link'}
                   </button>
@@ -623,7 +623,7 @@ export default function AuthScreen({ mode, role, onBack }: AuthScreenProps) {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder={isSignup ? 'Min 8 chars, upper + lower + number' : 'Your password'}
-                      className="w-full h-11 pl-10 pr-10 rounded-lg border border-gray-300 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-[#8026FA] focus:border-transparent"
+                      className="w-full h-11 pl-10 pr-10 rounded-lg border border-gray-300 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-hockia-primary focus:border-transparent"
                       required
                       autoComplete={isSignup ? 'new-password' : 'current-password'}
                     />
@@ -654,7 +654,7 @@ export default function AuthScreen({ mode, role, onBack }: AuthScreenProps) {
                     type="checkbox"
                     checked={orgAttested}
                     onChange={(e) => setOrgAttested(e.target.checked)}
-                    className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#8026FA] focus:ring-[#8026FA]"
+                    className="mt-0.5 h-4 w-4 rounded border-gray-300 text-hockia-primary focus:ring-hockia-primary"
                   />
                   <span>
                     I confirm I am 18 or older and authorized to represent this
@@ -675,7 +675,7 @@ export default function AuthScreen({ mode, role, onBack }: AuthScreenProps) {
                   <button
                     type="button"
                     onClick={() => navigate('/signup')}
-                    className="text-sm text-[#8026FA] hover:text-[#6B20D4] font-semibold underline-offset-2 hover:underline"
+                    className="text-sm text-hockia-primary hover:text-[#6B20D4] font-semibold underline-offset-2 hover:underline"
                   >
                     Create an account →
                   </button>
@@ -725,7 +725,7 @@ export default function AuthScreen({ mode, role, onBack }: AuthScreenProps) {
                 {footerPrompt}{' '}
                 <Link
                   to={footerLinkTo}
-                  className="font-semibold text-[#8026FA] hover:text-[#6B20D4] transition-colors"
+                  className="font-semibold text-hockia-primary hover:text-[#6B20D4] transition-colors"
                 >
                   {footerLinkLabel}
                 </Link>

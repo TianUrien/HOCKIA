@@ -163,7 +163,7 @@ export default function PostPage() {
             <button
               type="button"
               onClick={() => window.location.reload()}
-              className="rounded-lg bg-[#8026FA] px-4 py-2 text-sm font-medium text-white hover:bg-[#6B20D4]"
+              className="rounded-lg bg-hockia-primary px-4 py-2 text-sm font-medium text-white hover:bg-[#6B20D4]"
             >
               Try again
             </button>
@@ -192,7 +192,7 @@ export default function PostPage() {
           <button
             type="button"
             onClick={() => navigate('/home')}
-            className="text-sm font-medium text-[#8026FA] hover:text-[#6B20D4]"
+            className="text-sm font-medium text-hockia-primary hover:text-[#6B20D4]"
           >
             Go to home feed
           </button>

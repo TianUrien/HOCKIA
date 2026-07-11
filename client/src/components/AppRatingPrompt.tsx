@@ -158,14 +158,14 @@ export default function AppRatingPrompt() {
                 onChange={(e) => setComment(e.target.value.slice(0, COMMENT_MAX))}
                 rows={2}
                 placeholder={isPositive ? 'What stood out for you?' : 'Tell us what would make it better…'}
-                className="mt-1.5 w-full resize-none rounded-lg border border-gray-200 p-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-[#8026FA] focus:outline-none focus:ring-1 focus:ring-[#8026FA]"
+                className="mt-1.5 w-full resize-none rounded-lg border border-gray-200 p-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-hockia-primary focus:outline-none focus:ring-1 focus:ring-hockia-primary"
               />
               <div className="mt-2 flex items-center gap-2">
                 <button
                   type="button"
                   onClick={handleSubmit}
                   disabled={submitting}
-                  className="flex-1 rounded-lg bg-gradient-to-r from-[#8026FA] to-[#924CEC] py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+                  className="flex-1 rounded-lg bg-gradient-to-r from-hockia-primary to-hockia-secondary py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
                 >
                   {submitting ? 'Submitting…' : 'Submit feedback'}
                 </button>

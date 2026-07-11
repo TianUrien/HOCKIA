@@ -45,11 +45,11 @@ export default function WelcomeValueCard() {
 
   return (
     <div
-      className="relative flex items-start gap-3 rounded-2xl border border-[#8026FA]/15 bg-gradient-to-br from-[#8026FA]/5 via-white to-[#924CEC]/5 px-4 py-3 sm:px-5 sm:py-4"
+      className="relative flex items-start gap-3 rounded-2xl border border-hockia-primary/15 bg-gradient-to-br from-hockia-primary/5 via-white to-hockia-secondary/5 px-4 py-3 sm:px-5 sm:py-4"
       role="region"
       aria-label="Welcome to HOCKIA"
     >
-      <span className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-[#8026FA]/10 text-[#8026FA]">
+      <span className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-hockia-primary/10 text-hockia-primary">
         <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
       </span>
       <div className="min-w-0 flex-1 pr-6">
@@ -62,7 +62,7 @@ export default function WelcomeValueCard() {
         type="button"
         onClick={handleDismiss}
         aria-label="Dismiss welcome message"
-        className="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8026FA]/40"
+        className="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/40"
       >
         <X className="h-4 w-4" aria-hidden="true" />
       </button>

@@ -82,13 +82,13 @@ describe('Avatar — role-placeholder fallback', () => {
     // Outer wrapper should NOT have the legacy purple-to-purple gradient
     // since the SVG fills the box itself.
     const wrapper = container.firstChild as HTMLElement
-    expect(wrapper.className).not.toContain('from-[#8026FA]')
+    expect(wrapper.className).not.toContain('from-hockia-primary')
   })
 
   it('keeps the purple gradient bg class for the initials fallback (no role)', () => {
     const { container } = render(<Avatar initials="MG" />)
     const wrapper = container.firstChild as HTMLElement
-    expect(wrapper.className).toContain('from-[#8026FA]')
+    expect(wrapper.className).toContain('from-hockia-primary')
   })
 
   it('falls back to RolePlaceholder when src loads but errors (broken URL)', () => {

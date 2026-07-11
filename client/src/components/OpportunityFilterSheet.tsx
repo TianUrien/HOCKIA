@@ -41,7 +41,7 @@ export default function OpportunityFilterSheet({
             {hasActive && (
               <button
                 onClick={onClearSecondary}
-                className="text-sm text-[#8026FA] hover:text-[#6b1de0] font-medium"
+                className="text-sm text-hockia-primary hover:text-[#6b1de0] font-medium"
               >
                 Clear
               </button>
@@ -65,7 +65,7 @@ export default function OpportunityFilterSheet({
               value={location}
               onChange={(e) => onSetLocation(e.target.value)}
               placeholder="City or Country"
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#8026FA]/30 focus:border-[#8026FA] focus:outline-none transition-colors"
+              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-hockia-primary/30 focus:border-hockia-primary focus:outline-none transition-colors"
             />
           </div>
 
@@ -79,7 +79,7 @@ export default function OpportunityFilterSheet({
                     type="radio"
                     checked={startDate === value}
                     onChange={() => onSetStartDate(value)}
-                    className="w-4 h-4 accent-[#8026FA]"
+                    className="w-4 h-4 accent-hockia-primary"
                   />
                   <span className="text-sm text-gray-700">{label}</span>
                 </label>
@@ -97,7 +97,7 @@ export default function OpportunityFilterSheet({
                     type="checkbox"
                     checked={benefits.includes(benefit)}
                     onChange={() => onToggleBenefit(benefit)}
-                    className="w-4 h-4 accent-[#8026FA] rounded"
+                    className="w-4 h-4 accent-hockia-primary rounded"
                   />
                   <span className="text-sm text-gray-700 capitalize">{benefit}</span>
                 </label>
@@ -115,7 +115,7 @@ export default function OpportunityFilterSheet({
                     type="radio"
                     checked={priority === value}
                     onChange={() => onSetPriority(value)}
-                    className="w-4 h-4 accent-[#8026FA]"
+                    className="w-4 h-4 accent-hockia-primary"
                   />
                   <span className="text-sm text-gray-700">{label}</span>
                 </label>
@@ -128,7 +128,7 @@ export default function OpportunityFilterSheet({
         <div className="px-6 py-4 border-t border-gray-200 flex-shrink-0">
           <button
             onClick={onClose}
-            className="w-full px-4 py-3 rounded-xl font-semibold text-sm text-white bg-gradient-to-r from-[#8026FA] to-[#924CEC] hover:opacity-90 transition-opacity"
+            className="w-full px-4 py-3 rounded-xl font-semibold text-sm text-white bg-gradient-to-r from-hockia-primary to-hockia-secondary hover:opacity-90 transition-opacity"
           >
             Apply Filters
           </button>

@@ -86,7 +86,7 @@ export default function ReportUserModal({ targetId, targetName, contentType = 'u
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-2 bg-[#8026FA] text-white rounded-lg hover:bg-[#6b1fd4] transition-colors font-medium"
+              className="px-6 py-2 bg-hockia-primary text-white rounded-lg hover:bg-[#6b1fd4] transition-colors font-medium"
             >
               Done
             </button>
@@ -106,7 +106,7 @@ export default function ReportUserModal({ targetId, targetName, contentType = 'u
               <select
                 value={category}
                 onChange={e => setCategory(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-[#8026FA] focus:border-transparent"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-hockia-primary focus:border-transparent"
                 required
                 aria-label="Report category"
               >
@@ -123,7 +123,7 @@ export default function ReportUserModal({ targetId, targetName, contentType = 'u
                 value={reason}
                 onChange={e => setReason(e.target.value)}
                 placeholder="Please describe what happened..."
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-[#8026FA] focus:border-transparent resize-none"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-hockia-primary focus:border-transparent resize-none"
                 rows={3}
                 maxLength={1000}
                 required

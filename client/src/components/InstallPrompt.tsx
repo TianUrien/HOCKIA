@@ -233,7 +233,7 @@ export default function InstallPrompt() {
 
       <button
         onClick={handleInstall}
-        className="mt-3 w-full py-2.5 px-4 bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white text-sm font-medium rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+        className="mt-3 w-full py-2.5 px-4 bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white text-sm font-medium rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
       >
         <Download className="w-4 h-4" />
         Install App

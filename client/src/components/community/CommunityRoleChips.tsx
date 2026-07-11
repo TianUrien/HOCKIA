@@ -53,7 +53,7 @@ export function CommunityRoleChips({ activeTab }: CommunityRoleChipsProps) {
             aria-pressed={isActive ? 'true' : 'false'}
             className={`flex-shrink-0 inline-flex items-center px-3.5 py-1.5 rounded-full text-sm font-medium transition-colors border ${
               isActive
-                ? 'bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white border-transparent shadow-sm'
+                ? 'bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white border-transparent shadow-sm'
                 : 'bg-white text-gray-700 border-gray-200 hover:border-gray-300 hover:text-gray-900'
             }`}
           >

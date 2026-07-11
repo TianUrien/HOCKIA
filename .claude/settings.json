@@ -88,7 +88,8 @@
       "Bash(npx playwright *)",
       "Bash(cat node_modules/@supabase/functions-js/dist/module/types.js)",
       "Bash(grep -rn \"non-2xx\\\\|relay-error\\\\|x-relay-error\\\\|FunctionsHttpError\\\\|FunctionsRelayError\" node_modules/@supabase/functions-js/dist/module/)",
-      "Bash(git -c core.pager=cat diff HEAD -- supabase/functions/video-create-upload/index.ts)"
+      "Bash(git -c core.pager=cat diff HEAD -- supabase/functions/video-create-upload/index.ts)",
+      "Bash(npx eslint *)"
     ],
     "additionalDirectories": [
       "/Users/tianurien/Desktop/Code/HOCKIA-club/client/src/components/dashboard/bento",

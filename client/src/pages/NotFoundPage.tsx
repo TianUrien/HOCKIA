@@ -44,7 +44,7 @@ export default function NotFoundPage() {
           </button>
           <button
             onClick={() => navigate(user ? '/opportunities' : '/')}
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white font-medium rounded-lg hover:opacity-90 transition-opacity"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white font-medium rounded-lg hover:opacity-90 transition-opacity"
           >
             <Home className="w-4 h-4" />
             {user ? 'Opportunities' : 'Home'}

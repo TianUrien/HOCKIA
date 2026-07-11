@@ -32,16 +32,16 @@ const ROLE_CARDS: Array<{
     role: 'player',
     label: 'Join as Player',
     description: 'Build the profile that gets you found by clubs',
-    iconBg: 'bg-[#8026FA]/10',
-    iconText: 'text-[#8026FA]',
+    iconBg: 'bg-hockia-primary/10',
+    iconText: 'text-hockia-primary',
     Icon: User,
   },
   {
     role: 'coach',
     label: 'Join as Coach',
     description: 'Find coaching opportunities — and recruit players if you also manage a team',
-    iconBg: 'bg-[#924CEC]/10',
-    iconText: 'text-[#924CEC]',
+    iconBg: 'bg-hockia-secondary/10',
+    iconText: 'text-hockia-secondary',
     Icon: Briefcase,
   },
   {
@@ -139,7 +139,7 @@ export default function SignUp() {
               Already have an account?{' '}
               <Link
                 to="/signin"
-                className="font-semibold text-[#8026FA] hover:text-[#6B20D4] transition-colors"
+                className="font-semibold text-hockia-primary hover:text-[#6B20D4] transition-colors"
               >
                 Sign in
               </Link>

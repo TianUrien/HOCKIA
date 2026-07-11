@@ -160,7 +160,7 @@ export default function BasicInfoCard({ profile, readOnly, onEdit }: BasicInfoCa
           </p>
           <div className="flex flex-wrap gap-1.5">
             {playerSkills.map((s) => (
-              <span key={s} className="rounded-full bg-[#8026FA]/10 text-[#5b16b8] text-xs font-medium px-2 py-0.5">
+              <span key={s} className="rounded-full bg-hockia-primary/10 text-[#5b16b8] text-xs font-medium px-2 py-0.5">
                 {s}
               </span>
             ))}

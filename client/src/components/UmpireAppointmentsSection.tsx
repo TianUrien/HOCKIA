@@ -73,8 +73,8 @@ const ENTRY_TYPE_VISUALS: Record<EntryTypeKey, EntryTypeVisual> = {
   milestone: {
     label: 'Milestone',
     Icon: Trophy,
-    badgeClass: 'bg-purple-50 text-[#8026FA]',
-    borderClass: 'border-l-[#8026FA]',
+    badgeClass: 'bg-purple-50 text-hockia-primary',
+    borderClass: 'border-l-hockia-primary',
   },
   certification: {
     label: 'Certification',
@@ -208,7 +208,7 @@ export default function UmpireAppointmentsSection({
               <button
                 type="button"
                 onClick={() => navigate('/dashboard/profile?tab=officiating')}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-[#8026FA] to-[#924CEC] px-3.5 py-2 text-sm font-medium text-white hover:opacity-90 transition-opacity"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-hockia-primary to-hockia-secondary px-3.5 py-2 text-sm font-medium text-white hover:opacity-90 transition-opacity"
               >
                 <Plus className="w-3.5 h-3.5" />
                 Add your first entry
@@ -225,7 +225,7 @@ export default function UmpireAppointmentsSection({
             <button
               type="button"
               onClick={openCreate}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-[#8026FA] to-[#924CEC] px-3.5 py-1.5 text-sm font-medium text-white hover:opacity-90 transition-opacity"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-hockia-primary to-hockia-secondary px-3.5 py-1.5 text-sm font-medium text-white hover:opacity-90 transition-opacity"
             >
               <Plus className="w-3.5 h-3.5" />
               Add your first entry

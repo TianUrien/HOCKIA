@@ -208,7 +208,7 @@ export default function LocationAutocomplete({
           autoComplete="off"
           className={cn(
             'w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg',
-            'focus:outline-none focus:ring-2 focus:ring-[#8026FA] focus:border-transparent',
+            'focus:outline-none focus:ring-2 focus:ring-hockia-primary focus:border-transparent',
             'transition-all duration-200 placeholder:text-gray-400 pl-10',
             isSelected && 'border-emerald-300 bg-emerald-50/30',
             error && 'border-red-500 focus:ring-red-500',

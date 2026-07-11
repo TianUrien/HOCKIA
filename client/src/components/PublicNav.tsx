@@ -85,7 +85,7 @@ export default function PublicNav({ transparent = true }: PublicNavProps) {
             <Link
               to="/signup"
               onClick={() => trackSignupCtaClick('nav')}
-              className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-opacity shadow-lg"
+              className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-opacity shadow-lg"
             >
               <UserPlus className="w-4 h-4" />
               Join Now
@@ -153,7 +153,7 @@ export default function PublicNav({ transparent = true }: PublicNavProps) {
               <Link
                 to="/signup"
                 onClick={() => { setIsMobileMenuOpen(false); trackSignupCtaClick('nav_mobile') }}
-                className="flex items-center justify-center gap-2 mx-4 mt-2 px-5 py-3 bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white text-base font-semibold rounded-lg hover:opacity-90 transition-opacity shadow-lg"
+                className="flex items-center justify-center gap-2 mx-4 mt-2 px-5 py-3 bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white text-base font-semibold rounded-lg hover:opacity-90 transition-opacity shadow-lg"
               >
                 <UserPlus className="w-5 h-5" />
                 Join Now

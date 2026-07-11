@@ -1,4 +1,5 @@
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
+import { HOCKIA_PRIMARY } from '@/lib/brandTokens'
 
 interface DailyTrend {
   date: string
@@ -48,8 +49,8 @@ export function EmailVolumeChart({ data, loading }: EmailVolumeChartProps) {
         <AreaChart data={formatted}>
           <defs>
             <linearGradient id="gradSent" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#8026FA" stopOpacity={0.15} />
-              <stop offset="95%" stopColor="#8026FA" stopOpacity={0} />
+              <stop offset="5%" stopColor={HOCKIA_PRIMARY} stopOpacity={0.15} />
+              <stop offset="95%" stopColor={HOCKIA_PRIMARY} stopOpacity={0} />
             </linearGradient>
             <linearGradient id="gradDelivered" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor="#10b981" stopOpacity={0.15} />
@@ -67,7 +68,7 @@ export function EmailVolumeChart({ data, loading }: EmailVolumeChartProps) {
             contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb', fontSize: '13px' }}
           />
           <Legend wrapperStyle={{ fontSize: '12px' }} />
-          <Area type="monotone" dataKey="sent" name="Sent" stroke="#8026FA" fill="url(#gradSent)" strokeWidth={2} />
+          <Area type="monotone" dataKey="sent" name="Sent" stroke={HOCKIA_PRIMARY} fill="url(#gradSent)" strokeWidth={2} />
           <Area type="monotone" dataKey="delivered" name="Delivered" stroke="#10b981" fill="url(#gradDelivered)" strokeWidth={2} />
           <Area type="monotone" dataKey="opened" name="Opened" stroke="#3b82f6" fill="url(#gradOpened)" strokeWidth={2} />
         </AreaChart>

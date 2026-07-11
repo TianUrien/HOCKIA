@@ -51,9 +51,9 @@ export function VideoAddedCard({ item }: Props) {
               <RoleBadge role={item.uploader_role} />
             </div>
             <p className="text-sm text-gray-500 flex items-center gap-1.5">
-              <Video className="w-3.5 h-3.5 text-[#8026FA] flex-shrink-0" />
+              <Video className="w-3.5 h-3.5 text-hockia-primary flex-shrink-0" />
               <span>
-                <span className="font-medium text-[#8026FA]">{label}</span> &middot; {timeAgo}
+                <span className="font-medium text-hockia-primary">{label}</span> &middot; {timeAgo}
               </span>
             </p>
           </div>

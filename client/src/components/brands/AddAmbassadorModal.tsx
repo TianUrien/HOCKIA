@@ -158,7 +158,7 @@ export function AddAmbassadorModal({ isOpen, onClose, onAdd, existingPlayerIds }
           <input
             type="search"
             placeholder="Search players by name..."
-            className="w-full rounded-xl border border-gray-200 bg-gray-50 py-3 pl-10 pr-4 text-sm placeholder:text-gray-400 focus:border-[#8026FA] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#8026FA]/20"
+            className="w-full rounded-xl border border-gray-200 bg-gray-50 py-3 pl-10 pr-4 text-sm placeholder:text-gray-400 focus:border-hockia-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-hockia-primary/20"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             autoFocus
@@ -170,7 +170,7 @@ export function AddAmbassadorModal({ isOpen, onClose, onAdd, existingPlayerIds }
           />
           {isSearching && (
             <div className="absolute right-3 top-1/2 -translate-y-1/2">
-              <div className="w-4 h-4 border-2 border-[#8026FA] border-t-transparent rounded-full animate-spin" />
+              <div className="w-4 h-4 border-2 border-hockia-primary border-t-transparent rounded-full animate-spin" />
             </div>
           )}
         </div>
@@ -204,7 +204,7 @@ export function AddAmbassadorModal({ isOpen, onClose, onAdd, existingPlayerIds }
                 className={cn(
                   'inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors',
                   active
-                    ? 'bg-purple-50 border-purple-200 text-[#8026FA]'
+                    ? 'bg-purple-50 border-purple-200 text-hockia-primary'
                     : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
                 )}
                 aria-pressed={active ? 'true' : 'false'}
@@ -271,7 +271,7 @@ export function AddAmbassadorModal({ isOpen, onClose, onAdd, existingPlayerIds }
                       )}
                     </div>
                     {isAdding ? (
-                      <Loader2 className="w-4 h-4 text-[#8026FA] animate-spin flex-shrink-0" />
+                      <Loader2 className="w-4 h-4 text-hockia-primary animate-spin flex-shrink-0" />
                     ) : (
                       <UserPlus className="w-4 h-4 text-gray-400 flex-shrink-0" />
                     )}

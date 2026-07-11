@@ -370,7 +370,7 @@ export default function UmpireAppointmentEditor({
                     disabled={locked || submitting}
                     className={`flex flex-col items-center gap-1 rounded-xl border px-3 py-3 text-xs font-medium transition-colors ${
                       active
-                        ? 'border-[#8026FA] bg-[#8026FA]/5 text-[#8026FA]'
+                        ? 'border-hockia-primary bg-hockia-primary/5 text-hockia-primary'
                         : locked
                           ? 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed'
                           : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
@@ -631,7 +631,7 @@ export default function UmpireAppointmentEditor({
             <button
               onClick={handleSubmit}
               disabled={!canSubmit}
-              className="flex-1 px-4 py-2 text-sm font-medium text-white rounded-lg bg-gradient-to-r from-[#8026FA] to-[#924CEC] hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-4 py-2 text-sm font-medium text-white rounded-lg bg-gradient-to-r from-hockia-primary to-hockia-secondary hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {submitting ? (
                 <span className="flex items-center justify-center gap-2">

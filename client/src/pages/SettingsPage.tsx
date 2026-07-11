@@ -551,7 +551,7 @@ export default function SettingsPage() {
               <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
               <p className="text-gray-600 mt-1">Manage your account and preferences</p>
             </div>
-            <span className="px-3 py-1 rounded-full text-sm font-medium capitalize bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white">
+            <span className="px-3 py-1 rounded-full text-sm font-medium capitalize bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white">
               {profile.role}
             </span>
           </div>
@@ -594,13 +594,13 @@ export default function SettingsPage() {
                         value={newEmail}
                         onChange={(e) => setNewEmail(e.target.value)}
                         placeholder="New email address"
-                        className="flex-1 px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8026FA] focus:border-transparent"
+                        className="flex-1 px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-hockia-primary focus:border-transparent"
                         required
                       />
                       <button
                         type="submit"
                         disabled={emailLoading}
-                        className="px-4 py-2 text-sm font-medium text-white bg-[#8026FA] rounded-lg hover:bg-[#6b1ed4] transition-colors disabled:opacity-50"
+                        className="px-4 py-2 text-sm font-medium text-white bg-hockia-primary rounded-lg hover:bg-[#6b1ed4] transition-colors disabled:opacity-50"
                       >
                         {emailLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Change'}
                       </button>
@@ -626,7 +626,7 @@ export default function SettingsPage() {
                         setPasswordForm({ ...passwordForm, currentPassword: e.target.value })
                       }
                       placeholder="Current password"
-                      className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8026FA] focus:border-transparent"
+                      className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-hockia-primary focus:border-transparent"
                     />
                     <div className="grid grid-cols-2 gap-3">
                       <input
@@ -636,7 +636,7 @@ export default function SettingsPage() {
                           setPasswordForm({ ...passwordForm, newPassword: e.target.value })
                         }
                         placeholder="New password"
-                        className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8026FA] focus:border-transparent"
+                        className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-hockia-primary focus:border-transparent"
                       />
                       <input
                         type="password"
@@ -645,7 +645,7 @@ export default function SettingsPage() {
                           setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })
                         }
                         placeholder="Confirm"
-                        className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#8026FA] focus:border-transparent"
+                        className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-hockia-primary focus:border-transparent"
                       />
                     </div>
 

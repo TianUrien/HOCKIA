@@ -190,10 +190,10 @@ function ActionButton({
         'inline-flex items-center gap-1 rounded-md transition-colors',
         compact ? 'p-1.5' : 'px-2.5 py-1.5 text-xs font-medium',
         active
-          ? 'text-[#8026FA] bg-[#8026FA]/10 hover:bg-[#8026FA]/15'
-          : 'text-gray-700 hover:text-[#8026FA] hover:bg-[#8026FA]/5',
+          ? 'text-hockia-primary bg-hockia-primary/10 hover:bg-hockia-primary/15'
+          : 'text-gray-700 hover:text-hockia-primary hover:bg-hockia-primary/5',
         disabled && 'opacity-40 cursor-not-allowed hover:bg-transparent hover:text-gray-700',
-        'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8026FA]/40',
+        'focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/40',
       ].filter(Boolean).join(' ')}
     >
       <Icon className={compact ? 'w-4 h-4' : 'w-3.5 h-3.5'} />

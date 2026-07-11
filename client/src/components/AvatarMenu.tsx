@@ -142,14 +142,14 @@ export default function AvatarMenu({ isOnDashboard, className = '', placement = 
             // Bottom-nav variant: column layout matching the rest of the
             // mobile nav items (icon + label below).
             ? `flex flex-col items-center justify-center min-w-[48px] min-h-[44px] py-1 px-2 rounded-xl transition-all duration-200 ${
-                isOnDashboard ? 'text-[#8026FA]' : 'text-gray-600 active:bg-gray-100'
+                isOnDashboard ? 'text-hockia-primary' : 'text-gray-600 active:bg-gray-100'
               } ${className}`
             // Header variant: avatar + chevron-down indicator. The chevron
             // signals "this is a dropdown" — without it the bare avatar
             // reads as a profile-picture-only element and users miss that
             // it opens Settings + Sign Out (real complaint from prod audit).
             : `flex items-center gap-1 rounded-full pr-1.5 transition-all ${
-                isOnDashboard ? 'ring-2 ring-[#8026FA] ring-offset-2' : 'hover:opacity-80'
+                isOnDashboard ? 'ring-2 ring-hockia-primary ring-offset-2' : 'hover:opacity-80'
               } ${className}`
         }
         aria-label="Open account menu"
@@ -163,7 +163,7 @@ export default function AvatarMenu({ isOnDashboard, className = '', placement = 
             size="sm"
             loading="eager"
             role={profile.role}
-            className={showLabel && isOnDashboard ? 'ring-2 ring-[#8026FA] ring-offset-2' : undefined}
+            className={showLabel && isOnDashboard ? 'ring-2 ring-hockia-primary ring-offset-2' : undefined}
           />
         </div>
         {showLabel ? (

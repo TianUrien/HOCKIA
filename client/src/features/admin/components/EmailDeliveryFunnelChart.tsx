@@ -1,3 +1,5 @@
+import { HOCKIA_PRIMARY } from '@/lib/brandTokens'
+
 interface FunnelStep {
   label: string
   value: number
@@ -24,7 +26,7 @@ export function EmailDeliveryFunnelChart({ sent, delivered, opened, clicked, loa
   }
 
   const steps: FunnelStep[] = [
-    { label: 'Sent', value: sent, color: '#8026FA' },
+    { label: 'Sent', value: sent, color: HOCKIA_PRIMARY },
     { label: 'Delivered', value: delivered, color: '#10b981' },
     { label: 'Opened', value: opened, color: '#3b82f6' },
     { label: 'Clicked', value: clicked, color: '#f59e0b' },

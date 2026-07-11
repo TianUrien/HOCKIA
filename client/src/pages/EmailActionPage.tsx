@@ -118,7 +118,7 @@ function Card({ phase, onConfirmReject }: { phase: Phase; onConfirmReject: () =>
         : 'Recording your response…'
     return (
       <>
-        <Loader2 className="w-10 h-10 mx-auto animate-spin text-[#8026FA]" />
+        <Loader2 className="w-10 h-10 mx-auto animate-spin text-hockia-primary" />
         <h1 className="text-lg font-bold text-gray-900 mt-4">
           {phase.kind === 'executing' ? executingLabel : 'Checking your link…'}
         </h1>
@@ -143,7 +143,7 @@ function Card({ phase, onConfirmReject }: { phase: Phase; onConfirmReject: () =>
         <button
           type="button"
           onClick={onConfirmReject}
-          className="mt-5 w-full bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white font-semibold text-sm rounded-xl px-5 py-3 hover:opacity-95 transition"
+          className="mt-5 w-full bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white font-semibold text-sm rounded-xl px-5 py-3 hover:opacity-95 transition"
         >
           Yes, mark as Not a fit
         </button>
@@ -162,7 +162,7 @@ function Card({ phase, onConfirmReject }: { phase: Phase; onConfirmReject: () =>
   const cta = (label = 'Review applicants in HOCKIA') => (
     <Link
       to={appLink(info)}
-      className="mt-5 inline-block bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white font-semibold text-sm rounded-xl px-6 py-3 hover:opacity-95 transition"
+      className="mt-5 inline-block bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white font-semibold text-sm rounded-xl px-6 py-3 hover:opacity-95 transition"
     >
       {label}
     </Link>
@@ -174,7 +174,7 @@ function Card({ phase, onConfirmReject }: { phase: Phase; onConfirmReject: () =>
       return (
         <>
           <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto">
-            <RefreshCw className="w-6 h-6 text-[#8026FA]" />
+            <RefreshCw className="w-6 h-6 text-hockia-primary" />
           </div>
           <h1 className="text-lg font-bold text-gray-900 mt-4">Opportunity renewed</h1>
           <p className="text-sm text-gray-600 mt-2">
@@ -205,7 +205,7 @@ function Card({ phase, onConfirmReject }: { phase: Phase; onConfirmReject: () =>
           return (
             <>
               <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto">
-                <Star className="w-6 h-6 text-[#8026FA]" />
+                <Star className="w-6 h-6 text-hockia-primary" />
               </div>
               <h1 className="text-lg font-bold text-gray-900 mt-4">{name} added to your shortlist</h1>
               <p className="text-sm text-gray-600 mt-2">

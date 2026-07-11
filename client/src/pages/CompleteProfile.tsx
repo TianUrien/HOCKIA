@@ -1091,7 +1091,7 @@ export default function CompleteProfile() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#8026FA] mb-4"></div>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-hockia-primary mb-4"></div>
           <p className="text-gray-600">Loading your profile...</p>
         </div>
       </div>
@@ -1114,7 +1114,7 @@ export default function CompleteProfile() {
           </p>
           <button
             onClick={() => navigate('/')}
-            className="px-6 py-3 bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white rounded-lg hover:opacity-90 transition-opacity font-medium"
+            className="px-6 py-3 bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white rounded-lg hover:opacity-90 transition-opacity font-medium"
           >
             Back to Home
           </button>
@@ -1139,7 +1139,7 @@ export default function CompleteProfile() {
 
         <div className="relative z-10 w-full max-w-2xl">
           <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
-            <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-[#8026FA] to-[#924CEC]">
+            <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-hockia-primary to-hockia-secondary">
               <div className="flex items-center gap-3 mb-2">
                 <img
                   src="/WhiteLogo.svg"
@@ -1168,7 +1168,7 @@ export default function CompleteProfile() {
                   type="button"
                   onClick={() => handleRoleSelection('player')}
                   disabled={creatingProfile}
-                  className="w-full p-4 border-2 border-gray-200 rounded-xl hover:border-[#8026FA] hover:bg-purple-50 transition-all text-left group disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full p-4 border-2 border-gray-200 rounded-xl hover:border-hockia-primary hover:bg-purple-50 transition-all text-left group disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-100 to-indigo-100 flex items-center justify-center group-hover:from-purple-200 group-hover:to-indigo-200 transition-colors">
@@ -1186,7 +1186,7 @@ export default function CompleteProfile() {
                   type="button"
                   onClick={() => handleRoleSelection('coach')}
                   disabled={creatingProfile}
-                  className="w-full p-4 border-2 border-gray-200 rounded-xl hover:border-[#8026FA] hover:bg-purple-50 transition-all text-left group disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full p-4 border-2 border-gray-200 rounded-xl hover:border-hockia-primary hover:bg-purple-50 transition-all text-left group disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-100 to-indigo-100 flex items-center justify-center group-hover:from-purple-200 group-hover:to-indigo-200 transition-colors">
@@ -1204,7 +1204,7 @@ export default function CompleteProfile() {
                   type="button"
                   onClick={() => handleRoleSelection('club')}
                   disabled={creatingProfile}
-                  className="w-full p-4 border-2 border-gray-200 rounded-xl hover:border-[#8026FA] hover:bg-purple-50 transition-all text-left group disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full p-4 border-2 border-gray-200 rounded-xl hover:border-hockia-primary hover:bg-purple-50 transition-all text-left group disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-100 to-indigo-100 flex items-center justify-center group-hover:from-purple-200 group-hover:to-indigo-200 transition-colors">
@@ -1222,7 +1222,7 @@ export default function CompleteProfile() {
                   type="button"
                   onClick={() => handleRoleSelection('brand')}
                   disabled={creatingProfile}
-                  className="w-full p-4 border-2 border-gray-200 rounded-xl hover:border-[#8026FA] hover:bg-purple-50 transition-all text-left group disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full p-4 border-2 border-gray-200 rounded-xl hover:border-hockia-primary hover:bg-purple-50 transition-all text-left group disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-100 to-indigo-100 flex items-center justify-center group-hover:from-purple-200 group-hover:to-indigo-200 transition-colors">
@@ -1240,7 +1240,7 @@ export default function CompleteProfile() {
                   type="button"
                   onClick={() => handleRoleSelection('umpire')}
                   disabled={creatingProfile}
-                  className="w-full p-4 border-2 border-gray-200 rounded-xl hover:border-[#8026FA] hover:bg-purple-50 transition-all text-left group disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full p-4 border-2 border-gray-200 rounded-xl hover:border-hockia-primary hover:bg-purple-50 transition-all text-left group disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-full bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center group-hover:from-amber-200 group-hover:to-orange-200 transition-colors">
@@ -1256,7 +1256,7 @@ export default function CompleteProfile() {
 
               {creatingProfile && (
                 <div className="mt-6 text-center">
-                  <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-[#8026FA] mb-2"></div>
+                  <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-hockia-primary mb-2"></div>
                   <p className="text-sm text-gray-500">Setting up your profile...</p>
                 </div>
               )}
@@ -1286,7 +1286,7 @@ export default function CompleteProfile() {
 
       <div className="relative z-10 w-full max-w-2xl">
         <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
-          <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-[#8026FA] to-[#924CEC]">
+          <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-hockia-primary to-hockia-secondary">
             <div className="flex items-center gap-3 mb-2">
               <img
                 src="/WhiteLogo.svg"
@@ -1362,7 +1362,7 @@ export default function CompleteProfile() {
                           isCompleted
                             ? 'flex items-center justify-center w-7 h-7 rounded-full text-white text-xs font-semibold bg-emerald-500'
                             : isActive
-                            ? 'flex items-center justify-center w-7 h-7 rounded-full text-white text-xs font-semibold bg-gradient-to-br from-[#8026FA] to-[#924CEC] ring-4 ring-[#8026FA]/15'
+                            ? 'flex items-center justify-center w-7 h-7 rounded-full text-white text-xs font-semibold bg-gradient-to-br from-hockia-primary to-hockia-secondary ring-4 ring-hockia-primary/15'
                             : 'flex items-center justify-center w-7 h-7 rounded-full text-gray-400 text-xs font-semibold border-2 border-gray-200 bg-white'
                         }
                         aria-current={isActive ? 'step' : undefined}
@@ -1541,7 +1541,7 @@ export default function CompleteProfile() {
                           id="position-select"
                           value={formData.position}
                           onChange={(e) => setFormData({ ...formData, position: e.target.value })}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8026FA] focus:border-transparent"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-hockia-primary focus:border-transparent"
                           required
                         >
                           <option value="">Select your position</option>
@@ -1560,7 +1560,7 @@ export default function CompleteProfile() {
                           id="secondary-position-select"
                           value={formData.secondaryPosition}
                           onChange={(e) => setFormData({ ...formData, secondaryPosition: e.target.value })}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8026FA] focus:border-transparent"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-hockia-primary focus:border-transparent"
                         >
                           <option value="">No secondary position</option>
                           {['goalkeeper', 'defender', 'midfielder', 'forward'].map((option) => (
@@ -1660,18 +1660,18 @@ export default function CompleteProfile() {
                               onClick={() => setFormData({ ...formData, coachSpecialization: spec.value })}
                               className={`p-3 rounded-lg border-2 text-left transition-all ${
                                 formData.coachSpecialization === spec.value
-                                  ? 'border-[#8026FA] bg-purple-50'
+                                  ? 'border-hockia-primary bg-purple-50'
                                   : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                               }`}
                             >
                               <div className="flex items-center justify-between">
                                 <span className={`text-sm font-medium ${
-                                  formData.coachSpecialization === spec.value ? 'text-[#8026FA]' : 'text-gray-900'
+                                  formData.coachSpecialization === spec.value ? 'text-hockia-primary' : 'text-gray-900'
                                 }`}>
                                   {spec.label}
                                 </span>
                                 {formData.coachSpecialization === spec.value && (
-                                  <ChevronRight className="w-4 h-4 text-[#8026FA]" />
+                                  <ChevronRight className="w-4 h-4 text-hockia-primary" />
                                 )}
                               </div>
                               <p className="text-xs text-gray-500 mt-0.5">{spec.description}</p>
@@ -1725,7 +1725,7 @@ export default function CompleteProfile() {
                           maxLength={600}
                           autoCapitalize="sentences"
                           spellCheck
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8026FA] focus:border-transparent resize-none"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-hockia-primary focus:border-transparent resize-none"
                         />
                       </div>
 
@@ -1747,7 +1747,7 @@ export default function CompleteProfile() {
                             onClick={() => setFormData({ ...formData, coachRecruitsForTeam: true })}
                             className={`p-3 rounded-lg border-2 text-sm font-medium transition-all ${
                               formData.coachRecruitsForTeam
-                                ? 'border-[#8026FA] bg-purple-50 text-[#8026FA]'
+                                ? 'border-hockia-primary bg-purple-50 text-hockia-primary'
                                 : 'border-gray-200 hover:border-gray-300 text-gray-700'
                             }`}
                           >
@@ -1758,7 +1758,7 @@ export default function CompleteProfile() {
                             onClick={() => setFormData({ ...formData, coachRecruitsForTeam: false })}
                             className={`p-3 rounded-lg border-2 text-sm font-medium transition-all ${
                               !formData.coachRecruitsForTeam
-                                ? 'border-[#8026FA] bg-purple-50 text-[#8026FA]'
+                                ? 'border-hockia-primary bg-purple-50 text-hockia-primary'
                                 : 'border-gray-200 hover:border-gray-300 text-gray-700'
                             }`}
                           >
@@ -1864,7 +1864,7 @@ export default function CompleteProfile() {
                           value={formData.umpireLevel}
                           onChange={(e) => setFormData({ ...formData, umpireLevel: e.target.value })}
                           placeholder="Start typing…"
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8026FA] focus:border-transparent"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-hockia-primary focus:border-transparent"
                           required
                           autoComplete="off"
                         />
@@ -1889,7 +1889,7 @@ export default function CompleteProfile() {
                           value={formData.federation}
                           onChange={(e) => setFormData({ ...formData, federation: e.target.value })}
                           placeholder="e.g., FIH, England Hockey, CAH"
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8026FA] focus:border-transparent"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-hockia-primary focus:border-transparent"
                           required
                           autoComplete="off"
                         />
@@ -1914,7 +1914,7 @@ export default function CompleteProfile() {
                           value={formData.umpireSince}
                           onChange={(e) => setFormData({ ...formData, umpireSince: e.target.value })}
                           placeholder="e.g., 2018"
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8026FA] focus:border-transparent"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-hockia-primary focus:border-transparent"
                           autoComplete="off"
                         />
                       </div>
@@ -1939,7 +1939,7 @@ export default function CompleteProfile() {
                                 onClick={() => setFormData({ ...formData, officiatingSpecialization: value })}
                                 className={`p-3 rounded-lg border-2 text-center transition-all ${
                                   active
-                                    ? 'border-[#8026FA] bg-purple-50 text-[#8026FA]'
+                                    ? 'border-hockia-primary bg-purple-50 text-hockia-primary'
                                     : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700'
                                 }`}
                               >
@@ -1961,7 +1961,7 @@ export default function CompleteProfile() {
                             {formData.languages.map((lang) => (
                               <span
                                 key={lang}
-                                className="inline-flex items-center gap-1.5 rounded-full bg-purple-100 text-[#8026FA] px-3 py-1 text-sm font-medium"
+                                className="inline-flex items-center gap-1.5 rounded-full bg-purple-100 text-hockia-primary px-3 py-1 text-sm font-medium"
                               >
                                 {lang}
                                 <button
@@ -1973,7 +1973,7 @@ export default function CompleteProfile() {
                                     })
                                   }
                                   aria-label={`Remove ${lang}`}
-                                  className="text-[#8026FA] hover:text-[#6B20D4]"
+                                  className="text-hockia-primary hover:text-[#6B20D4]"
                                 >
                                   <X className="w-3.5 h-3.5" />
                                 </button>
@@ -1993,7 +1993,7 @@ export default function CompleteProfile() {
                             value={formData.pendingLanguage}
                             onChange={(e) => setFormData({ ...formData, pendingLanguage: e.target.value })}
                             placeholder="e.g., English, Spanish, Dutch"
-                            className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8026FA] focus:border-transparent"
+                            className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-hockia-primary focus:border-transparent"
                             autoComplete="off"
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') {
@@ -2024,7 +2024,7 @@ export default function CompleteProfile() {
                               })
                             }}
                             disabled={!formData.pendingLanguage.trim()}
-                            className="px-4 py-3 rounded-lg bg-[#8026FA] text-white text-sm font-medium hover:bg-[#6B20D4] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                            className="px-4 py-3 rounded-lg bg-hockia-primary text-white text-sm font-medium hover:bg-[#6B20D4] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                           >
                             Add
                           </button>
@@ -2125,7 +2125,7 @@ export default function CompleteProfile() {
                       value={formData.clubBio}
                       onChange={(e) => setFormData({ ...formData, clubBio: e.target.value })}
                       placeholder="Tell us about your club..."
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8026FA] focus:border-transparent"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-hockia-primary focus:border-transparent"
                       rows={4}
                     />
                   </div>
@@ -2163,7 +2163,7 @@ export default function CompleteProfile() {
                   type="button"
                   onClick={handleNext}
                   disabled={loading}
-                  className="flex-1 bg-gradient-to-r from-[#8026FA] to-[#924CEC]"
+                  className="flex-1 bg-gradient-to-r from-hockia-primary to-hockia-secondary"
                 >
                   Next
                 </Button>
@@ -2174,7 +2174,7 @@ export default function CompleteProfile() {
                 <Button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 bg-gradient-to-r from-[#8026FA] to-[#924CEC]"
+                  className="flex-1 bg-gradient-to-r from-hockia-primary to-hockia-secondary"
                 >
                   {loading ? 'Saving Profile...' : 'Complete Profile'}
                 </Button>

@@ -235,7 +235,7 @@ export default function MediaTab({ profileId, readOnly = false, renderHeader, sh
                 canViewVideo ? (
                   <div className="space-y-2">
                     <h3 className="flex items-center gap-2 text-base font-bold text-gray-900">
-                      <Video className="h-4 w-4 flex-shrink-0 text-[#8026FA]" />
+                      <Video className="h-4 w-4 flex-shrink-0 text-hockia-primary" />
                       Linked highlight
                     </h3>
                     <div className="relative">
@@ -407,7 +407,7 @@ function VideoEmbed({ url }: { url: string }) {
             type="button"
             onClick={() => setActivated(true)}
             aria-label="Play highlight video"
-            className="group absolute inset-0 flex flex-col items-center justify-center gap-3 overflow-hidden bg-gradient-to-br from-[#1a1030] via-[#2a1a4a] to-[#8026FA]/40 text-white"
+            className="group absolute inset-0 flex flex-col items-center justify-center gap-3 overflow-hidden bg-gradient-to-br from-[#1a1030] via-[#2a1a4a] to-hockia-primary/40 text-white"
           >
             {/* Real YouTube thumbnail when available; object-cover crops it
                 cleanly to 16:9. Falls back to the branded gradient (Drive,
@@ -423,7 +423,7 @@ function VideoEmbed({ url }: { url: string }) {
             )}
             {showYtThumb && <span className="absolute inset-0 bg-black/30" aria-hidden="true" />}
             <span className="relative flex h-14 w-14 items-center justify-center rounded-full bg-white/95 shadow-lg transition-transform group-hover:scale-105 group-active:scale-95">
-              <Video className="h-6 w-6 text-[#8026FA]" />
+              <Video className="h-6 w-6 text-hockia-primary" />
             </span>
             {!showYtThumb && (
               <>

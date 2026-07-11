@@ -46,6 +46,7 @@ import type {
 import { logger } from '@/lib/logger'
 import { formatAdminDate } from '../utils/formatDate'
 import { getRoleBadgeClasses } from '@/lib/roleColors'
+import { HOCKIA_PRIMARY } from '@/lib/brandTokens'
 
 type DaysFilter = 7 | 30 | 90
 type RatingFilter = 'all' | 'up' | 'down'
@@ -280,9 +281,9 @@ export function AdminAIOpinions() {
                 <Line
                   type="monotone"
                   dataKey="generations"
-                  stroke="#8026FA"
+                  stroke={HOCKIA_PRIMARY}
                   strokeWidth={2}
-                  dot={{ fill: '#8026FA', r: 3 }}
+                  dot={{ fill: HOCKIA_PRIMARY, r: 3 }}
                   activeDot={{ r: 5 }}
                 />
               </LineChart>
@@ -311,7 +312,7 @@ export function AdminAIOpinions() {
                   <XAxis dataKey="prompt_version" tick={{ fontSize: 11, fill: '#6B7280' }} />
                   <YAxis tick={{ fontSize: 11, fill: '#6B7280' }} allowDecimals={false} />
                   <Tooltip contentStyle={{ borderRadius: '0.5rem', fontSize: '12px' }} />
-                  <Bar dataKey="generations" fill="#8026FA" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="generations" fill={HOCKIA_PRIMARY} radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

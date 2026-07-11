@@ -217,7 +217,7 @@ export default function BrandOnboardingPage() {
           <button
             type="button"
             onClick={retryHeal}
-            className="w-full px-4 py-2 bg-[#8026FA] text-white font-semibold rounded-lg hover:bg-[#6b1fd4] transition-colors"
+            className="w-full px-4 py-2 bg-hockia-primary text-white font-semibold rounded-lg hover:bg-[#6b1fd4] transition-colors"
           >
             Try again
           </button>
@@ -255,7 +255,7 @@ export default function BrandOnboardingPage() {
       <div className="relative z-10 w-full max-w-xl">
         <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
           {/* Header */}
-          <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-[#8026FA] to-[#924CEC]">
+          <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-hockia-primary to-hockia-secondary">
             <div className="flex items-center gap-3 mb-2">
               <img
                 src="/WhiteLogo.svg"

@@ -30,7 +30,7 @@ export default function CategoryConfirmationBanner({
   return (
     <div className="rounded-xl border border-purple-200 bg-purple-50/60 p-4 mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
       <div className="flex items-start gap-3">
-        <Info className="w-5 h-5 text-[#8026FA] flex-shrink-0 mt-0.5" />
+        <Info className="w-5 h-5 text-hockia-primary flex-shrink-0 mt-0.5" />
         <p className="text-sm text-gray-800">
           We&apos;ve updated HOCKIA to use hockey categories instead of gender.
           Please confirm or update your category preferences.

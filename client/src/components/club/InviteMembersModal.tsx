@@ -178,7 +178,7 @@ export default function InviteMembersModal({ isOpen, onClose, onInvited }: Invit
                 type="button"
                 onClick={handleCopy}
                 disabled={!inviteUrl}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-[#8026FA] px-4 text-sm font-semibold text-white transition hover:bg-[#6B20D4] disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-hockia-primary px-4 text-sm font-semibold text-white transition hover:bg-[#6B20D4] disabled:opacity-50"
               >
                 {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                 {copied ? 'Copied' : 'Copy'}
@@ -204,7 +204,7 @@ export default function InviteMembersModal({ isOpen, onClose, onInvited }: Invit
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search players and coaches by name"
                 autoFocus
-                className="w-full rounded-xl border border-gray-200 bg-white pl-9 pr-3 py-2.5 text-sm text-gray-900 outline-none focus:border-[#8026FA]/40 focus:ring-2 focus:ring-[#8026FA]/15"
+                className="w-full rounded-xl border border-gray-200 bg-white pl-9 pr-3 py-2.5 text-sm text-gray-900 outline-none focus:border-hockia-primary/40 focus:ring-2 focus:ring-hockia-primary/15"
               />
             </div>
 
@@ -239,7 +239,7 @@ export default function InviteMembersModal({ isOpen, onClose, onInvited }: Invit
                           className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
                             isInvited
                               ? 'bg-green-50 text-green-600 cursor-default'
-                              : 'bg-[#8026FA] text-white hover:bg-[#6B20D4] disabled:opacity-60'
+                              : 'bg-hockia-primary text-white hover:bg-[#6B20D4] disabled:opacity-60'
                           }`}
                         >
                           {invitingId === m.id ? (

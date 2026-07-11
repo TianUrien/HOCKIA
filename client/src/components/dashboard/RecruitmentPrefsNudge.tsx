@@ -58,7 +58,7 @@ export default function RecruitmentPrefsNudge({ profile, onAdd }: RecruitmentPre
   }
 
   return (
-    <div className="relative rounded-2xl border border-[#8026FA]/20 bg-gradient-to-br from-[#8026FA]/5 to-[#924CEC]/5 p-4">
+    <div className="relative rounded-2xl border border-hockia-primary/20 bg-gradient-to-br from-hockia-primary/5 to-hockia-secondary/5 p-4">
       <button
         type="button"
         onClick={dismiss}
@@ -68,7 +68,7 @@ export default function RecruitmentPrefsNudge({ profile, onAdd }: RecruitmentPre
         <X className="w-4 h-4" />
       </button>
       <div className="flex items-start gap-3 pr-6">
-        <span className="flex-shrink-0 mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#8026FA]/10 text-[#8026FA]">
+        <span className="flex-shrink-0 mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-full bg-hockia-primary/10 text-hockia-primary">
           <Sparkles className="w-4 h-4" />
         </span>
         <div className="min-w-0">
@@ -80,7 +80,7 @@ export default function RecruitmentPrefsNudge({ profile, onAdd }: RecruitmentPre
             <button
               type="button"
               onClick={onAdd}
-              className="rounded-lg bg-gradient-to-r from-[#8026FA] to-[#924CEC] px-4 py-1.5 text-sm font-medium text-white hover:opacity-90"
+              className="rounded-lg bg-gradient-to-r from-hockia-primary to-hockia-secondary px-4 py-1.5 text-sm font-medium text-white hover:opacity-90"
             >
               Add now
             </button>

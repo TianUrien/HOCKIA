@@ -103,19 +103,19 @@ function SignalBars({ filled }: { filled: 1 | 2 | 3 }) {
       <span
         className={[
           'w-[3px] rounded-sm transition-colors h-[5px]',
-          filled >= 1 ? 'bg-[#8026FA]' : 'bg-gray-200',
+          filled >= 1 ? 'bg-hockia-primary' : 'bg-gray-200',
         ].join(' ')}
       />
       <span
         className={[
           'w-[3px] rounded-sm transition-colors h-[8px]',
-          filled >= 2 ? 'bg-[#8026FA]' : 'bg-gray-200',
+          filled >= 2 ? 'bg-hockia-primary' : 'bg-gray-200',
         ].join(' ')}
       />
       <span
         className={[
           'w-[3px] rounded-sm transition-colors h-[11px]',
-          filled >= 3 ? 'bg-[#8026FA]' : 'bg-gray-200',
+          filled >= 3 ? 'bg-hockia-primary' : 'bg-gray-200',
         ].join(' ')}
       />
     </span>
@@ -211,7 +211,7 @@ export default function ClubFitChip({
         onMouseDown={(e) => e.stopPropagation()}
         className={[
           'relative inline-flex items-center justify-center px-1 cursor-pointer',
-          'rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8026FA]/40',
+          'rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/40',
           className,
         ].join(' ')}
         title={tooltip}
@@ -237,7 +237,7 @@ export default function ClubFitChip({
 
   // ── Pill variant: bars + label, also tappable for the popover ────
   const textClass = (() => {
-    if (fit.state === 'green') return 'text-[#8026FA] font-semibold'
+    if (fit.state === 'green') return 'text-hockia-primary font-semibold'
     if (fit.state === 'yellow') return 'text-gray-800 font-medium'
     return 'text-gray-500'
   })()
@@ -252,7 +252,7 @@ export default function ClubFitChip({
       onMouseDown={(e) => e.stopPropagation()}
       className={[
         'relative inline-flex items-center gap-1.5 text-[11px] leading-none cursor-pointer',
-        'rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8026FA]/40',
+        'rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/40',
         'hover:opacity-80 transition-opacity',
         textClass,
         className,

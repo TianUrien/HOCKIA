@@ -22,7 +22,7 @@ export default function PublicViewBanner() {
       {/* Fixed banner below the navbar — small gap (top-[68px], not 64px)
           gives the header's edge some breathing room so the white→purple
           transition doesn't feel like a hard seam. */}
-      <div className="fixed top-[68px] left-0 right-0 z-40 bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white shadow-md">
+      <div className="fixed top-[68px] left-0 right-0 z-40 bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white shadow-md">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
@@ -40,7 +40,7 @@ export default function PublicViewBanner() {
             </div>
             <button
               onClick={handleReturnToDashboard}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white text-[#8026FA] rounded-lg hover:bg-white/90 transition-colors text-sm font-medium shadow-sm whitespace-nowrap w-full sm:w-auto"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white text-hockia-primary rounded-lg hover:bg-white/90 transition-colors text-sm font-medium shadow-sm whitespace-nowrap w-full sm:w-auto"
             >
               <ArrowLeft className="w-4 h-4" />
               Back to My Profile

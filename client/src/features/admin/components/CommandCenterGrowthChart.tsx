@@ -10,6 +10,7 @@ import {
   Legend,
 } from 'recharts'
 import type { UserGrowthPoint } from '../types'
+import { HOCKIA_PRIMARY } from '@/lib/brandTokens'
 
 interface CommandCenterGrowthChartProps {
   data: UserGrowthPoint[]
@@ -51,8 +52,8 @@ export function CommandCenterGrowthChart({ data, loading }: CommandCenterGrowthC
         <ComposedChart data={formatted}>
           <defs>
             <linearGradient id="gradCumulative" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#8026FA" stopOpacity={0.15} />
-              <stop offset="95%" stopColor="#8026FA" stopOpacity={0} />
+              <stop offset="5%" stopColor={HOCKIA_PRIMARY} stopOpacity={0.15} />
+              <stop offset="95%" stopColor={HOCKIA_PRIMARY} stopOpacity={0} />
             </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
@@ -81,7 +82,7 @@ export function CommandCenterGrowthChart({ data, loading }: CommandCenterGrowthC
             type="monotone"
             dataKey="cumulative_total"
             name="Total Users"
-            stroke="#8026FA"
+            stroke={HOCKIA_PRIMARY}
             fill="url(#gradCumulative)"
             strokeWidth={2}
           />

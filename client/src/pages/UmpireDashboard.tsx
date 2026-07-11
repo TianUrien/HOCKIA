@@ -366,7 +366,7 @@ export default function UmpireDashboard({
                         type="button"
                         onClick={handleSendMessage}
                         disabled={sendingMessage}
-                        className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-[#8026FA] to-[#924CEC] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-90 disabled:opacity-60"
+                        className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-hockia-primary to-hockia-secondary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-90 disabled:opacity-60"
                       >
                         {sendingMessage ? (
                           <>
@@ -519,7 +519,7 @@ export default function UmpireDashboard({
                     <button
                       type="button"
                       onClick={() => setShowEditModal(true)}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white text-sm font-medium hover:opacity-90 transition-opacity"
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white text-sm font-medium hover:opacity-90 transition-opacity"
                     >
                       <Edit2 className="w-3.5 h-3.5" />
                       Add credentials
@@ -590,7 +590,7 @@ export default function UmpireDashboard({
                 activeTab={activeTab}
                 onTabChange={handleTabChange}
                 className="gap-8 px-6"
-                activeClassName="border-[#8026FA] text-[#8026FA]"
+                activeClassName="border-hockia-primary text-hockia-primary"
                 inactiveClassName="border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300"
               />
             </div>

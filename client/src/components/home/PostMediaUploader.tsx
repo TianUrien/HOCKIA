@@ -175,12 +175,12 @@ export function PostMediaUploader({
     return (
       <div>
         <div className="py-10 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center gap-3 text-gray-500">
-          <Loader2 className="w-8 h-8 animate-spin text-[#8026FA]" />
+          <Loader2 className="w-8 h-8 animate-spin text-hockia-primary" />
           {uploadProgress != null ? (
             <div className="w-48 text-center">
               <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-[#8026FA] rounded-full transition-all duration-300"
+                  className="h-full bg-hockia-primary rounded-full transition-all duration-300"
                   style={{ width: `${Math.round(uploadProgress)}%` }}
                 />
               </div>
@@ -279,12 +279,12 @@ export function PostMediaUploader({
           <div className={`border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center gap-2 text-gray-400 ${
             media.length === 1 ? 'aspect-[16/9]' : 'aspect-square'
           }`}>
-            <Loader2 className="w-6 h-6 animate-spin text-[#8026FA]" />
+            <Loader2 className="w-6 h-6 animate-spin text-hockia-primary" />
             {uploadProgress != null ? (
               <div className="w-3/4 text-center">
                 <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-[#8026FA] rounded-full transition-all duration-300"
+                    className="h-full bg-hockia-primary rounded-full transition-all duration-300"
                     style={{ width: `${Math.round(uploadProgress)}%` }}
                   />
                 </div>

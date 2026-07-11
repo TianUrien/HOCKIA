@@ -74,7 +74,7 @@ export function MemberJoinedCard({ item }: MemberJoinedCardProps) {
         <div className="mt-4 flex justify-end">
           <Link
             to={profilePath}
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white text-sm font-medium rounded-lg hover:opacity-90 transition-opacity"
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white text-sm font-medium rounded-lg hover:opacity-90 transition-opacity"
           >
             View Profile
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

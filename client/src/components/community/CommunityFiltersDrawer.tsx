@@ -108,7 +108,7 @@ export function CommunityFiltersDrawer({ state, resultCount, videoCount, onSelec
                 <button
                   type="button"
                   onClick={clearFilters}
-                  className="text-sm text-[#8026FA] hover:text-[#6B20D4] font-medium min-h-[44px] px-2"
+                  className="text-sm text-hockia-primary hover:text-[#6B20D4] font-medium min-h-[44px] px-2"
                 >
                   Clear all
                 </button>
@@ -413,7 +413,7 @@ export function CommunityFiltersDrawer({ state, resultCount, videoCount, onSelec
             <button
               type="button"
               onClick={() => setShowFilters(false)}
-              className="w-full min-h-[44px] rounded-full bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white text-sm font-semibold hover:opacity-90 transition-opacity"
+              className="w-full min-h-[44px] rounded-full bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white text-sm font-semibold hover:opacity-90 transition-opacity"
             >
               {ctaLabel}
             </button>

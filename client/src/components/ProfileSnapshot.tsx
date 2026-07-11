@@ -175,7 +175,7 @@ export default function ProfileSnapshot({
         <button
           type="button"
           onClick={() => onSignalAction(improveActionId)}
-          className="mt-4 inline-flex items-center gap-1 text-xs font-medium text-[#8026FA] hover:text-[#6B20D4] transition-colors"
+          className="mt-4 inline-flex items-center gap-1 text-xs font-medium text-hockia-primary hover:text-[#6B20D4] transition-colors"
         >
           Edit your public profile
           <ArrowRight className="w-3 h-3" aria-hidden="true" />

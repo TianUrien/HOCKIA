@@ -86,8 +86,8 @@ export default function ContactModal() {
         {/* Header */}
         <div className="flex items-start justify-between p-5 pb-0">
           <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#8026FA]/10">
-              <Mail className="h-5 w-5 text-[#8026FA]" />
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-hockia-primary/10">
+              <Mail className="h-5 w-5 text-hockia-primary" />
             </span>
             <h2 id="contact-modal-title" className="text-lg font-bold text-gray-900">
               Contact us
@@ -118,7 +118,7 @@ export default function ContactModal() {
               type="button"
               onClick={handleCopy}
               aria-label="Copy email address"
-              className="flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-[#8026FA] transition-colors hover:bg-[#8026FA]/10"
+              className="flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-hockia-primary transition-colors hover:bg-hockia-primary/10"
             >
               {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
               {copied ? 'Copied' : 'Copy'}
@@ -135,7 +135,7 @@ export default function ContactModal() {
           <button
             type="button"
             onClick={openSupportEmail}
-            className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#8026FA] to-[#924CEC] px-5 py-3 text-base font-semibold text-white shadow-lg transition-opacity hover:opacity-90"
+            className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-hockia-primary to-hockia-secondary px-5 py-3 text-base font-semibold text-white shadow-lg transition-opacity hover:opacity-90"
           >
             <Mail className="h-5 w-5" />
             Open email app

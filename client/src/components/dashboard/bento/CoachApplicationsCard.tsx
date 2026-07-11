@@ -142,7 +142,7 @@ export default function CoachApplicationsCard({
         <button
           type="button"
           onClick={onBrowseOpportunities}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#8026FA] to-[#924CEC] px-4 py-3 text-sm font-semibold text-white shadow-sm hover:opacity-95 transition-opacity"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-hockia-primary to-hockia-secondary px-4 py-3 text-sm font-semibold text-white shadow-sm hover:opacity-95 transition-opacity"
         >
           <ArrowRight className="h-4 w-4" />
           Browse opportunities
@@ -156,7 +156,7 @@ export default function CoachApplicationsCard({
             type="button"
             onClick={onViewApplications}
             disabled={!appliedCount}
-            className="text-sm font-medium text-[#8026FA] hover:text-[#6B20D4] disabled:text-gray-400 disabled:cursor-not-allowed"
+            className="text-sm font-medium text-hockia-primary hover:text-[#6B20D4] disabled:text-gray-400 disabled:cursor-not-allowed"
           >
             View applications →
           </button>
@@ -176,7 +176,7 @@ interface MetricTileProps {
 
 function MetricTile({ icon: Icon, label, value, active, tone = 'default' }: MetricTileProps) {
   const iconColor =
-    tone === 'success' && active ? 'text-emerald-600' : 'text-[#8026FA]'
+    tone === 'success' && active ? 'text-emerald-600' : 'text-hockia-primary'
   return (
     <div className="rounded-xl border border-gray-100 bg-gray-50/60 px-3 py-3">
       <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">

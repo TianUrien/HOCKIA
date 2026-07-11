@@ -392,7 +392,7 @@ export default function QuestionDetailPage() {
                 <button
                   type="submit"
                   disabled={!answerText.trim() || isSubmittingAnswer}
-                  className="px-5 py-2.5 rounded-lg bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  className="px-5 py-2.5 rounded-lg bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                   {isSubmittingAnswer ? (
                     <>
@@ -410,7 +410,7 @@ export default function QuestionDetailPage() {
               <p className="text-gray-600 mb-4">Sign in to share your answer with the community.</p>
               <button
                 onClick={() => setShowSignInPrompt(true)}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white font-medium hover:opacity-90 transition-opacity"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white font-medium hover:opacity-90 transition-opacity"
               >
                 <LogIn className="w-4 h-4" />
                 Sign in to Answer

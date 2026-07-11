@@ -99,7 +99,7 @@ export default function ClubBasicInfoCard({ profile, readOnly, onEdit }: ClubBas
               href={profile.website.startsWith('http') ? profile.website : `https://${profile.website}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="block truncate text-[#8026FA] hover:text-[#6B20D4] underline"
+              className="block truncate text-hockia-primary hover:text-[#6B20D4] underline"
               title={profile.website}
             >
               {profile.website}
@@ -125,7 +125,7 @@ export default function ClubBasicInfoCard({ profile, readOnly, onEdit }: ClubBas
           {publicContact.shouldShow && publicContact.displayEmail ? (
             <a
               href={`mailto:${publicContact.displayEmail}`}
-              className="block truncate text-[#8026FA] hover:text-[#6B20D4] underline"
+              className="block truncate text-hockia-primary hover:text-[#6B20D4] underline"
               title={publicContact.displayEmail}
             >
               {publicContact.displayEmail}

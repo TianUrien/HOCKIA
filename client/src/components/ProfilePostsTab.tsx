@@ -104,7 +104,7 @@ export default function ProfilePostsTab({ profileId, readOnly = false }: Profile
               <button
                 type="button"
                 onClick={() => setShowComposerModal(true)}
-                className="px-5 py-2.5 bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity"
+                className="px-5 py-2.5 bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity"
               >
                 Create a post
               </button>
@@ -152,7 +152,7 @@ export default function ProfilePostsTab({ profileId, readOnly = false }: Profile
       {/* Pagination loading */}
       {isLoading && items.length > 0 && (
         <div className="flex items-center justify-center py-6">
-          <Loader2 className="w-6 h-6 text-[#8026FA] animate-spin" />
+          <Loader2 className="w-6 h-6 text-hockia-primary animate-spin" />
         </div>
       )}
 

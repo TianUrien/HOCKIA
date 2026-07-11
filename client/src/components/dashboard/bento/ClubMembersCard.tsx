@@ -84,7 +84,7 @@ export default function ClubMembersCard({ ownerProfileId, onViewMembers }: ClubM
       <div className="space-y-3.5">
         <div className="rounded-xl border border-gray-100 bg-gray-50/60 px-4 py-3.5">
           <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
-            <Users className="h-3.5 w-3.5 text-[#8026FA]" />
+            <Users className="h-3.5 w-3.5 text-hockia-primary" />
             <span>Roster</span>
           </div>
           <p

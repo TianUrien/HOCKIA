@@ -113,7 +113,7 @@ export function HomeFeed({ prependItemRef }: HomeFeedProps) {
             <button
               type="button"
               onClick={() => void handleShowNewItems()}
-              className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#8026FA] text-white text-sm font-medium rounded-full shadow-lg hover:bg-[#6B1FD4] active:scale-95 transition-all duration-200 animate-slideDown"
+              className="inline-flex items-center gap-1.5 px-4 py-2 bg-hockia-primary text-white text-sm font-medium rounded-full shadow-lg hover:bg-[#6B1FD4] active:scale-95 transition-all duration-200 animate-slideDown"
             >
               <ArrowUp className="w-4 h-4" />
               {newCount === 1
@@ -155,7 +155,7 @@ export function HomeFeed({ prependItemRef }: HomeFeedProps) {
                 className="flex items-center gap-3 rounded-xl border border-gray-100 bg-gray-50 p-4 transition-colors hover:bg-purple-50 hover:border-purple-200"
               >
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-purple-100">
-                  <Briefcase className="h-5 w-5 text-[#8026FA]" />
+                  <Briefcase className="h-5 w-5 text-hockia-primary" />
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-900">Browse Opportunities</p>
@@ -167,7 +167,7 @@ export function HomeFeed({ prependItemRef }: HomeFeedProps) {
                 className="flex items-center gap-3 rounded-xl border border-gray-100 bg-gray-50 p-4 transition-colors hover:bg-purple-50 hover:border-purple-200"
               >
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-purple-100">
-                  <MessageSquare className="h-5 w-5 text-[#8026FA]" />
+                  <MessageSquare className="h-5 w-5 text-hockia-primary" />
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-900">Join the Community</p>
@@ -179,7 +179,7 @@ export function HomeFeed({ prependItemRef }: HomeFeedProps) {
                 className="flex items-center gap-3 rounded-xl border border-gray-100 bg-gray-50 p-4 transition-colors hover:bg-purple-50 hover:border-purple-200"
               >
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-purple-100">
-                  <Globe className="h-5 w-5 text-[#8026FA]" />
+                  <Globe className="h-5 w-5 text-hockia-primary" />
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-900">Explore World</p>
@@ -191,7 +191,7 @@ export function HomeFeed({ prependItemRef }: HomeFeedProps) {
                 className="flex items-center gap-3 rounded-xl border border-gray-100 bg-gray-50 p-4 transition-colors hover:bg-purple-50 hover:border-purple-200"
               >
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-purple-100">
-                  <Search className="h-5 w-5 text-[#8026FA]" />
+                  <Search className="h-5 w-5 text-hockia-primary" />
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-900">Find People</p>
@@ -245,7 +245,7 @@ export function HomeFeed({ prependItemRef }: HomeFeedProps) {
       {/* Pagination loading */}
       {isFetchingNextPage && (
         <div className="flex items-center justify-center py-6">
-          <Loader2 className="w-6 h-6 text-[#8026FA] animate-spin" />
+          <Loader2 className="w-6 h-6 text-hockia-primary animate-spin" />
         </div>
       )}
     </div>

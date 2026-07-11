@@ -1,5 +1,6 @@
 import { memo } from 'react'
 import * as Sentry from '@sentry/react'
+import { useImpressionOnce, recordPostImpression } from '@/lib/homeInstrumentation'
 import type { HomeFeedItem } from '@/types/homeFeed'
 import {
   MemberJoinedCard,
@@ -28,7 +29,31 @@ interface HomeFeedItemCardProps {
 // returns 20 unknown items).
 const reportedUnknownTypes = new Set<string>()
 
+/** Viewport-gated post_impression (Home redesign §4): fires once per post per
+ *  session when the card nears the viewport. Feeds creator-side stats and the
+ *  future Brand reach module. Wraps ONLY post-type items — activity cards
+ *  (member_joined, media_added, …) are not "content" in the reach sense. */
+function PostImpressionSentinel({ postId, children }: { postId: string; children: React.ReactNode }) {
+  const ref = useImpressionOnce(() => recordPostImpression(postId))
+  return <div ref={ref}>{children}</div>
+}
+
 export const HomeFeedItemCard = memo(function HomeFeedItemCard({ item, onLikeUpdate, onDelete }: HomeFeedItemCardProps) {
+  const rendered = renderFeedItem(item, onLikeUpdate, onDelete)
+  if (rendered && (item.item_type === 'user_post' || item.item_type === 'brand_post')) {
+    const postId = (item as { post_id?: string }).post_id
+    if (postId) {
+      return <PostImpressionSentinel postId={postId}>{rendered}</PostImpressionSentinel>
+    }
+  }
+  return rendered
+})
+
+function renderFeedItem(
+  item: HomeFeedItem,
+  onLikeUpdate?: HomeFeedItemCardProps['onLikeUpdate'],
+  onDelete?: HomeFeedItemCardProps['onDelete'],
+) {
   switch (item.item_type) {
     case 'member_joined':
       return <MemberJoinedCard item={item} />
@@ -76,4 +101,4 @@ export const HomeFeedItemCard = memo(function HomeFeedItemCard({ item, onLikeUpd
       return null
     }
   }
-})
+}

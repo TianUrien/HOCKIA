@@ -31,7 +31,7 @@ export default function OpportunityQuickFilters({
   secondaryFilterCount,
   onOpenMoreFilters,
 }: QuickFiltersProps) {
-  const activeChip = 'flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium bg-[#8026FA] text-white border border-[#8026FA]'
+  const activeChip = 'flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium bg-hockia-primary text-white border border-hockia-primary'
   const inactiveChip = 'flex-shrink-0 inline-flex items-center px-3 py-2 rounded-full text-sm font-medium bg-white text-gray-700 border border-gray-200 active:bg-gray-100'
 
   // Cycle through type: all → player → coach → all
@@ -104,14 +104,14 @@ export default function OpportunityQuickFilters({
         onClick={onOpenMoreFilters}
         className={`flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium border ${
           secondaryFilterCount > 0
-            ? 'bg-[#8026FA]/10 text-[#8026FA] border-[#8026FA]/20'
+            ? 'bg-hockia-primary/10 text-hockia-primary border-hockia-primary/20'
             : 'bg-white text-gray-700 border-gray-200 active:bg-gray-100'
         }`}
       >
         <SlidersHorizontal className="w-4 h-4" />
         More
         {secondaryFilterCount > 0 && (
-          <span className="w-5 h-5 rounded-full bg-[#8026FA] text-white text-[10px] font-bold flex items-center justify-center">
+          <span className="w-5 h-5 rounded-full bg-hockia-primary text-white text-[10px] font-bold flex items-center justify-center">
             {secondaryFilterCount}
           </span>
         )}

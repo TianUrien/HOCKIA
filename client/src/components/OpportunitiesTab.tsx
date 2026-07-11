@@ -15,7 +15,6 @@ import ApplyToOpportunityModal from './ApplyToOpportunityModal'
 import OpportunityDetailView from './OpportunityDetailView'
 import PublishConfirmationModal from './PublishConfirmationModal'
 import DeleteOpportunityModal from './DeleteOpportunityModal'
-import ConfirmDialog from './ConfirmDialog'
 import Skeleton, { OpportunityCardSkeleton } from './Skeleton'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
 
@@ -222,6 +221,9 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
   const [showPublishModal, setShowPublishModal] = useState(false)
   const [vacancyToPublish, setVacancyToPublish] = useState<Vacancy | null>(null)
   const [vacancyToClose, setVacancyToClose] = useState<Vacancy | null>(null)
+  // Q5 (Home redesign): closes are typed. 'filled' feeds the role_filled
+  // market-moves card; the via-HOCKIA toggle is the investor stat.
+  const [filledViaHockia, setFilledViaHockia] = useState(false)
   // Delete confirmation modal state
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [vacancyToDelete, setVacancyToDelete] = useState<Vacancy | null>(null)
@@ -440,7 +442,7 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
     setVacancyToClose(vacancy)
   }
 
-  const handleClose = async () => {
+  const handleClose = async (reason: 'filled' | 'withdrawn') => {
     if (actionLoading || !vacancyToClose) return
     const vacancyId = vacancyToClose.id
 
@@ -449,12 +451,16 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
       Sentry.addBreadcrumb({
         category: 'supabase',
         message: 'vacancies.close',
-        data: { vacancyId },
+        data: { vacancyId, reason },
         level: 'info'
       })
       const { error } = await supabase
         .from('opportunities')
-        .update({ status: 'closed' } as never)
+        .update({
+          status: 'closed',
+          closed_reason: reason,
+          filled_via_hockia: reason === 'filled' ? filledViaHockia : null,
+        } as never)
         .eq('id', vacancyId)
 
       if (error) throw error
@@ -465,7 +471,8 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
       // which reads as the page navigating away.
       setStatusFilter('closed')
       setVacancyToClose(null)
-      addToast('Opportunity closed.', 'success')
+      setFilledViaHockia(false)
+      addToast(reason === 'filled' ? 'Marked as filled — congrats on the signing!' : 'Opportunity closed.', 'success')
     } catch (error) {
       logger.error('Error closing vacancy:', error)
       reportSupabaseError('vacancies.close', error, {
@@ -495,7 +502,7 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
       })
       const { error } = await supabase
         .from('opportunities')
-        .update({ status: 'open' } as never)
+        .update({ status: 'open', closed_reason: null, filled_via_hockia: null } as never)
         .eq('id', vacancy.id)
 
       if (error) throw error
@@ -609,7 +616,7 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
 
     const config: Record<string, { style: string; icon: React.ComponentType<{ className?: string }>; label: string }> = {
       draft: { style: 'bg-amber-50 text-amber-700 border border-amber-200', icon: AlertCircle, label: 'Draft' },
-      open: { style: 'bg-[#8026FA]/5 text-[#8026FA] border border-[#8026FA]/15', icon: CheckCircle, label: 'Published' },
+      open: { style: 'bg-hockia-primary/5 text-hockia-primary border border-hockia-primary/15', icon: CheckCircle, label: 'Published' },
       closed: { style: 'bg-gray-100 text-gray-500 border border-gray-200', icon: XCircle, label: 'Closed' },
     }
 
@@ -668,7 +675,7 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
             <button
               type="button"
               onClick={handleCreateNew}
-              className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-[#8026FA] to-[#924CEC] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
+              className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-hockia-primary to-hockia-secondary px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
             >
               <Plus className="w-4 h-4" />
               Add
@@ -694,12 +701,12 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
                   onClick={() => setStatusFilter(key)}
                   className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                     statusFilter === key
-                      ? 'bg-[#8026FA]/10 text-[#8026FA]'
+                      ? 'bg-hockia-primary/10 text-hockia-primary'
                       : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                   }`}
                 >
                   {label}
-                  <span className={`ml-1.5 text-xs ${statusFilter === key ? 'text-[#8026FA]/60' : 'text-gray-400'}`}>
+                  <span className={`ml-1.5 text-xs ${statusFilter === key ? 'text-hockia-primary/60' : 'text-gray-400'}`}>
                     {count}
                   </span>
                 </button>
@@ -713,8 +720,8 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
       {vacancies.length === 0 && !readOnly && (
         <div className="rounded-xl border-2 border-dashed border-gray-300 p-12 text-center">
           <div className="mb-4 flex justify-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#8026FA]/10">
-              <Briefcase className="w-8 h-8 text-[#8026FA]" />
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-hockia-primary/10">
+              <Briefcase className="w-8 h-8 text-hockia-primary" />
             </div>
           </div>
           <h3 className="mb-2 text-lg font-semibold text-gray-900">No Opportunities Yet</h3>
@@ -725,7 +732,7 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
           </p>
           <Button
             onClick={handleCreateNew}
-            className="mx-auto flex items-center gap-2 bg-gradient-to-r from-[#8026FA] to-[#924CEC] hover:opacity-90"
+            className="mx-auto flex items-center gap-2 bg-gradient-to-r from-hockia-primary to-hockia-secondary hover:opacity-90"
           >
             <Plus className="h-4 w-4" />
             Create First Opportunity
@@ -777,7 +784,7 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
                 {/* Card Header */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="space-y-2 min-w-0 flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-[#8026FA] transition-colors">{vacancy.title}</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-hockia-primary transition-colors">{vacancy.title}</h3>
                     <span className={`inline-flex h-6 items-center rounded-full px-2.5 text-[11px] font-semibold ${roleBadgeStyle}`}>
                       {badgeParts.join(' · ')}
                     </span>
@@ -838,7 +845,7 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
                       <button
                         type="button"
                         onClick={() => handleApply(vacancy)}
-                        className="flex-1 rounded-2xl bg-gradient-to-r from-[#8026FA] to-[#924CEC] px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-purple-500/30"
+                        className="flex-1 rounded-2xl bg-gradient-to-r from-hockia-primary to-hockia-secondary px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-purple-500/30"
                       >
                         Sign in to apply
                       </button>
@@ -854,7 +861,7 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
                       <button
                         type="button"
                         onClick={() => handleApply(vacancy)}
-                        className="flex-1 rounded-2xl bg-gradient-to-r from-[#8026FA] to-[#924CEC] px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-purple-500/30"
+                        className="flex-1 rounded-2xl bg-gradient-to-r from-hockia-primary to-hockia-secondary px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-purple-500/30"
                       >
                         Apply now
                       </button>
@@ -971,22 +978,59 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
         />
       )}
 
-      {/* Close Confirmation — guards an easy-to-misclick destructive
-          action and keeps applicant history attached (vs Duplicate). */}
-      <ConfirmDialog
-        isOpen={Boolean(vacancyToClose)}
-        onClose={() => setVacancyToClose(null)}
-        onConfirm={handleClose}
-        title="Close this opportunity?"
-        message={
-          vacancyToClose
-            ? `"${vacancyToClose.title}" will stop accepting new applications. Existing applicants stay attached — you can reopen the opportunity from the menu any time.`
-            : ''
-        }
-        confirmLabel="Close opportunity"
-        variant="danger"
-        testId="close-opportunity-confirm"
-      />
+      {/* Close flow (Home redesign Q5) — one-tap typed close. "Filled" feeds
+          the role_filled market-moves card, so the distinction must be honest:
+          never guess "filled" from a plain close. */}
+      {vacancyToClose && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4" role="presentation" onClick={() => setVacancyToClose(null)}>
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Close this opportunity"
+            data-testid="close-opportunity-confirm"
+            className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-bold text-gray-900">Close “{vacancyToClose.title}”?</h3>
+            <p className="mt-1 text-sm text-gray-600">
+              It will stop accepting applications. Existing applicants stay attached — you can reopen it any time.
+            </p>
+            <p className="mt-3 text-sm font-medium text-gray-900">Did you fill this role?</p>
+            <label className="mt-2 flex items-start gap-2.5 text-sm text-gray-600 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={filledViaHockia}
+                onChange={(e) => setFilledViaHockia(e.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-gray-300 text-hockia-primary focus:ring-hockia-primary"
+              />
+              <span>The hire came through HOCKIA</span>
+            </label>
+            <div className="mt-4 flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => void handleClose('filled')}
+                className="w-full rounded-lg bg-gradient-to-r from-hockia-primary to-hockia-secondary px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90"
+              >
+                Filled ✓
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleClose('withdrawn')}
+                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Just closing
+              </button>
+              <button
+                type="button"
+                onClick={() => setVacancyToClose(null)}
+                className="w-full px-4 py-1.5 text-xs font-medium text-gray-400 hover:text-gray-600"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Delete Confirmation Modal */}
       {vacancyToDelete && (

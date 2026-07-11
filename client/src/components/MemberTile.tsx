@@ -291,7 +291,7 @@ export default function MemberTile(props: MemberTileProps) {
       <button
         type="button"
         onClick={handleClick}
-        className="group block w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8026FA] focus-visible:ring-offset-2"
+        className="group block w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary focus-visible:ring-offset-2"
         aria-label={(() => {
           const name = props.full_name?.trim() ?? ''
           const pct = props.profileCompletenessPct

@@ -26,7 +26,7 @@ export default function ScrollableTabs<T extends string>({
   activeTab,
   onTabChange,
   className,
-  activeClassName = 'border-[#8026FA] text-[#8026FA]',
+  activeClassName = 'border-hockia-primary text-hockia-primary',
   inactiveClassName = 'border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300',
   wrapperClassName,
 }: ScrollableTabsProps<T>) {

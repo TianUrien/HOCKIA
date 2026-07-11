@@ -397,7 +397,7 @@ export default function VacancyDetailView({
                 <ul className="space-y-1.5">
                   {vacancy.custom_benefits.map((benefit, i) => (
                     <li key={i} className="flex items-start gap-2 text-[15px] text-gray-600">
-                      <span className="text-[#8026FA] mt-0.5">✓</span>
+                      <span className="text-hockia-primary mt-0.5">✓</span>
                       <span>{benefit}</span>
                     </li>
                   ))}
@@ -451,13 +451,13 @@ export default function VacancyDetailView({
                   {vacancy.contact_email && (
                     <div className="flex items-center gap-2 text-[15px]">
                       <Mail className="w-4 h-4 text-gray-400" />
-                      <a href={`mailto:${vacancy.contact_email}`} className="text-gray-600 hover:text-[#8026FA] transition-colors">{vacancy.contact_email}</a>
+                      <a href={`mailto:${vacancy.contact_email}`} className="text-gray-600 hover:text-hockia-primary transition-colors">{vacancy.contact_email}</a>
                     </div>
                   )}
                   {vacancy.contact_phone && (
                     <div className="flex items-center gap-2 text-[15px]">
                       <Phone className="w-4 h-4 text-gray-400" />
-                      <a href={`tel:${vacancy.contact_phone}`} className="text-gray-600 hover:text-[#8026FA] transition-colors">{vacancy.contact_phone}</a>
+                      <a href={`tel:${vacancy.contact_phone}`} className="text-gray-600 hover:text-hockia-primary transition-colors">{vacancy.contact_phone}</a>
                     </div>
                   )}
                 </div>
@@ -488,14 +488,14 @@ export default function VacancyDetailView({
                     onClose()
                     navigate(`/dashboard/opportunities/${vacancy.id}/applicants`)
                   }}
-                  className="flex-1 rounded-xl py-3.5 bg-gradient-to-r from-[#8026FA] to-[#924CEC] hover:opacity-90 text-base font-semibold inline-flex items-center justify-center gap-2"
+                  className="flex-1 rounded-xl py-3.5 bg-gradient-to-r from-hockia-primary to-hockia-secondary hover:opacity-90 text-base font-semibold inline-flex items-center justify-center gap-2"
                 >
                   <Users className="w-4 h-4" />
                   View applicants
                 </Button>
               ) : hasApplied ? (
-                <div className="flex-1 flex flex-col items-center justify-center gap-1.5 px-4 py-3 rounded-xl border border-[#8026FA]/15 bg-[#8026FA]/5">
-                  <div className="flex items-center gap-2 font-semibold text-sm text-[#8026FA]">
+                <div className="flex-1 flex flex-col items-center justify-center gap-1.5 px-4 py-3 rounded-xl border border-hockia-primary/15 bg-hockia-primary/5">
+                  <div className="flex items-center gap-2 font-semibold text-sm text-hockia-primary">
                     <CheckCircle className="w-4 h-4" />
                     Application Submitted
                   </div>
@@ -519,7 +519,7 @@ export default function VacancyDetailView({
                   </div>
                 </div>
               ) : onApply ? (
-                <Button onClick={onApply} className="flex-1 rounded-xl py-3.5 bg-gradient-to-r from-[#8026FA] to-[#924CEC] hover:opacity-90 text-base font-semibold">
+                <Button onClick={onApply} className="flex-1 rounded-xl py-3.5 bg-gradient-to-r from-hockia-primary to-hockia-secondary hover:opacity-90 text-base font-semibold">
                   Apply Now &rsaquo;
                 </Button>
               ) : (

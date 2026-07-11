@@ -39,7 +39,7 @@ export default function HockiaSocials({
   const linkTone =
     tone === 'onDark'
       ? 'text-white/70 hover:text-white'
-      : 'text-gray-500 dark:text-gray-400 hover:text-[#8026FA] dark:hover:text-purple-400'
+      : 'text-gray-500 dark:text-gray-400 hover:text-hockia-primary dark:hover:text-purple-400'
 
   return (
     <div className={`flex items-center gap-4 ${className}`} aria-label="Follow HOCKIA on social media">

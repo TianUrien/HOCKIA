@@ -44,6 +44,7 @@ import type {
 import { logger } from '@/lib/logger'
 import { formatAdminDate } from '../utils/formatDate'
 import { getRoleBadgeClasses } from '@/lib/roleColors'
+import { HOCKIA_PRIMARY } from '@/lib/brandTokens'
 
 type DaysFilter = 7 | 30 | 90
 type StatusFilter = 'all' | FeedbackStatusFilter
@@ -70,7 +71,7 @@ const STATUS_BG: Record<FeedbackStatusFilter, string> = {
 const CATEGORY_META: Record<FeedbackCategoryFilter, { label: string; icon: typeof Bug; color: string }> = {
   bug:       { label: 'Bug',       icon: Bug,            color: 'text-rose-600' },
   confusing: { label: 'Confusing', icon: HelpCircle,     color: 'text-amber-600' },
-  idea:      { label: 'Idea',      icon: Sparkles,       color: 'text-[#8026FA]' },
+  idea:      { label: 'Idea',      icon: Sparkles,       color: 'text-hockia-primary' },
   praise:    { label: 'Praise',    icon: Heart,          color: 'text-pink-500' },
   other:     { label: 'Other',     icon: MessageSquare,  color: 'text-gray-600' },
 }
@@ -274,9 +275,9 @@ export function AdminFeedback() {
                 <Line
                   type="monotone"
                   dataKey="submissions"
-                  stroke="#8026FA"
+                  stroke={HOCKIA_PRIMARY}
                   strokeWidth={2}
-                  dot={{ fill: '#8026FA', r: 3 }}
+                  dot={{ fill: HOCKIA_PRIMARY, r: 3 }}
                 />
               </LineChart>
             </ResponsiveContainer>

@@ -86,7 +86,7 @@ export function Composer({ value, sending, disabled, onChange, onSubmit, onFocus
             onFocus={onFocus}
             onKeyDown={handleKeyDown}
             onChange={event => onChange(event.target.value)}
-            className={`chat-textarea w-full resize-none rounded-3xl border border-gray-200 bg-gray-100 py-2.5 text-[15px] leading-snug text-gray-900 outline-none transition-colors placeholder:text-gray-400 focus:border-[#8026FA]/40 focus:bg-white ${showCounter ? 'pl-4 pr-14' : 'px-4'}`}
+            className={`chat-textarea w-full resize-none rounded-3xl border border-gray-200 bg-gray-100 py-2.5 text-[15px] leading-snug text-gray-900 outline-none transition-colors placeholder:text-gray-400 focus:border-hockia-primary/40 focus:bg-white ${showCounter ? 'pl-4 pr-14' : 'px-4'}`}
           />
           {/* Counter only appears near the limit — a clean, native-feeling
               input the rest of the time instead of an always-on form field. */}
@@ -99,7 +99,7 @@ export function Composer({ value, sending, disabled, onChange, onSubmit, onFocus
         <button
           type="submit"
           disabled={disabled}
-          className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#8026FA] to-[#924CEC] text-white shadow-sm transition-all hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8026FA] disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
+          className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-hockia-primary to-hockia-secondary text-white shadow-sm transition-all hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hockia-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
           aria-label="Send message"
         >
           {sending ? (

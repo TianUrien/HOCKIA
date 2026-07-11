@@ -484,7 +484,7 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
       {specialistSkills.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-1.5">
           {specialistSkills.map((s) => (
-            <span key={s} className="rounded-full bg-[#8026FA]/10 text-[#5b16b8] text-xs font-medium px-2 py-0.5">
+            <span key={s} className="rounded-full bg-hockia-primary/10 text-[#5b16b8] text-xs font-medium px-2 py-0.5">
               {s}
             </span>
           ))}
@@ -539,8 +539,8 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
               disabled={savedState.mutating}
               className={`inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-50 ${
                 savedState.isSaved
-                  ? 'bg-[#8026FA]/10 text-[#8026FA] hover:bg-[#8026FA]/15'
-                  : 'bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white hover:opacity-95'
+                  ? 'bg-hockia-primary/10 text-hockia-primary hover:bg-hockia-primary/15'
+                  : 'bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white hover:opacity-95'
               }`}
             >
               {savedState.isSaved ? (
@@ -573,7 +573,7 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
               <button
                 type="button"
                 onClick={handleViewJourney}
-                className="ml-auto inline-flex items-center text-sm font-medium text-[#8026FA] hover:text-[#6B20D4]"
+                className="ml-auto inline-flex items-center text-sm font-medium text-hockia-primary hover:text-[#6B20D4]"
               >
                 See full Journey →
               </button>
@@ -595,7 +595,7 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
             <button
               type="button"
               onClick={() => navigate('/signin')}
-              className="font-medium text-[#8026FA] hover:underline"
+              className="font-medium text-hockia-primary hover:underline"
             >
               Sign in
             </button>
@@ -609,7 +609,7 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
           <button
             type="button"
             onClick={handleViewJourney}
-            className="text-sm font-medium text-[#8026FA] hover:text-[#6B20D4]"
+            className="text-sm font-medium text-hockia-primary hover:text-[#6B20D4]"
           >
             See full Journey →
           </button>

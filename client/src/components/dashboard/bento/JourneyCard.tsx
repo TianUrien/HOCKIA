@@ -184,7 +184,7 @@ export default function JourneyCard({ profileId, readOnly, role = 'player', care
             {bioCredentials.map(cred => (
               <span
                 key={cred}
-                className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-50 text-[#8026FA]"
+                className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-50 text-hockia-primary"
               >
                 {cred}
               </span>

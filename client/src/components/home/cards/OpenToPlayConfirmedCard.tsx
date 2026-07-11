@@ -22,8 +22,8 @@ export function OpenToPlayConfirmedCard({ item }: Props) {
       <div className="p-5">
         {/* Header */}
         <div className="flex items-center gap-2 mb-4">
-          <div className="w-8 h-8 rounded-full bg-[#8026FA]/10 flex items-center justify-center flex-shrink-0">
-            <BadgeCheck className="w-4 h-4 text-[#8026FA]" />
+          <div className="w-8 h-8 rounded-full bg-hockia-primary/10 flex items-center justify-center flex-shrink-0">
+            <BadgeCheck className="w-4 h-4 text-hockia-primary" />
           </div>
           <div className="flex items-center gap-1.5 text-sm text-gray-500">
             <span className="font-medium text-gray-700">Open to play</span>
@@ -60,7 +60,7 @@ export function OpenToPlayConfirmedCard({ item }: Props) {
             )}
 
             {item.open_to_opportunities && (
-              <span className="inline-flex items-center mt-2 px-2 py-0.5 rounded-full bg-[#8026FA]/10 text-[#8026FA] text-xs font-medium">
+              <span className="inline-flex items-center mt-2 px-2 py-0.5 rounded-full bg-hockia-primary/10 text-hockia-primary text-xs font-medium">
                 Open to opportunities
               </span>
             )}
@@ -71,7 +71,7 @@ export function OpenToPlayConfirmedCard({ item }: Props) {
         <div className="mt-4 flex justify-end">
           <Link
             to={profilePath}
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white text-sm font-medium rounded-lg hover:opacity-90 transition-opacity"
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white text-sm font-medium rounded-lg hover:opacity-90 transition-opacity"
           >
             View Profile
             <ArrowUpRight className="w-3.5 h-3.5" />

@@ -121,7 +121,7 @@ export default function BrandProfilePage() {
           <div className="max-w-4xl mx-auto px-4 py-12 text-center">
             <Store className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-gray-900 mb-2">This profile is not available</h2>
-            <button type="button" onClick={() => navigate(-1)} className="mt-4 text-[#8026FA] hover:underline font-medium">Go back</button>
+            <button type="button" onClick={() => navigate(-1)} className="mt-4 text-hockia-primary hover:underline font-medium">Go back</button>
           </div>
         )}
 
@@ -297,7 +297,7 @@ export default function BrandProfilePage() {
                     <div className="mt-4 text-center">
                       <Link
                         to={`/marketplace`}
-                        className="text-sm font-medium text-[#8026FA] hover:text-[#6b1fd4]"
+                        className="text-sm font-medium text-hockia-primary hover:text-[#6b1fd4]"
                       >
                         View all updates
                       </Link>

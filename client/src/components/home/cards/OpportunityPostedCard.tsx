@@ -23,8 +23,8 @@ export function OpportunityPostedCard({ item }: OpportunityPostedCardProps) {
       <div className="p-5">
         {/* Header */}
         <div className="flex items-center gap-2 mb-4">
-          <div className="w-8 h-8 rounded-full bg-[#8026FA]/10 flex items-center justify-center flex-shrink-0">
-            <Briefcase className="w-4 h-4 text-[#8026FA]" />
+          <div className="w-8 h-8 rounded-full bg-hockia-primary/10 flex items-center justify-center flex-shrink-0">
+            <Briefcase className="w-4 h-4 text-hockia-primary" />
           </div>
           <div className="flex items-center gap-1.5 text-sm text-gray-500">
             <span className="font-medium text-gray-700">New Opportunity posted</span>
@@ -74,7 +74,7 @@ export function OpportunityPostedCard({ item }: OpportunityPostedCardProps) {
                   className="flex-shrink-0"
                   role={item.publisher_role}
                 />
-                <span className="text-sm font-medium text-gray-700 group-hover:text-[#8026FA] transition-colors">
+                <span className="text-sm font-medium text-gray-700 group-hover:text-hockia-primary transition-colors">
                   {item.club_name}
                 </span>
               </Link>
@@ -115,7 +115,7 @@ export function OpportunityPostedCard({ item }: OpportunityPostedCardProps) {
                 className="flex-shrink-0"
                 role={item.publisher_role}
               />
-              <span className="text-sm font-medium text-gray-700 group-hover:text-[#8026FA] transition-colors">
+              <span className="text-sm font-medium text-gray-700 group-hover:text-hockia-primary transition-colors">
                 {item.club_name}
               </span>
             </Link>
@@ -126,7 +126,7 @@ export function OpportunityPostedCard({ item }: OpportunityPostedCardProps) {
         <button
           type="button"
           onClick={() => setShowDetail(true)}
-          className="w-full px-4 py-2.5 bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white rounded-lg font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+          className="w-full px-4 py-2.5 bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white rounded-lg font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
         >
           Apply Now
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

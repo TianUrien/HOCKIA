@@ -282,7 +282,7 @@ function FullGameVideoRow({ video, readOnly, onEdit, onDelete }: FullGameVideoRo
         href={video.video_url}
         target="_blank"
         rel="noopener noreferrer"
-        className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[#8026FA] to-[#924CEC] px-4 py-1.5 text-xs font-semibold text-white shadow-sm hover:opacity-90"
+        className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-hockia-primary to-hockia-secondary px-4 py-1.5 text-xs font-semibold text-white shadow-sm hover:opacity-90"
       >
         Watch video
         <ExternalLink className="h-3 w-3" aria-hidden="true" />

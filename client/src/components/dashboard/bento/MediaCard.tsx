@@ -165,10 +165,10 @@ function Tile({ icon: Icon, label, count, loading, isEmpty }: TileProps) {
         'flex flex-col items-center justify-center gap-1.5 rounded-xl border p-3 text-center',
         isEmpty
           ? 'border-dashed border-gray-200 bg-gray-50/50'
-          : 'border-gray-100 bg-gradient-to-br from-[#8026FA]/[0.04] to-[#ec4899]/[0.04]',
+          : 'border-gray-100 bg-gradient-to-br from-hockia-primary/[0.04] to-[#ec4899]/[0.04]',
       )}
     >
-      <Icon className={cn('h-5 w-5', isEmpty ? 'text-gray-400' : 'text-[#8026FA]')} />
+      <Icon className={cn('h-5 w-5', isEmpty ? 'text-gray-400' : 'text-hockia-primary')} />
       <span
         className={cn(
           'text-base font-bold tabular-nums leading-none',

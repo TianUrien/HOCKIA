@@ -48,7 +48,7 @@ export function ReferenceReceivedCard({ item }: ReferenceReceivedCardProps) {
             />
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-semibold text-gray-900 group-hover:text-[#8026FA] transition-colors truncate">
+                <span className="font-semibold text-gray-900 group-hover:text-hockia-primary transition-colors truncate">
                   {item.referee_name || 'Unknown'}
                 </span>
                 {item.referee_role && <RoleBadge role={item.referee_role} />}
@@ -95,7 +95,7 @@ export function ReferenceReceivedCard({ item }: ReferenceReceivedCardProps) {
           />
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-semibold text-gray-900 group-hover:text-[#8026FA] transition-colors truncate">
+              <span className="font-semibold text-gray-900 group-hover:text-hockia-primary transition-colors truncate">
                 {item.full_name || 'Unknown'}
               </span>
               <RoleBadge role={item.role} />
@@ -105,7 +105,7 @@ export function ReferenceReceivedCard({ item }: ReferenceReceivedCardProps) {
 
         {/* Endorsement Quote */}
         {item.endorsement_text && (
-          <div className="mt-4 rounded-lg border border-gray-100 bg-gray-50 px-4 py-3 border-l-4 border-l-[#8026FA]/25">
+          <div className="mt-4 rounded-lg border border-gray-100 bg-gray-50 px-4 py-3 border-l-4 border-l-hockia-primary/25">
             <p className="text-sm text-gray-600 italic line-clamp-2">
               &ldquo;{item.endorsement_text}&rdquo;
             </p>

@@ -174,7 +174,7 @@ export function AvailabilityCheckInCard({
 
   return (
     <article
-      className="relative rounded-2xl border border-[#8026FA]/20 bg-gradient-to-br from-[#8026FA]/[0.06] via-white to-[#ec4899]/[0.04] p-4 shadow-sm"
+      className="relative rounded-2xl border border-hockia-primary/20 bg-gradient-to-br from-hockia-primary/[0.06] via-white to-[#ec4899]/[0.04] p-4 shadow-sm"
       data-testid="pulse-availability-check-in"
     >
       <button
@@ -188,11 +188,11 @@ export function AvailabilityCheckInCard({
       </button>
 
       <div className="flex items-start gap-3 pr-6">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#8026FA] to-[#ec4899] text-white shadow-sm">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-hockia-primary to-[#ec4899] text-white shadow-sm">
           <Sparkles className="w-5 h-5" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-[#8026FA] mb-0.5">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-hockia-primary mb-0.5">
             Weekly check-in
           </p>
           <h3 className="text-base font-semibold text-gray-900 leading-snug">{copy.question}</h3>

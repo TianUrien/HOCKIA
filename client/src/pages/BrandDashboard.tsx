@@ -577,7 +577,7 @@ export default function BrandDashboard() {
               activeTab={activeTab}
               onTabChange={handleTabChange}
               className="gap-8 px-6"
-              activeClassName="border-[#924CEC] text-[#924CEC]"
+              activeClassName="border-hockia-secondary text-hockia-secondary"
               inactiveClassName="border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300"
             />
           </div>
@@ -1017,7 +1017,7 @@ export default function BrandDashboard() {
                           type="button"
                           onClick={loadMoreAmbassadors}
                           disabled={ambassadorsLoading}
-                          className="px-6 py-2 text-sm font-medium text-[#8026FA] bg-white border border-gray-200 rounded-full hover:bg-gray-50 transition-colors disabled:opacity-50"
+                          className="px-6 py-2 text-sm font-medium text-hockia-primary bg-white border border-gray-200 rounded-full hover:bg-gray-50 transition-colors disabled:opacity-50"
                         >
                           {ambassadorsLoading ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
@@ -1104,7 +1104,7 @@ export default function BrandDashboard() {
                           type="button"
                           onClick={loadMoreFollowers}
                           disabled={followersLoading}
-                          className="px-6 py-2 text-sm font-medium text-[#8026FA] bg-white border border-gray-200 rounded-full hover:bg-gray-50 transition-colors disabled:opacity-50"
+                          className="px-6 py-2 text-sm font-medium text-hockia-primary bg-white border border-gray-200 rounded-full hover:bg-gray-50 transition-colors disabled:opacity-50"
                         >
                           {followersLoading ? (
                             <Loader2 className="w-4 h-4 animate-spin" />

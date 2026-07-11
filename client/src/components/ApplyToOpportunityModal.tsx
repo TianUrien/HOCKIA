@@ -213,7 +213,7 @@ export default function ApplyToVacancyModal({
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full px-4 py-3 rounded-xl font-semibold text-sm text-white bg-gradient-to-r from-[#8026FA] to-[#924CEC] hover:opacity-90 transition-opacity disabled:opacity-60"
+            className="w-full px-4 py-3 rounded-xl font-semibold text-sm text-white bg-gradient-to-r from-hockia-primary to-hockia-secondary hover:opacity-90 transition-opacity disabled:opacity-60"
           >
             {isSubmitting ? 'Submitting...' : 'Submit Application'}
           </button>

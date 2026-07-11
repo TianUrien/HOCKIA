@@ -305,7 +305,7 @@ export default function OpportunityDetailPage() {
             <p className="text-gray-600 mb-6">This opportunity may have been removed.</p>
             <button
               onClick={() => navigate('/opportunities')}
-              className="px-6 py-3 bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white rounded-lg hover:opacity-90 transition-opacity"
+              className="px-6 py-3 bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white rounded-lg hover:opacity-90 transition-opacity"
             >
               Browse Opportunities
             </button>
@@ -325,7 +325,7 @@ export default function OpportunityDetailPage() {
             <p className="text-gray-600 mb-6">This position is no longer accepting applications.</p>
             <button
               onClick={() => navigate('/opportunities')}
-              className="px-6 py-3 bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white rounded-lg hover:opacity-90 transition-opacity"
+              className="px-6 py-3 bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white rounded-lg hover:opacity-90 transition-opacity"
             >
               Browse Open Opportunities
             </button>

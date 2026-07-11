@@ -195,9 +195,9 @@ export default function AssistantMessage({ msg }: AssistantMessageProps) {
       <div
         className="
           flex-shrink-0 w-8 h-8 rounded-full
-          bg-gradient-to-br from-[#8026FA] to-[#924CEC]
+          bg-gradient-to-br from-hockia-primary to-hockia-secondary
           flex items-center justify-center mt-0.5
-          shadow-sm shadow-[#8026FA]/15
+          shadow-sm shadow-hockia-primary/15
         "
         aria-hidden="true"
       >

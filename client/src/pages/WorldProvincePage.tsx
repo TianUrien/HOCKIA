@@ -346,7 +346,7 @@ export default function WorldProvincePage() {
           <button
             type="button"
             onClick={() => navigate('/world')}
-            className="mt-4 text-[#8026FA] hover:underline"
+            className="mt-4 text-hockia-primary hover:underline"
           >
             Back to World
           </button>
@@ -394,18 +394,18 @@ export default function WorldProvincePage() {
               <div className="flex items-center gap-2 text-sm text-gray-500 mb-1">
                 <Link to="/world" className="hover:text-gray-700">World</Link>
                 <span>/</span>
-                <Link to={`/world/${countrySlug}`} className="text-[#8026FA] hover:underline">
+                <Link to={`/world/${countrySlug}`} className="text-hockia-primary hover:underline">
                   {country.name}
                 </Link>
                 <span>/</span>
-                <span className="text-[#8026FA]">{province.name}</span>
+                <span className="text-hockia-primary">{province.name}</span>
               </div>
               <h1 className="text-2xl font-bold text-gray-900">{province.name}</h1>
             </div>
           </div>
 
           <div className="hidden md:flex items-center gap-3">
-            <div className="px-3 py-1.5 bg-[#8026FA]/10 rounded-full text-sm text-[#8026FA] font-medium">
+            <div className="px-3 py-1.5 bg-hockia-primary/10 rounded-full text-sm text-hockia-primary font-medium">
               <Trophy className="w-4 h-4 inline mr-1" />
               {leagues.length} {leagues.length === 1 ? 'league' : 'leagues'}
             </div>
@@ -421,7 +421,7 @@ export default function WorldProvincePage() {
               onClick={() => setGenderFilter('women')}
               className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
                 genderFilter === 'women'
-                  ? 'bg-[#8026FA] text-white shadow-sm'
+                  ? 'bg-hockia-primary text-white shadow-sm'
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
@@ -432,7 +432,7 @@ export default function WorldProvincePage() {
               onClick={() => setGenderFilter('men')}
               className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
                 genderFilter === 'men'
-                  ? 'bg-[#8026FA] text-white shadow-sm'
+                  ? 'bg-hockia-primary text-white shadow-sm'
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
@@ -449,7 +449,7 @@ export default function WorldProvincePage() {
                 onClick={() => setSelectedLeague(league)}
                 className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all border ${
                   selectedLeague?.id === league.id
-                    ? 'bg-white border-[#8026FA] text-[#8026FA] shadow-sm'
+                    ? 'bg-white border-hockia-primary text-hockia-primary shadow-sm'
                     : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
                 }`}
               >
@@ -495,9 +495,9 @@ export default function WorldProvincePage() {
                 onClick={() => handleClubClick(club)}
                 className={`w-full text-left p-4 rounded-xl border transition-all cursor-pointer ${
                   highlightClubId === club.id
-                    ? 'bg-white border-[#8026FA] ring-2 ring-[#8026FA] ring-offset-2 shadow-md'
+                    ? 'bg-white border-hockia-primary ring-2 ring-hockia-primary ring-offset-2 shadow-md'
                     : club.is_claimed
-                      ? 'bg-white border-gray-200 hover:border-[#8026FA] hover:shadow-md'
+                      ? 'bg-white border-gray-200 hover:border-hockia-primary hover:shadow-md'
                       : 'bg-gray-50 border-gray-100 hover:bg-white hover:border-gray-200'
                 }`}
               >
@@ -512,7 +512,7 @@ export default function WorldProvincePage() {
                     ) : (
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                         club.is_claimed
-                          ? 'bg-gradient-to-br from-[#8026FA] to-[#924CEC]'
+                          ? 'bg-gradient-to-br from-hockia-primary to-hockia-secondary'
                           : 'bg-gray-200'
                       }`}>
                         <Building2 className={`w-5 h-5 ${club.is_claimed ? 'text-white' : 'text-gray-400'}`} />

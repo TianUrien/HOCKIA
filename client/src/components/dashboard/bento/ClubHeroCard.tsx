@@ -147,7 +147,7 @@ export default function ClubHeroCard({
               type="button"
               onClick={onEdit}
               aria-label="Change club logo"
-              className="absolute -bottom-0.5 -right-0.5 flex h-7 w-7 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-gray-200 text-[#8026FA] hover:bg-gray-50 transition-colors"
+              className="absolute -bottom-0.5 -right-0.5 flex h-7 w-7 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-gray-200 text-hockia-primary hover:bg-gray-50 transition-colors"
             >
               <Camera className="h-3.5 w-3.5" />
             </button>
@@ -200,7 +200,7 @@ export default function ClubHeroCard({
                   type="button"
                   onClick={onMessage}
                   disabled={sendingMessage}
-                  className="flex-1 min-w-0 justify-center whitespace-nowrap inline-flex h-11 items-center gap-2 rounded-lg bg-gradient-to-r from-[#8026FA] to-[#924CEC] px-4 text-sm font-semibold text-white shadow-sm hover:opacity-90 disabled:opacity-60"
+                  className="flex-1 min-w-0 justify-center whitespace-nowrap inline-flex h-11 items-center gap-2 rounded-lg bg-gradient-to-r from-hockia-primary to-hockia-secondary px-4 text-sm font-semibold text-white shadow-sm hover:opacity-90 disabled:opacity-60"
                 >
                   {sendingMessage ? (
                     <>
@@ -298,7 +298,7 @@ export default function ClubHeroCard({
               <MetaRow>
                 <a
                   href={`mailto:${publicContact.displayEmail}`}
-                  className="inline-flex items-center gap-1.5 hover:text-[#8026FA] transition-colors"
+                  className="inline-flex items-center gap-1.5 hover:text-hockia-primary transition-colors"
                 >
                   <Mail className="w-4 h-4 text-gray-400" />
                   <span>{publicContact.displayEmail}</span>
@@ -359,7 +359,7 @@ export default function ClubHeroCard({
                 onClick={() => setChecklistOpen((o) => !o)}
                 aria-expanded={checklistOpen ? 'true' : 'false'}
                 aria-controls="club-hero-checklist"
-                className="flex w-full items-center justify-center gap-1 text-sm font-medium text-[#8026FA] hover:text-[#6B20D4] transition-colors py-1"
+                className="flex w-full items-center justify-center gap-1 text-sm font-medium text-hockia-primary hover:text-[#6B20D4] transition-colors py-1"
                 data-testid="club-hero-checklist-toggle"
               >
                 Full checklist
@@ -429,7 +429,7 @@ function ChecklistRow({ bucket, onAction }: ChecklistRowProps) {
           type="button"
           onClick={() => onAction?.(bucket)}
           disabled={!onAction}
-          className="flex-shrink-0 inline-flex items-center rounded-md border border-[#8026FA]/30 bg-white px-2.5 py-1 text-xs font-medium text-[#8026FA] hover:bg-[#8026FA]/5 transition-colors disabled:opacity-50 disabled:hover:bg-white"
+          className="flex-shrink-0 inline-flex items-center rounded-md border border-hockia-primary/30 bg-white px-2.5 py-1 text-xs font-medium text-hockia-primary hover:bg-hockia-primary/5 transition-colors disabled:opacity-50 disabled:hover:bg-white"
         >
           {actionLabel}
         </button>
@@ -459,11 +459,11 @@ function CredibilityStat({ icon: Icon, label, count, onClick, testId }: Credibil
       aria-label={ariaLabel}
       className={cn(
         'group inline-flex items-center gap-1.5 whitespace-nowrap text-sm transition-colors',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8026FA]/30 rounded',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/30 rounded',
         onClick ? 'cursor-pointer' : 'cursor-default',
       )}
     >
-      <Icon className="h-4 w-4 text-[#8026FA]" aria-hidden="true" />
+      <Icon className="h-4 w-4 text-hockia-primary" aria-hidden="true" />
       <span className="text-gray-600">{label}</span>
       <span className="font-bold text-gray-900 tabular-nums">{count}</span>
       {onClick && (

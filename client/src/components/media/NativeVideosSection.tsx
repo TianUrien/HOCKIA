@@ -105,7 +105,7 @@ export default function NativeVideosSection({ playerUserId, readOnly, hasLegacyH
       <div className="flex items-center justify-between gap-2">
         <div className="min-w-0">
           <h3 className="flex items-center gap-2 text-base font-bold text-gray-900">
-            <Film className="h-4 w-4 text-[#8026FA] flex-shrink-0" />
+            <Film className="h-4 w-4 text-hockia-primary flex-shrink-0" />
             Highlight videos
           </h3>
           <p className="text-xs text-gray-500">Hosted on HOCKIA — play instantly, no external links.</p>
@@ -129,7 +129,7 @@ export default function NativeVideosSection({ playerUserId, readOnly, hasLegacyH
         !readOnly && !hasLegacyHighlight && (
           <div className="rounded-xl border-2 border-dashed border-gray-300 px-4 py-8 text-center">
             <div className="mb-3 flex justify-center">
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-[#8026FA] to-[#924CEC]">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-hockia-primary to-hockia-secondary">
                 <Film className="h-6 w-6 text-white" />
               </div>
             </div>
@@ -146,7 +146,7 @@ export default function NativeVideosSection({ playerUserId, readOnly, hasLegacyH
                 <button
                   type="button"
                   onClick={onAddLink}
-                  className="text-xs font-medium text-[#8026FA] hover:underline"
+                  className="text-xs font-medium text-hockia-primary hover:underline"
                 >
                   or paste a YouTube / Vimeo / Drive link
                 </button>
@@ -187,7 +187,7 @@ export default function NativeVideosSection({ playerUserId, readOnly, hasLegacyH
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-gray-900">{v.title}</p>
                   {v.visibility === 'recruiters' && (
-                    <span className="text-[11px] font-medium text-[#8026FA]">Recruiters only</span>
+                    <span className="text-[11px] font-medium text-hockia-primary">Recruiters only</span>
                   )}
                 </div>
                 {!readOnly && (
@@ -212,7 +212,7 @@ export default function NativeVideosSection({ playerUserId, readOnly, hasLegacyH
         <button
           type="button"
           onClick={onAddLink}
-          className="text-xs font-medium text-[#8026FA] hover:underline"
+          className="text-xs font-medium text-hockia-primary hover:underline"
         >
           or paste a YouTube / Vimeo / Drive link
         </button>

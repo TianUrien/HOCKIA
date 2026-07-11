@@ -66,7 +66,7 @@ export function ProfileViewersSection() {
     <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
       {/* Header */}
       <div className="flex items-center gap-2 mb-4">
-        <Eye className="w-5 h-5 text-[#8026FA]" />
+        <Eye className="w-5 h-5 text-hockia-primary" />
         <h3 className="text-base font-semibold text-gray-900">Who Viewed Your Profile</h3>
       </div>
 
@@ -101,7 +101,7 @@ export function ProfileViewersSection() {
           onClick={() => setCardOpen((v) => !v)}
           aria-expanded={cardOpen ? 'true' : 'false'}
           aria-controls="profile-viewers-list"
-          className="w-full flex items-center justify-center gap-1.5 py-2 text-sm font-medium text-[#8026FA] hover:bg-purple-50 rounded-xl transition-colors"
+          className="w-full flex items-center justify-center gap-1.5 py-2 text-sm font-medium text-hockia-primary hover:bg-purple-50 rounded-xl transition-colors"
         >
           {cardOpen ? 'Hide viewers' : 'Show viewers'}
           {cardOpen ? <ChevronUp className="w-4 h-4" aria-hidden="true" /> : <ChevronDown className="w-4 h-4" aria-hidden="true" />}
@@ -164,7 +164,7 @@ export function ProfileViewersSection() {
               <button
                 type="button"
                 onClick={() => setShowAll(!showAll)}
-                className="w-full flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium text-[#8026FA] hover:bg-purple-50 rounded-xl transition-colors"
+                className="w-full flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium text-hockia-primary hover:bg-purple-50 rounded-xl transition-colors"
               >
                 {showAll ? 'Show less' : `See all ${viewers.length} viewers`}
                 <ChevronDown className={`w-4 h-4 transition-transform ${showAll ? 'rotate-180' : ''}`} />

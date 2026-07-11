@@ -66,7 +66,7 @@ export default function ProfileCompletionCard() {
     if (!p.avatar_url?.trim()) {
       items.push({
         id: 'photo',
-        icon: <Camera className="w-5 h-5 text-[#8026FA]" />,
+        icon: <Camera className="w-5 h-5 text-hockia-primary" />,
         title: 'Add a profile photo',
         description: 'Profiles with photos are more likely to be shortlisted by clubs.',
         action: () => navigate(OWN_PROFILE_EDIT_PATH),
@@ -79,7 +79,7 @@ export default function ProfileCompletionCard() {
     if (!p.current_world_club_id && p.current_club?.trim()) {
       items.push({
         id: 'club',
-        icon: <Building2 className="w-5 h-5 text-[#8026FA]" />,
+        icon: <Building2 className="w-5 h-5 text-hockia-primary" />,
         title: 'Link your current club',
         description: 'Coaches in your league will find you faster in search.',
         action: () => navigate(OWN_PROFILE_EDIT_PATH),
@@ -92,7 +92,7 @@ export default function ProfileCompletionCard() {
     if ((p.accepted_friend_count ?? 0) === 0) {
       items.push({
         id: 'friends',
-        icon: <UserPlus className="w-5 h-5 text-[#8026FA]" />,
+        icon: <UserPlus className="w-5 h-5 text-hockia-primary" />,
         title: 'Connect with someone you know',
         description: 'Build your network to unlock references and trust signals.',
         action: () => navigate('/community?tab=people'),
@@ -105,7 +105,7 @@ export default function ProfileCompletionCard() {
     if ((p.accepted_reference_count ?? 0) === 0 && (p.accepted_friend_count ?? 0) > 0) {
       items.push({
         id: 'references',
-        icon: <Shield className="w-5 h-5 text-[#8026FA]" />,
+        icon: <Shield className="w-5 h-5 text-hockia-primary" />,
         title: 'Get your first reference',
         description: 'Players with references rank higher in every search.',
         // Owner dashboard References tab — NOT /players/:username?tab=friends:
@@ -168,7 +168,7 @@ export default function ProfileCompletionCard() {
           </div>
           <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-[#8026FA] to-[#924CEC] rounded-full transition-all duration-500"
+              className="h-full bg-gradient-to-r from-hockia-primary to-hockia-secondary rounded-full transition-all duration-500"
               style={{ width: `${profileStrength.percentage}%` }}
             />
           </div>
@@ -185,7 +185,7 @@ export default function ProfileCompletionCard() {
           <p className="text-xs text-gray-500 mt-0.5">{currentStep.description}</p>
           <button
             onClick={currentStep.action}
-            className="mt-2 inline-flex items-center px-3 py-1.5 text-xs font-medium text-white bg-gradient-to-r from-[#8026FA] to-[#924CEC] rounded-lg hover:opacity-90 transition-opacity"
+            className="mt-2 inline-flex items-center px-3 py-1.5 text-xs font-medium text-white bg-gradient-to-r from-hockia-primary to-hockia-secondary rounded-lg hover:opacity-90 transition-opacity"
           >
             {currentStep.actionLabel}
           </button>

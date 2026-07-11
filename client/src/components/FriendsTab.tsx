@@ -506,7 +506,7 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole, h
           </div>
           <div className="flex items-center gap-2">
             <div className="inline-flex items-center gap-2 rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-700">
-              <Users className="h-4 w-4 text-[#8026FA]" />
+              <Users className="h-4 w-4 text-hockia-primary" />
               {acceptedConnections.length} {acceptedConnections.length === 1 ? 'connection' : 'connections'}
             </div>
             {/* Find people — header entry point for the owner once
@@ -518,7 +518,7 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole, h
               <button
                 type="button"
                 onClick={() => navigate('/community')}
-                className="inline-flex items-center gap-1.5 rounded-full border border-[#8026FA]/20 bg-white px-3 py-1 text-sm font-semibold text-[#8026FA] hover:bg-[#8026FA]/5 transition-colors"
+                className="inline-flex items-center gap-1.5 rounded-full border border-hockia-primary/20 bg-white px-3 py-1 text-sm font-semibold text-hockia-primary hover:bg-hockia-primary/5 transition-colors"
               >
                 <UserPlus className="h-4 w-4" />
                 Find people

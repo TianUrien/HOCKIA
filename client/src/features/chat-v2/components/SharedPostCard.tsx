@@ -95,7 +95,7 @@ export function SharedPostCard({
       <div
         className={cn(
           'mt-2 flex items-center gap-1 text-xs font-medium',
-          isMine ? 'text-white/70' : 'text-[#8026FA]',
+          isMine ? 'text-white/70' : 'text-hockia-primary',
         )}
       >
         <span>View post</span>

@@ -83,7 +83,7 @@ export default function UploadVideoModal({ isOpen, onClose, onUploaded, kind = '
       >
         <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
           <h2 id={titleId} className="flex items-center gap-2 text-lg font-bold text-gray-900">
-            <Film className="h-5 w-5 text-[#8026FA]" />
+            <Film className="h-5 w-5 text-hockia-primary" />
             Upload highlight video
           </h2>
           <button
@@ -105,7 +105,7 @@ export default function UploadVideoModal({ isOpen, onClose, onUploaded, kind = '
             </div>
           ) : phase === 'processing' ? (
             <div className="flex flex-col items-center gap-3 py-6 text-center">
-              <Loader2 className="h-10 w-10 animate-spin text-[#8026FA]" />
+              <Loader2 className="h-10 w-10 animate-spin text-hockia-primary" />
               <p className="font-semibold text-gray-900">Processing your video…</p>
               <p className="text-sm text-gray-500">Cloudflare is preparing it for smooth playback. This can take a minute or two — you can keep using HOCKIA.</p>
             </div>
@@ -118,7 +118,7 @@ export default function UploadVideoModal({ isOpen, onClose, onUploaded, kind = '
                 <span className="tabular-nums text-gray-500">{progress}%</span>
               </div>
               <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100">
-                <div className="h-full rounded-full bg-gradient-to-r from-[#8026FA] to-[#924CEC] transition-all" style={{ width: `${progress}%` }} />
+                <div className="h-full rounded-full bg-gradient-to-r from-hockia-primary to-hockia-secondary transition-all" style={{ width: `${progress}%` }} />
               </div>
               <button type="button" onClick={() => { cancel(); reset() }} className="mt-3 text-xs text-gray-500 hover:text-gray-700 hover:underline">
                 Cancel
@@ -130,9 +130,9 @@ export default function UploadVideoModal({ isOpen, onClose, onUploaded, kind = '
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="flex w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-300 px-4 py-8 text-center transition-colors hover:border-[#8026FA]/50 hover:bg-[#8026FA]/[0.02]"
+                className="flex w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-300 px-4 py-8 text-center transition-colors hover:border-hockia-primary/50 hover:bg-hockia-primary/[0.02]"
               >
-                <UploadCloud className="h-8 w-8 text-[#8026FA]" />
+                <UploadCloud className="h-8 w-8 text-hockia-primary" />
                 <span className="text-sm font-semibold text-gray-900">
                   {file ? file.name : 'Choose a video file'}
                 </span>
@@ -152,7 +152,7 @@ export default function UploadVideoModal({ isOpen, onClose, onUploaded, kind = '
                   value={description}
                   onChange={(e) => setDescription(e.target.value.slice(0, 500))}
                   rows={2}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-[#8026FA] focus:outline-none focus:ring-1 focus:ring-[#8026FA]"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-hockia-primary focus:outline-none focus:ring-1 focus:ring-hockia-primary"
                   placeholder="A few words about this video"
                 />
               </div>
@@ -167,7 +167,7 @@ export default function UploadVideoModal({ isOpen, onClose, onUploaded, kind = '
                       onClick={() => setVisibility(val)}
                       className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
                         visibility === val
-                          ? 'border-[#8026FA] bg-[#8026FA]/5 text-[#8026FA]'
+                          ? 'border-hockia-primary bg-hockia-primary/5 text-hockia-primary'
                           : 'border-gray-200 text-gray-600 hover:border-gray-300'
                       }`}
                     >

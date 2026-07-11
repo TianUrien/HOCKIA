@@ -182,7 +182,7 @@ export default function ConnectionsSection({ profileId, profileRole, onAskToVouc
         </div>
         <Link
           to="/dashboard/profile/friends"
-          className="text-sm font-medium text-[#8026FA] hover:text-[#6B20D4] flex-shrink-0"
+          className="text-sm font-medium text-hockia-primary hover:text-[#6B20D4] flex-shrink-0"
         >
           View all
         </Link>
@@ -314,14 +314,14 @@ function TabButton({
       onClick={() => onClick(id)}
       className={`relative px-3 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
         active
-          ? 'text-[#8026FA] border-[#8026FA]'
+          ? 'text-hockia-primary border-hockia-primary'
           : 'text-gray-500 hover:text-gray-900 border-transparent'
       }`}
     >
       <span className="inline-flex items-center gap-1.5">
         {label}
         {badge !== undefined && badge > 0 && (
-          <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#8026FA] px-1.5 text-[10px] font-semibold text-white">
+          <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-hockia-primary px-1.5 text-[10px] font-semibold text-white">
             {badge}
           </span>
         )}
@@ -406,7 +406,7 @@ function ConnectionRow({
         <button
           type="button"
           onClick={onOpenProfile}
-          className="flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8026FA]/40 rounded-full"
+          className="flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/40 rounded-full"
           aria-label={`Open ${fullName}'s profile`}
         >
           <Avatar
@@ -422,7 +422,7 @@ function ConnectionRow({
             <button
               type="button"
               onClick={onOpenProfile}
-              className="font-medium text-sm text-gray-900 hover:text-[#8026FA] transition-colors truncate text-left"
+              className="font-medium text-sm text-gray-900 hover:text-hockia-primary transition-colors truncate text-left"
             >
               {fullName}
             </button>

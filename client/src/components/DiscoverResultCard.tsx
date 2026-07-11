@@ -223,7 +223,7 @@ export default function DiscoverResultCard({ result }: DiscoverResultCardProps) 
             type="button"
             onClick={() => setExpanded(e => !e)}
             aria-label={expanded ? 'Hide details' : 'Show details'}
-            className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-full border border-gray-200 text-gray-400 hover:border-[#8026FA]/40 hover:text-[#8026FA] transition-colors"
+            className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-full border border-gray-200 text-gray-400 hover:border-hockia-primary/40 hover:text-hockia-primary transition-colors"
           >
             <ChevronDown
               className={`w-4 h-4 transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`}

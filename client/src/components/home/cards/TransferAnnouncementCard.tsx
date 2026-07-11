@@ -100,7 +100,7 @@ export function TransferAnnouncementCard({ item, onLikeUpdate, onDelete }: Trans
   return (
     <div className="bg-white">
       {/* Branded header */}
-      <div className="bg-gradient-to-r from-[#8026FA] to-[#924CEC] px-4 py-2.5 flex items-center gap-2">
+      <div className="bg-gradient-to-r from-hockia-primary to-hockia-secondary px-4 py-2.5 flex items-center gap-2">
         <ArrowRight className="w-4 h-4 text-white" />
         <span className="text-sm font-medium text-white">Transfer Announcement</span>
         <span className="ml-auto text-xs text-white/70">{timeAgo}</span>
@@ -163,7 +163,7 @@ export function TransferAnnouncementCard({ item, onLikeUpdate, onDelete }: Trans
 
           {/* Arrow — vertically centered with avatars */}
           <div className="flex items-center justify-center flex-shrink-0 pt-5">
-            <ArrowRight className="w-6 h-6 text-[#8026FA]" />
+            <ArrowRight className="w-6 h-6 text-hockia-primary" />
           </div>
 
           {/* Club */}

@@ -156,7 +156,7 @@ export default function CoachPostedOpportunitiesCard({
         <button
           type="button"
           onClick={onCreateOpportunity}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#8026FA] to-[#924CEC] px-4 py-3 text-sm font-semibold text-white shadow-sm hover:opacity-95 transition-opacity"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-hockia-primary to-hockia-secondary px-4 py-3 text-sm font-semibold text-white shadow-sm hover:opacity-95 transition-opacity"
         >
           <Plus className="h-4 w-4" />
           Create opportunity
@@ -169,7 +169,7 @@ export default function CoachPostedOpportunitiesCard({
           <button
             type="button"
             onClick={onManageOpportunities}
-            className="text-sm font-medium text-[#8026FA] hover:text-[#6B20D4]"
+            className="text-sm font-medium text-hockia-primary hover:text-[#6B20D4]"
           >
             Manage all →
           </button>
@@ -190,7 +190,7 @@ function MetricTile({ icon: Icon, label, value, active }: MetricTileProps) {
   return (
     <div className="rounded-xl border border-gray-100 bg-gray-50/60 px-3 py-3">
       <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
-        <Icon className="h-3.5 w-3.5 text-[#8026FA]" />
+        <Icon className="h-3.5 w-3.5 text-hockia-primary" />
         <span className="truncate">{label}</span>
       </div>
       <p

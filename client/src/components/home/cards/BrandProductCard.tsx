@@ -69,7 +69,7 @@ export function BrandProductCard({ item }: BrandProductCardProps) {
             href={item.product_external_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="w-full px-4 py-2.5 bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white rounded-lg font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+            className="w-full px-4 py-2.5 bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white rounded-lg font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
           >
             Learn more
             <ExternalLink className="w-4 h-4" />

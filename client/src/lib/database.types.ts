@@ -2561,6 +2561,58 @@ export type Database = {
           },
         ]
       }
+      home_module_impressions: {
+        Row: {
+          created_at: string
+          hour_bucket: string | null
+          id: string
+          module_id: string
+          position: number
+          role: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          hour_bucket?: string | null
+          id?: string
+          module_id: string
+          position?: number
+          role?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          hour_bucket?: string | null
+          id?: string
+          module_id?: string
+          position?: number
+          role?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "home_module_impressions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "home_module_impressions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "home_module_impressions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       investor_share_tokens: {
         Row: {
           access_count: number
@@ -2813,6 +2865,7 @@ export type Database = {
           availability_required: boolean
           benefits: string[]
           closed_at: string | null
+          closed_reason: string | null
           club_id: string
           compensation: string | null
           compensation_required: boolean
@@ -2823,6 +2876,7 @@ export type Database = {
           description: string | null
           duration_text: string | null
           eu_passport_required: boolean
+          filled_via_hockia: boolean | null
           gender: Database["public"]["Enums"]["opportunity_gender"] | null
           id: string
           level_required: boolean
@@ -2854,6 +2908,7 @@ export type Database = {
           availability_required?: boolean
           benefits?: string[]
           closed_at?: string | null
+          closed_reason?: string | null
           club_id: string
           compensation?: string | null
           compensation_required?: boolean
@@ -2864,6 +2919,7 @@ export type Database = {
           description?: string | null
           duration_text?: string | null
           eu_passport_required?: boolean
+          filled_via_hockia?: boolean | null
           gender?: Database["public"]["Enums"]["opportunity_gender"] | null
           id?: string
           level_required?: boolean
@@ -2895,6 +2951,7 @@ export type Database = {
           availability_required?: boolean
           benefits?: string[]
           closed_at?: string | null
+          closed_reason?: string | null
           club_id?: string
           compensation?: string | null
           compensation_required?: boolean
@@ -2905,6 +2962,7 @@ export type Database = {
           description?: string | null
           duration_text?: string | null
           eu_passport_required?: boolean
+          filled_via_hockia?: boolean | null
           gender?: Database["public"]["Enums"]["opportunity_gender"] | null
           id?: string
           level_required?: boolean
@@ -8519,6 +8577,8 @@ export type Database = {
           status: Database["public"]["Enums"]["profile_reference_status"]
         }[]
       }
+      get_my_streak: { Args: never; Returns: Json }
+      get_my_weekly_visibility: { Args: never; Returns: Json }
       get_notification_counts: {
         Args: never
         Returns: {

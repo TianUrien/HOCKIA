@@ -102,7 +102,7 @@ export default function RecommendationCard({ rec }: RecommendationCardProps) {
       <button
         type="button"
         onClick={() => navigate(rec.navigate_to)}
-        className="mt-3 w-full flex items-center justify-center gap-1 min-h-[40px] py-2 rounded-lg bg-gradient-to-br from-[#8026FA] to-[#924CEC] text-white text-xs font-medium hover:opacity-90 transition-opacity"
+        className="mt-3 w-full flex items-center justify-center gap-1 min-h-[40px] py-2 rounded-lg bg-gradient-to-br from-hockia-primary to-hockia-secondary text-white text-xs font-medium hover:opacity-90 transition-opacity"
       >
         Review applicant
         <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />

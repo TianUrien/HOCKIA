@@ -38,7 +38,7 @@ export function SearchPostResult({ result }: SearchPostResultProps) {
           <div className="flex items-center gap-2">
             <Link
               to={profilePath}
-              className="font-semibold text-gray-900 truncate text-sm hover:text-[#8026FA] transition-colors"
+              className="font-semibold text-gray-900 truncate text-sm hover:text-hockia-primary transition-colors"
             >
               {result.author_name || 'Unknown'}
             </Link>

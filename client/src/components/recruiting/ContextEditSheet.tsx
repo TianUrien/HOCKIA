@@ -280,7 +280,7 @@ export default function ContextEditSheet({ isOpen, onClose }: ContextEditSheetPr
               className={[
                 'flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-all duration-200',
                 !active
-                  ? 'border-[#8026FA] bg-[#8026FA]/5'
+                  ? 'border-hockia-primary bg-hockia-primary/5'
                   : 'border-gray-200 hover:border-gray-300',
               ].join(' ')}
             >
@@ -297,7 +297,7 @@ export default function ContextEditSheet({ isOpen, onClose }: ContextEditSheetPr
                   className={[
                     'w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0',
                     !active
-                      ? 'border-[#8026FA] bg-[#8026FA]'
+                      ? 'border-hockia-primary bg-hockia-primary'
                       : 'border-gray-300',
                   ].join(' ')}
                 >
@@ -359,7 +359,7 @@ export default function ContextEditSheet({ isOpen, onClose }: ContextEditSheetPr
                       className={[
                         'flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-all duration-200',
                         isActive
-                          ? 'border-[#8026FA] bg-[#8026FA]/5'
+                          ? 'border-hockia-primary bg-hockia-primary/5'
                           : 'border-gray-200 hover:border-gray-300',
                       ].join(' ')}
                     >
@@ -376,7 +376,7 @@ export default function ContextEditSheet({ isOpen, onClose }: ContextEditSheetPr
                           className={[
                             'w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0',
                             isActive
-                              ? 'border-[#8026FA] bg-[#8026FA]'
+                              ? 'border-hockia-primary bg-hockia-primary'
                               : 'border-gray-300',
                           ].join(' ')}
                         >
@@ -418,7 +418,7 @@ export default function ContextEditSheet({ isOpen, onClose }: ContextEditSheetPr
                   className={[
                     'group flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-all duration-200',
                     isActive
-                      ? 'border-[#8026FA] bg-[#8026FA]/5'
+                      ? 'border-hockia-primary bg-hockia-primary/5'
                       : 'border-gray-200 hover:border-gray-300',
                   ].join(' ')}
                 >
@@ -435,7 +435,7 @@ export default function ContextEditSheet({ isOpen, onClose }: ContextEditSheetPr
                       className={[
                         'w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0',
                         isActive
-                          ? 'border-[#8026FA] bg-[#8026FA]'
+                          ? 'border-hockia-primary bg-hockia-primary'
                           : 'border-gray-300',
                       ].join(' ')}
                     >
@@ -483,7 +483,7 @@ export default function ContextEditSheet({ isOpen, onClose }: ContextEditSheetPr
                         name="target"
                         checked={draftTarget === opt.value}
                         onChange={() => setDraftTarget(opt.value)}
-                        className="mt-0.5 w-4 h-4 accent-[#8026FA]"
+                        className="mt-0.5 w-4 h-4 accent-hockia-primary"
                       />
                       <span className="flex-1 min-w-0">
                         <span className="block text-sm font-medium text-gray-900">{opt.label}</span>
@@ -503,7 +503,7 @@ export default function ContextEditSheet({ isOpen, onClose }: ContextEditSheetPr
                   value={draftRegion}
                   onChange={(e) => setDraftRegion(e.target.value)}
                   placeholder="e.g., Buenos Aires, Europe, Latin America"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#8026FA]/30 focus:border-[#8026FA] focus:outline-none"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-hockia-primary/30 focus:border-hockia-primary focus:outline-none"
                 />
               </div>
 
@@ -516,7 +516,7 @@ export default function ContextEditSheet({ isOpen, onClose }: ContextEditSheetPr
                   value={draftLabel}
                   onChange={(e) => setDraftLabel(e.target.value)}
                   placeholder="e.g., Women's team — next season"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#8026FA]/30 focus:border-[#8026FA] focus:outline-none"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-hockia-primary/30 focus:border-hockia-primary focus:outline-none"
                 />
               </div>
 
@@ -533,7 +533,7 @@ export default function ContextEditSheet({ isOpen, onClose }: ContextEditSheetPr
                   type="button"
                   onClick={handleSave}
                   disabled={!draftTarget || busy}
-                  className="px-3 py-1.5 text-sm font-semibold bg-[#8026FA] text-white rounded-lg hover:bg-[#6b1de0] disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                  className="px-3 py-1.5 text-sm font-semibold bg-hockia-primary text-white rounded-lg hover:bg-[#6b1de0] disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                 >
                   {busy ? 'Saving…' : 'Save & activate'}
                 </button>
@@ -543,7 +543,7 @@ export default function ContextEditSheet({ isOpen, onClose }: ContextEditSheetPr
             <button
               type="button"
               onClick={() => setCreating(true)}
-              className="w-full flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg border border-dashed border-gray-300 text-sm font-medium text-gray-600 hover:border-[#8026FA] hover:text-[#8026FA] transition-colors"
+              className="w-full flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg border border-dashed border-gray-300 text-sm font-medium text-gray-600 hover:border-hockia-primary hover:text-hockia-primary transition-colors"
             >
               <Plus className="w-4 h-4" />
               New context

@@ -311,7 +311,7 @@ export default function CommunityReferencesSection({
                     <button
                       type="button"
                       onClick={() => openProfile(profile?.id ?? null, profile?.role)}
-                      className="flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8026FA]/40 rounded-full"
+                      className="flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/40 rounded-full"
                       aria-label={`Open ${fullName}'s profile`}
                     >
                       <Avatar
@@ -328,7 +328,7 @@ export default function CommunityReferencesSection({
                         <button
                           type="button"
                           onClick={() => openProfile(profile?.id ?? null, profile?.role)}
-                          className="font-semibold text-sm text-gray-900 hover:text-[#8026FA] transition-colors truncate text-left"
+                          className="font-semibold text-sm text-gray-900 hover:text-hockia-primary transition-colors truncate text-left"
                         >
                           {fullName}
                         </button>
@@ -365,7 +365,7 @@ export default function CommunityReferencesSection({
                             onClick={() =>
                               setExpandedRefId(isExpanded ? null : reference.id)
                             }
-                            className="text-xs font-medium text-[#8026FA] hover:text-[#6B20D4]"
+                            className="text-xs font-medium text-hockia-primary hover:text-[#6B20D4]"
                           >
                             {isExpanded ? 'Show less' : 'Read full reference'}
                           </button>
@@ -474,7 +474,7 @@ export default function CommunityReferencesSection({
                           <button
                             type="button"
                             onClick={() => openProfile(requester?.id ?? null, requester?.role)}
-                            className="font-semibold text-sm text-gray-900 hover:text-[#8026FA] transition-colors truncate text-left"
+                            className="font-semibold text-sm text-gray-900 hover:text-hockia-primary transition-colors truncate text-left"
                           >
                             {fullName}
                           </button>
@@ -586,7 +586,7 @@ export default function CommunityReferencesSection({
                         <button
                           type="button"
                           onClick={() => openProfile(requester?.id ?? null, requester?.role)}
-                          className="font-semibold text-sm text-gray-900 hover:text-[#8026FA] transition-colors truncate text-left"
+                          className="font-semibold text-sm text-gray-900 hover:text-hockia-primary transition-colors truncate text-left"
                         >
                           {fullName}
                         </button>

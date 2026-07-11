@@ -122,7 +122,7 @@ export default function ClubInviteLanding() {
     action = (
       <>
         <p className="text-sm text-gray-600 mt-4 mb-5">Sign in or create your Hockia profile to join this club.</p>
-        <button type="button" onClick={handleSignIn} className="w-full rounded-xl bg-[#8026FA] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#6B20D4] transition-colors">
+        <button type="button" onClick={handleSignIn} className="w-full rounded-xl bg-hockia-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#6B20D4] transition-colors">
           Sign in to join
         </button>
         <button type="button" onClick={() => { try { sessionStorage.setItem('hockia-redirect-after-login', `/invite/club/${token}`) } catch { /* noop */ } navigate('/signup') }} className="mt-2 w-full rounded-xl bg-gray-100 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-200 transition-colors">
@@ -152,7 +152,7 @@ export default function ClubInviteLanding() {
     action = (
       <>
         <p className="text-sm text-gray-600 mt-4 mb-5">Join {clubName} as a member. They’ll see you in their roster.</p>
-        <button type="button" onClick={handleJoin} disabled={joining} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#8026FA] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#6B20D4] transition-colors disabled:opacity-60">
+        <button type="button" onClick={handleJoin} disabled={joining} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-hockia-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#6B20D4] transition-colors disabled:opacity-60">
           {joining ? <Loader2 className="w-4 h-4 animate-spin" /> : <Users className="w-4 h-4" />}
           {joining ? 'Joining…' : 'Join club'}
         </button>

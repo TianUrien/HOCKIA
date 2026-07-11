@@ -48,7 +48,7 @@ export default function OpportunityDetailOverlay({
         aria-label="Loading opportunity"
       >
         <div className="w-12 h-12 rounded-full bg-white shadow-lg flex items-center justify-center">
-          <div className="w-6 h-6 border-[3px] border-[#8026FA] border-t-transparent rounded-full animate-spin" />
+          <div className="w-6 h-6 border-[3px] border-hockia-primary border-t-transparent rounded-full animate-spin" />
         </div>
       </div>
     )
@@ -67,7 +67,7 @@ export default function OpportunityDetailOverlay({
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-2.5 bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white rounded-lg hover:opacity-90 transition-opacity"
+            className="px-5 py-2.5 bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white rounded-lg hover:opacity-90 transition-opacity"
           >
             Close
           </button>

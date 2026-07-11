@@ -281,7 +281,7 @@ export default function FullGameVideoFormModal({
                   value={positionPlayed}
                   onChange={(e) => setPositionPlayed(e.target.value)}
                   disabled={isSaving}
-                  className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-[#8026FA] focus:outline-none focus:ring-2 focus:ring-[#8026FA]/30 disabled:opacity-60"
+                  className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-hockia-primary focus:outline-none focus:ring-2 focus:ring-hockia-primary/30 disabled:opacity-60"
                 >
                   {POSITIONS.map((p) => (
                     <option key={p} value={p}>
@@ -319,14 +319,14 @@ export default function FullGameVideoFormModal({
                 maxLength={500}
                 rows={2}
                 placeholder="e.g. Tournament final, captained the team."
-                className="w-full resize-none rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-[#8026FA] focus:outline-none focus:ring-2 focus:ring-[#8026FA]/30 disabled:opacity-60"
+                className="w-full resize-none rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-hockia-primary focus:outline-none focus:ring-2 focus:ring-hockia-primary/30 disabled:opacity-60"
               />
             </div>
 
             <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
               <p className="mb-2 text-xs font-medium text-gray-700">Who can see this video?</p>
               <div className="flex flex-col gap-2 sm:flex-row">
-                <label className="flex flex-1 cursor-pointer items-start gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm hover:border-[#8026FA]/40">
+                <label className="flex flex-1 cursor-pointer items-start gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm hover:border-hockia-primary/40">
                   <input
                     type="radio"
                     name="visibility"
@@ -341,7 +341,7 @@ export default function FullGameVideoFormModal({
                     <span className="block text-xs text-gray-500">Visible to anyone who views your profile.</span>
                   </span>
                 </label>
-                <label className="flex flex-1 cursor-pointer items-start gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm hover:border-[#8026FA]/40">
+                <label className="flex flex-1 cursor-pointer items-start gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm hover:border-hockia-primary/40">
                   <input
                     type="radio"
                     name="visibility"

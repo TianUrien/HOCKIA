@@ -95,7 +95,7 @@ export default function Header() {
                 onClick={() => handleNavigate('/marketplace')}
                 className={`relative min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg transition-colors ${
                   isActive('/marketplace')
-                    ? 'text-[#8026FA] bg-[#8026FA]/10'
+                    ? 'text-hockia-primary bg-hockia-primary/10'
                     : 'text-gray-700 hover:bg-gray-100'
                 }`}
                 aria-label="Marketplace"
@@ -142,7 +142,7 @@ export default function Header() {
                     onClick={() => handleNavigate(path)}
                     className={`relative px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                       isActive(path)
-                        ? 'text-[#8026FA] bg-[#8026FA]/10'
+                        ? 'text-hockia-primary bg-hockia-primary/10'
                         : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                     }`}
                     aria-current={isActive(path) ? 'page' : undefined}
@@ -165,7 +165,7 @@ export default function Header() {
                   onClick={() => handleNavigate('/marketplace')}
                   className={`relative p-2 rounded-lg transition-colors ${
                     isActive('/marketplace')
-                      ? 'text-[#8026FA] bg-[#8026FA]/10'
+                      ? 'text-hockia-primary bg-hockia-primary/10'
                       : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                   }`}
                   aria-label="Marketplace"
@@ -178,7 +178,7 @@ export default function Header() {
                   onClick={() => handleNavigate('/discover')}
                   className={`relative p-2 rounded-lg transition-colors ${
                     isActive('/discover')
-                      ? 'text-[#8026FA] bg-[#8026FA]/10'
+                      ? 'text-hockia-primary bg-hockia-primary/10'
                       : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                   }`}
                   aria-label="Hockia AI"
@@ -191,7 +191,7 @@ export default function Header() {
                   onClick={() => handleNavigate('/messages')}
                   className={`relative p-2 rounded-lg transition-colors ${
                     isActive('/messages')
-                      ? 'text-[#8026FA] bg-[#8026FA]/10'
+                      ? 'text-hockia-primary bg-hockia-primary/10'
                       : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                   }`}
                   aria-label="Messages"
@@ -231,7 +231,7 @@ export default function Header() {
                     onClick={() => handleNavigate(path)}
                     className={`relative px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                       isActive(path)
-                        ? 'text-[#8026FA] bg-[#8026FA]/10'
+                        ? 'text-hockia-primary bg-hockia-primary/10'
                         : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                     }`}
                     aria-current={isActive(path) ? 'page' : undefined}
@@ -255,7 +255,7 @@ export default function Header() {
                 </button>
                 <button
                   onClick={() => handleNavigate('/signup')}
-                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#8026FA] to-[#924CEC] text-white text-sm font-medium hover:opacity-90 transition-opacity"
+                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white text-sm font-medium hover:opacity-90 transition-opacity"
                 >
                   Join HOCKIA
                 </button>
