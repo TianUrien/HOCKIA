@@ -14,6 +14,8 @@ export type FeedItemType =
   | 'media_added'
   | 'video_added'
   | 'open_to_play_confirmed'
+  | 'role_filled'
+  | 'career_move'
 
 export type MilestoneType =
   | 'first_gallery_image'
@@ -241,6 +243,35 @@ export interface OpenToPlayConfirmedFeedItem extends BaseFeedItem {
   first_confirmed_at: string | null
 }
 
+/** career_move rows are EXCLUDED from the merged feed (transfers/signings
+ *  render there as rich user_post cards) — they are read ONLY by
+ *  get_market_moves for the Pulse "Happening now" digest. */
+export interface CareerMoveFeedItem extends BaseFeedItem {
+  item_type: 'career_move'
+  post_id: string
+  direction: 'transfer' | 'signing'
+  mover_profile_id: string
+  mover_name: string | null
+  mover_role: 'player' | 'coach' | 'club' | 'umpire'
+  mover_avatar_url: string | null
+  club_name: string | null
+  club_world_club_id: string | null
+  club_avatar_url: string | null
+  club_profile_id: string | null
+}
+
+export interface RoleFilledFeedItem extends BaseFeedItem {
+  item_type: 'role_filled'
+  opportunity_id: string
+  title: string
+  position: string | null
+  opportunity_type: string | null
+  filled_via_hockia: boolean
+  club_id: string
+  club_name: string | null
+  club_avatar_url: string | null
+}
+
 // Union type for all feed items
 export type HomeFeedItem =
   | MemberJoinedFeedItem
@@ -254,3 +285,5 @@ export type HomeFeedItem =
   | MediaAddedFeedItem
   | VideoAddedFeedItem
   | OpenToPlayConfirmedFeedItem
+  | RoleFilledFeedItem
+  | CareerMoveFeedItem

@@ -6,6 +6,7 @@ import { PostComposer } from '@/components/home/PostComposer'
 import { SearchOverlay } from '@/components/search/SearchOverlay'
 import { PullToRefresh } from '@/components/PullToRefresh'
 import { HomeTabBar } from '@/components/home/HomeTabs'
+import { FeedTabHint } from '@/components/home/FeedTabHint'
 import { useHomeTab } from '@/hooks/useHomeTab'
 import { PulseTab } from '@/components/home/pulse/PulseTab'
 import { useScrollRestore } from '@/hooks/useScrollRestore'
@@ -47,7 +48,10 @@ export default function HomePage() {
               : 'translate-y-0 opacity-100'
           }`}
         >
-          <HomeTabBar tab={tab} onChange={setTab} />
+          <div className="relative">
+            <HomeTabBar tab={tab} onChange={setTab} />
+            <FeedTabHint tab={tab} onGoToFeed={() => setTab('feed')} />
+          </div>
         </div>
 
         {tab === 'pulse' ? (

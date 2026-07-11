@@ -2,6 +2,8 @@ import { useAuthStore } from '@/lib/auth'
 import { PlayerHero } from './PlayerHero'
 import { PulseRoleFallback } from './PulseRoleFallback'
 import { YourApplications } from './YourApplications'
+import { OpportunitiesForYou } from './OpportunitiesForYou'
+import { HappeningNow } from './HappeningNow'
 import { PulseSection } from '../PulseSection'
 import ProfileCompletionCard from '../ProfileCompletionCard'
 
@@ -25,9 +27,16 @@ export function PulseTab() {
         <>
           <PlayerHero />
           <YourApplications enabled />
+          <OpportunitiesForYou enabled />
+          <HappeningNow position={3} />
         </>
       ) : (
-        <PulseRoleFallback role={role ?? 'coach'} />
+        <>
+          <PulseRoleFallback role={role ?? 'coach'} />
+          {/* Market moves are role-agnostic content — they keep the holding
+              Pulse alive for club/coach/brand until their real heroes land. */}
+          <HappeningNow position={1} />
+        </>
       )}
 
       {/* Movement layer — folded in from the old feed-top position. */}

@@ -16,6 +16,7 @@ import {
   MediaAddedCard,
   VideoAddedCard,
   OpenToPlayConfirmedCard,
+  RoleFilledCard,
 } from './cards'
 
 interface HomeFeedItemCardProps {
@@ -75,6 +76,8 @@ function renderFeedItem(
       return <VideoAddedCard item={item} />
     case 'open_to_play_confirmed':
       return <OpenToPlayConfirmedCard item={item} />
+    case 'role_filled':
+      return <RoleFilledCard item={item} />
     case 'user_post':
       if (item.post_type === 'transfer' && item.metadata) {
         return <TransferAnnouncementCard item={item} onLikeUpdate={onLikeUpdate} onDelete={onDelete} />

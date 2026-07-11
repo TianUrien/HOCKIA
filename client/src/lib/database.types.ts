@@ -8505,6 +8505,7 @@ export type Database = {
           tier: number
         }[]
       }
+      get_market_moves: { Args: { p_limit?: number }; Returns: Json }
       get_message_recipient: {
         Args: { p_conversation_id: string; p_sender_id: string }
         Returns: string
