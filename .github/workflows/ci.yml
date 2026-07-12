@@ -263,17 +263,21 @@ jobs:
         if: github.ref_name == 'main'
         run: |
           set -euo pipefail
-          listing=$(supabase migration list --linked)
-          echo "$listing"
+          # Grep a FILE, not `echo | grep -q`: under pipefail, grep -q exiting
+          # early SIGPIPEs the echo and a MATCH reads as a pipeline failure
+          # (bit the first run of this step on a version that WAS applied).
+          supabase migration list --linked > migration-list.txt
+          cat migration-list.txt
           failed=0
           for f in supabase/migrations/*.sql; do
             v=$(basename "$f" | grep -oE '^[0-9]+')
             # REMOTE is the middle column: "| <version> |"
-            if ! echo "$listing" | grep -qE "\|[[:space:]]*${v}[[:space:]]*\|"; then
+            if ! grep -qE "\|[[:space:]]*${v}[[:space:]]*\|" migration-list.txt; then
               echo "::error::migration $v exists on main but was never applied to the staging DB"
               failed=1
             fi
           done
+          rm -f migration-list.txt
           exit $failed
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
