@@ -45,11 +45,15 @@ export function FeedTabHint({ tab, onGoToFeed }: { tab: HomeTab; onGoToFeed: () 
     setVisible(false)
   }
 
+  // In-flow inside the sticky header block (NOT an absolute overlay): it
+  // pushes the page content down while visible instead of covering the hero
+  // headline — there is no viewport where a floating bubble doesn't overlap
+  // something. Dismissing collapses it and the hero slides back up.
   return (
-    <div className="pointer-events-none absolute left-1/2 right-4 top-full z-30 mt-2 md:right-6">
-      {/* Arrow up at the Feed segment's center (the right half of the bar). */}
+    <div className="mx-4 mt-2 md:mx-6">
+      {/* Arrow up at the Feed segment's center (75% across the bar). */}
       <div className="mr-[calc(25%-6px)] ml-auto h-2 w-3 [clip-path:polygon(50%_0,0_100%,100%_100%)] bg-[#14141c]" />
-      <div className="pointer-events-auto flex items-center gap-2 rounded-xl bg-[#14141c] px-3 py-2.5 shadow-lg">
+      <div className="ml-auto flex w-full max-w-sm items-center gap-2 rounded-xl bg-[#14141c] px-3 py-2.5 shadow-lg">
         <button type="button" onClick={() => { dismiss(); onGoToFeed() }} className="min-w-0 flex-1 text-left">
           <p className="text-xs font-semibold text-white">Looking for posts?</p>
           <p className="text-[11px] leading-snug text-white/70">

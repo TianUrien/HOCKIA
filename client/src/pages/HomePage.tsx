@@ -48,10 +48,8 @@ export default function HomePage() {
               : 'translate-y-0 opacity-100'
           }`}
         >
-          <div className="relative">
-            <HomeTabBar tab={tab} onChange={setTab} />
-            <FeedTabHint tab={tab} onGoToFeed={() => setTab('feed')} />
-          </div>
+          <HomeTabBar tab={tab} onChange={setTab} />
+          <FeedTabHint tab={tab} onGoToFeed={() => setTab('feed')} />
         </div>
 
         {tab === 'pulse' ? (
