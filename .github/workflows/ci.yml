@@ -243,7 +243,38 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
       - name: Validate migrations (dry-run)
+        # Strict check for staging + PRs: local files and the staging DB's
+        # migration history must reconcile exactly.
+        if: github.ref_name != 'main'
         run: supabase db push --linked --dry-run --include-all
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+
+      - name: Validate migrations (main — tolerate staging-ahead)
+        # main is routinely BEHIND staging (staging-first deploys; selective
+        # prod pushes like the 2026-07-12 age-gate). The strict dry-run fails
+        # on remote-ahead ("Remote migration versions not found in local
+        # migrations directory") — a false positive that turns every selective
+        # prod push red. On main, assert the invariant that actually matters:
+        # every migration file on main has already been applied to the staging
+        # DB (nothing may reach main without passing through staging first).
+        # Staging having EXTRA migrations is the expected steady state.
+        if: github.ref_name == 'main'
+        run: |
+          set -euo pipefail
+          listing=$(supabase migration list --linked)
+          echo "$listing"
+          failed=0
+          for f in supabase/migrations/*.sql; do
+            v=$(basename "$f" | grep -oE '^[0-9]+')
+            # REMOTE is the middle column: "| <version> |"
+            if ! echo "$listing" | grep -qE "\|[[:space:]]*${v}[[:space:]]*\|"; then
+              echo "::error::migration $v exists on main but was never applied to the staging DB"
+              failed=1
+            fi
+          done
+          exit $failed
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
