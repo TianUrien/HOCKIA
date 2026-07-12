@@ -165,7 +165,7 @@ Deno.serve(async (req: Request) => {
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 12px;">
     <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:12px;padding:28px;">
       <tr><td>
-        <img src="https://www.inhockia.com/hockia-logo-white.png" alt="HOCKIA" width="100" height="24" style="height:24px;width:100px;background:#8026FA;padding:8px 12px;border-radius:6px;margin-bottom:18px;" />
+        <img src="https://www.inhockia.com/hockia-logo-white.png" alt="HOCKIA" width="100" height="24" style="height:24px;width:100px;background:#6d28d9;padding:8px 12px;border-radius:6px;margin-bottom:18px;" />
         <div style="font-size:20px;font-weight:700;color:#111827;">Hi ${escapeHtml(firstName)},</div>
         <p style="font-size:15px;color:#374151;line-height:1.55;">
           ${single
@@ -178,10 +178,10 @@ Deno.serve(async (req: Request) => {
         </p>
         ${suggestionsHtml(suggestions, HOCKIA_BASE_URL)}
         <div style="margin-top:20px;">
-          <a href="${HOCKIA_BASE_URL}/opportunities" style="display:inline-block;background:#8026FA;color:#ffffff;padding:10px 18px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;">Browse open opportunities</a>
+          <a href="${HOCKIA_BASE_URL}/opportunities" style="display:inline-block;background:#6d28d9;color:#ffffff;padding:10px 18px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;">Browse open opportunities</a>
         </div>
         <p style="font-size:12px;color:#9ca3af;margin-top:24px;">
-          <a href="${HOCKIA_BASE_URL}/settings" style="color:#8026FA;">Notification settings</a>
+          <a href="${HOCKIA_BASE_URL}/settings" style="color:#6d28d9;">Notification settings</a>
         </p>
       </td></tr>
     </table>

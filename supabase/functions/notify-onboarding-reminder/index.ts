@@ -245,12 +245,12 @@ Deno.serve(async (req: Request) => {
       subject = content.subject
       emailHtml = `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h1 style="color: #8026FA;">${content.heading}</h1>
+          <h1 style="color: #6d28d9;">${content.heading}</h1>
           <p>Hi ${firstName},</p>
           <p>${content.bodyText}</p>
           <p style="text-align: center; margin: 30px 0;">
             <a href="${templateVars.cta_url}"
-               style="background: #8026FA; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">
+               style="background: #6d28d9; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">
               ${content.ctaLabel}
             </a>
           </p>

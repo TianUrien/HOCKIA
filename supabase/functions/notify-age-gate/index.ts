@@ -63,7 +63,7 @@ function shell(inner: string): string {
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 12px;">
     <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:12px;padding:28px;">
       <tr><td>
-        <img src="https://www.inhockia.com/hockia-logo-white.png" alt="HOCKIA" width="100" height="24" style="height:24px;width:100px;background:#8026FA;padding:8px 12px;border-radius:6px;margin-bottom:18px;" />
+        <img src="https://www.inhockia.com/hockia-logo-white.png" alt="HOCKIA" width="100" height="24" style="height:24px;width:100px;background:#6d28d9;padding:8px 12px;border-radius:6px;margin-bottom:18px;" />
         ${inner}
       </td></tr>
     </table>
@@ -72,7 +72,7 @@ function shell(inner: string): string {
 }
 
 const btn = (url: string, label: string) =>
-  `<div style="margin-top:20px;"><a href="${url}" style="display:inline-block;background:#8026FA;color:#ffffff;padding:12px 22px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;">${label}</a></div>`
+  `<div style="margin-top:20px;"><a href="${url}" style="display:inline-block;background:#6d28d9;color:#ffffff;padding:12px 22px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;">${label}</a></div>`
 
 Deno.serve(async (req: Request) => {
   const correlationId = crypto.randomUUID().slice(0, 8)
@@ -185,7 +185,7 @@ Deno.serve(async (req: Request) => {
         ${btn(waitlistUrl, 'Keep me posted')}
         <p style="font-size:13px;color:#6b7280;line-height:1.5;margin-top:20px;">
           Questions, or want your data removed instead? Just reply, or write to
-          <a href="mailto:team@inhockia.com" style="color:#8026FA;">team@inhockia.com</a> —
+          <a href="mailto:team@inhockia.com" style="color:#6d28d9;">team@inhockia.com</a> —
           we answer every message.
         </p>`)
       text = [

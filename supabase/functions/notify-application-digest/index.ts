@@ -257,7 +257,7 @@ Deno.serve(async (req: Request) => {
     const btn = (url: string, label: string, solid: boolean) =>
       `<a href="${url}" style="display:inline-block;padding:8px 14px;margin:2px 6px 2px 0;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;${
         solid
-          ? 'background:#8026FA;color:#ffffff;'
+          ? 'background:#6d28d9;color:#ffffff;'
           : 'background:#f3f4f6;color:#374151;border:1px solid #e5e7eb;'
       }">${label}</a>`
 
@@ -287,7 +287,7 @@ Deno.serve(async (req: Request) => {
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 12px;">
     <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:12px;padding:28px;">
       <tr><td>
-        <img src="https://www.inhockia.com/hockia-logo-white.png" alt="HOCKIA" width="100" height="24" style="height:24px;width:100px;background:#8026FA;padding:8px 12px;border-radius:6px;margin-bottom:18px;" />
+        <img src="https://www.inhockia.com/hockia-logo-white.png" alt="HOCKIA" width="100" height="24" style="height:24px;width:100px;background:#6d28d9;padding:8px 12px;border-radius:6px;margin-bottom:18px;" />
         <div style="font-size:20px;font-weight:700;color:#111827;">Hi ${escapeHtml(firstName)},</div>
         <p style="font-size:15px;color:#374151;line-height:1.5;">
           You have <strong>${rows.length} application${rows.length === 1 ? '' : 's'}</strong> waiting for your response
@@ -302,7 +302,7 @@ Deno.serve(async (req: Request) => {
         <p style="font-size:12px;color:#9ca3af;margin-top:24px;">
           Applicants are notified when you respond &mdash; a quick answer, even a no, beats silence.
           You receive this weekly summary while you have unanswered applications.
-          <a href="${HOCKIA_BASE_URL}/settings" style="color:#8026FA;">Notification settings</a>
+          <a href="${HOCKIA_BASE_URL}/settings" style="color:#6d28d9;">Notification settings</a>
         </p>
       </td></tr>
     </table>

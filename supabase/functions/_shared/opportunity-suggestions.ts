@@ -49,7 +49,7 @@ export function suggestionsHtml(suggestions: OpportunitySuggestion[], baseUrl: s
   if (suggestions.length === 0) return ''
   const rows = suggestions.map((s) => `
     <tr><td style="padding:10px 0;border-bottom:1px solid #f0f0f2;">
-      <a href="${baseUrl}/opportunities/${s.opportunity_id}" style="font-size:14px;font-weight:600;color:#8026FA;text-decoration:none;">${escapeHtml(s.title)}</a>
+      <a href="${baseUrl}/opportunities/${s.opportunity_id}" style="font-size:14px;font-weight:600;color:#6d28d9;text-decoration:none;">${escapeHtml(s.title)}</a>
       <div style="font-size:12.5px;color:#6b7280;margin-top:2px;">${escapeHtml(suggestionMeta(s))}</div>
     </td></tr>`).join('')
   return `

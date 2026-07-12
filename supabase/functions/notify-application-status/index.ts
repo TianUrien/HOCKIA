@@ -187,7 +187,7 @@ Deno.serve(async (req: Request) => {
       ? `<tr><td style="padding:12px 0;border-bottom:1px solid #f0f0f2;">
            <div style="font-size:15px;font-weight:600;color:#111827;">⭐ You're on ${escapeHtml(e.club_name)}'s shortlist</div>
            <div style="font-size:13px;color:#6b7280;margin-top:2px;">${escapeHtml(e.vacancy_title)} — keep your profile sharp while they review.</div>
-           ${e.opportunity_id ? `<a href="${HOCKIA_BASE_URL}/opportunities/${e.opportunity_id}" style="font-size:13px;color:#8026FA;text-decoration:none;font-weight:600;">View opportunity →</a>` : ''}
+           ${e.opportunity_id ? `<a href="${HOCKIA_BASE_URL}/opportunities/${e.opportunity_id}" style="font-size:13px;color:#6d28d9;text-decoration:none;font-weight:600;">View opportunity →</a>` : ''}
          </td></tr>`
       : `<tr><td style="padding:12px 0;border-bottom:1px solid #f0f0f2;">
            <div style="font-size:15px;font-weight:600;color:#111827;">${escapeHtml(e.club_name)} went another way for ${escapeHtml(e.vacancy_title)}</div>
@@ -199,7 +199,7 @@ Deno.serve(async (req: Request) => {
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 12px;">
     <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:12px;padding:28px;">
       <tr><td>
-        <img src="https://www.inhockia.com/hockia-logo-white.png" alt="HOCKIA" width="100" height="24" style="height:24px;width:100px;background:#8026FA;padding:8px 12px;border-radius:6px;margin-bottom:18px;" />
+        <img src="https://www.inhockia.com/hockia-logo-white.png" alt="HOCKIA" width="100" height="24" style="height:24px;width:100px;background:#6d28d9;padding:8px 12px;border-radius:6px;margin-bottom:18px;" />
         <div style="font-size:20px;font-weight:700;color:#111827;">Hi ${escapeHtml(firstName)},</div>
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:6px;">
           ${entries.map(entryHtml).join('')}
@@ -209,7 +209,7 @@ Deno.serve(async (req: Request) => {
           <a href="${HOCKIA_BASE_URL}/opportunities" style="display:inline-block;background:#111827;color:#ffffff;padding:10px 18px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;">Open HOCKIA</a>
         </div>
         <p style="font-size:12px;color:#9ca3af;margin-top:24px;">
-          <a href="${HOCKIA_BASE_URL}/settings" style="color:#8026FA;">Notification settings</a>
+          <a href="${HOCKIA_BASE_URL}/settings" style="color:#6d28d9;">Notification settings</a>
         </p>
       </td></tr>
     </table>

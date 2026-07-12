@@ -153,7 +153,7 @@ function renderAvatarHtml(avatarUrl: string | null, name: string, size = 48): st
   const initials = getInitials(name)
   const r = Math.floor(size / 2)
   const fontSize = size > 40 ? 16 : 14
-  return `<table cellpadding="0" cellspacing="0" border="0" style="width: ${size}px; height: ${size}px; border-radius: ${r}px; background: linear-gradient(135deg, #8026FA 0%, #924CEC 100%);">
+  return `<table cellpadding="0" cellspacing="0" border="0" style="width: ${size}px; height: ${size}px; border-radius: ${r}px; background: linear-gradient(135deg, #6d28d9 0%, #7c3aed 100%);">
     <tr>
       <td align="center" valign="middle" style="width: ${size}px; height: ${size}px; color: white; font-weight: bold; font-size: ${fontSize}px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">${initials}</td>
     </tr>
@@ -204,7 +204,7 @@ function renderBlock(block: ContentBlock, vars: Record<string, string>): string 
     <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px 20px; margin-bottom: 16px;">
       ${label ? `<p style="color: #6b7280; margin: 0 0 4px 0; font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">${escapeHtml(label)}</p>` : ''}
       ${title ? `<h2 style="color: #1f2937; margin: 0 0 4px 0; font-size: 20px; font-weight: 600;">${escapeHtml(title)}</h2>` : ''}
-      ${subtitle ? `<p style="color: #8026FA; margin: 0 0 16px 0; font-size: 15px; font-weight: 500;">${escapeHtml(subtitle)}</p>` : ''}
+      ${subtitle ? `<p style="color: #6d28d9; margin: 0 0 16px 0; font-size: 15px; font-weight: 500;">${escapeHtml(subtitle)}</p>` : ''}
       ${fields ? `<div style="margin-top: 8px;">${fields}</div>` : ''}
     </div>`
     }
@@ -258,7 +258,7 @@ function renderBlock(block: ContentBlock, vars: Record<string, string>): string 
       if (!url) return ''
       return `
     <p style="margin: 0 0 24px 0;">
-      <a href="${url}" style="color: #8026FA; font-weight: 600; font-size: 16px; text-decoration: none;">
+      <a href="${url}" style="color: #6d28d9; font-weight: 600; font-size: 16px; text-decoration: none;">
         ${escapeHtml(text)} &rarr;
       </a>
     </p>`
@@ -431,7 +431,7 @@ export function renderContentBlocks(
 
   const footerHtml = `<p style="color: #9ca3af; font-size: 12px; margin: 0;">
       You're receiving this because you have a HOCKIA account.<br>
-      <a href="${settingsUrl}" style="color: #8026FA; text-decoration: none;">Notification settings</a>
+      <a href="${settingsUrl}" style="color: #6d28d9; text-decoration: none;">Notification settings</a>
     </p>`
 
   const html = `
@@ -445,7 +445,7 @@ export function renderContentBlocks(
 
   <!-- Header -->
   <div style="padding: 16px 0 24px 0; text-align: left;">
-    <img src="https://www.inhockia.com/hockia-logo-white.png" alt="HOCKIA" width="100" height="24" style="height: 24px; width: 100px; background: #8026FA; padding: 8px 12px; border-radius: 6px;" />
+    <img src="https://www.inhockia.com/hockia-logo-white.png" alt="HOCKIA" width="100" height="24" style="height: 24px; width: 100px; background: #6d28d9; padding: 8px 12px; border-radius: 6px;" />
   </div>
 
   <!-- Main Content -->

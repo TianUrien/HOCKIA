@@ -68,7 +68,7 @@ function buildConversationCardHtml(conv: ConversationDigest): string {
 
   const avatarHtml = conv.sender_avatar_url
     ? `<img src="${conv.sender_avatar_url}" alt="${conv.sender_name}" style="width: 40px; height: 40px; border-radius: 20px;" />`
-    : `<table cellpadding="0" cellspacing="0" border="0" style="width: 40px; height: 40px; border-radius: 20px; background: linear-gradient(135deg, #8026FA 0%, #924CEC 100%);">
+    : `<table cellpadding="0" cellspacing="0" border="0" style="width: 40px; height: 40px; border-radius: 20px; background: linear-gradient(135deg, #6d28d9 0%, #7c3aed 100%);">
         <tr>
           <td align="center" valign="middle" style="width: 40px; height: 40px; color: white; font-weight: bold; font-size: 14px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">${initials}</td>
         </tr>
@@ -123,7 +123,7 @@ export function generateEmailHtml(
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
 
   <div style="padding: 16px 0 24px 0; text-align: left;">
-    <img src="https://www.inhockia.com/hockia-logo-white.png" alt="HOCKIA" width="100" height="24" style="height: 24px; width: 100px; background: #8026FA; padding: 8px 12px; border-radius: 6px;" />
+    <img src="https://www.inhockia.com/hockia-logo-white.png" alt="HOCKIA" width="100" height="24" style="height: 24px; width: 100px; background: #6d28d9; padding: 8px 12px; border-radius: 6px;" />
   </div>
 
   <div style="padding: 0 0 24px 0;">
@@ -136,7 +136,7 @@ export function generateEmailHtml(
     </div>
 
     <p style="margin: 0;">
-      <a href="${ctaUrl}" style="color: #8026FA; font-weight: 600; text-decoration: none;">${ctaLabel} &rarr;</a>
+      <a href="${ctaUrl}" style="color: #6d28d9; font-weight: 600; text-decoration: none;">${ctaLabel} &rarr;</a>
     </p>
 
   </div>
@@ -144,7 +144,7 @@ export function generateEmailHtml(
   <div style="border-top: 1px solid #e5e7eb; padding: 16px 0 0 0; text-align: left;">
     <p style="color: #9ca3af; font-size: 12px; margin: 0;">
       You're receiving this because you have a HOCKIA account.<br>
-      <a href="${UNSUBSCRIBE_URL}" style="color: #8026FA; text-decoration: none;">Notification settings</a>
+      <a href="${UNSUBSCRIBE_URL}" style="color: #6d28d9; text-decoration: none;">Notification settings</a>
     </p>
   </div>
 

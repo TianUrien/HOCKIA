@@ -77,7 +77,7 @@ export function generateEmailHtml(vacancy: VacancyRecord, clubName: string): str
 
   <!-- Header -->
   <div style="padding: 16px 0 24px 0; text-align: left;">
-    <img src="https://www.inhockia.com/hockia-logo-white.png" alt="HOCKIA" width="100" height="24" style="height: 24px; width: 100px; background: #8026FA; padding: 8px 12px; border-radius: 6px;" />
+    <img src="https://www.inhockia.com/hockia-logo-white.png" alt="HOCKIA" width="100" height="24" style="height: 24px; width: 100px; background: #6d28d9; padding: 8px 12px; border-radius: 6px;" />
   </div>
 
   <!-- Main Content -->
@@ -89,7 +89,7 @@ export function generateEmailHtml(vacancy: VacancyRecord, clubName: string): str
     <!-- Vacancy Card -->
     <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
       <h2 style="color: #1f2937; margin: 0 0 4px 0; font-size: 20px; font-weight: 600;">${vacancy.title}</h2>
-      <p style="color: #8026FA; margin: 0 0 16px 0; font-size: 15px; font-weight: 500;">${safeClubName}</p>
+      <p style="color: #6d28d9; margin: 0 0 16px 0; font-size: 15px; font-weight: 500;">${safeClubName}</p>
 
       ${detailItems.length > 0 ? `<div style="margin-bottom: 16px;">${detailItems.join('')}</div>` : ''}
 
@@ -98,7 +98,7 @@ export function generateEmailHtml(vacancy: VacancyRecord, clubName: string): str
 
     <!-- CTA -->
     <p style="margin: 0 0 24px 0;">
-      <a href="${vacancyUrl}" style="color: #8026FA; font-weight: 600; text-decoration: none;">View this opportunity &rarr;</a>
+      <a href="${vacancyUrl}" style="color: #6d28d9; font-weight: 600; text-decoration: none;">View this opportunity &rarr;</a>
     </p>
   </div>
 
@@ -106,7 +106,7 @@ export function generateEmailHtml(vacancy: VacancyRecord, clubName: string): str
   <div style="border-top: 1px solid #e5e7eb; padding: 16px 0 0 0; text-align: left;">
     <p style="color: #9ca3af; font-size: 12px; margin: 0;">
       You're receiving this because you have a HOCKIA account.<br>
-      <a href="${HOCKIA_BASE_URL}/settings" style="color: #8026FA; text-decoration: none;">Notification settings</a>
+      <a href="${HOCKIA_BASE_URL}/settings" style="color: #6d28d9; text-decoration: none;">Notification settings</a>
     </p>
   </div>
 
