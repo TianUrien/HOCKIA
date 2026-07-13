@@ -121,13 +121,24 @@ if ('serviceWorker' in navigator) {
   })
 }
 
-const sentryEnvironment = import.meta.env.MODE === 'production' ? 'production' : 'development'
+// Environment: staging is a production-MODE build (Vercel), so MODE can't
+// distinguish it — the baked-in Supabase project ref can (house staging-
+// detection pattern, same as OpportunitiesPage).
+const sentryEnvironment =
+  import.meta.env.MODE !== 'production'
+    ? 'development'
+    : import.meta.env.VITE_SUPABASE_URL?.includes('ivjkdaylalhsteyyclvl')
+      ? 'staging'
+      : 'production'
 
 const isNativePlatform = Capacitor.isNativePlatform()
 
 Sentry.init({
   dsn: import.meta.env.VITE_SENTRY_DSN,
-  enabled: Boolean(import.meta.env.VITE_SENTRY_DSN),
+  // Never report from development: local sessions, HMR artifacts and
+  // dev-server e2e teardowns were ~85% of the Sentry feed (2026-07-14
+  // triage), burying real production signals.
+  enabled: Boolean(import.meta.env.VITE_SENTRY_DSN) && sentryEnvironment !== 'development',
   environment: sentryEnvironment,
   // Release tag — set via Vercel/Capacitor build env. Falls back to 'unknown'
   // so events from an untagged build are still identifiable in Sentry.
