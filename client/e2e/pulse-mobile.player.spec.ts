@@ -9,6 +9,16 @@ import { test, expect } from '@playwright/test'
  */
 test.describe('Pulse tab @ mobile viewport', () => {
   test('renders without horizontal overflow; tabs + modules mobile-clean', async ({ page }, testInfo) => {
+    // Impression telemetry must actually land (prod QA caught every upsert
+    // 403ing silently — the client swallows the error by design, so only a
+    // network-level assertion can guard it).
+    const failedImpressionWrites: number[] = []
+    page.on('response', (res) => {
+      if (res.url().includes('home_module_impressions') && res.status() >= 400) {
+        failedImpressionWrites.push(res.status())
+      }
+    })
+
     await page.goto('/home')
     await expect(page.getByRole('button', { name: 'pulse', exact: true })).toBeVisible({ timeout: 15_000 })
 
@@ -44,5 +54,7 @@ test.describe('Pulse tab @ mobile viewport', () => {
       clientW: document.documentElement.clientWidth,
     }))
     expect(feedOverflow.scrollW, 'no horizontal overflow on Feed').toBeLessThanOrEqual(feedOverflow.clientW + 1)
+
+    expect(failedImpressionWrites, 'impression upserts must not 4xx (silent telemetry loss)').toEqual([])
   })
 })
