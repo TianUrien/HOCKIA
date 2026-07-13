@@ -28,5 +28,13 @@ test.describe('notifications drawer probe', () => {
     await expect(page).toHaveURL(/tab=feed/)
     await page.getByRole('button', { name: 'pulse', exact: true }).click()
     await expect(page).not.toHaveURL(/tab=feed/)
+
+    // Tab switches are PUSH navigations (prod QA: replace:true ate the
+    // history entry — Back skipped Home entirely). Back must restore the
+    // previous tab, not leave the page.
+    await page.goBack()
+    await expect(page).toHaveURL(/tab=feed/)
+    await page.goBack()
+    await expect(page).toHaveURL(/\/home$/)
   })
 })

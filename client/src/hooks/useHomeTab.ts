@@ -22,11 +22,15 @@ export function useHomeTab(): [HomeTab, (t: HomeTab) => void] {
   }, [params])
 
   const setTab = (t: HomeTab) => {
+    if (t === tab) return
     setTabState(t)
     const next = new URLSearchParams(params)
     if (t === 'feed') next.set('tab', 'feed')
     else next.delete('tab')
-    setParams(next, { replace: true })
+    // PUSH, not replace: a user tab switch is a navigation — browser Back
+    // must return to the previous tab, not skip Home entirely (prod QA
+    // caught replace:true eating the history entry).
+    setParams(next)
     trackModuleClick(t === 'pulse' ? 'tab_pulse' : 'tab_feed', 0)
   }
 
