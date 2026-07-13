@@ -21,6 +21,10 @@ export interface MyApplication {
   opportunity_title: string
   club_name: string | null
   viewed_by_club: boolean
+  /** False when the joined opportunity is unreadable (hidden club or truly
+   *  deleted) — the row renders as "no longer available", not a dead link.
+   *  Closed roles stay readable via the applicant SELECT policy. */
+  available: boolean
 }
 
 const ACTIVE_STATUSES = ['pending', 'shortlisted', 'maybe'] as const
@@ -61,9 +65,10 @@ export function useMyApplications(enabled: boolean) {
           opportunity_id: r.opportunity_id as string,
           status: r.status as string,
           applied_at: r.applied_at as string,
-          opportunity_title: opp?.title ?? 'Opportunity',
+          opportunity_title: opp?.title ?? 'Role no longer available',
           club_name: opp?.profiles?.full_name ?? null,
           viewed_by_club: false,
+          available: opp != null,
         }
       })
 

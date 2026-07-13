@@ -43,6 +43,24 @@ export function YourApplications({ enabled }: { enabled: boolean }) {
       <div className="space-y-2">
         {applications.map((app) => {
           const pill = statusPill(app.status, app.viewed_by_club)
+          // Unreadable opportunity (hidden club / deleted): an inert row, not
+          // a dead link — the application itself is still the player's record.
+          if (!app.available) {
+            return (
+              <div
+                key={app.id}
+                className="flex w-full items-center gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-3 opacity-70"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-gray-400">{app.opportunity_title}</p>
+                </div>
+                <span className={`inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold ${pill.className}`}>
+                  <pill.Icon className="h-3 w-3" />
+                  {pill.label}
+                </span>
+              </div>
+            )
+          }
           return (
             <button
               key={app.id}
