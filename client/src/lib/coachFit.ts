@@ -117,7 +117,7 @@ const NOT_APPLICABLE: CoachFitResult = {
  *  enum ('head_coach', 'assistant_coach', 'youth_coach', 'other_coach',
  *  …). Stripping a trailing '_coach' aligns the two vocabularies so
  *  'other_coach' ↔ 'other' and 'head_coach' ↔ 'head_coach' both match. */
-function normalizeSpec(s: string | null | undefined): string | null {
+export function normalizeSpec(s: string | null | undefined): string | null {
   if (!s) return null
   const t = s.trim().toLowerCase()
   if (!t) return null

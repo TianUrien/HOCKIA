@@ -14,17 +14,35 @@ import { recordModuleImpression, trackModuleClick, useImpressionOnce } from '@/l
  * Empty-state rule (§C): below 1 view this week the stats block is replaced by
  * a "get seen" prompt — never "0 clubs viewed you".
  */
-const MODULE_ID = 'player_hero'
 const POSITION = 0
+
+/** Per-voice bits — the hero mechanics (visibility recap, streak, tiles) are
+ *  identical for players and coaches; only identity copy + targets differ.
+ *  No invented stats in either voice (every number must be real). */
+const VOICE = {
+  player: {
+    moduleId: 'player_hero',
+    emptyHeadline: 'Let clubs find you this week.',
+    emptySub: 'Clubs are most active on Mondays. Mark yourself open to play and keep your profile sharp — active players get seen far more.',
+    viewersTarget: '/dashboard/profile?tab=profile&section=viewers',
+  },
+  coach: {
+    moduleId: 'coach_hero',
+    emptyHeadline: 'Let clubs find you this week.',
+    emptySub: 'Clubs are most active on Mondays. Keep your coaching profile sharp and your availability current.',
+    viewersTarget: '/dashboard/profile?section=viewers',
+  },
+} as const
 
 function clubOrCoachViewers(byRole: Record<string, number>): number {
   return (byRole.club ?? 0) + (byRole.coach ?? 0)
 }
 
-export function PlayerHero() {
+export function PlayerHero({ voice = 'player' }: { voice?: 'player' | 'coach' }) {
   const navigate = useNavigate()
+  const v = VOICE[voice]
   const { loading, visibility, streakDays } = useWeeklyVisibility(true)
-  const ref = useImpressionOnce(() => recordModuleImpression(MODULE_ID, POSITION))
+  const ref = useImpressionOnce(() => recordModuleImpression(v.moduleId, POSITION))
 
   if (loading || !visibility) {
     return <div className="mb-6 h-44 animate-pulse rounded-[28px] bg-gray-200" />
@@ -36,8 +54,8 @@ export function PlayerHero() {
   const hasSignal = views >= 1
 
   const goToViewers = () => {
-    trackModuleClick(MODULE_ID, POSITION)
-    navigate('/dashboard/profile?tab=profile&section=viewers')
+    trackModuleClick(v.moduleId, POSITION)
+    navigate(v.viewersTarget)
   }
 
   return (
@@ -81,12 +99,8 @@ export function PlayerHero() {
           </>
         ) : (
           <>
-            <h1 className="mt-2 text-xl font-black leading-tight">
-              Let clubs find you this week.
-            </h1>
-            <p className="mt-1 text-sm text-white/70">
-              Clubs are most active on Mondays. Mark yourself open to play and keep your profile sharp — active players get seen far more.
-            </p>
+            <h1 className="mt-2 text-xl font-black leading-tight">{v.emptyHeadline}</h1>
+            <p className="mt-1 text-sm text-white/70">{v.emptySub}</p>
           </>
         )}
 

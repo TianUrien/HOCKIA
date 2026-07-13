@@ -51,8 +51,11 @@ export function categoriesToDisplay(values: string[] | null | undefined): string
     .join(', ')
 }
 
-/** True when the array represents the "any category" sentinel. The DB
- * constraint enforces that 'any' is exclusive, so we never see ['any', 'girls']. */
+/** True when the array represents the "any category" sentinel. NOTE: the DB
+ * constraint does NOT enforce exclusivity (chk_profiles_coaching_categories
+ * only checks cardinality + subset), so ['any', 'girls'] is storable — the
+ * client validator enforces it, and readers treat any-containing arrays as
+ * open-to-all. */
 export function isOpenToAny(values: string[] | null | undefined): boolean {
   return Array.isArray(values) && values.includes(ANY_CATEGORY)
 }

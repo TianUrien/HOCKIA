@@ -1,9 +1,11 @@
-import { Component, Fragment, useCallback, useEffect, useRef } from 'react'
+import { Component, Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode, ErrorInfo } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowUp, Loader2, Rss, Search, Globe, Briefcase, MessageSquare } from 'lucide-react'
 import * as Sentry from '@sentry/react'
 import { useHomeFeed } from '@/hooks/useHomeFeed'
+import { useAuthStore } from '@/lib/auth'
+import { FeedFilterChips, type FeedChip } from './FeedFilterChips'
 import { HomeFeedItemCard } from './HomeFeedItemCard'
 import { FeedSkeleton } from './FeedSkeleton'
 import type { HomeFeedItem } from '@/types/homeFeed'
@@ -55,14 +57,48 @@ interface HomeFeedProps {
  * other callers stay unaffected; we just don't pass them from here.
  */
 export function HomeFeed({ prependItemRef }: HomeFeedProps) {
-  const { items, isLoading, isFetchingNextPage, error, refetch, hasMore, loadMore, updateItemLike, removeItem, prependItem, newCount, showNewItems } = useHomeFeed()
+  // §2.6 filter chips — server filters where the RPC supports them, Photos
+  // client-side. Viewer country: base first (where they are), nationality
+  // fallback; the RPC matches AUTHOR NATIONALITY (its only geo signal).
+  const viewerCountryId = useAuthStore(
+    (s) => s.profile?.base_country_id ?? s.profile?.nationality_country_id ?? null,
+  )
+  const [chip, setChip] = useState<FeedChip>('all')
+  const feedFilters = useMemo(() => {
+    if (chip === 'near' && viewerCountryId != null) return { countryIds: [viewerCountryId] }
+    if (chip === 'players') return { roles: ['player'] }
+    if (chip === 'clubs') return { roles: ['club'] }
+    if (chip === 'opportunities') return { itemType: 'opportunity_posted' }
+    return undefined
+  }, [chip, viewerCountryId])
+
+  const { items: rawItems, isLoading, isFetchingNextPage, error, refetch, hasMore, loadMore, updateItemLike, removeItem, prependItem, newCount, showNewItems } = useHomeFeed(feedFilters)
+
+  // Photos drains server pages client-side; cap the automatic chain so a
+  // photo-sparse feed can't issue unbounded sequential RPCs (audit F2).
+  const photosAutoCapReached = chip === 'photos' && rawItems.length >= 100
+
+  // Photos: client-side across the two image-bearing shapes.
+  const items = useMemo(() => {
+    if (chip !== 'photos') return rawItems
+    return rawItems.filter(
+      (i) =>
+        i.item_type === 'media_added' ||
+        (i.item_type === 'user_post' && (i.images?.length ?? 0) > 0),
+    )
+  }, [chip, rawItems])
   const sentinelRef = useRef<HTMLDivElement>(null)
   const feedTopRef = useRef<HTMLDivElement>(null)
 
   // Expose prependItem to parent so PostComposer can live in the sticky header
   useEffect(() => {
     if (prependItemRef) {
-      prependItemRef.current = prependItem
+      // Snap back to All before prepending (audit F1): the new post lands in
+      // the unfiltered cache and must be visible where the user ends up.
+      prependItemRef.current = (item) => {
+        setChip('all')
+        prependItem(item)
+      }
     }
   }, [prependItem, prependItemRef])
 
@@ -76,7 +112,7 @@ export function HomeFeed({ prependItemRef }: HomeFeedProps) {
     if (!el) return
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && hasMore && !isFetchingNextPage) {
+        if (entry.isIntersecting && hasMore && !isFetchingNextPage && !photosAutoCapReached) {
           void loadMore()
         }
       },
@@ -84,7 +120,7 @@ export function HomeFeed({ prependItemRef }: HomeFeedProps) {
     )
     observer.observe(el)
     return () => observer.disconnect()
-  }, [hasMore, isFetchingNextPage, loadMore])
+  }, [hasMore, isFetchingNextPage, loadMore, photosAutoCapReached])
 
   return (
     <div>
@@ -97,6 +133,9 @@ export function HomeFeed({ prependItemRef }: HomeFeedProps) {
 
         {/* Scroll anchor for new posts */}
         <div ref={feedTopRef} />
+
+        {/* §2.6 one-level filter chips */}
+        <FeedFilterChips active={chip} onChange={setChip} showNearYou={viewerCountryId != null} />
 
         {/* New posts banner */}
         {newCount > 0 && (
@@ -128,8 +167,30 @@ export function HomeFeed({ prependItemRef }: HomeFeedProps) {
           </div>
         )}
 
+        {/* Filter-aware empty state (audit F2): a chip miss is not a cold
+            start. While pages are still draining (hasMore, under the photos
+            cap) show a spinner instead of a false verdict. */}
+        {!isLoading && !error && items.length === 0 && chip !== 'all' && (
+          hasMore && !photosAutoCapReached ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-hockia-primary" />
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-gray-200 bg-white p-6 text-center">
+              <p className="text-sm font-semibold text-gray-900">Nothing here under this filter yet</p>
+              <button
+                type="button"
+                onClick={() => setChip('all')}
+                className="mt-3 rounded-full bg-hockia-primary px-4 py-1.5 text-sm font-semibold text-white hover:opacity-90"
+              >
+                Show all posts
+              </button>
+            </div>
+          )
+        )}
+
         {/* Empty state — cold start guidance */}
-        {!isLoading && !error && items.length === 0 && (
+        {!isLoading && !error && items.length === 0 && chip === 'all' && (
           <div className="rounded-2xl border border-gray-200 bg-white p-6 sm:p-8">
             <div className="text-center mb-6">
               <Rss className="w-12 h-12 text-gray-300 mx-auto mb-3" />

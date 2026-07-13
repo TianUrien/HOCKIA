@@ -17,6 +17,9 @@ interface FeedPage {
 export interface UseHomeFeedFilters {
   countryIds?: number[]
   roles?: string[]
+  /** Single server-side item-type filter (get_home_feed p_item_type),
+   *  e.g. 'opportunity_posted' for the Opportunities chip. */
+  itemType?: string
 }
 
 interface UseHomeFeedResult {
@@ -45,7 +48,7 @@ function stableFilterKey(filters: UseHomeFeedFilters | undefined): string {
   if (!filters) return ''
   const countryIds = (filters.countryIds ?? []).slice().sort((a, b) => a - b).join(',')
   const roles = (filters.roles ?? []).slice().sort().join(',')
-  return `c:${countryIds}|r:${roles}`
+  return `c:${countryIds}|r:${roles}|t:${filters.itemType ?? ''}`
 }
 
 export function useHomeFeed(filters?: UseHomeFeedFilters): UseHomeFeedResult {
@@ -74,7 +77,8 @@ export function useHomeFeed(filters?: UseHomeFeedFilters): UseHomeFeedResult {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- filterKey is the canonical dep
     [filterKey]
   )
-  const hasFilters = rpcCountryIds !== null || rpcRoles !== null
+  const rpcItemType = filters?.itemType ?? null
+  const hasFilters = rpcCountryIds !== null || rpcRoles !== null || rpcItemType !== null
 
   const query = useInfiniteQuery<FeedPage>({
     queryKey,
@@ -96,6 +100,7 @@ export function useHomeFeed(filters?: UseHomeFeedFilters): UseHomeFeedResult {
       if (hasFilters) {
         rpcParams.p_country_ids = rpcCountryIds
         rpcParams.p_roles = rpcRoles
+        if (rpcItemType) rpcParams.p_item_type = rpcItemType
       }
 
       const { data, error } = await withTimeout(
@@ -158,6 +163,12 @@ export function useHomeFeed(filters?: UseHomeFeedFilters): UseHomeFeedResult {
   // --- New items detection ---
   const [newCount, setNewCount] = useState(0)
   const lastCheckRef = useRef(0)
+
+  // A count captured on the unfiltered feed must not survive into a chip
+  // view (audit F4): the banner would advertise posts the filter then hides.
+  useEffect(() => {
+    setNewCount(0)
+  }, [filterKey])
 
   const latestTimestamp = useMemo(() => {
     if (items.length === 0) return null
@@ -259,7 +270,10 @@ export function useHomeFeed(filters?: UseHomeFeedFilters): UseHomeFeedResult {
 
   const prependItem = useCallback((item: HomeFeedItem) => {
     setNewCount(0)
-    queryClient.setQueryData<InfiniteData<FeedPage>>(queryKey, (old) => {
+    // ALWAYS the unfiltered cache (audit F1): composing under a chip must
+    // not write into a filtered key (type-violating item / silently hidden
+    // post). HomeFeed snaps the chip back to All on post-created.
+    queryClient.setQueryData<InfiniteData<FeedPage>>(['home-feed', ''], (old) => {
       if (!old || old.pages.length === 0) return old
       const [firstPage, ...rest] = old.pages
       return {
@@ -270,7 +284,7 @@ export function useHomeFeed(filters?: UseHomeFeedFilters): UseHomeFeedResult {
         ],
       }
     })
-  }, [queryClient, queryKey])
+  }, [queryClient])
 
   // Map query error to string for backward compatibility
   let errorStr: string | null = null
@@ -293,12 +307,13 @@ export function useHomeFeed(filters?: UseHomeFeedFilters): UseHomeFeedResult {
       {
         countryIds: rpcCountryIds,
         roles: rpcRoles,
+        itemType: rpcItemType,
         hasFilters,
         pagesLoaded: pages.length,
       },
       { feature: 'home_feed', rpc: 'get_home_feed' }
     )
-  }, [query.error, rpcCountryIds, rpcRoles, hasFilters, pages.length])
+  }, [query.error, rpcCountryIds, rpcRoles, rpcItemType, hasFilters, pages.length])
 
   return {
     items,

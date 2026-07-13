@@ -15,7 +15,7 @@ import { recordModuleImpression, trackModuleClick, useImpressionOnce } from '@/l
 const MODULE_ID = 'available_now'
 const POSITION = 3
 
-export function AvailableNowRail({ matches, loading }: { matches: ScopedMatch[]; loading: boolean }) {
+export function AvailableNowRail({ matches, loading, voice = 'club' }: { matches: ScopedMatch[]; loading: boolean; voice?: 'club' | 'coach' }) {
   const navigate = useNavigate()
   const ref = useImpressionOnce(() => recordModuleImpression(MODULE_ID, POSITION))
 
@@ -33,7 +33,7 @@ export function AvailableNowRail({ matches, loading }: { matches: ScopedMatch[];
   return (
     <section ref={ref} className="mb-6">
       <SectionHeader
-        title="Available now — fit your team"
+        title={voice === 'coach' ? 'Available now — fit your search' : 'Available now — fit your team'}
         chip={{ label: 'Open', tone: 'new' }}
         action={
           <button

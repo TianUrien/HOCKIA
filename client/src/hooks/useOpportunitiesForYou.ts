@@ -5,6 +5,7 @@ import { useAuthStore } from '@/lib/auth'
 import { useCountries } from '@/hooks/useCountries'
 import { checkOpportunityEligibility } from '@/lib/opportunityEligibility'
 import { computeOpportunityMatch, MATCH_THRESHOLD } from '@/lib/opportunityMatch'
+import { computeCoachOpportunityMatch, COACH_MATCH_THRESHOLD } from '@/lib/coachOpportunityMatch'
 import { logger } from '@/lib/logger'
 
 /**
@@ -68,7 +69,10 @@ export function daysUntilDeadline(deadline: string | null, now: Date = new Date(
   return Math.floor((end.getTime() - now.getTime()) / 86_400_000)
 }
 
-export function useOpportunitiesForYou(enabled: boolean) {
+/** `forRole`: 'player' (default) or 'coach' — picks the opportunity_type
+ *  AND the matching scorer (player position/category/level vs coach
+ *  specialization/categories/level). Same §C threshold semantics. */
+export function useOpportunitiesForYou(enabled: boolean, forRole: 'player' | 'coach' = 'player') {
   const userId = useAuthStore((s) => s.user?.id)
   const profile = useAuthStore((s) => s.profile)
   const { countries, loading: countriesLoading } = useCountries()
@@ -91,7 +95,10 @@ export function useOpportunitiesForYou(enabled: boolean) {
             'id, title, position, gender, opportunity_type, level_sought, application_deadline, eu_passport_required, position_required, created_at, club:profiles!opportunities_club_id_fkey(id, full_name, avatar_url, is_test_account)',
           )
           .eq('status', 'open')
-          .eq('opportunity_type', 'player')
+          .eq('opportunity_type', forRole)
+          // A recruiting coach must never be recommended their OWN role
+          // (players can't own roles, so this only bites for coaches).
+          .neq('club_id', userId)
           .order('created_at', { ascending: false })
           .limit(FETCH_POOL),
         supabase
@@ -113,7 +120,7 @@ export function useOpportunitiesForYou(enabled: boolean) {
       setLoading(false)
     })()
     return () => { cancelled = true }
-  }, [enabled, userId])
+  }, [enabled, userId, forRole])
 
   const result = useMemo((): { mode: 'matched' | 'newest'; items: OpportunityForYou[] } => {
     if (!profile) return { mode: 'newest', items: [] }
@@ -133,23 +140,39 @@ export function useOpportunitiesForYou(enabled: boolean) {
       return checkOpportunityEligibility(r as unknown as Vacancy, profile, countries).eligible
     })
 
+    const threshold = forRole === 'coach' ? COACH_MATCH_THRESHOLD : MATCH_THRESHOLD
     const scored = candidates.map((r) => ({
       row: r,
-      score: computeOpportunityMatch(
-        {
-          position: profile.position ?? null,
-          secondary_position: profile.secondary_position ?? null,
-          playing_category: profile.playing_category ?? null,
-          gender: profile.gender ?? null,
-          level_target: profile.level_target ?? null,
-        },
-        {
-          position: r.position,
-          gender: r.gender,
-          level_sought: r.level_sought,
-          position_required: r.position_required,
-        },
-      ),
+      score:
+        forRole === 'coach'
+          ? computeCoachOpportunityMatch(
+              {
+                coach_specialization: profile.coach_specialization ?? null,
+                coaching_categories: profile.coaching_categories ?? null,
+                level_target: profile.level_target ?? null,
+              },
+              {
+                position: r.position,
+                gender: r.gender,
+                level_sought: r.level_sought,
+                position_required: r.position_required,
+              },
+            )
+          : computeOpportunityMatch(
+              {
+                position: profile.position ?? null,
+                secondary_position: profile.secondary_position ?? null,
+                playing_category: profile.playing_category ?? null,
+                gender: profile.gender ?? null,
+                level_target: profile.level_target ?? null,
+              },
+              {
+                position: r.position,
+                gender: r.gender,
+                level_sought: r.level_sought,
+                position_required: r.position_required,
+              },
+            ),
     }))
 
     const toItem = (r: RawRow, score: number | null): OpportunityForYou => ({
@@ -166,7 +189,7 @@ export function useOpportunitiesForYou(enabled: boolean) {
     })
 
     const matched = scored
-      .filter((s): s is typeof s & { score: number } => s.score != null && s.score >= MATCH_THRESHOLD)
+      .filter((s): s is typeof s & { score: number } => s.score != null && s.score >= threshold)
       .sort((a, b) => b.score - a.score || b.row.created_at.localeCompare(a.row.created_at))
       .slice(0, RAIL_SIZE)
 
@@ -175,7 +198,7 @@ export function useOpportunitiesForYou(enabled: boolean) {
     }
     // Newest fallback: rows are already newest-first from the query.
     return { mode: 'newest', items: scored.slice(0, RAIL_SIZE).map((s) => toItem(s.row, null)) }
-  }, [rows, appliedIds, profile, countries])
+  }, [rows, appliedIds, profile, countries, forRole])
 
   return { loading: loading || countriesLoading, mode: result.mode, items: result.items }
 }

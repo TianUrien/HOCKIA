@@ -13,7 +13,7 @@ import { RolesHealth } from './RolesHealth'
  * fanned to the modules; the market-moves digest is mounted by PulseTab after
  * this container.
  */
-export function ClubPulse() {
+export function ClubPulse({ voice = 'club' }: { voice?: 'club' | 'coach' }) {
   const rolesHealth = useRolesHealth(true)
   const scoped = useScopedMatches(true)
 
@@ -25,10 +25,11 @@ export function ClubPulse() {
         fitCount={scoped.fitCount}
         poolRole={scoped.poolRole}
         pendingApplicants={rolesHealth.totals.pending}
+        voice={voice}
       />
       <AiScoutBar />
       <ApplicantsToReview totals={rolesHealth.totals} loading={rolesHealth.loading || rolesHealth.failed} />
-      <AvailableNowRail matches={scoped.matches} loading={scoped.loading} />
+      <AvailableNowRail matches={scoped.matches} loading={scoped.loading} voice={voice} />
       {/* On a failed fetch the module collapses — never the Post-CTA card
           (which would misread as "you have no open roles"). */}
       <RolesHealth roles={rolesHealth.roles} loading={rolesHealth.loading || rolesHealth.failed} />

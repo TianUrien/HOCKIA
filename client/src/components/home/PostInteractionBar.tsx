@@ -73,6 +73,12 @@ export function PostInteractionBar({
           )}
         </div>
       )}
+      {/* §2.6 low-engagement rule: a zero-zero post invites the first like
+          instead of an empty band (the average post gets 2-3 likes — design
+          for that, not for 128). */}
+      {likeCount === 0 && commentCount === 0 && (
+        <div className="px-4 py-1.5 text-xs text-gray-400">Be the first to like this</div>
+      )}
 
       {/* Action buttons */}
       <div className="flex items-center border-t border-gray-100">

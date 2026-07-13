@@ -1,6 +1,7 @@
 import { useAuthStore } from '@/lib/auth'
 import { PlayerHero } from './PlayerHero'
 import { ClubPulse } from './ClubPulse'
+import { CoachPulse } from './CoachPulse'
 import { PulseRoleFallback } from './PulseRoleFallback'
 import { YourApplications } from './YourApplications'
 import { OpportunitiesForYou } from './OpportunitiesForYou'
@@ -37,11 +38,14 @@ export function PulseTab() {
           <ClubPulse />
           <HappeningNow position={5} />
         </>
+      ) : role === 'coach' ? (
+        /* Phase 3: dual-mode coach Pulse (§2.3) — mounts its own digest. */
+        <CoachPulse />
       ) : (
         <>
-          <PulseRoleFallback role={role ?? 'coach'} />
+          <PulseRoleFallback role={role ?? 'brand'} />
           {/* Market moves are role-agnostic content — they keep the holding
-              Pulse alive for coach/brand until their real heroes land. */}
+              Pulse alive for brand/umpire until their real heroes land. */}
           <HappeningNow position={1} />
         </>
       )}

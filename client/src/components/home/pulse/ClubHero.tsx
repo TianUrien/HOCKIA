@@ -19,12 +19,14 @@ import { recordModuleImpression, trackModuleClick, useImpressionOnce } from '@/l
 const MODULE_ID = 'club_hero'
 const POSITION = 0
 
-export function ClubHero({ loading, hasScope, fitCount, poolRole, pendingApplicants }: {
+export function ClubHero({ loading, hasScope, fitCount, poolRole, pendingApplicants, voice = 'club' }: {
   loading: boolean
   hasScope: boolean
   fitCount: number
   poolRole: string
   pendingApplicants: number
+  /** 'coach' renders the same mechanics in coach-recruiter voice. */
+  voice?: 'club' | 'coach'
 }) {
   const navigate = useNavigate()
   // No streak chip on the club hero — skip that RPC. Hero waits for the
@@ -55,13 +57,13 @@ export function ClubHero({ loading, hasScope, fitCount, poolRole, pendingApplica
           <>
             <h1 className="mt-2 text-xl font-black leading-tight">What are you recruiting for?</h1>
             <p className="mt-1 text-sm text-white/70">
-              Set your recruiting scope — team, position, level — and HOCKIA ranks every available {noun} for you.
+              Set your recruiting scope — {voice === 'coach' ? 'who you recruit for' : 'team'}, position, level — and HOCKIA ranks every available {noun} for you.
             </p>
           </>
         ) : fitCount > 0 ? (
           <>
             <h1 className="mt-2 text-2xl font-black leading-tight">
-              {fitCount} {fitCount === 1 ? noun : nounPlural} who {fitCount === 1 ? 'fits' : 'fit'} your team {fitCount === 1 ? 'is' : 'are'} available.
+              {fitCount} {fitCount === 1 ? noun : nounPlural} who {fitCount === 1 ? 'fits' : 'fit'} your {voice === 'coach' ? 'search' : 'team'} {fitCount === 1 ? 'is' : 'are'} available.
             </h1>
             <StatTileRow>
               <StatTile value={fitCount} label="Fit your search" accent />

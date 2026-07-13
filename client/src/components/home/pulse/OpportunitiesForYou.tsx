@@ -84,28 +84,42 @@ function OpportunityRailCard({ item, mode, onOpen }: {
   )
 }
 
-export function OpportunitiesForYou({ enabled }: { enabled: boolean }) {
+/** Defaults render the PLAYER rail; the coach Pulse reuses the component
+ *  with forRole='coach' + its own module id/position/title. */
+export function OpportunitiesForYou({
+  enabled,
+  forRole = 'player',
+  moduleId = MODULE_ID,
+  position = POSITION,
+  title = 'Opportunities for you',
+}: {
+  enabled: boolean
+  forRole?: 'player' | 'coach'
+  moduleId?: string
+  position?: number
+  title?: string
+}) {
   const navigate = useNavigate()
-  const { loading, mode, items } = useOpportunitiesForYou(enabled)
-  const ref = useImpressionOnce(() => recordModuleImpression(MODULE_ID, POSITION))
+  const { loading, mode, items } = useOpportunitiesForYou(enabled, forRole)
+  const ref = useImpressionOnce(() => recordModuleImpression(moduleId, position))
 
   if (!enabled || loading || items.length === 0) return null
 
   const openOpportunity = (id: string) => {
-    trackModuleClick(MODULE_ID, POSITION)
+    trackModuleClick(moduleId, position)
     navigate(`/opportunities/${id}`)
   }
 
   return (
     <section ref={ref} className="mb-6">
       <SectionHeader
-        title="Opportunities for you"
+        title={title}
         chip={mode === 'matched' ? { label: 'Matched', tone: 'new' } : undefined}
         action={
           <button
             type="button"
             onClick={() => {
-              trackModuleClick(MODULE_ID, POSITION)
+              trackModuleClick(moduleId, position)
               navigate('/opportunities')
             }}
             className="inline-flex items-center gap-0.5 text-sm font-semibold text-hockia-primary"

@@ -6,6 +6,9 @@ import { getTimeAgo } from '@/lib/utils'
 import type { OpportunityPostedFeedItem } from '@/types/homeFeed'
 import { opportunityGenderToTeamLabel } from '@/lib/hockeyCategories'
 import OpportunityDetailOverlay from '@/components/OpportunityDetailOverlay'
+import { useAuthStore } from '@/lib/auth'
+import { computeOpportunityMatch, MATCH_THRESHOLD } from '@/lib/opportunityMatch'
+import { isEuCountryCode, useCountries } from '@/hooks/useCountries'
 
 interface OpportunityPostedCardProps {
   item: OpportunityPostedFeedItem
@@ -17,6 +20,50 @@ export function OpportunityPostedCard({ item }: OpportunityPostedCardProps) {
   // change, no unmount, no scroll jump). Deep links still use the route.
   const [showDetail, setShowDetail] = useState(false)
   const timeAgo = getTimeAgo(item.created_at, true)
+
+  // §2.6 inline match % for PLAYER viewers — the same rule-based scorer as
+  // the Pulse rail, over the fields the feed item carries (position +
+  // category; level_sought/position_required are absent from older items'
+  // metadata and are SKIPPED, not zeroed — honest absence). Shown only at
+  // ≥ threshold, per the never-a-lonely-low-% rule.
+  const profile = useAuthStore((s) => s.profile)
+  const { getCountryById } = useCountries()
+  const itemWithIntent = item as typeof item & {
+    level_sought?: string | null
+    position_required?: boolean | null
+    eu_passport_required?: boolean | null
+  }
+  // EU hard gate (audit F3), same missing-data-never-blocks semantics as
+  // checkOpportunityEligibility: only suppress when the role requires an EU
+  // passport AND the viewer's known nationalities are all non-EU. Items
+  // predating the metadata extension lack the key (no gate — ages out).
+  const euBlocked = (() => {
+    if (itemWithIntent.eu_passport_required !== true || !profile) return false
+    const codes = [profile.nationality_country_id, (profile as { nationality2_country_id?: number | null }).nationality2_country_id]
+      .filter((id): id is number => typeof id === 'number')
+      .map((id) => getCountryById(id)?.code)
+      .filter((c): c is string => Boolean(c))
+    return codes.length > 0 && !codes.some(isEuCountryCode)
+  })()
+  const matchPct =
+    profile?.role === 'player' && item.opportunity_type !== 'coach'
+      ? computeOpportunityMatch(
+          {
+            position: profile.position ?? null,
+            secondary_position: profile.secondary_position ?? null,
+            playing_category: profile.playing_category ?? null,
+            gender: profile.gender ?? null,
+            level_target: profile.level_target ?? null,
+          },
+          {
+            position: item.position,
+            gender: item.gender,
+            level_sought: itemWithIntent.level_sought ?? null,
+            position_required: itemWithIntent.position_required ?? null,
+          },
+        )
+      : null
+  const showMatch = matchPct != null && matchPct >= MATCH_THRESHOLD && !euBlocked
 
   return (
     <div className="bg-white">
@@ -48,6 +95,11 @@ export function OpportunityPostedCard({ item }: OpportunityPostedCardProps) {
             {item.gender && (
               <span className="px-2.5 py-1 bg-pink-50 text-pink-700 rounded-full text-xs font-medium">
                 {opportunityGenderToTeamLabel(item.gender)}
+              </span>
+            )}
+            {showMatch && (
+              <span className="px-2.5 py-1 bg-[#f4f0fd] text-hockia-primary rounded-full text-xs font-bold">
+                {matchPct}% match
               </span>
             )}
             {(item.location_city || item.location_country) && (
