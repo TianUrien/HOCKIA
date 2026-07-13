@@ -2,8 +2,10 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { MemoryRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { describe, it, expect, vi } from 'vitest'
 
-// homeInstrumentation transitively imports @/lib/supabase, which throws
-// without env in CI — mock at the instrumentation boundary (house pattern).
+// Both import chains reach @/lib/supabase, which throws at module load
+// without env (CI has no .env.local): homeInstrumentation via AiScoutBar,
+// and useRolesHealth directly. Mock both boundaries (house pattern).
+vi.mock('@/lib/supabase', () => ({ supabase: {} }))
 vi.mock('@/lib/homeInstrumentation', () => ({
   useImpressionOnce: () => () => {},
   recordModuleImpression: vi.fn(),
