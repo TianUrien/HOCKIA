@@ -107,7 +107,7 @@ export default function EmailActionPage() {
 }
 
 function appLink(info: ActionInfo): string {
-  return info.opportunity_id ? `/dashboard/opportunities/${info.opportunity_id}/applicants` : '/dashboard'
+  return info.opportunity_id ? `/dashboard/opportunities/${info.opportunity_id}/applicants` : '/home'
 }
 
 function Card({ phase, onConfirmReject }: { phase: Phase; onConfirmReject: () => void }) {

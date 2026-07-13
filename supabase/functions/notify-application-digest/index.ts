@@ -49,6 +49,8 @@ interface QueueRecord {
 
 interface PendingRow {
   id: string
+  applicant_id: string | null
+  opportunity_id: string | null
   applicant_name: string
   position: string | null
   opportunity_title: string
@@ -199,6 +201,8 @@ Deno.serve(async (req: Request) => {
         (!a.opportunity?.application_deadline || a.opportunity.application_deadline >= todayIso))
       .map((a: any) => ({
         id: a.id,
+        applicant_id: a.applicant?.id ?? null,
+        opportunity_id: a.opportunity?.id ?? null,
         applicant_name: a.applicant?.full_name?.trim() || 'An applicant',
         position: a.applicant?.position ?? null,
         opportunity_title: a.opportunity?.title ?? 'your opportunity',
@@ -266,11 +270,29 @@ Deno.serve(async (req: Request) => {
         const meta = [r.position, `waiting ${r.days_waiting} day${r.days_waiting === 1 ? '' : 's'}`]
           .filter(Boolean)
           .join(' · ')
+        // Flow-investigation fixes (2026-07-14): recruiters won't triage an
+        // applicant they can't SEE — the name + an explicit link open the
+        // public profile (logged-out friendly, not AASA-claimed), and the
+        // role title deep-links to that opportunity's applicant list.
+        const profileUrl = r.applicant_id ? `${HOCKIA_BASE_URL}/players/id/${r.applicant_id}` : null
+        const applicantsUrl = r.opportunity_id
+          ? `${HOCKIA_BASE_URL}/dashboard/opportunities/${r.opportunity_id}/applicants`
+          : null
+        const nameHtml = profileUrl
+          ? `<a href="${profileUrl}" style="color:#111827;text-decoration:none;">${escapeHtml(r.applicant_name)}</a>`
+          : escapeHtml(r.applicant_name)
+        const titleHtml = applicantsUrl
+          ? `<a href="${applicantsUrl}" style="color:#6b7280;text-decoration:underline;">${escapeHtml(r.opportunity_title)}</a>`
+          : escapeHtml(r.opportunity_title)
         return `
         <tr>
           <td style="padding:14px 0;border-bottom:1px solid #f0f0f2;">
-            <div style="font-size:15px;font-weight:600;color:#111827;">${escapeHtml(r.applicant_name)}</div>
-            <div style="font-size:13px;color:#6b7280;margin:2px 0 8px;">${escapeHtml(meta)} · ${escapeHtml(r.opportunity_title)}</div>
+            <div style="font-size:15px;font-weight:600;color:#111827;">${nameHtml}${
+              profileUrl
+                ? ` &nbsp;<a href="${profileUrl}" style="font-size:13px;font-weight:600;color:#6d28d9;text-decoration:none;">View profile &rarr;</a>`
+                : ''
+            }</div>
+            <div style="font-size:13px;color:#6b7280;margin:2px 0 8px;">${escapeHtml(meta)} · ${titleHtml}</div>
             <div>
               ${btn(linkFor.get(`${r.id}:shortlisted`)!, ACTION_LABEL.shortlisted, true)}
               ${btn(linkFor.get(`${r.id}:maybe`)!, ACTION_LABEL.maybe, false)}
@@ -281,7 +303,11 @@ Deno.serve(async (req: Request) => {
       })
       .join('')
 
-    const dashboardUrl = `${HOCKIA_BASE_URL}/dashboard`
+    // The Pulse IS the triage surface (Phase 2/3): applicants-waiting card +
+    // per-role health at the top of /home for clubs AND recruiting coaches.
+    // The old generic /dashboard landing lost the one publisher who clicked
+    // (12-second bounce without ever reaching his applicants).
+    const dashboardUrl = `${HOCKIA_BASE_URL}/home`
     const fallbackHtml = `<!DOCTYPE html>
 <html><body style="margin:0;padding:0;background:#f6f6f8;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 12px;">
@@ -295,9 +321,9 @@ Deno.serve(async (req: Request) => {
           Triage them right from this email; each button works once and does exactly what the in-app options do.
         </p>
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rowsHtml}</table>
-        ${overflow > 0 ? `<p style="font-size:13px;color:#6b7280;">+ ${overflow} more waiting in your dashboard.</p>` : ''}
+        ${overflow > 0 ? `<p style="font-size:13px;color:#6b7280;">+ ${overflow} more waiting in HOCKIA.</p>` : ''}
         <div style="margin-top:20px;">
-          <a href="${dashboardUrl}" style="display:inline-block;background:#111827;color:#ffffff;padding:10px 18px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;">Open HOCKIA</a>
+          <a href="${dashboardUrl}" style="display:inline-block;background:#111827;color:#ffffff;padding:10px 18px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;">Review in HOCKIA</a>
         </div>
         <p style="font-size:12px;color:#9ca3af;margin-top:24px;">
           Applicants are notified when you respond &mdash; a quick answer, even a no, beats silence.
@@ -319,7 +345,7 @@ Deno.serve(async (req: Request) => {
       ),
       overflow > 0 ? `...and ${overflow} more.` : '',
       '',
-      `Respond in HOCKIA: ${dashboardUrl}`,
+      `Review in HOCKIA: ${dashboardUrl}`,
     ].filter((l) => l !== '').join('\n')
 
     // DB template can override the layout later without a redeploy; the
