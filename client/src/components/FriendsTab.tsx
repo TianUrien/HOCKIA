@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { invalidateFriendshipEdges } from '@/hooks/friendshipEdgeCache'
 import type { ReactNode } from 'react'
 import { formatDistanceToNow } from 'date-fns'
 import { Users, UserPlus, Check, X, Loader2, UserMinus, ShieldCheck } from 'lucide-react'
@@ -230,6 +231,7 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole, h
           .eq('id', friendshipId)
 
         if (error) throw error
+        invalidateFriendshipEdges()
         addToast(successMessage, 'success')
         await fetchConnections()
         // Refresh the auth profile so accepted_friend_count flows back
@@ -262,6 +264,7 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole, h
           .delete()
           .eq('id', friendshipId)
         if (error) throw error
+        invalidateFriendshipEdges()
         addToast('Connection removed.', 'success')
         await fetchConnections()
         // accepted_friend_count drops by one — refresh the auth profile

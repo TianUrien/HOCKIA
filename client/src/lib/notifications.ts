@@ -3,6 +3,7 @@ import type { RealtimeChannel } from '@supabase/supabase-js'
 import { supabase } from './supabase'
 import { requestCache, generateCacheKey } from './requestCache'
 import { logger } from './logger'
+import { invalidateFriendshipEdges } from '@/hooks/friendshipEdgeCache'
 import {
   fetchNotificationsPage,
   markNotificationRead as markNotificationReadRpc,
@@ -675,6 +676,10 @@ export const useNotificationStore = create<NotificationState>((set, get) => {
           logger.error('[NOTIFICATIONS] Failed to update friend request', error)
           return false
         }
+
+        // The friendship-edge cache (community cards, profile buttons) is
+        // keyed off profile_friend_edges — converge it on the new status.
+        invalidateFriendshipEdges()
 
         // Optimistically remove the notification from local state
         set((state) => ({

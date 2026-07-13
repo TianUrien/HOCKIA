@@ -3,6 +3,12 @@ import * as Sentry from '@sentry/react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import type { Database } from '@/lib/database.types'
+import {
+  type FriendEdge,
+  getFriendshipEdgeState,
+  loadFriendshipEdges,
+  subscribeFriendshipEdges,
+} from '@/hooks/friendshipEdgeCache'
 import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
 import { useNotificationStore } from '@/lib/notifications'
@@ -11,7 +17,6 @@ import { extractErrorMessage } from '@/lib/utils'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 
 type FriendStatus = Database['public']['Enums']['friendship_status']
-type FriendEdge = Database['public']['Views']['profile_friend_edges']['Row']
 
 type FriendshipState = {
   loading: boolean
@@ -36,12 +41,32 @@ export function useFriendship(profileId: string): FriendshipState {
   const { addToast } = useToastStore()
   const dismissNotification = useNotificationStore((state) => state.dismissBySource)
   const viewerId = authProfile?.id
-  const [relationship, setRelationship] = useState<FriendEdge | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [, forceRender] = useState(0)
   const [mutating, setMutating] = useState(false)
 
   const isAuthenticated = Boolean(viewerId)
   const isOwnProfile = Boolean(viewerId && viewerId === profileId)
+
+  const { ready: cacheReady, edges } = getFriendshipEdgeState(viewerId)
+
+  // Subscribe to shared-cache updates; kick the shared fetch on mount.
+  useEffect(() => {
+    const unsubscribe = subscribeFriendshipEdges(() => forceRender((n) => n + 1))
+    if (viewerId && !isOwnProfile) {
+      void loadFriendshipEdges(viewerId)
+      // The shared fetch can resolve between this card's render and the
+      // effect flush — before the listener above existed. Re-render if the
+      // cache state moved in that gap so the card can't strand on loading.
+      if (getFriendshipEdgeState(viewerId).ready !== cacheReady) {
+        forceRender((n) => n + 1)
+      }
+    }
+    return unsubscribe
+  }, [viewerId, isOwnProfile, cacheReady])
+
+  const relationship: FriendEdge | null =
+    viewerId && !isOwnProfile && cacheReady ? (edges?.get(profileId) ?? null) : null
+  const loading = Boolean(viewerId && !isOwnProfile && !cacheReady)
 
   const status = relationship?.status ?? null
   const isFriend = status === 'accepted'
@@ -49,56 +74,10 @@ export function useFriendship(profileId: string): FriendshipState {
   const isOutgoingRequest = Boolean(isPending && relationship?.requester_id === viewerId)
   const isIncomingRequest = Boolean(isPending && relationship?.requester_id !== viewerId)
 
-  const fetchRelationship = useCallback(async (signal?: AbortSignal) => {
-    if (!viewerId || isOwnProfile) {
-      setRelationship(null)
-      setLoading(false)
-      return
-    }
-
-    setLoading(true)
-    Sentry.addBreadcrumb({
-      category: 'supabase',
-      message: 'friendships.fetch_edge',
-      data: { viewerId, profileId },
-      level: 'info'
-    })
-    const { data, error } = await supabase
-      .from('profile_friend_edges')
-      .select('*')
-      .eq('profile_id', viewerId)
-      .eq('friend_id', profileId)
-      .maybeSingle()
-
-    // Don't update state if cancelled
-    if (signal?.aborted) return
-
-    if (error) {
-      logger.error('Failed to fetch friendship state', error)
-      reportSupabaseError('friends.fetch_state', error, { viewerId, profileId }, {
-        feature: 'friends',
-        operation: 'fetch_friendship'
-      })
-      addToast('Unable to load friendship status.', 'error')
-      setRelationship(null)
-    } else {
-      setRelationship((data as FriendEdge | null) ?? null)
-    }
-
-    setLoading(false)
-  }, [viewerId, profileId, isOwnProfile, addToast])
-
-  useEffect(() => {
-    setRelationship(null)
+  const fetchRelationship = useCallback(async () => {
     if (!viewerId || isOwnProfile) return
-    
-    const abortController = new AbortController()
-    void fetchRelationship(abortController.signal)
-    
-    return () => {
-      abortController.abort()
-    }
-  }, [fetchRelationship, viewerId, isOwnProfile])
+    await loadFriendshipEdges(viewerId, true)
+  }, [viewerId, isOwnProfile])
 
   const sendRequest = useCallback(async () => {
     if (!viewerId) {
@@ -201,6 +180,10 @@ export function useFriendship(profileId: string): FriendshipState {
           operation: 'update_friendship'
         })
         addToast(extractErrorMessage(error, 'Unable to update friendship. Please try again.'), 'error')
+        // A rejected transition usually means the cached edge is stale
+        // (accepted from the notifications panel, another device...) —
+        // refetch so the card self-heals instead of looping the error.
+        void fetchRelationship()
       } finally {
         setMutating(false)
       }

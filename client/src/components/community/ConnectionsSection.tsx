@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { invalidateFriendshipEdges } from '@/hooks/friendshipEdgeCache'
 import { Link, useNavigate } from 'react-router-dom'
 import { ShieldCheck, X, Check, UserPlus, UserMinus, MapPin } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -125,6 +126,7 @@ export default function ConnectionsSection({ profileId, profileRole, onAskToVouc
           .update({ status })
           .eq('id', id)
         if (error) throw error
+        invalidateFriendshipEdges()
         await fetchConnections()
         const msg =
           status === 'accepted'
@@ -156,6 +158,7 @@ export default function ConnectionsSection({ profileId, profileRole, onAskToVouc
       try {
         const { error } = await supabase.from('profile_friendships').delete().eq('id', id)
         if (error) throw error
+        invalidateFriendshipEdges()
         await fetchConnections()
         addToast('Connection removed.', 'success')
       } catch (error) {
