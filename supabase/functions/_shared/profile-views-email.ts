@@ -21,6 +21,10 @@ export interface ProfileViewQueueRecord {
   total_views: number
   anonymous_viewers: number
   top_viewer_ids: string[]
+  /** Distinct identified viewers per role, e.g. {"club":2,"player":4}. NULL on pre-upgrade rows. */
+  viewers_by_role: Record<string, number> | null
+  /** Identified views in the prior 7-day window. NULL on pre-upgrade rows. */
+  views_prior_7d: number | null
   processed_at: string | null
   created_at: string
 }
@@ -54,11 +58,61 @@ function getFirstName(fullName: string | null): string {
   return fullName.trim().split(' ')[0]
 }
 
+// Recruiter-first display order; unknown roles are MERGED into one
+// "other" bucket before labeling (never "1 other · 2 others").
+const ROLE_LABELS: Record<string, [singular: string, plural: string]> = {
+  club: ['club', 'clubs'],
+  coach: ['coach', 'coaches'],
+  player: ['player', 'players'],
+  brand: ['brand', 'brands'],
+  umpire: ['umpire', 'umpires'],
+}
+const ROLE_ORDER = ['club', 'coach', 'player', 'brand', 'umpire', 'other']
+
+/**
+ * "2 clubs · 1 coach · 4 players" from the enqueue-time role breakdown.
+ * Empty string when the queue row predates the breakdown column.
+ */
+export function composeStatsLine(viewersByRole: Record<string, number> | null): string {
+  if (!viewersByRole) return ''
+  const buckets = new Map<string, number>()
+  for (const [role, n] of Object.entries(viewersByRole)) {
+    if (n <= 0) continue
+    const key = ROLE_LABELS[role] ? role : 'other'
+    buckets.set(key, (buckets.get(key) ?? 0) + n)
+  }
+  if (buckets.size === 0) return ''
+  return ROLE_ORDER.filter((role) => buckets.has(role))
+    .map((role) => {
+      const n = buckets.get(role)!
+      const [singular, plural] = ROLE_LABELS[role] ?? ['other', 'others']
+      return `${n} ${n === 1 ? singular : plural}`
+    })
+    .join(' · ')
+}
+
+/**
+ * Week-over-week trend from the enqueue-time prior-week count. The line is
+ * SELF-CONTAINED — it states this week's total views before comparing, so
+ * the direction can never contradict the headline (which counts people,
+ * not views). Empty when the row predates views_prior_7d, and no
+ * comparison when the prior week had nothing to compare against — never
+ * invent a number we didn't measure.
+ */
+export function composeTrendLine(totalViews: number, viewsPrior7d: number | null): string {
+  if (viewsPrior7d === null || viewsPrior7d === undefined) return ''
+  const views = totalViews === 1 ? '1 profile view' : `${totalViews} profile views`
+  if (viewsPrior7d === 0) return `${views} this week.`
+  if (totalViews > viewsPrior7d) return `${views} this week — up from ${viewsPrior7d} the week before.`
+  if (totalViews < viewsPrior7d) return `${views} this week — down from ${viewsPrior7d} the week before.`
+  return `${views} this week — same as the week before.`
+}
+
 
 export function generateEmailHtml(
   recipient: RecipientData,
   _viewers: ViewerProfile[],
-  stats: { uniqueViewers: number; totalViews: number; anonymousViewers: number }
+  stats: { uniqueViewers: number; totalViews: number; anonymousViewers: number; statsLine?: string; trendLine?: string }
 ): string {
   const firstName = getFirstName(recipient.full_name)
 
@@ -66,7 +120,14 @@ export function generateEmailHtml(
     ? '1 person checked out your HOCKIA profile this week.'
     : `${stats.uniqueViewers} people checked out your HOCKIA profile this week.`
 
-  const ctaUrl = `${HOCKIA_BASE_URL}/dashboard/profile?tab=profile&section=viewers`
+  const breakdownHtml = stats.statsLine
+    ? `<p style="color: #6b7280; margin: 0 0 8px 0; font-size: 15px;">${stats.statsLine}</p>`
+    : ''
+  const trendHtml = stats.trendLine
+    ? `<p style="color: #6b7280; margin: 0 0 16px 0; font-size: 15px;">${stats.trendLine}</p>`
+    : ''
+
+  const ctaUrl = `${HOCKIA_BASE_URL}/home`
 
   return `
 <!DOCTYPE html>
@@ -87,10 +148,10 @@ export function generateEmailHtml(
 
     <p style="color: #1f2937; margin: 0 0 16px 0; font-size: 16px;">${viewCountText}</p>
 
-    <p style="color: #6b7280; margin: 0 0 24px 0; font-size: 15px;">Log in to see who viewed your profile.</p>
+    ${breakdownHtml}${trendHtml}<p style="color: #6b7280; margin: 0 0 24px 0; font-size: 15px;">Log in to see who viewed your profile.</p>
 
     <p style="margin: 0;">
-      <a href="${ctaUrl}" style="color: #6d28d9; font-weight: 600; text-decoration: none;">See who viewed your profile &rarr;</a>
+      <a href="${ctaUrl}" style="color: #6d28d9; font-weight: 600; text-decoration: none;">See your week on HOCKIA &rarr;</a>
     </p>
 
   </div>
@@ -109,7 +170,7 @@ export function generateEmailHtml(
 export function generateEmailText(
   recipient: RecipientData,
   _viewers: ViewerProfile[],
-  stats: { uniqueViewers: number; totalViews: number; anonymousViewers: number }
+  stats: { uniqueViewers: number; totalViews: number; anonymousViewers: number; statsLine?: string; trendLine?: string }
 ): string {
   const firstName = getFirstName(recipient.full_name)
 
@@ -117,16 +178,18 @@ export function generateEmailText(
     ? '1 person checked out your HOCKIA profile this week.'
     : `${stats.uniqueViewers} people checked out your HOCKIA profile this week.`
 
-  const ctaUrl = `${HOCKIA_BASE_URL}/dashboard/profile?tab=profile&section=viewers`
+  const ctaUrl = `${HOCKIA_BASE_URL}/home`
 
   const lines = [
     `Hi ${firstName},`,
     '',
     viewCountText,
+    ...(stats.statsLine ? [stats.statsLine] : []),
+    ...(stats.trendLine ? [stats.trendLine] : []),
     '',
     "Log in to see who's been looking and what caught their attention.",
     '',
-    'See Who Viewed Your Profile:',
+    'See your week on HOCKIA:',
     ctaUrl,
     '',
     'Tip: Keep your profile up to date so others can see everything you have to offer.',

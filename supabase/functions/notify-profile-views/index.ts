@@ -6,6 +6,8 @@ import {
   ProfileViewWebhookPayload,
   RecipientData,
   ViewerProfile,
+  composeStatsLine,
+  composeTrendLine,
   generateEmailHtml,
   generateEmailText,
 } from '../_shared/profile-views-email.ts'
@@ -168,10 +170,15 @@ Deno.serve(async (req: Request) => {
 
     logger.info('Fetched viewer profiles', { count: viewers.length })
 
+    // Role breakdown + week-over-week trend, both computed at enqueue time
+    // (queue columns). Empty strings on pre-upgrade rows — the template
+    // paragraphs are conditional and simply drop.
     const stats = {
       uniqueViewers: queueRecord.unique_viewers,
       totalViews: queueRecord.total_views,
       anonymousViewers: queueRecord.anonymous_viewers,
+      statsLine: composeStatsLine(queueRecord.viewers_by_role ?? null),
+      trendLine: composeTrendLine(queueRecord.total_views, queueRecord.views_prior_7d ?? null),
     }
 
     const firstName = recipient.full_name?.split(' ')[0]?.trim() || 'there'
@@ -185,8 +192,15 @@ Deno.serve(async (req: Request) => {
       unique_viewers: String(stats.uniqueViewers),
       total_views: String(stats.totalViews),
       anonymous_viewers: String(stats.anonymousViewers),
-      cta_url: `${HOCKIA_BASE_URL}/dashboard/profile?tab=profile&section=viewers`,
-      cta_label: 'See Who Viewed Your Profile',
+      stats_line: stats.statsLine,
+      trend_line: stats.trendLine,
+      // The Home Pulse carries the weekly-visibility card — a richer landing
+      // than the old dashboard viewers deep-link (2026-07 digest UX lesson:
+      // land people where the next action is).
+      cta_url: `${HOCKIA_BASE_URL}/home`,
+      // Label matches the destination: /home is the Pulse (visibility card
+      // when it applies), NOT the viewers list — don't promise that list.
+      cta_label: 'See your week on HOCKIA',
       settings_url: `${HOCKIA_BASE_URL}/settings`,
     }
 
