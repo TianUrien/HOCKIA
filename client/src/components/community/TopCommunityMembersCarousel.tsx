@@ -1,21 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ChevronRight } from 'lucide-react'
 import RecruiterCandidateCard, { type RecruiterCardMember } from '../recruiting/RecruiterCandidateCard'
-import { computeClubFit } from '@/lib/clubFit'
-import { computeCoachFit } from '@/lib/coachFit'
-import { computeEvidence } from '@/lib/evidence'
-import { computeInterest } from '@/lib/interestFit'
-import { computeRecruiterVerdict, type RecruiterVerdict } from '@/lib/recruiterVerdict'
-import {
-  useActiveRecruitingTarget, useActiveRecruitingTargetRole, useActiveRecruitingTargetPosition,
-  useActiveRecruitingTargetSpecialists, useActiveRecruitingTargetLocation, useActiveRecruitingTargetStartDate,
-  useActiveRecruitingTargetLevel, useActiveRecruitingTargetCompensation,
-  useHasActiveRecruitingScope, useActiveRecruitingTargetProblem,
-  useActiveRecruitingMustHaves,
-} from '@/hooks/useRecruitingContext'
-import { categoryToBandTarget } from '@/hooks/useInterest'
-import { getClubLevelBand } from '@/hooks/useWorldClubLogo'
-import { useCountries } from '@/hooks/useCountries'
+import type { RecruiterVerdict } from '@/lib/recruiterVerdict'
+import { computeScopedVerdicts } from '@/lib/scopedVerdicts'
+import { useRecruitingScope } from '@/hooks/useRecruitingScope'
 import { MemberPreviewModal } from './MemberPreviewModal'
 import { CandidatePreviewSheet } from '../recruiting/CandidatePreviewSheet'
 import type { Profile } from './PeopleListView'
@@ -343,105 +331,14 @@ export function TopCommunityMembersCarousel({
   // fetched pool by the SAME Recruiter Verdict the All-Members grid + profile
   // use (so all three agree), then demote/hide out-of-scope. Discovery rails
   // (no showEvidence) keep the RPC order untouched.
-  const contextTarget = useActiveRecruitingTarget()
-  const contextTargetRole = useActiveRecruitingTargetRole()
-  const contextTargetPosition = useActiveRecruitingTargetPosition()
-  const contextTargetSpecialists = useActiveRecruitingTargetSpecialists()
-  const contextTargetLocation = useActiveRecruitingTargetLocation()
-  const contextTargetStartDate = useActiveRecruitingTargetStartDate()
-  const contextTargetLevel = useActiveRecruitingTargetLevel()
-  const contextTargetCompensation = useActiveRecruitingTargetCompensation()
-  const hasOpeningScope = useHasActiveRecruitingScope()
-  const contextProblem = useActiveRecruitingTargetProblem()
-  const contextMustHaves = useActiveRecruitingMustHaves()
-  const { getCountryById } = useCountries()
+  const { scope } = useRecruitingScope()
 
   const verdictById = useMemo(() => {
-    const map = new Map<string, RecruiterVerdict>()
-    if (!showEvidence || !viewerProfile || !contextTarget) return map
-    const viewerCtx = {
-      role: viewerProfile.role,
-      womens_league_division: (viewerProfile as { womens_league_division?: string | null }).womens_league_division ?? null,
-      mens_league_division: (viewerProfile as { mens_league_division?: string | null }).mens_league_division ?? null,
-      current_world_club_id: viewerProfile.current_world_club_id ?? null,
-      // Viewer's own league band so competition_proximity can compare (relies on the
-      // shared clubLeagueCache, which PeopleListView warms with the viewer's club on
-      // the same Community page).
-      competition_level_band: getClubLevelBand(viewerProfile.current_world_club_id ?? null, contextTarget),
-    }
-    const interestScopeOptions = {
-      targetRole: contextTargetRole,
-      targetLocationCountry: contextTargetLocation,
-      targetStartDate: contextTargetStartDate,
-      targetLevel: contextTargetLevel,
-      targetCompensation: contextTargetCompensation,
-      countryName: (id: number) => getCountryById(id)?.name,
-      levelRequired: contextMustHaves.level,
-      compensationRequired: contextMustHaves.compensation,
-      locationRequired: contextMustHaves.location,
-      availabilityRequired: contextMustHaves.availability,
-    }
-    members.forEach((m) => {
-      const fit =
-        m.role === 'coach'
-          ? computeCoachFit(
-              viewerCtx,
-              { id: m.id, role: m.role, coach_specialization: m.coach_specialization, coaching_categories: m.coaching_categories },
-              { overrideTarget: contextTarget, targetRole: contextTargetRole, targetSpecialization: contextTargetPosition },
-            )
-          : computeClubFit(
-              viewerCtx,
-              {
-                id: m.id,
-                role: m.role,
-                playing_category: m.playing_category,
-                current_world_club_id: m.current_world_club_id,
-                competition_level_band: getClubLevelBand(m.current_world_club_id, categoryToBandTarget(m.playing_category)) ?? m.competition_level_band,
-                open_to_play: m.open_to_play,
-                open_to_coach: m.open_to_coach,
-                open_to_opportunities: m.open_to_opportunities,
-                last_active_at: m.last_active_at,
-                position: m.position,
-                secondary_position: m.secondary_position,
-                specialist_skills: m.specialist_skills,
-              },
-              {
-                overrideTarget: contextTarget,
-                targetRole: contextTargetRole,
-                targetPosition: contextTargetPosition,
-                targetSpecialists: contextTargetSpecialists,
-                positionRequired: contextMustHaves.position,
-                specialistsRequired: contextMustHaves.specialists,
-              },
-            )
-      if (!fit.isApplicable) return
-      const evidence = computeEvidence({
-        role: m.role,
-        highlight_video_url: m.highlight_video_url,
-        full_game_video_count: m.full_game_video_count,
-        accepted_reference_count: m.accepted_reference_count,
-        is_verified: m.is_verified,
-        current_world_club_id: m.current_world_club_id,
-      })
-      const interest = computeInterest(
-        {
-          role: m.role,
-          relocation_willingness: m.relocation_willingness,
-          relocation_countries_open: m.relocation_countries_open,
-          relocation_countries_excluded: m.relocation_countries_excluded,
-          available_from: m.available_from,
-          home_country_id: m.base_country_id ?? m.nationality_country_id,
-          proven_level_band: getClubLevelBand(m.current_world_club_id, categoryToBandTarget(m.playing_category)) ?? m.competition_level_band,
-          level_target: m.level_target,
-          opportunity_preference: m.opportunity_preference,
-        },
-        interestScopeOptions,
-      )
-      const verdict = computeRecruiterVerdict({ fit, evidence, interest, hasOpeningScope, problem: contextProblem, candidateRole: m.role })
-      if (verdict.isApplicable) map.set(m.id, verdict)
-    })
-    return map
-  }, [showEvidence, viewerProfile, contextTarget, contextTargetRole, contextTargetPosition, contextTargetSpecialists, contextTargetLocation, contextTargetStartDate, contextTargetLevel, contextTargetCompensation, contextMustHaves, hasOpeningScope, contextProblem, getCountryById, members])
+    if (!showEvidence || !viewerProfile || !scope) return new Map<string, RecruiterVerdict>()
+    // Shared composition (lib/scopedVerdicts) — the SAME verdict the
+    // All-Members grid, the profile sheet and the club Pulse hero compute.
+    return computeScopedVerdicts(members, scope)
+  }, [showEvidence, viewerProfile, scope, members])
 
   // Scoped order: in-scope (Pursue/Consider) first, then by match % (strength)
   // desc, completeness, id — out-of-scope (Longshot/Pass) is demoted to the
@@ -648,7 +545,7 @@ export function TopCommunityMembersCarousel({
         // the "non-keepers excluded, no real keepers" case.)
         <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50/60 p-4 text-center">
           <p className="text-sm text-gray-500">
-            {contextTargetPosition === 'goalkeeper'
+            {scope?.targetPosition === 'goalkeeper'
               ? 'No exact goalkeeper matches found in your community yet.'
               : 'No in-scope candidates found for this search yet.'}
           </p>

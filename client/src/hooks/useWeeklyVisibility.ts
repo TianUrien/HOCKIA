@@ -28,7 +28,9 @@ const EMPTY: WeeklyVisibility = {
   previews_7d: 0, previews_prior_7d: 0, viewers_by_role: {},
 }
 
-export function useWeeklyVisibility(enabled: boolean): VisibilityState {
+/** `includeStreak: false` skips the streak RPC — the club hero shows no
+ *  streak chip, so it shouldn't pay for one (audit L2). */
+export function useWeeklyVisibility(enabled: boolean, includeStreak = true): VisibilityState {
   const [state, setState] = useState<VisibilityState>({ loading: enabled, visibility: null, streakDays: 0 })
 
   useEffect(() => {
@@ -40,7 +42,7 @@ export function useWeeklyVisibility(enabled: boolean): VisibilityState {
     void (async () => {
       const [vis, streak] = await Promise.all([
         supabase.rpc('get_my_weekly_visibility'),
-        supabase.rpc('get_my_streak'),
+        includeStreak ? supabase.rpc('get_my_streak') : Promise.resolve({ data: null, error: null }),
       ])
       if (cancelled) return
       if (vis.error) logger.debug('[weekly-visibility] failed', vis.error.message)
@@ -52,7 +54,7 @@ export function useWeeklyVisibility(enabled: boolean): VisibilityState {
       })
     })()
     return () => { cancelled = true }
-  }, [enabled])
+  }, [enabled, includeStreak])
 
   return state
 }

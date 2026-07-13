@@ -8578,6 +8578,7 @@ export type Database = {
           status: Database["public"]["Enums"]["profile_reference_status"]
         }[]
       }
+      get_my_roles_health: { Args: never; Returns: Json }
       get_my_streak: { Args: never; Returns: Json }
       get_my_weekly_visibility: { Args: never; Returns: Json }
       get_notification_counts: {
