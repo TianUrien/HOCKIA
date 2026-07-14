@@ -93,6 +93,35 @@ Deno.serve(async (req) => {
 
   if (v.status !== 'ready' || !v.cf_uid) return json({ error: 'not_ready' }, 409)
 
+  // ── Hidden-profile fence (CLAUDE.md standing invariant) ──
+  // This is a service-role read returning a person's content, so it must apply
+  // the hidden predicate itself: a banned or frozen-minor owner's videos are
+  // unplayable regardless of the video's own visibility. 404 so a hidden
+  // owner's asset is indistinguishable from a deleted one.
+  const { data: owner } = await supabase
+    .from('profiles')
+    .select('is_blocked, frozen_minor_at')
+    .eq('id', v.user_id)
+    .single()
+  const ownerHidden =
+    !owner ||
+    (owner as { is_blocked?: boolean }).is_blocked === true ||
+    (owner as { frozen_minor_at?: string | null }).frozen_minor_at != null
+  if (ownerHidden) return json({ error: 'not_found' }, 404)
+
+  // A viewer who blocked (or was blocked by) the owner cannot play their video.
+  if (viewerId) {
+    const { data: block } = await supabase
+      .from('user_blocks')
+      .select('blocker_id')
+      .or(
+        `and(blocker_id.eq.${viewerId},blocked_id.eq.${v.user_id}),and(blocker_id.eq.${v.user_id},blocked_id.eq.${viewerId})`,
+      )
+      .limit(1)
+      .maybeSingle()
+    if (block) return json({ error: 'not_found' }, 404)
+  }
+
   // ── Access control ──
   const isOwner = viewerId && viewerId === v.user_id
   const isRecruiter = viewerRole === 'club' || viewerRole === 'coach'
