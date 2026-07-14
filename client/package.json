@@ -24,9 +24,9 @@
     "test:db": "vitest run --config vitest.db.config.ts",
     "test:e2e:debug": "playwright test --debug",
     "test:e2e:staging": "E2E_STAGING_MODE=1 playwright test --project=setup --project=staging",
-    "cap:sync": "npx cap sync ios",
+    "cap:sync": "npx cap sync ios && npx cap sync android",
     "cap:open": "npx cap open ios",
-    "cap:build": "npm run build && npx cap sync ios",
+    "cap:build": "npm run build && node scripts/assert-prod-bundle.mjs && npx cap sync ios && npx cap sync android",
     "gen:types": "npx supabase gen types typescript --project-id \"$SUPABASE_PROJECT_ID\" > src/lib/database.types.ts"
   },
   "dependencies": {

@@ -3,6 +3,25 @@ import react from '@vitejs/plugin-react'
 import { sentryVitePlugin } from '@sentry/vite-plugin'
 import { VitePWA } from 'vite-plugin-pwa'
 import path from 'path'
+import { readFileSync } from 'fs'
+
+// Sentry release tag for NATIVE builds: derive "<marketing>+<build>" from the
+// iOS Xcode project (the single source of truth for the shipped version), so
+// crashes from the store binary are attributable instead of tagged 'unknown'.
+// An explicit VITE_APP_VERSION always wins (e.g. Vercel web builds).
+function readNativeAppVersion(): string {
+  try {
+    const pbx = readFileSync(
+      path.resolve(__dirname, 'ios/App/App.xcodeproj/project.pbxproj'),
+      'utf8',
+    )
+    const marketing = pbx.match(/MARKETING_VERSION = ([0-9][0-9.]*);/)?.[1]
+    const build = pbx.match(/CURRENT_PROJECT_VERSION = ([0-9]+);/)?.[1]
+    return marketing ? `${marketing}+${build ?? '0'}` : ''
+  } catch {
+    return ''
+  }
+}
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
@@ -169,8 +188,21 @@ export default defineConfig(({ mode }) => {
         (mode === 'production' ? mergedEnv.VITE_SUPABASE_ANON_KEY : mergedEnv.SUPABASE_ANON_KEY) ?? '',
       ),
       'import.meta.env.VITE_VERCEL_GIT_COMMIT_SHA': JSON.stringify(mergedEnv.VERCEL_GIT_COMMIT_SHA ?? ''),
+      // Native builds have no VITE_APP_VERSION / Vercel SHA in the env; fall
+      // back to the version baked into the iOS project so Sentry release tags
+      // are real. Explicit env wins (web/CI).
+      'import.meta.env.VITE_APP_VERSION': JSON.stringify(
+        mergedEnv.VITE_APP_VERSION || readNativeAppVersion(),
+      ),
     },
-    envPrefix: ['VITE_', 'SUPABASE_'],
+    // Only VITE_* is exposed to import.meta.env / inlined into the bundle.
+    // The two legit bare SUPABASE_URL / SUPABASE_ANON_KEY values are provided
+    // explicitly via the `define` block above (prod-correct), so we must NOT
+    // also whitelist the 'SUPABASE_' prefix here: doing so serialized the
+    // ENTIRE env object, meaning any SUPABASE_*-prefixed var present in the
+    // build shell (e.g. a sourced SUPABASE_SERVICE_ROLE_KEY) would ship to
+    // every user. No source reads import.meta.env.SUPABASE_*, so this is safe.
+    envPrefix: ['VITE_'],
     test: {
       environment: 'jsdom',
       globals: true,
