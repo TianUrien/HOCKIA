@@ -36,7 +36,7 @@ vi.mock('@/lib/sentryHelpers', () => ({ reportSupabaseError: vi.fn() }))
 import { useFriendship } from '@/hooks/useFriendship'
 import {
   invalidateFriendshipEdges,
-  resetFriendshipEdgeCacheForTests,
+  clearFriendshipEdgeCache,
 } from '@/hooks/friendshipEdgeCache'
 
 function Card({ profileId }: { profileId: string }) {
@@ -51,7 +51,7 @@ function Card({ profileId }: { profileId: string }) {
 
 describe('useFriendship shared edge cache', () => {
   beforeEach(() => {
-    resetFriendshipEdgeCacheForTests()
+    clearFriendshipEdgeCache()
     edgesSelect.mockClear()
     edgeRows = [
       { friend_id: 'friend-a', status: 'accepted', requester_id: 'viewer-1', id: 'e1' },

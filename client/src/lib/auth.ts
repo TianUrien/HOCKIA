@@ -16,6 +16,9 @@ import { setUserProperties, clearUserProperties, trackLogin } from './analytics'
 import { trackDbEvent } from './trackDbEvent'
 import { trackUserDevice } from './trackUserDevice'
 import { detectPlatform } from './detectPlatform'
+import { queryClient } from './queryClient'
+import { useUploadManager } from './uploadManager'
+import { clearFriendshipEdgeCache } from '@/hooks/friendshipEdgeCache'
 
 interface AuthState {
   user: User | null
@@ -280,6 +283,42 @@ const clearLocalSession = async (reason: string, options?: ClearSessionOptions) 
 
   requestCache.clear()
 
+  // React Query holds user-scoped data (Home feed + its has_liked flags,
+  // search results, profile posts) under keys that carry NO user id, with a
+  // 5-minute gcTime. Without this, user B signing in on the same device
+  // within that window paints user A's feed and like-state as their own
+  // (2026-07-14 audit; same class as the friendship-edge cache below).
+  try {
+    queryClient.clear()
+  } catch (queryResetError) {
+    logger.error('[AUTH_STORE] Failed to clear query cache during sign-out', { queryResetError })
+  }
+
+  // Module-level per-viewer caches.
+  try {
+    clearFriendshipEdgeCache()
+  } catch (edgeResetError) {
+    logger.error('[AUTH_STORE] Failed to clear friendship edges during sign-out', { edgeResetError })
+  }
+
+  // In-flight uploads belong to the signed-out account (file names + TUS
+  // handles); they must not render in the next account's upload UI. Abort the
+  // TUS handles first — clearing the map alone leaves the fire-and-forget
+  // pipeline streaming to Cloudflare (and DB-polling as anon) until timeout.
+  try {
+    const uploads = useUploadManager.getState().uploads
+    for (const entry of Object.values(uploads)) {
+      try {
+        entry.tusUpload?.abort(true)
+      } catch {
+        /* best-effort */
+      }
+    }
+    useUploadManager.setState({ uploads: {} })
+  } catch (uploadResetError) {
+    logger.error('[AUTH_STORE] Failed to reset upload manager during sign-out', { uploadResetError })
+  }
+
   try {
     useUnreadStore.getState().reset()
   } catch (unreadResetError) {
@@ -317,6 +356,11 @@ const clearLocalSession = async (reason: string, options?: ClearSessionOptions) 
       // on this browser doesn't inherit the previous user's role / email.
       window.localStorage.removeItem('pending_role')
       window.localStorage.removeItem('pending_email')
+      // Recent searches are the signed-out user's scouting interests, stored
+      // under a key with no uid in it — they must not surface for the next
+      // account on a shared device.
+      window.localStorage.removeItem('hockia_recent_searches')
+      window.localStorage.removeItem('playr_recent_searches')
     } catch (storageError) {
       logger.error('[AUTH_STORE] Failed to remove cached session from storage', { storageError })
     }

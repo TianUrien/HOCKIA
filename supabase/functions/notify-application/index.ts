@@ -42,6 +42,11 @@ import { sendTrackedEmail } from '../_shared/email-sender.ts'
  * ============================================================================
  */
 
+/** Mirrors public.profile_is_hidden(is_blocked, frozen_minor_at). */
+function isHidden(p: { is_blocked?: boolean | null; frozen_minor_at?: string | null }): boolean {
+  return Boolean(p.is_blocked) || Boolean(p.frozen_minor_at)
+}
+
 Deno.serve(async (req: Request) => {
   const correlationId = crypto.randomUUID().slice(0, 8)
   const logger = createLogger('NOTIFY_APPLICATION', correlationId)
@@ -93,15 +98,77 @@ Deno.serve(async (req: Request) => {
       )
     }
 
-    const application = payload.record
-    logger.info('New application detected', {
+    // Service role client (shared singleton)
+    const supabase = getServiceClient()
+
+    // ==========================================================================
+    // TRUST THE DATABASE, NOT THE PAYLOAD (2026-07-14 audit — was a live P1)
+    // ==========================================================================
+    // This function used to compose the email straight from payload.record.
+    // But `verify_jwt` is NOT a security boundary here: the anon key is public
+    // (it ships inside every browser bundle), so ANY caller could POST a forged
+    // "INSERT" naming a real opportunity + a real player and make the club
+    // receive "New application from <that player>" for an application that
+    // never happened — repeatable, no rate limit.
+    //
+    // Fix: the payload is now only a POINTER. We re-read the application row
+    // from the database and use ITS values for everything downstream; a row
+    // that doesn't exist means there is nothing to notify about.
+    const claimedId = payload.record?.id
+    if (!claimedId) {
+      logger.info('Ignoring payload without an application id')
+      return new Response(
+        JSON.stringify({ message: 'Ignored - no application id' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    const { data: application, error: applicationError } = await supabase
+      .from('opportunity_applications')
+      .select('id, opportunity_id, applicant_id, status')
+      .eq('id', claimedId)
+      .maybeSingle()
+
+    if (applicationError) {
+      logger.error('Failed to fetch application', { error: applicationError.message })
+      return new Response(
+        JSON.stringify({ error: 'Failed to fetch application' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    if (!application) {
+      // Either a forged payload or a row deleted before we got here. Neither
+      // is a server error — refuse quietly (and loudly in the logs).
+      logger.error('Rejected: no such application row — payload not backed by the DB', {
+        claimedApplicationId: claimedId,
+      })
+      return new Response(
+        JSON.stringify({ error: 'Unknown application' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    logger.info('New application detected (DB-verified)', {
       applicationId: application.id,
       opportunityId: application.opportunity_id,
       applicantId: application.applicant_id,
+      status: application.status,
     })
 
-    // Service role client (shared singleton)
-    const supabase = getServiceClient()
+    // Only the initial pending application warrants a "new application" email.
+    // At INSERT the status is always 'pending'; a webhook re-delivery arriving
+    // after the applicant withdrew or the club decided must not re-send.
+    if (application.status !== 'pending') {
+      logger.info('Ignoring application that is no longer pending', {
+        applicationId: application.id,
+        status: application.status,
+      })
+      return new Response(
+        JSON.stringify({ message: 'Ignored - application not pending' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
 
     // Fetch the opportunity details
     const { data: opportunity, error: opportunityError } = await supabase
@@ -123,7 +190,7 @@ Deno.serve(async (req: Request) => {
     // Fetch the applicant profile
     const { data: applicant, error: applicantError } = await supabase
       .from('profiles')
-      .select('id, username, full_name, position, secondary_position, base_location, avatar_url, is_test_account')
+      .select('id, username, full_name, position, secondary_position, base_location, avatar_url, is_test_account, is_blocked, frozen_minor_at')
       .eq('id', application.applicant_id)
       .single()
 
@@ -156,10 +223,23 @@ Deno.serve(async (req: Request) => {
       )
     }
 
+    // Hidden-profile invariant (CLAUDE.md): service-role reads that surface
+    // PEOPLE carry the predicate themselves — RLS never runs here. A banned or
+    // frozen applicant must never be named in a club's inbox.
+    if (isHidden(applicant)) {
+      logger.info('Ignoring application from hidden (banned/frozen) applicant', {
+        applicantId: applicant.id,
+      })
+      return new Response(
+        JSON.stringify({ message: 'Ignored - applicant is hidden' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
     // Fetch the club profile (recipient)
     const { data: club, error: clubError } = await supabase
       .from('profiles')
-      .select('id, email, full_name, is_test_account, onboarding_completed, notify_applications')
+      .select('id, email, full_name, is_test_account, onboarding_completed, notify_applications, is_blocked, frozen_minor_at')
       .eq('id', opportunity.club_id)
       .single()
 
@@ -189,6 +269,15 @@ Deno.serve(async (req: Request) => {
       })
       return new Response(
         JSON.stringify({ message: 'Ignored - club is a test account' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // A banned / frozen club is never emailed (same invariant as the digest).
+    if (isHidden(club)) {
+      logger.info('Ignoring application to hidden (banned/frozen) club', { clubId: club.id })
+      return new Response(
+        JSON.stringify({ message: 'Ignored - club is hidden' }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
@@ -223,6 +312,30 @@ Deno.serve(async (req: Request) => {
       })
       return new Response(
         JSON.stringify({ message: 'Ignored - club has disabled application notifications' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // ==========================================================================
+    // IDEMPOTENCY (house pattern — mirrors notify-vacancy's metadata guard)
+    // ==========================================================================
+    // Supabase DB webhooks are at-least-once: a re-delivered INSERT would have
+    // emailed the club twice. Keyed on the application id we stamp onto
+    // email_sends.metadata below.
+    const { count: alreadySentCount } = await supabase
+      .from('email_sends')
+      .select('id', { count: 'exact', head: true })
+      .eq('template_key', 'application_notification')
+      .eq('status', 'sent')
+      .eq('metadata->>application_id', application.id)
+
+    if (alreadySentCount && alreadySentCount > 0) {
+      logger.info('Idempotency guard: application notification already sent', {
+        applicationId: application.id,
+        existingSendCount: alreadySentCount,
+      })
+      return new Response(
+        JSON.stringify({ message: 'Duplicate webhook — notification already sent' }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
@@ -280,6 +393,7 @@ Deno.serve(async (req: Request) => {
       templateKey: 'application_notification',
       recipientId: club.id,
       recipientRole: 'club',
+      metadata: { application_id: application.id, opportunity_id: opportunity.id },
       logger,
     })
 

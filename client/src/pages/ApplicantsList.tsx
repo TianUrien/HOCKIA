@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Users, Star, HelpCircle, XCircle, Inbox, Search, X } from 'lucide-react'
+import { ArrowLeft, Users, Star, HelpCircle, XCircle, Inbox, Search, X, Clock } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
@@ -27,6 +27,12 @@ const TIER_GROUPS: TierGroup[] = [
   { key: 'shortlisted', label: 'Good fit', icon: Star, iconClass: 'text-emerald-600', statuses: ['shortlisted'] },
   { key: 'maybe', label: 'Maybe', icon: HelpCircle, iconClass: 'text-amber-600', statuses: ['maybe'] },
   { key: 'not-a-fit', label: 'Not a fit', icon: XCircle, iconClass: 'text-red-500', statuses: ['rejected'] },
+  // The expiry sweep flips un-triaged applications to 'no_response'. Those
+  // rows are fetched (the publisher policy only hides 'withdrawn') and were
+  // counted in the header, but no tier rendered them — so once the sweep
+  // arms, a club would read "5 applicants" above 2 cards. They get their own
+  // tier: still the club's applicants, just past the response window.
+  { key: 'expired', label: 'Expired (no response)', icon: Clock, iconClass: 'text-gray-400', statuses: ['no_response'] },
 ]
 
 export default function ApplicantsList() {

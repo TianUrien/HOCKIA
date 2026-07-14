@@ -115,7 +115,12 @@ export function invalidateFriendshipEdges(): void {
   if (edgeCacheViewer) void loadFriendshipEdges(edgeCacheViewer, true)
 }
 
-/** Test-only: clear module state between specs. */
-export function resetFriendshipEdgeCacheForTests(): void {
+/**
+ * Drop every cached edge. Called from clearLocalSession on sign-out so the
+ * next account on this device can't read the previous viewer's friend graph,
+ * and used by tests to reset module state between specs.
+ */
+export function clearFriendshipEdgeCache(): void {
   resetEdgeCache()
+  notifyEdgeListeners()
 }
