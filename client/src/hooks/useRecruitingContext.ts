@@ -379,6 +379,14 @@ export const useRecruitingContextStore = create<RecruitingContextStoreState>((se
   clearError: () => set({ error: null }),
 }))
 
+/** Reset on sign-out / account switch. setViewer(null, null) drops the
+ *  previous owner's recruiting rows, so B never sees A's active recruiting
+ *  scope/target flash on the first community/dashboard render. Called from
+ *  clearLocalSession. */
+export function clearRecruitingContext(): void {
+  useRecruitingContextStore.getState().setViewer(null, null)
+}
+
 /**
  * Hook wrapper around the shared store. Keeps the store's viewer in
  * sync with the auth store and triggers the first fetch on mount.

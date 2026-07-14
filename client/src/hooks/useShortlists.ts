@@ -162,6 +162,14 @@ const useShortlistsStore = create<ShortlistsStoreState>((set, get) => {
   }
 })
 
+/** Reset on sign-out / account switch. The store is a module singleton that
+ *  holds the previous user's shortlists; without an imperative clear here it
+ *  self-heals only on the next consumer mount (owner-guarded refetch), leaving
+ *  a one-render flash of A's shortlists for B. Called from clearLocalSession. */
+export function clearShortlistsStore(): void {
+  useShortlistsStore.getState().clear()
+}
+
 /** Test-only escape hatch — resets the singleton between test files
  *  that share the module graph. Not exported from the barrel. */
 export function __resetShortlistsStoreForTests() {

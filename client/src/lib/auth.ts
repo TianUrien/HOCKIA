@@ -19,6 +19,10 @@ import { detectPlatform } from './detectPlatform'
 import { queryClient } from './queryClient'
 import { useUploadManager } from './uploadManager'
 import { clearFriendshipEdgeCache } from '@/hooks/friendshipEdgeCache'
+import { clearShortlistsStore } from '@/hooks/useShortlists'
+import { clearSavedProfileIds } from '@/hooks/useSavedProfiles'
+import { clearRecruitingContext } from '@/hooks/useRecruitingContext'
+import { clearSignedThumbnailCache } from '@/hooks/useSignedVideoThumbnail'
 
 interface AuthState {
   user: User | null
@@ -299,6 +303,21 @@ const clearLocalSession = async (reason: string, options?: ClearSessionOptions) 
     clearFriendshipEdgeCache()
   } catch (edgeResetError) {
     logger.error('[AUTH_STORE] Failed to clear friendship edges during sign-out', { edgeResetError })
+  }
+
+  // Recruiter/discovery module singletons that hold the PREVIOUS user's private
+  // data — saved-profile ids, shortlists, active recruiting scope — plus the
+  // signed video-thumbnail URL cache. Each self-heals via an owner-guard on the
+  // next consumer mount, but that leaves a one-render FLASH of A's data for B on
+  // an account switch. Clear them imperatively here, same as the caches above,
+  // so no previous-user data can paint even for a frame.
+  try {
+    clearSavedProfileIds()
+    clearShortlistsStore()
+    clearRecruitingContext()
+    clearSignedThumbnailCache()
+  } catch (storeResetError) {
+    logger.error('[AUTH_STORE] Failed to reset recruiter/media stores during sign-out', { storeResetError })
   }
 
   // In-flight uploads belong to the signed-out account (file names + TUS

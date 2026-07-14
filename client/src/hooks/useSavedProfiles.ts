@@ -186,6 +186,13 @@ export async function resyncSavedProfileIds(ownerId: string): Promise<void> {
   if (store.ownerId === ownerId) await store.refresh()
 }
 
+/** Reset on sign-out / account switch. setOwner(null) drops the previous
+ *  owner's saved-id Set, so B never renders a filled "Saved" heart off A's
+ *  private saved list on the first card mount. Called from clearLocalSession. */
+export function clearSavedProfileIds(): void {
+  useSavedProfileIdsStore.getState().setOwner(null)
+}
+
 /** Test-only: reset the module singleton between test files. */
 export function __resetSavedProfileIdsForTests(): void {
   useSavedProfileIdsStore.setState({

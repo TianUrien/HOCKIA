@@ -21,6 +21,17 @@ import { supabase } from '@/lib/supabase'
 
 const cache = new Map<string, string>()
 
+/**
+ * Drop all cached signed thumbnail URLs — called from clearLocalSession on
+ * sign-out / account switch. These are short-lived signed Cloudflare URLs
+ * (bearer capabilities keyed by video id) that bypass the video-playback-token
+ * access gate; clearing them ensures the next account is never served a URL
+ * minted for the previous user's access level.
+ */
+export function clearSignedThumbnailCache(): void {
+  cache.clear()
+}
+
 export function useSignedVideoThumbnail(
   videoId: string | null | undefined,
   /** Gate the mint (e.g. viewport visibility). Cached URLs ignore the gate —
