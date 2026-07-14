@@ -84,7 +84,7 @@ export function ClubHero({ loading, hasScope, fitCount, poolRole, pendingApplica
 
         <button
           type="button"
-          onClick={() => go('/community/players')}
+          onClick={() => go(poolRole === 'coach' ? '/community/coaches' : '/community/players')}
           className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-2xl bg-white/[0.14] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/20"
         >
           {!hasScope ? <Target className="h-4 w-4" /> : <Search className="h-4 w-4" />}

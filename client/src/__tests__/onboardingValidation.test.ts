@@ -11,6 +11,7 @@ const validPlayer: OnboardingFormSubset = {
   fullName: 'Alex Player',
   nationalityCountryId: 202,
   city: 'Amsterdam',
+  dateOfBirth: '2000-01-01',
   position: 'midfielder',
   secondaryPosition: 'defender',
   playingCategory: 'adult_men',
@@ -20,6 +21,7 @@ const validCoach: OnboardingFormSubset = {
   fullName: 'Casey Coach',
   nationalityCountryId: 5,
   city: 'Brussels',
+  dateOfBirth: '2000-01-01',
   coachSpecialization: 'head_coach',
   coachSpecializationCustom: '',
   coachingCategories: ['adult_women'],
@@ -29,6 +31,7 @@ const validUmpire: OnboardingFormSubset = {
   fullName: 'Umi Umpire',
   nationalityCountryId: 11,
   city: 'London',
+  dateOfBirth: '2000-01-01',
   umpireLevel: 'FIH International',
   federation: 'FIH',
   officiatingSpecialization: 'outdoor',
@@ -89,6 +92,20 @@ describe('validateOnboardingStep', () => {
         validateOnboardingStep(2, 'coach', { ...validCoach, city: '   ' })
       ).toMatch(/base location is required/i)
     })
+
+    // DOB is collected on step 2 for every person role and must gate advancing
+    // here — otherwise the requirement only surfaces at final submit on step 3
+    // (which stranded OAuth signups, who collect no DOB at sign-up).
+    it.each<OnboardingRole>(['player', 'coach', 'umpire'])(
+      'returns an error when dateOfBirth is missing (%s)',
+      (role) => {
+        const form =
+          role === 'player' ? validPlayer : role === 'coach' ? validCoach : validUmpire
+        expect(
+          validateOnboardingStep(2, role, { ...form, dateOfBirth: '' })
+        ).toMatch(/date of birth is required/i)
+      }
+    )
 
     // Phase 3: gender is no longer collected at step 2 for any role. The
     // hockey-category replacement lives in step 3 (per role).

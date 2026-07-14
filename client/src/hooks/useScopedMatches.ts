@@ -49,6 +49,10 @@ const RAIL_SIZE = 8
 export function useScopedMatches(enabled: boolean) {
   const { scope, loading: scopeLoading } = useRecruitingScope()
   const viewerWorldClubId = useAuthStore((s) => s.profile?.current_world_club_id ?? null)
+  // A recruiting coach's own profile is in the coach pool (open_to_coach
+  // defaults true), so without this they'd rank/count as a candidate in their
+  // OWN "Available now" rail and inflate the hero fitCount.
+  const viewerId = useAuthStore((s) => s.profile?.id ?? null)
   const [pool, setPool] = useState<PoolRow[]>([])
   const [fetching, setFetching] = useState(enabled)
   const poolRole = scope?.targetRole === 'coach' ? 'coach' : 'player'
@@ -95,8 +99,11 @@ export function useScopedMatches(enabled: boolean) {
 
   const { fitCount, matches } = useMemo(() => {
     if (!scope || pool.length === 0) return { fitCount: 0, matches: [] as ScopedMatch[] }
-    const verdicts = computeScopedVerdicts(pool, scope)
-    const kept = pool.filter((m) => {
+    // Never surface or count the viewer themself in their own recruiting rail.
+    const candidates = viewerId ? pool.filter((m) => m.id !== viewerId) : pool
+    if (candidates.length === 0) return { fitCount: 0, matches: [] as ScopedMatch[] }
+    const verdicts = computeScopedVerdicts(candidates, scope)
+    const kept = candidates.filter((m) => {
       const v = verdicts.get(m.id)
       return v != null && v.tier !== 'pass'
     })
@@ -126,7 +133,7 @@ export function useScopedMatches(enabled: boolean) {
         inScope: isInScope(verdicts.get(m.id)),
       })),
     }
-  }, [pool, scope])
+  }, [pool, scope, viewerId])
 
   // Loading until BOTH the context store settled (else a scoped club flashes
   // the no-scope onboarding hero) and any in-flight pool fetch resolved.

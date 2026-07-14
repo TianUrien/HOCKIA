@@ -29,7 +29,7 @@ export function ClubPulse({ voice = 'club' }: { voice?: 'club' | 'coach' }) {
       />
       <AiScoutBar />
       <ApplicantsToReview totals={rolesHealth.totals} loading={rolesHealth.loading || rolesHealth.failed} />
-      <AvailableNowRail matches={scoped.matches} loading={scoped.loading} voice={voice} />
+      <AvailableNowRail matches={scoped.matches} loading={scoped.loading} voice={voice} poolRole={scoped.poolRole} />
       {/* On a failed fetch the module collapses — never the Post-CTA card
           (which would misread as "you have no open roles"). */}
       <RolesHealth roles={rolesHealth.roles} loading={rolesHealth.loading || rolesHealth.failed} />

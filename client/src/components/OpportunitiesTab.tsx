@@ -192,7 +192,7 @@ function VacancyActionMenu({ vacancy, disabled, onEdit, onDuplicate, onPublish, 
 }
 
 export default function VacanciesTab({ profileId, readOnly = false, triggerCreate, onCreateTriggered, initialOpportunityType }: VacanciesTabProps) {
-  const { user, profile } = useAuthStore()
+  const { user, profile, refreshProfile } = useAuthStore()
   const targetUserId = profileId || user?.id
   const navigate = useNavigate()
   const { addToast } = useToastStore()
@@ -379,7 +379,30 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
     }
   }
 
-  const handleCreateNew = () => {
+  const handleCreateNew = async () => {
+    // Coaches default to coach_recruits_for_team=false; the opportunities
+    // INSERT policy (migration 20260508500000) requires role='coach' AND
+    // coach_recruits_for_team=true. The Coach dashboard's own Create CTA
+    // flips this flag first (CoachDashboard.handleCreateOpportunity), but
+    // these in-tab Create buttons are reachable directly — notably via the
+    // Home Pulse "Post an opportunity" CTA → /dashboard/profile/opportunities
+    // → this tab's "Create First Opportunity" — and previously skipped the
+    // flip, so a non-recruiter coach filled the whole form and hit a 403 on
+    // submit. Opt them into recruiter mode before opening the modal.
+    if (profile?.role === 'coach' && profile.coach_recruits_for_team !== true) {
+      try {
+        const { error } = await supabase
+          .from('profiles')
+          .update({ coach_recruits_for_team: true })
+          .eq('id', profile.id)
+        if (error) throw error
+        await refreshProfile()
+      } catch (err) {
+        logger.error('[OpportunitiesTab] failed to enable recruiter mode', err)
+        addToast('Unable to enable recruiter mode. Please try again.', 'error')
+        return
+      }
+    }
     setEditingVacancy(null)
     setShowModal(true)
   }
@@ -500,9 +523,29 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
         data: { vacancyId: vacancy.id },
         level: 'info'
       })
+      // Reopening restores publisher intent. Clear the hygiene auto-close
+      // marker: apply_renewal_action treats auto_closed_at IS NULL as "the
+      // publisher wants this open", so leaving it set means a still-valid
+      // renewal-email token could reopen a role the club later closed as
+      // filled. Also clear closed_at, and if the deadline has already passed
+      // extend it 30 days (mirrors apply_renewal_action) so the daily sweep
+      // doesn't re-close the role next morning and fire another renewal email.
+      const reopenUpdate: Record<string, unknown> = {
+        status: 'open',
+        closed_reason: null,
+        filled_via_hockia: null,
+        auto_closed_at: null,
+        closed_at: null,
+      }
+      const todayStr = new Date().toISOString().slice(0, 10)
+      if (vacancy.application_deadline && vacancy.application_deadline.slice(0, 10) < todayStr) {
+        const extended = new Date()
+        extended.setUTCDate(extended.getUTCDate() + 30)
+        reopenUpdate.application_deadline = extended.toISOString().slice(0, 10)
+      }
       const { error } = await supabase
         .from('opportunities')
-        .update({ status: 'open', closed_reason: null, filled_via_hockia: null } as never)
+        .update(reopenUpdate as never)
         .eq('id', vacancy.id)
 
       if (error) throw error

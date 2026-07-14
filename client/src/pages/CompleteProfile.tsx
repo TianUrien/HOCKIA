@@ -1496,6 +1496,7 @@ export default function CompleteProfile() {
 
                       <DateOfBirthPicker
                         label="Date of Birth"
+                        required
                         icon={<Calendar className="w-5 h-5" />}
                         value={formData.dateOfBirth}
                         onChange={(next) => setFormData({ ...formData, dateOfBirth: next })}
@@ -1624,6 +1625,7 @@ export default function CompleteProfile() {
 
                       <DateOfBirthPicker
                         label="Date of Birth"
+                        required
                         icon={<Calendar className="w-5 h-5" />}
                         value={formData.dateOfBirth}
                         onChange={(next) => setFormData({ ...formData, dateOfBirth: next })}
@@ -1824,6 +1826,7 @@ export default function CompleteProfile() {
 
                       <DateOfBirthPicker
                         label="Date of Birth"
+                        required
                         icon={<Calendar className="w-5 h-5" />}
                         value={formData.dateOfBirth}
                         onChange={(next) => setFormData({ ...formData, dateOfBirth: next })}

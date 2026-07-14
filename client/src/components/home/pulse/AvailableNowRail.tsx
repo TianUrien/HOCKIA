@@ -15,7 +15,7 @@ import { recordModuleImpression, trackModuleClick, useImpressionOnce } from '@/l
 const MODULE_ID = 'available_now'
 const POSITION = 3
 
-export function AvailableNowRail({ matches, loading, voice = 'club' }: { matches: ScopedMatch[]; loading: boolean; voice?: 'club' | 'coach' }) {
+export function AvailableNowRail({ matches, loading, voice = 'club', poolRole = 'player' }: { matches: ScopedMatch[]; loading: boolean; voice?: 'club' | 'coach'; poolRole?: string }) {
   const navigate = useNavigate()
   const ref = useImpressionOnce(() => recordModuleImpression(MODULE_ID, POSITION))
 
@@ -40,7 +40,7 @@ export function AvailableNowRail({ matches, loading, voice = 'club' }: { matches
             type="button"
             onClick={() => {
               trackModuleClick(MODULE_ID, POSITION)
-              navigate('/community/players')
+              navigate(poolRole === 'coach' ? '/community/coaches' : '/community/players')
             }}
             className="inline-flex items-center gap-0.5 text-sm font-semibold text-hockia-primary"
           >

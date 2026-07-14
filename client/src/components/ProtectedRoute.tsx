@@ -54,7 +54,12 @@ const PUBLIC_ROUTES = ['/', '/signup', '/signin', '/verify-email', '/auth/callba
 // and the email-action/waitlist endpoints. Everything else redirects to
 // onboarding until it is completed.
 const ONBOARDING_EXEMPT_ROUTES = [
-  '/complete-profile', '/auth/callback', '/verify-email',
+  // '/brands/onboarding' is the ONE onboarding surface that lives outside
+  // /complete-profile: brands finish signup there (CompleteProfile redirects
+  // role='brand' → /brands/onboarding). Without it in this list the gate
+  // below bounces the un-onboarded brand to /complete-profile, which bounces
+  // it right back — an infinite loop that made brand signup impossible.
+  '/complete-profile', '/brands/onboarding', '/auth/callback', '/verify-email',
   '/terms', '/privacy-policy', '/offline', '/email-action', '/juniors-waitlist',
 ]
 

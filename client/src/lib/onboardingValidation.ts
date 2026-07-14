@@ -27,6 +27,9 @@ export interface OnboardingFormSubset {
   fullName?: string
   nationalityCountryId?: number | null
   city?: string
+  /** ISO date (YYYY-MM-DD). Collected on step 2 for all person roles;
+   *  the 18+ age check itself is enforced server-side by declare_date_of_birth. */
+  dateOfBirth?: string
   position?: string
   secondaryPosition?: string
   coachSpecialization?: string
@@ -60,6 +63,14 @@ export function validateOnboardingStep(
 
   if (step === 2) {
     if (!formData.city?.trim()) return 'Base location is required.'
+    // DOB lives on this step for every person role. Gate it here so the
+    // requirement surfaces in place — previously it was only enforced at final
+    // submit on step 3, stranding OAuth signups (which collect no DOB at
+    // sign-up) on an error for a field two steps back. The 18+ check itself
+    // remains server-authoritative (declare_date_of_birth).
+    if (!formData.dateOfBirth) {
+      return 'Date of birth is required — HOCKIA is an 18+ platform.'
+    }
     return null
   }
 

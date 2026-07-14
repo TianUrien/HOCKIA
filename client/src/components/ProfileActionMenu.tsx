@@ -8,6 +8,7 @@ import { useToastStore } from '@/lib/toast'
 import { logger } from '@/lib/logger'
 import { rememberBlockedPair, invalidatePublicProfileCache } from '@/lib/publicProfileCache'
 import { notifyBlockListChanged } from '@/hooks/useBlockedUsers'
+import { invalidateFriendshipEdges } from '@/hooks/friendshipEdgeCache'
 import ReportUserModal from './ReportUserModal'
 
 const MENU_WIDTH = 192 // w-48
@@ -135,6 +136,10 @@ export default function ProfileActionMenu({ targetId, targetName }: ProfileActio
       // Re-sync the feed's blocked-id set so this user's posts drop out
       // immediately instead of lingering until a reload.
       notifyBlockListChanged()
+      // block_user() DELETEs the friendship row server-side; bust the shared
+      // friendship-edge cache so any mounted card stops showing stale
+      // "Friends"/"Pending" (Apple 1.2: a block must read as immediate).
+      invalidateFriendshipEdges()
       addToast(`${targetName} has been blocked`, 'success')
       // Navigate away — this profile is now unavailable to us
       navigate(-1)
@@ -157,6 +162,9 @@ export default function ProfileActionMenu({ targetId, targetName }: ProfileActio
       // Clear the cached block result so this profile becomes viewable again.
       rememberBlockedPair(user.id, targetId, false)
       notifyBlockListChanged()
+      // Friendship was severed by the original block; refresh the shared edge
+      // cache so re-add affordances reflect the true (non-friend) state.
+      invalidateFriendshipEdges()
       addToast(`${targetName} has been unblocked`, 'success')
     } catch (err) {
       logger.error('Unblock failed:', err)
