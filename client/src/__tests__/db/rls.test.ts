@@ -463,10 +463,10 @@ describe.skipIf(skip)('RLS Policy Isolation', () => {
     })
 
     it('coach cannot modify friendships between player and club', async () => {
-      // Find a friendship involving the player
+      // Find a friendship involving the player (any counterparty).
       const { data: playerFriends } = await player.client
         .from('profile_friendships')
-        .select('id')
+        .select('id, status')
         .or(`user_one.eq.${player.userId},user_two.eq.${player.userId}`)
         .limit(1)
 
@@ -474,21 +474,28 @@ describe.skipIf(skip)('RLS Policy Isolation', () => {
         console.warn('  ⏭  No player friendships found — skipping')
         return
       }
+      const before = playerFriends[0]
 
-      // Coach tries to update it
+      // Coach (not a party to this friendship) tries to FORCE a status change.
+      // Target a value DIFFERENT from the current one so a successful write
+      // would be observable — otherwise a friendship that happens to already be
+      // in the target state (e.g. 'blocked' left by other shared-staging tests)
+      // would mask an RLS hole AND false-positive the old `not.toBe('blocked')`.
+      const target = before.status === 'blocked' ? 'accepted' : 'blocked'
       const { error } = await coach.client
         .from('profile_friendships')
-        .update({ status: 'blocked' })
-        .eq('id', playerFriends[0].id)
+        .update({ status: target })
+        .eq('id', before.id)
 
-      // Either error or 0 rows affected — verify no change
+      // RLS must make the coach's write a no-op: the status is UNCHANGED,
+      // regardless of what state the friendship happened to be in.
       const { data: check } = await player.client
         .from('profile_friendships')
         .select('id, status')
-        .eq('id', playerFriends[0].id)
+        .eq('id', before.id)
         .single()
 
-      expect(check?.status).not.toBe('blocked')
+      expect(check?.status).toBe(before.status)
       if (error) {
         expect(error).not.toBeNull()
       }
