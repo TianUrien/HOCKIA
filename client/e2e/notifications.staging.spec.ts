@@ -453,7 +453,12 @@ test.describe.serial('Notification System E2E', () => {
     const clubPage = await clubCtx.newPage()
     await clubPage.goto('/opportunities')
     await clubPage.waitForLoadState('networkidle')
-    await assertNotificationInDrawer(clubPage, /sent you a message|started a conversation/i)
+    // Message notifications aggregate per sender ("X sent N new messages"),
+    // so match that form alongside the legacy single-message / conversation copy.
+    await assertNotificationInDrawer(
+      clubPage,
+      /sent \d+ new messages?|sent you a message|started a conversation/i,
+    )
     await clubCtx.close()
   })
 
