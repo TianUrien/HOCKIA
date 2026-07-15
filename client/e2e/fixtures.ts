@@ -452,13 +452,18 @@ export class HomeFeedPage extends HockiaPage {
  * with non-zero dimensions. We check the `translate-x-0` class instead.
  */
 export class NotificationsPage extends HockiaPage {
+  // The drawer exposes role="dialog" + aria-modal ONLY while open (a closed,
+  // off-screen drawer drops them so it doesn't register as a modal), and its
+  // accessible name comes from aria-labelledby → "Notifications". So the
+  // presence of the named dialog IS the open state — match by role+name rather
+  // than the old [aria-label] / .translate-x-0 CSS, which no longer applies.
   get drawer() {
-    return this.page.locator('[role="dialog"][aria-label="Notifications"]')
+    return this.page.getByRole('dialog', { name: 'Notifications' })
   }
 
-  /** The drawer element with the "open" transform class. */
+  /** The open notification drawer (role="dialog" is present only when open). */
   get openDrawerLocator() {
-    return this.page.locator('[role="dialog"][aria-label="Notifications"].translate-x-0')
+    return this.page.getByRole('dialog', { name: 'Notifications' })
   }
 
   get bellButton() {
