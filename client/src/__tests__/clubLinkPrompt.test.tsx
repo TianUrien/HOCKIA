@@ -145,4 +145,24 @@ describe('ClubLinkPrompt — Phase 0 add-club recovery', () => {
     await flush()
     expect(container.textContent).toBe('')
   })
+
+  it('dismissal is user-scoped: user A dismissing does NOT hide the prompt for user B', async () => {
+    // Same class of bug the repo fixed in WelcomeValueCard — an unscoped
+    // localStorage key let one account's dismissal hide the card for every
+    // account on a shared browser.
+    setProfile({ id: 'user-a' })
+    searchResult = []
+    const { unmount } = render(<ClubLinkPrompt onAddClub={vi.fn()} />)
+    await screen.findByRole('button', { name: /add your club to the directory/i })
+    fireEvent.click(screen.getByLabelText(/dismiss/i))
+    unmount()
+
+    // The key must be scoped to user A…
+    expect(window.localStorage.getItem('club-link-prompt-dismissed:user-a')).toBe('true')
+
+    // …so user B on the same browser still gets the prompt.
+    setProfile({ id: 'user-b' })
+    render(<ClubLinkPrompt onAddClub={vi.fn()} />)
+    expect(await screen.findByRole('button', { name: /add your club to the directory/i })).toBeTruthy()
+  })
 })

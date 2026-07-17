@@ -1,11 +1,12 @@
 /**
- * adminApi.getWorldCountries — World Phase 0 source fix.
+ * adminApi.getAllCountries — World Phase 0 source contract.
  *
- * The Admin Portal "Add Club" / "Edit Club" country dropdown and the World
- * country filter all read from getWorldCountries(). It used to query
- * `world_countries_with_directory` (countries that already have seeded
- * leagues), so an admin literally could not add a club in a country with no
- * World data yet — Ireland was missing from the dropdown. This locks the fix:
+ * Every World admin country dropdown (Add/Edit Club, league/region modals,
+ * filters, campaign audience) reads from getAllCountries(). The Add Club
+ * path used to read `world_countries_with_directory` (countries that already
+ * have seeded leagues), so an admin literally could not add a club in a
+ * country with no World data yet — Ireland was missing from the dropdown.
+ * Phase 0 consolidated every surface onto this one function; this locks it:
  * the query targets the full `countries` table and returns every row.
  */
 
@@ -19,7 +20,7 @@ vi.mock('@/lib/supabase', () => ({
   SUPABASE_ANON_KEY: 'anon',
   supabase: {
     // adminApi binds supabase.rpc at module load — must exist even though
-    // getWorldCountries doesn't use it.
+    // getAllCountries doesn't use it.
     rpc: vi.fn(),
     from: (table: string) => {
       fromSpy(table)
@@ -30,7 +31,7 @@ vi.mock('@/lib/supabase', () => ({
   },
 }))
 
-import { getWorldCountries } from '@/features/admin/api/adminApi'
+import { getAllCountries } from '@/features/admin/api/adminApi'
 
 const ALL_COUNTRIES = [
   { id: 372, code: 'IE', name: 'Ireland', flag_emoji: '🇮🇪' },
@@ -38,7 +39,7 @@ const ALL_COUNTRIES = [
   { id: 900, code: 'GB-NIR', name: 'Northern Ireland', flag_emoji: '🇬🇧' },
 ]
 
-describe('getWorldCountries — reads the full countries table (Phase 0)', () => {
+describe('getAllCountries — reads the full countries table (Phase 0)', () => {
   beforeEach(() => {
     fromSpy.mockClear()
     orderMock.mockReset()
@@ -46,13 +47,13 @@ describe('getWorldCountries — reads the full countries table (Phase 0)', () =>
   })
 
   it('queries `countries`, never the leagues-gated directory view', async () => {
-    await getWorldCountries()
+    await getAllCountries()
     expect(fromSpy).toHaveBeenCalledWith('countries')
     expect(fromSpy).not.toHaveBeenCalledWith('world_countries_with_directory')
   })
 
   it('returns every legitimate country — including ones with no World data (Ireland, Scotland, NIR)', async () => {
-    const result = await getWorldCountries()
+    const result = await getAllCountries()
     const names = result.map((c) => c.name)
     expect(names).toContain('Ireland')
     expect(names).toContain('Scotland')
@@ -68,6 +69,6 @@ describe('getWorldCountries — reads the full countries table (Phase 0)', () =>
 
   it('throws a descriptive error when the query fails', async () => {
     orderMock.mockResolvedValueOnce({ data: null, error: { message: 'boom' } })
-    await expect(getWorldCountries()).rejects.toThrow(/Failed to get world countries: boom/)
+    await expect(getAllCountries()).rejects.toThrow(/Failed to get all countries: boom/)
   })
 })

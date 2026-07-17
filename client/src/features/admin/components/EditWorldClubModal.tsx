@@ -9,7 +9,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { X, Save, Loader2, Plus, AlertTriangle, Upload, Trash2, Shield } from 'lucide-react'
 import { formatAdminDate } from '../utils/formatDate'
 import {
-  getWorldCountries,
+  getAllCountries,
   getWorldProvinces,
   getWorldLeagues,
   createWorldClub,
@@ -67,7 +67,7 @@ export function EditWorldClubModal({
   const loadCountries = useCallback(async () => {
     setLoadingCountries(true)
     try {
-      const data = await getWorldCountries()
+      const data = await getAllCountries()
       setCountries(data)
     } catch (err) {
       logger.error('[EditWorldClubModal] Failed to load countries:', err)

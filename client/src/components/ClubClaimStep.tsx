@@ -102,46 +102,47 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
   const [clubSearch, setClubSearch] = useState('')
   const [countrySearch, setCountrySearch] = useState('')
 
-  // Fetch the FULL country list on mount — not world_countries_with_directory,
-  // which only contains countries that already have seeded leagues. That view
-  // dead-ended every club in an unmapped country (e.g. Scotland, Ireland): the
-  // country never appeared, so the club could neither be found nor created.
-  // A legitimate country must always be selectable; has_regions and the league
-  // count are derived from world data instead of gating on it.
+  // Fetch the FULL country list on mount — never GATED on
+  // world_countries_with_directory, which only contains countries that
+  // already have World content. That gating dead-ended every club in an
+  // unmapped country (e.g. Scotland, Ireland): the country never appeared,
+  // so the club could neither be found nor created. A legitimate country
+  // must always be selectable. The view is still used — but only as a small
+  // per-country stats lookup (has_regions / league / club counts, one row
+  // per country WITH content) merged over the full list, instead of pulling
+  // every world_provinces + world_leagues row to count client-side.
   useEffect(() => {
     const fetchCountries = async () => {
       try {
         setLoading(true)
-        const [countriesRes, provincesRes, leaguesRes] = await Promise.all([
+        const [countriesRes, statsRes] = await Promise.all([
           supabase.from('countries').select('id, code, name, flag_emoji, region').order('name'),
-          supabase.from('world_provinces').select('country_id'),
-          supabase.from('world_leagues').select('country_id'),
+          supabase
+            .from('world_countries_with_directory')
+            .select('country_id, has_regions, total_leagues, total_clubs'),
         ])
 
         if (countriesRes.error) throw countriesRes.error
-        // Provinces/leagues are enrichment only — a fetch failure must not
-        // block country selection, so those errors degrade to empty sets.
-        const provinceCountryIds = new Set(
-          (provincesRes.data || []).map(p => p.country_id),
+        // Stats are enrichment only — a fetch failure must not block
+        // country selection, so it degrades to zero-content defaults.
+        const statsByCountry = new Map(
+          (statsRes.data || []).map(s => [s.country_id, s]),
         )
-        const leagueCounts = new Map<number, number>()
-        for (const l of leaguesRes.data || []) {
-          if (l.country_id != null) {
-            leagueCounts.set(l.country_id, (leagueCounts.get(l.country_id) ?? 0) + 1)
-          }
-        }
 
         setCountries(
-          (countriesRes.data || []).map(c => ({
-            country_id: c.id,
-            country_code: c.code,
-            country_name: c.name,
-            flag_emoji: c.flag_emoji,
-            region: c.region,
-            has_regions: provinceCountryIds.has(c.id),
-            total_leagues: leagueCounts.get(c.id) ?? 0,
-            total_clubs: null,
-          })),
+          (countriesRes.data || []).map(c => {
+            const stats = statsByCountry.get(c.id)
+            return {
+              country_id: c.id,
+              country_code: c.code,
+              country_name: c.name,
+              flag_emoji: c.flag_emoji,
+              region: c.region,
+              has_regions: stats?.has_regions ?? false,
+              total_leagues: stats?.total_leagues ?? 0,
+              total_clubs: stats?.total_clubs ?? null,
+            }
+          }),
         )
       } catch (err) {
         logger.error('[ClubClaimStep] Failed to fetch countries:', err)

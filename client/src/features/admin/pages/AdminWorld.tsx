@@ -38,7 +38,7 @@ import { AdminWorldClaims } from '../components/AdminWorldClaims'
 import {
   getWorldClubs,
   getWorldClubStats,
-  getWorldCountries,
+  getAllCountries,
   getWorldProvinces,
   unclaimWorldClub,
   deleteWorldClub,
@@ -122,7 +122,7 @@ export default function AdminWorld() {
   const loadCountries = useCallback(async () => {
     setLoadingCountries(true)
     try {
-      const data = await getWorldCountries()
+      const data = await getAllCountries()
       setCountries(data)
     } catch (err) {
       logger.error('[AdminWorld] Failed to load countries:', err)

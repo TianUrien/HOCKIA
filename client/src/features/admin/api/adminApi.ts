@@ -730,33 +730,6 @@ export async function getWorldClubStats(): Promise<WorldClubStats> {
 }
 
 /**
- * Get the full supported country list for the World admin tools.
- *
- * Sourced from the complete `countries` table, NOT
- * `world_countries_with_directory` (which only contains countries that already
- * have seeded leagues). The old source meant an admin could not add a club in
- * a country with no World data yet — e.g. Ireland was absent from the Add Club
- * dropdown. Admins must be able to add a club in ANY legitimate country and
- * grow the directory from there; the create RPC already accepts any valid
- * country id.
- */
-export async function getWorldCountries(): Promise<WorldCountry[]> {
-  const { data, error } = await supabase
-    .from('countries')
-    .select('id, code, name, flag_emoji')
-    .order('name')
-
-  if (error) throw new Error(`Failed to get world countries: ${error.message}`)
-
-  return (data || []).map((row) => ({
-    id: row.id,
-    code: row.code,
-    name: row.name,
-    flag_emoji: row.flag_emoji,
-  }))
-}
-
-/**
  * Get provinces/regions for a country
  */
 export async function getWorldProvinces(countryId: number): Promise<WorldProvince[]> {
@@ -1093,8 +1066,14 @@ export async function setWorldClubVerified(clubId: string, verified: boolean): P
 // ============================================================================
 
 /**
- * Get ALL countries (not just those with leagues).
- * Used in admin modals for creating leagues/regions in new countries.
+ * Get ALL countries (not just those with World content).
+ *
+ * The single country source for every World admin surface: Add/Edit Club,
+ * league/region modals, campaign audience, and the AdminWorld filters. Always
+ * the complete `countries` table, never `world_countries_with_directory` —
+ * the gated view once hid countries with no seeded World data (Ireland was
+ * missing from Add Club), and admins must be able to place content in ANY
+ * legitimate country.
  */
 export async function getAllCountries(): Promise<WorldCountry[]> {
   const { data, error } = await supabase

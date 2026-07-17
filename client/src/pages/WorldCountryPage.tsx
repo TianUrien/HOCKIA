@@ -131,6 +131,40 @@ function ClubCard({ club, highlighted, onClick }: { club: Club; highlighted: boo
   )
 }
 
+/** League-less ("community-added") clubs list. One shared section for both
+ *  country shapes — region countries render it under the region cards,
+ *  league countries under the league tabs, club-only countries as the main
+ *  list. Renders nothing when there are no such clubs. */
+function CommunityClubsSection({ title, clubs, highlightClubId, onClubClick, className }: {
+  title: string
+  clubs: Club[]
+  highlightClubId: string | null
+  onClubClick: (club: Club) => void
+  className?: string
+}) {
+  if (clubs.length === 0) return null
+  return (
+    <div className={className}>
+      <div className="mb-4">
+        <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+        <p className="text-sm text-gray-500 mt-0.5">
+          Added by the community — not yet part of a league
+        </p>
+      </div>
+      <div className="grid gap-3">
+        {clubs.map((club) => (
+          <ClubCard
+            key={club.id}
+            club={club}
+            highlighted={highlightClubId === club.id}
+            onClick={() => onClubClick(club)}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export default function WorldCountryPage() {
   const { countrySlug } = useParams<{ countrySlug: string }>()
   const navigate = useNavigate()
@@ -691,26 +725,13 @@ export default function WorldCountryPage() {
 
             {/* Community clubs not yet placed in any league — without this
                 section they'd be unreachable through the region drill-down. */}
-            {communityClubs.length > 0 && (
-              <div className="mt-10">
-                <div className="mb-4">
-                  <h2 className="text-lg font-semibold text-gray-900">More clubs in {country.name}</h2>
-                  <p className="text-sm text-gray-500 mt-0.5">
-                    Added by the community — not yet part of a league
-                  </p>
-                </div>
-                <div className="grid gap-3">
-                  {communityClubs.map((club) => (
-                    <ClubCard
-                      key={club.id}
-                      club={club}
-                      highlighted={highlightClubId === club.id}
-                      onClick={() => handleClubClick(club)}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
+            <CommunityClubsSection
+              title={`More clubs in ${country.name}`}
+              clubs={communityClubs}
+              highlightClubId={highlightClubId}
+              onClubClick={handleClubClick}
+              className="mt-10"
+            />
           </>
         ) : (
           /* ===== REGION-LESS COUNTRIES: League Tabs + Inline Clubs ===== */
@@ -801,28 +822,13 @@ export default function WorldCountryPage() {
             {/* Community clubs — league-less entries. The main list for
                 club-only countries; a secondary section under the league
                 tabs everywhere else. */}
-            {communityClubs.length > 0 && (
-              <div className={leagues.length > 0 ? 'mt-10' : ''}>
-                <div className="mb-4">
-                  <h2 className="text-lg font-semibold text-gray-900">
-                    {leagues.length > 0 ? `More clubs in ${country.name}` : `Clubs in ${country.name}`}
-                  </h2>
-                  <p className="text-sm text-gray-500 mt-0.5">
-                    Added by the community — not yet part of a league
-                  </p>
-                </div>
-                <div className="grid gap-3">
-                  {communityClubs.map((club) => (
-                    <ClubCard
-                      key={club.id}
-                      club={club}
-                      highlighted={highlightClubId === club.id}
-                      onClick={() => handleClubClick(club)}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
+            <CommunityClubsSection
+              title={leagues.length > 0 ? `More clubs in ${country.name}` : `Clubs in ${country.name}`}
+              clubs={communityClubs}
+              highlightClubId={highlightClubId}
+              onClubClick={handleClubClick}
+              className={leagues.length > 0 ? 'mt-10' : undefined}
+            />
 
             {leagues.length === 0 && communityClubs.length === 0 && (
               <div className="text-center py-12 bg-white rounded-2xl border border-gray-200">

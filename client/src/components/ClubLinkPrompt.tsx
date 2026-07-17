@@ -16,7 +16,12 @@ interface WorldClubMatch {
   women_league_name: string | null
 }
 
-const DISMISSED_KEY = 'club-link-prompt-dismissed'
+// Scoped by user id, same pattern (and same reasoning) as WelcomeValueCard:
+// an unscoped key lets one account's dismissal hide the prompt for every
+// other account on a shared browser. Users who dismissed under the old
+// global key see the prompt once more — acceptable, since it now also
+// carries the new "add your club to the directory" recovery action.
+const DISMISSED_KEY_PREFIX = 'club-link-prompt-dismissed'
 
 interface ClubLinkPromptProps {
   /** Opens the surface where the user can add/link their club (the profile
@@ -39,9 +44,11 @@ export default function ClubLinkPrompt({ onAddClub }: ClubLinkPromptProps = {}) 
   const [matches, setMatches] = useState<WorldClubMatch[]>([])
   const [loading, setLoading] = useState(true)
   const [linking, setLinking] = useState<string | null>(null)
-  const [dismissed, setDismissed] = useState(() =>
-    localStorage.getItem(DISMISSED_KEY) === 'true'
-  )
+  const dismissKey = profile?.id ? `${DISMISSED_KEY_PREFIX}:${profile.id}` : null
+  const [dismissed, setDismissed] = useState(() => {
+    if (typeof window === 'undefined' || !dismissKey) return true
+    return window.localStorage.getItem(dismissKey) === 'true'
+  })
 
   const currentClub = profile?.current_club?.trim()
   const hasWorldClub = Boolean(profile?.current_world_club_id)
@@ -100,7 +107,12 @@ export default function ClubLinkPrompt({ onAddClub }: ClubLinkPromptProps = {}) 
 
   const handleDismiss = () => {
     setDismissed(true)
-    localStorage.setItem(DISMISSED_KEY, 'true')
+    if (!dismissKey) return
+    try {
+      window.localStorage.setItem(dismissKey, 'true')
+    } catch {
+      // localStorage can throw in private mode / quota — silent fallback.
+    }
   }
 
   const noMatches = matches.length === 0
