@@ -723,26 +723,30 @@ export async function getWorldClubStats(): Promise<WorldClubStats> {
 }
 
 /**
- * Get countries that have world directory support
+ * Get the full supported country list for the World admin tools.
+ *
+ * Sourced from the complete `countries` table, NOT
+ * `world_countries_with_directory` (which only contains countries that already
+ * have seeded leagues). The old source meant an admin could not add a club in
+ * a country with no World data yet — e.g. Ireland was absent from the Add Club
+ * dropdown. Admins must be able to add a club in ANY legitimate country and
+ * grow the directory from there; the create RPC already accepts any valid
+ * country id.
  */
 export async function getWorldCountries(): Promise<WorldCountry[]> {
   const { data, error } = await supabase
-    .from('world_countries_with_directory')
-    .select('country_id, country_code, country_name, flag_emoji')
-    .order('country_name')
+    .from('countries')
+    .select('id, code, name, flag_emoji')
+    .order('name')
 
   if (error) throw new Error(`Failed to get world countries: ${error.message}`)
 
-  return (data || [])
-    .filter((row): row is typeof row & { country_id: number; country_code: string; country_name: string } =>
-      row.country_id != null && row.country_code != null && row.country_name != null
-    )
-    .map((row) => ({
-      id: row.country_id,
-      code: row.country_code,
-      name: row.country_name,
-      flag_emoji: row.flag_emoji,
-    }))
+  return (data || []).map((row) => ({
+    id: row.id,
+    code: row.code,
+    name: row.name,
+    flag_emoji: row.flag_emoji,
+  }))
 }
 
 /**

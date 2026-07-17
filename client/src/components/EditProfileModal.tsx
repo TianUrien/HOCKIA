@@ -390,26 +390,20 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
         if (claimData) {
           setWorldClaim(claimData)
 
-          // Check if country has regions using the view
-          const { data: countryInfo } = await supabase
-            .from('world_countries_with_directory')
-            .select('has_regions')
+          // Region availability comes straight from world_provinces — NOT the
+          // leagues-gated world_countries_with_directory view. That view omits
+          // countries that have regions but no seeded leagues, so a club that
+          // claimed a user-created club in such a country would wrongly lose
+          // its region dropdown when editing. Probing the table directly is
+          // the same pattern the other World Phase 0 surfaces use.
+          const { data: regions } = await supabase
+            .from('world_provinces')
+            .select('id, name, slug')
             .eq('country_id', claimData.country_id)
-            .maybeSingle()
+            .order('display_order')
 
-          const hasRegions = countryInfo?.has_regions ?? false
-          setCountryHasRegions(hasRegions)
-
-          if (hasRegions) {
-            // Fetch regions for this country
-            const { data: regions } = await supabase
-              .from('world_provinces')
-              .select('id, name, slug')
-              .eq('country_id', claimData.country_id)
-              .order('display_order')
-
-            setWorldRegions(regions || [])
-          }
+          setCountryHasRegions((regions?.length ?? 0) > 0)
+          setWorldRegions(regions || [])
 
           // Fetch leagues using the RPC function (works for both region-based and country-only)
            

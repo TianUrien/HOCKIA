@@ -43,11 +43,10 @@ interface WorldClubSearchProps {
 }
 
 interface WorldCountryOption {
-  country_id: number | null
-  country_name: string | null
-  country_code: string | null
+  country_id: number
+  country_name: string
+  country_code: string
   flag_emoji: string | null
-  has_regions: boolean | null
 }
 
 interface RegionOption {
@@ -85,7 +84,6 @@ export default function WorldClubSearch({
   const [addRegions, setAddRegions] = useState<RegionOption[]>([])
   const [addCountryId, setAddCountryId] = useState<number | null>(null)
   const [addRegionId, setAddRegionId] = useState<number | null>(null)
-  const [addCountryHasRegions, setAddCountryHasRegions] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
 
   // Refs
@@ -156,16 +154,27 @@ export default function WorldClubSearch({
     setAddCountryId(null)
     setAddRegionId(null)
     setAddRegions([])
-    setAddCountryHasRegions(false)
 
-    // Fetch countries with World directory
+    // FULL country list, not world_countries_with_directory. The view only
+    // contains countries that already have seeded leagues, which dead-ended
+    // legitimate countries with no World data yet (a Scottish player could
+    // not add her club — Scotland wasn't in the dropdown even though the
+    // creation RPC accepts it). A valid country must always be selectable;
+    // whether World has content there yet is irrelevant to adding a club.
     try {
       const { data } = await supabase
-        .from('world_countries_with_directory')
-        .select('country_id, country_name, country_code, flag_emoji, has_regions')
-        .order('country_name')
+        .from('countries')
+        .select('id, name, code, flag_emoji')
+        .order('name')
 
-      setAddCountries(data || [])
+      setAddCountries(
+        (data || []).map(c => ({
+          country_id: c.id,
+          country_name: c.name,
+          country_code: c.code,
+          flag_emoji: c.flag_emoji,
+        })),
+      )
     } catch (err) {
       logger.error('[WorldClubSearch] Failed to fetch countries:', err)
     }
@@ -175,26 +184,22 @@ export default function WorldClubSearch({
     setAddCountryId(countryId)
     setAddRegionId(null)
 
-    const country = addCountries.find(c => c.country_id === countryId)
-    const hasRegions = country?.has_regions ?? false
-    setAddCountryHasRegions(hasRegions)
+    // Probe regions directly instead of relying on the directory view's
+    // has_regions flag — most countries simply return zero rows and the
+    // region select stays hidden. Region is always optional.
+    try {
+      const { data } = await supabase
+        .from('world_provinces')
+        .select('id, name')
+        .eq('country_id', countryId)
+        .order('name')
 
-    if (hasRegions) {
-      try {
-        const { data } = await supabase
-          .from('world_provinces')
-          .select('id, name')
-          .eq('country_id', countryId)
-          .order('name')
-
-        setAddRegions(data || [])
-      } catch (err) {
-        logger.error('[WorldClubSearch] Failed to fetch regions:', err)
-      }
-    } else {
+      setAddRegions(data || [])
+    } catch (err) {
+      logger.error('[WorldClubSearch] Failed to fetch regions:', err)
       setAddRegions([])
     }
-  }, [addCountries])
+  }, [])
 
   const handleCreateClub = useCallback(async () => {
     if (!value.trim() || !addCountryId) return
@@ -470,15 +475,15 @@ export default function WorldClubSearch({
                 >
                   <option value="">Select country...</option>
                   {addCountries.map(c => (
-                    <option key={c.country_id} value={c.country_id ?? ''}>
-                      {c.flag_emoji} {c.country_name}
+                    <option key={c.country_id} value={c.country_id}>
+                      {c.flag_emoji ? `${c.flag_emoji} ` : ''}{c.country_name}
                     </option>
                   ))}
                 </select>
               </div>
 
-              {/* Region select (conditional) */}
-              {addCountryHasRegions && addRegions.length > 0 && (
+              {/* Region select (conditional — only when the country has regions) */}
+              {addRegions.length > 0 && (
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1">
                     Region (Optional)

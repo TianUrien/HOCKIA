@@ -25,6 +25,7 @@ import ScoutingCard from '@/components/profile/ScoutingCard'
 import PlayerCommunityHub from '@/components/community/PlayerCommunityHub'
 import PublicCommunityView from '@/components/community/PublicCommunityView'
 import { ProfileViewersSection } from '@/components/ProfileViewersSection'
+import ClubLinkPrompt from '@/components/ClubLinkPrompt'
 import type { Profile } from '@/lib/supabase'
 import { supabase } from '@/lib/supabase'
 import { useNavigate, useParams, useSearchParams, useLocation } from 'react-router-dom'
@@ -597,6 +598,14 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
         {!readOnly && isLanding && (
           <RecruitmentPrefsNudge profile={profile as Profile} onAdd={() => setShowEditModal(true)} />
         )}
+
+        {/* Club-link recovery nudge — owner-only. Shows when the player has a
+            free-text current_club but no linked world club, and now also
+            offers an "add it to the directory" path (World Phase 0) when no
+            match exists, so players whose club/country World hasn't mapped yet
+            (e.g. Scotland) can still contribute it. Opens the profile edit
+            modal, which hosts WorldClubSearch + its add-to-directory flow. */}
+        {!readOnly && isLanding && <ClubLinkPrompt onAddClub={() => setShowEditModal(true)} />}
 
         {/* "Who viewed your profile" — owner-only engagement nudge that
             sits between the Hero and the Bento Grid. Same placement

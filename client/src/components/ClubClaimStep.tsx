@@ -100,19 +100,49 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
   
   // Search
   const [clubSearch, setClubSearch] = useState('')
+  const [countrySearch, setCountrySearch] = useState('')
 
-  // Fetch countries with World directory on mount
+  // Fetch the FULL country list on mount — not world_countries_with_directory,
+  // which only contains countries that already have seeded leagues. That view
+  // dead-ended every club in an unmapped country (e.g. Scotland, Ireland): the
+  // country never appeared, so the club could neither be found nor created.
+  // A legitimate country must always be selectable; has_regions and the league
+  // count are derived from world data instead of gating on it.
   useEffect(() => {
     const fetchCountries = async () => {
       try {
         setLoading(true)
-        const { data, error } = await supabase
-          .from('world_countries_with_directory')
-          .select('*')
-          .order('country_name')
+        const [countriesRes, provincesRes, leaguesRes] = await Promise.all([
+          supabase.from('countries').select('id, code, name, flag_emoji, region').order('name'),
+          supabase.from('world_provinces').select('country_id'),
+          supabase.from('world_leagues').select('country_id'),
+        ])
 
-        if (error) throw error
-        setCountries(data || [])
+        if (countriesRes.error) throw countriesRes.error
+        // Provinces/leagues are enrichment only — a fetch failure must not
+        // block country selection, so those errors degrade to empty sets.
+        const provinceCountryIds = new Set(
+          (provincesRes.data || []).map(p => p.country_id),
+        )
+        const leagueCounts = new Map<number, number>()
+        for (const l of leaguesRes.data || []) {
+          if (l.country_id != null) {
+            leagueCounts.set(l.country_id, (leagueCounts.get(l.country_id) ?? 0) + 1)
+          }
+        }
+
+        setCountries(
+          (countriesRes.data || []).map(c => ({
+            country_id: c.id,
+            country_code: c.code,
+            country_name: c.name,
+            flag_emoji: c.flag_emoji,
+            region: c.region,
+            has_regions: provinceCountryIds.has(c.id),
+            total_leagues: leagueCounts.get(c.id) ?? 0,
+            total_clubs: null,
+          })),
+        )
       } catch (err) {
         logger.error('[ClubClaimStep] Failed to fetch countries:', err)
         setError('Failed to load countries')
@@ -430,7 +460,22 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
             </div>
           ) : (
             <div className="space-y-3">
-              {countries.map(country => (
+              {/* The list is now every country, so a filter is essential. */}
+              <input
+                type="search"
+                value={countrySearch}
+                onChange={e => setCountrySearch(e.target.value)}
+                placeholder="Search countries..."
+                aria-label="Search countries"
+                autoComplete="off"
+                className="w-full rounded-xl border border-gray-300 px-4 py-3 focus:border-transparent focus:ring-2 focus:ring-hockia-primary"
+              />
+              {countries
+                .filter(country =>
+                  !countrySearch.trim() ||
+                  (country.country_name ?? '').toLowerCase().includes(countrySearch.trim().toLowerCase())
+                )
+                .map(country => (
                 <button
                   key={country.country_id ?? 0}
                   onClick={() => handleCountrySelect(country)}
@@ -456,7 +501,9 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
                   <div className="flex-1 text-left">
                     <span className="font-medium text-gray-900">{country.country_name}</span>
                     <span className="text-sm text-gray-500 ml-2">
-                      {country.total_leagues ?? 0} {country.total_leagues === 1 ? 'league' : 'leagues'}
+                      {(country.total_leagues ?? 0) > 0
+                        ? `${country.total_leagues} ${country.total_leagues === 1 ? 'league' : 'leagues'}`
+                        : 'No leagues yet'}
                     </span>
                   </div>
                   <ChevronRight className="w-5 h-5 text-gray-400" />

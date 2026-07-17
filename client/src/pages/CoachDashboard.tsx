@@ -576,7 +576,7 @@ export default function CoachDashboard({
             nudge to link their club. Owner-only; doesn't appear on
             visitor views. ClubLinkPrompt reads auth/profile state
             internally — no props needed. */}
-        {!readOnly && isLanding && <ClubLinkPrompt />}
+        {!readOnly && isLanding && <ClubLinkPrompt onAddClub={() => setShowEditModal(true)} />}
 
         {/* Own-profile only: recruiter context chip. The chip itself
             self-hides for non-recruiter roles; the isOwnProfile gate
