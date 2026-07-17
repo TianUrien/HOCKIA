@@ -643,7 +643,8 @@ export async function getWorldClubs(
       province:world_provinces!world_clubs_province_id_fkey(id, name),
       men_league:world_leagues!world_clubs_men_league_id_fkey(id, name),
       women_league:world_leagues!world_clubs_women_league_id_fkey(id, name),
-      claimed_profile:profiles!world_clubs_claimed_profile_id_fkey(id, full_name)
+      claimed_profile:profiles!world_clubs_claimed_profile_id_fkey(id, full_name),
+      creator:profiles!world_clubs_created_by_fkey(id, full_name)
     `, { count: 'exact' })
 
   // Apply filters
@@ -697,6 +698,8 @@ export async function getWorldClubs(
     updated_at: row.updated_at,
     verified_at: row.verified_at ?? null,
     verified_by: row.verified_by ?? null,
+    created_by: row.created_by ?? null,
+    created_by_name: row.creator?.full_name ?? null,
   }))
 
   return { clubs, totalCount: count ?? 0 }
@@ -799,6 +802,7 @@ export async function createWorldClub(payload: WorldClubCreatePayload): Promise<
   const normalized = payload.club_name.toLowerCase().trim()
   const clubId = `${normalized.replace(/\s+/g, '_')}_${payload.country_id}_${Date.now()}`
 
+  const { data: auth } = await supabase.auth.getUser()
   const { data, error } = await supabase
     .from('world_clubs')
     .insert({
@@ -811,6 +815,7 @@ export async function createWorldClub(payload: WorldClubCreatePayload): Promise<
       women_league_id: payload.women_league_id ?? null,
       is_claimed: false,
       created_from: 'admin',
+      created_by: auth?.user?.id ?? null,
     })
     .select()
     .single()

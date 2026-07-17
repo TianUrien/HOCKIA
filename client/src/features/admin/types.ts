@@ -765,6 +765,10 @@ export interface WorldClub {
   updated_at: string
   verified_at: string | null
   verified_by: string | null
+  /** Who added this entry (attribution only — not ownership). NULL for
+   *  seeded rows and user-created rows predating World growth Phase 1. */
+  created_by: string | null
+  created_by_name?: string | null
 }
 
 export interface WorldClubStats {

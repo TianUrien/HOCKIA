@@ -571,6 +571,15 @@ export default function AdminWorld() {
                           }`}>
                             {club.created_from}
                           </span>
+                          {club.created_by && (
+                            <a
+                              href={`/admin/directory?profile=${club.created_by}`}
+                              className="block mt-1 text-xs text-gray-500 hover:text-purple-600 truncate max-w-[120px]"
+                              title={`Added by ${club.created_by_name || club.created_by}`}
+                            >
+                              by {club.created_by_name || club.created_by.slice(0, 8)}
+                            </a>
+                          )}
                         </td>
                         <td className="px-4 py-3 text-right">
                           <div className="flex items-center justify-end gap-1">

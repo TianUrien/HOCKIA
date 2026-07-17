@@ -5885,6 +5885,7 @@ export type Database = {
           club_name_normalized: string
           country_id: number
           created_at: string
+          created_by: string | null
           created_from: string
           id: string
           is_claimed: boolean
@@ -5904,6 +5905,7 @@ export type Database = {
           club_name_normalized: string
           country_id: number
           created_at?: string
+          created_by?: string | null
           created_from?: string
           id?: string
           is_claimed?: boolean
@@ -5923,6 +5925,7 @@ export type Database = {
           club_name_normalized?: string
           country_id?: number
           created_at?: string
+          created_by?: string | null
           created_from?: string
           id?: string
           is_claimed?: boolean
@@ -5968,6 +5971,27 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "world_countries_with_directory"
             referencedColumns: ["country_id"]
+          },
+          {
+            foreignKeyName: "world_clubs_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "world_clubs_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "world_clubs_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "world_clubs_men_league_id_fkey"

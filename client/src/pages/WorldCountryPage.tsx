@@ -7,7 +7,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom'
-import { ArrowLeft, MapPin, Building2, Trophy, CheckCircle, Clock, RefreshCw } from 'lucide-react'
+import { ArrowLeft, MapPin, Building2, Trophy, CheckCircle, Clock, RefreshCw, BadgeCheck } from 'lucide-react'
 import { Header } from '@/components'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
@@ -40,6 +40,8 @@ interface Club {
   claimed_profile_id: string | null
   profile_username?: string | null
   profile_avatar_url?: string | null
+  /** Admin-granted verification mark (world_clubs.verified_at) — public trust signal. */
+  verified: boolean
 }
 
 interface Country {
@@ -64,6 +66,71 @@ interface ClubLeagueRow {
   men_league_id: number | null
 }
 
+/** One club row — shared by the league list and the community (league-less)
+ *  list. Claimed clubs link to their HOCKIA profile; the blue BadgeCheck is
+ *  the admin-granted verification mark (public trust signal, World Phase 1). */
+function ClubCard({ club, highlighted, onClick }: { club: Club; highlighted: boolean; onClick: () => void }) {
+  return (
+    <button
+      data-club-id={club.id}
+      onClick={onClick}
+      disabled={!club.is_claimed}
+      className={`w-full text-left p-4 rounded-xl border transition-all ${
+        highlighted
+          ? 'bg-white border-hockia-primary ring-2 ring-hockia-primary ring-offset-2 shadow-md'
+          : club.is_claimed
+            ? 'bg-white border-gray-200 hover:border-hockia-primary hover:shadow-md cursor-pointer'
+            : 'bg-gray-50 border-gray-100 cursor-not-allowed opacity-60'
+      }`}
+    >
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          {club.profile_avatar_url ? (
+            <img
+              src={club.profile_avatar_url}
+              alt={club.club_name}
+              className="w-10 h-10 rounded-full object-cover"
+            />
+          ) : (
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+              club.is_claimed
+                ? 'bg-gradient-to-br from-hockia-primary to-hockia-secondary'
+                : 'bg-gray-200'
+            }`}>
+              <Building2 className={`w-5 h-5 ${club.is_claimed ? 'text-white' : 'text-gray-400'}`} />
+            </div>
+          )}
+          <div>
+            <h3 className={`font-medium inline-flex items-center gap-1 ${club.is_claimed ? 'text-gray-900' : 'text-gray-500'}`}>
+              {club.club_name}
+              {club.verified && (
+                <BadgeCheck className="w-4 h-4 text-blue-500 flex-shrink-0" aria-label="Verified club" />
+              )}
+            </h3>
+            {club.profile_username && (
+              <p className="text-sm text-gray-500">@{club.profile_username}</p>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {club.is_claimed ? (
+            <span className="flex items-center gap-1 text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full">
+              <CheckCircle className="w-3 h-3" />
+              Active
+            </span>
+          ) : (
+            <span className="flex items-center gap-1 text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+              <Clock className="w-3 h-3" />
+              Unclaimed
+            </span>
+          )}
+        </div>
+      </div>
+    </button>
+  )
+}
+
 export default function WorldCountryPage() {
   const { countrySlug } = useParams<{ countrySlug: string }>()
   const navigate = useNavigate()
@@ -75,6 +142,10 @@ export default function WorldCountryPage() {
   const [selectedLeague, setSelectedLeague] = useState<League | null>(null)
   const [clubs, setClubs] = useState<Club[]>([])
   const [clubsLoading, setClubsLoading] = useState(false)
+  // Clubs with no league assignment — how every community-added club starts
+  // (World growth Phase 1). Without this section they'd be invisible on the
+  // country page, and a club-only country would render an empty page.
+  const [communityClubs, setCommunityClubs] = useState<Club[]>([])
   const [loading, setLoading] = useState(true)
   // 'not-found' = the slug doesn't resolve to a known country (e.g.
   //   /world/atlantis); user-facing copy should make that explicit and
@@ -241,6 +312,10 @@ export default function WorldCountryPage() {
           // Fetch leagues + all club league assignments in parallel (once)
           await fetchLeaguesAndClubData(cid)
         }
+
+        // League-less clubs render in their own section for every country
+        // shape — they're the entry point of community-grown countries.
+        await fetchCommunityClubs(cid)
       } catch (err) {
         logger.error('[WorldCountryPage] Failed to fetch data:', err)
         // "country_not_found:" prefix is thrown by the explicit not-found
@@ -255,6 +330,10 @@ export default function WorldCountryPage() {
     }
 
     fetchCountryData()
+    // fetchCommunityClubs is stable per render and depends only on the
+    // country id resolved inside this effect — same treatment as the
+    // fetchClubsForLeague effect below.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [countrySlug, retryCount, navigate])
 
   // Fetch clubs when selected league changes
@@ -290,16 +369,53 @@ export default function WorldCountryPage() {
     }
   }
 
+  type ClubRow = { id: string; club_id: string; club_name: string; avatar_url: string | null; is_claimed: boolean; claimed_profile_id: string | null; verified_at: string | null }
+
+  // Attach usernames/avatars of the claiming profiles and normalize the shape.
+  // Shared by the league list and the community (league-less) list.
+  const enrichClubs = async (clubData: ClubRow[]): Promise<Club[]> => {
+    const claimedIds = clubData
+      .filter(c => c.claimed_profile_id)
+      .map(c => c.claimed_profile_id)
+      .filter((id): id is string => id !== null)
+
+    const profileMap = new Map<string, { username: string | null; avatar_url: string | null }>()
+    if (claimedIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, username, avatar_url')
+        .in('id', claimedIds)
+
+      for (const p of profiles || []) {
+        profileMap.set(p.id, { username: p.username, avatar_url: p.avatar_url })
+      }
+    }
+
+    return clubData.map(club => {
+      const profile = club.claimed_profile_id ? profileMap.get(club.claimed_profile_id) : null
+      // Treat as unclaimed if claimed_profile_id is missing (orphaned claim)
+      const effectivelyClaimed = club.is_claimed && !!club.claimed_profile_id
+      return {
+        id: club.id,
+        club_id: club.club_id,
+        club_name: club.club_name,
+        is_claimed: effectivelyClaimed,
+        claimed_profile_id: club.claimed_profile_id,
+        profile_username: profile?.username ?? null,
+        profile_avatar_url: profile?.avatar_url ?? club.avatar_url ?? null,
+        verified: club.verified_at !== null,
+      }
+    })
+  }
+
   const fetchClubsForLeague = async (countryId: number, leagueId: number) => {
     try {
       setClubsLoading(true)
       const leagueColumn = genderFilter === 'women' ? 'women_league_id' : 'men_league_id'
 
-      // avatar_url added in migration 202602190500 but not yet in generated types
-      type ClubRow = { id: string; club_id: string; club_name: string; avatar_url: string | null; is_claimed: boolean; claimed_profile_id: string | null }
       const { data: clubData, error: clubError } = await supabase
         .from('world_clubs')
-        .select('id, club_id, club_name, avatar_url, is_claimed, claimed_profile_id')
+        .select('id, club_id, club_name, avatar_url, is_claimed, claimed_profile_id, verified_at')
         .eq('country_id', countryId)
         .eq(leagueColumn, leagueId)
         .order('is_claimed', { ascending: false })
@@ -308,44 +424,35 @@ export default function WorldCountryPage() {
 
       if (clubError) throw clubError
 
-      // Get usernames and avatars for claimed clubs
-      const claimedIds = (clubData || [])
-        .filter(c => c.claimed_profile_id)
-        .map(c => c.claimed_profile_id)
-        .filter((id): id is string => id !== null)
-
-      const profileMap = new Map<string, { username: string | null; avatar_url: string | null }>()
-      if (claimedIds.length > 0) {
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('id, username, avatar_url')
-          .in('id', claimedIds)
-
-        for (const p of profiles || []) {
-          profileMap.set(p.id, { username: p.username, avatar_url: p.avatar_url })
-        }
-      }
-
-      const transformedClubs = (clubData || []).map(club => {
-        const profile = club.claimed_profile_id ? profileMap.get(club.claimed_profile_id) : null
-        // Treat as unclaimed if claimed_profile_id is missing (orphaned claim)
-        const effectivelyClaimed = club.is_claimed && !!club.claimed_profile_id
-        return {
-          id: club.id,
-          club_id: club.club_id,
-          club_name: club.club_name,
-          is_claimed: effectivelyClaimed,
-          claimed_profile_id: club.claimed_profile_id,
-          profile_username: profile?.username ?? null,
-          profile_avatar_url: profile?.avatar_url ?? club.avatar_url ?? null,
-        }
-      })
-
-      setClubs(transformedClubs)
+      setClubs(await enrichClubs(clubData || []))
     } catch (err) {
       logger.error('[WorldCountryPage] Failed to fetch clubs:', err)
     } finally {
       setClubsLoading(false)
+    }
+  }
+
+  // Clubs with no league assignment in either gender — every community-added
+  // club starts here until the admin (or a claiming club) links a league.
+  const fetchCommunityClubs = async (countryId: number) => {
+    try {
+      const { data: clubData, error: clubError } = await supabase
+        .from('world_clubs')
+        .select('id, club_id, club_name, avatar_url, is_claimed, claimed_profile_id, verified_at')
+        .eq('country_id', countryId)
+        .is('men_league_id', null)
+        .is('women_league_id', null)
+        .order('verified_at', { ascending: false, nullsFirst: false })
+        .order('is_claimed', { ascending: false })
+        .order('club_name')
+        .returns<ClubRow[]>()
+
+      if (clubError) throw clubError
+
+      setCommunityClubs(await enrichClubs(clubData || []))
+    } catch (err) {
+      // Non-fatal: the leagues/regions content still renders without it.
+      logger.error('[WorldCountryPage] Failed to fetch community clubs:', err)
     }
   }
 
@@ -581,10 +688,34 @@ export default function WorldCountryPage() {
                 </div>
               </div>
             </div>
+
+            {/* Community clubs not yet placed in any league — without this
+                section they'd be unreachable through the region drill-down. */}
+            {communityClubs.length > 0 && (
+              <div className="mt-10">
+                <div className="mb-4">
+                  <h2 className="text-lg font-semibold text-gray-900">More clubs in {country.name}</h2>
+                  <p className="text-sm text-gray-500 mt-0.5">
+                    Added by the community — not yet part of a league
+                  </p>
+                </div>
+                <div className="grid gap-3">
+                  {communityClubs.map((club) => (
+                    <ClubCard
+                      key={club.id}
+                      club={club}
+                      highlighted={highlightClubId === club.id}
+                      onClick={() => handleClubClick(club)}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </>
         ) : (
           /* ===== REGION-LESS COUNTRIES: League Tabs + Inline Clubs ===== */
           <>
+            {leagues.length > 0 && (<>
             {/* Gender + League Tabs Row */}
             <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
               {/* Gender Toggle */}
@@ -656,62 +787,50 @@ export default function WorldCountryPage() {
             ) : (
               <div className="grid gap-3">
                 {clubs.map((club) => (
-                  <button
+                  <ClubCard
                     key={club.id}
-                    data-club-id={club.id}
+                    club={club}
+                    highlighted={highlightClubId === club.id}
                     onClick={() => handleClubClick(club)}
-                    disabled={!club.is_claimed}
-                    className={`w-full text-left p-4 rounded-xl border transition-all ${
-                      highlightClubId === club.id
-                        ? 'bg-white border-hockia-primary ring-2 ring-hockia-primary ring-offset-2 shadow-md'
-                        : club.is_claimed
-                          ? 'bg-white border-gray-200 hover:border-hockia-primary hover:shadow-md cursor-pointer'
-                          : 'bg-gray-50 border-gray-100 cursor-not-allowed opacity-60'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        {club.profile_avatar_url ? (
-                          <img
-                            src={club.profile_avatar_url}
-                            alt={club.club_name}
-                            className="w-10 h-10 rounded-full object-cover"
-                          />
-                        ) : (
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                            club.is_claimed
-                              ? 'bg-gradient-to-br from-hockia-primary to-hockia-secondary'
-                              : 'bg-gray-200'
-                          }`}>
-                            <Building2 className={`w-5 h-5 ${club.is_claimed ? 'text-white' : 'text-gray-400'}`} />
-                          </div>
-                        )}
-                        <div>
-                          <h3 className={`font-medium ${club.is_claimed ? 'text-gray-900' : 'text-gray-500'}`}>
-                            {club.club_name}
-                          </h3>
-                          {club.profile_username && (
-                            <p className="text-sm text-gray-500">@{club.profile_username}</p>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        {club.is_claimed ? (
-                          <span className="flex items-center gap-1 text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full">
-                            <CheckCircle className="w-3 h-3" />
-                            Active
-                          </span>
-                        ) : (
-                          <span className="flex items-center gap-1 text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-                            <Clock className="w-3 h-3" />
-                            Unclaimed
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </button>
+                  />
                 ))}
+              </div>
+            )}
+            </>)}
+
+            {/* Community clubs — league-less entries. The main list for
+                club-only countries; a secondary section under the league
+                tabs everywhere else. */}
+            {communityClubs.length > 0 && (
+              <div className={leagues.length > 0 ? 'mt-10' : ''}>
+                <div className="mb-4">
+                  <h2 className="text-lg font-semibold text-gray-900">
+                    {leagues.length > 0 ? `More clubs in ${country.name}` : `Clubs in ${country.name}`}
+                  </h2>
+                  <p className="text-sm text-gray-500 mt-0.5">
+                    Added by the community — not yet part of a league
+                  </p>
+                </div>
+                <div className="grid gap-3">
+                  {communityClubs.map((club) => (
+                    <ClubCard
+                      key={club.id}
+                      club={club}
+                      highlighted={highlightClubId === club.id}
+                      onClick={() => handleClubClick(club)}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {leagues.length === 0 && communityClubs.length === 0 && (
+              <div className="text-center py-12 bg-white rounded-2xl border border-gray-200">
+                <Building2 className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500">No clubs in {country.name} yet</p>
+                <p className="text-sm text-gray-400 mt-1">
+                  Clubs will appear here once they join the platform
+                </p>
               </div>
             )}
           </>
