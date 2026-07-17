@@ -763,12 +763,44 @@ export interface WorldClub {
   created_from: 'seed' | 'user' | 'admin'
   created_at: string
   updated_at: string
+  verified_at: string | null
+  verified_by: string | null
 }
 
 export interface WorldClubStats {
   total_clubs: number
   claimed_clubs: number
   unclaimed_clubs: number
+}
+
+/** Audit-trail row for a world_clubs ownership claim (World Phase 1).
+ *  In auto review mode claims are granted instantly and land here as
+ *  'auto_approved' for post-hoc review; in manual mode they arrive as
+ *  'pending' and ownership is only granted on admin approval. */
+export interface WorldClubClaim {
+  id: string
+  world_club_id: string
+  profile_id: string | null
+  action: 'claimed_existing' | 'created_and_claimed' | 'legacy_backfill' | 'admin_force_claim'
+  status: 'pending' | 'auto_approved' | 'approved' | 'rejected' | 'revoked'
+  created_at: string
+  reviewed_by: string | null
+  reviewed_at: string | null
+  review_note: string | null
+  // Joined display fields
+  club_name?: string
+  club_country_name?: string | null
+  club_is_claimed?: boolean
+  club_verified_at?: string | null
+  claimant_name?: string | null
+  claimant_email?: string | null
+  claimant_created_at?: string | null
+}
+
+export interface WorldClubClaimFilters {
+  status?: WorldClubClaim['status']
+  /** Only claims no admin has looked at yet (reviewed_at IS NULL). */
+  unreviewed_only?: boolean
 }
 
 export interface WorldClubFilters {

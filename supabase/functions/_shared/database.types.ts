@@ -4088,6 +4088,8 @@ export type Database = {
           top_viewer_ids: string[]
           total_views: number
           unique_viewers: number
+          viewers_by_role: Json | null
+          views_prior_7d: number | null
         }
         Insert: {
           anonymous_viewers?: number
@@ -4098,6 +4100,8 @@ export type Database = {
           top_viewer_ids?: string[]
           total_views?: number
           unique_viewers?: number
+          viewers_by_role?: Json | null
+          views_prior_7d?: number | null
         }
         Update: {
           anonymous_viewers?: number
@@ -4108,6 +4112,8 @@ export type Database = {
           top_viewer_ids?: string[]
           total_views?: number
           unique_viewers?: number
+          viewers_by_role?: Json | null
+          views_prior_7d?: number | null
         }
         Relationships: [
           {
@@ -5783,6 +5789,92 @@ export type Database = {
           },
         ]
       }
+      world_club_claims: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          profile_id: string | null
+          review_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          world_club_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          profile_id?: string | null
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          world_club_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          profile_id?: string | null
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          world_club_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "world_club_claims_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "world_club_claims_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "world_club_claims_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "world_club_claims_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "world_club_claims_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "world_club_claims_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "world_club_claims_world_club_id_fkey"
+            columns: ["world_club_id"]
+            isOneToOne: false
+            referencedRelation: "world_clubs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       world_clubs: {
         Row: {
           avatar_url: string | null
@@ -5799,6 +5891,8 @@ export type Database = {
           men_league_id: number | null
           province_id: number | null
           updated_at: string
+          verified_at: string | null
+          verified_by: string | null
           women_league_id: number | null
         }
         Insert: {
@@ -5816,6 +5910,8 @@ export type Database = {
           men_league_id?: number | null
           province_id?: number | null
           updated_at?: string
+          verified_at?: string | null
+          verified_by?: string | null
           women_league_id?: number | null
         }
         Update: {
@@ -5833,6 +5929,8 @@ export type Database = {
           men_league_id?: number | null
           province_id?: number | null
           updated_at?: string
+          verified_at?: string | null
+          verified_by?: string | null
           women_league_id?: number | null
         }
         Relationships: [
@@ -5890,6 +5988,27 @@ export type Database = {
             columns: ["province_id"]
             isOneToOne: false
             referencedRelation: "world_provinces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "world_clubs_verified_by_fkey"
+            columns: ["verified_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "world_clubs_verified_by_fkey"
+            columns: ["verified_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "world_clubs_verified_by_fkey"
+            columns: ["verified_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
             referencedColumns: ["id"]
           },
           {
@@ -7667,6 +7786,10 @@ export type Database = {
         Args: { p_profile_id: string; p_reason?: string; p_updates: Json }
         Returns: Json
       }
+      applicant_can_view_opportunity: {
+        Args: { p_club_id: string; p_opportunity_id: string }
+        Returns: boolean
+      }
       apply_email_action: { Args: { p_token_hash: string }; Returns: Json }
       apply_renewal_action: { Args: { p_token_hash: string }; Returns: Json }
       archive_old_messages: {
@@ -8505,6 +8628,7 @@ export type Database = {
           tier: number
         }[]
       }
+      get_market_moves: { Args: { p_limit?: number }; Returns: Json }
       get_message_recipient: {
         Args: { p_conversation_id: string; p_sender_id: string }
         Returns: string
@@ -8577,6 +8701,7 @@ export type Database = {
           status: Database["public"]["Enums"]["profile_reference_status"]
         }[]
       }
+      get_my_roles_health: { Args: never; Returns: Json }
       get_my_streak: { Args: never; Returns: Json }
       get_my_weekly_visibility: { Args: never; Returns: Json }
       get_notification_counts: {

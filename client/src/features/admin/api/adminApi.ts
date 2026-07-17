@@ -607,6 +607,8 @@ import type {
   WorldClub,
   WorldClubStats,
   WorldClubFilters,
+  WorldClubClaim,
+  WorldClubClaimFilters,
   WorldCountry,
   WorldProvince,
   WorldLeague,
@@ -693,6 +695,8 @@ export async function getWorldClubs(
     created_from: row.created_from as WorldClub['created_from'],
     created_at: row.created_at,
     updated_at: row.updated_at,
+    verified_at: row.verified_at ?? null,
+    verified_by: row.verified_by ?? null,
   }))
 
   return { clubs, totalCount: count ?? 0 }
@@ -928,6 +932,155 @@ export async function forceClaimWorldClub(
     .eq('id', clubId)
 
   if (error) throw new Error(`Failed to force claim club: ${error.message}`)
+
+  // Audit trail: force-claims land in the same ledger as self-service claims.
+  // Non-fatal — the claim itself succeeded; a missing audit row is repairable.
+  const { data: auth } = await supabase.auth.getUser()
+  await supabase.from('world_club_claims').insert({
+    world_club_id: clubId,
+    profile_id: profileId,
+    action: 'admin_force_claim',
+    status: 'auto_approved',
+    reviewed_by: auth?.user?.id ?? null,
+    reviewed_at: new Date().toISOString(),
+  })
+}
+
+// ============================================================================
+// Hockey World — Claim audit trail (World Phase 1)
+// ============================================================================
+
+/**
+ * List claim-audit rows for the admin review queue, newest first.
+ * Joins the club (+country) and the claimant profile for display.
+ */
+export async function getWorldClubClaims(
+  filters: WorldClubClaimFilters = {},
+  limit = 50,
+  offset = 0
+): Promise<{ claims: WorldClubClaim[]; totalCount: number }> {
+  let query = supabase
+    .from('world_club_claims')
+    .select(`
+      *,
+      club:world_clubs!world_club_claims_world_club_id_fkey(
+        id, club_name, is_claimed, verified_at,
+        country:countries!world_clubs_country_id_fkey(name)
+      ),
+      claimant:profiles!world_club_claims_profile_id_fkey(id, full_name, email, created_at)
+    `, { count: 'exact' })
+
+  if (filters.status) {
+    query = query.eq('status', filters.status)
+  }
+  if (filters.unreviewed_only) {
+    query = query.is('reviewed_at', null)
+  }
+
+  query = query.order('created_at', { ascending: false }).range(offset, offset + limit - 1)
+
+  const { data, error, count } = await query
+
+  if (error) throw new Error(`Failed to get world club claims: ${error.message}`)
+
+  const claims: WorldClubClaim[] = (data || []).map((row) => ({
+    id: row.id,
+    world_club_id: row.world_club_id,
+    profile_id: row.profile_id,
+    action: row.action as WorldClubClaim['action'],
+    status: row.status as WorldClubClaim['status'],
+    created_at: row.created_at,
+    reviewed_by: row.reviewed_by,
+    reviewed_at: row.reviewed_at,
+    review_note: row.review_note,
+    club_name: row.club?.club_name ?? undefined,
+    club_country_name: row.club?.country?.name ?? null,
+    club_is_claimed: row.club?.is_claimed ?? undefined,
+    club_verified_at: row.club?.verified_at ?? null,
+    claimant_name: row.claimant?.full_name ?? null,
+    claimant_email: row.claimant?.email ?? null,
+    claimant_created_at: row.claimant?.created_at ?? null,
+  }))
+
+  return { claims, totalCount: count ?? 0 }
+}
+
+/**
+ * Stamp a claim as reviewed (post-hoc OK — status is left as-is).
+ */
+export async function markClaimReviewed(claimId: string, note?: string): Promise<void> {
+  const { data: auth } = await supabase.auth.getUser()
+  const { error } = await supabase
+    .from('world_club_claims')
+    .update({
+      reviewed_by: auth?.user?.id ?? null,
+      reviewed_at: new Date().toISOString(),
+      ...(note ? { review_note: note } : {}),
+    })
+    .eq('id', claimId)
+
+  if (error) throw new Error(`Failed to mark claim reviewed: ${error.message}`)
+}
+
+/**
+ * Revoke a granted claim: audit row → 'revoked', the club is unclaimed, and
+ * the claimant's profile link is cleared (the plain unclaim tool leaves the
+ * reverse profiles.current_world_club_id pointer stale — don't repeat that).
+ */
+export async function revokeWorldClubClaim(claim: WorldClubClaim, note?: string): Promise<void> {
+  const { data: auth } = await supabase.auth.getUser()
+
+  const { error: claimError } = await supabase
+    .from('world_club_claims')
+    .update({
+      status: 'revoked',
+      reviewed_by: auth?.user?.id ?? null,
+      reviewed_at: new Date().toISOString(),
+      ...(note ? { review_note: note } : {}),
+    })
+    .eq('id', claim.id)
+
+  if (claimError) throw new Error(`Failed to revoke claim: ${claimError.message}`)
+
+  // A deleted claimant account (profile_id null) was already unclaimed by the
+  // FK SET NULL + auto-unclaim trigger — nothing left to strip.
+  if (!claim.profile_id) return
+
+  // Only strip ownership if this claimant actually holds the club right now
+  // (a legacy/superseded audit row must not unclaim someone else's grant).
+  const { error: clubError } = await supabase
+    .from('world_clubs')
+    .update({ is_claimed: false, claimed_profile_id: null, claimed_at: null })
+    .eq('id', claim.world_club_id)
+    .eq('claimed_profile_id', claim.profile_id)
+
+  if (clubError) throw new Error(`Claim marked revoked, but unclaiming the club failed: ${clubError.message}`)
+
+  const { error: profileError } = await supabase
+    .from('profiles')
+    .update({ current_world_club_id: null })
+    .eq('id', claim.profile_id)
+    .eq('current_world_club_id', claim.world_club_id)
+
+  if (profileError) throw new Error(`Club unclaimed, but clearing the profile link failed: ${profileError.message}`)
+}
+
+/**
+ * Set / clear the admin "verified" mark on a world club (independent of
+ * claiming — Tian's manual review stamp).
+ */
+export async function setWorldClubVerified(clubId: string, verified: boolean): Promise<void> {
+  const { data: auth } = await supabase.auth.getUser()
+  const { error } = await supabase
+    .from('world_clubs')
+    .update(
+      verified
+        ? { verified_at: new Date().toISOString(), verified_by: auth?.user?.id ?? null }
+        : { verified_at: null, verified_by: null }
+    )
+    .eq('id', clubId)
+
+  if (error) throw new Error(`Failed to update verified mark: ${error.message}`)
 }
 
 // ============================================================================

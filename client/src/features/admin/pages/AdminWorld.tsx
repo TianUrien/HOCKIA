@@ -26,12 +26,15 @@ import {
   Building2,
   AlertTriangle,
   Shield,
+  BadgeCheck,
+  ClipboardCheck,
 } from 'lucide-react'
 import { StatCard } from '../components/StatCard'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { EditWorldClubModal } from '../components/EditWorldClubModal'
 import { AdminWorldLeagues } from '../components/AdminWorldLeagues'
 import { AdminWorldRegions } from '../components/AdminWorldRegions'
+import { AdminWorldClaims } from '../components/AdminWorldClaims'
 import {
   getWorldClubs,
   getWorldClubStats,
@@ -40,6 +43,7 @@ import {
   unclaimWorldClub,
   deleteWorldClub,
   forceClaimWorldClub,
+  setWorldClubVerified,
 } from '../api/adminApi'
 import type {
   WorldClub,
@@ -53,7 +57,7 @@ import { logger } from '@/lib/logger'
 const PAGE_SIZE = 25
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
-type WorldTab = 'clubs' | 'leagues' | 'regions'
+type WorldTab = 'clubs' | 'leagues' | 'regions' | 'claims'
 
 export default function AdminWorld() {
   // Tab state
@@ -82,6 +86,9 @@ export default function AdminWorld() {
   // Edit modal state
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [selectedClub, setSelectedClub] = useState<WorldClub | null>(null)
+
+  // Verified-mark toggle (in-flight club id)
+  const [verifyingClubId, setVerifyingClubId] = useState<string | null>(null)
 
   // Unclaim confirm dialog
   const [unclaimDialogOpen, setUnclaimDialogOpen] = useState(false)
@@ -196,6 +203,18 @@ export default function AdminWorld() {
   const handleEditClub = (club: WorldClub) => {
     setSelectedClub(club)
     setEditModalOpen(true)
+  }
+
+  const handleToggleVerified = async (club: WorldClub) => {
+    setVerifyingClubId(club.id)
+    try {
+      await setWorldClubVerified(club.id, !club.verified_at)
+      loadClubs()
+    } catch (err) {
+      logger.error('[AdminWorld] Failed to toggle verified:', err)
+    } finally {
+      setVerifyingClubId(null)
+    }
   }
 
   const handleUnclaimClick = (club: WorldClub) => {
@@ -332,6 +351,7 @@ export default function AdminWorld() {
             { id: 'clubs' as WorldTab, label: 'Clubs', icon: Building2 },
             { id: 'leagues' as WorldTab, label: 'Leagues', icon: Trophy },
             { id: 'regions' as WorldTab, label: 'Regions', icon: MapPin },
+            { id: 'claims' as WorldTab, label: 'Claims', icon: ClipboardCheck },
           ]).map((tab) => (
             <button
               key={tab.id}
@@ -504,7 +524,12 @@ export default function AdminWorld() {
                               </div>
                             )}
                             <div>
-                              <p className="font-medium text-gray-900">{club.club_name}</p>
+                              <p className="font-medium text-gray-900 inline-flex items-center gap-1">
+                                {club.club_name}
+                                {club.verified_at && (
+                                  <BadgeCheck className="w-4 h-4 text-blue-500 flex-shrink-0" aria-label="Verified club" />
+                                )}
+                              </p>
                               <p className="text-xs text-gray-500">ID: {club.club_id}</p>
                             </div>
                           </div>
@@ -556,6 +581,19 @@ export default function AdminWorld() {
                               aria-label={`Edit ${club.club_name}`}
                             >
                               <Pencil className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => void handleToggleVerified(club)}
+                              disabled={verifyingClubId === club.id}
+                              className={`p-2 rounded-lg transition-colors disabled:opacity-50 ${
+                                club.verified_at
+                                  ? 'text-blue-500 hover:text-gray-500 hover:bg-gray-50'
+                                  : 'text-gray-500 hover:text-blue-600 hover:bg-blue-50'
+                              }`}
+                              title={club.verified_at ? 'Remove verified mark' : 'Mark as verified'}
+                              aria-label={`${club.verified_at ? 'Remove verified mark from' : 'Mark'} ${club.club_name} ${club.verified_at ? '' : 'as verified'}`}
+                            >
+                              <BadgeCheck className="w-4 h-4" />
                             </button>
                             {!club.is_claimed && (
                               <button
@@ -728,6 +766,7 @@ export default function AdminWorld() {
 
       {activeTab === 'leagues' && <AdminWorldLeagues />}
       {activeTab === 'regions' && <AdminWorldRegions />}
+      {activeTab === 'claims' && <AdminWorldClaims />}
     </div>
   )
 }
