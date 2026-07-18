@@ -807,6 +807,80 @@ export interface WorldClubClaimFilters {
   unreviewed_only?: boolean
 }
 
+// ── Market intelligence (Opportunities → Market tab) ─────────────────────────
+
+export type MarketPosition = 'goalkeeper' | 'defender' | 'midfielder' | 'forward'
+export type MarketGender = 'Men' | 'Women'
+
+export interface MarketMatrixCell {
+  position: MarketPosition
+  gender: MarketGender
+  /** Vacancies published inside the demand window (default 90d). */
+  demand_window: number
+  demand_open_now: number
+  /** open_to_play players whose profile was touched ≤60d ago. */
+  supply_active: number
+  supply_stale: number
+  apps_window: number
+}
+
+export interface MarketClubRow {
+  club_profile_id: string
+  club_name: string | null
+  posted: number
+  open_now: number
+  apps_received: number
+  responded: number
+  pending_backlog: number
+  oldest_pending_days: number | null
+  filled: number
+  median_response_days: number | null
+}
+
+export interface MarketIntelligence {
+  meta: {
+    computed_at: string
+    demand_window_days: number
+    test_accounts_excluded: boolean
+  }
+  health: {
+    open_vacancies: number
+    active_supply: number
+    stale_supply: number
+    median_apps_per_vacancy: number | null
+    cold_vacancies: number
+    open_over_14d: number
+    total_apps: number
+    responded_apps: number
+    pending_apps: number
+    filled_via_hockia: number
+    closed_vacancies: number
+    median_hours_to_first_app: number | null
+    median_days_to_fill: number | null
+  }
+  matrix: MarketMatrixCell[]
+  coach_demand: { open_now: number; demand_window: number }
+  vacancy_funnel: {
+    published: number
+    viewed: number
+    applied: number
+    responded: number
+    filled: number
+  }
+  player_funnel: {
+    players: number
+    completed_profile: number
+    open_to_play: number
+    viewed_vacancy: number
+    applied: number
+    got_response: number
+    advanced: number
+  }
+  clubs: MarketClubRow[]
+  demand_by_country: { country: string; vacancies: number; open_now: number }[]
+  supply_by_country: { country: string; players: number; active: number }[]
+}
+
 export interface WorldClubFilters {
   country_id?: number
   province_id?: number

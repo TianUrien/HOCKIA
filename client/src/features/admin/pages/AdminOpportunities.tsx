@@ -16,14 +16,18 @@ import {
   Users,
   Clock,
   AlertTriangle,
+  TrendingUp,
 } from 'lucide-react'
 import { StatCard } from '../components/StatCard'
 import { pct } from '../utils/percent'
 import { DataTable } from '../components/DataTable'
 import type { Column } from '../components/DataTable'
+import { AdminMarketTab } from '../components/AdminMarketTab'
 import { getVacancies, getExtendedDashboardStats } from '../api/adminApi'
 import type { VacancyListItem, ExtendedDashboardStats, VacancySearchParams } from '../types'
 import { logger } from '@/lib/logger'
+
+type OpportunitiesView = 'operations' | 'market'
 
 type StatusFilter = 'all' | 'draft' | 'open' | 'closed'
 type DaysFilter = 7 | 30 | 90 | null
@@ -32,6 +36,9 @@ type GenderFilter = 'all' | 'Women' | 'Men'
 type HasAppsFilter = 'all' | 'yes' | 'no'
 
 export function AdminOpportunities() {
+  // 'operations' = the original per-vacancy dashboard (unchanged);
+  // 'market' = the market-intelligence layer (Market Intelligence Phase 1).
+  const [view, setView] = useState<OpportunitiesView>('operations')
   const [vacancies, setVacancies] = useState<VacancyListItem[]>([])
   const [totalCount, setTotalCount] = useState(0)
   const [stats, setStats] = useState<ExtendedDashboardStats | null>(null)
@@ -248,6 +255,32 @@ export function AdminOpportunities() {
         </button>
       </div>
 
+      {/* View tabs — Operations is the original dashboard, untouched. */}
+      <div className="border-b border-gray-200">
+        <nav className="flex gap-6">
+          {([
+            { id: 'operations' as OpportunitiesView, label: 'Operations', icon: Briefcase },
+            { id: 'market' as OpportunitiesView, label: 'Market', icon: TrendingUp },
+          ]).map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setView(tab.id)}
+              className={`flex items-center gap-2 pb-3 border-b-2 transition-colors ${
+                view === tab.id
+                  ? 'border-purple-600 text-purple-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <tab.icon className="w-4 h-4" />
+              <span className="text-sm font-medium">{tab.label}</span>
+            </button>
+          ))}
+        </nav>
+      </div>
+
+      {view === 'market' && <AdminMarketTab />}
+
+      {view === 'operations' && (<>
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
@@ -444,6 +477,7 @@ export function AdminOpportunities() {
           </div>
         )}
       </div>
+      </>)}
     </div>
   )
 }

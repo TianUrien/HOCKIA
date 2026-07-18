@@ -7661,6 +7661,10 @@ export type Database = {
         }
         Returns: string
       }
+      admin_market_intelligence: {
+        Args: { p_demand_days?: number }
+        Returns: Json
+      }
       admin_preview_campaign_audience: {
         Args: { p_audience_filter?: Json; p_category?: string }
         Returns: Json

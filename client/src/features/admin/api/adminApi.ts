@@ -609,6 +609,7 @@ import type {
   WorldClubFilters,
   WorldClubClaim,
   WorldClubClaimFilters,
+  MarketIntelligence,
   WorldCountry,
   WorldProvince,
   WorldLeague,
@@ -1041,6 +1042,20 @@ export async function revokeWorldClubClaim(claim: WorldClubClaim, note?: string)
     .eq('current_world_club_id', claim.world_club_id)
 
   if (profileError) throw new Error(`Club unclaimed, but clearing the profile link failed: ${profileError.message}`)
+}
+
+/**
+ * Market intelligence aggregates for the Opportunities → Market tab.
+ * One server round-trip; admin-only (the RPC raises for non-admins).
+ * Test accounts are excluded server-side.
+ */
+export async function getMarketIntelligence(demandDays = 90): Promise<MarketIntelligence> {
+  const { data, error } = await supabase.rpc('admin_market_intelligence', {
+    p_demand_days: demandDays,
+  })
+
+  if (error) throw new Error(`Failed to get market intelligence: ${error.message}`)
+  return data as unknown as MarketIntelligence
 }
 
 /**
