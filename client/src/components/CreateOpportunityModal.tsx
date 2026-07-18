@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import { X, Plus, Home, Car, Globe as GlobeIcon, Plane, Utensils, Briefcase, Shield, GraduationCap, CreditCard, Trophy, Flag } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { logger } from '../lib/logger'
@@ -18,6 +18,7 @@ import SpecialistSkillsSelect from '@/components/SpecialistSkillsSelect'
 import { pruneSpecialistSkillsForPosition } from '@/lib/specialistSkills'
 import { LEVEL_SOUGHT_OPTIONS, COMPENSATION_OPTIONS, RECRUITMENT_PROBLEM_OPTIONS, levelSoughtFromBand } from '@/lib/opportunityIntent'
 import { getClubLevelBand, prefetchWorldClubLogos } from '@/hooks/useWorldClubLogo'
+import { assessPostingQuality } from '@/lib/opportunityQuality'
 
 interface CreateVacancyModalProps {
   isOpen: boolean
@@ -189,6 +190,19 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
   const { addToast } = useToastStore()
 
   const [formData, setFormData] = useState<OpportunityFormData>(buildInitialFormData(editingVacancy, initialOpportunityType))
+
+  // Live posting-strength assessment (Market Phase 3) — recomputes as the
+  // club fills the form; nudge only, never blocks publishing.
+  const postingQuality = useMemo(() => assessPostingQuality({
+    compensation: formData.compensation,
+    benefits: formData.benefits,
+    custom_benefits: formData.custom_benefits,
+    description: formData.description,
+    start_date: formData.start_date,
+    level_sought: formData.level_sought,
+    application_deadline: formData.application_deadline,
+    club_has_logo: Boolean(profile?.avatar_url),
+  }), [formData, profile?.avatar_url])
   const { getCountryById } = useCountries()
 
   // Location autocomplete state
@@ -1293,6 +1307,51 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                 </div>
               </div>
             </div>
+          </section>
+
+          {/* Posting strength — live quality nudge (Market Phase 3). Same
+              8-point checklist the admin Market tab scores postings with;
+              a NUDGE only, never a gate: publishing stays zero-friction. */}
+          <section className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-semibold text-gray-900">Posting strength</h3>
+              <span className={`px-2 py-0.5 rounded-full text-xs font-semibold tabular-nums ${
+                postingQuality.score >= 75 ? 'bg-green-100 text-green-700'
+                : postingQuality.score >= 50 ? 'bg-amber-100 text-amber-700'
+                : 'bg-red-100 text-red-700'
+              }`}>
+                {postingQuality.score}/100
+              </span>
+            </div>
+            <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden mb-3">
+              <div
+                className={`h-full rounded-full transition-all ${
+                  postingQuality.score >= 75 ? 'bg-green-500'
+                  : postingQuality.score >= 50 ? 'bg-amber-500'
+                  : 'bg-red-400'
+                }`}
+                style={{ width: `${Math.max(4, postingQuality.score)}%` }}
+              />
+            </div>
+            {postingQuality.missing.length === 0 ? (
+              <p className="text-sm text-green-700">
+                Complete posting — this is what strong vacancies look like.
+              </p>
+            ) : (
+              <>
+                <p className="text-xs text-gray-500 mb-2">
+                  Complete postings attract more applicants. Consider adding:
+                </p>
+                <ul className="space-y-1">
+                  {postingQuality.missing.map((c) => (
+                    <li key={c.key} className="text-xs text-gray-600">
+                      <span className="font-medium text-gray-800">{c.label}</span>
+                      <span className="text-gray-400"> — {c.hint}</span>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
           </section>
         </div>
 

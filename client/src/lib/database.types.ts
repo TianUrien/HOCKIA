@@ -81,6 +81,33 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_digest_queue: {
+        Row: {
+          created_at: string
+          error: string | null
+          id: string
+          payload: Json
+          recipient: string
+          sent_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          payload: Json
+          recipient: string
+          sent_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          payload?: Json
+          recipient?: string
+          sent_at?: string | null
+        }
+        Relationships: []
+      }
       age_gate_email_queue: {
         Row: {
           attempts: number
@@ -7665,6 +7692,10 @@ export type Database = {
         Args: { p_demand_days?: number }
         Returns: Json
       }
+      admin_market_intelligence_impl: {
+        Args: { p_demand_days?: number }
+        Returns: Json
+      }
       admin_preview_campaign_audience: {
         Args: { p_audience_filter?: Json; p_category?: string }
         Returns: Json
@@ -8415,6 +8446,7 @@ export type Database = {
         }
       }
       engagement_heartbeat_interval_seconds: { Args: never; Returns: number }
+      enqueue_admin_market_digest: { Args: never; Returns: undefined }
       enqueue_application_digests: { Args: never; Returns: undefined }
       enqueue_application_status_emails: { Args: never; Returns: undefined }
       enqueue_availability_check_ins: { Args: never; Returns: number }
