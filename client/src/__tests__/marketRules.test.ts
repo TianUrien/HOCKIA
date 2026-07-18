@@ -38,6 +38,16 @@ const base = (over: Partial<MarketIntelligence> = {}): MarketIntelligence => ({
   clubs: [],
   demand_by_country: [],
   supply_by_country: [],
+  corridors: { flows: [], unknown_origin: 0 },
+  open_vacancy_quality: [],
+  top_vacancies: [],
+  trends: [],
+  player_behavior: {
+    applicants: 0, median_apps_per_applicant: null, multi_appliers: 0,
+    median_days_signup_to_first_app: null,
+    silent_supply: { count: 0, players: [] },
+    burned: { count: 0, players: [] },
+  },
   ...over,
 })
 
@@ -129,5 +139,86 @@ describe('marketRules — output contract', () => {
 
   it('returns an empty list on a quiet marketplace (no fires ≠ no data)', () => {
     expect(evaluateMarketRules(base())).toEqual([])
+  })
+})
+describe('marketRules — burned cohort rule (R7, Phase 2)', () => {
+  const burned = (count: number) => ({
+    applicants: count, median_apps_per_applicant: 1, multi_appliers: 0,
+    median_days_signup_to_first_app: null,
+    silent_supply: { count: 0, players: [] },
+    burned: {
+      count,
+      players: [
+        { id: 'p1', name: 'Ana', applications: 2, days_since_last_app: 21 },
+        { id: 'p2', name: 'Luz', applications: 1, days_since_last_app: 14 },
+        { id: 'p3', name: 'Mia', applications: 1, days_since_last_app: 9 },
+      ].slice(0, count),
+    },
+  })
+
+  it('fires at 3+ burned players as priority 1 Ops, naming names', () => {
+    const recs = evaluateMarketRules(base({ player_behavior: burned(3) }))
+    const r = recs.find((x) => x.id === 'burned-cohort')
+    expect(r).toBeTruthy()
+    expect(r!.priority).toBe(1)
+    expect(r!.owner).toBe('Ops')
+    expect(r!.detail).toMatch(/Ana/)
+  })
+
+  it('stays silent below 3 (personal outreach scale, not a stat)', () => {
+    const recs = evaluateMarketRules(base({ player_behavior: burned(2) }))
+    expect(recs.find((x) => x.id === 'burned-cohort')).toBeUndefined()
+  })
+})
+
+describe('marketRules — posting quality rule (R8, Phase 2)', () => {
+  const weakVacancy = (id: string, missing: string[]) => ({
+    id, title: `V${id}`, club_name: 'Test HC', days_open: 20, app_count: 0,
+    score: 25, missing: missing as never,
+  })
+
+  it('fires on 2+ weak open vacancies and names the most-missing attributes', () => {
+    const recs = evaluateMarketRules(base({
+      open_vacancy_quality: [
+        weakVacancy('a', ['compensation', 'housing', 'description']),
+        weakVacancy('b', ['compensation', 'housing']),
+      ],
+    }))
+    const r = recs.find((x) => x.id === 'posting-quality')
+    expect(r).toBeTruthy()
+    expect(r!.owner).toBe('Product')
+    expect(r!.detail).toMatch(/compensation/)
+  })
+
+  it('stays silent with a single weak vacancy', () => {
+    const recs = evaluateMarketRules(base({
+      open_vacancy_quality: [weakVacancy('a', ['compensation'])],
+    }))
+    expect(recs.find((x) => x.id === 'posting-quality')).toBeUndefined()
+  })
+})
+
+describe('marketRules — corridor rule (R9, Phase 2)', () => {
+  it('fires on the top corridor at 5+ applications', () => {
+    const recs = evaluateMarketRules(base({
+      corridors: {
+        flows: [{ from_country: 'Argentina', to_country: 'Spain', applications: 7 }],
+        unknown_origin: 0,
+      },
+    }))
+    const r = recs.find((x) => x.id.startsWith('corridor:'))
+    expect(r).toBeTruthy()
+    expect(r!.owner).toBe('Growth')
+    expect(r!.title).toMatch(/Argentina → Spain/)
+  })
+
+  it('stays silent below 5 applications on the top corridor', () => {
+    const recs = evaluateMarketRules(base({
+      corridors: {
+        flows: [{ from_country: 'Argentina', to_country: 'Spain', applications: 4 }],
+        unknown_origin: 0,
+      },
+    }))
+    expect(recs.find((x) => x.id.startsWith('corridor:'))).toBeUndefined()
   })
 })

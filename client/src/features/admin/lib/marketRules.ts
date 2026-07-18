@@ -148,14 +148,81 @@ function responseRateRule(mi: MarketIntelligence): MarketRecommendation[] {
  * Evaluate all rules, order by priority, cap at 5 so the panel stays a
  * to-do list rather than a report.
  */
+
+/** R7 — burned applicants: applied, never received ANY response, gone quiet.
+ *  The single highest-risk churn cohort a marketplace has; at current scale
+ *  this is a personal-outreach list, not a segment. */
+function burnedCohortRule(mi: MarketIntelligence): MarketRecommendation[] {
+  const b = mi.player_behavior?.burned
+  if (!b || b.count < 3) return []
+  const names = b.players.slice(0, 3).map((p) => p.name ?? 'a player').join(', ')
+  return [{
+    id: 'burned-cohort',
+    priority: 1,
+    title: `${b.count} players applied and never heard anything back`,
+    detail:
+      `Every one of their applications is still unanswered, the most recent from ` +
+      `${b.players[0]?.days_since_last_app ?? '?'}+ days ago (${names}${b.count > 3 ? ', …' : ''}). ` +
+      `They are the likeliest churners on the platform — a personal message beats any campaign here.`,
+    owner: 'Ops',
+  }]
+}
+
+/** R8 — posting quality: several open vacancies are badly under-specified.
+ *  Checklist-based (see open_vacancy_quality) — honest at small N. */
+function postingQualityRule(mi: MarketIntelligence): MarketRecommendation[] {
+  const weak = (mi.open_vacancy_quality ?? []).filter((q) => q.score < 50)
+  if (weak.length < 2) return []
+  const missingCounts = new Map<string, number>()
+  for (const q of weak) for (const m of q.missing) {
+    missingCounts.set(m, (missingCounts.get(m) ?? 0) + 1)
+  }
+  const topMissing = [...missingCounts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([attr]) => attr.replace('_', ' '))
+    .join(', ')
+  return [{
+    id: 'posting-quality',
+    priority: 2,
+    title: `${weak.length} open vacancies are under-specified (quality below 50)`,
+    detail:
+      `Most commonly missing: ${topMissing}. Complete postings attract more applicants — ` +
+      `help these clubs fill the gaps (see the quality list below), and consider making ` +
+      `the posting flow nudge for these fields.`,
+    owner: 'Product',
+  }]
+}
+
+/** R9 — corridor: name the strongest supply→demand country pair, so
+ *  acquisition targets pairs of markets rather than countries in isolation. */
+function corridorRule(mi: MarketIntelligence): MarketRecommendation[] {
+  const top = mi.corridors?.flows?.[0]
+  if (!top || top.applications < 5) return []
+  return [{
+    id: `corridor:${top.from_country}:${top.to_country}`,
+    priority: 3,
+    title: `Your strongest corridor: ${top.from_country} → ${top.to_country}`,
+    detail:
+      `${top.applications} applications flow from ${top.from_country} players to ` +
+      `${top.to_country} vacancies. Marketplace liquidity is corridor-shaped — recruiting ` +
+      `more ${top.from_country} players and more ${top.to_country} clubs compounds; ` +
+      `treat them as one market in campaigns.`,
+    owner: 'Growth',
+  }]
+}
+
 export function evaluateMarketRules(mi: MarketIntelligence): MarketRecommendation[] {
   return [
     ...gapRules(mi),
     ...clubBacklogRules(mi),
     ...responseRateRule(mi),
+    ...burnedCohortRule(mi),
     ...coldVacancyRule(mi),
+    ...postingQualityRule(mi),
     ...staleSupplyRule(mi),
     ...funnelRule(mi),
+    ...corridorRule(mi),
   ]
     .sort((a, b) => a.priority - b.priority)
     .slice(0, 5)

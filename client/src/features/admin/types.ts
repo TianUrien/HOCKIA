@@ -879,6 +879,51 @@ export interface MarketIntelligence {
   clubs: MarketClubRow[]
   demand_by_country: { country: string; vacancies: number; open_now: number }[]
   supply_by_country: { country: string; players: number; active: number }[]
+  // ── Phase 2 sections ──────────────────────────────────────────────────────
+  corridors: {
+    /** Applicant nationality country → vacancy country, ranked by volume. */
+    flows: { from_country: string; to_country: string; applications: number }[]
+    /** Applications whose applicant has no structured nationality set. */
+    unknown_origin: number
+  }
+  /** One row per OPEN vacancy; the client derives the cold list and quality
+   *  stats from this. Score = 8-point best-practice checklist × 12.5. */
+  open_vacancy_quality: MarketVacancyQuality[]
+  top_vacancies: {
+    id: string
+    title: string
+    club_name: string | null
+    applications: number
+    status: string
+  }[]
+  /** Last 6 calendar months, oldest first. */
+  trends: { month: string; posted: number; applications: number; filled: number }[]
+  player_behavior: {
+    applicants: number
+    median_apps_per_applicant: number | null
+    multi_appliers: number
+    median_days_signup_to_first_app: number | null
+    silent_supply: { count: number; players: { id: string; name: string | null }[] }
+    burned: {
+      count: number
+      players: { id: string; name: string | null; applications: number; days_since_last_app: number }[]
+    }
+  }
+}
+
+export type MarketQualityAttr =
+  | 'compensation' | 'housing' | 'flights' | 'description'
+  | 'start_date' | 'level' | 'club_logo' | 'deadline'
+
+export interface MarketVacancyQuality {
+  id: string
+  title: string
+  club_name: string | null
+  days_open: number
+  app_count: number
+  /** 0–100, best-practice checklist (not correlation-derived at current N). */
+  score: number
+  missing: MarketQualityAttr[]
 }
 
 export interface WorldClubFilters {

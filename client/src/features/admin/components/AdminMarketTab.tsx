@@ -85,6 +85,94 @@ function FunnelBars({ title, stages }: {
   )
 }
 
+/** Fixed series order + hues for the trends chart (categorical palette,
+ *  validated: CVD ΔE ≥ 16 all adjacent pairs on the light surface; the amber
+ *  contrast WARN is discharged by direct value labels + the sr-only table). */
+const TREND_SERIES = [
+  { key: 'posted', label: 'Vacancies posted', color: '#9333ea' },
+  { key: 'applications', label: 'Applications', color: '#0d9488' },
+  { key: 'filled', label: 'Filled via HOCKIA', color: '#f59e0b' },
+] as const
+
+function TrendsChart({ trends }: { trends: MarketIntelligence['trends'] }) {
+  const max = Math.max(1, ...trends.flatMap((t) => [t.posted, t.applications, t.filled]))
+  const allZero = trends.every((t) => t.posted === 0 && t.applications === 0 && t.filled === 0)
+  const monthLabel = (m: string) =>
+    new Date(m + '-01T00:00:00Z').toLocaleString('en', { month: 'short', timeZone: 'UTC' })
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 p-4">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-sm font-semibold text-gray-900">Last 6 months</h3>
+        <div className="flex items-center gap-3">
+          {TREND_SERIES.map((s) => (
+            <span key={s.key} className="inline-flex items-center gap-1 text-xs text-gray-600">
+              <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: s.color }} />
+              {s.label}
+            </span>
+          ))}
+        </div>
+      </div>
+      {allZero ? (
+        <p className="text-sm text-gray-500 py-6 text-center">No marketplace activity in the last 6 months</p>
+      ) : (
+        <div className="flex items-end justify-between gap-4 h-36 pt-4">
+          {trends.map((t) => (
+            <div key={t.month} className="flex-1 flex flex-col items-center gap-1 min-w-0">
+              <div className="flex items-end gap-0.5 h-28">
+                {TREND_SERIES.map((s) => {
+                  const v = t[s.key]
+                  return (
+                    <div key={s.key} className="relative group flex flex-col items-center justify-end h-full">
+                      {v > 0 && (
+                        <span className="text-[10px] text-gray-600 tabular-nums leading-none mb-0.5">{v}</span>
+                      )}
+                      <div
+                        className="w-3.5 rounded-t"
+                        style={{ height: `${Math.max(v > 0 ? 4 : 1, (v / max) * 96)}px`, backgroundColor: v > 0 ? s.color : '#e5e7eb' }}
+                      />
+                      <span className="pointer-events-none absolute bottom-full mb-1 hidden group-hover:block whitespace-nowrap rounded bg-gray-900 px-2 py-1 text-[10px] text-white z-10">
+                        {monthLabel(t.month)} · {s.label}: {v}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+              <span className="text-xs text-gray-500">{monthLabel(t.month)}</span>
+            </div>
+          ))}
+        </div>
+      )}
+      {/* Accessible table equivalent of the chart. */}
+      <table className="sr-only">
+        <caption>Marketplace activity by month</caption>
+        <thead><tr><th>Month</th><th>Posted</th><th>Applications</th><th>Filled</th></tr></thead>
+        <tbody>
+          {trends.map((t) => (
+            <tr key={t.month}><td>{t.month}</td><td>{t.posted}</td><td>{t.applications}</td><td>{t.filled}</td></tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+const QUALITY_ATTR_LABEL: Record<string, string> = {
+  compensation: 'compensation',
+  housing: 'housing',
+  flights: 'flights',
+  description: 'longer description',
+  start_date: 'start date',
+  level: 'level sought',
+  club_logo: 'club logo',
+  deadline: 'deadline',
+}
+
+const scoreChipClass = (score: number) =>
+  score >= 75 ? 'bg-green-100 text-green-700'
+  : score >= 50 ? 'bg-amber-100 text-amber-700'
+  : 'bg-red-100 text-red-700'
+
 export function AdminMarketTab() {
   const [data, setData] = useState<MarketIntelligence | null>(null)
   const [loading, setLoading] = useState(true)
@@ -374,6 +462,146 @@ export function AdminMarketTab() {
               ))}
             </ul>
           )}
+        </div>
+      </div>
+
+      {/* ── Trends (Phase 2) ──────────────────────────────────────────── */}
+      <TrendsChart trends={data.trends} />
+
+      {/* ── Performance: top vacancies + posting quality (Phase 2) ────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <h3 className="text-sm font-semibold text-gray-900 mb-2">Top vacancies by applications</h3>
+          {data.top_vacancies.length === 0 ? (
+            <p className="text-sm text-gray-500">No vacancies with applications yet</p>
+          ) : (
+            <ul className="space-y-2">
+              {data.top_vacancies.map((v) => (
+                <li key={v.id} className="flex items-center justify-between gap-2 text-sm">
+                  <div className="min-w-0">
+                    <p className="text-gray-900 truncate">{v.title}</p>
+                    <p className="text-xs text-gray-500 truncate">{v.club_name}</p>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium ${
+                      v.status === 'open' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
+                    }`}>{v.status}</span>
+                    <span className="tabular-nums font-medium text-gray-900">{v.applications}</span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <h3 className="text-sm font-semibold text-gray-900 mb-0.5">Open-vacancy posting quality</h3>
+          <p className="text-xs text-gray-400 mb-2">
+            8-point best-practice checklist — not correlation-derived at current volume
+          </p>
+          {data.open_vacancy_quality.length === 0 ? (
+            <p className="text-sm text-gray-500">No open vacancies</p>
+          ) : (
+            <ul className="space-y-2">
+              {data.open_vacancy_quality.map((q) => {
+                const isCold = q.days_open > 14 && q.app_count === 0
+                return (
+                  <li key={q.id} className="text-sm">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="text-gray-900 truncate inline-flex items-center gap-1.5">
+                          <span className="truncate">{q.title}</span>
+                          {isCold && (
+                            <span className="px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-blue-100 text-blue-700 flex-shrink-0">
+                              cold · {q.days_open}d · 0 apps
+                            </span>
+                          )}
+                        </p>
+                        <p className="text-xs text-gray-500 truncate">{q.club_name}</p>
+                      </div>
+                      <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-semibold tabular-nums flex-shrink-0 ${scoreChipClass(q.score)}`}>
+                        {q.score}
+                      </span>
+                    </div>
+                    {q.missing.length > 0 && (
+                      <p className="text-[11px] text-gray-400 mt-0.5 truncate">
+                        missing: {q.missing.map((m) => QUALITY_ATTR_LABEL[m] ?? m).join(', ')}
+                      </p>
+                    )}
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+        </div>
+      </div>
+
+      {/* ── Corridors + player behavior (Phase 2) ─────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <h3 className="text-sm font-semibold text-gray-900 mb-0.5">Recruitment corridors</h3>
+          <p className="text-xs text-gray-400 mb-2">Applicant nationality → vacancy country</p>
+          {data.corridors.flows.length === 0 ? (
+            <p className="text-sm text-gray-500">No cross-referenced applications yet</p>
+          ) : (
+            <ul className="space-y-1.5">
+              {data.corridors.flows.map((f) => (
+                <li key={`${f.from_country}:${f.to_country}`} className="flex justify-between text-sm">
+                  <span className="text-gray-700">{f.from_country} → {f.to_country}</span>
+                  <span className="tabular-nums font-medium text-gray-900">{f.applications}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+          {data.corridors.unknown_origin > 0 && (
+            <p className="text-xs text-gray-400 mt-2">
+              +{data.corridors.unknown_origin} application{data.corridors.unknown_origin === 1 ? '' : 's'} from
+              players without a structured nationality
+            </p>
+          )}
+        </div>
+        <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <h3 className="text-sm font-semibold text-gray-900 mb-2">Player behavior</h3>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm mb-3">
+            <span className="text-gray-600">Applicants (all-time)</span>
+            <span className="tabular-nums text-gray-900 text-right">{data.player_behavior.applicants}</span>
+            <span className="text-gray-600">Median apps / applicant</span>
+            <span className="tabular-nums text-gray-900 text-right">{data.player_behavior.median_apps_per_applicant ?? '—'}</span>
+            <span className="text-gray-600">Applied to 2+ vacancies</span>
+            <span className="tabular-nums text-gray-900 text-right">{data.player_behavior.multi_appliers}</span>
+            <span className="text-gray-600">Median signup → first application</span>
+            <span className="tabular-nums text-gray-900 text-right">
+              {data.player_behavior.median_days_signup_to_first_app != null
+                ? `${Math.round(data.player_behavior.median_days_signup_to_first_app)}d` : '—'}
+            </span>
+          </div>
+          <div className="space-y-2 text-sm">
+            <div>
+              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                Silent supply · {data.player_behavior.silent_supply.count}
+              </p>
+              <p className="text-xs text-gray-400">Active open-to-play, never applied — activation targets</p>
+              {data.player_behavior.silent_supply.players.length > 0 && (
+                <p className="text-xs text-gray-600 mt-0.5 truncate">
+                  {data.player_behavior.silent_supply.players.map((p) => p.name ?? '—').join(', ')}
+                </p>
+              )}
+            </div>
+            <div>
+              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                Burned · {data.player_behavior.burned.count}
+              </p>
+              <p className="text-xs text-gray-400">Applied 7+ days ago, never got any response — churn risk</p>
+              {data.player_behavior.burned.players.length > 0 && (
+                <ul className="text-xs text-gray-600 mt-0.5 space-y-0.5">
+                  {data.player_behavior.burned.players.map((p) => (
+                    <li key={p.id} className="truncate">
+                      {p.name ?? '—'} · {p.applications} app{p.applications === 1 ? '' : 's'} · last {p.days_since_last_app}d ago
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
