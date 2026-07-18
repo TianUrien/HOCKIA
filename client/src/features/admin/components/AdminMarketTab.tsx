@@ -507,11 +507,14 @@ export function AdminMarketTab() {
                 return (
                   <li key={q.id} className="text-sm">
                     <div className="flex items-center justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="text-gray-900 truncate inline-flex items-center gap-1.5">
-                          <span className="truncate">{q.title}</span>
+                      <div className="min-w-0 flex-1">
+                        {/* flex (not inline-flex) + min-w-0 so a long title
+                            truncates INSIDE the card and the cold badge stays
+                            visible instead of clipping at the edge. */}
+                        <p className="flex items-center gap-1.5 min-w-0 text-gray-900">
+                          <span className="truncate min-w-0">{q.title}</span>
                           {isCold && (
-                            <span className="px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-blue-100 text-blue-700 flex-shrink-0">
+                            <span className="px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-blue-100 text-blue-700 flex-shrink-0 whitespace-nowrap">
                               cold · {q.days_open}d · 0 apps
                             </span>
                           )}
