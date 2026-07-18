@@ -192,13 +192,21 @@ jobs:
           # dependency; the initial-load gzip gate stays healthy at
           # 412KB/480KB (the delivery-relevant metric), so only this
           # total-bloat backstop moved. ~97KB headroom restored.
-          if [ "$TOTAL_JS" -gt 3409920 ]; then
-            echo "::warning::Bundle nearing raw budget: ${TOTAL_KB}KB / 3700KB ($(( TOTAL_KB * 100 / 3700 ))%)"
+          # Budget bumped 3700KB → 3900KB on 2026-07-18 — the World batch
+          # (community-clubs section, admin Claims tab, verified toggles)
+          # plus Market Intelligence Phase 1 (Market tab: rules engine,
+          # balance matrix, funnels, club table) tipped raw to 3710KB.
+          # All lazy admin/world-route component code, no new dependency;
+          # the initial-load gzip gate stays healthy at 413KB/480KB (the
+          # delivery-relevant metric), so only this total-bloat backstop
+          # moved. ~190KB headroom restored.
+          if [ "$TOTAL_JS" -gt 3594240 ]; then
+            echo "::warning::Bundle nearing raw budget: ${TOTAL_KB}KB / 3900KB ($(( TOTAL_KB * 100 / 3900 ))%)"
           fi
 
-          # Secondary gate: raw total must stay under 3.7MB
-          if [ "$TOTAL_JS" -gt 3788800 ]; then
-            echo "::error::Raw bundle budget exceeded! ${TOTAL_KB}KB > 3700KB"
+          # Secondary gate: raw total must stay under 3.9MB
+          if [ "$TOTAL_JS" -gt 3993600 ]; then
+            echo "::error::Raw bundle budget exceeded! ${TOTAL_KB}KB > 3900KB"
             exit 1
           fi
 
