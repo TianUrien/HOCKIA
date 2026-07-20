@@ -219,7 +219,7 @@ export default function InstallPrompt() {
 
       <div className="flex items-start gap-3">
         <img
-          src="/pwa-icons/android/android-launchericon-96-96.png"
+          src="/brand/app-icons/hockia-pwa-192.png?v=2"
           alt="HOCKIA"
           className="w-10 h-10 rounded-xl flex-shrink-0"
         />

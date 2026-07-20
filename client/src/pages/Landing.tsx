@@ -289,7 +289,7 @@ export default function Landing() {
         <div className="flex-1 flex items-center px-8 xl:px-16">
           <div className="flex-1 pr-12 xl:pr-24 max-w-3xl">
             <img
-              src="/WhiteLogo.svg"
+              src="/brand/wordmark/hockia-wordmark-white.svg"
               alt="HOCKIA"
               className="h-24 xl:h-32 mb-8 object-contain"
               fetchPriority="high"

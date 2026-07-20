@@ -86,7 +86,7 @@ export function EmailPreview({ subject, blocks, variables, mode = 'html', isOutr
     return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
 <body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.6;color:#333;max-width:600px;margin:0 auto;padding:20px;background:#f9fafb;">
 <div style="background:linear-gradient(135deg,#8026FA,#924CEC);padding:32px 24px;border-radius:16px 16px 0 0;text-align:center;">
-  <img src="https://inhockia.com/hockia-logo-white.png" alt="HOCKIA" width="120" height="29" style="height:29px;width:120px;" />
+  <img src="https://inhockia.com/brand/wordmark/hockia-wordmark-white-512w.png" alt="HOCKIA" width="102" height="28" style="height:28px;width:102px;" />
 </div>
 <div style="background:#fff;padding:32px 24px;border-left:1px solid #e5e7eb;border-right:1px solid #e5e7eb;">
   ${body}

@@ -11,7 +11,7 @@ export default function OfflinePage() {
         {/* Logo */}
         <div className="mb-8">
           <img 
-            src="/HockiaLogoBlack.svg"
+            src="/brand/wordmark/hockia-wordmark-black.svg"
             alt="HOCKIA"
             className="h-8 mx-auto"
           />

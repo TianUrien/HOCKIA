@@ -75,7 +75,7 @@ export default function TermsGate({ children }: { children: React.ReactNode }) {
       <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] flex flex-col overflow-hidden">
         <div className="p-6 border-b border-gray-100">
           <div className="flex items-center gap-3 mb-2">
-            <img src="/WhiteLogo.svg" alt="HOCKIA" className="h-6 invert" />
+            <img src="/brand/wordmark/hockia-wordmark-black.svg" alt="HOCKIA" className="h-6" />
           </div>
           <h2 className="text-xl font-bold text-gray-900">Terms of Use</h2>
           <p className="text-sm text-gray-600 mt-1">

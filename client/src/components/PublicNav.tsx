@@ -42,7 +42,7 @@ export default function PublicNav({ transparent = true }: PublicNavProps) {
           {/* Logo - Mobile only (desktop shows hero logo instead) */}
           <Link to="/" className="flex-shrink-0 lg:hidden">
             <img 
-              src={transparent ? '/WhiteLogo.svg' : '/HockiaLogoBlack.svg'}
+              src={transparent ? '/brand/wordmark/hockia-wordmark-white.svg' : '/brand/wordmark/hockia-wordmark-black.svg'}
               alt="HOCKIA"
               className="h-8"
             />

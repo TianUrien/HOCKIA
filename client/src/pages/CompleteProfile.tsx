@@ -1142,7 +1142,7 @@ export default function CompleteProfile() {
             <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-hockia-primary to-hockia-secondary">
               <div className="flex items-center gap-3 mb-2">
                 <img
-                  src="/WhiteLogo.svg"
+                  src="/brand/wordmark/hockia-wordmark-white.svg"
                   alt="HOCKIA"
                   className="h-8"
                 />
@@ -1289,7 +1289,7 @@ export default function CompleteProfile() {
           <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-hockia-primary to-hockia-secondary">
             <div className="flex items-center gap-3 mb-2">
               <img
-                src="/WhiteLogo.svg"
+                src="/brand/wordmark/hockia-wordmark-white.svg"
                 alt="HOCKIA"
                 className="h-8"
               />

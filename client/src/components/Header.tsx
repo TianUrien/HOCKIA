@@ -75,7 +75,7 @@ export default function Header() {
               aria-label="HOCKIA — go home"
             >
               <img
-                src="/HockiaLogoBlack.svg"
+                src="/brand/wordmark/hockia-wordmark-black.svg"
                 alt=""
                 className="h-8"
               />

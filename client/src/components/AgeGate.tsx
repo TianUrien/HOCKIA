@@ -42,7 +42,7 @@ export default function AgeGate({ children }: { children: React.ReactNode }) {
     return (
       <div className="fixed inset-0 z-[9999] bg-white flex items-center justify-center p-6">
         <div className="max-w-md w-full text-center">
-          <img src="/WhiteLogo.svg" alt="HOCKIA" className="h-7 invert mx-auto mb-6" />
+          <img src="/brand/wordmark/hockia-wordmark-black.svg" alt="HOCKIA" className="h-7 mx-auto mb-6" />
           <h1 className="text-2xl font-bold text-gray-900">HOCKIA is 18+ for now</h1>
           <p className="text-sm text-gray-600 mt-4 leading-relaxed">
             Your profile is <strong>saved, not deleted</strong>. We&apos;re building
@@ -110,7 +110,7 @@ export default function AgeGate({ children }: { children: React.ReactNode }) {
     return (
       <div className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
-          <img src="/WhiteLogo.svg" alt="HOCKIA" className="h-6 invert mb-4" />
+          <img src="/brand/wordmark/hockia-wordmark-black.svg" alt="HOCKIA" className="h-6 mb-4" />
           <h2 className="text-xl font-bold text-gray-900">Confirm your date of birth</h2>
           <p className="text-sm text-gray-600 mt-1 leading-relaxed">
             HOCKIA is an 18+ platform. Confirm your date of birth to keep your

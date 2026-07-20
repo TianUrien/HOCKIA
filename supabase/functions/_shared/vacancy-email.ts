@@ -77,7 +77,7 @@ export function generateEmailHtml(vacancy: VacancyRecord, clubName: string): str
 
   <!-- Header -->
   <div style="padding: 16px 0 24px 0; text-align: left;">
-    <img src="https://www.inhockia.com/hockia-logo-white.png" alt="HOCKIA" width="100" height="24" style="height: 24px; width: 100px; background: #6d28d9; padding: 8px 12px; border-radius: 6px;" />
+    <img src="https://www.inhockia.com/brand/wordmark/hockia-wordmark-white-512w.png" alt="HOCKIA" width="102" height="28" style="height: 28px; width: 102px; background: #5b21b6; padding: 8px 12px; border-radius: 6px;" />
   </div>
 
   <!-- Main Content -->
