@@ -4,6 +4,7 @@ import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react'
 import { Button, InAppBrowserWarning, PublicNav } from '@/components'
 import HockiaSocials from '@/components/HockiaSocials'
+import StoreBadges from '@/components/StoreBadges'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { useImmersiveChrome } from '@/hooks/useImmersiveChrome'
@@ -257,6 +258,9 @@ export default function Landing() {
               </span>
             </Button>
 
+            {/* Download the native apps (live on both stores). */}
+            <StoreBadges className="justify-center" heightClass="h-10" source="landing_hero_mobile" />
+
             <p className="text-center text-sm text-white/70">
               Already have an account?{' '}
               <Link
@@ -326,6 +330,9 @@ export default function Landing() {
                 </Link>
               </p>
             </div>
+
+            {/* Download the native apps — live on both stores. */}
+            <StoreBadges className="mt-8" heightClass="h-12" source="landing_hero_desktop" />
 
             {/* Questions before signing up — subtle support link, not a CTA. */}
             <button
