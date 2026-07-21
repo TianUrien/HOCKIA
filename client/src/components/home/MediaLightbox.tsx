@@ -195,7 +195,6 @@ export function MediaLightbox({ images, initialIndex, onClose }: MediaLightboxPr
                     src={media.url}
                     poster={media.thumb_url}
                     isActive={i === currentIndex}
-                    isDragging={isDraggingRef}
                   />
                 ) : null
               ) : (
@@ -309,12 +308,10 @@ function LightboxVideoSlide({
   src,
   poster,
   isActive,
-  isDragging,
 }: {
   src: string
   poster?: string | null
   isActive: boolean
-  isDragging: React.RefObject<boolean>
 }) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const wrapperRef = useRef<HTMLDivElement>(null)
@@ -356,6 +353,14 @@ function LightboxVideoSlide({
 
   // Tap detection: distinguish tap (play/pause) from swipe (carousel nav).
   // We track pointerdown → pointerup distance; if < 10px and < 300ms, it's a tap.
+  //
+  // IMPORTANT: do NOT consult the carousel's isDraggingRef here. On touch
+  // devices pointerup fires BEFORE touchend, and useSwipeGesture holds
+  // isDragging=true from touchstart until touchend — so at pointerup time the
+  // ref reads true for EVERY tap, and a guard on it silently swallows all
+  // taps (the Android/iOS "play button does nothing" bug). The distance check
+  // below is sufficient on its own: carousel navigation requires ≥10px of
+  // movement (the hook's direction-lock threshold), which fails dx/dy < 10.
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     tapStartRef.current = { x: e.clientX, y: e.clientY, time: Date.now() }
   }, [])
@@ -364,9 +369,6 @@ function LightboxVideoSlide({
     const start = tapStartRef.current
     tapStartRef.current = null
     if (!start) return
-
-    // If the carousel is/was dragging, don't treat as a tap
-    if (isDragging.current) return
 
     const dx = Math.abs(e.clientX - start.x)
     const dy = Math.abs(e.clientY - start.y)
@@ -377,7 +379,7 @@ function LightboxVideoSlide({
       togglePlay()
       scheduleHideControls()
     }
-  }, [isDragging, togglePlay, scheduleHideControls])
+  }, [togglePlay, scheduleHideControls])
 
   const handleTimeUpdate = useCallback(() => {
     const video = videoRef.current

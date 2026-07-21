@@ -185,3 +185,70 @@ describe('MediaLightbox', () => {
     expect(document.body.style.overflow).toBe(originalOverflow)
   })
 })
+
+// ---------------------------------------------------------------------------
+// Video slide tap-to-play — touch-device regression
+// ---------------------------------------------------------------------------
+// On real touch devices the event order is pointerdown → touchstart →
+// pointerup → touchend. useSwipeGesture holds isDragging=true from touchstart
+// until touchend, so a tap guard that reads it at pointerup time swallows
+// EVERY tap (the "play button does nothing on Android/iOS" bug, silent since
+// c689dae). These tests replay that exact order against the real component.
+// ---------------------------------------------------------------------------
+
+const videoPost: PostMediaItem[] = [
+  {
+    url: 'https://example.com/clip.mp4',
+    thumb_url: 'https://example.com/poster.jpg',
+    media_type: 'video',
+    duration: 12.3,
+    order: 0,
+  },
+]
+
+describe('MediaLightbox video slide — tap-to-play on touch devices', () => {
+  let playSpy: ReturnType<typeof vi.spyOn>
+  let pauseSpy: ReturnType<typeof vi.spyOn>
+
+  beforeEach(() => {
+    // jsdom doesn't implement media playback — spy so togglePlay is observable.
+    playSpy = vi.spyOn(window.HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined)
+    pauseSpy = vi.spyOn(window.HTMLMediaElement.prototype, 'pause').mockImplementation(() => {})
+  })
+
+  afterEach(() => {
+    playSpy.mockRestore()
+    pauseSpy.mockRestore()
+  })
+
+  function renderVideoLightbox() {
+    render(<MediaLightbox images={videoPost} initialIndex={0} onClose={vi.fn()} />)
+    const video = document.querySelector('video')
+    expect(video).not.toBeNull()
+    // The slide wrapper (owns the pointer handlers) is the video's parent.
+    return { video: video as HTMLVideoElement, wrapper: (video as HTMLVideoElement).parentElement as HTMLElement }
+  }
+
+  it('plays on tap despite touchstart marking the carousel as dragging (real device event order)', () => {
+    const { wrapper } = renderVideoLightbox()
+
+    // Real touch-device order: pointerdown → touchstart → pointerup → touchend.
+    fireEvent.pointerDown(wrapper, { clientX: 100, clientY: 100 })
+    fireEvent.touchStart(wrapper, { touches: [{ clientX: 100, clientY: 100 }] })
+    fireEvent.pointerUp(wrapper, { clientX: 102, clientY: 101 }) // <10px = tap
+    fireEvent.touchEnd(wrapper, { changedTouches: [{ clientX: 102, clientY: 101 }] })
+
+    expect(playSpy).toHaveBeenCalledTimes(1)
+  })
+
+  it('does NOT toggle playback when the gesture moved like a swipe', () => {
+    const { wrapper } = renderVideoLightbox()
+
+    fireEvent.pointerDown(wrapper, { clientX: 200, clientY: 100 })
+    fireEvent.touchStart(wrapper, { touches: [{ clientX: 200, clientY: 100 }] })
+    fireEvent.pointerUp(wrapper, { clientX: 80, clientY: 100 }) // 120px horizontal = swipe
+    fireEvent.touchEnd(wrapper, { changedTouches: [{ clientX: 80, clientY: 100 }] })
+
+    expect(playSpy).not.toHaveBeenCalled()
+  })
+})
