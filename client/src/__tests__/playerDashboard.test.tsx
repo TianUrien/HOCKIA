@@ -334,10 +334,19 @@ describe('PlayerDashboard (Bento Grid)', () => {
     expect(screen.queryByTestId('player-bento-grid-visitor')).not.toBeInTheDocument()
   })
 
-  it('renders the visitor Bento Grid on the public profile route', () => {
+  it('renders the public PORTFOLIO (all sections inline, no tiles) on the public profile route', () => {
+    // Public-profile redesign: visitors get one continuous scrollable
+    // page — every section mounted inline — instead of the Bento tiles
+    // that navigated to sub-screens. The Bento Grid is owner-only now.
     renderDashboard({ readOnly: true })
-    expect(screen.getByTestId('player-bento-grid-visitor')).toBeInTheDocument()
+    expect(screen.queryByTestId('player-bento-grid-visitor')).not.toBeInTheDocument()
     expect(screen.queryByTestId('player-bento-grid-owner')).not.toBeInTheDocument()
+    expect(screen.getByTestId('journey-tab')).toBeInTheDocument()
+    expect(screen.getByTestId('public-references')).toBeInTheDocument()
+    expect(screen.getByTestId('media-tab')).toBeInTheDocument()
+    expect(screen.getByTestId('friends-tab')).toBeInTheDocument()
+    expect(screen.getByTestId('comments-tab')).toBeInTheDocument()
+    expect(screen.getByTestId('profile-posts-tab')).toBeInTheDocument()
   })
 
   it('does not render the standalone NextStepCard (its content moved into Hero progress section)', () => {
@@ -392,20 +401,22 @@ describe('PlayerDashboard (Bento Grid)', () => {
     expect(screen.queryByTestId('comments-tab')).not.toBeInTheDocument()
   })
 
-  it('visitor section URL renders the section content with a Back-to-profile shortcut', () => {
+  it('visitor /:section URL renders the full portfolio (anchor scroll, no section page, no Back shortcut)', () => {
+    // Old tile deep-links like /players/jordan/journey must keep
+    // resolving: the portfolio renders in full and an effect scrolls to
+    // the section anchor. There is no visitor section page and therefore
+    // no "Back to profile" shortcut anymore.
     renderDashboard({ initialPath: '/players/jordan/journey', readOnly: true })
-    expect(screen.getByRole('button', { name: /back to profile/i })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /back to profile/i })).not.toBeInTheDocument()
+    // Every section is mounted — not just the deep-linked one.
     expect(screen.getByTestId('journey-tab')).toBeInTheDocument()
+    expect(screen.getByTestId('friends-tab')).toBeInTheDocument()
+    expect(screen.getByTestId('comments-tab')).toBeInTheDocument()
+    // The journey anchor the scroll effect targets exists.
+    expect(document.getElementById('portfolio-journey')).not.toBeNull()
     // No tab strip anywhere
     expect(screen.queryByRole('button', { name: 'Profile' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Journey' })).not.toBeInTheDocument()
-  })
-
-  it('visitor "Back to profile" button on a section page returns to the visitor Bento Grid', async () => {
-    const { locationHistory } = renderDashboard({ initialPath: '/players/jordan/friends', readOnly: true })
-    await user.click(screen.getByRole('button', { name: /back to profile/i }))
-    expect(await screen.findByTestId('player-bento-grid-visitor')).toBeInTheDocument()
-    expect(locationHistory.at(-1)).toBe('/players/jordan')
   })
 
   it('the owner /community page renders the PlayerCommunityHub redesign (credibility card, references, connections, comments, posts)', () => {
@@ -425,16 +436,22 @@ describe('PlayerDashboard (Bento Grid)', () => {
     expect(screen.queryByTestId('player-bento-grid-owner')).not.toBeInTheDocument()
   })
 
-  it('the visitor /community page renders the slimmer PublicCommunityView', () => {
+  it('the visitor /community URL renders the portfolio with the social sections inline', () => {
+    // The visitor community hub is dissolved into the portfolio: the
+    // references / comments / posts sections are always inline, and the
+    // /community deep link scrolls to the references anchor.
     renderDashboard({ initialPath: '/players/jordan/community', readOnly: true })
 
-    expect(screen.getByTestId('public-community-stats')).toBeInTheDocument()
     expect(screen.getByTestId('public-references')).toBeInTheDocument()
-    // Visitor view does not expose the owner-only references list.
-    expect(screen.queryByTestId('community-references-selected')).not.toBeInTheDocument()
-    expect(screen.queryByTestId('connections-section')).not.toBeInTheDocument()
     expect(screen.getByTestId('comments-tab')).toBeInTheDocument()
     expect(screen.getByTestId('profile-posts-tab')).toBeInTheDocument()
+    expect(screen.getByTestId('friends-tab')).toBeInTheDocument()
+    // Owner-only community hub surfaces never render for visitors.
+    expect(screen.queryByTestId('community-references-selected')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('connections-section')).not.toBeInTheDocument()
+    // The ?section= anchors from PLAYER_SECTION_ANCHORS resolve inline.
+    expect(document.getElementById('community-references')).not.toBeNull()
+    expect(document.getElementById('community-connections')).not.toBeNull()
   })
 
   it('claims comment highlights when entering the comments section', async () => {

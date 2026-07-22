@@ -17,6 +17,7 @@ import CommentsTab from '@/components/CommentsTab'
 import AddVideoLinkModal from '@/components/AddVideoLinkModal'
 import ProfilePostsTab from '@/components/ProfilePostsTab'
 import SignInPromptModal from '@/components/SignInPromptModal'
+import AboutMeCard from '@/components/dashboard/bento/AboutMeCard'
 import HeroIdentityCard from '@/components/dashboard/bento/HeroIdentityCard'
 import RecruitmentVisibilityWidget from '@/components/dashboard/bento/RecruitmentVisibilityWidget'
 import RecruitmentPrefsNudge from '@/components/dashboard/RecruitmentPrefsNudge'
@@ -441,6 +442,36 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
     }
   }
 
+  // PUBLIC PORTFOLIO deep links: on the visitor view every section is
+  // inline, so a /:section URL (old tile links, shares, notifications)
+  // scrolls to the section's anchor instead of swapping the page. The
+  // community-* ids double as the ?section= anchors in
+  // PLAYER_SECTION_ANCHORS, so hero-pill navigation lands there too.
+  // (Must stay ABOVE the !profile guard — hooks can't be conditional.)
+  useEffect(() => {
+    if (!readOnly || activeTab === 'profile') return
+    const anchors: Partial<Record<TabType, string>> = {
+      journey: 'portfolio-journey',
+      media: 'portfolio-media',
+      friends: 'community-connections',
+      references: 'community-references',
+      comments: 'community-comments',
+      posts: 'community-posts',
+      community: 'community-references',
+    }
+    const id = anchors[activeTab]
+    if (!id) return
+    // Two-phase like useTabDeepLinkScroll: sections mount + fetch at
+    // different speeds, so retry once after layout settles.
+    const t1 = window.setTimeout(() => {
+      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 150)
+    const t2 = window.setTimeout(() => {
+      document.getElementById(id)?.scrollIntoView({ block: 'start' })
+    }, 600)
+    return () => { window.clearTimeout(t1); window.clearTimeout(t2) }
+  }, [readOnly, activeTab])
+
   if (!profile) return null
 
   const handleSendMessage = async () => {
@@ -545,8 +576,10 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
 
         {/* On a section page — back-shortcut. The tab strip is gone in
             PR2, so this is now the primary way users navigate from a
-            section back to the Bento Grid (browser back also works). */}
-        {!isLanding && (
+            section back to the Bento Grid (browser back also works).
+            Owner-only: the public portfolio has no section pages — a
+            /:section URL scrolls to its anchor instead. */}
+        {!isLanding && !readOnly && (
           <button
             type="button"
             onClick={() => handleTabChange('profile')}
@@ -623,7 +656,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
             Three zones: availability headline, career evidence (no
             duplication with the Hero), pinned actions. Replaces the
             earlier CareerSnapshot which duplicated most of the Hero. */}
-        {readOnly && !isOwnProfile && isLanding && (
+        {readOnly && !isOwnProfile && (
           <ScoutingCard
             profile={{
               id: profile.id,
@@ -658,7 +691,76 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
           />
         )}
 
-        {isLanding ? (
+        {readOnly ? (
+          // ── PUBLIC PORTFOLIO ─────────────────────────────────────────
+          // The public profile is for PRESENTING the person; the owner
+          // dashboard (below) is for managing it. Visitors get one
+          // continuous scrollable page — every section inline, no
+          // tile → sub-screen hops (open profile → scroll). Same pattern
+          // the Umpire + Brand public profiles already use. A /:section
+          // URL scrolls to its anchor (effect above) so old deep links
+          // keep working. Section components render their own headers
+          // and per-section empty states collapse to nothing.
+          <div className="space-y-5 md:space-y-6">
+            <AboutMeCard bio={(profile as Profile).bio} readOnly />
+
+            <div id="portfolio-journey" className="scroll-mt-20 bg-white rounded-2xl shadow-sm">
+              <div className="p-6 md:p-8">
+                <JourneyTab
+                  profileId={profile.id}
+                  readOnly
+                  variant="inline"
+                  title="Career History"
+                />
+              </div>
+            </div>
+
+            <div id="community-references" className="scroll-mt-20 bg-white rounded-2xl shadow-sm">
+              <div className="p-6 md:p-8">
+                <PublicReferencesSection
+                  profileId={profile.id}
+                  profileName={profile.full_name ?? profile.username ?? null}
+                />
+              </div>
+            </div>
+
+            <div id="portfolio-media" className="scroll-mt-20 bg-white rounded-2xl shadow-sm">
+              <div className="p-6 md:p-8">
+                <MediaTab
+                  profileId={profile.id}
+                  readOnly
+                  showVideo={true}
+                  showGallery={true}
+                  viewerRole={viewerRole ?? authProfile?.role ?? null}
+                  isOwnProfile={isOwnProfile}
+                  highlightVisibility={(profile as Profile)?.highlight_visibility ?? 'public'}
+                />
+              </div>
+            </div>
+
+            <div id="community-connections" className="scroll-mt-20 bg-white rounded-2xl shadow-sm">
+              <div className="p-6 md:p-8">
+                <FriendsTab profileId={profile.id} readOnly profileRole={profile.role} hideReferences />
+              </div>
+            </div>
+
+            <div id="community-comments" className="scroll-mt-20 bg-white rounded-2xl shadow-sm">
+              <div className="p-6 md:p-8">
+                <CommentsTab
+                  profileId={profile.id}
+                  highlightedCommentIds={highlightedComments}
+                  profileRole={profile.role}
+                />
+              </div>
+            </div>
+
+            <div id="community-posts" className="scroll-mt-20 bg-white rounded-2xl shadow-sm">
+              <div className="p-6 md:p-8">
+                <ProfilePostsTab profileId={profile.id} readOnly />
+              </div>
+            </div>
+          </div>
+        ) : isLanding ? (
           // Landing view — the Bento Grid. Each card lives in its own
           // white container; no outer card wrapper needed here.
           <PlayerBentoGrid
