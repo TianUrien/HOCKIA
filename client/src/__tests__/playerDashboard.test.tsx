@@ -287,6 +287,12 @@ const baseProfile: PlayerProfileShape = {
   email: 'jordan@example.com',
   contact_email: 'jordan@example.com',
   contact_email_public: true,
+  // Portfolio sections gate on these denormalized counts (empty sections
+  // collapse entirely) — give the fixture content so they render.
+  career_entry_count: 3,
+  accepted_reference_count: 1,
+  accepted_friend_count: 2,
+  post_count: 1,
 }
 
 type RenderOptions = {

@@ -19,6 +19,8 @@ import OpportunitiesTab from '@/components/OpportunitiesTab'
 import ProfilePostsTab from '@/components/ProfilePostsTab'
 import SignInPromptModal from '@/components/SignInPromptModal'
 import ClubLinkPrompt from '@/components/ClubLinkPrompt'
+import AboutMeCard from '@/components/dashboard/bento/AboutMeCard'
+import ConnectionsPreview from '@/components/profile/ConnectionsPreview'
 import HeroIdentityCard from '@/components/dashboard/bento/HeroIdentityCard'
 import RecruitmentVisibilityWidget from '@/components/dashboard/bento/RecruitmentVisibilityWidget'
 import RecruitmentSummaryCard from '@/components/dashboard/bento/RecruitmentSummaryCard'
@@ -416,6 +418,30 @@ export default function CoachDashboard({
     }
   }
 
+  // PUBLIC PORTFOLIO deep links — visitor /:section URLs scroll to the
+  // inline section anchor (mirror of PlayerDashboard; /friends excluded,
+  // it's the one real sub-page). Must stay ABOVE the !profile guard.
+  useEffect(() => {
+    if (!readOnly || activeTab === 'profile' || activeTab === 'friends') return
+    const anchors: Partial<Record<TabType, string>> = {
+      journey: 'portfolio-journey',
+      media: 'portfolio-media',
+      references: 'community-references',
+      comments: 'community-comments',
+      posts: 'community-posts',
+      community: 'community-references',
+    }
+    const id = anchors[activeTab]
+    if (!id) return
+    const t1 = window.setTimeout(() => {
+      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 150)
+    const t2 = window.setTimeout(() => {
+      document.getElementById(id)?.scrollIntoView({ block: 'start' })
+    }, 600)
+    return () => { window.clearTimeout(t1); window.clearTimeout(t2) }
+  }, [readOnly, activeTab])
+
   if (!profile) return null
 
   const handleSendMessage = async () => {
@@ -552,7 +578,10 @@ export default function CoachDashboard({
           </button>
         )}
 
-        {!isLanding && (
+        {/* Owner-only, with the /friends visitor exception (dedicated
+            Connections page) — all other visitor /:section URLs scroll
+            to their portfolio anchor. */}
+        {!isLanding && (!readOnly || activeTab === 'friends') && (
           <button
             type="button"
             onClick={() => handleTabChange('profile')}
@@ -644,7 +673,7 @@ export default function CoachDashboard({
 
         {/* ScoutingCard — visitor-only recruitment decision surface.
             Same placement + rationale as PlayerDashboard. */}
-        {readOnly && !isOwnProfile && isLanding && (
+        {readOnly && !isOwnProfile && (
           <ScoutingCard
             profile={{
               id: profile.id,
@@ -682,7 +711,86 @@ export default function CoachDashboard({
           />
         )}
 
-        {isLanding ? (
+        {readOnly && activeTab !== 'friends' ? (
+          // ── PUBLIC PORTFOLIO ─────────────────────────────────────────
+          // Same continuous-scroll visitor page as PlayerDashboard (see
+          // its comment for the full rationale). Coach media is
+          // gallery-only (showVideo=false), matching the coach section
+          // behavior. /friends stays the one dedicated sub-page.
+          <div className="space-y-5 md:space-y-6">
+            {Boolean((profile as Profile).bio?.trim()) && (
+              <AboutMeCard bio={(profile as Profile).bio} readOnly />
+            )}
+
+            {((profile as Profile).career_entry_count ?? 0) > 0 && (
+            <div id="portfolio-journey" className="scroll-mt-20 bg-white rounded-2xl shadow-sm">
+              <div className="p-6 md:p-8">
+                <JourneyTab
+                  profileId={profile.id}
+                  readOnly
+                  variant="inline"
+                  title="Career History"
+                />
+              </div>
+            </div>
+            )}
+
+            {((profile as Profile).accepted_reference_count ?? 0) > 0 && (
+            <div id="community-references" className="scroll-mt-20 bg-white rounded-2xl shadow-sm">
+              <div className="p-6 md:p-8">
+                <PublicReferencesSection
+                  profileId={profile.id}
+                  profileName={profile.full_name ?? profile.username ?? null}
+                />
+              </div>
+            </div>
+            )}
+
+            <div id="portfolio-media" className="scroll-mt-20 bg-white rounded-2xl shadow-sm">
+              <div className="p-6 md:p-8">
+                <MediaTab
+                  profileId={profile.id}
+                  readOnly
+                  showVideo={false}
+                  showGallery={true}
+                  viewerRole={authProfile?.role ?? null}
+                  isOwnProfile={isOwnProfile}
+                  highlightVisibility={(profile as Profile)?.highlight_visibility ?? 'public'}
+                />
+              </div>
+            </div>
+
+            <div id="community-connections" className="scroll-mt-20 bg-white rounded-2xl shadow-sm">
+              <div className="p-6 md:p-8">
+                <ConnectionsPreview
+                  profileId={profile.id}
+                  profileFirstName={profile.full_name ?? profile.username ?? null}
+                  totalConnections={profile.accepted_friend_count ?? 0}
+                  isAuthenticated={Boolean(user)}
+                  onSeeAll={() => handleTabChange('friends')}
+                />
+              </div>
+            </div>
+
+            <div id="community-comments" className="scroll-mt-20 bg-white rounded-2xl shadow-sm">
+              <div className="p-6 md:p-8">
+                <CommentsTab
+                  profileId={profile.id}
+                  highlightedCommentIds={highlightedComments}
+                  profileRole={profile.role}
+                />
+              </div>
+            </div>
+
+            {((profile as Profile).post_count ?? 0) > 0 && (
+            <div id="community-posts" className="scroll-mt-20 bg-white rounded-2xl shadow-sm">
+              <div className="p-6 md:p-8">
+                <ProfilePostsTab profileId={profile.id} readOnly />
+              </div>
+            </div>
+            )}
+          </div>
+        ) : isLanding ? (
           <CoachBentoGrid
             // Same cast rationale as the Hero — Coach and Player share
             // shape but TypeScript's structural check on the optional
@@ -725,12 +833,29 @@ export default function CoachDashboard({
 
               {activeTab === 'friends' && (
                 <div id="visitor-section-friends" className="animate-fade-in">
-                  <FriendsTab
-                    profileId={profile.id}
-                    readOnly={readOnly}
-                    profileRole={profile.role}
-                    hideReferences
-                  />
+                  {readOnly && !user ? (
+                    // Anonymous visitors never see the full graph
+                    // (reconciled Connections design — same as Player).
+                    <div className="flex flex-col items-start gap-3 rounded-xl border border-gray-100 bg-gray-50 p-6">
+                      <p className="text-sm text-gray-600">
+                        Sign in to see {profile.full_name ?? 'this member'}&apos;s connections.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => navigate('/signin')}
+                        className="rounded-lg bg-hockia-primary px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+                      >
+                        Sign in
+                      </button>
+                    </div>
+                  ) : (
+                    <FriendsTab
+                      profileId={profile.id}
+                      readOnly={readOnly}
+                      profileRole={profile.role}
+                      hideReferences
+                    />
+                  )}
                 </div>
               )}
 

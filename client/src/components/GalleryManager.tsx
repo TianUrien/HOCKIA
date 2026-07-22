@@ -33,6 +33,10 @@ interface GalleryManagerProps {
    *  completeness without waiting for a route change. Videos are excluded
    *  so the profile-strength meaning of this number never shifts. */
   onCountChange?: (count: number) => void
+  /** Public-portfolio cap: when set AND readOnly, the grid shows at most
+   *  this many tiles with an in-place "Show all N" toggle. Owner mode
+   *  ignores it (management needs the full grid + drag reorder). */
+  previewLimit?: number
 }
 
 interface UploadProgress {
@@ -182,6 +186,7 @@ export default function GalleryManager({
   emptyStateDescription,
   addButtonLabel,
   onCountChange,
+  previewLimit,
 }: GalleryManagerProps) {
   const config = MODE_CONFIG[mode]
   const { user } = useAuthStore()
@@ -192,6 +197,8 @@ export default function GalleryManager({
 
   const [media, setMedia] = useState<NormalizedMedia[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  // Public-portfolio cap toggle (readOnly + previewLimit only).
+  const [galleryExpanded, setGalleryExpanded] = useState(false)
   const [uploadProgress, setUploadProgress] = useState<UploadProgress[]>([])
   const [draggedItem, setDraggedItem] = useState<NormalizedMedia | null>(null)
   const [editingCaption, setEditingCaption] = useState<string | null>(null)
@@ -874,7 +881,10 @@ export default function GalleryManager({
 
       {!isLoading && media.length > 0 && (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-          {media.map((item, index) => (
+          {(readOnly && previewLimit && !galleryExpanded
+            ? media.slice(0, previewLimit)
+            : media
+          ).map((item, index) => (
             <div
               key={item.id}
               draggable={!readOnly}
@@ -1052,6 +1062,19 @@ export default function GalleryManager({
               <span className="text-xs text-gray-400">Drag files here or tap to browse</span>
             </button>
           )}
+        </div>
+      )}
+
+      {/* Public-portfolio cap toggle — expands in place, no sub-page. */}
+      {!isLoading && readOnly && Boolean(previewLimit) && media.length > (previewLimit ?? 0) && (
+        <div className="pt-3">
+          <button
+            type="button"
+            onClick={() => setGalleryExpanded((v) => !v)}
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-hockia-primary hover:underline"
+          >
+            {galleryExpanded ? 'Show fewer' : `Show all ${media.length}`}
+          </button>
         </div>
       )}
 

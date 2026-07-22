@@ -66,6 +66,32 @@ export default function NativeVideoPlayer({
   const [canRetry, setCanRetry] = useState(false)
   const [retryNonce, setRetryNonce] = useState(0)
   const videoElRef = useRef<HTMLVideoElement | null>(null)
+  // Inline portfolio pages mount several players at once — gate the token
+  // mint on proximity to the viewport so a page load doesn't fire one
+  // edge-function call per video up front. 300px rootMargin pre-mints
+  // just before the player scrolls in (same pattern as GalleryManager's
+  // VideoTile thumbnails). Once seen, stays true.
+  const containerRef = useRef<HTMLDivElement | null>(null)
+  const [inView, setInView] = useState(false)
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    if (typeof IntersectionObserver === 'undefined') {
+      setInView(true)
+      return
+    }
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setInView(true)
+          io.disconnect()
+        }
+      },
+      { rootMargin: '300px' },
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
 
   // Can THIS browser play HLS natively in a <video>? True on Safari / iOS /
   // the Capacitor WKWebView — our App Store target, and exactly where the
@@ -127,9 +153,10 @@ export default function NativeVideoPlayer({
         }
       }
     }
+    if (!inView) return
     void mintToken(0)
     return () => { cancelled = true }
-  }, [videoId, isOwner, retryNonce])
+  }, [videoId, isOwner, retryNonce, inView])
 
   const ready = nativeHls ? !!hlsUrl : !!iframeUrl
   const activate = useCallback(() => {
@@ -162,7 +189,7 @@ export default function NativeVideoPlayer({
   const duration = formatDuration(durationSeconds)
 
   return (
-    <div className="relative w-full overflow-hidden rounded-xl bg-black aspect-video">
+    <div ref={containerRef} className="relative w-full overflow-hidden rounded-xl bg-black aspect-video">
       {state === 'playing' && nativeHls && hlsUrl ? (
         // Native HTML5 player (Safari/iOS/WKWebView) — owns its own touch
         // gestures, fixing the iOS "page scrolls instead of controlling

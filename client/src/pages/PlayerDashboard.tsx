@@ -706,8 +706,11 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
           // keep working. Section components render their own headers
           // and per-section empty states collapse to nothing.
           <div className="space-y-5 md:space-y-6">
-            <AboutMeCard bio={(profile as Profile).bio} readOnly />
+            {Boolean((profile as Profile).bio?.trim()) && (
+              <AboutMeCard bio={(profile as Profile).bio} readOnly />
+            )}
 
+            {((profile as Profile).career_entry_count ?? 0) > 0 && (
             <div id="portfolio-journey" className="scroll-mt-20 bg-white rounded-2xl shadow-sm">
               <div className="p-6 md:p-8">
                 <JourneyTab
@@ -718,7 +721,9 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
                 />
               </div>
             </div>
+            )}
 
+            {((profile as Profile).accepted_reference_count ?? 0) > 0 && (
             <div id="community-references" className="scroll-mt-20 bg-white rounded-2xl shadow-sm">
               <div className="p-6 md:p-8">
                 <PublicReferencesSection
@@ -727,6 +732,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
                 />
               </div>
             </div>
+            )}
 
             <div id="portfolio-media" className="scroll-mt-20 bg-white rounded-2xl shadow-sm">
               <div className="p-6 md:p-8">
@@ -769,11 +775,13 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
               </div>
             </div>
 
+            {((profile as Profile).post_count ?? 0) > 0 && (
             <div id="community-posts" className="scroll-mt-20 bg-white rounded-2xl shadow-sm">
               <div className="p-6 md:p-8">
                 <ProfilePostsTab profileId={profile.id} readOnly />
               </div>
             </div>
+            )}
           </div>
         ) : isLanding ? (
           // Landing view — the Bento Grid. Each card lives in its own
