@@ -18,6 +18,7 @@ import AddVideoLinkModal from '@/components/AddVideoLinkModal'
 import ProfilePostsTab from '@/components/ProfilePostsTab'
 import SignInPromptModal from '@/components/SignInPromptModal'
 import AboutMeCard from '@/components/dashboard/bento/AboutMeCard'
+import ConnectionsPreview from '@/components/profile/ConnectionsPreview'
 import HeroIdentityCard from '@/components/dashboard/bento/HeroIdentityCard'
 import RecruitmentVisibilityWidget from '@/components/dashboard/bento/RecruitmentVisibilityWidget'
 import RecruitmentPrefsNudge from '@/components/dashboard/RecruitmentPrefsNudge'
@@ -450,10 +451,11 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
   // (Must stay ABOVE the !profile guard — hooks can't be conditional.)
   useEffect(() => {
     if (!readOnly || activeTab === 'profile') return
+    // NOTE: no 'friends' entry — /friends is the one real visitor
+    // sub-page (dedicated Connections screen, reconciled design).
     const anchors: Partial<Record<TabType, string>> = {
       journey: 'portfolio-journey',
       media: 'portfolio-media',
-      friends: 'community-connections',
       references: 'community-references',
       comments: 'community-comments',
       posts: 'community-posts',
@@ -577,9 +579,11 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
         {/* On a section page — back-shortcut. The tab strip is gone in
             PR2, so this is now the primary way users navigate from a
             section back to the Bento Grid (browser back also works).
-            Owner-only: the public portfolio has no section pages — a
-            /:section URL scrolls to its anchor instead. */}
-        {!isLanding && !readOnly && (
+            Owner-only, with ONE visitor exception: /friends is a real
+            sub-page (the dedicated Connections screen from the reconciled
+            design) — every other /:section URL scrolls to its portfolio
+            anchor instead. */}
+        {!isLanding && (!readOnly || activeTab === 'friends') && (
           <button
             type="button"
             onClick={() => handleTabChange('profile')}
@@ -691,7 +695,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
           />
         )}
 
-        {readOnly ? (
+        {readOnly && activeTab !== 'friends' ? (
           // ── PUBLIC PORTFOLIO ─────────────────────────────────────────
           // The public profile is for PRESENTING the person; the owner
           // dashboard (below) is for managing it. Visitors get one
@@ -740,7 +744,18 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
 
             <div id="community-connections" className="scroll-mt-20 bg-white rounded-2xl shadow-sm">
               <div className="p-6 md:p-8">
-                <FriendsTab profileId={profile.id} readOnly profileRole={profile.role} hideReferences />
+                {/* Reconciled Connections design (panel review 2026-07-22):
+                    the full list NEVER renders inline — signed-in viewers
+                    get a fixed faces strip + "See all" into the dedicated
+                    /friends page; anonymous viewers get count + sign-in
+                    CTA (no public graph enumeration). */}
+                <ConnectionsPreview
+                  profileId={profile.id}
+                  profileFirstName={profile.full_name ?? profile.username ?? null}
+                  totalConnections={(profile as Profile).accepted_friend_count ?? 0}
+                  isAuthenticated={Boolean(user)}
+                  onSeeAll={() => handleTabChange('friends')}
+                />
               </div>
             </div>
 
@@ -802,7 +817,26 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
 
               {activeTab === 'friends' && (
                 <div id="visitor-section-friends" className="animate-fade-in">
-                  <FriendsTab profileId={profile.id} readOnly={readOnly} profileRole={profile.role} hideReferences />
+                  {readOnly && !user ? (
+                    // Anonymous visitors never see the full graph — the
+                    // people listed didn't consent to a crawlable page,
+                    // and logged-out enumeration would bypass the block
+                    // system (reconciled Connections design).
+                    <div className="flex flex-col items-start gap-3 rounded-xl border border-gray-100 bg-gray-50 p-6">
+                      <p className="text-sm text-gray-600">
+                        Sign in to see {profile.full_name ?? 'this member'}&apos;s connections.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => navigate('/signin')}
+                        className="rounded-lg bg-hockia-primary px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+                      >
+                        Sign in
+                      </button>
+                    </div>
+                  ) : (
+                    <FriendsTab profileId={profile.id} readOnly={readOnly} profileRole={profile.role} hideReferences />
+                  )}
                 </div>
               )}
 
