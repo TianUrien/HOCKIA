@@ -37,6 +37,7 @@ export interface HappeningMove {
 
 function profilePath(role: string | null | undefined, id: string): string {
   if (role === 'club') return `/clubs/id/${id}`
+  if (role === 'coach') return `/coaches/id/${id}`
   if (role === 'umpire') return `/umpires/id/${id}`
   return `/players/id/${id}`
 }
@@ -55,15 +56,19 @@ export function feedItemToMove(item: HomeFeedItem): HappeningMove | null {
         path: `/opportunities/${item.opportunity_id}`,
       }
     case 'role_filled':
+      // Vacancies can be coach-published — then club_id/club_name carry the
+      // COACH's profile, and a hardcoded club path 404s ("Club profile not
+      // found"). Route by the publisher's author_role (merged in by the RPC;
+      // 'club' fallback covers cached pre-migration payloads).
       return {
         id: item.feed_item_id,
         kind: 'role_filled',
         actor: item.club_name ?? 'A club',
         action: `filled ${item.title}`,
         avatarUrl: item.club_avatar_url,
-        actorRole: 'club',
+        actorRole: item.author_role ?? 'club',
         createdAt: item.created_at,
-        path: `/clubs/id/${item.club_id}`,
+        path: profilePath(item.author_role ?? 'club', item.club_id),
       }
     case 'open_to_play_confirmed':
       return {
@@ -99,15 +104,16 @@ export function feedItemToMove(item: HomeFeedItem): HappeningMove | null {
         path: profilePath(item.uploader_role, item.uploader_id),
       }
     case 'club_responded':
+      // Same coach-publisher caveat as role_filled: route by author_role.
       return {
         id: item.feed_item_id,
         kind: 'responded',
         actor: item.club_name ?? 'A club',
         action: `reviewed ${item.response_count} application${item.response_count === 1 ? '' : 's'} this week`,
         avatarUrl: item.club_avatar_url,
-        actorRole: 'club',
+        actorRole: item.author_role ?? 'club',
         createdAt: item.created_at,
-        path: `/clubs/id/${item.club_id}`,
+        path: profilePath(item.author_role ?? 'club', item.club_id),
       }
     case 'career_move': {
       if (item.direction === 'signing') {

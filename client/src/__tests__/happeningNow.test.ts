@@ -142,6 +142,65 @@ describe('feedItemToMove', () => {
     ).toMatchObject({ action: 'reviewed 4 applications this week', path: '/clubs/id/c2' })
   })
 
+  // Vacancies can be COACH-published: the club_* fields of club_responded /
+  // role_filled then carry the coach's PROFILE id — routing them to the club
+  // page 404s ("Club profile not found", live prod repro 2026-07-21). The
+  // RPCs merge home_feed_items.author_role since 20260722; the mapper must
+  // route by it, with 'club' as the pre-migration-cache fallback.
+  it('routes coach-published club_responded / role_filled to the coach profile', () => {
+    const responded = feedItemToMove({
+      ...base,
+      item_type: 'club_responded',
+      author_role: 'coach',
+      club_id: 'coach-1',
+      club_name: 'Rodrigo Levy',
+      club_avatar_url: null,
+      week_start: '2026-07-20',
+      response_count: 2,
+      responsiveness_tier: null,
+      last_response_at: null,
+    } as HomeFeedItem)
+    expect(responded).toMatchObject({
+      kind: 'responded',
+      actorRole: 'coach',
+      path: '/coaches/id/coach-1',
+    })
+
+    const filled = feedItemToMove({
+      ...base,
+      item_type: 'role_filled',
+      author_role: 'coach',
+      opportunity_id: 'o9',
+      title: 'Forward wanted',
+      position: 'forward',
+      opportunity_type: 'player',
+      filled_via_hockia: false,
+      club_id: 'coach-1',
+      club_name: 'Rodrigo Levy',
+      club_avatar_url: null,
+    } as HomeFeedItem)
+    expect(filled).toMatchObject({
+      kind: 'role_filled',
+      actorRole: 'coach',
+      path: '/coaches/id/coach-1',
+    })
+
+    // Explicit club publisher keeps the club route.
+    const clubResponded = feedItemToMove({
+      ...base,
+      item_type: 'club_responded',
+      author_role: 'club',
+      club_id: 'c9',
+      club_name: 'CASI',
+      club_avatar_url: null,
+      week_start: '2026-07-20',
+      response_count: 1,
+      responsiveness_tier: null,
+      last_response_at: null,
+    } as HomeFeedItem)
+    expect(clubResponded).toMatchObject({ path: '/clubs/id/c9', actorRole: 'club' })
+  })
+
   it('maps transfer and signing announcements, drops plain posts', () => {
     expect(
       feedItemToMove(

@@ -17,6 +17,12 @@ interface RoleFilledCardProps {
  */
 export function RoleFilledCard({ item }: RoleFilledCardProps) {
   const timeAgo = getTimeAgo(item.created_at, true)
+  // Vacancies can be coach-published — then club_id/club_name carry the
+  // COACH's profile; route + badge by author_role ('club' fallback covers
+  // cached pre-migration payloads).
+  const publisherRole = item.author_role === 'coach' ? 'coach' : 'club'
+  const publisherPath =
+    publisherRole === 'coach' ? `/coaches/id/${item.club_id}` : `/clubs/id/${item.club_id}`
 
   return (
     <div className="bg-white">
@@ -50,14 +56,14 @@ export function RoleFilledCard({ item }: RoleFilledCardProps) {
             )}
           </div>
 
-          <Link to={`/clubs/id/${item.club_id}`} className="flex items-center gap-2.5 group">
+          <Link to={publisherPath} className="flex items-center gap-2.5 group">
             <span className="text-sm text-gray-500">by</span>
             <Avatar
               src={item.club_avatar_url}
               initials={item.club_name?.slice(0, 2) || '?'}
               size="sm"
               className="flex-shrink-0"
-              role="club"
+              role={publisherRole}
             />
             <span className="text-sm font-medium text-gray-700 group-hover:text-hockia-primary transition-colors">
               {item.club_name}

@@ -156,7 +156,7 @@ export function OpportunityPostedCard({ item }: OpportunityPostedCardProps) {
             </div>
           ) : (
             <Link
-              to={item.publisher_role === 'coach' ? `/players/id/${item.club_id}` : `/clubs/id/${item.club_id}`}
+              to={item.publisher_role === 'coach' ? `/coaches/id/${item.club_id}` : `/clubs/id/${item.club_id}`}
               className="flex items-center gap-2.5 group"
             >
               <span className="text-sm text-gray-500">by</span>

@@ -28,6 +28,12 @@ interface BaseFeedItem {
   feed_item_id: string
   item_type: FeedItemType
   created_at: string
+  /** home_feed_items.author_role, merged in by get_home_feed /
+   *  get_market_moves (20260722 migration). The PUBLISHER's role — needed
+   *  because vacancies can be coach-published, so the club_* fields of
+   *  club_responded / role_filled may reference a coach's profile.
+   *  Optional: absent on cached pre-migration payloads. */
+  author_role?: 'player' | 'coach' | 'club' | 'umpire' | 'brand' | null
 }
 
 // --- Individual feed item types ---
