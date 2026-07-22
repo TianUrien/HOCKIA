@@ -132,6 +132,12 @@ const MONTH_OPTIONS = [
 ].map((label, index) => ({ label, value: String(index) }))
 
 const CURRENT_YEAR = new Date().getUTCFullYear()
+
+// Public-portfolio cap: max entries the inline visitor timeline shows
+// before the in-place "Show all N entries" toggle. Prod p95 is 2 entries
+// and the max is 11 — 6 keeps the portfolio scannable without hiding a
+// typical career at all.
+const INLINE_PREVIEW_LIMIT = 6
 const YEAR_OPTIONS = Array.from({ length: 70 }, (_, index) => CURRENT_YEAR + 5 - index).map(year => String(year))
 const JOURNEY_BUCKET = 'journey'
 
@@ -202,6 +208,9 @@ export default function JourneyTab({
 
   const [journey, setJourney] = useState<EditableJourneyEntry[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  // Public-portfolio cap (inline+readOnly only): show the most recent
+  // entries with an in-place "Show all" toggle.
+  const [timelineExpanded, setTimelineExpanded] = useState(false)
   const [activeFormType, setActiveFormType] = useState<'new' | string | null>(null)
   const [activeEntryDraft, setActiveEntryDraft] = useState<EditableJourneyEntry | null>(null)
   const [formErrors, setFormErrors] = useState<Record<string, string>>({})
@@ -1140,7 +1149,7 @@ export default function JourneyTab({
       )
     }
 
-    const ordered = [...journey].sort((a, b) => {
+    const orderedAll = [...journey].sort((a, b) => {
       const aTime = a.start_date ? new Date(a.start_date).valueOf() : 0
       const bTime = b.start_date ? new Date(b.start_date).valueOf() : 0
       if (aTime === bTime) {
@@ -1148,6 +1157,14 @@ export default function JourneyTab({
       }
       return bTime - aTime
     })
+
+    // Public-portfolio cap: the inline visitor timeline shows the most
+    // recent PREVIEW_LIMIT entries with an in-place "Show all" — keeps
+    // the scrolling profile scannable as careers grow, without a
+    // sub-page. Owner tab variant always shows everything (management).
+    const capped =
+      variant === 'inline' && readOnly && !timelineExpanded && orderedAll.length > INLINE_PREVIEW_LIMIT
+    const ordered = capped ? orderedAll.slice(0, INLINE_PREVIEW_LIMIT) : orderedAll
 
     const showEmptyState = ordered.length === 0 && activeFormType !== 'new'
     const isEditingExistingEntry = Boolean(activeFormType && activeFormType !== 'new')
@@ -1369,6 +1386,21 @@ export default function JourneyTab({
                 )
               })}
             </div>
+          </div>
+        )}
+
+        {/* Public-portfolio cap toggle — expands in place, no sub-page. */}
+        {variant === 'inline' && readOnly && orderedAll.length > INLINE_PREVIEW_LIMIT && (
+          <div className="pt-1">
+            <button
+              type="button"
+              onClick={() => setTimelineExpanded((v) => !v)}
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-hockia-primary hover:underline"
+            >
+              {timelineExpanded
+                ? 'Show fewer entries'
+                : `Show all ${orderedAll.length} entries`}
+            </button>
           </div>
         )}
 

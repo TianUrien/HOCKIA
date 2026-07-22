@@ -96,9 +96,12 @@ test.describe('@smoke public profile share — seeded profile (anon visitor)', (
 // =====================================================================
 
 test.describe('@smoke public profile share — inline Journey', () => {
+  // Portfolio redesign (2026-07): the inline visitor timeline renders
+  // under the "Career History" title for both roles (JourneyTab
+  // variant='inline' title prop from Player/CoachDashboard).
   const cases: Array<{ role: 'player' | 'coach'; heading: string; envKey: string }> = [
-    { role: 'player', heading: 'Journey', envKey: 'E2E_PUBLIC_PLAYER_USERNAME' },
-    { role: 'coach', heading: 'Coaching Journey', envKey: 'E2E_PUBLIC_COACH_USERNAME' },
+    { role: 'player', heading: 'Career History', envKey: 'E2E_PUBLIC_PLAYER_USERNAME' },
+    { role: 'coach', heading: 'Career History', envKey: 'E2E_PUBLIC_COACH_USERNAME' },
   ]
 
   for (const { role, heading, envKey } of cases) {

@@ -289,6 +289,7 @@ export default function MediaTab({ profileId, readOnly = false, renderHeader, sh
           description="Share photos and videos from matches, training, and your career"
           emptyStateDescription={galleryEmptyCopy}
           addButtonLabel="Add Photo"
+          previewLimit={9}
         />
       )}
 
