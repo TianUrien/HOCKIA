@@ -47,13 +47,18 @@ export interface RequesterData {
 
 /**
  * Map a requester to the correct public profile path for the friend-request
- * email. Umpires live at /umpires/, clubs at /clubs/, everyone else (player,
- * coach, brand without a slug) falls back to /players/.
+ * email. Umpires live at /umpires/, clubs at /clubs/, brands at
+ * /brands/id/ (BrandIdRedirect resolves the profile id to the brand's
+ * slug page — profiles.username is NOT a brand slug, so never build
+ * /brands/<username>), everyone else (player, coach) at /players/.
  */
 export function buildRequesterProfileUrl(
   requester: Pick<RequesterData, 'id' | 'username' | 'role'>,
   baseUrl: string
 ): string {
+  if (requester.role === 'brand') {
+    return `${baseUrl}/brands/id/${requester.id}`
+  }
   const slug =
     requester.role === 'umpire' ? 'umpires' :
     requester.role === 'club' ? 'clubs' :

@@ -8,6 +8,7 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { MessageCircle, PenLine } from 'lucide-react'
 import { Avatar, RoleBadge } from '@/components'
+import { profilePath } from '@/lib/profileNavigation'
 import { CATEGORY_LABELS, CATEGORY_COLORS } from '@/types/questions'
 import type { Question } from '@/types/questions'
 import { formatDistanceToNow } from 'date-fns'
@@ -25,11 +26,14 @@ export function QuestionCard({ question }: QuestionCardProps) {
     .replace('about ', '')
     .replace('less than a minute ago', 'just now')
 
-  // Handle author click without navigating to question detail
+  // Handle author click without navigating to question detail.
+  // Route by ROLE — /members/id/:id only resolves player/coach and 404s
+  // for club/umpire/brand authors (same rule as QuestionDetailPage).
   const handleAuthorClick = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    navigate(`/members/id/${question.author.id}`)
+    const path = profilePath(question.author.role, null, question.author.id)
+    if (path) navigate(path)
   }
 
   // Navigate directly to answer form on question page

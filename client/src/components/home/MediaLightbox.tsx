@@ -370,6 +370,12 @@ function LightboxVideoSlide({
     tapStartRef.current = null
     if (!start) return
 
+    // Taps on the controls overlay belong to its buttons/seek bar. Their
+    // click-level stopPropagation can't help here — pointerup has already
+    // bubbled by the time click fires — so guard at the source, or every
+    // control tap ALSO toggles play/pause (pause looks dead, mute pauses).
+    if ((e.target as HTMLElement).closest('[data-video-controls]')) return
+
     const dx = Math.abs(e.clientX - start.x)
     const dy = Math.abs(e.clientY - start.y)
     const dt = Date.now() - start.time
@@ -403,10 +409,20 @@ function LightboxVideoSlide({
     const el = wrapperRef.current
     if (!el) return
     if (document.fullscreenElement) {
-      document.exitFullscreen()
-    } else {
-      el.requestFullscreen()
+      void document.exitFullscreen()
+      return
     }
+    // iPhone Safari has no Element fullscreen API (requestFullscreen is
+    // undefined on divs) — fall back to the video's native fullscreen
+    // player via webkitEnterFullscreen, or the button silently dies.
+    if (typeof el.requestFullscreen === 'function') {
+      void el.requestFullscreen()
+      return
+    }
+    const video = videoRef.current as
+      | (HTMLVideoElement & { webkitEnterFullscreen?: () => void })
+      | null
+    video?.webkitEnterFullscreen?.()
   }, [])
 
   const formatTime = (seconds: number) => {
@@ -459,9 +475,11 @@ function LightboxVideoSlide({
         </div>
       )}
 
-      {/* Controls overlay */}
+      {/* Controls overlay — data-video-controls opts its taps out of the
+          wrapper's pointerup play/pause toggle (see handlePointerUp). */}
       {hasStarted && (
         <div
+          data-video-controls
           className={`absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent pt-8 pb-2 px-3 transition-opacity duration-200 ${
             showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'
           }`}

@@ -10,7 +10,8 @@ export function SearchPersonResult({ result }: SearchPersonResultProps) {
   const profilePath = result.role === 'club'
     ? `/clubs/id/${result.profile_id}?ref=search`
     : result.role === 'brand'
-      ? `/brands/${result.profile_id}?ref=search`
+      // /brands/id/:id (BrandIdRedirect) — a raw uuid on the :slug route never matches
+      ? `/brands/id/${result.profile_id}?ref=search`
       : result.role === 'umpire'
         ? `/umpires/id/${result.profile_id}?ref=search`
         : `/players/id/${result.profile_id}?ref=search`

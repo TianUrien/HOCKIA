@@ -13,7 +13,8 @@ export function SearchPostResult({ result }: SearchPostResultProps) {
   const profilePath = result.author_role === 'club'
     ? `/clubs/id/${result.author_id}`
     : result.author_role === 'brand'
-      ? `/brands/${result.author_id}`
+      // /brands/id/:id (BrandIdRedirect) — a raw uuid on :slug never matches
+      ? `/brands/id/${result.author_id}`
       : result.author_role === 'umpire'
         ? `/umpires/id/${result.author_id}`
         : `/players/id/${result.author_id}`

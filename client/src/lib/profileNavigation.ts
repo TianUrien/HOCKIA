@@ -17,10 +17,10 @@ type RoleLike = string | null | undefined
 /**
  * Returns the path to view a profile by its role + id (uuid).
  *
- * Brand has no `/brands/id/:id` route today (brands are slug-only); when
- * the caller is brand we return `/brands/${id}` as a best-effort that
- * will resolve via slug-or-id lookup if the slug router supports it,
- * otherwise null.
+ * Brand id links go through `/brands/id/:id` (BrandIdRedirect), which
+ * resolves the profile id to the brand's slug page. Never build
+ * `/brands/${uuid}` — that hits the `:slug` route and a uuid never
+ * matches a slug ("brand not found").
  */
 export function profilePath(
   role: RoleLike,
@@ -60,9 +60,7 @@ export function profilePath(
     case 'club':
       return `/clubs/id/${id}`
     case 'brand':
-      // Brand has no id route; falling back to the slug pattern returns
-      // null so callers can skip navigation rather than 404.
-      return null
+      return `/brands/id/${id}`
     default:
       return null
   }

@@ -191,14 +191,15 @@ export function buildPushPayload(
       }
     }
     case 'vacancy_application_received': {
-      const vacancyTitle = getString(metadata, 'vacancy_title')
-      const applicantName = getString(metadata, 'applicant_name')
+      // Producer emits 'opportunity_title' (not 'vacancy_title'), and the
+      // applicant's name arrives as the notification ACTOR — there is no
+      // applicant_name metadata key. Reading the wrong keys made every
+      // applicant push read "New applicant for your opportunity".
+      const vacancyTitle = getString(metadata, 'opportunity_title')
       const oppId = getString(metadata, 'opportunity_id')
       return {
         title: 'New Applicant',
-        body: applicantName
-          ? `${applicantName} applied for ${vacancyTitle || 'your opportunity'}`
-          : `New applicant for ${vacancyTitle || 'your opportunity'}`,
+        body: `${actorName} applied for ${vacancyTitle || 'your opportunity'}`,
         url: oppId
           ? `/dashboard/opportunities/${oppId}/applicants`
           : '/dashboard?tab=vacancies',

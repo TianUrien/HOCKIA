@@ -267,7 +267,8 @@ export function SearchOverlay() {
         const path = result.role === 'club'
           ? `/clubs/id/${result.profile_id}?ref=search`
           : result.role === 'brand'
-            ? `/brands/${result.profile_id}?ref=search`
+            // /brands/id/:id (BrandIdRedirect) — a raw uuid on :slug never matches
+            ? `/brands/id/${result.profile_id}?ref=search`
             : result.role === 'umpire'
               ? `/umpires/id/${result.profile_id}?ref=search`
               : `/players/id/${result.profile_id}?ref=search`
@@ -285,7 +286,7 @@ export function SearchOverlay() {
         const authorPath = result.author_role === 'club'
           ? `/clubs/id/${result.author_id}`
           : result.author_role === 'brand'
-            ? `/brands/${result.author_id}`
+            ? `/brands/id/${result.author_id}`
             : result.author_role === 'umpire'
               ? `/umpires/id/${result.author_id}`
               : `/players/id/${result.author_id}`

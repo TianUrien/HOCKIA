@@ -253,11 +253,17 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
     icon: Briefcase,
     badgeText: 'New applicant',
     accentClassName: 'bg-purple-50 text-purple-600',
+    // Producer emits 'opportunity_title' (NOT 'vacancy_title' — that key
+    // belongs to vacancy_application_status), and no applicant_name: the
+    // ACTOR of this notification is the applicant. Reading the wrong keys
+    // rendered every club-side applicant notification as a generic
+    // "New opportunity applicant" with an empty description.
     getTitle: (notification) => {
-      const vacancyTitle = getMetadataString(notification, 'vacancy_title')
+      const vacancyTitle = getMetadataString(notification, 'opportunity_title')
       return vacancyTitle ? `New applicant for ${vacancyTitle}` : 'New opportunity applicant'
     },
-    getDescription: (notification) => getMetadataString(notification, 'applicant_name'),
+    getDescription: (notification) =>
+      notification.actor?.fullName || notification.actor?.username || null,
     getRoute: opportunityApplicantsRoute,
   },
   vacancy_application_status: {

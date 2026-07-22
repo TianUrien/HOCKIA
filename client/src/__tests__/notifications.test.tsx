@@ -295,14 +295,32 @@ describe('getNotificationConfig', () => {
     expect(config.getDescription?.(notification)).toBeNull()
   })
 
-  it('returns vacancy_application_received config', () => {
+  it('returns vacancy_application_received config from the PRODUCER contract (opportunity_title + actor)', () => {
+    // The trigger emits opportunity_title/applicant_id — NOT vacancy_title/
+    // applicant_name (that pair belongs to vacancy_application_status). The
+    // old version of this test fed the wrong keys, so it green-lit a consumer
+    // that rendered every real applicant notification as a generic title
+    // with an empty description (46/46 prod rows over 60 days).
     const notification = createNotification({
       kind: 'vacancy_application_received',
-      metadata: { vacancy_title: 'Midfielder', opportunity_id: 'opp-2' },
+      metadata: {
+        opportunity_title: 'Midfielder',
+        opportunity_id: 'opp-2',
+        applicant_id: 'actor-1',
+        application_status: 'pending',
+      },
     })
     const config = getNotificationConfig(notification)
     expect(config.getTitle(notification)).toBe('New applicant for Midfielder')
+    // Actor IS the applicant — the description names them.
+    expect(config.getDescription?.(notification)).toBe('Jordan Hall')
     expect(config.getRoute?.(notification)).toBe('/dashboard/opportunities/opp-2/applicants')
+  })
+
+  it('vacancy_application_received degrades gracefully without metadata', () => {
+    const notification = createNotification({ kind: 'vacancy_application_received', metadata: {} })
+    const config = getNotificationConfig(notification)
+    expect(config.getTitle(notification)).toBe('New opportunity applicant')
   })
 
   it('returns vacancy_application_status config with human, club-named copy (no raw enum)', () => {

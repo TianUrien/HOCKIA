@@ -251,4 +251,51 @@ describe('MediaLightbox video slide — tap-to-play on touch devices', () => {
 
     expect(playSpy).not.toHaveBeenCalled()
   })
+
+  it('control-button taps do NOT double-fire through the wrapper pointerup toggle', () => {
+    // The wrapper detects taps on pointerup; control buttons only
+    // stopPropagation on CLICK, which fires AFTER pointerup has bubbled.
+    // Without the data-video-controls guard, tapping Pause toggled twice
+    // (looked dead) and Mute/Fullscreen/seek also toggled playback.
+    let pausedState = true
+    playSpy.mockImplementation(function (this: HTMLMediaElement) {
+      pausedState = false
+      return Promise.resolve()
+    })
+    pauseSpy.mockImplementation(function (this: HTMLMediaElement) {
+      pausedState = true
+    })
+    const originalPaused = Object.getOwnPropertyDescriptor(
+      window.HTMLMediaElement.prototype,
+      'paused',
+    )
+    Object.defineProperty(window.HTMLMediaElement.prototype, 'paused', {
+      configurable: true,
+      get: () => pausedState,
+    })
+
+    try {
+      const { wrapper } = renderVideoLightbox()
+
+      // First tap on the video surface starts playback (controls appear).
+      fireEvent.pointerDown(wrapper, { clientX: 100, clientY: 100 })
+      fireEvent.pointerUp(wrapper, { clientX: 100, clientY: 100 })
+      expect(playSpy).toHaveBeenCalledTimes(1)
+
+      // Tap the play/pause control: pointer events bubble to the wrapper
+      // first, then click fires on the button. Exactly ONE toggle (pause)
+      // must result — the wrapper must ignore control-originated taps.
+      const controlButton = screen.getAllByRole('button', { name: /play|pause/i })[0]
+      fireEvent.pointerDown(controlButton, { clientX: 150, clientY: 300 })
+      fireEvent.pointerUp(controlButton, { clientX: 150, clientY: 300 })
+      fireEvent.click(controlButton)
+
+      expect(pauseSpy).toHaveBeenCalledTimes(1)
+      expect(playSpy).toHaveBeenCalledTimes(1) // no bounce-back to play
+    } finally {
+      if (originalPaused) {
+        Object.defineProperty(window.HTMLMediaElement.prototype, 'paused', originalPaused)
+      }
+    }
+  })
 })

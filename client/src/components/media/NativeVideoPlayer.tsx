@@ -61,6 +61,10 @@ export default function NativeVideoPlayer({
   const [iframeUrl, setIframeUrl] = useState<string | null>(null)
   const [signedThumb, setSignedThumb] = useState<string | null>(null)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  // Transient failures (404 deleted / 409 processing / 5xx / network) are
+  // retryable; the recruiters-only gate is not.
+  const [canRetry, setCanRetry] = useState(false)
+  const [retryNonce, setRetryNonce] = useState(0)
   const videoElRef = useRef<HTMLVideoElement | null>(null)
 
   // Can THIS browser play HLS natively in a <video>? True on Safari / iOS /
@@ -99,27 +103,48 @@ export default function NativeVideoPlayer({
           }
           if ((code === 403 || code === 401) && !isOwner) {
             setErrorMsg('Visible to recruiters (clubs and coaches) only.')
+            setCanRetry(false)
             setState('error')
+            return
           }
+          // Deleted (404), still-processing / transcode-failed (409), or a
+          // provider/5xx failure: surface it. A silent return here left the
+          // player permanently on a spinner after tap — no error, no retry.
+          setErrorMsg('This video is unavailable right now.')
+          setCanRetry(true)
+          setState('error')
           return
         }
         setHlsUrl(data.hls as string)
         if (data.iframe) setIframeUrl(data.iframe as string)
         if (data.thumbnail) setSignedThumb(data.thumbnail as string)
       } catch (err) {
-        if (!cancelled) logger.error('[NativeVideoPlayer] token prefetch failed', err)
+        if (!cancelled) {
+          logger.error('[NativeVideoPlayer] token prefetch failed', err)
+          setErrorMsg('This video is unavailable right now.')
+          setCanRetry(true)
+          setState('error')
+        }
       }
     }
     void mintToken(0)
     return () => { cancelled = true }
-  }, [videoId, isOwner])
+  }, [videoId, isOwner, retryNonce])
 
   const ready = nativeHls ? !!hlsUrl : !!iframeUrl
   const activate = useCallback(() => {
-    if (state === 'error') return
+    if (state === 'error') {
+      // Retryable failure: reset and re-mint. The recruiters-only gate
+      // (canRetry=false) stays put.
+      if (!canRetry) return
+      setErrorMsg(null)
+      setState('idle')
+      setRetryNonce((n) => n + 1)
+      return
+    }
     if (ready) { setState('playing'); return }
     setState('loading') // token not ready yet — the effect below promotes it
-  }, [ready, state])
+  }, [ready, state, canRetry])
 
   useEffect(() => {
     if (state === 'loading' && ready) setState('playing')
@@ -197,6 +222,11 @@ export default function NativeVideoPlayer({
             <>
               <AlertCircle className="relative h-8 w-8 text-white/90" />
               <span className="relative max-w-[80%] text-center text-xs text-white/90">{errorMsg}</span>
+              {canRetry && (
+                <span className="relative rounded-full bg-white/15 px-3 py-1 text-[11px] font-semibold text-white">
+                  Tap to retry
+                </span>
+              )}
             </>
           ) : (
             <>
