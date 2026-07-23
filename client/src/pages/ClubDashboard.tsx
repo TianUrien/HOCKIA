@@ -569,7 +569,7 @@ export default function ClubDashboard({
               readOnly
             />
 
-            {memberCount > 0 && (
+            {(memberCount ?? 0) > 0 && (
             <div id="portfolio-members" className="scroll-mt-20 bg-white rounded-2xl shadow-sm">
               <div className="p-6 md:p-8">
                 <ClubMembersTab profileId={profile.id} isOwner={false} />
