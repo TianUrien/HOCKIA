@@ -50,6 +50,8 @@ interface ConnectionsPreviewProps {
   isAuthenticated: boolean
   /** Navigates to the dedicated connections page (existing /friends route). */
   onSeeAll: () => void
+  /** Anonymous-CTA verb — "plays with" (people) vs "connects with" (clubs). */
+  signInVerb?: string
 }
 
 const ROLE_RANK: Record<string, number> = { club: 0, coach: 1, umpire: 2, player: 3 }
@@ -60,6 +62,7 @@ export default function ConnectionsPreview({
   totalConnections,
   isAuthenticated,
   onSeeAll,
+  signInVerb = 'plays with',
 }: ConnectionsPreviewProps) {
   const navigate = useNavigate()
   const [faces, setFaces] = useState<PreviewProfile[]>([])
@@ -149,7 +152,7 @@ export default function ConnectionsPreview({
         <div className="flex flex-col items-start gap-3 rounded-xl border border-gray-100 bg-gray-50 p-4">
           <p className="flex items-center gap-2 text-sm text-gray-600">
             <Lock className="h-4 w-4 flex-shrink-0 text-gray-400" />
-            Sign in to see who {firstName} plays with.
+            Sign in to see who {firstName} {signInVerb}.
           </p>
           <button
             type="button"

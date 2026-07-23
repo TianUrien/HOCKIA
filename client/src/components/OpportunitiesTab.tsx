@@ -233,6 +233,27 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
 
     setIsLoading(true)
     try {
+      // ANONYMOUS public view (club portfolio share links): the counts RPC
+      // is auth-fenced — its hidden-profile guard reads `profiles`, which
+      // anon has no grant for, so it 42501s and the visitor saw "0 live
+      // roles" even when open roles exist. Open opportunities themselves
+      // are anon-readable under the same RLS the public /opportunities
+      // list uses, so fall back to a plain select (no applicant counts —
+      // anon never sees those anyway).
+      if (readOnly && !user) {
+        const { data, error } = await supabase
+          .from('opportunities')
+          .select('*')
+          .eq('club_id', targetUserId)
+          .eq('status', 'open')
+          .order('created_at', { ascending: false })
+          .limit(200)
+        if (error) throw error
+        setVacancies((data ?? []) as Vacancy[])
+        setApplicantCounts({})
+        return
+      }
+
       const { data, error } = await supabase
         .rpc('fetch_club_opportunities_with_counts', {
           p_club_id: targetUserId,

@@ -101,6 +101,11 @@ export const PUBLIC_CLUB_FIELDS_LIST = [
   'year_founded',
   'womens_league_division',
   'mens_league_division',
+  // Club portfolio (Phase 2): denormalized aggregates that gate the
+  // inline sections — ConnectionsPreview total + Posts empty-gating.
+  // Same non-sensitive counts the player list already exposes.
+  'accepted_friend_count',
+  'post_count',
   // Masked (see PUBLIC_PROFILE_FIELDS_LIST comment + migration 20260610100000).
   'contact_email:contact_email_masked',
   'contact_email_public',

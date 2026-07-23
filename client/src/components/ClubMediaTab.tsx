@@ -7,9 +7,11 @@ interface ClubMediaTabProps {
    *  dashboard wires this to its profile-strength refresh so the
    *  completion arc updates without a route change. */
   onCountChange?: (count: number) => void
+  /** Public-portfolio cap (readOnly only) — see GalleryManager. */
+  previewLimit?: number
 }
 
-export default function ClubMediaTab({ clubId, readOnly = false, onCountChange }: ClubMediaTabProps) {
+export default function ClubMediaTab({ clubId, readOnly = false, onCountChange, previewLimit }: ClubMediaTabProps) {
   return (
     <GalleryManager
       mode="club"
@@ -20,6 +22,7 @@ export default function ClubMediaTab({ clubId, readOnly = false, onCountChange }
       emptyStateDescription="No photos yet"
       addButtonLabel="Add Photos"
       onCountChange={onCountChange}
+      previewLimit={previewLimit}
     />
   )
 }

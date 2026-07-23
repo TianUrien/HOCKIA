@@ -760,6 +760,10 @@ export default function CoachDashboard({
               </div>
             </div>
 
+            {/* Gate the WRAPPER, not just the component: ConnectionsPreview
+                self-collapses at 0, but the card shell would remain as a
+                hollow white box (same class of bug as the other sections). */}
+            {((profile as Profile).accepted_friend_count ?? 0) > 0 && (
             <div id="community-connections" className="scroll-mt-20 bg-white rounded-2xl shadow-sm">
               <div className="p-6 md:p-8">
                 <ConnectionsPreview
@@ -771,6 +775,7 @@ export default function CoachDashboard({
                 />
               </div>
             </div>
+            )}
 
             <div id="community-comments" className="scroll-mt-20 bg-white rounded-2xl shadow-sm">
               <div className="p-6 md:p-8">

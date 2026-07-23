@@ -16,6 +16,8 @@ import SignInPromptModal from '@/components/SignInPromptModal'
 import ClubHeroCard from '@/components/dashboard/bento/ClubHeroCard'
 import ContextSwitcher from '@/components/recruiting/ContextSwitcher'
 import ClubBentoGrid from '@/components/dashboard/bento/ClubBentoGrid'
+import ClubBasicInfoCard from '@/components/dashboard/bento/ClubBasicInfoCard'
+import ConnectionsPreview from '@/components/profile/ConnectionsPreview'
 import RecruitmentSummaryCard from '@/components/dashboard/bento/RecruitmentSummaryCard'
 import { ProfileViewersSection } from '@/components/ProfileViewersSection'
 import type { Profile } from '@/lib/supabase'
@@ -388,6 +390,30 @@ export default function ClubDashboard({
     }
   }
 
+  // PUBLIC PORTFOLIO deep links — visitor /:section URLs scroll to the
+  // inline section anchor (mirror of Player/CoachDashboard; /friends
+  // excluded — it's the one real sub-page). Above the !profile guard:
+  // hooks can't be conditional.
+  useEffect(() => {
+    if (!readOnly || activeTab === 'profile' || activeTab === 'friends') return
+    const anchors: Partial<Record<TabType, string>> = {
+      members: 'portfolio-members',
+      opportunities: 'portfolio-opportunities',
+      media: 'portfolio-media',
+      comments: 'community-comments',
+      posts: 'community-posts',
+    }
+    const id = anchors[activeTab]
+    if (!id) return
+    const t1 = window.setTimeout(() => {
+      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 150)
+    const t2 = window.setTimeout(() => {
+      document.getElementById(id)?.scrollIntoView({ block: 'start' })
+    }, 600)
+    return () => { window.clearTimeout(t1); window.clearTimeout(t2) }
+  }, [readOnly, activeTab])
+
   if (!profile) return null
 
   const handleSendMessage = async () => {
@@ -457,7 +483,10 @@ export default function ClubDashboard({
           </button>
         )}
 
-        {!isLanding && (
+        {/* Owner-only, with the /friends visitor exception (dedicated
+            Connections page) — all other visitor /:section URLs scroll
+            to their portfolio anchor. */}
+        {!isLanding && (!readOnly || activeTab === 'friends') && (
           <button
             type="button"
             onClick={() => handleTabChange('profile')}
@@ -525,7 +554,83 @@ export default function ClubDashboard({
           </div>
         )}
 
-        {isLanding ? (
+        {readOnly && activeTab !== 'friends' ? (
+          // ── PUBLIC PORTFOLIO ─────────────────────────────────────────
+          // Same continuous-scroll visitor page as Player/CoachDashboard
+          // (see PlayerDashboard for the full rationale). Club-specific
+          // wins: OPEN OPPORTUNITIES render inline for visitors — the
+          // tile design never surfaced them publicly at all — and its
+          // "No Open Opportunities" empty state stays (informative
+          // recruiting signal, unlike the gated personal sections).
+          // /friends stays the one dedicated sub-page.
+          <div className="space-y-5 md:space-y-6">
+            <ClubBasicInfoCard
+              profile={profile as Parameters<typeof ClubBasicInfoCard>[0]['profile']}
+              readOnly
+            />
+
+            {memberCount > 0 && (
+            <div id="portfolio-members" className="scroll-mt-20 bg-white rounded-2xl shadow-sm">
+              <div className="p-6 md:p-8">
+                <ClubMembersTab profileId={profile.id} isOwner={false} />
+              </div>
+            </div>
+            )}
+
+            <div id="portfolio-opportunities" className="scroll-mt-20 bg-white rounded-2xl shadow-sm">
+              <div className="p-6 md:p-8">
+                <OpportunitiesTab
+                  profileId={profile.id}
+                  readOnly
+                  triggerCreate={triggerCreateVacancy}
+                  onCreateTriggered={() => setTriggerCreateVacancy(false)}
+                />
+              </div>
+            </div>
+
+            <div id="portfolio-media" className="scroll-mt-20 bg-white rounded-2xl shadow-sm">
+              <div className="p-6 md:p-8">
+                <ClubMediaTab clubId={profile.id} readOnly previewLimit={9} />
+              </div>
+            </div>
+
+            {/* Gate the WRAPPER, not just the component: ConnectionsPreview
+                self-collapses at 0, but the card shell would remain as a
+                hollow white box (same class of bug as the other sections). */}
+            {((profile as Profile).accepted_friend_count ?? 0) > 0 && (
+            <div id="community-connections" className="scroll-mt-20 bg-white rounded-2xl shadow-sm">
+              <div className="p-6 md:p-8">
+                <ConnectionsPreview
+                  profileId={profile.id}
+                  profileFirstName={profile.full_name ?? profile.username ?? null}
+                  totalConnections={(profile as Profile).accepted_friend_count ?? 0}
+                  isAuthenticated={Boolean(user)}
+                  onSeeAll={() => handleTabChange('friends')}
+                  signInVerb="connects with"
+                />
+              </div>
+            </div>
+            )}
+
+            <div id="community-comments" className="scroll-mt-20 bg-white rounded-2xl shadow-sm">
+              <div className="p-6 md:p-8">
+                <CommentsTab
+                  profileId={profile.id}
+                  highlightedCommentIds={highlightedComments}
+                  profileRole={profile.role}
+                />
+              </div>
+            </div>
+
+            {((profile as Profile).post_count ?? 0) > 0 && (
+            <div id="community-posts" className="scroll-mt-20 bg-white rounded-2xl shadow-sm">
+              <div className="p-6 md:p-8">
+                <ProfilePostsTab profileId={profile.id} readOnly />
+              </div>
+            </div>
+            )}
+          </div>
+        ) : isLanding ? (
           <ClubBentoGrid
             profile={profile as Parameters<typeof ClubBentoGrid>[0]['profile']}
             readOnly={readOnly}
@@ -557,15 +662,32 @@ export default function ClubDashboard({
 
               {activeTab === 'friends' && (
                 <div id="visitor-section-friends" className="animate-fade-in">
-                  {/* hideReferences — clubs don't carry trust references,
-                      and the dashboard drops the References tile, so the
-                      Connections section stays references-free too. */}
-                  <FriendsTab
-                    profileId={profile.id}
-                    readOnly={readOnly}
-                    profileRole={profile.role}
-                    hideReferences
-                  />
+                  {readOnly && !user ? (
+                    // Anonymous visitors never see the full graph
+                    // (reconciled Connections design — same as Player).
+                    <div className="flex flex-col items-start gap-3 rounded-xl border border-gray-100 bg-gray-50 p-6">
+                      <p className="text-sm text-gray-600">
+                        Sign in to see {profile.full_name ?? 'this club'}&apos;s connections.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => navigate('/signin')}
+                        className="rounded-lg bg-hockia-primary px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+                      >
+                        Sign in
+                      </button>
+                    </div>
+                  ) : (
+                    // hideReferences — clubs don't carry trust references,
+                    // and the dashboard drops the References tile, so the
+                    // Connections section stays references-free too.
+                    <FriendsTab
+                      profileId={profile.id}
+                      readOnly={readOnly}
+                      profileRole={profile.role}
+                      hideReferences
+                    />
+                  )}
                 </div>
               )}
 
