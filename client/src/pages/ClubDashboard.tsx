@@ -31,6 +31,7 @@ import AvailabilityToggleStrip from '@/components/AvailabilityToggleStrip'
 import type { ProfileStrengthBucket } from '@/hooks/useProfileStrength'
 import { useSearchAppearances } from '@/hooks/useSearchAppearances'
 import { useTabDeepLinkScroll } from '@/hooks/useTabDeepLinkScroll'
+import { usePortfolioAnchorScroll } from '@/hooks/usePortfolioAnchorScroll'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 
 // `?section=` query param → DOM anchor id. Drives the deep-link scroll
@@ -211,6 +212,7 @@ export default function ClubDashboard({
   const [sendingMessage, setSendingMessage] = useState(false)
   const [triggerCreateVacancy, setTriggerCreateVacancy] = useState(false)
   const [memberCount, setMemberCount] = useState<number | null>(null)
+  const [clubMediaCount, setClubMediaCount] = useState<number | null>(null)
   const claimCommentHighlights = useNotificationStore((state) => state.claimCommentHighlights)
   const clearCommentNotifications = useNotificationStore((state) => state.clearCommentNotifications)
   const commentHighlightVersion = useNotificationStore((state) => state.commentHighlightVersion)
@@ -255,6 +257,33 @@ export default function ClubDashboard({
       cancelled = true
     }
   }, [profileId])
+
+  // Public-portfolio gallery gate — visitors only. club_media is
+  // public-read (RLS `true`), so a head count works for anon too. Without
+  // this the media wrapper renders as a hollow "No photos yet" card on
+  // photo-less clubs (the QA hollow-card class).
+  useEffect(() => {
+    if (!readOnly || !profileId) return
+    let cancelled = false
+    const fetchMediaCount = async () => {
+      try {
+        const { count, error } = await supabase
+          .from('club_media')
+          .select('id', { count: 'exact', head: true })
+          .eq('club_id', profileId)
+        if (cancelled) return
+        if (error) throw error
+        setClubMediaCount(count ?? 0)
+      } catch (err) {
+        logger.error('[ClubDashboard] media count fetch failed', err)
+        if (!cancelled) setClubMediaCount(0)
+      }
+    }
+    void fetchMediaCount()
+    return () => {
+      cancelled = true
+    }
+  }, [readOnly, profileId])
 
   // Legacy ?tab=X migration — old notification links / bookmarks.
   useEffect(() => {
@@ -391,28 +420,17 @@ export default function ClubDashboard({
   }
 
   // PUBLIC PORTFOLIO deep links — visitor /:section URLs scroll to the
-  // inline section anchor (mirror of Player/CoachDashboard; /friends
-  // excluded — it's the one real sub-page). Above the !profile guard:
-  // hooks can't be conditional.
-  useEffect(() => {
-    if (!readOnly || activeTab === 'profile' || activeTab === 'friends') return
-    const anchors: Partial<Record<TabType, string>> = {
-      members: 'portfolio-members',
-      opportunities: 'portfolio-opportunities',
-      media: 'portfolio-media',
-      comments: 'community-comments',
-      posts: 'community-posts',
-    }
-    const id = anchors[activeTab]
-    if (!id) return
-    const t1 = window.setTimeout(() => {
-      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }, 150)
-    const t2 = window.setTimeout(() => {
-      document.getElementById(id)?.scrollIntoView({ block: 'start' })
-    }, 600)
-    return () => { window.clearTimeout(t1); window.clearTimeout(t2) }
-  }, [readOnly, activeTab])
+  // inline section anchor (mirror of Player/CoachDashboard; /friends and
+  // profile excluded — no map entry → null → hook no-ops). Above the
+  // !profile guard: hooks can't be conditional.
+  const portfolioAnchors: Partial<Record<TabType, string>> = {
+    members: 'portfolio-members',
+    opportunities: 'portfolio-opportunities',
+    media: 'portfolio-media',
+    comments: 'community-comments',
+    posts: 'community-posts',
+  }
+  usePortfolioAnchorScroll(readOnly ? portfolioAnchors[activeTab] ?? null : null)
 
   if (!profile) return null
 
@@ -588,11 +606,13 @@ export default function ClubDashboard({
               </div>
             </div>
 
+            {(clubMediaCount ?? 0) > 0 && (
             <div id="portfolio-media" className="scroll-mt-20 bg-white rounded-2xl shadow-sm">
               <div className="p-6 md:p-8">
                 <ClubMediaTab clubId={profile.id} readOnly previewLimit={9} />
               </div>
             </div>
+            )}
 
             {/* Gate the WRAPPER, not just the component: ConnectionsPreview
                 self-collapses at 0, but the card shell would remain as a

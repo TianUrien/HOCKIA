@@ -37,6 +37,7 @@ import { useProfileStrength, type ProfileStrengthBucket } from '@/hooks/useProfi
 import { trackReferenceBadgeClick } from '@/lib/analytics'
 import { useWorldClubLogo } from '@/hooks/useWorldClubLogo'
 import { useTabDeepLinkScroll } from '@/hooks/useTabDeepLinkScroll'
+import { usePortfolioAnchorScroll } from '@/hooks/usePortfolioAnchorScroll'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 
 // `?section=` query param → DOM anchor id. Used by the deep-link scroll
@@ -449,30 +450,17 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
   // community-* ids double as the ?section= anchors in
   // PLAYER_SECTION_ANCHORS, so hero-pill navigation lands there too.
   // (Must stay ABOVE the !profile guard — hooks can't be conditional.)
-  useEffect(() => {
-    if (!readOnly || activeTab === 'profile') return
-    // NOTE: no 'friends' entry — /friends is the one real visitor
-    // sub-page (dedicated Connections screen, reconciled design).
-    const anchors: Partial<Record<TabType, string>> = {
-      journey: 'portfolio-journey',
-      media: 'portfolio-media',
-      references: 'community-references',
-      comments: 'community-comments',
-      posts: 'community-posts',
-      community: 'community-references',
-    }
-    const id = anchors[activeTab]
-    if (!id) return
-    // Two-phase like useTabDeepLinkScroll: sections mount + fetch at
-    // different speeds, so retry once after layout settles.
-    const t1 = window.setTimeout(() => {
-      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }, 150)
-    const t2 = window.setTimeout(() => {
-      document.getElementById(id)?.scrollIntoView({ block: 'start' })
-    }, 600)
-    return () => { window.clearTimeout(t1); window.clearTimeout(t2) }
-  }, [readOnly, activeTab])
+  // NOTE: no 'friends' entry — /friends is the one real visitor
+  // sub-page (dedicated Connections screen, reconciled design).
+  const portfolioAnchors: Partial<Record<TabType, string>> = {
+    journey: 'portfolio-journey',
+    media: 'portfolio-media',
+    references: 'community-references',
+    comments: 'community-comments',
+    posts: 'community-posts',
+    community: 'community-references',
+  }
+  usePortfolioAnchorScroll(readOnly ? portfolioAnchors[activeTab] ?? null : null)
 
   if (!profile) return null
 

@@ -40,6 +40,7 @@ import type { ProfileStrengthBucket } from '@/hooks/useProfileStrength'
 import { trackReferenceBadgeClick } from '@/lib/analytics'
 import { useWorldClubLogo } from '@/hooks/useWorldClubLogo'
 import { useTabDeepLinkScroll } from '@/hooks/useTabDeepLinkScroll'
+import { usePortfolioAnchorScroll } from '@/hooks/usePortfolioAnchorScroll'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 
 // `?section=` query param → DOM anchor id. Drives the deep-link scroll
@@ -419,28 +420,18 @@ export default function CoachDashboard({
   }
 
   // PUBLIC PORTFOLIO deep links — visitor /:section URLs scroll to the
-  // inline section anchor (mirror of PlayerDashboard; /friends excluded,
-  // it's the one real sub-page). Must stay ABOVE the !profile guard.
-  useEffect(() => {
-    if (!readOnly || activeTab === 'profile' || activeTab === 'friends') return
-    const anchors: Partial<Record<TabType, string>> = {
-      journey: 'portfolio-journey',
-      media: 'portfolio-media',
-      references: 'community-references',
-      comments: 'community-comments',
-      posts: 'community-posts',
-      community: 'community-references',
-    }
-    const id = anchors[activeTab]
-    if (!id) return
-    const t1 = window.setTimeout(() => {
-      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }, 150)
-    const t2 = window.setTimeout(() => {
-      document.getElementById(id)?.scrollIntoView({ block: 'start' })
-    }, 600)
-    return () => { window.clearTimeout(t1); window.clearTimeout(t2) }
-  }, [readOnly, activeTab])
+  // inline section anchor (mirror of PlayerDashboard; /friends and profile
+  // excluded — no map entry → null → hook no-ops). Must stay ABOVE the
+  // !profile guard.
+  const portfolioAnchors: Partial<Record<TabType, string>> = {
+    journey: 'portfolio-journey',
+    media: 'portfolio-media',
+    references: 'community-references',
+    comments: 'community-comments',
+    posts: 'community-posts',
+    community: 'community-references',
+  }
+  usePortfolioAnchorScroll(readOnly ? portfolioAnchors[activeTab] ?? null : null)
 
   if (!profile) return null
 

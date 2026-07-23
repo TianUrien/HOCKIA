@@ -713,7 +713,12 @@ export default function GalleryManager({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">{resolvedTitle}</h2>
-          <p className="mt-1 text-gray-600 sm:mt-0 sm:text-sm">{resolvedDescription}</p>
+          {/* The subtitle is manage-instructional ("Manage your club
+              photos" / "Share photos and videos…") — owner copy that must
+              never show on the public portfolio. */}
+          {!readOnly && (
+            <p className="mt-1 text-gray-600 sm:mt-0 sm:text-sm">{resolvedDescription}</p>
+          )}
         </div>
         {!readOnly && (
           <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
@@ -1083,7 +1088,15 @@ export default function GalleryManager({
           <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <Upload className="w-8 h-8 text-gray-400" />
           </div>
-          <p className="text-gray-600">{resolvedEmptyState}</p>
+          {/* Visitors get a neutral statement — the configured empty copy
+              is owner-instructional ("Start building your gallery!"). */}
+          <p className="text-gray-600">
+            {readOnly
+              ? config.supportsVideo
+                ? 'No photos or videos yet.'
+                : 'No photos yet.'
+              : resolvedEmptyState}
+          </p>
         </div>
       )}
 
