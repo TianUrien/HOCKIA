@@ -41,6 +41,8 @@ import { trackReferenceBadgeClick } from '@/lib/analytics'
 import { useWorldClubLogo } from '@/hooks/useWorldClubLogo'
 import { useTabDeepLinkScroll } from '@/hooks/useTabDeepLinkScroll'
 import { usePortfolioAnchorScroll } from '@/hooks/usePortfolioAnchorScroll'
+import PortfolioSectionNav from '@/components/profile/PortfolioSectionNav'
+import PublicConnectionsPage from '@/components/profile/PublicConnectionsPage'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 
 // `?section=` query param → DOM anchor id. Drives the deep-link scroll
@@ -709,12 +711,32 @@ export default function CoachDashboard({
           // gallery-only (showVideo=false), matching the coach section
           // behavior. /friends stays the one dedicated sub-page.
           <div className="space-y-5 md:space-y-6">
+            {/* Sticky quick-nav — chips mirror the section gates below. */}
+            <PortfolioSectionNav
+              sections={[
+                ...(((profile as Profile).career_entry_count ?? 0) > 0
+                  ? [{ id: 'portfolio-journey', label: 'Career' }]
+                  : []),
+                ...(((profile as Profile).accepted_reference_count ?? 0) > 0
+                  ? [{ id: 'community-references', label: 'References' }]
+                  : []),
+                { id: 'portfolio-media', label: 'Media' },
+                ...(((profile as Profile).accepted_friend_count ?? 0) > 0
+                  ? [{ id: 'community-connections', label: 'Connections' }]
+                  : []),
+                { id: 'community-comments', label: 'Comments' },
+                ...(((profile as Profile).post_count ?? 0) > 0
+                  ? [{ id: 'community-posts', label: 'Posts' }]
+                  : []),
+              ]}
+            />
+
             {Boolean((profile as Profile).bio?.trim()) && (
               <AboutMeCard bio={(profile as Profile).bio} readOnly />
             )}
 
             {((profile as Profile).career_entry_count ?? 0) > 0 && (
-            <div id="portfolio-journey" className="scroll-mt-20 bg-white rounded-2xl shadow-sm">
+            <div id="portfolio-journey" className="scroll-mt-32 bg-white rounded-2xl shadow-sm">
               <div className="p-6 md:p-8">
                 <JourneyTab
                   profileId={profile.id}
@@ -727,7 +749,7 @@ export default function CoachDashboard({
             )}
 
             {((profile as Profile).accepted_reference_count ?? 0) > 0 && (
-            <div id="community-references" className="scroll-mt-20 bg-white rounded-2xl shadow-sm">
+            <div id="community-references" className="scroll-mt-32 bg-white rounded-2xl shadow-sm">
               <div className="p-6 md:p-8">
                 <PublicReferencesSection
                   profileId={profile.id}
@@ -737,7 +759,7 @@ export default function CoachDashboard({
             </div>
             )}
 
-            <div id="portfolio-media" className="scroll-mt-20 bg-white rounded-2xl shadow-sm">
+            <div id="portfolio-media" className="scroll-mt-32 bg-white rounded-2xl shadow-sm">
               <div className="p-6 md:p-8">
                 <MediaTab
                   profileId={profile.id}
@@ -755,7 +777,7 @@ export default function CoachDashboard({
                 self-collapses at 0, but the card shell would remain as a
                 hollow white box (same class of bug as the other sections). */}
             {((profile as Profile).accepted_friend_count ?? 0) > 0 && (
-            <div id="community-connections" className="scroll-mt-20 bg-white rounded-2xl shadow-sm">
+            <div id="community-connections" className="scroll-mt-32 bg-white rounded-2xl shadow-sm">
               <div className="p-6 md:p-8">
                 <ConnectionsPreview
                   profileId={profile.id}
@@ -768,7 +790,7 @@ export default function CoachDashboard({
             </div>
             )}
 
-            <div id="community-comments" className="scroll-mt-20 bg-white rounded-2xl shadow-sm">
+            <div id="community-comments" className="scroll-mt-32 bg-white rounded-2xl shadow-sm">
               <div className="p-6 md:p-8">
                 <CommentsTab
                   profileId={profile.id}
@@ -779,7 +801,7 @@ export default function CoachDashboard({
             </div>
 
             {((profile as Profile).post_count ?? 0) > 0 && (
-            <div id="community-posts" className="scroll-mt-20 bg-white rounded-2xl shadow-sm">
+            <div id="community-posts" className="scroll-mt-32 bg-white rounded-2xl shadow-sm">
               <div className="p-6 md:p-8">
                 <ProfilePostsTab profileId={profile.id} readOnly />
               </div>
@@ -801,7 +823,7 @@ export default function CoachDashboard({
             onViewApplications={handleViewApplications}
           />
         ) : (
-          <div id="profile-tab-content" className="bg-white rounded-2xl shadow-sm scroll-mt-4">
+          <div id="profile-tab-content" className="bg-white rounded-2xl shadow-sm scroll-mt-24">
             <div className="p-6 md:p-8 min-h-screen">
               {activeTab === 'journey' && (
                 <div className="animate-fade-in">
@@ -844,6 +866,11 @@ export default function CoachDashboard({
                         Sign in
                       </button>
                     </div>
+                  ) : readOnly ? (
+                    <PublicConnectionsPage
+                      profileId={profile.id}
+                      profileName={profile.full_name ?? profile.username ?? null}
+                    />
                   ) : (
                     <FriendsTab
                       profileId={profile.id}

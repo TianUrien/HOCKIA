@@ -130,6 +130,10 @@ vi.mock('@/components/profile/ConnectionsPreview', () => ({
   default: () => <div data-testid="connections-preview">Connections preview</div>,
 }))
 
+vi.mock('@/components/profile/PublicConnectionsPage', () => ({
+  default: () => <div data-testid="public-connections-page">Public connections</div>,
+}))
+
 vi.mock('@/components/SignInPromptModal', () => ({
   default: () => null,
 }))
@@ -435,12 +439,22 @@ describe('PlayerDashboard (Bento Grid)', () => {
   it('visitor /friends is the ONE dedicated sub-page (reconciled Connections design)', () => {
     // The full connections list lives on its own screen with a Back
     // shortcut — the portfolio only ever shows the preview strip.
+    // Phase 3: visitors get PublicConnectionsPage (presentation-only, fed
+    // by the shared fenced RPC so its count matches the list); FriendsTab
+    // stays the OWNER surface with requests/mutations/vouch CTAs.
     renderDashboard({ initialPath: '/players/jordan/friends', readOnly: true })
-    expect(screen.getByTestId('friends-tab')).toBeInTheDocument()
+    expect(screen.getByTestId('public-connections-page')).toBeInTheDocument()
+    expect(screen.queryByTestId('friends-tab')).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: /back to profile/i })).toBeInTheDocument()
     // Portfolio sections are NOT stacked on the dedicated page.
     expect(screen.queryByTestId('journey-tab')).not.toBeInTheDocument()
     expect(screen.queryByTestId('media-tab')).not.toBeInTheDocument()
+  })
+
+  it('the OWNER /friends page still renders FriendsTab (management surface)', () => {
+    renderDashboard({ initialPath: '/dashboard/profile/friends' })
+    expect(screen.getByTestId('friends-tab')).toBeInTheDocument()
+    expect(screen.queryByTestId('public-connections-page')).not.toBeInTheDocument()
   })
 
   it('the owner /community page renders the PlayerCommunityHub redesign (credibility card, references, connections, comments, posts)', () => {

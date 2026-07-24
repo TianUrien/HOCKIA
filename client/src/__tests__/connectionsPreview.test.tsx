@@ -9,11 +9,11 @@ import ConnectionsPreview from '@/components/profile/ConnectionsPreview'
 // asserted here too so the contract lives in one place.
 
 const h = vi.hoisted(() => ({
-  fromMock: vi.fn(),
+  rpcMock: vi.fn(),
 }))
 
 vi.mock('@/lib/supabase', () => ({
-  supabase: { from: h.fromMock },
+  supabase: { rpc: h.rpcMock },
 }))
 
 vi.mock('@/components', () => ({
@@ -24,27 +24,14 @@ vi.mock('@/lib/logger', () => ({
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }))
 
-/** Awaitable chain stub: every builder method returns the chain; awaiting
- *  it resolves to `result` (same shape the supabase-js builder thenable has). */
-function chainResolving(result: { data: unknown; error: unknown }) {
-  const c: Record<string, unknown> = {}
-  for (const m of ['select', 'eq', 'order', 'limit', 'in']) {
-    c[m] = vi.fn(() => c)
-  }
-  c.then = (onFulfilled: (v: unknown) => unknown) => Promise.resolve(result).then(onFulfilled)
-  return c
-}
-
-function mockGraph(edgeCount: number, profiles: Array<Record<string, unknown>>) {
-  const edges = Array.from({ length: edgeCount }, (_, i) => ({
-    friend_id: `f${i + 1}`,
-    status: 'accepted',
-    created_at: new Date(2026, 0, edgeCount - i).toISOString(),
-  }))
-  h.fromMock.mockImplementation((table: string) => {
-    if (table === 'profile_friend_edges') return chainResolving({ data: edges, error: null })
-    if (table === 'profiles') return chainResolving({ data: profiles, error: null })
-    throw new Error(`unexpected table ${table}`)
+/** The component reads BOTH the faces and the visible total from the one
+ *  fenced RPC, so the stub returns rows carrying total_count (the RPC's
+ *  single-probe pattern). */
+function mockGraph(total: number, rows: Array<Record<string, unknown>>) {
+  const withTotal = rows.map((r) => ({ ...r, total_count: total }))
+  h.rpcMock.mockImplementation((fn: string) => {
+    if (fn !== 'get_profile_connections') throw new Error(`unexpected rpc ${fn}`)
+    return Promise.resolve({ data: withTotal, error: null })
   })
 }
 
@@ -56,6 +43,9 @@ function profileRow(i: number, overrides: Record<string, unknown> = {}) {
     role: 'player',
     username: `player${i}`,
     is_verified: false,
+    base_location: null,
+    current_club: null,
+    connected_at: new Date(2026, 0, 28 - i).toISOString(),
     ...overrides,
   }
 }
@@ -126,8 +116,33 @@ describe('ConnectionsPreview', () => {
     expect(
       screen.getByText(/Sign in to see who Marcia connects with\./),
     ).toBeInTheDocument()
-    expect(h.fromMock).not.toHaveBeenCalled()
+    // Anonymous viewers never hit the graph — the RPC is signed-in only
+    // (revoked from anon) and the design forbids public enumeration.
+    expect(h.rpcMock).not.toHaveBeenCalled()
     expect(screen.queryAllByTestId('avatar')).toHaveLength(0)
+  })
+
+  it('shows the FENCED total, not the denormalized prop, once loaded', async () => {
+    // The profile row claims 27; this viewer can only see 11 (blocked
+    // pairs / hidden / test accounts). The pill and "See all" must quote
+    // the number the connections page will actually list.
+    mockGraph(11, Array.from({ length: 11 }, (_, i) => profileRow(i + 1)))
+    renderPreview({ totalConnections: 27 })
+
+    expect(
+      await screen.findByRole('button', { name: /See all 11 connections/ }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('11 connections')).toBeInTheDocument()
+    expect(screen.queryByText(/27 connections/)).not.toBeInTheDocument()
+  })
+
+  it('says so instead of rendering a hollow card when fences hide everyone', async () => {
+    mockGraph(0, [])
+    renderPreview({ totalConnections: 4 })
+
+    expect(await screen.findByText('No connections to show.')).toBeInTheDocument()
+    expect(screen.queryAllByTestId('avatar')).toHaveLength(0)
+    expect(screen.queryByRole('button', { name: /See all/ })).not.toBeInTheDocument()
   })
 
   it('collapses entirely at zero connections', () => {
@@ -136,5 +151,14 @@ describe('ConnectionsPreview', () => {
     mockGraph(0, [])
     const { container } = renderPreview({ totalConnections: 0 })
     expect(container).toBeEmptyDOMElement()
+  })
+
+  it('falls back to the denormalized count if the RPC errors', async () => {
+    h.rpcMock.mockResolvedValue({ data: null, error: new Error('boom') })
+    renderPreview({ totalConnections: 12 })
+
+    expect(await screen.findByText(/Couldn't load connections right now\./)).toBeInTheDocument()
+    // Pill still renders from the prop rather than flashing a wrong 0.
+    expect(screen.getByText('12 connections')).toBeInTheDocument()
   })
 })

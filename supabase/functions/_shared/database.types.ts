@@ -8803,6 +8803,27 @@ export type Database = {
           profile_id: string
         }[]
       }
+      get_profile_connections: {
+        Args: {
+          p_limit?: number
+          p_offset?: number
+          p_profile_id: string
+          p_role?: string
+          p_search?: string
+        }
+        Returns: {
+          avatar_url: string
+          base_location: string
+          connected_at: string
+          current_club: string
+          full_name: string
+          id: string
+          is_verified: boolean
+          role: string
+          total_count: number
+          username: string
+        }[]
+      }
       get_profile_posts: {
         Args: { p_limit?: number; p_offset?: number; p_profile_id: string }
         Returns: Json

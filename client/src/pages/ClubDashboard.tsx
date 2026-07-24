@@ -32,6 +32,8 @@ import type { ProfileStrengthBucket } from '@/hooks/useProfileStrength'
 import { useSearchAppearances } from '@/hooks/useSearchAppearances'
 import { useTabDeepLinkScroll } from '@/hooks/useTabDeepLinkScroll'
 import { usePortfolioAnchorScroll } from '@/hooks/usePortfolioAnchorScroll'
+import PortfolioSectionNav from '@/components/profile/PortfolioSectionNav'
+import PublicConnectionsPage from '@/components/profile/PublicConnectionsPage'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 
 // `?section=` query param → DOM anchor id. Drives the deep-link scroll
@@ -582,20 +584,41 @@ export default function ClubDashboard({
           // recruiting signal, unlike the gated personal sections).
           // /friends stays the one dedicated sub-page.
           <div className="space-y-5 md:space-y-6">
+            {/* Sticky quick-nav — chips mirror the section gates below.
+                Opportunities + Comments always render for clubs. */}
+            <PortfolioSectionNav
+              sections={[
+                ...((memberCount ?? 0) > 0
+                  ? [{ id: 'portfolio-members', label: 'Members' }]
+                  : []),
+                { id: 'portfolio-opportunities', label: 'Opportunities' },
+                ...((clubMediaCount ?? 0) > 0
+                  ? [{ id: 'portfolio-media', label: 'Gallery' }]
+                  : []),
+                ...(((profile as Profile).accepted_friend_count ?? 0) > 0
+                  ? [{ id: 'community-connections', label: 'Connections' }]
+                  : []),
+                { id: 'community-comments', label: 'Comments' },
+                ...(((profile as Profile).post_count ?? 0) > 0
+                  ? [{ id: 'community-posts', label: 'Posts' }]
+                  : []),
+              ]}
+            />
+
             <ClubBasicInfoCard
               profile={profile as Parameters<typeof ClubBasicInfoCard>[0]['profile']}
               readOnly
             />
 
             {(memberCount ?? 0) > 0 && (
-            <div id="portfolio-members" className="scroll-mt-20 bg-white rounded-2xl shadow-sm">
+            <div id="portfolio-members" className="scroll-mt-32 bg-white rounded-2xl shadow-sm">
               <div className="p-6 md:p-8">
                 <ClubMembersTab profileId={profile.id} isOwner={false} />
               </div>
             </div>
             )}
 
-            <div id="portfolio-opportunities" className="scroll-mt-20 bg-white rounded-2xl shadow-sm">
+            <div id="portfolio-opportunities" className="scroll-mt-32 bg-white rounded-2xl shadow-sm">
               <div className="p-6 md:p-8">
                 <OpportunitiesTab
                   profileId={profile.id}
@@ -607,7 +630,7 @@ export default function ClubDashboard({
             </div>
 
             {(clubMediaCount ?? 0) > 0 && (
-            <div id="portfolio-media" className="scroll-mt-20 bg-white rounded-2xl shadow-sm">
+            <div id="portfolio-media" className="scroll-mt-32 bg-white rounded-2xl shadow-sm">
               <div className="p-6 md:p-8">
                 <ClubMediaTab clubId={profile.id} readOnly previewLimit={9} />
               </div>
@@ -618,7 +641,7 @@ export default function ClubDashboard({
                 self-collapses at 0, but the card shell would remain as a
                 hollow white box (same class of bug as the other sections). */}
             {((profile as Profile).accepted_friend_count ?? 0) > 0 && (
-            <div id="community-connections" className="scroll-mt-20 bg-white rounded-2xl shadow-sm">
+            <div id="community-connections" className="scroll-mt-32 bg-white rounded-2xl shadow-sm">
               <div className="p-6 md:p-8">
                 <ConnectionsPreview
                   profileId={profile.id}
@@ -632,7 +655,7 @@ export default function ClubDashboard({
             </div>
             )}
 
-            <div id="community-comments" className="scroll-mt-20 bg-white rounded-2xl shadow-sm">
+            <div id="community-comments" className="scroll-mt-32 bg-white rounded-2xl shadow-sm">
               <div className="p-6 md:p-8">
                 <CommentsTab
                   profileId={profile.id}
@@ -643,7 +666,7 @@ export default function ClubDashboard({
             </div>
 
             {((profile as Profile).post_count ?? 0) > 0 && (
-            <div id="community-posts" className="scroll-mt-20 bg-white rounded-2xl shadow-sm">
+            <div id="community-posts" className="scroll-mt-32 bg-white rounded-2xl shadow-sm">
               <div className="p-6 md:p-8">
                 <ProfilePostsTab profileId={profile.id} readOnly />
               </div>
@@ -660,7 +683,7 @@ export default function ClubDashboard({
             onManageOpportunities={() => handleTabChange('opportunities')}
           />
         ) : (
-          <div id="profile-tab-content" className="bg-white rounded-2xl shadow-sm scroll-mt-4">
+          <div id="profile-tab-content" className="bg-white rounded-2xl shadow-sm scroll-mt-24">
             <div className="p-6 md:p-8 min-h-screen">
               {activeTab === 'media' && (
                 <div className="animate-fade-in">
@@ -697,6 +720,11 @@ export default function ClubDashboard({
                         Sign in
                       </button>
                     </div>
+                  ) : readOnly ? (
+                    <PublicConnectionsPage
+                      profileId={profile.id}
+                      profileName={profile.full_name ?? profile.username ?? null}
+                    />
                   ) : (
                     // hideReferences — clubs don't carry trust references,
                     // and the dashboard drops the References tile, so the

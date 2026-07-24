@@ -164,23 +164,30 @@ export default function ClubHeroCard({
         </div>
       </div>
 
-      {/* Credibility stats — Connections + Members */}
+      {/* Credibility stats — Connections + Members. A zero stat is an
+          anti-signal to a visitor (and its "›" leads to an empty screen),
+          so visitors only see the ones that carry weight; the owner keeps
+          both as management entry points. */}
       <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2" data-testid="club-hero-stats">
         <ResponsivenessBadge tier={responsivenessTier} />
-        <CredibilityStat
-          icon={Users}
-          label="Connections"
-          count={friendCount}
-          onClick={onConnectionsClick}
-          testId="club-hero-connections"
-        />
-        <CredibilityStat
-          icon={UsersRound}
-          label="Members"
-          count={memberCount ?? 0}
-          onClick={onMembersClick}
-          testId="club-hero-members"
-        />
+        {(!readOnly || friendCount > 0) && (
+          <CredibilityStat
+            icon={Users}
+            label="Connections"
+            count={friendCount}
+            onClick={onConnectionsClick}
+            testId="club-hero-connections"
+          />
+        )}
+        {(!readOnly || (memberCount ?? 0) > 0) && (
+          <CredibilityStat
+            icon={UsersRound}
+            label="Members"
+            count={memberCount ?? 0}
+            onClick={onMembersClick}
+            testId="club-hero-members"
+          />
+        )}
       </div>
 
       {/* CTA row */}

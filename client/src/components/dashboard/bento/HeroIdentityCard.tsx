@@ -179,20 +179,27 @@ export default function HeroIdentityCard({
         className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2"
         data-testid="hero-credibility-tiles"
       >
-        <CredibilityStat
-          icon={Users}
-          label="Connections"
-          count={friendCount}
-          onClick={onFriendsClick}
-          testId="hero-friends-tile"
-        />
-        <CredibilityStat
-          icon={Shield}
-          label="References"
-          count={referenceCount}
-          onClick={onReferencesClick}
-          testId="hero-references-tile"
-        />
+        {/* Visitors only see stats that carry weight — a "0 ›" is an
+            anti-signal AND leads to an empty screen. Owner keeps both as
+            management entry points. */}
+        {(!readOnly || friendCount > 0) && (
+          <CredibilityStat
+            icon={Users}
+            label="Connections"
+            count={friendCount}
+            onClick={onFriendsClick}
+            testId="hero-friends-tile"
+          />
+        )}
+        {(!readOnly || referenceCount > 0) && (
+          <CredibilityStat
+            icon={Shield}
+            label="References"
+            count={referenceCount}
+            onClick={onReferencesClick}
+            testId="hero-references-tile"
+          />
+        )}
       </div>
 
       {/* CTA ROW — full-width below the identity zone. Visitor sees

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Users, ArrowRight, Lock } from 'lucide-react'
 import { Avatar } from '@/components'
 import { supabase } from '@/lib/supabase'
+import type { Database } from '@/lib/database.types'
 import { profilePath } from '@/lib/profileNavigation'
 import { logger } from '@/lib/logger'
 
@@ -31,14 +32,8 @@ import { logger } from '@/lib/logger'
 const MAX_FACES = 8
 const MIN_COUNT_TO_SHOW = 10
 
-interface PreviewProfile {
-  id: string
-  full_name: string | null
-  avatar_url: string | null
-  role: string | null
-  username: string | null
-  is_verified: boolean | null
-}
+type PreviewProfile =
+  Database['public']['Functions']['get_profile_connections']['Returns'][number]
 
 interface ConnectionsPreviewProps {
   profileId: string
@@ -66,7 +61,13 @@ export default function ConnectionsPreview({
 }: ConnectionsPreviewProps) {
   const navigate = useNavigate()
   const [faces, setFaces] = useState<PreviewProfile[]>([])
+  // Fenced total from get_profile_connections — what THIS viewer can
+  // actually see. null until loaded (or on error): display then falls
+  // back to the denormalized prop so the anon path and the skeleton
+  // keep working unchanged.
+  const [fencedTotal, setFencedTotal] = useState<number | null>(null)
   const [loading, setLoading] = useState(isAuthenticated)
+  const [loadFailed, setLoadFailed] = useState(false)
 
   useEffect(() => {
     // Anonymous viewers get no graph data — by design, not just styling.
@@ -74,44 +75,34 @@ export default function ConnectionsPreview({
     let cancelled = false
     const load = async () => {
       try {
-        // Same fence semantics as FriendsTab: accepted edges only.
-        // Over-fetch slightly so credential-ranking has material.
-        const { data: edges, error } = await supabase
-          .from('profile_friend_edges')
-          .select('friend_id, status, created_at')
-          .eq('profile_id', profileId)
-          .eq('status', 'accepted')
-          .order('created_at', { ascending: false })
-          .limit(MAX_FACES * 3)
+        // ONE shared RPC with the dedicated connections page — the faces,
+        // the pill and "See all N" can never disagree with the list the
+        // page will show. Over-fetch so credential-ranking has material.
+        const { data, error } = await supabase.rpc('get_profile_connections', {
+          p_profile_id: profileId,
+          p_limit: MAX_FACES * 3,
+          p_offset: 0,
+        })
         if (error) throw error
-        const ids = Array.from(
-          new Set((edges ?? []).map((e) => e.friend_id).filter((id): id is string => Boolean(id)))
-        )
-        if (ids.length === 0) {
-          if (!cancelled) setFaces([])
-          return
-        }
-        const { data: rows, error: pErr } = await supabase
-          .from('profiles')
-          .select('id, full_name, avatar_url, role, username, is_verified')
-          .in('id', ids)
-        if (pErr) throw pErr
         if (cancelled) return
+        const rows = (data ?? []) as PreviewProfile[]
+        setFencedTotal(rows.length > 0 ? Number(rows[0].total_count) : 0)
         // Rank for a stranger: clubs and coaches (the credibility-carrying
-        // roles) first, verified before unverified, then recency.
-        const order = new Map(ids.map((id, i) => [id, i]))
-        const ranked = [...(rows ?? [])].sort((a, b) => {
+        // roles) first, verified before unverified, then recency (the
+        // RPC's order — Array.sort is stable, so ties keep it).
+        const ranked = [...rows].sort((a, b) => {
           const roleDiff =
             (ROLE_RANK[a.role ?? 'player'] ?? 9) - (ROLE_RANK[b.role ?? 'player'] ?? 9)
           if (roleDiff !== 0) return roleDiff
-          const verDiff = Number(Boolean(b.is_verified)) - Number(Boolean(a.is_verified))
-          if (verDiff !== 0) return verDiff
-          return (order.get(a.id) ?? 99) - (order.get(b.id) ?? 99)
+          return Number(Boolean(b.is_verified)) - Number(Boolean(a.is_verified))
         })
-        setFaces(ranked.slice(0, MAX_FACES) as PreviewProfile[])
+        setFaces(ranked.slice(0, MAX_FACES))
       } catch (err) {
         logger.error('[ConnectionsPreview] failed to load preview', err)
-        if (!cancelled) setFaces([])
+        if (!cancelled) {
+          setFaces([])
+          setLoadFailed(true)
+        }
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -122,7 +113,10 @@ export default function ConnectionsPreview({
     }
   }, [profileId, isAuthenticated])
 
-  const showCount = totalConnections >= MIN_COUNT_TO_SHOW
+  // Signed-in surfaces show the FENCED number once known; anonymous (no
+  // RPC access) and the pre-load skeleton use the denormalized prop.
+  const displayTotal = isAuthenticated && fencedTotal !== null ? fencedTotal : totalConnections
+  const showCount = displayTotal >= MIN_COUNT_TO_SHOW
   const firstName = profileFirstName?.trim().split(/\s+/)[0] ?? 'this member'
 
   const header = useMemo(
@@ -134,12 +128,12 @@ export default function ConnectionsPreview({
         </h2>
         {showCount && (
           <span className="rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-600">
-            {totalConnections} connections
+            {displayTotal} connections
           </span>
         )}
       </div>
     ),
-    [showCount, totalConnections]
+    [showCount, displayTotal]
   )
 
   // Nothing to show, nothing to sell — collapse entirely.
@@ -177,6 +171,13 @@ export default function ConnectionsPreview({
             <div key={i} className="h-16 w-16 animate-pulse rounded-full bg-gray-100" />
           ))}
         </div>
+      ) : loadFailed ? (
+        <p className="text-sm text-gray-500">Couldn&apos;t load connections right now.</p>
+      ) : faces.length === 0 ? (
+        // The viewer's fences hid everything the denormalized gate let
+        // through (blocked pairs / hidden / test accounts) — say so
+        // instead of leaving a silent hollow card.
+        <p className="text-sm text-gray-500">No connections to show.</p>
       ) : (
         <div className="flex flex-wrap items-start gap-3">
           {faces.map((f) => {
@@ -203,13 +204,13 @@ export default function ConnectionsPreview({
           })}
         </div>
       )}
-      {totalConnections > MAX_FACES && (
+      {displayTotal > MAX_FACES && (
         <button
           type="button"
           onClick={onSeeAll}
           className="inline-flex items-center gap-1.5 text-sm font-semibold text-hockia-primary hover:underline"
         >
-          See all {totalConnections} connections
+          See all {displayTotal} connections
           <ArrowRight className="h-4 w-4" />
         </button>
       )}
