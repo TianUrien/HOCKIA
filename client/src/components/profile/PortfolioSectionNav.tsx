@@ -23,12 +23,23 @@ export interface PortfolioNavSection {
 
 interface PortfolioSectionNavProps {
   sections: PortfolioNavSection[]
+  /**
+   * True when PublicViewBanner is on screen (owner previewing their own
+   * public profile). That banner is `fixed top-[68px]` and taller than
+   * the header, so the default offset would park the chips underneath
+   * it. Its height differs by breakpoint because its content stacks on
+   * mobile (see PublicViewBanner's own h-[132px] sm:h-[68px] spacer).
+   */
+  hasPreviewBanner?: boolean
 }
 
 // One or two sections don't need a map; the bar earns its pixels at 3+.
 const MIN_SECTIONS = 3
 
-export default function PortfolioSectionNav({ sections }: PortfolioSectionNavProps) {
+export default function PortfolioSectionNav({
+  sections,
+  hasPreviewBanner = false,
+}: PortfolioSectionNavProps) {
   const [activeId, setActiveId] = useState<string | null>(null)
   // Suppress observer-driven highlight churn while a chip-initiated smooth
   // scroll is in flight — the sections passing by would flash each chip.
@@ -75,7 +86,12 @@ export default function PortfolioSectionNav({ sections }: PortfolioSectionNavPro
     <nav
       aria-label="Profile sections"
       data-testid="portfolio-section-nav"
-      className="sticky top-[calc(76px+env(safe-area-inset-top))] z-30 -mx-4 border-b border-gray-100 bg-gray-50/95 px-4 py-2 backdrop-blur md:-mx-6 md:px-6"
+      className={cn(
+        'sticky z-30 -mx-4 border-b border-gray-100 bg-gray-50/95 px-4 py-2 backdrop-blur md:-mx-6 md:px-6',
+        hasPreviewBanner
+          ? 'top-[calc(200px+env(safe-area-inset-top))] sm:top-[calc(148px+env(safe-area-inset-top))]'
+          : 'top-[calc(76px+env(safe-area-inset-top))]',
+      )}
     >
       <div className="flex gap-2 overflow-x-auto pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {sections.map((s) => (

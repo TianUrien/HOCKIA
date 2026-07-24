@@ -713,6 +713,7 @@ export default function CoachDashboard({
           <div className="space-y-5 md:space-y-6">
             {/* Sticky quick-nav — chips mirror the section gates below. */}
             <PortfolioSectionNav
+              hasPreviewBanner={readOnly && isOwnProfile}
               sections={[
                 ...(((profile as Profile).career_entry_count ?? 0) > 0
                   ? [{ id: 'portfolio-journey', label: 'Career' }]

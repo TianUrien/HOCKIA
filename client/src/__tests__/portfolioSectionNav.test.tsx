@@ -51,4 +51,19 @@ describe('PortfolioSectionNav', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Career' })),
     ).not.toThrow()
   })
+
+  // QA 2026-07-24: in the owner's "viewing your network profile" preview,
+  // PublicViewBanner is fixed at top-[68px] and taller than the header, so
+  // the default 76px offset parked the chips behind it. Measured banner
+  // bottoms: 146px desktop / 192px mobile (it stacks on small screens).
+  it('drops below the owner-preview banner when one is on screen', () => {
+    const { rerender } = render(<PortfolioSectionNav sections={SECTIONS} />)
+    const nav = () => screen.getByTestId('portfolio-section-nav')
+    expect(nav().className).toContain('top-[calc(76px+env(safe-area-inset-top))]')
+
+    rerender(<PortfolioSectionNav sections={SECTIONS} hasPreviewBanner />)
+    expect(nav().className).toContain('top-[calc(200px+env(safe-area-inset-top))]')
+    expect(nav().className).toContain('sm:top-[calc(148px+env(safe-area-inset-top))]')
+    expect(nav().className).not.toContain('top-[calc(76px+env(safe-area-inset-top))]')
+  })
 })

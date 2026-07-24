@@ -587,6 +587,7 @@ export default function ClubDashboard({
             {/* Sticky quick-nav — chips mirror the section gates below.
                 Opportunities + Comments always render for clubs. */}
             <PortfolioSectionNav
+              hasPreviewBanner={readOnly && isOwnProfile}
               sections={[
                 ...((memberCount ?? 0) > 0
                   ? [{ id: 'portfolio-members', label: 'Members' }]

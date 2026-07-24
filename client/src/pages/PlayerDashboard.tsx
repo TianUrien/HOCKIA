@@ -700,6 +700,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
                 a chip never points at a missing anchor. Anchors use
                 scroll-mt-32 (header + this bar). */}
             <PortfolioSectionNav
+              hasPreviewBanner={readOnly && isOwnProfile}
               sections={[
                 ...(((profile as Profile).career_entry_count ?? 0) > 0
                   ? [{ id: 'portfolio-journey', label: 'Career' }]
