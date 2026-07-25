@@ -59,7 +59,22 @@ function durable(): boolean {
 }
 function read(key: string): string | null {
   try {
-    return (durable() ? localStorage : sessionStorage).getItem(key) ?? sessionStorage.getItem(key)
+    if (!durable()) return sessionStorage.getItem(key)
+    const fromLocal = localStorage.getItem(key)
+    if (fromLocal !== null) return fromLocal
+    // Consent was granted AFTER this value was first written to the per-tab
+    // store — promote it so the visitor id survives the tab closing. Without
+    // this migration every return visit looks brand new and the
+    // unique/returning split is meaningless.
+    const fromSession = sessionStorage.getItem(key)
+    if (fromSession !== null) {
+      try {
+        localStorage.setItem(key, fromSession)
+      } catch {
+        /* storage full/blocked — keep serving the session value */
+      }
+    }
+    return fromSession
   } catch {
     return null
   }

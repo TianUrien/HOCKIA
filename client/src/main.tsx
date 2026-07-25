@@ -13,6 +13,7 @@ import UpdatePrompt from './components/UpdatePrompt'
 import CookieConsent from './components/CookieConsent'
 import { Capacitor } from '@capacitor/core'
 import { hasAnalyticsConsent, enableGA4 } from './lib/cookieConsent'
+import { initPostHog } from './lib/posthog'
 
 // Create a container for the update prompt (outside main React tree)
 let updatePromptRoot: ReturnType<typeof createRoot> | null = null
@@ -203,6 +204,7 @@ initWebVitals()
 // Skip on native apps — no cookies/GA4 in Capacitor (Apple Guideline 5.1.2)
 if (!Capacitor.isNativePlatform() && hasAnalyticsConsent()) {
   enableGA4()
+  initPostHog()
 }
 
 export function RootApp() {

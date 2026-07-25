@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Capacitor } from '@capacitor/core'
 import { getConsentStatus, enableGA4 } from '@/lib/cookieConsent'
+import { initPostHog } from '@/lib/posthog'
 
 /**
  * GDPR cookie consent banner.
@@ -22,12 +23,14 @@ export default function CookieConsent() {
       setVisible(true)
     } else if (status === 'accepted') {
       enableGA4()
+      initPostHog()
     }
   }, [])
 
   const handleAccept = () => {
     try { localStorage.setItem('hockia-cookie-consent', 'accepted') } catch { /* ignore */ }
     enableGA4()
+    initPostHog()
     setVisible(false)
   }
 

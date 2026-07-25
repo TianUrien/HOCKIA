@@ -44,6 +44,21 @@ describe('analyticsIdentity — visitor id', () => {
     expect(sessionStorage.getItem('hockia_anon_id')).toBe(a)
     expect(localStorage.getItem('hockia_anon_id')).toBeNull()
   })
+
+  // Caught by live verification: without this migration the id stays in
+  // sessionStorage forever, so every return visit looks brand new and the
+  // unique-vs-returning split is meaningless.
+  it('MIGRATES the pre-consent id to durable storage once consent is granted', () => {
+    consent.status = null
+    const before = getAnonymousId()
+    expect(localStorage.getItem('hockia_anon_id')).toBeNull()
+
+    consent.status = 'accepted'
+    const after = getAnonymousId()
+
+    expect(after).toBe(before) // same visitor, not a new identity
+    expect(localStorage.getItem('hockia_anon_id')).toBe(before)
+  })
 })
 
 describe('analyticsIdentity — sessionization', () => {

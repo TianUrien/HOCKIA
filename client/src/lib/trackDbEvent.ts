@@ -12,6 +12,7 @@
 
 import { supabase } from '@/lib/supabase'
 import { analyticsContext, getFirstTouch } from '@/lib/analyticsIdentity'
+import { phCapture } from '@/lib/posthog'
 
 export function trackDbEvent(
   eventName: string,
@@ -36,6 +37,10 @@ export function trackDbEvent(
         p_properties: merged as unknown as undefined,
       })
   ).then(() => {}).catch(() => {})
+
+  // Mirror to PostHog (consent-gated inside; no-ops when unavailable) so the
+  // funnel builder and experiments see the SAME taxonomy as the database.
+  phCapture(eventName, entityType ? { ...merged, entity_type: entityType, entity_id: entityId } : merged)
 }
 
 // ── Login-wall → registration intent bridge ─────────────────────────────────

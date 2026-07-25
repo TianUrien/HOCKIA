@@ -13,6 +13,7 @@ import { useUnreadStore } from './unread'
 import { useDiscoverChat } from '@/hooks/useDiscover'
 import { reportSupabaseError, reportAuthFlowError } from './sentryHelpers'
 import { setUserProperties, clearUserProperties, trackLogin } from './analytics'
+import { phIdentify, phReset } from './posthog'
 import { trackDbEvent } from './trackDbEvent'
 import { trackUserDevice } from './trackUserDevice'
 import { detectPlatform } from './detectPlatform'
@@ -235,6 +236,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         // userId via Web Crypto before passing to gtag), and login
         // doesn't depend on the GA write completing.
         void setUserProperties(userId, data.role)
+        // PostHog: bind the anonymous history to this user so pre-signup
+        // exploration and post-signup behaviour are one funnel. Role only —
+        // never name/email (no PII into third-party analytics).
+        phIdentify(userId, { role: data.role })
         // Fire-and-forget: stamp last_active_at on the server so the
         // "Active recently" Snapshot signal turns ✓. The RPC is throttled
         // to once per hour per user, so frequent profile re-fetches don't
@@ -408,6 +413,9 @@ const clearLocalSession = async (reason: string, options?: ClearSessionOptions) 
 
   // Clear GA4 user properties
   clearUserProperties()
+  // Drop the PostHog identity too — the next visitor on this browser must
+  // start anonymous, not inherit the previous user's person profile.
+  phReset()
 
   Sentry.setUser(null)
 }
