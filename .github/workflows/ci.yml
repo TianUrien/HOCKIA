@@ -203,13 +203,28 @@ jobs:
           # the initial-load gzip gate stays healthy at 413KB/480KB (the
           # delivery-relevant metric), so only this total-bloat backstop
           # moved. ~190KB headroom restored.
-          if [ "$TOTAL_JS" -gt 3594240 ]; then
-            echo "::warning::Bundle nearing raw budget: ${TOTAL_KB}KB / 3900KB ($(( TOTAL_KB * 100 / 3900 ))%)"
+          # Budget bumped 3900KB → 4150KB on 2026-07-25 — posthog-js, the
+          # product-analytics layer. NOTE: unlike every bump above, this one IS
+          # a new dependency, which is precisely what this backstop exists to
+          # flag, so it gets a real justification rather than a quiet bump:
+          #   · 218KB raw, and it is the LEAN build already (posthog-js ships
+          #     module.js 232KB / no-external 256KB / full 444KB — we're on the
+          #     smallest; session recording, surveys, autocapture, heatmaps and
+          #     performance capture are all disabled in code).
+          #   · It is lazy AND consent-gated: it lives in its own dynamic chunk
+          #     (explicitly exempted from the vendor catch-all in vite.config)
+          #     and is never fetched at all unless a visitor accepts cookies.
+          #   · Initial-load gzip — the delivery-relevant metric — did not
+          #     regress; it IMPROVED to 416KB/480KB, because pulling posthog out
+          #     of the eager `vendor` chunk also shrank first paint.
+          # ~180KB headroom restored.
+          if [ "$TOTAL_JS" -gt 3901440 ]; then
+            echo "::warning::Bundle nearing raw budget: ${TOTAL_KB}KB / 4150KB ($(( TOTAL_KB * 100 / 4150 ))%)"
           fi
 
-          # Secondary gate: raw total must stay under 3.9MB
-          if [ "$TOTAL_JS" -gt 3993600 ]; then
-            echo "::error::Raw bundle budget exceeded! ${TOTAL_KB}KB > 3900KB"
+          # Secondary gate: raw total must stay under 4.15MB
+          if [ "$TOTAL_JS" -gt 4249600 ]; then
+            echo "::error::Raw bundle budget exceeded! ${TOTAL_KB}KB > 4150KB"
             exit 1
           fi
 
