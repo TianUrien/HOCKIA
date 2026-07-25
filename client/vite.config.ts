@@ -47,6 +47,11 @@ export default defineConfig(({ mode }) => {
     { name: 'router', pattern: /node_modules\/react-router/ },
   ]
 
+  /** Dynamically-imported deps that must NEVER be folded into `vendor`.
+   *  `vendor` is modulepreloaded by index.html, so landing here silently
+   *  makes a deliberately code-split dependency eager. */
+  const LAZY_ONLY_DEPS = /node_modules\/posthog-js\//
+
   return {
     plugins: [
       react(),
@@ -164,6 +169,14 @@ export default defineConfig(({ mode }) => {
             const matchedGroup = manualChunkGroups.find(group => group.pattern.test(id))
             if (matchedGroup) {
               return matchedGroup.name
+            }
+
+            // Keep consent-gated / lazily-imported deps out of the eager
+            // vendor chunk — posthog-js alone pushed first paint from 480KB
+            // to 490KB gzip. Returning undefined lets Rollup leave it in the
+            // dynamic-import chunk, fetched only after cookie consent.
+            if (LAZY_ONLY_DEPS.test(id)) {
+              return undefined
             }
 
             return 'vendor'
