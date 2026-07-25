@@ -109,6 +109,7 @@ export default function OpportunityPreviewModal({
         onClose={() => setShowSignInPrompt(false)}
         title="Sign in to apply"
         message="Sign in or create a free HOCKIA account to apply to this opportunity."
+        action="apply_opportunity"
       />
 
       <ApplyToOpportunityModal

@@ -1,31 +1,52 @@
+import { useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { LogIn, UserPlus } from 'lucide-react'
 import Modal from './Modal'
 import Button from './Button'
 import { trackSignupWallAction } from '@/lib/analytics'
+import { trackDbEvent, markWallIntent } from '@/lib/trackDbEvent'
 
 interface SignInPromptModalProps {
   isOpen: boolean
   onClose: () => void
   title?: string
   message?: string
+  /** The gated action that triggered this wall (apply/message/connect/…),
+   *  for funnel attribution. Defaults to 'unknown' so wall impressions are
+   *  always counted even where the caller hasn't specified one yet. */
+  action?: string
 }
 
 /**
  * Modal prompting unauthenticated users to sign in or sign up.
  * Stores the current URL so they can return after authentication.
+ *
+ * This is the single chokepoint for the login-wall funnel: it fires
+ * `login_wall_shown` on open and marks a wall intent when the visitor chooses
+ * to authenticate, so a subsequent registration is attributed to the wall.
  */
 export default function SignInPromptModal({
   isOpen,
   onClose,
   title = 'Sign in to continue',
   message = 'Sign in or create a free HOCKIA account to apply to this opportunity.',
+  action,
 }: SignInPromptModalProps) {
   const navigate = useNavigate()
   const location = useLocation()
 
+  // Fire once per open (false→true transition), not on every re-render.
+  const wasOpen = useRef(false)
+  useEffect(() => {
+    if (isOpen && !wasOpen.current) {
+      trackDbEvent('login_wall_shown', undefined, undefined, { action: action ?? 'unknown' })
+    }
+    wasOpen.current = isOpen
+  }, [isOpen, action])
+
   const handleSignIn = () => {
     trackSignupWallAction('sign_in')
+    markWallIntent(action ?? 'unknown')
     // Navigate to landing with return URL stored in state
     navigate('/', { state: { from: location.pathname } })
     onClose()
@@ -33,6 +54,7 @@ export default function SignInPromptModal({
 
   const handleSignUp = () => {
     trackSignupWallAction('sign_up')
+    markWallIntent(action ?? 'unknown')
     // Navigate to signup with return URL stored in state
     navigate('/signup', { state: { from: location.pathname } })
     onClose()

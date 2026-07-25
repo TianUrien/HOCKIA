@@ -17,7 +17,8 @@ import { deleteStorageObject } from '@/lib/storage'
 import { isNativePlatform, pickImageNative } from '@/lib/nativeImagePicker'
 import { toSentryError } from '@/lib/sentryHelpers'
 import { trackOnboardingComplete, trackOnboardingStart, trackRoleSelected } from '@/lib/analytics'
-import { trackDbEvent, linkSignupAttribution } from '@/lib/trackDbEvent'
+import { trackDbEvent, linkSignupAttribution, consumeWallIntent } from '@/lib/trackDbEvent'
+import { getFirstTouch } from '@/lib/analyticsIdentity'
 import { COACH_SPECIALIZATIONS, type CoachSpecialization } from '@/lib/coachSpecializations'
 import { validateOnboardingStep, type WizardStep } from '@/lib/onboardingValidation'
 import { getAcquisition } from '@/lib/acquisition'
@@ -173,7 +174,12 @@ export default function CompleteProfile() {
     if (onboardingStartFiredRef.current || !userRole) return
     onboardingStartFiredRef.current = true
     trackOnboardingStart(userRole)
-  }, [userRole])
+    // DB funnel: the "registration started" step (wizard entered).
+    trackDbEvent('registration_started', 'profile', user?.id, {
+      role: userRole,
+      source_path: getFirstTouch()?.landing_path ?? null,
+    })
+  }, [userRole, user?.id])
 
   // Wizard-draft localStorage key. Scoped by user id AND role so a tester
   // switching between accounts on the same browser doesn't see another
@@ -1074,6 +1080,12 @@ export default function CompleteProfile() {
       // Identity stitching: link this account to its pre-signup anonymous
       // exploration (first-touch source/UTM + all prior anon events).
       linkSignupAttribution()
+      // Hypothesis test: was this registration driven by hitting a login wall
+      // while exploring? Fires only if a recent wall intent was recorded.
+      const wallAction = consumeWallIntent()
+      if (wallAction) {
+        trackDbEvent('registration_from_wall', 'profile', user?.id, { action: wallAction, role: userRole })
+      }
       navigate('/dashboard/profile', { replace: true })
 
     } catch (err) {

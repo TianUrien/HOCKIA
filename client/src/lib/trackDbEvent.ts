@@ -38,6 +38,36 @@ export function trackDbEvent(
   ).then(() => {}).catch(() => {})
 }
 
+// ── Login-wall → registration intent bridge ─────────────────────────────────
+// When a logged-out visitor hits a wall and chooses to sign in/up, we stash the
+// triggering action; if a registration completes soon after, that conversion is
+// attributed to the wall (registration_from_wall). This is the hypothesis test:
+// does thwarted exploration intent convert?
+const WALL_INTENT_KEY = 'hockia_wall_intent'
+const WALL_INTENT_TTL_MS = 60 * 60 * 1000
+
+export function markWallIntent(action: string): void {
+  try {
+    sessionStorage.setItem(WALL_INTENT_KEY, JSON.stringify({ action, ts: Date.now() }))
+  } catch {
+    /* storage blocked — no-op */
+  }
+}
+
+/** Reads and clears a recent wall intent. Returns null if none/stale. */
+export function consumeWallIntent(): string | null {
+  try {
+    const raw = sessionStorage.getItem(WALL_INTENT_KEY)
+    if (!raw) return null
+    sessionStorage.removeItem(WALL_INTENT_KEY)
+    const parsed = JSON.parse(raw) as { action?: string; ts?: number }
+    if (!parsed.ts || Date.now() - parsed.ts > WALL_INTENT_TTL_MS) return null
+    return parsed.action ?? null
+  } catch {
+    return null
+  }
+}
+
 /**
  * Called once right after registration completes. Writes first-touch signup
  * attribution and stitches every prior anonymous event from this browser to

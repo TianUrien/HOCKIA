@@ -53,11 +53,18 @@ caller needs to pass these.
 ### Conversion
 | Event | Key properties | Status |
 |---|---|---|
-| `registration_started` | `source_path` | ⏳ Phase 1 (wizard mount) |
+| `registration_started` | `role`, `source_path` | ✅ live (wizard mount) |
 | `onboarding_step` | `step`, `role` | ✅ live |
 | `onboarding_completed` / registration_completed | `role` | ✅ live (+ alias) |
-| `login_wall_shown` | `action` (apply/message/connect/…), `entity_type` | ⏳ Phase 1 |
-| `registration_from_wall` | `action` | ⏳ Phase 1 |
+| `login_wall_shown` | `action` (apply/message/connect/…) | ✅ live |
+| `registration_from_wall` | `action`, `role` | ✅ live |
+
+**Wall attribution mechanics:** `SignInPromptModal` is the single chokepoint —
+it fires `login_wall_shown` once per open (false→true transition). Choosing
+sign-in/sign-up writes a **wall intent** to sessionStorage (1-hour TTL,
+single-use); if onboarding completes while that intent is live,
+`registration_from_wall` fires with the originating action. Callers should pass
+`action` on the wall (defaults to `unknown` so impressions are never lost).
 
 The last two are the hypothesis test: `login_wall_shown` = thwarted intent while
 exploring; `registration_from_wall` = whether that intent converts.
