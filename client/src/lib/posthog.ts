@@ -21,6 +21,17 @@
  *    message snippets) into a third-party — a PII leak we don't accept.
  *  - IDENTITY SHARED: PostHog is keyed to the same `anonymous_id` the DB
  *    pipeline uses, so a funnel built here matches one built in SQL.
+ *
+ * TESTING GOTCHA (cost hours once — read before debugging "events aren't
+ * arriving"): posthog-js has its OWN bot filter and silently drops capture()
+ * in headless browsers — it returns undefined, queues nothing, sends nothing,
+ * and logs nothing, even with `debug: true` and everything else healthy
+ * (__loaded true, opted in, correct token/host). Overriding
+ * `navigator.webdriver` is NOT enough. To verify the send path from an
+ * automated browser, temporarily pass `opt_out_useragent_filter: true`;
+ * events then POST to {api_host}/e/ immediately. NEVER ship that flag — the
+ * filter is what keeps our E2E suite out of the analytics, and bot traffic
+ * was historically the single biggest distortion in our GA data.
  */
 import { Capacitor } from '@capacitor/core'
 import { hasAnalyticsConsent } from '@/lib/cookieConsent'
