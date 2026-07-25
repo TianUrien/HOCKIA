@@ -121,6 +121,11 @@ export function initPostHog(): void {
         disable_session_recording: true,
         disable_surveys: true,
         capture_performance: false,
+        // Heatmaps were the one surface we DIDN'T pin here, so the project's
+        // remote config switched them on and they started despite everything
+        // else being off. Pin it explicitly rather than depending on a
+        // dashboard toggle staying correct.
+        enable_heatmaps: false,
         // Reuse the DB pipeline's visitor id so both systems agree on who is
         // who, and unique/returning counts reconcile across the two.
         bootstrap: { distinctID: getAnonymousId() },
