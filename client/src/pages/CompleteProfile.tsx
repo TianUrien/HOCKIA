@@ -17,7 +17,7 @@ import { deleteStorageObject } from '@/lib/storage'
 import { isNativePlatform, pickImageNative } from '@/lib/nativeImagePicker'
 import { toSentryError } from '@/lib/sentryHelpers'
 import { trackOnboardingComplete, trackOnboardingStart, trackRoleSelected } from '@/lib/analytics'
-import { trackDbEvent } from '@/lib/trackDbEvent'
+import { trackDbEvent, linkSignupAttribution } from '@/lib/trackDbEvent'
 import { COACH_SPECIALIZATIONS, type CoachSpecialization } from '@/lib/coachSpecializations'
 import { validateOnboardingStep, type WizardStep } from '@/lib/onboardingValidation'
 import { getAcquisition } from '@/lib/acquisition'
@@ -1071,6 +1071,9 @@ export default function CompleteProfile() {
       }
       trackOnboardingComplete(userRole ?? 'unknown')
       trackDbEvent('onboarding_completed', 'profile', user?.id, { role: userRole })
+      // Identity stitching: link this account to its pre-signup anonymous
+      // exploration (first-touch source/UTM + all prior anon events).
+      linkSignupAttribution()
       navigate('/dashboard/profile', { replace: true })
 
     } catch (err) {

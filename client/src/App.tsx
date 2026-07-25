@@ -16,6 +16,7 @@ import AppRatingPrompt from '@/components/AppRatingPrompt'
 import ContactModal from '@/components/ContactModal'
 import { useEngagementTracking } from '@/hooks/useEngagementTracking'
 import { trackDbEvent } from '@/lib/trackDbEvent'
+import { captureFirstTouch } from '@/lib/analyticsIdentity'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import KeyboardShortcutsModal from '@/components/KeyboardShortcutsModal'
 import Landing from '@/pages/Landing'
@@ -253,16 +254,19 @@ function getFeatureFromPath(path: string): string {
   return 'other'
 }
 
-// Track page views to the DB events table (separate from GA4 tracking above)
+// Track page views to the DB events table (separate from GA4 tracking above).
+// NOTE: unlike before, this fires on the FIRST render too — the entry/landing
+// page-view is the single most important row for funnel analysis, and skipping
+// it left every landing hit uncounted in first-party data. First-touch
+// (referrer/UTM/landing path) is captured once at mount for signup attribution.
 function DbPageViewTracker() {
   const location = useLocation()
-  const isFirstRender = useRef(true)
 
   useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false
-      return
-    }
+    captureFirstTouch()
+  }, [])
+
+  useEffect(() => {
     trackDbEvent('page_view', undefined, undefined, {
       path: location.pathname,
       feature: getFeatureFromPath(location.pathname),

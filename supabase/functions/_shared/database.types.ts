@@ -2403,7 +2403,11 @@ export type Database = {
       }
       events: {
         Row: {
+          anonymous_id: string | null
+          browser: string | null
+          country: string | null
           created_at: string
+          device: string | null
           entity_id: string | null
           entity_type: string | null
           error_code: string | null
@@ -2412,13 +2416,20 @@ export type Database = {
           id: string
           ip_hash: string | null
           properties: Json | null
+          referrer_source: string | null
+          resolved_user_id: string | null
           role: string | null
           session_id: string | null
           user_agent: string | null
           user_id: string | null
+          utm: Json | null
         }
         Insert: {
+          anonymous_id?: string | null
+          browser?: string | null
+          country?: string | null
           created_at?: string
+          device?: string | null
           entity_id?: string | null
           entity_type?: string | null
           error_code?: string | null
@@ -2427,13 +2438,20 @@ export type Database = {
           id?: string
           ip_hash?: string | null
           properties?: Json | null
+          referrer_source?: string | null
+          resolved_user_id?: string | null
           role?: string | null
           session_id?: string | null
           user_agent?: string | null
           user_id?: string | null
+          utm?: Json | null
         }
         Update: {
+          anonymous_id?: string | null
+          browser?: string | null
+          country?: string | null
           created_at?: string
+          device?: string | null
           entity_id?: string | null
           entity_type?: string | null
           error_code?: string | null
@@ -2442,10 +2460,13 @@ export type Database = {
           id?: string
           ip_hash?: string | null
           properties?: Json | null
+          referrer_source?: string | null
+          resolved_user_id?: string | null
           role?: string | null
           session_id?: string | null
           user_agent?: string | null
           user_id?: string | null
+          utm?: Json | null
         }
         Relationships: [
           {
@@ -5093,6 +5114,61 @@ export type Database = {
             foreignKeyName: "shortlists_owner_id_fkey"
             columns: ["owner_id"]
             isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      signup_attribution: {
+        Row: {
+          anonymous_id: string | null
+          first_referrer: string | null
+          first_seen_at: string | null
+          first_source: string | null
+          landing_path: string | null
+          signup_at: string
+          user_id: string
+          utm: Json | null
+        }
+        Insert: {
+          anonymous_id?: string | null
+          first_referrer?: string | null
+          first_seen_at?: string | null
+          first_source?: string | null
+          landing_path?: string | null
+          signup_at?: string
+          user_id: string
+          utm?: Json | null
+        }
+        Update: {
+          anonymous_id?: string | null
+          first_referrer?: string | null
+          first_seen_at?: string | null
+          first_source?: string | null
+          landing_path?: string | null
+          signup_at?: string
+          user_id?: string
+          utm?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "signup_attribution_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "signup_attribution_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "signup_attribution_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
             referencedRelation: "profiles_self"
             referencedColumns: ["id"]
           },
@@ -8973,6 +9049,17 @@ export type Database = {
         Returns: Json
       }
       leave_club: { Args: { p_club_profile_id: string }; Returns: Json }
+      link_signup_attribution: {
+        Args: {
+          p_anonymous_id: string
+          p_first_referrer?: string
+          p_first_seen_at?: string
+          p_first_source?: string
+          p_landing_path?: string
+          p_utm?: Json
+        }
+        Returns: undefined
+      }
       log_error: {
         Args: {
           p_correlation_id?: string
