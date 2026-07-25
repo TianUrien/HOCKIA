@@ -27,7 +27,8 @@
     "cap:sync": "npx cap sync ios && npx cap sync android",
     "cap:open": "npx cap open ios",
     "cap:build": "npm run build && node scripts/assert-prod-bundle.mjs && npx cap sync ios && npx cap sync android",
-    "gen:types": "npx supabase gen types typescript --project-id \"$SUPABASE_PROJECT_ID\" > src/lib/database.types.ts"
+    "gen:types": "npx supabase gen types typescript --project-id \"$SUPABASE_PROJECT_ID\" > src/lib/database.types.ts",
+    "audit:check": "node scripts/audit-check.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.2.0",
@@ -54,7 +55,7 @@
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-hook-form": "^7.64.0",
-    "react-router-dom": "^7.9.4",
+    "react-router-dom": "^7.18.1",
     "recharts": "^3.7.0",
     "tslib": "^2.8.1",
     "tus-js-client": "^4.3.1",

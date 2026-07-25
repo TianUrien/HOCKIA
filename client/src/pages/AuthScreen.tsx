@@ -35,6 +35,7 @@ import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { trackLogin, trackLoginFailed, trackSignUp, trackSignUpStart } from '@/lib/analytics'
 import { reportAuthFlowError } from '@/lib/sentryHelpers'
+import { isSafeRedirectPath } from '@/lib/safeRedirect'
 
 export interface AuthScreenProps {
   mode: 'signin' | 'signup'
@@ -82,7 +83,9 @@ export default function AuthScreen({ mode, role, onBack }: AuthScreenProps) {
   const nextParam = searchParams.get('next')
 
   const stashRedirectIntent = () => {
-    if (!nextParam) return
+    // Validate at the WRITE point too (defence in depth): never persist a
+    // redirect target that isn't a safe same-origin path.
+    if (!nextParam || !isSafeRedirectPath(nextParam)) return
     try {
       sessionStorage.setItem('hockia-redirect-after-login', nextParam)
     } catch {

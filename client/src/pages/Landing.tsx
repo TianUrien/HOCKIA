@@ -9,6 +9,7 @@ import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { useImmersiveChrome } from '@/hooks/useImmersiveChrome'
 import { useContactModal } from '@/lib/contact'
+import { safeRedirectPath } from '@/lib/safeRedirect'
 
 /**
  * Landing — hero-only surface.
@@ -143,7 +144,10 @@ export default function Landing() {
     if (authLoading) return
 
     if (user && profile) {
-      const destination = redirectTo || '/dashboard/profile'
+      // Open-redirect guard: `redirectTo` traces back to the untrusted
+      // `?next=` param / location.state.from. Anything not a safe same-origin
+      // path falls back to the dashboard.
+      const destination = safeRedirectPath(redirectTo, '/dashboard/profile')
       try {
         sessionStorage.removeItem('hockia-redirect-after-login')
       } catch {

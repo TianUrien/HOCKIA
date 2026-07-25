@@ -6,6 +6,7 @@ import { logger } from '@/lib/logger'
 import { useAuthStore } from '@/lib/auth'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
 import { detectInAppBrowser, getExternalBrowserInstructions } from '@/lib/inAppBrowser'
+import { isSafeRedirectPath } from '@/lib/safeRedirect'
 
 /**
  * AuthCallback - Handles email verification redirect from Supabase
@@ -196,8 +197,10 @@ export default function AuthCallback() {
       // Honour redirect saved before OAuth (only for dashboard, not onboarding)
       if (destination === '/dashboard/profile') {
         try {
+          // startsWith('/') alone lets through //evil.com and /\evil.com —
+          // use the shared same-origin guard instead.
           const saved = sessionStorage.getItem('hockia-redirect-after-login')
-          if (saved && saved.startsWith('/')) {
+          if (saved && isSafeRedirectPath(saved)) {
             destination = saved as typeof destination
           }
         } catch { /* noop */ }

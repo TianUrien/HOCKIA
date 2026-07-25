@@ -38,7 +38,10 @@ jobs:
 
       - name: Dependency audit (production only)
         working-directory: ./client
-        run: npm audit --omit=dev --audit-level=high
+        # Same high/critical bar as `npm audit --audit-level=high`, but honours
+        # audit-allowlist.json for advisories unreachable in our architecture
+        # (each entry justified + review-dated; expired entries fail the build).
+        run: node scripts/audit-check.mjs
 
   lint-and-typecheck:
     name: Lint & Type Check
