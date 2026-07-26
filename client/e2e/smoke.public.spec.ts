@@ -1,14 +1,15 @@
 import { test, expect } from './fixtures'
 
 test.describe('@smoke public', () => {
-  test('landing loads and shows primary CTA', async ({ page }) => {
+  test('landing loads and shows both primary CTAs', async ({ page }) => {
     await page.goto('/')
 
-    // Post-2026 auth redesign: Landing's primary CTA is "Get Started" (which
-    // routes to /signup). The old "Join HOCKIA" / "Join Now" wording is gone.
-    // Both mobile and desktop layouts render the same button text.
-    const primaryCta = page.getByRole('button', { name: /get started/i }).first()
-    await expect(primaryCta).toBeVisible({ timeout: 20000 })
+    // 2026-07 landing redesign: the page leads with TWO actions — "Explore
+    // HOCKIA" (browse the public product with no account) and "Create your
+    // profile" (signup). The single "Get Started" CTA of the previous dark
+    // carousel hero is gone. Same markup on mobile and desktop.
+    await expect(page.getByRole('button', { name: /explore hockia/i }).first()).toBeVisible({ timeout: 20000 })
+    await expect(page.getByRole('button', { name: /create your profile/i }).first()).toBeVisible({ timeout: 20000 })
   })
 
   test('signup page loads and shows role selection', async ({ page }) => {

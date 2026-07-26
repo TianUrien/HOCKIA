@@ -405,6 +405,13 @@ export default function NotificationsDrawer() {
         // every mobile page. Expose role + aria-modal ONLY while open (a
         // closed, off-screen, inert drawer is not a dialog).
         {...(isOpen ? { role: 'dialog' as const, 'aria-modal': true } : {})}
+        // The drawer stays mounted while closed, so its ~5 controls (search,
+        // settings, close, All, Unread) stayed in the TAB ORDER — on every
+        // page, ahead of the header. Tabbing from the top parked focus on
+        // invisible off-screen buttons with no visible ring. `inert` removes
+        // the whole subtree from focus + a11y tree while closed. (React 19
+        // passes the boolean through natively.)
+        inert={!isOpen}
         aria-labelledby="notifications-drawer-title"
         tabIndex={-1}
         className={cn(

@@ -58,6 +58,20 @@ describe('safeRedirectPath — allows legitimate in-app targets', () => {
   })
 })
 
+describe('safeRedirectPath — never bounces back to the landing page', () => {
+  // QA 2026-07-25: '/' is same-origin and passed every other check, but the
+  // landing page itself redirects authenticated users — so a stored redirect
+  // of '/' sent them back to the page that immediately re-ran the same effect.
+  it('rejects "/" (would re-trigger the landing redirect effect)', () => {
+    expect(safeRedirectPath('/', FALLBACK)).toBe(FALLBACK)
+    expect(isSafeRedirectPath('/')).toBe(false)
+  })
+
+  it('still allows real paths that merely start with a slash', () => {
+    expect(safeRedirectPath('/home', FALLBACK)).toBe('/home')
+  })
+})
+
 describe('safeRedirectPath — never bounces back into auth screens', () => {
   it.each(['/signin', '/signup', '/auth/callback', '/signin/', '/signup?next=/x'])(
     'rejects %s (would loop)',
