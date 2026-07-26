@@ -44,6 +44,8 @@ export default function PublicNav({ transparent = true }: PublicNavProps) {
             <img 
               src={transparent ? '/brand/wordmark/hockia-wordmark-white.svg' : '/brand/wordmark/hockia-wordmark-black.svg'}
               alt="HOCKIA"
+              width={153}
+              height={42}
               className="h-8"
             />
           </Link>

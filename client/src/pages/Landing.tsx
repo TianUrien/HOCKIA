@@ -527,6 +527,10 @@ export default function Landing() {
             <img
               src="/brand/wordmark/hockia-wordmark-black.svg"
               alt="HOCKIA"
+              // 153x42 viewBox — height pinned by CSS; declared so no image
+              // on this page is missing intrinsic dimensions.
+              width={153}
+              height={42}
               className="h-7 object-contain"
               loading="lazy"
             />

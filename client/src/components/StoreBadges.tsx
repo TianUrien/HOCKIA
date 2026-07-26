@@ -46,6 +46,12 @@ export default function StoreBadges({
         <img
           src="/brand/badges/apple-app-store-badge.svg"
           alt="Download HOCKIA on the App Store"
+          // Intrinsic size from the badge's own viewBox (119.664x40) so the
+          // aspect ratio is known before load. Height is pinned by CSS, so
+          // this changes nothing visually — it just removes the last images
+          // on the page without declared dimensions.
+          width={120}
+          height={40}
           className={`${heightClass} w-auto`}
           draggable={false}
         />
@@ -61,6 +67,10 @@ export default function StoreBadges({
         <img
           src="/brand/badges/google-play-badge.png"
           alt="Get HOCKIA on Google Play"
+          // Raster badge (564x168 after the clear-space trim) — the one image
+          // here that genuinely benefits from declared dimensions.
+          width={564}
+          height={168}
           className={`${heightClass} w-auto`}
           draggable={false}
         />
