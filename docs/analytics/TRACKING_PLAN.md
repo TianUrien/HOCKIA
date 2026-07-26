@@ -30,6 +30,27 @@ caller needs to pass these.
 | `device`, `browser` | client (UA parse) | desktop/mobile/tablet |
 | `referrer_source` | client (first-touch) | google/linkedin/meta/direct/… |
 | `utm` | client (URL, when present) | {source,medium,campaign,term,content} |
+| `is_automated` | client (`navigator.webdriver`) | **present only when true** — see below |
+
+### Excluding automated traffic (READ THIS BEFORE QUOTING ANY FUNNEL NUMBER)
+
+GA4 and PostHog both refuse to load for automated browsers, but the first-party
+`events` pipeline accepts them — E2E runs and QA sweeps land in the same table
+the funnel is computed from. One 24-minute QA session produced 69 events, which
+is enough to dominate a conversion rate at our volume.
+
+Automated events are **marked, not dropped** (the rows stay useful for
+debugging, and dropping would break E2E assertions that watch for the
+`track_event` call). Every analytics query MUST filter them out:
+
+```sql
+WHERE properties->>'is_automated' IS NULL   -- real humans only
+```
+
+Also exclude test accounts when joining to profiles
+(`COALESCE(is_test_account,false) = false`) — all 21 `registration_started`
+rows on staging came from E2E accounts, which is why PostHog correctly has
+none: the bot gate kept them out.
 
 ## Funnel events
 

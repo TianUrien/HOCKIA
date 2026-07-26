@@ -36,6 +36,28 @@ export interface AnalyticsContext {
   browser: string
   referrer_source: string
   utm?: Record<string, string>
+  /** Present (true) only for automated browsers — see `isAutomated`. */
+  is_automated?: true
+}
+
+/**
+ * True for automated browsers (Playwright/Selenium/QA agents).
+ *
+ * GA4 and PostHog both refuse to load for these, but the first-party `events`
+ * pipeline accepted them — so E2E runs and QA sweeps landed in the table that
+ * every funnel number is computed from. A single 24-minute QA session put 69
+ * events in, which is enough to dominate a conversion rate at our volume.
+ *
+ * We MARK rather than DROP: the rows stay for debugging, and analytics filters
+ * them out explicitly. Dropping would also break E2E assertions that watch for
+ * the track_event call.
+ */
+export function isAutomated(): boolean {
+  try {
+    return navigator?.webdriver === true
+  } catch {
+    return false
+  }
 }
 
 function uuid(): string {
@@ -250,6 +272,9 @@ export function analyticsContext(): AnalyticsContext {
     referrer_source: getFirstTouch()?.first_source ?? classifySource(safeReferrer(), utm?.source ?? null),
   }
   if (utm) ctx.utm = utm
+  // Only stamped when true, so real-user payloads stay lean and the filter is
+  // a simple "is this key absent?".
+  if (isAutomated()) ctx.is_automated = true
   return ctx
 }
 

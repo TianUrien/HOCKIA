@@ -136,6 +136,19 @@ describe('analyticsIdentity — first touch', () => {
   })
 })
 
+describe('analyticsIdentity — automated-traffic marking', () => {
+  // QA 2026-07-27: GA4 and PostHog refuse automated browsers, but the DB
+  // pipeline accepted them, so E2E/QA runs polluted the table every funnel
+  // number is computed from (one 24-min QA session = 69 events).
+  it('stamps is_automated only when navigator.webdriver is true', () => {
+    Object.defineProperty(window.navigator, 'webdriver', { value: true, configurable: true })
+    expect(analyticsContext().is_automated).toBe(true)
+
+    Object.defineProperty(window.navigator, 'webdriver', { value: false, configurable: true })
+    expect(analyticsContext().is_automated).toBeUndefined()
+  })
+})
+
 describe('analyticsIdentity — context bundle', () => {
   it('emits the full stampable context', () => {
     setUA('Mozilla/5.0 (Macintosh) Chrome/120 Safari')
