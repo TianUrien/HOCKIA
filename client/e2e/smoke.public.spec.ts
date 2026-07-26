@@ -8,8 +8,10 @@ test.describe('@smoke public', () => {
     // HOCKIA" (browse the public product with no account) and "Create your
     // profile" (signup). The single "Get Started" CTA of the previous dark
     // carousel hero is gone. Same markup on mobile and desktop.
-    await expect(page.getByRole('button', { name: /explore hockia/i }).first()).toBeVisible({ timeout: 20000 })
-    await expect(page.getByRole('button', { name: /create your profile/i }).first()).toBeVisible({ timeout: 20000 })
+    // They are LINKS, not buttons — a conversion page's primary actions must
+    // support cmd/middle-click "open in new tab" and be crawlable.
+    await expect(page.getByRole('link', { name: /explore hockia/i }).first()).toBeVisible({ timeout: 20000 })
+    await expect(page.getByRole('link', { name: /create your profile/i }).first()).toBeVisible({ timeout: 20000 })
   })
 
   test('signup page loads and shows role selection', async ({ page }) => {

@@ -4,10 +4,13 @@ test.describe('@smoke home feed public', () => {
   test('home feed loads and shows feed content', async ({ page }) => {
     await page.goto('/home')
 
-    // Unauthenticated users may see the feed or be redirected to landing
+    // Unauthenticated users may see the feed or be redirected to landing.
+    // The landing headline changed in the 2026-07 redesign ("Built for Field
+    // Hockey" → "See what HOCKIA can do before you join"), so match the CTA
+    // instead — it's stable regardless of headline copy.
     await expect(
       page.getByText(/no activity yet/i)
-        .or(page.getByRole('heading', { name: /built for field hockey/i }))
+        .or(page.getByRole('link', { name: /explore hockia/i }).first())
         .or(page.locator('[data-testid="feed-container"]').first())
     ).toBeVisible({ timeout: 20000 })
   })
