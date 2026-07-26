@@ -41,11 +41,21 @@ is enough to dominate a conversion rate at our volume.
 
 Automated events are **marked, not dropped** (the rows stay useful for
 debugging, and dropping would break E2E assertions that watch for the
-`track_event` call). Every analytics query MUST filter them out:
+`track_event` call).
+
+**Query `analytics_events`, not `events`.** A remembered WHERE clause is a
+convention someone forgets under deadline, so the filter is baked into a view
+— the safe path is the default one:
 
 ```sql
-WHERE properties->>'is_automated' IS NULL   -- real humans only
+SELECT ... FROM public.analytics_events   -- automated + test accounts removed
+SELECT ... FROM public.events             -- raw, debugging only
 ```
+
+Scale of the problem it solves, measured on staging over 4 days:
+**4,159 raw events → 934 clean.** 3,185 (77%) were test accounts. Every
+`registration_started` row vanished under the filter — which is exactly why
+PostHog correctly never received one.
 
 Also exclude test accounts when joining to profiles
 (`COALESCE(is_test_account,false) = false`) — all 21 `registration_started`
