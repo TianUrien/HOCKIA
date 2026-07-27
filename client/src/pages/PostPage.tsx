@@ -4,7 +4,7 @@ import { ArrowLeft, Loader2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { useAuthStore } from '@/lib/auth'
-import { Header, Layout } from '@/components'
+import { Header } from '@/components'
 import { UserPostCard } from '@/components/home/cards/UserPostCard'
 import type { UserPostFeedItem, PostMediaItem, PostType, TransferMetadata, SigningMetadata } from '@/types/homeFeed'
 import type { Profile } from '@/lib/supabase'
@@ -141,18 +141,18 @@ export default function PostPage() {
 
   if (loading) {
     return (
-      <Layout>
+      <>
         <Header />
         <div className="flex flex-1 items-center justify-center">
           <Loader2 className="h-6 w-6 animate-spin text-gray-400" aria-label="Loading post" />
         </div>
-      </Layout>
+      </>
     )
   }
 
   if (loadError) {
     return (
-      <Layout>
+      <>
         <Header />
         <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
           <p className="text-lg font-semibold text-gray-900">Couldn’t load this post</p>
@@ -176,13 +176,13 @@ export default function PostPage() {
             </button>
           </div>
         </div>
-      </Layout>
+      </>
     )
   }
 
   if (notFound || !item) {
     return (
-      <Layout>
+      <>
         <Header />
         <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
           <p className="text-lg font-semibold text-gray-900">Post not found</p>
@@ -197,7 +197,7 @@ export default function PostPage() {
             Go to home feed
           </button>
         </div>
-      </Layout>
+      </>
     )
   }
 
@@ -217,7 +217,7 @@ export default function PostPage() {
   }
 
   return (
-    <Layout>
+    <>
       <Header />
       <div className="flex-1 bg-gray-50 pt-[var(--app-header-offset)]">
         <div className="mx-auto max-w-2xl px-4 py-6 md:py-10">
@@ -232,6 +232,6 @@ export default function PostPage() {
           <UserPostCard item={item} onLikeUpdate={handleLikeUpdate} onDelete={handleDelete} />
         </div>
       </div>
-    </Layout>
+    </>
   )
 }

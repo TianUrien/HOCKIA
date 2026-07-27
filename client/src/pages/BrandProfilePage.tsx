@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { ArrowLeft, Loader2, Store, MessageCircle, UserPlus, UserCheck, Award } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { Header, Layout, Button, Avatar, ProfileSnapshot } from '@/components'
+import { Header, Button, Avatar, ProfileSnapshot } from '@/components'
 import type { Profile } from '@/lib/supabase'
 import { BrandHeader, ProductCard, BrandPostCard } from '@/components/brands'
 import Breadcrumbs from '@/components/Breadcrumbs'
@@ -70,7 +70,7 @@ export default function BrandProfilePage() {
   })
 
   return (
-    <Layout>
+    <>
       {!isMobile && <Header />}
 
       <div className={`flex-1 bg-gray-50 ${isMobile ? 'pt-[var(--app-header-offset)]' : ''}`}>
@@ -345,6 +345,6 @@ export default function BrandProfilePage() {
         )}
         <PublicProfileFooterCTA />
       </div>
-    </Layout>
+    </>
   )
 }

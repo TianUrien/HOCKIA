@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, ExternalLink, Loader2, MapPin, Trophy } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
-import { Header, Layout, Avatar, VerifiedBadge, PendingVerificationBadge } from '@/components'
+import { Header, Avatar, VerifiedBadge, PendingVerificationBadge } from '@/components'
 
 /**
  * WorldClubPage — leaf-level page for a single world_clubs row.
@@ -148,18 +148,18 @@ export default function WorldClubPage() {
 
   if (loading) {
     return (
-      <Layout>
+      <>
         <Header />
         <div className="flex flex-1 items-center justify-center">
           <Loader2 className="h-6 w-6 animate-spin text-gray-400" aria-label="Loading club" />
         </div>
-      </Layout>
+      </>
     )
   }
 
   if (loadError) {
     return (
-      <Layout>
+      <>
         <Header />
         <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
           <p className="text-lg font-semibold text-gray-900">Couldn’t load this club</p>
@@ -183,13 +183,13 @@ export default function WorldClubPage() {
             </button>
           </div>
         </div>
-      </Layout>
+      </>
     )
   }
 
   if (notFound || !club) {
     return (
-      <Layout>
+      <>
         <Header />
         <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
           <p className="text-lg font-semibold text-gray-900">Club not found</p>
@@ -200,7 +200,7 @@ export default function WorldClubPage() {
             Go to World
           </Link>
         </div>
-      </Layout>
+      </>
     )
   }
 
@@ -215,7 +215,7 @@ export default function WorldClubPage() {
       : '/world'
 
   return (
-    <Layout>
+    <>
       <Header />
       <div className="flex-1 bg-gray-50 pt-[var(--app-header-offset)]">
         <div className="mx-auto max-w-3xl px-4 py-6 md:py-10">
@@ -312,6 +312,6 @@ export default function WorldClubPage() {
           </div>
         </div>
       </div>
-    </Layout>
+    </>
   )
 }

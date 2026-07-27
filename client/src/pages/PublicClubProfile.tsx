@@ -109,11 +109,11 @@ export default function PublicClubProfile() {
               .eq('role', 'club')
             const { data, error: fetchError } = await (
               username ? base.eq('username', username) : base.eq('id', id!)
-            ).single()
-            if (fetchError) {
-              if (fetchError.code === 'PGRST116') return null
-              throw fetchError
-            }
+            ).maybeSingle()
+            // maybeSingle: 0 rows is DATA (null), not an error — .single() made every
+            // hidden/unknown profile visit log a 406 in the console.
+            if (fetchError) throw fetchError
+            if (!data) return null
             return data as unknown as PublicClubProfile
           },
           PUBLIC_PROFILE_TTL,

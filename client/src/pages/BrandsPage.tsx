@@ -15,7 +15,7 @@ import { useState } from 'react'
 import { Search, Store, Loader2, Rss, Grid3X3 } from 'lucide-react'
 import { BrandCardSkeleton } from '@/components/Skeleton'
 import { useSearchParams } from 'react-router-dom'
-import { Header, Layout } from '@/components'
+import { Header } from '@/components'
 import { BrandCard, BrandCategoryFilter, GlobalBrandFeed } from '@/components/brands'
 import { useBrands, type BrandCategory } from '@/hooks/useBrands'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
@@ -44,7 +44,7 @@ export default function BrandsPage() {
   }
 
   return (
-    <Layout>
+    <>
       <Header />
 
       <div className="flex-1">
@@ -97,7 +97,7 @@ export default function BrandsPage() {
           )}
         </div>
       </div>
-    </Layout>
+    </>
   )
 }
 

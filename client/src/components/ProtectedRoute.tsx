@@ -53,6 +53,15 @@ const PUBLIC_ROUTES = ['/', '/signup', '/signin', '/verify-email', '/auth/callba
 // onboarding itself, auth plumbing, legal pages (linked from onboarding),
 // and the email-action/waitlist endpoints. Everything else redirects to
 // onboarding until it is completed.
+// Every surface that genuinely requires auth, by prefix. A path matching
+// neither this list nor PUBLIC_ROUTES is an unknown URL and falls through to
+// the router's `*` NotFoundPage instead of bouncing anon visitors to the
+// landing page (soft-404). Keep in step with the route table in App.tsx.
+const PROTECTED_ROUTE_PREFIXES = [
+  '/home', '/dashboard', '/messages', '/settings', '/notifications',
+  '/search', '/discover', '/discovery', '/complete-profile', '/admin',
+]
+
 const ONBOARDING_EXEMPT_ROUTES = [
   // '/brands/onboarding' is the ONE onboarding surface that lives outside
   // /complete-profile: brands finish signup there (CompleteProfile redirects
@@ -113,6 +122,18 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   // Public routes - allow access regardless of auth status
   if (isPublicRoute) {
+    return <>{children}</>
+  }
+
+  // Unknown routes: neither public nor any protected surface. Fall through to
+  // the router so the `*` NotFoundPage renders. Without this, a logged-out
+  // visitor with a typo'd or dead link was silently redirected to the landing
+  // page — a soft-404 with no feedback that the link was wrong (and the bad
+  // path was even stored as their post-login redirect target). The 404 page
+  // carries no data, so letting anon reach it is safe by construction.
+  const isKnownProtectedRoute = PROTECTED_ROUTE_PREFIXES.some(route =>
+    location.pathname === route || location.pathname.startsWith(route + '/'))
+  if (!isKnownProtectedRoute) {
     return <>{children}</>
   }
 
