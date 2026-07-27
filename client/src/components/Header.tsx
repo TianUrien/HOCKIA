@@ -81,7 +81,12 @@ export default function Header() {
               />
             </button>
             
-            <span className="hidden lg:inline-block px-3 py-1 rounded-full text-xs font-medium text-white bg-[#ff9500]">
+            {/* #c2410c, not the #ff9500 brand orange: white on #ff9500 is
+                2.20:1, well under the 4.5:1 WCAG AA needs for text this size,
+                and this tagline sits on every authenticated page. Darkening
+                the background (founder's call over darkening the text) takes
+                it to 5.18:1 while keeping the badge orange. */}
+            <span className="hidden lg:inline-block px-3 py-1 rounded-full text-xs font-medium text-white bg-[#c2410c]">
               Where field hockey sticks together.
             </span>
           </div>
