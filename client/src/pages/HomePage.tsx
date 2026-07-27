@@ -6,7 +6,6 @@ import { PostComposer } from '@/components/home/PostComposer'
 import { SearchOverlay } from '@/components/search/SearchOverlay'
 import { PullToRefresh } from '@/components/PullToRefresh'
 import { HomeTabBar } from '@/components/home/HomeTabs'
-import { FeedTabHint } from '@/components/home/FeedTabHint'
 import { useHomeTab } from '@/hooks/useHomeTab'
 import { PulseTab } from '@/components/home/pulse/PulseTab'
 import { useScrollRestore } from '@/hooks/useScrollRestore'
@@ -38,9 +37,15 @@ export default function HomePage() {
 
       <PullToRefresh onRefresh={handleRefresh}>
       <main className="max-w-2xl mx-auto pt-20 pb-24">
-        {/* Pulse (default, state-of-your-week) / Feed (community). Sticky so
-            the switch stays reachable; hides on scroll-down like the old
-            composer bar did. */}
+        {/* Feed (default, the community) / Pulse (state-of-your-week). Sticky
+            so the switch stays reachable; hides on scroll-down like the old
+            composer bar did.
+
+            The FeedTabHint coachmark lived here until 2026-07-27. It existed
+            to point people at the Feed tab; Feed is now where they land, so it
+            had nothing left to teach — and its own auto-dismiss fires on
+            tab === 'feed', so it would have flashed once and burned its
+            localStorage flag on first paint. */}
         <div
           className={`sticky top-[var(--app-header-height,60px)] z-40 bg-gray-50 pb-3 pt-2 transition-all duration-200 ${
             scrollDirection === 'down'
@@ -49,7 +54,6 @@ export default function HomePage() {
           }`}
         >
           <HomeTabBar tab={tab} onChange={setTab} />
-          <FeedTabHint tab={tab} onGoToFeed={() => setTab('feed')} />
         </div>
 
         {tab === 'pulse' ? (

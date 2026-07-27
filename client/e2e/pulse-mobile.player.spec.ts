@@ -19,7 +19,9 @@ test.describe('Pulse tab @ mobile viewport', () => {
       }
     })
 
-    await page.goto('/home')
+    // ?tab=pulse is explicit since Feed became the default tab (2026-07-27):
+    // bare /home now lands on the feed, and this spec is about Pulse.
+    await page.goto('/home?tab=pulse')
     await expect(page.getByRole('button', { name: 'pulse', exact: true })).toBeVisible({ timeout: 15_000 })
 
     // Let the async modules land before measuring — the horizontal

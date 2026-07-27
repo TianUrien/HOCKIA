@@ -307,7 +307,10 @@ Deno.serve(async (req: Request) => {
     // per-role health at the top of /home for clubs AND recruiting coaches.
     // The old generic /dashboard landing lost the one publisher who clicked
     // (12-second bounce without ever reaching his applicants).
-    const dashboardUrl = `${HOCKIA_BASE_URL}/home`
+    // ?tab=pulse REQUIRED since Feed became the default tab (2026-07-27):
+    // bare /home now lands on the feed, i.e. back to a generic landing and
+    // exactly the bounce this link was rewritten to avoid.
+    const dashboardUrl = `${HOCKIA_BASE_URL}/home?tab=pulse`
     const fallbackHtml = `<!DOCTYPE html>
 <html><body style="margin:0;padding:0;background:#f6f6f8;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 12px;">

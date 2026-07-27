@@ -197,9 +197,11 @@ Deno.serve(async (req: Request) => {
       // The Home Pulse carries the weekly-visibility card — a richer landing
       // than the old dashboard viewers deep-link (2026-07 digest UX lesson:
       // land people where the next action is).
-      cta_url: `${HOCKIA_BASE_URL}/home`,
-      // Label matches the destination: /home is the Pulse (visibility card
-      // when it applies), NOT the viewers list — don't promise that list.
+      // ?tab=pulse is REQUIRED since Feed became the default tab (2026-07-27):
+      // bare /home now lands on the feed, which carries no visibility card.
+      cta_url: `${HOCKIA_BASE_URL}/home?tab=pulse`,
+      // Label matches the destination: the Pulse (visibility card when it
+      // applies), NOT the viewers list — don't promise that list.
       cta_label: 'See your week on HOCKIA',
       settings_url: `${HOCKIA_BASE_URL}/settings`,
     }

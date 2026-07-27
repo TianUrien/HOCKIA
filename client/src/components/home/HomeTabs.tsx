@@ -1,11 +1,14 @@
 import type { HomeTab } from '@/hooks/useHomeTab'
 
-/** The Pulse / Feed segmented switch (Home redesign V2). State lives in the
- *  useHomeTab hook so this file only exports a component (fast-refresh rule). */
+/** The Feed / Pulse segmented switch. State lives in the useHomeTab hook so
+ *  this file only exports a component (fast-refresh rule).
+ *
+ *  Feed sits first because it is the default tab — a segmented control whose
+ *  selected item starts on the right reads as "you are somewhere secondary". */
 export function HomeTabBar({ tab, onChange }: { tab: HomeTab; onChange: (t: HomeTab) => void }) {
   return (
     <div className="mx-4 flex rounded-2xl bg-gray-100 p-1 md:mx-6">
-      {(['pulse', 'feed'] as const).map((t) => (
+      {(['feed', 'pulse'] as const).map((t) => (
         <button
           key={t}
           type="button"

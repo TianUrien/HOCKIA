@@ -127,7 +127,9 @@ export function generateEmailHtml(
     ? `<p style="color: #6b7280; margin: 0 0 16px 0; font-size: 15px;">${stats.trendLine}</p>`
     : ''
 
-  const ctaUrl = `${HOCKIA_BASE_URL}/home`
+  // ?tab=pulse REQUIRED since Feed became the default tab (2026-07-27):
+  // bare /home lands on the feed, which has no weekly-visibility card.
+  const ctaUrl = `${HOCKIA_BASE_URL}/home?tab=pulse`
 
   return `
 <!DOCTYPE html>
@@ -178,7 +180,9 @@ export function generateEmailText(
     ? '1 person checked out your HOCKIA profile this week.'
     : `${stats.uniqueViewers} people checked out your HOCKIA profile this week.`
 
-  const ctaUrl = `${HOCKIA_BASE_URL}/home`
+  // ?tab=pulse REQUIRED since Feed became the default tab (2026-07-27):
+  // bare /home lands on the feed, which has no weekly-visibility card.
+  const ctaUrl = `${HOCKIA_BASE_URL}/home?tab=pulse`
 
   const lines = [
     `Hi ${firstName},`,
