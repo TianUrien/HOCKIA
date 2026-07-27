@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { ArrowRight, Check } from 'lucide-react'
+import { Capacitor } from '@capacitor/core'
 import { InAppBrowserWarning, PublicNav } from '@/components'
 import HockiaSocials from '@/components/HockiaSocials'
 import StoreBadges from '@/components/StoreBadges'
@@ -30,6 +31,10 @@ import { setStatusBarForBackground } from '@/lib/nativeUi'
  */
 
 const EXPLORE_PATH = '/community'
+
+/** Inside the iOS/Android app. Constant for the lifetime of the process, so
+ *  it's read once rather than per render. */
+const isNativeApp = Capacitor.isNativePlatform()
 
 /**
  * Reveal-on-scroll. Honours prefers-reduced-motion by showing immediately.
@@ -326,15 +331,21 @@ export default function Landing() {
 
                 <div className="mt-8">{ctaPair('hero')}</div>
 
-                <div className="mt-9">
-                  <p className="text-sm font-medium text-gray-500">
-                    Use HOCKIA on the web — or take it with you.
-                  </p>
-                  <div className="mt-3 flex flex-wrap items-center gap-4">
-                    <StoreBadges heightClass="h-11" source="landing_hero" />
-                    <span className="text-sm text-gray-400">Web · iOS · Android</span>
+                {/* WEB ONLY. Inside the native app the visitor demonstrably
+                    already has the app, so "download it" is dead weight — and
+                    the surrounding copy ("use it on the web / take it with
+                    you") is simply wrong there. The website is unchanged. */}
+                {!isNativeApp && (
+                  <div className="mt-9">
+                    <p className="text-sm font-medium text-gray-500">
+                      Use HOCKIA on the web — or take it with you.
+                    </p>
+                    <div className="mt-3 flex flex-wrap items-center gap-4">
+                      <StoreBadges heightClass="h-11" source="landing_hero" />
+                      <span className="text-sm text-gray-400">Web · iOS · Android</span>
+                    </div>
                   </div>
-                </div>
+                )}
               </Reveal>
             </div>
 

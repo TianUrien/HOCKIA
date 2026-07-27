@@ -30,10 +30,17 @@ export default function PublicNav({ transparent = true }: PublicNavProps) {
   ]
 
   return (
-    <nav 
-      className={`relative z-20 w-full ${
-        transparent 
-          ? 'bg-transparent' 
+    <nav
+      // index.html sets viewport-fit=cover, so the app draws UNDER the iOS
+      // status bar and each fixed/top surface must clear it itself (the authed
+      // Header does the same). The old dark landing got this from padding on
+      // its own wrapper; the scrolling landing has no such wrapper, so without
+      // this the nav sits under the notch in the native app.
+      // No-op on the website: env(safe-area-inset-top) is 0 in desktop and
+      // mobile browsers, so this changes nothing there.
+      className={`relative z-20 w-full pt-[env(safe-area-inset-top)] ${
+        transparent
+          ? 'bg-transparent'
           : 'bg-white/95 backdrop-blur-sm border-b border-gray-200'
       }`}
     >
