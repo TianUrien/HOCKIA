@@ -336,7 +336,7 @@ function VisibilityRow({ item, onAction }: VisibilityRowProps) {
         </span>
       ) : (
         <Circle
-          className="h-5 w-5 flex-shrink-0 text-gray-300 mt-0.5"
+          className="h-5 w-5 flex-shrink-0 text-gray-500 mt-0.5"
           aria-hidden="true"
         />
       )}

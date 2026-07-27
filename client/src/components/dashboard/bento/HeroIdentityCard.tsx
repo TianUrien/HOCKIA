@@ -480,7 +480,7 @@ function MetaRow({ children }: { children: React.ReactNode }) {
 
 /** Subtle dot separator between groups on the same metadata row. */
 function MetaBullet() {
-  return <span className="text-gray-300" aria-hidden="true">·</span>
+  return <span className="text-gray-500" aria-hidden="true">·</span>
 }
 
 interface CredibilityStatProps {
@@ -523,7 +523,7 @@ function CredibilityStat({ icon: Icon, label, count, onClick, testId }: Credibil
       <span className="font-bold text-gray-900 tabular-nums">{count}</span>
       {onClick && (
         <ChevronRight
-          className="h-3.5 w-3.5 text-gray-300 transition-colors group-hover:text-gray-500"
+          className="h-3.5 w-3.5 text-gray-500 transition-colors group-hover:text-gray-500"
           aria-hidden="true"
         />
       )}

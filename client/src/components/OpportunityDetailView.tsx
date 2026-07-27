@@ -264,7 +264,7 @@ export default function VacancyDetailView({
                   <Avatar src={clubLogo} initials={clubName.split(' ').map(n => n[0]).join('').slice(0, 2)} size="lg" loading="eager" fetchPriority="high" role="club" />
                   <div className="mt-2 flex items-center gap-1.5">
                     <span className="text-lg font-bold text-gray-900">{clubName}</span>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide bg-[#F0FDFA] text-[#0D9488] border border-teal-100">Coach</span>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide bg-[#F0FDFA] text-[#0f766e] border border-teal-100">Coach</span>
                   </div>
                 </button>
                 {worldClub ? (
@@ -304,7 +304,7 @@ export default function VacancyDetailView({
                   </span>
                 )}
                 {cardType !== 'club' ? (
-                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-[#F0FDFA] text-[#0D9488] border border-teal-100">
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-[#F0FDFA] text-[#0f766e] border border-teal-100">
                     COACH LISTED
                   </span>
                 ) : (

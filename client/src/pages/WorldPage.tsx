@@ -157,7 +157,7 @@ export default function WorldPage() {
           </div>
         ) : error ? (
           <div className="text-center py-12">
-            <Globe className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+            <Globe className="w-12 h-12 text-gray-500 mx-auto mb-4" />
             <p className="text-gray-700 font-medium mb-1">Unable to load countries</p>
             <p className="text-sm text-gray-500 mb-4">Check your connection and try again</p>
             <button
@@ -171,7 +171,7 @@ export default function WorldPage() {
           </div>
         ) : filteredCountries.length === 0 ? (
           <div className="text-center py-12">
-            <Globe className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+            <Globe className="w-12 h-12 text-gray-500 mx-auto mb-4" />
             <p className="text-gray-500">
               {searchQuery ? 'No countries found matching your search' : 'No countries available yet'}
             </p>

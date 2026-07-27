@@ -82,7 +82,7 @@ export function NotificationCtrCard({ days = 30 }: { days?: number }) {
   if (rows.length === 0) {
     return (
       <div className="bg-white rounded-xl border border-gray-200 p-6 text-center">
-        <Bell className="w-6 h-6 text-gray-300 mx-auto mb-2" />
+        <Bell className="w-6 h-6 text-gray-500 mx-auto mb-2" />
         <p className="text-sm text-gray-400">No notifications sent in the last {days} days.</p>
       </div>
     )

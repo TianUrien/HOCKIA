@@ -29,7 +29,7 @@ export function PostComposer({ onPostCreated }: PostComposerProps) {
           <button
             type="button"
             onClick={() => setIsModalOpen(true)}
-            className="flex-1 text-left px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-full text-gray-500 text-sm hover:bg-gray-100 transition-colors"
+            className="flex-1 text-left px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-full text-gray-600 text-sm hover:bg-gray-100 transition-colors"
           >
             Start a post...
           </button>

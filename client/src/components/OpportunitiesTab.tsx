@@ -681,7 +681,7 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
     const config: Record<string, { style: string; icon: React.ComponentType<{ className?: string }>; label: string }> = {
       draft: { style: 'bg-amber-50 text-amber-700 border border-amber-200', icon: AlertCircle, label: 'Draft' },
       open: { style: 'bg-hockia-primary/5 text-hockia-primary border border-hockia-primary/15', icon: CheckCircle, label: 'Published' },
-      closed: { style: 'bg-gray-100 text-gray-500 border border-gray-200', icon: XCircle, label: 'Closed' },
+      closed: { style: 'bg-gray-100 text-gray-600 border border-gray-200', icon: XCircle, label: 'Closed' },
     }
 
     const { style, icon: Icon, label } = config[status] || config.draft
@@ -837,7 +837,7 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
             }
             const roleBadgeStyle = vacancy.opportunity_type === 'player'
               ? 'bg-[#EFF6FF] text-[#2563EB]'
-              : 'bg-[#F0FDFA] text-[#0D9488]'
+              : 'bg-[#F0FDFA] text-[#0f766e]'
 
             return (
               <div
@@ -876,7 +876,7 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
                     <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
                     <span>{locationLabel || 'Location TBD'}</span>
                   </div>
-                  <span className="text-gray-300">·</span>
+                  <span className="text-gray-500">·</span>
                   <div className="flex items-center gap-1.5">
                     <Calendar className="w-3.5 h-3.5" />
                     <span>{vacancy.start_date ? formatDate(vacancy.start_date) : 'Start TBD'}</span>

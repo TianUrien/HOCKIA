@@ -178,7 +178,7 @@ export function AdminEmail() {
           }}
           disabled={togglingTemplateId === row.id}
           className={`inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-medium rounded-full transition-colors ${
-            row.is_active ? 'bg-green-50 text-green-700 hover:bg-green-100' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+            row.is_active ? 'bg-green-50 text-green-700 hover:bg-green-100' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
           } ${togglingTemplateId === row.id ? 'opacity-50' : ''}`}
           title={`Click to ${row.is_active ? 'deactivate' : 'activate'} template`}
         >

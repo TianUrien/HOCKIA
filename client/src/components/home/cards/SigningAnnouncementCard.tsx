@@ -163,7 +163,7 @@ export function SigningAnnouncementCard({ item, onLikeUpdate, onDelete }: Signin
 
           {/* Arrow */}
           <div className="flex items-center justify-center flex-shrink-0 pt-5">
-            <ArrowRight className="w-6 h-6 text-[#EA580C]" />
+            <ArrowRight className="w-6 h-6 text-[#c2410c]" />
           </div>
 
           {/* Club (author) */}

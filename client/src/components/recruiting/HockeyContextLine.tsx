@@ -51,9 +51,9 @@ export default function HockeyContextLine({
       ].join(' ')}
     >
       <Segment value={club} />
-      <span className="text-gray-300 mx-1" aria-hidden="true">·</span>
+      <span className="text-gray-500 mx-1" aria-hidden="true">·</span>
       <Segment value={competition} />
-      <span className="text-gray-300 mx-1" aria-hidden="true">·</span>
+      <span className="text-gray-500 mx-1" aria-hidden="true">·</span>
       <Segment value={pos} />
     </p>
   )

@@ -34,7 +34,7 @@ export function SearchOpportunityResult({ result }: SearchOpportunityResultProps
             <span className="text-xs text-gray-500 truncate">{result.club_name}</span>
             {location && (
               <>
-                <span className="text-xs text-gray-300">&middot;</span>
+                <span className="text-xs text-gray-500">&middot;</span>
                 <span className="text-xs text-gray-400 truncate flex items-center gap-0.5">
                   <MapPin className="w-3 h-3" />
                   {location}
@@ -43,7 +43,7 @@ export function SearchOpportunityResult({ result }: SearchOpportunityResultProps
             )}
             {position && (
               <>
-                <span className="text-xs text-gray-300">&middot;</span>
+                <span className="text-xs text-gray-500">&middot;</span>
                 <span className="text-xs text-gray-400">{position}</span>
               </>
             )}

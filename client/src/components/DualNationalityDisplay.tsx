@@ -151,7 +151,7 @@ function CompactDisplay({ primaryCountry, secondaryCountry, isEuCountry, classNa
                 EU
               </span>
             )}
-            {i < nationalities.length - 1 && <span className="text-gray-300 ml-1">·</span>}
+            {i < nationalities.length - 1 && <span className="text-gray-500 ml-1">·</span>}
           </span>
         )
       })}

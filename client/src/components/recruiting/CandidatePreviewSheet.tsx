@@ -373,7 +373,7 @@ export function CandidatePreviewSheet({ member, onClose }: CandidatePreviewSheet
               <button
                 type="button"
                 onClick={requestClose}
-                className="-mr-1 flex h-8 w-8 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 transition-colors active:scale-95"
+                className="-mr-1 flex h-8 w-8 items-center justify-center rounded-full text-gray-600 hover:bg-gray-100 transition-colors active:scale-95"
                 aria-label="Close preview"
               >
                 <X className="h-4 w-4" />
@@ -535,7 +535,7 @@ export function CandidatePreviewSheet({ member, onClose }: CandidatePreviewSheet
                     {r.present ? (
                       <Check className="h-3.5 w-3.5 flex-shrink-0 text-emerald-600" />
                     ) : (
-                      <X className="h-3.5 w-3.5 flex-shrink-0 text-gray-300" />
+                      <X className="h-3.5 w-3.5 flex-shrink-0 text-gray-500" />
                     )}
                     <span className={r.present ? 'text-gray-700' : 'text-gray-400'}>{r.label}</span>
                   </div>

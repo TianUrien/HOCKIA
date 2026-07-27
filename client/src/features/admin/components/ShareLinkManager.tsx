@@ -147,7 +147,7 @@ export function ShareLinkManager({
       {/* Active tokens */}
       {activeTokens.length === 0 && !isCreating ? (
         <div className="text-center py-8 text-gray-500">
-          <Link2 className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+          <Link2 className="w-8 h-8 mx-auto mb-2 text-gray-500" />
           <p className="text-sm">No shareable links yet</p>
           <p className="text-xs text-gray-400 mt-1">Create a link to share metrics with investors</p>
         </div>

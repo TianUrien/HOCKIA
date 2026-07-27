@@ -600,7 +600,7 @@ export function CreateCampaignModal({ templates, editCampaign, onClose, onCreate
                               {isSelected ? (
                                 <CheckSquare className="w-4 h-4 text-purple-600 mx-auto" />
                               ) : (
-                                <Square className="w-4 h-4 text-gray-300 mx-auto" />
+                                <Square className="w-4 h-4 text-gray-500 mx-auto" />
                               )}
                             </td>
                             <td className="px-2 py-2">

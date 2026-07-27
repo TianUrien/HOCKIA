@@ -243,7 +243,7 @@ function ShortlistRow({ list, onOpen, onRename, onDelete, onSetDefault }: RowPro
                 type="button"
                 onClick={() => { setDraft(list.name); setEditing(false) }}
                 aria-label="Cancel rename"
-                className="p-1.5 rounded-md text-gray-500 hover:bg-gray-100"
+                className="p-1.5 rounded-md text-gray-600 hover:bg-gray-100"
               >
                 <X className="w-4 h-4" />
               </button>

@@ -474,7 +474,7 @@ export default function ApplicantsList() {
                     <h2 className="text-sm font-semibold text-gray-700">
                       {group.label}
                     </h2>
-                    <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500">
+                    <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
                       {group.applications.length}
                     </span>
                   </div>

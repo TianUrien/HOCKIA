@@ -120,7 +120,7 @@ function ClubCard({ club, highlighted, onClick }: { club: Club; highlighted: boo
               Active
             </span>
           ) : (
-            <span className="flex items-center gap-1 text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+            <span className="flex items-center gap-1 text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded-full">
               <Clock className="w-3 h-3" />
               Unclaimed
             </span>
@@ -538,7 +538,7 @@ export default function WorldCountryPage() {
         <Header />
         <main className="mx-auto max-w-7xl px-4 pt-24 pb-12 md:px-6">
           <div className="text-center py-12">
-            <Building2 className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+            <Building2 className="w-12 h-12 text-gray-500 mx-auto mb-4" />
             <p className="text-gray-700 font-medium mb-1">
               {isNotFound ? 'Country not found' : 'Unable to load country data'}
             </p>
@@ -799,7 +799,7 @@ export default function WorldCountryPage() {
               </div>
             ) : clubs.length === 0 ? (
               <div className="text-center py-12 bg-white rounded-2xl border border-gray-200">
-                <Building2 className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                <Building2 className="w-12 h-12 text-gray-500 mx-auto mb-4" />
                 <p className="text-gray-500">No clubs in this league yet</p>
                 <p className="text-sm text-gray-400 mt-1">
                   Clubs will appear here once they join the platform
@@ -832,7 +832,7 @@ export default function WorldCountryPage() {
 
             {leagues.length === 0 && communityClubs.length === 0 && (
               <div className="text-center py-12 bg-white rounded-2xl border border-gray-200">
-                <Building2 className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                <Building2 className="w-12 h-12 text-gray-500 mx-auto mb-4" />
                 <p className="text-gray-500">No clubs in {country.name} yet</p>
                 <p className="text-sm text-gray-400 mt-1">
                   Clubs will appear here once they join the platform

@@ -131,7 +131,7 @@ export function AdminOutreach() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => { fetchStats(); fetchContacts() }}
-            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 text-gray-600 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
             title="Refresh"
           >
             <RefreshCw className="w-4 h-4" />
@@ -274,7 +274,7 @@ export function AdminOutreach() {
               ) : contacts.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-4 py-12 text-center">
-                    <Users className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                    <Users className="w-8 h-8 text-gray-500 mx-auto mb-2" />
                     <p className="text-sm text-gray-500">
                       {debouncedSearch || filterStatus || filterCountry
                         ? 'No contacts match your filters'

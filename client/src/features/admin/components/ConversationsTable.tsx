@@ -187,7 +187,7 @@ export function ConversationsTable({ days }: ConversationsTableProps) {
                     {c.replied ? (
                       <Check className="w-4 h-4 text-emerald-600 inline" aria-label="Replied" />
                     ) : (
-                      <Minus className="w-4 h-4 text-gray-300 inline" aria-label="No reply" />
+                      <Minus className="w-4 h-4 text-gray-500 inline" aria-label="No reply" />
                     )}
                   </td>
                   {/* Msgs */}

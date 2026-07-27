@@ -50,7 +50,7 @@ export function BrandHeader({ brand }: BrandHeaderProps) {
                 decoding="async"
               />
             ) : (
-              <Store className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300" />
+              <Store className="w-12 h-12 sm:w-16 sm:h-16 text-gray-500" />
             )}
           </div>
 
@@ -66,7 +66,7 @@ export function BrandHeader({ brand }: BrandHeaderProps) {
               {CATEGORY_LABELS[brand.category] || brand.category}
               {country && (
                 <>
-                  <span className="mx-2 text-gray-300" aria-hidden="true">·</span>
+                  <span className="mx-2 text-gray-500" aria-hidden="true">·</span>
                   <span className="inline-flex items-center gap-1.5 align-middle">
                     <Flag code={country.code} countryName={country.name} fallbackEmoji={country.flag_emoji} />
                     <span>{country.name}</span>

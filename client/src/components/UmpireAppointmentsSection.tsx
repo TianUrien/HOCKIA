@@ -195,7 +195,7 @@ export default function UmpireAppointmentsSection({
       ) : appointments.length === 0 ? (
         readOnly ? (
           <div className="rounded-xl border border-dashed border-gray-200 p-6 text-center">
-            <Award className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+            <Award className="w-10 h-10 text-gray-500 mx-auto mb-3" />
             <p className="text-base font-semibold text-gray-900 mb-1">
               {isOwnProfile ? 'No journey entries yet' : 'No journey entries shared yet'}
             </p>
@@ -320,7 +320,7 @@ export default function UmpireAppointmentsSection({
                         <button
                           type="button"
                           onClick={() => openEdit(a)}
-                          className="p-1.5 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+                          className="p-1.5 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
                           aria-label="Edit entry"
                           title="Edit"
                         >

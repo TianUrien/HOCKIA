@@ -323,16 +323,16 @@ export function AdminChurn() {
                       <td className="py-3 px-2 text-right font-mono text-gray-900">
                         {Number(row.total_users).toLocaleString()}
                       </td>
-                      <td className={`py-3 px-2 text-right font-mono font-medium ${row.d7_pct == null ? 'text-gray-300' : retentionColor(Number(row.d7_pct))}`}>
+                      <td className={`py-3 px-2 text-right font-mono font-medium ${row.d7_pct == null ? 'text-gray-500' : retentionColor(Number(row.d7_pct))}`}>
                         {row.d7_pct == null ? '—' : `${row.d7_pct}%`}
                       </td>
-                      <td className={`py-3 px-2 text-right font-mono font-medium ${row.d15_pct == null ? 'text-gray-300' : retentionColor(Number(row.d15_pct))}`}>
+                      <td className={`py-3 px-2 text-right font-mono font-medium ${row.d15_pct == null ? 'text-gray-500' : retentionColor(Number(row.d15_pct))}`}>
                         {row.d15_pct == null ? '—' : `${row.d15_pct}%`}
                       </td>
-                      <td className={`py-3 px-2 text-right font-mono font-medium ${row.d30_pct == null ? 'text-gray-300' : retentionColor(Number(row.d30_pct))}`}>
+                      <td className={`py-3 px-2 text-right font-mono font-medium ${row.d30_pct == null ? 'text-gray-500' : retentionColor(Number(row.d30_pct))}`}>
                         {row.d30_pct == null ? '—' : `${row.d30_pct}%`}
                       </td>
-                      <td className={`py-3 px-2 text-right font-mono font-medium ${row.d90_pct == null ? 'text-gray-300' : retentionColor(Number(row.d90_pct))}`}>
+                      <td className={`py-3 px-2 text-right font-mono font-medium ${row.d90_pct == null ? 'text-gray-500' : retentionColor(Number(row.d90_pct))}`}>
                         {row.d90_pct == null ? '—' : `${row.d90_pct}%`}
                       </td>
                     </tr>

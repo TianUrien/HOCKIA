@@ -141,7 +141,7 @@ export default function AppRatingPrompt() {
                 aria-label={`${n} star${n > 1 ? 's' : ''}`}
               >
                 <Star
-                  className={`h-7 w-7 ${n <= display ? 'fill-amber-400 text-amber-400' : 'fill-transparent text-gray-300'}`}
+                  className={`h-7 w-7 ${n <= display ? 'fill-amber-400 text-amber-400' : 'fill-transparent text-gray-500'}`}
                 />
               </button>
             ))}

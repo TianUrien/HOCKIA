@@ -311,7 +311,7 @@ export function AdminFeedback() {
                 {s === 'all' ? 'All' : STATUS_LABEL[s as FeedbackStatusFilter]}
               </button>
             ))}
-            <span className="text-gray-300 mx-2">·</span>
+            <span className="text-gray-500 mx-2">·</span>
             <span className="text-gray-500 mr-1">Category:</span>
             {(['all', 'bug', 'confusing', 'idea', 'praise', 'other'] as CategoryFilter[]).map((c) => (
               <button
@@ -326,7 +326,7 @@ export function AdminFeedback() {
                 {c === 'all' ? 'All' : CATEGORY_META[c as FeedbackCategoryFilter].label}
               </button>
             ))}
-            <span className="text-gray-300 mx-2">·</span>
+            <span className="text-gray-500 mx-2">·</span>
             <label className="inline-flex items-center gap-1 cursor-pointer min-h-[32px] px-2">
               <input
                 type="checkbox"

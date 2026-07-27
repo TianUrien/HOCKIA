@@ -359,9 +359,9 @@ export default function NotificationsDrawer() {
             <div className="space-y-1">
               <p className={cn('text-[15px] leading-snug', isUnread ? 'font-semibold text-gray-900' : 'font-medium text-gray-700')}>{config.getTitle(notification)}</p>
               {description && <p className={cn('text-sm', isUnread ? 'text-gray-600' : 'text-gray-500')}>{description}</p>}
-              <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
+              <div className="flex flex-wrap items-center gap-2 text-xs text-gray-600">
                 <span className="font-medium">{displayTime}</span>
-                <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-gray-600">
                   <span className="h-1.5 w-1.5 rounded-full bg-[#0866FF]" />
                   {config.badgeText}
                 </span>
@@ -424,12 +424,12 @@ export default function NotificationsDrawer() {
             <div className="flex items-center justify-between">
               <div>
                 <p id="notifications-drawer-title" className="text-2xl font-semibold text-gray-900">Notifications</p>
-                <p className="text-sm text-gray-500">Stay on top of your network.</p>
+                <p className="text-sm text-gray-600">Stay on top of your network.</p>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  className="rounded-full bg-gray-100 min-w-[44px] min-h-[44px] inline-flex items-center justify-center text-gray-500 transition hover:bg-gray-200 hover:text-gray-700"
+                  className="rounded-full bg-gray-100 min-w-[44px] min-h-[44px] inline-flex items-center justify-center text-gray-600 transition hover:bg-gray-200 hover:text-gray-700"
                   aria-label="Search notifications"
                   onClick={(event) => event.stopPropagation()}
                 >
@@ -437,7 +437,7 @@ export default function NotificationsDrawer() {
                 </button>
                 <button
                   type="button"
-                  className="rounded-full bg-gray-100 min-w-[44px] min-h-[44px] inline-flex items-center justify-center text-gray-500 transition hover:bg-gray-200 hover:text-gray-700"
+                  className="rounded-full bg-gray-100 min-w-[44px] min-h-[44px] inline-flex items-center justify-center text-gray-600 transition hover:bg-gray-200 hover:text-gray-700"
                   aria-label="Notification settings"
                   onClick={(event) => event.stopPropagation()}
                 >
@@ -446,7 +446,7 @@ export default function NotificationsDrawer() {
                 <button
                   type="button"
                   onClick={() => toggleDrawer(false)}
-                  className="rounded-full bg-gray-100 min-w-[44px] min-h-[44px] inline-flex items-center justify-center text-gray-500 transition hover:bg-gray-200 hover:text-gray-700"
+                  className="rounded-full bg-gray-100 min-w-[44px] min-h-[44px] inline-flex items-center justify-center text-gray-600 transition hover:bg-gray-200 hover:text-gray-700"
                   aria-label="Close notifications"
                 >
                   ✕
@@ -484,7 +484,7 @@ export default function NotificationsDrawer() {
           <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-6">
             {sectionedNotifications.map((section) => (
               <div key={section.title} className="mb-6 last:mb-0">
-                <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-600">
                   {section.title}
                 </p>
                 {section.data.length > 0 ? (

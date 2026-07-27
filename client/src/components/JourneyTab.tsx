@@ -1313,7 +1313,7 @@ export default function JourneyTab({
                               className="h-full w-full object-cover rounded-xl"
                               containerClassName="h-10 w-10 min-w-[2.5rem] rounded-xl sm:h-12 sm:w-12 sm:min-w-[3rem]"
                               fallbackClassName="h-10 w-10 rounded-xl bg-gray-50 sm:h-12 sm:w-12"
-                              fallback={<ImageIcon className="h-4 w-4 text-gray-300" />}
+                              fallback={<ImageIcon className="h-4 w-4 text-gray-500" />}
                               fetchPriority={entryIndex < 3 ? 'high' : undefined}
                             />
 
@@ -1338,7 +1338,7 @@ export default function JourneyTab({
                             </span>
                             {(startLabel || entry.years) && (
                               <>
-                                <span className="text-gray-300">·</span>
+                                <span className="text-gray-500">·</span>
                                 <span className="inline-flex items-center gap-1">
                                   <Calendar className="h-3 w-3" />
                                   {startLabel || entry.years}
@@ -1348,13 +1348,13 @@ export default function JourneyTab({
                             )}
                             {durationLabel && (
                               <>
-                                <span className="text-gray-300">·</span>
+                                <span className="text-gray-500">·</span>
                                 <span>{durationLabel}</span>
                               </>
                             )}
                             {worldClub && (
                               <>
-                                <span className="text-gray-300">·</span>
+                                <span className="text-gray-500">·</span>
                                 <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
                                   <Globe2 className="h-3 w-3" />
                                   Directory

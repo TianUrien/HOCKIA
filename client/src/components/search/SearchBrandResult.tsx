@@ -47,7 +47,7 @@ export function SearchBrandResult({ result }: SearchBrandResultProps) {
               </span>
             )}
             {result.brand_bio && result.brand_category && (
-              <span className="text-xs text-gray-300">&middot;</span>
+              <span className="text-xs text-gray-500">&middot;</span>
             )}
             {result.brand_bio && (
               <span className="text-xs text-gray-400 truncate">
@@ -56,7 +56,7 @@ export function SearchBrandResult({ result }: SearchBrandResultProps) {
             )}
           </div>
         </div>
-        <span className="text-[10px] font-medium text-[#E11D48] bg-[#E11D48]/10 px-2 py-0.5 rounded-full flex-shrink-0">
+        <span className="text-[10px] font-medium text-[#be123c] bg-[#E11D48]/10 px-2 py-0.5 rounded-full flex-shrink-0">
           Brand
         </span>
       </div>

@@ -52,7 +52,7 @@ export function ApplicantsToReview({ totals, loading }: { totals: RolesHealthTot
               : 'Quick replies win players — respond within 3 days to stay ahead.'}
           </p>
         </div>
-        <ChevronRight className="h-4 w-4 flex-shrink-0 text-gray-300" />
+        <ChevronRight className="h-4 w-4 flex-shrink-0 text-gray-500" />
       </button>
     </section>
   )

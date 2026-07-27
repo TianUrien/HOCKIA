@@ -129,7 +129,7 @@ export default function AvailabilityToggleStrip({ role }: AvailabilityToggleStri
               'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-all duration-200',
               toggle.active
                 ? `bg-gradient-to-r ${toggle.activeGradient} text-white shadow-sm`
-                : 'bg-gray-100 text-gray-500 hover:bg-gray-200',
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200',
               saving === toggle.id && 'opacity-60'
             )}
           >

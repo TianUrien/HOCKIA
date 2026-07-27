@@ -207,7 +207,7 @@ export default function ClubMembersTab({ profileId, isOwner = false }: ClubMembe
             <button
               type="button"
               onClick={() => void handleCancelInvite(inv)}
-              className="inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+              className="inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-700 transition-colors"
             >
               Cancel
             </button>

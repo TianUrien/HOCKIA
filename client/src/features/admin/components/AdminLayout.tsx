@@ -275,7 +275,7 @@ export function AdminLayout() {
               <button
                 type="button"
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                className="lg:hidden p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+                className="lg:hidden p-2 rounded-lg text-gray-600 hover:text-gray-700 hover:bg-gray-100 transition-colors"
                 aria-label="Toggle menu"
               >
                 {isSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -342,9 +342,9 @@ export function AdminLayout() {
                       </div>
                       <span className={`px-2 py-0.5 text-xs font-medium rounded-full flex-shrink-0 ${
                         profile.role === 'player' ? 'bg-[#EFF6FF] text-[#2563EB]' :
-                        profile.role === 'coach' ? 'bg-[#F0FDFA] text-[#0D9488]' :
-                        profile.role === 'club' ? 'bg-[#FFF7ED] text-[#EA580C]' :
-                        profile.role === 'brand' ? 'bg-[#FFF1F2] text-[#E11D48]' :
+                        profile.role === 'coach' ? 'bg-[#F0FDFA] text-[#0f766e]' :
+                        profile.role === 'club' ? 'bg-[#FFF7ED] text-[#c2410c]' :
+                        profile.role === 'brand' ? 'bg-[#FFF1F2] text-[#be123c]' :
                         profile.role === 'umpire' ? 'bg-[#FEFCE8] text-[#A16207]' :
                         'bg-gray-100 text-gray-600'
                       }`}>

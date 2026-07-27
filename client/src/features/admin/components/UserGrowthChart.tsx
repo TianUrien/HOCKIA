@@ -178,7 +178,7 @@ export function UserGrowthChart({ trends, loading = false }: UserGrowthChartProp
             }}
           >
             <div className="font-medium">{formatAdminDate(hoveredPoint.date)}</div>
-            <div className="text-gray-300">
+            <div className="text-gray-500">
               {hoveredPoint.cumulative_total.toLocaleString()} total users
             </div>
             <div className="text-gray-400 text-[10px]">

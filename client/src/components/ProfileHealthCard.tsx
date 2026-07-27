@@ -113,7 +113,7 @@ export default function ProfileHealthCard<TBucket extends BucketLike>({
             className="flex items-start gap-2 text-sm text-gray-500"
           >
             <Circle
-              className="w-4 h-4 text-gray-300 flex-shrink-0 mt-0.5"
+              className="w-4 h-4 text-gray-500 flex-shrink-0 mt-0.5"
               aria-hidden="true"
             />
             <span className="min-w-0">{b.label}</span>

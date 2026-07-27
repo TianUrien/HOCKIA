@@ -10,9 +10,9 @@ type RoleBadgeProps = {
 
 const roleStyles: Record<string, string> = {
   player: 'bg-[#EFF6FF] text-[#2563EB]',
-  coach: 'bg-[#F0FDFA] text-[#0D9488]',
-  club: 'bg-[#FFF7ED] text-[#EA580C]',
-  brand: 'bg-[#FFF1F2] text-[#E11D48]',
+  coach: 'bg-[#F0FDFA] text-[#0f766e]',
+  club: 'bg-[#FFF7ED] text-[#c2410c]',
+  brand: 'bg-[#FFF1F2] text-[#be123c]',
   umpire: 'bg-[#FEFCE8] text-[#A16207]', // warm amber — distinct from the other four at a glance
 }
 

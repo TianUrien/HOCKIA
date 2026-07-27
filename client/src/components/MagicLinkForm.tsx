@@ -92,7 +92,7 @@ export default function MagicLinkForm({ intent, role, variant, onSent, compact =
   // ── Sent state — "Check your inbox" ──
   if (sentTo) {
     const labelColor = variant === 'dark' ? 'text-white' : 'text-gray-900'
-    const subColor = variant === 'dark' ? 'text-gray-300' : 'text-gray-600'
+    const subColor = variant === 'dark' ? 'text-gray-500' : 'text-gray-600'
     const mutedColor = variant === 'dark' ? 'text-gray-400' : 'text-gray-500'
     const linkColor = variant === 'dark' ? 'text-[#c084fc] hover:text-[#d8b4fe]' : 'text-hockia-primary hover:text-[#6B20D4]'
 

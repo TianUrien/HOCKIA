@@ -217,7 +217,7 @@ export function AdminAppRatings() {
                 {st == null ? 'All' : `${st}★`}
               </button>
             ))}
-            <span className="text-gray-300 mx-2">·</span>
+            <span className="text-gray-500 mx-2">·</span>
             <span className="text-gray-500 mr-1">Platform:</span>
             {([null, 'web', 'pwa', 'ios-native', 'android-native'] as (string | null)[]).map((pf) => (
               <button
@@ -232,7 +232,7 @@ export function AdminAppRatings() {
                 {pf == null ? 'All' : pf}
               </button>
             ))}
-            <span className="text-gray-300 mx-2">·</span>
+            <span className="text-gray-500 mx-2">·</span>
             <span className="text-gray-500 mr-1">Role:</span>
             {([null, 'player', 'coach', 'club', 'umpire', 'brand'] as (string | null)[]).map((rl) => (
               <button

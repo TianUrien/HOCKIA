@@ -211,7 +211,7 @@ export default function ApplicantCard({ application, onStatusChange, isUpdating,
                 className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all disabled:opacity-50 sm:text-sm ${
                   currentTier
                     ? currentTier.pillClass
-                    : 'border-gray-200 bg-gray-50 text-gray-500 hover:bg-gray-100'
+                    : 'border-gray-200 bg-gray-50 text-gray-600 hover:bg-gray-100'
                 }`}
               >
                 {currentTier ? (

@@ -153,7 +153,7 @@ export default function SearchPage() {
         {/* Results */}
         {query.length < 2 ? (
           <div className="text-center py-16 text-gray-500">
-            <SearchX className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+            <SearchX className="w-12 h-12 mx-auto mb-3 text-gray-500" />
             <p className="text-sm">Enter at least 2 characters to search</p>
           </div>
         ) : isLoading ? (
@@ -162,7 +162,7 @@ export default function SearchPage() {
           </div>
         ) : results.length === 0 ? (
           <div className="text-center py-16 text-gray-500">
-            <SearchX className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+            <SearchX className="w-12 h-12 mx-auto mb-3 text-gray-500" />
             <p className="text-sm font-medium">No results found</p>
             <p className="text-xs mt-1">Try different keywords or check the spelling</p>
           </div>

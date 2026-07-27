@@ -205,7 +205,7 @@ export function MessageBubble({
                 type="button"
                 onClick={cancelEdit}
                 disabled={saving}
-                className="rounded-full px-3 py-1 text-[13px] font-medium text-gray-500 transition hover:bg-gray-100 hover:text-gray-700 disabled:opacity-50"
+                className="rounded-full px-3 py-1 text-[13px] font-medium text-gray-600 transition hover:bg-gray-100 hover:text-gray-700 disabled:opacity-50"
               >
                 Cancel
               </button>

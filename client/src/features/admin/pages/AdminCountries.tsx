@@ -316,7 +316,7 @@ export function AdminCountries() {
                         {c.name}
                       </span>
                     </td>
-                    <td className="py-2 px-2 text-center">{c.is_eu ? <span className="text-blue-600 font-semibold">✓</span> : <span className="text-gray-300">—</span>}</td>
+                    <td className="py-2 px-2 text-center">{c.is_eu ? <span className="text-blue-600 font-semibold">✓</span> : <span className="text-gray-500">—</span>}</td>
                     <td className="py-2 px-2 text-right font-mono text-gray-900">{c.count}</td>
                     <td className="py-2 px-2 text-right font-mono text-gray-500">{c.pct_total ?? 0}%</td>
                     <td className="py-2 px-2 text-right font-mono">{c.players}</td>

@@ -112,7 +112,7 @@ export function ProfileViewersSection() {
           toggle above it (nothing to disclose). */}
       {viewers.length === 0 && (
         <div className="text-center py-6">
-          <Users className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+          <Users className="w-10 h-10 text-gray-500 mx-auto mb-2" />
           <p className="text-sm text-gray-500">No profile views yet</p>
           <p className="text-xs text-gray-400 mt-1">Share your profile to get discovered</p>
         </div>

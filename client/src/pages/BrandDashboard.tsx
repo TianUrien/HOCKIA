@@ -737,7 +737,7 @@ export default function BrandDashboard() {
                   </div>
                 ) : products.length === 0 ? (
                   <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
-                    <Package className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                    <Package className="w-12 h-12 text-gray-500 mx-auto mb-4" />
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">No products yet</h3>
                     <p className="text-gray-600 max-w-md mx-auto mb-4">
                       Add products so players, clubs, and coaches can discover your brand and reach out for partnerships.
@@ -800,7 +800,7 @@ export default function BrandDashboard() {
                   </div>
                 ) : posts.length === 0 ? (
                   <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
-                    <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                    <FileText className="w-12 h-12 text-gray-500 mx-auto mb-4" />
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">No posts yet</h3>
                     <p className="text-gray-600 max-w-md mx-auto mb-4">
                       Share updates, announcements, and news with your audience. Posts appear in the global brand feed.
@@ -883,7 +883,7 @@ export default function BrandDashboard() {
                   </div>
                 ) : ambassadors.length === 0 ? (
                   <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
-                    <Award className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                    <Award className="w-12 h-12 text-gray-500 mx-auto mb-4" />
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">No ambassadors yet</h3>
                     <p className="text-gray-600 max-w-md mx-auto mb-4">
                       Invite the players you sponsor to become brand ambassadors. They'll appear on your public profile once they accept.
@@ -1056,7 +1056,7 @@ export default function BrandDashboard() {
                   </div>
                 ) : followers.length === 0 ? (
                   <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
-                    <Users className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                    <Users className="w-12 h-12 text-gray-500 mx-auto mb-4" />
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">No followers yet</h3>
                     <p className="text-gray-600 max-w-md mx-auto">
                       Share your brand profile to grow your audience. Athletes and clubs can follow your brand from your profile page.

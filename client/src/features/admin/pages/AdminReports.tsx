@@ -240,7 +240,7 @@ export function AdminReports() {
           </div>
         ) : reports.length === 0 ? (
           <div className="p-12 text-center">
-            <Flag className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+            <Flag className="w-10 h-10 text-gray-500 mx-auto mb-3" />
             <p className="text-gray-500 font-medium">No reports found</p>
             <p className="text-sm text-gray-400 mt-1">
               {statusFilter === 'pending' ? 'All clear — no pending reports' : 'Try changing the filters'}

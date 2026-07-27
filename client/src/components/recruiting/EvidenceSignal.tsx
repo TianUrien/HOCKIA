@@ -205,7 +205,7 @@ function ChecklistPopover({ id, tier, rows, anchorRef, popoverRef }: ChecklistPo
             {r.present ? (
               <Check className="h-3.5 w-3.5 flex-shrink-0 text-emerald-600" aria-hidden="true" />
             ) : (
-              <X className="h-3.5 w-3.5 flex-shrink-0 text-gray-300" aria-hidden="true" />
+              <X className="h-3.5 w-3.5 flex-shrink-0 text-gray-500" aria-hidden="true" />
             )}
             <span className={r.present ? 'text-gray-700' : 'text-gray-400'}>{r.label}</span>
           </span>

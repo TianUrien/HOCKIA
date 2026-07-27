@@ -172,7 +172,7 @@ export function RegistrationFunnel() {
                     <p className="text-xs text-gray-400 pl-6">
                       {stepConversion}% from {STEPS[index - 1].label}
                       {stepConversion < 100 && (
-                        <span className="text-gray-300"> &middot; {100 - stepConversion}% drop-off</span>
+                        <span className="text-gray-500"> &middot; {100 - stepConversion}% drop-off</span>
                       )}
                     </p>
                   )}

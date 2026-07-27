@@ -188,8 +188,12 @@ html {
     line-height: 1;
     color: #ffffff;
     
-    /* Visual Style - Simple Red */
-    background: #ef4444;
+    /* Visual Style - Simple Red.
+       #dc2626, not #ef4444: this badge is 10px white text, and white on
+       #ef4444 is 3.76:1 — under the 4.5:1 AA needs. #dc2626 gives 4.83:1.
+       Matches the red-500 token override in tailwind.config.js; this rule
+       is plain CSS so it does not pick that up automatically. */
+    background: #dc2626;
     border-radius: 9px;
     
     /* Animation - Initial Hidden State */

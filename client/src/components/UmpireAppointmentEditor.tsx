@@ -372,7 +372,7 @@ export default function UmpireAppointmentEditor({
                       active
                         ? 'border-hockia-primary bg-hockia-primary/5 text-hockia-primary'
                         : locked
-                          ? 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed'
+                          ? 'border-gray-100 bg-gray-50 text-gray-500 cursor-not-allowed'
                           : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
                     }`}
                     title={locked ? 'Create a new entry to change its type' : t.label}
@@ -415,7 +415,7 @@ export default function UmpireAppointmentEditor({
                     >
                       Replace
                     </button>
-                    <span className="text-gray-300">·</span>
+                    <span className="text-gray-500">·</span>
                     <button
                       type="button"
                       onClick={handleRemoveImage}

@@ -225,7 +225,7 @@ export function AdminDataIssues() {
                     ? 'bg-gray-100 text-gray-400'
                     : tab.count > 0
                       ? 'bg-red-100 text-red-700'
-                      : 'bg-gray-100 text-gray-500'
+                      : 'bg-gray-100 text-gray-600'
                 }`}
               >
                 {isLoading ? '·' : tab.count}

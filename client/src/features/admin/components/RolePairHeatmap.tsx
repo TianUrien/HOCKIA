@@ -47,7 +47,7 @@ export function RolePairHeatmap({ data, loading = false }: RolePairHeatmapProps)
   }
 
   const cellClass = (count: number) => {
-    if (count === 0) return 'bg-gray-50 text-gray-300'
+    if (count === 0) return 'bg-gray-50 text-gray-500'
     const intensity = max > 0 ? count / max : 0
     if (intensity > 0.66) return 'bg-purple-600 text-white'
     if (intensity > 0.33) return 'bg-purple-400 text-white'

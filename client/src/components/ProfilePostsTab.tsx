@@ -90,7 +90,7 @@ export default function ProfilePostsTab({ profileId, readOnly = false }: Profile
       {/* Empty state */}
       {!isLoading && !error && items.length === 0 && (
         <div className="text-center py-12">
-          <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+          <FileText className="w-12 h-12 text-gray-500 mx-auto mb-4" />
           {readOnly ? (
             <p className="text-gray-500">No posts yet.</p>
           ) : (

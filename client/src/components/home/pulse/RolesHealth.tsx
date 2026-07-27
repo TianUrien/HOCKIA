@@ -38,7 +38,7 @@ export function RolesHealth({ roles, loading }: { roles: RoleHealth[]; loading: 
             <p className="text-sm font-bold text-[#14141c]">Post an opportunity</p>
             <p className="text-xs text-gray-500">Open roles get you ranked candidates and applicants here.</p>
           </div>
-          <ChevronRight className="h-4 w-4 flex-shrink-0 text-gray-300" />
+          <ChevronRight className="h-4 w-4 flex-shrink-0 text-gray-500" />
         </button>
       </section>
     )
@@ -93,7 +93,7 @@ export function RolesHealth({ roles, loading }: { roles: RoleHealth[]; loading: 
                     {r.new_count} new
                   </span>
                 )}
-                <ChevronRight className="h-4 w-4 text-gray-300" />
+                <ChevronRight className="h-4 w-4 text-gray-500" />
               </div>
             </button>
           )

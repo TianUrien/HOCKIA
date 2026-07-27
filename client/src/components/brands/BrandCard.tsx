@@ -43,7 +43,7 @@ export function BrandCard({ brand }: BrandCardProps) {
             decoding="async"
           />
         ) : (
-          <Store className="w-16 h-16 text-gray-300 group-hover:text-gray-400 transition-colors" />
+          <Store className="w-16 h-16 text-gray-500 group-hover:text-gray-400 transition-colors" />
         )}
 
         {/* Verified Badge */}

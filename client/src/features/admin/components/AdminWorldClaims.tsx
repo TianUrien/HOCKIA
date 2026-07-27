@@ -182,7 +182,7 @@ export function AdminWorldClaims() {
               ) : claims.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-4 py-12 text-center text-sm text-gray-500">
-                    <ClipboardCheck className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                    <ClipboardCheck className="w-8 h-8 text-gray-500 mx-auto mb-2" />
                     No claims match the current filters.
                   </td>
                 </tr>
@@ -272,7 +272,7 @@ export function AdminWorldClaims() {
               <button
                 onClick={() => setPage((p) => Math.max(0, p - 1))}
                 disabled={page === 0}
-                className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg disabled:opacity-40"
+                className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg disabled:opacity-40"
                 aria-label="Previous page"
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -280,7 +280,7 @@ export function AdminWorldClaims() {
               <button
                 onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
                 disabled={page >= totalPages - 1}
-                className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg disabled:opacity-40"
+                className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg disabled:opacity-40"
                 aria-label="Next page"
               >
                 <ChevronRight className="w-4 h-4" />

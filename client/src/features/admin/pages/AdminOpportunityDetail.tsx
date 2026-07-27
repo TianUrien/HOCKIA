@@ -160,7 +160,7 @@ export function AdminOpportunityDetail() {
             <Video className="w-4 h-4" />
           </a>
         ) : (
-          <span className="text-gray-300">—</span>
+          <span className="text-gray-500">—</span>
         ),
     },
     {

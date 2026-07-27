@@ -77,7 +77,7 @@ export function ReferenceReceivedCard({ item }: ReferenceReceivedCardProps) {
 
         {/* Connector */}
         <div className="flex items-center gap-2 my-2.5 ml-[18px]">
-          <ArrowDown className="w-3.5 h-3.5 text-gray-300" />
+          <ArrowDown className="w-3.5 h-3.5 text-gray-500" />
           <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">vouched for</span>
         </div>
 

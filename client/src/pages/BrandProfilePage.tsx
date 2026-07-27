@@ -131,7 +131,7 @@ export default function BrandProfilePage() {
         {/* Blocked State */}
         {isBlockedProfile && (
           <div className="max-w-4xl mx-auto px-4 py-12 text-center">
-            <Store className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <Store className="w-16 h-16 text-gray-500 mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-gray-900 mb-2">This profile is not available</h2>
             <button type="button" onClick={() => navigate(-1)} className="mt-4 text-hockia-primary hover:underline font-medium">Go back</button>
           </div>
@@ -140,7 +140,7 @@ export default function BrandProfilePage() {
         {/* Not Found State */}
         {!isLoading && !error && !brand && !isBlockedProfile && (
           <div className="max-w-4xl mx-auto px-4 py-12 text-center">
-            <Store className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <Store className="w-16 h-16 text-gray-500 mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-gray-900 mb-2">
               Brand not found
             </h2>
@@ -187,7 +187,7 @@ export default function BrandProfilePage() {
                     className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                       isFollowing
                         ? 'bg-gray-100 text-gray-700 hover:bg-red-50 hover:text-red-600 border border-gray-200'
-                        : 'bg-[#E11D48]/10 text-[#E11D48] hover:bg-[#E11D48]/20 border border-[#E11D48]/20'
+                        : 'bg-[#E11D48]/10 text-[#be123c] hover:bg-[#E11D48]/20 border border-[#E11D48]/20'
                     }`}
                   >
                     {isFollowing ? (
@@ -247,7 +247,7 @@ export default function BrandProfilePage() {
                 <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
-                      <Award className="w-5 h-5 text-[#E11D48]" />
+                      <Award className="w-5 h-5 text-[#be123c]" />
                       <h2 className="text-lg font-semibold text-gray-900">
                         Brand Ambassadors
                       </h2>

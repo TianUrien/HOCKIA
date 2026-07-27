@@ -260,7 +260,7 @@ const CHIP: Record<VerdictDisplayTier, { label: string; chipClass: string; icon:
   excellent: { label: 'Excellent',    icon: Check, chipClass: 'bg-[#EEEDFE] text-[#3C3489]', barClass: 'bg-[#7F77DD]', pctClass: 'text-[#7F77DD]' },
   good:      { label: 'Good',         icon: Check, chipClass: 'bg-[#F4F2FE] text-[#5B51B0]', barClass: 'bg-[#7F77DD]', pctClass: 'text-[#7F77DD]' },
   possible:  { label: 'Possible',     icon: Check, chipClass: 'bg-[#F7F6FD] text-[#6B62C0]', barClass: 'bg-[#A9A4E6]', pctClass: 'text-[#6B62C0]' },
-  out:       { label: 'Out of scope', icon: Minus, chipClass: 'bg-gray-100 text-gray-500',   barClass: 'bg-[#B4B2A9]', pctClass: 'text-gray-500' },
+  out:       { label: 'Out of scope', icon: Minus, chipClass: 'bg-gray-100 text-gray-600',   barClass: 'bg-[#B4B2A9]', pctClass: 'text-gray-500' },
 }
 
 /** Proof shield colour = the existing evidence tier. Strong/Enough → green
@@ -390,13 +390,13 @@ export default function RecruiterCandidateCard({ member, verdict, onPreview, pri
               mode="code"
             />
           ) : (
-            <span className="text-[11px] text-gray-300">Nationality not listed</span>
+            <span className="text-[11px] text-gray-500">Nationality not listed</span>
           )}
         </div>
 
         {/* ── Location / club ── */}
         <div className="mt-0.5 flex h-[16px] w-full items-center justify-center">
-          <span className={`truncate text-[11px] ${location ? 'text-gray-400' : 'text-gray-300'}`} title={location ?? undefined}>
+          <span className={`truncate text-[11px] ${location ? 'text-gray-400' : 'text-gray-500'}`} title={location ?? undefined}>
             {location || (isOrg ? 'Location not listed' : 'Club not listed')}
           </span>
         </div>
@@ -430,7 +430,7 @@ export default function RecruiterCandidateCard({ member, verdict, onPreview, pri
               )}
             </div>
             <p className="mt-1.5 flex h-[15px] w-full items-center justify-center px-2 text-[11px] leading-none">
-              <span className={`truncate ${substance ? 'text-gray-600' : 'text-gray-300'}`} title={substance ?? undefined}>
+              <span className={`truncate ${substance ? 'text-gray-600' : 'text-gray-500'}`} title={substance ?? undefined}>
                 {substance || 'No details yet'}
               </span>
             </p>

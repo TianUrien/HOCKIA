@@ -27,7 +27,7 @@ function CodeBlock({ code, language = 'bash' }: { code: string; language?: strin
         {copied ? (
           <Check className="w-4 h-4 text-green-400" />
         ) : (
-          <Copy className="w-4 h-4 text-gray-300" />
+          <Copy className="w-4 h-4 text-gray-500" />
         )}
       </button>
     </div>
@@ -57,7 +57,7 @@ function JsonBlock({ json }: { json: object }) {
         {copied ? (
           <Check className="w-4 h-4 text-green-400" />
         ) : (
-          <Copy className="w-4 h-4 text-gray-300" />
+          <Copy className="w-4 h-4 text-gray-500" />
         )}
       </button>
     </div>

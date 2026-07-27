@@ -199,7 +199,7 @@ export default function OpportunityCard({
               >
                 {publisherName}
               </button>
-              <span className="flex-shrink-0 rounded border border-gray-200 bg-gray-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-gray-500">
+              <span className="flex-shrink-0 rounded border border-gray-200 bg-gray-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-gray-600">
                 {isCoachPublisher ? 'Coach' : 'Club'}
               </span>
             </div>

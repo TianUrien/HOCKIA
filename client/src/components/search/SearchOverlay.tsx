@@ -62,7 +62,7 @@ function CompactPersonRow({ result, onSelect }: { result: SearchPersonResult; on
           <p className="text-xs text-gray-500 truncate">{subtitle}</p>
         )}
       </div>
-      <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0" />
+      <ChevronRight className="w-4 h-4 text-gray-500 flex-shrink-0" />
     </button>
   )
 }
@@ -98,7 +98,7 @@ function CompactClubRow({ result, onSelect }: { result: SearchClubResult; onSele
           On HOCKIA
         </span>
       )}
-      <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0" />
+      <ChevronRight className="w-4 h-4 text-gray-500 flex-shrink-0" />
     </button>
   )
 }
@@ -129,7 +129,7 @@ function CompactPostRow({ result, onSelect }: { result: SearchPostResult; onSele
         </div>
         <p className="text-xs text-gray-500 truncate">{preview}</p>
       </div>
-      <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0" />
+      <ChevronRight className="w-4 h-4 text-gray-500 flex-shrink-0" />
     </button>
   )
 }
@@ -156,7 +156,7 @@ function CompactOpportunityRow({ result, onSelect }: { result: SearchOpportunity
           <span className="text-xs text-gray-500 truncate">{result.club_name}</span>
           {location && (
             <>
-              <span className="text-xs text-gray-300">&middot;</span>
+              <span className="text-xs text-gray-500">&middot;</span>
               <span className="text-xs text-gray-400 truncate flex items-center gap-0.5">
                 <MapPin className="w-3 h-3" />
                 {location}
@@ -165,7 +165,7 @@ function CompactOpportunityRow({ result, onSelect }: { result: SearchOpportunity
           )}
         </div>
       </div>
-      <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0" />
+      <ChevronRight className="w-4 h-4 text-gray-500 flex-shrink-0" />
     </button>
   )
 }
@@ -333,7 +333,7 @@ export function SearchOverlay() {
     <button
       type="button"
       onClick={() => setIsOpen(true)}
-      className="w-full flex items-center gap-2.5 px-4 py-2.5 bg-gray-100 border border-gray-200 rounded-full text-sm text-gray-500 hover:bg-gray-50 hover:border-gray-300 transition-colors"
+      className="w-full flex items-center gap-2.5 px-4 py-2.5 bg-gray-100 border border-gray-200 rounded-full text-sm text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-colors"
     >
       <Search className="w-4 h-4 text-gray-400" />
       <span>Search players, clubs, posts...</span>
@@ -357,7 +357,7 @@ export function SearchOverlay() {
             <button
               type="button"
               onClick={handleClose}
-              className="p-1.5 text-gray-500 hover:text-gray-700 transition-colors rounded-full hover:bg-gray-100"
+              className="p-1.5 text-gray-600 hover:text-gray-700 transition-colors rounded-full hover:bg-gray-100"
               aria-label="Close search"
             >
               <ArrowLeft className="w-5 h-5" />
@@ -435,7 +435,7 @@ export function SearchOverlay() {
                 </div>
               ) : results.length === 0 ? (
                 <div className="text-center py-16 text-gray-500">
-                  <SearchX className="w-10 h-10 mx-auto mb-3 text-gray-300" />
+                  <SearchX className="w-10 h-10 mx-auto mb-3 text-gray-500" />
                   <p className="text-sm font-medium">No results found</p>
                   <p className="text-xs mt-1 text-gray-400">Try different keywords or check the spelling</p>
                 </div>
@@ -486,7 +486,7 @@ export function SearchOverlay() {
                   </>
                 ) : (
                   <div className="text-center py-12 text-gray-400">
-                    <Search className="w-10 h-10 mx-auto mb-3 text-gray-300" />
+                    <Search className="w-10 h-10 mx-auto mb-3 text-gray-500" />
                     <p className="text-sm">Start typing to search players, clubs, and posts</p>
                   </div>
                 )}

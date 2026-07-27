@@ -103,7 +103,7 @@ export default function BlockedAccountsList() {
   if (blockedUsers.length === 0) {
     return (
       <div className="text-center py-4">
-        <Ban className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+        <Ban className="w-8 h-8 text-gray-500 mx-auto mb-2" />
         <p className="text-sm text-gray-500">No blocked accounts</p>
       </div>
     )

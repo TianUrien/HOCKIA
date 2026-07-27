@@ -172,7 +172,7 @@ export default function NativeVideosSection({ playerUserId, readOnly, hasLegacyH
                 />
               ) : (
                 // Owner-only processing / failed state.
-                <div className="flex aspect-video w-full flex-col items-center justify-center gap-2 rounded-xl bg-gray-100 text-gray-500">
+                <div className="flex aspect-video w-full flex-col items-center justify-center gap-2 rounded-xl bg-gray-100 text-gray-600">
                   {v.status === 'errored' ? (
                     <span className="text-xs">Processing failed — try re-uploading</span>
                   ) : (

@@ -191,7 +191,7 @@ export default function DiscoverResultCard({ result }: DiscoverResultCardProps) 
               <div className="flex items-center gap-x-1.5 mt-1 text-xs text-gray-600">
                 {metaItems.map((it, i) => (
                   <span key={i} className="inline-flex items-center gap-x-1.5">
-                    {i > 0 && <span className="text-gray-300" aria-hidden="true">·</span>}
+                    {i > 0 && <span className="text-gray-500" aria-hidden="true">·</span>}
                     <span className="inline-flex items-center gap-1">
                       {it.flag && <span aria-hidden="true">{it.flag}</span>}
                       <span>{it.text}</span>

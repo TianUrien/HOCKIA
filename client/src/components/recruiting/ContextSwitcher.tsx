@@ -127,7 +127,7 @@ export default function ContextSwitcher({ className = '' }: ContextSwitcherProps
           disabled={clearing}
           className={[
             'inline-flex items-center gap-1 px-2 py-1.5 rounded-full',
-            'text-[11px] font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100',
+            'text-[11px] font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100',
             'transition active:scale-95 disabled:opacity-50',
             'focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-300',
           ].join(' ')}

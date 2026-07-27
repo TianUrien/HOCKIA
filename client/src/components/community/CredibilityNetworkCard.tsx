@@ -106,7 +106,7 @@ interface StatProps {
 
 const ACCENT_CLASSES: Record<StatProps['accent'], { iconBg: string; iconColor: string }> = {
   emerald: { iconBg: 'bg-emerald-50', iconColor: 'text-emerald-600' },
-  gray: { iconBg: 'bg-gray-100', iconColor: 'text-gray-500' },
+  gray: { iconBg: 'bg-gray-100', iconColor: 'text-gray-600' },
   purple: { iconBg: 'bg-hockia-primary/10', iconColor: 'text-hockia-primary' },
 }
 

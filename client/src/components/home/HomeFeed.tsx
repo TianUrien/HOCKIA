@@ -193,7 +193,7 @@ export function HomeFeed({ prependItemRef }: HomeFeedProps) {
         {!isLoading && !error && items.length === 0 && chip === 'all' && (
           <div className="rounded-2xl border border-gray-200 bg-white p-6 sm:p-8">
             <div className="text-center mb-6">
-              <Rss className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+              <Rss className="w-12 h-12 text-gray-500 mx-auto mb-3" />
               <h3 className="text-lg font-semibold text-gray-900 mb-1">
                 Welcome to your feed
               </h3>

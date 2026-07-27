@@ -241,7 +241,7 @@ function ShortlistItemRow({
                   'text-[11px] font-medium px-2.5 py-1 rounded-full transition-colors',
                   item.status === opt.value
                     ? opt.pill + ' ring-2 ring-offset-1 ring-current'
-                    : 'bg-gray-50 text-gray-500 hover:bg-gray-100',
+                    : 'bg-gray-50 text-gray-600 hover:bg-gray-100',
                 ].join(' ')}
               >
                 {opt.label}

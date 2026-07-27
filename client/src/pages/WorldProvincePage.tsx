@@ -314,7 +314,7 @@ export default function WorldProvincePage() {
         <Header />
         <main className="mx-auto max-w-7xl px-4 pt-24 pb-12 md:px-6">
           <div className="text-center py-12">
-            <Building2 className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+            <Building2 className="w-12 h-12 text-gray-500 mx-auto mb-4" />
             <p className="text-gray-700 font-medium mb-1">Unable to load region data</p>
             <p className="text-sm text-gray-500 mb-4">Check your connection and try again</p>
             <div className="flex items-center justify-center gap-3">
@@ -474,12 +474,12 @@ export default function WorldProvincePage() {
           </div>
         ) : leagues.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-2xl border border-gray-200">
-            <Trophy className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+            <Trophy className="w-12 h-12 text-gray-500 mx-auto mb-4" />
             <p className="text-gray-500">No leagues found for {genderFilter === 'women' ? "women's" : "men's"} hockey</p>
           </div>
         ) : clubs.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-2xl border border-gray-200">
-            <Building2 className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+            <Building2 className="w-12 h-12 text-gray-500 mx-auto mb-4" />
             <p className="text-gray-500">No clubs in this league yet</p>
             <p className="text-sm text-gray-400 mt-1">
               Clubs will appear here once they join the platform
@@ -535,7 +535,7 @@ export default function WorldProvincePage() {
                         Active
                       </span>
                     ) : (
-                      <span className="flex items-center gap-1 text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                      <span className="flex items-center gap-1 text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded-full">
                         <Clock className="w-3 h-3" />
                         Unclaimed
                       </span>

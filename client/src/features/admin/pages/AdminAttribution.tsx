@@ -188,7 +188,7 @@ export function AdminAttribution() {
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <div className="flex items-center gap-2 mb-4">
               <Eye className="w-5 h-5 text-gray-400" />
-              <ArrowRight className="w-4 h-4 text-gray-300" />
+              <ArrowRight className="w-4 h-4 text-gray-500" />
               <Mail className="w-5 h-5 text-gray-400" />
             </div>
             <div className="text-xs font-medium text-purple-600 uppercase tracking-wide mb-1">
@@ -208,7 +208,7 @@ export function AdminAttribution() {
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <div className="flex items-center gap-2 mb-4">
               <Eye className="w-5 h-5 text-gray-400" />
-              <ArrowRight className="w-4 h-4 text-gray-300" />
+              <ArrowRight className="w-4 h-4 text-gray-500" />
               <UserPlus className="w-5 h-5 text-gray-400" />
             </div>
             <div className="text-xs font-medium text-blue-600 uppercase tracking-wide mb-1">
@@ -228,7 +228,7 @@ export function AdminAttribution() {
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <div className="flex items-center gap-2 mb-4">
               <Briefcase className="w-5 h-5 text-gray-400" />
-              <ArrowRight className="w-4 h-4 text-gray-300" />
+              <ArrowRight className="w-4 h-4 text-gray-500" />
               <UserPlus className="w-5 h-5 text-gray-400" />
             </div>
             <div className="text-xs font-medium text-green-600 uppercase tracking-wide mb-1">

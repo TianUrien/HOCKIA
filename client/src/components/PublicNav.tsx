@@ -175,7 +175,7 @@ export default function PublicNav({ transparent = true }: PublicNavProps) {
                 className={`flex w-full items-center gap-3 px-4 py-3 mt-1 rounded-lg text-left text-sm font-medium transition-colors ${
                   transparent
                     ? 'text-white/60 hover:text-white hover:bg-white/10'
-                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                 }`}
               >
                 <Mail className="w-4 h-4" />

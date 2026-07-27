@@ -17,7 +17,7 @@ const POSITION = 1
 
 function statusPill(status: string, viewed: boolean): { label: string; className: string; Icon: typeof Clock } {
   if (status === 'shortlisted' || status === 'maybe') {
-    return { label: 'In review', className: 'bg-[#e7f9ee] text-[#10b981]', Icon: CheckCircle2 }
+    return { label: 'In review', className: 'bg-[#e7f9ee] text-[#047857]', Icon: CheckCircle2 }
   }
   if (viewed) {
     return { label: 'Viewed by club', className: 'bg-[#f4f0fd] text-hockia-primary', Icon: Eye }
@@ -79,7 +79,7 @@ export function YourApplications({ enabled }: { enabled: boolean }) {
                 <pill.Icon className="h-3 w-3" />
                 {pill.label}
               </span>
-              <ChevronRight className="h-4 w-4 flex-shrink-0 text-gray-300" />
+              <ChevronRight className="h-4 w-4 flex-shrink-0 text-gray-500" />
             </button>
           )
         })}

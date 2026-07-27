@@ -465,7 +465,7 @@ export default function AdminWorld() {
             <div className="flex items-center gap-3">
               <button
                 onClick={handleRefresh}
-                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 text-gray-600 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
                 title="Refresh data"
                 aria-label="Refresh data"
               >

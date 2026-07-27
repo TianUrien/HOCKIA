@@ -397,7 +397,7 @@ function MetaRow({ children }: { children: React.ReactNode }) {
 }
 
 function MetaBullet() {
-  return <span className="text-gray-300" aria-hidden="true">·</span>
+  return <span className="text-gray-500" aria-hidden="true">·</span>
 }
 
 interface ChecklistRowProps {
@@ -417,7 +417,7 @@ function ChecklistRow({ bucket, onAction }: ChecklistRowProps) {
           <Check className="h-3 w-3" strokeWidth={3} />
         </span>
       ) : (
-        <Circle className="h-5 w-5 flex-shrink-0 text-gray-300" aria-hidden="true" />
+        <Circle className="h-5 w-5 flex-shrink-0 text-gray-500" aria-hidden="true" />
       )}
       <span
         className={cn(
@@ -475,7 +475,7 @@ function CredibilityStat({ icon: Icon, label, count, onClick, testId }: Credibil
       <span className="font-bold text-gray-900 tabular-nums">{count}</span>
       {onClick && (
         <ChevronRight
-          className="h-3.5 w-3.5 text-gray-300 transition-colors group-hover:text-gray-500"
+          className="h-3.5 w-3.5 text-gray-500 transition-colors group-hover:text-gray-500"
           aria-hidden="true"
         />
       )}

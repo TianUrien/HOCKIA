@@ -195,11 +195,14 @@ export default function MobileBottomNav() {
                     "Opportunities" alone is ~78px wide which doesn't fit a
                     60px slot. aria-label on the parent button (line 121)
                     keeps the nav fully accessible to screen readers. */}
-                <span
-                  className={`hidden min-[360px]:inline text-[10px] font-medium transition-all duration-200 ${
-                    active ? 'opacity-100' : 'opacity-60'
-                  }`}
-                >
+                {/* No opacity dimming on the inactive label. The button sets
+                    text-gray-600 (7.56:1 on white), but opacity-60 flattened
+                    that to ~2.87:1 at 10px — the single worst contrast in the
+                    app, on the primary navigation. Active vs inactive is
+                    already carried by colour (violet vs grey), stroke weight
+                    and scale, so the dimming was redundant as well as
+                    unreadable. */}
+                <span className="hidden min-[360px]:inline text-[10px] font-medium transition-all duration-200">
                   {item.label}
                 </span>
               </button>
@@ -262,12 +265,9 @@ export default function MobileBottomNav() {
                 />
               </div>
               {/* Label matches sibling nav items — hidden under 360px to
-                  match MobileBottomNav's existing icon-only fallback. */}
-              <span
-                className={`hidden min-[360px]:inline text-[10px] font-medium transition-all duration-200 ${
-                  location.pathname.startsWith('/dashboard') ? 'opacity-100' : 'opacity-60'
-                }`}
-              >
+                  match MobileBottomNav's existing icon-only fallback.
+                  No opacity dimming, for the contrast reason above. */}
+              <span className="hidden min-[360px]:inline text-[10px] font-medium transition-all duration-200">
                 Dashboard
               </span>
             </button>

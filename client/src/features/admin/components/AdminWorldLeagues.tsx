@@ -173,7 +173,7 @@ export function AdminWorldLeagues() {
         <div className="flex items-center gap-3">
           <button
             onClick={loadLeagues}
-            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 text-gray-600 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
             title="Refresh"
             aria-label="Refresh leagues"
           >

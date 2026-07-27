@@ -1016,7 +1016,7 @@ export default function GalleryManager({
                         <div className="inline-flex overflow-hidden rounded-lg border border-gray-200 bg-white">
                           <button
                             onClick={() => moveMedia(item.id, 'up')}
-                            className="tap-target px-2 py-1 text-gray-500 transition-colors hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-secondary focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
+                            className="tap-target px-2 py-1 text-gray-600 transition-colors hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-secondary focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
                             disabled={index === 0}
                             type="button"
                           >
@@ -1025,7 +1025,7 @@ export default function GalleryManager({
                           </button>
                           <button
                             onClick={() => moveMedia(item.id, 'down')}
-                            className="tap-target px-2 py-1 text-gray-500 transition-colors hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-secondary focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
+                            className="tap-target px-2 py-1 text-gray-600 transition-colors hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-secondary focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
                             disabled={index === media.length - 1}
                             type="button"
                           >
@@ -1196,7 +1196,7 @@ function VideoTile({ item }: { item: NormalizedMedia }) {
 
   if (item.status === 'errored') {
     return (
-      <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-gray-100 px-3 text-center text-gray-500">
+      <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-gray-100 px-3 text-center text-gray-600">
         <AlertCircle className="h-6 w-6 text-red-400" />
         <span className="text-xs">Processing failed — delete and re-upload</span>
       </div>
@@ -1205,7 +1205,7 @@ function VideoTile({ item }: { item: NormalizedMedia }) {
 
   if (item.status !== 'ready') {
     return (
-      <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-gray-100 text-gray-500">
+      <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-gray-100 text-gray-600">
         <Clock className="h-6 w-6 animate-pulse" />
         <span className="text-xs">Processing…</span>
       </div>

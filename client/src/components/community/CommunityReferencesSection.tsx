@@ -346,7 +346,7 @@ export default function CommunityReferencesSection({
                         {formatRelationshipType(reference.relationshipType)}
                         {profile?.baseLocation && (
                           <>
-                            <span className="mx-1 text-gray-300">·</span>
+                            <span className="mx-1 text-gray-500">·</span>
                             <span>{profile.baseLocation}</span>
                           </>
                         )}

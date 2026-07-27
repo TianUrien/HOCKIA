@@ -96,7 +96,7 @@ export default function MoreActionsMenu({
         aria-expanded={overflowOpen}
         className={[
           'min-w-[44px] min-h-[44px] inline-flex items-center justify-center',
-          'rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors',
+          'rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors',
           'focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/40',
         ].join(' ')}
       >

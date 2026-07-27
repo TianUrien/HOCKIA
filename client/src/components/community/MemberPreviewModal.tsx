@@ -596,7 +596,7 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
                         {r.present ? (
                           <Check className="h-3.5 w-3.5 flex-shrink-0 text-emerald-600" />
                         ) : (
-                          <X className="h-3.5 w-3.5 flex-shrink-0 text-gray-300" />
+                          <X className="h-3.5 w-3.5 flex-shrink-0 text-gray-500" />
                         )}
                         <span className={r.present ? 'text-gray-700' : 'text-gray-400'}>{r.label}</span>
                       </div>

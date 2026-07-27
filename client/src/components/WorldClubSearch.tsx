@@ -520,7 +520,7 @@ export default function WorldClubSearch({
                 <button
                   type="button"
                   onClick={() => setShowAddForm(false)}
-                  className="rounded-lg px-3 py-1.5 text-sm text-gray-500 transition-colors hover:bg-gray-100"
+                  className="rounded-lg px-3 py-1.5 text-sm text-gray-600 transition-colors hover:bg-gray-100"
                 >
                   Cancel
                 </button>

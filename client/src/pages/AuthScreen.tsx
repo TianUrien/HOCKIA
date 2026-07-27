@@ -477,7 +477,7 @@ export default function AuthScreen({ mode, role, onBack }: AuthScreenProps) {
                   >
                     {cooldown > 0 ? `Resend in ${cooldown}s` : loading ? 'Resending…' : 'Resend link'}
                   </button>
-                  <span className="text-gray-300">·</span>
+                  <span className="text-gray-500">·</span>
                   <button
                     type="button"
                     onClick={() => {
