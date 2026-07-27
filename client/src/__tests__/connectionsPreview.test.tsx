@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import ConnectionsPreview from '@/components/profile/ConnectionsPreview'
@@ -78,8 +78,9 @@ describe('ConnectionsPreview', () => {
     const seeAll = await screen.findByRole('button', { name: /See all 12 connections/ })
     // Count pill fires at >= 10.
     expect(screen.getByText('12 connections')).toBeInTheDocument()
-    // 8 face buttons (title = full name) + nothing more.
-    expect(screen.getAllByTestId('avatar')).toHaveLength(8)
+    // 8 face buttons (title = full name) + nothing more. Awaited, not read
+    // synchronously: the faces paint on a later update than the count.
+    await waitFor(() => expect(screen.getAllByTestId('avatar')).toHaveLength(8))
 
     fireEvent.click(seeAll)
     expect(onSeeAll).toHaveBeenCalledTimes(1)
@@ -94,9 +95,15 @@ describe('ConnectionsPreview', () => {
     renderPreview()
 
     await screen.findByRole('button', { name: /See all 12 connections/ })
-    const faceButtons = screen
-      .getAllByRole('button')
-      .filter((b) => b.getAttribute('title'))
+    // The count and the faces land on DIFFERENT state updates, so waiting for
+    // the count says nothing about the strip having painted. Reading it
+    // synchronously here passed locally and failed on a loaded CI runner —
+    // wait for the thing actually being asserted.
+    const faceButtons = await waitFor(() => {
+      const found = screen.getAllByRole('button').filter((b) => b.getAttribute('title'))
+      expect(found.length).toBeGreaterThan(0)
+      return found
+    })
     expect(faceButtons[0]).toHaveAttribute('title', 'Club Alpha')
     expect(faceButtons[1]).toHaveAttribute('title', 'Coach Beta')
   })
