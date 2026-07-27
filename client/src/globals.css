@@ -288,8 +288,7 @@ html {
     overflow-y: auto;
     overflow-x: hidden;
     overscroll-behavior: contain;
-    -webkit-overflow-scrolling: touch;
-    /* Use auto to prevent browser-initiated smooth scrolling */
+      /* Use auto to prevent browser-initiated smooth scrolling */
     scroll-behavior: auto;
     /* GPU acceleration for smooth scrolling */
     transform: translateZ(0);
@@ -540,4 +539,183 @@ html {
 
 .animate-slide-down {
   animation: slide-down 0.3s ease-out;
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   MARKETING MOTION
+   Effects for the public landing surface that Tailwind utilities can't
+   express — mask-composite border lighting, sheen sweeps, digit settle.
+   Timing tokens are mirrored from src/lib/motion.ts; keep them in step.
+   ════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --ease-entrance: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ── Cursor-tracked card lighting ──────────────────────────────────────────
+   A 1px gradient ring drawn only where the cursor is, plus a faint interior
+   wash. The ring is a padding-box/border-box mask XOR — the standard way to
+   paint a gradient on a border without a wrapper element.
+
+   --gx/--gy are written per card by usePointerGlow (pointer-relative px).
+   --glow is 0/1 on the CONTAINER, so light bleeds onto neighbouring cards
+   from a single hover. That bleed is the whole effect: it makes a grid read
+   as one lit surface rather than six separate boxes. */
+.glow-card {
+  --gx: 50%;
+  --gy: 50%;
+  position: relative;
+  isolation: isolate;
+}
+
+.glow-card::before,
+.glow-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: var(--glow, 0);
+  transition: opacity 320ms var(--ease-entrance);
+  pointer-events: none;
+}
+
+/* The ring */
+.glow-card::before {
+  padding: 1px;
+  background: radial-gradient(
+    220px circle at var(--gx) var(--gy),
+    rgb(109 40 217 / 0.55),
+    transparent 65%
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  z-index: 1;
+}
+
+/* The wash */
+.glow-card::after {
+  background: radial-gradient(
+    260px circle at var(--gx) var(--gy),
+    rgb(109 40 217 / 0.06),
+    transparent 70%
+  );
+  z-index: -1;
+}
+
+/* ── One-time sheen ────────────────────────────────────────────────────────
+   A diagonal light sweep as a surface enters view. Runs ONCE. Looping it is
+   the single fastest way to make a page feel cheap. */
+@keyframes sheen-sweep {
+  from {
+    transform: translateX(-120%) skewX(-18deg);
+  }
+  to {
+    transform: translateX(320%) skewX(-18deg);
+  }
+}
+
+.sheen::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 28%;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.55), transparent);
+  transform: translateX(-120%) skewX(-18deg);
+  pointer-events: none;
+}
+
+.sheen-run::after {
+  animation: sheen-sweep 1100ms var(--ease-entrance) 220ms 1 both;
+}
+
+/* ── Digit settle ──────────────────────────────────────────────────────────
+   A single small overshoot as a counter lands, so the number arrives rather
+   than merely stopping. */
+@keyframes digit-settle {
+  0% {
+    transform: scale(1);
+  }
+  38% {
+    transform: scale(1.045);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.digit-settle {
+  animation: digit-settle 520ms var(--ease-spring) both;
+}
+
+/* ── Carousel ──────────────────────────────────────────────────────────────
+   Native momentum + snap. A JS carousel cannot match the platform's own
+   inertia on iOS, so the browser drives it and JS only reads position. */
+.snap-rail {
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+
+.snap-rail::-webkit-scrollbar {
+  display: none;
+}
+
+.snap-item {
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
+}
+
+/* Proximity-to-centre, written to --near by RoleCards while the rail scrolls.
+   Defaults to 1 everywhere, so a card is never dimmed or shrunk because JS
+   hasn't run yet — and above the rail breakpoint there is no rule at all.
+   The transition is short and linear: this tracks a finger, and any easing
+   makes it feel like it is lagging behind the swipe. */
+@media (max-width: 639px) {
+  .rail-inner {
+    transform: scale(calc(0.94 + 0.06 * var(--near, 1)));
+    opacity: calc(0.55 + 0.45 * var(--near, 1));
+    transition:
+      transform 180ms linear,
+      opacity 180ms linear;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .rail-inner {
+      transform: none;
+      opacity: 1;
+      transition: none;
+    }
+  }
+}
+
+/* Card lift. Kept here rather than as a hover: utility so the spring curve
+   matches the rest of the motion system. */
+@media (hover: hover) and (pointer: fine) {
+  .glow-card:hover {
+    border-color: rgb(109 40 217 / 0.22);
+    box-shadow:
+      0 1px 2px rgb(16 12 32 / 0.04),
+      0 18px 40px -16px rgb(109 40 217 / 0.28);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheen-run::after,
+  .digit-settle {
+    animation: none !important;
+  }
+
+  .glow-card::before,
+  .glow-card::after {
+    transition: none;
+  }
 }

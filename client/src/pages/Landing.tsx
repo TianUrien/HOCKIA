@@ -1,10 +1,20 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef, useCallback } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { ArrowRight, Check } from 'lucide-react'
 import { Capacitor } from '@capacitor/core'
 import { InAppBrowserWarning, PublicNav } from '@/components'
 import HockiaSocials from '@/components/HockiaSocials'
 import StoreBadges from '@/components/StoreBadges'
+import LandingStats from '@/components/landing/LandingStats'
+import RoleCards from '@/components/landing/RoleCards'
+import {
+  useInView,
+  useParallax,
+  useReducedMotion,
+  stagger,
+  EASE_ENTRANCE,
+  DUR_ENTRANCE,
+} from '@/lib/motion'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { useContactModal } from '@/lib/contact'
@@ -37,83 +47,49 @@ const EXPLORE_PATH = '/community'
 const isNativeApp = Capacitor.isNativePlatform()
 
 /**
- * Reveal-on-scroll. Honours prefers-reduced-motion by showing immediately.
+ * Reveal-on-scroll, on the shared motion system (see lib/motion.ts for the
+ * easing tokens and the pooled observer/scroll machinery).
  *
- * SAFETY: marketing copy must never be permanently invisible. The animation is
- * a progressive enhancement, so there are three independent ways to become
- * visible — the observer, a scroll fallback, and an unconditional timeout — and
- * any one of them is enough. (Caught in review: full-page capture left the last
- * two sections blank because the observer never fired for them.)
+ * SAFETY, inherited from useInView: marketing copy must never be permanently
+ * invisible. Three independent paths lead to visible and any one suffices.
+ * (Caught in review once: a full-page capture left two sections blank because
+ * the observer never fired for them.)
  */
-const REVEAL_FAILSAFE_MS = 1500
-
-function useReveal<T extends HTMLElement>() {
-  const ref = useRef<T | null>(null)
-  const [shown, setShown] = useState(false)
-
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
-
-    const reduced =
-      typeof window.matchMedia === 'function' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    if (reduced || typeof IntersectionObserver === 'undefined') {
-      setShown(true)
-      return
-    }
-
-    let done = false
-    const reveal = () => {
-      if (done) return
-      done = true
-      setShown(true)
-    }
-
-    // 1. Anything already within a viewport-and-a-bit shows straight away.
-    const nearViewport = () => {
-      const r = el.getBoundingClientRect()
-      return r.top < window.innerHeight * 1.15 && r.bottom > 0
-    }
-    if (nearViewport()) reveal()
-
-    // 2. The observer handles the normal scrolling case.
-    const io = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((e) => e.isIntersecting)) reveal()
-      },
-      { rootMargin: '0px 0px -8% 0px', threshold: 0 },
-    )
-    io.observe(el)
-
-    // 3. Belt-and-braces: a plain scroll listener, plus a timeout that reveals
-    //    unconditionally so content can never be stranded.
-    const onScroll = () => { if (nearViewport()) reveal() }
-    window.addEventListener('scroll', onScroll, { passive: true })
-    const t = window.setTimeout(reveal, REVEAL_FAILSAFE_MS)
-
-    return () => {
-      io.disconnect()
-      window.removeEventListener('scroll', onScroll)
-      window.clearTimeout(t)
-    }
-  }, [])
-
-  return { ref, shown }
-}
-
 function Reveal({ children, className = '', delay = 0 }: {
   children: React.ReactNode; className?: string; delay?: number
 }) {
-  const { ref, shown } = useReveal<HTMLDivElement>()
+  const { ref, inView } = useInView<HTMLDivElement>()
+  const reduced = useReducedMotion()
   return (
     <div
       ref={ref}
-      className={`transition-all duration-700 ease-out motion-reduce:transition-none ${
-        shown ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
-      } ${className}`}
-      style={{ transitionDelay: shown ? `${delay}ms` : '0ms' }}
+      className={className}
+      style={{
+        opacity: inView ? 1 : 0,
+        transform: inView ? 'translateY(0)' : 'translateY(18px)',
+        transition: reduced
+          ? 'none'
+          : `opacity ${DUR_ENTRANCE}ms ${EASE_ENTRANCE} ${delay}ms, transform ${DUR_ENTRANCE}ms ${EASE_ENTRANCE} ${delay}ms`,
+      }}
     >
+      {children}
+    </div>
+  )
+}
+
+/**
+ * Scroll-linked drift for the product shots. Deliberately small — parallax
+ * past roughly 40px stops reading as depth and starts reading as a bug.
+ *
+ * Its own element: `Reveal` writes `transform` inline for the entrance, and
+ * two writers on one element means one of them silently loses.
+ */
+function Parallax({ children, range = 22, className = '' }: {
+  children: React.ReactNode; range?: number; className?: string
+}) {
+  const ref = useParallax<HTMLDivElement>(range)
+  return (
+    <div ref={ref} className={className}>
       {children}
     </div>
   )
@@ -160,19 +136,21 @@ function FeatureSection({ eyebrow, title, body, bullets, image, imageAlt, flip, 
             </h2>
             <p className="mt-4 text-lg text-gray-600 leading-relaxed">{body}</p>
             <ul className="mt-6 space-y-3">
-              {bullets.map((b) => (
-                <li key={b} className="flex items-start gap-3">
-                  <span className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-hockia-primary/10">
-                    <Check className="h-3 w-3 text-hockia-primary" strokeWidth={3} />
-                  </span>
-                  <span className="text-gray-700">{b}</span>
-                </li>
+              {bullets.map((b, i) => (
+                <Reveal key={b} delay={140 + stagger(i, 90)}>
+                  <li className="flex items-start gap-3">
+                    <span className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-hockia-primary/10">
+                      <Check className="h-3 w-3 text-hockia-primary" strokeWidth={3} />
+                    </span>
+                    <span className="text-gray-700">{b}</span>
+                  </li>
+                </Reveal>
               ))}
             </ul>
           </Reveal>
 
           <Reveal className="flex-1 min-w-0 w-full" delay={120}>
-            <div className={`mx-auto ${narrow ? 'max-w-[300px]' : 'max-w-[560px]'}`}>
+            <Parallax className={`mx-auto ${narrow ? 'max-w-[300px]' : 'max-w-[560px]'}`}>
               <img
                 src={image}
                 alt={imageAlt}
@@ -182,7 +160,7 @@ function FeatureSection({ eyebrow, title, body, bullets, image, imageAlt, flip, 
                 decoding="async"
                 className="w-full h-auto drop-shadow-2xl"
               />
-            </div>
+            </Parallax>
           </Reveal>
         </div>
       </div>
@@ -279,15 +257,15 @@ export default function Landing() {
       <Link
         to={EXPLORE_PATH}
         onClick={() => handleCta('explore_hockia', place)}
-        className="group inline-flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-hockia-primary to-hockia-secondary px-7 text-base font-semibold text-white shadow-lg shadow-hockia-primary/20 transition-all hover:shadow-xl hover:shadow-hockia-primary/30 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-hockia-primary/40 focus-visible:ring-offset-2 motion-reduce:hover:translate-y-0 sm:w-auto"
+        className="group inline-flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-hockia-primary to-hockia-secondary px-7 text-base font-semibold text-white shadow-lg shadow-hockia-primary/20 transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:shadow-xl hover:shadow-hockia-primary/30 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-hockia-primary/40 focus-visible:ring-offset-2 active:translate-y-0 active:scale-[0.985] active:duration-75 motion-reduce:transform-none sm:w-auto"
       >
         Explore HOCKIA
-        <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 motion-reduce:group-hover:translate-x-0" />
+        <ArrowRight className="h-4 w-4 transition-transform duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:translate-x-1 motion-reduce:transform-none" />
       </Link>
       <Link
         to="/signup"
         onClick={() => handleCta('create_profile', place)}
-        className="inline-flex h-14 w-full items-center justify-center rounded-2xl border border-gray-200 bg-white px-7 text-base font-semibold text-gray-900 shadow-sm transition-all hover:border-gray-300 hover:bg-gray-50 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-hockia-primary/40 focus-visible:ring-offset-2 motion-reduce:hover:translate-y-0 sm:w-auto"
+        className="inline-flex h-14 w-full items-center justify-center rounded-2xl border border-gray-200 bg-white px-7 text-base font-semibold text-gray-900 shadow-sm transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:border-gray-300 hover:bg-gray-50 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-hockia-primary/40 focus-visible:ring-offset-2 active:translate-y-0 active:scale-[0.985] active:duration-75 motion-reduce:transform-none sm:w-auto"
       >
         Create your profile
       </Link>
@@ -310,32 +288,44 @@ export default function Landing() {
 
         <div className="relative mx-auto max-w-6xl px-6 pt-14 pb-12 md:pt-20 md:pb-20">
           <div className="flex flex-col lg:flex-row lg:items-center gap-12 lg:gap-8">
+            {/* Above the fold, so these reveals fire immediately and read as a
+                load choreography rather than a scroll effect: badge, headline,
+                promise, action. Each element arrives just after the one that
+                earns it. */}
             <div className="flex-1 min-w-0">
               <Reveal>
                 <span className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-1.5 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-gray-100">
                   <span className="h-2 w-2 rounded-full bg-hockia-primary" />
                   Where field hockey sticks together.
                 </span>
+              </Reveal>
 
+              <Reveal delay={90}>
                 <h1 className="mt-6 text-[2.5rem] leading-[1.06] sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-gray-900 text-balance">
                   See what HOCKIA can do
                   <span className="block bg-gradient-to-r from-hockia-primary to-hockia-secondary bg-clip-text text-transparent">
                     before you join.
                   </span>
                 </h1>
+              </Reveal>
 
+              <Reveal delay={180}>
                 <p className="mt-5 max-w-xl text-lg md:text-xl text-gray-600 leading-relaxed">
                   Explore players, coaches, clubs, opportunities and the global field hockey
                   community — then create your profile when you&apos;re ready.
                 </p>
+              </Reveal>
 
+              <Reveal delay={270}>
                 <div className="mt-8">{ctaPair('hero')}</div>
+              </Reveal>
 
-                {/* WEB ONLY. Inside the native app the visitor demonstrably
-                    already has the app, so "download it" is dead weight — and
-                    the surrounding copy ("use it on the web / take it with
-                    you") is simply wrong there. The website is unchanged. */}
-                {!isNativeApp && (
+              {/* WEB ONLY. Inside the native app the visitor demonstrably
+                  already has the app, so "download it" is dead weight — and
+                  the surrounding copy ("use it on the web / take it with
+                  you") is simply wrong there. The website is unchanged. */}
+              {!isNativeApp && (
+                <Reveal delay={360}>
                   <div className="mt-9">
                     <p className="text-sm font-medium text-gray-500">
                       Use HOCKIA on the web — or take it with you.
@@ -345,50 +335,49 @@ export default function Landing() {
                       <span className="text-sm text-gray-400">Web · iOS · Android</span>
                     </div>
                   </div>
-                )}
-              </Reveal>
+                </Reveal>
+              )}
             </div>
 
-            {/* Device composition — real product, not an illustration. */}
+            {/* Device composition — real product, not an illustration.
+                The two shots drift at different rates on scroll: the phone in
+                front travels further than the board behind it, which is what
+                actually reads as depth. Equal rates would just look like the
+                whole image sliding. */}
             <Reveal className="flex-1 min-w-0 w-full" delay={140}>
               <div className="relative mx-auto max-w-[560px] lg:max-w-none">
-                <img
-                  src="/Mockup5.webp"
-                  alt="The HOCKIA opportunities board, showing open roles at clubs across Europe"
-                  width={836}
-                  height={640}
-                  className="w-full h-auto drop-shadow-2xl"
-                  fetchPriority="high"
-                  decoding="async"
-                />
-                <img
-                  src="/Mockup4.webp"
-                  alt="A HOCKIA player profile with an evidence checklist"
-                  width={500}
-                  height={748}
-                  className="absolute -bottom-6 -right-2 w-[34%] max-w-[190px] h-auto drop-shadow-2xl sm:-right-4"
-                  fetchPriority="high"
-                  decoding="async"
-                />
+                <Parallax range={14}>
+                  <img
+                    src="/Mockup5.webp"
+                    alt="The HOCKIA opportunities board, showing open roles at clubs across Europe"
+                    width={836}
+                    height={640}
+                    className="w-full h-auto drop-shadow-2xl"
+                    fetchPriority="high"
+                    decoding="async"
+                  />
+                </Parallax>
+                <Parallax
+                  range={34}
+                  className="absolute -bottom-6 -right-2 w-[34%] max-w-[190px] sm:-right-4"
+                >
+                  <img
+                    src="/Mockup4.webp"
+                    alt="A HOCKIA player profile with an evidence checklist"
+                    width={500}
+                    height={748}
+                    className="w-full h-auto drop-shadow-2xl"
+                    fetchPriority="high"
+                    decoding="async"
+                  />
+                </Parallax>
               </div>
             </Reveal>
           </div>
 
           {/* Proof strip — real figures from the live database. */}
           <Reveal delay={220}>
-            <dl className="mt-16 grid grid-cols-2 gap-x-4 gap-y-8 border-t border-gray-100 pt-10 sm:grid-cols-4">
-              {[
-                ['258', 'members'],
-                ['43', 'nationalities'],
-                ['281', 'clubs mapped'],
-                ['11', 'open roles'],
-              ].map(([n, label]) => (
-                <div key={label}>
-                  <dt className="text-3xl font-extrabold tracking-tight text-gray-900 tabular-nums">{n}</dt>
-                  <dd className="mt-1 text-sm text-gray-500">{label}</dd>
-                </div>
-              ))}
-            </dl>
+            <LandingStats />
           </Reveal>
         </div>
       </section>
@@ -405,22 +394,8 @@ export default function Landing() {
             </h2>
           </Reveal>
 
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {[
-              { t: 'Players', d: 'Build the profile that gets you found, and find opportunities that fit.' },
-              { t: 'Coaches', d: 'Show your coaching journey and connect with clubs that need you.' },
-              { t: 'Clubs', d: 'Present your club, recruit with full context, and reach the wider hockey world.' },
-              { t: 'Brands', d: 'Understand the community and find meaningful ways to take part in the sport.' },
-              { t: 'Umpires', d: 'Be visible in the ecosystem and connect beyond the matchday.' },
-              { t: 'Everyone else', d: 'One place for the people and organisations moving the sport forward.' },
-            ].map((r, i) => (
-              <Reveal key={r.t} delay={i * 60}>
-                <div className="h-full rounded-2xl border border-gray-100 bg-white p-6 transition-all hover:border-hockia-primary/25 hover:shadow-lg hover:-translate-y-0.5 motion-reduce:hover:translate-y-0">
-                  <h3 className="text-lg font-bold text-gray-900">{r.t}</h3>
-                  <p className="mt-2 text-[15px] leading-relaxed text-gray-600">{r.d}</p>
-                </div>
-              </Reveal>
-            ))}
+          <div className="mt-10">
+            <RoleCards />
           </div>
         </div>
       </section>

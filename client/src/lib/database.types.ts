@@ -6281,6 +6281,53 @@ export type Database = {
       }
     }
     Views: {
+      analytics_events: {
+        Row: {
+          anonymous_id: string | null
+          browser: string | null
+          country: string | null
+          created_at: string | null
+          device: string | null
+          entity_id: string | null
+          entity_type: string | null
+          error_code: string | null
+          error_message: string | null
+          event_name: string | null
+          id: string | null
+          ip_hash: string | null
+          properties: Json | null
+          referrer_source: string | null
+          resolved_user_id: string | null
+          role: string | null
+          session_id: string | null
+          user_agent: string | null
+          user_id: string | null
+          utm: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       country_migration_stats: {
         Row: {
           nationality_pending_review: number | null
@@ -8755,6 +8802,15 @@ export type Database = {
         Returns: Json
       }
       get_home_feed_new_count: { Args: { p_since: string }; Returns: number }
+      get_landing_stats: {
+        Args: never
+        Returns: {
+          clubs_mapped: number
+          members: number
+          nationalities: number
+          open_roles: number
+        }[]
+      }
       get_leagues_for_location: {
         Args: { p_country_id: number; p_region_id?: number }
         Returns: {
