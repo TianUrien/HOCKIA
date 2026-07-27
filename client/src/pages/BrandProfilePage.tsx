@@ -40,15 +40,27 @@ export default function BrandProfilePage() {
   const { isFollowing, followerCount, toggleFollow, isToggling } = useFollowBrand(brand?.id)
   const { ambassadors, total: ambassadorTotal, isLoading: ambassadorsLoading } = useBrandAmbassadorsPublic(brand?.id)
 
-  // Block check — must complete before rendering profile
+  // Block check — must complete before rendering profile.
+  //
+  // `blockChecked` OPENS the render gate, so a stale resolution unlocking it
+  // is a fail-OPEN: navigating brand A → B fast could let A's .finally()
+  // set blockChecked=true while B's own check was still in flight, briefly
+  // rendering B before it had been cleared. Same P1 class the July audit
+  // fixed on the player/coach/club profile pages.
+  //
+  // Guarded, and the result is now assigned rather than only ever set to
+  // true — a sticky `true` from a previous brand hid an unrelated one.
   useEffect(() => {
-    if (!brand) { setBlockChecked(true); return }
-    if (!user) { setBlockChecked(true); return }
+    let cancelled = false
+    setBlockChecked(false)
+    setIsBlockedProfile(false)
+    if (!brand || !user) { setBlockChecked(true); return }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(supabase as any).rpc('is_blocked_pair', { p_user_a: user.id, p_user_b: brand.profile_id })
-      .then(({ data }: { data: boolean }) => { if (data) setIsBlockedProfile(true) })
-      .catch(() => {})
-      .finally(() => setBlockChecked(true))
+      .then(({ data }: { data: boolean }) => { if (!cancelled) setIsBlockedProfile(Boolean(data)) })
+      .catch(() => { /* fail closed: leave isBlockedProfile false, gate opens below */ })
+      .finally(() => { if (!cancelled) setBlockChecked(true) })
+    return () => { cancelled = true }
   }, [brand?.profile_id, user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Track brand profile view (skip if brand owner)

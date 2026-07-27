@@ -128,9 +128,16 @@ export default function LandingStats() {
       {/* One object, not four stray figures: a single card with hairline
           dividers. Rounded boxes with accent bars would read as a template.
           The sheen sweeps once as it enters — looping it is the fastest way
-          to make a page look cheap. */}
+          to make a page look cheap.
+
+          Deliberately NOT a <dl>. The visual design needs a border wrapper
+          around each cell plus the cell's own layout div, which puts any
+          <dt>/<dd> two levels deep — invalid, since a <dl> allows only one
+          wrapping <div> (axe flagged exactly this). Plain elements read in
+          DOM order as "258 members", which is what a screen reader should
+          say anyway. */}
       <div ref={glowRef}>
-        <dl
+        <div
           data-glow
           className={`glow-card sheen relative grid grid-cols-2 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-[0_1px_2px_rgba(16,12,32,0.04),0_12px_32px_-12px_rgba(109,40,217,0.16)] transition-[box-shadow,border-color] duration-300 sm:grid-cols-4 ${
             inView && !reduced ? 'sheen-run' : ''
@@ -150,7 +157,7 @@ export default function LandingStats() {
               <StatCell stat={s} animate={inView} index={i} />
             </div>
           ))}
-        </dl>
+        </div>
       </div>
     </div>
   )

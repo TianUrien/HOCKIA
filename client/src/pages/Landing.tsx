@@ -137,14 +137,18 @@ function FeatureSection({ eyebrow, title, body, bullets, image, imageAlt, flip, 
             <p className="mt-4 text-lg text-gray-600 leading-relaxed">{body}</p>
             <ul className="mt-6 space-y-3">
               {bullets.map((b, i) => (
-                <Reveal key={b} delay={140 + stagger(i, 90)}>
-                  <li className="flex items-start gap-3">
+                // The Reveal wrapper goes INSIDE the <li>, not around it: a
+                // <ul> may only directly contain <li>, and wrapping each item
+                // in a div orphaned all of them from the list (caught by axe —
+                // screen readers stop announcing these as a list at all).
+                <li key={b}>
+                  <Reveal delay={140 + stagger(i, 90)} className="flex items-start gap-3">
                     <span className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-hockia-primary/10">
                       <Check className="h-3 w-3 text-hockia-primary" strokeWidth={3} />
                     </span>
                     <span className="text-gray-700">{b}</span>
-                  </li>
-                </Reveal>
+                  </Reveal>
+                </li>
               ))}
             </ul>
           </Reveal>

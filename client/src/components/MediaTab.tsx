@@ -113,6 +113,7 @@ export default function MediaTab({ profileId, readOnly = false, renderHeader, sh
 
   // Fetch the profile data for the user being viewed
   useEffect(() => {
+    let cancelled = false
     const fetchTargetProfile = async () => {
       if (!targetUserId) {
         setTargetProfile(null)
@@ -144,19 +145,25 @@ export default function MediaTab({ profileId, readOnly = false, renderHeader, sh
           .single()
 
         if (error) throw error
+        if (cancelled) return
         // Cast to Profile — we only render `displayProfile.highlight_video_url`,
         // so the missing fields are unused at this call site. Full Profile
         // shape is preserved when targetProfile === authProfile (own view).
         setTargetProfile(data as unknown as Profile)
       } catch (error) {
+        if (cancelled) return
         logger.error('Error fetching target profile:', error)
         setTargetProfile(null)
       } finally {
-        setIsLoadingProfile(false)
+        if (!cancelled) setIsLoadingProfile(false)
       }
     }
 
+    // targetUserId changes as the viewer moves between profiles; without this
+    // guard a slower earlier response lands last and the media tab renders one
+    // person's highlight video under another person's profile.
     fetchTargetProfile()
+    return () => { cancelled = true }
   }, [targetUserId, user?.id, authProfile])
 
   // Fetch gallery photos

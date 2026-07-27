@@ -61,13 +61,28 @@ export default function ProfileActionMenu({ targetId, targetName }: ProfileActio
     setPos({ top, left })
   }, [])
 
-  // Check if already blocked
+  // Check if already blocked.
+  //
+  // Two things this has to get right, both of which it previously didn't:
+  //
+  // 1. Set the resolved value, not just `true`. This component is reused
+  //    across profiles (same tree position, changing targetId), so a
+  //    "true" that is never cleared carried over: after viewing a blocked
+  //    profile, the NEXT profile's menu still offered "Unblock" and hid
+  //    "Block" — so you could not block that person at all.
+  // 2. Ignore a stale response. targetId can change while the RPC is in
+  //    flight; without the guard the previous target's answer wins.
   useEffect(() => {
-    if (!user) return
+    if (!user) {
+      setBlocked(false)
+      return
+    }
+    let cancelled = false
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(supabase as any).rpc('is_user_blocked', { p_other_id: targetId })
-      .then(({ data }: { data: boolean }) => { if (data) setBlocked(true) })
-      .catch(() => {})
+      .then(({ data }: { data: boolean }) => { if (!cancelled) setBlocked(Boolean(data)) })
+      .catch(() => { if (!cancelled) setBlocked(false) })
+    return () => { cancelled = true }
   }, [user, targetId])
 
   // Measure synchronously before paint when opening so there's no flash
