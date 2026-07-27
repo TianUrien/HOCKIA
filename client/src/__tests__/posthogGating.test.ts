@@ -9,6 +9,7 @@ const state = vi.hoisted(() => ({
   native: false,
   initCalls: 0,
   captures: [] as Array<{ event: string; props?: Record<string, unknown> }>,
+  identifies: [] as Array<{ id: string; props?: Record<string, unknown> }>,
 }))
 
 vi.mock('@/lib/cookieConsent', () => ({
@@ -32,7 +33,7 @@ vi.mock('posthog-js', () => {
     },
     capture: (event: string, props?: Record<string, unknown>) =>
       state.captures.push({ event, props }),
-    identify: vi.fn(),
+    identify: (id: string, props?: Record<string, unknown>) => state.identifies.push({ id, props }),
     reset: vi.fn(),
     getFeatureFlag: () => 'variant-b',
   }
@@ -49,6 +50,7 @@ beforeEach(() => {
   state.native = false
   state.initCalls = 0
   state.captures = []
+  state.identifies = []
   Object.defineProperty(window.navigator, 'webdriver', { value: false, configurable: true })
 })
 
@@ -122,6 +124,32 @@ describe('PostHog capture', () => {
     const ph = await freshModule()
     expect(() => ph.phCapture('login_wall_shown')).not.toThrow()
     expect(state.captures).toHaveLength(0)
+  })
+})
+
+describe('PostHog identify — idempotency', () => {
+  // QA 2026-07-27: two $identify events landed per sign-in because the profile
+  // fetch can run more than once. identify() is meant to be called once.
+  it('identifies a user once, then drops repeats', async () => {
+    const ph = await freshModule()
+    ph.initPostHog()
+    await vi.waitFor(() => expect(state.initCalls).toBe(1))
+
+    ph.phIdentify('user-1', { role: 'coach' })
+    ph.phIdentify('user-1', { role: 'coach' })
+    ph.phIdentify('user-1')
+    expect(state.identifies).toEqual([{ id: 'user-1', props: { role: 'coach' } }])
+  })
+
+  it('identifies a different user after reset (shared browser)', async () => {
+    const ph = await freshModule()
+    ph.initPostHog()
+    await vi.waitFor(() => expect(state.initCalls).toBe(1))
+
+    ph.phIdentify('user-1', { role: 'coach' })
+    ph.phReset()
+    ph.phIdentify('user-2', { role: 'player' })
+    expect(state.identifies.map((i) => i.id)).toEqual(['user-1', 'user-2'])
   })
 })
 

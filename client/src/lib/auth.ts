@@ -269,6 +269,10 @@ interface ClearSessionOptions {
   skipSupabaseSignOut?: boolean
 }
 
+/** Which user we've already fired login analytics for — see the SIGNED_IN
+ *  handler. Cleared on sign-out so a genuine re-login tracks again. */
+let lastLoginTrackedUserId: string | null = null
+
 const clearLocalSession = async (reason: string, options?: ClearSessionOptions) => {
   logger.warn('[AUTH_STORE] Clearing local session', { reason })
 
@@ -416,6 +420,8 @@ const clearLocalSession = async (reason: string, options?: ClearSessionOptions) 
   // Drop the PostHog identity too — the next visitor on this browser must
   // start anonymous, not inherit the previous user's person profile.
   phReset()
+  // Allow the next sign-in to be tracked (see the SIGNED_IN dedupe).
+  lastLoginTrackedUserId = null
 
   Sentry.setUser(null)
 }
@@ -634,9 +640,20 @@ export const initializeAuth = () => {
         message: 'auth.signed_in',
         data: { method, platform: detectPlatform() },
       })
-      trackLogin(method)
-      trackDbEvent('login', undefined, undefined, { method, platform: detectPlatform() })
-      trackUserDevice()
+      // Supabase emits SIGNED_IN more than once for a single human sign-in —
+      // initial session, token refresh, and the multi-tab broadcast noted
+      // above all deliver it. Analytics ran on every emission, so `login`
+      // landed twice ~1-15ms apart with distinct insert ids (observed in
+      // PostHog 2026-07-27). Person counts were unaffected, which is why it
+      // hid for so long, but every event-count metric read ~2x.
+      // Fire the analytics ONCE per signed-in user; reset on sign-out so a
+      // genuine re-login is tracked again.
+      if (lastLoginTrackedUserId !== session.user.id) {
+        lastLoginTrackedUserId = session.user.id
+        trackLogin(method)
+        trackDbEvent('login', undefined, undefined, { method, platform: detectPlatform() })
+        trackUserDevice()
+      }
     }
 
     runSessionEffects(session)

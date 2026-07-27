@@ -54,6 +54,10 @@ interface PostHogClient {
 
 let client: PostHogClient | null = null
 let loading = false
+/** Who we've already identified. PostHog's identify() is meant to be called
+ *  once per user; the profile fetch can run more than once around a sign-in,
+ *  which emitted duplicate $identify events (observed 2026-07-27). */
+let identifiedUserId: string | null = null
 
 // The SDK is code-split and loads asynchronously, but the most important
 // events of a session (the landing entry page_view, an immediate CTA click)
@@ -78,6 +82,7 @@ function flush(): void {
   }
   if (pendingIdentify) {
     try {
+      identifiedUserId = pendingIdentify.id
       client.identify(pendingIdentify.id, pendingIdentify.properties)
     } catch {
       /* noop */
@@ -170,11 +175,15 @@ export function phCapture(event: string, properties?: Record<string, unknown>): 
 /** Called on login/registration so anonymous history stitches to the user. */
 export function phIdentify(userId: string, properties?: Record<string, unknown>): void {
   if (blocked() || !userId) return
+  // Idempotent: repeated calls for the SAME user are dropped, so a re-run of
+  // the profile fetch can't emit a second $identify.
+  if (identifiedUserId === userId) return
   try {
     if (!client) {
       pendingIdentify = { id: userId, properties }
       return
     }
+    identifiedUserId = userId
     client.identify(userId, properties)
   } catch {
     /* noop */
@@ -183,6 +192,9 @@ export function phIdentify(userId: string, properties?: Record<string, unknown>)
 
 /** Called on logout — starts a fresh anonymous identity. */
 export function phReset(): void {
+  // Clear FIRST so a failed reset can't strand the guard and block the next
+  // user's identify on a shared browser.
+  identifiedUserId = null
   try {
     client?.reset()
   } catch {
@@ -211,4 +223,5 @@ export function __resetPostHogForTests(): void {
   loading = false
   queue = []
   pendingIdentify = null
+  identifiedUserId = null
 }
