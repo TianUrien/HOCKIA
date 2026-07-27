@@ -17,6 +17,15 @@ vi.mock('@capacitor/core', () => ({
   Capacitor: { isNativePlatform: () => native.value },
 }))
 
+// The page renders LandingStats, which imports the Supabase client — and that
+// module THROWS at import when the env vars are absent. They are present
+// locally via .env.local and absent in the CI unit-test job, so leaving this
+// unmocked passes on a laptop and fails only in CI. Stub it: this file is
+// about the store badges, not the stats.
+vi.mock('@/lib/supabase', () => ({
+  supabase: { rpc: vi.fn().mockResolvedValue({ data: null, error: null }) },
+}))
+
 // Keep the page cheap to mount — we're asserting one conditional block.
 vi.mock('@/lib/auth', () => ({
   useAuthStore: (sel?: (s: unknown) => unknown) => {
