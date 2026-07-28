@@ -8507,6 +8507,7 @@ export type Database = {
           p_relocation_willingness?: string
           p_required_location_country_id?: number
           p_required_positions?: string[]
+          p_restrict_profile_ids?: string[]
           p_roles?: string[]
           p_search_text?: string
           p_sort_by?: string

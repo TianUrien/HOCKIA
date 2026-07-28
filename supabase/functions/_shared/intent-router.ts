@@ -16,6 +16,8 @@
  * test. Keep it boring on purpose.
  */
 
+import { hasNationalTeamIntent, stripNationalTeamPhrases } from './international-taxonomy.ts'
+
 export type EntityType =
   | 'clubs'
   | 'players'
@@ -388,7 +390,13 @@ export function classifyEntityType(query: string): RoutedIntent {
 
   // 5. Strip possessive context BEFORE entity scoring so "find players for
   //    my team" is scored as "find players ___" and doesn't pick up team→club.
-  const scoringInput = stripPossessiveContext(q)
+  //    ALSO strip national-team phrases first: the word "team" inside
+  //    "Argentina national team" is not a clubs signal — the 2026-07-23
+  //    incident routed exactly that query to the world-club directory.
+  const intlIntent = hasNationalTeamIntent(q)
+  const scoringInput = stripPossessiveContext(
+    intlIntent ? stripNationalTeamPhrases(q) : q,
+  )
 
   const opps = anyMatch(OPPORTUNITIES, scoringInput)
   const products = anyMatch(PRODUCTS, scoringInput)
@@ -422,6 +430,15 @@ export function classifyEntityType(query: string): RoutedIntent {
   ].filter(s => s.hits.length > 0)
 
   if (scores.length === 0) {
+    // A representative-experience query with no explicit role noun ("Are
+    // there any Argentina national team in the app?") defaults to players
+    // at MEDIUM confidence — the dominant recruiting ask — so it reaches
+    // profile search instead of falling into the LLM-only flow (which is
+    // what mis-routed incident #2 to the clubs directory). Medium, not
+    // high: the LLM may still pick coaches if the phrasing suggests it.
+    if (intlIntent) {
+      return { entity_type: 'players', confidence: 'medium', matched_signals: ['national_team'] }
+    }
     return { entity_type: 'unknown', confidence: 'none', matched_signals: [] }
   }
 
@@ -430,7 +447,7 @@ export function classifyEntityType(query: string): RoutedIntent {
     return {
       entity_type: scores[0].type,
       confidence: 'high',
-      matched_signals: scores[0].hits,
+      matched_signals: intlIntent ? [...scores[0].hits, 'national_team'] : scores[0].hits,
     }
   }
 

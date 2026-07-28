@@ -16,8 +16,9 @@ import { getServiceClient } from '../_shared/supabase-client.ts'
 import type { Database } from '../_shared/database.types.ts'
 import { getCorsHeaders } from '../_shared/cors.ts'
 import { captureException } from '../_shared/sentry.ts'
-import { parseSearchQuery, synthesizeQualitativeInsights, composeNoResults, answerPlatformHelp, PROMPT_VERSION, type LLMCallMeta, type ParsedFilters, type HistoryTurn, type ProfileQualitativeData, type UserContext } from '../_shared/llm-client.ts'
+import { parseSearchQuery, synthesizeQualitativeInsights, composeNoResults, answerPlatformHelp, PROMPT_VERSION, type LLMCallMeta, type ParsedFilters, type SearchIntent, type HistoryTurn, type ProfileQualitativeData, type UserContext } from '../_shared/llm-client.ts'
 import { classifyEntityType, entityTypeToRole, type RoutedIntent } from '../_shared/intent-router.ts'
+import { detectInternationalIntent, countryMentionedOutsideSpans, tournamentAliasPatterns, tournamentIncludesDomestic, rowTextLevel, BIO_NT_MARKERS, hasNationalTeamIntent } from '../_shared/international-taxonomy.ts'
 import { resolveFeatureCta } from '../_shared/hockia-features.ts'
 import {
   type AppliedSearch,
@@ -2440,6 +2441,25 @@ Deno.serve(async (req) => {
     // and the filters map cleanly to JS-builder calls). Results merge
     // into `data[]` with result_type='world_club' so the frontend can
     // render claimed and unclaimed clubs side-by-side.
+    // ── International-experience guard (incident #2, 2026-07-23) ─────────
+    // "Are there any Argentina selection national team in the app?" was
+    // routed here and searched the CLUBS DIRECTORY (0 results). A national-
+    // team query is a people query; coerce it back to profile search and let
+    // the deterministic binding below build the representative-experience
+    // filter. The router no longer scores NT phrases as club signals, but
+    // the LLM can still pick this tool on its own — this guard is the fence.
+    if (llmResult.type === 'world_club_search' && hasNationalTeamIntent(query)) {
+      const coerced: SearchIntent = {
+        type: 'search',
+        filters: {
+          roles: [entityTypeToRole(intent.entity_type) ?? 'player'],
+          summary: llmResult.filters.summary,
+        },
+        message: '',
+      }
+      llmResult = coerced
+    }
+
     if (llmResult.type === 'world_club_search') {
       const wcFilters = llmResult.filters
 
@@ -2699,12 +2719,182 @@ Deno.serve(async (req) => {
     const parsed: ParsedFilters = llmResult.filters
     let synthMeta: LLMCallMeta | null = null
 
+    // ── International/representative experience — deterministic binding ──
+    // The LLM schema asks for this (belt); this rule GUARANTEES it (braces).
+    // Incident 2026-07-23: "players who played in the Argentina national
+    // team" was parsed as nationality=Argentina and served a passport as an
+    // answer. A country bound to an NT phrase is representative experience.
+    const intlDetected = detectInternationalIntent(query)
+    let intlBindingSource: 'llm' | 'deterministic' | 'both' | null =
+      parsed.international_experience ? 'llm' : null
+    if (intlDetected) {
+      const ieMut = parsed.international_experience ?? {}
+      const have = new Set((ieMut.countries ?? []).map((c) => c.toLowerCase()))
+      for (const tok of intlDetected.country_tokens) {
+        if (!have.has(tok.toLowerCase())) (ieMut.countries ??= []).push(tok)
+      }
+      for (const k of intlDetected.tournaments) {
+        if (!(ieMut.tournaments ?? []).includes(k)) (ieMut.tournaments ??= []).push(k)
+      }
+      if (!ieMut.level && intlDetected.level) ieMut.level = intlDetected.level
+      parsed.international_experience = ieMut
+      intlBindingSource = intlBindingSource === 'llm' ? 'both' : 'deterministic'
+    }
+    const ie = parsed.international_experience
+    const intlActive = !!ie && (
+      (ie.countries?.length ?? 0) > 0 ||
+      (ie.tournaments?.length ?? 0) > 0 ||
+      intlDetected !== null
+    )
+
     // ── Resolve text values → IDs ───────────────────────────────────────
     let nationalityCountryIds: number[] | null = null
     let baseCountryIds: number[] | null = null
     let baseLocationText: string | null = null
     let leagueIds: number[] | null = null
     let countryIds: number[] | null = null
+
+    // ── International experience: resolve country + pre-retrieve (Step A) ──
+    // Verified tier matches what the career-history row SAYS (club_name /
+    // badge_label / division_league) via HIGH-confidence aliases only.
+    // Never location_country — that is the tournament HOST ("2022 Pan Am
+    // Cup" hosted in Chile), and never city-level aliases — "buenos aires"
+    // (medium) would turn a provincial selection into national caps.
+    let intlCountryIds: number[] | null = null
+    let intlCountryLabel: string | null = null
+    let intlAliasPatterns: string[] = []
+    let intlRestrictIds: string[] | null = null
+    const intlProvenance = new Map<string, 'verified' | 'self_described'>()
+    const intlVerifiedLabel = new Map<string, string>()
+    let intlVerifiedCount = 0
+    let intlSelfDescribedCount = 0
+    if (intlActive && ie) {
+      if (ie.countries?.length) {
+        const orConditions = ie.countries.map(n =>
+          `name.ilike.%${n}%,common_name.ilike.%${n}%,nationality_name.ilike.%${n}%`
+        ).join(',')
+        const { data: cRows } = await adminClient.from('countries').select('id, name').or(orConditions)
+        let ids = (cRows ?? []).map((c: any) => c.id as number)
+        // Alias fallback for ES names / demonyms the countries table misses
+        // ("España", "argentina" the adjective). Exact match, high confidence.
+        const { data: aRows } = await adminClient
+          .from('country_text_aliases').select('country_id')
+          .in('alias_text', ie.countries.map((c) => c.toLowerCase()))
+          .eq('confidence', 'high')
+        ids = [...new Set([...ids, ...((aRows ?? []) as any[]).map((a) => a.country_id as number)])]
+        if (ids.length) {
+          intlCountryIds = ids
+          intlCountryLabel = ((cRows ?? [])[0] as any)?.name ?? ie.countries[0]
+          const { data: pRows } = await adminClient
+            .from('country_text_aliases').select('alias_text')
+            .in('country_id', ids).eq('confidence', 'high')
+          intlAliasPatterns = [...new Set([
+            ...((pRows ?? []) as any[]).map((a) => `%${a.alias_text}%`),
+            ...((cRows ?? []) as any[]).map((c) => `%${c.name}%`),
+          ])]
+        }
+      }
+
+      // The regression fence, applied at ID level so EN/ES name mismatches
+      // ("España" captured, "Spain" in nationalities) can't dodge it: a
+      // nationality that resolves to an NT-bound country is dropped UNLESS
+      // the query asserts it separately outside the NT phrase.
+      if (intlDetected && parsed.nationalities?.length && intlCountryIds?.length) {
+        const kept: string[] = []
+        for (const nat of parsed.nationalities) {
+          const { data: natRows } = await adminClient.from('countries').select('id')
+            .or(`name.ilike.%${nat}%,common_name.ilike.%${nat}%,nationality_name.ilike.%${nat}%`)
+          const natIds = ((natRows ?? []) as any[]).map((r) => r.id as number)
+          const boundToNT = natIds.some((id) => intlCountryIds!.includes(id))
+          if (!boundToNT || countryMentionedOutsideSpans(query, nat, intlDetected.spans)) kept.push(nat)
+        }
+        parsed.nationalities = kept
+        if (!kept.length) delete parsed.nationalities
+      }
+
+      const tPatterns = ie.tournaments?.length ? tournamentAliasPatterns(ie.tournaments) : []
+      const wantCountry = (ie.countries?.length ?? 0) > 0
+      const wantTournament = tPatterns.length > 0
+
+      const fetchCareerRows = async (types: Array<'national_team' | 'tournament' | 'achievement' | 'club'>, patterns: string[]) => {
+        if (!patterns.length) return [] as any[]
+        const orExpr = patterns.flatMap((p) =>
+          [`club_name.ilike.${p}`, `badge_label.ilike.${p}`, `division_league.ilike.${p}`]
+        ).join(',')
+        const { data } = await adminClient.from('career_history')
+          .select('user_id, club_name, badge_label, division_league, years')
+          .in('entry_type', types).or(orExpr)
+        return (data ?? []) as any[]
+      }
+
+      let countryRows: any[] = []
+      let tournamentRows: any[] = []
+      if (wantCountry && intlAliasPatterns.length) {
+        countryRows = await fetchCareerRows(['national_team'], intlAliasPatterns)
+      }
+      if (wantTournament) {
+        // Tier-7 domestic leagues (Hockey One, Hoofdklasse…) are CLUB
+        // experience — those rows live on entry_type='club', so include it
+        // exactly when a domestic-league key was asked for.
+        const tTypes: Array<'national_team' | 'tournament' | 'achievement' | 'club'> =
+          tournamentIncludesDomestic(ie.tournaments ?? [])
+            ? ['national_team', 'tournament', 'achievement', 'club']
+            : ['national_team', 'tournament', 'achievement']
+        tournamentRows = await fetchCareerRows(tTypes, tPatterns)
+      }
+      if (!wantCountry && !wantTournament) {
+        // Generic "international experience" → any national_team entry.
+        const { data } = await adminClient.from('career_history')
+          .select('user_id, club_name, badge_label, division_league, years')
+          .eq('entry_type', 'national_team')
+        countryRows = (data ?? []) as any[]
+      }
+
+      const rowText = (r: any) => `${r.club_name ?? ''} ${r.badge_label ?? ''} ${r.division_league ?? ''}`
+      const applyLevel = (rows: any[]) => rows.filter((r) => {
+        const lvl = rowTextLevel(rowText(r))
+        if (ie.level === 'junior') return lvl.junior
+        if (ie.level === 'senior') return !lvl.junior
+        return true
+      })
+      countryRows = applyLevel(countryRows)
+      tournamentRows = applyLevel(tournamentRows)
+
+      const countryIdSet = new Set(countryRows.map((r) => r.user_id as string))
+      const tourIdSet = new Set(tournamentRows.map((r) => r.user_id as string))
+      const verifiedIds = wantCountry && wantTournament
+        ? new Set([...countryIdSet].filter((id) => tourIdSet.has(id)))
+        : (wantTournament && !wantCountry ? tourIdSet : countryIdSet)
+
+      for (const r of [...countryRows, ...tournamentRows]) {
+        const uid = r.user_id as string
+        if (!verifiedIds.has(uid) || intlVerifiedLabel.has(uid)) continue
+        const lvl = rowTextLevel(rowText(r))
+        const label = `${(r.club_name ?? '').trim()}${r.years ? ' · ' + r.years : ''}${lvl.masters ? ' · Masters' : ''}`
+        intlVerifiedLabel.set(uid, label)
+        intlProvenance.set(uid, 'verified')
+      }
+
+      // SELF-DESCRIBED tier — bio mentions. Never presented as verified.
+      const bioOr = BIO_NT_MARKERS.map((m) => `bio.ilike.%${m}%`).join(',')
+      const { data: bioRows } = await adminClient.from('profiles').select('id, bio').or(bioOr)
+      const needle = (p: string) => p.replaceAll('%', '').toLowerCase()
+      for (const b of (bioRows ?? []) as any[]) {
+        if (intlProvenance.has(b.id)) continue
+        const bio = (b.bio ?? '').toLowerCase()
+        const countryOk = !wantCountry || intlAliasPatterns.some((p) => bio.includes(needle(p)))
+        const tourOk = !wantTournament || tPatterns.some((p) => bio.includes(needle(p)))
+        if (countryOk && tourOk) intlProvenance.set(b.id, 'self_described')
+      }
+
+      intlVerifiedCount = intlVerifiedLabel.size
+      intlSelfDescribedCount = [...intlProvenance.values()].filter((v) => v === 'self_described').length
+      const allIds = [...intlProvenance.keys()]
+      // Empty set → pass an impossible id so the RPC returns an honest zero
+      // through the normal envelope (fences, logging, no-results copy) — the
+      // filter must CONSTRAIN, never silently drop.
+      intlRestrictIds = allIds.length ? allIds : ['00000000-0000-0000-0000-000000000000']
+    }
 
     // Resolve nationality names → country IDs
     if (parsed.nationalities?.length) {
@@ -2968,6 +3158,7 @@ Deno.serve(async (req) => {
       p_required_positions?: string[] | null
       p_exclude_paid_seekers?: boolean | null
       p_required_location_country_id?: number | null
+      p_restrict_profile_ids?: string[] | null
     }
     const baseDiscoverParams = {
       p_positions: parsed.positions || null,
@@ -3001,6 +3192,8 @@ Deno.serve(async (req) => {
           : null,
       p_specialist_skills: parsed.specialist_skills || null,
       p_sort_by: parsed.sort_by || 'relevance',
+      // International experience (Step A) — NULL-neutral in the RPC.
+      p_restrict_profile_ids: intlRestrictIds,
     }
 
     let rpcResult: { results: any[]; total: number; has_more: boolean } | null = null
@@ -3404,6 +3597,23 @@ Deno.serve(async (req) => {
       const bioCredCount = r?.id ? (bioCredCountByUser.get(r.id) ?? 0) : 0
       const fit_level = fitLevelForDiscoverResult(r, career, bioCredCount)
       const withHighlights = highlights && highlights.length > 0 ? { ...r, highlights } : r
+      // International experience — three-tier provenance rides on each card.
+      // 'verified' carries the matched career entry; 'self_described' is
+      // always labelled as unverified; nationality-only rows can't appear
+      // here at all (the restrict set excludes them by construction).
+      if (intlActive && r?.id) {
+        const prov = intlProvenance.get(r.id) ?? null
+        return {
+          ...withHighlights,
+          fit_level,
+          provenance: prov,
+          provenance_label: prov === 'verified'
+            ? (intlVerifiedLabel.get(r.id) ?? null)
+            : prov === 'self_described'
+              ? 'Mentions it in their bio — not verified'
+              : null,
+        }
+      }
       return { ...withHighlights, fit_level }
     })
 
@@ -3475,6 +3685,53 @@ Deno.serve(async (req) => {
       suggestedActions = [followUpAction, ...suggestedActions].slice(0, 4)
     }
 
+    // ── International experience: honesty contract (composed in CODE) ────
+    // The LLM summary narrated the original bug ("Showing player profiles
+    // from Argentina, searching for national team experience"), so for this
+    // intent the message is assembled here and never delegated.
+    if (intlActive && ie) {
+      const what = intlCountryLabel
+        ? `${intlCountryLabel} national-team`
+        : (ie.tournaments?.length
+            ? ie.tournaments.map((k) => k.replace(/_/g, ' ')).join(' / ')
+            : 'international')
+      if (result.total > 0) {
+        const vShown = result.results.filter((r: any) => intlProvenance.get(r?.id) === 'verified').length
+        const sShown = result.results.filter((r: any) => intlProvenance.get(r?.id) === 'self_described').length
+        const parts: string[] = []
+        if (vShown > 0) parts.push(`${vShown} with verified ${what} experience in their career history`)
+        if (sShown > 0) parts.push(`${sShown} who mention it in their bio (not verified)`)
+        aiMessage = parts.length
+          ? `Found ${parts.join(', and ')}.`
+          : aiMessage
+      } else {
+        let pivot = ''
+        if (intlCountryIds?.length && intlCountryLabel) {
+          try {
+            const { data: cntData } = await adminClient.rpc('discover_profiles', ({
+              ...baseDiscoverParams,
+              p_restrict_profile_ids: null,
+              p_nationality_country_ids: intlCountryIds,
+              p_search_text: null,
+              p_roles: effectiveRoles,
+              p_limit: 1,
+              p_offset: 0,
+            } satisfies DiscoverProfilesParams as unknown as Database['public']['Functions']['discover_profiles']['Args']))
+            const natTotal = (cntData as { total?: number } | null)?.total ?? 0
+            if (natTotal > 0) {
+              pivot = ` ${natTotal} ${intlCountryLabel} ${entityNoun} (by nationality) ${natTotal === 1 ? 'is' : 'are'} on HOCKIA — want to see them?`
+              const pivotAction: SuggestedAction = {
+                label: `Show ${intlCountryLabel} ${entityNoun}`,
+                intent: { type: 'free_text', query: `${entityNoun} from ${intlCountryLabel}` },
+              }
+              suggestedActions = [pivotAction, ...suggestedActions].slice(0, 4)
+            }
+          } catch { /* pivot count is best-effort; the honest zero stands alone */ }
+        }
+        aiMessage = `No ${entityNoun} with verified ${what} experience on HOCKIA yet.${pivot}`
+      }
+    }
+
     // ── Analytics logging ────────────────────────────────────────────────
     // Phase 0 enrichment: stash the routing decision into parsed_filters._meta
     // so we can prove (or disprove) that the keyword router is actually
@@ -3507,6 +3764,12 @@ Deno.serve(async (req) => {
         // Phase 4 — no-results compose telemetry
         no_results_composed: result.total === 0 && !!noResultsMeta,
         no_results_follow_up: noResultsFollowUpQuery !== null,
+        // International-experience telemetry (design doc §11) — hit-rate on
+        // this intent class is one SQL query over discovery_events.
+        intl_active: intlActive,
+        intl_binding_source: intlBindingSource,
+        intl_verified_count: intlVerifiedCount,
+        intl_self_described_count: intlSelfDescribedCount,
       },
     }
     fireAndForget(logDiscoveryEvent(adminClient, {

@@ -55,6 +55,17 @@ export interface ParsedFilters {
   opportunity_preference?: string
   available_from?: string
   specialist_skills?: string[]
+  /** Representative (national-team / tournament) experience — DISTINCT from
+   * `nationalities` (passport). Born from the 2026-07-23 incident where a
+   * country bound to "national team" was parsed as a passport filter. The
+   * deterministic post-parse layer in nl-search is the guarantee; this field
+   * in the LLM schema is the belt. Countries are names-as-typed, resolved to
+   * ids via country_text_aliases (confidence='high') at retrieval time. */
+  international_experience?: {
+    countries?: string[]
+    level?: 'senior' | 'junior'
+    tournaments?: string[]
+  }
   text_query?: string
   sort_by?: string
   summary?: string
@@ -613,6 +624,19 @@ const SEARCH_TOOL = {
         type: 'array',
         items: { type: 'string', enum: ['drag_flicker', 'penalty_corner', 'playmaker', 'target_forward', 'defensive_leader', 'sweeper_keeper', 'pressing', 'indoor'] },
         description: 'Player specialisms. "drag flicker" → drag_flicker; "penalty corner specialist" → penalty_corner; "playmaker" → playmaker; "target forward" → target_forward; "defensive leader" → defensive_leader; "sweeper keeper" → sweeper_keeper; "pressing specialist" → pressing; "indoor specialist" → indoor. These are PLAYER skills — set roles=["player"] when used.',
+      },
+      international_experience: {
+        type: 'object',
+        description:
+          'REPRESENTATIVE (national-team / tournament) experience. TRAP: a country name next to "national team" / "selección" is the country the person REPRESENTED — it goes in countries HERE, NOT in nationalities. "played for the Argentina national team" → {countries:["Argentina"]} and nationalities stays EMPTY unless the query separately asserts a passport ("Argentine players who played for Spain" → nationalities:["Argentina"], here countries:["Spain"]). "Olympic experience / played a World Cup / la Euro" → tournaments. U16-U23/junior/juvenil → level junior.',
+        properties: {
+          countries: { type: 'array', items: { type: 'string' }, description: 'Countries REPRESENTED (not passport).' },
+          level: { type: 'string', enum: ['senior', 'junior'] },
+          tournaments: {
+            type: 'array',
+            items: { type: 'string', enum: ['olympics', 'world_cup', 'junior_world_cup', 'eurohockey', 'pan_am', 'asia_cup', 'africa_cup', 'oceania_cup', 'commonwealth', 'pro_league', 'nations_cup', 'hoofdklasse', 'honor_division', 'bundesliga_hockey', 'england_premier', 'hockey_one', 'hil', 'metropolitano'] },
+          },
+        },
       },
       text_query: {
         type: 'string',
