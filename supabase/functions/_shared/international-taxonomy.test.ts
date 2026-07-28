@@ -168,3 +168,27 @@ Deno.test('ROUTER: ordinary team/club queries still route to clubs', () => {
   const r = classifyEntityType('find hockey clubs in Madrid')
   assertEquals(r.entity_type, 'clubs')
 })
+
+// ── Tier-7 domestic leagues need past/experience framing ─────────────────
+// "players in the Bundesliga" is a CURRENT-league ask (existing league
+// filter path) — it must NOT become a career-text restriction. Caught by a
+// false-positive probe after the first prod ship.
+
+Deno.test('CONTROL: bare domestic-league mentions do not trigger intl', () => {
+  assertEquals(detectInternationalIntent('players in the Bundesliga'), null)
+  assertEquals(detectInternationalIntent('midfielders currently playing in the Hoofdklasse'), null)
+  assertEquals(detectInternationalIntent('clubs in the metropolitano'), null)
+  assertEquals(detectInternationalIntent('defenders playing hockey one this season'), null)
+})
+
+Deno.test('past framing still triggers domestic-league experience', () => {
+  const a = detectInternationalIntent('forwards who played Hockey One in Australia')
+  assert(a); assertEquals(a!.tournaments, ['hockey_one'])
+  const b = detectInternationalIntent('players with Bundesliga experience')
+  assert(b); assertEquals(b!.tournaments, ['bundesliga_hockey'])
+})
+
+Deno.test('non-domestic tournaments stay ungated (no league path to break)', () => {
+  const r = detectInternationalIntent('any Olympians here?')
+  assert(r); assert(r!.tournaments.includes('olympics'))
+})

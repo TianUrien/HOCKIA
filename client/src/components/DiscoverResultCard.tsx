@@ -200,6 +200,28 @@ export default function DiscoverResultCard({ result }: DiscoverResultCardProps) 
                 ))}
               </div>
             )}
+
+            {/* International-experience provenance — the honesty contract on
+                the card itself. Verified shows the matched career entry;
+                a bio mention is ALWAYS labelled unverified. Colours meet AA
+                on their tints (emerald-700/amber-800 post token pass). */}
+            {result.provenance === 'verified' && (
+              <p className="mt-1 flex items-center gap-1 text-xs">
+                <span className="inline-flex items-center rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700">
+                  ✓ Verified
+                </span>
+                {result.provenance_label && (
+                  <span className="truncate text-gray-700">{result.provenance_label}</span>
+                )}
+              </p>
+            )}
+            {result.provenance === 'self_described' && (
+              <p className="mt-1 text-xs">
+                <span className="inline-flex items-center rounded-full bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">
+                  Bio mention — not verified
+                </span>
+              </p>
+            )}
           </div>
 
           {/* Match strength + availability, stacked on the right. */}

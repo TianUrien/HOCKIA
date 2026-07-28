@@ -61,6 +61,11 @@ export interface DiscoverResult {
   // experience, references, stated achievements). Up to 4, shown in the
   // result card's expanded drawer. Absent when the profile has no Journey.
   highlights?: string[]
+  /** International-experience provenance (only present when that filter is
+   * active). 'verified' = career_history entry; 'self_described' = bio
+   * mention, never presented as verified. */
+  provenance?: 'verified' | 'self_described' | null
+  provenance_label?: string | null
   // Phase 4 MVP-B — World directory club row. When result_type is
   // 'world_club', the row represents an entry from the World directory
   // (a global field-hockey club registry) rather than a claimed HOCKIA

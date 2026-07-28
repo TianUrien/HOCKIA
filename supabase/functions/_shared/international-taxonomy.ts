@@ -27,7 +27,7 @@ export interface TournamentDef {
 }
 
 export const TOURNAMENTS: TournamentDef[] = [
-  { key: 'olympics', tier: 1, aliases_en: ['olympics', 'olympic games', 'olympian', 'olympic experience', 'olympic qualifier'], aliases_es: ['juegos olímpicos', 'juegos olimpicos', 'olímpicos', 'olimpicos', 'olimpiadas', 'olímpiadas'] },
+  { key: 'olympics', tier: 1, aliases_en: ['olympics', 'olympic games', 'olympian', 'olympians', 'olympic experience', 'olympic qualifier'], aliases_es: ['juegos olímpicos', 'juegos olimpicos', 'olímpicos', 'olimpicos', 'olimpiadas', 'olímpiadas'] },
   { key: 'world_cup', tier: 2, aliases_en: ['world cup'], aliases_es: ['mundial', 'copa del mundo'] },
   { key: 'junior_world_cup', tier: 5, level_hint: 'junior', aliases_en: ['junior world cup', 'u21 world cup', 'u-21 world cup'], aliases_es: ['mundial junior', 'mundial juvenil'] },
   { key: 'eurohockey', tier: 3, aliases_en: ['eurohockey', 'euro hockey', 'european championship', 'the euro'], aliases_es: ['campeonato europeo', 'la euro', 'una euro'] },
@@ -175,7 +175,16 @@ export function detectInternationalIntent(query: string): IntlIntent | null {
   }
 
   const lower = q.toLowerCase()
+  // Tier-7 domestic leagues are ONLY representative-experience signals when
+  // the query frames them as PAST experience ("who played Hockey One",
+  // "with Bundesliga experience"). A bare league mention ("players in the
+  // Bundesliga", "playing in the Hoofdklasse") is a CURRENT-league ask that
+  // belongs to the existing league filter — hijacking it into a career-text
+  // restriction silently narrows results that used to be correct.
+  const hasPastFraming =
+    /\b(played|jugad[oa]s?|jug[oó]|jugaron|hayan?\s+jugado|experience|experiencia)\b/i.test(q)
   for (const t of TOURNAMENTS) {
+    if (t.tier === 7 && !hasPastFraming) continue
     for (const alias of [...t.aliases_en, ...t.aliases_es]) {
       const idx = lower.indexOf(alias)
       // Word-ish boundary check so "hil" can't match inside "while".
