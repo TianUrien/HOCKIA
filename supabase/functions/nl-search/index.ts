@@ -2816,10 +2816,18 @@ Deno.serve(async (req) => {
       const wantCountry = (ie.countries?.length ?? 0) > 0
       const wantTournament = tPatterns.length > 0
 
-      const fetchCareerRows = async (types: Array<'national_team' | 'tournament' | 'achievement' | 'club'>, patterns: string[]) => {
+      // `columns` matters: COUNTRY matching must NOT read division_league —
+      // prod row "Buenos Aires Selection Team" (a provincial side) carries
+      // division_league "Argentina League", which would resurrect the exact
+      // bug this feature exists to kill, one column over. TOURNAMENT matching
+      // keeps division_league — that's where "Hockey One" actually lives.
+      const fetchCareerRows = async (types: Array<'national_team' | 'tournament' | 'achievement' | 'club'>, patterns: string[], columns: 'name_badge' | 'all' = 'all') => {
         if (!patterns.length) return [] as any[]
+        const cols = columns === 'name_badge'
+          ? ['club_name', 'badge_label']
+          : ['club_name', 'badge_label', 'division_league']
         const orExpr = patterns.flatMap((p) =>
-          [`club_name.ilike.${p}`, `badge_label.ilike.${p}`, `division_league.ilike.${p}`]
+          cols.map((c) => `${c}.ilike.${p}`)
         ).join(',')
         const { data } = await adminClient.from('career_history')
           .select('user_id, club_name, badge_label, division_league, years')
@@ -2830,7 +2838,7 @@ Deno.serve(async (req) => {
       let countryRows: any[] = []
       let tournamentRows: any[] = []
       if (wantCountry && intlAliasPatterns.length) {
-        countryRows = await fetchCareerRows(['national_team'], intlAliasPatterns)
+        countryRows = await fetchCareerRows(['national_team'], intlAliasPatterns, 'name_badge')
       }
       if (wantTournament) {
         // Tier-7 domestic leagues (Hockey One, Hoofdklasse…) are CLUB
