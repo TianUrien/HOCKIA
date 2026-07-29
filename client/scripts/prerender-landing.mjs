@@ -21,6 +21,12 @@
  * the untouched SPA shell as index.html — exactly yesterday's behaviour —
  * and prints a loud warning instead.
  */
+// Browsers install INSIDE node_modules so Vercel's build cache keeps them
+// between deploys (a bare ~/.cache install would re-download ~130MB every
+// build — or fail entirely on locked-down runners). Must be set before
+// playwright is imported.
+process.env.PLAYWRIGHT_BROWSERS_PATH = '0'
+
 import { createServer } from 'node:http'
 import { readFile, writeFile, stat } from 'node:fs/promises'
 import { execSync } from 'node:child_process'
@@ -65,7 +71,13 @@ async function launchChromium() {
     // CI/Vercel build images may not have the browser cached. One install
     // attempt, then give up gracefully.
     console.warn('[prerender] chromium launch failed, installing…', String(first).slice(0, 120))
-    execSync('npx playwright install chromium', { stdio: 'inherit', timeout: 240_000 })
+    // --with-deps first (CI/Vercel images may lack system libs; needs root,
+    // which build containers typically have) — plain install as fallback.
+    try {
+      execSync('npx playwright install chromium --with-deps', { stdio: 'inherit', timeout: 300_000 })
+    } catch {
+      execSync('npx playwright install chromium', { stdio: 'inherit', timeout: 300_000 })
+    }
     return await chromium.launch()
   }
 }
@@ -99,6 +111,12 @@ function postProcess(html) {
 
 async function main() {
   const shell = await readFile(path.join(DIST, 'index.html'), 'utf8')
+  // Idempotency: a second run against an already-prerendered dist would
+  // snapshot the snapshot and overwrite app.html with landing content.
+  if (shell.includes('__PRERENDERED_LANDING__')) {
+    console.log('[prerender] dist/index.html is already prerendered — skipping (rebuild to refresh)')
+    return
+  }
   // The SPA shell survives as app.html: the vercel.json rewrite, the SW
   // navigateFallback and the PWA start_url all point non-root navigation
   // here. Byte-copy of the BUILT shell — same hashed assets, no second
