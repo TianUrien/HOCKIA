@@ -61,6 +61,11 @@ export default function PushPrompt() {
 
   if (!visible) return null
 
+  // Prerender snapshot (scripts/prerender-landing.mjs): overlays must
+  // never be baked into the static landing HTML. Placed AFTER all hooks
+  // (rules-of-hooks); the flag is constant for the page's lifetime.
+  if (typeof window !== 'undefined' && (window as unknown as { __PRERENDER__?: boolean }).__PRERENDER__) return null
+
   return (
     <div className="fixed bottom-20 left-4 right-4 md:left-auto md:right-4 md:w-96 bg-white rounded-xl shadow-2xl border border-gray-200 p-4 z-50 animate-slide-up">
       <button

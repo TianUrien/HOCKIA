@@ -1,14 +1,17 @@
 {
-  "name": "HOCKIA – Where field hockey sticks together.",
+  "name": "HOCKIA \u2013 Where field hockey sticks together.",
   "short_name": "HOCKIA",
   "description": "Connect players, coaches, and clubs. Raise the sport together.",
-  "start_url": "/",
+  "start_url": "/home",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#ffffff",
   "theme_color": "#5b21b6",
-  "categories": ["sports", "social"],
+  "categories": [
+    "sports",
+    "social"
+  ],
   "lang": "en",
   "dir": "ltr",
   "icons": [
@@ -55,21 +58,36 @@
       "short_name": "Opportunities",
       "description": "Find open positions at clubs",
       "url": "/opportunities",
-      "icons": [{ "src": "/favicon-96x96.png?v=2", "sizes": "96x96" }]
+      "icons": [
+        {
+          "src": "/favicon-96x96.png?v=2",
+          "sizes": "96x96"
+        }
+      ]
     },
     {
       "name": "Messages",
       "short_name": "Messages",
       "description": "View your conversations",
       "url": "/messages",
-      "icons": [{ "src": "/favicon-96x96.png?v=2", "sizes": "96x96" }]
+      "icons": [
+        {
+          "src": "/favicon-96x96.png?v=2",
+          "sizes": "96x96"
+        }
+      ]
     },
     {
       "name": "Community",
       "short_name": "Community",
       "description": "Connect with the hockey community",
       "url": "/community",
-      "icons": [{ "src": "/favicon-96x96.png?v=2", "sizes": "96x96" }]
+      "icons": [
+        {
+          "src": "/favicon-96x96.png?v=2",
+          "sizes": "96x96"
+        }
+      ]
     }
   ],
   "related_applications": [],

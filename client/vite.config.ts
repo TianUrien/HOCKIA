@@ -144,7 +144,15 @@ export default defineConfig(({ mode }) => {
               },
             },
           ],
-          navigateFallback: '/index.html',
+          // app.html is the SPA shell; index.html is the PRERENDERED landing
+          // (scripts/prerender-landing.mjs) and must never serve deep links.
+          navigateFallback: '/app.html',
+          // app.html is NOT a Vite input — scripts/prerender-landing.mjs
+          // writes it post-build as a byte-copy of the built shell (a second
+          // Vite HTML input flips rolldown-vite into eager <script> tags for
+          // every shared chunk — +110KB charts on cold load; learned the
+          // hard way 2026-07-29). The SW fetches it at install time.
+          additionalManifestEntries: [{ url: '/app.html', revision: String(Date.now()) }],
           navigateFallbackDenylist: [/^\/api/, /^\/auth/],
           // Ensure new service worker takes control immediately when activated
           skipWaiting: false, // We handle this manually via prompt
@@ -197,7 +205,10 @@ export default defineConfig(({ mode }) => {
       modulePreload: {
         resolveDependencies(_filename, deps, { hostType }) {
           if (hostType !== 'html') return deps
-          return deps.filter(dep => !/\/(charts)-/.test(dep))
+          // (?:^|\/) not \/: the multi-input build (app.html) emits
+          // RELATIVE dep paths, and the old leading-slash pattern silently
+          // stopped matching — recharts leaked back into every cold load.
+          return deps.filter(dep => !/(?:^|\/)(assets\/)?charts-/.test(dep))
         },
       },
       rollupOptions: {

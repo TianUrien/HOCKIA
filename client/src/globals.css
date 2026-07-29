@@ -545,6 +545,13 @@ html {
   animation: slide-down 0.3s ease-out;
 }
 
+/* Native webview, pre-hydration: the prerendered landing is Capacitor's
+   entry file, and the store badges are web-only. The inline head gate in
+   scripts/prerender-landing.mjs adds .is-native before first paint. */
+.is-native [data-store-badges] {
+  display: none !important;
+}
+
 /* ════════════════════════════════════════════════════════════════════════
    MARKETING MOTION
    Effects for the public landing surface that Tailwind utilities can't

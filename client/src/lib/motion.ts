@@ -161,14 +161,23 @@ function observe(el: Element, margin: string, cb: () => void): () => void {
  */
 const FAILSAFE_MS = 1500
 
+/** True when this DOM was served prerendered (scripts/prerender-landing.mjs
+ *  stamps the flag). The visitor has been READING the static content for
+ *  seconds by the time React boots — fading it back in would be a regression
+ *  dressed as polish, so entrances start visible on those loads. */
+const PRERENDERED =
+  typeof window !== 'undefined' &&
+  (window as unknown as { __PRERENDERED_LANDING__?: boolean }).__PRERENDERED_LANDING__ === true
+
 export function useInView<T extends HTMLElement>(margin = '0px 0px -8% 0px') {
   const ref = useRef<T | null>(null)
-  const [inView, setInView] = useState(false)
+  const [inView, setInView] = useState(PRERENDERED)
   const reduced = useReducedMotion()
 
   useEffect(() => {
     const el = ref.current
     if (!el) return
+    if (PRERENDERED) return // already visible; no observers to run
     if (reduced || typeof IntersectionObserver === 'undefined') {
       setInView(true)
       return

@@ -37,3 +37,4 @@ dist-ssr
 /playwright/.cache/
 /e2e/.auth/
 /e2e/.data/
+app.html

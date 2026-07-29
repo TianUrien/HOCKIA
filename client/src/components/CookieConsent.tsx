@@ -52,6 +52,11 @@ export default function CookieConsent() {
   // over any interactive content. Clipboard-style: short copy, two
   // small buttons, dismissable. Desktop drops back to bottom:0 since
   // there's no bottom nav at lg+.
+  // Prerender snapshot (scripts/prerender-landing.mjs): overlays must
+  // never be baked into the static landing HTML. Placed AFTER all hooks
+  // (rules-of-hooks); the flag is constant for the page's lifetime.
+  if (typeof window !== 'undefined' && (window as unknown as { __PRERENDER__?: boolean }).__PRERENDER__) return null
+
   return (
     <div
       className="fixed inset-x-0 z-[9999] px-3 pb-3 sm:px-6 sm:pb-4 pointer-events-none bottom-[calc(env(safe-area-inset-bottom)+80px)] lg:bottom-0"

@@ -330,7 +330,11 @@ export default function Landing() {
                   you") is simply wrong there. The website is unchanged. */}
               {!isNativeApp && (
                 <Reveal delay={360}>
-                  <div className="mt-9">
+                  {/* data-store-badges: the prerendered index.html is also
+                      Capacitor's entry file, so an inline head script adds
+                      .is-native and this block hides BEFORE hydration —
+                      no store-badge flash in the app. */}
+                  <div className="mt-9" data-store-badges>
                     <p className="text-sm font-medium text-gray-500">
                       Use HOCKIA on the web — or take it with you.
                     </p>
