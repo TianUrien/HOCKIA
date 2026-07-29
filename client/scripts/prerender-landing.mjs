@@ -64,22 +64,28 @@ async function serveDist() {
 }
 
 async function launchChromium() {
-  const { chromium } = await import('playwright')
+  // Path 1: full playwright (dev machines, GitHub CI — proven there).
   try {
-    return await chromium.launch()
-  } catch (first) {
-    // CI/Vercel build images may not have the browser cached. One install
-    // attempt, then give up gracefully.
-    console.warn('[prerender] chromium launch failed, installing…', String(first).slice(0, 120))
-    // --with-deps first (CI/Vercel images may lack system libs; needs root,
-    // which build containers typically have) — plain install as fallback.
+    const { chromium } = await import('playwright')
     try {
-      execSync('npx playwright install chromium --with-deps', { stdio: 'inherit', timeout: 300_000 })
+      return await chromium.launch()
     } catch {
+      console.warn('[prerender] chromium launch failed, installing…')
       execSync('npx playwright install chromium', { stdio: 'inherit', timeout: 300_000 })
+      return await chromium.launch()
     }
-    return await chromium.launch()
+  } catch (pwErr) {
+    console.warn('[prerender] playwright path failed:', String(pwErr).slice(0, 140))
   }
+  // Path 2: @sparticuz/chromium — a lambda-grade chromium that SHIPS ITS
+  // OWN system libraries, built exactly for build containers (Vercel)
+  // where `playwright install` binaries can't run.
+  const sparticuz = (await import('@sparticuz/chromium')).default
+  const { chromium: pwCore } = await import('playwright-core')
+  return await pwCore.launch({
+    executablePath: await sparticuz.executablePath(),
+    args: sparticuz.args,
+  })
 }
 
 function postProcess(html) {
