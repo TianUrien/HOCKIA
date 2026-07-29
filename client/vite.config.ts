@@ -43,14 +43,19 @@ export default defineConfig(({ mode }) => {
     { name: 'icons', pattern: /node_modules\/lucide-react\// },
     { name: 'datetime', pattern: /node_modules\/date-fns\// },
     { name: 'sentry', pattern: /node_modules\/@sentry\// },
-    { name: 'charts', pattern: /node_modules\/(recharts|d3-|victory)\// },
     { name: 'router', pattern: /node_modules\/react-router/ },
   ]
 
   /** Dynamically-imported deps that must NEVER be folded into `vendor`.
    *  `vendor` is modulepreloaded by index.html, so landing here silently
    *  makes a deliberately code-split dependency eager. */
-  const LAZY_ONLY_DEPS = /node_modules\/posthog-js\//
+  // recharts moved here from a manual 'charts' group (2026-07-29): with the
+  // manual group, rolldown deduplicated React ITSELF into the charts chunk
+  // (jsx-runtime/createContext lived there), so all ~100 chunks statically
+  // imported 372KB of admin-only charting to reach the jsx helper — putting
+  // recharts in the critical path of every page. As a lazy-only dep it stays
+  // inside the admin pages' own dynamic chunks where it belongs.
+  const LAZY_ONLY_DEPS = /node_modules\/(posthog-js|recharts|d3-|victory)\//
 
   return {
     plugins: [
