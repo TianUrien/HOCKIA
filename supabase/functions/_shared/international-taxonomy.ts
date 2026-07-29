@@ -280,6 +280,42 @@ export function tournamentIncludesDomestic(keys: string[]): boolean {
   return keys.some((k) => TOURNAMENTS.find((t) => t.key === k)?.tier === 7)
 }
 
+/**
+ * Word-boundary country matching for career-history row text.
+ *
+ * The first backfill used substring ILIKE and produced three wrong
+ * assignments on prod: alias "us" matched inside "MassachUSetts", alias
+ * "american" matched inside "Pan American Cup", and a host-series title
+ * ("2026 South African Series") was read as caps. Three guards, all
+ * deterministic:
+ *   1. aliases match on WORD BOUNDARIES only;
+ *   2. tournament aliases are blanked from the text first, so a
+ *      continental-tournament name can never donate its adjective;
+ *   3. rows whose title STARTS WITH A YEAR are event entries, not teams —
+ *      they never country-match.
+ */
+const YEAR_START = /^\s*(19|20)\d{2}\b/
+
+function escapeRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+export function rowTextMatchesCountry(rowTitle: string, aliases: string[]): boolean {
+  const title = rowTitle || ''
+  if (YEAR_START.test(title)) return false
+  let blanked = title.toLowerCase()
+  for (const t of TOURNAMENTS) {
+    for (const a of [...t.aliases_en, ...t.aliases_es]) {
+      blanked = blanked.replace(new RegExp(escapeRegex(a), 'gi'), ' ')
+    }
+  }
+  return aliases.some((a) => {
+    const clean = a.replaceAll('%', '').trim()
+    if (!clean) return false
+    return new RegExp(`(?:^|[^\\p{L}\\p{N}])${escapeRegex(clean)}(?:[^\\p{L}\\p{N}]|$)`, 'iu').test(blanked)
+  })
+}
+
 /** Bio markers for the SELF-DESCRIBED tier (never presented as verified). */
 export const BIO_NT_MARKERS = [
   'national team', 'selección', 'seleccion', 'seleccionado', 'seleccionada',

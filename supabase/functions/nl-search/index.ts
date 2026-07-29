@@ -18,7 +18,7 @@ import { getCorsHeaders } from '../_shared/cors.ts'
 import { captureException } from '../_shared/sentry.ts'
 import { parseSearchQuery, synthesizeQualitativeInsights, composeNoResults, answerPlatformHelp, PROMPT_VERSION, type LLMCallMeta, type ParsedFilters, type SearchIntent, type HistoryTurn, type ProfileQualitativeData, type UserContext } from '../_shared/llm-client.ts'
 import { classifyEntityType, entityTypeToRole, type RoutedIntent } from '../_shared/intent-router.ts'
-import { detectInternationalIntent, countryMentionedOutsideSpans, tournamentAliasPatterns, tournamentIncludesDomestic, rowTextLevel, BIO_NT_MARKERS, hasNationalTeamIntent } from '../_shared/international-taxonomy.ts'
+import { detectInternationalIntent, countryMentionedOutsideSpans, tournamentAliasPatterns, tournamentIncludesDomestic, rowTextLevel, rowTextMatchesCountry, BIO_NT_MARKERS, hasNationalTeamIntent } from '../_shared/international-taxonomy.ts'
 import { resolveFeatureCta } from '../_shared/hockia-features.ts'
 import {
   type AppliedSearch,
@@ -2850,12 +2850,22 @@ Deno.serve(async (req) => {
       }
       if (wantCountry && intlAliasPatterns.length) {
         // LEGACY text fallback for rows without a structured country.
-        const textRows = await fetchCareerRows(['national_team'], intlAliasPatterns, 'name_badge')
-        // Dedupe by user: structured rows already claimed their users, and
-        // the label prefers the structured entry.
+        // Fetched broad, matched in TS via rowTextMatchesCountry — word
+        // boundaries + tournament blanking + year-start guard. Substring
+        // ILIKE produced verified-looking false positives on prod (alias
+        // "us" inside "Massachusetts", "american" inside "Pan American").
+        const { data: ntRows } = await adminClient.from('career_history')
+          .select('user_id, club_name, badge_label, division_league, years, represented_country_id, represented_level')
+          .eq('entry_type', 'national_team')
         const seen = new Set(countryRows.map((r) => r.user_id as string))
-        for (const r of textRows) {
-          if (!seen.has(r.user_id)) countryRows.push(r)
+        for (const r of (ntRows ?? []) as any[]) {
+          if (seen.has(r.user_id)) continue
+          if (r.represented_country_id != null) continue // structured rows: ID pass owns them
+          const title = `${r.club_name ?? ''} ${r.badge_label ?? ''}`
+          if (rowTextMatchesCountry(title, intlAliasPatterns)) {
+            seen.add(r.user_id)
+            countryRows.push(r)
+          }
         }
       }
       if (wantTournament) {

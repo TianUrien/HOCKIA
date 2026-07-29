@@ -192,3 +192,29 @@ Deno.test('non-domestic tournaments stay ungated (no league path to break)', () 
   const r = detectInternationalIntent('any Olympians here?')
   assert(r); assert(r!.tournaments.includes('olympics'))
 })
+
+// ── Word-boundary country matching (the prod-backfill bug class) ─────────
+
+import { rowTextMatchesCountry } from './international-taxonomy.ts'
+
+Deno.test('substring aliases cannot match inside words (us in Massachusetts)', () => {
+  assertEquals(rowTextMatchesCountry('University of Massachusetts', ['us', 'usa', 'american']), false)
+})
+
+Deno.test('tournament adjectives cannot donate a country (Pan American Cup ≠ USA)', () => {
+  assertEquals(rowTextMatchesCountry('2022 Pan American Cup', ['us', 'usa', 'american', 'united states']), false)
+  // even without the year guard, blanking alone must hold:
+  assertEquals(rowTextMatchesCountry('Pan American Cup squad', ['american']), false)
+})
+
+Deno.test('year-prefixed rows are events, never country matches', () => {
+  assertEquals(rowTextMatchesCountry('2026 South African Series', ['south africa', 'south african']), false)
+})
+
+Deno.test('genuine national-team titles still match, word-bounded', () => {
+  assertEquals(rowTextMatchesCountry('Italian National Team', ['italy', 'italian']), true)
+  assertEquals(rowTextMatchesCountry('Selección Argentina', ['argentina', 'argentine']), true)
+  assertEquals(rowTextMatchesCountry('England', ['england']), true)
+  assertEquals(rowTextMatchesCountry("Lithuania’s national team", ['lithuania']), true)
+  assertEquals(rowTextMatchesCountry('Team ARG', ['arg']), true)
+})
