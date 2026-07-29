@@ -21,7 +21,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook, waitFor, act } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import type { ReactNode } from 'react'
+import type { ReactElement, ReactNode } from 'react'
 
 const galleryFetch = vi.hoisted(() => ({
   calls: 0,
@@ -73,7 +73,7 @@ const baseProfile = {
 
 describe('strength hook dedupe (useProfileStrength canary, React Query)', () => {
   let queryClient: QueryClient
-  let wrapper: ({ children }: { children: ReactNode }) => JSX.Element
+  let wrapper: ({ children }: { children: ReactNode }) => ReactElement
 
   beforeEach(() => {
     galleryFetch.calls = 0
