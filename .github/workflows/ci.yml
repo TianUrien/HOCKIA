@@ -166,7 +166,13 @@ jobs:
           # number that punished code-splitting. Investigated 2026-06-18: the
           # charts chunk is already lazy + admin-only; the eager set was 407KB gzip
           # when this metric replaced the all-chunks gate.
-          EAGER_FILES=$(grep -oE 'assets/[a-zA-Z0-9_-]+\.js' dist/index.html | sort -u | sed 's#^#dist/#')
+          # app.html is the SPA shell (what every non-root route serves).
+          # dist/index.html is the PRERENDERED landing since 2026-07-29 —
+          # its head also lists the landing's own lazy chunks as preloads,
+          # which are NOT part of the shared eager shell this budget guards.
+          BUDGET_HTML=dist/app.html
+          [ -f "$BUDGET_HTML" ] || BUDGET_HTML=dist/index.html
+          EAGER_FILES=$(grep -oE 'assets/[a-zA-Z0-9_-]+\.js' "$BUDGET_HTML" | sort -u | sed 's#^#dist/#')
           EAGER_GZIP=$(cat $EAGER_FILES | gzip -c | wc -c)
           EAGER_KB=$((EAGER_GZIP / 1024))
           TOTAL_JS=$(cat dist/assets/*.js | wc -c)
