@@ -5,6 +5,7 @@ import { NotificationBadge } from '@/components'
 import { useNavigation } from '@/hooks/useNavigation'
 import { useAnyModalOpen } from '@/hooks/useAnyModalOpen'
 import { useBottomPrompt } from '@/lib/bottomPrompt'
+import { hapticSelection } from '@/lib/haptics'
 
 interface NavItem {
   id: string
@@ -166,7 +167,7 @@ export default function MobileBottomNav() {
             return (
               <button
                 key={item.id}
-                onClick={() => handleNavigate(item.path)}
+                onClick={() => { void hapticSelection(); handleNavigate(item.path) }}
                 className={`flex flex-col items-center justify-center min-w-[48px] min-h-[44px] py-1 px-2 rounded-xl transition-all duration-200 ${
                   active 
                     ? 'text-hockia-primary' 

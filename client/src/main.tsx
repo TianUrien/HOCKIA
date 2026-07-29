@@ -144,12 +144,12 @@ Sentry.init({
   // Release tag — set via Vercel/Capacitor build env. Falls back to 'unknown'
   // so events from an untagged build are still identifiable in Sentry.
   release: import.meta.env.VITE_APP_VERSION || import.meta.env.VITE_VERCEL_GIT_COMMIT_SHA || 'unknown',
-  integrations: [
-    Sentry.browserTracingIntegration(),
-    // Disable session replay on native — sends user interaction data to sentry.io
-    // which Apple considers third-party tracking (Guideline 5.1.2)
-    ...(!isNativePlatform ? [Sentry.replayIntegration()] : []),
-  ],
+  // PERF (Lighthouse 2026-07-29): integrations attach AFTER first paint —
+  // see below. init() itself is cheap; browserTracing + replay setup were
+  // part of a 5.4s mobile render delay (sentry chunk alone: 643ms boot-up
+  // time on emulated mobile). Error capture works from this line; only the
+  // tracing/replay extras wait for idle.
+  integrations: [],
   tracesSampleRate: sentryEnvironment === 'production' ? 0.3 : 1.0,
   replaysSessionSampleRate: isNativePlatform ? 0 : (sentryEnvironment === 'production' ? 0.05 : 1.0),
   replaysOnErrorSampleRate: isNativePlatform ? 0 : 1.0,
@@ -185,6 +185,28 @@ Sentry.init({
     return event
   },
 })
+
+// Attach the heavyweight integrations once the page has painted and the
+// main thread is idle. Errors before this point are still captured by the
+// minimal init above; we only defer performance tracing and replay.
+const attachDeferredSentryIntegrations = () => {
+  try {
+    Sentry.addIntegration(Sentry.browserTracingIntegration())
+    // Disable session replay on native — sends user interaction data to
+    // sentry.io which Apple considers third-party tracking (Guideline 5.1.2)
+    if (!isNativePlatform) Sentry.addIntegration(Sentry.replayIntegration())
+  } catch (e) {
+    logger.debug('[SENTRY] deferred integration attach failed', e)
+  }
+}
+if (typeof window !== 'undefined') {
+  const idle = (cb: () => void) =>
+    typeof window.requestIdleCallback === 'function'
+      ? window.requestIdleCallback(cb, { timeout: 4000 })
+      : window.setTimeout(cb, 1500)
+  if (document.readyState === 'complete') idle(attachDeferredSentryIntegrations)
+  else window.addEventListener('load', () => idle(attachDeferredSentryIntegrations), { once: true })
+}
 
 // Set up in-app browser context for all Sentry events
 // This helps track issues specific to Instagram, WhatsApp, etc. WebViews

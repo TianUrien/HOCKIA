@@ -70,6 +70,30 @@ jobs:
         working-directory: ./client
         run: npm run typecheck
 
+  edge-function-tests:
+    name: Edge Function Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      # The _shared deno tests existed for months but were never wired into
+      # CI, and two of them rotted (stale expectations found 2026-07-29).
+      # email-sender.test.ts is EXCLUDED pending a mock repair: its
+      # hand-rolled Supabase mock predates query-chain changes in
+      # email-sender.ts (tracked follow-up) — everything else gates merges,
+      # including the 28 international-experience eval tests.
+      - name: Run shared-module tests
+        working-directory: ./supabase/functions/_shared
+        run: |
+          deno test --allow-env             action-tokens.test.ts             clarifying.test.ts             recovery.test.ts             suggested-actions.test.ts             international-taxonomy.test.ts
+
   unit-tests:
     name: Unit Tests
     runs-on: ubuntu-latest

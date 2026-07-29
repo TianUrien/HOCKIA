@@ -56,13 +56,54 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       VitePWA({
-        registerType: 'prompt',
+        // autoUpdate (was 'prompt', 2026-07-29): with prompt and no prompt
+        // UI, returning visitors got a stale index.html once per deploy —
+        // the founder hit exactly this after the landing relaunch. autoUpdate
+        // activates the fresh SW immediately (skipWaiting+clientsClaim) so
+        // the next navigation serves current code, no reload popup.
+        registerType: 'autoUpdate',
         includeAssets: ['favicon.ico', 'WhiteLogo.svg', 'HockiaLogoBlack.svg', 'apple-touch-icon.png'],
         manifest: false, // We use our own manifest.json
         workbox: {
           importScripts: ['/push-sw.js'],
-          globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff2}'],
+          // Images are deliberately NOT precached: public/ images aren't
+          // content-hashed, so workbox fetches them with a revision query —
+          // a SECOND download of e.g. the hero mockup during first load.
+          // The runtime image route below caches them on actual use.
+          globPatterns: ['**/*.{js,css,html,ico,svg,woff2}'],
+          // PERF (Lighthouse 2026-07-29): the precache was 266 entries /
+          // 7.6MB, downloaded in the background on a first-time visitor's
+          // landing view — competing with the LCP image on mobile radio
+          // (an admin-only recharts chunk showed up in the landing trace).
+          // Heavy lazy chunks are excluded from INSTALL-time precache and
+          // picked up by the runtime route below on first actual use.
+          globIgnores: [
+            '**/charts-*.js',      // recharts — admin dashboards only
+            '**/Admin*-*.js',      // every /admin page chunk
+            '**/posthog-*.js',     // consent-gated; never needed pre-consent
+          ],
           runtimeCaching: [
+            {
+              // Same-origin images: cached on first use, refreshed in the
+              // background. Keeps repeat visits instant without doubling the
+              // first visit's downloads.
+              urlPattern: /\.(?:png|webp|jpg|jpeg|avif)$/i,
+              handler: 'StaleWhileRevalidate',
+              options: {
+                cacheName: 'images',
+                expiration: { maxEntries: 120, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              },
+            },
+            {
+              // Hashed build assets excluded from precache above: cache on
+              // first use. CacheFirst is safe — filenames are content-hashed.
+              urlPattern: /\/assets\/.*\.(?:js|css)$/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'lazy-assets',
+                expiration: { maxEntries: 80, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              },
+            },
             {
               // Cache API calls to Supabase with network-first strategy
               urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/v1\/.*/i,

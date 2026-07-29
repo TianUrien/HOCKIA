@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { Loader2 } from 'lucide-react'
+import { hapticSuccess } from '@/lib/haptics'
 
 interface PullToRefreshProps {
   onRefresh: () => Promise<void>
@@ -62,6 +63,8 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
       setPullDistance(THRESHOLD)
       try {
         await onRefresh()
+        // Native-only success tick when the refresh actually completes.
+        void hapticSuccess()
       } finally {
         setIsRefreshing(false)
         setPullDistance(0)

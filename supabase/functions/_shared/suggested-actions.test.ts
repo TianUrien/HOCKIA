@@ -66,7 +66,8 @@ Deno.test('getNoResultsActions: player searching women clubs (the screenshot)', 
   assertEquals(actions.length, 4)
   assertEquals(actions[0].label, 'Show all clubs')
   assertEquals(actions[1].label, 'Search by country')
-  assertEquals(actions[2].label, 'Remove women filter')
+  // Phase 3e renamed the category chips; 'Remove women filter' predates it.
+  assertEquals(actions[2].label, 'Remove Adult Women filter')
   assertEquals(actions[3].label, 'Find opportunities')
 })
 
@@ -195,8 +196,10 @@ Deno.test('getSelfAdviceActions: brand', () => {
   assertEquals(actions[0].label, 'Find ambassadors')
 })
 
-Deno.test('getSelfAdviceActions: umpire / unknown returns empty (no chips beats wrong chips)', () => {
-  assertEquals(getSelfAdviceActions('umpire').length, 0)
+Deno.test('getSelfAdviceActions: umpires get chips since Phase 4; unknown roles stay empty', () => {
+  // The empty-umpire behaviour this test used to pin WAS the bug — Phase 4
+  // gave umpires their own advice chips (see the case 'umpire' branch).
+  assertEquals(getSelfAdviceActions('umpire').length, 3)
   assertEquals(getSelfAdviceActions(null).length, 0)
   assertEquals(getSelfAdviceActions('mystery').length, 0)
 })
