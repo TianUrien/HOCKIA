@@ -357,6 +357,11 @@ export default function Landing() {
                 <Parallax range={14}>
                   <img
                     src="/Mockup5.webp"
+                    // The LCP element. 480w variant serves phones (renders at
+                    // ~342px there); the 836w master serves desktop's 560px
+                    // slot and high-DPR screens.
+                    srcSet="/Mockup5-480.webp 480w, /Mockup5.webp 836w"
+                    sizes="(min-width: 1024px) 560px, 92vw"
                     alt="The HOCKIA opportunities board, showing open roles at clubs across Europe"
                     width={836}
                     height={640}
@@ -371,11 +376,16 @@ export default function Landing() {
                 >
                   <img
                     src="/Mockup4.webp"
+                    // Renders at ≤190px (34% of the composition) — the 360w
+                    // variant covers 2× DPR there. NOT fetchPriority=high:
+                    // this overlay is not the LCP element and must not
+                    // compete with Mockup5 for first-paint bandwidth.
+                    srcSet="/Mockup4-360.webp 360w, /Mockup4.webp 500w"
+                    sizes="(min-width: 640px) 190px, 34vw"
                     alt="A HOCKIA player profile with an evidence checklist"
                     width={500}
                     height={748}
                     className="w-full h-auto drop-shadow-2xl"
-                    fetchPriority="high"
                     decoding="async"
                   />
                 </Parallax>
