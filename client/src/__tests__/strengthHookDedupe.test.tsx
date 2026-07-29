@@ -1,54 +1,62 @@
 /**
- * Profile-strength hook dedupe — pattern regression.
+ * Profile-strength gallery fetch — dedupe regression, React Query edition.
  *
- * Follow-up to the JourneyCard audit (8ee75aa). The three role-specific
- * strength hooks (useProfileStrength / useCoachProfileStrength /
- * useUmpireProfileStrength) each fetched gallery_photos on mount with
- * no dedup. Combined with their dashboard's `strength.refresh()` on
- * tab change + MediaCard's own fetch, the coach landing dashboard
- * fired the same `HEAD /gallery_photos` URL 3× per mount (QA F3 on
- * staging, May 2026).
+ * History: the three role-specific strength hooks each fetched
+ * gallery_photos on mount with no dedup; the coach landing dashboard fired
+ * the same `HEAD /gallery_photos` URL 3× per mount (QA F3 on staging,
+ * May 2026). That was fixed with requestCache.dedupe, then migrated to a
+ * single shared React Query hook (useGalleryCount) in the requestCache →
+ * React Query move (2026-07-29). These tests pin the SAME four behaviours
+ * under the new engine, plus the cross-hook sharing the migration unlocked:
+ *   - Parallel mounts share one fetch (RQ in-flight dedupe)
+ *   - Remounts within the 30s staleTime serve cache — no refetch
+ *   - Explicit refresh() forces a network call even while fresh
+ *   - refresh() fired while the auto-fetch is in flight JOINS it instead
+ *     of racing it (the aa52843 race, now refetch({ cancelRefetch: false }))
  *
- * After wrapping each hook in `requestCache.dedupe`:
- *   - Auto-mounts share the cache (parallel mounts → 1 fetch)
- *   - Re-mounts within 30s share the cache (no refetch)
- *   - Explicit `refresh()` busts the cache first so callers who just
- *     edited gallery contents see fresh data
- *
- * useProfileStrength is the canary — the other two share the identical
- * wrapper shape, so one test is enough to lock the pattern in.
+ * useProfileStrength is the canary — coach/umpire consume the identical
+ * shared hook, so one suite locks the pattern for all three.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook, waitFor, act } from '@testing-library/react'
-import { requestCache } from '@/lib/requestCache'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import type { ReactNode } from 'react'
 
-const fromSpy = vi.fn()
-vi.mock('@/lib/supabase', () => {
-  const builder = {
-    select: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockImplementation(function (this: unknown) {
-      const chain = builder as unknown as Record<string, unknown>
-      chain.then = (resolve: (v: { count: number; error: null }) => unknown) =>
-        Promise.resolve({ count: 7, error: null }).then(resolve)
-      return builder
+const galleryFetch = vi.hoisted(() => ({
+  calls: 0,
+  /** When true, fetches stay pending until release() is called. */
+  manual: false,
+  pending: [] as Array<() => void>,
+  release() {
+    this.pending.forEach((resolve) => resolve())
+    this.pending = []
+  },
+}))
+
+vi.mock('@/lib/supabase', () => ({
+  supabase: {
+    from: () => ({
+      select: () => ({
+        eq: () => {
+          galleryFetch.calls++
+          const result = { count: 7, error: null }
+          if (!galleryFetch.manual) return Promise.resolve(result)
+          return new Promise((resolve) => {
+            galleryFetch.pending.push(() => resolve(result))
+          })
+        },
+      }),
     }),
-  }
-  return {
-    supabase: {
-      from: (...args: unknown[]) => {
-        fromSpy(...args)
-        return builder
-      },
-    },
-  }
-})
+  },
+}))
 
 vi.mock('@/lib/logger', () => ({
   logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }))
 
 import { useProfileStrength } from '@/hooks/useProfileStrength'
+import { useGalleryCount } from '@/hooks/useGalleryCount'
 import type { Profile } from '@/lib/supabase'
 
 const baseProfile = {
@@ -63,66 +71,124 @@ const baseProfile = {
   accepted_reference_count: 0,
 } as unknown as Profile
 
-describe('strength hook dedupe (useProfileStrength canary)', () => {
+describe('strength hook dedupe (useProfileStrength canary, React Query)', () => {
+  let queryClient: QueryClient
+  let wrapper: ({ children }: { children: ReactNode }) => JSX.Element
+
   beforeEach(() => {
-    requestCache.clear()
-    fromSpy.mockClear()
-  })
-
-  it('two parallel mounts share a single gallery_photos fetch', async () => {
-    renderHook(() => useProfileStrength(baseProfile))
-    renderHook(() => useProfileStrength(baseProfile))
-    renderHook(() => useProfileStrength(baseProfile))
-
-    await waitFor(() => {
-      expect(fromSpy).toHaveBeenCalledWith('gallery_photos')
+    galleryFetch.calls = 0
+    galleryFetch.manual = false
+    galleryFetch.pending = []
+    // Fresh cache per test; retries off so a thrown queryFn fails fast.
+    queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
     })
-    expect(fromSpy.mock.calls.filter((c) => c[0] === 'gallery_photos')).toHaveLength(1)
+    wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    )
   })
 
-  it('remount within TTL hits cache — no refetch', async () => {
-    const first = renderHook(() => useProfileStrength(baseProfile))
-    await waitFor(() => expect(fromSpy).toHaveBeenCalledTimes(1))
+  it('three parallel mounts share a single gallery_photos fetch', async () => {
+    const a = renderHook(() => useProfileStrength(baseProfile), { wrapper })
+    renderHook(() => useProfileStrength(baseProfile), { wrapper })
+    renderHook(() => useProfileStrength(baseProfile), { wrapper })
+
+    await waitFor(() => expect(a.result.current.loading).toBe(false))
+    expect(galleryFetch.calls).toBe(1)
+  })
+
+  it('remount within staleTime serves cache — no refetch', async () => {
+    const first = renderHook(() => useProfileStrength(baseProfile), { wrapper })
+    await waitFor(() => expect(first.result.current.loading).toBe(false))
 
     first.unmount()
-    renderHook(() => useProfileStrength(baseProfile))
+    const second = renderHook(() => useProfileStrength(baseProfile), { wrapper })
 
-    expect(fromSpy.mock.calls.filter((c) => c[0] === 'gallery_photos')).toHaveLength(1)
+    // Cached data is fresh (staleTime 30s) → available immediately, no fetch.
+    expect(second.result.current.loading).toBe(false)
+    expect(galleryFetch.calls).toBe(1)
   })
 
-  it('refresh() busts the cache and re-fetches even within TTL', async () => {
-    const { result } = renderHook(() => useProfileStrength(baseProfile))
-    await waitFor(() => expect(fromSpy).toHaveBeenCalledTimes(1))
+  it('refresh() forces a network call even while data is fresh', async () => {
+    const { result } = renderHook(() => useProfileStrength(baseProfile), { wrapper })
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    expect(galleryFetch.calls).toBe(1)
 
-    // Without bust, an immediate refresh() would hit cache and skip the
-    // network. With bust, the explicit "I just edited" semantics work.
+    // Explicit "I just edited my gallery" — must bypass the freshness window.
     await act(async () => {
       await result.current.refresh()
     })
-    expect(fromSpy.mock.calls.filter((c) => c[0] === 'gallery_photos')).toHaveLength(2)
+    expect(galleryFetch.calls).toBe(2)
   })
 
-  it('refresh() joins an in-flight fetch instead of racing it (QA F-strength race)', async () => {
-    // Regression: aa52843 shipped refresh() that called invalidate()
-    // unconditionally. invalidate() deletes BOTH the cache entry AND
-    // the in-flight tracking, so a refresh() fired in the same render
-    // cycle as the hook's auto-fetch produced two identical fetches:
-    //   1. Auto-fetch starts → inFlight.set(key, A)
-    //   2. refresh() → invalidate(key) deletes A's in-flight entry
-    //   3. refresh() → fetchCounts() → cache miss + in-flight miss → starts B
-    // Both A and B fire fetches. Fix: refresh() now checks
-    // hasInflight() first and skips invalidate when one exists, so
-    // fetchCounts() joins the in-flight via dedupe instead of racing.
-    const { result } = renderHook(() => useProfileStrength(baseProfile))
+  it('refresh() during the initial in-flight fetch joins it (aa52843 race)', async () => {
+    // The original requestCache regression: refresh() fired in the same
+    // render cycle as the hook's auto-fetch produced two identical requests.
+    // RQ makes this inherently safe — while data is still undefined, fetch()
+    // always joins the running request (cancelRefetch only applies once
+    // data exists) — but the behaviour is the contract, so keep it pinned.
+    galleryFetch.manual = true
+    const { result } = renderHook(() => useProfileStrength(baseProfile), { wrapper })
+    await waitFor(() => expect(galleryFetch.calls).toBe(1))
 
-    // The hook's auto-fetch should already have started. Call refresh()
-    // BEFORE the first fetch resolves — this is the race condition.
+    // Fire refresh() while fetch #1 is still pending, then let it resolve.
+    let refreshPromise: Promise<void>
+    act(() => {
+      refreshPromise = result.current.refresh()
+    })
     await act(async () => {
-      await result.current.refresh()
+      galleryFetch.release()
+      await refreshPromise
     })
 
-    // With the fix: exactly one fetch fires (auto-fetch; refresh joins it).
-    // Without the fix: two fetches fire.
-    expect(fromSpy.mock.calls.filter((c) => c[0] === 'gallery_photos')).toHaveLength(1)
+    expect(galleryFetch.calls).toBe(1)
+    await waitFor(() => expect(result.current.loading).toBe(false))
+  })
+
+  it('overlapping refresh() calls share one network request', async () => {
+    // Once data exists, refetch()'s DEFAULT cancelRefetch:true would cancel
+    // a running refetch and start another — two dashboard surfaces calling
+    // refresh() together (e.g. tab-effect + post-upload) would duplicate the
+    // request, the modern form of the aa52843 race. The hook passes
+    // { cancelRefetch: false } so the second caller joins the first.
+    const { result } = renderHook(() => useProfileStrength(baseProfile), { wrapper })
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    expect(galleryFetch.calls).toBe(1)
+
+    galleryFetch.manual = true
+    let first: Promise<void>
+    act(() => {
+      first = result.current.refresh()
+    })
+    await waitFor(() => expect(galleryFetch.calls).toBe(2))
+
+    let second: Promise<void>
+    act(() => {
+      second = result.current.refresh()
+    })
+    await act(async () => {
+      galleryFetch.release()
+      await Promise.all([first, second])
+    })
+
+    expect(galleryFetch.calls).toBe(2)
+  })
+
+  it('player strength hook and useGalleryCount share one cache entry', async () => {
+    // The migration's win over requestCache: the per-role key split
+    // (player-/coach-/umpire-strength-gallery-*) collapsed into one
+    // qk.galleryCount key, so ANY consumer of the count joins the same
+    // round trip.
+    const { result } = renderHook(
+      () => ({
+        strength: useProfileStrength(baseProfile),
+        gallery: useGalleryCount(baseProfile.id),
+      }),
+      { wrapper },
+    )
+
+    await waitFor(() => expect(result.current.strength.loading).toBe(false))
+    expect(result.current.gallery.count).toBe(7)
+    expect(galleryFetch.calls).toBe(1)
   })
 })

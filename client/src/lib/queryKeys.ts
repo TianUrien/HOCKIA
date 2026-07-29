@@ -1,0 +1,21 @@
+/**
+ * React Query key factory — the single vocabulary for query keys.
+ *
+ * Part of the requestCache → React Query migration (2026-07-29, maturity
+ * roadmap #2). requestCache keys were ad-hoc template strings scattered
+ * across 28 files, which is how three role-specific strength hooks ended up
+ * with three different keys for the IDENTICAL gallery-count query (the
+ * "shared round trip" their comments promised never actually happened).
+ *
+ * Rules:
+ *  - Every key lives here. No inline `['foo', id]` literals at call sites.
+ *  - Arrays, coarse→fine: ['domain', 'entity', id, ...params].
+ *  - Invalidate by prefix: `queryClient.invalidateQueries({ queryKey:
+ *    qk.galleryCount(id) })` or a broader prefix for a whole domain.
+ */
+
+export const qk = {
+  /** gallery_photos count for a profile — shared by every strength hook
+   *  (player/coach/umpire) and, in a later tranche, MediaCard. */
+  galleryCount: (profileId: string | null) => ['gallery', 'count', profileId] as const,
+}

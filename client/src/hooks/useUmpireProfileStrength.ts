@@ -1,7 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { supabase } from '@/lib/supabase'
-import { logger } from '@/lib/logger'
-import { requestCache } from '@/lib/requestCache'
+import { useMemo } from 'react'
+import { useGalleryCount } from '@/hooks/useGalleryCount'
 import type { UmpireProfileShape } from '@/pages/UmpireDashboard'
 
 export interface ProfileBucket {
@@ -39,60 +37,13 @@ interface UseUmpireProfileStrengthOptions {
  * the canonical formula doesn't score — dropped here to keep one number.)
  */
 export function useUmpireProfileStrength({ profile }: UseUmpireProfileStrengthOptions) {
-  const [galleryCount, setGalleryCount] = useState<number>(0)
-  const [loading, setLoading] = useState<boolean>(Boolean(profile?.id))
-
   const profileId = profile?.id ?? null
-  // Deduped via requestCache so MediaCard + this hook + the dashboard's
-  // tab-effect refresh share one round trip. 30s TTL matches the Bento
-  // card batch (8ee75aa). refresh() below busts the cache for explicit
-  // post-upload calls.
-  const cacheKey = profileId ? `umpire-strength-gallery-${profileId}` : null
 
-  const fetchGalleryCount = useCallback(async () => {
-    if (!profileId || !cacheKey) {
-      setGalleryCount(0)
-      setLoading(false)
-      return
-    }
-    setLoading(true)
-    try {
-      const count = await requestCache.dedupe<number>(
-        cacheKey,
-        async () => {
-          const { count: c, error } = await supabase
-            .from('gallery_photos')
-            .select('id', { count: 'exact', head: true })
-            .eq('user_id', profileId)
-          if (error) throw error
-          return c ?? 0
-        },
-        30000,
-      )
-      setGalleryCount(count)
-    } catch (error) {
-      logger.error('[useUmpireProfileStrength] gallery count failed:', error)
-      setGalleryCount(0)
-    } finally {
-      setLoading(false)
-    }
-  }, [profileId, cacheKey])
-
-  // Force-fresh — bust the 30s cache so post-upload calls don't get
-  // the cached value. Skip the invalidate when a fetch is already
-  // in-flight (invalidate also nukes in-flight tracking, which raced
-  // the hook's auto-fetch on first mount and produced duplicate
-  // requests — QA caught the same race on the coach hook in aa52843).
-  const refresh = useCallback(async () => {
-    if (cacheKey && !requestCache.hasInflight(cacheKey)) {
-      requestCache.invalidate(cacheKey)
-    }
-    await fetchGalleryCount()
-  }, [cacheKey, fetchGalleryCount])
-
-  useEffect(() => {
-    void fetchGalleryCount()
-  }, [fetchGalleryCount])
+  // Gallery count via the shared React Query fetch (useGalleryCount) —
+  // one round trip per dashboard; refresh() joins any in-flight fetch
+  // instead of racing it (the aa52843 contract).
+  const { count, loading, refresh } = useGalleryCount(profileId)
+  const galleryCount = count ?? 0
 
   // Buckets mirror the canonical SQL formula (umpire branch) EXACTLY so the
   // owner % equals the public card % (2d-bis): nat+loc 10 · level/categories 10

@@ -1,6 +1,5 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
-import { supabase } from '@/lib/supabase'
-import { requestCache } from '@/lib/requestCache'
+import { useCallback, useMemo } from 'react'
+import { useGalleryCount } from '@/hooks/useGalleryCount'
 import type { CoachProfileShape } from '@/pages/CoachDashboard'
 
 export interface ProfileBucket {
@@ -34,70 +33,18 @@ interface UseCoachProfileStrengthOptions {
  *   career history 15 · gallery 5 · friends 5 · references 15 · open-to-coach 10
  */
 export function useCoachProfileStrength({ profile }: UseCoachProfileStrengthOptions) {
-  const [galleryCount, setGalleryCount] = useState<number | null>(null)
-  const [loading, setLoading] = useState(true)
-
   const profileId = profile?.id ?? null
+
+  // Gallery count is the only remaining query — shared React Query fetch
+  // (useGalleryCount): one round trip per dashboard, refresh() joins any
+  // in-flight fetch instead of racing it (the aa52843 contract).
+  const { count: galleryCount, loading, refresh } = useGalleryCount(profileId)
 
   // Read denormalized counts directly from the profile row (trigger-maintained).
   // Only gallery_photos still requires a query since it's not denormalized.
   const journeyCount: number = profile?.career_entry_count ?? 0
   const referenceCount: number = profile?.accepted_reference_count ?? 0
   const friendCount: number = profile?.accepted_friend_count ?? 0
-
-  // Fetch gallery count (only remaining query needed). Deduped via
-  // requestCache so multiple consumers on the same dashboard render
-  // (e.g. MediaCard + this hook + the dashboard's tab-effect refresh)
-  // share a single round trip. 30s TTL matches the Bento card batch
-  // (8ee75aa) — auto-mounts within the window hit cache; refresh()
-  // below busts the cache when the user explicitly returns from a
-  // surface where they may have edited the gallery.
-  const cacheKey = profileId ? `coach-strength-gallery-${profileId}` : null
-
-  const fetchCounts = useCallback(async () => {
-    if (!profileId || !cacheKey) {
-      setGalleryCount(null)
-      setLoading(false)
-      return
-    }
-    setLoading(true)
-    try {
-      const count = await requestCache.dedupe<number>(
-        cacheKey,
-        async () => {
-          const galleryRes = await supabase
-            .from('gallery_photos')
-            .select('id', { count: 'exact', head: true })
-            .eq('user_id', profileId)
-          return galleryRes.count ?? 0
-        },
-        30000,
-      )
-      setGalleryCount(count)
-    } finally {
-      setLoading(false)
-    }
-  }, [profileId, cacheKey])
-
-  // refresh() needs two contracts at once:
-  //   1) "I just edited" → bust the 30s cache, fetch fresh.
-  //   2) Concurrent with the hook's auto-fetch on first mount → join
-  //      the in-flight instead of racing it. The QA pass on aa52843
-  //      caught the race: invalidate() also deletes the in-flight
-  //      tracking, so two callers fired identical fetches.
-  // Solution: only invalidate when there's no in-flight. The
-  // in-flight entry IS the freshest data we can get; awaiting it via
-  // dedupe() is correct.
-  const refresh = useCallback(async () => {
-    if (cacheKey && !requestCache.hasInflight(cacheKey)) {
-      requestCache.invalidate(cacheKey)
-    }
-    await fetchCounts()
-  }, [cacheKey, fetchCounts])
-
-  useEffect(() => {
-    void fetchCounts()
-  }, [fetchCounts])
 
   // Canonical "nationality + base location" bucket (compute_profile_
   // completeness_pct, coach branch): (nationality_country_id OR nationality)

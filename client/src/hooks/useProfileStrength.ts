@@ -1,7 +1,5 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
-import { supabase } from '@/lib/supabase'
-import { logger } from '@/lib/logger'
-import { requestCache } from '@/lib/requestCache'
+import { useMemo } from 'react'
+import { useGalleryCount } from '@/hooks/useGalleryCount'
 import type { Profile } from '@/lib/supabase'
 
 export type ProfileStrengthBucket = {
@@ -79,11 +77,10 @@ function hasHighlightVideo(profile: Profile): boolean {
  *   gallery 5 · friends 5 · references 15 · open-to-play 5
  */
 export function useProfileStrength(profile: Profile | null): ProfileStrengthResult {
-  const [loading, setLoading] = useState(true)
-  const [galleryCount, setGalleryCount] = useState<number>(0)
-
   // Read denormalized counts directly from the profile row (trigger-maintained).
-  // Only gallery_photos still requires a query since it's not denormalized.
+  // Only gallery_photos still requires a query since it's not denormalized —
+  // useGalleryCount is the shared React Query fetch, so every dashboard
+  // consumer (this hook, MediaCard once migrated) shares one round trip.
   const journeyCount: number = profile?.career_entry_count ?? 0
   const friendCount: number = profile?.accepted_friend_count ?? 0
   const referenceCount: number = profile?.accepted_reference_count ?? 0
@@ -91,60 +88,8 @@ export function useProfileStrength(profile: Profile | null): ProfileStrengthResu
   // as the others — no extra query needed.
   const fullGameVideoCount: number = profile?.full_game_video_count ?? 0
 
-  // Gallery count is the only remaining query (everything else lives
-  // on the profile row). Deduped via requestCache so MediaCard + this
-  // hook + the dashboard's tab-effect refresh share one round trip.
-  // 30s TTL matches the Bento card batch (8ee75aa). refresh() below
-  // busts the cache for explicit "I just edited" calls.
-  const profileId = profile?.id ?? null
-  const cacheKey = profileId ? `player-strength-gallery-${profileId}` : null
-
-  const fetchCounts = useCallback(async () => {
-    if (!profileId || !cacheKey) {
-      setLoading(false)
-      return
-    }
-
-    setLoading(true)
-    try {
-      const count = await requestCache.dedupe<number>(
-        cacheKey,
-        async () => {
-          const galleryRes = await supabase
-            .from('gallery_photos')
-            .select('id', { count: 'exact', head: true })
-            .eq('user_id', profileId)
-          if (galleryRes.error) throw galleryRes.error
-          return galleryRes.count ?? 0
-        },
-        30000,
-      )
-      setGalleryCount(count)
-    } catch (error) {
-      logger.error('Error fetching profile strength data:', error)
-    } finally {
-      setLoading(false)
-    }
-  }, [profileId, cacheKey])
-
-  // Force-fresh re-fetch — busts the 30s cache so explicit refresh()
-  // calls (e.g. after an upload modal closes) skip the cached value.
-  // BUT: skip the invalidate when there's already an in-flight fetch
-  // for this key — invalidate() also deletes in-flight tracking, so
-  // racing it with the hook's own auto-fetch on first mount produced
-  // duplicate identical fetches (QA caught on aa52843). Joining the
-  // in-flight via dedupe() gives us the same fresh data without the
-  // duplicate.
-  const refresh = useCallback(async () => {
-    if (cacheKey && !requestCache.hasInflight(cacheKey)) {
-      requestCache.invalidate(cacheKey)
-    }
-    await fetchCounts()
-  }, [cacheKey, fetchCounts])
-
-  useEffect(() => {
-    void fetchCounts()
-  }, [fetchCounts])
+  const { count, loading, refresh } = useGalleryCount(profile?.id)
+  const galleryCount = count ?? 0
 
   const buckets = useMemo<ProfileStrengthBucket[]>(() => {
     if (!profile) {
