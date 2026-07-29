@@ -88,8 +88,21 @@ async function launchChromium() {
   })
 }
 
-function postProcess(html) {
+function postProcess(html, shellHtml) {
+  // HEAD comes from the SHELL, not the runtime DOM: at snapshot time the
+  // Vite runtime has injected modulepreload links for every chunk the
+  // booted app touched — measured on prod: charts (109KB, admin-only) plus
+  // ~150KB of lazy-chunk preloads, all fetched at High priority against
+  // the render-blocking CSS on every landing view. The shell's head is the
+  // curated resource list (entry, filtered preloads, css); the snapshot
+  // contributes ONLY its painted <body>.
+  const shellHead = shellHtml.match(/<head>[\s\S]*?<\/head>/)
+  const snapBody = html.match(/<body[\s\S]*<\/body>/)
   let out = html
+  if (shellHead && snapBody) {
+    const htmlOpen = html.match(/<html[^>]*>/)?.[0] ?? '<html lang="en">'
+    out = `${htmlOpen}${shellHead[0]}${snapBody[0]}</html>`
+  }
 
   // Reveal-on-scroll leaves below-fold sections at opacity:0 in the
   // snapshot. Static HTML must be fully visible (crawlers, pre-JS reads);
@@ -144,8 +157,9 @@ async function main() {
     if (!html.includes('See what HOCKIA')) throw new Error('hero headline missing from snapshot')
     if (!/assets\/(index|main)-/.test(html)) throw new Error('entry script missing from snapshot')
 
-    await writeFile(path.join(DIST, 'index.html'), postProcess(html))
-    const grew = Math.round((postProcess(html).length - shell.length) / 1024)
+    const processed = postProcess(html, shell)
+    await writeFile(path.join(DIST, 'index.html'), processed)
+    const grew = Math.round((processed.length - shell.length) / 1024)
     console.log(`[prerender] dist/index.html is now the prerendered landing (+${grew}KB over shell)`)
   } finally {
     await browser.close().catch(() => {})
