@@ -82,17 +82,13 @@ jobs:
         uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
-
-      # The _shared deno tests existed for months but were never wired into
-      # CI, and two of them rotted (stale expectations found 2026-07-29).
-      # email-sender.test.ts is EXCLUDED pending a mock repair: its
-      # hand-rolled Supabase mock predates query-chain changes in
-      # email-sender.ts (tracked follow-up) — everything else gates merges,
-      # including the 28 international-experience eval tests.
+      # Every _shared test gates merges (the suite existed for months
+      # unwired and three files rotted — all repaired 2026-07-29,
+      # including email-sender's supabase mock, which predated the
+      # suppression-check query chains).
       - name: Run shared-module tests
         working-directory: ./supabase/functions/_shared
-        run: |
-          deno test --allow-env             action-tokens.test.ts             clarifying.test.ts             recovery.test.ts             suggested-actions.test.ts             international-taxonomy.test.ts
+        run: deno test --allow-env .
 
   unit-tests:
     name: Unit Tests
