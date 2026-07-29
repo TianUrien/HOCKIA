@@ -41,13 +41,36 @@ function resetState() {
   fetchStub = null
 }
 
-function createMockSupabase(insertError: { message: string } | null = null) {
+function createMockSupabase(
+  insertError: { message: string } | null = null,
+  suppressedEmails: string[] = [],
+) {
+  // email-sender's suppression checks issue chainable reads —
+  //   .select('id').in(...).in(...).limit(1)          (single send)
+  //   .select('recipient_email').in(...).in(...)      (batch, NO limit)
+  // — and AWAIT the chain at either depth, so the chain object itself must
+  // be thenable. The original mock only implemented .insert, which is how
+  // this file rotted out of CI (found 2026-07-29 when wiring deno tests in).
+  const makeSelectChain = () => {
+    const result = {
+      data: suppressedEmails.map((e) => ({ id: 'sup', recipient_email: e })),
+      error: null,
+    }
+    const chain: any = {
+      in: () => chain,
+      limit: () => Promise.resolve(result),
+      then: (onFulfilled: any, onRejected: any) =>
+        Promise.resolve(result).then(onFulfilled, onRejected),
+    }
+    return chain
+  }
   return {
     from: (_table: string) => ({
       insert: (_rows: any) => Promise.resolve({
         error: insertError,
         data: null,
       }),
+      select: (_cols: string) => makeSelectChain(),
     }),
   } as any
 }
