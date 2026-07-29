@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { requestCache } from '@/lib/requestCache'
+import { queryClient } from '@/lib/queryClient'
+import { qk } from '@/lib/queryKeys'
 import { logger } from '@/lib/logger'
 import { useAuthStore } from '@/lib/auth'
 import { prefetchWorldClubLogos } from './useWorldClubLogo'
@@ -71,15 +72,22 @@ export function useScopedMatches(enabled: boolean) {
     setFetching(true)
     void (async () => {
       try {
-        const rows = await requestCache.dedupe<PoolRow[]>(`club-pulse-pool-${poolRole}`, async () => {
-          const { data, error } = await supabase.rpc('get_top_community_members', {
-            p_role: poolRole,
-            p_limit: POOL_LIMIT,
-            p_sort: 'availability_activity',
-            p_only_open: true,
-          })
-          if (error) throw error
-          return (data ?? []) as PoolRow[]
+        // fetchQuery (not useQuery) keeps the imperative ordering below:
+        // the league-band cache must be warm BEFORE the pool reaches
+        // state (H1), which a declarative query can't sequence.
+        const rows = await queryClient.fetchQuery({
+          queryKey: qk.clubPulsePool(poolRole),
+          staleTime: 30_000,
+          queryFn: async (): Promise<PoolRow[]> => {
+            const { data, error } = await supabase.rpc('get_top_community_members', {
+              p_role: poolRole,
+              p_limit: POOL_LIMIT,
+              p_sort: 'availability_activity',
+              p_only_open: true,
+            })
+            if (error) throw error
+            return (data ?? []) as PoolRow[]
+          },
         })
         // Warm the league-band cache BEFORE the pool reaches state, so the
         // verdict memo's first computation already sees the bands (H1).

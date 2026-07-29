@@ -1,7 +1,8 @@
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
-import { requestCache } from '@/lib/requestCache'
+import { queryClient } from '@/lib/queryClient'
+import { qk } from '@/lib/queryKeys'
 
 /**
  * Module-level cache: world_club_id → avatar_url.
@@ -116,22 +117,23 @@ async function fetchLogo(worldClubId: string): Promise<string | null> {
  *
  * Concurrent-caller dedupe: the featured carousel and the All Members
  * grid both call this on every Community visit with the same set of
- * IDs. Without the requestCache.dedupe wrap below, both sent identical
- * SELECTs (visible as two `world_clubs?...in.(…)` round-trips). The
- * cache key is derived from the SORTED list of uncached IDs so two
- * concurrent callers with the same input collapse to one fetch.
+ * IDs. Without the fetchQuery wrap below, both sent identical SELECTs
+ * (visible as two `world_clubs?...in.(…)` round-trips). The query key is
+ * derived from the SORTED list of uncached IDs so two concurrent callers
+ * with the same input collapse to one fetch. The results live in the
+ * module-level Maps above (they serve synchronous render-time reads);
+ * React Query only provides the dedupe window here.
  */
 export async function prefetchWorldClubLogos(worldClubIds: string[]): Promise<void> {
   // Filter to only IDs not already cached
   const uncachedIds = worldClubIds.filter(id => !logoCache.has(id))
   if (uncachedIds.length === 0) return
 
-  const cacheKey = `world-club-logos:${[...uncachedIds].sort().join(',')}`
-
   try {
-    await requestCache.dedupe(
-      cacheKey,
-      async () => {
+    await queryClient.fetchQuery({
+      queryKey: qk.worldClubLogosBatch([...uncachedIds].sort()),
+      staleTime: 30_000,
+      queryFn: async () => {
         // Joins to world_leagues twice so we can fill the league
         // metadata cache (bands + names) in the same round-trip. The
         // men/women split mirrors the schema — clubs may field one
@@ -182,8 +184,7 @@ export async function prefetchWorldClubLogos(worldClubIds: string[]): Promise<vo
         }
         return null
       },
-      30000,
-    )
+    })
   } catch (err) {
     logger.error('[prefetchWorldClubLogos] Unexpected error:', err)
   }
