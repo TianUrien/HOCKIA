@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Briefcase, FileText, Zap, ChevronRight } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
-import { requestCache } from '@/lib/requestCache'
+import { qk } from '@/lib/queryKeys'
 import { cn } from '@/lib/utils'
 import AvailabilityToggleStrip from '@/components/AvailabilityToggleStrip'
 import DashboardCard from './DashboardCard'
@@ -37,41 +38,29 @@ const ACTIVE_STATUSES = ['pending', 'shortlisted', 'maybe'] as const
 
 export default function OpportunitiesCard({ ownerProfileId, onViewOpportunities, fullWidth = false, role = 'player' }: OpportunitiesCardProps) {
   const navigate = useNavigate()
-  const [activeCount, setActiveCount] = useState<number | null>(null)
+
+  // React Query dedupes Bento re-renders + tab navs back to landing that
+  // used to fire this count each time. staleTime 30s — the opportunities
+  // feed itself refetches on visit.
+  const { data, error } = useQuery({
+    queryKey: qk.activeApplications(ownerProfileId),
+    staleTime: 30_000,
+    queryFn: async () => {
+      const res = await supabase
+        .from('opportunity_applications')
+        .select('id', { count: 'exact', head: true })
+        .eq('applicant_id', ownerProfileId)
+        .in('status', [...ACTIVE_STATUSES])
+      if (res.error) throw res.error
+      return res.count ?? 0
+    },
+  })
 
   useEffect(() => {
-    let cancelled = false
-    // Bento-card fetch dedup (JourneyCard pattern). Bento re-renders +
-    // tab navs back to landing were firing this count each time. 30s
-    // TTL — the opportunities feed itself refetches on visit.
-    const cacheKey = `opportunities-card-active-${ownerProfileId}`
-    async function fetchCount() {
-      try {
-        const count = await requestCache.dedupe<number>(
-          cacheKey,
-          async () => {
-            const res = await supabase
-              .from('opportunity_applications')
-              .select('id', { count: 'exact', head: true })
-              .eq('applicant_id', ownerProfileId)
-              .in('status', [...ACTIVE_STATUSES])
-            if (res.error) throw res.error
-            return res.count ?? 0
-          },
-          30000,
-        )
-        if (!cancelled) setActiveCount(count)
-      } catch (err) {
-        if (cancelled) return
-        logger.error('[OPPORTUNITIES_CARD] Failed to fetch application count', err)
-        setActiveCount(0)
-      }
-    }
-    void fetchCount()
-    return () => {
-      cancelled = true
-    }
-  }, [ownerProfileId])
+    if (error) logger.error('[OPPORTUNITIES_CARD] Failed to fetch application count', error)
+  }, [error])
+
+  const activeCount = error ? 0 : data ?? null
 
   const activeLabel = activeCount === null
     ? '—'

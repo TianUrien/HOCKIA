@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { Users } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
-import { requestCache } from '@/lib/requestCache'
+import { qk } from '@/lib/queryKeys'
 import DashboardCard from './DashboardCard'
 
 /**
@@ -24,42 +25,29 @@ interface ClubMembersCardProps {
 }
 
 export default function ClubMembersCard({ ownerProfileId, onViewMembers }: ClubMembersCardProps) {
-  const [memberCount, setMemberCount] = useState<number | null>(null)
+  // React Query dedupes Bento re-mounts; Members tab refetch covers any
+  // roster changes the user makes after editing.
+  const { data, error } = useQuery({
+    queryKey: qk.clubMemberCount(ownerProfileId),
+    staleTime: 30_000,
+    queryFn: async () => {
+      // limit 1 — we only need total_count off the first row, not the
+      // roster itself. The RPC returns total_count on every row.
+      const { data: rows, error: fetchError } = await supabase.rpc('get_club_members', {
+        p_profile_id: ownerProfileId,
+        p_limit: 1,
+        p_offset: 0,
+      })
+      if (fetchError) throw fetchError
+      return rows && rows.length > 0 ? rows[0].total_count : 0
+    },
+  })
 
   useEffect(() => {
-    let cancelled = false
-    // Bento-card fetch dedup (JourneyCard pattern). Members tab refetch
-    // covers any roster changes the user makes after editing.
-    const cacheKey = `club-members-card-count-${ownerProfileId}`
-    const fetchCount = async () => {
-      try {
-        // limit 1 — we only need total_count off the first row, not the
-        // roster itself. The RPC returns total_count on every row.
-        const count = await requestCache.dedupe<number>(
-          cacheKey,
-          async () => {
-            const { data, error } = await supabase.rpc('get_club_members', {
-              p_profile_id: ownerProfileId,
-              p_limit: 1,
-              p_offset: 0,
-            })
-            if (error) throw error
-            return data && data.length > 0 ? data[0].total_count : 0
-          },
-          30000,
-        )
-        if (!cancelled) setMemberCount(count)
-      } catch (err) {
-        if (cancelled) return
-        logger.error('[ClubMembersCard] fetch member count failed', err)
-        setMemberCount(0)
-      }
-    }
-    void fetchCount()
-    return () => {
-      cancelled = true
-    }
-  }, [ownerProfileId])
+    if (error) logger.error('[ClubMembersCard] fetch member count failed', error)
+  }, [error])
+
+  const memberCount = error ? 0 : data ?? null
 
   const hasMembers = memberCount !== null && memberCount > 0
   const countLabel =

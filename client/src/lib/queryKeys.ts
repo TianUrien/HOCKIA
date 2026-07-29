@@ -22,4 +22,19 @@ export const qk = {
   clubMediaCount: (clubId: string | null) => ['club-media', 'count', clubId] as const,
   /** career_history entry counts grouped by entry_type (JourneyCard). */
   journeyCounts: (profileId: string | null) => ['journey', 'counts', profileId] as const,
+  /** Visible profile_comments count (CommunityCard). */
+  commentCount: (profileId: string | null) => ['comments', 'count', profileId] as const,
+  /** Player's active opportunity_applications count (OpportunitiesCard). */
+  activeApplications: (profileId: string | null) =>
+    ['applications', 'active-count', profileId] as const,
+  /** Club member count via get_club_members RPC (ClubMembersCard). */
+  clubMemberCount: (clubId: string | null) => ['club-members', 'count', clubId] as const,
+  /** Recruiter's saved_profiles count + 3 most recent (SavedCandidatesCard). */
+  savedCandidates: (userId: string | null) => ['saved-candidates', 'card', userId] as const,
+  /** Coach applied/shortlisted application counts (CoachApplicationsCard). */
+  coachApplicationCounts: (profileId: string | null) =>
+    ['applications', 'coach-counts', profileId] as const,
+  /** Coach's open opportunities + applicant totals (CoachPostedOpportunitiesCard). */
+  coachPostedOpportunities: (profileId: string | null) =>
+    ['opportunities', 'coach-posted', profileId] as const,
 }

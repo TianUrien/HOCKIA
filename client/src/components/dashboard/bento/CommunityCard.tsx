@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { Users, Shield, MessageSquare, FileText } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
-import { requestCache } from '@/lib/requestCache'
+import { qk } from '@/lib/queryKeys'
 import { cn } from '@/lib/utils'
 import DashboardCard from './DashboardCard'
 import type { Profile } from '@/lib/supabase'
@@ -32,43 +33,29 @@ interface CommunityCardProps {
 }
 
 export default function CommunityCard({ profile, onOpenTab, hideReferences = false, readOnly = false }: CommunityCardProps) {
-  const [commentCount, setCommentCount] = useState<number | null>(null)
+  // React Query dedupes Bento re-renders + tab navs back to landing that
+  // used to fire this count query repeatedly. staleTime 30s keeps the
+  // comment number fresh enough after a moderation action — the comments
+  // tab itself refetches on visit.
+  const { data, error } = useQuery({
+    queryKey: qk.commentCount(profile.id),
+    staleTime: 30_000,
+    queryFn: async () => {
+      const res = await supabase
+        .from('profile_comments')
+        .select('id', { count: 'exact', head: true })
+        .eq('profile_id', profile.id)
+        .eq('status', 'visible')
+      if (res.error) throw res.error
+      return res.count ?? 0
+    },
+  })
 
   useEffect(() => {
-    let cancelled = false
-    // Bento-card fetch dedup pattern (mirror of JourneyCard fix).
-    // Bento re-renders + tab navs back to landing were firing this
-    // count query repeatedly. 30s TTL keeps the comment number fresh
-    // enough after a moderation action — the comments tab itself
-    // refetches on visit.
-    const cacheKey = `community-card-comments-${profile.id}`
-    async function fetchCount() {
-      try {
-        const count = await requestCache.dedupe<number>(
-          cacheKey,
-          async () => {
-            const res = await supabase
-              .from('profile_comments')
-              .select('id', { count: 'exact', head: true })
-              .eq('profile_id', profile.id)
-              .eq('status', 'visible')
-            if (res.error) throw res.error
-            return res.count ?? 0
-          },
-          30000,
-        )
-        if (!cancelled) setCommentCount(count)
-      } catch (err) {
-        if (cancelled) return
-        logger.error('[COMMUNITY_CARD] Failed to fetch comment count', err)
-        setCommentCount(0)
-      }
-    }
-    void fetchCount()
-    return () => {
-      cancelled = true
-    }
-  }, [profile.id])
+    if (error) logger.error('[COMMUNITY_CARD] Failed to fetch comment count', error)
+  }, [error])
+
+  const commentCount = error ? 0 : data ?? null
 
   const friends = profile.accepted_friend_count ?? 0
   const references = profile.accepted_reference_count ?? 0

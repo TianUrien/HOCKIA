@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { BookmarkCheck, Bookmark } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
-import { requestCache } from '@/lib/requestCache'
+import { qk } from '@/lib/queryKeys'
 import { Avatar } from '@/components'
 import { getInitials } from '@/lib/utils'
 import DashboardCard from './DashboardCard'
@@ -58,82 +59,66 @@ export default function SavedCandidatesCard({ variant = 'recruiter' }: SavedCand
   const copy = VARIANT_COPY[variant]
   const { user } = useAuthStore()
   const navigate = useNavigate()
-  const [count, setCount] = useState<number | null>(null)
-  const [recent, setRecent] = useState<RecentSave[]>([])
+
+  // Both queries cached together under one React Query key so Bento
+  // re-renders + tab navs share a single round trip. staleTime 30s —
+  // Save toggles in the grid bust the useSavedProfileIds shared store;
+  // this Bento summary refreshes on next visit after the window.
+  const userId = user?.id ?? null
+  const { data, error } = useQuery({
+    queryKey: qk.savedCandidates(userId),
+    enabled: !!userId,
+    staleTime: 30_000,
+    queryFn: async (): Promise<{ count: number; recent: RecentSave[] }> => {
+      const [countRes, recentRes] = await Promise.all([
+        supabase
+          .from('saved_profiles')
+          .select('id', { count: 'exact', head: true })
+          .eq('owner_id', userId as string),
+        supabase
+          .from('saved_profiles')
+          .select(`
+            saved_profile_id,
+            profile:profiles!saved_profiles_saved_profile_id_fkey(
+              full_name,
+              avatar_url,
+              role
+            )
+          `)
+          .eq('owner_id', userId as string)
+          .order('created_at', { ascending: false })
+          .limit(3),
+      ])
+      if (countRes.error) {
+        logger.warn('[SavedCandidatesCard] count failed', countRes.error)
+      }
+      if (recentRes.error) {
+        logger.warn('[SavedCandidatesCard] recent failed', recentRes.error)
+      }
+      const rows = (recentRes.data ?? []) as unknown as Array<{
+        saved_profile_id: string
+        profile: { full_name: string | null; avatar_url: string | null; role: string | null } | null
+      }>
+      return {
+        count: countRes.count ?? 0,
+        recent: rows
+          .filter((r) => r.profile !== null)
+          .map((r) => ({
+            saved_profile_id: r.saved_profile_id,
+            full_name: r.profile!.full_name,
+            avatar_url: r.profile!.avatar_url,
+            role: r.profile!.role,
+          })),
+      }
+    },
+  })
 
   useEffect(() => {
-    if (!user?.id) return
-    let cancelled = false
-    // Bento-card fetch dedup (JourneyCard pattern). Both queries cached
-    // together under one key so Bento re-renders + tab navs share a
-    // single round trip. 30s TTL — Save toggles in the grid bust the
-    // useSavedProfileIds shared store; this Bento summary refreshes on
-    // next visit after TTL.
-    const cacheKey = `saved-candidates-card-${user.id}`
-    const fetchAll = async () => {
-      try {
-        const result = await requestCache.dedupe<{ count: number; recent: RecentSave[] }>(
-          cacheKey,
-          async () => {
-            const [countRes, recentRes] = await Promise.all([
-              supabase
-                .from('saved_profiles')
-                .select('id', { count: 'exact', head: true })
-                .eq('owner_id', user.id),
-              supabase
-                .from('saved_profiles')
-                .select(`
-                  saved_profile_id,
-                  profile:profiles!saved_profiles_saved_profile_id_fkey(
-                    full_name,
-                    avatar_url,
-                    role
-                  )
-                `)
-                .eq('owner_id', user.id)
-                .order('created_at', { ascending: false })
-                .limit(3),
-            ])
-            if (countRes.error) {
-              logger.warn('[SavedCandidatesCard] count failed', countRes.error)
-            }
-            if (recentRes.error) {
-              logger.warn('[SavedCandidatesCard] recent failed', recentRes.error)
-            }
-            const rows = (recentRes.data ?? []) as unknown as Array<{
-              saved_profile_id: string
-              profile: { full_name: string | null; avatar_url: string | null; role: string | null } | null
-            }>
-            return {
-              count: countRes.count ?? 0,
-              recent: rows
-                .filter((r) => r.profile !== null)
-                .map((r) => ({
-                  saved_profile_id: r.saved_profile_id,
-                  full_name: r.profile!.full_name,
-                  avatar_url: r.profile!.avatar_url,
-                  role: r.profile!.role,
-                })),
-            }
-          },
-          30000,
-        )
-        if (cancelled) return
-        setCount(result.count)
-        setRecent(result.recent)
-      } catch (err) {
-        if (cancelled) return
-        logger.error('[SavedCandidatesCard] fetch failed', err)
-        setCount(0)
-        setRecent([])
-      }
-    }
+    if (error) logger.error('[SavedCandidatesCard] fetch failed', error)
+  }, [error])
 
-    void fetchAll()
-    return () => {
-      cancelled = true
-    }
-  }, [user?.id])
+  const count = error ? 0 : data?.count ?? null
+  const recent = error ? [] : data?.recent ?? []
 
   const countLabel =
     count === null

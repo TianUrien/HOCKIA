@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { Briefcase, FileText, Users, Plus } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
-import { requestCache } from '@/lib/requestCache'
+import { qk } from '@/lib/queryKeys'
 import { cn } from '@/lib/utils'
 import DashboardCard from './DashboardCard'
 
@@ -48,61 +49,45 @@ export default function CoachPostedOpportunitiesCard({
   onManageOpportunities,
   bodyCopy = DEFAULT_BODY_COPY,
 }: CoachPostedOpportunitiesCardProps) {
-  const [openCount, setOpenCount] = useState<number | null>(null)
-  const [applicants, setApplicants] = useState<number | null>(null)
+  // Count + RPC cached under one React Query key. staleTime 30s —
+  // opportunities management tab refetches on visit when the user
+  // creates / closes a role.
+  const { data, error } = useQuery({
+    queryKey: qk.coachPostedOpportunities(ownerProfileId),
+    staleTime: 30_000,
+    queryFn: async () => {
+      const openRes = await supabase
+        .from('opportunities')
+        .select('id', { count: 'exact', head: true })
+        .eq('club_id', ownerProfileId)
+        .eq('status', 'open')
+      if (openRes.error) throw openRes.error
+
+      // Same RPC the vacancies tab uses; returns rows + applicant
+      // counts. We sum the counts here for the header metric so the
+      // number matches what the coach sees inside the management
+      // surface.
+      const appsRes = await supabase.rpc('fetch_club_opportunities_with_counts', {
+        p_club_id: ownerProfileId,
+        p_include_closed: false,
+        p_limit: 200,
+      })
+      if (appsRes.error) throw appsRes.error
+      const total = (appsRes.data ?? []).reduce(
+        (sum: number, row: { applicant_count?: number | null }) =>
+          sum + (row.applicant_count ?? 0),
+        0,
+      )
+      return { open: openRes.count ?? 0, applicants: total }
+    },
+  })
 
   useEffect(() => {
-    let cancelled = false
-    // Bento-card fetch dedup (JourneyCard pattern). Count + RPC cached
-    // under one key. 30s TTL — opportunities management tab refetches
-    // on visit when the user creates / closes a role.
-    const cacheKey = `coach-posted-opportunities-card-${ownerProfileId}`
-    const fetchCounts = async () => {
-      try {
-        const result = await requestCache.dedupe<{ open: number; applicants: number }>(
-          cacheKey,
-          async () => {
-            const openRes = await supabase
-              .from('opportunities')
-              .select('id', { count: 'exact', head: true })
-              .eq('club_id', ownerProfileId)
-              .eq('status', 'open')
-            if (openRes.error) throw openRes.error
+    if (error) logger.error('[CoachOpportunitiesCard] fetch counts failed', error)
+  }, [error])
 
-            // Same RPC the vacancies tab uses; returns rows + applicant
-            // counts. We sum the counts here for the header metric so the
-            // number matches what the coach sees inside the management
-            // surface.
-            const appsRes = await supabase.rpc('fetch_club_opportunities_with_counts', {
-              p_club_id: ownerProfileId,
-              p_include_closed: false,
-              p_limit: 200,
-            })
-            if (appsRes.error) throw appsRes.error
-            const total = (appsRes.data ?? []).reduce(
-              (sum: number, row: { applicant_count?: number | null }) =>
-                sum + (row.applicant_count ?? 0),
-              0,
-            )
-            return { open: openRes.count ?? 0, applicants: total }
-          },
-          30000,
-        )
-        if (cancelled) return
-        setOpenCount(result.open)
-        setApplicants(result.applicants)
-      } catch (err) {
-        if (cancelled) return
-        logger.error('[CoachOpportunitiesCard] fetch counts failed', err)
-        setOpenCount(0)
-        setApplicants(0)
-      }
-    }
-    void fetchCounts()
-    return () => {
-      cancelled = true
-    }
-  }, [ownerProfileId])
+  const openCount = error ? 0 : data?.open ?? null
+  const applicants = error ? 0 : data?.applicants ?? null
 
   const openLabel =
     openCount === null

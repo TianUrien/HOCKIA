@@ -1,18 +1,18 @@
 /**
- * Bento-card fetch dedupe — pattern regression.
+ * Bento-card fetch dedupe — pattern regression, React Query edition.
  *
- * After JourneyCard's dedupe fix, all 7 other Bento cards that hit
- * supabase on mount got the same treatment (CommunityCard,
- * OpportunitiesCard, ClubMembersCard, SavedCandidatesCard,
- * CoachApplicationsCard, CoachPostedOpportunitiesCard, MediaCard).
+ * All 8 Bento cards that hit supabase on mount (JourneyCard,
+ * CommunityCard, OpportunitiesCard, ClubMembersCard, SavedCandidatesCard,
+ * CoachApplicationsCard, CoachPostedOpportunitiesCard, MediaCard) share
+ * the same caching contract, originally via requestCache.dedupe and since
+ * the 2026-07-29 migration via useQuery({ queryKey: qk.*, staleTime: 30s }).
  *
  * Lock-in test: mount the same card twice with the same identifier and
  * verify only ONE supabase fetch fires. CommunityCard is the canary —
- * cheapest shape, single .from('profile_comments') call. The other six
- * cards use the identical `requestCache.dedupe(cacheKey, fn, 30000)`
- * wrapper, so this single test is enough to catch the pattern
- * regressing (if any card stops using dedupe, the lib.requestCache
- * tests still pass but real-world fetches stack up).
+ * cheapest shape, single .from('profile_comments') call. The other cards
+ * use the identical useQuery wrapper, so this single test is enough to
+ * catch the pattern regressing (a card dropping its qk key or staleTime
+ * shows up as stacked real-world fetches).
  *
  * Per-card behavioural tests (toast on success, deep-link routing,
  * etc.) belong in card-specific suites; this is purely the dedupe
@@ -22,7 +22,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, waitFor, cleanup } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import { requestCache } from '@/lib/requestCache'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 const fromSpy = vi.fn()
 vi.mock('@/lib/supabase', () => {
@@ -60,21 +60,25 @@ const baseProfile = {
   post_count: 0,
 }
 
-function renderCard() {
-  return render(
-    <MemoryRouter>
-      <CommunityCard profile={baseProfile} onOpenTab={vi.fn()} />
-    </MemoryRouter>,
-  )
-}
-
 describe('Bento card dedupe pattern (CommunityCard canary)', () => {
+  let queryClient: QueryClient
+
   beforeEach(() => {
-    // requestCache holds state at module level; clear it between tests
-    // so each one starts cold.
-    requestCache.clear()
+    // Fresh QueryClient per test so each starts cold; renders within a
+    // test share it, mirroring the app's single client.
+    queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
     fromSpy.mockClear()
   })
+
+  function renderCard() {
+    return render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <CommunityCard profile={baseProfile} onOpenTab={vi.fn()} />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    )
+  }
 
   it('fires only one fetch when the card mounts twice for the same profile', async () => {
     renderCard()
@@ -86,7 +90,7 @@ describe('Bento card dedupe pattern (CommunityCard canary)', () => {
     expect(fromSpy.mock.calls.filter((c) => c[0] === 'profile_comments')).toHaveLength(1)
   })
 
-  it('does not re-fetch when a card unmounts and remounts within TTL', async () => {
+  it('does not re-fetch when a card unmounts and remounts within staleTime', async () => {
     const first = renderCard()
     await waitFor(() => expect(fromSpy).toHaveBeenCalledTimes(1))
 
