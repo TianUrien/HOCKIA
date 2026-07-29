@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo } from 'react'
 import { Flag, Landmark, Globe2, Award, Calendar } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
-import { requestCache } from '@/lib/requestCache'
+import { qk } from '@/lib/queryKeys'
 import { detectBioCredentials } from '@/lib/bioCredentials'
 import DashboardCard from './DashboardCard'
 
@@ -61,8 +62,6 @@ const EMPTY: GroupedCounts = {
 }
 
 export default function JourneyCard({ profileId, readOnly, role = 'player', careerEntryCount, bio, onViewJourney }: JourneyCardProps) {
-  const [counts, setCounts] = useState<GroupedCounts | null>(null)
-
   // Pure regex scan; same patterns as the Hockia AI owner-handler
   // (supabase/functions/nl-search/index.ts). Empty array when no bio
   // or no credentials match — section renders nothing in that case.
@@ -73,69 +72,56 @@ export default function JourneyCard({ profileId, readOnly, role = 'player', care
   // for the coach dashboard QA flagged).
   const knownEmpty = careerEntryCount === 0
 
-  useEffect(() => {
-    if (knownEmpty) {
-      setCounts(EMPTY)
-      return
-    }
-    let cancelled = false
-    // F2 fix — requestCache.dedupe so re-mounts of the same profile in
-    // a session reuse the same breakdown. Bento Grid re-renders + tab
-    // navigations used to fire the same GET repeatedly. 30s TTL keeps
-    // the breakdown fresh enough after a Journey edit (the edit flow
-    // also clears the cache via cacheKey below).
-    const cacheKey = `journey-counts-${profileId}`
-    const run = async () => {
-      try {
-        const grouped = await requestCache.dedupe<GroupedCounts>(
-          cacheKey,
-          async () => {
-            const { data, error } = await supabase
-              .from('career_history')
-              .select('entry_type')
-              .eq('user_id', profileId)
-            if (error) throw error
-            const result: GroupedCounts = { ...EMPTY }
-            for (const row of data ?? []) {
-              const type = (row.entry_type ?? 'other') as string
-              switch (type) {
-                case 'club':
-                  result.clubs += 1
-                  break
-                case 'national_team':
-                  // DB enum value is legacy ('national_team') but the
-                  // bucket now covers any representative-team experience:
-                  // regional, provincial, state, or national. JourneyTab
-                  // uses "Representative Team" as the entry-type label.
-                  result.representative += 1
-                  break
-                case 'achievement':
-                case 'tournament':
-                  result.achievements += 1
-                  break
-                case 'milestone':
-                case 'academy':
-                  result.milestones += 1
-                  break
-              }
-              result.total += 1
-            }
-            return result
-          },
-          30000,
-        )
-        if (!cancelled) setCounts(grouped)
-      } catch (err) {
-        if (cancelled) return
-        logger.error('[JOURNEY_CARD] Failed to fetch journey counts', err)
-        setCounts(EMPTY)
+  // React Query dedupes re-mounts of the same profile in a session
+  // (Bento Grid re-renders + tab navigations used to fire the same GET
+  // repeatedly — F2). staleTime 30s keeps the breakdown fresh enough
+  // after a Journey edit.
+  const { data, error } = useQuery({
+    queryKey: qk.journeyCounts(profileId),
+    enabled: !knownEmpty && !!profileId,
+    staleTime: 30_000,
+    queryFn: async (): Promise<GroupedCounts> => {
+      const { data: rows, error: fetchError } = await supabase
+        .from('career_history')
+        .select('entry_type')
+        .eq('user_id', profileId)
+      if (fetchError) throw fetchError
+      const result: GroupedCounts = { ...EMPTY }
+      for (const row of rows ?? []) {
+        const type = (row.entry_type ?? 'other') as string
+        switch (type) {
+          case 'club':
+            result.clubs += 1
+            break
+          case 'national_team':
+            // DB enum value is legacy ('national_team') but the
+            // bucket now covers any representative-team experience:
+            // regional, provincial, state, or national. JourneyTab
+            // uses "Representative Team" as the entry-type label.
+            result.representative += 1
+            break
+          case 'achievement':
+          case 'tournament':
+            result.achievements += 1
+            break
+          case 'milestone':
+          case 'academy':
+            result.milestones += 1
+            break
+        }
+        result.total += 1
       }
-    }
-    void run()
-    return () => {
-      cancelled = true
-    }
-  }, [profileId, knownEmpty])
+      return result
+    },
+  })
+
+  useEffect(() => {
+    if (error) logger.error('[JOURNEY_CARD] Failed to fetch journey counts', error)
+  }, [error])
+
+  // Error → EMPTY keeps the pre-RQ behaviour (card shows the empty state
+  // rather than spinning forever on a failed fetch).
+  const counts: GroupedCounts | null = knownEmpty ? EMPTY : error ? EMPTY : data ?? null
 
   const isEmpty = counts !== null && counts.total === 0
 

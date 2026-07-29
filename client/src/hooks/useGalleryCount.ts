@@ -52,6 +52,40 @@ export function useGalleryCount(profileId: string | null | undefined) {
     count: data ?? null,
     /** true only while a profile id exists and no data has arrived yet. */
     loading: !!id && isPending,
+    /** Query error, if the fetch (after retries) failed. */
+    error: error ?? null,
     refresh,
+  }
+}
+
+/**
+ * club_media count for a club profile — MediaCard's club tile. Clubs store
+ * gallery photos in club_media (keyed by club_id), not gallery_photos, so
+ * this is a separate query key, same semantics as useGalleryCount.
+ */
+export function useClubMediaCount(clubId: string | null | undefined) {
+  const id = clubId ?? null
+  const { data, isPending, error } = useQuery({
+    queryKey: qk.clubMediaCount(id),
+    enabled: !!id,
+    staleTime: 30_000,
+    queryFn: async () => {
+      const res = await supabase
+        .from('club_media')
+        .select('id', { count: 'exact', head: true })
+        .eq('club_id', id as string)
+      if (res.error) throw res.error
+      return res.count ?? 0
+    },
+  })
+
+  useEffect(() => {
+    if (error) logger.error('Error fetching club media count:', error)
+  }, [error])
+
+  return {
+    count: data ?? null,
+    loading: !!id && isPending,
+    error: error ?? null,
   }
 }

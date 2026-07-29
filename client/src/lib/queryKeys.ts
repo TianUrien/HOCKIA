@@ -16,6 +16,10 @@
 
 export const qk = {
   /** gallery_photos count for a profile — shared by every strength hook
-   *  (player/coach/umpire) and, in a later tranche, MediaCard. */
+   *  (player/coach/umpire) and MediaCard's player/coach tile. */
   galleryCount: (profileId: string | null) => ['gallery', 'count', profileId] as const,
+  /** club_media count for a club profile (MediaCard's club tile). */
+  clubMediaCount: (clubId: string | null) => ['club-media', 'count', clubId] as const,
+  /** career_history entry counts grouped by entry_type (JourneyCard). */
+  journeyCounts: (profileId: string | null) => ['journey', 'counts', profileId] as const,
 }
