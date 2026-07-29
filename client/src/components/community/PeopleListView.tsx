@@ -35,7 +35,8 @@ import { useCountries, isEuCountryCode } from '@/hooks/useCountries'
 import { isEuEligible } from '@/lib/euEligibility'
 import { expandCountryEquivalents } from '@/lib/countryEquivalents'
 import { categoryToBandTarget } from '@/hooks/useInterest'
-import { requestCache } from '@/lib/requestCache'
+import { queryClient } from '@/lib/queryClient'
+import { qk } from '@/lib/queryKeys'
 import { monitor } from '@/lib/monitor'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { usePageState } from '@/hooks/usePageState'
@@ -277,12 +278,13 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     // onboarded, non-test rows — same shape authenticated viewers get.
     if (authLoading) return
     let cancelled = false
-    const cacheKey = `community-count-${roleFilter ?? 'all'}-${hideTestAccounts ? 'no-test' : 'all'}`
     const run = async () => {
       try {
-        const count = await requestCache.dedupe<number>(
-          cacheKey,
-          async () => {
+        const count = await queryClient.fetchQuery({
+          queryKey: qk.communityCount(roleFilter ?? 'all', hideTestAccounts ? 'no-test' : 'all'),
+          staleTime: 30_000,
+          retry: false,
+          queryFn: async () => {
             let q = supabase
               .from('profiles')
               .select('id', { count: 'exact', head: true })
@@ -295,8 +297,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
             if (error) throw error
             return c ?? 0
           },
-          30000,
-        )
+        })
         if (cancelled) return
         onTotalCountChange?.(count)
       } catch (err) {
@@ -354,22 +355,24 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
       p_open_opportunity_type: filters.clubOpportunityType ?? undefined,
       p_limit: 500,
     }
-    const cacheKey = `community-members-${viewerScope}-${JSON.stringify(rpcParams)}`
+    const queryKey = qk.communityMembers(viewerScope, JSON.stringify(rpcParams))
 
-    // Fastest path: data already cached at the module level → hand
-    // it back synchronously, never touch isLoading or measure.
-    const cached = requestCache.peek<Profile[]>(cacheKey)
-    if (cached) {
-      setBaseMembers(cached)
+    // Fastest path: fresh data already in the query cache → hand it
+    // back synchronously, never touch isLoading or measure.
+    const cachedState = queryClient.getQueryState<Profile[]>(queryKey)
+    if (cachedState?.data !== undefined && Date.now() - cachedState.dataUpdatedAt < 30_000) {
+      setBaseMembers(cachedState.data)
       setIsLoading(false)
       return
     }
 
     setIsLoading(true)
     try {
-      const members = await requestCache.dedupe(
-        cacheKey,
-        async () => monitor.measure('fetch_community_members', async () => {
+      const members = await queryClient.fetchQuery({
+        queryKey,
+        staleTime: 30_000,
+        retry: false,
+        queryFn: async () => monitor.measure('fetch_community_members', async () => {
           const { data, error } = await supabase.rpc('community_search_members', rpcParams)
           if (error) throw error
           const payload = (data ?? {}) as unknown as { results?: Profile[] }
@@ -410,8 +413,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
 
           return members
         }),
-        30000 // 30 second cache for community members
-      )
+      })
 
       // Batch-prefetch world club logos BEFORE rendering to avoid N+1
       // queries in MemberCard. Runs on cache hits too (cheap if
@@ -479,12 +481,13 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
       // /community/players) doesn't accidentally surface profiles from
       // other roles.
       const roleKey = roleFilter ?? 'all'
-      const cacheKey = `community-search-${viewerScope}-${roleKey}-${query}`
 
       try {
-        const members = await requestCache.dedupe(
-          cacheKey,
-          async () => {
+        const members = await queryClient.fetchQuery({
+          queryKey: qk.communitySearch(viewerScope, roleKey, query),
+          staleTime: 20_000,
+          retry: false,
+          queryFn: async () => {
             const searchTerm = `%${query}%`
             let dbQuery = supabase
               .from('profiles')
@@ -543,8 +546,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
 
             return members
           },
-          20000 // 20 second cache for searches
-        )
+        })
 
         // Batch-prefetch world club logos BEFORE rendering (same pattern as
         // fetchMembers) — includes the viewer's own club for Club Fit proximity.

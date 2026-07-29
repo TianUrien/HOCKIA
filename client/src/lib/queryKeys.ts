@@ -54,4 +54,25 @@ export const qk = {
   opportunityAlerts: (userId: string | null) => ['opportunities', 'alerts', userId] as const,
   /** Notification feed page for the bell (notifications store). */
   profileNotifications: (userId: string | null) => ['notifications', 'feed', userId] as const,
+  /** Featured community rail (TopCommunityMembersCarousel) — params collapse
+   *  to one string segment so the whole family shares a prefix. */
+  topCommunity: (params: string) => ['community', 'top-rail', params] as const,
+  /** Total community member count for the "N members" line (PeopleListView). */
+  communityCount: (role: string, testScope: string) =>
+    ['community', 'count', role, testScope] as const,
+  /** Filtered community member pool (PeopleListView.fetchMembers). */
+  communityMembers: (viewerScope: string, paramsJson: string) =>
+    ['community', 'members', viewerScope, paramsJson] as const,
+  /** Free-text community search page (PeopleListView.performServerSearch). */
+  communitySearch: (viewerScope: string, roleKey: string, query: string) =>
+    ['community', 'search', viewerScope, roleKey, query] as const,
+  /** Open vacancies feed with joins (OpportunitiesPage). */
+  openVacancies: (testScope: string, filterKey: string) =>
+    ['opportunities', 'open-feed', testScope, filterKey] as const,
+  /** Vacancy ids the user has applied to (OpportunitiesPage). */
+  userApplications: (userId: string | null) =>
+    ['applications', 'applied-ids', userId] as const,
+  /** Conversation list page keyed by pagination cursor (MessagesPage). */
+  conversations: (userId: string | null, cursor: string) =>
+    ['conversations', 'page', userId, cursor] as const,
 }

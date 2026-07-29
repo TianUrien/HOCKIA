@@ -11,7 +11,8 @@ import type { ChatMessageEvent, ConversationOrigin } from '@/types/chat'
 import Header from '@/components/Header'
 import { ConversationSkeleton } from '@/components/Skeleton'
 import { NewMessageModal } from '@/components'
-import { requestCache } from '@/lib/requestCache'
+import { queryClient } from '@/lib/queryClient'
+import { qk } from '@/lib/queryKeys'
 import { monitor } from '@/lib/monitor'
 import { logger } from '@/lib/logger'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
@@ -161,7 +162,10 @@ export default function MessagesPage() {
 
     const safeLimit = CONVERSATIONS_PAGE_SIZE
     const cursor = options?.cursor ?? null
-    const cacheKey = `conversations-${user.id}-${cursor?.lastMessageAt ?? 'root'}-${cursor?.conversationId ?? 'root'}`
+    const queryKey = qk.conversations(
+      user.id,
+      `${cursor?.lastMessageAt ?? 'root'}-${cursor?.conversationId ?? 'root'}`,
+    )
 
     if (options?.append) {
       setIsFetchingMoreConversations(true)
@@ -172,15 +176,18 @@ export default function MessagesPage() {
 
     await monitor.measure('fetch_conversations', async () => {
       if (options?.force) {
-        requestCache.invalidate(cacheKey)
-        logger.debug('Forcing conversations refresh', { cacheKey })
+        logger.debug('Forcing conversations refresh', { queryKey })
       }
 
       try {
         setError(null)
-        const rows = await requestCache.dedupe(
-          cacheKey,
-          async () => {
+        // staleTime 0 on force gives a fresh fetch that still joins any
+        // in-flight request; otherwise pages stay warm for 60s.
+        const rows = await queryClient.fetchQuery({
+          queryKey,
+          staleTime: options?.force ? 0 : 60_000,
+          retry: false,
+          queryFn: async () => {
             let data: ConversationRpcRow[] = []
             let lastError: unknown = null
             const maxAttempts = 3
@@ -217,8 +224,7 @@ export default function MessagesPage() {
 
             return data as ConversationRpcRow[] | null
           },
-          60000
-        )
+        })
 
         const safeRows = rows ?? []
 
@@ -700,7 +706,11 @@ export default function MessagesPage() {
       )
 
       if (user?.id) {
-        requestCache.invalidate(`conversations-${user.id}`)
+        // Prefix invalidation covers every cursor page. (The old
+        // requestCache.invalidate('conversations-<uid>') was an
+        // exact-string delete that never matched the cursor-suffixed
+        // keys — a silent no-op this migration fixes.)
+        void queryClient.invalidateQueries({ queryKey: ['conversations', 'page', user.id] })
       }
     },
     [user?.id]

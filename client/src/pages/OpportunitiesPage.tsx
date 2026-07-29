@@ -13,7 +13,8 @@ import CreateOpportunityModal from '../components/CreateOpportunityModal'
 import Button from '../components/Button'
 import { OpportunityCardSkeleton } from '../components/Skeleton'
 import { OpportunitiesListJsonLd } from '../components/OpportunityJsonLd'
-import { requestCache } from '@/lib/requestCache'
+import { queryClient } from '@/lib/queryClient'
+import { qk } from '@/lib/queryKeys'
 import { monitor } from '@/lib/monitor'
 import { logger } from '@/lib/logger'
 import { useOpportunityNotifications } from '@/hooks/useOpportunityNotifications'
@@ -262,15 +263,17 @@ export default function OpportunitiesPage() {
     setFetchError(null)
 
     const filterKey = `${filters.role}-${filters.gender}-${filters.position}-${filters.euPassport}`
-    const cacheKey = isCurrentUserTestAccount ? `open-vacancies-test-${filterKey}` : `open-vacancies-${filterKey}`
-
-    if (options?.skipCache) requestCache.invalidate(cacheKey)
+    const queryKey = qk.openVacancies(isCurrentUserTestAccount ? 'test' : 'std', filterKey)
 
     await monitor.measure('fetch_vacancies', async () => {
       try {
-        const { vacanciesData, clubsMap, wcMap } = await requestCache.dedupe(
-          cacheKey,
-          async () => {
+        // staleTime 0 on skipCache forces a fresh fetch while still
+        // joining an in-flight one; otherwise 5s absorbs mount bursts.
+        const { vacanciesData, clubsMap, wcMap } = await queryClient.fetchQuery({
+          queryKey,
+          staleTime: options?.skipCache ? 0 : 5_000,
+          retry: false,
+          queryFn: async () => {
             let query = supabase
               .from('opportunities')
               .select(`
@@ -346,8 +349,7 @@ export default function OpportunitiesPage() {
 
             return { vacanciesData: filteredVacancies, clubsMap, wcMap }
           },
-          options?.skipCache ? 0 : 5000
-        )
+        })
 
         setVacancies((vacanciesData as Vacancy[]) || [])
         // Responsiveness badges (Task 2): one tiny batch query per page —
@@ -370,13 +372,13 @@ export default function OpportunitiesPage() {
     if (!user || (profile?.role !== 'player' && profile?.role !== 'coach')) return
 
     await monitor.measure('fetch_user_applications', async () => {
-      const cacheKey = `user-applications-${user.id}`
       const shouldSkipCache = options?.skipCache === true
       try {
-        if (shouldSkipCache) requestCache.invalidate(cacheKey)
-        const appliedVacancyIds = await requestCache.dedupe(
-          cacheKey,
-          async () => {
+        const appliedVacancyIds = await queryClient.fetchQuery({
+          queryKey: qk.userApplications(user.id),
+          staleTime: shouldSkipCache ? 0 : 30_000,
+          retry: false,
+          queryFn: async () => {
             const { data, error } = await supabase
               .from('opportunity_applications')
               .select('opportunity_id')
@@ -384,8 +386,7 @@ export default function OpportunitiesPage() {
             if (error) throw error
             return (data as { opportunity_id: string }[])?.map(app => app.opportunity_id) || []
           },
-          shouldSkipCache ? 0 : 30000
-        )
+        })
         setUserApplications(appliedVacancyIds)
       } catch (error) {
         logger.error('Error fetching user applications:', error)

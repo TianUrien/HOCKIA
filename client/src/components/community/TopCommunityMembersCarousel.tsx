@@ -9,7 +9,8 @@ import { CandidatePreviewSheet } from '../recruiting/CandidatePreviewSheet'
 import type { Profile } from './PeopleListView'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
-import { requestCache } from '@/lib/requestCache'
+import { queryClient } from '@/lib/queryClient'
+import { qk } from '@/lib/queryKeys'
 import { isAuthExpiredError } from '@/lib/sentryHelpers'
 import { useAuthStore } from '@/lib/auth'
 
@@ -399,10 +400,15 @@ export function TopCommunityMembersCarousel({
       // it, we hand back cached rows synchronously and never flip
       // `loading` to true (which is what the user previously saw as
       // a second skeleton flash).
-      const cacheKey = `top-community-${roleFilter ?? 'any'}-${sortCriterion}-${limit}-${onlyOpen ? 'open' : 'all'}-${filterCategoryKey}-${showEvidence ? 'ev' : 'noev'}`
-      const cached = requestCache.peek<TopMemberRow[]>(cacheKey)
-      if (cached) {
-        setMembers(cached)
+      const queryKey = qk.topCommunity(
+        `${roleFilter ?? 'any'}-${sortCriterion}-${limit}-${onlyOpen ? 'open' : 'all'}-${filterCategoryKey}-${showEvidence ? 'ev' : 'noev'}`,
+      )
+      const cachedState = queryClient.getQueryState<TopMemberRow[]>(queryKey)
+      if (
+        cachedState?.data !== undefined &&
+        Date.now() - cachedState.dataUpdatedAt < 30_000
+      ) {
+        setMembers(cachedState.data)
         setLoading(false)
         return
       }
@@ -419,9 +425,11 @@ export function TopCommunityMembersCarousel({
             ? Math.min(100, limit * 2)
             : limit
 
-        const rows = await requestCache.dedupe<TopMemberRow[]>(
-          cacheKey,
-          async () => {
+        const rows = await queryClient.fetchQuery({
+          queryKey,
+          staleTime: 30_000, // survives StrictMode double-invoke + replay
+          retry: false,
+          queryFn: async (): Promise<TopMemberRow[]> => {
             const { data, error: rpcError } = await supabase.rpc('get_top_community_members', {
               p_role: roleFilter ?? undefined,
               p_limit: fetchLimit,
@@ -471,8 +479,7 @@ export function TopCommunityMembersCarousel({
             }
             return sliced
           },
-          30000, // 30s cache — survives StrictMode double-invoke + replay
-        )
+        })
         if (cancelled) return
         setMembers(rows)
       } catch (err) {
