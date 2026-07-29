@@ -5,7 +5,8 @@ import { isUniqueViolationError } from '@/lib/supabaseErrors'
 import { monitor } from '@/lib/monitor'
 import { logger } from '@/lib/logger'
 import { withRetry } from '@/lib/retry'
-import { requestCache, generateCacheKey } from '@/lib/requestCache'
+import { queryClient } from '@/lib/queryClient'
+import { qk } from '@/lib/queryKeys'
 import { useToastStore } from '@/lib/toast'
 import { useUnreadStore } from '@/lib/unread'
 import { loadMessageDraft, saveMessageDraft, clearMessageDraft } from '@/lib/messageDrafts'
@@ -336,7 +337,6 @@ export function useChat({
     pendingReadIdsRef.current.clear()
     const optimisticIds = new Set(pendingIds)
     const now = new Date().toISOString()
-    const cacheKey = generateCacheKey('unread_count', { userId: currentUserId })
     let latestPendingSentAt: string | null = null
 
     messagesRef.current.forEach(msg => {
@@ -375,7 +375,9 @@ export function useChat({
           onConversationRead(conversation.id)
         }
 
-        requestCache.invalidate(cacheKey)
+        // Mark the unread-count cache stale so the store's next fetch
+        // (below and on any later mount burst) hits the network.
+        void queryClient.invalidateQueries({ queryKey: qk.unreadCount(currentUserId) })
         if (onMessageSent && pendingIds.length > 0 && conversation.id) {
           onMessageSent({
             type: 'read',

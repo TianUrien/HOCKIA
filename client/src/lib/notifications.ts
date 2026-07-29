@@ -1,7 +1,8 @@
 import { create } from 'zustand'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 import { supabase } from './supabase'
-import { requestCache, generateCacheKey } from './requestCache'
+import { queryClient } from './queryClient'
+import { qk } from './queryKeys'
 import { logger } from './logger'
 import { invalidateFriendshipEdges } from '@/hooks/friendshipEdgeCache'
 import {
@@ -138,23 +139,25 @@ let inFlightInit: Promise<void> | null = null
 let inFlightInitUserId: string | null = null
 
 const fetchNotifications = async (userId: string, options?: RefreshOptions): Promise<NotificationRecord[]> => {
-  const cacheKey = generateCacheKey('profile_notifications', { userId })
-  if (options?.bypassCache) {
-    requestCache.invalidate(cacheKey)
-  }
-
-  return await requestCache.dedupe(cacheKey, async () => {
-    try {
-      return await fetchNotificationsPage({
-        filter: 'all',
-        limit: NOTIFICATION_LIMIT,
-        offset: 0,
-      })
-    } catch (error) {
-      logger.error('[NOTIFICATIONS] Failed to fetch notifications', error)
-      return []
-    }
-  }, 3000)
+  // staleTime 0 on bypass forces a fresh fetch while still joining an
+  // in-flight one; otherwise a 3s window absorbs mount bursts.
+  return await queryClient.fetchQuery({
+    queryKey: qk.profileNotifications(userId),
+    staleTime: options?.bypassCache ? 0 : 3_000,
+    retry: false,
+    queryFn: async () => {
+      try {
+        return await fetchNotificationsPage({
+          filter: 'all',
+          limit: NOTIFICATION_LIMIT,
+          offset: 0,
+        })
+      } catch (error) {
+        logger.error('[NOTIFICATIONS] Failed to fetch notifications', error)
+        return []
+      }
+    },
+  })
 }
 
 const extractCommentId = (notification: NotificationRecord): string | null => {

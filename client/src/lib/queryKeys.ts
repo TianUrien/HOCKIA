@@ -48,4 +48,10 @@ export const qk = {
     ['world-club-logos', 'batch', sortedIds.join(',')] as const,
   /** Club Pulse availability-ranked candidate pool (useScopedMatches). */
   clubPulsePool: (role: 'player' | 'coach') => ['club-pulse', 'pool', role] as const,
+  /** Unread message count (unread store; invalidated by useChat read receipts). */
+  unreadCount: (userId: string | null) => ['unread', 'count', userId] as const,
+  /** Unseen opportunity alerts count (opportunityNotifications store). */
+  opportunityAlerts: (userId: string | null) => ['opportunities', 'alerts', userId] as const,
+  /** Notification feed page for the bell (notifications store). */
+  profileNotifications: (userId: string | null) => ['notifications', 'feed', userId] as const,
 }

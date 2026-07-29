@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { supabase } from './supabase'
-import { requestCache, generateCacheKey } from './requestCache'
+import { queryClient } from './queryClient'
+import { qk } from './queryKeys'
 import { monitor } from './monitor'
 import { logger } from './logger'
 
@@ -35,18 +36,17 @@ interface OpportunityNotificationState {
 let refreshInterval: ReturnType<typeof setInterval> | null = null
 
 const fetchOpportunityCount = async (userId: string, options?: RefreshOptions): Promise<number> => {
-  const cacheKey = generateCacheKey('opportunity_alerts', { userId })
-  if (options?.bypassCache) {
-    requestCache.invalidate(cacheKey)
-  }
-
   try {
     const count = await monitor.measure(
       'fetch_opportunity_alerts',
       async () => {
-        return await requestCache.dedupe(
-          cacheKey,
-          async () => {
+        // staleTime 0 on bypass forces a fresh fetch while still joining
+        // an in-flight one; otherwise a 5s window absorbs mount bursts.
+        return await queryClient.fetchQuery({
+          queryKey: qk.opportunityAlerts(userId),
+          staleTime: options?.bypassCache ? 0 : 5_000,
+          retry: false,
+          queryFn: async () => {
             const { data, error } = await supabase.rpc('get_opportunity_alerts')
 
             if (error) {
@@ -69,8 +69,7 @@ const fetchOpportunityCount = async (userId: string, options?: RefreshOptions): 
 
             return 0
           },
-          5000
-        )
+        })
       },
       { userId }
     )

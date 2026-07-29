@@ -1,7 +1,8 @@
 import { create } from 'zustand'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 import { supabase } from './supabase'
-import { requestCache, generateCacheKey } from './requestCache'
+import { queryClient } from './queryClient'
+import { qk } from './queryKeys'
 import { monitor } from './monitor'
 import { logger } from './logger'
 
@@ -24,16 +25,15 @@ interface UnreadState {
 }
 
 const fetchUnreadCount = async (userId: string, options?: RefreshOptions): Promise<number> => {
-  const cacheKey = generateCacheKey('unread_count', { userId })
-  if (options?.bypassCache) {
-    requestCache.invalidate(cacheKey)
-  }
-
   try {
     const count = await monitor.measure('fetch_unread_count', async () => {
-      return await requestCache.dedupe(
-        cacheKey,
-        async () => {
+      // staleTime 0 on bypass forces a fresh fetch while still joining an
+      // in-flight one; otherwise a 5s window absorbs mount bursts.
+      return await queryClient.fetchQuery({
+        queryKey: qk.unreadCount(userId),
+        staleTime: options?.bypassCache ? 0 : 5_000,
+        retry: false,
+        queryFn: async () => {
           const { data, error } = await supabase
             .from('user_unread_counts_secure')
             .select('unread_count')
@@ -46,8 +46,7 @@ const fetchUnreadCount = async (userId: string, options?: RefreshOptions): Promi
 
           return data?.unread_count ?? 0
         },
-        5000
-      )
+      })
     }, { userId })
 
     return count
