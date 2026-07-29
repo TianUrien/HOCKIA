@@ -1,6 +1,20 @@
 /**
  * Request Deduplication & Caching
  * Prevents duplicate API calls for the same data within a short time window
+ *
+ * STATUS (2026-07-29, requestCache → React Query migration): RETIRED for
+ * general use — every data-fetch surface now goes through React Query
+ * (see lib/queryKeys.ts). The ONLY remaining consumers, kept deliberately:
+ *
+ *   - lib/publicProfileCache.ts + the three Public*Profile pages: the
+ *     block-gating fence (dual id/username seeded keys, safeSeed
+ *     freshness rules, rememberBlockedPair) is security-relevant and
+ *     tightly coupled to auth-store busting — it migrates as its own
+ *     carefully-tested pass, not as a mechanical sweep.
+ *   - lib/auth.ts: busts those same fence keys on profile edit/logout.
+ *
+ * Do NOT add new call sites — new fetches belong on React Query with a
+ * key in lib/queryKeys.ts.
  */
 
 import { logger } from './logger'
