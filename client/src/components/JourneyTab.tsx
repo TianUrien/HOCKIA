@@ -29,6 +29,8 @@ import ConfirmDialog from './ConfirmDialog'
 import Skeleton from './Skeleton'
 import StorageImage from './StorageImage'
 import WorldClubSearch, { type WorldClubSearchResult } from './WorldClubSearch'
+import CountrySelect from './CountrySelect'
+import { useCountries } from '@/hooks/useCountries'
 
 type EditableJourneyEntry = Omit<
   CareerHistory,
@@ -164,6 +166,9 @@ const createEmptyJourneyEntry = (userId: string): EditableJourneyEntry => ({
   description: '',
   image_url: null,
   world_club_id: null,
+  represented_country_id: null,
+  represented_level: null,
+  caps: null,
   display_order: 0,
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
@@ -202,6 +207,7 @@ export default function JourneyTab({
   variant = 'tab',
   title = 'Career History',
 }: JourneyTabProps) {
+  const { getCountryById } = useCountries()
   const { user } = useAuthStore()
   const { addToast } = useToastStore()
   const targetUserId = profileId || user?.id
@@ -713,6 +719,12 @@ export default function JourneyTab({
       description: activeEntryDraft.description,
       image_url: activeEntryDraft.image_url,
       world_club_id: entryType === 'club' ? (activeEntryDraft.world_club_id ?? null) : null,
+      // Structured international experience (2026-07-29) — only meaningful
+      // on Representative Team entries; nulled elsewhere so switching an
+      // entry's type can't leave a stale country behind.
+      represented_country_id: entryType === 'national_team' ? (activeEntryDraft.represented_country_id ?? null) : null,
+      represented_level: entryType === 'national_team' ? (activeEntryDraft.represented_level ?? null) : null,
+      caps: entryType === 'national_team' ? (activeEntryDraft.caps ?? null) : null,
       display_order: isCreating ? computeDisplayOrder() : activeEntryDraft.display_order,
     }
 
@@ -901,6 +913,61 @@ export default function JourneyTab({
               placeholder="Hoofdklasse"
             />
           </div>
+
+          {/* Structured international experience — Representative Team only.
+              The country picked here is what makes the entry findable by
+              Hockia AI as VERIFIED ("played for the Argentina national
+              team") even when the title never names the country. */}
+          {entry.entry_type === 'national_team' && (
+            <div className="rounded-xl border border-emerald-100 bg-emerald-50/40 p-4 space-y-3">
+              <p className="text-sm font-medium text-gray-800">
+                Country represented
+                <span className="ml-2 text-xs font-normal text-gray-600">
+                  Makes this entry verifiable in search
+                </span>
+              </p>
+              <CountrySelect
+                value={entry.represented_country_id}
+                onChange={(id) => updateField('represented_country_id', id)}
+                placeholder="Select the country you represented"
+              />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor={`journey-level-${entry.id}`} className="text-sm font-medium text-gray-700">
+                    Level
+                  </label>
+                  <select
+                    id={`journey-level-${entry.id}`}
+                    value={entry.represented_level ?? ''}
+                    onChange={(event) => updateField('represented_level', event.target.value || null)}
+                    className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2.5 bg-white focus:border-transparent focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="">Not specified</option>
+                    <option value="senior">Senior</option>
+                    <option value="junior">Junior (U14–U23)</option>
+                    <option value="masters">Masters</option>
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor={`journey-caps-${entry.id}`} className="text-sm font-medium text-gray-700">
+                    Caps <span className="font-normal text-gray-600">(optional)</span>
+                  </label>
+                  <input
+                    id={`journey-caps-${entry.id}`}
+                    type="number"
+                    min={0}
+                    value={entry.caps ?? ''}
+                    onChange={(event) => {
+                      const n = parseInt(event.target.value, 10)
+                      updateField('caps', Number.isFinite(n) && n >= 0 ? n : null)
+                    }}
+                    className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-transparent focus:ring-2 focus:ring-indigo-500"
+                    placeholder="12"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
 
           <div>
             <label htmlFor={`journey-city-${entry.id}`} className="text-sm font-medium text-gray-700">
@@ -1328,6 +1395,27 @@ export default function JourneyTab({
                                   {[entry.position_role, entry.division_league].filter(Boolean).join(' · ')}
                                 </p>
                               )}
+                              {entry.entry_type === 'national_team' && entry.represented_country_id != null && (() => {
+                                const c = getCountryById(entry.represented_country_id)
+                                if (!c) return null
+                                const levelLabel = entry.represented_level === 'junior'
+                                  ? 'Junior' : entry.represented_level === 'masters' ? 'Masters'
+                                  : entry.represented_level === 'senior' ? 'Senior' : null
+                                return (
+                                  <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-sm leading-normal text-gray-600">
+                                    <span aria-hidden="true">{c.flag_emoji}</span>
+                                    <span>{c.name}</span>
+                                    {levelLabel && (
+                                      <span className="inline-flex items-center rounded-full bg-emerald-50 px-1.5 py-0.5 text-[11px] font-semibold text-emerald-700">
+                                        {levelLabel}
+                                      </span>
+                                    )}
+                                    {entry.caps != null && entry.caps > 0 && (
+                                      <span className="text-xs text-gray-500">{entry.caps} caps</span>
+                                    )}
+                                  </p>
+                                )
+                              })()}
                             </div>
                           </div>
 

@@ -1163,6 +1163,9 @@ export type Database = {
       career_history: {
         Row: {
           badge_label: string | null
+          caps: number | null
+          represented_country_id: number | null
+          represented_level: string | null
           club_name: string
           created_at: string
           description: string | null
@@ -1184,6 +1187,9 @@ export type Database = {
         }
         Insert: {
           badge_label?: string | null
+          caps?: number | null
+          represented_country_id?: number | null
+          represented_level?: string | null
           club_name: string
           created_at?: string
           description?: string | null
@@ -1205,6 +1211,9 @@ export type Database = {
         }
         Update: {
           badge_label?: string | null
+          caps?: number | null
+          represented_country_id?: number | null
+          represented_level?: string | null
           club_name?: string
           created_at?: string
           description?: string | null

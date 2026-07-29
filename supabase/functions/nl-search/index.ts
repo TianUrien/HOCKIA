@@ -2837,8 +2837,26 @@ Deno.serve(async (req) => {
 
       let countryRows: any[] = []
       let tournamentRows: any[] = []
+      if (wantCountry && intlCountryIds?.length) {
+        // STRUCTURED pass first (2026-07-29): entries whose country was set
+        // via the Journey editor's picker (or the conservative backfill)
+        // match by ID — no text parsing, no aliases, works even when the
+        // entry title never names the country ("The Lionesses").
+        const { data: structured } = await adminClient.from('career_history')
+          .select('user_id, club_name, badge_label, division_league, years, represented_level')
+          .eq('entry_type', 'national_team')
+          .in('represented_country_id', intlCountryIds)
+        countryRows = (structured ?? []) as any[]
+      }
       if (wantCountry && intlAliasPatterns.length) {
-        countryRows = await fetchCareerRows(['national_team'], intlAliasPatterns, 'name_badge')
+        // LEGACY text fallback for rows without a structured country.
+        const textRows = await fetchCareerRows(['national_team'], intlAliasPatterns, 'name_badge')
+        // Dedupe by user: structured rows already claimed their users, and
+        // the label prefers the structured entry.
+        const seen = new Set(countryRows.map((r) => r.user_id as string))
+        for (const r of textRows) {
+          if (!seen.has(r.user_id)) countryRows.push(r)
+        }
       }
       if (wantTournament) {
         // Tier-7 domestic leagues (Hockey One, Hoofdklasse…) are CLUB
@@ -2860,6 +2878,13 @@ Deno.serve(async (req) => {
 
       const rowText = (r: any) => `${r.club_name ?? ''} ${r.badge_label ?? ''} ${r.division_league ?? ''}`
       const applyLevel = (rows: any[]) => rows.filter((r) => {
+        // Structured level (Journey picker / backfill) wins over text
+        // sniffing; masters stays senior-eligible but gets labelled below.
+        if (r.represented_level) {
+          if (ie.level === 'junior') return r.represented_level === 'junior'
+          if (ie.level === 'senior') return r.represented_level !== 'junior'
+          return true
+        }
         const lvl = rowTextLevel(rowText(r))
         if (ie.level === 'junior') return lvl.junior
         if (ie.level === 'senior') return !lvl.junior
@@ -2878,7 +2903,8 @@ Deno.serve(async (req) => {
         const uid = r.user_id as string
         if (!verifiedIds.has(uid) || intlVerifiedLabel.has(uid)) continue
         const lvl = rowTextLevel(rowText(r))
-        const label = `${(r.club_name ?? '').trim()}${r.years ? ' · ' + r.years : ''}${lvl.masters ? ' · Masters' : ''}`
+        const isMasters = r.represented_level === 'masters' || lvl.masters
+        const label = `${(r.club_name ?? '').trim()}${r.years ? ' · ' + r.years : ''}${isMasters ? ' · Masters' : ''}`
         intlVerifiedLabel.set(uid, label)
         intlProvenance.set(uid, 'verified')
       }
