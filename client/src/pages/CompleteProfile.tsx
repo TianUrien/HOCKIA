@@ -13,7 +13,7 @@ import { logger } from '@/lib/logger'
 import { optimizeAvatarImage, validateImage } from '@/lib/imageOptimization'
 import { getImageUrl } from '@/lib/imageUrl'
 import { invalidateProfile } from '@/lib/profile'
-import { deleteStorageObject } from '@/lib/storage'
+import { usePendingStorageCleanup } from '@/hooks/usePendingStorageCleanup'
 import { isNativePlatform, pickImageNative } from '@/lib/nativeImagePicker'
 import { toSentryError } from '@/lib/sentryHelpers'
 import { trackOnboardingComplete, trackOnboardingStart, trackRoleSelected } from '@/lib/analytics'
@@ -65,6 +65,9 @@ export default function CompleteProfile() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [avatarUrl, setAvatarUrl] = useState<string>(profile?.avatar_url || '')
+  // Replaced avatars are deleted only after the profile row is saved — see
+  // the hook's header for the prod incident this prevents.
+  const pendingCleanup = usePendingStorageCleanup()
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   // Hydrate from localStorage synchronously on first render. Reading these in
   // a useEffect (as we did before) caused a 1-frame flash of the inline
@@ -625,9 +628,12 @@ export default function CompleteProfile() {
 
       const previousUrl = avatarUrl || profile?.avatar_url || null
       setAvatarUrl(publicUrl)
+      // Deferred: onboarding is abandonable at any step, and the profile row
+      // still references the old object until the final submit lands.
       if (previousUrl && previousUrl !== publicUrl) {
-        await deleteStorageObject({ bucket: 'avatars', publicUrl: previousUrl, context: 'complete-profile:replace-avatar' })
+        pendingCleanup.queue({ bucket: 'avatars', publicUrl: previousUrl, context: 'complete-profile:replace-avatar' })
       }
+      pendingCleanup.unqueue(publicUrl)
       logger.info('Avatar uploaded successfully')
       trackDbEvent('onboarding_step', 'profile', user.id, { step: 'avatar_uploaded' })
     } catch (err) {
@@ -1065,6 +1071,9 @@ export default function CompleteProfile() {
 
       // CRITICAL: Refresh the auth store so dependent routes pick up the update
       await invalidateProfile({ userId: user.id, reason: 'complete-profile' })
+
+      // Row is saved and verified — safe to drop the objects it replaced.
+      await pendingCleanup.flush()
 
       logger.debug('Auth store refreshed - profile now complete')
       localStorage.setItem('hockia-onboarding-completed', '1')

@@ -18,6 +18,7 @@
  * bands so chip + bar + % can never disagree, with a hard `pass → Out of
  * scope` cap for wrong-fit candidates.
  */
+import { useState } from 'react'
 import { Check, Minus, AlertCircle, ShieldCheck } from 'lucide-react'
 import { DualNationalityDisplay, RoleBadge } from '@/components'
 import { getImageUrl } from '@/lib/imageUrl'
@@ -288,7 +289,12 @@ export default function RecruiterCandidateCard({ member, verdict, onPreview, pri
   // Brand hero prefers the brand logo (contained, never cropped); everyone else
   // uses their avatar (cover-cropped).
   const rawHero = isBrand ? member.brand_logo_url ?? member.avatar_url : member.avatar_url
-  const heroImageUrl = rawHero ? getImageUrl(rawHero, 'avatar-md') : null
+  // A URL that 404s (e.g. a profile row still pointing at a replaced file)
+  // used to render the browser's broken-image glyph here, while a NULL url
+  // fell back to initials — so a broken avatar looked worse than no avatar.
+  // Treat a failed load as "no image" and take the same initials path.
+  const [heroFailed, setHeroFailed] = useState(false)
+  const heroImageUrl = rawHero && !heroFailed ? getImageUrl(rawHero, 'avatar-md') : null
 
   const isOnline = member.last_active_at
     ? Date.now() - new Date(member.last_active_at).getTime() < ONLINE_WINDOW_MS
@@ -352,6 +358,7 @@ export default function RecruiterCandidateCard({ member, verdict, onPreview, pri
                 loading={priority ? 'eager' : 'lazy'}
                 fetchPriority={priority ? 'high' : undefined}
                 decoding="async"
+                onError={() => setHeroFailed(true)}
               />
             ) : (
               <div className={`flex h-full w-full items-center justify-center text-[15px] font-semibold ${tintFor(name)}`}>

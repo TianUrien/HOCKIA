@@ -23,6 +23,7 @@ import { useToastStore } from '@/lib/toast'
 import { optimizeImage, generateThumbnail, validateImage } from '@/lib/imageOptimization'
 import type { CareerHistory } from '@/lib/supabase'
 import { deleteStorageObject, extractStoragePath } from '@/lib/storage'
+import { usePendingStorageCleanup } from '@/hooks/usePendingStorageCleanup'
 import { logger } from '@/lib/logger'
 import Button from './Button'
 import ConfirmDialog from './ConfirmDialog'
@@ -222,6 +223,9 @@ export default function JourneyTab({
   const [formErrors, setFormErrors] = useState<Record<string, string>>({})
   const [savingEntryId, setSavingEntryId] = useState<string | 'new-entry' | null>(null)
   const [uploadingImageId, setUploadingImageId] = useState<string | null>(null)
+  // Replaced/removed entry images are deleted only after the row is saved —
+  // see the hook's header for the prod incident this prevents.
+  const pendingCleanup = usePendingStorageCleanup()
   const [activeDraftContext, setActiveDraftContext] = useState<JourneyDraftContext | null>(null)
   // Target for the in-app delete confirmation. Replaces window.confirm
   // (unreliable inside iOS PWAs / mobile-emulated Chrome).
@@ -613,14 +617,18 @@ export default function JourneyTab({
       const previousUrl = activeEntryDraft.image_url
       updateField('image_url', data.publicUrl as EditableJourneyEntry['image_url'])
 
+      // Queue the old full image + thumbnail; they are deleted only once the
+      // career_history row actually references the new one. Deleting here
+      // would break the entry's image for anyone who closes the editor
+      // without saving (the row still points at the old object).
       if (previousUrl && previousUrl !== data.publicUrl) {
-        // Clean up old full image + old thumbnail
-        await deleteStorageObject({ bucket: JOURNEY_BUCKET, publicUrl: previousUrl, context: 'journey:replace-image' })
+        pendingCleanup.queue({ bucket: JOURNEY_BUCKET, publicUrl: previousUrl, context: 'journey:replace-image' })
         const oldThumbUrl = deriveThumbUrl(previousUrl)
         if (oldThumbUrl !== previousUrl) {
-          deleteStorageObject({ bucket: JOURNEY_BUCKET, publicUrl: oldThumbUrl, context: 'journey:replace-thumb' })
+          pendingCleanup.queue({ bucket: JOURNEY_BUCKET, publicUrl: oldThumbUrl, context: 'journey:replace-thumb' })
         }
       }
+      pendingCleanup.unqueue(data.publicUrl)
 
       addToast('Image uploaded successfully.', 'success')
     } catch (error) {
@@ -644,11 +652,12 @@ export default function JourneyTab({
 
     try {
       if (activeEntryDraft.image_url) {
-        await deleteStorageObject({ bucket: JOURNEY_BUCKET, publicUrl: activeEntryDraft.image_url, context: 'journey:remove-image' })
-        // Best-effort thumbnail cleanup
+        // Same deferral as replace: "Remove" only clears the draft field, so
+        // the saved row still points at this object until the user saves.
+        pendingCleanup.queue({ bucket: JOURNEY_BUCKET, publicUrl: activeEntryDraft.image_url, context: 'journey:remove-image' })
         const thumbUrl = deriveThumbUrl(activeEntryDraft.image_url)
         if (thumbUrl !== activeEntryDraft.image_url) {
-          deleteStorageObject({ bucket: JOURNEY_BUCKET, publicUrl: thumbUrl, context: 'journey:remove-thumb' })
+          pendingCleanup.queue({ bucket: JOURNEY_BUCKET, publicUrl: thumbUrl, context: 'journey:remove-thumb' })
         }
       }
 
@@ -743,6 +752,8 @@ export default function JourneyTab({
       }
 
       await fetchJourney()
+      // Row now references the new image — safe to drop what it replaced.
+      await pendingCleanup.flush()
       resetFormState()
       addToast('Entry saved.', 'success')
     } catch (error) {

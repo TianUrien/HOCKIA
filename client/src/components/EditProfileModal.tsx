@@ -15,7 +15,7 @@ import { useFocusTrap } from '@/hooks/useFocusTrap'
 import { useCountries } from '@/hooks/useCountries'
 import { invalidateProfile } from '@/lib/profile'
 import { useToastStore } from '@/lib/toast'
-import { deleteStorageObject } from '@/lib/storage'
+import { usePendingStorageCleanup } from '@/hooks/usePendingStorageCleanup'
 import { isNativePlatform, pickImageNative } from '@/lib/nativeImagePicker'
 import { toSentryError } from '@/lib/sentryHelpers'
 import { clearProfileDraft, loadProfileDraft, saveProfileDraft } from '@/lib/profileDrafts'
@@ -358,6 +358,9 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
   const modalOpenRef = useRef(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  // Replaced avatar objects are deleted only after the DB write lands — see
+  // the hook's header for the prod incident this prevents.
+  const pendingCleanup = usePendingStorageCleanup()
   const titleId = useId()
   const activeProfileId = profile?.id ?? null
 
@@ -616,9 +619,13 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
 
       const previousUrl = formData.avatar_url || profile.avatar_url || null
       setFormData(prev => ({ ...prev, avatar_url: publicUrl }))
+      // Deleting the old object here would break the avatar for anyone who
+      // closes this modal without saving — the profile row still points at
+      // it until handleSubmit runs. Queue it; flush after the DB write.
       if (previousUrl && previousUrl !== publicUrl) {
-        await deleteStorageObject({ bucket: 'avatars', publicUrl: previousUrl, context: 'edit-profile:replace-avatar' })
+        pendingCleanup.queue({ bucket: 'avatars', publicUrl: previousUrl, context: 'edit-profile:replace-avatar' })
       }
+      pendingCleanup.unqueue(publicUrl)
       logger.info('Avatar uploaded successfully')
     } catch (error) {
       captureOnboardingError(error, {
@@ -857,6 +864,9 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
       }
       trackDbEvent('profile_edit', 'profile', profileId, { fields: updatedFields, role })
       clearProfileDraft(profileId, role)
+      // The row now points at the new avatar — only now is it safe to delete
+      // the objects it replaced.
+      await pendingCleanup.flush()
     } catch (err) {
       captureOnboardingError(err, {
         profileId,
