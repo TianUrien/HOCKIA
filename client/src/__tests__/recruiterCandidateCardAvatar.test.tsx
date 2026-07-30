@@ -17,6 +17,33 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import RecruiterCandidateCard, { type RecruiterCardMember } from '@/components/recruiting/RecruiterCandidateCard'
 
+// The card imports the @/components barrel, which transitively pulls in
+// lib/supabase — and that module THROWS at import when Supabase env vars are
+// absent. CI's unit job has no env (the vars come from a gitignored root
+// .env.local locally), so without this mock the whole file fails to load
+// there while passing on any dev machine.
+vi.mock('@/lib/supabase', () => {
+  // Chainable no-op builder: any query method returns the builder, and
+  // awaiting it yields an empty result. Keeps this test independent of
+  // whatever the barrel's transitive imports happen to query.
+  const builder: Record<string, unknown> = {}
+  const chain = new Proxy(builder, {
+    get: (_t, prop) => {
+      if (prop === 'then') {
+        return (resolve: (v: unknown) => unknown) => Promise.resolve({ data: [], error: null }).then(resolve)
+      }
+      return () => chain
+    },
+  })
+  return {
+    supabase: {
+      from: () => chain,
+      rpc: () => chain,
+      auth: { getSession: async () => ({ data: { session: null }, error: null }) },
+    },
+  }
+})
+
 vi.mock('@/hooks/useWorldClubLogo', () => ({
   getPlayerLeagueName: () => null,
   prefetchWorldClubLogos: vi.fn(),
