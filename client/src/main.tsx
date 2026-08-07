@@ -163,6 +163,13 @@ Sentry.init({
     'Email rate limit exceeded',
     // Duplicate signup attempt — UI should already guide them to /signin
     'User already registered',
+    // Microsoft Outlook SafeLink scanner executing our JS while previewing
+    // emailed links — a well-known bot artifact, not a user (Sentry triage
+    // 2026-08-07: fired only from /community with 0 real users).
+    'Object Not Found Matching Id',
+    // React Query cancels in-flight fetches on unmount/navigation; the
+    // rejection is the mechanism working, not a failure.
+    'CancelledError',
   ],
   beforeSend(event) {
     // Scrub PII from error events before sending to Sentry
