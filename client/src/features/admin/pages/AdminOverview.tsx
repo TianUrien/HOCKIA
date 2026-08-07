@@ -42,6 +42,8 @@ import { ActivationByRoleCard } from '../components/ActivationByRoleCard'
 import { NotificationCtrCard } from '../components/NotificationCtrCard'
 import { HealthSignals } from '../components/HealthSignals'
 import { ProductHealthHero } from '../components/ProductHealthHero'
+import { EngagementOverview } from '../components/EngagementOverview'
+import { InfoTip } from '../components/InfoTip'
 import { useAdminStats } from '../hooks/useAdminStats'
 import { useCommandCenter } from '../hooks/useCommandCenter'
 import { getErrorBudgetStatus } from '@/lib/errorBudget'
@@ -208,13 +210,30 @@ export function AdminOverview() {
           subtitle={`${ccStats?.application_conversion ?? 0}% view-to-apply`}
           loading={ccLoading}
         />
-        <CommandCenterKPICard
-          label="WAU / MAU"
-          value={`${ccStats?.wau_mau_ratio ?? 0}%`}
-          subtitle="Stickiness ratio"
-          loading={ccLoading}
-        />
+        <div className="relative">
+          <CommandCenterKPICard
+            label="WAU / MAU"
+            value={`${ccStats?.wau_mau_ratio ?? 0}%`}
+            subtitle="Stickiness ratio"
+            loading={ccLoading}
+          />
+          {!ccLoading && (
+            <span className="absolute right-4 top-4">
+              <InfoTip
+                metric="stickiness"
+                align="right"
+                value={ccStats?.wau_mau_ratio ?? 0}
+                interpretation={`${ccStats?.wau_mau_ratio ?? 0}% of monthly actives came back this week — random once-a-month visits alone would give ~23%, so a real weekly habit exists.`}
+              />
+            </span>
+          )}
+        </div>
       </div>
+
+      {/* ============================================================= */}
+      {/* FOUNDER-READABLE ENGAGEMENT SECTIONS                           */}
+      {/* ============================================================= */}
+      <EngagementOverview ccStats={ccStats} days={daysFilter} loading={ccLoading} />
 
       {/* ============================================================= */}
       {/* HEALTH SIGNALS                                                 */}

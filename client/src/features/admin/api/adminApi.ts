@@ -2038,6 +2038,45 @@ export async function getCommandCenterStats(days = 30): Promise<CommandCenterSta
   return data as CommandCenterStats
 }
 
+export interface EngagementOverview {
+  new_users_period: number
+  new_users_prev: number
+  activation_cohort: number
+  activation_activated: number
+  activation_pct: number
+  profiles_complete: number
+  profiles_total: number
+  profile_completion_pct: number
+  wau: number
+  contributors_7d: number
+  contributor_pct: number
+  content_7d: {
+    photos: number
+    videos: number
+    posts: number
+    opportunities: number
+    comments: number
+    messages: number
+  }
+  north_star: {
+    players_contacted: number
+    club_conversations: number
+    applications: number
+    shortlists: number
+    invites_sent: number
+    invite_joins: number
+    filled_period: number
+    filled_all_time: number
+  }
+  generated_at: string
+}
+
+export async function getEngagementOverview(days = 30): Promise<EngagementOverview> {
+  const { data, error } = await adminRpc('admin_get_engagement_overview', { p_days: days })
+  if (error) throw new Error(`Failed to get engagement overview: ${error.message}`)
+  return data as EngagementOverview
+}
+
 export async function getRetentionCohorts(months = 3): Promise<RetentionCohort[]> {
   const { data, error } = await adminRpc('admin_get_retention_cohorts', { p_months: months })
   if (error) throw new Error(`Failed to get retention cohorts: ${error.message}`)
