@@ -45,8 +45,32 @@ export async function authenticateAs(
     auth: { autoRefreshToken: false, persistSession: false },
   })
 
-  const { data, error } = await tmp.auth.signInWithPassword({ email, password })
-  if (error) throw new Error(`Auth failed (${email}): ${error.message}`)
+  // Retry transient NETWORK failures only. This job talks to a real remote
+  // Supabase over the internet, and CI runners intermittently hit
+  // ECONNRESET / "fetch failed" mid-handshake — which failed the whole suite
+  // and trained everyone to re-run red builds (seen 2026-08-08). A genuine
+  // auth rejection ("Invalid login credentials") still fails immediately:
+  // retrying a real credential error would only mask a broken fixture.
+  let data: Awaited<ReturnType<typeof tmp.auth.signInWithPassword>>['data'] | null = null
+  let lastError: unknown = null
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    const res = await tmp.auth.signInWithPassword({ email, password }).catch((e) => {
+      // Network-layer throw (fetch failed) rather than an auth response.
+      return { data: null, error: { message: String(e?.message ?? e), status: 0 } } as never
+    })
+    if (!res.error) { data = res.data; break }
+
+    const msg = res.error.message ?? ''
+    const isTransient = /fetch failed|ECONNRESET|ETIMEDOUT|network|socket hang up|502|503|504/i.test(msg)
+    lastError = res.error
+    if (!isTransient) throw new Error(`Auth failed (${email}): ${msg}`)
+    if (attempt < 3) await new Promise((r) => setTimeout(r, attempt * 1000))
+  }
+  if (!data) {
+    throw new Error(
+      `Auth failed (${email}) after 3 attempts — transient network: ${(lastError as { message?: string })?.message}`,
+    )
+  }
   if (!data.session || !data.user) throw new Error(`No session (${email})`)
 
   // Authenticated client
