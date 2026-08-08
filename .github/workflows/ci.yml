@@ -88,7 +88,10 @@ jobs:
       # suppression-check query chains).
       - name: Run shared-module tests
         working-directory: ./supabase/functions/_shared
-        run: deno test --allow-env .
+        # --allow-read: webhook-auth.test.ts reads the sibling function
+        # sources to assert every database-webhook function still calls
+        # assertServiceRole (the 2026-08-08 regression guard).
+        run: deno test --allow-env --allow-read .
 
   unit-tests:
     name: Unit Tests
