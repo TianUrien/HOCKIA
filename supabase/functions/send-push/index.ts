@@ -2,6 +2,7 @@
 import webpush from 'npm:web-push@3.6.7'
 import { getServiceClient } from '../_shared/supabase-client.ts'
 import { corsHeaders } from '../_shared/cors.ts'
+import { assertServiceRole } from '../_shared/webhook-auth.ts'
 import { captureException } from '../_shared/sentry.ts'
 import { buildPushPayload } from './push-payload.ts'
 import { sendFcmNotification, isFcmConfigured } from './fcm.ts'
@@ -45,6 +46,12 @@ Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
+
+  // SECURITY (2026-08-08): `verify_jwt` only proves the caller sent *a* valid
+  // Supabase JWT — and the anon key is public. Database webhooks call us with a
+  // service_role token, which an attacker cannot mint. See _shared/webhook-auth.ts.
+  const unauthorized = assertServiceRole(req)
+  if (unauthorized) return unauthorized
 
   try {
     if (!hasVapid && !hasFcm && !hasApns) {
