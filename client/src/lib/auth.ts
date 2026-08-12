@@ -6,6 +6,7 @@ import type { Profile, ProfileInsert } from './supabase'
 import { supabase, AUTH_STORAGE_KEY } from './supabase'
 import { getAuthRedirectUrl } from './siteUrl'
 import { requestCache, generateCacheKey } from './requestCache'
+import { purgeStaleApiCaches } from './purgeStaleApiCaches'
 import { invalidatePublicProfileCache } from './publicProfileCache'
 import { monitor } from './monitor'
 import { logger } from './logger'
@@ -295,6 +296,14 @@ const clearLocalSession = async (reason: string, options?: ClearSessionOptions) 
   }
 
   requestCache.clear()
+
+  // Service-worker Cache Storage keys on URL alone — the Authorization header
+  // is not part of the key — so any cached /rest/v1/ response would otherwise
+  // outlive this session and could be served to the next person on a shared
+  // device. The caching rule was removed on 2026-08-08; this clears whatever
+  // already-installed devices still carry. Fire-and-forget: cache hygiene must
+  // never delay or break sign-out.
+  void purgeStaleApiCaches(reason)
 
   // React Query holds user-scoped data (Home feed + its has_liked flags,
   // search results, profile posts) under keys that carry NO user id, with a

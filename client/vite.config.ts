@@ -109,21 +109,28 @@ export default defineConfig(({ mode }) => {
                 expiration: { maxEntries: 80, maxAgeSeconds: 60 * 60 * 24 * 30 },
               },
             },
-            {
-              // Cache API calls to Supabase with network-first strategy
-              urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/v1\/.*/i,
-              handler: 'NetworkFirst',
-              options: {
-                cacheName: 'supabase-api-cache',
-                expiration: {
-                  maxEntries: 100,
-                  maxAgeSeconds: 60 * 5, // 5 minutes
-                },
-                cacheableResponse: {
-                  statuses: [0, 200],
-                },
-              },
-            },
+            // NO runtime caching of /rest/v1/ — deliberately removed 2026-08-08.
+            //
+            // It used to be NetworkFirst into a `supabase-api-cache`, which was
+            // wrong on two counts:
+            //
+            //  1) SECURITY. Cache Storage keys on URL ALONE — the Authorization
+            //     header is not part of the key. Every /rest/v1/ response is
+            //     user-scoped and authorised by the caller's JWT, so on a shared
+            //     device one account's rows could be served to the next person,
+            //     and entries survived sign-out entirely.
+            //  2) CORRECTNESS. NetworkFirst falls back to cache whenever the
+            //     network hiccups, so a list could silently render a stale
+            //     snapshot. Home reads its feed over POST (which Workbox never
+            //     caches) while lists use GET — so the two surfaces could
+            //     disagree, which is what made the 2026-08-08 "opportunity
+            //     missing from Opportunities" report ambiguous to diagnose.
+            //
+            // React Query already provides in-session caching with proper
+            // invalidation, and its cache IS cleared on logout — so nothing of
+            // value is lost. Offline reads were marginal anyway behind a
+            // 5-minute TTL that only applied on network failure. Caches left on
+            // already-installed devices are deleted by purgeStaleApiCaches().
             {
               // Cache images with cache-first strategy
               urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp)$/i,

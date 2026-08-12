@@ -8,6 +8,7 @@ import App from './App.tsx'
 import { initWebVitals } from './lib/monitor'
 import { queryClient } from './lib/queryClient'
 import { logger } from './lib/logger'
+import { purgeStaleApiCaches } from './lib/purgeStaleApiCaches'
 import { initSentryInAppBrowserContext } from './lib/sentryHelpers'
 import UpdatePrompt from './components/UpdatePrompt'
 import CookieConsent from './components/CookieConsent'
@@ -211,8 +212,13 @@ if (typeof window !== 'undefined') {
     typeof window.requestIdleCallback === 'function'
       ? window.requestIdleCallback(cb, { timeout: 4000 })
       : window.setTimeout(cb, 1500)
-  if (document.readyState === 'complete') idle(attachDeferredSentryIntegrations)
-  else window.addEventListener('load', () => idle(attachDeferredSentryIntegrations), { once: true })
+  // Devices that installed an earlier service worker still carry a populated
+  // `supabase-api-cache` holding user-scoped API responses keyed by URL alone.
+  // The caching rule is gone (vite.config.ts, 2026-08-08) but existing entries
+  // only disappear when we delete them — do it once, off the critical path.
+  const purgeOnce = () => { void purgeStaleApiCaches('startup') }
+  if (document.readyState === 'complete') idle(() => { attachDeferredSentryIntegrations(); purgeOnce() })
+  else window.addEventListener('load', () => idle(() => { attachDeferredSentryIntegrations(); purgeOnce() }), { once: true })
 }
 
 // Set up in-app browser context for all Sentry events
