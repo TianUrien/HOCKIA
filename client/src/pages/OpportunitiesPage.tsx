@@ -298,7 +298,11 @@ export default function OpportunitiesPage() {
             if (filters.position) query = query.eq('position', filters.position as NonNullable<Vacancy['position']>)
             if (filters.euPassport) query = query.eq('eu_passport_required', true)
 
+            // Order by publish date, not creation date — see the `posted`
+            // helper in the sort memo below for why. created_at is the
+            // tiebreak for rows that share (or lack) a published_at.
             const { data: vacanciesData, error: vacanciesError } = await query
+              .order('published_at', { ascending: false, nullsFirst: false })
               .order('created_at', { ascending: false })
 
             if (vacanciesError) throw vacanciesError
@@ -459,17 +463,27 @@ export default function OpportunitiesPage() {
     }
 
     const time = (d: string | null | undefined) => (d ? new Date(d).getTime() : 0)
+    // "Posted" means PUBLISHED, not created. A club can draft a listing in
+    // June and publish it in August, or republish/renew an old one — and the
+    // Home feed announces that publish event ("New Opportunity posted · 1h
+    // ago"). Sorting by created_at buried such a listing mid-list, so users
+    // followed a "new opportunity" announcement to a page that appeared not
+    // to contain it (reported 2026-08-08: a Head Coach listing created 04 Jun,
+    // published 12 Aug, sat 6th of 11). published_at is the date the card
+    // itself shows, so ordering by it is also what users expect to see.
+    const posted = (v: { published_at?: string | null; created_at: string }) =>
+      time(v.published_at ?? v.created_at)
     filtered.sort((a, b) => {
-      if (sort === 'oldest') return time(a.created_at) - time(b.created_at)
+      if (sort === 'oldest') return posted(a) - posted(b)
       if (sort === 'deadline') {
         // Soonest deadline first; opportunities with no deadline go last.
         const da = a.application_deadline ? time(a.application_deadline) : Infinity
         const db = b.application_deadline ? time(b.application_deadline) : Infinity
         if (da !== db) return da - db
-        return time(b.created_at) - time(a.created_at)
+        return posted(b) - posted(a)
       }
       // newest (default)
-      return time(b.created_at) - time(a.created_at)
+      return posted(b) - posted(a)
     })
 
     return filtered
