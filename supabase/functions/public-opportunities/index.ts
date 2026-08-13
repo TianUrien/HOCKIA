@@ -291,8 +291,12 @@ Deno.serve(async (req: Request) => {
     // publish-ordering floated every renewal to the top above genuinely new
     // listings. created_at is the stable key and matches OpportunitiesPage,
     // the admin panel, and the shipped native builds.
+    // The id tiebreak makes range() pagination deterministic: Postgres gives
+    // no stable order for rows sharing a created_at, so without it a page
+    // boundary could duplicate or skip a row for API consumers that paginate.
     dbQuery = dbQuery
       .order('created_at', { ascending: false })
+      .order('id', { ascending: false })
       .range(offset, offset + limit - 1)
 
     const { data, error, count } = await dbQuery
