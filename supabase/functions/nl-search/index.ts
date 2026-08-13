@@ -2475,6 +2475,12 @@ Deno.serve(async (req) => {
         if (data?.length) wcCountryIds = data.map((c: any) => c.id)
       }
 
+      // Set only when the directory search found nothing in the asked-for
+      // place and was widened — drives the headline and the telemetry.
+      let wcSoftening: { step: GeoSofteningStep; countryLabel: string | null } | null = null
+      let wcRegionPeers: { regionLabel: string; countryIds: number[] } | null = null
+      let wcCountryLabel: string | null = null
+
       // Resolve province names → IDs (optional).
       let wcProvinceIds: number[] | null = null
       if (wcFilters.province_names?.length) {
@@ -2532,9 +2538,84 @@ Deno.serve(async (req) => {
         wcQuery = wcQuery.or(`claimed_profile_id.is.null,claimed_profile_id.neq.${user.id}`)
       }
 
-      const { data: wcRows, error: wcErr } = await wcQuery
+      let { data: wcRows, error: wcErr } = await wcQuery
       if (wcErr) {
         captureException(wcErr, { functionName: 'nl-search', correlationId, extra: { phase: 'world_club_search' } })
+      }
+
+      // ── Geographic softening, directory edition ───────────────────────
+      // Same rule as the profile search below: a geographic zero here is
+      // usually true but useless. This is the branch "what clubs would suit
+      // me?" actually lands on, so without it the headline case still shows
+      // an empty grid. Widen province → country → region → worldwide,
+      // stopping at the first rung that finds something.
+      if (!wcErr && (wcRows?.length ?? 0) === 0) {
+        const ladderScope = {
+          countryIds: wcCountryIds?.length ? wcCountryIds : null,
+          hasSubCountry: !!wcProvinceIds?.length,
+        }
+        if (wcCountryIds?.length) {
+          const { data: searchedCountries } = await adminClient
+            .from('countries').select('id, name, region').in('id', wcCountryIds)
+          const regions = [...new Set(
+            (searchedCountries ?? []).map((c) => c.region).filter((r): r is string => !!r),
+          )]
+          wcCountryLabel = (searchedCountries ?? []).map((c) => c.name).slice(0, 2).join(' / ') || null
+          if (regions.length > 0) {
+            const { data: peers } = await adminClient
+              .from('countries').select('id').in('region', regions)
+            if (peers?.length) {
+              wcRegionPeers = { regionLabel: regions.join(' and '), countryIds: peers.map((c) => c.id) }
+            }
+          }
+        }
+
+        for (const rung of buildSofteningLadder(ladderScope, wcRegionPeers)) {
+          // Rebuild from scratch: the non-geographic filters (league, name
+          // text, self-exclusion) are re-applied verbatim, and ONLY the
+          // geography moves.
+          let retryQuery = adminClient
+            .from('world_clubs')
+            .select(`
+              id, club_name, avatar_url, is_claimed, claimed_profile_id,
+              country:countries!world_clubs_country_id_fkey(id, name, code, flag_emoji),
+              province:world_provinces!world_clubs_province_id_fkey(id, name, slug),
+              men_league:world_leagues!world_clubs_men_league_id_fkey(id, name, tier),
+              women_league:world_leagues!world_clubs_women_league_id_fkey(id, name, tier)
+            `)
+            .order('is_claimed', { ascending: false })
+            .order('club_name', { ascending: true })
+            .limit(tryExtractCount(query) ?? 20)
+
+          const retryCountryIds = rung.countryMode === 'none'
+            ? null
+            : rung.countryMode === 'region'
+              ? (wcRegionPeers?.countryIds ?? null)
+              : wcCountryIds
+          if (retryCountryIds?.length) retryQuery = retryQuery.in('country_id', retryCountryIds)
+          if (rung.keepSubCountry && wcProvinceIds) retryQuery = retryQuery.in('province_id', wcProvinceIds)
+          if (wcLeagueIds && wcLeagueIds.length > 0) {
+            retryQuery = retryQuery.or(
+              `men_league_id.in.(${wcLeagueIds.join(',')}),women_league_id.in.(${wcLeagueIds.join(',')})`
+            )
+          }
+          if (wcFilters.text_query?.trim()) {
+            retryQuery = retryQuery.ilike('club_name_normalized', `%${wcFilters.text_query.toLowerCase().trim()}%`)
+          }
+          if (wcFilters.claimed_only === true) retryQuery = retryQuery.eq('is_claimed', true)
+          if (userContext?.role === 'club') {
+            retryQuery = retryQuery.or(`claimed_profile_id.is.null,claimed_profile_id.neq.${user.id}`)
+          }
+
+          const { data: retryRows, error: retryErr } = await retryQuery
+          // A failed retry must never replace an honest zero with an error.
+          if (retryErr) break
+          if ((retryRows?.length ?? 0) > 0) {
+            wcRows = retryRows
+            wcSoftening = { step: rung.step, countryLabel: wcCountryLabel }
+            break
+          }
+        }
       }
 
       // Map to a unified DiscoverResult-shaped row. The frontend switches
@@ -2600,12 +2681,25 @@ Deno.serve(async (req) => {
         // all" expander. Naming that turns the response into a curated
         // recommendation rather than a directory dump the user must sift.
         const topNote = total > 3 ? ' Here are the top 3 to start with.' : ''
+        // When the directory search was widened, the opening sentence has to
+        // say so. "I found 20 clubs in the United Kingdom" would name a place
+        // these clubs are NOT in — the same grid-contradicts-the-copy defect
+        // this codebase has now had to fix three times.
+        const opening = wcSoftening
+          ? describeSoftening(wcSoftening.step, {
+              noun: 'clubs',
+              nounSingular: 'club',
+              count: total,
+              countryLabel: wcSoftening.countryLabel ?? locationLabel,
+              regionLabel: wcRegionPeers?.regionLabel ?? null,
+            })
+          : `I found ${total} ${noun}${where}.`
         if (claimedCount > 0 && unclaimedCount > 0) {
-          wcAiMessage = `I found ${total} ${noun}${where}. ${claimedCount} ${isAre(claimedCount)} active on HOCKIA, so you can message them directly, and ${unclaimedCount} ${isAre(unclaimedCount)} in the directory but not yet claimed, so you may need to reach out externally.${topNote}`
+          wcAiMessage = `${opening} ${claimedCount} ${isAre(claimedCount)} active on HOCKIA, so you can message them directly, and ${unclaimedCount} ${isAre(unclaimedCount)} in the directory but not yet claimed, so you may need to reach out externally.${topNote}`
         } else if (claimedCount > 0) {
-          wcAiMessage = `I found ${total} ${noun}${where} — all active on HOCKIA, so you can message them directly.${topNote}`
+          wcAiMessage = `${opening} All are active on HOCKIA, so you can message them directly.${topNote}`
         } else {
-          wcAiMessage = `I found ${total} ${noun}${where} in HOCKIA's directory. None are claimed yet, so you'll need to reach out externally — but they're real clubs worth exploring.${topNote}`
+          wcAiMessage = `${opening} None are claimed yet, so you'll need to reach out externally — but they're real clubs worth exploring.${topNote}`
         }
         // Phase 4 audit P1-1 — DO NOT append llmResult.message here. The LLM
         // generates that field at parse-time before knowing the count, so it
@@ -2679,6 +2773,10 @@ Deno.serve(async (req) => {
           world_club_total: mapped.length,
           world_club_claimed: claimedCount,
           world_club_unclaimed: unclaimedCount,
+          // Same pair as the profile path: separates "nothing in the place
+          // they asked for" from "nothing anywhere".
+          geo_softened_to: wcSoftening?.step ?? null,
+          geo_softened_from: wcSoftening?.countryLabel ?? locationLabel ?? null,
         },
       }
       fireAndForget(logDiscoveryEvent(adminClient, {
@@ -3418,14 +3516,16 @@ Deno.serve(async (req) => {
       // the same zero, and dead-end the list. The ladder is deterministic, so
       // page 2 lands on the same rung page 1 did.
       if (!error && (rpcResult?.total ?? 0) === 0) {
-        const geoScope = {
-          baseCountryIds: scoped.params.p_base_country_ids ?? null,
-          baseLocationText: scoped.params.p_base_location ?? null,
-          countryIds: scoped.params.p_country_ids ?? null,
-        }
+        const origBaseCountryIds: number[] | null = scoped.params.p_base_country_ids ?? null
+        const origBaseLocation: string | null = scoped.params.p_base_location ?? null
+        const origCountryIds: number[] | null = scoped.params.p_country_ids ?? null
         const appliedCountryIds = [
-          ...new Set([...(geoScope.baseCountryIds ?? []), ...(geoScope.countryIds ?? [])]),
+          ...new Set([...(origBaseCountryIds ?? []), ...(origCountryIds ?? [])]),
         ]
+        const geoScope = {
+          countryIds: appliedCountryIds.length ? appliedCountryIds : null,
+          hasSubCountry: !!origBaseLocation?.trim(),
+        }
 
         // Resolve the searched countries → their names and region peers. Only
         // on the zero path, so this costs nothing on a normal search.
@@ -3447,12 +3547,24 @@ Deno.serve(async (req) => {
           }
         }
 
+        // Widen only the country filters that were actually applied — handing
+        // a region-wide list to a filter the user never set would ADD a
+        // constraint while claiming to remove one.
+        const widen = (orig: number[] | null, mode: 'original' | 'region' | 'none') =>
+          mode === 'none'
+            ? null
+            : mode === 'region'
+              ? (orig?.length && regionPeers ? regionPeers.countryIds : null)
+              : orig
+
         for (const rung of buildSofteningLadder(geoScope, regionPeers)) {
           const { data: retryData, error: retryError } = await adminClient.rpc(
             'discover_profiles',
             ({
               ...scoped.params,
-              ...rung.overlay,
+              p_base_location: rung.keepSubCountry ? origBaseLocation : null,
+              p_base_country_ids: widen(origBaseCountryIds, rung.countryMode),
+              p_country_ids: widen(origCountryIds, rung.countryMode),
               p_roles: effectiveRoles,
               // Mirror the main query's paging exactly, so a softened list
               // pages the same way an unsoftened one does.
@@ -3468,7 +3580,7 @@ Deno.serve(async (req) => {
             rpcResult = retry
             geoSoftening = {
               step: rung.step,
-              cityLabel: geoScope.baseLocationText,
+              cityLabel: origBaseLocation,
               countryLabel,
               regionLabel: regionPeers?.regionLabel ?? null,
             }
@@ -3626,6 +3738,7 @@ Deno.serve(async (req) => {
         // this area of the code keeps having to fix.
         ? describeSoftening(geoSoftening.step, {
             noun: entityNoun,
+            nounSingular: ENTITY_SINGULAR[entityNoun] ?? entityNoun,
             count: shown,
             cityLabel: geoSoftening.cityLabel,
             countryLabel: geoSoftening.countryLabel,

@@ -3,7 +3,7 @@ import { buildSofteningLadder, describeSoftening, type GeoScope } from './geo-so
 
 const EUROPE = { regionLabel: 'Europe', countryIds: [1, 2, 3, 4, 5, 6, 7, 8] }
 const scope = (o: Partial<GeoScope> = {}): GeoScope => ({
-  baseCountryIds: null, baseLocationText: null, countryIds: null, ...o,
+  countryIds: null, hasSubCountry: false, ...o,
 })
 
 // ── When NOT to widen ─────────────────────────────────────────────────────
@@ -13,64 +13,45 @@ Deno.test('no geographic filter → no ladder at all', () => {
   assertEquals(buildSofteningLadder(scope(), EUROPE), [])
 })
 
-Deno.test('blank location text does not count as a filter', () => {
-  assertEquals(buildSofteningLadder(scope({ baseLocationText: '   ' }), EUROPE), [])
-})
-
 // ── The founder's case: city + country, no results ────────────────────────
 Deno.test('city + country climbs city → region → worldwide', () => {
   const rungs = buildSofteningLadder(
-    scope({ baseCountryIds: [1], baseLocationText: 'London' }), EUROPE,
+    scope({ countryIds: [1], hasSubCountry: true }), EUROPE,
   )
   assertEquals(rungs.map(r => r.step), ['city', 'region', 'worldwide'])
 
   // Rung 1 drops the city but HOLDS the country.
-  assertEquals(rungs[0].overlay.p_base_location, null)
-  assertEquals(rungs[0].overlay.p_base_country_ids, [1])
+  assertEquals(rungs[0].keepSubCountry, false)
+  assertEquals(rungs[0].countryMode, 'original')
 
-  // Rung 2 opens up to the region.
-  assertEquals(rungs[1].overlay.p_base_country_ids, EUROPE.countryIds)
-  assertEquals(rungs[1].overlay.p_base_location, null)
-
-  // Rung 3 drops geography entirely.
-  assertEquals(rungs[2].overlay, {
-    p_base_location: null, p_base_country_ids: null, p_country_ids: null,
-  })
+  // Rung 2 opens up to the region, rung 3 drops geography entirely.
+  assertEquals(rungs[1].countryMode, 'region')
+  assertEquals(rungs[2].countryMode, 'none')
 })
 
-Deno.test('city with NO country skips the redundant city rung', () => {
+Deno.test('sub-country with NO country skips the redundant city rung', () => {
   // Dropping the city when nothing else pins the search IS the worldwide
   // rung — running both would fire the identical query twice.
-  const rungs = buildSofteningLadder(scope({ baseLocationText: 'London' }), EUROPE)
+  const rungs = buildSofteningLadder(scope({ hasSubCountry: true }), EUROPE)
   assertEquals(rungs.map(r => r.step), ['worldwide'])
 })
 
-// ── Widening only what was actually applied ───────────────────────────────
-Deno.test('a null filter is never promoted to a region-wide list', () => {
-  // p_country_ids was not part of the search; handing it the whole region
-  // would ADD a constraint while claiming to remove one.
-  const rungs = buildSofteningLadder(scope({ baseCountryIds: [1] }), EUROPE)
-  const region = rungs.find(r => r.step === 'region')!
-  assertEquals(region.overlay.p_base_country_ids, EUROPE.countryIds)
-  assertEquals(region.overlay.p_country_ids, null)
-})
-
-Deno.test('world-club country widens on its own too', () => {
-  const rungs = buildSofteningLadder(scope({ countryIds: [2] }), EUROPE)
-  const region = rungs.find(r => r.step === 'region')!
-  assertEquals(region.overlay.p_country_ids, EUROPE.countryIds)
-  assertEquals(region.overlay.p_base_country_ids, null)
+Deno.test('country with no sub-country starts at the region rung', () => {
+  assertEquals(
+    buildSofteningLadder(scope({ countryIds: [1] }), EUROPE).map(r => r.step),
+    ['region', 'worldwide'],
+  )
 })
 
 Deno.test('region rung is skipped when it would widen nothing', () => {
   // Already searching the entire region, or a region of one.
   const solo = { regionLabel: 'Oceania', countryIds: [9] }
   assertEquals(
-    buildSofteningLadder(scope({ baseCountryIds: [9] }), solo).map(r => r.step),
+    buildSofteningLadder(scope({ countryIds: [9] }), solo).map(r => r.step),
     ['worldwide'],
   )
   assertEquals(
-    buildSofteningLadder(scope({ baseCountryIds: [1, 2] }), EUROPE)
+    buildSofteningLadder(scope({ countryIds: [1, 2] }), EUROPE)
       .map(r => r.step).includes('region'),
     true,
   )
@@ -78,9 +59,20 @@ Deno.test('region rung is skipped when it would widen nothing', () => {
 
 Deno.test('missing region data still yields the worldwide rung', () => {
   assertEquals(
-    buildSofteningLadder(scope({ baseCountryIds: [1] }), null).map(r => r.step),
+    buildSofteningLadder(scope({ countryIds: [1] }), null).map(r => r.step),
     ['worldwide'],
   )
+})
+
+Deno.test('the ladder never repeats a rung, so no query runs twice', () => {
+  for (const s of [
+    scope({ countryIds: [1], hasSubCountry: true }),
+    scope({ countryIds: [1] }),
+    scope({ hasSubCountry: true }),
+  ]) {
+    const steps = buildSofteningLadder(s, EUROPE).map(r => r.step)
+    assertEquals(steps.length, new Set(steps).size)
+  }
 })
 
 // ── The copy is the honesty half — it must name the widening ──────────────
@@ -90,6 +82,7 @@ Deno.test('every rung states where the results actually are', () => {
   })
   assertStringIncludes(city, 'London')
   assertStringIncludes(city, 'England')
+  assertStringIncludes(city, '3 clubs')
 
   const region = describeSoftening('region', {
     noun: 'clubs', count: 6, cityLabel: 'London', countryLabel: 'England', regionLabel: 'Europe',
@@ -106,8 +99,32 @@ Deno.test('every rung states where the results actually are', () => {
 
 Deno.test('singular count reads correctly', () => {
   assertStringIncludes(
-    describeSoftening('region', { noun: 'clubs', count: 1, countryLabel: 'England', regionLabel: 'Europe' }),
-    'here is 1',
+    describeSoftening('region', {
+      noun: 'clubs', nounSingular: 'club', count: 1,
+      countryLabel: 'England', regionLabel: 'Europe',
+    }),
+    'here is 1 club ',
+  )
+})
+
+Deno.test('city rung does not name the same place on both sides', () => {
+  // The parse often puts a COUNTRY in the location text, which produced
+  // "No clubs in United Kingdom itself — here is 1 in United Kingdom."
+  const msg = describeSoftening('city', {
+    noun: 'clubs', nounSingular: 'club', count: 1,
+    cityLabel: 'United Kingdom', countryLabel: 'United Kingdom',
+  })
+  assertEquals(msg, 'Here is 1 club in United Kingdom.')
+  assertEquals(msg.includes('itself'), false)
+})
+
+Deno.test('city rung still contrasts when the labels genuinely differ', () => {
+  assertEquals(
+    describeSoftening('city', {
+      noun: 'clubs', nounSingular: 'club', count: 1,
+      cityLabel: 'London', countryLabel: 'England',
+    }),
+    'No clubs in London itself — here is 1 club elsewhere in England.',
   )
 })
 
