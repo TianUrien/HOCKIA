@@ -263,6 +263,28 @@ const UMPIRES = [
   /\breferees?\b/i,
 ]
 
+/**
+ * Verbs that mean "is recruiting for". Kept as ONE pattern because two
+ * different decisions depend on it and they must agree: which entity the
+ * router returns, and whether nl-search reads a position as "what this
+ * organisation is recruiting" rather than "what this profile is".
+ */
+// "searching for" is deliberately absent: "search" is an imperative verb the
+// anchoring rule below already owns ("search for coaches" is a command, not a
+// statement about who is recruiting).
+export const RECRUITING_VERB = /\b(?:hir(?:e|es|ing)|recruit(?:s|ing)?|looking for|seeking|in need of)\b/i
+
+/**
+ * True when the query asks who is RECRUITING for something, e.g. "clubs
+ * looking for forwards". nl-search uses this to decide that a position names
+ * a vacancy rather than the profile's own attribute — a distinction that
+ * matters because a club never *has* a position (0 of 27 on prod) but can
+ * certainly be advertising one.
+ */
+export function hasRecruitingIntent(query: string): boolean {
+  return RECRUITING_VERB.test(query ?? '')
+}
+
 // ── Opportunities (vacancies / hiring) ──
 const OPPORTUNITIES = [
   /\bopportunit(y|ies)\b/i,
@@ -406,16 +428,52 @@ export function classifyEntityType(query: string): RoutedIntent {
   const brands = anyMatch(BRANDS, scoringInput)
   const umpires = anyMatch(UMPIRES, scoringInput)
 
-  // 6. "hiring/recruiting + role" — recruitment-style queries route to the
-  //    role being recruited, not the recruiter's role. "find clubs hiring
-  //    coaches" → coaches; "clubs hiring players" → players.
-  const isRecruiting = /\b(hir(e|ing)|recruit(e|ing)|looking for)\b/i.test(scoringInput)
-  if (isRecruiting) {
-    if (coaches.length > 0) {
-      return { entity_type: 'coaches', confidence: 'high', matched_signals: coaches }
+  // 6. Recruitment-style queries ("X hiring Y", "X looking for Y").
+  //
+  //    The entity the user NAMES is the one they want back. "Show me clubs
+  //    looking for forwards" asks for CLUBS — the position describes what
+  //    those clubs are recruiting, not what the user wants to see. Routing it
+  //    to players showed 124 player cards under a summary reading "Showing
+  //    clubs with open opportunities for forwards or midfielders": the copy
+  //    and the grid contradicted each other (founder ruling, 2026-08-13).
+  //
+  //    So: whatever entity is named BEFORE the recruiting verb wins. Only
+  //    when nothing is named there ("who's looking for midfielders?",
+  //    "looking for a goalkeeper") does the RECRUITED role win — which is the
+  //    case the original rule was really written for.
+  //
+  //    This is the same principle as the imperative-verb anchoring below
+  //    ("the entity word right after the verb wins"); that rule simply ran
+  //    too late to ever fire on a recruiting query.
+  const recruitingMatch = scoringInput.match(RECRUITING_VERB)
+  if (recruitingMatch) {
+    const beforeVerb = scoringInput.slice(0, recruitingMatch.index)
+    const namedBefore = [
+      { type: 'clubs' as EntityType, hits: anyMatch(CLUBS, beforeVerb) },
+      { type: 'brands' as EntityType, hits: anyMatch(BRANDS, beforeVerb) },
+      { type: 'coaches' as EntityType, hits: anyMatch(COACHES, beforeVerb) },
+      { type: 'players' as EntityType, hits: anyMatch(PLAYERS, beforeVerb) },
+      { type: 'umpires' as EntityType, hits: anyMatch(UMPIRES, beforeVerb) },
+    ].filter(s => s.hits.length > 0)
+
+    // Exactly one entity named before the verb → unambiguous, respect it.
+    // Two or more ("find coaches at clubs hiring players") is genuinely
+    // ambiguous, so fall through to the scoring + verb-anchoring below
+    // rather than guessing.
+    if (namedBefore.length === 1) {
+      return {
+        entity_type: namedBefore[0].type,
+        confidence: 'high',
+        matched_signals: namedBefore[0].hits,
+      }
     }
-    if (players.length > 0) {
-      return { entity_type: 'players', confidence: 'high', matched_signals: players }
+    if (namedBefore.length === 0) {
+      if (coaches.length > 0) {
+        return { entity_type: 'coaches', confidence: 'high', matched_signals: coaches }
+      }
+      if (players.length > 0) {
+        return { entity_type: 'players', confidence: 'high', matched_signals: players }
+      }
     }
   }
 

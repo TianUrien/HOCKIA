@@ -17,7 +17,7 @@ import type { Database } from '../_shared/database.types.ts'
 import { getCorsHeaders } from '../_shared/cors.ts'
 import { captureException } from '../_shared/sentry.ts'
 import { parseSearchQuery, synthesizeQualitativeInsights, composeNoResults, answerPlatformHelp, PROMPT_VERSION, type LLMCallMeta, type ParsedFilters, type SearchIntent, type HistoryTurn, type ProfileQualitativeData, type UserContext } from '../_shared/llm-client.ts'
-import { classifyEntityType, entityTypeToRole, type RoutedIntent } from '../_shared/intent-router.ts'
+import { classifyEntityType, entityTypeToRole, hasRecruitingIntent, type RoutedIntent } from '../_shared/intent-router.ts'
 import { detectInternationalIntent, countryMentionedOutsideSpans, tournamentAliasPatterns, tournamentIncludesDomestic, rowTextLevel, rowTextMatchesCountry, BIO_NT_MARKERS, hasNationalTeamIntent } from '../_shared/international-taxonomy.ts'
 import { resolveFeatureCta } from '../_shared/hockia-features.ts'
 import {
@@ -3205,6 +3205,68 @@ Deno.serve(async (req) => {
       p_required_location_country_id?: number | null
       p_restrict_profile_ids?: string[] | null
     }
+
+    // ── "Clubs looking for forwards" — resolve the position through VACANCIES
+    //
+    // When the user asks which organisations are RECRUITING a position, the
+    // position describes the vacancy, not the profile. A club never has a
+    // position of its own (0 of 27 on prod), so the filter cannot be applied
+    // to the profile row — scopeFiltersToRoles correctly drops it. Dropping
+    // it alone would answer "clubs looking for forwards" with *every* club,
+    // which is broader than what was asked.
+    //
+    // So resolve it properly: find the open opportunities for those positions
+    // and constrain the search to the profiles that published them.
+    //
+    // Gated on hasRecruitingIntent so this only fires when the CURRENT query
+    // actually expresses recruiting intent. A position that merely bled in
+    // from a previous turn ("Show all clubs" after a forwards query) must
+    // still be dropped, not reinterpreted as a vacancy filter.
+    type OpportunityPosition = Database['public']['Enums']['opportunity_position']
+    const OPPORTUNITY_POSITIONS: readonly OpportunityPosition[] = [
+      'goalkeeper', 'defender', 'midfielder', 'forward',
+      'head_coach', 'assistant_coach', 'goalkeeper_coach', 'youth_coach',
+      'strength_conditioning', 'performance_analyst', 'sports_scientist', 'other_coach',
+    ]
+
+    let recruitingRestrictIds: string[] | null = null
+    const orgOnlySearch = effectiveRoles.length > 0
+      && effectiveRoles.every((r) => r === 'club' || r === 'brand')
+    // Narrow to real enum values: an unmappable position is a parse artifact,
+    // and constraining on it would answer an honest question with a zero.
+    const wantedPositions = (parsed.positions ?? []).filter(
+      (p: string): p is OpportunityPosition =>
+        (OPPORTUNITY_POSITIONS as readonly string[]).includes(p),
+    )
+    if (orgOnlySearch && wantedPositions.length && hasRecruitingIntent(query)) {
+      const { data: vacancies } = await adminClient
+        .from('opportunities')
+        .select('club_id')
+        .eq('status', 'open')
+        .in('position', wantedPositions)
+        .not('published_at', 'is', null)
+      const publisherIds = [...new Set(
+        (vacancies ?? [])
+          .map((v: { club_id: string | null }) => v.club_id)
+          .filter((id): id is string => typeof id === 'string'),
+      )]
+      // Same contract as the international filter above: an empty set passes
+      // an impossible id so the RPC returns an honest zero through the normal
+      // envelope. The filter must CONSTRAIN, never silently drop.
+      recruitingRestrictIds = publisherIds.length
+        ? publisherIds
+        : ['00000000-0000-0000-0000-000000000000']
+    }
+
+    // Both restrictions are whitelists, so combining them means INTERSECTION —
+    // union would let through a profile that failed one of the two filters.
+    let restrictProfileIds: string[] | null = intlRestrictIds ?? recruitingRestrictIds
+    if (intlRestrictIds && recruitingRestrictIds) {
+      const recruitingSet = new Set(recruitingRestrictIds)
+      const both = intlRestrictIds.filter((id) => recruitingSet.has(id))
+      restrictProfileIds = both.length ? both : ['00000000-0000-0000-0000-000000000000']
+    }
+
     const baseDiscoverParams = {
       p_positions: parsed.positions || null,
       // Phase 3e: prefer the new category param. Legacy p_gender is also
@@ -3237,8 +3299,9 @@ Deno.serve(async (req) => {
           : null,
       p_specialist_skills: parsed.specialist_skills || null,
       p_sort_by: parsed.sort_by || 'relevance',
-      // International experience (Step A) — NULL-neutral in the RPC.
-      p_restrict_profile_ids: intlRestrictIds,
+      // International experience (Step A) intersected with the recruiting
+      // vacancy set — NULL-neutral in the RPC when neither applies.
+      p_restrict_profile_ids: restrictProfileIds,
     }
 
     let rpcResult: { results: any[]; total: number; has_more: boolean } | null = null
@@ -3832,6 +3895,13 @@ Deno.serve(async (req) => {
         // non-empty it explains on the admin Discovery screen why a query
         // returned different results than the raw parse implies.
         dropped_role_filters: droppedRoleFilters,
+        // "clubs looking for forwards" — how many organisations had a matching
+        // open vacancy. null when the query wasn't a recruiting search.
+        recruiting_vacancy_publishers: recruitingRestrictIds
+          ? (recruitingRestrictIds[0] === '00000000-0000-0000-0000-000000000000'
+              ? 0
+              : recruitingRestrictIds.length)
+          : null,
         suggested_actions_count: suggestedActions.length,
         // Phase 4 MVP-A telemetry — shortlist composition
         shortlist_used: shortlistByProfileId.size > 0,
