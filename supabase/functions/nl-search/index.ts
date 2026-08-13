@@ -36,6 +36,7 @@ import {
 import { detectRecoveryQuery } from '../_shared/recovery.ts'
 import { detectClarifyingNeed } from '../_shared/clarifying.ts'
 import { scopeFiltersToRoles } from '../_shared/role-filter-scope.ts'
+import { buildSofteningLadder, describeSoftening, type GeoSofteningStep } from '../_shared/geo-softening.ts'
 
 // EU passport country code list — single source of truth for eu_passport
 // derivation. discover_profiles uses the same set internally to filter, but
@@ -3310,6 +3311,15 @@ Deno.serve(async (req) => {
     // surfaced in _meta so a zero-result search is explainable on the admin
     // Discovery screen rather than mysterious.
     let droppedRoleFilters: string[] = []
+    // Set only when a geographic search found nothing and was widened. Drives
+    // both the sentence the user reads and the telemetry — a widening the user
+    // isn't told about would be a lie, so these two must never diverge.
+    let geoSoftening: {
+      step: GeoSofteningStep
+      cityLabel: string | null
+      countryLabel: string | null
+      regionLabel: string | null
+    } | null = null
 
     if (isCompound) {
       const merged: any[] = []
@@ -3391,6 +3401,81 @@ Deno.serve(async (req) => {
       } satisfies DiscoverProfilesParams as Database['public']['Functions']['discover_profiles']['Args']))
       rpcResult = data as { results: any[]; total: number; has_more: boolean } | null
       rpcError = error
+
+      // ── Geographic softening ──────────────────────────────────────────
+      // A geographic zero is usually true but useless: HOCKIA has thin
+      // coverage outside a handful of countries, so "clubs near me" returns
+      // nothing for a lot of real users while there are matches one country
+      // away. Rather than hand back a blank grid, widen geography in bounded
+      // steps — city, then region, then worldwide — stopping at the first
+      // rung that finds anything, and say which rung we landed on.
+      //
+      // Every non-geographic filter is carried through untouched: a search
+      // for goalkeepers under 25 stays a search for goalkeepers under 25.
+      // Runs on load-more pages too, not just the first. A softened page 1
+      // can report has_more, and "Show more" re-runs this whole path from
+      // scratch — gating on offset 0 would send the narrow query again, get
+      // the same zero, and dead-end the list. The ladder is deterministic, so
+      // page 2 lands on the same rung page 1 did.
+      if (!error && (rpcResult?.total ?? 0) === 0) {
+        const geoScope = {
+          baseCountryIds: scoped.params.p_base_country_ids ?? null,
+          baseLocationText: scoped.params.p_base_location ?? null,
+          countryIds: scoped.params.p_country_ids ?? null,
+        }
+        const appliedCountryIds = [
+          ...new Set([...(geoScope.baseCountryIds ?? []), ...(geoScope.countryIds ?? [])]),
+        ]
+
+        // Resolve the searched countries → their names and region peers. Only
+        // on the zero path, so this costs nothing on a normal search.
+        let regionPeers: { regionLabel: string; countryIds: number[] } | null = null
+        let countryLabel: string | null = null
+        if (appliedCountryIds.length > 0) {
+          const { data: searchedCountries } = await adminClient
+            .from('countries').select('id, name, region').in('id', appliedCountryIds)
+          const regions = [...new Set(
+            (searchedCountries ?? []).map((c) => c.region).filter((r): r is string => !!r),
+          )]
+          countryLabel = (searchedCountries ?? []).map((c) => c.name).slice(0, 2).join(' / ') || null
+          if (regions.length > 0) {
+            const { data: peers } = await adminClient
+              .from('countries').select('id').in('region', regions)
+            if (peers?.length) {
+              regionPeers = { regionLabel: regions.join(' and '), countryIds: peers.map((c) => c.id) }
+            }
+          }
+        }
+
+        for (const rung of buildSofteningLadder(geoScope, regionPeers)) {
+          const { data: retryData, error: retryError } = await adminClient.rpc(
+            'discover_profiles',
+            ({
+              ...scoped.params,
+              ...rung.overlay,
+              p_roles: effectiveRoles,
+              // Mirror the main query's paging exactly, so a softened list
+              // pages the same way an unsoftened one does.
+              p_limit: requestedOffset > 0 ? DEFAULT_RESULT_LIMIT : resolveResultLimit(query),
+              p_offset: requestedOffset,
+            } satisfies DiscoverProfilesParams as Database['public']['Functions']['discover_profiles']['Args']),
+          )
+          // A failed retry must never replace an honest zero with an error —
+          // stop widening and let the normal no-results path handle it.
+          if (retryError) break
+          const retry = retryData as { results: any[]; total: number; has_more: boolean } | null
+          if ((retry?.total ?? 0) > 0) {
+            rpcResult = retry
+            geoSoftening = {
+              step: rung.step,
+              cityLabel: geoScope.baseLocationText,
+              countryLabel,
+              regionLabel: regionPeers?.regionLabel ?? null,
+            }
+            break
+          }
+        }
+      }
     }
 
     if (rpcError) {
@@ -3534,9 +3619,21 @@ Deno.serve(async (req) => {
       const geoLabel = rawGeo
         ? rawGeo.replace(/[^\p{L}\p{N}\s\-.,'()]/gu, '').trim().slice(0, 40) || null
         : null
-      aiMessage = geoLabel
-        ? `I found ${shown} ${noun} based in ${geoLabel} — say "broaden the location" to widen this.`
-        : `I found ${shown} ${noun} for you.`
+      aiMessage = geoSoftening
+        // The user's own scope was empty and we widened it. Say that plainly:
+        // the unwidened phrasing below would name a place these results are
+        // NOT in, which is precisely the grid-contradicts-the-copy defect
+        // this area of the code keeps having to fix.
+        ? describeSoftening(geoSoftening.step, {
+            noun: entityNoun,
+            count: shown,
+            cityLabel: geoSoftening.cityLabel,
+            countryLabel: geoSoftening.countryLabel,
+            regionLabel: geoSoftening.regionLabel,
+          })
+        : geoLabel
+          ? `I found ${shown} ${noun} based in ${geoLabel} — say "broaden the location" to widen this.`
+          : `I found ${shown} ${noun} for you.`
     }
 
     // ── Phase 4 — proactive no-results diagnosis ─────────────────────
@@ -3901,6 +3998,14 @@ Deno.serve(async (req) => {
           ? (recruitingRestrictIds[0] === '00000000-0000-0000-0000-000000000000'
               ? 0
               : recruitingRestrictIds.length)
+          : null,
+        // Set when a geographic search found nothing in the user's own scope
+        // and was widened. On the admin Discovery screen this separates "we
+        // had nothing nearby" from "we had nothing at all" — two very
+        // different coverage problems that both used to read as one zero.
+        geo_softened_to: geoSoftening?.step ?? null,
+        geo_softened_from: geoSoftening
+          ? (geoSoftening.cityLabel ?? geoSoftening.countryLabel ?? null)
           : null,
         suggested_actions_count: suggestedActions.length,
         // Phase 4 MVP-A telemetry — shortlist composition
