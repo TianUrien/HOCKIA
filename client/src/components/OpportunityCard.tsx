@@ -1,9 +1,10 @@
-import { MapPin, Calendar, Home, Car, Globe as GlobeIcon, Plane, Utensils, Briefcase, Shield, GraduationCap, Award, DollarSign, Dumbbell, ChevronRight } from 'lucide-react'
+import { MapPin, Calendar, Clock, Home, Car, Globe as GlobeIcon, Plane, Utensils, Briefcase, Shield, GraduationCap, Award, DollarSign, Dumbbell, ChevronRight } from 'lucide-react'
 import ResponsivenessBadge, { type ResponsivenessTier } from '@/components/ResponsivenessBadge'
 import { useNavigate } from 'react-router-dom'
 import type { Vacancy } from '../lib/supabase'
 import Avatar from './Avatar'
 import { opportunityGenderToTeamLabel } from '@/lib/hockeyCategories'
+import { getTimeAgo } from '@/lib/utils'
 
 export interface WorldClubInfo {
   id: string
@@ -278,7 +279,7 @@ export default function OpportunityCard({
           </p>
         )}
 
-        {/* ── Meta: location · start (always present) ── */}
+        {/* ── Meta: location · start · posted (always present) ── */}
         <div className="my-3.5 border-t border-gray-100" />
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[13px] text-gray-500">
           {locationText && (
@@ -290,6 +291,14 @@ export default function OpportunityCard({
           <span className="flex items-center gap-1.5">
             <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
             {isImmediate ? 'Starts immediately' : `Starts ${formatDate(vacancy.start_date)}`}
+          </span>
+          {/* Deliberately created_at, NOT published_at/updated_at: this is
+              the key "Newest" sorts on (founder ruling 2026-08-13), shown so
+              the ordering is verifiable at a glance. A renewal re-stamps
+              published_at, which would make the list look mis-sorted. */}
+          <span className="flex items-center gap-1.5">
+            <Clock className="h-3.5 w-3.5 flex-shrink-0" />
+            {`Posted ${getTimeAgo(vacancy.created_at, true).replace(/^Just now$/, 'just now')}`}
           </span>
         </div>
 
