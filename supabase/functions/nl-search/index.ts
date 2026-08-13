@@ -35,6 +35,7 @@ import {
 } from '../_shared/suggested-actions.ts'
 import { detectRecoveryQuery } from '../_shared/recovery.ts'
 import { detectClarifyingNeed } from '../_shared/clarifying.ts'
+import { scopeFiltersToRoles } from '../_shared/role-filter-scope.ts'
 
 // EU passport country code list — single source of truth for eu_passport
 // derivation. discover_profiles uses the same set internally to filter, but
@@ -3242,6 +3243,10 @@ Deno.serve(async (req) => {
 
     let rpcResult: { results: any[]; total: number; has_more: boolean } | null = null
     let rpcError: { message?: string } | null = null
+    // Filters removed because the targeted role(s) cannot satisfy them —
+    // surfaced in _meta so a zero-result search is explainable on the admin
+    // Discovery screen rather than mysterious.
+    let droppedRoleFilters: string[] = []
 
     if (isCompound) {
       const merged: any[] = []
@@ -3254,8 +3259,18 @@ Deno.serve(async (req) => {
         // 'context') shouldn't silently narrow a multi-role search they
         // never explicitly scoped. Apply each filter only where it belongs.
         const avail = baseDiscoverParams.p_availability
+        // The shared role-scoping rule first: it covers every player-only
+        // param (an age range, a specialist skill, a level target — each of
+        // which zeroes out a club sub-search on its own). The explicit
+        // overrides below then handle what a static table can't express:
+        // position-aware compound counts, the searcher's own category, and
+        // availability polarity.
+        const subScoped = scopeFiltersToRoles(baseDiscoverParams, [rc.role])
+        for (const k of subScoped.dropped) {
+          if (!droppedRoleFilters.includes(k)) droppedRoleFilters.push(k)
+        }
         const { data, error } = await adminClient.rpc('discover_profiles', ({
-          ...baseDiscoverParams,
+          ...subScoped.params,
           // MUST-HAVE overlay only on the player sub-search.
           ...(rc.role === 'player' ? mustHaveOverlay : {}),
           // …but if THIS sub-search names a position ("1 goalkeeper"), that
@@ -3274,8 +3289,10 @@ Deno.serve(async (req) => {
             avail === 'open_to_play' ? (rc.role === 'player' ? avail : null)
               : avail === 'open_to_coach' ? (rc.role === 'coach' ? avail : null)
                 : avail,
-          p_target_category: categorySource === 'context' ? null : baseDiscoverParams.p_target_category,
-          p_gender: categorySource === 'context' ? null : baseDiscoverParams.p_gender,
+          // Read from the SCOPED params, not the base ones — otherwise a club
+          // sub-search re-adds the category/gender the scoper just dropped.
+          p_target_category: categorySource === 'context' ? null : subScoped.params.p_target_category,
+          p_gender: categorySource === 'context' ? null : subScoped.params.p_gender,
           p_limit: rc.count,
           p_offset: 0,
         } satisfies DiscoverProfilesParams as Database['public']['Functions']['discover_profiles']['Args']))
@@ -3287,12 +3304,22 @@ Deno.serve(async (req) => {
       // its own requested count, so there is no single list to "show more".
       if (!rpcError) rpcResult = { results: merged, total: merged.length, has_more: false }
     } else {
+      // Drop filters the targeted role(s) can never satisfy. Without this a
+      // stray player-only filter (e.g. a position bled in from the previous
+      // turn) silently zeroes a club search — "Show all clubs" returned 0 on
+      // prod while a NARROWER query returned 14. The compound branch above
+      // already scoped per role; this is the same rule for single-role
+      // searches, shared so the two cannot drift apart again.
+      const scoped = scopeFiltersToRoles(
+        {
+          ...baseDiscoverParams,
+          ...(effectiveRoles.length === 1 && effectiveRoles[0] === 'player' ? mustHaveOverlay : {}),
+        },
+        effectiveRoles,
+      )
+      droppedRoleFilters = scoped.dropped
       const { data, error } = await adminClient.rpc('discover_profiles', ({
-        ...baseDiscoverParams,
-        // MUST-HAVE overlay only on a pure player search (must-haves are
-        // player-opps; applying them to a coach/club/brand search would wrongly
-        // filter on player intent fields).
-        ...(effectiveRoles.length === 1 && effectiveRoles[0] === 'player' ? mustHaveOverlay : {}),
+        ...scoped.params,
         p_roles: effectiveRoles,
         // Phase 1b — the explicit count governs the first page; "Show more"
         // load-more requests (offset > 0) page in default-sized batches.
@@ -3800,6 +3827,11 @@ Deno.serve(async (req) => {
         // Phase 1A telemetry additions
         kind: responseKind,
         applied_role_summary: applied.role_summary,
+        // Filters dropped because the targeted role(s) cannot satisfy them
+        // (e.g. a position on a club search). Empty in the normal case; when
+        // non-empty it explains on the admin Discovery screen why a query
+        // returned different results than the raw parse implies.
+        dropped_role_filters: droppedRoleFilters,
         suggested_actions_count: suggestedActions.length,
         // Phase 4 MVP-A telemetry — shortlist composition
         shortlist_used: shortlistByProfileId.size > 0,
