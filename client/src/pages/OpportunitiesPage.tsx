@@ -298,11 +298,14 @@ export default function OpportunitiesPage() {
             if (filters.position) query = query.eq('position', filters.position as NonNullable<Vacancy['position']>)
             if (filters.euPassport) query = query.eq('eu_passport_required', true)
 
-            // Order by publish date, not creation date — see the `posted`
-            // helper in the sort memo below for why. created_at is the
-            // tiebreak for rows that share (or lack) a published_at.
+            // Order strictly by creation date (founder ruling 2026-08-13).
+            // NOT published_at: re-opening a closed listing re-stamps
+            // published_at via the set_opportunity_published_at trigger, so
+            // publish-ordering sent every RENEWED listing to the top of
+            // "Newest", above genuinely new ones (a May listing renewed in
+            // August outranked an August creation). created_at matches the
+            // admin panel and the shipped native builds.
             const { data: vacanciesData, error: vacanciesError } = await query
-              .order('published_at', { ascending: false, nullsFirst: false })
               .order('created_at', { ascending: false })
 
             if (vacanciesError) throw vacanciesError
@@ -463,27 +466,26 @@ export default function OpportunitiesPage() {
     }
 
     const time = (d: string | null | undefined) => (d ? new Date(d).getTime() : 0)
-    // "Posted" means PUBLISHED, not created. A club can draft a listing in
-    // June and publish it in August, or republish/renew an old one — and the
-    // Home feed announces that publish event ("New Opportunity posted · 1h
-    // ago"). Sorting by created_at buried such a listing mid-list, so users
-    // followed a "new opportunity" announcement to a page that appeared not
-    // to contain it (reported 2026-08-08: a Head Coach listing created 04 Jun,
-    // published 12 Aug, sat 6th of 11). published_at is the date the card
-    // itself shows, so ordering by it is also what users expect to see.
-    const posted = (v: { published_at?: string | null; created_at: string }) =>
-      time(v.published_at ?? v.created_at)
+    // "Newest" = strictly by created_at, descending (founder ruling
+    // 2026-08-13, reverting the 2026-08-12 publish-date ordering). The
+    // set_opportunity_published_at trigger re-stamps published_at whenever a
+    // closed listing is re-opened, so publish-ordering floated every RENEWAL
+    // to the top above genuinely new listings. Creation date is the stable
+    // key — and the one the admin panel and native builds already use.
+    // Trade-off, accepted: a renewed old listing keeps its chronological
+    // place mid-list even when the Home feed announces its re-publish.
+    const created = (v: { created_at: string }) => time(v.created_at)
     filtered.sort((a, b) => {
-      if (sort === 'oldest') return posted(a) - posted(b)
+      if (sort === 'oldest') return created(a) - created(b)
       if (sort === 'deadline') {
         // Soonest deadline first; opportunities with no deadline go last.
         const da = a.application_deadline ? time(a.application_deadline) : Infinity
         const db = b.application_deadline ? time(b.application_deadline) : Infinity
         if (da !== db) return da - db
-        return posted(b) - posted(a)
+        return created(b) - created(a)
       }
       // newest (default)
-      return posted(b) - posted(a)
+      return created(b) - created(a)
     })
 
     return filtered

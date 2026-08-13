@@ -1,16 +1,23 @@
 /**
- * Opportunities list ordering — regression for the 2026-08-08 report
- * "Home says a new opportunity was posted, but it isn't on Opportunities".
+ * Opportunities list ordering — founder ruling 2026-08-13.
  *
- * It WAS on the page — sixth of eleven. The listing sorted by `created_at`
- * while the Home feed announces the PUBLISH event, so a Head Coach listing
- * created 04 Jun and published 12 Aug sat between July and May entries. The
- * founder looked at the top of a list that had just advertised it as new and
- * concluded it was missing. A second live listing (created 18 May, published
- * 04 Aug) had the same shape.
+ * "Newest" sorts strictly by created_at, descending. This REVERTS the
+ * 2026-08-12 publish-date ordering, which had an unintended consequence:
+ * the set_opportunity_published_at trigger re-stamps published_at whenever
+ * a closed listing is re-opened, so every RENEWED listing floated to the
+ * top of "Newest" above genuinely new ones (a May listing renewed in August
+ * outranked an August creation — the founder's screenshot showed creations
+ * from 04 Jun and 18 May in the top two slots).
  *
- * The rule: "posted" means published_at, falling back to created_at when a
- * row has no publish timestamp.
+ * created_at is the stable key: it never changes after insert, it is what
+ * the admin panel sorts and displays, and it is what the shipped native
+ * builds (Android 1.13 / iOS 1.3.12, built before the 08-12 change) already
+ * use — so this also restores web/native/admin consistency.
+ *
+ * Accepted trade-off, ruled on with the data in front of us: a renewed old
+ * listing keeps its chronological place mid-list even when the Home feed
+ * announces its re-publish. If renewals ever need surfacing, that is a
+ * badge/feature, not a sort-order change.
  */
 
 import { describe, it, expect } from 'vitest'
@@ -24,57 +31,66 @@ type Row = {
 
 /** Mirrors the comparator in OpportunitiesPage's sort memo. */
 const time = (d: string | null | undefined) => (d ? new Date(d).getTime() : 0)
-const posted = (v: Row) => time(v.published_at ?? v.created_at)
+const created = (v: Row) => time(v.created_at)
 
 function sortRows(rows: Row[], sort: 'newest' | 'oldest' | 'deadline'): Row[] {
   return [...rows].sort((a, b) => {
-    if (sort === 'oldest') return posted(a) - posted(b)
+    if (sort === 'oldest') return created(a) - created(b)
     if (sort === 'deadline') {
       const da = a.application_deadline ? time(a.application_deadline) : Infinity
       const db = b.application_deadline ? time(b.application_deadline) : Infinity
       if (da !== db) return da - db
-      return posted(b) - posted(a)
+      return created(b) - created(a)
     }
-    return posted(b) - posted(a)
+    return created(b) - created(a)
   })
 }
 
-// The real production rows that produced the report.
-const HEAD_COACH: Row = { id: 'head-coach', created_at: '2026-06-04T09:21:00Z', published_at: '2026-08-12T21:10:00Z' }
-const RECENT_CREATED: Row = { id: 'elite-men', created_at: '2026-08-02T15:43:00Z', published_at: '2026-08-02T15:43:00Z' }
-const OLD_REPUBLISHED: Row = { id: 'senior-men', created_at: '2026-05-18T14:19:00Z', published_at: '2026-08-04T16:05:00Z' }
+// The real production rows behind both reports.
+const RENEWED_JUN: Row = { id: 'head-coach', created_at: '2026-06-04T09:21:00Z', published_at: '2026-08-12T21:10:00Z' }
+const CREATED_AUG: Row = { id: 'elite-men', created_at: '2026-08-02T15:43:00Z', published_at: '2026-08-02T15:43:00Z' }
+const RENEWED_MAY: Row = { id: 'senior-men', created_at: '2026-05-18T14:19:00Z', published_at: '2026-08-04T16:05:00Z' }
 const NEVER_PUBLISHED: Row = { id: 'no-publish', created_at: '2026-07-01T00:00:00Z', published_at: null }
 
-describe('opportunity list ordering', () => {
-  it('a recently PUBLISHED but long-ago CREATED listing sorts first', () => {
-    const sorted = sortRows([RECENT_CREATED, HEAD_COACH, OLD_REPUBLISHED], 'newest')
-    // published 12 Aug > 04 Aug > 02 Aug, regardless of creation dates
-    expect(sorted.map((r) => r.id)).toEqual(['head-coach', 'senior-men', 'elite-men'])
+describe('opportunity list ordering (created_at, founder ruling 2026-08-13)', () => {
+  it('newest = strictly created_at desc — a renewal does NOT jump the queue', () => {
+    const sorted = sortRows([RENEWED_MAY, RENEWED_JUN, CREATED_AUG], 'newest')
+    // created 02 Aug > 04 Jun > 18 May, regardless of publish/renewal dates
+    expect(sorted.map((r) => r.id)).toEqual(['elite-men', 'head-coach', 'senior-men'])
   })
 
-  it('would have FAILED under the old created_at ordering (the bug)', () => {
-    const byCreated = [RECENT_CREATED, HEAD_COACH, OLD_REPUBLISHED]
-      .sort((a, b) => time(b.created_at) - time(a.created_at))
+  it('would have FAILED under the 08-12 publish ordering (the reported bug)', () => {
+    const byPublished = [RENEWED_MAY, RENEWED_JUN, CREATED_AUG]
+      .sort((a, b) => time(b.published_at ?? b.created_at) - time(a.published_at ?? a.created_at))
       .map((r) => r.id)
-    // Demonstrates the reported symptom: the newly published listing is buried.
-    expect(byCreated).toEqual(['elite-men', 'head-coach', 'senior-men'])
-    expect(byCreated[0]).not.toBe('head-coach')
+    // The symptom in the founder's screenshot: both renewals above the
+    // genuinely newest creation.
+    expect(byPublished).toEqual(['head-coach', 'senior-men', 'elite-men'])
+    expect(byPublished[0]).not.toBe('elite-men')
   })
 
-  it('falls back to created_at when a row has no published_at', () => {
-    const sorted = sortRows([NEVER_PUBLISHED, RECENT_CREATED], 'newest')
-    // 02 Aug published beats 01 Jul created
-    expect(sorted.map((r) => r.id)).toEqual(['elite-men', 'no-publish'])
+  it('published_at is entirely ignored — a null publish changes nothing', () => {
+    const sorted = sortRows([NEVER_PUBLISHED, CREATED_AUG, RENEWED_JUN], 'newest')
+    // 02 Aug > 01 Jul > 04 Jun by creation alone
+    expect(sorted.map((r) => r.id)).toEqual(['elite-men', 'no-publish', 'head-coach'])
   })
 
-  it('oldest reverses on the same publish-date basis', () => {
-    const sorted = sortRows([HEAD_COACH, RECENT_CREATED, OLD_REPUBLISHED], 'oldest')
-    expect(sorted.map((r) => r.id)).toEqual(['elite-men', 'senior-men', 'head-coach'])
+  it('oldest reverses on the same creation-date basis', () => {
+    const sorted = sortRows([RENEWED_JUN, CREATED_AUG, RENEWED_MAY], 'oldest')
+    expect(sorted.map((r) => r.id)).toEqual(['senior-men', 'head-coach', 'elite-men'])
   })
 
-  it('deadline sort tie-breaks on publish date, not creation date', () => {
-    const a: Row = { ...HEAD_COACH, application_deadline: '2026-09-01' }
-    const b: Row = { ...RECENT_CREATED, application_deadline: '2026-09-01' }
-    expect(sortRows([b, a], 'deadline').map((r) => r.id)).toEqual(['head-coach', 'elite-men'])
+  it('deadline sort tie-breaks on creation date', () => {
+    const a: Row = { ...RENEWED_JUN, application_deadline: '2026-09-01' }
+    const b: Row = { ...CREATED_AUG, application_deadline: '2026-09-01' }
+    // Same deadline → the more recently CREATED one first, even though the
+    // other was renewed more recently.
+    expect(sortRows([a, b], 'deadline').map((r) => r.id)).toEqual(['elite-men', 'head-coach'])
+  })
+
+  it('sooner deadline still beats creation recency', () => {
+    const soon: Row = { ...RENEWED_MAY, application_deadline: '2026-08-20' }
+    const later: Row = { ...CREATED_AUG, application_deadline: '2026-09-01' }
+    expect(sortRows([later, soon], 'deadline').map((r) => r.id)).toEqual(['senior-men', 'elite-men'])
   })
 })

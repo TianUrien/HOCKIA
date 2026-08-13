@@ -285,12 +285,13 @@ Deno.serve(async (req: Request) => {
     const limit = query.limit || DEFAULT_LIMIT
     const offset = query.offset || 0
 
-    // Order by PUBLISH date, not creation date. A club can draft a listing in
-    // June and publish it in August (or republish/renew an old one), and it is
-    // the publish event users are told about — ordering by created_at buried
-    // freshly-published listings mid-list. Matches OpportunitiesPage.
+    // Order strictly by CREATION date (founder ruling 2026-08-13, reverting
+    // the short-lived publish-date ordering). Re-opening a closed listing
+    // re-stamps published_at via the set_opportunity_published_at trigger, so
+    // publish-ordering floated every renewal to the top above genuinely new
+    // listings. created_at is the stable key and matches OpportunitiesPage,
+    // the admin panel, and the shipped native builds.
     dbQuery = dbQuery
-      .order('published_at', { ascending: false, nullsFirst: false })
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1)
 
