@@ -106,6 +106,17 @@ export default function AuthScreen({ mode, role, onBack }: AuthScreenProps) {
   // since role is a separate state value, not a form-shape modifier.
   const [passwordMode, setPasswordMode] = useState(true)
   const [password, setPassword] = useState('')
+  // ── Sign-up: hierarchy of intent (founder decision, 2026-08-17). ──
+  // The two OAuth buttons are the fast path (one tap, no inbox round-trip);
+  // the email form is a slower path that used to sit right beside them and
+  // made the user COMPARE the two — which slows the fast one. It also showed
+  // the DOB field on the same screen as "Continue with Apple", when the OAuth
+  // round-trip never sends a DOB (onboarding asks). So on sign-up the email
+  // form is collapsed behind one text link and revealed on request. Sign-in
+  // is deliberately NOT collapsed: a returning member with a password wants
+  // the field visible immediately, and hiding it would add a tap to the most
+  // common login.
+  const [emailFormOpen, setEmailFormOpen] = useState(mode !== 'signup')
   const [pwVisibility, setPwVisibility] = useState<PasswordVisibility>('hidden')
 
   // Unified status model.
@@ -412,7 +423,10 @@ export default function AuthScreen({ mode, role, onBack }: AuthScreenProps) {
   }
 
   const isSignup = mode === 'signup'
-  const heading = isSignup ? 'Create your account' : 'Welcome back'
+  // Sign-up: the role picker just said "Join HOCKIA" — repeating "Create your
+  // account" is the same headline twice in a row. "Almost there" confirms
+  // progress; the subheading below confirms the role they picked.
+  const heading = isSignup ? 'Almost there' : 'Welcome back'
   const subheading = isSignup
     ? role
       ? `You're joining as ${roleLabel(role)}`
@@ -569,6 +583,35 @@ export default function AuthScreen({ mode, role, onBack }: AuthScreenProps) {
               )}
             </div>
 
+            {/* ── Terms — sits UNDER the actions it governs, inside the card, so
+                it is visible on the OAuth path (now the only content above the
+                fold on sign-up) rather than below a card that scrolls on
+                SE-size phones. The 18+ gate makes this line load-bearing. ── */}
+            {isSignup && (
+              <p className="mt-3 text-center text-[11px] leading-4 text-gray-500">
+                By continuing, you agree to our{' '}
+                <Link to="/terms" className="underline underline-offset-2 hover:text-gray-900">Terms</Link>
+                {' '}and{' '}
+                <Link to="/privacy-policy" className="underline underline-offset-2 hover:text-gray-900">Privacy Policy</Link>.
+              </p>
+            )}
+
+            {/* ── Sign-up, email collapsed: one text link, not a form. ── */}
+            {isSignup && !emailFormOpen && (
+              <div className="mt-5 text-center">
+                <button
+                  type="button"
+                  onClick={() => setEmailFormOpen(true)}
+                  className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+                >
+                  Prefer email?{' '}
+                  <span className="font-semibold text-hockia-primary">Sign up with email →</span>
+                </button>
+              </div>
+            )}
+
+            {emailFormOpen && (
+            <>
             {/* ── Divider ── */}
             <div className="relative my-5">
               <div className="absolute inset-0 flex items-center">
@@ -721,6 +764,8 @@ export default function AuthScreen({ mode, role, onBack }: AuthScreenProps) {
                 </button>
               </div>
             </form>
+            </>
+            )}
 
             {/* ── Footer: opposite-mode link. */}
             <div className="mt-6 pt-5 border-t border-gray-100 text-center">
@@ -736,19 +781,6 @@ export default function AuthScreen({ mode, role, onBack }: AuthScreenProps) {
             </div>
           </div>
 
-          {isSignup && (
-            <p className="mt-4 text-center text-xs text-gray-500 px-4">
-              By continuing, you agree to our{' '}
-              <Link to="/terms" className="underline underline-offset-2 hover:text-gray-900">
-                Terms
-              </Link>{' '}
-              and{' '}
-              <Link to="/privacy-policy" className="underline underline-offset-2 hover:text-gray-900">
-                Privacy Policy
-              </Link>
-              .
-            </p>
-          )}
         </div>
       </main>
     </div>

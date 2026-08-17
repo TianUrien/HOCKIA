@@ -97,6 +97,10 @@ describe('AuthScreen — handleOAuth stashes role across the redirect', () => {
     const user = userEvent.setup()
     render(<AuthScreen mode="signup" role="coach" />)
 
+    // Sign-up collapses the email form behind "Sign up with email" (hierarchy
+    // of intent, 2026-08-17) — open it the way a real user would, then type.
+    // The stash-on-OAuth behaviour this test guards is unchanged.
+    await user.click(screen.getByRole('button', { name: /sign up with email/i }))
     // Email field is shared between magic-link and OAuth flows.
     await user.type(screen.getByPlaceholderText('you@example.com'), 'tester@example.com')
     await user.click(screen.getByRole('button', { name: /continue with google/i }))
@@ -124,5 +128,52 @@ describe('AuthScreen — handleOAuth stashes role across the redirect', () => {
 
     expect(localStorage.getItem('pending_role')).toBe('umpire')
     expect(mocks.startOAuthSignIn).toHaveBeenCalledWith('apple')
+  })
+})
+
+/**
+ * Hierarchy of intent (founder decision, 2026-08-17). On SIGN-UP the OAuth
+ * buttons are the fast path and the email form is collapsed behind one text
+ * link; on SIGN-IN the email form must stay visible immediately — collapsing
+ * it would add a tap to the most common login. These pin both halves.
+ */
+describe('AuthScreen — sign-up collapses the email form; sign-in does not', () => {
+  beforeEach(() => localStorage.clear())
+
+  it('sign-up: OAuth + Terms visible, email/password/DOB HIDDEN until requested', () => {
+    render(<AuthScreen mode="signup" role="player" />)
+    expect(screen.getByRole('button', { name: /continue with apple/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /continue with google/i })).toBeInTheDocument()
+    // Terms is load-bearing for the 18+ gate — must be visible on the OAuth path.
+    expect(screen.getByText(/by continuing, you agree/i)).toBeInTheDocument()
+    expect(screen.queryByPlaceholderText('you@example.com')).not.toBeInTheDocument()
+    expect(screen.queryByText(/date of birth/i)).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /sign up with email/i })).toBeInTheDocument()
+  })
+
+  it('sign-up: "Sign up with email" reveals email + password + DOB + Create Account', async () => {
+    const user = userEvent.setup()
+    render(<AuthScreen mode="signup" role="player" />)
+    await user.click(screen.getByRole('button', { name: /sign up with email/i }))
+    expect(screen.getByPlaceholderText('you@example.com')).toBeInTheDocument()
+    expect(screen.getByText(/date of birth/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^create account$/i })).toBeInTheDocument()
+    // The link itself goes away once opened.
+    expect(screen.queryByRole('button', { name: /sign up with email/i })).not.toBeInTheDocument()
+  })
+
+  it('sign-up heading is "Almost there" (the role picker already said "Join HOCKIA")', () => {
+    render(<AuthScreen mode="signup" role="coach" />)
+    expect(screen.getByRole('heading', { name: /almost there/i })).toBeInTheDocument()
+    expect(screen.getByText(/joining as coach/i)).toBeInTheDocument()
+  })
+
+  it('sign-in: email form is visible IMMEDIATELY and there is no collapse link', () => {
+    render(<AuthScreen mode="signin" />)
+    expect(screen.getByRole('heading', { name: /welcome back/i })).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('you@example.com')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /sign up with email/i })).not.toBeInTheDocument()
+    // Terms is sign-up only.
+    expect(screen.queryByText(/by continuing, you agree/i)).not.toBeInTheDocument()
   })
 })
