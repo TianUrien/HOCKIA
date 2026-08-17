@@ -620,7 +620,11 @@ export default function Landing() {
 
       {/* ───────────── S1 · Hero ───────────── */}
       <section className="mx-auto flex max-w-[1440px] flex-col items-center gap-[18px] px-5 pb-2 pt-9 lg:flex-row lg:items-center lg:gap-12 lg:py-8 lg:pl-[72px] lg:pr-12">
-        <div className="flex flex-col items-center gap-[18px] lg:min-w-0 lg:flex-1 lg:items-start lg:gap-6">
+        {/* w-full + min-w-0: the column spans the section's content width
+            (viewport − 2×px-5) and can never be widened by a child. Without
+            it a 400px child made the column 400px on a 390pt phone and the
+            CTAs overflowed the screen (negative gutters). */}
+        <div className="flex w-full min-w-0 flex-col items-center gap-[18px] lg:flex-1 lg:items-start lg:gap-6">
           <Reveal>
             {/* Eyebrow — tagline signature "A · Orbit light" */}
             <span className="relative inline-flex items-center rounded-full border border-[#ede9ff] bg-white py-[7px] pl-3 pr-3.5 lg:py-2 lg:pl-3.5 lg:pr-4">
@@ -645,7 +649,11 @@ export default function Landing() {
           </Reveal>
 
           {/* Ecosystem chips — scrollable strip on mobile, inline on desktop */}
-          <Reveal delay={170} className="w-screen lg:w-auto">
+          {/* -mx-5 + calc width lets the strip scroll edge-to-edge while its box
+              stays the column's width. The previous `w-screen` inflated the
+              flex column to the viewport, so the CTA block below (w-full)
+              rendered 440px wide on a 440px screen — zero gutter. */}
+          <Reveal delay={170} className="-mx-5 w-[calc(100%+40px)] lg:mx-0 lg:w-auto">
             <div className="flex gap-2 overflow-x-auto px-5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:overflow-visible lg:px-0">
               {['Players', 'Coaches', 'Clubs', 'Umpires', 'Brands'].map((c) => (
                 <span key={c} className="shrink-0 rounded-full border border-[#e4e3eb] bg-[#f9f9fb] px-[13px] py-2 text-[13px] font-medium tracking-[-0.004em] lg:px-3 lg:py-[7px]" style={{ color: INK_2 }}>
@@ -655,8 +663,11 @@ export default function Landing() {
             </div>
           </Reveal>
 
-          <Reveal delay={220} className="w-full lg:w-auto">
-            <div className="flex w-full flex-col gap-3 lg:w-auto lg:flex-row lg:items-center">
+          {/* Same width for both, always: they fill the column (viewport − 2×20px
+              gutters, the design's px-5), capped at 400px so on a tablet-width
+              phone they stay a CTA and not a bar. Desktop is a side-by-side row. */}
+          <Reveal delay={220} className="w-full max-w-[400px] lg:w-auto lg:max-w-none">
+            <div className="flex w-full flex-col gap-3.5 lg:w-auto lg:flex-row lg:items-center lg:gap-3">
               <Link
                 to="/signup"
                 onClick={() => handleCta('create_profile', 'hero')}
