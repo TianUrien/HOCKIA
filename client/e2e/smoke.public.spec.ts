@@ -4,14 +4,15 @@ test.describe('@smoke public', () => {
   test('landing loads and shows both primary CTAs', async ({ page }) => {
     await page.goto('/')
 
-    // 2026-07 landing redesign: the page leads with TWO actions — "Explore
-    // HOCKIA" (browse the public product with no account) and "Create your
-    // profile" (signup). The single "Get Started" CTA of the previous dark
-    // carousel hero is gone. Same markup on mobile and desktop.
-    // They are LINKS, not buttons — a conversion page's primary actions must
-    // support cmd/middle-click "open in new tab" and be crawlable.
+    // The landing leads with TWO actions — "Explore Hockia" (browse the public
+    // product with no account) and "Create a profile" (signup). Same markup on
+    // mobile and desktop. They are LINKS, not buttons — a conversion page's
+    // primary actions must support cmd/middle-click "open in new tab" and be
+    // crawlable. Matched loosely (/create a|your profile/) so a copy tweak
+    // doesn't fail the smoke — the 2026-08 Web A redesign changed "your" →
+    // "a" and this spec was the only red job in an otherwise green CI.
     await expect(page.getByRole('link', { name: /explore hockia/i }).first()).toBeVisible({ timeout: 20000 })
-    await expect(page.getByRole('link', { name: /create your profile/i }).first()).toBeVisible({ timeout: 20000 })
+    await expect(page.getByRole('link', { name: /create (a|your) profile/i }).first()).toBeVisible({ timeout: 20000 })
   })
 
   test('signup page loads and shows role selection', async ({ page }) => {
