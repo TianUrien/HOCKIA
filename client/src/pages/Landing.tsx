@@ -246,6 +246,15 @@ function PhoneCluster() {
       className="absolute left-0 top-0 h-[470px] w-[390px] origin-top-left lg:static lg:h-auto lg:w-auto"
       style={{ transform: desktop ? undefined : `scale(${scale})` }}
     >
+    {/* Centre the GROUP, not the front phone. The Figma canvas authors the
+        cluster asymmetrically — measured with rotation, the three phones
+        span −43 → 395 on the 390 canvas, so their visual centre sits 19px
+        left of the canvas centre and the composition reads as leaning left
+        (founder, 2026-08-17). One translate on the group shifts all three
+        together, keeping sizes, overlap and depth exactly as designed, and
+        the bleed becomes symmetric (~24px off each screen edge). Mobile only:
+        the desktop stage is 660 wide and the phones sit inside it. */}
+    <div className="h-full w-full translate-x-[19px] lg:translate-x-0">
     <Parallax className="relative h-[470px] w-[390px] lg:h-[640px] lg:w-[660px]">
       {/* Left — Community */}
       <div className="absolute left-[-24px] top-[46px] -rotate-6 lg:left-[47px] lg:top-[78px]">
@@ -282,6 +291,7 @@ function PhoneCluster() {
         />
       </div>
     </Parallax>
+    </div>
     </div>
     </div>
   )
