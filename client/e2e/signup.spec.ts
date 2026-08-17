@@ -78,6 +78,8 @@ test.describe('Signup Flow', () => {
 
     // Select player role - actual button text is "Join as Player"
     await page.getByRole('button', { name: /join as player/i }).click()
+    // Email form is collapsed behind one link on sign-up (hierarchy of intent, 2026-08-17).
+    await page.getByRole('button', { name: /sign up with email/i }).click()
 
     // Email input should appear after role selection
     await expect(page.getByPlaceholder(/enter your email/i)).toBeVisible({ timeout: 5000 })
@@ -88,6 +90,8 @@ test.describe('Signup Flow', () => {
 
     // Select club role - actual button text is "Join as Club"
     await page.getByRole('button', { name: /join as club/i }).click()
+    // Email form is collapsed behind one link on sign-up (hierarchy of intent, 2026-08-17).
+    await page.getByRole('button', { name: /sign up with email/i }).click()
 
     // Email input should appear after role selection
     await expect(page.getByPlaceholder(/enter your email/i)).toBeVisible({ timeout: 5000 })
@@ -98,6 +102,8 @@ test.describe('Signup Flow', () => {
 
     // Select coach role - actual button text is "Join as Coach"
     await page.getByRole('button', { name: /join as coach/i }).click()
+    // Email form is collapsed behind one link on sign-up (hierarchy of intent, 2026-08-17).
+    await page.getByRole('button', { name: /sign up with email/i }).click()
 
     // Email input should appear after role selection
     await expect(page.getByPlaceholder(/enter your email/i)).toBeVisible({ timeout: 5000 })
@@ -107,6 +113,8 @@ test.describe('Signup Flow', () => {
     await page.goto('/signup')
     await dismissOverlays(page)
     await page.getByRole('button', { name: /join as player/i }).click()
+    // Email form is collapsed behind one link on sign-up (hierarchy of intent, 2026-08-17).
+    await page.getByRole('button', { name: /sign up with email/i }).click()
 
     // Try invalid email
     await page.getByPlaceholder(/enter your email/i).fill('invalid-email')
@@ -126,6 +134,8 @@ test.describe('Signup Flow', () => {
     await page.goto('/signup')
     await dismissOverlays(page)
     await page.getByRole('button', { name: /join as player/i }).click()
+    // Email form is collapsed behind one link on sign-up (hierarchy of intent, 2026-08-17).
+    await page.getByRole('button', { name: /sign up with email/i }).click()
 
     // Fill the form with valid-looking data but intercept the API call
     // to avoid triggering actual Supabase emails

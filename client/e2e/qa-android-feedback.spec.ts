@@ -40,6 +40,10 @@ test.describe('@smoke android-feedback — DoB picker (Vincent\'s original ask)'
     // no longer shows a picker once a DOB exists; see the locked test below.)
     await page.goto('/signup')
     await page.getByRole('button', { name: /join as player/i }).click()
+    // Sign-up now leads with OAuth and keeps the email form (which carries
+    // the DOB picker) behind one text link — hierarchy of intent, 2026-08-17.
+    // Open it the way a real email signup would; the picker itself is unchanged.
+    await page.getByRole('button', { name: /sign up with email/i }).click()
 
     const daySelect = page.getByLabel('Day', { exact: true })
     const monthSelect = page.getByLabel('Month', { exact: true })
