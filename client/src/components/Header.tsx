@@ -3,6 +3,7 @@ import { MessageCircle, Home, Users, Briefcase, Bell, Globe, Sparkles, Store } f
 import { AvatarMenu, NotificationBadge } from '@/components'
 import SettingsSheet from './SettingsSheet'
 import { useNavigation } from '@/hooks/useNavigation'
+import { useAuthStore } from '@/lib/auth'
 
 export default function Header() {
   const {
@@ -15,6 +16,7 @@ export default function Header() {
     opportunityCount,
     notificationCount,
   } = useNavigation()
+  const authLoading = useAuthStore((s) => s.loading)
   const headerRef = useRef<HTMLElement>(null)
 
   useEffect(() => {
@@ -128,6 +130,21 @@ export default function Header() {
                   bottom nav (the avatar there now navigates directly to
                   the dashboard). Mobile-only; desktop keeps AvatarMenu. */}
               <SettingsSheet />
+            </div>
+          )}
+
+          {/* Mobile, GUEST — returning visitors look for "Log in" in the
+              header, so it belongs here rather than in the bottom bar, which
+              carries the three explore areas plus Join. Mirrors the landing
+              page's mobile nav pill so the two surfaces read as one product. */}
+          {!user && !authLoading && (
+            <div className="flex lg:hidden items-center">
+              <button
+                onClick={() => handleNavigate('/signin')}
+                className="min-h-[44px] rounded-full bg-[#f4f1ff] px-4 text-sm font-semibold text-[#5b21b6] transition-colors active:bg-[#ede9ff]"
+              >
+                Log in
+              </button>
             </div>
           )}
 

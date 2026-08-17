@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
+import { useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { logger } from '../lib/logger'
 import { requestCache } from '../lib/requestCache'
@@ -13,6 +12,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { trackDbEvent } from '../lib/trackDbEvent'
 import { trackProfileView, trackPublicProfileViewed } from '../lib/analytics'
 import { usePublicProfileMeta } from '@/hooks/usePublicProfileMeta'
+import ProfileUnavailable from '@/components/profile/ProfileUnavailable'
 import PublicProfileFooterCTA from '@/components/profile/PublicProfileFooterCTA'
 
 type PublicProfileBase = Pick<
@@ -63,7 +63,6 @@ import { PUBLIC_PROFILE_FIELDS } from '@/lib/publicProfileFields'
 
 export default function PublicPlayerProfile() {
   const { username, id } = useParams<{ username?: string; id?: string }>()
-  const navigate = useNavigate()
   const { profile: currentUserProfile } = useAuthStore()
   const isCurrentUserTestAccount = currentUserProfile?.is_test_account ?? false
   // Staging shows test accounts to everyone for QA.
@@ -233,24 +232,9 @@ export default function PublicPlayerProfile() {
   }
 
   if (error || !profile) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center max-w-md mx-auto px-4">
-          <div className="text-6xl mb-4">🏑</div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Profile Not Found</h2>
-          <p className="text-gray-600 mb-6">
-            {error || 'Profile not found.'}
-          </p>
-          <button
-            onClick={() => navigate(-1)}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Go Back
-          </button>
-        </div>
-      </div>
-    )
+    // Coach and player share this page; the URL says which noun to use.
+    const noun = window.location.pathname.startsWith('/coaches') ? 'coach' : 'player'
+    return <ProfileUnavailable noun={noun} message={error} />
   }
 
   // Coerce nullable verification fields to the stricter shape the dashboard

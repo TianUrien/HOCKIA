@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
-import { Home, Users, Briefcase, Globe, Sparkles } from 'lucide-react'
+import { Home, Users, Briefcase, Globe, Sparkles, UserPlus } from 'lucide-react'
 import Avatar from './Avatar'
 import { NotificationBadge } from '@/components'
 import { useNavigation } from '@/hooks/useNavigation'
 import { useAnyModalOpen } from '@/hooks/useAnyModalOpen'
 import { useBottomPrompt } from '@/lib/bottomPrompt'
 import { hapticSelection } from '@/lib/haptics'
+import { trackSignupCtaClick } from '@/lib/analytics'
+import { useAuthStore } from '@/lib/auth'
 
 interface NavItem {
   id: string
@@ -23,6 +25,7 @@ export default function MobileBottomNav() {
     handleNavigate,
     opportunityCount,
   } = useNavigation()
+  const authLoading = useAuthStore((s) => s.loading)
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false)
   const [isHidden, setIsHidden] = useState(false)
   // The floating Hockia AI button hides while the user scrolls DOWN through
@@ -140,14 +143,121 @@ export default function MobileBottomNav() {
     setIsHidden(shouldHide)
   }, [location.pathname, location.search])
 
-  // Don't render if user is not authenticated or on hidden routes
-  if (!user || !profile || isHidden) {
+  if (isHidden || isKeyboardOpen) {
     return null
   }
 
-  // Hide when keyboard is open
-  if (isKeyboardOpen) {
+  // While the session is still being resolved, `user` is null for EVERYONE —
+  // rendering the guest bar here would flash "Join" at a logged-in member
+  // cold-loading a public page, then swap to their real bar. Wait it out.
+  if (authLoading) {
     return null
+  }
+
+  // ── Guest exploration bar ────────────────────────────────────────────────
+  // Founder brief 2026-08-15: "Explore Hockia should actually feel
+  // explorable." Until now a logged-out visitor on mobile had NO navigation
+  // at all — the two halves each delegated it to the other. Header's guest
+  // links sit in a `hidden lg:flex` block (desktop only) and its mobile slot
+  // is commented "navigation handled by MobileBottomNav", while this
+  // component returned null without a profile. So tapping "Explore Hockia"
+  // landed people on a single screen with no way onward.
+  //
+  // The fix is the app's OWN idiom rather than a new pattern: guests get the
+  // same bottom tab bar, scoped to the three public areas plus a conversion
+  // slot. Signing up then ADDS Home and Dashboard to a bar already familiar,
+  // instead of swapping one navigation model for another.
+  //
+  // No Hockia AI FAB here — it needs an authenticated session, so offering it
+  // would be a dead end.
+  // A signed-in account with NO profile row yet is not a guest — they are
+  // mid-signup, and Landing/AuthCallback route them to /complete-profile.
+  // Offering them "Join" would send an existing account to the signup form.
+  // No bar for them; the authed bar below needs a profile anyway.
+  if (user && !profile) {
+    return null
+  }
+
+  if (!user) {
+    // The bar follows the guest through the EXPLORE surface: the three areas
+    // plus the public profile/detail pages they open from there — otherwise
+    // tapping a member card strands them on a page with no way onward.
+    // Anywhere else a guest can land — sign-in/up, verify-email, invite,
+    // terms — is a focused flow, and a persistent "browse elsewhere" bar
+    // there is noise (or, mid-signup, an exit ramp). Half-signed-up members
+    // (user but no profile yet) are on /complete-profile and must not see it.
+    const GUEST_BAR_ROUTES = [
+      '/world', '/opportunities', '/community',
+      '/players', '/coaches', '/clubs', '/umpires', '/brands', '/members', '/marketplace', '/post',
+    ]
+    const onExploreArea = GUEST_BAR_ROUTES.some(
+      (r) => location.pathname === r || location.pathname.startsWith(r + '/'),
+    )
+    if (!onExploreArea) return null
+
+    const guestItems: NavItem[] = [
+      { id: 'world', label: 'World', path: '/world', icon: Globe },
+      { id: 'opportunities', label: 'Opportunities', path: '/opportunities', icon: Briefcase },
+      { id: 'community', label: 'Community', path: '/community', icon: Users },
+    ]
+
+    return (
+      <>
+        <div className="h-20 lg:hidden" aria-hidden="true" />
+        <nav
+          className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/[0.97] backdrop-blur-lg border-t border-gray-200/50 shadow-lg pb-[max(env(safe-area-inset-bottom),0.5rem)] [transform:translate3d(0,0,0)] [backface-visibility:hidden]"
+          aria-label="Explore Hockia"
+        >
+          <div className="flex items-center justify-between gap-1 px-2 pt-2">
+            {guestItems.map((item) => {
+              const Icon = item.icon
+              const active = isActive(item.path)
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => { void hapticSelection(); handleNavigate(item.path) }}
+                  className={`flex min-h-[44px] min-w-[48px] flex-1 flex-col items-center justify-center rounded-xl px-2 py-1 transition-all duration-200 ${
+                    active ? 'text-hockia-primary' : 'text-gray-600 active:bg-gray-100'
+                  }`}
+                  aria-label={item.label}
+                  aria-current={active ? 'page' : undefined}
+                >
+                  <div className={`relative mb-0.5 flex h-7 w-7 items-center justify-center transition-transform duration-200 ${active ? 'scale-110' : 'scale-100'}`}>
+                    <Icon className={`h-6 w-6 transition-all duration-200 ${active ? 'stroke-[2.5]' : 'stroke-[2]'}`} />
+                    {active && (
+                      <div className="absolute inset-0 rounded-full bg-gradient-to-r from-hockia-primary to-hockia-secondary opacity-20 blur-md" />
+                    )}
+                  </div>
+                  {/* Same ≥360px rule as the authed bar: "Opportunities" is
+                      ~78px and cannot share a row of four below that. */}
+                  <span className="hidden text-[10px] font-medium transition-all duration-200 min-[360px]:inline">
+                    {item.label}
+                  </span>
+                </button>
+              )
+            })}
+
+            {/* Conversion slot. Deliberately NOT styled as a fourth
+                destination — a filled violet pill reads as an action, so the
+                three areas stay legible as "places" and the ask is present
+                without nagging. Log in lives in the header, where returning
+                users look for it. */}
+            <button
+              onClick={() => { void hapticSelection(); trackSignupCtaClick('guest_nav'); handleNavigate('/signup') }}
+              className="flex min-h-[44px] min-w-[48px] flex-1 flex-col items-center justify-center rounded-xl px-2 py-1 text-hockia-primary transition-all duration-200 active:scale-95"
+              aria-label="Create a profile"
+            >
+              <div className="mb-0.5 flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-hockia-primary to-hockia-secondary shadow-sm shadow-hockia-primary/30">
+                <UserPlus className="h-[15px] w-[15px] text-white" strokeWidth={2.5} />
+              </div>
+              <span className="hidden text-[10px] font-semibold transition-all duration-200 min-[360px]:inline">
+                Join
+              </span>
+            </button>
+          </div>
+        </nav>
+      </>
+    )
   }
 
   return (
