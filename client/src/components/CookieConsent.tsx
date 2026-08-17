@@ -58,8 +58,13 @@ export default function CookieConsent() {
   if (typeof window !== 'undefined' && (window as unknown as { __PRERENDER__?: boolean }).__PRERENDER__) return null
 
   return (
+    // z-[9990], deliberately BELOW the Terms/Age gates (z-[9999]). At equal
+    // z-index this banner won by DOM order and sat directly on top of the
+    // gate's "I Agree — Continue" button on mobile — the one control that
+    // lets a first-time user proceed. A blocking legal gate must always be
+    // above an informational banner.
     <div
-      className="fixed inset-x-0 z-[9999] px-3 pb-3 sm:px-6 sm:pb-4 pointer-events-none bottom-[calc(env(safe-area-inset-bottom)+80px)] lg:bottom-0"
+      className="fixed inset-x-0 z-[9990] px-3 pb-3 sm:px-6 sm:pb-4 pointer-events-none bottom-[calc(env(safe-area-inset-bottom)+80px)] lg:bottom-0"
       role="region"
       aria-label="Cookie consent"
     >

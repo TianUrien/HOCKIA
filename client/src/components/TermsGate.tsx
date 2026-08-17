@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
@@ -14,6 +14,7 @@ const CURRENT_TERMS_VERSION = '1.0'
 export default function TermsGate({ children }: { children: React.ReactNode }) {
   const { user } = useAuthStore()
   const navigate = useNavigate()
+  const location = useLocation()
   const [accepted, setAccepted] = useState<boolean | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -21,6 +22,20 @@ export default function TermsGate({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!user) {
       setAccepted(true) // Not logged in — don't gate public pages
+      return
+    }
+    // /auth/callback is a TRANSIENT routing page — it exchanges the OAuth or
+    // magic-link code, resolves the profile, and navigates on. Gating it
+    // parked first-time users behind a full-screen Terms modal on a page
+    // that says nothing, while the callback's own navigation was blocked
+    // underneath. Found in the pre-release QA of 2026-08-17: 2 of 8 Google
+    // signups in the prior 14 days had a confirmed account, no profile, and
+    // zero page views — they quit at exactly this wall (one came back two
+    // days later and hit it again). Let the callback finish; the gate then
+    // shows on /complete-profile, over a real screen with context, where
+    // acceptance is still required before anything else.
+    if (location.pathname.startsWith('/auth/callback')) {
+      setAccepted(true)
       return
     }
 
@@ -43,7 +58,7 @@ export default function TermsGate({ children }: { children: React.ReactNode }) {
       .catch(() => {
         setAccepted(false) // Fail closed — require acceptance on DB errors
       })
-  }, [user])
+  }, [user, location.pathname])
 
   const handleAccept = async () => {
     if (!user) return

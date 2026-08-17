@@ -401,6 +401,12 @@ export default function AuthScreen({ mode, role, onBack }: AuthScreenProps) {
           setError('This email is already registered. Try signing in instead.')
           return
         }
+        // Supabase's "Unable to validate email address: invalid format" is
+        // accurate but reads like a log line. Say it the way a person would.
+        if (/validate email|invalid format|invalid email/i.test(signUpError.message)) {
+          setError('That email address doesn’t look right — please check it.')
+          return
+        }
         setError(signUpError.message)
         return
       }

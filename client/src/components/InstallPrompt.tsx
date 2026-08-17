@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useLocation } from 'react-router-dom'
 import { Capacitor } from '@capacitor/core'
 import { X, Download, Share, Plus } from 'lucide-react'
 import { trackPwaInstall, trackPwaInstallDismiss } from '@/lib/analytics'
@@ -26,6 +27,9 @@ declare global {
 type InstallState = 'idle' | 'can-install' | 'ios-safari' | 'installed'
 
 // Version key — bumped to force re-tracking for users who hit the v1 bug
+/** Routes where the install prompt must NEVER render. */
+const AUTH_FLOW_PREFIXES = ['/signup', '/signin', '/auth', '/verify-email', '/complete-profile', '/forgot-password', '/reset-password', '/email-action', '/juniors-waitlist']
+
 const TRACKED_KEY = 'pwa-install-tracked-v2'
 
 async function persistInstallToDb(platform: 'ios' | 'android' | 'desktop'): Promise<boolean> {
@@ -45,6 +49,7 @@ async function persistInstallToDb(platform: 'ios' | 'android' | 'desktop'): Prom
 }
 
 export default function InstallPrompt() {
+  const location = useLocation()
   const [installState, setInstallState] = useState<InstallState>('idle')
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
   const [isDismissed, setIsDismissed] = useState(false)
@@ -163,6 +168,18 @@ export default function InstallPrompt() {
   // Never inside the native app; and not if dismissed, already installed, or no
   // install option.
   if (isNative || isDismissed || installState === 'installed' || installState === 'idle') {
+    return null
+  }
+
+  // Never during auth or onboarding. Found in the pre-release QA of
+  // 2026-08-17: on iPhone this card rendered over /signup and physically
+  // covered the "Sign up with email" link — the only route to the email form
+  // — and it competed with the Terms modal and the cookie banner for the same
+  // bottom strip during a first-time user's most fragile moments. A stranger
+  // mid-signup is not the audience for an install pitch; a member who has
+  // finished onboarding is. Sitting inside <BrowserRouter>, so useLocation is
+  // safe here.
+  if (AUTH_FLOW_PREFIXES.some((pre) => location.pathname === pre || location.pathname.startsWith(pre + '/'))) {
     return null
   }
 
