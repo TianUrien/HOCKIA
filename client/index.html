@@ -65,6 +65,32 @@
     <meta name="msapplication-TileColor" content="#5b21b6" />
 
     <!-- Inter Font: self-hosted (see globals.css) -->
+
+    <!-- ES2022 shims for old WebViews (Sentry JAVASCRIPT-REACT-8Y: ".at is
+         not a function" on Chrome Mobile WebView 91 / Android 11). A CLASSIC
+         inline script, deliberately not a module import: static ES imports
+         are hoisted and vendor chunks evaluate BEFORE the entry module's own
+         body, so a shim inside main.tsx would run too late for anything that
+         calls .at() at module-evaluation time. Inline here it executes before
+         the module graph even starts. Guarded — modern engines keep native.
+         Mirrors src/lib/polyfills.ts, which unit-tests the same semantics. -->
+    <script>
+      (function () {
+        function defineAt(p) {
+          if (typeof p.at === 'function') return;
+          Object.defineProperty(p, 'at', { configurable: true, writable: true, value: function (n) {
+            var i = Math.trunc(n) || 0; if (i < 0) i += this.length;
+            return i < 0 || i >= this.length ? undefined : this[i];
+          } });
+        }
+        defineAt(Array.prototype); defineAt(String.prototype);
+        var T = [Int8Array, Uint8Array, Uint8ClampedArray, Int16Array, Uint16Array, Int32Array, Uint32Array, Float32Array, Float64Array];
+        for (var k = 0; k < T.length; k++) if (typeof T[k] !== 'undefined') defineAt(T[k].prototype);
+        if (typeof Object.hasOwn !== 'function') {
+          Object.defineProperty(Object, 'hasOwn', { configurable: true, writable: true, value: function (o, key) { return Object.prototype.hasOwnProperty.call(o, key); } });
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
