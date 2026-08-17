@@ -20,6 +20,15 @@ import { captureFirstTouch } from '@/lib/analyticsIdentity'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import KeyboardShortcutsModal from '@/components/KeyboardShortcutsModal'
 import Landing from '@/pages/Landing'
+import NativeWelcome from '@/pages/NativeWelcome'
+import { Capacitor } from '@capacitor/core'
+
+// Dev-only preview: `?native=1` renders the native first-run in a browser so
+// the screen can be reviewed without a device build. Ignored in production
+// (import.meta.env.DEV is false there), so it can never leak to the website.
+const IS_NATIVE =
+  Capacitor.isNativePlatform() ||
+  (import.meta.env.DEV && typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('native') === '1')
 import SignUp from '@/pages/SignUp'
 import AuthScreen from '@/pages/AuthScreen'
 import AuthCallback from '@/pages/AuthCallback'
@@ -381,7 +390,13 @@ function App() {
               <Suspense fallback={<PageLoader />}>
                 <Routes>
                 {/* Public Routes (allowlisted in ProtectedRoute) */}
-                <Route path="/" element={<ErrorBoundary fallback={<RouteErrorFallback />}><Landing /></ErrorBoundary>} />
+                {/* "/" — the website gets the Web A marketing landing; the
+                    iOS/Android apps get their own first-run screen (Figma
+                    02-F3). Someone who opened the app from a store has
+                    already converted on intent and doesn't need the scroll.
+                    Decided once at module load — the platform can't change
+                    for the lifetime of the process. */}
+                <Route path="/" element={<ErrorBoundary fallback={<RouteErrorFallback />}>{IS_NATIVE ? <NativeWelcome /> : <Landing />}</ErrorBoundary>} />
                 <Route path="/signup" element={<ErrorBoundary fallback={<RouteErrorFallback />}><SignUp /></ErrorBoundary>} />
                 <Route path="/signin" element={<ErrorBoundary fallback={<RouteErrorFallback />}><AuthScreen mode="signin" /></ErrorBoundary>} />
                 <Route path="/auth/callback" element={<ErrorBoundary fallback={<RouteErrorFallback />}><AuthCallback /></ErrorBoundary>} />
