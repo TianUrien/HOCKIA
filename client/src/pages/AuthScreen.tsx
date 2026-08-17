@@ -36,6 +36,7 @@ import { logger } from '@/lib/logger'
 import { trackLogin, trackLoginFailed, trackSignUp, trackSignUpStart } from '@/lib/analytics'
 import { reportAuthFlowError } from '@/lib/sentryHelpers'
 import { isSafeRedirectPath } from '@/lib/safeRedirect'
+import { extractErrorMessage } from '@/lib/utils'
 
 export interface AuthScreenProps {
   mode: 'signin' | 'signup'
@@ -407,7 +408,9 @@ export default function AuthScreen({ mode, role, onBack }: AuthScreenProps) {
           setError('That email address doesn’t look right — please check it.')
           return
         }
-        setError(signUpError.message)
+        // Route through the shared mapper: a dropped connection said
+        // "Failed to fetch (xtert….supabase.co)" — a hostname is not a message.
+        setError(extractErrorMessage(signUpError, 'Sign up failed. Please try again.'))
         return
       }
 
@@ -422,7 +425,7 @@ export default function AuthScreen({ mode, role, onBack }: AuthScreenProps) {
       navigate('/verify-email')
     } catch (err) {
       logger.error('Sign up error:', err)
-      setError(err instanceof Error ? err.message : 'Sign up failed.')
+      setError(extractErrorMessage(err, 'Sign up failed. Please try again.'))
     } finally {
       setLoading(false)
     }
