@@ -225,12 +225,13 @@ function PhoneCluster() {
       {/* Front — First run */}
       <div className="absolute left-[97px] top-[16px] lg:left-[186px] lg:top-[4px]">
         <Phone
-          src="/landing/phone-firstrun.png"
+          src="/landing/phone-firstrun.webp"
           alt="Hockia app: your game, your network"
           className="relative h-[417px] w-[196px] shadow-[0_4px_5px_rgba(41,28,66,0.12),0_22px_24px_rgba(41,28,66,0.24)] lg:h-[600px] lg:w-[282px]"
+          imgClassName="object-top"
           priority
-          screenW={390}
-          screenH={844}
+          screenW={780}
+          screenH={1688}
         />
       </div>
     </Parallax>
