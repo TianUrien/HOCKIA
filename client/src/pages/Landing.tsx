@@ -197,9 +197,56 @@ function Phone({ src, alt, className, imgClassName = '', priority = false, scree
   )
 }
 
+/** Authoring canvas of the mobile cluster — the Figma frame's dimensions. */
+const CLUSTER_W = 390
+const CLUSTER_H = 470
+
 function PhoneCluster() {
+  // MOBILE: the cluster is authored on a 390×470 canvas. Rather than a fixed
+  // 390px box that floats in dead space on a 430pt phone and overflows a
+  // 360pt one, the outer box takes the viewport width and the canvas scales
+  // to fill it — proportionally identical on every phone, outer phones
+  // bleeding off the screen edges exactly as designed. DESKTOP keeps its
+  // fixed 660×640 stage (scale 1).
+  //
+  // The scale is a NUMBER, so it is measured in JS: CSS can't derive a
+  // unitless ratio from `100vw / 390px` (length ÷ length is not allowed in
+  // calc for scale()). ResizeObserver keeps it right on rotation.
+  const outerRef = useRef<HTMLDivElement | null>(null)
+  const [scale, setScale] = useState(1)
+  const [desktop, setDesktop] = useState(false)
+  useEffect(() => {
+    const el = outerRef.current
+    if (!el) return
+    const update = () => {
+      const isDesktop = window.matchMedia('(min-width: 1024px)').matches
+      setDesktop(isDesktop)
+      setScale(isDesktop ? 1 : el.clientWidth / CLUSTER_W)
+    }
+    update()
+    const ro = new ResizeObserver(update)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
   return (
-    <Parallax className="relative mx-auto h-[470px] w-[390px] shrink-0 lg:h-[640px] lg:w-[660px]">
+    <div
+      ref={outerRef}
+      className="relative mx-auto w-full shrink-0 lg:h-[640px] lg:w-[660px]"
+      // Mobile ALWAYS sets the height (the canvas is absolutely positioned, so
+      // the box has no intrinsic height) — including at exactly scale 1 on a
+      // 390pt phone, which used to collapse to 0.
+      style={{ height: desktop ? undefined : CLUSTER_H * scale }}
+      data-cluster
+    >
+    {/* Scaling lives on THIS wrapper, not on Parallax's element — Parallax
+        writes `transform` inline for its scroll drift, and two writers on one
+        element means one silently loses (see the note on Reveal/Parallax). */}
+    <div
+      className="absolute left-0 top-0 h-[470px] w-[390px] origin-top-left lg:static lg:h-auto lg:w-auto"
+      style={{ transform: desktop ? undefined : `scale(${scale})` }}
+    >
+    <Parallax className="relative h-[470px] w-[390px] lg:h-[640px] lg:w-[660px]">
       {/* Left — Community */}
       <div className="absolute left-[-24px] top-[46px] -rotate-6 lg:left-[47px] lg:top-[78px]">
         <Phone
@@ -235,6 +282,8 @@ function PhoneCluster() {
         />
       </div>
     </Parallax>
+    </div>
+    </div>
   )
 }
 
@@ -636,7 +685,13 @@ export default function Landing() {
           )}
         </div>
 
-        <Reveal delay={150} className="w-full overflow-hidden lg:w-auto lg:overflow-visible">
+        {/* The cluster BLEEDS to the screen edges on mobile — the Figma frame
+            runs the outer phones off both sides on purpose. `w-screen` +
+            negative margins escape the section's px-5, so the only thing
+            that clips a phone is the viewport itself, never an inner padding
+            box (which chopped 37px off the left phone at 430w). Desktop keeps
+            its own width; the hero's flex row positions it. */}
+        <Reveal delay={150} className="-mx-5 w-screen overflow-hidden lg:mx-0 lg:w-auto lg:overflow-visible">
           <PhoneCluster />
         </Reveal>
       </section>
