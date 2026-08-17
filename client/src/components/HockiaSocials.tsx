@@ -25,8 +25,9 @@ const HOCKIA_SOCIALS = [
 
 interface HockiaSocialsProps {
   /** 'muted' = grey icons for light surfaces (footer); 'onDark' = white
-   *  icons for dark surfaces (landing hero). */
-  tone?: 'muted' | 'onDark'
+   *  icons for dark surfaces (landing hero); 'onBrand' = white icons in
+   *  frosted circle chips for the solid-violet CTA band (Web A design). */
+  tone?: 'muted' | 'onDark' | 'onBrand'
   iconClassName?: string
   className?: string
 }
@@ -37,12 +38,17 @@ export default function HockiaSocials({
   className = '',
 }: HockiaSocialsProps) {
   const linkTone =
-    tone === 'onDark'
-      ? 'text-white/70 hover:text-white'
-      : 'text-gray-500 dark:text-gray-400 hover:text-hockia-primary dark:hover:text-purple-400'
+    tone === 'onBrand'
+      ? 'flex h-10 w-10 items-center justify-center rounded-full bg-white/[0.12] text-white hover:bg-white/20'
+      : tone === 'onDark'
+        ? 'text-white/70 hover:text-white'
+        : 'text-gray-500 dark:text-gray-400 hover:text-hockia-primary dark:hover:text-purple-400'
 
   return (
-    <div className={`flex items-center gap-4 ${className}`} aria-label="Follow HOCKIA on social media">
+    <div
+      className={`flex items-center ${tone === 'onBrand' ? 'gap-2' : 'gap-4'} ${className}`}
+      aria-label="Follow HOCKIA on social media"
+    >
       {HOCKIA_SOCIALS.map(({ label, href, Icon }) => (
         <a
           key={label}

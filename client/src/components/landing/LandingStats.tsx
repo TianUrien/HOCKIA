@@ -75,7 +75,42 @@ function StatCell({ stat, animate, index }: { stat: Stat; animate: boolean; inde
   )
 }
 
-export default function LandingStats() {
+/**
+ * Web A "S2 · Live proof" band cell — 56px extrabold violet figure over an
+ * uppercase overline label (Figma node 21:416 "Web / Stat"). Same live data,
+ * count-up and settle behaviour as the card variant; only the clothes differ.
+ */
+function BandCell({ stat, animate, index }: { stat: Stat; animate: boolean; index: number }) {
+  const { value, settled } = useCountUp(stat.value, animate)
+  const reduced = useReducedMotion()
+  return (
+    <div
+      className="flex h-[110px] flex-col items-center justify-center gap-1.5"
+      style={{
+        opacity: animate ? 1 : 0,
+        transform: animate ? 'translateY(0)' : 'translateY(10px)',
+        transition: reduced
+          ? 'none'
+          : `opacity ${DUR_ENTRANCE}ms ${EASE_ENTRANCE} ${stagger(index)}ms, transform ${DUR_ENTRANCE}ms ${EASE_ENTRANCE} ${stagger(index)}ms`,
+      }}
+    >
+      <span
+        key={settled ? 'done' : 'running'}
+        className={`text-[44px] font-extrabold leading-[1.07] tracking-[-0.04em] text-[#5b21b6] tabular-nums lg:text-[56px] ${
+          settled && !reduced ? 'digit-settle' : ''
+        }`}
+      >
+        {value.toLocaleString()}
+        {stat.key === 'members' ? '+' : ''}
+      </span>
+      <span className="text-[10px] font-semibold uppercase tracking-[0.062em] text-[#6e6779]">
+        {stat.label}
+      </span>
+    </div>
+  )
+}
+
+export default function LandingStats({ variant = 'card' }: { variant?: 'card' | 'band' }) {
   const [data, setData] = useState(FALLBACK)
   const { ref, inView } = useInView<HTMLDivElement>('0px 0px -10% 0px')
   const glowRef = usePointerGlow<HTMLDivElement>('[data-glow]')
@@ -112,6 +147,27 @@ export default function LandingStats() {
     { key: 'clubs', label: 'clubs mapped', value: data.clubs_mapped, icon: Building2 },
     { key: 'roles', label: 'open roles', value: data.open_roles, icon: Briefcase },
   ]
+
+  if (variant === 'band') {
+    return (
+      <div ref={ref} data-testid="landing-stats" className="flex w-full flex-col items-center gap-3.5 lg:gap-6">
+        <div className="grid w-full grid-cols-2 gap-2 lg:flex lg:w-auto lg:items-center lg:gap-16">
+          {stats.map((s, i) => (
+            <BandCell key={s.key} stat={s} animate={inView} index={i} />
+          ))}
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="relative flex h-1.5 w-1.5" aria-hidden="true">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-hockia-secondary/60 motion-reduce:hidden" />
+            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-hockia-secondary" />
+          </span>
+          <span className="text-xs font-medium tracking-[0.008em] text-[#6e6779] lg:text-[13px]">
+            Live from the Hockia community, not a projection
+          </span>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div ref={ref} className="mt-16" data-testid="landing-stats">

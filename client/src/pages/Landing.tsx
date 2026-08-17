@@ -1,21 +1,20 @@
-import { useEffect, useRef, useCallback } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
-import { ArrowRight, Check } from 'lucide-react'
+import { ChevronRight, Menu, X } from 'lucide-react'
 import { Capacitor } from '@capacitor/core'
-import { InAppBrowserWarning, PublicNav } from '@/components'
+import { InAppBrowserWarning } from '@/components'
 import HockiaSocials from '@/components/HockiaSocials'
 import StoreBadges from '@/components/StoreBadges'
 import LandingStats from '@/components/landing/LandingStats'
-import RoleCards from '@/components/landing/RoleCards'
 import {
   useInView,
   useParallax,
   useReducedMotion,
-  stagger,
   EASE_ENTRANCE,
   DUR_ENTRANCE,
 } from '@/lib/motion'
 import { useAuthStore } from '@/lib/auth'
+import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { useContactModal } from '@/lib/contact'
 import { safeRedirectPath } from '@/lib/safeRedirect'
@@ -26,15 +25,14 @@ import { setStatusBarForBackground } from '@/lib/nativeUi'
 /**
  * Landing — the public marketing surface.
  *
- * Strategy (founder brief + funnel review, 2026-07-25): the funnel data showed
- * the drop is BEFORE signup, not inside onboarding (~95% of people who start
- * the wizard finish it), and that logged-out visitors already try to explore —
- * a third of opportunity views come from people with no account. So the page's
- * job is to SHOW the product, not describe it, and to offer "look around" as a
- * first-class action next to "sign up".
+ * Design: Figma "Web A · Product first" (desktop, node 22:411) and
+ * "Web A · Product first — Mobile" (node 48:1613), founder-selected
+ * 2026-08-15. One responsive component, not two trees: every section is the
+ * same DOM styled per breakpoint, so the copy can never drift between sizes.
  *
- * Every screenshot here is the real product with real data, not an
- * illustration — that's the whole point: proof instead of claims.
+ * Strategy carried over from the funnel review (2026-07-25): the drop is
+ * BEFORE signup, so the page SHOWS the product — real screenshots, live
+ * numbers, real open roles — and offers "look around" beside "sign up".
  *
  * NOTE: this page scrolls, so it must NOT use useImmersiveChrome (that hook
  * locks body/html overflow for the old fixed full-screen dark hero).
@@ -42,18 +40,20 @@ import { setStatusBarForBackground } from '@/lib/nativeUi'
 
 const EXPLORE_PATH = '/community'
 
-/** Inside the iOS/Android app. Constant for the lifetime of the process, so
- *  it's read once rather than per render. */
+/** Inside the iOS/Android app. Constant for the lifetime of the process. */
 const isNativeApp = Capacitor.isNativePlatform()
 
+/** Design tokens from the Figma frame — named so a retune touches one line. */
+const INK = '#2b2a33' // semantic/text/primary
+const INK_2 = '#504f59' // semantic/text/secondary
+const INK_3 = '#6e6779' // semantic/text/tertiary
+const BRAND_TEXT = '#5b21b6' // semantic/text/brand
+const BRAND_SOLID = '#7c3aed' // semantic/bg/brand-solid
+
 /**
- * Reveal-on-scroll, on the shared motion system (see lib/motion.ts for the
- * easing tokens and the pooled observer/scroll machinery).
- *
+ * Reveal-on-scroll, on the shared motion system (lib/motion.ts).
  * SAFETY, inherited from useInView: marketing copy must never be permanently
- * invisible. Three independent paths lead to visible and any one suffices.
- * (Caught in review once: a full-page capture left two sections blank because
- * the observer never fired for them.)
+ * invisible — three independent paths lead to visible and any one suffices.
  */
 function Reveal({ children, className = '', delay = 0 }: {
   children: React.ReactNode; className?: string; delay?: number
@@ -77,100 +77,404 @@ function Reveal({ children, className = '', delay = 0 }: {
   )
 }
 
-/**
- * Scroll-linked drift for the product shots. Deliberately small — parallax
- * past roughly 40px stops reading as depth and starts reading as a bug.
- *
- * Its own element: `Reveal` writes `transform` inline for the entrance, and
- * two writers on one element means one of them silently loses.
- */
-function Parallax({ children, range = 22, className = '' }: {
+/** Scroll-linked drift for the phone cluster. Small on purpose — parallax
+ *  past ~40px stops reading as depth and starts reading as a bug. */
+function Parallax({ children, range = 18, className = '' }: {
   children: React.ReactNode; range?: number; className?: string
 }) {
   const ref = useParallax<HTMLDivElement>(range)
+  return <div ref={ref} className={className}>{children}</div>
+}
+
+/* ────────────────────────── Nav ────────────────────────── */
+
+function LandingNav({ onCta }: { onCta: (cta: 'create_profile', place: string) => void }) {
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  const links = [
+    { to: EXPLORE_PATH, label: 'Explore' },
+    { to: '/opportunities', label: 'Opportunities' },
+    { to: '/world', label: 'For clubs' },
+  ]
+
   return (
-    <div ref={ref} className={className}>
-      {children}
+    // index.html sets viewport-fit=cover, so each top surface must clear the
+    // iOS notch itself. No-op in browsers (safe-area inset is 0).
+    <nav className="relative z-20 w-full border-b border-[#e4e3eb] bg-white pt-[env(safe-area-inset-top)]">
+      <div className="mx-auto flex h-[60px] max-w-[1440px] items-center justify-between pl-5 pr-4 lg:h-[76px] lg:gap-8 lg:px-[72px]">
+        <Link to="/" className="flex shrink-0 items-center gap-2" aria-label="HOCKIA home">
+          <img src="/brand/svg/hockia-logo-violet.svg" alt="" width={300} height={243} className="h-6 w-auto lg:h-7" />
+          <img src="/brand/wordmark/hockia-wordmark-black.svg" alt="HOCKIA" width={153} height={42} className="h-3.5 w-auto lg:h-[17px]" />
+        </Link>
+
+        {/* Desktop links + actions */}
+        <div className="hidden flex-1 items-center gap-8 lg:flex">
+          <span className="w-2.5" aria-hidden="true" />
+          {links.map((l) => (
+            <Link key={l.to} to={l.to} className="text-sm font-medium text-[#504f59] transition-colors hover:text-[#2b2a33]">
+              {l.label}
+            </Link>
+          ))}
+          <span className="flex-1" aria-hidden="true" />
+          <Link to="/signin" className="text-sm font-semibold text-[#5b21b6] hover:underline underline-offset-4">
+            Log in
+          </Link>
+          <Link
+            to="/signup"
+            onClick={() => onCta('create_profile', 'nav')}
+            className="rounded-xl bg-[#7c3aed] px-5 py-[11px] text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#6d28d9] active:scale-[0.98]"
+          >
+            Create a profile
+          </Link>
+        </div>
+
+        {/* Mobile actions */}
+        <div className="flex items-center gap-2 lg:hidden">
+          <Link to="/signin" className="rounded-full bg-[#f4f1ff] px-4 py-2 text-sm font-semibold text-[#5b21b6]">
+            Log in
+          </Link>
+          <button
+            type="button"
+            onClick={() => setMenuOpen((v) => !v)}
+            aria-expanded={menuOpen}
+            aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+            className="flex h-10 w-10 items-center justify-center rounded-lg text-[#2b2a33] hover:bg-gray-100"
+          >
+            {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
+      </div>
+
+      {menuOpen && (
+        <div className="border-t border-[#e4e3eb] bg-white px-5 py-3 lg:hidden">
+          {links.map((l) => (
+            <Link
+              key={l.to}
+              to={l.to}
+              onClick={() => setMenuOpen(false)}
+              className="block rounded-lg px-2 py-3 text-[15px] font-medium text-[#2b2a33] hover:bg-gray-50"
+            >
+              {l.label}
+            </Link>
+          ))}
+          <Link
+            to="/signup"
+            onClick={() => { setMenuOpen(false); onCta('create_profile', 'nav_menu') }}
+            className="mt-2 block rounded-xl bg-[#7c3aed] px-2 py-3 text-center text-[15px] font-semibold text-white"
+          >
+            Create a profile
+          </Link>
+        </div>
+      )}
+    </nav>
+  )
+}
+
+/* ─────────────────────── Phone cluster ─────────────────────── */
+
+/**
+ * Three real product screens in CSS device frames (Figma 22:479 / 48:1689).
+ * The screenshots are exports of the actual app — proof, not illustration.
+ * Frames are pure CSS so the phones scale between breakpoints without
+ * shipping device-bezel images.
+ */
+function Phone({ src, alt, className, imgClassName = '', priority = false, screenW, screenH }: {
+  src: string; alt: string; className?: string; imgClassName?: string; priority?: boolean
+  screenW: number; screenH: number
+}) {
+  return (
+    <div className={`rounded-[42px] bg-[#0b0b12] ${className ?? ''}`}>
+      <img
+        src={src}
+        alt={alt}
+        width={screenW}
+        height={screenH}
+        loading={priority ? 'eager' : 'lazy'}
+        fetchPriority={priority ? 'high' : undefined}
+        className={`absolute inset-[1.34%_2.86%] h-[97.32%] w-[94.28%] rounded-[34px] object-cover ${imgClassName}`}
+      />
     </div>
   )
 }
 
-/**
- * Intrinsic pixel sizes of the mockups. Passed as width/height on every <img>
- * so the browser reserves the box before decode. Without these the page grew
- * ~400px (desktop) / ~1500px (mobile) underneath the reader as lazy images
- * landed — visible layout shift, and it also skewed landing_scroll_depth,
- * which measured against a document still growing.
- */
-const MOCKUP_SIZE: Record<string, { w: number; h: number }> = {
-  '/Mockup1.webp': { w: 590, h: 1280 },
-  '/Mockup2.webp': { w: 461, h: 702 },
-  '/Mockup3.webp': { w: 498, h: 623 },
-  '/Mockup4.webp': { w: 500, h: 748 },
-  '/Mockup5.webp': { w: 836, h: 640 },
-}
-
-interface FeatureSectionProps {
-  eyebrow: string
-  title: string
-  body: string
-  bullets: string[]
-  image: string
-  imageAlt: string
-  /** Image on the right (default) or left. */
-  flip?: boolean
-  /** Phone shots need a narrower frame than the laptop shot. */
-  narrow?: boolean
-}
-
-function FeatureSection({ eyebrow, title, body, bullets, image, imageAlt, flip, narrow }: FeatureSectionProps) {
-  const size = MOCKUP_SIZE[image]
+function PhoneCluster() {
   return (
-    <section className="py-16 md:py-24">
-      <div className="mx-auto max-w-6xl px-6">
-        <div className={`flex flex-col gap-10 md:gap-16 items-center ${flip ? 'md:flex-row-reverse' : 'md:flex-row'}`}>
-          <Reveal className="flex-1 min-w-0">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-hockia-primary">{eyebrow}</p>
-            <h2 className="mt-3 text-3xl md:text-[2.5rem] font-bold text-gray-900 leading-[1.15] tracking-tight text-balance">
-              {title}
-            </h2>
-            <p className="mt-4 text-lg text-gray-600 leading-relaxed">{body}</p>
-            <ul className="mt-6 space-y-3">
-              {bullets.map((b, i) => (
-                // The Reveal wrapper goes INSIDE the <li>, not around it: a
-                // <ul> may only directly contain <li>, and wrapping each item
-                // in a div orphaned all of them from the list (caught by axe —
-                // screen readers stop announcing these as a list at all).
-                <li key={b}>
-                  <Reveal delay={140 + stagger(i, 90)} className="flex items-start gap-3">
-                    <span className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-hockia-primary/10">
-                      <Check className="h-3 w-3 text-hockia-primary" strokeWidth={3} />
-                    </span>
-                    <span className="text-gray-700">{b}</span>
-                  </Reveal>
-                </li>
-              ))}
-            </ul>
-          </Reveal>
-
-          <Reveal className="flex-1 min-w-0 w-full" delay={120}>
-            <Parallax className={`mx-auto ${narrow ? 'max-w-[300px]' : 'max-w-[560px]'}`}>
-              <img
-                src={image}
-                alt={imageAlt}
-                width={size?.w}
-                height={size?.h}
-                loading="lazy"
-                decoding="async"
-                className="w-full h-auto drop-shadow-2xl"
-              />
-            </Parallax>
-          </Reveal>
-        </div>
+    <Parallax className="relative mx-auto h-[470px] w-[390px] shrink-0 lg:h-[640px] lg:w-[660px]">
+      {/* Left — Community */}
+      <div className="absolute left-[-24px] top-[46px] -rotate-6 lg:left-[47px] lg:top-[78px]">
+        <Phone
+          src="/landing/phone-community.png"
+          alt="Hockia community screen: players, coaches and clubs around the world"
+          className="relative h-[366px] w-[172px] shadow-[0_2px_4px_rgba(41,28,66,0.1),0_15px_17px_rgba(41,28,66,0.18)] lg:h-[502px] lg:w-[236px]"
+          screenW={390}
+          screenH={844}
+        />
       </div>
+      {/* Right — Feed. Top-anchored so the HOCKIA header and Feed/Pulse tabs
+          stay visible whatever sliver object-cover trims. */}
+      <div className="absolute left-[204px] top-[52px] rotate-6 lg:left-[381px] lg:top-[83px]">
+        <Phone
+          src="/landing/phone-feed.jpg"
+          alt="Hockia home feed: opportunities, milestones and community activity"
+          className="relative h-[366px] w-[172px] shadow-[0_2px_4px_rgba(41,28,66,0.1),0_15px_17px_rgba(41,28,66,0.18)] lg:h-[502px] lg:w-[236px]"
+          imgClassName="object-top"
+          screenW={590}
+          screenH={1280}
+        />
+      </div>
+      {/* Front — First run */}
+      <div className="absolute left-[97px] top-[16px] lg:left-[186px] lg:top-[4px]">
+        <Phone
+          src="/landing/phone-firstrun.png"
+          alt="Hockia app: your game, your network"
+          className="relative h-[417px] w-[196px] shadow-[0_4px_5px_rgba(41,28,66,0.12),0_22px_24px_rgba(41,28,66,0.24)] lg:h-[600px] lg:w-[282px]"
+          priority
+          screenW={390}
+          screenH={844}
+        />
+      </div>
+    </Parallax>
+  )
+}
+
+/* ─────────────────────── Role panel ─────────────────────── */
+
+interface RoleContent {
+  key: string
+  tab: string
+  title: string
+  titleAccent: string
+  body: string
+  chips: string[]
+}
+
+/** Player copy is verbatim from the Figma frame; the other four follow the
+ *  per-role value props (memory: project_hockia_role_value_props). */
+const ROLE_PANEL: RoleContent[] = [
+  {
+    key: 'player', tab: 'Player',
+    title: 'Build your hockey profile.', titleAccent: 'Get discovered.',
+    body: 'Career history, position, highlights and evidence. A professional identity made for hockey.',
+    chips: ['Professional profile', 'Position identity', 'Open to play'],
+  },
+  {
+    key: 'coach', tab: 'Coach',
+    title: 'Show your coaching journey.', titleAccent: 'Get hired.',
+    body: 'Specialisations, categories and career history — visible to clubs that need exactly you.',
+    chips: ['Coaching profile', 'Specialisations', 'Open to coach'],
+  },
+  {
+    key: 'club', tab: 'Club',
+    title: 'Present your club.', titleAccent: 'Recruit with context.',
+    body: 'Publish real roles, review applicants with evidence, and reach the worldwide game.',
+    chips: ['Club page', 'Open roles', 'Applicant review'],
+  },
+  {
+    key: 'umpire', tab: 'Umpire',
+    title: 'Be part of the game.', titleAccent: 'Beyond matchday.',
+    body: 'Your umpiring identity and categories, visible across the whole hockey ecosystem.',
+    chips: ['Umpire profile', 'Categories', 'Visibility'],
+  },
+  {
+    key: 'brand', tab: 'Brand',
+    title: 'Reach the hockey world.', titleAccent: 'Meaningfully.',
+    body: 'Understand the community and find real ways to take part in the sport.',
+    chips: ['Brand page', 'Products', 'Community reach'],
+  },
+]
+
+function RolePanel() {
+  const [active, setActive] = useState(0)
+  const role = ROLE_PANEL[active]
+
+  return (
+    <section className="bg-white pb-12 pt-11 lg:pb-20 lg:pt-[72px]">
+      <Reveal className="flex flex-col items-center gap-4 lg:gap-[26px]">
+        {/* Tabs — mobile: scrollable pill row; desktop: segmented control */}
+        <div
+          role="tablist"
+          aria-label="Who Hockia is for"
+          className="flex w-full gap-2 overflow-x-auto px-5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:w-auto lg:gap-0 lg:overflow-visible lg:rounded-full lg:bg-[#f3f2f7] lg:p-1 lg:px-1"
+        >
+          {ROLE_PANEL.map((r, i) => {
+            const selected = i === active
+            return (
+              <button
+                key={r.key}
+                role="tab"
+                aria-selected={selected}
+                onClick={() => setActive(i)}
+                className={[
+                  'shrink-0 cursor-pointer rounded-full px-4 py-[9px] text-sm transition-colors lg:px-[26px] lg:py-[11px]',
+                  selected
+                    ? 'bg-[#7c3aed] font-semibold text-white lg:bg-white lg:text-[#5b21b6] lg:shadow-[0_1px_4px_rgba(41,28,66,0.1)]'
+                    : 'border border-[#dad9e2] bg-white font-medium text-[#504f59] hover:text-[#2b2a33] lg:border-0 lg:bg-transparent',
+                ].join(' ')}
+              >
+                {r.tab}
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Per-role copy — keyed so the swap re-fires the entrance */}
+        <div key={role.key} className="flex animate-fadeSlideIn flex-col items-center gap-4 px-5 lg:gap-[26px]">
+          <h2 className="text-center text-[28px] font-bold leading-[34px] tracking-[-0.025em] text-[#2b2a33] lg:text-[40px] lg:font-extrabold lg:leading-[46px] lg:tracking-[-0.035em]">
+            {role.title}
+            <span className="block text-[#5b21b6]">{role.titleAccent}</span>
+          </h2>
+          <p className="max-w-[322px] text-center text-[15px] leading-[21px] tracking-[-0.007em] text-[#504f59] lg:max-w-[560px] lg:text-[19px] lg:leading-[29px]">
+            {role.body}
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-2 lg:gap-2.5">
+            {role.chips.map((c) => (
+              <span key={c} className="rounded-full bg-[#f4f1ff] px-3 py-[7px] text-xs font-semibold tracking-[0.008em] text-[#5b21b6] lg:px-3.5 lg:py-2 lg:text-[13px]">
+                {c}
+              </span>
+            ))}
+          </div>
+        </div>
+      </Reveal>
     </section>
   )
 }
+
+/* ─────────────────── Opportunities section ─────────────────── */
+
+interface TeaserRole {
+  title: string
+  org: string
+  country: string
+  /** Raw position/opportunity slug, e.g. "goalkeeper" | "head_coach". */
+  position: string
+}
+
+/** The three roles in the Figma frame — real prod listings at design time.
+ *  Only ever shown if the live fetch fails; better a real-but-stale role
+ *  than an empty section on the page whose argument is "this is live". */
+const FALLBACK_ROLES: TeaserRole[] = [
+  { title: 'Goalkeeper wanted', org: 'Quilmes Atletico Club', country: 'Argentina', position: 'goalkeeper' },
+  { title: 'Head Coach wanted', org: 'KHCB', country: 'Spain', position: 'head_coach' },
+  { title: 'Forward wanted', org: 'Puerto Belgrano HC', country: 'Argentina', position: 'forward' },
+]
+
+/** Position-chip palettes from the design (position/* tokens). Coach-type
+ *  roles share the defender blue, per the Figma frame. */
+const POS_CHIP: Record<string, { bg: string; text: string; label: string }> = {
+  goalkeeper: { bg: '#ffefec', text: '#95141c', label: 'Goalkeeper' },
+  defender: { bg: '#e7f6ff', text: '#005878', label: 'Defender' },
+  midfielder: { bg: '#eefbf1', text: '#00612f', label: 'Midfielder' },
+  forward: { bg: '#f4f1ff', text: '#5b21b6', label: 'Forward' },
+}
+
+function posChip(position: string) {
+  const direct = POS_CHIP[position]
+  if (direct) return direct
+  // head_coach / assistant_coach / … — anything non-field reads as "Coach".
+  return { bg: '#e7f6ff', text: '#005878', label: 'Coach' }
+}
+
+function OpportunitiesSection() {
+  const [roles, setRoles] = useState<TeaserRole[]>(FALLBACK_ROLES)
+
+  // Live open roles via the public API (same source as the developers page).
+  // Failure keeps the fallback silently — never an empty section.
+  useEffect(() => {
+    let cancelled = false
+    void (async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke<{
+          data?: Array<{
+            title?: string
+            position?: string | null
+            location?: { country?: string | null } | null
+            club?: { name?: string | null } | null
+          }>
+        }>('public-opportunities?limit=3', { method: 'GET' })
+        if (error) throw error
+        const rows = (data?.data ?? [])
+          .map((r) => ({
+            title: r.title?.trim() ?? '',
+            org: r.club?.name?.trim() ?? '',
+            country: r.location?.country?.trim() ?? '',
+            position: r.position ?? '',
+          }))
+          .filter((r) => r.title && r.org)
+          .slice(0, 3)
+        if (!cancelled && rows.length === 3) setRoles(rows)
+      } catch (err) {
+        logger.debug('[Landing] live roles unavailable, using fallback', err)
+      }
+    })()
+    return () => { cancelled = true }
+  }, [])
+
+  return (
+    <section className="bg-[#f9f9fb] px-5 pb-12 pt-11 lg:px-[72px] lg:pb-[88px] lg:pt-20">
+      <Reveal className="mx-auto flex max-w-[1024px] flex-col items-center gap-4 lg:gap-9">
+        <h2 className="text-center text-[28px] font-bold leading-[34px] tracking-[-0.025em] text-[#2b2a33] lg:text-[40px] lg:font-extrabold lg:leading-[46px] lg:tracking-[-0.035em]">
+          Your next <span className="text-[#5b21b6]">opportunity</span>
+          <span className="block">could be anywhere.</span>
+        </h2>
+
+        {/* Mobile: compact rows. Desktop: three cards. One list, two skins. */}
+        <div className="flex w-full flex-col gap-4 lg:w-auto lg:flex-row lg:items-start lg:gap-5">
+          {roles.map((r) => {
+            const chip = posChip(r.position)
+            return (
+              <Link
+                key={`${r.title}-${r.org}`}
+                to="/opportunities"
+                onClick={() => trackDbEvent('cta_click', undefined, undefined, { cta: 'open_role_teaser', location: 'opportunities_section' })}
+                className="group flex items-center gap-3 rounded-2xl border border-[#dad9e2] bg-white p-4 transition-all hover:-translate-y-0.5 hover:border-[#c9c6d6] hover:shadow-[0_10px_24px_-12px_rgba(41,28,66,0.25)] motion-reduce:transform-none lg:w-[300px] lg:flex-col lg:items-start lg:gap-3 lg:rounded-[18px] lg:p-[22px] lg:shadow-[0_1px_2px_rgba(41,28,66,0.05)]"
+              >
+                {/* Desktop-only "Open" pill riding with the pos chip */}
+                <div className="hidden items-center gap-2 lg:flex">
+                  <span className="flex items-center gap-[5px] rounded-full bg-[#f0fdf5] py-1 pl-[9px] pr-2.5">
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#16a34a]" aria-hidden="true" />
+                    <span className="text-xs font-semibold tracking-[0.008em] text-[#00612f]">Open</span>
+                  </span>
+                  <span className="rounded-full px-[9px] py-1 text-xs font-semibold tracking-[0.008em]" style={{ backgroundColor: chip.bg, color: chip.text }}>
+                    {chip.label}
+                  </span>
+                </div>
+
+                {/* Mobile-only pos chip */}
+                <span className="shrink-0 rounded-full px-[9px] py-[5px] text-xs font-semibold tracking-[0.008em] lg:hidden" style={{ backgroundColor: chip.bg, color: chip.text }}>
+                  {chip.label}
+                </span>
+
+                <span className="flex min-w-0 flex-1 flex-col gap-0.5 lg:flex-none lg:gap-3">
+                  <span className="truncate text-base font-semibold tracking-[-0.01em] text-[#2b2a33] lg:whitespace-normal lg:text-[22px] lg:leading-7 lg:tracking-[-0.018em]">
+                    {r.title}
+                  </span>
+                  <span className="truncate text-xs font-medium tracking-[0.008em] text-[#6e6779] lg:text-sm">
+                    <span className="lg:text-[#504f59]">{r.org}</span> · {r.country}
+                  </span>
+                  <span className="hidden pt-1 text-[13px] font-semibold tracking-[-0.004em] text-[#5b21b6] lg:block">
+                    Apply in the app
+                  </span>
+                </span>
+
+                {/* Mobile-only open dot */}
+                <span className="h-2 w-2 shrink-0 rounded-full bg-[#16a34a] lg:hidden" aria-label="Open role" />
+              </Link>
+            )
+          })}
+        </div>
+
+        <p className="text-center text-[13px] font-medium tracking-[-0.004em] text-[#6e6779] lg:text-[19px] lg:font-normal lg:leading-[29px] lg:tracking-[-0.008em] lg:text-[#504f59]">
+          <span className="lg:hidden">Clubs publish real roles. Apply in the app.</span>
+          <span className="hidden lg:inline">
+            Players and coaches discover roles worldwide. Clubs discover people who are actually looking.
+          </span>
+        </p>
+      </Reveal>
+    </section>
+  )
+}
+
+/* ────────────────────────── Page ────────────────────────── */
 
 export default function Landing() {
   const navigate = useNavigate()
@@ -190,16 +494,12 @@ export default function Landing() {
       }
     })()
 
-  // Light page: paint the native status bar for a light background. (No
-  // useImmersiveChrome — it locks scrolling for the old fixed dark hero.)
+  // Light page: paint the native status bar for a light background.
   useEffect(() => {
     void setStatusBarForBackground('light-bg')
   }, [])
 
-  // ── Funnel instrumentation ────────────────────────────────────────────────
-  // The two CTAs and reading depth are the landing-specific events deliberately
-  // held back from Phase 1 so they'd be built against THIS page rather than the
-  // one it replaced. `page_view` (path='/') is already emitted app-wide.
+  // ── Funnel instrumentation (unchanged from the previous landing) ──────────
   const firedDepths = useRef<Set<number>>(new Set())
   useEffect(() => {
     const onScroll = () => {
@@ -253,302 +553,155 @@ export default function Landing() {
     }
   }, [user, profile, profileStatus, authLoading, navigate, redirectTo])
 
-  // Real <Link>s, not buttons: a conversion page's primary actions must
-  // support cmd/middle-click "open in new tab" and be crawlable as links.
-  // The click handler still fires the funnel event; navigation is the Link's.
-  const ctaPair = (place: string) => (
-    <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
-      <Link
-        to={EXPLORE_PATH}
-        onClick={() => handleCta('explore_hockia', place)}
-        className="group inline-flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-hockia-primary to-hockia-secondary px-7 text-base font-semibold text-white shadow-lg shadow-hockia-primary/20 transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:shadow-xl hover:shadow-hockia-primary/30 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-hockia-primary/40 focus-visible:ring-offset-2 active:translate-y-0 active:scale-[0.985] active:duration-75 motion-reduce:transform-none sm:w-auto"
-      >
-        Explore HOCKIA
-        <ArrowRight className="h-4 w-4 transition-transform duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:translate-x-1 motion-reduce:transform-none" />
-      </Link>
-      <Link
-        to="/signup"
-        onClick={() => handleCta('create_profile', place)}
-        className="inline-flex h-14 w-full items-center justify-center rounded-2xl border border-gray-200 bg-white px-7 text-base font-semibold text-gray-900 shadow-sm transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:border-gray-300 hover:bg-gray-50 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-hockia-primary/40 focus-visible:ring-offset-2 active:translate-y-0 active:scale-[0.985] active:duration-75 motion-reduce:transform-none sm:w-auto"
-      >
-        Create your profile
-      </Link>
-    </div>
-  )
-
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white" style={{ color: INK }}>
       <InAppBrowserWarning context="login" />
-      <PublicNav transparent={false} />
+      <LandingNav onCta={handleCta} />
 
-      {/* ───────────────────────── HERO ───────────────────────── */}
-      <section className="relative overflow-hidden">
-        {/* Soft violet wash + grid, brand-tinted rather than a generic gradient */}
-        <div aria-hidden="true" className="pointer-events-none absolute inset-0">
-          <div className="absolute inset-0 bg-gradient-to-b from-[#f6f4ff] via-white to-white" />
-          <div className="absolute -top-32 -right-24 h-[420px] w-[420px] rounded-full bg-hockia-primary/10 blur-3xl" />
-          <div className="absolute top-40 -left-32 h-[380px] w-[380px] rounded-full bg-hockia-accent/5 blur-3xl" />
-        </div>
+      {/* ───────────── S1 · Hero ───────────── */}
+      <section className="mx-auto flex max-w-[1440px] flex-col items-center gap-[18px] px-5 pb-2 pt-9 lg:flex-row lg:items-center lg:gap-12 lg:py-8 lg:pl-[72px] lg:pr-12">
+        <div className="flex flex-col items-center gap-[18px] lg:min-w-0 lg:flex-1 lg:items-start lg:gap-6">
+          <Reveal>
+            {/* Eyebrow — tagline signature "A · Orbit light" */}
+            <span className="relative inline-flex items-center rounded-full border border-[#ede9ff] bg-white py-[7px] pl-3 pr-3.5 lg:py-2 lg:pl-3.5 lg:pr-4">
+              <span className="text-xs font-semibold tracking-[0.008em] text-[#5b21b6] lg:text-[13px] lg:tracking-[-0.004em]">
+                Where field hockey sticks together
+              </span>
+              <span className="orbit-ring" aria-hidden="true" />
+            </span>
+          </Reveal>
 
-        <div className="relative mx-auto max-w-6xl px-6 pt-14 pb-12 md:pt-20 md:pb-20">
-          <div className="flex flex-col lg:flex-row lg:items-center gap-12 lg:gap-8">
-            {/* Above the fold, so these reveals fire immediately and read as a
-                load choreography rather than a scroll effect: badge, headline,
-                promise, action. Each element arrives just after the one that
-                earns it. */}
-            <div className="flex-1 min-w-0">
-              <Reveal>
-                <span className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-1.5 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-gray-100">
-                  <span className="h-2 w-2 rounded-full bg-hockia-primary" />
-                  Where field hockey sticks together.
+          <Reveal delay={60}>
+            <h1 className="text-center text-[38px] font-extrabold leading-[42px] tracking-[-0.04em] lg:text-left lg:text-[64px] lg:leading-[68px]" style={{ color: INK }}>
+              The network for
+              <span className="block" style={{ color: BRAND_TEXT }}>field hockey.</span>
+            </h1>
+          </Reveal>
+
+          <Reveal delay={120}>
+            <p className="max-w-[320px] text-center text-base leading-6 tracking-[-0.009em] lg:max-w-[430px] lg:text-left lg:text-[19px] lg:leading-[29px]" style={{ color: INK_2 }}>
+              One network for the whole game: build your hockey identity, connect worldwide, and find your next move.
+            </p>
+          </Reveal>
+
+          {/* Ecosystem chips — scrollable strip on mobile, inline on desktop */}
+          <Reveal delay={170} className="w-screen lg:w-auto">
+            <div className="flex gap-2 overflow-x-auto px-5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:overflow-visible lg:px-0">
+              {['Players', 'Coaches', 'Clubs', 'Umpires', 'Brands'].map((c) => (
+                <span key={c} className="shrink-0 rounded-full border border-[#e4e3eb] bg-[#f9f9fb] px-[13px] py-2 text-[13px] font-medium tracking-[-0.004em] lg:px-3 lg:py-[7px]" style={{ color: INK_2 }}>
+                  {c}
                 </span>
-              </Reveal>
-
-              <Reveal delay={90}>
-                <h1 className="mt-6 text-[2.5rem] leading-[1.06] sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-gray-900 text-balance">
-                  See what HOCKIA can do
-                  <span className="block bg-gradient-to-r from-hockia-primary to-hockia-secondary bg-clip-text text-transparent">
-                    before you join.
-                  </span>
-                </h1>
-              </Reveal>
-
-              <Reveal delay={180}>
-                <p className="mt-5 max-w-xl text-lg md:text-xl text-gray-600 leading-relaxed">
-                  Explore players, coaches, clubs, opportunities and the global field hockey
-                  community — then create your profile when you&apos;re ready.
-                </p>
-              </Reveal>
-
-              <Reveal delay={270}>
-                <div className="mt-8">{ctaPair('hero')}</div>
-              </Reveal>
-
-              {/* WEB ONLY. Inside the native app the visitor demonstrably
-                  already has the app, so "download it" is dead weight — and
-                  the surrounding copy ("use it on the web / take it with
-                  you") is simply wrong there. The website is unchanged. */}
-              {!isNativeApp && (
-                <Reveal delay={360}>
-                  {/* data-store-badges: the prerendered index.html is also
-                      Capacitor's entry file, so an inline head script adds
-                      .is-native and this block hides BEFORE hydration —
-                      no store-badge flash in the app. */}
-                  <div className="mt-9" data-store-badges>
-                    <p className="text-sm font-medium text-gray-500">
-                      Use HOCKIA on the web — or take it with you.
-                    </p>
-                    <div className="mt-3 flex flex-wrap items-center gap-4">
-                      <StoreBadges heightClass="h-11" source="landing_hero" />
-                      <span className="text-sm text-gray-400">Web · iOS · Android</span>
-                    </div>
-                  </div>
-                </Reveal>
-              )}
+              ))}
             </div>
+          </Reveal>
 
-            {/* Device composition — real product, not an illustration.
-                The two shots drift at different rates on scroll: the phone in
-                front travels further than the board behind it, which is what
-                actually reads as depth. Equal rates would just look like the
-                whole image sliding. */}
-            <Reveal className="flex-1 min-w-0 w-full" delay={140}>
-              <div className="relative mx-auto max-w-[560px] lg:max-w-none">
-                <Parallax range={14}>
-                  <img
-                    src="/Mockup5.webp"
-                    // The LCP element. 480w variant serves phones (renders at
-                    // ~342px there); the 836w master serves desktop's 560px
-                    // slot and high-DPR screens.
-                    srcSet="/Mockup5-480.webp 480w, /Mockup5.webp 836w"
-                    sizes="(min-width: 1024px) 560px, 92vw"
-                    alt="The HOCKIA opportunities board, showing open roles at clubs across Europe"
-                    width={836}
-                    height={640}
-                    className="w-full h-auto drop-shadow-2xl"
-                    fetchPriority="high"
-                    decoding="async"
-                  />
-                </Parallax>
-                <Parallax
-                  range={34}
-                  className="absolute -bottom-6 -right-2 w-[34%] max-w-[190px] sm:-right-4"
-                >
-                  <img
-                    src="/Mockup4.webp"
-                    // Renders at ≤190px (34% of the composition) — the 360w
-                    // variant covers 2× DPR there. NOT fetchPriority=high:
-                    // this overlay is not the LCP element and must not
-                    // compete with Mockup5 for first-paint bandwidth.
-                    srcSet="/Mockup4-360.webp 360w, /Mockup4.webp 500w"
-                    sizes="(min-width: 640px) 190px, 34vw"
-                    alt="A HOCKIA player profile with an evidence checklist"
-                    width={500}
-                    height={748}
-                    className="w-full h-auto drop-shadow-2xl"
-                    decoding="async"
-                  />
-                </Parallax>
+          <Reveal delay={220} className="w-full lg:w-auto">
+            <div className="flex w-full flex-col gap-3 lg:w-auto lg:flex-row lg:items-center">
+              <Link
+                to="/signup"
+                onClick={() => handleCta('create_profile', 'hero')}
+                className="flex h-[54px] w-full items-center justify-center rounded-[14px] bg-[#7c3aed] text-[17px] font-semibold tracking-[-0.012em] text-white shadow-[0_6px_18px_rgba(124,58,237,0.32)] transition-all hover:-translate-y-0.5 hover:bg-[#6d28d9] active:translate-y-0 active:scale-[0.985] motion-reduce:transform-none lg:w-auto lg:px-[26px]"
+              >
+                Create a profile
+              </Link>
+              <Link
+                to={EXPLORE_PATH}
+                onClick={() => handleCta('explore_hockia', 'hero')}
+                className="group flex h-[52px] w-full items-center justify-center gap-2 rounded-[14px] border-[1.5px] border-[#dad9e2] bg-white text-[17px] font-semibold tracking-[-0.012em] transition-all hover:-translate-y-0.5 hover:border-[#c9c6d6] hover:bg-gray-50 active:translate-y-0 active:scale-[0.985] motion-reduce:transform-none lg:w-auto lg:pl-6 lg:pr-5"
+                style={{ color: INK }}
+              >
+                Explore Hockia
+                <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transform-none" style={{ color: INK_3 }} />
+              </Link>
+            </div>
+          </Reveal>
+
+          <Reveal delay={260}>
+            <p className="text-[13px] font-medium tracking-[-0.004em]" style={{ color: INK_3 }}>
+              No account needed to look around
+            </p>
+          </Reveal>
+
+          {/* Store links are pointless (and Apple-frowned-upon) inside the app */}
+          {!isNativeApp && (
+            <Reveal delay={300}>
+              <div className="flex items-center gap-2.5 lg:gap-3">
+                <p className="text-[13px] font-medium tracking-[-0.004em]" style={{ color: INK_3 }}>
+                  Or get the app
+                </p>
+                <StoreBadges heightClass="h-10 lg:h-11" source="landing_hero" />
               </div>
             </Reveal>
-          </div>
-
-          {/* Proof strip — real figures from the live database. */}
-          <Reveal delay={220}>
-            <LandingStats />
-          </Reveal>
+          )}
         </div>
+
+        <Reveal delay={150} className="w-full overflow-hidden lg:w-auto lg:overflow-visible">
+          <PhoneCluster />
+        </Reveal>
       </section>
 
-      {/* ─────────────── WHO IT'S FOR ─────────────── */}
-      <section className="border-y border-gray-100 bg-[#fafafd] py-16 md:py-20">
-        <div className="mx-auto max-w-6xl px-6">
-          <Reveal>
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-hockia-primary">
-              One platform. The whole ecosystem.
-            </p>
-            <h2 className="mt-3 max-w-2xl text-3xl md:text-[2.5rem] font-bold leading-[1.15] tracking-tight text-gray-900 text-balance">
-              Built for everyone who makes field hockey happen.
-            </h2>
-          </Reveal>
-
-          <div className="mt-10">
-            <RoleCards />
-          </div>
-        </div>
+      {/* ───────────── S2 · Live proof ───────────── */}
+      <section className="bg-[#faf8ff] px-5 pb-11 pt-10 lg:px-[72px] lg:py-14">
+        <LandingStats variant="band" />
       </section>
 
-      {/* ─────────────── WHAT'S INSIDE ─────────────── */}
-      <FeatureSection
-        eyebrow="Get found"
-        title="A profile that answers the questions recruiters actually ask."
-        body="Not a CV. Position, category, availability and the evidence behind it — so a club can judge fit in seconds instead of messaging to find out."
-        bullets={[
-          'Evidence checklist: footage, references, club, career history',
-          'Profile strength shows exactly what is still missing',
-          'Say when you are open to play or coach — and where',
-        ]}
-        image="/Mockup4.webp"
-        imageAlt="A HOCKIA player profile showing an evidence checklist and open-to-play status"
-        narrow
-      />
+      {/* ───────────── S3 · Role panel ───────────── */}
+      <RolePanel />
 
-      <div className="bg-[#fafafd] border-y border-gray-100">
-        <FeatureSection
-          eyebrow="Real opportunities"
-          title="Open roles at real clubs, not a noticeboard."
-          body="Filter by country, role, category and position. See who is recruiting right now, what they need, and apply without leaving the platform."
-          bullets={[
-            'Player, coach and staff openings from clubs worldwide',
-            'Filter by country, category, position and EU passport',
-            'Apply in-app — your profile is the application',
-          ]}
-          image="/Mockup5.webp"
-          imageAlt="The HOCKIA opportunities board with open coach and player roles"
-          flip
+      {/* ───────────── S4 · Opportunities ───────────── */}
+      <OpportunitiesSection />
+
+      {/* ───────────── S5 · Final CTA ───────────── */}
+      <section className="relative overflow-hidden px-6 pb-[60px] pt-[52px] lg:px-[72px] lg:pb-[104px] lg:pt-24" style={{ backgroundColor: BRAND_SOLID }}>
+        {/* Watermark — the mark itself, oversized and quiet (Figma 23:489) */}
+        <img
+          src="/brand/svg/hockia-logo-white.svg"
+          alt=""
+          aria-hidden="true"
+          width={300}
+          height={243}
+          loading="lazy"
+          className="pointer-events-none absolute -top-8 left-[46%] h-[320px] w-auto max-w-none opacity-[0.13] lg:-top-20 lg:left-[70%] lg:h-[560px]"
         />
-      </div>
 
-      <FeatureSection
-        eyebrow="Your hockey story"
-        title="Every club, season and achievement in one timeline."
-        body="Career history that reads like a career — the clubs, the roles, the tournaments and what you actually did there."
-        bullets={[
-          'Clubs, seasons, roles and honours on one timeline',
-          'Tournaments and achievements marked as they happened',
-          'References from people you have actually played with',
-        ]}
-        image="/Mockup1.webp"
-        imageAlt="A HOCKIA career history timeline showing clubs and achievements"
-        narrow
-      />
+        <Reveal className="relative flex flex-col items-center gap-[18px] lg:gap-7">
+          <h2 className="text-center text-[34px] font-extrabold leading-[37px] tracking-[-0.034em] text-white lg:text-[64px] lg:leading-[68px] lg:tracking-[-0.04em]">
+            The field hockey world.
+            <span className="block">One community.</span>
+          </h2>
 
-      <div className="bg-[#fafafd] border-y border-gray-100">
-        <FeatureSection
-          eyebrow="Show, don't tell"
-          title="Highlights, full match footage and a gallery."
-          body="Link the highlight reel, attach unedited match video for the coaches who want the full picture, and keep the photos that tell the rest of the story."
-          bullets={[
-            'Linked highlight video right on your profile',
-            'Full match footage for deeper evaluation',
-            'A gallery from matches, training and your career',
-          ]}
-          image="/Mockup3.webp"
-          imageAlt="HOCKIA profile media: linked highlight video, full match footage and gallery"
-          flip
-          narrow
-        />
-      </div>
+          {/* Mobile leads with the account CTA; desktop leads with the apps
+              (per the two Figma frames) */}
+          <Link
+            to="/signup"
+            onClick={() => handleCta('create_profile', 'closing_cta')}
+            className="flex h-[54px] w-full items-center justify-center rounded-[14px] bg-white text-[17px] font-semibold tracking-[-0.012em] text-[#5b21b6] transition-all hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.985] motion-reduce:transform-none lg:hidden"
+          >
+            Create a profile
+          </Link>
 
-      <FeatureSection
-        eyebrow="For clubs & recruiters"
-        title="Judge fit with context, not a hunch."
-        body="See how a candidate matches the specific role you posted, what evidence backs it up, and where the gaps are — before you spend a message."
-        bullets={[
-          'Fit assessed against the role you actually posted',
-          'Evidence and profile completeness at a glance',
-          'Message, save or shortlist straight from the preview',
-        ]}
-        image="/Mockup2.webp"
-        imageAlt="A HOCKIA candidate preview showing role fit and supporting evidence"
-        narrow
-      />
+          {!isNativeApp && <StoreBadges heightClass="h-[42px] lg:h-[52px]" source="landing_footer" />}
 
-      {/* ─────────────── CLOSING CTA ─────────────── */}
-      <section className="relative overflow-hidden border-t border-gray-100">
-        <div aria-hidden="true" className="pointer-events-none absolute inset-0">
-          <div className="absolute inset-0 bg-gradient-to-b from-white to-[#f6f4ff]" />
-          <div className="absolute -bottom-40 left-1/2 h-[420px] w-[720px] -translate-x-1/2 rounded-full bg-hockia-primary/10 blur-3xl" />
-        </div>
+          <p className="hidden text-[13px] font-medium tracking-[-0.004em] text-white/75 lg:block">
+            Free for players and coaches · hockia.com
+          </p>
+          <p className="text-sm text-white lg:hidden">
+            <span className="font-medium opacity-70">Already a member?</span>{' '}
+            <Link to="/signin" className="font-semibold underline underline-offset-2">
+              Log in
+            </Link>
+          </p>
 
-        <div className="relative mx-auto max-w-3xl px-6 py-20 md:py-28 text-center">
-          <Reveal>
-            <h2 className="text-3xl md:text-[2.75rem] font-bold leading-[1.12] tracking-tight text-gray-900 text-balance">
-              Look around first.
-              <span className="block text-hockia-primary">Join when it makes sense.</span>
-            </h2>
-            <p className="mt-5 text-lg text-gray-600">
-              Browsing is open to everyone. You only need an account to apply, message or connect.
-            </p>
-            {/* 'closing_cta', not 'footer' — the footer is a separate element
-                with no CTA, and a wrong label misleads whoever queries this. */}
-            <div className="mt-8 flex justify-center">{ctaPair('closing_cta')}</div>
+          <HockiaSocials tone="onBrand" iconClassName="h-[21px] w-[21px]" />
 
-            <p className="mt-8 text-sm text-gray-500">
-              Already have an account?{' '}
-              <Link to="/signin" className="font-semibold text-hockia-primary hover:underline underline-offset-2">
-                Sign in
-              </Link>
-            </p>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ─────────────── FOOTER ─────────────── */}
-      <footer className="border-t border-gray-100 bg-white">
-        <div className="mx-auto max-w-6xl px-6 py-12">
-          <div className="flex flex-col items-center gap-6 md:flex-row md:justify-between">
-            <img
-              src="/brand/wordmark/hockia-wordmark-black.svg"
-              alt="HOCKIA"
-              // 153x42 viewBox — height pinned by CSS; declared so no image
-              // on this page is missing intrinsic dimensions.
-              width={153}
-              height={42}
-              className="h-7 object-contain"
-              loading="lazy"
-            />
-            <HockiaSocials tone="muted" />
-            <button
-              type="button"
-              onClick={openContact}
-              className="text-sm text-gray-500 transition-colors hover:text-gray-900"
-            >
-              Questions? Contact us
+          <p className="text-sm text-white">
+            <span className="font-medium opacity-70">Questions?</span>{' '}
+            <button type="button" onClick={openContact} className="font-semibold underline underline-offset-2">
+              Team@inhockia.com
             </button>
-          </div>
-        </div>
-      </footer>
+          </p>
+        </Reveal>
+      </section>
     </div>
   )
 }

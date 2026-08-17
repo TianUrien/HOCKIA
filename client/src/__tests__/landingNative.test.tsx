@@ -66,21 +66,22 @@ describe('Landing — store badges are web-only', () => {
   it('SHOWS the badges and the download copy on the website', async () => {
     native.value = false
     await renderLanding()
-    expect(screen.getByTestId('store-badges')).toBeInTheDocument()
-    expect(screen.getByText(/Use HOCKIA on the web/i)).toBeInTheDocument()
+    // Web A landing (2026-08-15): the badges are introduced by "Or get the app".
+    expect(screen.getAllByTestId('store-badges').length).toBeGreaterThan(0)
+    expect(screen.getByText(/Or get the app/i)).toBeInTheDocument()
   })
 
   it('HIDES the badges and the download copy inside the native app', async () => {
     native.value = true
     await renderLanding()
     expect(screen.queryByTestId('store-badges')).not.toBeInTheDocument()
-    expect(screen.queryByText(/Use HOCKIA on the web/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Or get the app/i)).not.toBeInTheDocument()
   })
 
   it('keeps BOTH primary CTAs in the app — only the download block is removed', async () => {
     native.value = true
     await renderLanding()
     expect(screen.getAllByRole('link', { name: /explore hockia/i }).length).toBeGreaterThan(0)
-    expect(screen.getAllByRole('link', { name: /create your profile/i }).length).toBeGreaterThan(0)
+    expect(screen.getAllByRole('link', { name: /create a profile/i }).length).toBeGreaterThan(0)
   })
 })

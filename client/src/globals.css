@@ -730,3 +730,59 @@ html {
     transition: none;
   }
 }
+
+/* ── Orbit light (landing eyebrow) ─────────────────────────────────────────
+   Figma "Tagline signature — A · Orbit light" (node 52:1710/52:1711): a
+   violet light travels the pill's perimeter once every 6s, linear,
+   continuous, with the bright head fading over a short trail. Implemented as
+   a conic-gradient ring: padding-box/border-box masks cut the gradient to a
+   1.6px ring, and the registered --orbit-angle custom property rotates the
+   gradient itself (rotating the element would deform a non-circular pill).
+
+   Fallbacks are graceful by construction: browsers without @property render
+   the ring static (the design's documented fallback), and reduced-motion
+   gets a plain violet-4 border. The pill underneath always keeps its own
+   hairline border, so the eyebrow is never borderless. */
+@property --orbit-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.orbit-ring {
+  position: absolute;
+  inset: -1px;
+  border-radius: 9999px;
+  padding: 1.6px;
+  background: conic-gradient(
+    from var(--orbit-angle),
+    transparent 0deg,
+    transparent 290deg,
+    rgba(124, 58, 237, 0.12) 320deg,
+    rgba(124, 58, 237, 0.55) 345deg,
+    rgba(124, 58, 237, 0.95) 360deg
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  animation: orbit-spin 6s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes orbit-spin {
+  to {
+    --orbit-angle: 360deg;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orbit-ring {
+    animation: none;
+    background: none;
+    border: 1.6px solid #ede9ff;
+    padding: 0;
+    -webkit-mask: none;
+    mask: none;
+  }
+}

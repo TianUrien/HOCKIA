@@ -154,7 +154,10 @@ async function main() {
     const html = await page.evaluate(() => document.documentElement.outerHTML)
 
     // Sanity gates — a broken snapshot must never replace the shell.
-    if (!html.includes('See what HOCKIA')) throw new Error('hero headline missing from snapshot')
+    // Web A hero (Figma 22:411, shipped 2026-08-15). Keep in sync with the
+    // <h1> in src/pages/Landing.tsx — this gate exists so a broken render can
+    // never silently replace the shell with an empty snapshot.
+    if (!html.includes('The network for')) throw new Error('hero headline missing from snapshot')
     if (!/assets\/(index|main)-/.test(html)) throw new Error('entry script missing from snapshot')
 
     const processed = postProcess(html, shell)
