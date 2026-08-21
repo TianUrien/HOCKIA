@@ -21,14 +21,8 @@ import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import KeyboardShortcutsModal from '@/components/KeyboardShortcutsModal'
 import Landing from '@/pages/Landing'
 import NativeWelcome from '@/pages/NativeWelcome'
-import { Capacitor } from '@capacitor/core'
-
-// Dev-only preview: `?native=1` renders the native first-run in a browser so
-// the screen can be reviewed without a device build. Ignored in production
-// (import.meta.env.DEV is false there), so it can never leak to the website.
-const IS_NATIVE =
-  Capacitor.isNativePlatform() ||
-  (import.meta.env.DEV && typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('native') === '1')
+import { IS_NATIVE } from '@/lib/isNative'
+import NativeLaunchSplash from '@/components/NativeLaunchSplash'
 import SignUp from '@/pages/SignUp'
 import AuthScreen from '@/pages/AuthScreen'
 import AuthCallback from '@/pages/AuthCallback'
@@ -187,15 +181,23 @@ const RouteErrorFallback = () => (
   </div>
 )
 
-// Loading fallback component
-const PageLoader = () => (
-  <div className="min-h-screen flex items-center justify-center bg-gray-50">
-    <div className="flex flex-col items-center gap-4">
-      <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
-      <p className="text-gray-600 text-sm">Loading...</p>
+// Loading fallback for lazy routes. On NATIVE this is the launch-splash
+// continuation (violet + white mark): during a cold launch the welcome's
+// redirect to /dashboard/profile suspends on the dashboard chunk, and a gray
+// spinner there would break the one-uninterrupted-splash sequence
+// (2026-08-17 launch-flicker fix). Chunks are local files in the app bundle,
+// so mid-session this paints for a frame at most. Web keeps the spinner.
+const PageLoader = () => {
+  if (IS_NATIVE) return <NativeLaunchSplash />
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="flex flex-col items-center gap-4">
+        <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-gray-600 text-sm">Loading...</p>
+      </div>
     </div>
-  </div>
-)
+  )
+}
 
 // Engagement tracking wrapper - tracks time in app via heartbeats
 function EngagementTracker() {

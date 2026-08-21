@@ -15,7 +15,24 @@ export default function TermsGate({ children }: { children: React.ReactNode }) {
   const { user } = useAuthStore()
   const navigate = useNavigate()
   const location = useLocation()
-  const [accepted, setAccepted] = useState<boolean | null>(null)
+  // First frame decided SYNCHRONOUSLY (2026-08-17 launch-flicker fix):
+  // starting at null blanked the ENTIRE app (this gate wraps every route)
+  // for React's first commit, until the effect below flushed — a guaranteed
+  // blank frame on every cold start. At mount the auth store has no user yet
+  // (logged out, or still hydrating — ProtectedRoute owns that waiting
+  // state), so there is nothing to gate and children may render immediately.
+  // If a user is already known (remount), localStorage answers synchronously.
+  // The effect re-checks against the DB once the user resolves — enforcement
+  // is unchanged, only the blank frame is gone.
+  const [accepted, setAccepted] = useState<boolean | null>(() => {
+    const u = useAuthStore.getState().user
+    if (!u) return true
+    try {
+      return localStorage.getItem(`hockia-terms-${u.id}-${CURRENT_TERMS_VERSION}`) === 'accepted' ? true : null
+    } catch {
+      return null
+    }
+  })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 

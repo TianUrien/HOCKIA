@@ -2,6 +2,8 @@ import { useEffect } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
+import { IS_NATIVE } from '@/lib/isNative'
+import NativeLaunchSplash from '@/components/NativeLaunchSplash'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
@@ -87,8 +89,13 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     })
   }, [location.pathname, loading, user])
 
-  // Show loading while checking auth
+  // Show loading while checking auth. On NATIVE this continues the system
+  // launch screen (violet + white mark) instead of a gray spinner, so a cold
+  // launch is one uninterrupted splash: system splash → this → the right
+  // screen. Part of the 2026-08-17 launch-flicker fix — no unauthenticated
+  // (or off-brand) frame may paint while the session restores.
   if (loading) {
+    if (IS_NATIVE) return <NativeLaunchSplash />
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">

@@ -1,10 +1,12 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '@/lib/auth'
 import { safeRedirectPath } from '@/lib/safeRedirect'
 import { trackSignupCtaClick } from '@/lib/analytics'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import { setStatusBarForBackground } from '@/lib/nativeUi'
+import { hasPersistedSession } from '@/lib/persistedSession'
+import NativeLaunchSplash from '@/components/NativeLaunchSplash'
 
 /**
  * NativeWelcome — the first screen of the iOS / Android apps.
@@ -52,9 +54,30 @@ export default function NativeWelcome() {
       }
     })()
 
+  // ── First-frame selection (founder report, 2026-08-17: launch flicker) ──
+  // The auth store boots with loading:true and hydrates the persisted session
+  // asynchronously; rendering the welcome during that window flashed
+  // "Create account" at signed-in members for <1s before the redirect fired.
+  // The persisted-session check is SYNCHRONOUS, so the very first frame is
+  // chosen correctly with no timers and no artificial delay:
+  //   hydrating + stored session  → splash continuation (violet + mark, the
+  //                                 same design as the native launch screen,
+  //                                 so the wait is visually invisible)
+  //   hydrating + nothing stored  → welcome immediately (fresh installs pay
+  //                                 zero delay — hydration cannot produce a
+  //                                 user from empty storage)
+  //   resolved  + user            → splash while the redirect effect runs
+  //   resolved  + no user         → welcome (covers expired/revoked stored
+  //                                 sessions: hydration failed, so the
+  //                                 unauthenticated flow is the truth)
+  // Read once per mount: hydration outcomes flow through the store, and
+  // re-reading mid-flight could flap the frame.
+  const [storedSession] = useState(() => hasPersistedSession())
+  const showWelcome = authLoading ? !storedSession : !user
+
   useEffect(() => {
-    void setStatusBarForBackground('light-bg')
-  }, [])
+    void setStatusBarForBackground(showWelcome ? 'light-bg' : 'dark-bg')
+  }, [showWelcome])
 
   // ── Redirect already-authenticated users out (same contract as Landing) ──
   useEffect(() => {
@@ -75,12 +98,20 @@ export default function NativeWelcome() {
     }
   }, [user, profile, profileStatus, authLoading, navigate, redirectTo])
 
+  // Funnel event only when the welcome is actually SHOWN — a returning
+  // member passing through the splash must not log a welcome page view.
   useEffect(() => {
+    if (!showWelcome) return
     trackDbEvent('page_view', undefined, undefined, { path: '/', surface: 'native_welcome' })
-  }, [])
+  }, [showWelcome])
 
-  // While the session resolves, paint the same static art so a returning
-  // member sees a calm brand frame rather than a spinner, then gets bounced.
+  if (!showWelcome) {
+    // To the user the system splash simply lasts a moment longer, then the
+    // dashboard appears. Not a spinner, not the welcome — no unauthenticated
+    // UI ever paints for a stored session.
+    return <NativeLaunchSplash />
+  }
+
   return (
     <div
       className="relative flex min-h-screen-dvh w-full flex-col overflow-hidden bg-white"
