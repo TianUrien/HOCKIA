@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { Capacitor } from '@capacitor/core'
 import type { Database } from './database.types'
+import { AUTH_STORAGE_KEY } from './authStorageKey'
 
 // Get environment variables – prefer process.env to align with shared config, fall back to Vite env entries
 const supabaseUrl =
@@ -17,7 +18,9 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables – check .env.local')
 }
 
-export const AUTH_STORAGE_KEY = 'hockia-auth'
+// Re-export for existing importers; the canonical home is lib/authStorageKey
+// (importable without env vars — see that module's comment).
+export { AUTH_STORAGE_KEY }
 
 // One-time migration: move session from legacy key so existing users stay logged in
 if (typeof window !== 'undefined') {

@@ -36,7 +36,9 @@ vi.mock('react-router-dom', async (importOriginal) => {
 })
 
 import NativeWelcome from '@/pages/NativeWelcome'
-import { AUTH_STORAGE_KEY } from '@/lib/supabase'
+// From authStorageKey, NOT lib/supabase: that module throws at import when
+// the VITE_SUPABASE_* env vars are missing, and the CI unit job has none.
+import { AUTH_STORAGE_KEY } from '@/lib/authStorageKey'
 
 const storeSession = () =>
   localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({ access_token: 'at', refresh_token: 'rt', expires_at: 0 }))

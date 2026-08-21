@@ -1,4 +1,4 @@
-import { AUTH_STORAGE_KEY } from './supabase'
+import { AUTH_STORAGE_KEY } from './authStorageKey'
 
 /**
  * Synchronous evidence that a session restore is POSSIBLE — read before the
