@@ -85,7 +85,7 @@ export async function signInWithOAuthNative(provider: 'apple' | 'google'): Promi
     const cleanup = () => {
       resolved = true
       clearTimeout(timeoutId)
-      listenerHandle.then(h => h.remove())
+      listenerHandle.then(h => h.remove()).catch(() => { /* listener already gone */ })
       // Clear the module-level handle if we're still the current attempt.
       // Guarded so a later attempt that already replaced cancelInFlight
       // doesn't get its handle wiped by ours.
@@ -198,6 +198,15 @@ export async function signInWithOAuthNative(provider: 'apple' | 'google'): Promi
       }
     })
   })
+
+  // Mark the promise as HANDLED from the moment it exists. Below we await
+  // Browser.open() BEFORE returning authPromise to the caller — on a slow
+  // device the Custom Tab can take a while to open, and if the user taps
+  // the button again in that window, the newer attempt's cancelInFlight()
+  // rejects this promise while nobody is attached to it yet → an unhandled
+  // rejection (Sentry JAVASCRIPT-REACT-C9, Pixel 6 Pro / WebView 95). The
+  // caller still receives the rejection through the returned promise.
+  authPromise.catch(() => { /* handled by the caller once it awaits */ })
 
   // Open the OAuth URL in SFSafariViewController (iOS) / Chrome Custom Tab (Android)
   // Must use 'fullscreen' — 'popover' on iPad prevents Universal Link interception,

@@ -158,6 +158,9 @@ Sentry.init({
   // user-input errors from Supabase Auth — not application bugs — and
   // should not page anyone or clutter the dashboard.
   ignoreErrors: [
+    // A native OAuth attempt deliberately superseded by a newer tap — expected,
+    // handled in lib/nativeOAuth + AuthScreen; belt-and-braces here.
+    'OAuth cancelled — superseded by a newer sign-in attempt',
     // Wrong password / wrong email entry on /signin
     'Invalid login credentials',
     // /signup or /signin hammered too quickly — Supabase rate limit

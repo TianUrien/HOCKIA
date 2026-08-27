@@ -230,6 +230,10 @@ export default function AuthScreen({ mode, role, onBack }: AuthScreenProps) {
       trackSignUpStart(provider)
     }
     startOAuthSignIn(provider).catch((err) => {
+      // A superseded attempt (user tapped again while the first one was
+      // still opening) is not a failure — the newer attempt is in flight
+      // and showing "Sign-in failed" here would contradict what they see.
+      if (err instanceof Error && err.name === 'OAuthCancelled') return
       logger.error(`${provider} OAuth error:`, err)
       setError('Sign-in failed. Please try again.')
     })
