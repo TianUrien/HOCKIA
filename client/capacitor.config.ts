@@ -30,10 +30,17 @@ const config: CapacitorConfig = {
   },
   plugins: {
     SplashScreen: {
-      launchAutoHide: true,
-      launchShowDuration: 2000,
-      backgroundColor: '#ffffff',
+      // The native launch artwork (01-E · Violet editorial) stays up until the
+      // web app reports its first frame is painted (src/lib/launchSplash.ts) —
+      // no fixed duration, no artificial delay, and the in-app splash is the
+      // same artwork so the hand-off is invisible.
+      launchAutoHide: false,
+      launchFadeOutDuration: 0,
+      backgroundColor: '#5929a8',
       showSpinner: false,
+      androidScaleType: 'CENTER_CROP',
+      splashFullScreen: true,
+      splashImmersive: false,
     },
     PushNotifications: {
       presentationOptions: ['badge', 'sound', 'alert'],

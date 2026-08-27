@@ -5,6 +5,8 @@ import * as Sentry from '@sentry/react'
 import { registerSW } from 'virtual:pwa-register'
 import './globals.css'
 import App from './App.tsx'
+import LaunchSplashController from './components/LaunchSplashController'
+import { warmLaunchArtwork } from './lib/launchSplash'
 import { initWebVitals } from './lib/monitor'
 import { queryClient } from './lib/queryClient'
 import { logger } from './lib/logger'
@@ -252,11 +254,18 @@ export function RootApp() {
         <QueryClientProvider client={queryClient}>
           <App />
           <CookieConsent />
+          {/* Last sibling: releases the native launch splash once the first
+              frame is real (see components/LaunchSplashController). */}
+          <LaunchSplashController />
         </QueryClientProvider>
       </StrictMode>
     </Sentry.ErrorBoundary>
   )
 }
+
+// Native only: have the in-app splash artwork fetched + decoded before the
+// first React frame needs it (see lib/launchSplash).
+warmLaunchArtwork()
 
 createRoot(document.getElementById('root')!).render(<RootApp />)
 

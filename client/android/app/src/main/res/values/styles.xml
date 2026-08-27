@@ -17,6 +17,13 @@
 
 
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
-        <item name="android:background">@drawable/splash</item>
+        <!-- API 31+: the OS splash is icon-on-colour by platform rule; the full
+             artwork follows immediately via the Capacitor SplashScreen plugin. -->
+        <item name="windowSplashScreenBackground">@color/splash_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher_foreground</item>
+        <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
+        <!-- Pre-31: window background = artwork centred on its base colour (a plain
+             bitmap background would be stretched to the window). -->
+        <item name="android:background">@drawable/splash_window</item>
     </style>
 </resources>
