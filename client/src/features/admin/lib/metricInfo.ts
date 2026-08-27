@@ -97,8 +97,8 @@ export const METRIC_INFO = {
   },
   d7Retention: {
     title: 'Day-7 Retention',
-    measures: 'Of people who signed up 1–2 weeks ago, how many returned in their second week.',
-    formula: 'Signups from 8–14 days ago who were active again between day 7 and day 13 after signing up.',
+    measures: 'Of the members old enough to be measured, how many came back during their second week.',
+    formula: 'Retained ÷ eligible. Eligible = members whose day 7–13 window has fully elapsed (UTC); retained = those active at least once inside it. Test, blocked and frozen accounts excluded. Shown as N/A — never 0% — when nobody is eligible yet.',
     why: 'The single best early signal of product-market fit: do new members find enough value to come back after the first week?',
     unit: '%',
     benchmarks: [
@@ -106,6 +106,32 @@ export const METRIC_INFO = {
       { min: 15, tier: 'average', label: '15–25%' },
       { min: 25, tier: 'good', label: '25–40%' },
       { min: 40, tier: 'excellent', label: '40%+' },
+    ],
+  },
+  d15Retention: {
+    title: 'Day-15 Retention',
+    measures: 'Of the members old enough to be measured, how many were still coming back in their third week.',
+    formula: 'Retained ÷ eligible, same service as D7 with the window at days 15–21 (UTC).',
+    why: 'The bridge between curiosity and habit. D7 can be driven by a signup email; surviving to D15 means the product itself pulled them back.',
+    unit: '%',
+    benchmarks: [
+      { min: 0, tier: 'poor', label: '<10%' },
+      { min: 10, tier: 'average', label: '10–20%' },
+      { min: 20, tier: 'good', label: '20–35%' },
+      { min: 35, tier: 'excellent', label: '35%+' },
+    ],
+  },
+  d30Retention: {
+    title: 'Day-30 Retention',
+    measures: 'Of the members old enough to be measured, how many were still active a month in.',
+    formula: 'Retained ÷ eligible, same service as D7 with the window at days 30–36 (UTC).',
+    why: 'Where a niche network lives or dies: a month is long enough that only real, repeated value keeps someone coming back. For HOCKIA this is the number that predicts whether a season-long habit forms.',
+    unit: '%',
+    benchmarks: [
+      { min: 0, tier: 'poor', label: '<8%' },
+      { min: 8, tier: 'average', label: '8–15%' },
+      { min: 15, tier: 'good', label: '15–30%' },
+      { min: 30, tier: 'excellent', label: '30%+' },
     ],
   },
   newUsers: {

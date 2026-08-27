@@ -41,6 +41,7 @@ import { Ga4TopFunnel } from '../components/Ga4TopFunnel'
 import { ActivationByRoleCard } from '../components/ActivationByRoleCard'
 import { NotificationCtrCard } from '../components/NotificationCtrCard'
 import { HealthSignals } from '../components/HealthSignals'
+import { RetentionSignals } from '../components/RetentionSignals'
 import { ProductHealthHero } from '../components/ProductHealthHero'
 import { EngagementOverview } from '../components/EngagementOverview'
 import { InfoTip } from '../components/InfoTip'
@@ -239,6 +240,11 @@ export function AdminOverview() {
       {/* HEALTH SIGNALS                                                 */}
       {/* ============================================================= */}
       <HealthSignals stats={ccStats} loading={ccLoading} />
+
+      {/* ============================================================= */}
+      {/* RETENTION — D7 / D15 / D30                                     */}
+      {/* ============================================================= */}
+      <RetentionSignals />
 
       {/* ============================================================= */}
       {/* USER GROWTH CHART                                              */}

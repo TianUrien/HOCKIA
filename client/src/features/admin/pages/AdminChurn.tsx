@@ -13,6 +13,7 @@ import {
   RefreshCw,
 } from 'lucide-react'
 import { StatCard } from '../components/StatCard'
+import { RetentionExplorer } from '../components/RetentionExplorer'
 import { getChurnAnalysis, getRetentionByRole } from '../api/analyticsApi'
 import { logger } from '@/lib/logger'
 import { getRoleColors } from '@/lib/roleColors'
@@ -129,6 +130,17 @@ export function AdminChurn() {
           </button>
         </div>
       </div>
+
+      {/* ── Cohort retention: D7 / D15 / D30 ────────────────────────────
+          Same service as the Overview cards, so identical filters give
+          identical numbers; the sections below are the churn-side view. */}
+      <section aria-label="Cohort retention">
+        <h2 className="text-lg font-semibold text-gray-900 mb-1">Cohort retention — D7 / D15 / D30</h2>
+        <p className="text-sm text-gray-500 mb-3">
+          Filter and segment the curve, then export exactly what you see.
+        </p>
+        <RetentionExplorer />
+      </section>
 
       {/* Inactive User Tiers */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

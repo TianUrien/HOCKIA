@@ -1,5 +1,9 @@
 import type { CommandCenterStats } from '../types'
 
+// D7 lived here as a bare percentage with no denominator, computed by a
+// different query than the Retention tab used. It now sits in
+// <RetentionSignals> alongside D15/D30, on the shared retention service.
+
 interface HealthSignalsProps {
   stats: CommandCenterStats | null
   loading?: boolean
@@ -15,12 +19,6 @@ interface Signal {
 function getWauMauStatus(ratio: number): 'green' | 'yellow' | 'red' {
   if (ratio >= 25) return 'green'
   if (ratio >= 15) return 'yellow'
-  return 'red'
-}
-
-function getD7RetentionStatus(pct: number): 'green' | 'yellow' | 'red' {
-  if (pct >= 20) return 'green'
-  if (pct >= 10) return 'yellow'
   return 'red'
 }
 
@@ -55,8 +53,8 @@ const STATUS_BG = {
 export function HealthSignals({ stats, loading }: HealthSignalsProps) {
   if (loading) {
     return (
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {[1, 2, 3, 4].map((i) => (
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+        {[1, 2, 3].map((i) => (
           <div key={i} className="bg-white rounded-xl border border-gray-200 p-4 animate-pulse">
             <div className="h-3 w-16 bg-gray-200 rounded mb-2" />
             <div className="h-5 w-12 bg-gray-200 rounded" />
@@ -74,12 +72,6 @@ export function HealthSignals({ stats, loading }: HealthSignalsProps) {
       value: `${stats.wau_mau_ratio}%`,
       status: getWauMauStatus(stats.wau_mau_ratio),
       tooltip: 'Weekly to Monthly active ratio. Green: >=25%, Yellow: >=15%',
-    },
-    {
-      label: 'D7 Retention',
-      value: `${stats.d7_retention}%`,
-      status: getD7RetentionStatus(stats.d7_retention),
-      tooltip: 'Users active on day 7 after signup. Green: >=20%, Yellow: >=10%',
     },
     {
       label: 'Profile Complete',
@@ -102,7 +94,7 @@ export function HealthSignals({ stats, loading }: HealthSignalsProps) {
   ]
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
       {signals.map((signal) => (
         <div
           key={signal.label}
