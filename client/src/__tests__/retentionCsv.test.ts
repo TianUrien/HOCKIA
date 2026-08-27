@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { buildRetentionCsv, retentionCsvFilename } from '@/features/admin/lib/retentionCsv'
-import { retentionFilterParams } from '@/features/admin/api/retentionApi'
+import { retentionFilterParams } from '@/features/admin/lib/retentionFilters'
 import type { RetentionCohortTable } from '@/features/admin/types/retention'
 
 /**

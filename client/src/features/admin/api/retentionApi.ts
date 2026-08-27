@@ -7,6 +7,7 @@
  */
 
 import { supabase } from '@/lib/supabase'
+import { DEFAULT_RETENTION_DAYS, retentionFilterParams } from '../lib/retentionFilters'
 import type {
   RetentionActivity,
   RetentionCohortTable,
@@ -20,17 +21,9 @@ import type {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const adminRpc = supabase.rpc.bind(supabase) as unknown as (fn: string, params?: Record<string, unknown>) => Promise<{ data: any; error: any }>
 
-export const DEFAULT_RETENTION_DAYS = [7, 15, 30]
-
-/** Filters → RPC params. Shared so the grid and the cards can never diverge. */
-export function retentionFilterParams(filters: RetentionFilters = {}): Record<string, unknown> {
-  return {
-    p_role: filters.role ?? null,
-    p_country_id: filters.countryId ?? null,
-    p_platform: filters.platform ?? null,
-    p_source: filters.source ?? null,
-  }
-}
+// Defined in lib/retentionFilters (no Supabase import) so tests can exercise
+// the mapping without env vars; re-exported here for callers.
+export { DEFAULT_RETENTION_DAYS, retentionFilterParams }
 
 export interface RetentionQuery extends RetentionFilters {
   days?: number[]
