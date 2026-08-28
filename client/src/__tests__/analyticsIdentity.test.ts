@@ -84,20 +84,24 @@ describe('analyticsIdentity — sessionization', () => {
 })
 
 describe('analyticsIdentity — source classification', () => {
+  // Since attribution v2 (2026-08-28) events share signup_attribution's
+  // taxonomy: google_organic / instagram / facebook / x / referral:<host>.
   it('classifies UTM source over referrer', () => {
-    expect(classifySource('https://l.instagram.com/', 'google_ads')).toBe('google')
+    expect(classifySource('https://l.instagram.com/', 'google')).toBe('google_organic')
     expect(classifySource(null, 'linkedin')).toBe('linkedin')
+    expect(classifySource(null, 'google_ads')).toBe('google_ads') // unknown slug stays itself
   })
   it('classifies referrer hostnames', () => {
-    expect(classifySource('https://www.google.com/search', null)).toBe('google')
+    expect(classifySource('https://www.google.com/search', null)).toBe('google_organic')
     expect(classifySource('https://www.linkedin.com/feed', null)).toBe('linkedin')
-    expect(classifySource('https://l.facebook.com/', null)).toBe('meta')
-    expect(classifySource('https://t.co/abc', null)).toBe('twitter')
+    expect(classifySource('https://l.facebook.com/', null)).toBe('facebook')
+    expect(classifySource('https://t.co/abc', null)).toBe('x')
   })
-  it('treats empty referrer as direct and unknown host as referral', () => {
+  it('treats empty referrer as direct, unknown host as referral:<host>, auth providers as internal', () => {
     expect(classifySource('', null)).toBe('direct')
     expect(classifySource(null, null)).toBe('direct')
-    expect(classifySource('https://some-blog.example/post', null)).toBe('referral')
+    expect(classifySource('https://some-blog.example/post', null)).toBe('referral:some-blog.example')
+    expect(classifySource('https://accounts.google.com/o/oauth2', null)).toBe('internal')
   })
 })
 

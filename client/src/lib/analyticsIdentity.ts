@@ -11,6 +11,7 @@
  * to a per-tab sessionStorage id, so we still measure sessions without setting
  * a cross-session cookie. All functions are null-safe and never throw.
  */
+import { hostnameOf, normalizeAttribution } from '@/lib/attributionRules'
 import { getConsentStatus } from '@/lib/cookieConsent'
 
 const ANON_KEY = 'hockia_anon_id'
@@ -109,6 +110,11 @@ function write(key: string, val: string): void {
   }
 }
 
+/** Consent-aware storage, shared with lib/attribution so every identity and
+ *  attribution value follows the same per-tab → durable promotion rule. */
+export const storageRead = read
+export const storageWrite = write
+
 /** Durable per-browser visitor id (or per-tab before consent). */
 export function getAnonymousId(): string {
   let id = read(ANON_KEY)
@@ -170,34 +176,26 @@ export function getDeviceContext(): { device: string; browser: string } {
   }
 }
 
-/** Classify a referrer hostname / utm_source into a coarse channel. */
+/**
+ * Classify a referrer / utm_source with the attribution registry, so every
+ * events.referrer_source value shares signup_attribution's taxonomy.
+ * Auth-provider referrers normalize to 'internal' here (never a channel).
+ */
 export function classifySource(referrer: string | null, utmSource: string | null): string {
-  const u = (utmSource || '').toLowerCase()
-  if (u) {
-    if (/google|adwords|gads/.test(u)) return 'google'
-    if (/linkedin/.test(u)) return 'linkedin'
-    if (/meta|facebook|fb|instagram|ig/.test(u)) return 'meta'
-    if (/twitter|x\.com/.test(u)) return 'twitter'
-    if (/newsletter|email|mailchimp|resend|gmass/.test(u)) return 'email'
-    return u
-  }
-  if (!referrer) return 'direct'
-  let host = ''
+  const n = normalizeAttribution(utmSource, hostnameOf(referrer))
+  return n.discarded ? 'internal' : n.source
+}
+
+/** First-touch source from the v2 attribution store (read-only; the engine
+ *  in lib/attribution owns writes — reading here avoids an import cycle). */
+function readV2FirstSource(): string | null {
+  const raw = read('hockia_attr_v2')
+  if (!raw) return null
   try {
-    host = new URL(referrer).hostname.toLowerCase()
+    return (JSON.parse(raw) as { first?: { source?: string } | null }).first?.source ?? null
   } catch {
-    return 'referral'
+    return null
   }
-  if (!host) return 'direct'
-  if (host.includes('hockia') || host.includes('inhockia')) return 'internal'
-  if (host.includes('google')) return 'google'
-  if (host.includes('linkedin') || host.includes('lnkd')) return 'linkedin'
-  if (host.includes('facebook') || host.includes('instagram') || host.includes('fb.')) return 'meta'
-  if (host.includes('t.co') || host.includes('twitter') || host.includes('x.com')) return 'twitter'
-  if (host.includes('bing')) return 'bing'
-  if (host.includes('duckduckgo')) return 'duckduckgo'
-  if (host.includes('youtube')) return 'youtube'
-  return 'referral'
 }
 
 function readUTM(): Record<string, string> | null {
@@ -269,7 +267,7 @@ export function analyticsContext(): AnalyticsContext {
     anonymous_id: getAnonymousId(),
     device,
     browser,
-    referrer_source: getFirstTouch()?.first_source ?? classifySource(safeReferrer(), utm?.source ?? null),
+    referrer_source: readV2FirstSource() ?? getFirstTouch()?.first_source ?? classifySource(safeReferrer(), utm?.source ?? null),
   }
   if (utm) ctx.utm = utm
   // Only stamped when true, so real-user payloads stay lean and the filter is

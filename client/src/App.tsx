@@ -16,7 +16,7 @@ import AppRatingPrompt from '@/components/AppRatingPrompt'
 import ContactModal from '@/components/ContactModal'
 import { useEngagementTracking } from '@/hooks/useEngagementTracking'
 import { trackDbEvent } from '@/lib/trackDbEvent'
-import { captureFirstTouch } from '@/lib/analyticsIdentity'
+import { recordEntryTouch } from '@/lib/attribution'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import KeyboardShortcutsModal from '@/components/KeyboardShortcutsModal'
 import Landing from '@/pages/Landing'
@@ -36,7 +36,6 @@ import SettingsPage from '@/pages/SettingsPage'
 import OfflinePage from '@/pages/OfflinePage'
 import TermsGate from '@/components/TermsGate'
 import AgeGate from '@/components/AgeGate'
-import { captureAcquisition } from '@/lib/acquisition'
 
 // Auto-reload on stale chunk errors (after deploy, old hashed filenames 404).
 // Uses sessionStorage guard to prevent infinite reload loops.
@@ -209,11 +208,12 @@ function EngagementTracker() {
 function AnalyticsTracker() {
   const location = useLocation()
 
-  // P6 acquisition capture: record the first-touch UTM/referrer once per
-  // browser as early as any route renders (signup deep links included).
+  // Attribution: every page entry is a touch (utm / referrer / deep link);
+  // the engine decides what it means (lib/attribution). Re-run when the
+  // query string changes so an in-app navigation carrying utm counts too.
   useEffect(() => {
-    captureAcquisition()
-  }, [])
+    recordEntryTouch()
+  }, [location.search])
 
   useEffect(() => {
     // Tag current route on every event sent to Sentry (critical for debugging
@@ -272,10 +272,6 @@ function getFeatureFromPath(path: string): string {
 // (referrer/UTM/landing path) is captured once at mount for signup attribution.
 function DbPageViewTracker() {
   const location = useLocation()
-
-  useEffect(() => {
-    captureFirstTouch()
-  }, [])
 
   useEffect(() => {
     trackDbEvent('page_view', undefined, undefined, {

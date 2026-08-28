@@ -17,6 +17,7 @@ import {
   Bell,
 } from 'lucide-react'
 import { getCrossFeatureAttribution } from '../api/analyticsApi'
+import { AcquisitionReport } from '../components/AcquisitionReport'
 import { logger } from '@/lib/logger'
 
 type DaysFilter = 7 | 30 | 90
@@ -110,6 +111,7 @@ export function AdminAttribution() {
 
   return (
     <div className="space-y-6">
+      <AcquisitionReport days={daysFilter} />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

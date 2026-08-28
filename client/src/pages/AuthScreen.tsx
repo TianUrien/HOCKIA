@@ -25,7 +25,7 @@ import { Input, Button } from '@/components'
 import { supabase, SUPABASE_URL } from '@/lib/supabase'
 import { getAuthRedirectUrl } from '@/lib/siteUrl'
 import { calculateAge } from '@/lib/utils'
-import { getAcquisition } from '@/lib/acquisition'
+import { getAttributionSnapshot } from '@/lib/attribution'
 import DateOfBirthPicker from '@/components/DateOfBirthPicker'
 import { startOAuthSignIn } from '@/lib/oauthSignIn'
 import { supportsReliableOAuth } from '@/lib/inAppBrowser'
@@ -251,7 +251,7 @@ export default function AuthScreen({ mode, role, onBack }: AuthScreenProps) {
       // creates the account, so the gate must run before the send).
       if (mode === 'signup' && !(await passesAgeGate())) return
       const intent = mode === 'signin' ? 'signin' : 'signup'
-      const acq = getAcquisition()
+      const acq = getAttributionSnapshot()
       const result = await sendMagicLink({
         email,
         role: mode === 'signup' ? role : undefined,
@@ -392,7 +392,7 @@ export default function AuthScreen({ mode, role, onBack }: AuthScreenProps) {
             role,
             ...(isPersonRole && signupDob ? { dob: signupDob } : {}),
             ...(isOrgRole && orgAttested ? { org_attested: true } : {}),
-            ...(getAcquisition() ? { acq: getAcquisition() } : {}),
+            ...(getAttributionSnapshot() ? { acq: getAttributionSnapshot() } : {}),
           },
         },
       })

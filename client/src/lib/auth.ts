@@ -16,6 +16,7 @@ import { reportSupabaseError, reportAuthFlowError } from './sentryHelpers'
 import { setUserProperties, clearUserProperties, trackLogin } from './analytics'
 import { phIdentify, phReset } from './posthog'
 import { trackDbEvent } from './trackDbEvent'
+import { submitSignupAttribution } from '@/lib/attribution'
 import { trackUserDevice } from './trackUserDevice'
 import { detectPlatform } from './detectPlatform'
 import { queryClient } from './queryClient'
@@ -611,6 +612,20 @@ export const initializeAuth = () => {
 
   // Listen for auth changes
   const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    // A brand-new account: write signup attribution NOW, at registration.
+    // The old system wrote it at onboarding completion, so members who
+    // stalled in onboarding had no attribution row at all (audit 2026-08-28).
+    // Runs BEFORE the same-user skip below: on a reload during onboarding the
+    // session is restored by getSession() first and INITIAL_SESSION then
+    // arrives for the same user — the skip would swallow it. Cheap and
+    // idempotent (browser flag + server first-write-wins), so it is safe here.
+    if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.user) {
+      const createdAt = Date.parse(session.user.created_at ?? '')
+      if (Number.isFinite(createdAt) && Date.now() - createdAt < 15 * 60 * 1000) {
+        submitSignupAttribution()
+      }
+    }
+
     // If we already have an authenticated user and the incoming event carries
     // the same user, skip heavy re-processing. This prevents cascading state
     // resets (loading flash → ProtectedRoute unmounts children → form state
@@ -664,6 +679,7 @@ export const initializeAuth = () => {
         trackUserDevice()
       }
     }
+
 
     runSessionEffects(session)
       .catch((error) => {

@@ -17,11 +17,11 @@ import { usePendingStorageCleanup } from '@/hooks/usePendingStorageCleanup'
 import { isNativePlatform, pickImageNative } from '@/lib/nativeImagePicker'
 import { toSentryError } from '@/lib/sentryHelpers'
 import { trackOnboardingComplete, trackOnboardingStart, trackRoleSelected } from '@/lib/analytics'
-import { trackDbEvent, linkSignupAttribution, consumeWallIntent } from '@/lib/trackDbEvent'
+import { trackDbEvent, consumeWallIntent } from '@/lib/trackDbEvent'
+import { submitSignupAttribution } from '@/lib/attribution'
 import { getFirstTouch } from '@/lib/analyticsIdentity'
 import { COACH_SPECIALIZATIONS, type CoachSpecialization } from '@/lib/coachSpecializations'
 import { validateOnboardingStep, type WizardStep } from '@/lib/onboardingValidation'
-import { getAcquisition } from '@/lib/acquisition'
 import { UMPIRE_LEVEL_SUGGESTIONS } from '@/lib/umpireLevels'
 import { FEDERATION_SUGGESTIONS } from '@/lib/umpireFederations'
 import { LANGUAGE_SUGGESTIONS } from '@/lib/languages'
@@ -851,12 +851,6 @@ export default function CompleteProfile() {
         ? (selectedCountry?.name || '')
         : (selectedCountry?.nationality_name || '')
 
-      // P6 acquisition: persist first-touch attribution exactly once (only
-      // while the server column is still NULL). Source priority: the value
-      // that rode signup metadata, else this browser's stored first touch.
-      const acqInfo =
-        (user?.user_metadata?.acq as ReturnType<typeof getAcquisition>) ?? getAcquisition()
-
       let updateData: Record<string, unknown> = {
         role: userRole, // IMPORTANT: Always include role in update
         full_name: formData.fullName || formData.clubName || '',
@@ -867,9 +861,6 @@ export default function CompleteProfile() {
         nationality_country_id: formData.nationalityCountryId,
         onboarding_completed: true, // Mark onboarding as complete
         avatar_url: avatarUrl || null, // Include avatar if uploaded
-        ...(profile?.acquisition_source == null && acqInfo
-          ? { acquisition_source: acqInfo.source, acquisition_meta: acqInfo }
-          : {}),
       }
 
       if (userRole === 'player') {
@@ -1088,7 +1079,9 @@ export default function CompleteProfile() {
       trackDbEvent('onboarding_completed', 'profile', user?.id, { role: userRole })
       // Identity stitching: link this account to its pre-signup anonymous
       // exploration (first-touch source/UTM + all prior anon events).
-      linkSignupAttribution()
+      // Fallback write for members whose registration hook didn't fire
+      // (idempotent server-side; the first write wins).
+      submitSignupAttribution()
       // Hypothesis test: was this registration driven by hitting a login wall
       // while exploring? Fires only if a recent wall intent was recorded.
       const wallAction = consumeWallIntent()
