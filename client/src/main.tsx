@@ -169,6 +169,12 @@ Sentry.init({
     'Email rate limit exceeded',
     // Duplicate signup attempt — UI should already guide them to /signin
     'User already registered',
+    // Leaked-password protection (enabled 2026-08-27) rejecting a weak or
+    // breached password — the form shows the message; it is user input.
+    'Password is known to be weak',
+    // Auth endpoint cooldown after a rapid retry (resend / reset) — a
+    // guardrail firing as designed, not a failure.
+    'you can only request this after',
     // Microsoft Outlook SafeLink scanner executing our JS while previewing
     // emailed links — a well-known bot artifact, not a user (Sentry triage
     // 2026-08-07: fired only from /community with 0 real users).

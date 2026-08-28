@@ -100,6 +100,19 @@ describe('recordEntryTouch (browser integration)', () => {
     expect(s.touches.some((t) => t.referring_domain === 'accounts.google.com')).toBe(false)
   })
 
+  it('an email-client bounce onto /auth/callback is never a source (Gmail → www.google.com)', () => {
+    setLocation('/auth/callback', '', 'https://www.google.com/')
+    const s = recordEntryTouch()!
+    expect(s.first?.source).toBe('direct')
+    expect(s.touches.some((t) => t.referring_domain)).toBe(false)
+    // sticky for the life of the document: the next in-app page must not
+    // pick the same referrer up either
+    setLocation('/complete-profile', '', 'https://www.google.com/')
+    const s2 = recordEntryTouch()!
+    expect(s2.first?.source).toBe('direct')
+    expect(s2.touches.some((t) => t.referring_domain)).toBe(false)
+  })
+
   it('a short-link resolver page (/l/<code>) is a pass-through, never a touch', () => {
     setLocation('/l/ig', '', 'https://l.instagram.com/')
     const s = recordEntryTouch()!
@@ -170,13 +183,27 @@ describe('signup payload + submit', () => {
     expect(p.session_source).toBe('instagram')
   })
 
-  it('submits once per browser; the server keeps the first write anyway', async () => {
+  it('submits once per ACCOUNT — a second person on the same browser still gets a row', async () => {
     setLocation('/', '', '')
     recordEntryTouch()
-    submitSignupAttribution(); submitSignupAttribution()
-    await Promise.resolve(); await Promise.resolve()
+    submitSignupAttribution('user-a'); submitSignupAttribution('user-a')
+    await new Promise((r) => setTimeout(r, 0))
     expect(m.rpc).toHaveBeenCalledTimes(1)
     expect((m.rpc.mock.calls[0] as unknown as unknown[])[0]).toBe('record_signup_attribution')
+    submitSignupAttribution('user-a')
+    expect(m.rpc).toHaveBeenCalledTimes(1)
+    // the audit bug (2026-08-28): the flag was per browser, so user-b got nothing
+    submitSignupAttribution('user-b')
+    await new Promise((r) => setTimeout(r, 0))
+    expect(m.rpc).toHaveBeenCalledTimes(2)
+    expect(localStorage.getItem('hockia_attr_submitted')).toBe('user-b')
+  })
+
+  it('without a user id (legacy callers) it stays once-per-browser', async () => {
+    setLocation('/', '', '')
+    recordEntryTouch()
+    submitSignupAttribution()
+    await new Promise((r) => setTimeout(r, 0))
     submitSignupAttribution()
     expect(m.rpc).toHaveBeenCalledTimes(1)
   })

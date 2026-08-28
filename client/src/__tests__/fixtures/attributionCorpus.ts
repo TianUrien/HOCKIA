@@ -59,6 +59,19 @@ export const ATTRIBUTION_CORPUS: Array<[string | null, string | null, string, bo
   ['whatsapp', null, 'whatsapp', false],
   ['google', null, 'google_organic', false],
   ['weird-partner', null, 'weird-partner', false],
+  // audit 2026-08-28: paid search is not organic; lookalike hosts do not match; NBSP from a pasted link
+  ['adwords', null, 'google_ads', false],
+  ['gads', null, 'google_ads', false],
+  [null, 'google.com.attacker.io', 'referral:google.com.attacker.io', false],
+  [null, 'www.google.com.ar', 'google_organic', false],
+  ['instagram ', null, 'instagram', false],
+  // email clients and Android app referrers are channels, not referral sites
+  [null, 'mail.google.com', 'email', false],
+  [null, 'com.google.android.gm', 'email', false],
+  [null, 'outlook.live.com', 'email', false],
+  [null, 'com.linkedin.android', 'linkedin', false],
+  [null, 'com.instagram.android', 'instagram', false],
+  [null, 'com.whatsapp', 'whatsapp', false],
   // precedence: an explicit tag beats the referrer
   ['ig', 'www.google.com', 'instagram', false],
   // nothing at all

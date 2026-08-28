@@ -58,13 +58,15 @@ export const ATTRIBUTION_RULES: Rule[] = [
   { kind: 'utm', pattern: /^perplexity$/i, source: 'perplexity', group: 'ai_assistant', medium: 'referral' },
   { kind: 'utm', pattern: /^(claude|claude\.ai)$/i, source: 'claude', group: 'ai_assistant', medium: 'referral' },
   { kind: 'utm', pattern: /^(gemini|bard)$/i, source: 'gemini', group: 'ai_assistant', medium: 'referral' },
-  // search
-  { kind: 'host', pattern: /^(www\.)?google\.[a-z.]+$/i, source: 'google_organic', group: 'search', medium: 'organic' },
+  // paid search is its own channel (audit 2026-08-28: adwords/gads are never organic)
+  { kind: 'utm', pattern: /^(adwords|gads|google_ads|googleads)$/i, source: 'google_ads', group: 'search', medium: 'cpc' },
+  // search — Google ccTLDs only (com | xx | co.xx | com.xx), so google.com.evil.io cannot match
+  { kind: 'host', pattern: /^(www\.)?google\.(com|[a-z]{2}|com?\.[a-z]{2})$/i, source: 'google_organic', group: 'search', medium: 'organic' },
   { kind: 'host', pattern: /(^|\.)bing\.com$/i, source: 'bing', group: 'search', medium: 'organic' },
   { kind: 'host', pattern: /^duckduckgo\.com$/i, source: 'duckduckgo', group: 'search', medium: 'organic' },
   { kind: 'host', pattern: /(^|\.)ecosia\.org$/i, source: 'ecosia', group: 'search', medium: 'organic' },
   { kind: 'host', pattern: /(^|\.)search\.yahoo\.com$/i, source: 'yahoo', group: 'search', medium: 'organic' },
-  { kind: 'utm', pattern: /^(google|adwords|gads)$/i, source: 'google_organic', group: 'search', medium: 'organic' },
+  { kind: 'utm', pattern: /^google$/i, source: 'google_organic', group: 'search', medium: 'organic' },
   { kind: 'utm', pattern: /^bing$/i, source: 'bing', group: 'search', medium: 'organic' },
   // social
   { kind: 'host', pattern: /(^|\.)(instagram\.com)$/i, source: 'instagram', group: 'social', medium: 'social' },
@@ -79,11 +81,20 @@ export const ATTRIBUTION_RULES: Rule[] = [
   { kind: 'utm', pattern: /^(twitter|x)$/i, source: 'x', group: 'social', medium: 'social' },
   { kind: 'host', pattern: /(^|\.)(youtube\.com)$|^youtu\.be$/i, source: 'youtube', group: 'social', medium: 'social' },
   { kind: 'utm', pattern: /^youtube$/i, source: 'youtube', group: 'social', medium: 'social' },
+  // Android app referrers arrive as android-app://<package> → hostnameOf gives the package
+  { kind: 'host', pattern: /^com\.linkedin\.android$/i, source: 'linkedin', group: 'social', medium: 'social' },
+  { kind: 'host', pattern: /^com\.instagram\.android$/i, source: 'instagram', group: 'social', medium: 'social' },
+  { kind: 'host', pattern: /^com\.facebook\.(katana|orca|lite)$/i, source: 'facebook', group: 'social', medium: 'social' },
+  { kind: 'host', pattern: /^com\.twitter\.android$/i, source: 'x', group: 'social', medium: 'social' },
   // messaging
   { kind: 'host', pattern: /^(wa\.me|(web|api)\.whatsapp\.com)$/i, source: 'whatsapp', group: 'messaging', medium: 'messaging' },
   { kind: 'utm', pattern: /^(whatsapp|wa)$/i, source: 'whatsapp', group: 'messaging', medium: 'messaging' },
   { kind: 'host', pattern: /^(t\.me|telegram\.me)$/i, source: 'telegram', group: 'messaging', medium: 'messaging' },
   { kind: 'utm', pattern: /^(telegram|tg)$/i, source: 'telegram', group: 'messaging', medium: 'messaging' },
+  { kind: 'host', pattern: /^com\.whatsapp(\.w4b)?$/i, source: 'whatsapp', group: 'messaging', medium: 'messaging' },
+  { kind: 'host', pattern: /^org\.telegram\.messenger$/i, source: 'telegram', group: 'messaging', medium: 'messaging' },
+  // email — webmail and mail-app referrers are the email channel, not "referral sites"
+  { kind: 'host', pattern: /^(mail\.google\.com|com\.google\.android\.gm|outlook\.(live|office|office365)\.com|com\.microsoft\.office\.outlook|mail\.yahoo\.com|mail\.proton\.me)$/i, source: 'email', group: 'email', medium: 'email' },
   // email / qr / stores
   { kind: 'utm', pattern: /^(email|newsletter|resend|gmass|mailchimp)$/i, source: 'email', group: 'email', medium: 'email' },
   { kind: 'utm', pattern: /^qr$/i, source: 'qr', group: 'qr', medium: 'qr' },

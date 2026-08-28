@@ -18,8 +18,7 @@ import { isNativePlatform, pickImageNative } from '@/lib/nativeImagePicker'
 import { toSentryError } from '@/lib/sentryHelpers'
 import { trackOnboardingComplete, trackOnboardingStart, trackRoleSelected } from '@/lib/analytics'
 import { trackDbEvent, consumeWallIntent } from '@/lib/trackDbEvent'
-import { submitSignupAttribution } from '@/lib/attribution'
-import { getFirstTouch } from '@/lib/analyticsIdentity'
+import { getAttributionState, submitSignupAttribution } from '@/lib/attribution'
 import { COACH_SPECIALIZATIONS, type CoachSpecialization } from '@/lib/coachSpecializations'
 import { validateOnboardingStep, type WizardStep } from '@/lib/onboardingValidation'
 import { UMPIRE_LEVEL_SUGGESTIONS } from '@/lib/umpireLevels'
@@ -180,7 +179,7 @@ export default function CompleteProfile() {
     // DB funnel: the "registration started" step (wizard entered).
     trackDbEvent('registration_started', 'profile', user?.id, {
       role: userRole,
-      source_path: getFirstTouch()?.landing_path ?? null,
+      source_path: getAttributionState()?.first?.landing_page ?? null,
     })
   }, [userRole, user?.id])
 
@@ -1081,7 +1080,7 @@ export default function CompleteProfile() {
       // exploration (first-touch source/UTM + all prior anon events).
       // Fallback write for members whose registration hook didn't fire
       // (idempotent server-side; the first write wins).
-      submitSignupAttribution()
+      submitSignupAttribution(user?.id)
       // Hypothesis test: was this registration driven by hitting a login wall
       // while exploring? Fires only if a recent wall intent was recorded.
       const wallAction = consumeWallIntent()

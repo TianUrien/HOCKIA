@@ -621,8 +621,12 @@ export const initializeAuth = () => {
     // idempotent (browser flag + server first-write-wins), so it is safe here.
     if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.user) {
       const createdAt = Date.parse(session.user.created_at ?? '')
-      if (Number.isFinite(createdAt) && Date.now() - createdAt < 15 * 60 * 1000) {
-        submitSignupAttribution()
+      // 48h, not 15 min (audit 2026-08-28): an email signup's account is
+      // created when the magic link is SENT; the first session arrives when
+      // it is opened, which can be hours later. The server is first-write-
+      // wins, so a wide window costs at most one no-op call per session.
+      if (Number.isFinite(createdAt) && Date.now() - createdAt < 48 * 60 * 60 * 1000) {
+        submitSignupAttribution(session.user.id)
       }
     }
 

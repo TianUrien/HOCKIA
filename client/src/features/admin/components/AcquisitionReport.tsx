@@ -53,7 +53,10 @@ export function AcquisitionReport({ days = 90 }: { days?: number }) {
   const rows = useMemo(() => [...(report?.channels ?? [])].sort((a, b) => b.signups - a.signups), [report])
   const color = useMemo(() => colorForSources(rows.map((r) => r.source)), [rows])
   const total = report?.total_signups ?? 0
-  const leader = rows.find((r) => !isNonChannel(r.source)) ?? null
+  // A source that only existed last period comes back with 0 signups so the
+  // legend can show "was N"; it is never the leader and never a slice.
+  const leader = rows.find((r) => !isNonChannel(r.source) && r.signups > 0) ?? null
+  const slices = rows.filter((r) => r.signups > 0)
   const identifiedTotal = rows.filter((r) => !isNonChannel(r.source)).reduce((n, r) => n + r.signups, 0)
   const measured = report ? Object.entries(report.methods)
     .filter(([m]) => m === 'utm' || m === 'referrer' || m === 'deep_link' || m === 'install_referrer')
@@ -88,19 +91,19 @@ export function AcquisitionReport({ days = 90 }: { days?: number }) {
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
-                      data={rows.map((r) => ({ ...r, name: displaySource(r.source) }))}
+                      data={slices.map((r) => ({ ...r, name: displaySource(r.source) }))}
                       dataKey="signups"
                       nameKey="name"
                       innerRadius={64}
                       outerRadius={94}
-                      paddingAngle={rows.length > 1 ? 2 : 0}
+                      paddingAngle={slices.length > 1 ? 2 : 0}
                       stroke="#ffffff"
                       strokeWidth={2}
                       startAngle={90}
                       endAngle={-270}
                       animationDuration={500}
                     >
-                      {rows.map((r) => <Cell key={r.source} fill={color(r.source)} />)}
+                      {slices.map((r) => <Cell key={r.source} fill={color(r.source)} />)}
                     </Pie>
                     <Tooltip content={<DonutTip total={total} />} />
                   </PieChart>

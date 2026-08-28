@@ -122,6 +122,10 @@ export function suggestCode(label: string): string {
     .slice(0, 32)
 }
 
-export function isIOSUserAgent(ua: string): boolean {
-  return /iPhone|iPad|iPod/i.test(ua) || (/Macintosh/.test(ua) && /Mobile/.test(ua))
+/**
+ * iPadOS 13+ presents a desktop "Macintosh" UA; the only reliable tell is a
+ * touch screen, so callers pass navigator.maxTouchPoints.
+ */
+export function isIOSUserAgent(ua: string, maxTouchPoints = 0): boolean {
+  return /iPhone|iPad|iPod/i.test(ua) || (/Macintosh/.test(ua) && (maxTouchPoints > 1 || /Mobile/.test(ua)))
 }

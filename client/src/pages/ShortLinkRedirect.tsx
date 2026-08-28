@@ -59,7 +59,7 @@ export default function ShortLinkRedirect() {
         if (error) throw new Error(error.message)
         const link = data as ShortLink | null
         if (!link) { home(); return }
-        go(buildShortLinkTarget(link, { isIOS: isIOSUserAgent(navigator.userAgent) }))
+        go(buildShortLinkTarget(link, { isIOS: isIOSUserAgent(navigator.userAgent, navigator.maxTouchPoints ?? 0) }))
       })
       .catch((err: unknown) => {
         logger.warn('[ShortLinkRedirect] resolve failed', err)

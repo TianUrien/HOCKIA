@@ -223,6 +223,14 @@ export function applyTouch(state: AttributionState, touch: Touch): AttributionSt
 
 // ── public API ───────────────────────────────────────────────────────────
 
+/** Entry paths reached from an email / OAuth round-trip, never from a source. */
+export const BOUNCE_ENTRY_PATHS = ['/auth/callback', '/verify-email', '/email-action', '/reset-password']
+let entryPathname: string | null = null
+function isBounceEntryDocument(): boolean {
+  if (entryPathname === null) entryPathname = window.location.pathname
+  return BOUNCE_ENTRY_PATHS.some((p) => entryPathname === p || entryPathname!.startsWith(p + '/'))
+}
+
 /**
  * Record the current page entry as a touch. Call once per page load and on
  * any in-app navigation that carries utm parameters. Idempotent within a
@@ -238,7 +246,13 @@ export function recordEntryTouch(): AttributionState | null {
     if (isShortLinkPath(window.location.pathname)) return state
     const utm = readUtm(window.location.search)
     const linkId = readLinkId(window.location.search)
-    const referrer = document.referrer || null
+    // A document that ENTERED on an auth/email landing (magic link, verify,
+    // reset) got there from a mail client or an OAuth provider — its referrer
+    // (www.google.com, mail.google.com, outlook.live.com, android-app://…)
+    // is a bounce, not a source. document.referrer never changes for the
+    // life of the document, so the neutralisation must be sticky, not
+    // per-path. Same bug class as accounts.google.com, one door over.
+    const referrer = isBounceEntryDocument() ? null : (document.referrer || null)
     // Inside the native shell there is no referrer; a plain open is the
     // session's "direct_app" — distinct from web "direct" in reporting.
     const native = currentPlatform() !== 'web'
@@ -307,7 +321,12 @@ export function getAttributionSnapshot(): Record<string, unknown> | null {
   const s = getAttributionState()
   if (!s?.first) return null
   const f = s.first
-  return { v: 2, source: f.source, medium: f.medium, campaign: f.campaign, referrer: f.referring_domain, landing: f.landing_page, at: f.captured_at }
+  // utm_source is the RAW tag so the server can re-normalize it; `source`
+  // stays for readers of older snapshots.
+  return {
+    v: 2, source: f.source, utm_source: f.raw.utm?.source ?? null, medium: f.medium, campaign: f.campaign,
+    referrer: f.referring_domain, landing: f.landing_page, at: f.captured_at, link_id: f.link_id,
+  }
 }
 
 /** The jsonb the server normalizes and writes once, at registration. */
@@ -357,10 +376,17 @@ function safeDevice(): string {
  */
 let submitInFlight = false
 
-export function submitSignupAttribution(): void {
+export function submitSignupAttribution(userId?: string | null): void {
   if (typeof window === 'undefined') return
   try {
-    if (submitInFlight || storageRead(SUBMITTED_KEY)) return
+    if (submitInFlight) return
+    // The flag remembers WHICH account this browser submitted for. A second
+    // person signing up on a shared device (a parent after a junior, a club
+    // laptop) must still get a row — without one they vanish from every
+    // acquisition number. Without a user id (legacy shim) fall back to
+    // once-per-browser.
+    const submitted = storageRead(SUBMITTED_KEY)
+    if (submitted && (!userId || submitted === userId)) return
     submitInFlight = true
     const state = loadState()
     const payload = buildSignupPayload(state)
@@ -368,7 +394,7 @@ export function submitSignupAttribution(): void {
     // bind: a detached `rpc` loses `this` and throws before any request is made
     const rpc = supabase.rpc.bind(supabase) as unknown as (fn: string, args: Record<string, unknown>) => PromiseLike<{ error: unknown }>
     void Promise.resolve(rpc('record_signup_attribution', { p: payload }))
-      .then(({ error }) => { if (!error) storageWrite(SUBMITTED_KEY, new Date().toISOString()) })
+      .then(({ error }) => { if (!error) storageWrite(SUBMITTED_KEY, userId ?? new Date().toISOString()) })
       .catch(() => {})
       .finally(() => { submitInFlight = false })
   } catch {
@@ -379,6 +405,7 @@ export function submitSignupAttribution(): void {
 /** Test-only. */
 export function __resetAttributionForTests(): void {
   submitInFlight = false
+  entryPathname = null
   try {
     localStorage.removeItem(ATTRIBUTION_KEY); sessionStorage.removeItem(ATTRIBUTION_KEY)
     localStorage.removeItem(SUBMITTED_KEY); sessionStorage.removeItem(SUBMITTED_KEY)

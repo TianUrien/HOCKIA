@@ -11,6 +11,7 @@ import * as Sentry from '@sentry/react'
 import { BrandForm, type BrandFormData } from '@/components/brands'
 import { useMyBrand } from '@/hooks/useMyBrand'
 import { useAuthStore } from '@/lib/auth'
+import { submitSignupAttribution } from '@/lib/attribution'
 import { logger } from '@/lib/logger'
 import { toSentryError } from '@/lib/sentryHelpers'
 import { supabase } from '@/lib/supabase'
@@ -186,6 +187,9 @@ export default function BrandOnboardingPage() {
       // app picks up the new flag immediately.
       if (user) {
         await fetchProfile(user.id, { force: true })
+        // Onboarding-completion fallback for the attribution write (the
+        // registration hook covers most; brands were the one path without it).
+        submitSignupAttribution(user.id)
       }
 
       Sentry.addBreadcrumb({

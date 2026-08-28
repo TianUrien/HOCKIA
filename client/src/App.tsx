@@ -212,9 +212,13 @@ function AnalyticsTracker() {
   // Attribution: every page entry is a touch (utm / referrer / deep link);
   // the engine decides what it means (lib/attribution). Re-run when the
   // query string changes so an in-app navigation carrying utm counts too.
+  // Keyed on pathname too (audit 2026-08-28): a short-link resolver that
+  // falls back to "/" changes the path but not the search, and the entry
+  // touch (with the external referrer) must still be recorded. The engine
+  // is idempotent for signal-less entries within a session.
   useEffect(() => {
     recordEntryTouch()
-  }, [location.search])
+  }, [location.pathname, location.search])
 
   useEffect(() => {
     // Tag current route on every event sent to Sentry (critical for debugging

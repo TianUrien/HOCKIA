@@ -89,5 +89,8 @@ describe('validation helpers', () => {
     expect(isIOSUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)')).toBe(true)
     expect(isIOSUserAgent('Mozilla/5.0 (Linux; Android 14; Pixel 8)')).toBe(false)
     expect(isIOSUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)')).toBe(false)
+    // iPadOS 13+ hides behind a Macintosh UA; a touch screen is the tell
+    expect(isIOSUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)', 5)).toBe(true)
+    expect(isIOSUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)', 0)).toBe(false)
   })
 })

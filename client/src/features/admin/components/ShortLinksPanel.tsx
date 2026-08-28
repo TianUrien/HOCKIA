@@ -59,7 +59,8 @@ export function ShortLinksPanel() {
   const startEdit = (r: ShortLinkRow) => {
     setForm({
       code: r.code, label: r.label, destination: r.destination, utm_source: r.utm_source,
-      utm_medium: r.utm_medium ?? '', utm_campaign: r.utm_campaign ?? '', utm_content: r.utm_content ?? '', is_active: r.is_active,
+      utm_medium: r.utm_medium ?? '', utm_campaign: r.utm_campaign ?? '', utm_content: r.utm_content ?? '',
+      utm_term: r.utm_term, is_active: r.is_active,
     })
     setIsNew(false)
     setFormError(null)
@@ -70,17 +71,23 @@ export function ShortLinksPanel() {
     return normalizeAttribution(form.utm_source.trim().toLowerCase(), null)
   }, [form?.utm_source])
 
+  // Mirrors the table CHECKs so a mistake reads as guidance, not a raw
+  // check_violation from the database.
   const validate = (f: ShortLinkInput): string | null => {
     if (!f.label.trim()) return 'Give the link a label.'
+    if (f.label.trim().length > 80) return 'Label: 80 characters at most.'
     if (!SHORT_LINK_CODE_RE.test(f.code)) return 'Code: 2–32 characters, lowercase letters, digits and hyphens.'
     if (isNew && rows.some((r) => r.code === f.code)) return `"${f.code}" is already taken.`
     if (!isValidDestination(f.destination.trim())) return 'Destination must be an in-app path (/opportunities), an https:// URL, or "store".'
     if (!f.utm_source.trim()) return 'utm_source is what the report will attribute signups to — it is required.'
+    for (const [k, v] of [['utm_source', f.utm_source], ['utm_medium', f.utm_medium], ['utm_campaign', f.utm_campaign], ['utm_content', f.utm_content]] as const) {
+      if ((v ?? '').trim().length > 64) return `${k}: 64 characters at most.`
+    }
     return null
   }
 
   const save = async () => {
-    if (!form) return
+    if (!form || saving) return
     const problem = validate(form)
     if (problem) { setFormError(problem); return }
     setSaving(true)
