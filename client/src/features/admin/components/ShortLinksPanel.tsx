@@ -126,6 +126,7 @@ export function ShortLinksPanel() {
     }
   }
 
+  const maxClicks = rows.reduce((m, r) => Math.max(m, r.click_count), 0)
   const field = 'w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-400'
 
   return (
@@ -254,6 +255,7 @@ export function ShortLinksPanel() {
                 <th className="py-2 pr-3">Link</th>
                 <th className="py-2 pr-3">Channel</th>
                 <th className="py-2 pr-3">Destination</th>
+                <th className="py-2 pr-3 min-w-[9rem]">Clicks → signups</th>
                 <th className="py-2 pr-3 text-right">Clicks</th>
                 <th className="py-2 pr-3 text-right">30d</th>
                 <th className="py-2 pr-3 text-right">Signups</th>
@@ -282,6 +284,15 @@ export function ShortLinksPanel() {
                     {r.utm_campaign && <span className="text-gray-400"> · {r.utm_campaign}</span>}
                   </td>
                   <td className="py-2 pr-3 font-mono text-xs text-gray-600 max-w-[16rem] truncate" title={r.destination}>{destinationLabel(r.destination)}</td>
+                  <td className="py-2 pr-3" data-testid={`short-link-perf-${r.code}`}>
+                    <div className="relative h-2.5 rounded-full bg-gray-100 overflow-hidden" title={`${r.click_count} clicks → ${r.signups} signups`}>
+                      <div className="absolute inset-y-0 left-0 rounded-full bg-purple-200" style={{ width: `${maxClicks ? (r.click_count / maxClicks) * 100 : 0}%` }} />
+                      <div className="absolute inset-y-0 left-0 rounded-full bg-purple-600" style={{ width: `${maxClicks ? (r.signups / maxClicks) * 100 : 0}%` }} />
+                    </div>
+                    <div className="mt-0.5 text-[11px] text-gray-500 tabular-nums">
+                      {r.click_count > 0 ? `${Math.round((r.signups / r.click_count) * 100)}% convert` : 'no clicks yet'}
+                    </div>
+                  </td>
                   <td className="py-2 pr-3 text-right tabular-nums">{r.click_count}</td>
                   <td className="py-2 pr-3 text-right tabular-nums text-gray-600">{r.clicks_30d}</td>
                   <td className="py-2 pr-3 text-right tabular-nums font-medium">{r.signups}</td>

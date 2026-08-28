@@ -32,6 +32,23 @@ export function displaySource(source: string | null | undefined): string {
   return SOURCE_LABEL[source] ?? source.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
 }
 
+/** Sources that mean "no channel" — never a winner, always grey. */
+export const NON_CHANNEL_COLORS: Record<string, string> = { direct: '#9ca3af', direct_app: '#6b7280', unknown: '#d1d5db' }
+const SOURCE_PALETTE = ['#6d28d9', '#2563eb', '#059669', '#d97706', '#e11d48', '#0891b2', '#65a30d', '#db2777', '#4f46e5', '#0d9488']
+
+export function isNonChannel(source: string): boolean {
+  return source in NON_CHANNEL_COLORS
+}
+
+/**
+ * Stable colours for a set of sources: non-channels grey, identified sources
+ * take palette colours in the order given (rank them first for a legend).
+ */
+export function colorForSources(sources: string[]): (source: string) => string {
+  const identified = sources.filter((s) => !isNonChannel(s))
+  return (source) => NON_CHANNEL_COLORS[source] ?? SOURCE_PALETTE[Math.max(0, identified.indexOf(source)) % SOURCE_PALETTE.length]
+}
+
 export function displayGroup(group: string | null | undefined): string {
   if (!group) return '—'
   return GROUP_LABEL[group] ?? group
