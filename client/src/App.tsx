@@ -36,6 +36,7 @@ import SettingsPage from '@/pages/SettingsPage'
 import OfflinePage from '@/pages/OfflinePage'
 import TermsGate from '@/components/TermsGate'
 import ShortLinkGate from '@/components/ShortLinkGate'
+import NativeDeepLinkRouter from '@/components/NativeDeepLinkRouter'
 import AgeGate from '@/components/AgeGate'
 
 // Auto-reload on stale chunk errors (after deploy, old hashed filenames 404).
@@ -381,6 +382,7 @@ function App() {
           <ContactModal />
           <EngagementTracker />
           <AnalyticsTracker />
+          <NativeDeepLinkRouter />
           <DbPageViewTracker />
           <SessionTracker />
           <ScrollToTop />

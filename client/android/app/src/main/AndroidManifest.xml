@@ -26,6 +26,15 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="hockia" android:host="auth" android:pathPrefix="/callback" />
             </intent-filter>
+
+            <!-- Deep links (attribution Phase 3): hockia://app.inhockia.com/<path>?utm_…
+                 Routed in-app by NativeDeepLinkRouter; the OAuth filter above stays separate. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="hockia" android:host="app.inhockia.com" />
+            </intent-filter>
         </activity>
 
         <provider

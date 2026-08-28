@@ -72,6 +72,8 @@ export const ATTRIBUTION_CORPUS: Array<[string | null, string | null, string, bo
   [null, 'com.linkedin.android', 'linkedin', false],
   [null, 'com.instagram.android', 'instagram', false],
   [null, 'com.whatsapp', 'whatsapp', false],
+  // Play Install Referrer organic marker → store install
+  ['google-play', null, 'google_play', false],
   // precedence: an explicit tag beats the referrer
   ['ig', 'www.google.com', 'instagram', false],
   // nothing at all

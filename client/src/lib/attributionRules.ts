@@ -99,6 +99,8 @@ export const ATTRIBUTION_RULES: Rule[] = [
   { kind: 'utm', pattern: /^(email|newsletter|resend|gmass|mailchimp)$/i, source: 'email', group: 'email', medium: 'email' },
   { kind: 'utm', pattern: /^qr$/i, source: 'qr', group: 'qr', medium: 'qr' },
   { kind: 'host', pattern: /^play\.google\.com$/i, source: 'google_play', group: 'store', medium: 'referral' },
+  // Play Install Referrer's own organic marker (Phase 3): found us in the store
+  { kind: 'utm', pattern: /^(google-play|google_play|play)$/i, source: 'google_play', group: 'store', medium: 'organic' },
   { kind: 'host', pattern: /^apps\.apple\.com$/i, source: 'app_store', group: 'store', medium: 'referral' },
 ]
 

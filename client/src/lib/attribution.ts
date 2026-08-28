@@ -55,7 +55,7 @@ export interface Touch {
   platform: Platform
   session_id: string | null
   captured_at: string
-  method: 'utm' | 'referrer' | 'none' | 'deep_link' | 'migrated'
+  method: 'utm' | 'referrer' | 'none' | 'deep_link' | 'migrated' | 'install_referrer'
   raw: { utm: Record<string, string> | null; referrer: string | null }
 }
 
@@ -186,7 +186,7 @@ function buildTouch(input: {
     platform: currentPlatform(),
     session_id: safeSessionId(),
     captured_at: input.at,
-    method: input.method === 'migrated' || input.method === 'deep_link' ? input.method : n.method,
+    method: input.method === 'migrated' || input.method === 'deep_link' || input.method === 'install_referrer' ? input.method : n.method,
     raw: { utm: input.utm, referrer: input.referrer },
   }
 }
@@ -262,6 +262,37 @@ export function recordEntryTouch(): AttributionState | null {
     })
     if (!touch) return state // discarded (auth provider) — nothing to learn
     if (native && !hasSignal(touch) && !utm) touch.source = 'direct_app'
+    applyTouch(state, touch)
+    saveState(state)
+    return state
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Phase 3: the Google Play Install Referrer string (already URL-decoded by
+ * Play), e.g. "utm_source=instagram&utm_medium=social&hk_link=ig-app".
+ * An organic Play install arrives as "utm_source=google-play&utm_medium=organic"
+ * or "(not set)"; both are recorded as a google_play store install.
+ * On a fresh install the launch already recorded a signal-less direct_app
+ * touch, so this lands as the one permitted D2 upgrade of the first touch.
+ */
+export function recordInstallReferrerTouch(referrer: string): AttributionState | null {
+  try {
+    const raw = (referrer ?? '').trim()
+    if (!raw) return null
+    const params = new URLSearchParams(raw)
+    const notSet = (v: string | null) => !v || /^\(not[ _]?set\)$/i.test(v)
+    const search = '?' + params.toString()
+    let utm = readUtm(search)
+    if (!utm || notSet(utm.source)) utm = { ...(utm ?? {}), source: 'google-play', medium: utm?.medium && !notSet(utm.medium) ? utm.medium : 'organic' }
+    const state = loadState()
+    const touch = buildTouch({
+      utm, referrer: null, landing: '/', at: new Date().toISOString(), method: 'install_referrer',
+      deepLink: ('install_referrer:' + raw).slice(0, CLIP), linkId: readLinkId(search),
+    })
+    if (!touch) return state
     applyTouch(state, touch)
     saveState(state)
     return state
@@ -354,7 +385,10 @@ export function buildSignupPayload(state: AttributionState): Record<string, unkn
     last_nd: toBlock(ln),
     deep_link: f?.deep_link ?? null,
     link_id: f?.link_id ?? ln?.link_id ?? null,
-    attribution_method: f?.method === 'migrated' ? 'migrated' : state.first_upgraded ? 'upgraded_first_signal' : undefined,
+    // The evidence type wins over the state-machine event: an install
+    // referrer that upgraded a direct_app first touch is still "install_referrer".
+    attribution_method: f && (f.method === 'migrated' || f.method === 'deep_link' || f.method === 'install_referrer') ? f.method
+      : state.first_upgraded ? 'upgraded_first_signal' : undefined,
     touches: state.touches.slice(-MAX_TOUCHES),
   }
 }
