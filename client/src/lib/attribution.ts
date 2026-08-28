@@ -27,6 +27,7 @@ import { Capacitor } from '@capacitor/core'
 import { supabase } from '@/lib/supabase'
 import { getAnonymousId, getDeviceContext, getSessionId, storageRead, storageWrite } from '@/lib/analyticsIdentity'
 import { hostnameOf, normalizeAttribution } from '@/lib/attributionRules'
+import { isShortLinkPath } from '@/lib/shortLinks'
 
 export const ATTRIBUTION_KEY = 'hockia_attr_v2'
 const LEGACY_FIRST_TOUCH_KEY = 'hockia_first_touch'
@@ -231,6 +232,10 @@ export function recordEntryTouch(): AttributionState | null {
   if (typeof window === 'undefined') return null
   try {
     const state = loadState()
+    // /l/<code> is a pass-through, not a landing: the resolver redirects to
+    // the real destination with the link's utm set, and THAT entry is the
+    // touch (with the external referrer still intact — no document reload).
+    if (isShortLinkPath(window.location.pathname)) return state
     const utm = readUtm(window.location.search)
     const linkId = readLinkId(window.location.search)
     const referrer = document.referrer || null

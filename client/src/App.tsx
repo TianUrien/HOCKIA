@@ -35,6 +35,7 @@ import DevelopersPage from '@/pages/DevelopersPage'
 import SettingsPage from '@/pages/SettingsPage'
 import OfflinePage from '@/pages/OfflinePage'
 import TermsGate from '@/components/TermsGate'
+import ShortLinkGate from '@/components/ShortLinkGate'
 import AgeGate from '@/components/AgeGate'
 
 // Auto-reload on stale chunk errors (after deploy, old hashed filenames 404).
@@ -381,6 +382,7 @@ function App() {
           <ScrollToTop />
           <KeyboardShortcutsManager />
           {!isProduction && <SentryTestButton />}
+          <ShortLinkGate>
           <TermsGate>
           <AgeGate>
           <ProtectedRoute>
@@ -599,6 +601,7 @@ function App() {
           </ProtectedRoute>
           </AgeGate>
           </TermsGate>
+          </ShortLinkGate>
         </ProfileImagePreviewProvider>
       </BrowserRouter>
     </ErrorBoundary>

@@ -13,6 +13,7 @@ import { useEffect, useState } from 'react'
 import { AlertTriangle, Compass } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { displayGroup, displaySource } from '@/lib/attributionLabels'
 
 interface ChannelRow { source: string; group: string; signups: number; activated: number; prev_signups: number }
 interface Report {
@@ -22,19 +23,6 @@ interface Report {
   methods: Record<string, number>
   confidence: Record<string, number>
   platforms: Record<string, number>
-}
-
-const GROUP_LABEL: Record<string, string> = {
-  social: 'Social', search: 'Search', ai_assistant: 'AI assistants', messaging: 'Messaging',
-  email: 'Email', qr: 'QR', store: 'App stores', referral: 'Referral sites', direct: 'Direct',
-  unknown: 'Unknown', other: 'Other', internal: 'Internal',
-}
-
-function label(source: string): string {
-  return source
-    .replace(/^referral:/, '')
-    .replace(/_/g, ' ')
-    .replace(/\b\w/g, (c) => c.toUpperCase())
 }
 
 export function AcquisitionReport({ days = 90 }: { days?: number }) {
@@ -104,8 +92,8 @@ export function AcquisitionReport({ days = 90 }: { days?: number }) {
                   const delta = c.signups - c.prev_signups
                   return (
                     <tr key={c.source} className="border-t border-gray-100" data-testid={`acq-row-${c.source}`}>
-                      <td className="py-2 pr-3 font-medium text-gray-900">{label(c.source)}</td>
-                      <td className="py-2 pr-3 text-gray-500">{GROUP_LABEL[c.group] ?? c.group}</td>
+                      <td className="py-2 pr-3 font-medium text-gray-900">{displaySource(c.source)}</td>
+                      <td className="py-2 pr-3 text-gray-500">{displayGroup(c.group)}</td>
                       <td className="py-2 pr-3 text-right tabular-nums">{c.signups}</td>
                       <td className="py-2 pr-3 text-right tabular-nums text-gray-600">
                         {Math.round((c.signups / report.total_signups) * 100)}%

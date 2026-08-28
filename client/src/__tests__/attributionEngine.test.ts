@@ -100,6 +100,19 @@ describe('recordEntryTouch (browser integration)', () => {
     expect(s.touches.some((t) => t.referring_domain === 'accounts.google.com')).toBe(false)
   })
 
+  it('a short-link resolver page (/l/<code>) is a pass-through, never a touch', () => {
+    setLocation('/l/ig', '', 'https://l.instagram.com/')
+    const s = recordEntryTouch()!
+    expect(s.touches).toHaveLength(0)
+    expect(s.first).toBeNull()
+    // …the redirect it performs IS the touch, with the referrer still intact
+    setLocation('/', '?utm_source=instagram&utm_medium=social&utm_campaign=bio&hk_link=ig', 'https://l.instagram.com/')
+    const after = recordEntryTouch()!
+    expect(after.first?.source).toBe('instagram')
+    expect(after.first?.link_id).toBe('ig')
+    expect(after.first?.referring_domain).toBe('l.instagram.com')
+  })
+
   it('captures utm + referrer on a tagged landing and keeps raw values', () => {
     setLocation('/opportunities', '?utm_source=ig&utm_medium=social&utm_campaign=bio&hk_link=abc12', 'https://l.instagram.com/')
     const s = recordEntryTouch()!
