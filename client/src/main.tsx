@@ -175,6 +175,12 @@ Sentry.init({
     // Auth endpoint cooldown after a rapid retry (resend / reset) — a
     // guardrail firing as designed, not a failure.
     'you can only request this after',
+    // Tried to sign in before clicking the verification email — user input.
+    'Email not confirmed',
+    // iOS WKWebView injected-script noise (Sentry JAVASCRIPT-REACT-CF,
+    // 2026-09-01): no source file, symbol not in our bundle — a system or
+    // reader-mode script erroring inside the webview, not our code.
+    "Can't find variable: EmptyRanges",
     // Microsoft Outlook SafeLink scanner executing our JS while previewing
     // emailed links — a well-known bot artifact, not a user (Sentry triage
     // 2026-08-07: fired only from /community with 0 real users).
