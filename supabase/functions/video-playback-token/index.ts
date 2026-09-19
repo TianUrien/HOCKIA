@@ -153,15 +153,23 @@ Deno.serve(async (req) => {
   }
   const token = tokenJson.result.token as string
 
-  // Signed delivery URLs. videodelivery.net is Cloudflare Stream's player
-  // domain; the token authorizes this specific asset for TOKEN_TTL.
+  // Signed delivery URLs — served from OUR account's customer subdomain,
+  // NEVER videodelivery.net. Both host the same assets and accept the same
+  // token, but videodelivery.net is TLS-intercepted and killed by ISP
+  // content filters (verified 2026-09-19: Allot DPI on Personal/Movistar
+  // "secure browsing" in Argentina re-signs its cert → every fetch fails →
+  // black players for those users, while customer-*.cloudflarestream.com
+  // passes untouched). Same host family as the stored thumbnail_url, so
+  // one CSP/CORS surface too.
+  const deliveryHost = Deno.env.get('CF_STREAM_CUSTOMER_HOST') ||
+    'customer-vlcap0eaaguje56f.cloudflarestream.com'
   return json({
     videoId,
     token,
-    hls: `https://videodelivery.net/${token}/manifest/video.m3u8`,
-    dash: `https://videodelivery.net/${token}/manifest/video.mpd`,
-    iframe: `https://iframe.videodelivery.net/${token}`,
-    thumbnail: `https://videodelivery.net/${token}/thumbnails/thumbnail.jpg`,
+    hls: `https://${deliveryHost}/${token}/manifest/video.m3u8`,
+    dash: `https://${deliveryHost}/${token}/manifest/video.mpd`,
+    iframe: `https://${deliveryHost}/${token}/iframe`,
+    thumbnail: `https://${deliveryHost}/${token}/thumbnails/thumbnail.jpg`,
     durationSeconds: v.duration_seconds,
     expiresInSeconds: TOKEN_TTL_SECONDS,
   })
