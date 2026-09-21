@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { Check, ChevronRight, Flag } from 'lucide-react'
 import { DetailNavBar } from '@/components/ui/DetailNavBar'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
-import JourneyTab from '@/components/JourneyTab'
-import { useCareerTimeline, type CareerTimelineEntry } from '@/hooks/useCareerTimeline'
+import CareerEntryScreen from './CareerEntryScreen'
+import { useCareerTimeline, type CareerHistoryRow, type CareerTimelineEntry } from '@/hooks/useCareerTimeline'
 import { useCountries } from '@/hooks/useCountries'
 import { careerSpan } from '@/lib/careerCopy'
 import { getImageUrl } from '@/lib/imageUrl'
@@ -72,18 +72,19 @@ export default function CareerScreen({ profileId, mode, onBack }: CareerScreenPr
   const own = mode === 'own'
   const { entries, loading, failed, refresh } = useCareerTimeline(profileId)
   const { countries } = useCountries()
-  // Interim: entries open the existing editor until the Career entry leaf
-  // (Figma 145:671) replaces it.
-  const [editing, setEditing] = useState(false)
+  // undefined = timeline · null = new entry · row = editing that entry
+  const [editing, setEditing] = useState<CareerHistoryRow | null | undefined>(undefined)
+  const editingCrest = editing ? entries.find((e) => e.id === editing.id)?.crestUrl ?? null : null
 
-  if (editing) {
+  if (own && editing !== undefined) {
+    const nextOrder = entries.reduce((max, e) => Math.max(max, e.row.display_order ?? 0), 0) + 1
     return (
-      <div className="min-h-screen bg-white pb-24 lg:hidden">
-        <div className="sticky top-0 z-20 bg-white pt-[env(safe-area-inset-top)]">
-          <DetailNavBar parent="Career" title="Edit career" onBack={() => { setEditing(false); refresh() }} />
-        </div>
-        <div className="px-4 pt-2"><JourneyTab profileId={profileId} /></div>
-      </div>
+      <CareerEntryScreen
+        entry={editing}
+        initialCrestUrl={editingCrest}
+        nextDisplayOrder={nextOrder}
+        onClose={(changed) => { setEditing(undefined); if (changed) refresh() }}
+      />
     )
   }
 
@@ -115,7 +116,7 @@ export default function CareerScreen({ profileId, mode, onBack }: CareerScreenPr
                   entry={e}
                   last={i === entries.length - 1}
                   flag={e.representedCountryId ? countries.find((c) => c.id === e.representedCountryId)?.flag_emoji ?? null : null}
-                  onOpen={own ? () => setEditing(true) : undefined}
+                  onOpen={own ? () => setEditing(e.row) : undefined}
                 />
               ))}
             </ul>
@@ -125,7 +126,7 @@ export default function CareerScreen({ profileId, mode, onBack }: CareerScreenPr
       </div>
       {own && (
         <div className="fixed inset-x-0 bottom-[calc(64px+env(safe-area-inset-bottom))] z-20 bg-gradient-to-t from-white via-white to-white/0 px-5 pb-3 pt-4 lg:hidden">
-          <button type="button" onClick={() => setEditing(true)} className="flex h-[50px] w-full items-center justify-center rounded-full bg-hockia-primary text-body font-semibold text-white">Add an entry</button>
+          <button type="button" onClick={() => setEditing(null)} className="flex h-[50px] w-full items-center justify-center rounded-full bg-hockia-primary text-body font-semibold text-white">Add an entry</button>
         </div>
       )}
     </div>

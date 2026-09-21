@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useId } from 'react'
-import { Building2, Check, Globe2, Loader2, Plus, Search, X } from 'lucide-react'
+import { Building2, Check, ChevronDown, Globe2, Loader2, Plus, Search, X } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import StorageImage from './StorageImage'
@@ -40,6 +40,12 @@ interface WorldClubSearchProps {
   error?: string
   disabled?: boolean
   id?: string
+  /** 'field' = the Figma redesign form input (grey #F2F2F7 surface, radius 12,
+   *  50px, 28px crest on the left, chevron on the right). Search behaviour is
+   *  identical in both appearances. */
+  appearance?: 'default' | 'field'
+  /** Crest of the linked club, shown in the 'field' appearance. */
+  crestUrl?: string | null
 }
 
 interface WorldCountryOption {
@@ -68,6 +74,8 @@ export default function WorldClubSearch({
   error,
   disabled = false,
   id: externalId,
+  appearance = 'default',
+  crestUrl = null,
 }: WorldClubSearchProps) {
   const generatedId = useId()
   const inputId = externalId || `world-club-search-${generatedId}`
@@ -292,19 +300,24 @@ export default function WorldClubSearch({
   // ── Render ─────────────────────────────────────────────────────────────
 
   const isLinked = Boolean(selectedClubId)
+  const isField = appearance === 'field'
 
   return (
     <div ref={containerRef} className="relative">
       {label && (
-        <label htmlFor={inputId} className="text-sm font-medium text-gray-700">
+        <label htmlFor={inputId} className={isField ? 'mb-1.5 block text-secondary font-semibold text-ink-2' : 'text-sm font-medium text-gray-700'}>
           {label}
           {required && <span className="text-red-500">*</span>}
         </label>
       )}
 
-      <div className="relative mt-1">
-        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-          {isSearching ? (
+      <div className={isField ? 'relative' : 'relative mt-1'}>
+        <div className={`pointer-events-none absolute inset-y-0 left-0 flex items-center ${isField ? 'pl-3.5' : 'pl-3'}`}>
+          {isField && isLinked && !isSearching ? (
+            <span className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-tile bg-white">
+              {crestUrl ? <img src={crestUrl} alt="" className="h-full w-full object-cover" /> : <Building2 className="h-4 w-4 text-ink-3" />}
+            </span>
+          ) : isSearching ? (
             <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
           ) : isLinked ? (
             <Check className="h-4 w-4 text-emerald-500" />
@@ -328,14 +341,23 @@ export default function WorldClubSearch({
           autoCapitalize="none"
           autoCorrect="off"
           spellCheck={false}
-          className={`w-full rounded-lg border py-2.5 pl-10 pr-10 focus:border-transparent focus:ring-2 focus:ring-indigo-500 ${
+          className={isField
+            ? `h-[50px] w-full rounded-[12px] bg-surface-grouped pr-11 text-body text-ink-1 placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-hockia-primary/30 [&::-webkit-search-cancel-button]:hidden ${isLinked ? 'pl-[50px]' : 'pl-10'} ${error ? 'ring-2 ring-red-400' : ''} ${disabled ? 'cursor-not-allowed opacity-60' : ''}`
+            : `w-full rounded-lg border py-2.5 pl-10 pr-10 focus:border-transparent focus:ring-2 focus:ring-indigo-500 ${
             error ? 'border-red-400' : isLinked ? 'border-emerald-300 bg-emerald-50/30' : 'border-gray-300'
           } ${disabled ? 'cursor-not-allowed bg-gray-50' : ''}`}
         />
 
         {/* Right side: linked badge or clear */}
         <div className="absolute inset-y-0 right-0 flex items-center pr-2">
-          {isLinked && (
+          {isField && (isLinked ? (
+            <button type="button" onClick={handleClear} aria-label="Unlink club" className="flex h-9 w-9 items-center justify-center text-ink-3">
+              <X className="h-4 w-4" />
+            </button>
+          ) : (
+            <ChevronDown className="pointer-events-none mr-2 h-4 w-4 text-ink-4" strokeWidth={1.8} />
+          ))}
+          {!isField && isLinked && (
             <>
               <span className="mr-1 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700">
                 Linked
@@ -353,7 +375,7 @@ export default function WorldClubSearch({
         </div>
       </div>
 
-      {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+      {error && <p className={isField ? 'mt-1 text-caption text-red-600' : 'mt-1 text-sm text-red-600'}>{error}</p>}
 
       {/* Soft nudge: user typed a club name but didn't pick a suggestion or
           use "Add new". Profile saves but `current_world_club_id` stays null,
@@ -365,7 +387,7 @@ export default function WorldClubSearch({
           structured link is established. Hidden when a club is already
           linked, when the input is empty, or when an error is shown. */}
       {!error && !selectedClubId && value.trim().length > 0 && !disabled && (
-        <p className="mt-1 text-xs text-gray-500">
+        <p className={isField ? 'mt-1.5 text-caption text-ink-3' : 'mt-1 text-xs text-gray-500'}>
           Tip: pick a suggestion or use <span className="font-medium">Add new club</span> so your club logo and links work.
         </p>
       )}

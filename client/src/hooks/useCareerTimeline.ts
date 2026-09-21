@@ -8,7 +8,8 @@ import type { Database } from '@/lib/database.types'
  * and order the profile preview and the legacy Journey tab use — newest
  * first — so the three surfaces can never disagree.
  */
-type Row = Database['public']['Tables']['career_history']['Row'] & {
+export type CareerHistoryRow = Database['public']['Tables']['career_history']['Row']
+type Row = CareerHistoryRow & {
   world_club: { id: string; club_name: string; avatar_url: string | null; country: { flag_emoji: string | null } | null } | null
 }
 
@@ -27,6 +28,15 @@ export type CareerTimelineEntry = {
   representedCountryId: number | null
   crestUrl: string | null
   clubFlag: string | null
+  /** The stored row — what the Career entry editor loads. */
+  row: CareerHistoryRow
+}
+
+/** The editor writes the row back — the joined club must not ride along. */
+function stripJoin(r: Row): CareerHistoryRow {
+  const copy: Partial<Row> = { ...r }
+  delete copy.world_club
+  return copy as CareerHistoryRow
 }
 
 export function useCareerTimeline(profileId: string | null | undefined) {
@@ -70,6 +80,7 @@ export function useCareerTimeline(profileId: string | null | undefined) {
         representedCountryId: r.represented_country_id,
         crestUrl: r.world_club?.avatar_url ?? null,
         clubFlag: r.world_club?.country?.flag_emoji ?? null,
+        row: stripJoin(r),
       })))
       setLoading(false)
     })()
