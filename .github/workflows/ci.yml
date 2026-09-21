@@ -247,13 +247,20 @@ jobs:
           #     regress; it IMPROVED to 416KB/480KB, because pulling posthog out
           #     of the eager `vendor` chunk also shrank first paint.
           # ~180KB headroom restored.
-          if [ "$TOTAL_JS" -gt 3901440 ]; then
-            echo "::warning::Bundle nearing raw budget: ${TOTAL_KB}KB / 4150KB ($(( TOTAL_KB * 100 / 4150 ))%)"
+          # Budget bumped 4150KB → 4350KB on 2026-09-21 (founder-approved) — the
+          # Figma "New-Hockia" phone redesign tipped raw to 4168KB. The added
+          # weight is the redesign's own screens in lazy route chunks; no new
+          # dependency. The first-load budget above is untouched and stays the
+          # HARD limit (470KB / 480KB today): it never moves, and if a later
+          # leaf pushes first-load past 480KB the answer is splitting, not
+          # raising. ~180KB headroom restored.
+          if [ "$TOTAL_JS" -gt 4096000 ]; then
+            echo "::warning::Bundle nearing raw budget: ${TOTAL_KB}KB / 4350KB ($(( TOTAL_KB * 100 / 4350 ))%)"
           fi
 
-          # Secondary gate: raw total must stay under 4.15MB
-          if [ "$TOTAL_JS" -gt 4249600 ]; then
-            echo "::error::Raw bundle budget exceeded! ${TOTAL_KB}KB > 4150KB"
+          # Secondary gate: raw total must stay under 4.35MB
+          if [ "$TOTAL_JS" -gt 4454400 ]; then
+            echo "::error::Raw bundle budget exceeded! ${TOTAL_KB}KB > 4350KB"
             exit 1
           fi
 
