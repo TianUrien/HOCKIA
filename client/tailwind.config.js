@@ -78,6 +78,11 @@ export default {
         surface: { muted: '#f4f4f7', grouped: '#f2f2f7' },
         line: '#e6e6ec',
         positive: { DEFAULT: '#15803d', soft: '#e8f7ee' },
+        // Gold = TRUST (references). Never the amber warning hue: amber
+        // (#B45309 / #FDF1E4) is for notices only — EU passport, "Apply by".
+        // gold = text (6:1 on white) · gold-line = ring / card border / rule ·
+        // gold-soft = pill background (with gold text).
+        gold: { DEFAULT: '#7a5f0b', line: '#c9a227', soft: '#fbf4dc' },
         'dark-bg': '#0a0a0a',
         'dark-surface': '#18181b',
         'dark-surface-elevated': '#27272a',

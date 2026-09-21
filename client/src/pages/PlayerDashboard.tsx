@@ -27,6 +27,7 @@ import ScoutingCard from '@/components/profile/ScoutingCard'
 import ProfileLongScroll from '@/components/profile/mobile/ProfileLongScroll'
 import FriendsScreen from '@/components/profile/mobile/FriendsScreen'
 import CareerScreen from '@/components/profile/mobile/CareerScreen'
+import ReferencesScreen from '@/components/profile/mobile/ReferencesScreen'
 import PlayerCommunityHub from '@/components/community/PlayerCommunityHub'
 import PublicCommunityView from '@/components/community/PublicCommunityView'
 import { ProfileViewersSection } from '@/components/ProfileViewersSection'
@@ -212,6 +213,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
   }, [sectionFromRoute, sectionIsValid, readOnly, routeParams.username, routeParams.id, navigate])
   const [showEditModal, setShowEditModal] = useState(false)
   const [videoTotal, setVideoTotal] = useState<number | null>(null)
+  const [openReferenceId, setOpenReferenceId] = useState<string | null>(null)
 
   // ?action=edit deep-link from Home cards (ProfileCompletion 'Add Photo' /
   // 'Link Club', AvailabilityCheckIn 'Not now') opens the editor. Owner view
@@ -518,28 +520,11 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
     navigate(`${base}/${slug}`)
   }
 
-  // Hero pills route to the unified Community hub (May 2026 redesign).
-  // We bypass handleTabChange because we want to add a `?section=` param
-  // that the deep-link scroll hook reads to scroll to the right card.
-  // handleTabChange preserves existing params but doesn't know how to add
-  // a section param of its own.
-  const navigateToCommunitySection = (section: 'connections' | 'references') => {
-    if (readOnly) {
-      const base = routeParams.username
-        ? `/players/${routeParams.username}`
-        : routeParams.id
-          ? `/players/id/${routeParams.id}`
-          : null
-      if (!base) return
-      navigate(`${base}/community?section=${section}`, { replace: true })
-    } else {
-      navigate(`/dashboard/profile/community?section=${section}`, { replace: true })
-    }
-  }
-
-  const handleReferencesClick = () => {
+  // References number / "See all N" / a reference card → the References leaf
+  // (phone) or the references section (desktop). Never the Community hub.
+  const openReferencesLeaf = () => {
     trackReferenceBadgeClick('player', profile.accepted_reference_count ?? 0)
-    navigateToCommunitySection('references')
+    handleTabChange('references')
   }
 
   const handleViewOpportunities = () => navigate('/opportunities')
@@ -553,7 +538,8 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
   const showPhoneScroll = isLanding
   // Phone leaf screens (Figma: the number in the stats strip opens the
   // complete collection). One screen per collection, own / public modes.
-  const phoneLeaf: 'friends' | 'career' | null = activeTab === 'friends' ? 'friends' : activeTab === 'journey' ? 'career' : null
+  const phoneLeaf: 'friends' | 'career' | 'references' | null =
+    activeTab === 'friends' ? 'friends' : activeTab === 'journey' ? 'career' : activeTab === 'references' ? 'references' : null
 
   return (
     <div className="min-h-screen bg-white lg:bg-gray-50">
@@ -570,6 +556,16 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
           profileRole={profile.role ?? null}
           mode={readOnly ? 'public' : 'own'}
           onBack={() => handleTabChange('profile')}
+        />
+      )}
+      {phoneLeaf === 'references' && (
+        <ReferencesScreen
+          profileId={profile.id}
+          profileName={profile.full_name ?? null}
+          profileRole={profile.role ?? null}
+          mode={readOnly ? 'public' : 'own'}
+          initialReferenceId={openReferenceId}
+          onBack={() => { setOpenReferenceId(null); handleTabChange('profile') }}
         />
       )}
       {phoneLeaf === 'career' && (
@@ -629,7 +625,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
           onMessage={handleSendMessage}
           sendingMessage={sendingMessage}
           onFriendsClick={() => handleTabChange('friends')}
-          onReferencesClick={handleReferencesClick}
+          onReferencesClick={openReferencesLeaf}
           onCareerClick={() => handleTabChange('journey')}
           onVideosClick={() => handleTabChange('media')}
           videoTotal={videoTotal}
@@ -645,7 +641,8 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
               readOnly={readOnly}
               onEdit={() => setShowEditModal(true)}
               onOpenVideos={() => handleTabChange('media')}
-              onOpenReferences={handleReferencesClick}
+              onOpenReferences={openReferencesLeaf}
+              onOpenReference={(id) => { setOpenReferenceId(id); openReferencesLeaf() }}
               onOpenCareer={() => handleTabChange('journey')}
               onOpenPhotos={() => handleTabChange('media')}
               onOpenPosts={() => handleTabChange('posts')}

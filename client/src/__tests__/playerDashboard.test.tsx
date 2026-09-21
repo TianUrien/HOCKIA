@@ -158,6 +158,9 @@ vi.mock('@/components/profile/mobile/ProfileLongScroll', () => ({
 vi.mock('@/components/profile/mobile/FriendsScreen', () => ({
   default: () => <div data-testid="friends-screen" />,
 }))
+vi.mock('@/components/profile/mobile/ReferencesScreen', () => ({
+  default: () => <div data-testid="references-screen" />,
+}))
 vi.mock('@/components/profile/mobile/CareerScreen', () => ({
   default: () => <div data-testid="career-screen" />,
 }))

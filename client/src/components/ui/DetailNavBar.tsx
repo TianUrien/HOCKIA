@@ -8,6 +8,9 @@ interface DetailNavBarProps {
   parent: string
   /** Centred title. When set, the parent name is not shown next to the chevron. */
   title?: string
+  /** Keep the purple parent name beside the chevron even with a title
+   *  (Figma References — all: "‹ Valentina   References · 5"). */
+  showParent?: boolean
   /** Where "back" goes when there is no history (deep links). */
   fallbackPath?: string
   onBack?: () => void
@@ -23,6 +26,7 @@ interface DetailNavBarProps {
 export function DetailNavBar({
   parent,
   title,
+  showParent = false,
   fallbackPath = '/home',
   onBack,
   trailing,
@@ -47,10 +51,10 @@ export function DetailNavBar({
         <span className="flex h-11 w-11 items-center justify-center">
           <ChevronLeft className="h-6 w-6" strokeWidth={2} />
         </span>
-        {title ? null : parent}
+        {title && !showParent ? null : <span className="max-w-[96px] truncate">{parent}</span>}
       </button>
       {title ? (
-        <h1 className="pointer-events-none absolute inset-x-16 text-center text-body font-semibold text-ink-1 truncate">
+        <h1 className={cn('pointer-events-none absolute text-center text-body font-semibold text-ink-1 truncate', showParent ? 'inset-x-[120px]' : 'inset-x-16')}>
           {title}
         </h1>
       ) : null}

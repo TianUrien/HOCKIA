@@ -109,7 +109,7 @@ export default function FriendsScreen({ profileId, profileName, profileRole, mod
               {passportFlags && <span className="shrink-0 whitespace-pre"> · {passportFlags}</span>}
             </span>
             {!own && vouched && (
-              <span className="mt-1 inline-flex h-[22px] items-center gap-1 rounded-full bg-amber-50 px-2 text-caption font-semibold text-amber-600">
+              <span className="mt-1 inline-flex h-[22px] items-center gap-1 rounded-full bg-gold-soft px-2 text-caption font-semibold text-gold">
                 <PenLine className="h-3 w-3" strokeWidth={2.2} /> Wrote a reference
               </span>
             )}

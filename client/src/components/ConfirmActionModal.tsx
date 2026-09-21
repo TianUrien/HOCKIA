@@ -59,7 +59,9 @@ export default function ConfirmActionModal({
   if (!isOpen) return null
 
   const confirmStyles = confirmTone === 'danger'
-    ? 'bg-red-600 hover:bg-red-700 focus-visible:ring-red-600'
+    // bg-none: .btn-primary paints a purple gradient (background-image) that
+    // would otherwise sit on top of the red — the danger tone must read red.
+    ? 'bg-none bg-red-600 hover:bg-red-700 focus-visible:ring-red-600'
     : 'bg-hockia-primary hover:bg-hockia-primary/90 focus-visible:ring-hockia-primary'
 
   const iconWrapperStyles = confirmTone === 'danger'

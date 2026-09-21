@@ -36,6 +36,8 @@ interface ProfileLongScrollProps {
   onEdit: () => void
   onOpenVideos: () => void
   onOpenReferences: () => void
+  /** A reference card opens that reference's detail. */
+  onOpenReference: (referenceId: string) => void
   onOpenCareer: () => void
   onOpenPhotos: () => void
   onOpenPosts: () => void
@@ -156,7 +158,7 @@ function ReferenceCard({ reference, onOpen }: { reference: PublicReferenceCard; 
   const detail = p?.role === 'player' ? p.position : p?.role === 'coach' ? [humanizeToken(reference.relationshipType), p.currentClub].filter(Boolean).join(' · ') : humanizeToken(reference.relationshipType)
   const avatar = p?.avatarUrl ? getImageUrl(p.avatarUrl, 'avatar-md') ?? p.avatarUrl : null
   return (
-    <button type="button" onClick={onOpen} className="w-full rounded-card border border-amber-200 bg-white p-3.5 text-left">
+    <button type="button" onClick={onOpen} className="w-full rounded-card border border-gold-line bg-white p-3.5 text-left">
       <div className="flex items-center gap-3">
         <EntityAvatar src={avatar} name={name} role={p?.role} size={40} />
         <div className="min-w-0 flex-1">
@@ -167,7 +169,7 @@ function ReferenceCard({ reference, onOpen }: { reference: PublicReferenceCard; 
       </div>
       {reference.endorsementText && <p className="mt-2.5 line-clamp-3 text-row leading-[21px] text-ink-1">“{reference.endorsementText}”</p>}
       <div className="mt-2.5 flex items-center justify-between">
-        <span className="flex items-center gap-1 text-caption font-semibold text-amber-600"><Check className="h-3.5 w-3.5" strokeWidth={2.5} /> Verified · written on Hockia</span>
+        <span className="flex items-center gap-1 text-caption font-semibold text-gold"><Check className="h-3.5 w-3.5" strokeWidth={2.5} /> Verified · written on Hockia</span>
         {reference.acceptedAt && <span className="text-caption text-ink-3">{monthYear(reference.acceptedAt)}</span>}
       </div>
     </button>
@@ -229,7 +231,7 @@ function FactRow({ label, value }: { label: string; value: string | null }) {
   )
 }
 
-export default function ProfileLongScroll({ profile, readOnly, onEdit, onOpenVideos, onOpenReferences, onOpenCareer, onOpenPhotos, onOpenPosts, onVideoCount }: ProfileLongScrollProps) {
+export default function ProfileLongScroll({ profile, readOnly, onEdit, onOpenVideos, onOpenReferences, onOpenReference, onOpenCareer, onOpenPhotos, onOpenPosts, onVideoCount }: ProfileLongScrollProps) {
   const navigate = useNavigate()
   const owner = !readOnly
   const profileId = profile.id ?? null
@@ -353,7 +355,7 @@ export default function ProfileLongScroll({ profile, readOnly, onEdit, onOpenVid
         <section className="flex flex-col gap-3" data-testid="profile-references-section">
           <SectionHeader title="References" count={referenceCount} action={referenceCount > 0 ? `See all ${referenceCount}` : null} onAction={onOpenReferences} />
           {referenceCount === 0 && !refsLoading && empty('Ask for a reference', onOpenReferences)}
-          {acceptedReferences.slice(0, 2).map((r) => <ReferenceCard key={r.id} reference={r} onOpen={onOpenReferences} />)}
+          {acceptedReferences.slice(0, 2).map((r) => <ReferenceCard key={r.id} reference={r} onOpen={() => onOpenReference(r.id)} />)}
           {referenceCount > 2 && (
             <button type="button" onClick={onOpenReferences} className="flex h-[46px] items-center justify-center gap-1 rounded-full bg-hockia-soft text-row font-semibold text-hockia-primary">
               See all {referenceCount} references <ChevronRight className="h-4 w-4" strokeWidth={2} />
