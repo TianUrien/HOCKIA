@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Camera, Check, ChevronLeft, MapPin, MessageCircle, Share, Shield, Sparkles, Target, UserPlus } from 'lucide-react'
+import { Camera, Check, ChevronLeft, MapPin, MessageCircle, Settings, Share, Shield, Sparkles, Target, UserPlus } from 'lucide-react'
 import { Avatar, DualNationalityDisplay, LastActivePill, VerifiedBadge } from '@/components'
 import ProfileActionMenu from '@/components/ProfileActionMenu'
 import SettingsSheet from '@/components/SettingsSheet'
@@ -183,7 +183,15 @@ export default function HeroIdentityCard({
             <button type="button" onClick={() => void share()} aria-label="Share profile" className={GLASS}>
               <Share className="h-[18px] w-[18px]" strokeWidth={1.6} />
             </button>
-            {isOwnerView && <SettingsSheet className="!h-9 !w-9 !min-h-0 !min-w-0 !rounded-full !bg-white/90 !text-ink-1 shadow-sm backdrop-blur" />}
+            {isOwnerView && (
+              <>
+                {/* Phone: the gear opens the Settings hub. Desktop keeps the sheet. */}
+                <button type="button" onClick={() => navigate('/settings')} aria-label="Settings" className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-ink-1 shadow-sm backdrop-blur lg:hidden">
+                  <Settings className="h-[18px] w-[18px]" strokeWidth={1.6} />
+                </button>
+                <span className="hidden lg:inline-flex"><SettingsSheet className="!h-9 !w-9 !min-h-0 !min-w-0 !rounded-full !bg-white/90 !text-ink-1 shadow-sm backdrop-blur" /></span>
+              </>
+            )}
             {isVisitorView && <ProfileActionMenu targetId={profile.id} targetName={profile.full_name ?? 'this user'} />}
           </div>
         </div>

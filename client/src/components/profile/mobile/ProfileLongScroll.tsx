@@ -271,7 +271,7 @@ export default function ProfileLongScroll({ profile, readOnly, onEdit, onOpenVid
       {strength && (
         <button
           type="button"
-          onClick={() => (strength.next ? strength.next.open() : onOpenVideos())}
+          onClick={() => (strength.next ? strength.next.open() : navigate('/settings/privacy'))}
           className="rounded-card border border-line bg-white p-4 text-left"
           data-testid="profile-strength-card"
         >

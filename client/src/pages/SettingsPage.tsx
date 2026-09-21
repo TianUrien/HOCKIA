@@ -17,12 +17,14 @@ import {
   ExternalLink,
   EyeOff
 } from 'lucide-react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, useParams, Link } from 'react-router-dom'
 import Footer from '@/components/Footer'
 import { useAuthStore } from '@/lib/auth'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import Header from '@/components/Header'
+import SettingsMobile, { type SettingsSection } from '@/components/settings/SettingsMobile'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 import DeleteAccountModal from '@/components/DeleteAccountModal'
 import BlockedAccountsList from '@/components/BlockedAccountsList'
 import StagingQaResetCard from '@/components/StagingQaResetCard'
@@ -36,6 +38,8 @@ export default function SettingsPage() {
   useDocumentTitle('Settings')
   const navigate = useNavigate()
   const { user, profile, refreshProfile, signOut } = useAuthStore()
+  const isPhone = useMediaQuery('(max-width: 1023px)')
+  const { section: routeSection } = useParams<{ section?: string }>()
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [expandedSection, setExpandedSection] = useState<string | null>('account')
   const [passwordForm, setPasswordForm] = useState({
@@ -528,6 +532,15 @@ export default function SettingsPage() {
         <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gray-600" />
       </Link>
     )
+  }
+
+
+  // Phone: the Figma Settings hub and its Notifications / Privacy leaves.
+  // /settings/account keeps this page (email, password, sessions) until the
+  // Email & sign-in leaf exists.
+  if (isPhone && routeSection !== 'account') {
+    const section: SettingsSection = routeSection === 'notifications' || routeSection === 'privacy' || routeSection === 'blocked' ? routeSection : 'hub'
+    return <SettingsMobile section={section} />
   }
 
   return (

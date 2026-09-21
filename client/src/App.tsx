@@ -497,6 +497,7 @@ function App() {
                     to /home so the URL has a real destination. */}
                 <Route path="/notifications" element={<ErrorBoundary fallback={<RouteErrorFallback />}><NotificationsRedirect /></ErrorBoundary>} />
                 <Route path="/settings" element={<ErrorBoundary fallback={<RouteErrorFallback />}><SettingsPage /></ErrorBoundary>} />
+                <Route path="/settings/:section" element={<ErrorBoundary fallback={<RouteErrorFallback />}><SettingsPage /></ErrorBoundary>} />
                 {/* Bare /dashboard 404'd in production — the bottom-nav
                     label is "Dashboard" and users typed it directly. Redirect
                     to the canonical /dashboard/profile. */}
