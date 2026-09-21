@@ -39,12 +39,17 @@ interface MediaLightboxProps {
   caption?: string | null
   stats?: LightboxStats
   onShare?: () => void
+  /** Top-bar label for a video — "Highlight" / "Full match" / "Reel" on the
+   *  profile (Figma Video player). Defaults to "Video". */
+  videoLabel?: string
+  /** The viewer owns these videos — they always play, whatever the visibility. */
+  isOwner?: boolean
 }
 
 /** Rubber-band resistance at carousel boundaries (0–1, lower = more resistance) */
 const EDGE_RESISTANCE = 0.3
 
-export function MediaLightbox({ images, initialIndex, onClose, author, caption, stats, onShare }: MediaLightboxProps) {
+export function MediaLightbox({ images, initialIndex, onClose, author, caption, stats, onShare, videoLabel = 'Video', isOwner = false }: MediaLightboxProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex)
   const dialogRef = useRef<HTMLDivElement>(null)
   const trackRef = useRef<HTMLDivElement>(null)
@@ -174,7 +179,7 @@ export function MediaLightbox({ images, initialIndex, onClose, author, caption, 
         </button>
         <span className="text-row font-semibold text-white" aria-live="polite">
           {(images[currentIndex]?.media_type ?? 'image') === 'video'
-            ? 'Video'
+            ? videoLabel
             : hasMultiple ? `${currentIndex + 1} of ${images.length}` : 'Photo'}
         </span>
         {onShare ? (
@@ -219,6 +224,7 @@ export function MediaLightbox({ images, initialIndex, onClose, author, caption, 
                       <NativeVideoPlayer
                         videoId={media.video_id}
                         durationSeconds={media.duration ?? null}
+                        isOwner={isOwner}
                       />
                     </Suspense>
                   </div>

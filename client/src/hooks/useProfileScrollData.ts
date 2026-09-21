@@ -65,14 +65,28 @@ type CareerRow = Database['public']['Tables']['career_history']['Row'] & {
   world_club: { id: string; club_name: string; avatar_url: string | null; country: { flag_emoji: string | null } | null } | null
 }
 
+// One minute of memory per profile: crossing the phone/desktop breakpoint (or
+// coming back from a leaf) remounts this tree, and that must not refetch.
+const TTL = 60_000
+const cache = new Map<string, { at: number; data: typeof EMPTY }>()
+
 export function useProfileScrollData(profileId: string | null | undefined, enabled = true): ProfileScrollData {
-  const [data, setData] = useState(EMPTY)
-  const [loading, setLoading] = useState(Boolean(profileId) && enabled)
+  const fresh = (id: string | null | undefined) => {
+    const hit = id ? cache.get(id) : undefined
+    return hit && Date.now() - hit.at < TTL ? hit.data : null
+  }
+  const [data, setData] = useState(() => fresh(profileId) ?? EMPTY)
+  const [loading, setLoading] = useState(Boolean(profileId) && enabled && !fresh(profileId))
   const [nonce, setNonce] = useState(0)
-  const refresh = useCallback(() => setNonce((n) => n + 1), [])
+  const refresh = useCallback(() => {
+    if (profileId) cache.delete(profileId)
+    setNonce((n) => n + 1)
+  }, [profileId])
 
   useEffect(() => {
     if (!profileId || !enabled) return
+    const hit = cache.get(profileId)
+    if (hit && Date.now() - hit.at < TTL) { setData(hit.data); setLoading(false); return }
     let cancelled = false
     setLoading(true)
     void (async () => {
@@ -115,7 +129,7 @@ export function useProfileScrollData(profileId: string | null | undefined, enabl
         .map<ScrollVideo>((v) => ({ id: v.id, title: v.title, kind: v.kind as ScrollVideo['kind'], visibility: v.visibility, status: v.status, durationSeconds: v.duration_seconds }))
       const careerRows = (career.data ?? []) as unknown as CareerRow[]
       const postsPayload = (posts.data ?? null) as { items?: UserPostFeedItem[]; total?: number } | null
-      setData({
+      const next = {
         highlights: allVideos.filter((v) => v.kind === 'highlight'),
         fullMatches: allVideos.filter((v) => v.kind === 'full_match'),
         fullGameLinks: (links.data ?? []) as ScrollFullGameLink[],
@@ -139,7 +153,9 @@ export function useProfileScrollData(profileId: string | null | undefined, enabl
         photoCount: photoCount.count ?? 0,
         posts: Array.isArray(postsPayload?.items) ? postsPayload!.items : [],
         postCount: postsPayload?.total ?? 0,
-      })
+      }
+      cache.set(profileId, { at: Date.now(), data: next })
+      setData(next)
       setLoading(false)
     })().catch((err) => {
       logger.debug('[useProfileScrollData] failed', err)

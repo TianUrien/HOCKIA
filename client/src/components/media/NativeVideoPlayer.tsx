@@ -233,7 +233,16 @@ export default function NativeVideoPlayer({
               alt=""
               aria-hidden="true"
               className="absolute inset-0 h-full w-full object-cover"
-              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).style.display = 'none'
+                // The token minted but Cloudflare has no such asset (404): the
+                // row outlived its video. Say so — never a play button that
+                // leads to a spinner or a black frame.
+                setSignedThumb(null)
+                setErrorMsg('Video unavailable')
+                setCanRetry(true)
+                setState('error')
+              }}
             />
           ) : null}
           <span

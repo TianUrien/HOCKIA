@@ -28,6 +28,7 @@ import ProfileLongScroll from '@/components/profile/mobile/ProfileLongScroll'
 import FriendsScreen from '@/components/profile/mobile/FriendsScreen'
 import CareerScreen from '@/components/profile/mobile/CareerScreen'
 import ReferencesScreen from '@/components/profile/mobile/ReferencesScreen'
+import VideosScreen from '@/components/profile/mobile/VideosScreen'
 import PlayerCommunityHub from '@/components/community/PlayerCommunityHub'
 import PublicCommunityView from '@/components/community/PublicCommunityView'
 import { ProfileViewersSection } from '@/components/ProfileViewersSection'
@@ -45,6 +46,7 @@ import { usePortfolioAnchorScroll } from '@/hooks/usePortfolioAnchorScroll'
 import PortfolioSectionNav from '@/components/profile/PortfolioSectionNav'
 import PublicConnectionsPage from '@/components/profile/PublicConnectionsPage'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 
 // `?section=` query param → DOM anchor id. Used by the deep-link scroll
 // hook so notifications like ?tab=profile&section=viewers land on the
@@ -62,7 +64,7 @@ const PLAYER_SECTION_ANCHORS = {
   posts: 'community-posts',
 } as const
 
-type TabType = 'profile' | 'media' | 'journey' | 'references' | 'friends' | 'comments' | 'posts' | 'community'
+type TabType = 'profile' | 'media' | 'videos' | 'journey' | 'references' | 'friends' | 'comments' | 'posts' | 'community'
 
 // Centralised whitelist so URL parsing + push handlers stay in sync.
 // 'media' is new in the Bento redesign — MediaCard CTAs land here so the
@@ -72,7 +74,8 @@ type TabType = 'profile' | 'media' | 'journey' | 'references' | 'friends' | 'com
 // Comments + Posts stacked vertically). It's the "Go to community" CTA
 // target from the CommunityCard — individual tile clicks still deep-link
 // to the dedicated section pages.
-const VALID_TABS: TabType[] = ['profile', 'media', 'journey', 'references', 'friends', 'comments', 'posts', 'community']
+// 'videos' = the Videos — all leaf (phone); desktop shows the media surface.
+const VALID_TABS: TabType[] = ['profile', 'media', 'videos', 'journey', 'references', 'friends', 'comments', 'posts', 'community']
 
 // Legacy ?tab=X aliases — mirror of CoachDashboard's map. CASI production
 // QA flagged ?tab=connections silently routing to overview because
@@ -169,6 +172,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
   const ownerTabTitle: Record<TabType, string> = {
     profile: 'Player dashboard',
     media: 'Media',
+    videos: 'Videos',
     journey: 'Career History',
     references: 'References',
     friends: 'Connections',
@@ -179,6 +183,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
   const visitorTabSuffix: Record<TabType, string | null> = {
     profile: null,
     media: 'Media',
+    videos: 'Videos',
     journey: 'Career History',
     references: 'References',
     friends: 'Connections',
@@ -213,6 +218,9 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
   }, [sectionFromRoute, sectionIsValid, readOnly, routeParams.username, routeParams.id, navigate])
   const [showEditModal, setShowEditModal] = useState(false)
   const [videoTotal, setVideoTotal] = useState<number | null>(null)
+  // Phone and desktop bodies are different trees. Mount only the one on
+  // screen — hiding the other with CSS would still run all of its fetches.
+  const isPhone = useMediaQuery('(max-width: 1023px)')
   const [openReferenceId, setOpenReferenceId] = useState<string | null>(null)
 
   // ?action=edit deep-link from Home cards (ProfileCompletion 'Add Photo' /
@@ -463,6 +471,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
   const portfolioAnchors: Partial<Record<TabType, string>> = {
     journey: 'portfolio-journey',
     media: 'portfolio-media',
+    videos: 'portfolio-media',
     references: 'community-references',
     comments: 'community-comments',
     posts: 'community-posts',
@@ -538,8 +547,8 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
   const showPhoneScroll = isLanding
   // Phone leaf screens (Figma: the number in the stats strip opens the
   // complete collection). One screen per collection, own / public modes.
-  const phoneLeaf: 'friends' | 'career' | 'references' | null =
-    activeTab === 'friends' ? 'friends' : activeTab === 'journey' ? 'career' : activeTab === 'references' ? 'references' : null
+  const phoneLeaf: 'friends' | 'career' | 'references' | 'videos' | null =
+    activeTab === 'friends' ? 'friends' : activeTab === 'journey' ? 'career' : activeTab === 'references' ? 'references' : activeTab === 'videos' ? 'videos' : null
 
   return (
     <div className="min-h-screen bg-white lg:bg-gray-50">
@@ -549,7 +558,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
       {/* Public View Banner - shown when user views their own profile in public mode */}
       {readOnly && isOwnProfile && <PublicViewBanner compactOnPhone />}
 
-      {phoneLeaf === 'friends' && (
+      {isPhone && phoneLeaf === 'friends' && (
         <FriendsScreen
           profileId={profile.id}
           profileName={profile.full_name ?? null}
@@ -558,7 +567,15 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
           onBack={() => handleTabChange('profile')}
         />
       )}
-      {phoneLeaf === 'references' && (
+      {isPhone && phoneLeaf === 'videos' && (
+        <VideosScreen
+          profile={profile as Profile}
+          mode={readOnly ? 'public' : 'own'}
+          onBack={() => handleTabChange('profile')}
+          onManage={() => handleTabChange('media')}
+        />
+      )}
+      {isPhone && phoneLeaf === 'references' && (
         <ReferencesScreen
           profileId={profile.id}
           profileName={profile.full_name ?? null}
@@ -568,10 +585,11 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
           onBack={() => { setOpenReferenceId(null); handleTabChange('profile') }}
         />
       )}
-      {phoneLeaf === 'career' && (
+      {isPhone && phoneLeaf === 'career' && (
         <CareerScreen profileId={profile.id} mode={readOnly ? 'public' : 'own'} onBack={() => handleTabChange('profile')} />
       )}
 
+      {!(isPhone && phoneLeaf) && (
       <main className={`max-w-7xl mx-auto px-4 md:px-6 pt-0 lg:pt-24 pb-12 space-y-5 md:space-y-6${phoneLeaf ? ' hidden lg:block' : ''}`}>
         {readOnly && !isOwnProfile && (
           <button
@@ -627,20 +645,21 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
           onFriendsClick={() => handleTabChange('friends')}
           onReferencesClick={openReferencesLeaf}
           onCareerClick={() => handleTabChange('journey')}
-          onVideosClick={() => handleTabChange('media')}
+          onVideosClick={() => handleTabChange('videos')}
           videoTotal={videoTotal}
         />
 
         {/* Phone: Figma Profile own / public — one long scroll under the
             identity block. The bento / portfolio body below is desktop-only
             on the landing view; section pages keep their own surface. */}
-        {showPhoneScroll && (
+        {isPhone && showPhoneScroll && (
           <div className="-mx-4 md:-mx-6 lg:hidden">
             <ProfileLongScroll
               profile={profile}
               readOnly={readOnly}
               onEdit={() => setShowEditModal(true)}
-              onOpenVideos={() => handleTabChange('media')}
+              onOpenVideos={() => handleTabChange('videos')}
+              onManageVideos={() => handleTabChange('media')}
               onOpenReferences={openReferencesLeaf}
               onOpenReference={(id) => { setOpenReferenceId(id); openReferencesLeaf() }}
               onOpenCareer={() => handleTabChange('journey')}
@@ -651,6 +670,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
           </div>
         )}
 
+        {!(isPhone && showPhoneScroll) && (
         <div className={showPhoneScroll ? 'hidden space-y-5 md:space-y-6 lg:block' : 'space-y-5 md:space-y-6'}>
         {/* G.10 — private 5-item recruitment-readiness checklist.
             Owner-only on the landing view; replaces the legacy
@@ -869,7 +889,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
                 </div>
               )}
 
-              {activeTab === 'media' && (
+              {(activeTab === 'media' || activeTab === 'videos') && (
                 <div className="animate-fade-in">
                   <MediaTab
                     profileId={profile.id}
@@ -966,7 +986,9 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
           </div>
         )}
         </div>
+        )}
       </main>
+      )}
 
       {/* Edit Profile Modal */}
       <EditProfileModal

@@ -1,11 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Check, ChevronRight, ExternalLink, Flag, Heart, Lock, Play, Plus, X } from 'lucide-react'
+import { Check, ChevronRight, ExternalLink, Flag, Heart, Lock, Plus } from 'lucide-react'
 import { useProfileScrollData, type ScrollCareerEntry, type ScrollFullGameLink, type ScrollVideo } from '@/hooks/useProfileScrollData'
-import { useSignedVideoThumbnail } from '@/hooks/useSignedVideoThumbnail'
+import { ProfileVideoTile } from './ProfileVideoTile'
+import { VideoAccessSheets, type VideoBlock } from './VideoAccessSheets'
+import { useAuthStore } from '@/lib/auth'
 import { useTrustedReferences, type PublicReferenceCard } from '@/hooks/useTrustedReferences'
 import { useCountries } from '@/hooks/useCountries'
-import NativeVideoPlayer from '@/components/media/NativeVideoPlayer'
 import { MediaLightbox } from '@/components/home/MediaLightbox'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
 import { PostComposerModal } from '@/components/home/PostComposerModal'
@@ -35,6 +36,8 @@ interface ProfileLongScrollProps {
   readOnly: boolean
   onEdit: () => void
   onOpenVideos: () => void
+  /** Owner's Video › Manage → Manage media. */
+  onManageVideos: () => void
   onOpenReferences: () => void
   /** A reference card opens that reference's detail. */
   onOpenReference: (referenceId: string) => void
@@ -72,47 +75,6 @@ function SectionHeader({ title, count, action, onAction }: { title: string; coun
         </button>
       )}
     </div>
-  )
-}
-
-function useInView<T extends HTMLElement>() {
-  const ref = useRef<T | null>(null)
-  const [inView, setInView] = useState(false)
-  useEffect(() => {
-    const el = ref.current
-    if (!el || typeof IntersectionObserver === 'undefined') { setInView(true); return }
-    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setInView(true); io.disconnect() } }, { rootMargin: '200px' })
-    io.observe(el)
-    return () => io.disconnect()
-  }, [])
-  return { ref, inView }
-}
-
-function VideoTile({ video, portrait, locked, onOpen }: { video: ScrollVideo; portrait?: boolean; locked?: boolean; onOpen: () => void }) {
-  const { ref, inView } = useInView<HTMLButtonElement>()
-  const { thumb, onThumbError, onThumbLoad } = useSignedVideoThumbnail(video.id, inView)
-  const dur = duration(video.durationSeconds)
-  return (
-    <button
-      ref={ref}
-      type="button"
-      onClick={onOpen}
-      aria-label={`Play ${video.title}`}
-      className={cn('relative shrink-0 snap-start overflow-hidden rounded-card bg-ink-1 text-left', portrait ? 'h-[164px] w-[124px]' : 'h-[126px] w-[224px]')}
-    >
-      {thumb && <img src={thumb} alt="" onError={onThumbError} onLoad={onThumbLoad} className="absolute inset-0 h-full w-full object-cover" />}
-      <span className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/70 to-transparent" />
-      <span className="absolute left-1/2 top-1/2 flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-ink-1">
-        <Play className="ml-0.5 h-4 w-4 fill-current" />
-      </span>
-      {locked && (
-        <span className="absolute left-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-black/55 text-white">
-          <Lock className="h-3 w-3" strokeWidth={2.2} />
-        </span>
-      )}
-      {!portrait && <span className="absolute bottom-2 left-2.5 max-w-[150px] truncate text-secondary font-semibold text-white">{video.title}</span>}
-      {dur && <span className={cn('absolute bottom-2 text-secondary font-semibold text-white', portrait ? 'left-1/2 -translate-x-1/2' : 'right-2.5')}>{dur}</span>}
-    </button>
   )
 }
 
@@ -231,7 +193,7 @@ function FactRow({ label, value }: { label: string; value: string | null }) {
   )
 }
 
-export default function ProfileLongScroll({ profile, readOnly, onEdit, onOpenVideos, onOpenReferences, onOpenReference, onOpenCareer, onOpenPhotos, onOpenPosts, onVideoCount }: ProfileLongScrollProps) {
+export default function ProfileLongScroll({ profile, readOnly, onEdit, onOpenVideos, onManageVideos, onOpenReferences, onOpenReference, onOpenCareer, onOpenPhotos, onOpenPosts, onVideoCount }: ProfileLongScrollProps) {
   const navigate = useNavigate()
   const owner = !readOnly
   const profileId = profile.id ?? null
@@ -243,6 +205,15 @@ export default function ProfileLongScroll({ profile, readOnly, onEdit, onOpenVid
   const [composer, setComposer] = useState(false)
 
   const lockFullMatches = profile.highlight_visibility === 'recruiters'
+  const viewerRole = useAuthStore((st) => st.profile?.role ?? null)
+  const signedIn = useAuthStore((st) => Boolean(st.user))
+  const canWatchLocked = owner || viewerRole === 'club' || viewerRole === 'coach'
+  const [videoBlock, setVideoBlock] = useState<VideoBlock>(null)
+  const openVideo = (v: ScrollVideo, locked: boolean) => {
+    if (!signedIn && !owner) setVideoBlock('join')
+    else if (locked && !canWatchLocked) setVideoBlock('locked')
+    else setPlayer(v)
+  }
   const highlightCount = data.highlights.length + (profile.highlight_video_url ? 1 : 0)
   const fullMatchCount = data.fullMatches.length + data.fullGameLinks.length
   const videoTotal = highlightCount + fullMatchCount + data.reels.length
@@ -324,11 +295,11 @@ export default function ProfileLongScroll({ profile, readOnly, onEdit, onOpenVid
 
       {showVideo && (
         <section className="flex flex-col gap-4" data-testid="profile-video-section">
-          <SectionHeader title="Video" action={owner ? 'Manage' : videoTotal > 0 ? `See all ${videoTotal}` : null} onAction={onOpenVideos} />
-          {videoTotal === 0 && !data.loading && empty('Add your first highlight', onOpenVideos)}
+          <SectionHeader title="Video" action={owner ? 'Manage' : videoTotal > 0 ? `See all ${videoTotal}` : null} onAction={owner ? onManageVideos : onOpenVideos} />
+          {videoTotal === 0 && !data.loading && empty('Add your first highlight', onManageVideos)}
           {(data.highlights.length > 0 || profile.highlight_video_url) && (
             <VideoRow label="Highlights" count={highlightCount}>
-              {data.highlights.map((v) => <VideoTile key={v.id} video={v} locked={v.visibility === 'recruiters'} onOpen={() => setPlayer(v)} />)}
+              {data.highlights.map((v) => <ProfileVideoTile key={v.id} video={v} locked={v.visibility === 'recruiters'} canWatch={canWatchLocked} onOpen={() => openVideo(v, v.visibility === 'recruiters')} className="h-[126px] w-[224px] shrink-0 snap-start" />)}
               {profile.highlight_video_url && (
                 <a href={profile.highlight_video_url} target="_blank" rel="noopener noreferrer" className="relative flex h-[126px] w-[224px] shrink-0 snap-start flex-col justify-end rounded-card bg-gradient-to-br from-ink-1 to-ink-2 p-2.5">
                   <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-white/15 text-white"><ExternalLink className="h-3 w-3" /></span>
@@ -339,13 +310,13 @@ export default function ProfileLongScroll({ profile, readOnly, onEdit, onOpenVid
           )}
           {fullMatchCount > 0 && (
             <VideoRow label="Full matches" count={fullMatchCount} lockLabel={lockFullMatches ? 'Clubs & coaches' : null}>
-              {data.fullMatches.map((v) => <VideoTile key={v.id} video={v} locked={lockFullMatches || v.visibility === 'recruiters'} onOpen={() => setPlayer(v)} />)}
+              {data.fullMatches.map((v) => <ProfileVideoTile key={v.id} video={v} locked={lockFullMatches || v.visibility === 'recruiters'} canWatch={canWatchLocked} onOpen={() => openVideo(v, lockFullMatches || v.visibility === 'recruiters')} className="h-[126px] w-[224px] shrink-0 snap-start" />)}
               {data.fullGameLinks.map((l) => <LinkTile key={l.id} link={l} />)}
             </VideoRow>
           )}
           {data.reels.length > 0 && (
             <VideoRow label="Reels" count={data.reels.length}>
-              {data.reels.map((v) => <VideoTile key={v.id} video={v} portrait onOpen={() => setPlayer(v)} />)}
+              {data.reels.map((v) => <ProfileVideoTile key={v.id} video={v} portrait onOpen={() => openVideo(v, false)} className="h-[164px] w-[124px] shrink-0 snap-start" />)}
             </VideoRow>
           )}
         </section>
@@ -418,18 +389,17 @@ export default function ProfileLongScroll({ profile, readOnly, onEdit, onOpenVid
       )}
 
       {player && (
-        <div className="fixed inset-0 z-[70] flex flex-col bg-black" role="dialog" aria-label={player.title}>
-          <div className="flex items-center gap-3 px-3 pb-2 pt-[max(12px,env(safe-area-inset-top))] text-white">
-            <button type="button" onClick={() => setPlayer(null)} aria-label="Close video" className="flex h-10 w-10 items-center justify-center rounded-full bg-white/15"><X className="h-5 w-5" /></button>
-            <p className="min-w-0 flex-1 truncate text-row font-semibold">{player.title}</p>
-          </div>
-          <div className="flex flex-1 items-center">
-            <div className="w-full">
-              <NativeVideoPlayer videoId={player.id} title={player.title} durationSeconds={player.durationSeconds} isOwner={owner} />
-            </div>
-          </div>
-        </div>
+        <MediaLightbox
+          images={[{ video_id: player.id, media_type: 'video', duration: player.durationSeconds, order: 0 }]}
+          initialIndex={0}
+          onClose={() => setPlayer(null)}
+          videoLabel={player.kind === 'highlight' ? 'Highlight' : player.kind === 'full_match' ? 'Full match' : 'Reel'}
+          isOwner={owner}
+          caption={[player.title, duration(player.durationSeconds)].filter(Boolean).join(' · ')}
+        />
       )}
+
+      <VideoAccessSheets block={videoBlock} firstName={profile.full_name?.trim().split(/\s+/)[0] || null} onClose={() => setVideoBlock(null)} />
 
       {photoIndex !== null && (
         <MediaLightbox

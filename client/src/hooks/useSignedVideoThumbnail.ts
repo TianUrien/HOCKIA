@@ -92,5 +92,7 @@ export function useSignedVideoThumbnail(
     attemptsRef.current = 0
   }
 
-  return { thumb: failed ? null : thumb, onThumbError, onThumbLoad }
+  // `unavailable`: the signed thumbnail could not be minted or 404'd twice —
+  // for a video the viewer is allowed to watch, that means a dead asset.
+  return { thumb: failed ? null : thumb, onThumbError, onThumbLoad, unavailable: failed }
 }
