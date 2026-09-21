@@ -38,7 +38,7 @@ describe('MilestoneCard', () => {
     render(<MilestoneCard item={baseMilestone} />)
 
     expect(screen.getByText('Test Player')).toBeInTheDocument()
-    expect(screen.getByText('completed their profile')).toBeInTheDocument()
+    expect(screen.getByText('Completed their profile')).toBeInTheDocument()
   })
 
   it('renders first_gallery_image milestone', () => {
@@ -48,7 +48,7 @@ describe('MilestoneCard', () => {
       />
     )
 
-    expect(screen.getByText('added gallery images')).toBeInTheDocument()
+    expect(screen.getByText('Added their first gallery photos')).toBeInTheDocument()
   })
 
   it('renders first_reference_received milestone', () => {
@@ -58,14 +58,14 @@ describe('MilestoneCard', () => {
       />
     )
 
-    expect(screen.getByText('received their first reference')).toBeInTheDocument()
+    expect(screen.getByText('Received their first reference')).toBeInTheDocument()
   })
 
   it('links to correct profile path for player', () => {
     render(<MilestoneCard item={baseMilestone} />)
 
     const link = screen.getByText('Test Player').closest('a')
-    expect(link).toHaveAttribute('href', '/players/id/p1')
+    expect(link).toHaveAttribute('href', '/players/id/p1?ref=feed')
   })
 
   it('links to correct profile path for club', () => {
@@ -76,7 +76,7 @@ describe('MilestoneCard', () => {
     )
 
     const link = screen.getByText('Test FC').closest('a')
-    expect(link).toHaveAttribute('href', '/clubs/id/p1')
+    expect(link).toHaveAttribute('href', '/clubs/id/p1?ref=feed')
   })
 
   it('returns null for unknown milestone types', () => {
@@ -101,7 +101,7 @@ describe('MilestoneCard', () => {
     )
 
     // Card renders initially
-    expect(screen.getByText('added gallery images')).toBeInTheDocument()
+    expect(screen.getByText('Added their first gallery photos')).toBeInTheDocument()
 
     // Simulate image load error
     fireEvent.error(screen.getByTestId('storage-image'))

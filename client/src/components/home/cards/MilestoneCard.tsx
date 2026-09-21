@@ -1,136 +1,63 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 import { Image, CheckCircle, Shield, Video } from 'lucide-react'
-import { Avatar, RoleBadge, StorageImage } from '@/components'
-import { getTimeAgo } from '@/lib/utils'
+import { StorageImage } from '@/components'
+import { FeedCard, FeedCardAction, FeedCardCaption, FeedCardFooter, FeedCardHeader, FeedCardMedia, profilePathForRole } from '../FeedCard'
 import type { MilestoneAchievedFeedItem, MilestoneType } from '@/types/homeFeed'
 
 interface MilestoneCardProps {
   item: MilestoneAchievedFeedItem
 }
 
-const MILESTONE_CONFIG: Record<MilestoneType, {
-  icon: typeof Image
-  bgColor: string
-  iconColor: string
-  label: string
-}> = {
-  first_gallery_image: {
-    icon: Image,
-    bgColor: 'bg-blue-100',
-    iconColor: 'text-blue-600',
-    label: 'added gallery images',
-  },
-  first_video: {
-    // Trigger fires in 202602091100_home_feed_triggers.sql when
-    // highlight_video_url goes NULL → value. Was recorded but rendered
-    // null because there was no MILESTONE_CONFIG entry — the trust signal
-    // (a player adding video evidence for the first time) is exactly the
-    // kind of moment the home feed should celebrate.
-    icon: Video,
-    bgColor: 'bg-purple-100',
-    iconColor: 'text-purple-600',
-    label: 'added their first highlight video',
-  },
-  profile_100_percent: {
-    icon: CheckCircle,
-    bgColor: 'bg-green-100',
-    iconColor: 'text-green-600',
-    label: 'completed their profile',
-  },
-  first_reference_received: {
-    icon: Shield,
-    bgColor: 'bg-indigo-100',
-    iconColor: 'text-indigo-600',
-    label: 'received their first reference',
-  },
+const MILESTONE_CONFIG: Record<MilestoneType, { icon: typeof Image; label: string }> = {
+  first_gallery_image: { icon: Image, label: 'Added their first gallery photos' },
+  // Trigger fires when highlight_video_url goes NULL → value — a player adding
+  // video evidence for the first time is exactly the moment to celebrate.
+  first_video: { icon: Video, label: 'Added their first highlight video' },
+  profile_100_percent: { icon: CheckCircle, label: 'Completed their profile' },
+  first_reference_received: { icon: Shield, label: 'Received their first reference' },
 }
 
 export function MilestoneCard({ item }: MilestoneCardProps) {
   const [mediaError, setMediaError] = useState(false)
-  const timeAgo = getTimeAgo(item.created_at, true)
   const config = MILESTONE_CONFIG[item.milestone_type]
 
   // Unknown milestone type — don't render
   if (!config) return null
-
   // Media failed to load — hide entire card
   if (mediaError) return null
 
   const Icon = config.icon
-  const profilePath = item.role === 'club'
-    ? `/clubs/id/${item.profile_id}`
-    : item.role === 'umpire'
-      ? `/umpires/id/${item.profile_id}`
-      : `/players/id/${item.profile_id}`
+  const profilePath = profilePathForRole(item.role, item.profile_id)
 
   return (
-    <div className="bg-white">
-      <div className="p-5">
-        {/* Header */}
-        <div className="flex items-center gap-2 mb-4">
-          <div className={`w-8 h-8 rounded-full ${config.bgColor} flex items-center justify-center flex-shrink-0`}>
-            <Icon className={`w-4 h-4 ${config.iconColor}`} />
-          </div>
-          <div className="flex items-center gap-1.5 text-sm text-gray-500">
-            <span className="font-medium text-gray-700">Profile milestone</span>
-            <span>&middot;</span>
-            <span>{timeAgo}</span>
-          </div>
-        </div>
+    <FeedCard testId="milestone-card">
+      <FeedCardHeader
+        authorId={item.profile_id}
+        name={item.full_name}
+        avatarUrl={item.avatar_url}
+        role={item.role}
+        createdAt={item.created_at}
+        profilePath={profilePath}
+      />
+      <FeedCardCaption icon={<Icon />}>{config.label}</FeedCardCaption>
 
-        {/* Member Info */}
-        <Link
-          to={profilePath}
-          className="flex items-start gap-4 group"
-        >
-          <Avatar
-            src={item.avatar_url}
-            initials={item.full_name?.slice(0, 2) || '?'}
-            size="md"
-            className="flex-shrink-0"
-            role={item.role}
-          />
-
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-              <span className="font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">
-                {item.full_name || 'Unknown'}
-              </span>
-              <RoleBadge role={item.role} />
-            </div>
-            <p className="text-sm text-gray-600">
-              {config.label}
-            </p>
-          </div>
-        </Link>
-
-        {/* Milestone media preview */}
-        {item.milestone_type === 'first_gallery_image' && item.image_url && (
+      {item.milestone_type === 'first_gallery_image' && item.image_url && (
+        <FeedCardMedia>
           <StorageImage
             src={item.image_url}
             imageSize="feed-full"
             alt="Gallery"
-            className="h-full w-full object-cover rounded-lg"
-            containerClassName="mt-4 aspect-[4/3] rounded-lg overflow-hidden"
-            fallbackClassName="mt-4 h-48 rounded-lg"
+            className="h-full w-full object-cover"
+            containerClassName="aspect-[4/3]"
+            fallbackClassName="h-48"
             onImageError={() => setMediaError(true)}
           />
-        )}
+        </FeedCardMedia>
+      )}
 
-        {/* CTA */}
-        <div className="mt-4 flex justify-end">
-          <Link
-            to={profilePath}
-            className="inline-flex items-center gap-1.5 px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            View Profile
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-            </svg>
-          </Link>
-        </div>
-      </div>
-    </div>
+      <FeedCardFooter>
+        <FeedCardAction to={profilePath}>View profile</FeedCardAction>
+      </FeedCardFooter>
+    </FeedCard>
   )
 }

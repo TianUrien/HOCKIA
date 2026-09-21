@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Loader2 } from 'lucide-react'
+import { Loader2, MoreHorizontal } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { useAuthStore } from '@/lib/auth'
 import { Header } from '@/components'
 import { UserPostCard } from '@/components/home/cards/UserPostCard'
+import { DetailNavBar } from '@/components/ui/DetailNavBar'
+import { IconButton } from '@/components/ui/IconButton'
 import type { UserPostFeedItem, PostMediaItem, PostType, TransferMetadata, SigningMetadata } from '@/types/homeFeed'
 import type { Profile } from '@/lib/supabase'
 
@@ -218,18 +220,16 @@ export default function PostPage() {
 
   return (
     <>
-      <Header />
-      <div className="flex-1 bg-gray-50 pt-[var(--app-header-offset)]">
-        <div className="mx-auto max-w-2xl px-4 py-6 md:py-10">
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="mb-4 inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </button>
-          <UserPostCard item={item} onLikeUpdate={handleLikeUpdate} onDelete={handleDelete} />
+      <Header mobileHidden />
+      <div className="flex-1 bg-white pt-[env(safe-area-inset-top)] lg:bg-gray-50 lg:pt-[var(--app-header-offset)]">
+        {/* Figma Post detail: chevron + "Home" on the left, more on the right */}
+        <DetailNavBar
+          parent="Home"
+          fallbackPath="/home"
+          trailing={<IconButton label="More options" disabled><MoreHorizontal className="h-6 w-6" strokeWidth={1.8} /></IconButton>}
+        />
+        <div className="mx-auto max-w-2xl lg:px-4 lg:py-6">
+          <UserPostCard item={item} onLikeUpdate={handleLikeUpdate} onDelete={handleDelete} detail />
         </div>
       </div>
     </>

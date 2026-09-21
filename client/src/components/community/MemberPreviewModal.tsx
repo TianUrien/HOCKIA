@@ -56,6 +56,7 @@ import { getSpecializationLabel } from '@/lib/coachSpecializations'
 import { getUmpireActivity } from '@/lib/umpireActivity'
 import { resolveConversationRoute } from '@/lib/startConversation'
 import type { Profile } from './PeopleListView'
+import { MemberPreviewSheet } from './MemberPreviewSheet'
 
 const BRAND_CATEGORY_LABELS: Record<string, string> = {
   equipment: 'Equipment',
@@ -309,6 +310,12 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
     if (member.role === 'brand') return member.brand_bio?.trim() ?? null
     return member.bio?.trim() ?? null
   })()
+
+  // Non-recruiters (players, umpires, brands, guests) see the Figma
+  // half-sheet: Passports · Club · Based, no Evidence, no Available.
+  if (!isRecruiterViewer) {
+    return createPortal(<MemberPreviewSheet member={member} onClose={onClose} />, document.body)
+  }
 
   const overlay = (
     <>

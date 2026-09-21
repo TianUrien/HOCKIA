@@ -32,7 +32,11 @@ export function roleToPath(role: RoleFilter): string {
   return MEMBER_TYPES.find((m) => m.role === role)?.path ?? '/community'
 }
 
-export type AvailabilityFilter = 'all' | 'open'
+/** "Open to" reads the member's OWN column (founder 2026-09-20): play →
+ *  open_to_play, coach → open_to_coach, recruiting → coach_recruits_for_team
+ *  (coaches) / open_to_opportunities (clubs), opportunities →
+ *  open_to_opportunities. Same columns Settings › Availability writes. */
+export type AvailabilityFilter = 'all' | 'play' | 'coach' | 'recruiting' | 'opportunities'
 
 export type SortOption = 'newest' | 'completeness' | 'evidence'
 

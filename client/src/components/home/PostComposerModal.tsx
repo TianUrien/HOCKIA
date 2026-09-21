@@ -1,10 +1,11 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { Loader2, Search, Shield, X, ImagePlus } from 'lucide-react'
+import { Loader2, Search, Shield, X, ImagePlus, CircleHelp } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
+import { identityLine } from '@/lib/identity'
 import { useUserPosts, type PostImage } from '@/hooks/useUserPosts'
 import { validateImage, optimizeImage } from '@/lib/imageOptimization'
 import { useUploadManager } from '@/lib/uploadManager'
@@ -103,6 +104,9 @@ export function PostComposerModal({
 
   // Transfer mode state
   const [mode, setMode] = useState<'post' | 'transfer'>('post')
+  // Post | Question chips (Figma Compose): switches the kind only — placeholder
+  // and primary button change, everything else stays.
+  const [kind, setKind] = useState<'post' | 'question'>('post')
   const [clubSearch, setClubSearch] = useState('')
   const [clubResults, setClubResults] = useState<ClubSearchResult[]>([])
   const [isSearching, setIsSearching] = useState(false)
@@ -203,6 +207,7 @@ export function PostComposerModal({
     }
     setError(null)
     setMode('post')
+    setKind('post')
     // Keep lastModeRef in sync so the mode-change effect below doesn't
     // immediately re-fire (with stale mode === 'transfer' from prior
     // session) and clobber the post-mode draft we just loaded.
@@ -768,7 +773,7 @@ export function PostComposerModal({
           throw new Error(result.error || 'Failed to update post')
         }
       } else {
-        const result = await createPost(trimmed, postMedia)
+        const result = await createPost(trimmed, postMedia, kind === 'question' ? 'question' : 'text')
         if (!result.success) {
           throw new Error(result.error || 'Failed to create post')
         }
@@ -813,7 +818,7 @@ export function PostComposerModal({
     } finally {
       setIsSubmitting(false)
     }
-  }, [content, media, mode, selectedClub, selectedPerson, customClubName, clubLogoUrl, isEdit, editingPost, createPost, createTransferPost, createSigningPost, updatePost, profile, onPostCreated, onClose, isSubmitting, user?.id])
+  }, [content, media, mode, selectedClub, selectedPerson, customClubName, clubLogoUrl, isEdit, editingPost, createPost, createTransferPost, createSigningPost, updatePost, profile, onPostCreated, onClose, isSubmitting, user?.id, kind])
 
   if (!isOpen) return null
 
@@ -853,7 +858,7 @@ export function PostComposerModal({
     // in the sticky parent's stacking context (z-40) and z-50 was relative
     // to that — irrelevant once we render at the root.
     <div className="fixed inset-0 z-[10000] overflow-y-auto">
-      <div className="flex min-h-full items-center justify-center p-4">
+      <div className="flex min-h-full items-center justify-center p-0 sm:p-4">
         <div className="fixed inset-0 bg-black/50" onClick={handleClose} />
         <div
           ref={dialogRef}
@@ -861,22 +866,26 @@ export function PostComposerModal({
           aria-modal="true"
           aria-labelledby="post-composer-title"
           tabIndex={-1}
-          className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[100dvh] overflow-y-auto focus:outline-none"
+          className="relative flex min-h-[100dvh] w-full flex-col bg-white focus:outline-none sm:min-h-0 sm:max-h-[100dvh] sm:max-w-lg sm:overflow-y-auto sm:rounded-2xl sm:shadow-xl"
         >
-          {/* Header */}
-          <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10">
-            <h2 id="post-composer-title" className="text-xl font-semibold text-gray-900">
-              {isEdit ? 'Edit Post' : mode === 'transfer' ? (isClubRole ? 'Announce New Signing' : 'Announce Transfer') : 'Create Post'}
+          {/* Nav (Figma Compose): Cancel on the left, the one primary pill on
+              the right — Post / Ask / Save / Announce. */}
+          <div className="sticky top-0 z-10 flex h-11 items-center justify-between bg-white px-5 pt-[env(safe-area-inset-top)]">
+            <h2 id="post-composer-title" className="sr-only">
+              {isEdit ? 'Edit post' : mode === 'transfer' ? (isClubRole ? 'Announce new signing' : 'Announce transfer') : kind === 'question' ? 'Ask a question' : 'Create post'}
             </h2>
+            <button type="button" onClick={handleClose} className="-ml-1 min-h-[44px] pr-3 text-body text-hockia-primary" aria-label="Cancel">
+              Cancel
+            </button>
             <button
               type="button"
-              onClick={handleClose}
-              className="text-gray-400 hover:text-gray-600"
-              aria-label="Close"
+              onClick={handleSubmit}
+              disabled={isSubmitting || isUploading || isUploadingLogo || !canSubmit}
+              aria-label={isEdit ? 'Save changes' : mode === 'transfer' ? 'Announce' : kind === 'question' ? 'Ask' : 'Publish post'}
+              className="flex h-[34px] items-center gap-1.5 rounded-full bg-hockia-primary px-4 text-row font-semibold text-white transition-opacity disabled:opacity-40"
             >
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+              {isEdit ? 'Save' : mode === 'transfer' ? 'Announce' : kind === 'question' ? 'Ask' : 'Post'}
             </button>
           </div>
 
@@ -894,39 +903,43 @@ export function PostComposerModal({
                   role={profile.role}
                 />
                 <div>
-                  <p className="font-semibold text-gray-900 text-sm">{profile.full_name}</p>
-                  <p className="text-xs text-gray-500 capitalize">{profile.role}</p>
+                  <p className="text-row font-semibold text-ink-1">{profile.full_name}</p>
+                  <p className="text-secondary text-ink-2">{identityLine(profile.role)} · Everyone on Hockia</p>
                 </div>
               </div>
             )}
 
-            {/* Mode toggle — hidden when editing and for roles that don't
-                have transfer/signing semantics (umpires + brands). See
-                canUseTransferMode for the role allowlist. */}
-            {!isEdit && canUseTransferMode && (
-              <div className="flex bg-gray-100 rounded-lg p-1">
-                <button
-                  type="button"
-                  onClick={() => setMode('post')}
-                  className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-all ${
-                    mode === 'post'
-                      ? 'bg-white text-gray-900 shadow-sm'
-                      : 'text-gray-500 hover:text-gray-700'
-                  }`}
-                >
-                  Post
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMode('transfer')}
-                  className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-all ${
-                    mode === 'transfer'
-                      ? 'bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white shadow-sm'
-                      : 'text-gray-500 hover:text-gray-700'
-                  }`}
-                >
-                  {isClubRole ? 'New Signing' : 'Transfer'}
-                </button>
+            {/* Post | Question | Transfer chips (Figma "post type"). Post and
+                Question share the free-text form and differ only in placeholder
+                and button; Transfer / New signing switches to the announcement
+                form. Questions are public by design so coaches and clubs can answer. */}
+            {!isEdit && (
+              <div className="flex gap-2" role="radiogroup" aria-label="Post type">
+                {/* Transfers are career events, not posts (founder 2026-09-20):
+                    the milestone reaches the feed from Career entry. The
+                    transfer/signing form stays in the code but is never offered. */}
+                {([
+                  ['post', 'Post'],
+                  ['question', 'Question'],
+                ] as const).map(([value, label]) => {
+                  const active = mode === 'post' && kind === value
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      role="radio"
+                      aria-checked={active}
+                      onClick={() => {
+                        setMode('post')
+                        setKind(value)
+                      }}
+                      className={`flex h-[30px] items-center gap-1.5 rounded-full px-3 text-secondary font-semibold transition-colors ${active ? 'bg-ink-1 text-white' : 'bg-surface-grouped text-ink-1'}`}
+                    >
+                      {value === 'question' && <CircleHelp className="h-3.5 w-3.5" strokeWidth={2} />}
+                      {label}
+                    </button>
+                  )
+                })}
               </div>
             )}
 
@@ -1257,20 +1270,21 @@ export function PostComposerModal({
                     // placeholder. Umpire prompts in that pool already
                     // stick to credentials / federation / aggregates, per
                     // officials' professional norms (NASO, TASO).
-                    : postPlaceholder
+                    : kind === 'question' ? 'What do you want to ask?' : postPlaceholder
                 }
                 rows={mode === 'transfer' ? 3 : 4}
                 maxLength={MAX_CONTENT_LENGTH}
                 autoCapitalize="sentences"
                 spellCheck
-                className="w-full px-0 py-2 text-gray-900 text-base placeholder-gray-400 border-0 focus:outline-none focus:ring-0 resize-none"
+                className={`w-full px-0 py-2 text-ink-1 placeholder:text-ink-4 border-0 focus:outline-none focus:ring-0 resize-none ${mode === 'transfer' ? 'text-base' : 'text-[20px] leading-[26px]'}`}
                 style={{ minHeight: mode === 'transfer' ? '60px' : '100px' }}
               />
-              <div className="flex justify-end">
-                <span className={`text-xs ${content.length > MAX_CONTENT_LENGTH - 200 ? 'text-amber-600' : 'text-gray-400'}`}>
-                  {content.length}/{MAX_CONTENT_LENGTH}
-                </span>
-              </div>
+              {/* Remaining count only inside the last 50 characters, lightest ink. */}
+              {MAX_CONTENT_LENGTH - content.length <= 50 && (
+                <div className="flex justify-end">
+                  <span className="text-caption tabular-nums text-ink-4">{MAX_CONTENT_LENGTH - content.length}</span>
+                </div>
+              )}
             </div>
 
             {/* Media uploader (images + video). Video is a REGULAR-POST
@@ -1290,12 +1304,14 @@ export function PostComposerModal({
               allowVideo={mode !== 'transfer' && videoPostsEnabled}
             />
 
-            {/* Submit */}
+            {/* Submit — the nav pill is the primary control on the phone; this
+                full-width button stays for announcements and wide screens. */}
+            {(mode === 'transfer' || isEdit) && (
             <button
               type="button"
               onClick={handleSubmit}
               disabled={isSubmitting || isUploading || isUploadingLogo || !canSubmit}
-              className="w-full py-2.5 px-4 bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white rounded-lg font-medium text-sm hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full py-2.5 px-4 bg-hockia-primary text-white rounded-full font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
               {isSubmitting
@@ -1311,6 +1327,7 @@ export function PostComposerModal({
                     : 'Publish post'
               }
             </button>
+            )}
           </div>
         </div>
       </div>

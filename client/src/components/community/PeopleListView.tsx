@@ -9,6 +9,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { Loader2 } from 'lucide-react'
 import { useNavigationType } from 'react-router-dom'
 import RecruiterCandidateCard from '@/components/recruiting/RecruiterCandidateCard'
+import { useOpenRoleCounts } from '@/hooks/useOpenRoleCounts'
 import { logger } from '@/lib/logger'
 import { isAuthExpiredError } from '@/lib/sentryHelpers'
 import { isOpenToAny } from '@/lib/hockeyCategories'
@@ -18,7 +19,6 @@ import { CandidatePreviewSheet } from '@/components/recruiting/CandidatePreviewS
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { computeClubFit } from '@/lib/clubFit'
-import { isOpenToAvailability } from '@/lib/availabilityLabel'
 import { computeCoachFit } from '@/lib/coachFit'
 import { computeEvidence } from '@/lib/evidence'
 import { computeInterest } from '@/lib/interestFit'
@@ -68,6 +68,9 @@ export interface Profile {
   open_to_play?: boolean
   open_to_coach?: boolean
   open_to_opportunities?: boolean
+  coach_recruits_for_team?: boolean | null
+  /** Open opportunities this member has published (decorated client-side). */
+  open_role_count?: number | null
   last_active_at?: string | null
   accepted_reference_count?: number
   coach_specialization?: string | null
@@ -124,7 +127,7 @@ export interface Profile {
 }
 
 const PROFILES_SELECT =
-  'id, avatar_url, full_name, role, nationality, nationality_country_id, nationality2_country_id, base_location, position, secondary_position, current_club, current_world_club_id, gender, playing_category, coaching_categories, umpiring_categories, created_at, is_test_account, open_to_play, open_to_coach, open_to_opportunities, last_active_at, accepted_reference_count, coach_specialization, coach_specialization_custom, base_country_id, relocation_willingness, relocation_countries_open, relocation_countries_excluded, available_from, level_target, opportunity_preference, specialist_skills, highlight_video_url, full_game_video_count, bio, club_bio, year_founded, website, career_entry_count, accepted_friend_count, is_verified, verified_at, umpire_level, federation, umpire_since, officiating_specialization, languages, last_officiated_at, umpire_appointment_count, available_for_appointments, profile_completeness_pct'
+  'id, avatar_url, full_name, role, nationality, nationality_country_id, nationality2_country_id, base_location, position, secondary_position, current_club, current_world_club_id, gender, playing_category, coaching_categories, umpiring_categories, created_at, is_test_account, open_to_play, open_to_coach, open_to_opportunities, coach_recruits_for_team, last_active_at, accepted_reference_count, coach_specialization, coach_specialization_custom, base_country_id, relocation_willingness, relocation_countries_open, relocation_countries_excluded, available_from, level_target, opportunity_preference, specialist_skills, highlight_video_url, full_game_video_count, bio, club_bio, year_founded, website, career_entry_count, accepted_friend_count, is_verified, verified_at, umpire_level, federation, umpire_since, officiating_specialization, languages, last_officiated_at, umpire_appointment_count, available_for_appointments, profile_completeness_pct'
 
 // CommunityFilters type moved to ./communityFilters.ts so the lifted
 // search bar / quick filters / drawer (now rendered by CommunityPage)
@@ -210,6 +213,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
   // best-fit-first FOR THIS CONTEXT instead of the viewer's own profile
   // target — matching what the per-card Fit chips already show. Nobody
   // is hidden; this only re-orders.
+  const openRoleCounts = useOpenRoleCounts()
   const contextTarget = useActiveRecruitingTarget()
   const contextTargetRole = useActiveRecruitingTargetRole()
   const contextTargetPosition = useActiveRecruitingTargetPosition()
@@ -350,7 +354,9 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
       p_nationality_country_ids: filters.nationalityCountryIds.length ? filters.nationalityCountryIds : undefined,
       p_eu_required: (filters.euOnly || euFilterActive) ? true : undefined,
       p_location_country_ids: filters.locationCountryIds.length ? filters.locationCountryIds : undefined,
-      p_availability_open: filters.availability === 'open' ? true : undefined,
+      // The RPC's role-relative "open" flag only matches the play/coach
+      // values; recruiting/opportunities read their own columns client-side.
+      p_availability_open: filters.availability === 'play' || filters.availability === 'coach' ? true : undefined,
       p_brand_category: filters.brandCategory || undefined,
       p_open_opportunity_type: filters.clubOpportunityType ?? undefined,
       p_limit: 500,
@@ -689,11 +695,19 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
         (typeof m.nationality2_country_id === 'number' && natIds.includes(m.nationality2_country_id))
       )
     }
-    if (filters.availability === 'open') {
-      // Role-complete "open" filter — players (open_to_play), coaches
-      // (open_to_coach), umpires (available_for_appointments), brands/clubs
-      // (open_to_opportunities). Single source: availabilityLabel helper.
-      result = result.filter(m => isOpenToAvailability(m.role, m))
+    // "Open to" — each value reads its own profile column (the same ones
+    // Settings › Availability writes), never a role-relative proxy.
+    switch (filters.availability) {
+      case 'play': result = result.filter((m) => m.open_to_play === true); break
+      case 'coach': result = result.filter((m) => m.open_to_coach === true); break
+      // Recruiting: open roles are the truth, the toggle is the fallback.
+      case 'recruiting': result = result.filter((m) => (m.role === 'coach' && m.coach_recruits_for_team === true) || (m.role === 'club' && ((openRoleCounts.get(m.id) ?? 0) > 0 || m.open_to_opportunities === true))); break
+      case 'opportunities': result = result.filter((m) => m.open_to_opportunities === true); break
+      default: break
+    }
+    // The card prefers the concrete signal ("2 open roles") over the generic pill.
+    if (openRoleCounts.size > 0) {
+      result = result.map((m) => (openRoleCounts.has(m.id) ? { ...m, open_role_count: openRoleCounts.get(m.id) } : m))
     }
 
     // Phase 2D — EU eligibility HARD filter. When the active scope requires
@@ -849,7 +863,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     }
 
     return result
-  }, [allMembers, filters, sort, currentUserProfile, applyContextFit, contextTarget, contextTargetRole, contextTargetPosition, contextTargetSpecialists, contextMustHaves, euFilterActive, euCountryIds, countries])
+  }, [allMembers, filters, sort, currentUserProfile, applyContextFit, contextTarget, contextTargetRole, contextTargetPosition, contextTargetSpecialists, contextMustHaves, euFilterActive, euCountryIds, countries, openRoleCounts])
 
   // Recruiter Match is "active" only while an active scope ranks PLAYERS by
   // fit — a coach scope ranks coaches, so the player match bar stays off.
@@ -1175,7 +1189,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
         <>
           <div className={[
             (playerMatchActive || coachMatchActive)
-              ? 'grid grid-cols-2 auto-rows-fr gap-2.5 sm:gap-3 mb-6 sm:mb-8'
+              ? 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 auto-rows-fr gap-3 sm:gap-4 mb-6 sm:mb-8'
               // No-context grid: auto-rows-fr makes every tile in a row the
               // same length. The tile's key rows (avatar → name → role →
               // nationality) stay top-aligned and its footer is pinned to the

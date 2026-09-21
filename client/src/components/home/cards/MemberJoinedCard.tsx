@@ -1,88 +1,47 @@
-import { Link } from 'react-router-dom'
 import { UserPlus } from 'lucide-react'
-import { Avatar, RoleBadge, NationalityCardDisplay } from '@/components'
-import { getTimeAgo } from '@/lib/utils'
+import { NationalityCardDisplay } from '@/components'
+import { FeedCard, FeedCardAction, FeedCardBody, FeedCardCaption, FeedCardFooter, FeedCardHeader, profilePathForRole } from '../FeedCard'
 import type { MemberJoinedFeedItem } from '@/types/homeFeed'
 
 interface MemberJoinedCardProps {
   item: MemberJoinedFeedItem
 }
 
+/**
+ * member_joined — "Joined HOCKIA". The header owns club · city (author
+ * context lookup), so the body only carries what the header can't:
+ * nationality and position.
+ */
 export function MemberJoinedCard({ item }: MemberJoinedCardProps) {
-  const timeAgo = getTimeAgo(item.created_at, true)
-  const profilePath = item.role === 'club'
-    ? `/clubs/id/${item.profile_id}?ref=feed`
-    : item.role === 'umpire'
-      ? `/umpires/id/${item.profile_id}?ref=feed`
-      : `/players/id/${item.profile_id}?ref=feed`
+  const profilePath = profilePathForRole(item.role, item.profile_id)
+  const hasDetails = Boolean(item.nationality_country_id || item.position)
 
   return (
-    <div className="bg-white">
-      <div className="p-5">
-        {/* Header */}
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-            <UserPlus className="w-4 h-4 text-green-600" />
-          </div>
-          <div className="flex items-center gap-1.5 text-sm text-gray-500">
-            <span className="font-medium text-gray-700">New member joined HOCKIA</span>
-            <span>&middot;</span>
-            <span>{timeAgo}</span>
-          </div>
-        </div>
+    <FeedCard testId="member-joined-card">
+      <FeedCardHeader
+        authorId={item.profile_id}
+        name={item.full_name}
+        avatarUrl={item.avatar_url}
+        role={item.role}
+        createdAt={item.created_at}
+        profilePath={profilePath}
+      />
+      <FeedCardCaption icon={<UserPlus />}>Joined HOCKIA</FeedCardCaption>
 
-        {/* Member Info */}
-        <Link
-          to={profilePath}
-          className="flex items-start gap-4 group"
-        >
-          <Avatar
-            src={item.avatar_url}
-            initials={item.full_name?.slice(0, 2) || '?'}
-            size="lg"
-            className="flex-shrink-0"
-            role={item.role}
-          />
-
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1 flex-wrap">
-              <h3 className="font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">
-                {item.full_name || 'Unknown'}
-              </h3>
-              <RoleBadge role={item.role} />
-            </div>
-
+      {hasDetails && (
+        <FeedCardBody>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[14px] leading-5 text-gray-600">
             {item.nationality_country_id && (
-              <div className="mb-1">
-                <NationalityCardDisplay
-                  primaryCountryId={item.nationality_country_id}
-                />
-              </div>
+              <NationalityCardDisplay primaryCountryId={item.nationality_country_id} />
             )}
-
-            {item.current_club && (
-              <p className="text-sm text-gray-500">{item.current_club}</p>
-            )}
-
-            {item.position && (
-              <p className="text-sm text-gray-500 mt-1">{item.position}</p>
-            )}
+            {item.position && <span>{item.position}</span>}
           </div>
-        </Link>
+        </FeedCardBody>
+      )}
 
-        {/* CTA */}
-        <div className="mt-4 flex justify-end">
-          <Link
-            to={profilePath}
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white text-sm font-medium rounded-lg hover:opacity-90 transition-opacity"
-          >
-            View Profile
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-            </svg>
-          </Link>
-        </div>
-      </div>
-    </div>
+      <FeedCardFooter>
+        <FeedCardAction to={profilePath}>View profile</FeedCardAction>
+      </FeedCardFooter>
+    </FeedCard>
   )
 }

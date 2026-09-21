@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
-import { useSearchParams } from 'react-router-dom'
-import { ChevronDown, Shield, X, Check, ArrowUpDown, Plus } from 'lucide-react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { ChevronDown, Shield, X, Check, ArrowUpDown, Plus, Search, SlidersHorizontal } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuthStore } from '../lib/auth'
 import type { Vacancy } from '../lib/supabase'
@@ -18,7 +18,16 @@ import { qk } from '@/lib/queryKeys'
 import { monitor } from '@/lib/monitor'
 import { logger } from '@/lib/logger'
 import { useOpportunityNotifications } from '@/hooks/useOpportunityNotifications'
-import { useCountries, type Country } from '@/hooks/useCountries'
+import { useCountries, isEuCountryCode, type Country } from '@/hooks/useCountries'
+import { isEuEligible } from '@/lib/euEligibility'
+import { LargeTitleBar } from '@/components/ui/LargeTitleBar'
+import { IconButton } from '@/components/ui/IconButton'
+import { SegmentedControl } from '@/components/ui/SegmentedControl'
+import { RoleCard } from '@/components/opportunities/RoleCard'
+import { OpportunityFiltersSheet } from '@/components/opportunities/OpportunityFiltersSheet'
+import ApplyToOpportunityModal from '../components/ApplyToOpportunityModal'
+import SignInPromptModal from '../components/SignInPromptModal'
+import { EMPTY_ROLE_FILTERS, applyRoleFilters, countActiveRoleFilters, type RoleFilters } from '@/lib/opportunityFilters'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { useScrollRestore } from '@/hooks/useScrollRestore'
 
@@ -144,6 +153,7 @@ function FilterDropdown({ label, value, options, onChange, icon, clearable = tru
 export default function OpportunitiesPage() {
   useDocumentTitle('Opportunities')
   const [searchParams, setSearchParams] = useSearchParams()
+  const navigate = useNavigate()
   const { user, profile } = useAuthStore()
   const isCurrentUserTestAccount = profile?.is_test_account ?? false
   const isStaging = import.meta.env.VITE_SUPABASE_URL?.includes('ivjkdaylalhsteyyclvl')
@@ -174,6 +184,12 @@ export default function OpportunitiesPage() {
   // the Community MemberPreviewModal pattern. Deep-link entries to
   // /opportunities/:id still use the standalone OpportunityDetailPage.
   const [previewVacancy, setPreviewVacancy] = useState<Vacancy | null>(null)
+  // Phone layout (Figma Opportunities v2): filters sheet + role cards, applied
+  // client-side on top of the open list; the wide layout keeps its dropdowns.
+  const [roleFilters, setRoleFilters] = useState<RoleFilters>(EMPTY_ROLE_FILTERS)
+  const [filtersOpen, setFiltersOpen] = useState(false)
+  const [applyTarget, setApplyTarget] = useState<Vacancy | null>(null)
+  const [showJoin, setShowJoin] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [fetchError, setFetchError] = useState<string | null>(null)
   const [isSyncingNewVacancies, setIsSyncingNewVacancies] = useState(false)
@@ -493,6 +509,28 @@ export default function OpportunitiesPage() {
 
   const totalFilteredCount = filteredOpportunities.length
 
+  // "Only roles my passports qualify for" — EU-only roles hide for a non-EU
+  // player. Unknown nationality keeps everything (never hide for an
+  // incomplete profile).
+  const euCountryIds = useMemo(() => new Set(countries.filter((c) => isEuCountryCode(c.code)).map((c) => c.id)), [countries])
+  const viewerIsEuEligible = isEuEligible(profile?.nationality_country_id, profile?.nationality2_country_id, euCountryIds)
+  const mobileList = useMemo(() => applyRoleFilters(filteredOpportunities, roleFilters, viewerIsEuEligible), [filteredOpportunities, roleFilters, viewerIsEuEligible])
+  const activeRoleFilterCount = countActiveRoleFilters(roleFilters)
+  const nationalityWord = countries.find((c) => c.id === profile?.nationality_country_id)?.nationality_name ?? profile?.nationality ?? null
+  const eligibleCount = useMemo(() => vacancies.filter((v) => !v.eu_passport_required || viewerIsEuEligible).length, [vacancies, viewerIsEuEligible])
+  const passportHint = profile?.role === 'player' && nationalityWord ? `${nationalityWord} — ${eligibleCount} of ${vacancies.length} open roles` : null
+  const canApplyTo = (v: Vacancy) =>
+    !user
+      ? true
+      : v.club_id !== user.id && ((profile?.role === 'player' && v.opportunity_type === 'player') || (profile?.role === 'coach' && v.opportunity_type === 'coach'))
+  const leagueFor = (v: Vacancy) => {
+    const wc = v.world_club_id ? worldClubsMap[v.world_club_id] : null
+    const club = clubs[v.club_id]
+    if (wc?.leagueName) return wc.leagueName
+    const womens = v.gender === 'Women' || v.gender === 'Girls'
+    return (womens ? club?.womens_league_division ?? club?.mens_league_division : club?.mens_league_division ?? club?.womens_league_division) ?? null
+  }
+
   const hasActiveFilters = filters.country !== '' || filters.role !== 'all' || filters.gender !== 'all' || filters.position !== '' || filters.euPassport || filters.applied !== 'all'
 
   const clearFilters = () => {
@@ -510,12 +548,45 @@ export default function OpportunitiesPage() {
         />
       )}
 
-      <div className="min-h-screen bg-gray-50">
-        <Header />
+      <div className="min-h-screen bg-white lg:bg-gray-50">
+        <Header mobileHidden />
 
-        <main className="max-w-[640px] md:max-w-5xl mx-auto px-4 pt-24 pb-12">
-          {/* Page Header */}
-          <div className="mb-6 flex items-start justify-between gap-4">
+        <main className="max-w-[640px] md:max-w-5xl mx-auto px-0 pt-[env(safe-area-inset-top)] pb-24 lg:px-4 lg:pt-24 lg:pb-12">
+          {/* Phone header (Figma Opportunities v2): large title, one filters
+              button, a search pill, and Open roles | Applied. */}
+          <div className="lg:hidden">
+            <LargeTitleBar
+              title="Opportunities"
+              trailing={
+                <IconButton label="Filters" onClick={() => setFiltersOpen(true)}>
+                  <span className="relative">
+                    <SlidersHorizontal className="h-6 w-6" strokeWidth={1.8} />
+                    {activeRoleFilterCount > 0 && <span aria-hidden="true" className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-hockia-primary ring-2 ring-white" />}
+                  </span>
+                </IconButton>
+              }
+            />
+            <div className="px-5 pb-2">
+              <button type="button" onClick={() => navigate('/search')} className="flex h-9 w-full items-center gap-2 rounded-[10px] bg-surface-grouped px-3 text-body text-ink-3">
+                <Search className="h-4 w-4" strokeWidth={2} /> Search clubs and roles
+              </button>
+            </div>
+            {user && (profile?.role === 'player' || profile?.role === 'coach') && (
+              <div className="px-5 pb-3">
+                <SegmentedControl<'open' | 'applied'>
+                  ariaLabel="Roles"
+                  value="open"
+                  onChange={(v) => { if (v === 'applied') navigate('/opportunities/applications') }}
+                  options={[
+                    { value: 'open', label: 'Open roles', count: mobileList.length },
+                    { value: 'applied', label: 'Applied', count: userApplications.length },
+                  ]}
+                />
+              </div>
+            )}
+          </div>
+          {/* Page Header (wide layout) */}
+          <div className="mb-6 hidden items-start justify-between gap-4 lg:flex">
             <div>
               <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">
                 Opportunities
@@ -542,7 +613,7 @@ export default function OpportunitiesPage() {
               listings today, so Apply is hidden for umpires. Kept low-key so
               it informs without blocking the browsing experience. */}
           {isUmpire && (
-            <div className="mb-6 flex items-start gap-3 rounded-xl bg-amber-50 border border-amber-200 px-4 py-3">
+            <div className="mx-5 mb-6 flex items-start gap-3 rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 lg:mx-0">
               <Shield className="w-5 h-5 text-amber-700 flex-shrink-0 mt-0.5" />
               <div className="text-sm text-amber-900">
                 <p className="font-medium">Browse-only for umpires right now</p>
@@ -555,8 +626,8 @@ export default function OpportunitiesPage() {
             </div>
           )}
 
-          {/* Filter Bar */}
-          <div className="flex items-center gap-2 flex-wrap mb-6">
+          {/* Filter Bar (wide layout) */}
+          <div className="mb-6 hidden flex-wrap items-center gap-2 lg:flex">
             <FilterDropdown
               label="Country"
               value={filters.country}
@@ -670,7 +741,7 @@ export default function OpportunitiesPage() {
 
           {/* New opportunities banner */}
           {opportunityCount > 0 && (
-            <div className="bg-hockia-primary/5 border border-hockia-primary/10 text-gray-900 rounded-xl p-4 mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="mx-5 mb-6 flex flex-col gap-3 rounded-xl border border-hockia-primary/10 bg-hockia-primary/5 p-4 text-gray-900 sm:flex-row sm:items-center sm:justify-between lg:mx-0">
               <div>
                 <p className="font-semibold text-sm">
                   {opportunityCount === 1 ? 'New opportunity available' : `${opportunityCount} new opportunities available`}
@@ -692,7 +763,7 @@ export default function OpportunitiesPage() {
 
           {/* Content */}
           {isLoading ? (
-            <div className="columns-1 md:columns-2 gap-4">
+            <div className="columns-1 gap-4 px-5 md:columns-2 lg:px-0">
               {[1, 2, 3, 4].map(i => (
                 <div key={i} className="break-inside-avoid mb-4">
                   <OpportunityCardSkeleton />
@@ -763,7 +834,36 @@ export default function OpportunitiesPage() {
                Tiles flow into columns at their natural height, so a
                richly-completed opportunity reads taller than a sparse
                one and the feed never looks like a repetitive list. */
-            <div className="columns-1 md:columns-2 gap-4">
+                        <>
+              {/* Phone: role cards (Figma). Tap → detail screen; Apply → sheet. */}
+              <div className="flex flex-col gap-3 px-5 lg:hidden">
+                {mobileList.length === 0 && (
+                  <div className="py-10 text-center">
+                    <p className="text-row font-semibold text-ink-1">No roles match these filters</p>
+                    <button type="button" onClick={() => setRoleFilters(EMPTY_ROLE_FILTERS)} className="mt-2 text-row font-semibold text-hockia-primary">Reset filters</button>
+                  </div>
+                )}
+                {mobileList.map((vacancy) => {
+                  const club = clubs[vacancy.club_id]
+                  const wc = vacancy.world_club_id ? worldClubsMap[vacancy.world_club_id] ?? null : null
+                  return (
+                    <RoleCard
+                      key={vacancy.id}
+                      vacancy={vacancy}
+                      clubName={wc?.clubName || club?.full_name || 'Club'}
+                      clubLogo={wc?.avatarUrl || club?.avatar_url || null}
+                      publisherRole={club?.role}
+                      countryFlag={getFlagEmoji(vacancy.location_country)}
+                      league={leagueFor(vacancy)}
+                      applied={userApplications.includes(vacancy.id)}
+                      canApply={canApplyTo(vacancy)}
+                      onOpen={() => navigate(`/opportunities/${vacancy.id}`)}
+                      onApply={() => (user ? setApplyTarget(vacancy) : setShowJoin(true))}
+                    />
+                  )
+                })}
+              </div>
+            <div className="hidden columns-1 gap-4 md:columns-2 lg:block">
               {filteredOpportunities.map((vacancy) => {
                 const club = clubs[vacancy.club_id]
                 const org = vacancy.organization_name || club?.current_club || null
@@ -785,9 +885,40 @@ export default function OpportunitiesPage() {
                 )
               })}
             </div>
+            </>
           )}
         </main>
       </div>
+
+      <OpportunityFiltersSheet
+        open={filtersOpen}
+        onClose={() => setFiltersOpen(false)}
+        value={roleFilters}
+        onApply={setRoleFilters}
+        countFor={(draft) => applyRoleFilters(filteredOpportunities, draft, viewerIsEuEligible).length}
+        passportHint={passportHint}
+      />
+
+      {applyTarget && (
+        <ApplyToOpportunityModal
+          isOpen
+          onClose={() => setApplyTarget(null)}
+          vacancy={applyTarget}
+          clubName={(applyTarget.world_club_id ? worldClubsMap[applyTarget.world_club_id]?.clubName : null) || clubs[applyTarget.club_id]?.full_name || null}
+          clubLogo={(applyTarget.world_club_id ? worldClubsMap[applyTarget.world_club_id]?.avatarUrl : null) || clubs[applyTarget.club_id]?.avatar_url || null}
+          publisherRole={clubs[applyTarget.club_id]?.role ?? null}
+          league={leagueFor(applyTarget)}
+          onSuccess={(vacancyId) => setUserApplications((prev) => (prev.includes(vacancyId) ? prev : [...prev, vacancyId]))}
+        />
+      )}
+
+      <SignInPromptModal
+        isOpen={showJoin}
+        onClose={() => setShowJoin(false)}
+        title="Sign in to apply"
+        message="Create a free HOCKIA profile — it is your application. Clubs see your career, videos and references."
+        action="apply"
+      />
 
       {/* Create Opportunity — launched directly from the feed for clubs
           and recruiter-coaches, so posting doesn't require a dashboard

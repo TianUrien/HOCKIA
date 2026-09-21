@@ -8443,7 +8443,7 @@ export type Database = {
         Returns: Json
       }
       create_user_post: {
-        Args: { p_content: string; p_images?: Json }
+        Args: { p_content: string; p_images?: Json; p_post_type?: string }
         Returns: Json
       }
       create_world_club_from_career: {

@@ -9,6 +9,7 @@
  */
 
 import { Capacitor } from '@capacitor/core'
+import { profilePath } from '@/lib/profileNavigation'
 
 export type ShareableRole = 'player' | 'coach' | 'club' | 'brand' | 'umpire'
 
@@ -139,4 +140,10 @@ export function mailtoShareUrl(role: ShareableRole, profileUrl: string): string 
   // plus-signs to remain `+`, and URLSearchParams encodes spaces as
   // `+` which mail clients then render as literal `+`.
   return `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+}
+
+/** Absolute share URL for a member's public profile (production origin on native). */
+export function publicProfileShareUrl(role: string | null | undefined, id: string, username: string | null | undefined): string | null {
+  const path = profilePath(role as Parameters<typeof profilePath>[0], username, id)
+  return path ? `${getShareOrigin()}${path}` : null
 }

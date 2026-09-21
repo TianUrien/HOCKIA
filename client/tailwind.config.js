@@ -65,13 +65,19 @@ export default {
           600: '#be123c', // on rose-50: 4.28 → 5.72
         },
         // ───────────────────────────────────────────────────────────────────
-        'hockia-primary': '#6d28d9',
+        'hockia-primary': '#6c2bd9',
         'hockia-secondary': '#7c3aed',
         'hockia-accent': '#ec4899',
         'hockia-success': '#10b981',
         'hockia-warning': '#f59e0b',
         'hockia-danger': '#ef4444',
         'hockia-orange': '#ff9500',
+        // Figma "New-Hockia" 03 Player tokens (2026-09-20) — 01 Foundations / Hockia / Color
+        'hockia-soft': '#f1eafd',
+        ink: { 1: '#0f0f14', 2: '#5b5b6b', 3: '#8e8e9a', 4: '#aeaeb2' },
+        surface: { muted: '#f4f4f7', grouped: '#f2f2f7' },
+        line: '#e6e6ec',
+        positive: { DEFAULT: '#15803d', soft: '#e8f7ee' },
         'dark-bg': '#0a0a0a',
         'dark-surface': '#18181b',
         'dark-surface-elevated': '#27272a',
@@ -80,7 +86,23 @@ export default {
         'dark-text-muted': '#a1a1aa',
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        sans: ['var(--font-sans)', 'Inter', 'system-ui', '-apple-system', 'sans-serif'],
+      },
+      // Figma type scale (SF Pro sizes; family comes from --font-sans). Weights 400/500/600/700.
+      fontSize: {
+        'large-title': ['34px', { lineHeight: '41px', letterSpacing: '-0.015em', fontWeight: '700' }],
+        title: ['22px', { lineHeight: '27px', fontWeight: '700' }],
+        body: ['17px', { lineHeight: '22px' }],
+        row: ['15px', { lineHeight: '20px' }],
+        secondary: ['13px', { lineHeight: '18px' }],
+        caption: ['12px', { lineHeight: '16px' }],
+        micro: ['11px', { lineHeight: '14px' }],
+        tab: ['10px', { lineHeight: '12px', fontWeight: '500' }],
+      },
+      borderRadius: {
+        tile: '7px',
+        card: '14px',
+        sheet: '22px',
       },
       keyframes: {
         shimmer: {

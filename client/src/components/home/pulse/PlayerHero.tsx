@@ -65,7 +65,7 @@ export function PlayerHero({ voice = 'player' }: { voice?: 'player' | 'coach' })
           <HeroLabel>Your week on HOCKIA</HeroLabel>
           {streakDays >= 2 && (
             <HeroChip>
-              <Flame className="h-3 w-3 text-[#c6ff6b]" />
+              <Flame className="h-3 w-3 text-emerald-600" />
               {streakDays}-day streak
             </HeroChip>
           )}
@@ -79,7 +79,7 @@ export function PlayerHero({ voice = 'player' }: { voice?: 'player' | 'coach' })
                 : `${views} profile ${views === 1 ? 'view' : 'views'} this week.`}
             </h1>
             {viewDelta > 0 && (
-              <p className="mt-1 text-sm font-semibold text-[#c6ff6b]">
+              <p className="mt-1 text-sm font-semibold text-emerald-600">
                 ▲ {viewDelta} more than last week
               </p>
             )}
@@ -100,14 +100,14 @@ export function PlayerHero({ voice = 'player' }: { voice?: 'player' | 'coach' })
         ) : (
           <>
             <h1 className="mt-2 text-xl font-black leading-tight">{v.emptyHeadline}</h1>
-            <p className="mt-1 text-sm text-white/70">{v.emptySub}</p>
+            <p className="mt-1 text-sm text-gray-600">{v.emptySub}</p>
           </>
         )}
 
         <button
           type="button"
           onClick={goToViewers}
-          className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-2xl bg-white/[0.14] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/20"
+          className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-hockia-primary px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
         >
           <Eye className="h-4 w-4" />
           {hasSignal ? 'See who viewed you' : 'Boost your visibility'}

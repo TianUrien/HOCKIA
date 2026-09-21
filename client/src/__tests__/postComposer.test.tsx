@@ -42,12 +42,12 @@ describe('PostComposer', () => {
     }
   })
 
-  it('renders "Start a post..." trigger when authenticated', () => {
+  it('renders the "What\'s new?" trigger when authenticated', () => {
     render(<PostComposer onPostCreated={onPostCreated} />)
 
-    expect(screen.getByText('Start a post...')).toBeInTheDocument()
+    expect(screen.getByText("What's new?")).toBeInTheDocument()
     expect(screen.getByTestId('avatar')).toBeInTheDocument()
-    expect(screen.getByLabelText('Add image')).toBeInTheDocument()
+    expect(screen.getByLabelText('Add a photo or video')).toBeInTheDocument()
   })
 
   it('returns null when user is not authenticated', () => {
@@ -57,14 +57,14 @@ describe('PostComposer', () => {
     expect(container.innerHTML).toBe('')
   })
 
-  it('opens modal when "Start a post..." is clicked', async () => {
+  it('opens modal when the prompt is clicked', async () => {
     render(<PostComposer onPostCreated={onPostCreated} />)
 
     // Modal should not be open initially
     expect(screen.queryByTestId('composer-modal')).not.toBeInTheDocument()
 
     // Click trigger
-    await user.click(screen.getByText('Start a post...'))
+    await user.click(screen.getByText("What's new?"))
 
     // Modal should open
     expect(screen.getByTestId('composer-modal')).toBeInTheDocument()
@@ -73,7 +73,7 @@ describe('PostComposer', () => {
   it('opens modal when image button is clicked', async () => {
     render(<PostComposer onPostCreated={onPostCreated} />)
 
-    await user.click(screen.getByLabelText('Add image'))
+    await user.click(screen.getByLabelText('Add a photo or video'))
 
     expect(screen.getByTestId('composer-modal')).toBeInTheDocument()
   })

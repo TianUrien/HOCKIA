@@ -267,18 +267,12 @@ export function BrandCardSkeleton() {
 // doesn't shift the grid.
 export function MemberTileSkeleton() {
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-      <div className="pt-5 pb-4 px-4 flex items-center justify-center">
-        <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-gray-100 animate-pulse" />
-      </div>
-      <div className="px-4 pb-4 space-y-2.5">
-        <Skeleton width="80%" height={16} />
-        <div className="flex gap-1.5">
-          <Skeleton width={56} height={20} className="rounded-full" />
-          <Skeleton width={44} height={20} className="rounded-full" />
-        </div>
+    <div className="rounded-2xl bg-surface-grouped p-2 pb-3">
+      <div className="aspect-square w-full animate-pulse rounded-xl bg-gray-200/70" />
+      <div className="space-y-2 px-1 pb-1 pt-2.5">
+        <Skeleton width="75%" height={14} />
         <Skeleton width="60%" height={12} />
-        <Skeleton width="70%" height={12} />
+        <Skeleton width="45%" height={12} />
       </div>
     </div>
   )

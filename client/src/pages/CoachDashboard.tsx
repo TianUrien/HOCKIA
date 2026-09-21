@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import ProfileTopBar from '@/components/dashboard/ProfileTopBar'
 import { ArrowLeft } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
@@ -555,11 +556,12 @@ export default function CoachDashboard({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
+      <Header mobileHidden={!readOnly} />
 
       {readOnly && isOwnProfile && <PublicViewBanner />}
 
-      <main className="max-w-7xl mx-auto px-4 md:px-6 pt-24 pb-12 space-y-5 md:space-y-6">
+      <main className="max-w-7xl mx-auto px-4 md:px-6 ${readOnly ? 'pt-24' : 'pt-[max(env(safe-area-inset-top),0.75rem)] lg:pt-24'} pb-12 space-y-5 md:space-y-6">
+        {!readOnly && <ProfileTopBar />}
         {readOnly && !isOwnProfile && (
           <button
             type="button"

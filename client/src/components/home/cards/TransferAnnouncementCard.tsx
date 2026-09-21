@@ -4,13 +4,13 @@ import { ArrowRight, MoreHorizontal, Trash2, Shield } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
 import { usePostInteractions } from '@/hooks/usePostInteractions'
 import { useUserPosts } from '@/hooks/useUserPosts'
-import { Avatar, RoleBadge } from '@/components'
-import { getTimeAgo } from '@/lib/utils'
+import { Avatar } from '@/components'
 import { getImageUrl } from '@/lib/imageUrl'
 import { FeedMediaGrid } from '../FeedMediaGrid'
 import { MediaLightbox } from '../MediaLightbox'
 import { PostInteractionBar } from '../PostInteractionBar'
 import { PostCommentsSection } from '../PostCommentsSection'
+import { FeedCard, FeedCardBody, FeedCardCaption, FeedCardHeader, FeedCardMedia, profilePathForRole } from '../FeedCard'
 import type { UserPostFeedItem, TransferMetadata } from '@/types/homeFeed'
 
 interface TransferAnnouncementCardProps {
@@ -37,14 +37,13 @@ export function TransferAnnouncementCard({ item, onLikeUpdate, onDelete }: Trans
     setLocalCommentCount(item.comment_count)
   }, [item.comment_count])
 
-  const timeAgo = getTimeAgo(item.created_at, true)
   const isOwner = user?.id === item.author_id
 
-  const profilePath = item.author_role === 'club'
-    ? `/clubs/id/${item.author_id}`
-    : `/players/id/${item.author_id}`
+  const profilePath = profilePathForRole(item.author_role, item.author_id)
 
-  const clubPath = meta.club_profile_id ? `/clubs/id/${meta.club_profile_id}` : null
+  // The destination club is a profile only when the transfer was made to a
+  // claimed HOCKIA club; a world-club / free-text destination stays unlinked.
+  const clubPath = meta.club_profile_id ? profilePathForRole('club', meta.club_profile_id) : null
 
   const sortedImages = useMemo(
     () => item.images ? [...item.images].sort((a, b) => a.order - b.order) : [],
@@ -97,51 +96,70 @@ export function TransferAnnouncementCard({ item, onLikeUpdate, onDelete }: Trans
     setLocalCommentCount(newCount)
   }, [])
 
-  return (
-    <div className="bg-white">
-      {/* Branded header */}
-      <div className="bg-gradient-to-r from-hockia-primary to-hockia-secondary px-4 py-2.5 flex items-center gap-2">
-        <ArrowRight className="w-4 h-4 text-white" />
-        <span className="text-sm font-medium text-white">Transfer Announcement</span>
-        <span className="ml-auto text-xs text-white/70">{timeAgo}</span>
+  const menu = isOwner ? (
+    <div className="relative">
+      <button
+        type="button"
+        aria-label="Post options"
+        aria-haspopup="menu"
+        aria-expanded={showMenu}
+        onClick={() => setShowMenu(!showMenu)}
+        className="-mr-2 flex h-11 w-11 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
+      >
+        <MoreHorizontal className="h-5 w-5" />
+      </button>
 
-        {/* Owner menu */}
-        {isOwner && (
-          <div className="relative ml-1">
+      {showMenu && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
+          <div role="menu" className="absolute right-0 top-full z-20 mt-1 w-40 rounded-xl border border-gray-100 bg-white py-1 shadow-lg">
             <button
               type="button"
-              aria-label="Post options"
-              onClick={() => setShowMenu(!showMenu)}
-              className="p-1 text-white/70 hover:text-white rounded transition-colors"
+              role="menuitem"
+              onClick={handleDelete}
+              className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-red-600 hover:bg-red-50"
             >
-              <MoreHorizontal className="w-4 h-4" />
+              <Trash2 className="h-4 w-4" />
+              Delete post
             </button>
-
-            {showMenu && (
-              <>
-                <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
-                <div className="absolute right-0 top-full mt-1 z-20 bg-white border border-gray-200 rounded-lg shadow-lg py-1 w-36">
-                  <button
-                    type="button"
-                    onClick={handleDelete}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    Delete
-                  </button>
-                </div>
-              </>
-            )}
           </div>
-        )}
-      </div>
+        </>
+      )}
+    </div>
+  ) : null
+
+  const clubAvatar = (
+    <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-gray-100 ring-1 ring-gray-200">
+      {meta.club_avatar_url ? (
+        <img src={getImageUrl(meta.club_avatar_url, 'avatar-md') ?? undefined} alt={meta.club_name} className="h-full w-full object-cover" decoding="async" />
+      ) : (
+        <Shield className="h-7 w-7 text-gray-400" />
+      )}
+    </div>
+  )
+  const clubName = (
+    <p className="line-clamp-2 text-sm font-semibold leading-5 text-gray-900">{meta.club_name}</p>
+  )
+
+  return (
+    <FeedCard testId="transfer-announcement-card">
+      <FeedCardHeader
+        authorId={item.author_id}
+        name={item.author_name}
+        avatarUrl={item.author_avatar}
+        role={item.author_role}
+        createdAt={item.created_at}
+        profilePath={profilePath}
+        right={menu}
+      />
+      <FeedCardCaption icon={<ArrowRight />}>Transfer announcement</FeedCardCaption>
 
       {/* Transfer visual: Player → Club */}
-      <div className="px-4 py-6">
+      <div className="px-4 pb-3 pt-1">
         <div className="flex items-start justify-center gap-3 sm:gap-6">
           {/* Player */}
-          <div className="text-center flex-shrink-0 w-[130px]">
-            <Link to={profilePath} className="inline-block mx-auto">
+          <div className="w-[130px] flex-shrink-0 text-center">
+            <Link to={profilePath} className="mx-auto inline-block">
               <Avatar
                 src={item.author_avatar}
                 initials={item.author_name?.slice(0, 2) || '?'}
@@ -149,102 +167,51 @@ export function TransferAnnouncementCard({ item, onLikeUpdate, onDelete }: Trans
                 role={item.author_role}
               />
             </Link>
-            <div className="mt-2 min-h-[40px] flex items-start justify-center">
+            <div className="mt-2 flex min-h-[40px] items-start justify-center">
               <Link to={profilePath}>
-                <p className="text-sm font-semibold text-gray-900 line-clamp-2 leading-5">
+                <p className="line-clamp-2 text-sm font-semibold leading-5 text-gray-900">
                   {item.author_name || 'Unknown'}
                 </p>
               </Link>
             </div>
-            <div className="mt-1 h-6 flex items-center justify-center">
-              <RoleBadge role={item.author_role} />
-            </div>
           </div>
 
           {/* Arrow — vertically centered with avatars */}
-          <div className="flex items-center justify-center flex-shrink-0 pt-5">
-            <ArrowRight className="w-6 h-6 text-hockia-primary" />
+          <div className="flex flex-shrink-0 items-center justify-center pt-5">
+            <ArrowRight className="h-6 w-6 text-[#c2410c]" />
           </div>
 
           {/* Club */}
-          <div className="text-center flex-shrink-0 w-[130px]">
-            {/* Avatar — same w-16 h-16 as player */}
+          <div className="w-[130px] flex-shrink-0 text-center">
             {clubPath ? (
-              <Link to={clubPath} className="inline-block mx-auto">
-                <div className="w-16 h-16 rounded-full bg-gray-100 border-2 border-gray-200 flex items-center justify-center overflow-hidden">
-                  {meta.club_avatar_url ? (
-                    <img src={getImageUrl(meta.club_avatar_url, 'avatar-md') ?? undefined} alt={meta.club_name} className="w-full h-full object-cover" decoding="async" />
-                  ) : (
-                    <Shield className="w-7 h-7 text-gray-400" />
-                  )}
-                </div>
-              </Link>
+              <Link to={clubPath} className="mx-auto inline-block">{clubAvatar}</Link>
             ) : (
-              <div className="w-16 h-16 rounded-full bg-gray-100 border-2 border-gray-200 flex items-center justify-center mx-auto overflow-hidden">
-                {meta.club_avatar_url ? (
-                  <img src={getImageUrl(meta.club_avatar_url, 'avatar-md') ?? undefined} alt={meta.club_name} className="w-full h-full object-cover" decoding="async" />
-                ) : (
-                  <Shield className="w-7 h-7 text-gray-400" />
-                )}
-              </div>
+              <div className="mx-auto inline-block">{clubAvatar}</div>
             )}
             {/* Name — same row height as player name */}
-            <div className="mt-2 min-h-[40px] flex items-start justify-center">
-              {clubPath ? (
-                <Link to={clubPath}>
-                  <p className="text-sm font-semibold text-gray-900 line-clamp-2 leading-5">
-                    {meta.club_name}
-                  </p>
-                </Link>
-              ) : (
-                <p className="text-sm font-semibold text-gray-900 line-clamp-2 leading-5">
-                  {meta.club_name}
-                </p>
-              )}
-            </div>
-            {/* Tag row — same h-6 as player's RoleBadge row */}
-            <div className="mt-1 h-6 flex items-center justify-center">
-              <RoleBadge role="club" />
+            <div className="mt-2 flex min-h-[40px] items-start justify-center">
+              {clubPath ? <Link to={clubPath}>{clubName}</Link> : clubName}
             </div>
           </div>
         </div>
-
-        {/* Custom message */}
-        {hasCustomMessage && (
-          <p className="mt-5 text-gray-700 text-sm text-center leading-relaxed whitespace-pre-wrap">
-            {item.content}
-          </p>
-        )}
-
-        {/* View Profile CTA — the announcing player is the focus; route
-            to their public profile. The card is the player saying "I
-            joined {club}". Matches the CTA style on the other actor-
-            focused feed cards. */}
-        <div className="mt-5 flex justify-center">
-          <Link
-            to={profilePath}
-            className="inline-flex items-center gap-1.5 px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            View Profile
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-            </svg>
-          </Link>
-        </div>
       </div>
 
-      {/* Media grid — flush to card edges (Facebook style). */}
+      {hasCustomMessage && (
+        <FeedCardBody>
+          <p className="whitespace-pre-wrap">{item.content}</p>
+        </FeedCardBody>
+      )}
+
       {sortedImages.length > 0 && (
-        <div className="pb-2">
+        <FeedCardMedia>
           <FeedMediaGrid
             media={sortedImages}
             altPrefix={item.author_name ? `Transfer announcement by ${item.author_name}` : 'Transfer announcement'}
             onImageClick={handleImageClick}
           />
-        </div>
+        </FeedCardMedia>
       )}
 
-      {/* Interaction bar */}
       <PostInteractionBar
         postId={item.post_id}
         likeCount={item.like_count}
@@ -261,7 +228,6 @@ export function TransferAnnouncementCard({ item, onLikeUpdate, onDelete }: Trans
         thumbnailUrl={item.images?.[0]?.url ?? null}
       />
 
-      {/* Comments section */}
       {showComments && (
         <PostCommentsSection
           postId={item.post_id}
@@ -270,7 +236,6 @@ export function TransferAnnouncementCard({ item, onLikeUpdate, onDelete }: Trans
         />
       )}
 
-      {/* Media lightbox */}
       {lightboxOpen && lightboxImages.length > 0 && (
         <MediaLightbox
           images={lightboxImages}
@@ -278,6 +243,6 @@ export function TransferAnnouncementCard({ item, onLikeUpdate, onDelete }: Trans
           onClose={() => setLightboxOpen(false)}
         />
       )}
-    </div>
+    </FeedCard>
   )
 }

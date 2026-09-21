@@ -55,14 +55,14 @@ export function PulseRoleFallback({ role }: { role: Role }) {
       <AuroraHero accent="#4f46e5">
         <HeroLabel>Your week on HOCKIA</HeroLabel>
         <h1 className="mt-2 text-xl font-black leading-tight">{copy.headline}</h1>
-        <p className="mt-1 text-sm text-white/70">{copy.sub}</p>
+        <p className="mt-1 text-sm text-gray-600">{copy.sub}</p>
         <button
           type="button"
           onClick={() => {
             trackModuleClick(MODULE_ID, 0)
             navigate(copy.to)
           }}
-          className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-2xl bg-white/[0.14] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/20"
+          className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-hockia-primary px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
         >
           <copy.Icon className="h-4 w-4" />
           {copy.cta}

@@ -1,7 +1,6 @@
 import type { CommunityFilters } from '@/components/community/communityFilters'
 import { CATEGORY_LABELS } from '@/lib/hockeyCategories'
 import { COACH_SPECIALIZATIONS } from '@/lib/coachSpecializations'
-import { availabilityFilterLabel } from '@/lib/availabilityLabel'
 
 /**
  * One removable active-filter chip shown below the Community search bar. Role is
@@ -61,8 +60,9 @@ export function getActiveFilterChips(
   if (filters.evidenceEnoughOnly) {
     chips.push({ id: 'evidence', label: 'Enough evidence+', onRemove: () => update('evidenceEnoughOnly', false) })
   }
-  if (filters.availability === 'open') {
-    chips.push({ id: 'availability', label: availabilityFilterLabel(filters.role), onRemove: () => update('availability', 'all') })
+  if (filters.availability !== 'all') {
+    const label = { play: 'Open to play', coach: 'Open to coach', recruiting: 'Recruiting', opportunities: 'Open to opportunities' }[filters.availability]
+    chips.push({ id: 'availability', label, onRemove: () => update('availability', 'all') })
   }
   if (filters.brandCategory) {
     chips.push({ id: 'brandCategory', label: titleCase(filters.brandCategory), onRemove: () => update('brandCategory', null) })

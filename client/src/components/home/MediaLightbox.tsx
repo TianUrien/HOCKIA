@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react'
 import { createPortal } from 'react-dom'
-import { X, ChevronLeft, ChevronRight, Play, Pause, Volume2, VolumeX, Maximize } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { EntityAvatar } from '@/components/ui/EntityAvatar'
+import { identityLine } from '@/lib/identity'
+import { X, ChevronLeft, ChevronRight, Play, Pause, Volume2, VolumeX, Maximize, Share2, Heart, MessageCircle } from 'lucide-react'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import { useSwipeGesture } from '@/hooks/useSwipeGesture'
@@ -11,16 +14,37 @@ import type { PostMediaItem } from '@/types/homeFeed'
 // render). Legacy Supabase-Storage MP4 items keep the raw <video> slide below.
 const NativeVideoPlayer = lazy(() => import('@/components/media/NativeVideoPlayer'))
 
+export interface LightboxAuthor {
+  id: string
+  name: string | null
+  avatarUrl: string | null
+  role: string | null
+  profilePath: string | null
+}
+
+export interface LightboxStats {
+  likeCount: number
+  commentCount: number
+  hasLiked: boolean
+  onToggleLike?: () => void
+  onComment?: () => void
+}
+
 interface MediaLightboxProps {
   images: PostMediaItem[]
   initialIndex: number
   onClose: () => void
+  /** Figma Video player / Photo viewer chrome: author row, caption, actions. */
+  author?: LightboxAuthor
+  caption?: string | null
+  stats?: LightboxStats
+  onShare?: () => void
 }
 
 /** Rubber-band resistance at carousel boundaries (0–1, lower = more resistance) */
 const EDGE_RESISTANCE = 0.3
 
-export function MediaLightbox({ images, initialIndex, onClose }: MediaLightboxProps) {
+export function MediaLightbox({ images, initialIndex, onClose, author, caption, stats, onShare }: MediaLightboxProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex)
   const dialogRef = useRef<HTMLDivElement>(null)
   const trackRef = useRef<HTMLDivElement>(null)
@@ -79,7 +103,7 @@ export function MediaLightbox({ images, initialIndex, onClose }: MediaLightboxPr
           track!.style.transition = 'none'
           track!.style.transform = `translateX(${baseTranslate + dragPercent}%) translateY(${swipeDownY}px)`
           track!.style.opacity = swipeDownY > 0 ? String(swipeDownOpacity) : '1'
-          dialog!.style.backgroundColor = `rgba(0, 0, 0, ${0.95 * swipeDownOpacity})`
+          dialog!.style.backgroundColor = `rgba(0, 0, 0, ${swipeDownOpacity})`
         } else {
           // Snap: restore CSS transition
           track!.style.transition = 'transform 300ms cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 300ms ease-out'
@@ -133,19 +157,10 @@ export function MediaLightbox({ images, initialIndex, onClose }: MediaLightboxPr
       aria-label="Media viewer"
       tabIndex={-1}
       onClick={onClose}
-      style={{ backgroundColor: 'rgba(0, 0, 0, 0.95)' }}
+      style={{ backgroundColor: '#000' }}
     >
-      {/* Header: close button + position indicator */}
-      <div className="flex items-center justify-between px-4 py-3 relative z-10">
-        <div className="w-10" />
-        {hasMultiple && (
-          <span
-            className="text-white/80 text-sm font-medium"
-            aria-live="polite"
-          >
-            {currentIndex + 1} / {images.length}
-          </span>
-        )}
+      {/* Top bar (Figma Video player / Photo viewer): X left, title centre, share right */}
+      <div className="relative z-10 flex items-center justify-between px-3 pb-2 pt-[max(env(safe-area-inset-top),0.75rem)]">
         <button
           type="button"
           aria-label="Close"
@@ -153,10 +168,27 @@ export function MediaLightbox({ images, initialIndex, onClose }: MediaLightboxPr
             e.stopPropagation()
             onClose()
           }}
-          className="w-10 h-10 flex items-center justify-center rounded-full text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-white transition-colors hover:bg-white/30"
         >
-          <X className="w-6 h-6" />
+          <X className="h-[18px] w-[18px]" strokeWidth={1.7} />
         </button>
+        <span className="text-row font-semibold text-white" aria-live="polite">
+          {(images[currentIndex]?.media_type ?? 'image') === 'video'
+            ? 'Video'
+            : hasMultiple ? `${currentIndex + 1} of ${images.length}` : 'Photo'}
+        </span>
+        {onShare ? (
+          <button
+            type="button"
+            aria-label="Share"
+            onClick={(e) => { e.stopPropagation(); onShare() }}
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-white transition-colors hover:bg-white/30"
+          >
+            <Share2 className="h-[18px] w-[18px]" strokeWidth={1.7} />
+          </button>
+        ) : (
+          <span className="w-9" />
+        )}
       </div>
 
       {/* Carousel — touch-action: none prevents browser gesture interference */}
@@ -236,6 +268,58 @@ export function MediaLightbox({ images, initialIndex, onClose }: MediaLightboxPr
           </button>
         )}
       </div>
+
+      {/* Bottom overlay: author + View profile, caption, actions over the media */}
+      {(author || caption || stats) && (
+        <div
+          className="relative z-10 flex flex-col gap-2.5 px-5 pb-[max(env(safe-area-inset-bottom),1.5rem)] pt-3"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {author && (
+            <div className="flex items-center gap-2.5">
+              <EntityAvatar src={author.avatarUrl} name={author.name} role={author.role} size={36} />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-row font-semibold text-white">{author.name ?? 'HOCKIA member'}</p>
+                <p className="truncate text-secondary text-[#d1d1d6]">{identityLine(author.role)}</p>
+              </div>
+              {author.profilePath && (
+                <Link
+                  to={author.profilePath}
+                  onClick={onClose}
+                  className="flex h-8 items-center rounded-full bg-white/20 px-4 text-secondary font-semibold text-white"
+                >
+                  View profile
+                </Link>
+              )}
+            </div>
+          )}
+          {caption ? <p className="line-clamp-2 text-[14px] leading-5 text-white">{caption}</p> : null}
+          {stats && (
+            <div className="flex items-center gap-5 pt-0.5 text-[14px] text-[#d1d1d6]">
+              <button
+                type="button"
+                onClick={stats.onToggleLike}
+                disabled={!stats.onToggleLike}
+                aria-pressed={stats.hasLiked}
+                aria-label={stats.hasLiked ? 'Unlike' : 'Like'}
+                className={`inline-flex items-center gap-1.5 ${stats.hasLiked ? 'text-hockia-soft' : 'text-white'}`}
+              >
+                <Heart className={`h-[22px] w-[22px] ${stats.hasLiked ? 'fill-hockia-primary text-hockia-primary' : ''}`} strokeWidth={1.7} />
+                {stats.likeCount > 0 && <span className="text-[#d1d1d6]">{stats.likeCount}</span>}
+              </button>
+              <button type="button" onClick={stats.onComment} aria-label="Comments" className="inline-flex items-center gap-1.5 text-white">
+                <MessageCircle className="h-[22px] w-[22px]" strokeWidth={1.7} />
+                {stats.commentCount > 0 && <span className="text-[#d1d1d6]">{stats.commentCount}</span>}
+              </button>
+              {onShare && (
+                <button type="button" onClick={onShare} aria-label="Share" className="inline-flex items-center text-white">
+                  <Share2 className="h-[22px] w-[22px]" strokeWidth={1.7} />
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </div>,
     document.body
   )

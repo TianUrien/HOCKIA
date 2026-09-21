@@ -24,6 +24,7 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import ProfileTopBar from '@/components/dashboard/ProfileTopBar'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, MapPin, Calendar, Shield, Flag, Edit2, Eye, Languages as LanguagesIcon, Activity, MessageCircle, Award } from 'lucide-react'
 import Header from '@/components/Header'
@@ -284,9 +285,10 @@ export default function UmpireDashboard({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
+      <Header mobileHidden={!readOnly} />
       {readOnly && isOwnProfile && <PublicViewBanner />}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 pt-24 pb-12">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 ${readOnly ? 'pt-24' : 'pt-[max(env(safe-area-inset-top),0.75rem)] lg:pt-24'} pb-12">
+        {!readOnly && <ProfileTopBar />}
         {readOnly && (
           <button
             type="button"

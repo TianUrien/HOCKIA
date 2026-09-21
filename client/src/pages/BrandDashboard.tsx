@@ -6,6 +6,7 @@
  */
 
 import { useEffect, useState, useRef, useCallback } from 'react'
+import ProfileTopBar from '@/components/dashboard/ProfileTopBar'
 import { Globe, Instagram, ExternalLink, Eye, Edit, Store, Package, Users, Plus, FileText, Loader2, Award, X } from 'lucide-react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import Header from '@/components/Header'
@@ -409,7 +410,7 @@ export default function BrandDashboard() {
   if (brandLoading || !brand) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <Header />
+        <Header mobileHidden />
         <main className="mx-auto max-w-7xl px-4 pt-24 pb-12 md:px-6">
           <div className="mb-6 rounded-2xl bg-white p-6 shadow-sm md:p-8">
             <div className="flex flex-col gap-6 md:flex-row md:items-center">
@@ -437,9 +438,10 @@ export default function BrandDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
+      <Header mobileHidden />
 
-      <main data-testid="brand-dashboard" className="max-w-7xl mx-auto px-4 md:px-6 pt-24 pb-12">
+      <main data-testid="brand-dashboard" className="max-w-7xl mx-auto px-4 md:px-6 pt-[max(env(safe-area-inset-top),0.75rem)] lg:pt-24 pb-12">
+        <ProfileTopBar />
         {/* Profile Card */}
         <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm mb-6 animate-fade-in overflow-visible">
           <div className="flex flex-col md:flex-row items-start md:items-center gap-6">

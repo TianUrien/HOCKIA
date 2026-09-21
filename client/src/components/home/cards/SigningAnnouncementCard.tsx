@@ -4,12 +4,12 @@ import { ArrowRight, MoreHorizontal, Trash2 } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
 import { usePostInteractions } from '@/hooks/usePostInteractions'
 import { useUserPosts } from '@/hooks/useUserPosts'
-import { Avatar, RoleBadge } from '@/components'
-import { getTimeAgo } from '@/lib/utils'
+import { Avatar } from '@/components'
 import { FeedMediaGrid } from '../FeedMediaGrid'
 import { MediaLightbox } from '../MediaLightbox'
 import { PostInteractionBar } from '../PostInteractionBar'
 import { PostCommentsSection } from '../PostCommentsSection'
+import { FeedCard, FeedCardBody, FeedCardCaption, FeedCardHeader, FeedCardMedia, profilePathForRole } from '../FeedCard'
 import type { UserPostFeedItem, SigningMetadata } from '@/types/homeFeed'
 
 interface SigningAnnouncementCardProps {
@@ -36,15 +36,12 @@ export function SigningAnnouncementCard({ item, onLikeUpdate, onDelete }: Signin
     setLocalCommentCount(item.comment_count)
   }, [item.comment_count])
 
-  const timeAgo = getTimeAgo(item.created_at, true)
   const isOwner = user?.id === item.author_id
 
   // Club (author) path
-  const clubPath = `/clubs/id/${item.author_id}`
-  // Signed person path. Coaches share the player public-profile route in
-  // this codebase (no `/coaches/:id` route exists) — see App.tsx and the
-  // pattern used in MemberJoinedCard, MilestoneCard, OpportunityPostedCard.
-  const personPath = `/players/id/${meta.person_profile_id}`
+  const clubPath = profilePathForRole(item.author_role, item.author_id)
+  // Signed person path — routed by their role (player or coach).
+  const personPath = profilePathForRole(meta.person_role, meta.person_profile_id)
 
   const sortedImages = useMemo(
     () => item.images ? [...item.images].sort((a, b) => a.order - b.order) : [],
@@ -97,51 +94,57 @@ export function SigningAnnouncementCard({ item, onLikeUpdate, onDelete }: Signin
     setLocalCommentCount(newCount)
   }, [])
 
-  return (
-    <div className="bg-white">
-      {/* Branded header — club orange */}
-      <div className="bg-gradient-to-r from-[#EA580C] to-[#F97316] px-4 py-2.5 flex items-center gap-2">
-        <ArrowRight className="w-4 h-4 text-white" />
-        <span className="text-sm font-medium text-white">New Signing</span>
-        <span className="ml-auto text-xs text-white/70">{timeAgo}</span>
+  const menu = isOwner ? (
+    <div className="relative">
+      <button
+        type="button"
+        aria-label="Post options"
+        aria-haspopup="menu"
+        aria-expanded={showMenu}
+        onClick={() => setShowMenu(!showMenu)}
+        className="-mr-2 flex h-11 w-11 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
+      >
+        <MoreHorizontal className="h-5 w-5" />
+      </button>
 
-        {/* Owner menu */}
-        {isOwner && (
-          <div className="relative ml-1">
+      {showMenu && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
+          <div role="menu" className="absolute right-0 top-full z-20 mt-1 w-40 rounded-xl border border-gray-100 bg-white py-1 shadow-lg">
             <button
               type="button"
-              aria-label="Post options"
-              onClick={() => setShowMenu(!showMenu)}
-              className="p-1 text-white/70 hover:text-white rounded transition-colors"
+              role="menuitem"
+              onClick={handleDelete}
+              className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-red-600 hover:bg-red-50"
             >
-              <MoreHorizontal className="w-4 h-4" />
+              <Trash2 className="h-4 w-4" />
+              Delete post
             </button>
-
-            {showMenu && (
-              <>
-                <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
-                <div className="absolute right-0 top-full mt-1 z-20 bg-white border border-gray-200 rounded-lg shadow-lg py-1 w-36">
-                  <button
-                    type="button"
-                    onClick={handleDelete}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    Delete
-                  </button>
-                </div>
-              </>
-            )}
           </div>
-        )}
-      </div>
+        </>
+      )}
+    </div>
+  ) : null
+
+  return (
+    <FeedCard testId="signing-announcement-card">
+      <FeedCardHeader
+        authorId={item.author_id}
+        name={item.author_name}
+        avatarUrl={item.author_avatar}
+        role={item.author_role}
+        createdAt={item.created_at}
+        profilePath={clubPath}
+        right={menu}
+      />
+      <FeedCardCaption icon={<ArrowRight />}>New signing</FeedCardCaption>
 
       {/* Signing visual: Person → Club */}
-      <div className="px-4 py-6">
+      <div className="px-4 pb-3 pt-1">
         <div className="flex items-start justify-center gap-3 sm:gap-6">
           {/* Signed person */}
-          <div className="text-center flex-shrink-0 w-[130px]">
-            <Link to={personPath} className="inline-block mx-auto">
+          <div className="w-[130px] flex-shrink-0 text-center">
+            <Link to={personPath} className="mx-auto inline-block">
               <Avatar
                 src={meta.person_avatar_url}
                 initials={meta.person_name?.slice(0, 2) || '?'}
@@ -149,26 +152,23 @@ export function SigningAnnouncementCard({ item, onLikeUpdate, onDelete }: Signin
                 role={meta.person_role}
               />
             </Link>
-            <div className="mt-2 min-h-[40px] flex items-start justify-center">
+            <div className="mt-2 flex min-h-[40px] items-start justify-center">
               <Link to={personPath}>
-                <p className="text-sm font-semibold text-gray-900 line-clamp-2 leading-5">
+                <p className="line-clamp-2 text-sm font-semibold leading-5 text-gray-900">
                   {meta.person_name}
                 </p>
               </Link>
             </div>
-            <div className="mt-1 h-6 flex items-center justify-center">
-              <RoleBadge role={meta.person_role} />
-            </div>
           </div>
 
-          {/* Arrow */}
-          <div className="flex items-center justify-center flex-shrink-0 pt-5">
-            <ArrowRight className="w-6 h-6 text-[#c2410c]" />
+          {/* Arrow — vertically centered with avatars */}
+          <div className="flex flex-shrink-0 items-center justify-center pt-5">
+            <ArrowRight className="h-6 w-6 text-[#c2410c]" />
           </div>
 
           {/* Club (author) */}
-          <div className="text-center flex-shrink-0 w-[130px]">
-            <Link to={clubPath} className="inline-block mx-auto">
+          <div className="w-[130px] flex-shrink-0 text-center">
+            <Link to={clubPath} className="mx-auto inline-block">
               <Avatar
                 src={item.author_avatar}
                 initials={item.author_name?.slice(0, 2) || '?'}
@@ -176,55 +176,33 @@ export function SigningAnnouncementCard({ item, onLikeUpdate, onDelete }: Signin
                 role={item.author_role}
               />
             </Link>
-            <div className="mt-2 min-h-[40px] flex items-start justify-center">
+            <div className="mt-2 flex min-h-[40px] items-start justify-center">
               <Link to={clubPath}>
-                <p className="text-sm font-semibold text-gray-900 line-clamp-2 leading-5">
+                <p className="line-clamp-2 text-sm font-semibold leading-5 text-gray-900">
                   {item.author_name || 'Unknown'}
                 </p>
               </Link>
             </div>
-            <div className="mt-1 h-6 flex items-center justify-center">
-              <RoleBadge role="club" />
-            </div>
           </div>
-        </div>
-
-        {/* Custom message */}
-        {hasCustomMessage && (
-          <p className="mt-5 text-gray-700 text-sm text-center leading-relaxed whitespace-pre-wrap">
-            {item.content}
-          </p>
-        )}
-
-        {/* View Profile CTA — the signed person is the focus of the
-            announcement; route to their public profile. Matches the CTA
-            style used on MilestoneCard / MemberJoinedCard for feed-wide
-            consistency. */}
-        <div className="mt-5 flex justify-center">
-          <Link
-            to={personPath}
-            className="inline-flex items-center gap-1.5 px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            View Profile
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-            </svg>
-          </Link>
         </div>
       </div>
 
-      {/* Media grid — flush to card edges (Facebook style). */}
+      {hasCustomMessage && (
+        <FeedCardBody>
+          <p className="whitespace-pre-wrap">{item.content}</p>
+        </FeedCardBody>
+      )}
+
       {sortedImages.length > 0 && (
-        <div className="pb-2">
+        <FeedCardMedia>
           <FeedMediaGrid
             media={sortedImages}
             altPrefix={item.author_name ? `Signing announcement by ${item.author_name}` : 'Signing announcement'}
             onImageClick={handleImageClick}
           />
-        </div>
+        </FeedCardMedia>
       )}
 
-      {/* Interaction bar */}
       <PostInteractionBar
         postId={item.post_id}
         likeCount={item.like_count}
@@ -241,7 +219,6 @@ export function SigningAnnouncementCard({ item, onLikeUpdate, onDelete }: Signin
         thumbnailUrl={item.images?.[0]?.url ?? null}
       />
 
-      {/* Comments section */}
       {showComments && (
         <PostCommentsSection
           postId={item.post_id}
@@ -250,7 +227,6 @@ export function SigningAnnouncementCard({ item, onLikeUpdate, onDelete }: Signin
         />
       )}
 
-      {/* Media lightbox */}
       {lightboxOpen && lightboxImages.length > 0 && (
         <MediaLightbox
           images={lightboxImages}
@@ -258,6 +234,6 @@ export function SigningAnnouncementCard({ item, onLikeUpdate, onDelete }: Signin
           onClose={() => setLightboxOpen(false)}
         />
       )}
-    </div>
+    </FeedCard>
   )
 }

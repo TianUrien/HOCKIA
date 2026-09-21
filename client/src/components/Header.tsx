@@ -1,11 +1,13 @@
 import { useEffect, useRef } from 'react'
-import { MessageCircle, Home, Users, Briefcase, Bell, Globe, Sparkles, Store } from 'lucide-react'
+import { Home, Users, Briefcase, Bell, Inbox, Sparkles, Store, Search } from 'lucide-react'
+import { openSearchOverlay } from '@/lib/searchOverlayBus'
 import { AvatarMenu, NotificationBadge } from '@/components'
-import SettingsSheet from './SettingsSheet'
 import { useNavigation } from '@/hooks/useNavigation'
 import { useAuthStore } from '@/lib/auth'
 
-export default function Header() {
+/** `mobileHidden`: screens that carry their own title row (the Profile
+ *  screen, founder ruling 2026-09-19) drop the app header below lg. */
+export default function Header({ mobileHidden = false }: { mobileHidden?: boolean } = {}) {
   const {
     user,
     profile,
@@ -64,7 +66,7 @@ export default function Header() {
   return (
     <header
       ref={headerRef}
-      className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 pt-[env(safe-area-inset-top)] [transform:translate3d(0,0,0)] [backface-visibility:hidden]"
+      className={`${mobileHidden ? 'hidden lg:block ' : ''}fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 pt-[env(safe-area-inset-top)] [transform:translate3d(0,0,0)] [backface-visibility:hidden]`}
     >
       <nav className="max-w-7xl mx-auto px-4 md:px-6 py-4">
         <div className="flex items-center justify-between">
@@ -93,43 +95,18 @@ export default function Header() {
             </span>
           </div>
 
-          {/* Mobile Navigation — Marketplace + Messages + Notifications.
-              HOCKIA AI / Discover lives as a floating button above the Dashboard
-              slot in MobileBottomNav, no longer in the header. */}
+          {/* Mobile header (Figma 03 Player, Home v2): wordmark + Search only.
+              Notifications and messages moved into the Inbox tab; settings
+              live on the Profile screen. */}
           {user && profile && (
-            <div className="flex lg:hidden items-center gap-1">
+            <div className="flex lg:hidden items-center">
               <button
-                onClick={() => handleNavigate('/marketplace')}
-                className={`relative min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg transition-colors ${
-                  isActive('/marketplace')
-                    ? 'text-hockia-primary bg-hockia-primary/10'
-                    : 'text-gray-700 hover:bg-gray-100'
-                }`}
-                aria-label="Marketplace"
+                onClick={() => openSearchOverlay()}
+                className="relative min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full text-gray-900 hover:bg-gray-100 transition-colors"
+                aria-label="Search"
               >
-                <Store className="w-5 h-5" />
+                <Search className="w-[22px] h-[22px]" strokeWidth={1.75} />
               </button>
-              <button
-                onClick={() => handleNavigate('/messages')}
-                className="relative min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
-                aria-label="Messages"
-              >
-                <MessageCircle className="w-5 h-5" />
-                <NotificationBadge count={unreadCount} className="-right-0.5 -top-0.5" />
-              </button>
-              <button
-                onClick={() => toggleNotificationDrawer()}
-                className="relative min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
-                aria-label="Notifications"
-              >
-                <Bell className="w-5 h-5" />
-                <NotificationBadge count={notificationCount} className="-right-0.5 -top-0.5" />
-              </button>
-              {/* Settings sheet — gear icon dropdown. Replaces the avatar-
-                  menu Settings/Sign out entries that used to live in the
-                  bottom nav (the avatar there now navigates directly to
-                  the dashboard). Mobile-only; desktop keeps AvatarMenu. */}
-              <SettingsSheet />
             </div>
           )}
 
@@ -155,9 +132,9 @@ export default function Header() {
                 {/* Primary nav links */}
                 {([
                   { path: '/home', label: 'Home', icon: Home, badge: undefined as number | undefined },
-                  { path: '/world', label: 'World', icon: Globe, badge: undefined as number | undefined },
-                  { path: '/opportunities', label: 'Opportunities', icon: Briefcase, badge: opportunityCount as number | undefined },
                   { path: '/community', label: 'Community', icon: Users, badge: undefined as number | undefined },
+                  { path: '/opportunities', label: 'Opportunities', icon: Briefcase, badge: opportunityCount as number | undefined },
+                  { path: '/inbox', label: 'Inbox', icon: Inbox, badge: (unreadCount + notificationCount) as number | undefined },
                 ]).map(({ path, label, icon: Icon, badge }) => (
                   <button
                     key={path}
@@ -210,20 +187,6 @@ export default function Header() {
                   <Sparkles className="w-5 h-5" />
                 </button>
                 <button
-                  onClick={() => handleNavigate('/messages')}
-                  className={`relative p-2 rounded-lg transition-colors ${
-                    isActive('/messages')
-                      ? 'text-hockia-primary bg-hockia-primary/10'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                  }`}
-                  aria-label="Messages"
-                  title="Messages"
-                  aria-current={isActive('/messages') ? 'page' : undefined}
-                >
-                  <MessageCircle className="w-5 h-5" />
-                  <NotificationBadge count={unreadCount} className="-right-0.5 -top-0.5" />
-                </button>
-                <button
                   onClick={() => toggleNotificationDrawer()}
                   className="relative p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors"
                   aria-label="Notifications"
@@ -243,7 +206,6 @@ export default function Header() {
               <>
                 {/* Unauthenticated primary nav links */}
                 {([
-                  { path: '/world', label: 'World', icon: Globe, badge: undefined as number | undefined },
                   { path: '/marketplace', label: 'Marketplace', icon: Store, badge: undefined as number | undefined },
                   { path: '/opportunities', label: 'Opportunities', icon: Briefcase, badge: opportunityCount as number | undefined },
                   { path: '/community', label: 'Community', icon: Users, badge: undefined as number | undefined },

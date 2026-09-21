@@ -147,6 +147,21 @@ vi.mock('@/components/ProfileViewersSection', () => ({
 // Stubbing here keeps PlayerDashboard tests focused on the dashboard
 // shell (Hero + Bento Grid vs tab content routing) without dragging
 // in Supabase fetches from every child card.
+// Phone long scroll — its own reads (videos, career, gallery, posts) are
+// covered separately; the dashboard test asserts the desktop landing body.
+vi.mock('@/components/profile/mobile/ProfileLongScroll', () => ({
+  default: () => <div data-testid="profile-long-scroll" />,
+}))
+
+// Phone leaf screens (Friends / Career, own + public) render beside the
+// desktop section surface; jsdom applies no CSS, so they are stubbed here.
+vi.mock('@/components/profile/mobile/FriendsScreen', () => ({
+  default: () => <div data-testid="friends-screen" />,
+}))
+vi.mock('@/components/profile/mobile/CareerScreen', () => ({
+  default: () => <div data-testid="career-screen" />,
+}))
+
 vi.mock('@/components/dashboard/bento/PlayerBentoGrid', () => ({
   default: ({ readOnly }: { readOnly: boolean }) => (
     <div data-testid={readOnly ? 'player-bento-grid-visitor' : 'player-bento-grid-owner'}>

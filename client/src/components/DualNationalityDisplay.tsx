@@ -18,12 +18,17 @@ interface DualNationalityDisplayProps {
    *     just two flags + EU pill, since two long nationality names on a
    *     ~150px tile width truncate to "Aus, Engli EU" which reads worse
    *     than "🇦🇺🇬🇧 EU".
+   *   - 'line' — Figma redesign rule (2026-09-21): nationalities are ALWAYS
+   *     one line. Flags first, then the demonyms joined with " · ",
+   *     truncated with an ellipsis — "🇦🇺 🏴 Australian · English". Never
+   *     wraps or stacks, so a card's height never depends on how many
+   *     passports a member holds.
    *   - 'code' — ultra-compact flag + ISO3 code for the premium recruiter
    *     card ("🇳🇱 NLD · 🇦🇷 ARG · EU"). One trailing EU chip means the
    *     PERSON has EU eligibility (recruiter-relevant), not a per-country
    *     label.
    */
-  mode?: 'full' | 'compact' | 'card' | 'tile' | 'code'
+  mode?: 'full' | 'compact' | 'card' | 'tile' | 'code' | 'line'
   /** Additional CSS classes */
   className?: string
 }
@@ -58,6 +63,18 @@ export default function DualNationalityDisplay({
       return <span className={className}>{fallbackText}</span>
     }
     return null
+  }
+
+  if (mode === 'line') {
+    const held = [primaryCountry, secondaryCountry].filter((c): c is Country => Boolean(c))
+    return (
+      <span className={`flex min-w-0 max-w-full items-center gap-1.5 ${className}`}>
+        <span className="flex shrink-0 items-center gap-1">
+          {held.map((c) => <Flag key={c.id} code={c.code} countryName={c.name} fallbackEmoji={c.flag_emoji} />)}
+        </span>
+        <span className="min-w-0 truncate">{held.map((c) => c.nationality_name).join(' · ')}</span>
+      </span>
+    )
   }
 
   if (mode === 'compact') {

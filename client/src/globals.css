@@ -17,6 +17,16 @@
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
+/* Font family (founder ruling 2026-09-20): Inter on the web, the system font on native
+   (SF Pro on iOS, Roboto on Android). Sizes, weights and line-heights follow the
+   Figma spec regardless of family — see tailwind.config.js fontSize. */
+:root {
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+}
+html[data-native='1'] {
+  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Roboto', 'Inter', system-ui, sans-serif;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

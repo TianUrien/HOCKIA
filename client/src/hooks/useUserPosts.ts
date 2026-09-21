@@ -66,7 +66,8 @@ export function useUserPosts() {
 
   const createPost = useCallback(async (
     content: string,
-    images?: PostImage[] | null
+    images?: PostImage[] | null,
+    postType: 'text' | 'question' = 'text',
   ): Promise<PostResult> => {
     try {
       const { data, error } = await withTimeout(
@@ -74,6 +75,7 @@ export function useUserPosts() {
         async () => await supabase.rpc('create_user_post', {
           p_content: content,
           p_images: (images && images.length > 0 ? images : null) as unknown as undefined,
+          p_post_type: postType,
         }),
         15_000
       )
@@ -82,7 +84,7 @@ export function useUserPosts() {
 
       const result = data as unknown as PostResult
       if (result.success && result.post_id) {
-        trackDbEvent('post_create', 'post', result.post_id, { type: 'user' })
+        trackDbEvent('post_create', 'post', result.post_id, { type: postType === 'question' ? 'question' : 'user' })
         invalidatePostQueriesAfterCreate()
         void refreshAuthProfile()
       }

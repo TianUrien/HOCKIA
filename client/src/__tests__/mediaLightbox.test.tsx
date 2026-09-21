@@ -54,7 +54,7 @@ describe('MediaLightbox', () => {
       />
     )
 
-    expect(screen.getByText('1 / 3')).toBeInTheDocument()
+    expect(screen.getByText('1 of 3')).toBeInTheDocument()
   })
 
   it('navigates to next image on next arrow click', () => {
@@ -67,7 +67,7 @@ describe('MediaLightbox', () => {
     )
 
     fireEvent.click(screen.getByLabelText('Next'))
-    expect(screen.getByText('2 / 3')).toBeInTheDocument()
+    expect(screen.getByText('2 of 3')).toBeInTheDocument()
   })
 
   it('navigates to previous image on prev arrow click', () => {
@@ -80,7 +80,7 @@ describe('MediaLightbox', () => {
     )
 
     fireEvent.click(screen.getByLabelText('Previous'))
-    expect(screen.getByText('2 / 3')).toBeInTheDocument()
+    expect(screen.getByText('2 of 3')).toBeInTheDocument()
   })
 
   it('does not navigate past first image', () => {
@@ -94,7 +94,7 @@ describe('MediaLightbox', () => {
 
     // No prev button when at first image
     expect(screen.queryByLabelText('Previous')).not.toBeInTheDocument()
-    expect(screen.getByText('1 / 3')).toBeInTheDocument()
+    expect(screen.getByText('1 of 3')).toBeInTheDocument()
   })
 
   it('does not navigate past last image', () => {
@@ -108,7 +108,7 @@ describe('MediaLightbox', () => {
 
     // No next button when at last image
     expect(screen.queryByLabelText('Next')).not.toBeInTheDocument()
-    expect(screen.getByText('3 / 3')).toBeInTheDocument()
+    expect(screen.getByText('3 of 3')).toBeInTheDocument()
   })
 
   it('closes on Escape key', () => {
@@ -164,10 +164,10 @@ describe('MediaLightbox', () => {
     )
 
     fireEvent.keyDown(document, { key: 'ArrowRight' })
-    expect(screen.getByText('2 / 3')).toBeInTheDocument()
+    expect(screen.getByText('2 of 3')).toBeInTheDocument()
 
     fireEvent.keyDown(document, { key: 'ArrowLeft' })
-    expect(screen.getByText('1 / 3')).toBeInTheDocument()
+    expect(screen.getByText('1 of 3')).toBeInTheDocument()
   })
 
   it('locks body scroll when open and restores on unmount', () => {

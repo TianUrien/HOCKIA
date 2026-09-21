@@ -1,77 +1,57 @@
-import { useRef, useCallback, useState } from 'react'
+import { useRef, useCallback } from 'react'
+import { Navigate, useSearchParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { Header } from '@/components'
 import { HomeFeed } from '@/components/home/HomeFeed'
 import { PostComposer } from '@/components/home/PostComposer'
+import { YourWeekCard } from '@/components/home/YourWeekCard'
 import { SearchOverlay } from '@/components/search/SearchOverlay'
 import { PullToRefresh } from '@/components/PullToRefresh'
-import { HomeTabBar } from '@/components/home/HomeTabs'
-import { useHomeTab } from '@/hooks/useHomeTab'
-import { PulseTab } from '@/components/home/pulse/PulseTab'
 import { useScrollRestore } from '@/hooks/useScrollRestore'
-import { useScrollDirection } from '@/hooks/useScrollDirection'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import type { HomeFeedItem } from '@/types/homeFeed'
 
+/**
+ * Home (UI redesign 2026-09-19): one scroll — "Your week" (the Pulse
+ * summary, tap → /pulse), the composer strip, then the community feed.
+ * The Feed / Pulse tab switch is gone; Pulse is its own screen.
+ */
 export default function HomePage() {
   useScrollRestore()
   useDocumentTitle('Home')
-  const scrollDirection = useScrollDirection()
+  const [params] = useSearchParams()
   const prependItemRef = useRef<((item: HomeFeedItem) => void) | null>(null)
   const queryClient = useQueryClient()
-  const [tab, setTab] = useHomeTab()
-  // Pulse modules fetch via plain mount-effect hooks, not React Query, so a
-  // ['home-feed'] invalidation doesn't touch them. Bumping this key remounts
-  // PulseTab, re-running its hooks — makes pull-to-refresh actually refresh
-  // the hero stats / applications / pulse cards on the default tab.
-  const [pulseRefreshKey, setPulseRefreshKey] = useState(0)
 
   const handleRefresh = useCallback(async () => {
     await queryClient.invalidateQueries({ queryKey: ['home-feed'] })
-    setPulseRefreshKey((k) => k + 1)
   }, [queryClient])
 
+  // Links in the wild (and the profile-views / application emails) still
+  // point at /home?tab=pulse — that card lives on /pulse now.
+  if (params.get('tab') === 'pulse') return <Navigate to="/pulse" replace />
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white md:bg-[#F4F4F6]">
       <Header />
 
       <PullToRefresh onRefresh={handleRefresh}>
-      <main className="max-w-2xl mx-auto pt-20 pb-24">
-        {/* Feed (default, the community) / Pulse (state-of-your-week). Sticky
-            so the switch stays reachable; hides on scroll-down like the old
-            composer bar did.
+        <main className="mx-auto max-w-2xl pt-20 pb-24">
+          {/* The mobile header carries the search icon; on desktop the
+              resting pill stays where it was. One instance either way. */}
+          <div className="px-4 pt-3 md:px-6">
+            <SearchOverlay triggerClassName="hidden lg:block lg:mb-3" />
+            <YourWeekCard />
+          </div>
 
-            The FeedTabHint coachmark lived here until 2026-07-27. It existed
-            to point people at the Feed tab; Feed is now where they land, so it
-            had nothing left to teach — and its own auto-dismiss fires on
-            tab === 'feed', so it would have flashed once and burned its
-            localStorage flag on first paint. */}
-        <div
-          className={`sticky top-[var(--app-header-height,60px)] z-40 bg-gray-50 pb-3 pt-2 transition-all duration-200 ${
-            scrollDirection === 'down'
-              ? '-translate-y-full opacity-0 pointer-events-none'
-              : 'translate-y-0 opacity-100'
-          }`}
-        >
-          <HomeTabBar tab={tab} onChange={setTab} />
-        </div>
+          <div className="mt-3 bg-white md:mx-6 md:rounded-2xl md:shadow-[0_1px_2px_rgba(20,20,28,0.04)]">
+            <PostComposer onPostCreated={(item) => prependItemRef.current?.(item)} />
+          </div>
 
-        {tab === 'pulse' ? (
-          <PulseTab key={pulseRefreshKey} />
-        ) : (
-          <>
-            <div className="px-4 md:px-6">
-              <SearchOverlay />
-              <div className="mt-4">
-                <PostComposer onPostCreated={(item) => prependItemRef.current?.(item)} />
-              </div>
-            </div>
-            <div className="mt-4">
-              <HomeFeed prependItemRef={prependItemRef} />
-            </div>
-          </>
-        )}
-      </main>
+          <div className="border-t border-line md:mt-2 md:border-0">
+            <HomeFeed prependItemRef={prependItemRef} />
+          </div>
+        </main>
       </PullToRefresh>
     </div>
   )

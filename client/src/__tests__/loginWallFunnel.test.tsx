@@ -72,7 +72,7 @@ describe('SignInPromptModal instrumentation', () => {
     })
     expect(trackDbEvent).toHaveBeenCalledTimes(1)
 
-    fireEvent.click(screen.getByText(/Create Free Account/i))
+    fireEvent.click(screen.getByText(/Create a profile/i))
     expect(markWall).toHaveBeenCalledWith('apply_opportunity')
 
     vi.doUnmock('@/lib/trackDbEvent')

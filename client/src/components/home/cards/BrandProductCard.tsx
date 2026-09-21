@@ -1,81 +1,68 @@
-import { Link } from 'react-router-dom'
-import { Store, BadgeCheck, ExternalLink } from 'lucide-react'
-import { getTimeAgo } from '@/lib/utils'
-import { getImageUrl } from '@/lib/imageUrl'
+import { BadgeCheck, ExternalLink } from 'lucide-react'
 import { FeedImageCarousel } from '../FeedImageCarousel'
+import { FeedCard, FeedCardBody, FeedCardFooter, FeedCardHeader, FeedCardMedia } from '../FeedCard'
 import type { BrandProductFeedItem } from '@/types/homeFeed'
 
 interface BrandProductCardProps {
   item: BrandProductFeedItem
 }
 
+/**
+ * brand_product — the BRAND is the author (slug route, category as the
+ * header subtitle, verified check in the right slot). Product images sit in
+ * the media well; name + description in the body; the external "Learn more"
+ * CTA in the footer.
+ */
 export function BrandProductCard({ item }: BrandProductCardProps) {
-  const timeAgo = getTimeAgo(item.created_at, true)
   const sortedImages = item.product_images
     ? [...item.product_images].sort((a, b) => a.order - b.order)
     : []
 
   return (
-    <div className="bg-white">
-      <div className="p-5 pb-0">
-        {/* Brand Header */}
-        <Link
-          to={`/brands/${item.brand_slug}`}
-          className="flex items-center gap-3 mb-4 group"
-        >
-          {item.brand_logo_url ? (
-            <img
-              src={getImageUrl(item.brand_logo_url, 'avatar-sm') ?? undefined}
-              alt={item.brand_name || ''}
-              className="w-10 h-10 rounded-full object-cover flex-shrink-0"
-              decoding="async"
-            />
-          ) : (
-            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-              <Store className="w-5 h-5 text-gray-400" />
-            </div>
-          )}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5">
-              <span className="font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors truncate">
-                {item.brand_name}
-              </span>
-              {item.brand_is_verified && (
-                <BadgeCheck className="w-4 h-4 text-blue-500 flex-shrink-0" />
-              )}
-            </div>
-            <p className="text-xs text-gray-400">{timeAgo}</p>
-          </div>
-        </Link>
-      </div>
+    <FeedCard testId="brand-product-card">
+      <FeedCardHeader
+        authorId={item.brand_id}
+        name={item.brand_name}
+        avatarUrl={item.brand_logo_url}
+        role="brand"
+        createdAt={item.created_at}
+        profilePath={`/brands/${item.brand_slug}`}
+        subtitle={item.brand_category}
+        right={item.brand_is_verified ? (
+          <BadgeCheck className="h-5 w-5 flex-shrink-0 text-blue-500" aria-label="Verified brand" />
+        ) : undefined}
+      />
 
-      {/* Product Image Carousel */}
       {sortedImages.length > 0 && (
-        <FeedImageCarousel images={sortedImages} altPrefix={item.product_name} />
+        <FeedCardMedia>
+          <FeedImageCarousel images={sortedImages} altPrefix={item.product_name} />
+        </FeedCardMedia>
       )}
 
-      {/* Product Info */}
-      <div className="p-5 pt-3">
-        <h3 className="font-bold text-gray-900 mb-1">{item.product_name}</h3>
+      <FeedCardBody>
+        <h3 className="text-[15px] font-semibold leading-5 text-gray-900">{item.product_name}</h3>
         {item.product_description && (
-          <p className="text-sm text-gray-600 line-clamp-2 mb-4">
+          <p className="mt-1 line-clamp-2 text-[14px] leading-5 text-gray-600">
             {item.product_description}
           </p>
         )}
+      </FeedCardBody>
 
-        {/* CTA */}
-        {item.product_external_url && (
+      {/* External destination — a plain <a target="_blank"> (the shell's
+          primary action only knows in-app routes), styled to match it. */}
+      {item.product_external_url && (
+        <FeedCardFooter>
           <a
             href={item.product_external_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="w-full px-4 py-2.5 bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white rounded-lg font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+            className="inline-flex items-center gap-1.5 rounded-full bg-hockia-primary px-4 py-2 text-[13px] font-semibold text-white transition-opacity hover:opacity-90 active:opacity-80"
           >
             Learn more
-            <ExternalLink className="w-4 h-4" />
+            <ExternalLink className="h-3.5 w-3.5" />
           </a>
-        )}
-      </div>
-    </div>
+        </FeedCardFooter>
+      )}
+    </FeedCard>
   )
 }

@@ -1,6 +1,9 @@
-import { useCallback, useEffect, useId, useRef, useState } from 'react'
-import { X } from 'lucide-react'
+import { useCallback, useMemo, useState } from 'react'
+import { nationalityLine } from '@/lib/nationalityLine'
+import { useNavigate } from 'react-router-dom'
+import { AlertCircle, ChevronDown, Loader2, X } from 'lucide-react'
 import * as Sentry from '@sentry/react'
+import { format } from 'date-fns'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { useAuthStore } from '@/lib/auth'
@@ -8,10 +11,14 @@ import { useToastStore } from '@/lib/toast'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import { trackApplicationSubmit } from '@/lib/analytics'
 import type { Vacancy } from '@/lib/supabase'
-import { useFocusTrap } from '@/hooks/useFocusTrap'
-import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
 import { extractErrorMessage } from '@/lib/utils'
+import { useCountries, isEuCountryCode } from '@/hooks/useCountries'
+import { BottomSheet } from '@/components/ui/BottomSheet'
+import { EntityAvatar } from '@/components/ui/EntityAvatar'
+import { ApplicationSent } from '@/components/opportunities/ApplicationSent'
+import { genderPill, roleTitle } from '@/lib/opportunityCopy'
+import { checkOpportunityEligibility } from '@/lib/opportunityEligibility'
 
 interface ApplyToVacancyModalProps {
   isOpen: boolean
@@ -19,84 +26,99 @@ interface ApplyToVacancyModalProps {
   vacancy: Vacancy
   onSuccess: (vacancyId: string) => void
   onError?: (vacancyId: string) => void
+  /** Club identity for the sheet header; falls back to the organisation name. */
+  clubName?: string | null
+  clubLogo?: string | null
+  publisherRole?: string | null
+  league?: string | null
 }
 
+const DURATION_LABELS: Record<string, string> = {
+  full_season: 'Full season', half_season: 'Half season', short_term: 'Short term', flexible: 'Flexible',
+}
+
+/**
+ * Apply sheet (Figma 43:274 / 285:629): "The profile is the application."
+ * Three prefilled facts in an inset group, one optional message, one button.
+ * Eligibility is evaluated HERE with the same two rules as the
+ * check_application_eligibility trigger — (A) EU passport, (B) team category
+ * vs gender; missing data never blocks — so the server error is never the
+ * first time the player hears about it. Not eligible: amber reason, no
+ * message box, Message the club, Send disabled. On success the Application
+ * sent screen takes over.
+ */
 export default function ApplyToVacancyModal({
-  isOpen,
-  onClose,
-  vacancy,
-  onSuccess,
-  onError,
+  isOpen, onClose, vacancy, onSuccess, onError, clubName, clubLogo, publisherRole, league,
 }: ApplyToVacancyModalProps) {
   const { user, profile } = useAuthStore()
   const { addToast } = useToastStore()
+  const { countries } = useCountries()
+  const navigate = useNavigate()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [message, setMessage] = useState('')
   const [error, setError] = useState<string | null>(null)
-  const dialogRef = useRef<HTMLDivElement>(null)
-  const titleId = useId()
-  const descriptionId = useId()
+  const [sent, setSent] = useState(false)
+
+  const displayClub = clubName?.trim() || vacancy.organization_name?.trim() || 'the club'
+  const pill = vacancy.opportunity_type === 'player' ? genderPill(vacancy.gender) : null
+  const subtitle = [roleTitle(vacancy), [pill?.label, league].filter(Boolean).join(' ')].filter(Boolean).join(' · ')
+
+  // ── The three facts ──
+  const passports = useMemo(() => {
+    const ids = [profile?.nationality_country_id, profile?.nationality2_country_id].filter((id): id is number => typeof id === 'number')
+    return ids.map((id) => countries.find((c) => c.id === id)).filter((c): c is NonNullable<typeof c> => Boolean(c))
+  }, [countries, profile?.nationality_country_id, profile?.nationality2_country_id])
+  const passportText =
+    nationalityLine(passports, { suffix: (c) => (isEuCountryCode((c as { code?: string }).code) ? '(EU)' : null) }) ??
+    (profile?.nationality?.trim() || 'Add your nationality')
+  const nationalityWord = passports[0]?.nationality_name ?? profile?.nationality ?? 'not EU'
+
+  // Same rules, same order, same missing-data leniency as the DB trigger.
+  const eligibility = useMemo(() => checkOpportunityEligibility(vacancy, profile, countries), [vacancy, profile, countries])
+  const blocked = !eligibility.eligible
+  const blockedByPassport = blocked && /EU passport/i.test(eligibility.reason ?? '')
+  const blockedReason = blockedByPassport
+    ? `${displayClub} asks for an EU passport and yours is ${nationalityWord}, so this role can’t take your application. You can still message the club.`
+    : `${(eligibility.reason ?? 'This role is for another team category.').replace(/\.$/, '')}, so this role can’t take your application. You can still message the club.`
+  const blockedFooter = blockedByPassport
+    ? 'Nothing was sent. Passports are edited from Edit profile — if you get an EU passport later, this role reopens for you.'
+    : 'Nothing was sent. Your team category is edited from Edit profile.'
+  const messageClub = () => {
+    onClose()
+    navigate(`/messages?new=${vacancy.club_id}`)
+  }
+
+  const availableText = (() => {
+    const from = profile?.available_from ? new Date(profile.available_from) : null
+    const when = from && !Number.isNaN(from.getTime()) ? format(from, 'MMM yyyy') : null
+    const duration = profile?.availability_duration ? DURATION_LABELS[profile.availability_duration] ?? profile.availability_duration : null
+    return [when ?? 'Now', duration].filter(Boolean).join(' · ')
+  })()
+  const contactText = profile?.contact_email_masked || (profile?.contact_email ? `${profile.contact_email.slice(0, 3)}…` : 'Shown once the club replies')
 
   const handleClose = useCallback(() => {
     if (isSubmitting) return
-    onClose()
     setError(null)
+    onClose()
   }, [isSubmitting, onClose])
 
-  useFocusTrap({ containerRef: dialogRef, isActive: isOpen })
-
-  useBodyScrollLock(isOpen)
-
-  useEffect(() => {
-    if (!isOpen) return
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        event.preventDefault()
-        handleClose()
-      }
-    }
-    document.addEventListener('keydown', handleKeyDown)
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [handleClose, isOpen])
-
-  if (!isOpen) return null
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (isSubmitting) return
-
-    if (!user) {
-      setError('You must be signed in to apply.')
-      return
-    }
-
-    // Self-apply guard. The Apply CTA is hidden for publishers on every
-    // surface now, but if a deep link or stale UI path reaches here, an
-    // explicit message beats the generic role-mismatch text the RLS
-    // rejection would otherwise surface ("Only coaches can apply…").
-    if (vacancy.club_id === user.id) {
-      setError("You can't apply to your own opportunity.")
-      return
-    }
+  const handleSubmit = async () => {
+    if (isSubmitting || blocked) return
+    if (!user) { setError('You must be signed in to apply.'); return }
+    if (vacancy.club_id === user.id) { setError("You can't apply to your own opportunity."); return }
 
     setIsSubmitting(true)
     setError(null)
-
     try {
-      Sentry.addBreadcrumb({
-        category: 'supabase',
-        message: 'vacancies.apply',
-        data: { vacancyId: vacancy.id },
-        level: 'info'
-      })
+      Sentry.addBreadcrumb({ category: 'supabase', message: 'vacancies.apply', data: { vacancyId: vacancy.id }, level: 'info' })
+      const trimmed = message.trim()
       const { error: insertError } = await supabase
         .from('opportunity_applications')
         .insert({
           opportunity_id: vacancy.id,
           applicant_id: user.id,
           status: 'pending',
+          ...(trimmed ? { metadata: { message: trimmed } } : {}),
         } as never)
 
       if (insertError) {
@@ -106,42 +128,24 @@ export default function ApplyToVacancyModal({
           addToast('You have already applied to this opportunity.', 'info')
         } else if (insertError.code === '42501' || insertError.message?.includes('row-level security')) {
           logger.error('Role mismatch - RLS policy blocked application:', insertError)
-          reportSupabaseError('vacancies.apply_rls_block', insertError, {
-            vacancyId: vacancy.id,
-            viewerRole: profile?.role ?? null
-          }, {
-            feature: 'vacancies',
-            operation: 'apply_vacancy'
-          })
+          reportSupabaseError('vacancies.apply_rls_block', insertError, { vacancyId: vacancy.id, viewerRole: profile?.role ?? null }, { feature: 'vacancies', operation: 'apply_vacancy' })
           onError?.(vacancy.id)
-
-          if (vacancy.opportunity_type === 'coach') {
-            addToast('Only coaches can apply to coach opportunities.', 'error')
-          } else if (vacancy.opportunity_type === 'player') {
-            addToast('Only players can apply to player opportunities.', 'error')
-          } else {
-            addToast('You cannot apply to this opportunity due to role restrictions.', 'error')
-          }
+          const msg = vacancy.opportunity_type === 'coach'
+            ? 'Only coaches can apply to coach opportunities.'
+            : vacancy.opportunity_type === 'player'
+              ? 'Only players can apply to player opportunities.'
+              : 'You cannot apply to this opportunity due to role restrictions.'
+          setError(msg)
+          addToast(msg, 'error')
         } else if (insertError.code === 'P0001') {
-          // The check_application_eligibility trigger rejected this
-          // application (EU passport / gender mismatch). The raised
-          // message is already user-facing — surface it as-is. This is
-          // an expected rejection, not a fault, so it is not reported
-          // to Sentry. The UI normally blocks ineligible users before
-          // they reach here; this is the server-side backstop.
+          // check_application_eligibility rejected it — the message is user-facing.
           onError?.(vacancy.id)
           const msg = insertError.message || 'You are not eligible to apply to this opportunity.'
           setError(msg)
           addToast(msg, 'error')
         } else {
           logger.error('Error applying to vacancy:', insertError)
-          reportSupabaseError('vacancies.apply_error', insertError, {
-            vacancyId: vacancy.id,
-            viewerRole: profile?.role ?? null
-          }, {
-            feature: 'vacancies',
-            operation: 'apply_vacancy'
-          })
+          reportSupabaseError('vacancies.apply_error', insertError, { vacancyId: vacancy.id, viewerRole: profile?.role ?? null }, { feature: 'vacancies', operation: 'apply_vacancy' })
           onError?.(vacancy.id)
           const msg = extractErrorMessage(insertError, 'Failed to submit application. Please try again.')
           setError(msg)
@@ -151,17 +155,11 @@ export default function ApplyToVacancyModal({
         trackDbEvent('application_submit', 'vacancy', vacancy.id, { position: vacancy.position ?? undefined })
         void trackApplicationSubmit(vacancy.id, vacancy.position ?? undefined)
         onSuccess(vacancy.id)
-        onClose()
-        addToast('Application submitted successfully!', 'success')
+        setSent(true)
       }
     } catch (err) {
       logger.error('Unexpected error:', err)
-      reportSupabaseError('vacancies.apply_exception', err, {
-        vacancyId: vacancy.id
-      }, {
-        feature: 'vacancies',
-        operation: 'apply_vacancy'
-      })
+      reportSupabaseError('vacancies.apply_exception', err, { vacancyId: vacancy.id }, { feature: 'vacancies', operation: 'apply_vacancy' })
       onError?.(vacancy.id)
       const msg = extractErrorMessage(err, 'Network error. Please check your connection and try again.')
       setError(msg)
@@ -171,54 +169,86 @@ export default function ApplyToVacancyModal({
     }
   }
 
-  return (
-    <div
-      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-      role="presentation"
-      onClick={(e) => { if (e.target === e.currentTarget) handleClose() }}
-    >
-      <div
-        ref={dialogRef}
-        className="bg-white rounded-2xl max-w-sm w-full focus:outline-none shadow-2xl"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        aria-describedby={descriptionId}
-        tabIndex={-1}
-      >
-        <form onSubmit={handleSubmit} className="p-6">
-          <div className="flex items-start justify-between mb-4">
-            <h2 id={titleId} className="text-lg font-bold text-gray-900">Apply to this position?</h2>
-            <button
-              type="button"
-              onClick={handleClose}
-              disabled={isSubmitting}
-              className="text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50 -mt-1 -mr-1 p-1 hover:bg-gray-100 rounded-full"
-              aria-label="Close modal"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
+  if (sent) {
+    return (
+      <ApplicationSent
+        clubName={displayClub}
+        clubLogo={clubLogo ?? null}
+        publisherRole={publisherRole}
+        onClose={() => { setSent(false); setMessage(''); onClose() }}
+      />
+    )
+  }
 
-          <p id={descriptionId} className="text-sm text-gray-600 mb-6">
-            Your profile will be shared with the recruiter for review.
-          </p>
-
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
-              <p className="text-sm text-red-800">{error}</p>
-            </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full px-4 py-3 rounded-xl font-semibold text-sm text-white bg-gradient-to-r from-hockia-primary to-hockia-secondary hover:opacity-90 transition-opacity disabled:opacity-60"
-          >
-            {isSubmitting ? 'Submitting...' : 'Submit Application'}
-          </button>
-        </form>
-      </div>
+  const Row = ({ label, value }: { label: string; value: string }) => (
+    <div className="flex items-center gap-3 py-3 pl-3.5 pr-3">
+      <span className="shrink-0 text-body text-ink-1">{label}</span>
+      <span className="min-w-0 flex-1 truncate text-right text-row text-ink-2">{value}</span>
+      <ChevronDown className="h-4 w-4 shrink-0 text-ink-4" strokeWidth={1.8} />
     </div>
+  )
+
+  return (
+    <BottomSheet open={isOpen} onClose={handleClose} ariaLabel={`Apply to ${displayClub}`}>
+      <div className="flex flex-col gap-[18px] px-5 pb-2 pt-1">
+        <div className="flex items-start gap-3">
+          <EntityAvatar src={clubLogo} name={displayClub} role={publisherRole ?? 'club'} size={44} />
+          <div className="min-w-0 flex-1">
+            <h2 className="text-[20px] font-bold leading-[25px] text-ink-1">Apply to {displayClub}</h2>
+            <p className="mt-0.5 text-row text-ink-2">{subtitle}</p>
+          </div>
+          <button type="button" onClick={handleClose} aria-label="Close" className="-mr-2 -mt-1 flex h-9 w-9 items-center justify-center rounded-full text-ink-4">
+            <X className="h-[22px] w-[22px]" strokeWidth={2} />
+          </button>
+        </div>
+
+        <div className="divide-y divide-line rounded-[12px] bg-surface-grouped">
+          <Row label="Available from" value={availableText} />
+          <Row label="Passport" value={passportText} />
+          <Row label="Contact" value={contactText} />
+        </div>
+
+        {blocked ? (
+          <div className="flex items-start gap-2 rounded-[12px] bg-[#fdf1e4] px-3 py-2.5 text-[14px] leading-[18px] text-[#b45309]" role="status">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={1.6} />
+            <p>{blockedReason}</p>
+          </div>
+        ) : (
+          <textarea
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder="Add a message to the club (optional)"
+            rows={3}
+            maxLength={600}
+            className="w-full resize-none rounded-[12px] bg-surface-grouped px-3.5 py-3 text-body text-ink-1 placeholder:text-ink-4 focus:outline-none focus:ring-2 focus:ring-hockia-primary/40"
+          />
+        )}
+
+        {error && <p className="text-secondary text-red-600" role="alert">{error}</p>}
+
+        {blocked && (
+          <button
+            type="button"
+            onClick={messageClub}
+            className="flex h-[50px] w-full items-center justify-center rounded-full bg-surface-grouped text-body font-semibold text-ink-1"
+          >
+            Message the club
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={() => void handleSubmit()}
+          disabled={isSubmitting || blocked}
+          aria-disabled={blocked || undefined}
+          className="flex h-[50px] w-full items-center justify-center gap-2 rounded-full bg-hockia-primary text-body font-semibold text-white disabled:opacity-40"
+        >
+          {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+          Send application
+        </button>
+        <p className="text-center text-secondary text-ink-4">
+          {blocked ? blockedFooter : 'Your profile, career and highlights are sent automatically. Withdraw any time from My applications.'}
+        </p>
+      </div>
+    </BottomSheet>
   )
 }

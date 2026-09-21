@@ -1,74 +1,54 @@
-import { Link } from 'react-router-dom'
-import { Store, BadgeCheck } from 'lucide-react'
-import { getTimeAgo } from '@/lib/utils'
+import { BadgeCheck } from 'lucide-react'
 import { getImageUrl } from '@/lib/imageUrl'
+import { FeedCard, FeedCardBody, FeedCardHeader, FeedCardMedia } from '../FeedCard'
 import type { BrandPostFeedItem } from '@/types/homeFeed'
 
 interface BrandPostCardProps {
   item: BrandPostFeedItem
 }
 
+/**
+ * brand_post — the BRAND is the author. Brand routes are slug-based, and a
+ * brand has no profiles row, so the header's club · city line is replaced
+ * by the brand category; the verified check sits in the header's right slot.
+ */
 export function BrandPostCard({ item }: BrandPostCardProps) {
-  const timeAgo = getTimeAgo(item.created_at, true)
-
   return (
-    <div className="bg-white">
-      <div className="p-5 pb-0">
-        {/* Brand Header */}
-        <Link
-          to={`/brands/${item.brand_slug}`}
-          className="flex items-center gap-3 mb-4 group"
-        >
-          {item.brand_logo_url ? (
-            <img
-              src={getImageUrl(item.brand_logo_url, 'avatar-sm') ?? undefined}
-              alt={item.brand_name || ''}
-              className="w-10 h-10 rounded-full object-cover flex-shrink-0"
-              decoding="async"
-            />
-          ) : (
-            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-              <Store className="w-5 h-5 text-gray-400" />
-            </div>
-          )}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5">
-              <span className="font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors truncate">
-                {item.brand_name}
-              </span>
-              {item.brand_is_verified && (
-                <BadgeCheck className="w-4 h-4 text-blue-500 flex-shrink-0" />
-              )}
-              {item.brand_category && (
-                <span className="text-xs text-gray-400 flex-shrink-0">&middot; {item.brand_category}</span>
-              )}
-            </div>
-            <p className="text-xs text-gray-400">{timeAgo}</p>
-          </div>
-        </Link>
+    <FeedCard testId="brand-post-card">
+      <FeedCardHeader
+        authorId={item.brand_id}
+        name={item.brand_name}
+        avatarUrl={item.brand_logo_url}
+        role="brand"
+        createdAt={item.created_at}
+        profilePath={`/brands/${item.brand_slug}`}
+        subtitle={item.brand_category}
+        right={item.brand_is_verified ? (
+          <BadgeCheck className="h-5 w-5 flex-shrink-0 text-blue-500" aria-label="Verified brand" />
+        ) : undefined}
+      />
 
-        {/* Post Content */}
-        {item.post_content && (
-          <p className="text-gray-800 mb-4 whitespace-pre-line break-words">
-            {item.post_content}
-          </p>
-        )}
-      </div>
+      {item.post_content && (
+        <FeedCardBody>
+          <p className="whitespace-pre-line break-words">{item.post_content}</p>
+        </FeedCardBody>
+      )}
 
-      {/* Post Image — full-width / flush to card edges (Facebook style).
-          Reserved 4:3 box: zero layout shift as the image decodes (the feed's
+      {/* Reserved 4:3 box: zero layout shift as the image decodes (the feed's
           house ratio, matching products/carousels). */}
       {item.post_image_url && (
-        <div className="aspect-[4/3] bg-gray-100 overflow-hidden">
-          <img
-            src={getImageUrl(item.post_image_url, 'feed-full') ?? undefined}
-            alt=""
-            className="w-full h-full object-cover"
-            loading="lazy"
-            decoding="async"
-          />
-        </div>
+        <FeedCardMedia>
+          <div className="aspect-[4/3]">
+            <img
+              src={getImageUrl(item.post_image_url, 'feed-full') ?? undefined}
+              alt=""
+              className="h-full w-full object-cover"
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
+        </FeedCardMedia>
       )}
-    </div>
+    </FeedCard>
   )
 }

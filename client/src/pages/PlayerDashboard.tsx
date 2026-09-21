@@ -24,6 +24,9 @@ import RecruitmentVisibilityWidget from '@/components/dashboard/bento/Recruitmen
 import RecruitmentPrefsNudge from '@/components/dashboard/RecruitmentPrefsNudge'
 import PlayerBentoGrid from '@/components/dashboard/bento/PlayerBentoGrid'
 import ScoutingCard from '@/components/profile/ScoutingCard'
+import ProfileLongScroll from '@/components/profile/mobile/ProfileLongScroll'
+import FriendsScreen from '@/components/profile/mobile/FriendsScreen'
+import CareerScreen from '@/components/profile/mobile/CareerScreen'
 import PlayerCommunityHub from '@/components/community/PlayerCommunityHub'
 import PublicCommunityView from '@/components/community/PublicCommunityView'
 import { ProfileViewersSection } from '@/components/ProfileViewersSection'
@@ -208,6 +211,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
     }
   }, [sectionFromRoute, sectionIsValid, readOnly, routeParams.username, routeParams.id, navigate])
   const [showEditModal, setShowEditModal] = useState(false)
+  const [videoTotal, setVideoTotal] = useState<number | null>(null)
 
   // ?action=edit deep-link from Home cards (ProfileCompletion 'Add Photo' /
   // 'Link Club', AvailabilityCheckIn 'Not now') opens the editor. Owner view
@@ -538,28 +542,46 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
     navigateToCommunitySection('references')
   }
 
-  const handleFriendsClick = () => navigateToCommunitySection('connections')
-
   const handleViewOpportunities = () => navigate('/opportunities')
 
   // The Profile tab IS the Bento Grid landing page. Section pages keep
   // their existing UIs as deep-link destinations from card CTAs. PR2 will
   // promote each tab to its own route and delete the tab strip.
   const isLanding = activeTab === 'profile'
+  // Phone long scroll replaces the bento (owner) and the portfolio (visitor)
+  // on the landing view only — /friends etc. stay dedicated sub-pages.
+  const showPhoneScroll = isLanding
+  // Phone leaf screens (Figma: the number in the stats strip opens the
+  // complete collection). One screen per collection, own / public modes.
+  const phoneLeaf: 'friends' | 'career' | null = activeTab === 'friends' ? 'friends' : activeTab === 'journey' ? 'career' : null
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
+    <div className="min-h-screen bg-white lg:bg-gray-50">
+      {/* Figma Profile v2/v3: the cover carries share · gear (owner) or back · share (visitor) — no app header on the phone. */}
+      <Header mobileHidden />
 
       {/* Public View Banner - shown when user views their own profile in public mode */}
-      {readOnly && isOwnProfile && <PublicViewBanner />}
+      {readOnly && isOwnProfile && <PublicViewBanner compactOnPhone />}
 
-      <main className="max-w-7xl mx-auto px-4 md:px-6 pt-24 pb-12 space-y-5 md:space-y-6">
+      {phoneLeaf === 'friends' && (
+        <FriendsScreen
+          profileId={profile.id}
+          profileName={profile.full_name ?? null}
+          profileRole={profile.role ?? null}
+          mode={readOnly ? 'public' : 'own'}
+          onBack={() => handleTabChange('profile')}
+        />
+      )}
+      {phoneLeaf === 'career' && (
+        <CareerScreen profileId={profile.id} mode={readOnly ? 'public' : 'own'} onBack={() => handleTabChange('profile')} />
+      )}
+
+      <main className={`max-w-7xl mx-auto px-4 md:px-6 pt-0 lg:pt-24 pb-12 space-y-5 md:space-y-6${phoneLeaf ? ' hidden lg:block' : ''}`}>
         {readOnly && !isOwnProfile && (
           <button
             type="button"
             onClick={() => handleBack()}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+            className="hidden items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors lg:flex"
           >
             <ArrowLeft className="w-4 h-4" />
             <span className="text-sm font-medium">Back</span>
@@ -606,10 +628,33 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
           onViewPublic={handleViewPublic}
           onMessage={handleSendMessage}
           sendingMessage={sendingMessage}
-          onFriendsClick={handleFriendsClick}
+          onFriendsClick={() => handleTabChange('friends')}
           onReferencesClick={handleReferencesClick}
+          onCareerClick={() => handleTabChange('journey')}
+          onVideosClick={() => handleTabChange('media')}
+          videoTotal={videoTotal}
         />
 
+        {/* Phone: Figma Profile own / public — one long scroll under the
+            identity block. The bento / portfolio body below is desktop-only
+            on the landing view; section pages keep their own surface. */}
+        {showPhoneScroll && (
+          <div className="-mx-4 md:-mx-6 lg:hidden">
+            <ProfileLongScroll
+              profile={profile}
+              readOnly={readOnly}
+              onEdit={() => setShowEditModal(true)}
+              onOpenVideos={() => handleTabChange('media')}
+              onOpenReferences={handleReferencesClick}
+              onOpenCareer={() => handleTabChange('journey')}
+              onOpenPhotos={() => handleTabChange('media')}
+              onOpenPosts={() => handleTabChange('posts')}
+              onVideoCount={setVideoTotal}
+            />
+          </div>
+        )}
+
+        <div className={showPhoneScroll ? 'hidden space-y-5 md:space-y-6 lg:block' : 'space-y-5 md:space-y-6'}>
         {/* G.10 — private 5-item recruitment-readiness checklist.
             Owner-only on the landing view; replaces the legacy
             "Profile complete %" arc that used to sit in HeroIdentityCard. */}
@@ -923,6 +968,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
             </div>
           </div>
         )}
+        </div>
       </main>
 
       {/* Edit Profile Modal */}

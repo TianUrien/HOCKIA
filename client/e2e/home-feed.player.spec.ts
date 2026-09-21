@@ -26,7 +26,7 @@ test.describe('@smoke home feed player', () => {
 
     // Submit button should be visible but disabled (no content yet).
     // Labelled "Publish post" — distinct from the "Post" mode tab.
-    const postBtn = page.locator('button.w-full', { hasText: /^publish post$/i })
+    const postBtn = page.getByRole('button', { name: /^publish post$/i })
     await expect(postBtn).toBeVisible()
 
     // Close the modal (exact match avoids "Close notifications" button)

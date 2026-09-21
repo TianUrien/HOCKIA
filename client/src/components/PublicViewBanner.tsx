@@ -10,7 +10,8 @@ import { Eye, ArrowLeft } from 'lucide-react'
  * This component is fixed positioned below the header (top-16 accounts for header height)
  * and includes a spacer div to push content down.
  */
-export default function PublicViewBanner() {
+export default function PublicViewBanner({ compactOnPhone = false }: { /** Player profile (Figma Public view): the phone has no app header, so the
+   *  banner is a slim in-flow bar there; desktop keeps the fixed banner. */ compactOnPhone?: boolean } = {}) {
   const navigate = useNavigate()
 
   const handleReturnToDashboard = () => {
@@ -19,6 +20,14 @@ export default function PublicViewBanner() {
 
   return (
     <>
+      {compactOnPhone && (
+        <div className="flex items-center gap-2 bg-ink-1 px-5 pb-2.5 pt-[max(10px,env(safe-area-inset-top))] text-white lg:hidden">
+          <Eye className="h-4 w-4 shrink-0" aria-hidden="true" />
+          <p className="min-w-0 flex-1 truncate text-secondary"><span className="font-semibold">Public view</span> · how other members see you</p>
+          <button type="button" onClick={handleReturnToDashboard} className="shrink-0 text-secondary font-semibold text-white underline-offset-2">Done</button>
+        </div>
+      )}
+      <div className={compactOnPhone ? 'hidden lg:block' : undefined}>
       {/* Fixed banner below the navbar — small gap (top-[68px], not 64px)
           gives the header's edge some breathing room so the white→purple
           transition doesn't feel like a hard seam. */}
@@ -50,6 +59,7 @@ export default function PublicViewBanner() {
       </div>
       {/* Spacer to push content below the fixed banner */}
       <div className="h-[132px] sm:h-[68px]" aria-hidden="true" />
+      </div>
     </>
   )
 }

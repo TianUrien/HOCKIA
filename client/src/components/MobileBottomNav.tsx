@@ -1,258 +1,144 @@
 import { useEffect, useState } from 'react'
-import { Home, Users, Briefcase, Globe, Sparkles, UserPlus } from 'lucide-react'
+import { Home, Users, Briefcase, Inbox, UserPlus } from 'lucide-react'
 import Avatar from './Avatar'
-import { NotificationBadge } from '@/components'
 import { useNavigation } from '@/hooks/useNavigation'
-import { useAnyModalOpen } from '@/hooks/useAnyModalOpen'
-import { useBottomPrompt } from '@/lib/bottomPrompt'
 import { hapticSelection } from '@/lib/haptics'
 import { trackSignupCtaClick } from '@/lib/analytics'
 import { useAuthStore } from '@/lib/auth'
+import { cn } from '@/lib/utils'
+import { useInboxDot } from '@/lib/inboxSeen'
 
 interface NavItem {
   id: string
   label: string
   path: string
-  icon: React.ComponentType<{ className?: string }>
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>
+  /** Unread indicator (Figma tab bar carries no counts — a quiet dot). */
+  dot?: boolean
 }
 
+/**
+ * Tab bar v3 (Figma 02 Components / 03 Player): Home · Community ·
+ * Opportunities · Inbox · Profile. No Clubs tab — clubs are members,
+ * reached through Search and the Community role filter — and no floating
+ * Hockia AI button — the assistant lives inside Search (founder rulings
+ * 2026-09-20). 26px icons, 10px medium labels, purple = the selected tab.
+ */
 export default function MobileBottomNav() {
-  const {
-    user,
-    profile,
-    location,
-    isActive,
-    handleNavigate,
-    opportunityCount,
-  } = useNavigation()
+  const { user, profile, location, isActive, handleNavigate } = useNavigation()
+  const inboxDot = useInboxDot()
   const authLoading = useAuthStore((s) => s.loading)
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false)
   const [isHidden, setIsHidden] = useState(false)
-  // The floating Hockia AI button hides while the user scrolls DOWN through
-  // content (so it never obscures what they're reading — e.g. a card's fit
-  // chip or gallery text) and reappears on scroll-up, near the top, or once
-  // scrolling stops. The bottom nav itself stays put; only the FAB reacts.
-  const [fabHidden, setFabHidden] = useState(false)
-  // Also hide the FAB whenever a modal/dialog is open so it never sits ON TOP
-  // of modal content/actions (e.g. covering Edit Profile's "Save Changes").
-  const anyModalOpen = useAnyModalOpen()
-  // ...and whenever a bottom-corner prompt (Install / Push / Native-update / App
-  // rating card) is showing — they share this corner, so the FAB defers to them.
-  const bottomPromptActive = useBottomPrompt('fab', false)
-  const hideFab = fabHidden || anyModalOpen || bottomPromptActive
 
-  // rAF-coalesced scroll listener — compares scrollY frame-to-frame to derive
-  // direction. Hide on downward scroll past a small threshold; show on any
-  // upward scroll or when within 80px of the top. A short idle timer also
-  // re-reveals it so it never stays hidden once the user pauses.
-  useEffect(() => {
-    let lastY = window.scrollY
-    let ticking = false
-    let idleTimer: ReturnType<typeof setTimeout> | null = null
-
-    const update = () => {
-      ticking = false
-      const y = window.scrollY
-      const delta = y - lastY
-      if (y < 80) {
-        setFabHidden(false)
-      } else if (delta > 6) {
-        setFabHidden(true)
-      } else if (delta < -6) {
-        setFabHidden(false)
-      }
-      lastY = y
-      if (idleTimer) clearTimeout(idleTimer)
-      idleTimer = setTimeout(() => setFabHidden(false), 1200)
-    }
-
-    const onScroll = () => {
-      if (!ticking) {
-        ticking = true
-        requestAnimationFrame(update)
-      }
-    }
-
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => {
-      window.removeEventListener('scroll', onScroll)
-      if (idleTimer) clearTimeout(idleTimer)
-    }
-  }, [])
-
-  // Navigation items
-  const navItems: NavItem[] = [
-    {
-      id: 'home',
-      label: 'Home',
-      path: '/home',
-      icon: Home,
-    },
-    {
-      id: 'world',
-      label: 'World',
-      path: '/world',
-      icon: Globe,
-    },
-    {
-      id: 'opportunities',
-      label: 'Opportunities',
-      path: '/opportunities',
-      icon: Briefcase,
-    },
-    {
-      id: 'community',
-      label: 'Community',
-      path: '/community',
-      icon: Users,
-    },
-  ]
-
-  // Handle keyboard visibility (iOS specific)
+  // Keyboard detection (iOS): a large visual-viewport shrink means the
+  // keyboard is up and the bar would float above it.
   useEffect(() => {
     const handleResize = () => {
-      // Detect keyboard on mobile by checking if viewport height decreased significantly
       if (typeof window !== 'undefined' && window.visualViewport) {
-        const viewportHeight = window.visualViewport.height
-        const windowHeight = window.innerHeight
-        const heightDiff = windowHeight - viewportHeight
-        
-        // If height difference is significant (> 150px), keyboard is likely open
+        const heightDiff = window.innerHeight - window.visualViewport.height
         setIsKeyboardOpen(heightDiff > 150)
       }
     }
-
     if (typeof window !== 'undefined' && window.visualViewport) {
       window.visualViewport.addEventListener('resize', handleResize)
       return () => window.visualViewport?.removeEventListener('resize', handleResize)
     }
   }, [])
 
-  // Hide on certain routes (modals, auth pages)
+  // Focused flows and immersive views have no tab bar: auth, onboarding,
+  // the Hockia AI screen (reached from Search, back-only) and an open chat.
   useEffect(() => {
     const hiddenRoutes = ['/', '/signup', '/login', '/complete-profile', '/discover']
     const searchParams = new URLSearchParams(location.search)
     const isConversationPath = location.pathname.startsWith('/messages/')
     const hasMessagesOverlayParam = searchParams.has('conversation') || searchParams.has('new')
     const isImmersiveMessagesView =
-      location.pathname.startsWith('/messages') &&
-      (isConversationPath || hasMessagesOverlayParam)
-    const shouldHide =
-      hiddenRoutes.some(route => location.pathname === route) ||
-      isImmersiveMessagesView
-    setIsHidden(shouldHide)
+      location.pathname.startsWith('/messages') && (isConversationPath || hasMessagesOverlayParam)
+    // Detail screens with their own fixed action bar (Figma Opportunity
+    // detail: Message / Apply) carry no tab bar — back is the way out.
+    const isOpportunityDetail = /^\/opportunities\/(?!applications$)[^/]+$/.test(location.pathname)
+    setIsHidden(hiddenRoutes.some((route) => location.pathname === route) || isImmersiveMessagesView || isOpportunityDetail)
   }, [location.pathname, location.search])
 
-  if (isHidden || isKeyboardOpen) {
-    return null
+  if (isHidden || isKeyboardOpen) return null
+
+  // While the session resolves, `user` is null for everyone — rendering the
+  // guest bar would flash "Join" at a signed-in member. Wait it out.
+  if (authLoading) return null
+
+  // Signed in but no profile yet = mid-signup; no bar until onboarding ends.
+  if (user && !profile) return null
+
+  const renderTab = (item: NavItem, active: boolean) => {
+    const Icon = item.icon
+    return (
+      <button
+        key={item.id}
+        type="button"
+        onClick={() => {
+          void hapticSelection()
+          handleNavigate(item.path)
+        }}
+        aria-label={item.label}
+        aria-current={active ? 'page' : undefined}
+        className={cn(
+          'flex min-h-[52px] flex-1 flex-col items-center gap-[3px] pb-1 pt-[7px] transition-colors',
+          active ? 'text-hockia-primary' : 'text-ink-2',
+        )}
+      >
+        <span className="relative flex h-[26px] w-[26px] items-center justify-center">
+          <Icon className="h-[26px] w-[26px]" strokeWidth={active ? 2.2 : 1.85} />
+          {item.dot && <span aria-label="Unread" className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-hockia-primary ring-2 ring-white" />}
+        </span>
+        {/* Labels hide below 360px where five 10px labels no longer share a row. */}
+        <span className="hidden text-tab min-[360px]:inline">{item.label}</span>
+      </button>
+    )
   }
 
-  // While the session is still being resolved, `user` is null for EVERYONE —
-  // rendering the guest bar here would flash "Join" at a logged-in member
-  // cold-loading a public page, then swap to their real bar. Wait it out.
-  if (authLoading) {
-    return null
-  }
+  const barClassName =
+    'lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-line bg-white pb-[env(safe-area-inset-bottom)] [transform:translate3d(0,0,0)] [backface-visibility:hidden]'
 
   // ── Guest exploration bar ────────────────────────────────────────────────
-  // Founder brief 2026-08-15: "Explore Hockia should actually feel
-  // explorable." Until now a logged-out visitor on mobile had NO navigation
-  // at all — the two halves each delegated it to the other. Header's guest
-  // links sit in a `hidden lg:flex` block (desktop only) and its mobile slot
-  // is commented "navigation handled by MobileBottomNav", while this
-  // component returned null without a profile. So tapping "Explore Hockia"
-  // landed people on a single screen with no way onward.
-  //
-  // The fix is the app's OWN idiom rather than a new pattern: guests get the
-  // same bottom tab bar, scoped to the three public areas plus a conversion
-  // slot. Signing up then ADDS Home and Dashboard to a bar already familiar,
-  // instead of swapping one navigation model for another.
-  //
-  // No Hockia AI FAB here — it needs an authenticated session, so offering it
-  // would be a dead end.
-  // A signed-in account with NO profile row yet is not a guest — they are
-  // mid-signup, and Landing/AuthCallback route them to /complete-profile.
-  // Offering them "Join" would send an existing account to the signup form.
-  // No bar for them; the authed bar below needs a profile anyway.
-  if (user && !profile) {
-    return null
-  }
-
+  // Guests keep a bar on the public explore surface (Community, Opportunities
+  // and the profiles they open from there) plus a conversion slot. Anywhere
+  // else — sign-in, verify-email, invite, terms — is a focused flow.
   if (!user) {
-    // The bar follows the guest through the EXPLORE surface: the three areas
-    // plus the public profile/detail pages they open from there — otherwise
-    // tapping a member card strands them on a page with no way onward.
-    // Anywhere else a guest can land — sign-in/up, verify-email, invite,
-    // terms — is a focused flow, and a persistent "browse elsewhere" bar
-    // there is noise (or, mid-signup, an exit ramp). Half-signed-up members
-    // (user but no profile yet) are on /complete-profile and must not see it.
     const GUEST_BAR_ROUTES = [
       '/world', '/opportunities', '/community',
       '/players', '/coaches', '/clubs', '/umpires', '/brands', '/members', '/marketplace', '/post',
     ]
-    const onExploreArea = GUEST_BAR_ROUTES.some(
-      (r) => location.pathname === r || location.pathname.startsWith(r + '/'),
-    )
+    const onExploreArea = GUEST_BAR_ROUTES.some((r) => location.pathname === r || location.pathname.startsWith(r + '/'))
     if (!onExploreArea) return null
 
     const guestItems: NavItem[] = [
-      { id: 'world', label: 'World', path: '/world', icon: Globe },
-      { id: 'opportunities', label: 'Opportunities', path: '/opportunities', icon: Briefcase },
       { id: 'community', label: 'Community', path: '/community', icon: Users },
+      { id: 'opportunities', label: 'Opportunities', path: '/opportunities', icon: Briefcase },
     ]
 
     return (
       <>
         <div className="h-20 lg:hidden" aria-hidden="true" />
-        <nav
-          className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/[0.97] backdrop-blur-lg border-t border-gray-200/50 shadow-lg pb-[max(env(safe-area-inset-bottom),0.5rem)] [transform:translate3d(0,0,0)] [backface-visibility:hidden]"
-          aria-label="Explore Hockia"
-        >
-          <div className="flex items-center justify-between gap-1 px-2 pt-2">
-            {guestItems.map((item) => {
-              const Icon = item.icon
-              const active = isActive(item.path)
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => { void hapticSelection(); handleNavigate(item.path) }}
-                  className={`flex min-h-[44px] min-w-[48px] flex-1 flex-col items-center justify-center rounded-xl px-2 py-1 transition-all duration-200 ${
-                    active ? 'text-hockia-primary' : 'text-gray-600 active:bg-gray-100'
-                  }`}
-                  aria-label={item.label}
-                  aria-current={active ? 'page' : undefined}
-                >
-                  <div className={`relative mb-0.5 flex h-7 w-7 items-center justify-center transition-transform duration-200 ${active ? 'scale-110' : 'scale-100'}`}>
-                    <Icon className={`h-6 w-6 transition-all duration-200 ${active ? 'stroke-[2.5]' : 'stroke-[2]'}`} />
-                    {active && (
-                      <div className="absolute inset-0 rounded-full bg-gradient-to-r from-hockia-primary to-hockia-secondary opacity-20 blur-md" />
-                    )}
-                  </div>
-                  {/* Same ≥360px rule as the authed bar: "Opportunities" is
-                      ~78px and cannot share a row of four below that. */}
-                  <span className="hidden text-[10px] font-medium transition-all duration-200 min-[360px]:inline">
-                    {item.label}
-                  </span>
-                </button>
-              )
-            })}
-
-            {/* Conversion slot. Deliberately NOT styled as a fourth
-                destination — a filled violet pill reads as an action, so the
-                three areas stay legible as "places" and the ask is present
-                without nagging. Log in lives in the header, where returning
-                users look for it. */}
+        <nav className={barClassName} aria-label="Explore Hockia">
+          <div className="flex items-stretch px-1.5">
+            {guestItems.map((item) => renderTab(item, isActive(item.path)))}
+            {/* Conversion slot: a filled pill reads as an action, so the two
+                areas stay legible as "places". Log in lives in the header. */}
             <button
-              onClick={() => { void hapticSelection(); trackSignupCtaClick('guest_nav'); handleNavigate('/signup') }}
-              className="flex min-h-[44px] min-w-[48px] flex-1 flex-col items-center justify-center rounded-xl px-2 py-1 text-hockia-primary transition-all duration-200 active:scale-95"
+              type="button"
+              onClick={() => {
+                void hapticSelection()
+                trackSignupCtaClick('guest_nav')
+                handleNavigate('/signup')
+              }}
+              className="flex min-h-[52px] flex-1 flex-col items-center gap-[3px] pb-1 pt-[7px] text-hockia-primary active:scale-95"
               aria-label="Create a profile"
             >
-              <div className="mb-0.5 flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-hockia-primary to-hockia-secondary shadow-sm shadow-hockia-primary/30">
+              <span className="flex h-[26px] w-[26px] items-center justify-center rounded-full bg-hockia-primary">
                 <UserPlus className="h-[15px] w-[15px] text-white" strokeWidth={2.5} />
-              </div>
-              <span className="hidden text-[10px] font-semibold transition-all duration-200 min-[360px]:inline">
-                Join
               </span>
+              <span className="hidden text-tab font-semibold min-[360px]:inline">Join</span>
             </button>
           </div>
         </nav>
@@ -260,158 +146,60 @@ export default function MobileBottomNav() {
     )
   }
 
+  const navItems: NavItem[] = [
+    { id: 'home', label: 'Home', path: '/home', icon: Home },
+    { id: 'community', label: 'Community', path: '/community', icon: Users },
+    { id: 'opportunities', label: 'Opportunities', path: '/opportunities', icon: Briefcase },
+    // Unread messages, or activity/requests newer than the last time that
+    // segment was opened (lib/inboxSeen).
+    { id: 'inbox', label: 'Inbox', path: '/inbox', icon: Inbox, dot: inboxDot },
+  ]
+
+  const onProfile = location.pathname.startsWith('/dashboard')
+  const initials =
+    (profile?.full_name ?? '')
+      .trim()
+      .split(' ')
+      .filter(Boolean)
+      .map((p) => p[0])
+      .join('')
+      .slice(0, 2)
+      .toUpperCase() || '?'
+
   return (
     <>
-      {/* Spacer to prevent content from being hidden behind fixed nav */}
+      {/* Spacer so content never ends behind the fixed bar */}
       <div className="h-20 lg:hidden" aria-hidden="true" />
 
-      {/* Bottom Navigation */}
-      <nav 
-        className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/[0.97] backdrop-blur-lg border-t border-gray-200/50 shadow-lg pb-[max(env(safe-area-inset-bottom),0.5rem)] [transform:translate3d(0,0,0)] [backface-visibility:hidden]"
-      >
-        <div className="flex items-center justify-between px-2 pt-2 gap-1">
-          {navItems.map((item) => {
-            const Icon = item.icon
-            const active = isActive(item.path)
-            
-            return (
-              <button
-                key={item.id}
-                onClick={() => { void hapticSelection(); handleNavigate(item.path) }}
-                className={`flex flex-col items-center justify-center min-w-[48px] min-h-[44px] py-1 px-2 rounded-xl transition-all duration-200 ${
-                  active 
-                    ? 'text-hockia-primary' 
-                    : 'text-gray-600 active:bg-gray-100'
-                }`}
-                aria-label={item.label}
-                aria-current={active ? 'page' : undefined}
-              >
-                <div className={`relative flex items-center justify-center w-7 h-7 mb-0.5 transition-transform duration-200 ${
-                  active ? 'scale-110' : 'scale-100'
-                }`}>
-                  <Icon 
-                    className={`w-6 h-6 transition-all duration-200 ${
-                      active ? 'stroke-[2.5]' : 'stroke-[2]'
-                    }`}
-                  />
-                  {item.id === 'opportunities' && (
-                    <NotificationBadge count={opportunityCount} />
-                  )}
-                  {active && (
-                    <div className="absolute inset-0 bg-gradient-to-r from-hockia-primary to-hockia-secondary opacity-20 rounded-full blur-md" />
-                  )}
-                </div>
-                {/* Labels hidden below 360px (iPhone SE 1st-gen and narrower)
-                    where 5 items × 10px-font would crowd into each other —
-                    "Opportunities" alone is ~78px wide which doesn't fit a
-                    60px slot. aria-label on the parent button (line 121)
-                    keeps the nav fully accessible to screen readers. */}
-                {/* No opacity dimming on the inactive label. The button sets
-                    text-gray-600 (7.56:1 on white), but opacity-60 flattened
-                    that to ~2.87:1 at 10px — the single worst contrast in the
-                    app, on the primary navigation. Active vs inactive is
-                    already carried by colour (violet vs grey), stroke weight
-                    and scale, so the dimming was redundant as well as
-                    unreadable. */}
-                <span className="hidden min-[360px]:inline text-[10px] font-medium transition-all duration-200">
-                  {item.label}
-                </span>
-              </button>
-            )
-          })}
+      <nav className={barClassName} aria-label="Main">
+        <div className="flex items-stretch px-1.5">
+          {navItems.map((item) => renderTab(item, isActive(item.path) || (item.id === 'inbox' && isActive('/messages'))))}
 
-          {/* Dashboard slot. AI is intentionally NOT a sixth nav item:
-              it's an intelligent shortcut into the Discover chat. The
-              floating button is rendered OUTSIDE this <nav> (see below the
-              </nav>) so its `fixed` positioning anchors to the viewport,
-              not to the nav — the nav's `transform: translate3d` would
-              otherwise make IT the containing block and drag the button
-              down onto this Dashboard slot (the bug we keep regressing). */}
-          <div className="relative">
-            {/* Avatar = Dashboard nav item. Tap navigates directly to
-                /dashboard/profile (mock convention). Settings + Sign out
-                used to live in a dropdown anchored here; those moved to
-                the SettingsSheet (gear icon) in the header so the avatar
-                becomes a single-purpose nav tap. Purple ring on the avatar
-                + label opacity bump mark the active state when on the
-                dashboard. */}
-            <button
-              type="button"
-              onClick={() => handleNavigate('/dashboard/profile')}
-              aria-label="Dashboard"
-              aria-current={location.pathname.startsWith('/dashboard') ? 'page' : undefined}
-              className={`flex flex-col items-center justify-center min-w-[48px] min-h-[44px] py-1 px-2 rounded-xl transition-all duration-200 ${
-                location.pathname.startsWith('/dashboard')
-                  ? 'text-hockia-primary'
-                  : 'text-gray-600 active:bg-gray-100'
-              }`}
-            >
-              <div
-                className={`relative flex items-center justify-center w-7 h-7 mb-0.5 transition-transform duration-200 ${
-                  location.pathname.startsWith('/dashboard') ? 'scale-110' : 'scale-100'
-                }`}
-              >
-                <Avatar
-                  src={profile?.avatar_url}
-                  initials={
-                    (profile?.full_name ?? '')
-                      .trim()
-                      .split(' ')
-                      .filter(Boolean)
-                      .map((p) => p[0])
-                      .join('')
-                      .slice(0, 2)
-                      .toUpperCase() || '?'
-                  }
-                  size="sm"
-                  loading="eager"
-                  role={profile?.role}
-                  // Match the 24px icon box of sibling nav items so the
-                  // Dashboard slot is the same height (was ~4px taller).
-                  className={`!w-6 !h-6 ${
-                    location.pathname.startsWith('/dashboard')
-                      ? 'ring-2 ring-hockia-primary ring-offset-2'
-                      : ''
-                  }`}
-                />
-              </div>
-              {/* Label matches sibling nav items — hidden under 360px to
-                  match MobileBottomNav's existing icon-only fallback.
-                  No opacity dimming, for the contrast reason above. */}
-              <span className="hidden min-[360px]:inline text-[10px] font-medium transition-all duration-200">
-                Dashboard
-              </span>
-            </button>
-          </div>
+          {/* Profile = the member's own avatar (Figma tab/Profile). */}
+          <button
+            type="button"
+            onClick={() => handleNavigate('/dashboard/profile')}
+            aria-label="Profile"
+            aria-current={onProfile ? 'page' : undefined}
+            className={cn(
+              'flex min-h-[52px] flex-1 flex-col items-center gap-[3px] pb-1 pt-[7px] transition-colors',
+              onProfile ? 'text-hockia-primary' : 'text-ink-2',
+            )}
+          >
+            <span className="flex h-[26px] w-[26px] items-center justify-center">
+              <Avatar
+                src={profile?.avatar_url}
+                initials={initials}
+                size="sm"
+                loading="eager"
+                role={profile?.role}
+                className={cn('!h-[26px] !w-[26px]', onProfile && 'ring-2 ring-hockia-primary ring-offset-1')}
+              />
+            </span>
+            <span className="hidden text-tab min-[360px]:inline">Profile</span>
+          </button>
         </div>
       </nav>
-
-      {/* Floating HOCKIA AI button — rendered as a viewport-fixed SIBLING of
-          the nav (NOT a child) so the nav's `transform: translate3d` can't
-          capture its `fixed` positioning. Anchored to the bottom-right,
-          lifted clear above the nav bar with the safe-area inset folded in,
-          so it never sits on the Dashboard icon or the nav row at any
-          viewport width. z-50 keeps it above the z-40 nav. Hides on
-          scroll-down (fabHidden) and reappears on scroll-up / at rest, so it
-          stays out of the way of card content while scrolling. */}
-      <button
-        type="button"
-        onClick={() => handleNavigate('/discover')}
-        aria-label="Open Hockia AI"
-        aria-hidden={hideFab ? 'true' : undefined}
-        tabIndex={hideFab ? -1 : 0}
-        className={`lg:hidden fixed right-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-50
-                   w-12 h-12 rounded-full
-                   bg-gradient-to-br from-hockia-primary to-hockia-secondary
-                   flex items-center justify-center
-                   shadow-lg shadow-hockia-primary/40 ring-2 ring-white
-                   transition-all duration-300 ease-out
-                   ${hideFab
-                     ? 'translate-y-24 opacity-0 pointer-events-none'
-                     : 'translate-y-0 opacity-100 active:scale-95'}`}
-      >
-        <Sparkles className="w-5 h-5 text-white" strokeWidth={2.25} />
-      </button>
     </>
   )
 }

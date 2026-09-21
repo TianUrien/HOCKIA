@@ -10,6 +10,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
+import { onOpenSearchOverlay } from '@/lib/searchOverlayBus'
 import { Search, ArrowLeft, X, Clock, Loader2, SearchX, Shield, ChevronRight, Briefcase, MapPin } from 'lucide-react'
 import { Avatar, RoleBadge } from '@/components'
 import { useSearch } from '@/hooks/useSearch'
@@ -172,9 +173,12 @@ function CompactOpportunityRow({ result, onSelect }: { result: SearchOpportunity
 
 // ── Main overlay component ────────────────────────────────────────────
 
-export function SearchOverlay() {
+export function SearchOverlay({ triggerClassName }: { triggerClassName?: string } = {}) {
   const navigate = useNavigate()
   const [isOpen, setIsOpen] = useState(false)
+
+  // The header's search icon opens this overlay (lib/searchOverlayBus).
+  useEffect(() => onOpenSearchOverlay(() => setIsOpen(true)), [])
   const [query, setQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const [activeTab, setActiveTab] = useState<TabType>('all')
@@ -500,7 +504,7 @@ export function SearchOverlay() {
 
   return (
     <>
-      {pill}
+      {triggerClassName ? <div className={triggerClassName}>{pill}</div> : pill}
       {overlay}
     </>
   )

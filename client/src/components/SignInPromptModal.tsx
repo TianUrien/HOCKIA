@@ -1,8 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { LogIn, UserPlus } from 'lucide-react'
-import Modal from './Modal'
-import Button from './Button'
+import { BottomSheet } from '@/components/ui/BottomSheet'
 import { trackSignupWallAction } from '@/lib/analytics'
 import { trackDbEvent, markWallIntent } from '@/lib/trackDbEvent'
 
@@ -17,9 +15,18 @@ interface SignInPromptModalProps {
   action?: string
 }
 
+/** "Sign in to apply" → "Join Hockia to apply" — one sheet, the trigger in the title. */
+function joinTitle(title: string): string {
+  const m = /^(?:sign in|log in) to (.+)$/i.exec(title.trim())
+  if (m) return `Join Hockia to ${m[1]}`
+  if (/^sign in to continue$/i.test(title.trim())) return 'Join Hockia'
+  return title
+}
+
 /**
- * Modal prompting unauthenticated users to sign in or sign up.
- * Stores the current URL so they can return after authentication.
+ * The guest Join sheet (founder ruling 2026-09-20): every gated action —
+ * Apply, Add friend, Message, View profile — lands on this one sheet with
+ * the trigger named in the title. Create a profile first, Log in second.
  *
  * This is the single chokepoint for the login-wall funnel: it fires
  * `login_wall_shown` on open and marks a wall intent when the visitor chooses
@@ -29,7 +36,7 @@ export default function SignInPromptModal({
   isOpen,
   onClose,
   title = 'Sign in to continue',
-  message = 'Sign in or create a free HOCKIA account to apply to this opportunity.',
+  message = 'Create a free HOCKIA profile — clubs, coaches and players are already here.',
   action,
 }: SignInPromptModalProps) {
   const navigate = useNavigate()
@@ -47,57 +54,40 @@ export default function SignInPromptModal({
   const handleSignIn = () => {
     trackSignupWallAction('sign_in')
     markWallIntent(action ?? 'unknown')
-    // Navigate to landing with return URL stored in state
-    navigate('/', { state: { from: location.pathname } })
+    navigate('/signin', { state: { from: location.pathname } })
     onClose()
   }
 
   const handleSignUp = () => {
     trackSignupWallAction('sign_up')
     markWallIntent(action ?? 'unknown')
-    // Navigate to signup with return URL stored in state
     navigate('/signup', { state: { from: location.pathname } })
     onClose()
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose}>
-      <div className="p-6 text-center">
-        {/* Icon */}
-        <div className="w-16 h-16 bg-gradient-to-br from-hockia-primary to-hockia-secondary rounded-full flex items-center justify-center mx-auto mb-4">
-          <LogIn className="w-8 h-8 text-white" />
+    <BottomSheet open={isOpen} onClose={onClose} ariaLabel={joinTitle(title)}>
+      <div className="flex flex-col gap-4 px-5 pb-3 pt-1">
+        <div>
+          <h2 className="text-title text-ink-1">{joinTitle(title)}</h2>
+          <p className="mt-1.5 text-row text-ink-2">{message}</p>
         </div>
-
-        {/* Title */}
-        <h2 className="text-xl font-bold text-gray-900 mb-2">{title}</h2>
-
-        {/* Message */}
-        <p className="text-gray-600 mb-6">{message}</p>
-
-        {/* Actions */}
-        <div className="space-y-3">
-          <Button
-            onClick={handleSignIn}
-            className="w-full bg-gradient-to-r from-hockia-primary to-hockia-secondary hover:opacity-90 flex items-center justify-center gap-2"
-          >
-            <LogIn className="w-4 h-4" />
-            Sign In
-          </Button>
-          <Button
-            onClick={handleSignUp}
-            variant="outline"
-            className="w-full flex items-center justify-center gap-2"
-          >
-            <UserPlus className="w-4 h-4" />
-            Create Free Account
-          </Button>
-        </div>
-
-        {/* Footer note */}
-        <p className="text-xs text-gray-500 mt-4">
-          It only takes a minute to join HOCKIA and start connecting with clubs worldwide.
-        </p>
+        <button
+          type="button"
+          onClick={handleSignUp}
+          className="flex h-[52px] w-full items-center justify-center rounded-full bg-hockia-primary text-body font-semibold text-white"
+        >
+          Create a profile
+        </button>
+        <button
+          type="button"
+          onClick={handleSignIn}
+          className="flex h-[52px] w-full items-center justify-center rounded-full bg-surface-grouped text-body font-semibold text-ink-1"
+        >
+          Log in
+        </button>
+        <p className="text-center text-secondary text-ink-4">Free. It takes a minute.</p>
       </div>
-    </Modal>
+    </BottomSheet>
   )
 }

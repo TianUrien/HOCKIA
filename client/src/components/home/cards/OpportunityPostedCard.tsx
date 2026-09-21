@@ -1,8 +1,7 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 import { Briefcase, MapPin, BadgeCheck } from 'lucide-react'
-import { Avatar, StorageImage } from '@/components'
-import { getTimeAgo } from '@/lib/utils'
+import { StorageImage } from '@/components'
+import { FeedCard, FeedCardBody, FeedCardCaption, FeedCardFooter, FeedCardHeader, FeedCardPrimaryAction, profilePathForRole } from '../FeedCard'
 import type { OpportunityPostedFeedItem } from '@/types/homeFeed'
 import { opportunityGenderToTeamLabel } from '@/lib/hockeyCategories'
 import OpportunityDetailOverlay from '@/components/OpportunityDetailOverlay'
@@ -19,7 +18,11 @@ export function OpportunityPostedCard({ item }: OpportunityPostedCardProps) {
   // mounted underneath, so closing reveals it exactly where it was — no route
   // change, no unmount, no scroll jump). Deep links still use the route.
   const [showDetail, setShowDetail] = useState(false)
-  const timeAgo = getTimeAgo(item.created_at, true)
+
+  // The PUBLISHER is the card's author. Vacancies can be coach-published —
+  // then club_id/club_name/club_logo carry the COACH's profile.
+  const publisherRole = item.publisher_role === 'coach' ? 'coach' : 'club'
+  const publisherPath = profilePathForRole(publisherRole, item.club_id)
 
   // §2.6 inline match % for PLAYER viewers — the same rule-based scorer as
   // the Pulse rail, over the fields the feed item carries (position +
@@ -65,127 +68,80 @@ export function OpportunityPostedCard({ item }: OpportunityPostedCardProps) {
       : null
   const showMatch = matchPct != null && matchPct >= MATCH_THRESHOLD && !euBlocked
 
+  const hasChips = Boolean(item.position || item.gender || showMatch || item.location_city || item.location_country)
+
   return (
-    <div className="bg-white">
-      <div className="p-5">
-        {/* Header */}
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-8 h-8 rounded-full bg-hockia-primary/10 flex items-center justify-center flex-shrink-0">
-            <Briefcase className="w-4 h-4 text-hockia-primary" />
-          </div>
-          <div className="flex items-center gap-1.5 text-sm text-gray-500">
-            <span className="font-medium text-gray-700">New Opportunity posted</span>
-            <span>&middot;</span>
-            <span>{timeAgo}</span>
-          </div>
-        </div>
+    <FeedCard testId="opportunity-posted-card">
+      <FeedCardHeader
+        authorId={item.club_id}
+        name={item.club_name}
+        avatarUrl={item.club_logo}
+        role={publisherRole}
+        createdAt={item.created_at}
+        profilePath={publisherPath}
+      />
+      <FeedCardCaption icon={<Briefcase />}>New opportunity</FeedCardCaption>
 
-        {/* Opportunity Details */}
-        <div className="mb-4">
-          <h3 className="text-lg font-bold text-gray-900 mb-2">
-            {item.title}
-          </h3>
+      <FeedCardBody>
+        <h3 className="text-[17px] font-semibold leading-6 text-gray-900">{item.title}</h3>
 
-          <div className="flex items-center gap-3 flex-wrap text-sm text-gray-600 mb-3">
+        {hasChips && (
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-gray-600">
             {item.position && (
-              <span className="px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
+              <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
                 {item.position}
               </span>
             )}
             {item.gender && (
-              <span className="px-2.5 py-1 bg-pink-50 text-pink-700 rounded-full text-xs font-medium">
+              <span className="rounded-full bg-pink-50 px-2.5 py-1 text-xs font-medium text-pink-700">
                 {opportunityGenderToTeamLabel(item.gender)}
               </span>
             )}
             {showMatch && (
-              <span className="px-2.5 py-1 bg-[#f4f0fd] text-hockia-primary rounded-full text-xs font-bold">
+              <span className="rounded-full bg-[#f4f0fd] px-2.5 py-1 text-xs font-bold text-hockia-primary">
                 {matchPct}% match
               </span>
             )}
             {(item.location_city || item.location_country) && (
-              <span className="flex items-center gap-1 text-gray-500">
-                <MapPin className="w-3.5 h-3.5" />
+              <span className="flex items-center gap-1 text-[13px] text-gray-500">
+                <MapPin className="h-3.5 w-3.5" />
                 {[item.location_city, item.location_country].filter(Boolean).join(', ')}
               </span>
             )}
           </div>
+        )}
 
-          {/* Publisher Info */}
-          {item.publisher_role === 'coach' && item.world_club_name ? (
-            <div className="space-y-1.5">
-              {/* Coach (primary) */}
-              <Link
-                to={`/players/id/${item.club_id}`}
-                className="flex items-center gap-2.5 group"
-              >
-                <span className="text-sm text-gray-500">by</span>
-                <Avatar
-                  src={item.club_logo}
-                  initials={item.club_name?.slice(0, 2) || '?'}
-                  size="sm"
-                  className="flex-shrink-0"
-                  role={item.publisher_role}
-                />
-                <span className="text-sm font-medium text-gray-700 group-hover:text-hockia-primary transition-colors">
-                  {item.club_name}
-                </span>
-              </Link>
-              {/* World Club (secondary) */}
-              <div className="flex items-center gap-2 ml-7">
-                {item.world_club_avatar ? (
-                  <StorageImage
-                    src={item.world_club_avatar}
-                    imageSize="card-thumb"
-                    alt={item.world_club_name}
-                    className="w-5 h-5 rounded-full object-cover flex-shrink-0"
-                    containerClassName="w-5 h-5 flex-shrink-0"
-                  />
-                ) : (
-                  <div className="w-5 h-5 rounded-full bg-orange-50 flex items-center justify-center flex-shrink-0 border border-orange-200">
-                    <span className="text-[7px] font-bold text-orange-600">
-                      {item.world_club_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                    </span>
-                  </div>
-                )}
-                <span className="text-xs text-gray-500">{item.world_club_name}</span>
-                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-[#FFF7ED] text-[#c2410c] border border-orange-100">
-                  <BadgeCheck className="w-2.5 h-2.5" />
-                  Official
+        {/* Coach-published on behalf of a world club — the club is named as
+            the official home of the role. */}
+        {item.publisher_role === 'coach' && item.world_club_name && (
+          <div className="mt-2 flex items-center gap-2">
+            {item.world_club_avatar ? (
+              <StorageImage
+                src={item.world_club_avatar}
+                imageSize="card-thumb"
+                alt={item.world_club_name}
+                className="h-5 w-5 rounded-full object-cover flex-shrink-0"
+                containerClassName="h-5 w-5 flex-shrink-0"
+              />
+            ) : (
+              <div className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border border-orange-200 bg-orange-50">
+                <span className="text-[7px] font-bold text-orange-600">
+                  {item.world_club_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                 </span>
               </div>
-            </div>
-          ) : (
-            <Link
-              to={item.publisher_role === 'coach' ? `/coaches/id/${item.club_id}` : `/clubs/id/${item.club_id}`}
-              className="flex items-center gap-2.5 group"
-            >
-              <span className="text-sm text-gray-500">by</span>
-              <Avatar
-                src={item.club_logo}
-                initials={item.club_name?.slice(0, 2) || '?'}
-                size="sm"
-                className="flex-shrink-0"
-                role={item.publisher_role}
-              />
-              <span className="text-sm font-medium text-gray-700 group-hover:text-hockia-primary transition-colors">
-                {item.club_name}
-              </span>
-            </Link>
-          )}
-        </div>
+            )}
+            <span className="text-[13px] text-gray-500">{item.world_club_name}</span>
+            <span className="inline-flex items-center gap-0.5 rounded-full border border-orange-100 bg-[#FFF7ED] px-1.5 py-0.5 text-[9px] font-semibold text-[#c2410c]">
+              <BadgeCheck className="h-2.5 w-2.5" />
+              Official
+            </span>
+          </div>
+        )}
+      </FeedCardBody>
 
-        {/* CTA */}
-        <button
-          type="button"
-          onClick={() => setShowDetail(true)}
-          className="w-full px-4 py-2.5 bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white rounded-lg font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
-        >
-          Apply Now
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-          </svg>
-        </button>
-      </div>
+      <FeedCardFooter>
+        <FeedCardPrimaryAction onClick={() => setShowDetail(true)}>Apply</FeedCardPrimaryAction>
+      </FeedCardFooter>
 
       {showDetail && (
         <OpportunityDetailOverlay
@@ -193,6 +149,6 @@ export function OpportunityPostedCard({ item }: OpportunityPostedCardProps) {
           onClose={() => setShowDetail(false)}
         />
       )}
-    </div>
+    </FeedCard>
   )
 }

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, useRef } from 'react'
+import ProfileTopBar from '@/components/dashboard/ProfileTopBar'
 import { ArrowLeft } from 'lucide-react'
 import { useNavigate, useParams, useSearchParams, useLocation } from 'react-router-dom'
 import Header from '@/components/Header'
@@ -487,11 +488,12 @@ export default function ClubDashboard({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
+      <Header mobileHidden={!readOnly} />
 
       {readOnly && isOwnProfile && <PublicViewBanner />}
 
-      <main className="max-w-7xl mx-auto px-4 md:px-6 pt-24 pb-12 space-y-5 md:space-y-6">
+      <main className="max-w-7xl mx-auto px-4 md:px-6 ${readOnly ? 'pt-24' : 'pt-[max(env(safe-area-inset-top),0.75rem)] lg:pt-24'} pb-12 space-y-5 md:space-y-6">
+        {!readOnly && <ProfileTopBar />}
         {readOnly && !isOwnProfile && (
           <button
             type="button"

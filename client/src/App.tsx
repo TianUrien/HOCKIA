@@ -78,6 +78,7 @@ function lazyWithRetry<T extends ComponentType<any>>(
 const CompleteProfile = lazyWithRetry(() => import('@/pages/CompleteProfile'))
 const DashboardRouter = lazyWithRetry(() => import('@/pages/DashboardRouter'))
 const HomePage = lazyWithRetry(() => import('@/pages/HomePage'))
+const PulsePage = lazyWithRetry(() => import('@/pages/PulsePage'))
 const OpportunitiesPage = lazyWithRetry(() => import('@/pages/OpportunitiesPage'))
 const OpportunityDetailPage = lazyWithRetry(() => import('@/pages/OpportunityDetailPage'))
 const CommunityPage = lazyWithRetry(() => import('@/pages/CommunityPage'))
@@ -90,6 +91,8 @@ const PublicPlayerProfile = lazyWithRetry(() => import('@/pages/PublicPlayerProf
 const PublicClubProfile = lazyWithRetry(() => import('@/pages/PublicClubProfile'))
 const PublicUmpireProfile = lazyWithRetry(() => import('@/pages/PublicUmpireProfile'))
 const MessagesPage = lazyWithRetry(() => import('@/pages/MessagesPage'))
+const InboxPage = lazyWithRetry(() => import('@/pages/InboxPage'))
+const MyApplicationsPage = lazyWithRetry(() => import('@/pages/MyApplicationsPage'))
 const SearchPage = lazyWithRetry(() => import('@/pages/SearchPage'))
 const DiscoverPage = lazyWithRetry(() => import('@/pages/DiscoverPage'))
 
@@ -247,6 +250,7 @@ function AnalyticsTracker() {
 function getFeatureFromPath(path: string): string {
   if (path.startsWith('/home') || path === '/') return 'feed'
   if (path.startsWith('/messages')) return 'messaging'
+  if (path.startsWith('/inbox')) return 'messaging'
   if (path.startsWith('/opportunities')) return 'marketplace'
   if (path.startsWith('/marketplace')) return 'marketplace'
   if (path.startsWith('/community')) return 'community'
@@ -464,6 +468,7 @@ function App() {
                 {/* Protected Routes (require authentication) - Lazy loaded */}
                 <Route path="/complete-profile" element={<ErrorBoundary fallback={<RouteErrorFallback />}><CompleteProfile /></ErrorBoundary>} />
                 <Route path="/home" element={<ErrorBoundary fallback={<RouteErrorFallback />}><HomePage /></ErrorBoundary>} />
+                <Route path="/pulse" element={<ErrorBoundary fallback={<RouteErrorFallback />}><PulsePage /></ErrorBoundary>} />
                 <Route path="/search" element={<ErrorBoundary fallback={<RouteErrorFallback />}><SearchPage /></ErrorBoundary>} />
                 <Route path="/discover" element={<ErrorBoundary fallback={<RouteErrorFallback />}><DiscoverPage /></ErrorBoundary>} />
                 {/* Alias: /discovery → /discover. Some users (and external
@@ -471,12 +476,18 @@ function App() {
                 <Route path="/discovery" element={<Navigate to="/discover" replace />} />
                 <Route path="/discovery/:rest" element={<Navigate to="/discover" replace />} />
                 <Route path="/community" element={<ErrorBoundary fallback={<RouteErrorFallback />}><CommunityPage /></ErrorBoundary>} />
+                {/* Questions are a post kind in the Home feed now (2026-09-20). */}
+                <Route path="/community/questions" element={<Navigate to="/home" replace />} />
                 <Route path="/community/:tab" element={<ErrorBoundary fallback={<RouteErrorFallback />}><CommunityPage /></ErrorBoundary>} />
                 <Route path="/community/questions/:questionId" element={<ErrorBoundary fallback={<RouteErrorFallback />}><QuestionDetailPage /></ErrorBoundary>} />
                 <Route path="/opportunities" element={<ErrorBoundary fallback={<RouteErrorFallback />}><OpportunitiesPage /></ErrorBoundary>} />
+                <Route path="/opportunities/applications" element={<ErrorBoundary fallback={<RouteErrorFallback />}><MyApplicationsPage /></ErrorBoundary>} />
                 <Route path="/opportunities/:id" element={<ErrorBoundary fallback={<RouteErrorFallback />}><OpportunityDetailPage /></ErrorBoundary>} />
                 <Route path="/messages" element={<ErrorBoundary fallback={<RouteErrorFallback />}><MessagesPage /></ErrorBoundary>} />
                 <Route path="/messages/:conversationId" element={<ErrorBoundary fallback={<RouteErrorFallback />}><MessagesPage /></ErrorBoundary>} />
+                {/* Inbox tab (Figma 03 Player): Messages · Requests · Activity */}
+                <Route path="/inbox" element={<ErrorBoundary fallback={<RouteErrorFallback />}><InboxPage /></ErrorBoundary>} />
+                <Route path="/inbox/:segment" element={<ErrorBoundary fallback={<RouteErrorFallback />}><InboxPage /></ErrorBoundary>} />
                 {/* /notifications was an unrouted dead-link (the UI lives in
                     a global drawer, not a page). Email/bookmark deep-links
                     used to hit the 404. Handler opens the drawer + redirects

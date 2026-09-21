@@ -19,20 +19,21 @@
  * scope` cap for wrong-fit candidates.
  */
 import { useState } from 'react'
-import { Check, Minus, AlertCircle, ShieldCheck } from 'lucide-react'
-import { DualNationalityDisplay, RoleBadge } from '@/components'
+import { Check, Minus, ShieldCheck } from 'lucide-react'
+import { DualNationalityDisplay } from '@/components'
 import { getImageUrl } from '@/lib/imageUrl'
-import RecruiterCardActions from './RecruiterCardActions'
-import { computeEvidence, evidenceDisplayLabel, EVIDENCE_TOOLTIP } from '@/lib/evidence'
 import { getPlayerLeagueName } from '@/hooks/useWorldClubLogo'
 import { recruiterDisplayTier, type RecruiterVerdict, type VerdictDisplayTier } from '@/lib/recruiterVerdict'
 import { availabilityLabel } from '@/lib/availabilityLabel'
+import { openRolesLabel } from '@/hooks/useOpenRoleCounts'
 
 /** Fields the card reads — a structural subset of the Community member row, so
  *  PeopleListView can pass `member` straight through. Most are optional so a
  *  thin row still renders (the zone shows a muted placeholder). */
 export interface RecruiterCardMember {
   id: string
+  /** Open opportunities this member has published — outranks the generic pill. */
+  open_role_count?: number | null
   avatar_url: string | null
   full_name: string
   role: 'player' | 'coach' | 'club' | 'brand' | 'umpire'
@@ -91,9 +92,6 @@ interface RecruiterCandidateCardProps {
    *  surface) so it paints instantly; everyone else stays lazy. */
   priority?: boolean
 }
-
-const ONLINE_WINDOW_MS = 5 * 60 * 1000
-const COMPLETENESS_WARN_BELOW = 60
 
 const BRAND_CATEGORY_LABELS: Record<string, string> = {
   equipment: 'Equipment',
@@ -207,35 +205,9 @@ function substanceLine(member: RecruiterCardMember): string | null {
  *  in; nothing otherwise — never a "not looking" state. Single source of truth:
  *  availabilityLabel. */
 function availabilityChip(member: RecruiterCardMember): { label: string } | null {
-  const label = availabilityLabel(member.role, member)
+  // Concrete beats generic: a stale Recruiting toggle never outranks real roles.
+  const label = openRolesLabel(member.open_role_count) ?? availabilityLabel(member.role, member)
   return label ? { label } : null
-}
-
-/** Card-specific Proof checklist (NOT the full evidenceChecklist). Player = 5
- *  items, coach = 4 — matching the screenshots' "Proof 4/5" / "Proof 3/4".
- *  Only players and coaches have a proof shield; orgs/umpires fall back to a
- *  Verified badge in the trust row. */
-function proofChecklist(member: RecruiterCardMember): { present: number; total: number } | null {
-  if (member.role === 'player') {
-    const items = [
-      (member.full_game_video_count ?? 0) > 0, // footage
-      Boolean(member.highlight_video_url), // highlight
-      (member.accepted_reference_count ?? 0) > 0, // references
-      Boolean(member.current_world_club_id || member.current_club), // club
-      Boolean(member.is_verified), // verified
-    ]
-    return { present: items.filter(Boolean).length, total: items.length }
-  }
-  if (member.role === 'coach') {
-    const items = [
-      (member.accepted_reference_count ?? 0) > 0, // references
-      Boolean(member.is_verified), // verified
-      Boolean(member.current_world_club_id || member.current_club), // club
-      (member.career_entry_count ?? 0) > 0, // career history
-    ]
-    return { present: items.filter(Boolean).length, total: items.length }
-  }
-  return null
 }
 
 /** Soft, deterministic, non-purple initials tint (purple is reserved for the
@@ -264,27 +236,58 @@ const CHIP: Record<VerdictDisplayTier, { label: string; chipClass: string; icon:
   out:       { label: 'Out of scope', icon: Minus, chipClass: 'bg-gray-100 text-gray-600',   barClass: 'bg-[#B4B2A9]', pctClass: 'text-gray-500' },
 }
 
-/** Proof shield colour = the existing evidence tier. Strong/Enough → green
- *  family, Limited → amber, Missing → grey. */
-function shieldColor(level: 'strong' | 'moderate' | 'limited', isApplicable: boolean): string {
-  if (!isApplicable) return '#B4B2A9'
-  switch (level) {
-    case 'strong':
-      return '#1D9E75'
-    case 'moderate':
-      return '#639922'
-    case 'limited':
-      return '#BA7517'
+/** Role noun for the tile's second line: "Player", "Coach", "Club"… */
+function roleNoun(member: RecruiterCardMember): string {
+  switch (member.role) {
+    case 'coach': return 'Coach'
+    case 'umpire': return 'Umpire'
+    case 'club': return 'Club'
+    case 'brand': return 'Brand'
+    default: return 'Player'
   }
 }
 
+/** The tile's second line — "Player · Midfielder", "Club · Serie A Elite",
+ *  "Coach · Goalkeeping Coach", "Brand · Equipment". */
+function tileDetail(member: RecruiterCardMember): string {
+  const noun = roleNoun(member)
+  let fact: string | null = null
+  switch (member.role) {
+    case 'player': {
+      const raw = member.position?.trim()
+      fact = raw ? (POSITION_LABEL[raw.toLowerCase()] ?? titleCase(raw)) : null
+      break
+    }
+    case 'coach':
+      fact = coachSpecLabel(member)
+      break
+    case 'umpire':
+      fact = umpireLevelLabel(member)
+      break
+    case 'club':
+      fact = member.competition_name?.trim() || substanceLine(member) || locationLine(member)
+      break
+    case 'brand':
+      fact = member.brand_category ? BRAND_CATEGORY_LABELS[member.brand_category] ?? null : null
+      break
+  }
+  return fact && fact !== noun ? `${noun} · ${fact}` : noun
+}
+
+/**
+ * The member tile (UI redesign 2026-09-19, "Community v2"): photo-first.
+ *   [ photo — status pill top-left ]
+ *   Name
+ *   Player · Midfielder
+ *   🇦🇷 Argentina
+ * In CONTEXT mode (a recruiter with an active scope) the pill is the verdict
+ * chip and a "% match" line joins the text block. Tap → preview.
+ */
 export default function RecruiterCandidateCard({ member, verdict, onPreview, priority = false }: RecruiterCandidateCardProps) {
   const name = member.full_name?.trim() || 'Unknown'
   const initials = name.split(' ').map((w) => w[0]).filter(Boolean).join('').slice(0, 2).toUpperCase() || '?'
 
   const isBrand = member.role === 'brand'
-  const isOrg = member.role === 'club' || isBrand
-  const isPerson = !isOrg // players/coaches/umpires get the online dot
 
   // Brand hero prefers the brand logo (contained, never cropped); everyone else
   // uses their avatar (cover-cropped).
@@ -296,15 +299,7 @@ export default function RecruiterCandidateCard({ member, verdict, onPreview, pri
   const [heroFailed, setHeroFailed] = useState(false)
   const heroImageUrl = rawHero && !heroFailed ? getImageUrl(rawHero, 'avatar-md') : null
 
-  const isOnline = member.last_active_at
-    ? Date.now() - new Date(member.last_active_at).getTime() < ONLINE_WINDOW_MS
-    : false
-
-  const completeness = member.profile_completeness_pct ?? 0
-  const showIncomplete = completeness > 0 && completeness < COMPLETENESS_WARN_BELOW
-
   const hasNationality = Boolean(member.nationality_country_id || member.nationality)
-  const location = locationLine(member)
 
   // ── CONTEXT mode (verdict present) ──────────────────────────────────────
   const inContext = Boolean(verdict)
@@ -317,159 +312,82 @@ export default function RecruiterCandidateCard({ member, verdict, onPreview, pri
 
   // ── NEUTRAL mode (no verdict) ───────────────────────────────────────────
   const availability = availabilityChip(member)
-  const substance = substanceLine(member)
-
-  // ── Trust row (Proof shield for persons-with-evidence, Verified otherwise) ─
-  const proof = proofChecklist(member)
-  const evidence = computeEvidence({
-    role: member.role,
-    highlight_video_url: member.highlight_video_url ?? null,
-    full_game_video_count: member.full_game_video_count ?? null,
-    accepted_reference_count: member.accepted_reference_count ?? null,
-    is_verified: member.is_verified ?? null,
-    current_world_club_id: member.current_world_club_id ?? null,
-  })
 
   const ariaLabel = inContext
     ? `${name} — ${chip.label} (${pct}% match). Tap to preview.`
     : `${name} — ${detailLine(member)}. Tap to preview.`
 
   return (
-    <div className="relative flex h-full flex-col rounded-xl border border-gray-200 bg-white">
-      {/* Role pill — top-left tag (role-coloured, never purple). pointer-events-
-          none so a tap on the corner still opens the preview. */}
-      <div className="pointer-events-none absolute left-2 top-2 z-10">
-        <RoleBadge role={member.role} className="px-1.5 py-0.5 text-[10px]" />
-      </div>
-      <button
-        type="button"
-        onClick={onPreview}
-        className="flex flex-1 flex-col items-center px-2.5 pt-3 pb-2 text-center transition-transform duration-100 active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-hockia-primary rounded-t-xl"
-        aria-label={ariaLabel}
-      >
-        {/* ── Avatar (+ online dot for persons) ── */}
-        <div className="relative h-[52px] w-[52px] flex-shrink-0">
-          <div className="h-full w-full overflow-hidden rounded-full bg-gray-100">
-            {heroImageUrl ? (
-              <img
-                src={heroImageUrl}
-                alt=""
-                className={`h-full w-full ${isBrand ? 'object-contain p-1.5' : 'object-cover'}`}
-                loading={priority ? 'eager' : 'lazy'}
-                fetchPriority={priority ? 'high' : undefined}
-                decoding="async"
-                onError={() => setHeroFailed(true)}
-              />
-            ) : (
-              <div className={`flex h-full w-full items-center justify-center text-[15px] font-semibold ${tintFor(name)}`}>
-                {initials}
-              </div>
-            )}
+    <button
+      type="button"
+      onClick={onPreview}
+      className="flex h-full w-full flex-col rounded-2xl bg-surface-grouped p-2 pb-3 text-left transition-transform duration-100 active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary"
+      aria-label={ariaLabel}
+      data-testid="member-tile"
+    >
+      {/* ── Photo + status pill ── */}
+      <div className={`relative aspect-square w-full overflow-hidden rounded-xl ${isBrand || member.role === 'club' ? 'border border-line bg-white' : 'bg-gray-100'}`}>
+        {heroImageUrl ? (
+          <img
+            src={heroImageUrl}
+            alt=""
+            className={`h-full w-full ${isBrand || member.role === 'club' ? 'bg-white object-contain p-5' : 'object-cover'}`}
+            loading={priority ? 'eager' : 'lazy'}
+            fetchPriority={priority ? 'high' : undefined}
+            decoding="async"
+            onError={() => setHeroFailed(true)}
+          />
+        ) : (
+          <div className={`flex h-full w-full items-center justify-center text-3xl font-semibold ${tintFor(name)}`}>
+            {initials}
           </div>
-          {isPerson && (
-            <>
-              <span
-                className={`absolute bottom-0 right-0 h-[11px] w-[11px] rounded-full ring-2 ring-white ${isOnline ? 'bg-[#1D9E75]' : 'bg-[#B4B2A9]'}`}
-                aria-hidden="true"
-              />
-              <span className="sr-only">{isOnline ? 'Online' : 'Offline'}</span>
-            </>
-          )}
-        </div>
+        )}
+        {inContext ? (
+          <span className={`absolute left-2 top-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold shadow-sm ${chip.chipClass}`}>
+            <ChipIcon className="h-3 w-3" aria-hidden="true" />
+            {chip.label}
+          </span>
+        ) : availability ? (
+          <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-white px-[7px] py-[3px] text-[11px] font-semibold text-[#1b8a3f]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#1b8a3f]" aria-hidden="true" />
+            {availability.label}
+          </span>
+        ) : null}
+      </div>
 
-        {/* ── Name ── */}
-        <h3 className="mt-2 flex h-[18px] w-full items-center justify-center">
-          <span className="truncate text-[13.5px] font-semibold leading-tight text-gray-900" title={name}>{name}</span>
+      {/* ── Text block ── */}
+      <div className="min-w-0 px-1 pt-2">
+        <h3 className="flex items-center gap-1 text-row font-semibold text-ink-1">
+          <span className="truncate" title={name}>{name}</span>
+          {member.is_verified && <ShieldCheck className="h-3.5 w-3.5 flex-shrink-0 text-[#1D9E75]" aria-label="Verified" />}
         </h3>
-
-        {/* ── Detail line (role noun — always present) ── */}
-        <p className="flex h-[16px] items-center text-[11.5px] font-medium text-gray-700">
-          {detailLine(member)}
+        <p className="mt-px truncate text-secondary text-ink-2" title={tileDetail(member)}>
+          {tileDetail(member)}
         </p>
-
-        {/* ── Nationality (centered; EU tag never truncates) ── */}
-        <div className="mt-0.5 flex h-[17px] w-full items-center justify-center overflow-hidden">
+        <div className="mt-px flex h-[18px] items-center overflow-hidden text-secondary text-ink-4">
           {hasNationality ? (
             <DualNationalityDisplay
               primaryCountryId={member.nationality_country_id}
               secondaryCountryId={member.role === 'club' ? null : member.nationality2_country_id}
               fallbackText={member.nationality}
-              mode="code"
+              mode="line"
             />
           ) : (
-            <span className="text-[11px] text-gray-500">Nationality not listed</span>
+            <span>Nationality not listed</span>
           )}
         </div>
-
-        {/* ── Location / club ── */}
-        <div className="mt-0.5 flex h-[16px] w-full items-center justify-center">
-          <span className={`truncate text-[11px] ${location ? 'text-gray-400' : 'text-gray-500'}`} title={location ?? undefined}>
-            {location || (isOrg ? 'Location not listed' : 'Club not listed')}
-          </span>
-        </div>
-
-        {/* ── MIDDLE ZONE ── */}
-        {inContext ? (
-          /* CONTEXT — the only purple zone. chip + bar + % all derive from
-             the same strength so they can never disagree. */
-          <div className="mt-2.5 flex w-full flex-col items-center">
-            <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11.5px] font-medium ${chip.chipClass}`}>
-              <ChipIcon className="h-3 w-3" aria-hidden="true" />
-              {chip.label}
-            </span>
-            <div className="mt-2 h-[3px] w-[84%] overflow-hidden rounded-full bg-gray-100" aria-hidden="true">
+        {inContext && (
+          <div className="mt-1.5">
+            <div className="h-[3px] w-full overflow-hidden rounded-full bg-gray-100" aria-hidden="true">
               <div className={`h-full rounded-full ${chip.barClass} transition-[width] duration-300`} style={{ width: `${pct}%` }} />
             </div>
-            <p className="mt-1 flex h-[15px] w-full items-center justify-center gap-1 px-1 text-[11px] leading-none">
-              <span className={`font-medium ${chip.pctClass}`}>{pct}%</span>
+            <p className="mt-1 flex items-center gap-1 text-[11px] leading-none">
+              <span className={`font-semibold ${chip.pctClass}`}>{pct}%</span>
               <span className="truncate text-gray-500">match {matchSuffix}</span>
             </p>
           </div>
-        ) : (
-          /* NEUTRAL — availability chip + the single load-bearing fact. */
-          <div className="mt-2.5 flex w-full flex-col items-center">
-            <div className="flex h-[22px] items-center">
-              {availability && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-[#E7F6EF] px-2.5 py-0.5 text-[11.5px] font-medium text-[#13754F]">
-                  <span className="h-1.5 w-1.5 rounded-full bg-[#1D9E75]" aria-hidden="true" />
-                  {availability.label}
-                </span>
-              )}
-            </div>
-            <p className="mt-1.5 flex h-[15px] w-full items-center justify-center px-2 text-[11px] leading-none">
-              <span className={`truncate ${substance ? 'text-gray-600' : 'text-gray-500'}`} title={substance ?? undefined}>
-                {substance || 'No details yet'}
-              </span>
-            </p>
-          </div>
         )}
-
-        {/* ── TRUST ── */}
-        <div className="mt-2 flex h-[16px] w-full items-center justify-center gap-2.5 text-[11px]">
-          {showIncomplete && (
-            <span className="inline-flex items-center gap-1 text-[#854F0B]">
-              <AlertCircle className="h-3 w-3" aria-hidden="true" />
-              Incomplete
-            </span>
-          )}
-          {proof ? (
-            <span className="inline-flex items-center gap-1 text-gray-600" title={EVIDENCE_TOOLTIP}>
-              <ShieldCheck className="h-3.5 w-3.5 flex-shrink-0" style={{ color: shieldColor(evidence.level, evidence.isApplicable) }} aria-hidden="true" />
-              {evidenceDisplayLabel(evidence)}
-            </span>
-          ) : member.is_verified ? (
-            <span className="inline-flex items-center gap-1 text-gray-600">
-              <ShieldCheck className="h-3.5 w-3.5 flex-shrink-0 text-[#1D9E75]" aria-hidden="true" />
-              Verified
-            </span>
-          ) : null}
-        </div>
-      </button>
-
-      {/* ── ACTION (pinned to the bottom; single hairline above) ── */}
-      <div className="mt-auto">
-        <RecruiterCardActions playerId={member.id} playerName={name} />
       </div>
-    </div>
+    </button>
   )
 }

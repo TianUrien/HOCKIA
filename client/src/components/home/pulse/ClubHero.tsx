@@ -56,7 +56,7 @@ export function ClubHero({ loading, hasScope, fitCount, poolRole, pendingApplica
         {!hasScope ? (
           <>
             <h1 className="mt-2 text-xl font-black leading-tight">What are you recruiting for?</h1>
-            <p className="mt-1 text-sm text-white/70">
+            <p className="mt-1 text-sm text-gray-600">
               Set your recruiting scope — {voice === 'coach' ? 'who you recruit for' : 'team'}, position, level — and HOCKIA ranks every available {noun} for you.
             </p>
           </>
@@ -76,7 +76,7 @@ export function ClubHero({ loading, hasScope, fitCount, poolRole, pendingApplica
             <h1 className="mt-2 text-xl font-black leading-tight">
               New {nounPlural} join HOCKIA every week.
             </h1>
-            <p className="mt-1 text-sm text-white/70">
+            <p className="mt-1 text-sm text-gray-600">
               Your scope is set — matches surface here the moment they arrive. Meanwhile, browse who&apos;s open right now.
             </p>
           </>
@@ -85,7 +85,7 @@ export function ClubHero({ loading, hasScope, fitCount, poolRole, pendingApplica
         <button
           type="button"
           onClick={() => go(poolRole === 'coach' ? '/community/coaches' : '/community/players')}
-          className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-2xl bg-white/[0.14] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/20"
+          className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-hockia-primary px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
         >
           {!hasScope ? <Target className="h-4 w-4" /> : <Search className="h-4 w-4" />}
           {!hasScope ? 'Set your scope' : fitCount > 0 ? 'See your matches' : `Search ${nounPlural}`}

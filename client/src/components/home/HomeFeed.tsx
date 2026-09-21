@@ -1,11 +1,10 @@
-import { Component, Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Component, Fragment, useCallback, useEffect, useMemo, useRef } from 'react'
 import type { ReactNode, ErrorInfo } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowUp, Loader2, Rss, Search, Globe, Briefcase, MessageSquare } from 'lucide-react'
+import { ArrowUp, Loader2, Rss, Search, Shield, Briefcase, MessageSquare } from 'lucide-react'
 import * as Sentry from '@sentry/react'
 import { useHomeFeed } from '@/hooks/useHomeFeed'
-import { useAuthStore } from '@/lib/auth'
-import { FeedFilterChips, type FeedChip } from './FeedFilterChips'
+import { FeedAuthorContext, useFeedAuthorContext } from '@/hooks/useFeedAuthorContext'
 import { HomeFeedItemCard } from './HomeFeedItemCard'
 import { FeedSkeleton } from './FeedSkeleton'
 import type { HomeFeedItem } from '@/types/homeFeed'
@@ -45,50 +44,29 @@ interface HomeFeedProps {
 }
 
 /**
- * Facebook-style Home feed (post-Phase 6 redesign).
- * - Cards run flush to the container edges; media is full-width.
- * - Posts are separated by a gray spacer (the page bg shows through `space-y-2`).
- * - Text-content surfaces (pulse, profile completion, empty/error states)
- *   keep horizontal padding so they don't touch viewport edges.
- *
- * Country + role filter chips were removed in this redesign — see
- * deletion of HomeFilterChips. The filter params on `useHomeFeed` /
- * `get_home_feed` are intentionally still accepted by the hook + RPC so
- * other callers stay unaffected; we just don't pass them from here.
+ * The Home feed (UI redesign 2026-09-19): one chronological community feed,
+ * no filter chips ("more simple" — founder). The filter params on
+ * `useHomeFeed` / `get_home_feed` are still accepted by the hook + RPC for
+ * other callers; Home just doesn't pass any.
+ * - Cards are white surfaces on the page ground; media inset and rounded.
  */
 export function HomeFeed({ prependItemRef }: HomeFeedProps) {
-  // §2.6 filter chips — server filters where the RPC supports them, Photos
-  // client-side. Viewer country: base first (where they are), nationality
-  // fallback; the RPC matches AUTHOR NATIONALITY (its only geo signal).
-  const viewerCountryId = useAuthStore(
-    (s) => s.profile?.base_country_id ?? s.profile?.nationality_country_id ?? null,
-  )
-  const [chip, setChip] = useState<FeedChip>('all')
-  const feedFilters = useMemo(() => {
-    if (chip === 'near' && viewerCountryId != null) return { countryIds: [viewerCountryId] }
-    if (chip === 'players') return { roles: ['player'] }
-    if (chip === 'clubs') return { roles: ['club'] }
-    if (chip === 'opportunities') return { itemType: 'opportunity_posted' }
-    return undefined
-  }, [chip, viewerCountryId])
-
-  const { items: rawItems, isLoading, isFetchingNextPage, error, refetch, hasMore, loadMore, updateItemLike, removeItem, prependItem, newCount, showNewItems } = useHomeFeed(feedFilters)
-
-  // Photos drains server pages client-side; cap the automatic chain so a
-  // photo-sparse feed can't issue unbounded sequential RPCs (audit F2).
-  const photosAutoCapReached = chip === 'photos' && rawItems.length >= 100
-
-  // Photos: client-side across the two image-bearing shapes.
-  const items = useMemo(() => {
-    if (chip !== 'photos') return rawItems
-    return rawItems.filter(
-      (i) =>
-        i.item_type === 'media_added' ||
-        (i.item_type === 'user_post' && (i.images?.length ?? 0) > 0),
-    )
-  }, [chip, rawItems])
+  const { items, isLoading, isFetchingNextPage, error, refetch, hasMore, loadMore, updateItemLike, removeItem, prependItem, newCount, showNewItems } = useHomeFeed()
   const sentinelRef = useRef<HTMLDivElement>(null)
   const feedTopRef = useRef<HTMLDivElement>(null)
+
+  // "club · city" under every author (UI redesign 2026-09-19): one batched
+  // profile read per page for whichever id each card type is about.
+  const authorIds = useMemo(() => {
+    const ids: string[] = []
+    for (const i of items) {
+      const r = i as unknown as Record<string, unknown>
+      const id = (r.author_id ?? r.uploader_id ?? r.profile_id ?? r.club_id) as string | undefined
+      if (id) ids.push(id)
+    }
+    return ids
+  }, [items])
+  const lookupAuthor = useFeedAuthorContext(authorIds)
 
   // Expose prependItem to parent so PostComposer can live in the sticky header
   useEffect(() => {
@@ -96,7 +74,6 @@ export function HomeFeed({ prependItemRef }: HomeFeedProps) {
       // Snap back to All before prepending (audit F1): the new post lands in
       // the unfiltered cache and must be visible where the user ends up.
       prependItemRef.current = (item) => {
-        setChip('all')
         prependItem(item)
       }
     }
@@ -112,7 +89,7 @@ export function HomeFeed({ prependItemRef }: HomeFeedProps) {
     if (!el) return
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && hasMore && !isFetchingNextPage && !photosAutoCapReached) {
+        if (entry.isIntersecting && hasMore && !isFetchingNextPage) {
           void loadMore()
         }
       },
@@ -120,9 +97,10 @@ export function HomeFeed({ prependItemRef }: HomeFeedProps) {
     )
     observer.observe(el)
     return () => observer.disconnect()
-  }, [hasMore, isFetchingNextPage, loadMore, photosAutoCapReached])
+  }, [hasMore, isFetchingNextPage, loadMore])
 
   return (
+    <FeedAuthorContext.Provider value={lookupAuthor}>
     <div>
       {/* Pre-feed content — pulse, profile completion, banners, empty/error
           states. These are text-shaped surfaces; keep horizontal padding so
@@ -133,9 +111,6 @@ export function HomeFeed({ prependItemRef }: HomeFeedProps) {
 
         {/* Scroll anchor for new posts */}
         <div ref={feedTopRef} />
-
-        {/* §2.6 one-level filter chips */}
-        <FeedFilterChips active={chip} onChange={setChip} showNearYou={viewerCountryId != null} />
 
         {/* New posts banner */}
         {newCount > 0 && (
@@ -167,30 +142,8 @@ export function HomeFeed({ prependItemRef }: HomeFeedProps) {
           </div>
         )}
 
-        {/* Filter-aware empty state (audit F2): a chip miss is not a cold
-            start. While pages are still draining (hasMore, under the photos
-            cap) show a spinner instead of a false verdict. */}
-        {!isLoading && !error && items.length === 0 && chip !== 'all' && (
-          hasMore && !photosAutoCapReached ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-hockia-primary" />
-            </div>
-          ) : (
-            <div className="rounded-2xl border border-gray-200 bg-white p-6 text-center">
-              <p className="text-sm font-semibold text-gray-900">Nothing here under this filter yet</p>
-              <button
-                type="button"
-                onClick={() => setChip('all')}
-                className="mt-3 rounded-full bg-hockia-primary px-4 py-1.5 text-sm font-semibold text-white hover:opacity-90"
-              >
-                Show all posts
-              </button>
-            </div>
-          )
-        )}
-
         {/* Empty state — cold start guidance */}
-        {!isLoading && !error && items.length === 0 && chip === 'all' && (
+        {!isLoading && !error && items.length === 0 && (
           <div className="rounded-2xl border border-gray-200 bg-white p-6 sm:p-8">
             <div className="text-center mb-6">
               <Rss className="w-12 h-12 text-gray-500 mx-auto mb-3" />
@@ -231,10 +184,10 @@ export function HomeFeed({ prependItemRef }: HomeFeedProps) {
                 className="flex items-center gap-3 rounded-xl border border-gray-100 bg-gray-50 p-4 transition-colors hover:bg-purple-50 hover:border-purple-200"
               >
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-purple-100">
-                  <Globe className="h-5 w-5 text-hockia-primary" />
+                  <Shield className="h-5 w-5 text-hockia-primary" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-900">Explore World</p>
+                  <p className="text-sm font-medium text-gray-900">Explore Clubs</p>
                   <p className="text-xs text-gray-500">Discover clubs across 8 countries</p>
                 </div>
               </Link>
@@ -263,7 +216,7 @@ export function HomeFeed({ prependItemRef }: HomeFeedProps) {
         <>
           {[1, 2, 3].map((i, idx) => (
             <Fragment key={i}>
-              {idx > 0 && <div aria-hidden="true" className="h-2 bg-gray-100" />}
+              {idx > 0 && <div aria-hidden="true" className="mx-5 h-px bg-line md:mx-0 md:h-3 md:bg-transparent" />}
               <FeedSkeleton />
             </Fragment>
           ))}
@@ -275,10 +228,10 @@ export function HomeFeed({ prependItemRef }: HomeFeedProps) {
           end of one post and start of the next reads clearly. 8px tall,
           full-width, no border line — keeps the surface clean. */}
       {items.length > 0 && (
-        <>
+        <div className="md:px-6">
           {items.map((item, idx) => (
             <Fragment key={item.feed_item_id}>
-              {idx > 0 && <div aria-hidden="true" className="h-2 bg-gray-100" />}
+              {idx > 0 && <div aria-hidden="true" className="mx-5 h-px bg-line md:mx-0 md:h-3 md:bg-transparent" />}
               <FeedItemErrorBoundary>
                 <HomeFeedItemCard
                   item={item}
@@ -288,7 +241,7 @@ export function HomeFeed({ prependItemRef }: HomeFeedProps) {
               </FeedItemErrorBoundary>
             </Fragment>
           ))}
-        </>
+        </div>
       )}
 
       {/* Infinite scroll sentinel */}
@@ -301,5 +254,6 @@ export function HomeFeed({ prependItemRef }: HomeFeedProps) {
         </div>
       )}
     </div>
+    </FeedAuthorContext.Provider>
   )
 }

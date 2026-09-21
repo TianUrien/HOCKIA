@@ -134,38 +134,35 @@ export function PostMediaUploader({
     </>
   )
 
-  // Empty state — show add buttons with file size limits
+  // Empty state (Figma Compose bottom bar): two quiet round buttons and a
+  // one-line hint — the limits are enforced on pick, not advertised up front.
   if (media.length === 0 && !isUploading) {
     return (
-      <div>
-        <div className="flex gap-2">
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => imageInputRef.current?.click()}
+          disabled={isUploading}
+          aria-label="Add photos"
+          className="flex h-11 w-11 items-center justify-center rounded-full bg-surface-grouped text-ink-1 transition-colors active:bg-gray-200 disabled:opacity-50"
+        >
+          <ImagePlus className="h-5 w-5" strokeWidth={1.8} />
+        </button>
+        {allowVideo && (
           <button
             type="button"
-            onClick={() => imageInputRef.current?.click()}
+            onClick={() => videoInputRef.current?.click()}
             disabled={isUploading}
-            className="flex-1 py-8 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center gap-2 text-gray-400 hover:border-indigo-400 hover:text-indigo-500 transition-colors disabled:opacity-50"
+            aria-label="Add video"
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-surface-grouped text-ink-1 transition-colors active:bg-gray-200 disabled:opacity-50"
           >
-            <ImagePlus className="w-6 h-6" />
-            <span className="text-sm">Add photos</span>
+            <Film className="h-5 w-5" strokeWidth={1.8} />
           </button>
-          {allowVideo && (
-            <button
-              type="button"
-              onClick={() => videoInputRef.current?.click()}
-              disabled={isUploading}
-              className="flex-1 py-8 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center gap-2 text-gray-400 hover:border-purple-400 hover:text-purple-500 transition-colors disabled:opacity-50"
-            >
-              <Film className="w-6 h-6" />
-              <span className="text-sm">Add video</span>
-            </button>
-          )}
-          {fileInputs}
-        </div>
-        <p className="text-xs text-gray-400 mt-1.5">
-          {allowVideo
-            ? `Photos: up to 10 MB each · Video: up to 100 MB, 3 min max · Up to ${maxItems} items`
-            : `Photos: up to 10 MB each · Up to ${maxItems} items`}
+        )}
+        <p className="text-secondary text-ink-4">
+          {allowVideo ? `Photo or video · up to ${maxItems}` : `Photos · up to ${maxItems}`}
         </p>
+        {fileInputs}
       </div>
     )
   }

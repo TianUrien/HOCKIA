@@ -122,7 +122,7 @@ export interface BrandProductFeedItem extends BaseFeedItem {
   product_external_url: string | null
 }
 
-export type PostType = 'text' | 'transfer' | 'signing'
+export type PostType = 'text' | 'transfer' | 'signing' | 'question'
 
 export interface TransferMetadata {
   club_name: string

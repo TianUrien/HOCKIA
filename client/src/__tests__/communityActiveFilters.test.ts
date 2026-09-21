@@ -31,7 +31,7 @@ describe('getActiveFilterChips', () => {
   })
 
   it('emits chips for EU, availability (role-aware), city text, and brand category', () => {
-    const filters = { ...defaultFilters('player'), euOnly: true, availability: 'open' as const, location: 'London' }
+    const filters = { ...defaultFilters('player'), euOnly: true, availability: 'play' as const, location: 'London' }
     const labels = getActiveFilterChips(filters, COUNTRIES, noop).map((c) => c.label)
     expect(labels).toContain('EU-eligible')
     expect(labels).toContain('Open to play') // role-aware availability label for players

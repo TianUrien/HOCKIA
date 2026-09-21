@@ -12,6 +12,7 @@ import ApplyToOpportunityModal from '../components/ApplyToOpportunityModal'
 import SignInPromptModal from '../components/SignInPromptModal'
 import OpportunityJsonLd from '../components/OpportunityJsonLd'
 import Breadcrumbs from '../components/Breadcrumbs'
+import { OpportunityDetailMobile } from '../components/opportunities/OpportunityDetailMobile'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 
 export default function OpportunityDetailPage() {
@@ -47,6 +48,8 @@ export default function OpportunityDetailPage() {
   const [applicationStatus, setApplicationStatus] = useState<string | null>(null)
   const [showApplyModal, setShowApplyModal] = useState(false)
   const [showSignInPrompt, setShowSignInPrompt] = useState(false)
+  // One Join sheet for every gated trigger, the trigger named in the title.
+  const [wallTitle, setWallTitle] = useState('Sign in to apply')
   const [isLoading, setIsLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
   const [isClosed, setIsClosed] = useState(false)
@@ -338,7 +341,8 @@ export default function OpportunityDetailPage() {
   // Determine what happens when user clicks "Apply"
   const handleApplyClick = () => {
     if (!user) {
-      // Not authenticated - show sign-in prompt
+      // Not authenticated - show the Join sheet
+      setWallTitle('Sign in to apply')
       setShowSignInPrompt(true)
     } else if (
       ((profile?.role === 'player' && opportunity.opportunity_type === 'player') ||
@@ -350,6 +354,23 @@ export default function OpportunityDetailPage() {
     }
     // Clubs, role mismatches, or users who have already applied - button shouldn't be shown
   }
+
+  // Message the club — guests land on the same Join sheet.
+  const handleMessageClick = () => {
+    if (!user) {
+      setWallTitle('Sign in to message')
+      setShowSignInPrompt(true)
+      return
+    }
+    navigate(`/messages?new=${club.id}`)
+  }
+  const leagueForPhone = (() => {
+    if (worldClub?.leagueName) return worldClub.leagueName
+    const womensFamily = opportunity.gender === 'Women' || opportunity.gender === 'Girls'
+    return (womensFamily
+      ? club.womens_league_division ?? club.mens_league_division
+      : club.mens_league_division ?? club.womens_league_division) ?? null
+  })()
 
   // Determine if user can apply (or should see the apply button)
   const canShowApplyButton = !hasApplied && (
@@ -369,9 +390,27 @@ export default function OpportunityDetailPage() {
         }}
       />
       
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <div className="pt-20">
+      <div className="min-h-screen bg-white lg:bg-gray-50">
+        <Header mobileHidden />
+        {/* Phone: Figma Opportunity detail v2 / — applied */}
+        <div className="pt-[env(safe-area-inset-top)] lg:hidden">
+          <OpportunityDetailMobile
+            vacancy={opportunity}
+            clubName={worldClub?.clubName || club.full_name || 'Club'}
+            clubLogo={worldClub?.avatarUrl || club.avatar_url}
+            clubId={club.id}
+            publisherRole={club.role}
+            countryFlag={worldClub?.flagEmoji ?? null}
+            league={leagueForPhone}
+            hasApplied={hasApplied}
+            applicationStatus={applicationStatus}
+            canApply={canShowApplyButton}
+            isPublisher={Boolean(user && user.id === opportunity.club_id)}
+            onApply={handleApplyClick}
+            onMessage={handleMessageClick}
+          />
+        </div>
+        <div className="hidden pt-20 lg:block">
           <div className="max-w-4xl mx-auto px-4 md:px-6 pt-4 pb-2">
             <Breadcrumbs
               items={[
@@ -408,7 +447,8 @@ export default function OpportunityDetailPage() {
       <SignInPromptModal
         isOpen={showSignInPrompt}
         onClose={() => setShowSignInPrompt(false)}
-        title="Sign in to apply"
+        title={wallTitle}
+        action={wallTitle.includes('message') ? 'message' : 'apply'}
         message="Sign in or create a free HOCKIA account to apply to this opportunity."
       />
 
@@ -418,6 +458,10 @@ export default function OpportunityDetailPage() {
           isOpen={showApplyModal}
           onClose={() => setShowApplyModal(false)}
           vacancy={opportunity}
+          clubName={worldClub?.clubName || club.full_name}
+          clubLogo={worldClub?.avatarUrl || club.avatar_url}
+          publisherRole={club.role}
+          league={leagueForPhone}
           onSuccess={(vacancyId) => {
             void vacancyId
             // ⚡ OPTIMISTIC UPDATE: Instant UI feedback

@@ -1,4 +1,5 @@
 import { StrictMode } from 'react'
+import { IS_NATIVE } from '@/lib/isNative'
 import { createRoot } from 'react-dom/client'
 import { QueryClientProvider } from '@tanstack/react-query'
 import * as Sentry from '@sentry/react'
@@ -136,6 +137,9 @@ const sentryEnvironment =
       : 'production'
 
 const isNativePlatform = Capacitor.isNativePlatform()
+// Native builds use the platform font (SF Pro / Roboto); the web keeps Inter.
+// globals.css switches --font-sans on this attribute.
+if (IS_NATIVE && typeof document !== 'undefined') document.documentElement.dataset.native = '1'
 
 Sentry.init({
   dsn: import.meta.env.VITE_SENTRY_DSN,

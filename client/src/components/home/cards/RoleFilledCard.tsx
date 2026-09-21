@@ -1,7 +1,5 @@
-import { Link } from 'react-router-dom'
 import { CheckCircle2, BadgeCheck } from 'lucide-react'
-import { Avatar } from '@/components'
-import { getTimeAgo } from '@/lib/utils'
+import { FeedCard, FeedCardBody, FeedCardCaption, FeedCardHeader, profilePathForRole } from '../FeedCard'
 import type { RoleFilledFeedItem } from '@/types/homeFeed'
 
 interface RoleFilledCardProps {
@@ -16,61 +14,42 @@ interface RoleFilledCardProps {
  * through the platform.
  */
 export function RoleFilledCard({ item }: RoleFilledCardProps) {
-  const timeAgo = getTimeAgo(item.created_at, true)
   // Vacancies can be coach-published — then club_id/club_name carry the
-  // COACH's profile; route + badge by author_role ('club' fallback covers
-  // cached pre-migration payloads).
+  // COACH's profile; route + avatar tint by author_role ('club' fallback
+  // covers cached pre-migration payloads).
   const publisherRole = item.author_role === 'coach' ? 'coach' : 'club'
-  const publisherPath =
-    publisherRole === 'coach' ? `/coaches/id/${item.club_id}` : `/clubs/id/${item.club_id}`
+  const publisherPath = profilePathForRole(publisherRole, item.club_id)
 
   return (
-    <div className="bg-white">
-      <div className="p-5">
-        {/* Header */}
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center flex-shrink-0">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-          </div>
-          <div className="flex items-center gap-1.5 text-sm text-gray-500">
-            <span className="font-medium text-gray-700">Role filled</span>
-            <span>&middot;</span>
-            <span>{timeAgo}</span>
-          </div>
-        </div>
+    <FeedCard testId="role-filled-card">
+      <FeedCardHeader
+        authorId={item.club_id}
+        name={item.club_name}
+        avatarUrl={item.club_avatar_url}
+        role={publisherRole}
+        createdAt={item.created_at}
+        profilePath={publisherPath}
+      />
+      <FeedCardCaption icon={<CheckCircle2 />}>Role filled</FeedCardCaption>
 
-        {/* Filled role */}
-        <div className="mb-1">
-          <h3 className="text-lg font-bold text-gray-900 mb-2">{item.title}</h3>
-          <div className="flex items-center gap-2 flex-wrap mb-3">
+      <FeedCardBody>
+        <h3 className="text-[17px] font-semibold leading-6 text-gray-900">{item.title}</h3>
+        {(item.position || item.filled_via_hockia) && (
+          <div className="mt-2 flex flex-wrap items-center gap-2">
             {item.position && (
-              <span className="px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium capitalize">
+              <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium capitalize text-blue-700">
                 {item.position.replace(/_/g, ' ')}
               </span>
             )}
             {item.filled_via_hockia && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#f4f0fd] text-hockia-primary rounded-full text-xs font-semibold">
-                <BadgeCheck className="w-3 h-3" />
+              <span className="inline-flex items-center gap-1 rounded-full bg-[#f4f0fd] px-2.5 py-1 text-xs font-semibold text-hockia-primary">
+                <BadgeCheck className="h-3 w-3" />
                 Filled via HOCKIA
               </span>
             )}
           </div>
-
-          <Link to={publisherPath} className="flex items-center gap-2.5 group">
-            <span className="text-sm text-gray-500">by</span>
-            <Avatar
-              src={item.club_avatar_url}
-              initials={item.club_name?.slice(0, 2) || '?'}
-              size="sm"
-              className="flex-shrink-0"
-              role={publisherRole}
-            />
-            <span className="text-sm font-medium text-gray-700 group-hover:text-hockia-primary transition-colors">
-              {item.club_name}
-            </span>
-          </Link>
-        </div>
-      </div>
-    </div>
+        )}
+      </FeedCardBody>
+    </FeedCard>
   )
 }

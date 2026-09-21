@@ -41,14 +41,14 @@ const defaultProps = {
   thumbnailUrl: null as string | null,
 }
 
-// Helper: action buttons use exact text "Like", "Comment", "Share"
-// The counts row also has buttons with "3 comments" text, so we need exact names
+// Helpers: the redesigned bar is icon + count; each control's accessible
+// name starts with its verb and carries the count ("Like, 5 likes").
 function getLikeActionButton() {
-  return screen.getByRole('button', { name: 'Like' })
+  return screen.getByRole('button', { name: /^(Like|Unlike)/ })
 }
 
 function getCommentActionButton() {
-  return screen.getByRole('button', { name: 'Comment' })
+  return screen.getByRole('button', { name: /^Comments/ })
 }
 
 function getShareActionButton() {
@@ -70,30 +70,28 @@ describe('PostInteractionBar', () => {
     expect(getShareActionButton()).toBeInTheDocument()
   })
 
-  it('shows counts when > 0', () => {
+  it('shows counts next to their icons when > 0', () => {
     render(<PostInteractionBar {...defaultProps} />)
 
-    expect(screen.getByText('5 likes')).toBeInTheDocument()
-    expect(screen.getByText('3 comments')).toBeInTheDocument()
+    expect(getLikeActionButton()).toHaveTextContent('5')
+    expect(getLikeActionButton()).toHaveAccessibleName('Like, 5 likes')
+    expect(getCommentActionButton()).toHaveTextContent('3')
+    expect(getCommentActionButton()).toHaveAccessibleName('Comments, 3')
   })
 
-  it('shows singular when count is 1', () => {
+  it('uses the singular in the accessible name when count is 1', () => {
     render(<PostInteractionBar {...defaultProps} likeCount={1} commentCount={1} />)
 
-    expect(screen.getByText('1 like')).toBeInTheDocument()
-    expect(screen.getByText('1 comment')).toBeInTheDocument()
+    expect(getLikeActionButton()).toHaveAccessibleName('Like, 1 like')
   })
 
-  it('hides counts row when all counts are 0', () => {
+  it('prints no number when all counts are 0', () => {
     render(<PostInteractionBar {...defaultProps} likeCount={0} commentCount={0} />)
 
-    // No count text should appear
-    expect(screen.queryByText(/\d+ likes?/)).not.toBeInTheDocument()
-    expect(screen.queryByText(/\d+ comments?/)).not.toBeInTheDocument()
-
-    // But the action buttons should still be there
-    expect(getLikeActionButton()).toBeInTheDocument()
-    expect(getCommentActionButton()).toBeInTheDocument()
+    expect(getLikeActionButton()).toHaveTextContent('')
+    expect(getCommentActionButton()).toHaveTextContent('')
+    expect(getLikeActionButton()).toHaveAccessibleName('Like')
+    expect(getCommentActionButton()).toHaveAccessibleName('Comments')
   })
 
   it('calls onToggleLike when Like is clicked', async () => {

@@ -1,7 +1,6 @@
-import { Link } from 'react-router-dom'
-import { BadgeCheck, ArrowUpRight } from 'lucide-react'
-import { Avatar, RoleBadge, NationalityCardDisplay } from '@/components'
-import { getTimeAgo } from '@/lib/utils'
+import { BadgeCheck } from 'lucide-react'
+import { NationalityCardDisplay } from '@/components'
+import { FeedCard, FeedCardAction, FeedCardBody, FeedCardCaption, FeedCardFooter, FeedCardHeader, profilePathForRole } from '../FeedCard'
 import type { OpenToPlayConfirmedFeedItem } from '@/types/homeFeed'
 
 interface Props {
@@ -14,70 +13,38 @@ interface Props {
  * (never stacks), so it reads as a live availability signal.
  */
 export function OpenToPlayConfirmedCard({ item }: Props) {
-  const timeAgo = getTimeAgo(item.created_at, true)
-  const profilePath = `/players/id/${item.player_id}?ref=feed`
+  const profilePath = profilePathForRole(item.player_role, item.player_id)
+  const hasDetails = Boolean(item.country_id || item.position || item.open_to_opportunities)
 
   return (
-    <div className="bg-white">
-      <div className="p-5">
-        {/* Header */}
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-8 h-8 rounded-full bg-hockia-primary/10 flex items-center justify-center flex-shrink-0">
-            <BadgeCheck className="w-4 h-4 text-hockia-primary" />
-          </div>
-          <div className="flex items-center gap-1.5 text-sm text-gray-500">
-            <span className="font-medium text-gray-700">Open to play</span>
-            <span>&middot;</span>
-            <span>{timeAgo}</span>
-          </div>
-        </div>
+    <FeedCard testId="open-to-play-confirmed-card">
+      <FeedCardHeader
+        authorId={item.player_id}
+        name={item.player_name}
+        avatarUrl={item.player_avatar_url}
+        role={item.player_role}
+        createdAt={item.created_at}
+        profilePath={profilePath}
+      />
+      <FeedCardCaption icon={<BadgeCheck />}>Open to play</FeedCardCaption>
 
-        {/* Player */}
-        <Link to={profilePath} className="flex items-start gap-4 group">
-          <Avatar
-            src={item.player_avatar_url}
-            initials={item.player_name?.slice(0, 2) || '?'}
-            size="lg"
-            role={item.player_role}
-            className="flex-shrink-0"
-          />
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1 flex-wrap">
-              <h3 className="font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">
-                {item.player_name || 'A player'}
-              </h3>
-              <RoleBadge role={item.player_role} />
-            </div>
-
-            {item.country_id && (
-              <div className="mb-1">
-                <NationalityCardDisplay primaryCountryId={item.country_id} />
-              </div>
-            )}
-
-            {item.position && (
-              <p className="text-sm text-gray-500">{item.position}</p>
-            )}
-
+      {hasDetails && (
+        <FeedCardBody>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[14px] leading-5 text-gray-600">
+            {item.country_id && <NationalityCardDisplay primaryCountryId={item.country_id} />}
+            {item.position && <span>{item.position}</span>}
             {item.open_to_opportunities && (
-              <span className="inline-flex items-center mt-2 px-2 py-0.5 rounded-full bg-hockia-primary/10 text-hockia-primary text-xs font-medium">
+              <span className="inline-flex items-center rounded-full bg-hockia-primary/10 px-2 py-0.5 text-xs font-medium text-hockia-primary">
                 Open to opportunities
               </span>
             )}
           </div>
-        </Link>
+        </FeedCardBody>
+      )}
 
-        {/* CTA */}
-        <div className="mt-4 flex justify-end">
-          <Link
-            to={profilePath}
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white text-sm font-medium rounded-lg hover:opacity-90 transition-opacity"
-          >
-            View Profile
-            <ArrowUpRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
-      </div>
-    </div>
+      <FeedCardFooter>
+        <FeedCardAction to={profilePath}>View profile</FeedCardAction>
+      </FeedCardFooter>
+    </FeedCard>
   )
 }

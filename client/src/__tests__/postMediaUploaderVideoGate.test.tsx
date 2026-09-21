@@ -30,7 +30,7 @@ const baseProps = {
 describe('PostMediaUploader video gate', () => {
   it('shows the video button by default (regular post)', () => {
     render(<PostMediaUploader {...baseProps} />)
-    expect(screen.getByText('Add video')).toBeInTheDocument()
+    expect(screen.getByLabelText('Add video')).toBeInTheDocument()
   })
 
   it('shows the signed poster frame for a ready Cloudflare video in the preview', () => {
@@ -59,9 +59,9 @@ describe('PostMediaUploader video gate', () => {
 
   it('removes the video path entirely when allowVideo is false (announcements / flag off)', () => {
     render(<PostMediaUploader {...baseProps} allowVideo={false} />)
-    expect(screen.queryByText('Add video')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Add video')).not.toBeInTheDocument()
     expect(screen.queryByLabelText('Select video file')).not.toBeInTheDocument()
     // Photos remain available.
-    expect(screen.getByText('Add photos')).toBeInTheDocument()
+    expect(screen.getByLabelText('Add photos')).toBeInTheDocument()
   })
 })
