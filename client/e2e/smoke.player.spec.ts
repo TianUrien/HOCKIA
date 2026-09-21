@@ -8,6 +8,10 @@ async function getE2EVacancyCard(page: import('@playwright/test').Page) {
   return titleHeading.locator('xpath=ancestor::div[contains(@class,"rounded-2xl")]').first()
 }
 
+// The 2026-09 redesign gives phones their own profile and opportunities
+// screens (Figma 03 Player); desktop keeps the bento dashboard for now.
+const isPhone = (page: import('@playwright/test').Page) => (page.viewportSize()?.width ?? 1280) < 1024
+
 test.describe('@smoke player', () => {
   test('dashboard loads for authenticated player', async ({ page }) => {
     await page.goto('/dashboard/profile')
@@ -17,8 +21,14 @@ test.describe('@smoke player', () => {
 
     // The Bento Grid is the landing view (no tab strip). Verify the
     // owner variant renders + at least one of its cards.
-    await expect(page.getByTestId('player-bento-grid-owner')).toBeVisible({ timeout: 10000 })
-    await expect(page.getByTestId('journey-card')).toBeVisible({ timeout: 10000 })
+    if (isPhone(page)) {
+      // Phone: one long scroll under the identity block, no bento.
+      await expect(page.getByTestId('profile-long-scroll')).toBeVisible({ timeout: 10000 })
+      await expect(page.getByTestId('profile-career-section')).toBeVisible({ timeout: 10000 })
+    } else {
+      await expect(page.getByTestId('player-bento-grid-owner')).toBeVisible({ timeout: 10000 })
+      await expect(page.getByTestId('journey-card')).toBeVisible({ timeout: 10000 })
+    }
 
     // PR2 — section pages are now their own routes; legacy ?tab=X URLs
     // redirect on mount. Both should land on the journey section page.
@@ -27,7 +37,12 @@ test.describe('@smoke player', () => {
       () => window.location.pathname === '/dashboard/profile/journey',
       { timeout: 10000 },
     )
-    await expect(page.getByRole('button', { name: /back to dashboard/i })).toBeVisible({ timeout: 10000 })
+    if (isPhone(page)) {
+      // Phone: /journey is the Career — own leaf screen.
+      await expect(page.getByTestId('career-screen-own')).toBeVisible({ timeout: 10000 })
+    } else {
+      await expect(page.getByRole('button', { name: /back to dashboard/i })).toBeVisible({ timeout: 10000 })
+    }
   })
 
   test('player can open seeded vacancy details', async ({ page, opportunitiesPage }) => {
@@ -35,6 +50,19 @@ test.describe('@smoke player', () => {
     await opportunitiesPage.waitForLoadingToComplete()
 
     await expect(page.getByRole('heading', { level: 1, name: 'Opportunities' })).toBeVisible({ timeout: 20000 })
+
+    if (isPhone(page)) {
+      // Phone: role cards lead with the position ("Midfielder") and the club;
+      // the card opens the full-screen detail at /opportunities/:id.
+      const roleCard = page.getByTestId('role-card').filter({ hasText: /E2E Test FC/i }).first()
+      await expect(roleCard).toBeVisible({ timeout: 20000 })
+      await roleCard.getByRole('button').first().click()
+      await page.waitForURL(/\/opportunities\/[0-9a-f-]{36}/, { timeout: 20000 })
+      await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 20000 })
+      await page.getByRole('button', { name: /back to opportunities/i }).click()
+      await expect(page.getByRole('heading', { level: 1, name: 'Opportunities' })).toBeVisible({ timeout: 20000 })
+      return
+    }
 
     const card = await getE2EVacancyCard(page)
     await expect(card).toBeVisible({ timeout: 20000 })

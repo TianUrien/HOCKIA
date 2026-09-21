@@ -48,10 +48,13 @@ test.describe('@smoke public', () => {
     // signal. `exact: true` to disambiguate from the ContextSwitcher's
     // "…show all members" button (recruiter view only, but anon view
     // can flip into recruiter mode after auth, so be defensive).
-    await expect(
-      page.getByRole('button', { name: 'Members', exact: true }),
-    ).toBeVisible({ timeout: 20000 })
-    await expect(page.getByRole('button', { name: 'Questions', exact: true })).toBeVisible()
+    // 2026-09 redesign: Community is members only — role chips (All · Players ·
+    // Coaches · Clubs · Brands · Umpires) replaced the Members | Questions
+    // switch; questions are a post kind inside Home.
+    const chips = page.getByRole('tablist', { name: 'Member type' })
+    await expect(chips.getByRole('tab', { name: 'All', exact: true })).toBeVisible({ timeout: 20000 })
+    await expect(chips.getByRole('tab', { name: 'Players', exact: true })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Questions', exact: true })).toHaveCount(0)
   })
 
   test('world directory loads (public)', async ({ page }) => {

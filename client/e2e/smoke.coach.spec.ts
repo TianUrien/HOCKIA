@@ -47,10 +47,13 @@ test.describe('@smoke coach', () => {
     // scope" button has aria-label "…show all members" which loose
     // /members/i matching also picks up — strict-mode violation
     // otherwise.
-    await expect(
-      page.getByRole('button', { name: 'Members', exact: true })
-    ).toBeVisible({ timeout: 20000 })
-    await expect(page.getByRole('button', { name: 'Questions', exact: true })).toBeVisible()
+    // 2026-09 redesign: Community is members only — role chips (All · Players ·
+    // Coaches · Clubs · Brands · Umpires) replaced the Members | Questions
+    // switch; questions are a post kind inside Home.
+    const chips = page.getByRole('tablist', { name: 'Member type' })
+    await expect(chips.getByRole('tab', { name: 'All', exact: true })).toBeVisible({ timeout: 20000 })
+    await expect(chips.getByRole('tab', { name: 'Players', exact: true })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Questions', exact: true })).toHaveCount(0)
   })
 
   test('coach cannot access brand dashboard', async ({ page }) => {

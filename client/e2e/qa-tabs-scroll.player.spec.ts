@@ -20,31 +20,14 @@ const MOBILE_VIEWPORT = { width: 390, height: 844 } // iPhone 13/14
 test.describe('Profile section deep-links + adjacent flows (mobile)', () => {
   test.use({ viewport: MOBILE_VIEWPORT })
 
-  test('?section=incoming deep-link scrolls Requests heading near top', async ({ page }) => {
-    // PR2 route shape: /dashboard/profile/friends?section=incoming. The
-    // legacy `/dashboard/profile?tab=friends&section=incoming` URL still
-    // works via the redirect in PlayerDashboard.tsx but we test the
-    // canonical shape directly here.
+  test('?section=incoming deep-link lands on Inbox › Requests (phone)', async ({ page }) => {
+    // 2026-09 redesign: on phones friend requests live in Inbox › Requests;
+    // the Friends leaf lists friends only. The friend_request_received
+    // notification still emits /dashboard/profile/friends?section=incoming,
+    // so PlayerDashboard redirects it.
     await page.goto('/dashboard/profile/friends?section=incoming')
-    await page.waitForSelector('.animate-spin', { state: 'hidden', timeout: 30000 }).catch(() => {})
-    // Wait for the friends section content to render
-    await expect(page.getByRole('heading', { level: 2, name: /^Connections$/i })).toBeVisible({ timeout: 15000 })
-    // The deep-link scroll runs after fetchConnections settles. Give it a
-    // generous beat — connections fetch + smooth scroll.
-    await page.waitForTimeout(1500)
-
-    const incomingTop = await page
-      .locator('section[data-deeplink-section="incoming-requests"]')
-      .evaluate((el) => Math.round(el.getBoundingClientRect().top))
-      .catch(() => null)
-
-    console.log(`incoming-requests section top after ?section=incoming: ${incomingTop}`)
-
-    // Acceptable window: scroll-mt-[88px] gives 88px of headroom — anchor
-    // top should be roughly between 0 and 120 px.
-    expect(incomingTop, 'incoming-requests anchor must exist when ?section=incoming').not.toBeNull()
-    expect(incomingTop!).toBeGreaterThanOrEqual(-10)
-    expect(incomingTop!).toBeLessThanOrEqual(150)
+    await page.waitForFunction(() => window.location.pathname === '/inbox/requests', { timeout: 15000 })
+    await expect(page.getByRole('heading', { level: 1, name: 'Inbox' })).toBeVisible({ timeout: 15000 })
   })
 
   test('?section=requests legacy is silently no-op for player (hideReferences=true)', async ({ page }) => {
@@ -55,7 +38,8 @@ test.describe('Profile section deep-links + adjacent flows (mobile)', () => {
 
     await page.goto('/dashboard/profile/friends?section=requests')
     await page.waitForSelector('.animate-spin', { state: 'hidden', timeout: 30000 }).catch(() => {})
-    await expect(page.getByRole('heading', { level: 2, name: /^Connections$/i })).toBeVisible({ timeout: 15000 })
+    // Phone: /friends is the Friends — own leaf screen (2026-09 redesign).
+    await expect(page.getByTestId('friends-screen-own')).toBeVisible({ timeout: 15000 })
     await page.waitForTimeout(800)
 
     // The TrustedReferences section should NOT exist (hideReferences=true)
@@ -70,7 +54,8 @@ test.describe('Profile section deep-links + adjacent flows (mobile)', () => {
     // experience is identical. URL settles on the new route.
     await page.goto('/dashboard/profile?tab=friends')
     await page.waitForSelector('.animate-spin', { state: 'hidden', timeout: 30000 }).catch(() => {})
-    await expect(page.getByRole('heading', { level: 2, name: /^Connections$/i })).toBeVisible({ timeout: 15000 })
+    // Phone: /friends is the Friends — own leaf screen (2026-09 redesign).
+    await expect(page.getByTestId('friends-screen-own')).toBeVisible({ timeout: 15000 })
 
     await page.waitForFunction(
       () => window.location.pathname === '/dashboard/profile/friends',

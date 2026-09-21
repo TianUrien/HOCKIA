@@ -393,15 +393,15 @@ export class HomeFeedPage extends HockiaPage {
   }
 
   async expectPostComposerVisible() {
-    await expect(this.page.getByText('Start a post...')).toBeVisible({ timeout: 10000 })
+    await expect(this.page.getByText("What's new?")).toBeVisible({ timeout: 10000 })
   }
 
   async expectPostComposerHidden() {
-    await expect(this.page.getByText('Start a post...')).not.toBeVisible({ timeout: 5000 })
+    await expect(this.page.getByText("What's new?")).not.toBeVisible({ timeout: 5000 })
   }
 
   async openPostComposer() {
-    await this.page.getByText('Start a post...').click()
+    await this.page.getByText("What's new?").click()
   }
 
   async fillPostContent(content: string) {
@@ -411,8 +411,9 @@ export class HomeFeedPage extends HockiaPage {
   }
 
   async submitPost() {
-    // Target the full-width submit button (not the mode toggle "Post" tab)
-    await this.page.locator('button.w-full', { hasText: /^publish post$/i }).click()
+    // The Post pill in the Compose nav bar. Labelled "Publish post" — distinct
+    // from the "Post" kind chip.
+    await this.page.getByRole('button', { name: /^publish post$/i }).click()
   }
 
   async expectPostInFeed(content: string) {

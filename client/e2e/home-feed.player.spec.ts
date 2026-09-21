@@ -7,8 +7,8 @@ test.describe('@smoke home feed player', () => {
     // Post composer should be visible
     await homeFeedPage.expectPostComposerVisible()
 
-    // Should show the image button
-    await expect(page.getByLabel('Add image')).toBeVisible()
+    // The camera sits beside the prompt (Figma Home: "What's new?" + camera).
+    await expect(page.getByLabel('Add a photo or video')).toBeVisible()
   })
 
   test('player can open and close post composer modal', async ({ page, homeFeedPage }) => {
@@ -29,8 +29,8 @@ test.describe('@smoke home feed player', () => {
     const postBtn = page.getByRole('button', { name: /^publish post$/i })
     await expect(postBtn).toBeVisible()
 
-    // Close the modal (exact match avoids "Close notifications" button)
-    await page.getByRole('button', { name: 'Close', exact: true }).click()
+    // Compose nav bar: Cancel on the left, the Post pill on the right.
+    await page.getByRole('button', { name: 'Cancel', exact: true }).click()
 
     // Modal should be gone
     await expect(composerTextarea).not.toBeVisible({ timeout: 5000 })
@@ -110,9 +110,10 @@ test.describe('@smoke home feed player', () => {
     if (hasShareButton) {
       await shareButton.click()
 
-      // Share sheet should open with "Share post" heading and Copy link button
+      // One share sheet for the whole app (Figma Share): "Share this post"
+      // heading, friends first, then Copy link.
       await expect(
-        page.getByText('Share post')
+        page.getByRole('heading', { name: 'Share this post' })
       ).toBeVisible({ timeout: 5000 })
 
       await expect(

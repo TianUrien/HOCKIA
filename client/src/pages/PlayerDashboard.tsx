@@ -35,7 +35,7 @@ import { ProfileViewersSection } from '@/components/ProfileViewersSection'
 import ClubLinkPrompt from '@/components/ClubLinkPrompt'
 import type { Profile } from '@/lib/supabase'
 import { supabase } from '@/lib/supabase'
-import { useNavigate, useParams, useSearchParams, useLocation } from 'react-router-dom'
+import { Navigate, useNavigate, useParams, useSearchParams, useLocation } from 'react-router-dom'
 import { useToastStore } from '@/lib/toast'
 import { useNotificationStore } from '@/lib/notifications'
 import { useProfileStrength, type ProfileStrengthBucket } from '@/hooks/useProfileStrength'
@@ -480,6 +480,13 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
   usePortfolioAnchorScroll(readOnly ? portfolioAnchors[activeTab] ?? null : null)
 
   if (!profile) return null
+
+  // Friend-request notifications deep-link to the Friends section's incoming
+  // block. On phones friend requests live in Inbox › Requests (the Friends
+  // leaf lists friends only), so that link must land there.
+  if (isPhone && !readOnly && activeTab === 'friends' && searchParams.get('section') === 'incoming') {
+    return <Navigate to="/inbox/requests" replace />
+  }
 
   const handleSendMessage = async () => {
     if (!user) {
