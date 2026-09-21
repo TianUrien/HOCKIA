@@ -2,6 +2,10 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { vi } from 'vitest'
 import type { MilestoneAchievedFeedItem } from '@/types/homeFeed'
 
+// FeedCard reaches the Supabase client through useFeedAuthorContext; the CI
+// unit job has no env vars, so the client must never be constructed here.
+vi.mock('@/lib/supabase', () => ({ supabase: { from: vi.fn(), rpc: vi.fn() } }))
+
 vi.mock('react-router-dom', () => ({
   Link: ({ children, to, ...props }: { children: React.ReactNode; to: string; className?: string }) => (
     <a href={to} {...props}>{children}</a>

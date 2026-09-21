@@ -31,8 +31,6 @@ import ForgotPassword from '@/pages/ForgotPassword'
 import ResetPassword from '@/pages/ResetPassword'
 import PrivacyPolicy from '@/pages/PrivacyPolicy'
 import Terms from '@/pages/Terms'
-import DevelopersPage from '@/pages/DevelopersPage'
-import SettingsPage from '@/pages/SettingsPage'
 import OfflinePage from '@/pages/OfflinePage'
 import TermsGate from '@/components/TermsGate'
 import ShortLinkGate from '@/components/ShortLinkGate'
@@ -75,6 +73,11 @@ function lazyWithRetry<T extends ComponentType<any>>(
 }
 
 // Lazy load heavy components
+// Neither is on a first-paint path: Settings sits behind the profile gear,
+// Developers behind a footer link. Kept out of the eager shell so the
+// initial-load gzip budget keeps headroom (2026-09-21: 477KB / 480KB).
+const SettingsPage = lazyWithRetry(() => import('@/pages/SettingsPage'))
+const DevelopersPage = lazyWithRetry(() => import('@/pages/DevelopersPage'))
 const CompleteProfile = lazyWithRetry(() => import('@/pages/CompleteProfile'))
 const DashboardRouter = lazyWithRetry(() => import('@/pages/DashboardRouter'))
 const HomePage = lazyWithRetry(() => import('@/pages/HomePage'))
