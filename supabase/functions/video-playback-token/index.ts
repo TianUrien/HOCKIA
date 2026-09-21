@@ -161,7 +161,22 @@ Deno.serve(async (req) => {
   // black players for those users, while customer-*.cloudflarestream.com
   // passes untouched). Same host family as the stored thumbnail_url, so
   // one CSP/CORS surface too.
-  const deliveryHost = Deno.env.get('CF_STREAM_CUSTOMER_HOST') ||
+  //
+  // WHICH customer subdomain is per Cloudflare ACCOUNT, and staging and prod
+  // use different accounts. A hardcoded default 404s every signed URL on the
+  // other project (found 2026-09-21: all staging video had been dead since the
+  // 09-19 host change). So the host comes from the row itself: thumbnail_url
+  // is written by Cloudflare's webhook for THIS asset, which makes it correct
+  // by construction on any account. Env override first, prod default last.
+  const storedHost = (() => {
+    try {
+      const host = new URL(v.thumbnail_url ?? '').hostname
+      return /^customer-[a-z0-9]+\.cloudflarestream\.com$/.test(host) ? host : null
+    } catch {
+      return null
+    }
+  })()
+  const deliveryHost = Deno.env.get('CF_STREAM_CUSTOMER_HOST') || storedHost ||
     'customer-vlcap0eaaguje56f.cloudflarestream.com'
   return json({
     videoId,
