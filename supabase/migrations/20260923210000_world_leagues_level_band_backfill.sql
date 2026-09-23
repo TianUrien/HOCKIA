@@ -2,9 +2,10 @@
 -- production had no level_band_global, so compute_club_fit's level component
 -- scored 0 for every club and player in them. Values follow the curation
 -- scale documented in 20260528060000 (and already carried by staging for the
--- same logical_id). Leinster Division 1A (Ireland, tier 2 — the top Leinster
--- provincial division below the EY Hockey League) = 5, on a par with England
--- Division One and Germany 2. Bundesliga.
+-- same logical_id). Scale: 1 = strongest (Hoofdklasse); 5 = top flights such
+-- as England Premier Division, 1. Bundesliga, Serie A Elite; 7 = second tiers
+-- such as Serie A1 and Metropolitano C. Leinster Division 1A (Ireland's second
+-- tier, below the EY Hockey League) = 7 (founder ruling 2026-09-23).
 -- Idempotent: only rows still without a band are touched.
 UPDATE public.world_leagues l
    SET level_band_global = v.band
@@ -17,6 +18,6 @@ UPDATE public.world_leagues l
  WHERE l.logical_id = v.logical_id AND l.level_band_global IS NULL;
 
 UPDATE public.world_leagues l
-   SET level_band_global = 5
+   SET level_band_global = 7
   FROM public.countries c
  WHERE c.id = l.country_id AND c.name = 'Ireland' AND l.name = 'Leinster Division 1A' AND l.level_band_global IS NULL;

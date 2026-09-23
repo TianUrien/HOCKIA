@@ -8,6 +8,7 @@ import type { WorldClubInfo } from './OpportunityCard'
 import { opportunityGenderToTeamLabel } from '@/lib/hockeyCategories'
 import { levelSoughtLabel, compensationLabel, recruitmentProblemLabel } from '@/lib/opportunityIntent'
 import { specialistSkillLabels } from '@/lib/specialistSkills'
+import { formatDurationText } from '@/lib/opportunityCopy'
 import { getShareOrigin } from '@/lib/profileShare'
 import { useAuthStore } from '@/lib/auth'
 import { useCountries } from '@/hooks/useCountries'
@@ -342,10 +343,10 @@ export default function VacancyDetailView({
                   <span>{isImmediate ? 'Starts Immediately' : `Starts ${formatShortDate(vacancy.start_date)}`}</span>
                 </div>
               </div>
-              {vacancy.duration_text && (
+              {formatDurationText(vacancy.duration_text) && (
                 <div className="flex items-center gap-2">
                   <Clock className="w-4 h-4 flex-shrink-0" />
-                  <span>{vacancy.duration_text}</span>
+                  <span>{formatDurationText(vacancy.duration_text)}</span>
                 </div>
               )}
             </div>

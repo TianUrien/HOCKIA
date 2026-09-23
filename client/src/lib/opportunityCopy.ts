@@ -33,6 +33,24 @@ export function genderPill(gender: string | null | undefined): GenderPill | null
   }
 }
 
+/**
+ * duration_text as the reader should see it. The column holds free text
+ * ("3 months", "Season March-September") and, from the old form, bare numbers
+ * ("7", "3") that meant months. A bare integer becomes "N months"; anything
+ * else is trimmed and shown as written. Empty → null. Founder ruling
+ * 2026-09-23: no data migration, format on display; the Post-a-role picker
+ * keeps new rows clean.
+ */
+export function formatDurationText(raw: string | null | undefined): string | null {
+  const t = raw?.trim().replace(/\s+/g, ' ') ?? ''
+  if (!t) return null
+  if (/^\d+$/.test(t)) {
+    const n = Number(t)
+    return n === 1 ? '1 month' : `${n} months`
+  }
+  return t
+}
+
 /** "Sep 16 · 3 months" / "Starts immediately". */
 export function whenLine(v: Pick<Vacancy, 'start_date' | 'duration_text'>, now = new Date()): string {
   const parts: string[] = []
@@ -40,16 +58,18 @@ export function whenLine(v: Pick<Vacancy, 'start_date' | 'duration_text'>, now =
     const d = new Date(v.start_date)
     if (!Number.isNaN(d.getTime())) parts.push(format(d, d.getFullYear() === now.getFullYear() ? 'MMM d' : 'MMM d, yyyy'))
   }
-  if (v.duration_text?.trim()) parts.push(v.duration_text.trim())
+  const duration = formatDurationText(v.duration_text)
+  if (duration) parts.push(duration)
   return parts.length ? parts.join(' · ') : 'Starts immediately'
 }
 
 /** Detail header: "Starts Sep 16, 2026 · 3 months". */
 export function startsLine(v: Pick<Vacancy, 'start_date' | 'duration_text'>): string {
-  if (!v.start_date) return v.duration_text?.trim() ? `Starts immediately · ${v.duration_text.trim()}` : 'Starts immediately'
+  const duration = formatDurationText(v.duration_text)
+  if (!v.start_date) return duration ? `Starts immediately · ${duration}` : 'Starts immediately'
   const d = new Date(v.start_date)
   const when = Number.isNaN(d.getTime()) ? v.start_date : format(d, 'MMM d, yyyy')
-  return v.duration_text?.trim() ? `Starts ${when} · ${v.duration_text.trim()}` : `Starts ${when}`
+  return duration ? `Starts ${when} · ${duration}` : `Starts ${when}`
 }
 
 /** "Posted 3 days ago · No deadline — closes when filled". */

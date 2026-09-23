@@ -13,6 +13,7 @@
 
 import { useMemo } from 'react'
 import type { Vacancy } from '@/lib/supabase'
+import { formatDurationText } from '@/lib/opportunityCopy'
 
 interface ClubInfo {
   name: string
@@ -138,8 +139,9 @@ function createDescription(vacancy: Vacancy, club: ClubInfo): string {
   }
   
   // Add duration if available
-  if (vacancy.duration_text) {
-    parts.push(`Duration: ${vacancy.duration_text}`)
+  const duration = formatDurationText(vacancy.duration_text)
+  if (duration) {
+    parts.push(`Duration: ${duration}`)
   }
   
   return parts.join(' ')
