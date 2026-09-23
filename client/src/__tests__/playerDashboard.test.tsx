@@ -163,6 +163,12 @@ vi.mock('@/components/profile/mobile/ReferencesScreen', () => ({
 }))
 // This suite asserts the DESKTOP body; the phone tree mounts only under 1024px.
 vi.mock('@/hooks/useMediaQuery', () => ({ useMediaQuery: () => false }))
+vi.mock('@/components/profile/mobile/ManageMediaScreen', () => ({
+  default: () => <div data-testid="manage-media-screen" />,
+}))
+vi.mock('@/components/profile/mobile/GalleryScreen', () => ({
+  default: () => <div data-testid="gallery-screen" />,
+}))
 vi.mock('@/components/profile/mobile/VideosScreen', () => ({
   default: () => <div data-testid="videos-screen" />,
 }))

@@ -22,9 +22,11 @@ interface ProfileVideoTileProps {
   canWatch?: boolean
   onOpen: () => void
   className?: string
+  /** Small card thumbnail: play glyph only, no title, no lock badge. */
+  compact?: boolean
 }
 
-export function ProfileVideoTile({ video, portrait = false, locked = false, canWatch = true, onOpen, className }: ProfileVideoTileProps) {
+export function ProfileVideoTile({ video, portrait = false, locked = false, canWatch = true, onOpen, className, compact = false }: ProfileVideoTileProps) {
   const ref = useRef<HTMLButtonElement | null>(null)
   const [inView, setInView] = useState(false)
   useEffect(() => {
@@ -53,10 +55,10 @@ export function ProfileVideoTile({ video, portrait = false, locked = false, canW
     <button ref={ref} type="button" onClick={onOpen} aria-label={`${gated ? 'Locked: ' : 'Play '}${video.title}`} className={cn('relative overflow-hidden rounded-card bg-ink-1 text-left', className)}>
       {thumb && <img src={thumb} alt="" onError={onThumbError} onLoad={onThumbLoad} className="absolute inset-0 h-full w-full object-cover" />}
       <span className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-black/70 to-transparent" />
-      <span className="absolute left-1/2 top-1/2 flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-ink-1"><Play className="ml-0.5 h-4 w-4 fill-current" /></span>
-      {locked && <span className="absolute left-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-black/55 text-white"><Lock className="h-3 w-3" strokeWidth={2.2} /></span>}
-      {!portrait && <span className="absolute bottom-2 left-2.5 right-14 truncate text-caption font-semibold text-white">{video.title}</span>}
-      {dur && <span className="absolute bottom-2 right-2 rounded-[6px] bg-black/55 px-1.5 py-0.5 text-[11px] font-semibold text-white">{dur}</span>}
+      <span className={cn('absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-ink-1', compact ? 'h-8 w-8' : 'h-10 w-10')}><Play className={cn('ml-0.5 fill-current', compact ? 'h-3.5 w-3.5' : 'h-4 w-4')} /></span>
+      {locked && !compact && <span className="absolute left-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-black/55 text-white"><Lock className="h-3 w-3" strokeWidth={2.2} /></span>}
+      {!portrait && !compact && <span className="absolute bottom-2 left-2.5 right-14 truncate text-caption font-semibold text-white">{video.title}</span>}
+      {dur && !compact && <span className="absolute bottom-2 right-2 rounded-[6px] bg-black/55 px-1.5 py-0.5 text-[11px] font-semibold text-white">{dur}</span>}
     </button>
   )
 }

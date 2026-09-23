@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useId } from 'react'
 import { X, UploadCloud, Loader2, CheckCircle2, AlertCircle, Film } from 'lucide-react'
 import Button from '../Button'
+import { useAuthStore } from '@/lib/auth'
 import Input from '../Input'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
 import { useNativeVideoUpload } from '@/hooks/useNativeVideoUpload'
@@ -22,7 +23,10 @@ export default function UploadVideoModal({ isOpen, onClose, onUploaded, kind = '
   const [file, setFile] = useState<File | null>(null)
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  const [visibility, setVisibility] = useState<'public' | 'recruiters'>('public')
+  // A new full match starts from the owner's default (Settings › Privacy);
+  // the per-video setting wins from then on. Highlights are public by default.
+  const defaultVisibility = useAuthStore((s) => s.profile?.highlight_visibility)
+  const [visibility, setVisibility] = useState<'public' | 'recruiters'>(kind === 'full_match' && defaultVisibility === 'recruiters' ? 'recruiters' : 'public')
   const dialogRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const titleId = useId()
@@ -84,7 +88,7 @@ export default function UploadVideoModal({ isOpen, onClose, onUploaded, kind = '
         <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
           <h2 id={titleId} className="flex items-center gap-2 text-lg font-bold text-gray-900">
             <Film className="h-5 w-5 text-hockia-primary" />
-            Upload highlight video
+            {kind === 'full_match' ? 'Upload full match' : 'Upload highlight video'}
           </h2>
           <button
             type="button"

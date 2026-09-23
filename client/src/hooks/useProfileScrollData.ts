@@ -70,6 +70,10 @@ type CareerRow = Database['public']['Tables']['career_history']['Row'] & {
 const TTL = 60_000
 const cache = new Map<string, { at: number; data: typeof EMPTY }>()
 
+export function clearProfileScrollCache(profileId: string) {
+  cache.delete(profileId)
+}
+
 export function useProfileScrollData(profileId: string | null | undefined, enabled = true): ProfileScrollData {
   const fresh = (id: string | null | undefined) => {
     const hit = id ? cache.get(id) : undefined
@@ -115,7 +119,7 @@ export function useProfileScrollData(profileId: string | null | undefined, enabl
           .from('gallery_photos')
           .select('id, photo_url, caption')
           .eq('user_id', profileId)
-          .order('order_index', { ascending: true })
+          .order('order_index', { ascending: false })
           .limit(3),
         supabase.from('gallery_photos').select('id', { count: 'exact', head: true }).eq('user_id', profileId),
         supabase.rpc('get_profile_posts', { p_profile_id: profileId, p_limit: 6, p_offset: 0 }),

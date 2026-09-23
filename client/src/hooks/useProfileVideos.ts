@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import type { Database } from '@/lib/database.types'
@@ -23,6 +23,8 @@ export function useProfileVideos(profileId: string | null | undefined) {
   const [videos, setVideos] = useState<ProfileVideo[]>([])
   const [links, setLinks] = useState<ProfileFullGameLink[]>([])
   const [loading, setLoading] = useState(Boolean(profileId))
+  const [nonce, setNonce] = useState(0)
+  const reload = useCallback(() => setNonce((n) => n + 1), [])
 
   useEffect(() => {
     if (!profileId) { setLoading(false); return }
@@ -49,7 +51,7 @@ export function useProfileVideos(profileId: string | null | undefined) {
       setLoading(false)
     })()
     return () => { cancelled = true }
-  }, [profileId])
+  }, [profileId, nonce])
 
-  return { videos, links, loading }
+  return { videos, links, loading, reload }
 }

@@ -30,6 +30,7 @@ import CareerScreen from '@/components/profile/mobile/CareerScreen'
 import ReferencesScreen from '@/components/profile/mobile/ReferencesScreen'
 import VideosScreen from '@/components/profile/mobile/VideosScreen'
 import EditProfileScreen, { type EditField } from '@/components/profile/mobile/EditProfileScreen'
+import ManageMediaScreen from '@/components/profile/mobile/ManageMediaScreen'
 import PlayerCommunityHub from '@/components/community/PlayerCommunityHub'
 import PublicCommunityView from '@/components/community/PublicCommunityView'
 import { ProfileViewersSection } from '@/components/ProfileViewersSection'
@@ -574,8 +575,9 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
   const showPhoneScroll = isLanding
   // Phone leaf screens (Figma: the number in the stats strip opens the
   // complete collection). One screen per collection, own / public modes.
-  const phoneLeaf: 'friends' | 'career' | 'references' | 'videos' | 'edit' | null =
-    activeTab === 'edit' && !readOnly ? 'edit' : activeTab === 'friends' ? 'friends' : activeTab === 'journey' ? 'career' : activeTab === 'references' ? 'references' : activeTab === 'videos' ? 'videos' : null
+  // 'media' = Manage media for the owner; a visitor's /media is Videos — all.
+  const phoneLeaf: 'friends' | 'career' | 'references' | 'videos' | 'edit' | 'media' | null =
+    activeTab === 'edit' && !readOnly ? 'edit' : activeTab === 'media' ? (readOnly ? 'videos' : 'media') : activeTab === 'friends' ? 'friends' : activeTab === 'journey' ? 'career' : activeTab === 'references' ? 'references' : activeTab === 'videos' ? 'videos' : null
 
   return (
     <div className="min-h-screen bg-white lg:bg-gray-50">
@@ -596,6 +598,9 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
       )}
       {isPhone && phoneLeaf === 'edit' && (
         <EditProfileScreen field={(searchParams.get('field') as EditField | null) ?? null} onDone={() => handleTabChange('profile')} />
+      )}
+      {isPhone && phoneLeaf === 'media' && (
+        <ManageMediaScreen profileId={profile.id} onBack={() => handleTabChange('profile')} />
       )}
       {isPhone && phoneLeaf === 'videos' && (
         <VideosScreen

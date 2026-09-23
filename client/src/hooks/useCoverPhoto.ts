@@ -13,7 +13,8 @@ export function clearCoverPhotoCache(profileId: string) {
 /**
  * Cover photo for the profile screen (Figma Profile v2/v3 "cover"). profiles
  * has no cover column, so the cover is the member's first gallery photo —
- * the one they ordered first. Null → the screen paints its own gradient.
+ * the one at the top of their gallery (highest order_index, as the gallery
+ * manager arranges it). Null → the screen paints its own gradient.
  */
 export function useCoverPhoto(profileId: string | null | undefined): string | null {
   const [url, setUrl] = useState<string | null>(() => (profileId ? cache.get(profileId) ?? null : null))
@@ -31,7 +32,7 @@ export function useCoverPhoto(profileId: string | null | undefined): string | nu
           .from('gallery_photos')
           .select('photo_url')
           .eq('user_id', profileId)
-          .order('order_index', { ascending: true })
+          .order('order_index', { ascending: false })
           .limit(1)
         if (error) throw error
         const first = data?.[0]?.photo_url ?? null

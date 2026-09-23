@@ -260,7 +260,7 @@ function Privacy({ back, go }: { back: () => void; go: (s: SettingsSection) => v
 
   return (
     <Screen parent="Settings" title="Privacy" onBack={back}>
-      <SettingsGroup label="Who can watch your full matches" footer="Full matches carry the most detail about how you play, so they are locked to recruiters by default.">
+      <SettingsGroup label="Default for new full matches" footer="Full matches carry the most detail about how you play, so they are locked to recruiters by default. You can change any single video from Manage media.">
         {options.map((o) => (
           <button key={o.value} type="button" role="radio" aria-checked={visibility === o.value} disabled={busy === 'highlight_visibility'} onClick={() => { if (visibility !== o.value) void write({ highlight_visibility: o.value }, 'highlight_visibility') }} className="flex w-full items-center gap-3 px-4 py-3 text-left">
             <span className="min-w-0 flex-1">
