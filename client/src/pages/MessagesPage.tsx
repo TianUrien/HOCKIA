@@ -81,6 +81,21 @@ interface Conversation {
   origin?: ConversationOrigin
 }
 
+/** "‹ Inbox" by default; when the chat was opened from somewhere else, name
+ *  that destination ("‹ Profile", "‹ Opportunity"); "Back" only as a fallback. */
+function backLabelFor(state: { returnTo?: unknown; from?: unknown } | null): string {
+  const path = typeof state?.returnTo === 'string' ? state.returnTo : typeof state?.from === 'string' ? state.from : null
+  if (!path) return 'Inbox'
+  if (/^\/(players|coaches|clubs|brands|umpires)\b/.test(path)) return 'Profile'
+  if (/^\/dashboard\b/.test(path)) return 'Profile'
+  if (/^\/opportunities\/[^/]+/.test(path)) return 'Opportunity'
+  if (/^\/opportunities\b/.test(path)) return 'Opportunities'
+  if (/^\/community\b/.test(path)) return 'Community'
+  if (/^\/inbox\b/.test(path)) return 'Inbox'
+  if (/^\/home\b/.test(path)) return 'Home'
+  return 'Back'
+}
+
 export default function MessagesPage() {
   const { user } = useAuthStore()
   const location = useLocation()
@@ -632,8 +647,8 @@ export default function MessagesPage() {
     // Fall back to the inbox-style behavior (clear conversation
     // selection, stay on /messages) when no returnTo is present —
     // matches the "opened from inbox" + "opened via deep link" cases.
-    const state = location.state as { returnTo?: unknown } | null
-    const returnTo = typeof state?.returnTo === 'string' ? state.returnTo : null
+    const state = location.state as { returnTo?: unknown; from?: unknown } | null
+    const returnTo = typeof state?.returnTo === 'string' ? state.returnTo : typeof state?.from === 'string' ? state.from : null
     if (returnTo) {
       navigate(returnTo, { replace: true })
       return
@@ -1189,7 +1204,7 @@ export default function MessagesPage() {
                 conversation={selectedConversation}
                 currentUserId={user?.id || ''}
                 onBack={handleBackToList}
-                backLabel={typeof (location.state as { returnTo?: unknown } | null)?.returnTo === 'string' ? 'Back' : 'Inbox'}
+                backLabel={backLabelFor(location.state as { returnTo?: unknown; from?: unknown } | null)}
                 onMessageSent={handleConversationMessageEvent}
                 onConversationCreated={handleConversationCreated}
                 onConversationRead={handleConversationRead}

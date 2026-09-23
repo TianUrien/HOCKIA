@@ -18,6 +18,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 export default function OpportunityDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const location = useLocation()
   const routerLocation = useLocation()
   const { user, profile } = useAuthStore()
 
@@ -362,7 +363,7 @@ export default function OpportunityDetailPage() {
       setShowSignInPrompt(true)
       return
     }
-    navigate(`/messages?new=${club.id}`)
+    navigate(`/messages?new=${club.id}`, { state: { from: location.pathname } })
   }
   const leagueForPhone = (() => {
     if (worldClub?.leagueName) return worldClub.leagueName

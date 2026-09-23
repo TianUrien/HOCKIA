@@ -4,10 +4,9 @@
 --      row as the "last message" — an empty preview that the client rendered
 --      as "Say hello" even though the conversation had messages. Skip deleted
 --      rows so the one before shows; "Say hello" is only for no messages at all.
---   2. E2E teardown must hard-delete the smoke messages the tests send. There
---      was no DELETE policy on messages at all; a sender may now remove their
---      own rows (the unread-counter trigger already handles DELETE). The app's
---      Delete keeps using delete_message (soft).
+--   (No DELETE policy: messages are soft-deleted on purpose — founder ruling
+--   2026-09-23 — so reports and moderation keep the record. Test cleanup runs
+--   with the service role, never through a client permission.)
 
 CREATE OR REPLACE FUNCTION public.get_user_conversations(p_user_id uuid, p_limit integer DEFAULT 50, p_cursor_last_message_at timestamp with time zone DEFAULT NULL::timestamp with time zone, p_cursor_conversation_id uuid DEFAULT NULL::uuid)
  RETURNS TABLE(conversation_id uuid, other_participant_id uuid, other_participant_name text, other_participant_username text, other_participant_avatar text, other_participant_role text, last_message_content text, last_message_sent_at timestamp with time zone, last_message_sender_id uuid, unread_count bigint, conversation_created_at timestamp with time zone, conversation_updated_at timestamp with time zone, conversation_last_message_at timestamp with time zone, has_more boolean)
@@ -94,8 +93,3 @@ BEGIN
 END;
 $function$;
 
-DROP POLICY IF EXISTS "Users can hard-delete their own messages" ON public.messages;
-CREATE POLICY "Users can hard-delete their own messages"
-  ON public.messages FOR DELETE
-  TO authenticated
-  USING (sender_id = auth.uid());

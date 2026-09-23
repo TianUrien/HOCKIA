@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
 import { Header } from '@/components'
 import { DetailNavBar } from '@/components/ui/DetailNavBar'
@@ -23,6 +23,7 @@ export default function MyApplicationsPage() {
   useScrollRestore()
   useDocumentTitle('My applications')
   const navigate = useNavigate()
+  const location = useLocation()
   const { rows, loading } = useMyApplicationsAll()
   const [segment, setSegment] = useState<Segment>('active')
 
@@ -106,7 +107,7 @@ export default function MyApplicationsPage() {
               </p>
               <button
                 type="button"
-                onClick={() => navigate(`/messages?new=${waitingLongest.club!.id}`)}
+                onClick={() => navigate(`/messages?new=${waitingLongest.club!.id}`, { state: { from: location.pathname } })}
                 className="mt-2 flex items-center gap-1 text-row font-semibold text-hockia-primary"
               >
                 Message {waitingLongest.club.name} <ChevronRight className="h-4 w-4" strokeWidth={2} />

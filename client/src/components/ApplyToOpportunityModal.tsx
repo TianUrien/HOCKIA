@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { nationalityLine } from '@/lib/nationalityLine'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { AlertCircle, ChevronRight, Loader2, X } from 'lucide-react'
 import * as Sentry from '@sentry/react'
 import { format } from 'date-fns'
@@ -54,6 +54,7 @@ export default function ApplyToVacancyModal({
   const { addToast } = useToastStore()
   const { countries } = useCountries()
   const navigate = useNavigate()
+  const location = useLocation()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -85,7 +86,7 @@ export default function ApplyToVacancyModal({
     : 'Nothing was sent. Your team category is edited from Edit profile.'
   const messageClub = () => {
     onClose()
-    navigate(`/messages?new=${vacancy.club_id}`)
+    navigate(`/messages?new=${vacancy.club_id}`, { state: { from: location.pathname } })
   }
 
   const availableText = (() => {

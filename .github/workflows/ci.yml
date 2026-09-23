@@ -390,6 +390,8 @@ jobs:
           E2E_BRAND_PASSWORD: ${{ secrets.E2E_BRAND_PASSWORD }}
           E2E_UMPIRE_EMAIL: ${{ secrets.E2E_UMPIRE_EMAIL }}
           E2E_UMPIRE_PASSWORD: ${{ secrets.E2E_UMPIRE_PASSWORD }}
+          # Service role for the global teardown only (hard-deletes the E2E accounts' test messages). Optional: teardown skips without it.
+          E2E_SERVICE_ROLE_KEY: ${{ secrets.STAGING_SUPABASE_SERVICE_ROLE_KEY }}
         run: npm run test:db
 
   e2e-tests:
@@ -442,6 +444,8 @@ jobs:
           E2E_BRAND_PASSWORD: ${{ secrets.E2E_BRAND_PASSWORD }}
           E2E_UMPIRE_EMAIL: ${{ secrets.E2E_UMPIRE_EMAIL }}
           E2E_UMPIRE_PASSWORD: ${{ secrets.E2E_UMPIRE_PASSWORD }}
+          # Service role for the global teardown only (hard-deletes the E2E accounts' test messages). Optional: teardown skips without it.
+          E2E_SERVICE_ROLE_KEY: ${{ secrets.STAGING_SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           echo "VITE_SUPABASE_URL=${VITE_SUPABASE_URL}" >> .env
           echo "VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}" >> .env
