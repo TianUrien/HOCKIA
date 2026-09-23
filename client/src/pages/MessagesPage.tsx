@@ -3,7 +3,7 @@ import { Search, MessageCircle, X, Plus } from 'lucide-react'
 import * as Sentry from '@sentry/react'
 import { useAuthStore } from '@/lib/auth'
 import { supabase } from '@/lib/supabase'
-import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import { Navigate, useLocation, useNavigate, useParams } from 'react-router-dom'
 import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js'
 import ConversationList from '@/components/ConversationList'
 import ChatWindowV2 from '@/features/chat-v2/ChatWindowV2'
@@ -104,6 +104,9 @@ export default function MessagesPage() {
   const [isFetchingMoreConversations, setIsFetchingMoreConversations] = useState(false)
   const [conversationCursor, setConversationCursor] = useState<{ lastMessageAt: string | null; conversationId: string | null } | null>(null)
   const isMobile = useMediaQuery('(max-width: 767px)')
+  // Under 1024px the tab bar is on screen and Inbox owns the conversation
+  // list; the legacy list here is retired on phones (walkthrough #3).
+  const isPhone = useMediaQuery('(max-width: 1023px)')
   const realtimeRefreshTimeoutRef = useRef<number | null>(null)
   const [isNewMessageModalOpen, setIsNewMessageModalOpen] = useState(false)
 
@@ -635,6 +638,14 @@ export default function MessagesPage() {
       navigate(returnTo, { replace: true })
       return
     }
+    if (isPhone) {
+      // Back must return to where you came from: Inbox (its segment and scroll
+      // come back with the history entry), a profile, the Apply sheet… A deep
+      // link with no history falls back to Inbox › Messages.
+      if (location.key !== 'default' && window.history.length > 1) navigate(-1)
+      else navigate('/inbox', { replace: true })
+      return
+    }
     setSelectedConversationId(null)
     setPendingConversation(null)
     const nextParams = new URLSearchParams(searchParams)
@@ -645,7 +656,7 @@ export default function MessagesPage() {
       pathname: '/messages',
       search: nextSearch ? `?${nextSearch}` : ''
     })
-  }, [navigate, searchParams, location.state])
+  }, [navigate, searchParams, location.state, location.key, isPhone])
 
   const handleConversationCreated = useCallback(
     (createdConversation: Conversation) => {
@@ -1009,6 +1020,10 @@ export default function MessagesPage() {
       ? 'flex min-h-0 flex-1 flex-col bg-white md:flex-row'
       : 'flex flex-1 min-h-0 flex-row overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm'
 
+  if (isPhone && !selectedConversationId && !newConversationTargetId) {
+    return <Navigate to="/inbox" replace />
+  }
+
   if (loading) {
     return (
       <div className={rootContainerClasses}>
@@ -1174,6 +1189,7 @@ export default function MessagesPage() {
                 conversation={selectedConversation}
                 currentUserId={user?.id || ''}
                 onBack={handleBackToList}
+                backLabel={typeof (location.state as { returnTo?: unknown } | null)?.returnTo === 'string' ? 'Back' : 'Inbox'}
                 onMessageSent={handleConversationMessageEvent}
                 onConversationCreated={handleConversationCreated}
                 onConversationRead={handleConversationRead}

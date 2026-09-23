@@ -1,6 +1,13 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { format } from 'date-fns'
+import { format, isToday, isYesterday } from 'date-fns'
+
+/** "Today" · "Yesterday" · "Monday, Sep 12" — the day label above a group. */
+function dayLabel(d: Date): string {
+  if (isToday(d)) return 'Today'
+  if (isYesterday(d)) return 'Yesterday'
+  return format(d, 'EEEE, MMM d')
+}
 import { AlertCircle, Ban, Check, CheckCheck, Loader2, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import type { ChatMessage, MessageDeliveryStatus } from '@/types/chat'
 import { cn } from '@/lib/utils'
@@ -153,15 +160,13 @@ export function MessageBubble({
   return (
     <div className={cn('space-y-1', isGroupedWithPrevious ? '' : 'mt-2')}>
       {showDayDivider && (
-        <div className="flex justify-center py-4">
-          <span className="inline-flex items-center rounded-full bg-white px-3 py-1 text-[11px] font-medium uppercase tracking-wide text-gray-500 shadow-sm ring-1 ring-gray-200">
-            {format(new Date(message.sent_at), 'EEEE, MMM d')}
-          </span>
+        <div className="py-3 text-caption font-semibold text-ink-4">
+          {dayLabel(new Date(message.sent_at))}
         </div>
       )}
       {showTimestamp && !showDayDivider && (
-        <div className="text-center text-[11px] font-medium text-gray-400 py-2">
-          {format(new Date(message.sent_at), 'MMM d, h:mm a')}
+        <div className="py-2 text-center text-caption text-ink-4">
+          {format(new Date(message.sent_at), 'HH:mm')}
         </div>
       )}
       {isUnreadMarker && (
@@ -175,7 +180,7 @@ export function MessageBubble({
       {isDeleted ? (
         <div className={cn('flex', isMine ? 'justify-end' : 'justify-start')}>
           <div
-            className="inline-flex max-w-[75%] items-center gap-1.5 rounded-2xl px-3.5 py-2 text-[13px] italic text-gray-400 ring-1 ring-gray-200 sm:max-w-[65%]"
+            className="inline-flex max-w-[75%] items-center gap-1.5 rounded-[18px] px-3.5 py-2 text-[13px] italic text-ink-3 ring-1 ring-line sm:max-w-[65%]"
             data-testid="message-deleted"
           >
             <Ban className="h-3.5 w-3.5 flex-shrink-0" aria-hidden="true" />
@@ -279,13 +284,11 @@ export function MessageBubble({
 
           <div
             className={cn(
-              'max-w-[75%] rounded-2xl px-3.5 py-2 text-[15px] leading-relaxed sm:max-w-[65%]',
+              'max-w-[78%] rounded-[18px] px-3.5 py-2.5 text-[15px] leading-5 sm:max-w-[65%]',
+              isMine ? 'bg-hockia-primary text-white' : 'bg-surface-grouped text-ink-1',
               isMine
-                ? 'bg-gradient-to-br from-purple-500 to-purple-600 text-white'
-                : 'bg-white text-gray-900 ring-1 ring-gray-200',
-              isMine
-                ? isGroupedWithPrevious ? 'rounded-tr-md' : ''
-                : isGroupedWithPrevious ? 'rounded-tl-md' : ''
+                ? isGroupedWithPrevious ? 'rounded-tr-[6px]' : ''
+                : isGroupedWithPrevious ? 'rounded-tl-[6px]' : ''
             )}
           >
             {isSharedPost && message.metadata?.type === 'shared_post' ? (

@@ -37,7 +37,7 @@ test.describe('Messages Page - Authenticated', () => {
 
   test('has message composer area', async ({ page }) => {
     // If there's a selected conversation or the composer is always visible
-    const composer = page.getByPlaceholder(/type a message|write a message/i)
+    const composer = page.getByPlaceholder(/^message$|type a message|write a message/i)
       .or(page.locator('[data-testid="message-composer"]'))
     
     // Composer might not be visible until a conversation is selected

@@ -23,6 +23,8 @@ interface ChatWindowV2Props {
   onConversationCreated: (conversation: Conversation) => void
   onConversationRead?: (conversationId: string) => void
   isImmersiveMobile?: boolean
+  /** Phone back-label beside the chevron ("Inbox", or where the chat was opened from). */
+  backLabel?: string
 }
 
 export default function ChatWindowV2({
@@ -32,7 +34,8 @@ export default function ChatWindowV2({
   onMessageSent,
   onConversationCreated,
   onConversationRead,
-  isImmersiveMobile = false
+  isImmersiveMobile = false,
+  backLabel,
 }: ChatWindowV2Props) {
   const {
     messages,
@@ -254,6 +257,7 @@ export default function ChatWindowV2({
       <ChatHeader
         participant={conversation.otherParticipant ?? undefined}
         onBack={onBack}
+        backLabel={backLabel}
         profilePath={profilePath}
         isMobile={isMobile}
       />
@@ -261,7 +265,7 @@ export default function ChatWindowV2({
         <div
           ref={scrollContainerRef}
           data-testid="chat-message-list"
-          className={`chat-scroll-container absolute inset-0 bg-gray-50 overflow-y-auto overscroll-contain ${scrollPaddingClasses}`}
+          className={`chat-scroll-container absolute inset-0 overflow-y-auto overscroll-contain ${isMobile ? 'bg-white' : 'bg-gray-50'} ${scrollPaddingClasses}`}
         >
           {messages.length === 0 ? (
             <EmptyState />

@@ -426,7 +426,7 @@ test.describe.serial('Notification System E2E', () => {
     await playerPage.waitForLoadState('networkidle')
 
     const messageText = `E2E notif test msg ${Date.now()}`
-    const textarea = playerPage.getByPlaceholder(/type a message/i)
+    const textarea = playerPage.getByPlaceholder(/^message$|type a message/i)
     await textarea.fill(messageText)
     await playerPage.keyboard.press('Enter')
 

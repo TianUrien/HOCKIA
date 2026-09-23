@@ -24,7 +24,7 @@ test.describe('Messaging - Full Flow', () => {
     await expect(page).toHaveURL(/\/messages/i, { timeout: 20000 })
 
     // Composer should be visible
-    const composer = page.getByPlaceholder(/type a message/i)
+    const composer = page.getByPlaceholder(/^message$|type a message/i)
     await expect(composer).toBeVisible({ timeout: 20000 })
 
     // Send a timestamped message
@@ -57,7 +57,7 @@ test.describe('Messaging - Full Flow', () => {
 
       // Chat window should open with the composer
       await expect(
-        page.getByPlaceholder(/type a message/i)
+        page.getByPlaceholder(/^message$|type a message/i)
       ).toBeVisible({ timeout: 20000 })
     } else {
       // If no conversation exists yet, the empty state should show
@@ -77,7 +77,7 @@ test.describe('Messaging - Full Flow', () => {
     await page.getByRole('button', { name: 'Message', exact: true }).click()
     await expect(page).toHaveURL(/\/messages/i, { timeout: 20000 })
 
-    const composer = page.getByPlaceholder(/type a message/i)
+    const composer = page.getByPlaceholder(/^message$|type a message/i)
     await expect(composer).toBeVisible({ timeout: 20000 })
 
     // Ensure composer is focused and ready
@@ -132,7 +132,7 @@ test.describe('Messaging - Mobile', () => {
     await expect(page).toHaveURL(/\/messages/i, { timeout: 20000 })
 
     // Composer should be visible on mobile
-    const composer = page.getByPlaceholder(/type a message/i)
+    const composer = page.getByPlaceholder(/^message$|type a message/i)
     await expect(composer).toBeVisible({ timeout: 20000 })
 
     // Send a message

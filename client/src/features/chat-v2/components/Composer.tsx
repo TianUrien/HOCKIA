@@ -59,7 +59,7 @@ export function Composer({ value, sending, disabled, onChange, onSubmit, onFocus
 
   return (
     <form
-      className="relative flex-shrink-0 border-t border-gray-200 bg-white px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:px-5"
+      className="relative flex-shrink-0 border-t border-line bg-white px-4 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] md:px-5"
       onSubmit={event => {
         event.preventDefault()
         void onSubmit()
@@ -76,7 +76,7 @@ export function Composer({ value, sending, disabled, onChange, onSubmit, onFocus
             value={value}
             rows={1}
             maxLength={maxLength}
-            placeholder="Type a message..."
+            placeholder="Message"
             inputMode="text"
             enterKeyHint="send"
             autoComplete="off"
@@ -86,7 +86,7 @@ export function Composer({ value, sending, disabled, onChange, onSubmit, onFocus
             onFocus={onFocus}
             onKeyDown={handleKeyDown}
             onChange={event => onChange(event.target.value)}
-            className={`chat-textarea w-full resize-none rounded-3xl border border-gray-200 bg-gray-100 py-2.5 text-[15px] leading-snug text-gray-900 outline-none transition-colors placeholder:text-gray-400 focus:border-hockia-primary/40 focus:bg-white ${showCounter ? 'pl-4 pr-14' : 'px-4'}`}
+            className={`chat-textarea w-full resize-none rounded-[20px] bg-surface-grouped py-2.5 text-[15px] leading-5 text-ink-1 outline-none transition-colors placeholder:text-ink-4 focus-visible:outline-none focus:bg-[#ebebf0] ${showCounter ? 'pl-4 pr-14' : 'px-4'}`}
           />
           {/* Counter only appears near the limit — a clean, native-feeling
               input the rest of the time instead of an always-on form field. */}
@@ -99,7 +99,7 @@ export function Composer({ value, sending, disabled, onChange, onSubmit, onFocus
         <button
           type="submit"
           disabled={disabled}
-          className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-hockia-primary to-hockia-secondary text-white shadow-sm transition-all hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hockia-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
+          className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-hockia-primary text-white transition-opacity focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hockia-primary disabled:cursor-not-allowed disabled:opacity-40"
           aria-label="Send message"
         >
           {sending ? (

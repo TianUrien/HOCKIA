@@ -225,7 +225,8 @@ describe('Messages flows', () => {
     mockUseMediaQuery.mockReturnValue(true)
     const { getByLabelText } = renderChatWindow()
 
-    const backButton = getByLabelText('Back to conversations')
+    // Phone header reads "‹ Inbox" (or where the chat was opened from).
+    const backButton = getByLabelText(/^Back to /)
     const header = backButton.closest('header')
     expect(header).not.toBeNull()
     // Header should be relative on mobile without immersive mode
@@ -320,7 +321,7 @@ describe('Messages flows', () => {
     mockUseMediaQuery.mockReturnValue(true)
     renderChatWindow()
 
-    const textarea = screen.getByPlaceholderText('Type a message...')
+    const textarea = screen.getByPlaceholderText('Message')
     expect(textarea).toHaveClass('chat-textarea')
   })
 })

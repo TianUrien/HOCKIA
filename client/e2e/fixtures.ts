@@ -192,7 +192,7 @@ export class MessagesPage extends HockiaPage {
   }
 
   async sendMessage(content: string) {
-    const textarea = this.page.getByPlaceholder(/type a message/i)
+    const textarea = this.page.getByPlaceholder(/^message$|type a message/i)
     await textarea.fill(content)
     await this.page.keyboard.press('Enter')
   }

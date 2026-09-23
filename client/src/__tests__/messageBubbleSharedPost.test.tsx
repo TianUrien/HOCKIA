@@ -146,8 +146,8 @@ describe('MessageBubble — shared post rendering', () => {
       />,
     )
 
-    // The outer bubble has purple gradient when isMine
-    const bubble = container.querySelector('.from-purple-500')
+    // The outer bubble is brand purple when isMine (Figma Chat bubbles)
+    const bubble = container.querySelector('.bg-hockia-primary')
     expect(bubble).not.toBeNull()
 
     // The card inside should have sender styling. (Own messages also render a

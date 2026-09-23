@@ -87,7 +87,7 @@ test.describe('@smoke player', () => {
 
     // Messaging page should load
     await expect(page).toHaveURL(/\/messages/i, { timeout: 20000 })
-    await expect(page.getByPlaceholder(/type a message/i)).toBeVisible({ timeout: 20000 })
+    await expect(page.getByPlaceholder(/^message$|type a message/i)).toBeVisible({ timeout: 20000 })
   })
 
   test('player can send a message and see it in the thread', async ({ page }) => {
@@ -99,7 +99,7 @@ test.describe('@smoke player', () => {
     await expect(page).toHaveURL(/\/messages/i, { timeout: 20000 })
 
     const message = `E2E smoke message ${Date.now()}`
-    const textarea = page.getByPlaceholder(/type a message/i)
+    const textarea = page.getByPlaceholder(/^message$|type a message/i)
     await textarea.fill(message)
     await page.keyboard.press('Enter')
 
@@ -115,7 +115,7 @@ test.describe('@smoke player', () => {
 
     // Send a fresh message we own (and will clean up by deleting it).
     const original = `E2E edit/delete ${Date.now()}`
-    await page.getByPlaceholder(/type a message/i).fill(original)
+    await page.getByPlaceholder(/^message$|type a message/i).fill(original)
     await page.keyboard.press('Enter')
 
     const messageList = page.getByTestId('chat-message-list')
@@ -164,7 +164,7 @@ test.describe('@smoke player', () => {
 
     // Should navigate to messages with the brand's profile_id
     await expect(page).toHaveURL(/\/messages/i, { timeout: 20000 })
-    await expect(page.getByPlaceholder(/type a message/i)).toBeVisible({ timeout: 20000 })
+    await expect(page.getByPlaceholder(/^message$|type a message/i)).toBeVisible({ timeout: 20000 })
   })
 
   test('player can send a message to a brand', async ({ page }) => {
@@ -176,7 +176,7 @@ test.describe('@smoke player', () => {
     await page.getByRole('link', { name: /send message/i }).click()
     await expect(page).toHaveURL(/\/messages/i, { timeout: 20000 })
 
-    const composer = page.getByPlaceholder(/type a message/i)
+    const composer = page.getByPlaceholder(/^message$|type a message/i)
     await expect(composer).toBeVisible({ timeout: 20000 })
 
     const message = `E2E brand message ${Date.now()}`
