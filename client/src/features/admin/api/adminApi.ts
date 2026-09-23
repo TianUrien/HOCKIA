@@ -901,6 +901,13 @@ export async function forceClaimWorldClub(
     throw new Error(`Profile has role "${targetProfile.role}" — only club profiles can claim world clubs.`)
   }
 
+  const { data: club, error: clubError } = await supabase
+    .from('world_clubs')
+    .select('id, men_league_id, women_league_id, province_id, avatar_url')
+    .eq('id', clubId)
+    .single()
+  if (clubError || !club) throw new Error('World club not found.')
+
   const { error } = await supabase
     .from('world_clubs')
     .update({
@@ -911,6 +918,28 @@ export async function forceClaimWorldClub(
     .eq('id', clubId)
 
   if (error) throw new Error(`Failed to force claim club: ${error.message}`)
+
+  // The profile side of the link — exactly what claim_world_club writes for a
+  // self-service claim. Without it compute_club_fit reads a null
+  // current_world_club_id and the club's level scores 0 forever (Kilkenny,
+  // Jul 17 — Figma DEV NOTE · Club & league, data fix 1).
+  const leagueIds = [club.men_league_id, club.women_league_id].filter((id): id is number => typeof id === 'number')
+  const { data: leagues } = leagueIds.length
+    ? await supabase.from('world_leagues').select('id, name').in('id', leagueIds)
+    : { data: [] as { id: number; name: string }[] }
+  const leagueName = (id: number | null) => leagues?.find((l) => l.id === id)?.name ?? null
+  const { error: profileLinkError } = await supabase
+    .from('profiles')
+    .update({
+      current_world_club_id: clubId,
+      mens_league_id: club.men_league_id,
+      womens_league_id: club.women_league_id,
+      mens_league_division: leagueName(club.men_league_id),
+      womens_league_division: leagueName(club.women_league_id),
+      world_region_id: club.province_id,
+    })
+    .eq('id', profileId)
+  if (profileLinkError) throw new Error(`Club linked, but the profile could not be updated: ${profileLinkError.message}`)
 
   // Audit trail: force-claims land in the same ledger as self-service claims.
   // Non-fatal — the claim itself succeeded; a missing audit row is repairable.
