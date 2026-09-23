@@ -49,7 +49,10 @@ export function InboxMessages({ onCompose }: InboxMessagesProps) {
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: inboxConversationsKey(userId ?? 'anon'),
     enabled: Boolean(userId),
-    staleTime: 30_000,
+    // Coming back from a chat must show the message you just sent: refetch on
+    // every mount (one small RPC), keep the cached rows meanwhile.
+    staleTime: 0,
+    refetchOnMount: 'always',
     queryFn: async () => {
       const { data: rows, error } = await supabase.rpc('get_user_conversations', {
         p_user_id: userId!,

@@ -1,20 +1,19 @@
-import { differenceInCalendarDays, format, isToday, isYesterday } from 'date-fns'
+import { differenceInCalendarDays, format, isToday } from 'date-fns'
 
 /**
- * Inbox row timestamps (Figma Inbox — Messages): "10:24" today, "Yesterday",
- * weekday within the week, otherwise "3 Sep". Short on purpose — the row has
- * one line for it.
+ * Inbox row timestamps (app rule): the time today, the weekday within the
+ * week, "Sep 12" before that (and the year once it differs). Short on
+ * purpose — the row has one line for it.
  */
 export function formatInboxTime(iso: string | null | undefined, now: Date = new Date()): string {
   if (!iso) return ''
   const date = new Date(iso)
   if (Number.isNaN(date.getTime())) return ''
   if (isToday(date)) return format(date, 'HH:mm')
-  if (isYesterday(date)) return 'Yesterday'
   const days = differenceInCalendarDays(now, date)
   if (days < 7) return format(date, 'EEE')
-  if (date.getFullYear() === now.getFullYear()) return format(date, 'd MMM')
-  return format(date, 'd MMM yyyy')
+  if (date.getFullYear() === now.getFullYear()) return format(date, 'MMM d')
+  return format(date, 'MMM d, yyyy')
 }
 
 /** Feed and Activity rows (founder rule): "now / 4m / 2h / 3d / Sep 12" — never "ago". */
