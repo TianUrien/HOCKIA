@@ -37,40 +37,46 @@ export function YourWeekCard() {
     (isClub && (roles.loading || scoped.loading))
 
   const views = vis.visibility?.views_7d ?? 0
+  const matched = opps.mode === 'matched' ? opps.items.length : 0
+  const replies = apps.applications.filter((a) => a.status !== 'pending').length
   const stats: Stat[] = isTalent
     ? [
-        { value: opps.mode === 'matched' ? opps.items.length : 0, label: 'roles match you' },
-        { value: views, label: 'profile views' },
-        { value: apps.applications.filter((a) => a.status !== 'pending').length, label: 'club replies' },
+        { value: matched, label: matched === 1 ? 'role matches you' : 'roles match you' },
+        { value: views, label: views === 1 ? 'profile view' : 'profile views' },
+        { value: replies, label: replies === 1 ? 'club reply' : 'club replies' },
       ]
     : isClub
       ? [
           { value: scoped.fitCount, label: 'fit your search' },
-          { value: roles.totals.newApplicants, label: 'new applicants' },
-          { value: views, label: 'profile views' },
+          { value: roles.totals.newApplicants, label: roles.totals.newApplicants === 1 ? 'new applicant' : 'new applicants' },
+          { value: views, label: views === 1 ? 'profile view' : 'profile views' },
         ]
-      : [{ value: views, label: 'profile views' }]
+      : [{ value: views, label: views === 1 ? 'profile view' : 'profile views' }]
 
   return (
     <Link
       to="/pulse"
-      className="block rounded-2xl bg-[#F0F0F4] px-4 py-3.5 transition-colors hover:bg-[#EAEAF0] active:bg-[#E4E4EB]"
+      className="block overflow-hidden rounded-[18px] bg-surface-grouped transition-colors active:bg-[#e9e9ef]"
       aria-label="Your week — open Pulse"
       data-testid="your-week-card"
     >
-      <div className="flex items-center justify-between">
-        <h2 className="text-[15px] font-semibold text-gray-900">Your week</h2>
-        <ChevronRight className="h-5 w-5 text-gray-400" strokeWidth={1.75} aria-hidden="true" />
+      {/* Figma Home v2 · Your week: 17/semibold title with a chevron, a hairline,
+          then equal centred cells separated by 30px dividers. */}
+      <div className="flex h-12 items-center justify-between pl-4 pr-3.5">
+        <h2 className="text-body font-semibold text-ink-1">Your week</h2>
+        <ChevronRight className="h-5 w-5 text-ink-3" strokeWidth={1.75} aria-hidden="true" />
       </div>
-      <div className={`mt-2.5 grid gap-3 ${stats.length === 3 ? 'grid-cols-3' : stats.length === 2 ? 'grid-cols-2' : 'grid-cols-1'}`}>
-        {stats.map((s) => (
-          <div key={s.label} className="min-w-0">
+      <div className="h-px bg-line" />
+      <div className="flex items-stretch">
+        {stats.map((s, i) => (
+          <div key={s.label} className="relative flex min-w-0 flex-1 flex-col items-center gap-0.5 pb-2.5 pt-3.5">
+            {i > 0 && <span className="absolute left-0 top-1/2 h-[30px] w-px -translate-y-1/2 bg-line" aria-hidden="true" />}
             {loading ? (
-              <div className="h-7 w-8 animate-pulse rounded-md bg-gray-200" />
+              <div className="h-[31px] w-8 animate-pulse rounded-md bg-line" />
             ) : (
-              <div className="text-[24px] font-semibold leading-7 tabular-nums text-gray-900">{s.value}</div>
+              <div className="text-[26px] font-semibold leading-[31px] tracking-[-0.01em] tabular-nums text-ink-1">{s.value}</div>
             )}
-            <div className="mt-0.5 truncate text-[12px] leading-4 text-gray-500">{s.label}</div>
+            <div className="max-w-full truncate px-2 text-caption text-ink-2">{s.label}</div>
           </div>
         ))}
       </div>
