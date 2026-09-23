@@ -4,7 +4,7 @@ import { Check, ChevronRight } from 'lucide-react'
 import { DetailNavBar } from '@/components/ui/DetailNavBar'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
 import AddReferenceModal, { type ReferenceFriendOption } from '@/components/AddReferenceModal'
-import ReferenceEndorsementModal from '@/components/ReferenceEndorsementModal'
+import WriteReferenceSheet from './WriteReferenceSheet'
 import ConfirmActionModal from '@/components/ConfirmActionModal'
 import { useAuthStore } from '@/lib/auth'
 import { useFriendsList } from '@/hooks/useFriendsList'
@@ -265,19 +265,25 @@ export default function ReferencesScreen({ profileId, profileName, profileRole, 
         confirmLoading={withdrawId ? refs.isMutating('withdraw', withdrawId) : false}
         loadingLabel="Withdrawing…"
       />
-      <ReferenceEndorsementModal
-        isOpen={Boolean(writing)}
+      <WriteReferenceSheet
+        open={Boolean(writing)}
         onClose={() => setWritingId(null)}
-        onSubmit={async (endorsement) => {
+        forName={writing?.requesterProfile?.fullName?.trim().split(/\s+/)[0] ?? null}
+        relationshipType={writing?.relationshipType ?? ''}
+        requestNote={writing?.requestNote}
+        loading={writing ? mine.isMutating('respond', writing.id) : false}
+        onSend={async (endorsement) => {
           if (!writing) return false
           const ok = await mine.respondToRequest({ referenceId: writing.id, accept: true, endorsement })
           if (ok) setWritingId(null)
           return ok
         }}
-        loading={writing ? mine.isMutating('respond', writing.id) : false}
-        requesterName={writing?.requesterProfile?.fullName ?? 'this member'}
-        relationshipType={writing?.relationshipType ?? ''}
-        requestNote={writing?.requestNote}
+        onDecline={async () => {
+          if (!writing) return false
+          const ok = await mine.respondToRequest({ referenceId: writing.id, accept: false })
+          if (ok) setWritingId(null)
+          return ok
+        }}
       />
     </div>
   )
