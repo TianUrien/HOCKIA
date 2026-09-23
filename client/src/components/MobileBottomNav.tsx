@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { Home, Users, Briefcase, Inbox, UserPlus } from 'lucide-react'
 import Avatar from './Avatar'
 import { useNavigation } from '@/hooks/useNavigation'
@@ -26,6 +26,7 @@ interface NavItem {
  */
 export default function MobileBottomNav() {
   const { user, profile, location, isActive, handleNavigate } = useNavigation()
+  const pointerTapRef = useRef(false)
   const inboxDot = useInboxDot()
   const authLoading = useAuthStore((s) => s.loading)
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false)
@@ -70,20 +71,28 @@ export default function MobileBottomNav() {
   // Signed in but no profile yet = mid-signup; no bar until onboarding ends.
   if (user && !profile) return null
 
+
+
   const renderTab = (item: NavItem, active: boolean) => {
     const Icon = item.icon
     return (
       <button
         key={item.id}
         type="button"
-        onClick={() => {
+        onPointerDown={() => { pointerTapRef.current = true }}
+        onClick={(e) => {
           void hapticSelection()
+          // A tap must not leave the tab focused (the global :focus-visible
+          // outline would trail it); keyboard activation has no pointerdown
+          // and keeps its focus ring.
+          if (pointerTapRef.current) e.currentTarget.blur()
+          pointerTapRef.current = false
           handleNavigate(item.path)
         }}
         aria-label={item.label}
         aria-current={active ? 'page' : undefined}
         className={cn(
-          'flex min-h-[52px] flex-1 flex-col items-center gap-[3px] pb-1 pt-[7px] transition-colors',
+          'flex min-h-[52px] flex-1 flex-col items-center gap-[3px] pb-1 pt-[7px] transition-colors focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-hockia-primary focus-visible:rounded-xl',
           active ? 'text-hockia-primary' : 'text-ink-2',
         )}
       >
