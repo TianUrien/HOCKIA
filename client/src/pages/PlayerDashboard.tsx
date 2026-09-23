@@ -31,6 +31,7 @@ import ReferencesScreen from '@/components/profile/mobile/ReferencesScreen'
 import VideosScreen from '@/components/profile/mobile/VideosScreen'
 import EditProfileScreen, { type EditField } from '@/components/profile/mobile/EditProfileScreen'
 import ManageMediaScreen from '@/components/profile/mobile/ManageMediaScreen'
+import GalleryScreen from '@/components/profile/mobile/GalleryScreen'
 import PlayerCommunityHub from '@/components/community/PlayerCommunityHub'
 import PublicCommunityView from '@/components/community/PublicCommunityView'
 import { ProfileViewersSection } from '@/components/ProfileViewersSection'
@@ -66,7 +67,7 @@ const PLAYER_SECTION_ANCHORS = {
   posts: 'community-posts',
 } as const
 
-type TabType = 'profile' | 'edit' | 'media' | 'videos' | 'journey' | 'references' | 'friends' | 'comments' | 'posts' | 'community'
+type TabType = 'profile' | 'edit' | 'media' | 'videos' | 'gallery' | 'journey' | 'references' | 'friends' | 'comments' | 'posts' | 'community'
 
 // Centralised whitelist so URL parsing + push handlers stay in sync.
 // 'media' is new in the Bento redesign — MediaCard CTAs land here so the
@@ -77,7 +78,7 @@ type TabType = 'profile' | 'edit' | 'media' | 'videos' | 'journey' | 'references
 // target from the CommunityCard — individual tile clicks still deep-link
 // to the dedicated section pages.
 // 'videos' = the Videos — all leaf (phone); desktop shows the media surface.
-const VALID_TABS: TabType[] = ['profile', 'edit', 'media', 'videos', 'journey', 'references', 'friends', 'comments', 'posts', 'community']
+const VALID_TABS: TabType[] = ['profile', 'edit', 'media', 'videos', 'gallery', 'journey', 'references', 'friends', 'comments', 'posts', 'community']
 
 // Legacy ?tab=X aliases — mirror of CoachDashboard's map. CASI production
 // QA flagged ?tab=connections silently routing to overview because
@@ -176,6 +177,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
     edit: 'Edit profile',
     media: 'Media',
     videos: 'Videos',
+    gallery: 'Photos',
     journey: 'Career History',
     references: 'References',
     friends: 'Connections',
@@ -188,6 +190,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
     edit: null,
     media: 'Media',
     videos: 'Videos',
+    gallery: 'Photos',
     journey: 'Career History',
     references: 'References',
     friends: 'Connections',
@@ -493,6 +496,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
     journey: 'portfolio-journey',
     media: 'portfolio-media',
     videos: 'portfolio-media',
+    gallery: 'portfolio-media',
     references: 'community-references',
     comments: 'community-comments',
     posts: 'community-posts',
@@ -576,8 +580,8 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
   // Phone leaf screens (Figma: the number in the stats strip opens the
   // complete collection). One screen per collection, own / public modes.
   // 'media' = Manage media for the owner; a visitor's /media is Videos — all.
-  const phoneLeaf: 'friends' | 'career' | 'references' | 'videos' | 'edit' | 'media' | null =
-    activeTab === 'edit' && !readOnly ? 'edit' : activeTab === 'media' ? (readOnly ? 'videos' : 'media') : activeTab === 'friends' ? 'friends' : activeTab === 'journey' ? 'career' : activeTab === 'references' ? 'references' : activeTab === 'videos' ? 'videos' : null
+  const phoneLeaf: 'friends' | 'career' | 'references' | 'videos' | 'edit' | 'media' | 'gallery' | null =
+    activeTab === 'edit' && !readOnly ? 'edit' : activeTab === 'gallery' ? 'gallery' : activeTab === 'media' ? (readOnly ? 'videos' : 'media') : activeTab === 'friends' ? 'friends' : activeTab === 'journey' ? 'career' : activeTab === 'references' ? 'references' : activeTab === 'videos' ? 'videos' : null
 
   return (
     <div className="min-h-screen bg-white lg:bg-gray-50">
@@ -598,6 +602,9 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
       )}
       {isPhone && phoneLeaf === 'edit' && (
         <EditProfileScreen field={(searchParams.get('field') as EditField | null) ?? null} onDone={() => handleTabChange('profile')} />
+      )}
+      {isPhone && phoneLeaf === 'gallery' && (
+        <GalleryScreen profile={profile as Profile} mode={readOnly ? 'public' : 'own'} onBack={() => handleTabChange('profile')} />
       )}
       {isPhone && phoneLeaf === 'media' && (
         <ManageMediaScreen profileId={profile.id} onBack={() => handleTabChange('profile')} />
@@ -698,7 +705,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
               onOpenReferences={openReferencesLeaf}
               onOpenReference={(id) => { setOpenReferenceId(id); openReferencesLeaf() }}
               onOpenCareer={() => handleTabChange('journey')}
-              onOpenPhotos={() => handleTabChange('media')}
+              onOpenPhotos={() => handleTabChange('gallery')}
               onOpenPosts={() => handleTabChange('posts')}
               onVideoCount={setVideoTotal}
             />
@@ -924,7 +931,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
                 </div>
               )}
 
-              {(activeTab === 'media' || activeTab === 'videos') && (
+              {(activeTab === 'media' || activeTab === 'videos' || activeTab === 'gallery') && (
                 <div className="animate-fade-in">
                   <MediaTab
                     profileId={profile.id}

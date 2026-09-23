@@ -350,7 +350,7 @@ export default function ProfileLongScroll({ profile, readOnly, onEdit, onOpenVid
       {showPhotos && (
         <section className="flex flex-col gap-3" data-testid="profile-photos-section">
           <SectionHeader title="Photos" action={data.photoCount > 0 ? `See all ${data.photoCount}` : null} onAction={onOpenPhotos} />
-          {data.photos.length === 0 && !data.loading && empty('Add photos', onOpenPhotos)}
+          {data.photos.length === 0 && !data.loading && empty('Add photos', owner ? onManageVideos : onOpenPhotos)}
           {data.photos.length > 0 && (
             <div className="grid h-[248px] grid-cols-2 grid-rows-2 gap-1.5">
               {data.photos.map((p, i) => (
