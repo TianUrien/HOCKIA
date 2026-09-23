@@ -29,6 +29,7 @@ import FriendsScreen from '@/components/profile/mobile/FriendsScreen'
 import CareerScreen from '@/components/profile/mobile/CareerScreen'
 import ReferencesScreen from '@/components/profile/mobile/ReferencesScreen'
 import VideosScreen from '@/components/profile/mobile/VideosScreen'
+import EditProfileScreen, { type EditField } from '@/components/profile/mobile/EditProfileScreen'
 import PlayerCommunityHub from '@/components/community/PlayerCommunityHub'
 import PublicCommunityView from '@/components/community/PublicCommunityView'
 import { ProfileViewersSection } from '@/components/ProfileViewersSection'
@@ -64,7 +65,7 @@ const PLAYER_SECTION_ANCHORS = {
   posts: 'community-posts',
 } as const
 
-type TabType = 'profile' | 'media' | 'videos' | 'journey' | 'references' | 'friends' | 'comments' | 'posts' | 'community'
+type TabType = 'profile' | 'edit' | 'media' | 'videos' | 'journey' | 'references' | 'friends' | 'comments' | 'posts' | 'community'
 
 // Centralised whitelist so URL parsing + push handlers stay in sync.
 // 'media' is new in the Bento redesign — MediaCard CTAs land here so the
@@ -75,7 +76,7 @@ type TabType = 'profile' | 'media' | 'videos' | 'journey' | 'references' | 'frie
 // target from the CommunityCard — individual tile clicks still deep-link
 // to the dedicated section pages.
 // 'videos' = the Videos — all leaf (phone); desktop shows the media surface.
-const VALID_TABS: TabType[] = ['profile', 'media', 'videos', 'journey', 'references', 'friends', 'comments', 'posts', 'community']
+const VALID_TABS: TabType[] = ['profile', 'edit', 'media', 'videos', 'journey', 'references', 'friends', 'comments', 'posts', 'community']
 
 // Legacy ?tab=X aliases — mirror of CoachDashboard's map. CASI production
 // QA flagged ?tab=connections silently routing to overview because
@@ -171,6 +172,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
   const visitedName = readOnly ? profile?.full_name : null
   const ownerTabTitle: Record<TabType, string> = {
     profile: 'Player dashboard',
+    edit: 'Edit profile',
     media: 'Media',
     videos: 'Videos',
     journey: 'Career History',
@@ -182,6 +184,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
   }
   const visitorTabSuffix: Record<TabType, string | null> = {
     profile: null,
+    edit: null,
     media: 'Media',
     videos: 'Videos',
     journey: 'Career History',
@@ -221,6 +224,12 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
   // Phone and desktop bodies are different trees. Mount only the one on
   // screen — hiding the other with CSS would still run all of its fetches.
   const isPhone = useMediaQuery('(max-width: 1023px)')
+  // Edit profile: a full-screen leaf on phones, the modal on desktop. `field`
+  // opens one editor directly (the Apply sheet's fact rows use it).
+  const openEdit = (field?: EditField) => {
+    if (isPhone) navigate(`/dashboard/profile/edit${field ? `?field=${field}` : ''}`)
+    else setShowEditModal(true)
+  }
   const [openReferenceId, setOpenReferenceId] = useState<string | null>(null)
 
   // ?action=edit deep-link from Home cards (ProfileCompletion 'Add Photo' /
@@ -232,9 +241,20 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
     if (readOnly || editDeepLinkRef.current) return
     if (searchParams.get('action') === 'edit') {
       editDeepLinkRef.current = true
-      setShowEditModal(true)
+      if (isPhone) navigate('/dashboard/profile/edit', { replace: true })
+      else setShowEditModal(true)
     }
-  }, [readOnly, searchParams])
+  }, [readOnly, searchParams, isPhone, navigate])
+
+  // /dashboard/profile/edit is the phone leaf. On desktop the same URL opens
+  // the modal over the dashboard.
+  const desktopEditRouteRef = useRef(false)
+  useEffect(() => {
+    if (readOnly || isPhone || activeTab !== 'edit' || desktopEditRouteRef.current) return
+    desktopEditRouteRef.current = true
+    setShowEditModal(true)
+    navigate('/dashboard/profile', { replace: true })
+  }, [readOnly, isPhone, activeTab, navigate])
   const [showAddVideoModal, setShowAddVideoModal] = useState(false)
   const [showSignInPrompt, setShowSignInPrompt] = useState(false)
   const [sendingMessage, setSendingMessage] = useState(false)
@@ -438,7 +458,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
   const handleProfileStrengthAction = (bucket: ProfileStrengthBucket) => {
     switch (bucket.action.type) {
       case 'edit-profile':
-        setShowEditModal(true)
+        openEdit()
         break
       case 'tab': {
         const targetTab = bucket.action.tab as TabType
@@ -554,8 +574,8 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
   const showPhoneScroll = isLanding
   // Phone leaf screens (Figma: the number in the stats strip opens the
   // complete collection). One screen per collection, own / public modes.
-  const phoneLeaf: 'friends' | 'career' | 'references' | 'videos' | null =
-    activeTab === 'friends' ? 'friends' : activeTab === 'journey' ? 'career' : activeTab === 'references' ? 'references' : activeTab === 'videos' ? 'videos' : null
+  const phoneLeaf: 'friends' | 'career' | 'references' | 'videos' | 'edit' | null =
+    activeTab === 'edit' && !readOnly ? 'edit' : activeTab === 'friends' ? 'friends' : activeTab === 'journey' ? 'career' : activeTab === 'references' ? 'references' : activeTab === 'videos' ? 'videos' : null
 
   return (
     <div className="min-h-screen bg-white lg:bg-gray-50">
@@ -573,6 +593,9 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
           mode={readOnly ? 'public' : 'own'}
           onBack={() => handleTabChange('profile')}
         />
+      )}
+      {isPhone && phoneLeaf === 'edit' && (
+        <EditProfileScreen field={(searchParams.get('field') as EditField | null) ?? null} onDone={() => handleTabChange('profile')} />
       )}
       {isPhone && phoneLeaf === 'videos' && (
         <VideosScreen
@@ -632,7 +655,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
         {!readOnly && (
           <CategoryConfirmationBanner
             needsConfirmation={Boolean(profile.category_confirmation_needed)}
-            onConfirm={() => setShowEditModal(true)}
+            onConfirm={() => openEdit('category')}
           />
         )}
 
@@ -645,7 +668,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
           isOwnProfile={isOwnProfile}
           authProfileRole={authProfile?.role}
           currentClubLogo={currentClubLogo}
-          onEdit={() => setShowEditModal(true)}
+          onEdit={() => openEdit()}
           onViewPublic={handleViewPublic}
           onMessage={handleSendMessage}
           sendingMessage={sendingMessage}
@@ -664,7 +687,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
             <ProfileLongScroll
               profile={profile}
               readOnly={readOnly}
-              onEdit={() => setShowEditModal(true)}
+              onEdit={() => openEdit()}
               onOpenVideos={() => handleTabChange('videos')}
               onManageVideos={() => handleTabChange('media')}
               onOpenReferences={openReferencesLeaf}
@@ -692,7 +715,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
         {/* Matching Increment #2 — dismissible nudge to add recruitment
             preferences (Interested lens). Self-hides once set or dismissed. */}
         {!readOnly && isLanding && (
-          <RecruitmentPrefsNudge profile={profile as Profile} onAdd={() => setShowEditModal(true)} />
+          <RecruitmentPrefsNudge profile={profile as Profile} onAdd={() => openEdit('relocation')} />
         )}
 
         {/* Club-link recovery nudge — owner-only. Shows when the player has a
@@ -701,7 +724,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
             match exists, so players whose club/country World hasn't mapped yet
             (e.g. Scotland) can still contribute it. Opens the profile edit
             modal, which hosts WorldClubSearch + its add-to-directory flow. */}
-        {!readOnly && isLanding && <ClubLinkPrompt onAddClub={() => setShowEditModal(true)} />}
+        {!readOnly && isLanding && <ClubLinkPrompt onAddClub={() => openEdit('club')} />}
 
         {/* "Who viewed your profile" — owner-only engagement nudge that
             sits between the Hero and the Bento Grid. Same placement
@@ -877,7 +900,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
             profile={profile}
             readOnly={readOnly}
             onOpenTab={handleTabChange}
-            onEdit={() => setShowEditModal(true)}
+            onEdit={() => openEdit()}
             onViewOpportunities={handleViewOpportunities}
           />
         ) : (

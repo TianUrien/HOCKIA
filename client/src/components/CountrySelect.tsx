@@ -16,6 +16,9 @@ interface CountrySelectProps {
   /** If true, shows nationality name instead of country name */
   showNationality?: boolean
   className?: string
+  /** 'field' = the Figma redesign form input (grey #F2F2F7 surface, radius 12,
+   *  50px, no border). Behaviour is identical in both appearances. */
+  appearance?: 'default' | 'field'
 }
 
 /**
@@ -32,7 +35,9 @@ export default function CountrySelect({
   disabled = false,
   showNationality = false,
   className,
+  appearance = 'default',
 }: CountrySelectProps) {
+  const isField = appearance === 'field'
   const { countries, loading, getCountryById } = useCountries()
   const [isOpen, setIsOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -145,11 +150,11 @@ export default function CountrySelect({
   )
 
   return (
-    <div className={cn('space-y-2', className)} ref={containerRef}>
+    <div className={cn(isField ? 'space-y-1.5' : 'space-y-2', className)} ref={containerRef}>
       {label && (
         <label
           id={labelId}
-          className="block text-sm font-medium text-gray-700"
+          className={isField ? 'block text-secondary font-semibold text-ink-2' : 'block text-sm font-medium text-gray-700'}
         >
           {label}
           {required && <span className="text-red-500 ml-1">*</span>}
@@ -169,13 +174,13 @@ export default function CountrySelect({
           aria-describedby={errorId}
           aria-invalid={!!error}
           className={cn(
-            'w-full px-4 py-3 bg-gray-50 border rounded-lg text-left',
-            'flex items-center justify-between gap-2',
-            'focus:outline-none focus:ring-2 focus:ring-hockia-primary focus:border-transparent',
-            'transition-all duration-200',
+            'w-full text-left flex items-center justify-between gap-2 transition-all duration-200',
+            isField
+              ? 'h-[50px] rounded-[12px] bg-surface-grouped px-3.5 text-body text-ink-1 focus:outline-none focus:ring-2 focus:ring-hockia-primary/30'
+              : 'px-4 py-3 bg-gray-50 border rounded-lg focus:outline-none focus:ring-2 focus:ring-hockia-primary focus:border-transparent',
             disabled && 'opacity-50 cursor-not-allowed',
-            error ? 'border-red-500' : 'border-gray-200',
-            !disabled && 'hover:border-gray-300'
+            isField ? error && 'ring-2 ring-red-400' : error ? 'border-red-500' : 'border-gray-200',
+            !isField && !disabled && 'hover:border-gray-300'
           )}
         >
           <span className={cn(

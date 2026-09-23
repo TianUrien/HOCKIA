@@ -257,7 +257,7 @@ export default function CareerEntryScreen({ entry, initialCrestUrl = null, nextD
 
         {isNational && (
           <>
-            <CountrySelect label="Country represented" value={countryId} onChange={setCountryId} placeholder="Choose a country" />
+            <CountrySelect appearance="field" label="Country represented" value={countryId} onChange={setCountryId} placeholder="Choose a country" />
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label htmlFor="career-entry-level">Level</Label>

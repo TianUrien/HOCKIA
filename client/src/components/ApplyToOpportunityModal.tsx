@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import { nationalityLine } from '@/lib/nationalityLine'
 import { useNavigate } from 'react-router-dom'
-import { AlertCircle, ChevronDown, Loader2, X } from 'lucide-react'
+import { AlertCircle, ChevronRight, Loader2, X } from 'lucide-react'
 import * as Sentry from '@sentry/react'
 import { format } from 'date-fns'
 import { supabase } from '@/lib/supabase'
@@ -180,12 +180,19 @@ export default function ApplyToVacancyModal({
     )
   }
 
-  const Row = ({ label, value }: { label: string; value: string }) => (
-    <div className="flex items-center gap-3 py-3 pl-3.5 pr-3">
+  // The three facts are read from the profile; a row opens the matching Edit
+  // profile field (players have the field-level leaf; other roles get the
+  // editor). Nothing here is sent until Send application.
+  const editField = (field: 'availability' | 'passports' | 'contact') => {
+    handleClose()
+    navigate(profile?.role === 'player' ? `/dashboard/profile/edit?field=${field}` : '/dashboard/profile?action=edit')
+  }
+  const Row = ({ label, value, field }: { label: string; value: string; field: 'availability' | 'passports' | 'contact' }) => (
+    <button type="button" onClick={() => editField(field)} aria-label={`${label}: ${value}. Edit`} className="flex w-full items-center gap-3 py-3 pl-3.5 pr-3 text-left">
       <span className="shrink-0 text-body text-ink-1">{label}</span>
       <span className="min-w-0 flex-1 truncate text-right text-row text-ink-2">{value}</span>
-      <ChevronDown className="h-4 w-4 shrink-0 text-ink-4" strokeWidth={1.8} />
-    </div>
+      <ChevronRight className="h-4 w-4 shrink-0 text-ink-4" strokeWidth={1.8} />
+    </button>
   )
 
   return (
@@ -203,9 +210,9 @@ export default function ApplyToVacancyModal({
         </div>
 
         <div className="divide-y divide-line rounded-[12px] bg-surface-grouped">
-          <Row label="Available from" value={availableText} />
-          <Row label="Passport" value={passportText} />
-          <Row label="Contact" value={contactText} />
+          <Row label="Available from" value={availableText} field="availability" />
+          <Row label="Passport" value={passportText} field="passports" />
+          <Row label="Contact" value={contactText} field="contact" />
         </div>
 
         {blocked ? (
