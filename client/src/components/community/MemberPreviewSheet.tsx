@@ -13,7 +13,8 @@ import { openRolesLabel } from '@/hooks/useOpenRoleCounts'
 import { useCountries, isEuCountryCode } from '@/hooks/useCountries'
 import { availabilityLabel } from '@/lib/availabilityLabel'
 import { getSpecializationLabel } from '@/lib/coachSpecializations'
-import { getImageUrl } from '@/lib/imageUrl'
+import { getImageUrl, getImageSrcSet } from '@/lib/imageUrl'
+import { SmoothImage } from '@/components/ui/SmoothImage'
 import { humanizeToken, identityLine, isOrganisationRole } from '@/lib/identity'
 import { nationalityLine } from '@/lib/nationalityLine'
 import { resolveConversationRoute } from '@/lib/startConversation'
@@ -152,7 +153,7 @@ export function MemberPreviewSheet({ member, onClose }: MemberPreviewSheetProps)
               {isOrg ? (
                 <EntityAvatar src={photoUrl} name={name} role={member.role} size={96} />
               ) : photoUrl ? (
-                <img src={photoUrl} alt="" className="h-24 w-24 rounded-[20px] object-cover" />
+                <SmoothImage src={photoUrl} srcSet={getImageSrcSet(rawPhoto, 'avatar-lg') ?? undefined} sizes="96px" alt="" priority wrapperClassName="h-24 w-24 overflow-hidden rounded-[20px]" className="object-cover" />
               ) : (
                 <EntityAvatar src={null} name={name} role={member.role} size={96} className="rounded-[20px]" />
               )}

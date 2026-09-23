@@ -1,6 +1,9 @@
 import { useState, useCallback } from 'react'
 import { Play } from 'lucide-react'
-import { getImageUrl, getLqipUrl } from '@/lib/imageUrl'
+import { getImageUrl, getImageSrcSet, getLqipUrl } from '@/lib/imageUrl'
+import { SmoothImage } from '@/components/ui/SmoothImage'
+import { useNearViewport } from '@/hooks/useNearViewport'
+import { useSignedVideoThumbnail } from '@/hooks/useSignedVideoThumbnail'
 import type { ImageSize } from '@/lib/imageUrl'
 import type { PostMediaItem } from '@/types/homeFeed'
 
@@ -15,18 +18,33 @@ interface FeedMediaGridProps {
   altPrefix?: string
 }
 
+function CloudflareThumb({ videoId, alt, eager }: { videoId: string; alt: string; eager: boolean }) {
+  // Reels store no poster: the signed thumbnail comes from the shared token
+  // cache, minted 1.5 screens ahead, at feed-tile size.
+  const { ref, near } = useNearViewport<HTMLSpanElement>(eager)
+  const { thumb, loaded, onThumbError, onThumbLoad } = useSignedVideoThumbnail(videoId, near, { width: 400, height: 300 })
+  return (
+    <span ref={ref} className="absolute inset-0 block bg-surface-grouped">
+      {thumb && <img src={thumb} alt={alt} loading={eager ? 'eager' : 'lazy'} decoding="async" onError={onThumbError} onLoad={onThumbLoad} className={`h-full w-full object-cover transition-opacity duration-150 ${loaded ? 'opacity-100' : 'opacity-0'}`} />}
+    </span>
+  )
+}
+
 function MediaItem({
   item,
   className = '',
   onClick,
   imageSize = 'feed-thumb',
   alt,
+  eager = false,
 }: {
   item: PostMediaItem
   className?: string
   onClick?: () => void
   imageSize?: ImageSize
   alt: string
+  /** First tile of a card near the top of the feed: load now. */
+  eager?: boolean
 }) {
   const mediaType = item.media_type ?? 'image'
   const [imgLoaded, setImgLoaded] = useState(false)
@@ -40,17 +58,17 @@ function MediaItem({
       <button
         type="button"
         aria-label={`Play video — ${alt}`}
-        className={`relative overflow-hidden cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary ${className}`}
+        className={`relative overflow-hidden bg-surface-grouped cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary ${className}`}
         onClick={onClick}
       >
         {item.thumb_url ? (
-          <img src={getImageUrl(item.thumb_url, imageSize) ?? undefined} alt={alt} loading="lazy" decoding="async" className="w-full h-full object-cover" onError={(e) => { if (item.thumb_url && e.currentTarget.src !== item.thumb_url) e.currentTarget.src = item.thumb_url }} />
+          <SmoothImage src={getImageUrl(item.thumb_url, imageSize) ?? undefined} srcSet={getImageSrcSet(item.thumb_url, imageSize) ?? undefined} sizes="(max-width: 640px) 50vw, 320px" alt={alt} eager={eager} className="object-cover" onError={(e) => { if (item.thumb_url && e.currentTarget.src !== item.thumb_url) e.currentTarget.src = item.thumb_url }} />
+        ) : item.video_id ? (
+          <CloudflareThumb videoId={item.video_id} alt={alt} eager={eager} />
         ) : (
-          // Cloudflare reels store no poster (the signed poster is minted at
-          // playback), so show the branded tile rather than a black box.
-          <div className="w-full h-full bg-gradient-to-br from-[#1a1030] via-[#2a1a4a] to-hockia-primary/40" />
+          <div className="w-full h-full bg-surface-grouped" />
         )}
-        <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+        <div className="absolute inset-0 flex items-center justify-center">
           <div className="w-12 h-12 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center">
             <Play className="w-6 h-6 text-white ml-0.5" fill="white" />
           </div>
@@ -63,7 +81,7 @@ function MediaItem({
     <button
       type="button"
       aria-label={`View image — ${alt}`}
-      className={`relative overflow-hidden cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary ${className}`}
+      className={`relative overflow-hidden bg-surface-grouped cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary ${className}`}
       onClick={onClick}
     >
       {lqip && !imgLoaded && (
@@ -73,13 +91,16 @@ function MediaItem({
           style={{ backgroundImage: `url("${lqip}")` }}
         />
       )}
-      <img
+      <SmoothImage
         src={getImageUrl(item.url, imageSize) ?? undefined}
+        srcSet={getImageSrcSet(item.url, imageSize) ?? undefined}
+        sizes={imageSize === 'feed-full' ? '(max-width: 640px) 100vw, 640px' : '(max-width: 640px) 50vw, 320px'}
         alt={alt}
-        loading="lazy"
-        decoding="async"
-        className={`relative w-full h-full object-cover transition-[transform,opacity] duration-300 hover:scale-[1.02] ${lqip && !imgLoaded ? 'opacity-0' : 'opacity-100'}`}
-        onLoad={() => setImgLoaded(true)}
+        eager={eager}
+        priority={eager && imageSize === 'feed-full'}
+        wrapperClassName="relative bg-transparent"
+        className="object-cover hover:scale-[1.02] transition-[transform,opacity] duration-300"
+        onLoaded={() => setImgLoaded(true)}
         onError={(e) => { setImgLoaded(true); if (item.url && e.currentTarget.src !== item.url) e.currentTarget.src = item.url }}
       />
     </button>
@@ -149,6 +170,7 @@ export function FeedMediaGrid({ media, onImageClick, altPrefix = 'Post' }: FeedM
       <div className="grid grid-cols-3 grid-rows-2 gap-1 overflow-hidden" style={{ height: '320px' }}>
         <div className="col-span-2 row-span-2">
           <MediaItem
+            eager
             item={displayItems[0]}
             className="w-full h-full"
             alt={altFor(0, count)}

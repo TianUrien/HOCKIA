@@ -1,98 +1,79 @@
 import { useEffect, useRef, useState } from 'react'
-import { supabase } from '@/lib/supabase'
+import { PlaybackTokenError, clearPlaybackTokenCache, getPlaybackToken, peekPlaybackToken, sizedThumbnail } from '@/lib/playbackToken'
 
 /**
- * Signed Cloudflare Stream thumbnail for a player_videos row.
+ * Signed Cloudflare Stream thumbnail for a player_videos row, at display size.
  *
- * Assets are created with requireSignedURLs, so the stored thumbnail_url 401s —
- * a short-lived signed URL (~1h TTL) must be minted per video via
- * video-playback-token, which is also the ACCESS CONTROL: it refuses videos the
- * viewer may not see, so this hook can never leak a restricted frame.
+ * Assets are created with requireSignedURLs, so the stored thumbnail_url 401s;
+ * the signed URL comes from the shared playback-token cache (one mint per video
+ * per session — see lib/playbackToken.ts), so the browser can cache the image
+ * across Feed, Profile, Videos — all and Manage media.
  *
- * Used by the Gallery grid tiles and the post composer preview. The cache is
- * session-lived and keyed by player_videos.id (a UUID — collisions impossible),
- * so a 12-video gallery mints each thumbnail once, not per re-render.
- *
- * Wire the returned handlers onto the <img>: on error the cached URL is
- * dropped and ONE fresh mint is attempted (covers expiry in long-lived tabs);
- * a second consecutive failure settles on `thumb: null` so callers show their
- * branded fallback. Successful loads reset the failure counter.
- */
-
-const cache = new Map<string, string>()
-
-/**
- * Drop all cached signed thumbnail URLs — called from clearLocalSession on
- * sign-out / account switch. These are short-lived signed Cloudflare URLs
- * (bearer capabilities keyed by video id) that bypass the video-playback-token
- * access gate; clearing them ensures the next account is never served a URL
- * minted for the previous user's access level.
+ * Failure policy: a mint failure or an image error retries ONCE with a fresh
+ * token; a second failure (or a load that never completes within the timeout,
+ * then fails again) settles on `unavailable` — a dead asset. Access denial
+ * (401/403) is `unavailable` immediately: nothing to retry.
  */
 export function clearSignedThumbnailCache(): void {
-  cache.clear()
+  clearPlaybackTokenCache()
 }
+
+const LOAD_TIMEOUT_MS = 12_000
 
 export function useSignedVideoThumbnail(
   videoId: string | null | undefined,
-  /** Gate the mint (e.g. viewport visibility). Cached URLs ignore the gate —
-   *  rendering them costs no network. */
+  /** Gate the mint (viewport proximity). Cached URLs ignore the gate. */
   enabled = true,
+  /** Display size in CSS px; the request asks for 2×. */
+  size: { width: number; height?: number } = { width: 240 },
 ) {
-  const [thumb, setThumb] = useState<string | null>(() =>
-    videoId ? cache.get(videoId) ?? null : null,
-  )
+  const w = Math.round(size.width * 2)
+  const h = size.height ? Math.round(size.height * 2) : undefined
+  const fromCache = () => { const t = videoId ? peekPlaybackToken(videoId) : null; return t ? sizedThumbnail(t.thumbnail, w, h) : null }
+  const [thumb, setThumb] = useState<string | null>(fromCache)
   const [failed, setFailed] = useState(false)
+  const [loaded, setLoaded] = useState(false)
   const attemptsRef = useRef(0)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Reset when the hook instance is reused for a different video (callers key
-  // tiles by id so this is usually a remount, but don't depend on that).
   const prevIdRef = useRef(videoId)
   if (prevIdRef.current !== videoId) {
     prevIdRef.current = videoId
     attemptsRef.current = 0
-    setThumb(videoId ? cache.get(videoId) ?? null : null)
+    setThumb(fromCache())
     setFailed(false)
+    setLoaded(false)
   }
 
   useEffect(() => {
     if (!videoId || !enabled || thumb || failed) return
     let cancelled = false
-    void supabase.functions
-      .invoke('video-playback-token', { body: { videoId } })
-      .then(({ data, error }) => {
+    getPlaybackToken(videoId, { force: attemptsRef.current > 0 })
+      .then((t) => { if (!cancelled) setThumb(sizedThumbnail(t.thumbnail, w, h)) })
+      .catch((err) => {
         if (cancelled) return
-        const url = (data as { thumbnail?: string } | null)?.thumbnail
-        if (!error && url) {
-          cache.set(videoId, url)
-          setThumb(url)
-        } else {
-          setFailed(true)
-        }
+        const status = err instanceof PlaybackTokenError ? err.status : null
+        if (status === 401 || status === 403 || attemptsRef.current >= 1) setFailed(true)
+        else { attemptsRef.current += 1; setThumb(null) } // one more try on the next tick
       })
-      .catch(() => {
-        if (!cancelled) setFailed(true)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [videoId, enabled, thumb, failed])
+    return () => { cancelled = true }
+  }, [videoId, enabled, thumb, failed, w, h])
+
+  // A load that never completes (slow network, stalled CDN) counts as a miss:
+  // after the timeout, re-mint once; only a second miss shows "unavailable".
+  useEffect(() => {
+    if (!thumb || loaded || failed) return
+    timerRef.current = setTimeout(() => { if (attemptsRef.current < 1) { attemptsRef.current += 1; setThumb(null) } }, LOAD_TIMEOUT_MS)
+    return () => { if (timerRef.current) clearTimeout(timerRef.current) }
+  }, [thumb, loaded, failed])
 
   const onThumbError = () => {
     if (!videoId) return
-    cache.delete(videoId)
     attemptsRef.current += 1
-    if (attemptsRef.current > 1) {
-      setFailed(true)
-    } else {
-      setThumb(null) // the effect re-mints a fresh signed URL
-    }
+    if (attemptsRef.current > 1) setFailed(true)
+    else setThumb(null) // the effect re-mints with force (attempts > 0)
   }
+  const onThumbLoad = () => { attemptsRef.current = 0; setLoaded(true) }
 
-  const onThumbLoad = () => {
-    attemptsRef.current = 0
-  }
-
-  // `unavailable`: the signed thumbnail could not be minted or 404'd twice —
-  // for a video the viewer is allowed to watch, that means a dead asset.
-  return { thumb: failed ? null : thumb, onThumbError, onThumbLoad, unavailable: failed }
+  return { thumb: failed ? null : thumb, loaded, onThumbError, onThumbLoad, unavailable: failed }
 }

@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
-import { getImageUrl } from '@/lib/imageUrl'
+import { getImageUrl, getImageSrcSet } from '@/lib/imageUrl'
+import { SmoothImage } from '@/components/ui/SmoothImage'
 
 interface CarouselImage {
   url: string
@@ -38,12 +39,13 @@ export function FeedImageCarousel({ images, altPrefix }: FeedImageCarouselProps)
         {images.map((img, i) => (
           <div key={i} className="flex-shrink-0 w-full snap-start">
             <div className="aspect-[4/3] bg-gray-100">
-              <img
+              <SmoothImage
                 src={getImageUrl(img.url, 'feed-full') ?? undefined}
+                srcSet={getImageSrcSet(img.url, 'feed-full') ?? undefined}
+                sizes="(max-width: 640px) 100vw, 640px"
                 alt={`${altPrefix} - image ${i + 1}`}
-                className="w-full h-full object-cover"
-                loading="lazy"
-                decoding="async"
+                eager={i < 2}
+                className="object-cover"
               />
             </div>
           </div>

@@ -244,7 +244,8 @@ describe('Gallery ↔ video-kind separation', () => {
     await screen.findByText('Video')
 
     await waitFor(() => {
-      const img = container.querySelector('img[src="https://videodelivery.net/tok-abc/thumbnails/thumbnail.jpg"]')
+      // The signed URL now carries the display size (?width=…&height=…).
+      const img = container.querySelector('img[src^="https://videodelivery.net/tok-abc/thumbnails/thumbnail.jpg?width="]')
       expect(img).not.toBeNull()
     })
     expect(invokeMock).toHaveBeenCalledWith('video-playback-token', { body: { videoId: 'video-thumb' } })

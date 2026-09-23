@@ -10,7 +10,8 @@ import { useCountries } from '@/hooks/useCountries'
 import { MediaLightbox } from '@/components/home/MediaLightbox'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
 import { PostComposerModal } from '@/components/home/PostComposerModal'
-import { getImageUrl } from '@/lib/imageUrl'
+import { getImageUrl, getImageSrcSet } from '@/lib/imageUrl'
+import { SmoothImage } from '@/components/ui/SmoothImage'
 import { humanizeToken, identityLine } from '@/lib/identity'
 import { categoryToDisplay } from '@/lib/hockeyCategories'
 import { DURATION_LABEL, RELOCATION_LABEL } from '@/lib/candidateIntent'
@@ -175,7 +176,7 @@ function PostTile({ post, onOpen }: { post: UserPostFeedItem; onOpen: () => void
   return (
     <button type="button" onClick={onOpen} className="w-[168px] shrink-0 snap-start text-left">
       <div className="flex h-[124px] w-full items-end overflow-hidden rounded-card bg-surface-grouped">
-        {src ? <img src={src} alt="" className="h-full w-full object-cover" /> : <p className="line-clamp-4 p-3 text-secondary text-ink-2">{post.content}</p>}
+        {src ? <SmoothImage src={src} alt="" eager className="object-cover" /> : <p className="line-clamp-4 p-3 text-secondary text-ink-2">{post.content}</p>}
       </div>
       {src && post.content && <p className="mt-1.5 line-clamp-2 text-secondary leading-[17px] text-ink-1">{post.content}</p>}
       <p className="mt-1 flex items-center gap-1 text-caption text-ink-3"><Heart className="h-3 w-3" /> {post.like_count} · {monthYear(post.created_at)}</p>
@@ -299,7 +300,7 @@ export default function ProfileLongScroll({ profile, readOnly, onEdit, onOpenVid
           {videoTotal === 0 && !data.loading && empty('Add your first highlight', onManageVideos)}
           {(data.highlights.length > 0 || profile.highlight_video_url) && (
             <VideoRow label="Highlights" count={highlightCount}>
-              {data.highlights.map((v) => <ProfileVideoTile key={v.id} video={v} locked={v.visibility === 'recruiters'} canWatch={canWatchLocked} onOpen={() => openVideo(v, v.visibility === 'recruiters')} className="h-[126px] w-[224px] shrink-0 snap-start" />)}
+              {data.highlights.map((v, i) => <ProfileVideoTile key={v.id} video={v} locked={v.visibility === 'recruiters'} canWatch={canWatchLocked} eager={i < 2} priority={i === 0} onOpen={() => openVideo(v, v.visibility === 'recruiters')} className="h-[126px] w-[224px] shrink-0 snap-start" />)}
               {profile.highlight_video_url && (
                 <a href={profile.highlight_video_url} target="_blank" rel="noopener noreferrer" className="relative flex h-[126px] w-[224px] shrink-0 snap-start flex-col justify-end rounded-card bg-gradient-to-br from-ink-1 to-ink-2 p-2.5">
                   <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-white/15 text-white"><ExternalLink className="h-3 w-3" /></span>
@@ -310,13 +311,13 @@ export default function ProfileLongScroll({ profile, readOnly, onEdit, onOpenVid
           )}
           {fullMatchCount > 0 && (
             <VideoRow label="Full matches" count={fullMatchCount} lockLabel={lockFullMatches ? 'Clubs & coaches' : null}>
-              {data.fullMatches.map((v) => <ProfileVideoTile key={v.id} video={v} locked={lockFullMatches || v.visibility === 'recruiters'} canWatch={canWatchLocked} onOpen={() => openVideo(v, lockFullMatches || v.visibility === 'recruiters')} className="h-[126px] w-[224px] shrink-0 snap-start" />)}
+              {data.fullMatches.map((v, i) => <ProfileVideoTile key={v.id} video={v} locked={lockFullMatches || v.visibility === 'recruiters'} canWatch={canWatchLocked} eager={i < 2} onOpen={() => openVideo(v, lockFullMatches || v.visibility === 'recruiters')} className="h-[126px] w-[224px] shrink-0 snap-start" />)}
               {data.fullGameLinks.map((l) => <LinkTile key={l.id} link={l} />)}
             </VideoRow>
           )}
           {data.reels.length > 0 && (
             <VideoRow label="Reels" count={data.reels.length}>
-              {data.reels.map((v) => <ProfileVideoTile key={v.id} video={v} portrait onOpen={() => openVideo(v, false)} className="h-[164px] w-[124px] shrink-0 snap-start" />)}
+              {data.reels.map((v, i) => <ProfileVideoTile key={v.id} video={v} portrait eager={i < 3} onOpen={() => openVideo(v, false)} className="h-[164px] w-[124px] shrink-0 snap-start" />)}
             </VideoRow>
           )}
         </section>
@@ -355,7 +356,7 @@ export default function ProfileLongScroll({ profile, readOnly, onEdit, onOpenVid
             <div className="grid h-[248px] grid-cols-2 grid-rows-2 gap-1.5">
               {data.photos.map((p, i) => (
                 <button key={p.id} type="button" onClick={() => setPhotoIndex(i)} aria-label={p.caption || `Photo ${i + 1}`} className={cn('overflow-hidden rounded-card bg-surface-grouped', i === 0 && 'row-span-2')}>
-                  <img src={getImageUrl(p.url, 'gallery') ?? p.url} alt="" className="h-full w-full object-cover" />
+                  <SmoothImage src={getImageUrl(p.url, 'gallery') ?? p.url} srcSet={getImageSrcSet(p.url, 'gallery') ?? undefined} sizes="50vw" alt="" eager className="object-cover" />
                 </button>
               ))}
             </div>

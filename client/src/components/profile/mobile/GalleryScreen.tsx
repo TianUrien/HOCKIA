@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { DetailNavBar } from '@/components/ui/DetailNavBar'
 import { MediaLightbox } from '@/components/home/MediaLightbox'
 import { useGalleryPhotos } from '@/hooks/useGalleryPhotos'
-import { getImageUrl } from '@/lib/imageUrl'
+import { getImageUrl, getImageSrcSet } from '@/lib/imageUrl'
+import { SmoothImage } from '@/components/ui/SmoothImage'
 import { profilePath } from '@/lib/profileNavigation'
 import { cn } from '@/lib/utils'
 
@@ -54,7 +55,7 @@ export default function GalleryScreen({ profile, mode, onBack }: GalleryScreenPr
                 aria-label={p.caption || `Photo ${i + 1} of ${count}`}
                 className={cn('overflow-hidden rounded-card bg-surface-grouped', i % 5 === 4 ? 'col-span-2 aspect-[3/2]' : 'aspect-square')}
               >
-                <img src={getImageUrl(p.url, 'gallery') ?? p.url} alt="" loading="lazy" className="h-full w-full object-cover" />
+                <SmoothImage src={getImageUrl(p.url, 'gallery') ?? p.url} srcSet={getImageSrcSet(p.url, 'gallery') ?? undefined} sizes={i % 5 === 4 ? '100vw' : '50vw'} alt="" eager={i < 4} priority={i === 0} className="object-cover" />
               </button>
             ))}
           </div>

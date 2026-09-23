@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { Play, Loader2, AlertCircle } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
+import { PlaybackTokenError, getPlaybackToken, sizedThumbnail } from '@/lib/playbackToken'
 import { logger } from '@/lib/logger'
 
 /**
@@ -87,7 +87,7 @@ export default function NativeVideoPlayer({
           io.disconnect()
         }
       },
-      { rootMargin: '300px' },
+      { rootMargin: '150% 0px' },
     )
     io.observe(el)
     return () => io.disconnect()
@@ -115,42 +115,38 @@ export default function NativeVideoPlayer({
     let cancelled = false
     const mintToken = async (attempt: number): Promise<void> => {
       try {
-        const { data, error } = await supabase.functions.invoke('video-playback-token', { body: { videoId } })
+        // Shared per-session cache: the tile that showed this video's thumbnail
+        // already minted the token, so the poster is on screen at once.
+        const data = await getPlaybackToken(videoId, { force: attempt > 0 || retryNonce > 0 })
         if (cancelled) return
-        if (error || !data?.hls) {
-          const code = (error as { context?: { status?: number } } | null)?.context?.status
-          // The OWNER must always be able to play their own video. A 401/403
-          // for an owner means the session JWT hadn't attached yet (race on
-          // first paint, e.g. right after upload) — NOT a real denial. Retry
-          // once after a short beat; never show the owner the gated message.
-          if ((code === 403 || code === 401) && isOwner && attempt === 0) {
-            setTimeout(() => { if (!cancelled) void mintToken(1) }, 1200)
-            return
-          }
-          if ((code === 403 || code === 401) && !isOwner) {
-            setErrorMsg('Visible to recruiters (clubs and coaches) only.')
-            setCanRetry(false)
-            setState('error')
-            return
-          }
-          // Deleted (404), still-processing / transcode-failed (409), or a
-          // provider/5xx failure: surface it. A silent return here left the
-          // player permanently on a spinner after tap — no error, no retry.
-          setErrorMsg('This video is unavailable right now.')
-          setCanRetry(true)
+        if (!data.hls) throw new PlaybackTokenError('no_playback_url', null)
+        setHlsUrl(data.hls)
+        if (data.iframe) setIframeUrl(data.iframe)
+        setSignedThumb(sizedThumbnail(data.thumbnail, 1280, 720))
+      } catch (err) {
+        if (cancelled) return
+        const code = err instanceof PlaybackTokenError ? err.status : null
+        // The OWNER must always be able to play their own video. A 401/403
+        // for an owner means the session JWT hadn't attached yet (race on
+        // first paint, e.g. right after upload) — NOT a real denial. Retry
+        // once after a short beat; never show the owner the gated message.
+        if ((code === 403 || code === 401) && isOwner && attempt === 0) {
+          setTimeout(() => { if (!cancelled) void mintToken(1) }, 1200)
+          return
+        }
+        if ((code === 403 || code === 401) && !isOwner) {
+          setErrorMsg('Visible to recruiters (clubs and coaches) only.')
+          setCanRetry(false)
           setState('error')
           return
         }
-        setHlsUrl(data.hls as string)
-        if (data.iframe) setIframeUrl(data.iframe as string)
-        if (data.thumbnail) setSignedThumb(data.thumbnail as string)
-      } catch (err) {
-        if (!cancelled) {
-          logger.error('[NativeVideoPlayer] token prefetch failed', err)
-          setErrorMsg('This video is unavailable right now.')
-          setCanRetry(true)
-          setState('error')
-        }
+        // Deleted (404), still-processing / transcode-failed (409), or a
+        // provider/5xx failure: surface it. A silent return here left the
+        // player permanently on a spinner after tap — no error, no retry.
+        logger.error('[NativeVideoPlayer] token mint failed', err)
+        setErrorMsg('This video is unavailable right now.')
+        setCanRetry(true)
+        setState('error')
       }
     }
     if (!inView) return
@@ -232,7 +228,8 @@ export default function NativeVideoPlayer({
               src={signedThumb}
               alt=""
               aria-hidden="true"
-              className="absolute inset-0 h-full w-full object-cover"
+              decoding="async"
+              className="absolute inset-0 h-full w-full object-cover transition-opacity duration-150"
               onError={(e) => {
                 (e.currentTarget as HTMLImageElement).style.display = 'none'
                 // The token minted but Cloudflare has no such asset (404): the

@@ -15,7 +15,8 @@ import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
 import { logger } from '@/lib/logger'
-import { getImageUrl } from '@/lib/imageUrl'
+import { getImageUrl, getImageSrcSet } from '@/lib/imageUrl'
+import { SmoothImage } from '@/components/ui/SmoothImage'
 import { formatVideoDuration } from '@/lib/videoCopy'
 import { invalidateProfile } from '@/lib/profile'
 
@@ -42,7 +43,7 @@ function VideoCard({ video, onPlay, onVisibility, onDelete }: { video: ProfileVi
   const locked = video.visibility === 'recruiters'
   return (
     <div className="flex gap-3">
-      <ProfileVideoTile video={video} locked={locked} compact onOpen={onPlay} className="h-[72px] w-[120px] shrink-0" />
+      <ProfileVideoTile video={video} locked={locked} compact eager size={{ width: 120, height: 72 }} onOpen={onPlay} className="h-[72px] w-[120px] shrink-0" />
       <div className="min-w-0 flex-1">
         <p className="truncate text-row font-semibold text-ink-1">{video.title}</p>
         <p className="text-secondary text-ink-2">{[formatVideoDuration(video.durationSeconds), 'ready'].filter(Boolean).join(' · ')}</p>
@@ -233,7 +234,7 @@ export default function ManageMediaScreen({ profileId, onBack }: ManageMediaScre
             {shownPhotos.filter((p) => !stagedDeletes.has(p.id)).map((p, i, visible) => (
               <div key={p.id} className="relative aspect-square overflow-hidden rounded-[10px] bg-surface-grouped">
                 <button type="button" onClick={() => !reordering && setPhotoIndex(i)} className="h-full w-full" aria-label={p.caption || `Photo ${i + 1}`}>
-                  <img src={getImageUrl(p.url, 'gallery') ?? p.url} alt="" className="h-full w-full object-cover" />
+                  <SmoothImage src={getImageUrl(p.url, 'card-thumb') ?? p.url} srcSet={getImageSrcSet(p.url, 'card-thumb') ?? undefined} sizes="33vw" alt="" eager={i < 6} className="object-cover" />
                 </button>
                 {reordering && (
                   <>

@@ -21,7 +21,8 @@
 import { useState } from 'react'
 import { Check, Minus, ShieldCheck } from 'lucide-react'
 import { DualNationalityDisplay } from '@/components'
-import { getImageUrl } from '@/lib/imageUrl'
+import { getImageUrl, getImageSrcSet } from '@/lib/imageUrl'
+import { SmoothImage } from '@/components/ui/SmoothImage'
 import { getPlayerLeagueName } from '@/hooks/useWorldClubLogo'
 import { recruiterDisplayTier, type RecruiterVerdict, type VerdictDisplayTier } from '@/lib/recruiterVerdict'
 import { availabilityLabel } from '@/lib/availabilityLabel'
@@ -328,13 +329,14 @@ export default function RecruiterCandidateCard({ member, verdict, onPreview, pri
       {/* ── Photo + status pill ── */}
       <div className={`relative aspect-square w-full overflow-hidden rounded-xl ${isBrand || member.role === 'club' ? 'border border-line bg-white' : 'bg-gray-100'}`}>
         {heroImageUrl ? (
-          <img
+          <SmoothImage
             src={heroImageUrl}
+            srcSet={getImageSrcSet(rawHero, 'avatar-md') ?? undefined}
+            sizes="(max-width: 640px) 45vw, 200px"
             alt=""
-            className={`h-full w-full ${isBrand || member.role === 'club' ? 'bg-white object-contain p-5' : 'object-cover'}`}
-            loading={priority ? 'eager' : 'lazy'}
-            fetchPriority={priority ? 'high' : undefined}
-            decoding="async"
+            wrapperClassName={isBrand || member.role === 'club' ? 'bg-white' : undefined}
+            className={isBrand || member.role === 'club' ? 'bg-white object-contain p-5' : 'object-cover'}
+            priority={priority}
             onError={() => setHeroFailed(true)}
           />
         ) : (

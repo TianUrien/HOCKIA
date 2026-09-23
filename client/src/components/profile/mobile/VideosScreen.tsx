@@ -108,7 +108,7 @@ export default function VideosScreen({ profile, mode, onBack, onManage }: Videos
             {highlightCount > 0 && (
               <Group title="Highlights" count={highlightCount}>
                 <div className="grid grid-cols-2 gap-2.5">
-                  {highlights.map((v) => <ProfileVideoTile key={v.id} video={v} locked={isLocked(v)} canWatch={canWatchLocked} onOpen={() => open(v)} className="aspect-[16/9] w-full" />)}
+                  {highlights.map((v, i) => <ProfileVideoTile key={v.id} video={v} locked={isLocked(v)} canWatch={canWatchLocked} eager={i < 4} priority={i === 0} size={{ width: 180, height: 101 }} onOpen={() => open(v)} className="aspect-[16/9] w-full" />)}
                   {profile.highlight_video_url && <LinkTile title="Linked highlight" href={profile.highlight_video_url} />}
                 </div>
               </Group>
@@ -116,7 +116,7 @@ export default function VideosScreen({ profile, mode, onBack, onManage }: Videos
             {fullCount > 0 && (
               <Group title="Full matches" count={fullCount} lockLabel={lockFullMatches || fullMatches.some(isLocked) || links.some((l) => l.visibility === 'recruiters') ? 'Clubs & coaches' : null}>
                 <div className="grid grid-cols-2 gap-2.5">
-                  {fullMatches.map((v) => <ProfileVideoTile key={v.id} video={v} locked={isLocked(v)} canWatch={canWatchLocked} onOpen={() => open(v)} className="aspect-[16/9] w-full" />)}
+                  {fullMatches.map((v, i) => <ProfileVideoTile key={v.id} video={v} locked={isLocked(v)} canWatch={canWatchLocked} eager={i < 4} size={{ width: 180, height: 101 }} onOpen={() => open(v)} className="aspect-[16/9] w-full" />)}
                   {links.map((l) => <LinkTile key={l.id} title={linkTitle(l)} href={l.video_url} date={l.match_date} locked={l.visibility === 'recruiters'} />)}
                 </div>
               </Group>
@@ -124,7 +124,7 @@ export default function VideosScreen({ profile, mode, onBack, onManage }: Videos
             {reels.length > 0 && (
               <Group title="Reels" count={reels.length}>
                 <div className="grid grid-cols-3 gap-2.5">
-                  {reels.map((v) => <ProfileVideoTile key={v.id} video={v} portrait locked={isLocked(v)} canWatch={canWatchLocked} onOpen={() => open(v)} className="aspect-[3/4] w-full" />)}
+                  {reels.map((v, i) => <ProfileVideoTile key={v.id} video={v} portrait locked={isLocked(v)} canWatch={canWatchLocked} eager={i < 6} size={{ width: 116, height: 155 }} onOpen={() => open(v)} className="aspect-[3/4] w-full" />)}
                 </div>
               </Group>
             )}

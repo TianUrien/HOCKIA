@@ -1172,6 +1172,7 @@ function VideoTile({ item }: { item: NormalizedMedia }) {
   const { thumb, onThumbError, onThumbLoad } = useSignedVideoThumbnail(
     item.id,
     item.status === 'ready' && inView,
+    { width: 200, height: 200 },
   )
 
   useEffect(() => {
@@ -1181,7 +1182,7 @@ function VideoTile({ item }: { item: NormalizedMedia }) {
       ([entry]) => {
         if (entry.isIntersecting) setInView(true)
       },
-      { rootMargin: '200px' },
+      { rootMargin: '150% 0px' },
     )
     observer.observe(el)
     return () => observer.disconnect()

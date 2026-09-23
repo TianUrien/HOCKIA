@@ -104,6 +104,20 @@ export function getLqipUrl(url: string | null | undefined): string | null {
   return `${renderUrl}?width=24&resize=contain&quality=30${formatParam}`
 }
 
+/**
+ * srcset for a preset: the preset width is the 2× (retina) candidate and half
+ * of it serves 1× screens, so a phone at DPR 1 downloads a quarter of the
+ * bytes. Returns null when the URL is not a Supabase storage URL.
+ */
+export function getImageSrcSet(url: string | null | undefined, size: ImageSize): string | null {
+  if (!url || size === 'original' || !url.includes(SUPABASE_STORAGE_PATH)) return null
+  const two = getImageUrl(url, size)
+  if (!two) return null
+  const w = SIZE_CONFIG[size].width
+  const one = two.replace(`width=${w}`, `width=${Math.round(w / 2)}`)
+  return `${one} ${Math.round(w / 2)}w, ${two} ${w}w`
+}
+
 /** Map Avatar component sizes to ImageSize presets */
 export const AVATAR_SIZE_MAP: Record<string, ImageSize> = {
   sm: 'avatar-sm',
