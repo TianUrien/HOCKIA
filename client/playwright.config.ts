@@ -58,6 +58,9 @@ export default defineConfig({
     video: 'on-first-retry',
   },
 
+  /* Hard-delete the messages the specs send (see e2e/global.teardown.ts). */
+  globalTeardown: './e2e/global.teardown.ts',
+
   /* Configure projects for major browsers */
   projects: [
     // Setup project - authenticates test users
