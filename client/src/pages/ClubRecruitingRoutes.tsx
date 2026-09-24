@@ -8,6 +8,7 @@ import { useAuthStore } from '@/lib/auth'
 const ClubOpportunitiesScreen = lazy(() => import('@/components/club/ClubOpportunitiesScreen'))
 const ApplicantsScreen = lazy(() => import('@/components/club/ApplicantsScreen'))
 const ApplicantReviewScreen = lazy(() => import('@/components/club/ApplicantReviewScreen'))
+const PostRoleScreen = lazy(() => import('@/components/club/PostRoleScreen'))
 
 const OpportunitiesPage = lazy(() => import('@/pages/OpportunitiesPage'))
 const ApplicantsList = lazy(() => import('@/pages/ApplicantsList'))
@@ -44,4 +45,14 @@ export function ApplicantReviewEntry() {
   if (!opportunityId || !applicationId) return <Navigate to="/opportunities" replace />
   if (!isPhone) return <Navigate to={`/dashboard/opportunities/${opportunityId}/applicants`} replace />
   return <Screen><ApplicantReviewScreen roleId={opportunityId} applicationId={applicationId} /></Screen>
+}
+
+/** Post a role (Figma 04 Club 330:318): phone clubs only. Desktop keeps the
+ *  create modal on Opportunities; `/:id/edit` continues a draft. */
+export function PostRoleEntry() {
+  const isPhone = useMediaQuery(PHONE)
+  const role = useAuthStore((s) => s.profile?.role)
+  const { opportunityId } = useParams<{ opportunityId?: string }>()
+  if (!isPhone || (role && role !== 'club')) return <Navigate to="/opportunities" replace />
+  return <Screen><PostRoleScreen key={opportunityId ?? 'new'} draftId={opportunityId ?? null} /></Screen>
 }

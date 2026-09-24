@@ -1,5 +1,5 @@
-import { lazy, Suspense, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useMemo, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { Calendar, ChevronRight, Clock, DollarSign, Info, Plus, Star, Users } from 'lucide-react'
 import { LargeTitleBar } from '@/components/ui/LargeTitleBar'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
@@ -9,7 +9,6 @@ import { formatDurationText, genderPill, isPaid, roleBenefits, roleTitle } from 
 import { waitingNotice } from '@/lib/clubRecruiting'
 import { cn } from '@/lib/utils'
 
-const CreateOpportunityModal = lazy(() => import('@/components/CreateOpportunityModal'))
 
 /**
  * The club's Opportunities tab (Figma 04 Club · Opportunities — club v2,
@@ -37,6 +36,27 @@ function closedLabel(r: ClubRole): string {
   if (r.closed_reason === 'filled') return r.filled_via_hockia ? 'Filled through Hockia' : 'Filled'
   if (r.closed_reason === 'withdrawn') return 'Closed without hiring'
   return 'Closed'
+}
+
+/** A saved draft (Post a role · Save draft): title, what's set so far, Continue. */
+function DraftCard({ role, onContinue }: { role: ClubRole; onContinue: () => void }) {
+  const pill = genderPill(role.gender)
+  return (
+    <article className="flex flex-col gap-3 rounded-[18px] border border-line bg-white p-4" data-testid="club-draft-card">
+      <div className="flex items-center justify-between gap-2">
+        <span className="min-w-0 truncate text-secondary font-semibold text-ink-2">{role.title}</span>
+        <span className="shrink-0 rounded-full bg-surface-grouped px-2 py-0.5 text-caption font-semibold text-ink-2">Draft</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <h3 className="text-[22px] font-bold leading-7 tracking-[-0.11px] text-ink-1">{roleTitle(role)}</h3>
+        {pill && <span className={cn('rounded-full px-2 py-0.5 text-secondary font-semibold', pill.className)}>{pill.label}</span>}
+      </div>
+      <p className="text-[14px] leading-[19px] text-ink-2">Only you can see this. Post it when it’s ready.</p>
+      <button type="button" onClick={onContinue} className="flex h-11 items-center justify-center rounded-full bg-surface-grouped text-row font-semibold text-ink-1">
+        Continue
+      </button>
+    </article>
+  )
 }
 
 function RoleCard({ role, expiryDays, onReview }: { role: ClubRole; expiryDays: number; onReview: () => void }) {
@@ -109,8 +129,16 @@ export default function ClubOpportunitiesScreen() {
   const profile = useAuthStore((s) => s.profile)
   const data = useClubRoles(profile?.id)
   const [segment, setSegment] = useState<Segment>('open')
-  const [posting, setPosting] = useState(false)
-  const roles = segment === 'open' ? data.open : data.closed
+  const location = useLocation()
+  const highlight = (location.state as { highlight?: string } | null)?.highlight ?? null
+  // Land on Opportunities with the role just posted or saved on top (DEV NOTE 330:781).
+  const roles = useMemo(() => {
+    const list = segment === 'open' ? data.open : data.closed
+    if (!highlight) return list
+    const hit = list.find((r) => r.id === highlight)
+    return hit ? [hit, ...list.filter((r) => r.id !== highlight)] : list
+  }, [segment, data.open, data.closed, highlight])
+  const postRole = () => navigate('/dashboard/opportunities/new')
 
   const pending = useMemo(() => data.open.flatMap((r) => r.pendingAppliedAt), [data.open])
   const notice = waitingNotice(pending, data.expiryDays)
@@ -126,7 +154,7 @@ export default function ClubOpportunitiesScreen() {
       <LargeTitleBar
         title="Opportunities"
         trailing={(
-          <button type="button" onClick={() => setPosting(true)} aria-label="Post a role" className="flex h-11 w-11 items-center justify-center text-ink-1">
+          <button type="button" onClick={postRole} aria-label="Post a role" className="flex h-11 w-11 items-center justify-center text-ink-1">
             <Plus className="h-6 w-6" strokeWidth={2} />
           </button>
         )}
@@ -156,13 +184,14 @@ export default function ClubOpportunitiesScreen() {
       <div className="flex flex-col gap-3 px-5">
         {!data.loading && roles.length === 0 && (
           segment === 'open' ? (
-            <button type="button" onClick={() => setPosting(true)} className="flex h-[52px] w-full items-center justify-between rounded-card bg-surface-grouped px-4 text-row text-ink-2">
+            <button type="button" onClick={postRole} className="flex h-[52px] w-full items-center justify-between rounded-card bg-surface-grouped px-4 text-row text-ink-2">
               Post your first role <Plus className="h-4 w-4 text-hockia-primary" strokeWidth={2.2} />
             </button>
           ) : <p className="py-2 text-row text-ink-3">No closed roles yet.</p>
         )}
-        {roles.map((r) => (
-          <RoleCard key={r.id} role={r} expiryDays={data.expiryDays} onReview={() => navigate(applicantsPath(r.id), { state: { from: '/opportunities' } })} />
+        {roles.map((r) => (r.status === 'draft'
+          ? <DraftCard key={r.id} role={r} onContinue={() => navigate(`/dashboard/opportunities/${r.id}/edit`)} />
+          : <RoleCard key={r.id} role={r} expiryDays={data.expiryDays} onReview={() => navigate(applicantsPath(r.id), { state: { from: '/opportunities' } })} />
         ))}
 
         {segment === 'open' && (
@@ -183,11 +212,6 @@ export default function ClubOpportunitiesScreen() {
         )}
       </div>
 
-      {posting && (
-        <Suspense fallback={null}>
-          <CreateOpportunityModal isOpen={posting} onClose={() => setPosting(false)} onSuccess={() => { setPosting(false); data.refresh() }} />
-        </Suspense>
-      )}
     </div>
   )
 }

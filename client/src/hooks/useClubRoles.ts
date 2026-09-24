@@ -36,7 +36,7 @@ export function useClubRoles(clubId: string | null | undefined): ClubRolesData {
     let cancelled = false
     void (async () => {
       const [{ data: roles, error }, { data: settings }, { data: saved }] = await Promise.all([
-        supabase.from('opportunities').select('*').eq('club_id', clubId).in('status', ['open', 'closed']).order('created_at', { ascending: false }),
+        supabase.from('opportunities').select('*').eq('club_id', clubId).in('status', ['draft', 'open', 'closed']).order('created_at', { ascending: false }),
         supabase.from('application_response_settings').select('expiry_days').limit(1).maybeSingle(),
         supabase.from('saved_profiles').select('saved_profile_id').eq('owner_id', clubId),
       ])
@@ -68,7 +68,11 @@ export function useClubRoles(clubId: string | null | undefined): ClubRolesData {
       setState({
         loading: false,
         // Roles with applicants waiting first, oldest waiting first; then newest.
-        open: withPipeline.filter((r) => r.status === 'open').sort((a, b) => {
+        // Drafts first (newest first), then open roles (Figma DEV NOTE 330:769:
+        // drafts show under Open with a "Draft" pill).
+        open: [
+          ...withPipeline.filter((r) => r.status === 'draft').sort((a, b) => (b.updated_at ?? b.created_at ?? '').localeCompare(a.updated_at ?? a.created_at ?? '')),
+          ...withPipeline.filter((r) => r.status === 'open').sort((a, b) => {
           const oa = a.pendingAppliedAt.length ? a.pendingAppliedAt.reduce((x, y) => (x < y ? x : y)) : null
           const ob = b.pendingAppliedAt.length ? b.pendingAppliedAt.reduce((x, y) => (x < y ? x : y)) : null
           if (oa && ob) return oa.localeCompare(ob)
@@ -76,6 +80,7 @@ export function useClubRoles(clubId: string | null | undefined): ClubRolesData {
           if (ob) return 1
           return (b.created_at ?? '').localeCompare(a.created_at ?? '')
         }),
+        ],
         closed: withPipeline.filter((r) => r.status === 'closed'),
         expiryDays: (settings as { expiry_days?: number } | null)?.expiry_days ?? DEFAULT_EXPIRY_DAYS,
         shortlistCount: shortlisted.size,

@@ -510,6 +510,8 @@ export default function ClubDashboard({
   }
 
   const handleCreateOpportunity = () => {
+    // Phone: the Post a role flow (Figma 04 Club 330:318). Desktop keeps the modal.
+    if (isPhone) { navigate('/dashboard/opportunities/new'); return }
     setTriggerCreateVacancy(true)
     handleTabChange('opportunities')
   }
