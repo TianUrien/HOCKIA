@@ -1,4 +1,6 @@
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { supabase } from '@/lib/supabase'
 import { Calendar, Check, ChevronRight, Clock, MessageCircle, Share } from 'lucide-react'
 import type { Vacancy } from '@/lib/supabase'
 import { DetailNavBar } from '@/components/ui/DetailNavBar'
@@ -58,6 +60,27 @@ export function OpportunityDetailMobile({
   const specialists = vacancy.specialist_skills_wanted ?? []
   const status = hasApplied ? applicationStatusPill(applicationStatus ?? 'pending', null, vacancy.status === 'open') : null
 
+  // A decline can carry the club's own note (Figma 04 Club · Decline). The
+  // player reads it here, where My applications' "Read the club's note" lands.
+  const [clubNote, setClubNote] = useState<string | null>(null)
+  const userId = profile?.id ?? null
+  useEffect(() => {
+    if (!hasApplied || applicationStatus !== 'rejected' || !userId) { setClubNote(null); return }
+    let cancelled = false
+    void supabase
+      .from('opportunity_applications')
+      .select('ai_feedback')
+      .eq('opportunity_id', vacancy.id)
+      .eq('applicant_id', userId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (cancelled) return
+        const fb = (data as { ai_feedback?: Record<string, unknown> | null } | null)?.ai_feedback
+        setClubNote(fb && fb.source === 'club' && fb.status === 'rejected' && typeof fb.message === 'string' ? fb.message : null)
+      })
+    return () => { cancelled = true }
+  }, [hasApplied, applicationStatus, userId, vacancy.id])
+
   const share = async () => {
     const url = `${getShareOrigin()}/opportunities/${vacancy.id}`
     try {
@@ -110,6 +133,16 @@ export function OpportunityDetailMobile({
           <Clock className="mt-0.5 h-[13px] w-[13px] shrink-0" strokeWidth={1.6} /> {postedLine(vacancy)}
         </p>
       </div>
+
+      {clubNote && (
+        <section className="px-5 pt-3.5" data-testid="club-note">
+          <div className="rounded-card bg-surface-grouped p-3.5">
+            <p className="text-secondary font-semibold text-ink-2">Not selected · The club’s note</p>
+            <p className="mt-1.5 whitespace-pre-wrap text-row leading-[21px] text-ink-1">{clubNote}</p>
+            <p className="mt-1.5 text-caption text-ink-3">From {clubName}</p>
+          </div>
+        </section>
+      )}
 
       <section className="px-5 pt-3.5">
         <h2 className="text-body font-semibold text-ink-1">What the club offers</h2>

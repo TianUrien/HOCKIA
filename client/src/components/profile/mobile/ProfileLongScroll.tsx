@@ -115,7 +115,7 @@ function VideoRow({ label, count, lockLabel, children }: { label: string; count:
   )
 }
 
-function ReferenceCard({ reference, onOpen }: { reference: PublicReferenceCard; onOpen: () => void }) {
+export function ReferenceCard({ reference, onOpen }: { reference: PublicReferenceCard; onOpen: () => void }) {
   const p = reference.profile
   const name = p?.fullName?.trim() || 'Hockia member'
   const detail = p?.role === 'player' ? p.position : p?.role === 'coach' ? [humanizeToken(reference.relationshipType), p.currentClub].filter(Boolean).join(' · ') : humanizeToken(reference.relationshipType)
@@ -139,7 +139,7 @@ function ReferenceCard({ reference, onOpen }: { reference: PublicReferenceCard; 
   )
 }
 
-function CareerRow({ entry, last, flag }: { entry: ScrollCareerEntry; last: boolean; flag: string | null }) {
+export function CareerRow({ entry, last, flag }: { entry: ScrollCareerEntry; last: boolean; flag: string | null }) {
   const isNow = isCurrentEntry(entry)
   const isRep = entry.entryType === 'national_team'
   const span = careerSpan(entry)

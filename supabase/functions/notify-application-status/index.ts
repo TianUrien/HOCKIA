@@ -37,6 +37,9 @@ interface StatusEntry {
   vacancy_title: string
   club_name: string
   opportunity_id: string | null
+  application_id: string | null
+  /** The club's note on a decline (Figma 04 Club · Decline), when it wrote one. */
+  note: string | null
 }
 
 function createLogger(correlationId: string) {
@@ -152,14 +155,36 @@ Deno.serve(async (req: Request) => {
       return json(500, { error: 'Failed to fetch notifications' })
     }
 
-    const entries: StatusEntry[] = notifications
+    const rawEntries: StatusEntry[] = notifications
       .map((n: any) => ({
         status: n.metadata?.status,
         vacancy_title: n.metadata?.vacancy_title ?? 'your opportunity',
         club_name: n.metadata?.club_name ?? 'The team',
         opportunity_id: n.metadata?.opportunity_id ?? null,
+        application_id: n.metadata?.application_id ?? null,
+        note: null,
       }))
       .filter((e: any): e is StatusEntry => e.status === 'shortlisted' || e.status === 'rejected')
+
+    // Current state of each application: an entry whose status has since
+    // changed (the club changed its mind) is dropped, and a decline carries
+    // the note the club sent with it.
+    const appIds = rawEntries.map((e) => e.application_id).filter((v): v is string => Boolean(v))
+    const currentById = new Map<string, { status: string; note: string | null }>()
+    if (appIds.length) {
+      const { data: apps } = await supabase
+        .from('opportunity_applications')
+        .select('id, status, ai_feedback')
+        .in('id', appIds)
+      for (const a of (apps ?? []) as { id: string; status: string; ai_feedback: Record<string, unknown> | null }[]) {
+        const fb = a.ai_feedback && typeof a.ai_feedback === 'object' ? a.ai_feedback : null
+        const note = fb && fb.status === a.status && (fb.source === 'club' || fb.source === 'ai') && typeof fb.message === 'string' ? fb.message : null
+        currentById.set(a.id, { status: a.status, note })
+      }
+    }
+    const entries: StatusEntry[] = rawEntries
+      .filter((e) => !e.application_id || !currentById.has(e.application_id) || currentById.get(e.application_id)!.status === e.status)
+      .map((e) => ({ ...e, note: e.status === 'rejected' && e.application_id ? currentById.get(e.application_id)?.note ?? null : null }))
 
     if (entries.length === 0) {
       logger.info('No emailable entries in batch, skipping', { playerId: player.id })
@@ -198,7 +223,10 @@ Deno.serve(async (req: Request) => {
          </td></tr>`
       : `<tr><td style="padding:12px 0;border-bottom:1px solid #f0f0f2;">
            <div style="font-size:15px;font-weight:600;color:#111827;">${escapeHtml(e.club_name)} went another way for ${escapeHtml(e.vacancy_title)}</div>
-           <div style="font-size:13px;color:#6b7280;margin-top:2px;">It often comes down to fit, not ability — a clear answer beats silence, and the right opening is out there.</div>
+           ${e.note
+             ? `<div style="font-size:14px;color:#111827;margin-top:8px;padding:12px 14px;background:#f4f4f7;border-radius:10px;line-height:1.45;">${escapeHtml(e.note)}</div>`
+             : `<div style="font-size:13px;color:#6b7280;margin-top:2px;">It often comes down to fit, not ability — a clear answer beats silence, and the right opening is out there.</div>`}
+           ${e.opportunity_id ? `<a href="${HOCKIA_BASE_URL}/opportunities/${e.opportunity_id}" style="font-size:13px;color:#6d28d9;text-decoration:none;font-weight:600;">See your application →</a>` : ''}
          </td></tr>`
 
     const html = `<!DOCTYPE html>
@@ -227,7 +255,9 @@ Deno.serve(async (req: Request) => {
       `Hi ${firstName},`,
       '',
       ...shortlisted.map((e) => `⭐ You're on ${e.club_name}'s shortlist for ${e.vacancy_title}.`),
-      ...rejected.map((e) => `${e.club_name} went another way for ${e.vacancy_title}. It often comes down to fit, not ability.`),
+      ...rejected.map((e) => e.note
+        ? `${e.club_name} went another way for ${e.vacancy_title}. Their note: "${e.note}"`
+        : `${e.club_name} went another way for ${e.vacancy_title}. It often comes down to fit, not ability.`),
       suggestionsText(suggestions, HOCKIA_BASE_URL),
       '',
       `Open HOCKIA: ${HOCKIA_BASE_URL}/opportunities`,

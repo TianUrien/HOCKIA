@@ -82,11 +82,12 @@ const CompleteProfile = lazyWithRetry(() => import('@/pages/CompleteProfile'))
 const DashboardRouter = lazyWithRetry(() => import('@/pages/DashboardRouter'))
 const HomePage = lazyWithRetry(() => import('@/pages/HomePage'))
 const PulsePage = lazyWithRetry(() => import('@/pages/PulsePage'))
-const OpportunitiesPage = lazyWithRetry(() => import('@/pages/OpportunitiesPage'))
+const OpportunitiesEntry = lazyWithRetry(() => import('@/pages/ClubRecruitingRoutes').then((m) => ({ default: m.OpportunitiesEntry })))
 const OpportunityDetailPage = lazyWithRetry(() => import('@/pages/OpportunityDetailPage'))
 const CommunityPage = lazyWithRetry(() => import('@/pages/CommunityPage'))
 const QuestionDetailPage = lazyWithRetry(() => import('@/pages/QuestionDetailPage'))
-const ApplicantsList = lazyWithRetry(() => import('@/pages/ApplicantsList'))
+const ApplicantsEntry = lazyWithRetry(() => import('@/pages/ClubRecruitingRoutes').then((m) => ({ default: m.ApplicantsEntry })))
+const ApplicantReviewEntry = lazyWithRetry(() => import('@/pages/ClubRecruitingRoutes').then((m) => ({ default: m.ApplicantReviewEntry })))
 const SavedCandidatesPage = lazyWithRetry(() => import('@/pages/SavedCandidatesPage'))
 const ShortlistsIndexPage = lazyWithRetry(() => import('@/pages/ShortlistsIndexPage'))
 const ShortlistDetailPage = lazyWithRetry(() => import('@/pages/ShortlistDetailPage'))
@@ -481,7 +482,7 @@ function App() {
                 <Route path="/community/questions" element={<Navigate to="/home" replace />} />
                 <Route path="/community/:tab" element={<ErrorBoundary fallback={<RouteErrorFallback />}><CommunityPage /></ErrorBoundary>} />
                 <Route path="/community/questions/:questionId" element={<ErrorBoundary fallback={<RouteErrorFallback />}><QuestionDetailPage /></ErrorBoundary>} />
-                <Route path="/opportunities" element={<ErrorBoundary fallback={<RouteErrorFallback />}><OpportunitiesPage /></ErrorBoundary>} />
+                <Route path="/opportunities" element={<ErrorBoundary fallback={<RouteErrorFallback />}><OpportunitiesEntry /></ErrorBoundary>} />
                 <Route path="/opportunities/applications" element={<ErrorBoundary fallback={<RouteErrorFallback />}><MyApplicationsPage /></ErrorBoundary>} />
                 <Route path="/opportunities/:id" element={<ErrorBoundary fallback={<RouteErrorFallback />}><OpportunityDetailPage /></ErrorBoundary>} />
                 <Route path="/messages" element={<ErrorBoundary fallback={<RouteErrorFallback />}><MessagesPage /></ErrorBoundary>} />
@@ -512,7 +513,8 @@ function App() {
                     /:section, their dashboard renders its landing
                     (section param is silently ignored, no crash). */}
                 <Route path="/dashboard/profile/:section" element={<ErrorBoundary fallback={<RouteErrorFallback />}><DashboardRouter /></ErrorBoundary>} />
-                <Route path="/dashboard/opportunities/:opportunityId/applicants" element={<ErrorBoundary fallback={<RouteErrorFallback />}><ApplicantsList /></ErrorBoundary>} />
+                <Route path="/dashboard/opportunities/:opportunityId/applicants" element={<ErrorBoundary fallback={<RouteErrorFallback />}><ApplicantsEntry /></ErrorBoundary>} />
+                <Route path="/dashboard/opportunities/:opportunityId/applicants/:applicationId" element={<ErrorBoundary fallback={<RouteErrorFallback />}><ApplicantReviewEntry /></ErrorBoundary>} />
                 <Route path="/dashboard/saved" element={<ErrorBoundary fallback={<RouteErrorFallback />}><SavedCandidatesPage /></ErrorBoundary>} />
                 <Route path="/dashboard/shortlists" element={<ErrorBoundary fallback={<RouteErrorFallback />}><ShortlistsIndexPage /></ErrorBoundary>} />
                 <Route path="/dashboard/shortlists/:id" element={<ErrorBoundary fallback={<RouteErrorFallback />}><ShortlistDetailPage /></ErrorBoundary>} />

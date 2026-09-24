@@ -41,17 +41,23 @@ export default function MyApplicationsPage() {
       <li key={r.id}>
         <button
           type="button"
-          onClick={() => r.title && navigate(`/opportunities/${r.opportunityId}`)}
+          onClick={() => r.title && navigate(`/opportunities/${r.opportunityId}`, { state: { from: location.pathname } })}
           className="flex w-full items-center gap-3 px-5 py-3 text-left active:bg-surface-muted"
         >
           <EntityAvatar src={r.club?.avatarUrl} name={r.club?.name} role={r.club?.role ?? 'club'} size={52} />
           <span className="min-w-0 flex-1">
             <span className="block truncate text-row font-semibold text-ink-1">{headline}</span>
             {sub && <span className="block truncate text-secondary text-ink-2">{sub}</span>}
-            <span className="mt-1 flex items-center gap-2">
-              <span className={`rounded-full px-2 py-0.5 text-caption font-semibold ${APPLICATION_TONE_CLASS[pill.tone]}`}>{pill.label}</span>
-              <span className="text-caption text-ink-4">{appliedLine(r.appliedAt)}</span>
-            </span>
+            {r.hasClubNote ? (
+              <span className="mt-1 block text-secondary text-ink-2" data-testid="club-note-line">
+                Not selected · <span className="font-semibold text-hockia-primary">Read the club’s note</span>
+              </span>
+            ) : (
+              <span className="mt-1 flex items-center gap-2">
+                <span className={`rounded-full px-2 py-0.5 text-caption font-semibold ${APPLICATION_TONE_CLASS[pill.tone]}`}>{pill.label}</span>
+                <span className="text-caption text-ink-4">{appliedLine(r.appliedAt)}</span>
+              </span>
+            )}
           </span>
           {r.title && <ChevronRight className="h-[18px] w-[18px] shrink-0 text-ink-4" strokeWidth={1.6} />}
         </button>
