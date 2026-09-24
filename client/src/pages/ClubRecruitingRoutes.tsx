@@ -1,10 +1,13 @@
-import { lazy } from 'react'
+import { lazy, Suspense, type ReactNode } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { useAuthStore } from '@/lib/auth'
-import ClubOpportunitiesScreen from '@/components/club/ClubOpportunitiesScreen'
-import ApplicantsScreen from '@/components/club/ApplicantsScreen'
-import ApplicantReviewScreen from '@/components/club/ApplicantReviewScreen'
+
+// Every screen is its own chunk: players on /opportunities and desktop
+// clubs never download the club phone screens.
+const ClubOpportunitiesScreen = lazy(() => import('@/components/club/ClubOpportunitiesScreen'))
+const ApplicantsScreen = lazy(() => import('@/components/club/ApplicantsScreen'))
+const ApplicantReviewScreen = lazy(() => import('@/components/club/ApplicantReviewScreen'))
 
 const OpportunitiesPage = lazy(() => import('@/pages/OpportunitiesPage'))
 const ApplicantsList = lazy(() => import('@/pages/ApplicantsList'))
@@ -17,18 +20,22 @@ const ApplicantsList = lazy(() => import('@/pages/ApplicantsList'))
  */
 const PHONE = '(max-width: 1023px)'
 
+const Screen = ({ children }: { children: ReactNode }) => (
+  <Suspense fallback={<div className="min-h-screen bg-white" />}>{children}</Suspense>
+)
+
 export function OpportunitiesEntry() {
   const isPhone = useMediaQuery(PHONE)
   const role = useAuthStore((s) => s.profile?.role)
-  if (isPhone && role === 'club') return <ClubOpportunitiesScreen />
-  return <OpportunitiesPage />
+  if (isPhone && role === 'club') return <Screen><ClubOpportunitiesScreen /></Screen>
+  return <Screen><OpportunitiesPage /></Screen>
 }
 
 export function ApplicantsEntry() {
   const isPhone = useMediaQuery(PHONE)
   const { opportunityId } = useParams<{ opportunityId: string }>()
-  if (isPhone && opportunityId) return <ApplicantsScreen roleId={opportunityId} />
-  return <ApplicantsList />
+  if (isPhone && opportunityId) return <Screen><ApplicantsScreen roleId={opportunityId} /></Screen>
+  return <Screen><ApplicantsList /></Screen>
 }
 
 export function ApplicantReviewEntry() {
@@ -36,5 +43,5 @@ export function ApplicantReviewEntry() {
   const { opportunityId, applicationId } = useParams<{ opportunityId: string; applicationId: string }>()
   if (!opportunityId || !applicationId) return <Navigate to="/opportunities" replace />
   if (!isPhone) return <Navigate to={`/dashboard/opportunities/${opportunityId}/applicants`} replace />
-  return <ApplicantReviewScreen roleId={opportunityId} applicationId={applicationId} />
+  return <Screen><ApplicantReviewScreen roleId={opportunityId} applicationId={applicationId} /></Screen>
 }

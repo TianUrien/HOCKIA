@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useRef } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useState, useRef } from 'react'
 import ProfileTopBar from '@/components/dashboard/ProfileTopBar'
 import { ArrowLeft } from 'lucide-react'
 import { useNavigate, useParams, useSearchParams, useLocation } from 'react-router-dom'
@@ -37,9 +37,10 @@ import PortfolioSectionNav from '@/components/profile/PortfolioSectionNav'
 import PublicConnectionsPage from '@/components/profile/PublicConnectionsPage'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
-import ClubProfileScreen from '@/components/profile/mobile/ClubProfileScreen'
-import ClubLeagueScreen from '@/components/profile/mobile/ClubLeagueScreen'
-import LinkClubScreen from '@/components/profile/mobile/LinkClubScreen'
+// Club v2 phone screens: own chunks, so desktop never downloads them.
+const ClubProfileScreen = lazy(() => import('@/components/profile/mobile/ClubProfileScreen'))
+const ClubLeagueScreen = lazy(() => import('@/components/profile/mobile/ClubLeagueScreen'))
+const LinkClubScreen = lazy(() => import('@/components/profile/mobile/LinkClubScreen'))
 
 // `?section=` query param → DOM anchor id. Drives the deep-link scroll
 // for notifications + shareable URLs (e.g. ?section=viewers).
@@ -523,13 +524,18 @@ export default function ClubDashboard({
 
       {readOnly && isOwnProfile && <PublicViewBanner compactOnPhone={isLanding} />}
 
-      {isLeagueLeaf && <ClubLeagueScreen profile={profile} onBack={() => handleTabChange('profile')} onLink={() => handleTabChange('link')} />}
-      {isLinkLeaf && <LinkClubScreen profile={profile} onCancel={() => handleTabChange('league')} onLinked={() => handleTabChange('league')} />}
+      {(isLeagueLeaf || isLinkLeaf) && (
+        <Suspense fallback={<div className="min-h-screen bg-white" />}>
+          {isLeagueLeaf && <ClubLeagueScreen profile={profile} onBack={() => handleTabChange('profile')} onLink={() => handleTabChange('link')} />}
+          {isLinkLeaf && <LinkClubScreen profile={profile} onCancel={() => handleTabChange('league')} onLinked={() => handleTabChange('league')} />}
+        </Suspense>
+      )}
 
       {!isLeagueLeaf && !isLinkLeaf && (
       <main className={`max-w-7xl mx-auto px-4 md:px-6 ${isLanding ? 'pt-0' : readOnly ? 'pt-24' : 'pt-[max(env(safe-area-inset-top),0.75rem)]'} lg:pt-24 pb-12 space-y-5 md:space-y-6`}>
         {isPhone && isLanding ? (
           <div className="-mx-4 md:-mx-6">
+            <Suspense fallback={<div className="min-h-screen bg-white" />}>
             <ClubProfileScreen
               profile={profile}
               readOnly={readOnly}
@@ -546,6 +552,7 @@ export default function ClubDashboard({
               onOpenClubLeague={() => handleTabChange('league')}
               onOpenPosts={() => handleTabChange('posts')}
             />
+            </Suspense>
           </div>
         ) : (
         <>
