@@ -67,6 +67,37 @@ Deno.serve(async (req) => {
     return json({ error: 'invalid_body' }, 400)
   }
 
+  // Probe: { probe: 'local-signing', videoId } signs ONE token with the
+  // configured Stream key regardless of CF_STREAM_LOCAL_SIGNING and checks
+  // the poster server-side. Returns only status codes (no token, no URL),
+  // so a key can be verified on a project before it serves users.
+  if (body.probe === 'local-signing' && typeof body.videoId === 'string') {
+    const keyId = Deno.env.get('CF_STREAM_KEY_ID')?.trim()
+    const jwk = Deno.env.get('CF_STREAM_JWK')?.trim()
+    if (!keyId || !jwk) return json({ probe: 'local-signing', configured: false })
+    // Key identity only (never key material): the kid baked into the JWK
+    // must match CF_STREAM_KEY_ID, or Cloudflare looks up the wrong key.
+    let jwkKid: string | null = null
+    let jwkInfo: Record<string, unknown> = {}
+    try {
+      const j = JSON.parse(atob(jwk)) as Record<string, unknown>
+      jwkKid = typeof j.kid === 'string' ? j.kid : null
+      jwkInfo = { kty: j.kty, alg: j.alg ?? null, hasD: typeof j.d === 'string', nBits: typeof j.n === 'string' ? Math.round((j.n as string).length * 6) : null }
+    } catch (e) { jwkInfo = { parseError: String(e) } }
+    const idMatch = jwkKid === null ? 'jwk has no kid' : jwkKid === keyId ? 'match' : `MISMATCH jwk=${jwkKid.slice(0, 8)}`
+    const r = (await resolveVideos([body.videoId])).get(body.videoId)
+    if (!r || 'error' in r || r.visibility !== 'public') return json({ probe: 'local-signing', error: 'public ready video required' }, 400)
+    try {
+      const token = await signStreamToken(r.cf_uid as string, Math.floor(Date.now() / 1000) + 300, keyId, jwk)
+      const host = (() => { try { return new URL(r.thumbnail_url ?? '').hostname } catch { return null } })() ?? 'customer-vlcap0eaaguje56f.cloudflarestream.com'
+      const poster = await fetch(`https://${host}/${token}/thumbnails/thumbnail.jpg?width=64`)
+      const manifest = await fetch(`https://${host}/${token}/manifest/video.m3u8`)
+      return json({ probe: 'local-signing', configured: true, kid: keyId.slice(0, 8), idMatch, jwkInfo, keyIdLen: keyId.length, poster: poster.status, manifest: manifest.status, flag: Deno.env.get('CF_STREAM_LOCAL_SIGNING') ?? null })
+    } catch (err) {
+      return json({ probe: 'local-signing', configured: true, error: String(err) }, 500)
+    }
+  }
+
   // Batch mode: { videoIds: [...] } → { results: { [id]: payload | { error, status } } }.
   // One auth check, one read for all rows / owners / blocks, and the
   // Cloudflare mints in parallel — a profile with six videos used to make
