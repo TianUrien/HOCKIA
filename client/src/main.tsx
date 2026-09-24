@@ -3,6 +3,7 @@ import { IS_NATIVE } from '@/lib/isNative'
 import { createRoot } from 'react-dom/client'
 import { QueryClientProvider } from '@tanstack/react-query'
 import * as Sentry from '@sentry/react'
+import { isNetworkFailureMessage } from '@/lib/sentryHelpers'
 import { registerSW } from 'virtual:pwa-register'
 import './globals.css'
 import App from './App.tsx'
@@ -192,8 +193,32 @@ Sentry.init({
     // React Query cancels in-flight fetches on unmount/navigation; the
     // rejection is the mechanism working, not a failure.
     'CancelledError',
+    // Expected auth outcomes (Sentry triage 2026-09-24): the user left the
+    // OAuth flow open, or hit a signed-out page — the UI already explains.
+    'OAuth timed out after 5 minutes',
+    'Auth session missing',
+    // Android WebView bridge torn down mid-call after the app was
+    // backgrounded — the OS reclaimed the page, not a code path.
+    'Java object is gone',
   ],
-  beforeSend(event) {
+  beforeSend(event, hint) {
+    // Network failures (Safari "Load failed", Chrome "Failed to fetch"): the
+    // request never reached the server — offline, a blocked ISP, a dropped
+    // connection. Nothing in the app to fix, and they hide real errors in
+    // the alert stream. Keep them COUNTED so an outage spike stays visible,
+    // but as info-level, tagged, and sampled 1 in 4 (founder ruling
+    // 2026-09-24: out of alerts, still counted). Alert rules key on
+    // level:error, so these never page.
+    const original = hint?.originalException
+    const message = [event.message, ...(event.exception?.values?.map((v) => v.value) ?? []), original instanceof Error ? original.message : '']
+      .filter((m): m is string => typeof m === 'string')
+      .join('\n')
+    if (isNetworkFailureMessage(message)) {
+      if (Math.random() >= 0.25) return null
+      event.level = 'info'
+      event.tags = { ...event.tags, network_failure: 'true' }
+      event.fingerprint = ['network-failure']
+    }
     // Scrub PII from error events before sending to Sentry
     if (event.user) {
       delete event.user.email
