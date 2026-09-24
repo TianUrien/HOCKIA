@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 const invokeMock = vi.fn()
 vi.mock('@/lib/supabase', () => ({ supabase: { functions: { invoke: (...args: unknown[]) => invokeMock(...args) } } }))
 
-import { clearPlaybackTokenCache, getPlaybackToken, PlaybackTokenError } from '@/lib/playbackToken'
+import { clearPlaybackTokenCache, getPlaybackToken, PlaybackTokenError, prefetchProfileVideoPosters } from '@/lib/playbackToken'
 
 const payload = (id: string) => ({ videoId: id, token: `t-${id}`, hls: `h-${id}`, thumbnail: `https://c/${id}/thumb.jpg`, durationSeconds: 10, expiresInSeconds: 3600 })
 
@@ -53,5 +53,41 @@ describe('getPlaybackToken batching', () => {
     expect(x.thumbnail).toBe('https://c/x/thumb.jpg')
     expect(y.thumbnail).toBe('https://c/y/thumb.jpg')
     expect(invokeMock).toHaveBeenCalledTimes(3)
+  })
+})
+
+// Thumbnails, founder ruling 2026-09-24: the profile's first tokens are
+// requested at page mount, by id or username, before the video list is read.
+describe('prefetchProfileVideoPosters', () => {
+  beforeEach(() => {
+    invokeMock.mockReset()
+    clearPlaybackTokenCache()
+  })
+
+  it('asks for the profile tiles in one call and serves the tiles from it', async () => {
+    invokeMock.mockResolvedValue({ data: { results: { a: payload('a'), b: payload('b') }, order: ['a', 'b'] }, error: null })
+    prefetchProfileVideoPosters({ username: 'leandro' })
+    const [a, b] = await Promise.all([getPlaybackToken('a'), getPlaybackToken('b')])
+    expect(invokeMock).toHaveBeenCalledTimes(1)
+    expect(invokeMock).toHaveBeenCalledWith('video-playback-token', { body: { profileVideos: { id: undefined, username: 'leandro', limit: 4 } } })
+    expect([a.thumbnail, b.thumbnail]).toEqual(['https://c/a/thumb.jpg', 'https://c/b/thumb.jpg'])
+  })
+
+  it('mints a tile the prefetch did not return, after it lands', async () => {
+    invokeMock
+      .mockResolvedValueOnce({ data: { results: { a: payload('a') }, order: ['a'] }, error: null })
+      .mockResolvedValueOnce({ data: payload('z'), error: null })
+    prefetchProfileVideoPosters('owner-1')
+    const z = await getPlaybackToken('z')
+    expect(z.thumbnail).toBe('https://c/z/thumb.jpg')
+    expect(invokeMock).toHaveBeenNthCalledWith(2, 'video-playback-token', { body: { videoId: 'z' } })
+  })
+
+  it('prefetches a profile once per session', async () => {
+    invokeMock.mockResolvedValue({ data: { results: {}, order: [] }, error: null })
+    prefetchProfileVideoPosters('owner-2')
+    prefetchProfileVideoPosters({ id: 'owner-2' })
+    await Promise.resolve()
+    expect(invokeMock).toHaveBeenCalledTimes(1)
   })
 })
