@@ -36,6 +36,8 @@ import { usePortfolioAnchorScroll } from '@/hooks/usePortfolioAnchorScroll'
 import PortfolioSectionNav from '@/components/profile/PortfolioSectionNav'
 import PublicConnectionsPage from '@/components/profile/PublicConnectionsPage'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
+import ClubProfileScreen from '@/components/profile/mobile/ClubProfileScreen'
 
 // `?section=` query param → DOM anchor id. Drives the deep-link scroll
 // for notifications + shareable URLs (e.g. ?section=viewers).
@@ -78,7 +80,7 @@ const LEGACY_SECTION_ALIASES: Record<string, TabType> = {
 const resolveLegacySection = (section: string | undefined): TabType | null =>
   section && LEGACY_SECTION_ALIASES[section] ? LEGACY_SECTION_ALIASES[section] : null
 
-type ClubProfileShape =
+export type ClubProfileShape =
   Partial<Profile> &
   Pick<
     Profile,
@@ -232,6 +234,10 @@ export default function ClubDashboard({
   useSearchAppearances({
     profileId: readOnly ? null : (profileData?.id ?? authProfile?.id ?? null),
   })
+
+  // Phone: the Figma Club profile (own / public) replaces the bento and the
+  // portfolio on the landing view only — section pages keep their surface.
+  const isPhone = useMediaQuery('(max-width: 1023px)')
 
   const sectionParam = searchParams.get('section')
   const profileId = profile?.id ?? null
@@ -488,11 +494,36 @@ export default function ClubDashboard({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header mobileHidden={!readOnly} />
+      {/* Phone landing: the cover carries share · gear (owner) or back · share
+          (visitor) — no app header there, like the player screen. */}
+      <Header mobileHidden={!readOnly || isLanding} />
 
-      {readOnly && isOwnProfile && <PublicViewBanner />}
+      {readOnly && isOwnProfile && <PublicViewBanner compactOnPhone={isLanding} />}
 
-      <main className="max-w-7xl mx-auto px-4 md:px-6 ${readOnly ? 'pt-24' : 'pt-[max(env(safe-area-inset-top),0.75rem)] lg:pt-24'} pb-12 space-y-5 md:space-y-6">
+      <main className={`max-w-7xl mx-auto px-4 md:px-6 ${isLanding ? 'pt-0' : readOnly ? 'pt-24' : 'pt-[max(env(safe-area-inset-top),0.75rem)]'} lg:pt-24 pb-12 space-y-5 md:space-y-6`}>
+        {isPhone && isLanding ? (
+          <div className="-mx-4 md:-mx-6">
+            <ClubProfileScreen
+              profile={profile}
+              readOnly={readOnly}
+              isOwnProfile={isOwnProfile}
+              authProfileRole={authProfile?.role}
+              onEdit={() => setShowEditModal(true)}
+              onViewPublic={handleViewPublic}
+              onMessage={() => void handleSendMessage()}
+              sendingMessage={sendingMessage}
+              onOpenFriends={() => handleTabChange('friends')}
+              onOpenSquad={() => handleTabChange('members')}
+              onOpenRoles={() => handleTabChange('opportunities')}
+              onPostRole={handleCreateOpportunity}
+              // Leaf 2 (Club & league, Figma 338:424) replaces this with its
+              // own screen; until then the editor holds the league fields.
+              onOpenClubLeague={() => setShowEditModal(true)}
+              onOpenPosts={() => handleTabChange('posts')}
+            />
+          </div>
+        ) : (
+        <>
         {!readOnly && <ProfileTopBar />}
         {readOnly && !isOwnProfile && (
           <button
@@ -770,6 +801,8 @@ export default function ClubDashboard({
               )}
             </div>
           </div>
+        )}
+        </>
         )}
       </main>
 

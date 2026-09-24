@@ -170,7 +170,7 @@ function CareerRow({ entry, last, flag }: { entry: ScrollCareerEntry; last: bool
   )
 }
 
-function PostTile({ post, onOpen }: { post: UserPostFeedItem; onOpen: () => void }) {
+export function PostTile({ post, onOpen }: { post: UserPostFeedItem; onOpen: () => void }) {
   const first = post.images?.find((m) => m.url || m.thumb_url)
   const src = first ? (first.media_type === 'video' ? first.thumb_url ?? null : getImageUrl(first.url ?? null, 'feed-thumb') ?? first.url ?? null) : null
   return (
