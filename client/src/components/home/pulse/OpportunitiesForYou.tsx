@@ -27,9 +27,8 @@ function urgencyLabel(deadline: string | null): string | null {
   return `Closes in ${days}d`
 }
 
-function OpportunityRailCard({ item, mode, onOpen }: {
+function OpportunityRailCard({ item, onOpen }: {
   item: OpportunityForYou
-  mode: 'matched' | 'newest'
   onOpen: (id: string) => void
 }) {
   const urgency = urgencyLabel(item.application_deadline)
@@ -68,11 +67,9 @@ function OpportunityRailCard({ item, mode, onOpen }: {
       </div>
 
       <div className="mt-3 flex items-center justify-between gap-2">
-        {mode === 'matched' && item.score != null ? (
-          <span className="text-sm font-black text-hockia-primary">{item.score}% match</span>
-        ) : (
-          <span className="text-xs font-medium text-gray-400">{getTimeAgo(item.created_at, true)}</span>
-        )}
+        {/* Ranked by the match score in 'matched' mode, but the number itself
+            is never shown — players never see match or fit scores. */}
+        <span className="text-xs font-medium text-gray-400">{getTimeAgo(item.created_at, true)}</span>
         {urgency && (
           <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-[#fef3c7] px-2 py-0.5 text-[10px] font-semibold text-[#b45309]">
             <Hourglass className="h-2.5 w-2.5" />
@@ -131,7 +128,7 @@ export function OpportunitiesForYou({
       />
       <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 md:-mx-6 md:px-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {items.map((item) => (
-          <OpportunityRailCard key={item.id} item={item} mode={mode} onOpen={openOpportunity} />
+          <OpportunityRailCard key={item.id} item={item} onOpen={openOpportunity} />
         ))}
       </div>
     </section>
