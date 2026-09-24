@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Check, ExternalLink, Lock, MessageCircle, Minus, Target } from 'lucide-react'
 import { DetailNavBar } from '@/components/ui/DetailNavBar'
+import ProfileActionMenu from '@/components/ProfileActionMenu'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
 import { ProfileVideoTile } from '@/components/profile/mobile/ProfileVideoTile'
 import { CareerRow, ReferenceCard } from '@/components/profile/mobile/ProfileLongScroll'
@@ -218,7 +219,14 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
 
   return (
     <div className="flex h-[100dvh] flex-col bg-white pt-[env(safe-area-inset-top)] lg:hidden" data-testid="applicant-review-screen">
-      <DetailNavBar parent="Applicants" title={scrolled && p?.full_name ? p.full_name : undefined} showParent wideParent onBack={backToApplicants} />
+      <DetailNavBar
+        parent="Applicants"
+        title={scrolled && p?.full_name ? p.full_name : undefined}
+        showParent
+        wideParent
+        onBack={backToApplicants}
+        trailing={p ? <ProfileActionMenu targetId={p.id} targetName={p.full_name ?? 'this player'} /> : undefined}
+      />
       <div className="flex-1 overflow-y-auto pb-40" onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 120)}>
         {error && <p className="px-5 py-6 text-row text-ink-2">{error}</p>}
         {p && review && (

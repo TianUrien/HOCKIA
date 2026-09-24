@@ -148,7 +148,7 @@ export function applicationStatusPill(
   switch (status) {
     case 'shortlisted': return { label: 'Shortlisted', tone: 'positive' }
     case 'maybe': return { label: 'Replied', tone: 'positive' }
-    case 'rejected': return { label: 'Declined', tone: 'grey' }
+    case 'rejected': return { label: 'Not selected', tone: 'grey' }
     case 'withdrawn': return { label: 'Withdrawn', tone: 'grey' }
     case 'no_response': return { label: 'No reply', tone: 'grey' }
     default: {

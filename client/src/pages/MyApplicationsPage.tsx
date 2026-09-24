@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
 import { Header } from '@/components'
 import { DetailNavBar } from '@/components/ui/DetailNavBar'
+import { backLabelFrom } from '@/lib/backLabel'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
 import { ConversationSkeleton } from '@/components/Skeleton'
@@ -69,7 +70,7 @@ export default function MyApplicationsPage() {
     <div className="min-h-screen bg-white">
       <Header mobileHidden />
       <main className="mx-auto max-w-2xl pb-24 pt-[env(safe-area-inset-top)] lg:pt-24">
-        <DetailNavBar parent="Opportunities" title="My applications" fallbackPath="/opportunities" />
+        <DetailNavBar parent={backLabelFrom(location.state, 'Opportunities')} title="My applications" showParent wideParent fallbackPath="/opportunities" />
         <h1 className="hidden px-5 pb-2 text-title text-ink-1 lg:block">My applications</h1>
 
         <div className="px-5 pb-1.5 pt-2">
@@ -90,7 +91,7 @@ export default function MyApplicationsPage() {
           <div className="px-5 py-12 text-center">
             <p className="text-row font-semibold text-ink-1">{segment === 'active' ? 'No active applications' : 'Nothing closed yet'}</p>
             <p className="mt-1 text-secondary text-ink-2">
-              {segment === 'active' ? 'Roles you apply to show up here with the club’s answer.' : 'Declined and closed roles keep their outcome here.'}
+              {segment === 'active' ? 'Roles you apply to show up here with the club’s answer.' : 'Roles you weren’t selected for, and closed roles, keep their outcome here.'}
             </p>
             {segment === 'active' && (
               <button type="button" onClick={() => navigate('/opportunities')} className="mt-4 rounded-full bg-hockia-primary px-5 py-2.5 text-row font-semibold text-white">

@@ -576,7 +576,7 @@ export default function OpportunitiesPage() {
                 <SegmentedControl<'open' | 'applied'>
                   ariaLabel="Roles"
                   value="open"
-                  onChange={(v) => { if (v === 'applied') navigate('/opportunities/applications') }}
+                  onChange={(v) => { if (v === 'applied') navigate('/opportunities/applications', { state: { from: '/opportunities' } }) }}
                   options={[
                     { value: 'open', label: 'Open roles', count: mobileList.length },
                     { value: 'applied', label: 'Applied', count: userApplications.length },
