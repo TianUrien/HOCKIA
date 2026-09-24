@@ -15,6 +15,10 @@ import {
 import { renderTemplate } from '../_shared/email-renderer.ts'
 import { sendTrackedEmail, createLogger } from '../_shared/email-sender.ts'
 
+// Window over which concurrent digest invocations spread their single send
+// (ms). ~60 rows over 8 s stays under Resend's 10 req/s.
+const SEND_SPREAD_MS = 8000
+
 /**
  * ============================================================================
  * Profile View Digest Email Edge Function
@@ -233,6 +237,15 @@ Deno.serve(async (req: Request) => {
       logger.info('Falling back to hardcoded template')
     }
 
+    // The weekly generator inserts every recipient's queue row in one
+    // statement, and each INSERT fires this webhook at once — 63 sends in
+    // the same second on 2026-09-21 blew through Resend's 10 req/s and six
+    // members never got their digest (Sentry SUPABASE-EDGE-FUNCTIONS-B).
+    // Spread the burst: each invocation waits a random slice of the window
+    // before its single send, which keeps the batch under the limit; the
+    // sender's own 429 retry with jitter covers the residue.
+    await new Promise((resolve) => setTimeout(resolve, Math.floor(Math.random() * SEND_SPREAD_MS)))
+
     // Send tracked email
     const result = await sendTrackedEmail({
       supabase,
@@ -246,9 +259,10 @@ Deno.serve(async (req: Request) => {
       logger,
     })
 
-    // Mark queue row as processed regardless of email success
-    await markQueueProcessed(supabase, queueRecord.id, logger)
-
+    // A row is processed only once the email actually went out. A failed
+    // send leaves processed_at NULL so the failure stays visible in the
+    // queue (founder ruling 2026-09-24: no resend of missed digests —
+    // next week's covers them — but never mark a miss as done).
     if (!result.success) {
       logger.error('Failed to send profile view digest email', { error: result.error })
       return new Response(
@@ -256,6 +270,8 @@ Deno.serve(async (req: Request) => {
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
+
+    await markQueueProcessed(supabase, queueRecord.id, logger)
 
     logger.info('=== Profile view digest email sent successfully ===', {
       recipient: recipient.email,

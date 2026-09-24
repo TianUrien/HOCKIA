@@ -145,3 +145,17 @@ export function reportAuthFlowError(
     },
   })
 }
+
+/**
+ * Network failures the browser reports as a TypeError: Safari "Load failed",
+ * Chrome "Failed to fetch", Firefox "NetworkError when attempting to fetch",
+ * WebKit "The network connection was lost". The request never reached the
+ * server — offline, a blocked ISP, a dropped connection — so there is
+ * nothing in the app to fix. Sentry keeps them counted at info level, tagged
+ * and sampled, out of the error alerts (founder ruling 2026-09-24).
+ */
+const NETWORK_FAILURE_RE = /\b(Load failed|Failed to fetch|NetworkError when attempting to fetch|The network connection was lost)\b/
+
+export function isNetworkFailureMessage(message: string | null | undefined): boolean {
+  return typeof message === 'string' && NETWORK_FAILURE_RE.test(message)
+}
