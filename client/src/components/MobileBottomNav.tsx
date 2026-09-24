@@ -59,7 +59,9 @@ export default function MobileBottomNav() {
     // Detail screens with their own fixed action bar (Figma Opportunity
     // detail: Message / Apply) carry no tab bar — back is the way out.
     const isOpportunityDetail = /^\/opportunities\/(?!applications$)[^/]+$/.test(location.pathname)
-    setIsHidden(hiddenRoutes.some((route) => location.pathname === route) || isImmersiveMessagesView || isOpportunityDetail)
+    // Modal flows with their own bottom action (Figma 04 Club · Link your club).
+    const isModalFlow = location.pathname === '/dashboard/profile/link'
+    setIsHidden(hiddenRoutes.some((route) => location.pathname === route) || isImmersiveMessagesView || isOpportunityDetail || isModalFlow)
   }, [location.pathname, location.search])
 
   if (isHidden || isKeyboardOpen) return null

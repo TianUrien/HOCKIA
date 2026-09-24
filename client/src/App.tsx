@@ -374,8 +374,6 @@ function App() {
     }
   }, [])
 
-  const isProduction = import.meta.env.MODE === 'production' || import.meta.env.VITE_ENVIRONMENT === 'production'
-
   return (
     <ErrorBoundary>
       <BrowserRouter>
@@ -394,7 +392,7 @@ function App() {
           <SessionTracker />
           <ScrollToTop />
           <KeyboardShortcutsManager />
-          {!isProduction && <SentryTestButton />}
+          {import.meta.env.DEV && <SentryTestButton />}
           <ShortLinkGate>
           <TermsGate>
           <AgeGate>

@@ -3,7 +3,6 @@ import { Check, ChevronRight, Info } from 'lucide-react'
 import { DetailNavBar } from '@/components/ui/DetailNavBar'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
-import ClubLinkPrompt from '@/components/ClubLinkPrompt'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
@@ -22,8 +21,8 @@ const FeedbackModal = lazy(() => import('@/components/FeedbackModal'))
  * the profile claimed (world_clubs) and its country's leagues; a league row
  * opens a picker and the choice is saved at once to the profile's league
  * ids — the DB trigger mirrors them onto world_clubs and the text fields,
- * exactly as the desktop editor does. Not linked yet → the existing link
- * prompt (leaf 3, Link your club 338:495, replaces it).
+ * exactly as the desktop editor does. Not linked yet → Link your club
+ * (338:495).
  *
  * DEV NOTE: when a linked league has no level band, say so under Leagues —
  * fit cannot compare levels for the club's roles until Hockia has one.
@@ -33,6 +32,8 @@ const FeedbackModal = lazy(() => import('@/components/FeedbackModal'))
 interface ClubLeagueScreenProps {
   profile: ClubProfileShape
   onBack: () => void
+  /** Not linked yet → Link your club (Figma 338:495). */
+  onLink: () => void
 }
 
 type Side = 'men' | 'women'
@@ -46,7 +47,7 @@ function monthDay(iso: string | null): string | null {
   return Number.isNaN(d.getTime()) ? null : `${MONTH[d.getMonth()]} ${d.getDate()}`
 }
 
-export default function ClubLeagueScreen({ profile, onBack }: ClubLeagueScreenProps) {
+export default function ClubLeagueScreen({ profile, onBack, onLink }: ClubLeagueScreenProps) {
   const setProfile = useAuthStore((s) => s.setProfile)
   const authProfile = useAuthStore((s) => s.profile)
   const addToast = useToastStore((s) => s.addToast)
@@ -183,7 +184,9 @@ export default function ClubLeagueScreen({ profile, onBack }: ClubLeagueScreenPr
               <p className="text-[16px] font-medium leading-[21px] text-ink-1">Not linked yet</p>
               <p className="text-secondary text-ink-2">Link your club so players see your league and fit can compare levels.</p>
             </div>
-            <div className="mt-3"><ClubLinkPrompt /></div>
+            <button type="button" onClick={onLink} className="mt-3 flex h-[50px] w-full items-center justify-center rounded-full bg-hockia-primary text-body font-semibold text-white" data-testid="club-league-link-cta">
+              Link your club
+            </button>
           </div>
         )}
       </div>
@@ -207,9 +210,11 @@ export default function ClubLeagueScreen({ profile, onBack }: ClubLeagueScreenPr
         </>
       )}
 
-      <div className="px-5 pb-6 pt-4">
-        <button type="button" onClick={() => setContact(true)} className="text-row font-semibold text-hockia-primary">Can’t find your league? Contact us</button>
-      </div>
+      {worldClubId && (
+        <div className="px-5 pb-6 pt-4">
+          <button type="button" onClick={() => setContact(true)} className="text-row font-semibold text-hockia-primary">Can’t find your league? Contact us</button>
+        </div>
+      )}
 
       <BottomSheet open={picker !== null} onClose={() => setPicker(null)} ariaLabel={picker === 'women' ? 'Women’s teams league' : 'Men’s teams league'}>
         <div className="px-5 pb-6 pt-2">

@@ -39,6 +39,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import ClubProfileScreen from '@/components/profile/mobile/ClubProfileScreen'
 import ClubLeagueScreen from '@/components/profile/mobile/ClubLeagueScreen'
+import LinkClubScreen from '@/components/profile/mobile/LinkClubScreen'
 
 // `?section=` query param → DOM anchor id. Drives the deep-link scroll
 // for notifications + shareable URLs (e.g. ?section=viewers).
@@ -55,6 +56,7 @@ type TabType =
   | 'posts'
   | 'opportunities'
   | 'league'
+  | 'link'
 
 const VALID_TABS: TabType[] = [
   'profile',
@@ -65,6 +67,7 @@ const VALID_TABS: TabType[] = [
   'posts',
   'opportunities',
   'league',
+  'link',
 ]
 
 // Legacy section aliases. 'vacancies' → 'opportunities' (PR #101);
@@ -153,6 +156,7 @@ export default function ClubDashboard({
     posts: 'Posts',
     opportunities: 'Opportunities',
     league: 'Club & league',
+    link: 'Link your club',
   }
   const visitorTabSuffix: Record<TabType, string | null> = {
     profile: null,
@@ -163,6 +167,7 @@ export default function ClubDashboard({
     posts: 'Posts',
     opportunities: 'Opportunities',
     league: null,
+    link: null,
   }
   const computedTitle = visitedName
     ? visitorTabSuffix[activeTab]
@@ -247,14 +252,15 @@ export default function ClubDashboard({
   // Club & league (Figma 338:424) is a phone leaf for the owner. Anywhere
   // else the section falls back to the landing with the editor open.
   const isLeagueLeaf = activeTab === 'league' && !readOnly && isPhone
+  const isLinkLeaf = activeTab === 'link' && !readOnly && isPhone
   useEffect(() => {
-    if (activeTab !== 'league' || isLeagueLeaf) return
+    if ((activeTab !== 'league' || isLeagueLeaf) && (activeTab !== 'link' || isLinkLeaf)) return
     if (readOnly) {
       if (visitorBasePath) navigate(visitorBasePath, { replace: true })
     } else {
       navigate('/dashboard/profile?action=edit', { replace: true })
     }
-  }, [activeTab, isLeagueLeaf, readOnly, visitorBasePath, navigate])
+  }, [activeTab, isLeagueLeaf, isLinkLeaf, readOnly, visitorBasePath, navigate])
 
   const sectionParam = searchParams.get('section')
   const profileId = profile?.id ?? null
@@ -517,9 +523,10 @@ export default function ClubDashboard({
 
       {readOnly && isOwnProfile && <PublicViewBanner compactOnPhone={isLanding} />}
 
-      {isLeagueLeaf && <ClubLeagueScreen profile={profile} onBack={() => handleTabChange('profile')} />}
+      {isLeagueLeaf && <ClubLeagueScreen profile={profile} onBack={() => handleTabChange('profile')} onLink={() => handleTabChange('link')} />}
+      {isLinkLeaf && <LinkClubScreen profile={profile} onCancel={() => handleTabChange('league')} onLinked={() => handleTabChange('league')} />}
 
-      {!isLeagueLeaf && (
+      {!isLeagueLeaf && !isLinkLeaf && (
       <main className={`max-w-7xl mx-auto px-4 md:px-6 ${isLanding ? 'pt-0' : readOnly ? 'pt-24' : 'pt-[max(env(safe-area-inset-top),0.75rem)]'} lg:pt-24 pb-12 space-y-5 md:space-y-6`}>
         {isPhone && isLanding ? (
           <div className="-mx-4 md:-mx-6">
