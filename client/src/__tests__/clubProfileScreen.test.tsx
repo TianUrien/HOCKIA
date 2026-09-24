@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { clubLeagueLine, openRoleLine } from '@/lib/clubProfileCopy'
+import { clubLeagueLine, leagueBandNote, openRoleLine } from '@/lib/clubProfileCopy'
 
 // Figma 04 Club › Club profile (337:372 / 337:588): the league fact row and
 // the public open-role card's second line.
@@ -25,5 +25,18 @@ describe('openRoleLine', () => {
   it('drops the parts it does not have', () => {
     expect(openRoleLine({ startDate: null, durationText: null })).toBe('Open role')
     expect(openRoleLine({ startDate: null, durationText: 'Permanent ' })).toBe('Open role · Permanent')
+  })
+})
+
+describe('leagueBandNote', () => {
+  it('names the unbanded leagues, once each', () => {
+    expect(leagueBandNote([{ name: 'Leinster Division 1A', band: null }, { name: 'Leinster Division 1A', band: null }])).toBe(
+      "Hockia doesn't have a level for Leinster Division 1A yet. Until it does, fit can't compare levels for your roles.",
+    )
+    expect(leagueBandNote([{ name: 'A', band: null }, { name: 'B', band: null }])).toContain('for A and B yet')
+  })
+  it('is silent when every league has a band', () => {
+    expect(leagueBandNote([{ name: 'Premier Division', band: 3 }])).toBeNull()
+    expect(leagueBandNote([])).toBeNull()
   })
 })

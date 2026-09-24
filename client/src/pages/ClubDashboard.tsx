@@ -38,6 +38,7 @@ import PublicConnectionsPage from '@/components/profile/PublicConnectionsPage'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import ClubProfileScreen from '@/components/profile/mobile/ClubProfileScreen'
+import ClubLeagueScreen from '@/components/profile/mobile/ClubLeagueScreen'
 
 // `?section=` query param → DOM anchor id. Drives the deep-link scroll
 // for notifications + shareable URLs (e.g. ?section=viewers).
@@ -53,6 +54,7 @@ type TabType =
   | 'comments'
   | 'posts'
   | 'opportunities'
+  | 'league'
 
 const VALID_TABS: TabType[] = [
   'profile',
@@ -62,6 +64,7 @@ const VALID_TABS: TabType[] = [
   'comments',
   'posts',
   'opportunities',
+  'league',
 ]
 
 // Legacy section aliases. 'vacancies' → 'opportunities' (PR #101);
@@ -149,6 +152,7 @@ export default function ClubDashboard({
     comments: 'Comments',
     posts: 'Posts',
     opportunities: 'Opportunities',
+    league: 'Club & league',
   }
   const visitorTabSuffix: Record<TabType, string | null> = {
     profile: null,
@@ -158,6 +162,7 @@ export default function ClubDashboard({
     comments: 'Comments',
     posts: 'Posts',
     opportunities: 'Opportunities',
+    league: null,
   }
   const computedTitle = visitedName
     ? visitorTabSuffix[activeTab]
@@ -238,6 +243,18 @@ export default function ClubDashboard({
   // Phone: the Figma Club profile (own / public) replaces the bento and the
   // portfolio on the landing view only — section pages keep their surface.
   const isPhone = useMediaQuery('(max-width: 1023px)')
+
+  // Club & league (Figma 338:424) is a phone leaf for the owner. Anywhere
+  // else the section falls back to the landing with the editor open.
+  const isLeagueLeaf = activeTab === 'league' && !readOnly && isPhone
+  useEffect(() => {
+    if (activeTab !== 'league' || isLeagueLeaf) return
+    if (readOnly) {
+      if (visitorBasePath) navigate(visitorBasePath, { replace: true })
+    } else {
+      navigate('/dashboard/profile?action=edit', { replace: true })
+    }
+  }, [activeTab, isLeagueLeaf, readOnly, visitorBasePath, navigate])
 
   const sectionParam = searchParams.get('section')
   const profileId = profile?.id ?? null
@@ -500,6 +517,9 @@ export default function ClubDashboard({
 
       {readOnly && isOwnProfile && <PublicViewBanner compactOnPhone={isLanding} />}
 
+      {isLeagueLeaf && <ClubLeagueScreen profile={profile} onBack={() => handleTabChange('profile')} />}
+
+      {!isLeagueLeaf && (
       <main className={`max-w-7xl mx-auto px-4 md:px-6 ${isLanding ? 'pt-0' : readOnly ? 'pt-24' : 'pt-[max(env(safe-area-inset-top),0.75rem)]'} lg:pt-24 pb-12 space-y-5 md:space-y-6`}>
         {isPhone && isLanding ? (
           <div className="-mx-4 md:-mx-6">
@@ -516,9 +536,7 @@ export default function ClubDashboard({
               onOpenSquad={() => handleTabChange('members')}
               onOpenRoles={() => handleTabChange('opportunities')}
               onPostRole={handleCreateOpportunity}
-              // Leaf 2 (Club & league, Figma 338:424) replaces this with its
-              // own screen; until then the editor holds the league fields.
-              onOpenClubLeague={() => setShowEditModal(true)}
+              onOpenClubLeague={() => handleTabChange('league')}
               onOpenPosts={() => handleTabChange('posts')}
             />
           </div>
@@ -805,6 +823,7 @@ export default function ClubDashboard({
         </>
         )}
       </main>
+      )}
 
       <EditProfileModal isOpen={showEditModal} onClose={() => setShowEditModal(false)} role="club" />
 

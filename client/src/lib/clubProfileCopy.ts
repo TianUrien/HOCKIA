@@ -28,3 +28,12 @@ export function openRoleLine(role: Pick<ClubOpenRole, 'startDate' | 'durationTex
   return ['Open role', from ? `from ${from}` : null, formatDurationText(role.durationText)].filter(Boolean).join(' · ')
 }
 
+
+/** "Hockia doesn't have a level for Leinster Division 1A yet. …" — one line per unbanded league. */
+export function leagueBandNote(leagues: { name: string; band: number | null }[]): string | null {
+  const names = [...new Set(leagues.filter((l) => l.band === null).map((l) => l.name))]
+  if (names.length === 0) return null
+  const list = names.length === 1 ? names[0] : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`
+  return `Hockia doesn't have a level for ${list} yet. Until it does, fit can't compare levels for your roles.`
+}
+
