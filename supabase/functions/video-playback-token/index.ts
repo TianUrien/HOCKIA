@@ -26,8 +26,11 @@
 
 import { getServiceClient } from '../_shared/supabase-client.ts'
 import { getCorsHeaders } from '../_shared/cors.ts'
+import { localSigningConfig, signStreamToken } from '../_shared/stream-signing.ts'
 
 const TOKEN_TTL_SECONDS = 60 * 60 // 1h — long enough to watch, short enough to not be a durable link
+// Upper bound for one batch request — a screenful of tiles plus lookahead.
+const MAX_BATCH = 24
 
 Deno.serve(async (req) => {
   const cors = getCorsHeaders(req.headers.get('Origin'))
@@ -46,22 +49,16 @@ Deno.serve(async (req) => {
 
   const supabase = getServiceClient()
 
-  // Optional auth — anonymous is allowed for public videos.
-  let viewerId: string | null = null
-  let viewerRole: string | null = null
+  // Optional auth — anonymous is allowed for public videos. Resolved in the
+  // background so it overlaps the video read instead of preceding it.
   const jwt = req.headers.get('Authorization')?.replace(/^Bearer\s+/i, '') ?? ''
-  if (jwt) {
+  const viewerPromise: Promise<{ id: string | null; role: string | null }> = (async () => {
+    if (!jwt) return { id: null, role: null }
     const { data: userData } = await supabase.auth.getUser(jwt)
-    if (userData?.user) {
-      viewerId = userData.user.id
-      const { data: prof } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', viewerId)
-        .single()
-      viewerRole = (prof as { role?: string } | null)?.role ?? null
-    }
-  }
+    if (!userData?.user) return { id: null, role: null }
+    const { data: prof } = await supabase.from('profiles').select('role').eq('id', userData.user.id).single()
+    return { id: userData.user.id, role: (prof as { role?: string } | null)?.role ?? null }
+  })()
 
   let body: Record<string, unknown>
   try {
@@ -69,123 +66,165 @@ Deno.serve(async (req) => {
   } catch {
     return json({ error: 'invalid_body' }, 400)
   }
+
+  // Batch mode: { videoIds: [...] } → { results: { [id]: payload | { error, status } } }.
+  // One auth check, one read for all rows / owners / blocks, and the
+  // Cloudflare mints in parallel — a profile with six videos used to make
+  // six full round trips (auth + four reads + a Cloudflare call each), which
+  // put a cold public-profile's thumbnails at ~7 s on production.
+  // Single mode ({ videoId }) keeps its exact response for older native builds.
+  if (Array.isArray(body.videoIds)) {
+    const ids = [...new Set((body.videoIds as unknown[]).filter((x): x is string => typeof x === 'string' && x.length > 0))]
+    if (ids.length === 0) return json({ error: 'missing_videoIds' }, 400)
+    if (ids.length > MAX_BATCH) return json({ error: 'too_many_videoIds', max: MAX_BATCH }, 400)
+    const resolved = await resolveVideos(ids)
+    const results: Record<string, unknown> = {}
+    await Promise.all(ids.map(async (id) => {
+      const r = resolved.get(id) ?? { error: 'not_found', status: 404 }
+      results[id] = 'error' in r ? r : await mint(id, r)
+    }))
+    return json({ results })
+  }
+
   const videoId = typeof body.videoId === 'string' ? body.videoId : ''
   if (!videoId) return json({ error: 'missing_videoId' }, 400)
+  const r = (await resolveVideos([videoId])).get(videoId) ?? { error: 'not_found', status: 404 }
+  if ('error' in r) return json({ error: r.error }, r.status)
+  const out = await mint(videoId, r)
+  if ('error' in out) return json({ error: out.error, detail: out.detail }, out.status)
+  return json(out)
 
-  // Service-role read so we can evaluate visibility ourselves (don't lean
-  // on RLS here — we want explicit, auditable access logic).
-  const { data: video } = await supabase
-    .from('player_videos')
-    .select('id, user_id, visibility, status, cf_uid, playback_id, thumbnail_url, duration_seconds')
-    .eq('id', videoId)
-    .single()
-  if (!video) return json({ error: 'not_found' }, 404)
+  // ── helpers (closures over supabase / viewer / Cloudflare config) ──
 
-  const v = video as {
-    user_id: string
-    visibility: string
-    status: string
-    cf_uid: string | null
-    playback_id: string | null
-    thumbnail_url: string | null
-    duration_seconds: number | null
-  }
+  /** Reads and access checks for a set of videos. Service-role reads so the
+   *  visibility logic is explicit and auditable here, not left to RLS. */
+  async function resolveVideos(ids: string[]): Promise<Map<string, VideoRow | Denied>> {
+    const out = new Map<string, VideoRow | Denied>()
+    const [{ id: viewerId, role: viewerRole }, { data: rows }] = await Promise.all([
+      viewerPromise,
+      supabase
+        .from('player_videos')
+        .select('id, user_id, visibility, status, cf_uid, playback_id, thumbnail_url, duration_seconds')
+        .in('id', ids),
+    ])
+    const videos = (rows ?? []) as VideoRow[]
+    const ownerIds = [...new Set(videos.map((v) => v.user_id))]
+    const list = ownerIds.join(',')
 
-  if (v.status !== 'ready' || !v.cf_uid) return json({ error: 'not_ready' }, 409)
-
-  // ── Hidden-profile fence (CLAUDE.md standing invariant) ──
-  // This is a service-role read returning a person's content, so it must apply
-  // the hidden predicate itself: a banned or frozen-minor owner's videos are
-  // unplayable regardless of the video's own visibility. 404 so a hidden
-  // owner's asset is indistinguishable from a deleted one.
-  const { data: owner } = await supabase
-    .from('profiles')
-    .select('is_blocked, frozen_minor_at')
-    .eq('id', v.user_id)
-    .single()
-  const ownerHidden =
-    !owner ||
-    (owner as { is_blocked?: boolean }).is_blocked === true ||
-    (owner as { frozen_minor_at?: string | null }).frozen_minor_at != null
-  if (ownerHidden) return json({ error: 'not_found' }, 404)
-
-  // A viewer who blocked (or was blocked by) the owner cannot play their video.
-  if (viewerId) {
-    const { data: block } = await supabase
-      .from('user_blocks')
-      .select('blocker_id')
-      .or(
-        `and(blocker_id.eq.${viewerId},blocked_id.eq.${v.user_id}),and(blocker_id.eq.${v.user_id},blocked_id.eq.${viewerId})`,
-      )
-      .limit(1)
-      .maybeSingle()
-    if (block) return json({ error: 'not_found' }, 404)
-  }
-
-  // ── Access control ──
-  const isOwner = viewerId && viewerId === v.user_id
-  const isRecruiter = viewerRole === 'club' || viewerRole === 'coach'
-  const allowed =
-    v.visibility === 'public' || isOwner || (v.visibility === 'recruiters' && isRecruiter)
-  if (!allowed) {
-    return json({ error: viewerId ? 'forbidden' : 'auth_required' }, viewerId ? 403 : 401)
-  }
-
-  // ── Mint a signed Cloudflare Stream token for this asset ──
-  const tokenRes = await fetch(
-    `https://api.cloudflare.com/client/v4/accounts/${accountId}/stream/${v.cf_uid}/token`,
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        // exp is enforced by CF; downscale/own-domain options could be
-        // added later. Keep MVP minimal.
-        exp: Math.floor(Date.now() / 1000) + TOKEN_TTL_SECONDS,
-      }),
-    },
-  )
-  const tokenJson = await tokenRes.json().catch(() => null)
-  if (!tokenRes.ok || !tokenJson?.success || !tokenJson?.result?.token) {
-    return json({ error: 'token_mint_failed', detail: tokenJson?.errors }, 502)
-  }
-  const token = tokenJson.result.token as string
-
-  // Signed delivery URLs — served from OUR account's customer subdomain,
-  // NEVER videodelivery.net. Both host the same assets and accept the same
-  // token, but videodelivery.net is TLS-intercepted and killed by ISP
-  // content filters (verified 2026-09-19: Allot DPI on Personal/Movistar
-  // "secure browsing" in Argentina re-signs its cert → every fetch fails →
-  // black players for those users, while customer-*.cloudflarestream.com
-  // passes untouched). Same host family as the stored thumbnail_url, so
-  // one CSP/CORS surface too.
-  //
-  // WHICH customer subdomain is per Cloudflare ACCOUNT, and staging and prod
-  // use different accounts. A hardcoded default 404s every signed URL on the
-  // other project (found 2026-09-21: all staging video had been dead since the
-  // 09-19 host change). So the host comes from the row itself: thumbnail_url
-  // is written by Cloudflare's webhook for THIS asset, which makes it correct
-  // by construction on any account. Env override first, prod default last.
-  const storedHost = (() => {
-    try {
-      const host = new URL(v.thumbnail_url ?? '').hostname
-      return /^customer-[a-z0-9]+\.cloudflarestream\.com$/.test(host) ? host : null
-    } catch {
-      return null
+    // ── Hidden-profile fence (CLAUDE.md standing invariant) ──
+    // A banned or frozen-minor owner's videos are unplayable regardless of
+    // the video's own visibility; 404 so a hidden owner's asset reads as
+    // deleted. A viewer who blocked (or was blocked by) the owner cannot play
+    // their video either. Both reads run together.
+    const [{ data: owners }, { data: blocks }] = await Promise.all([
+      ownerIds.length
+        ? supabase.from('profiles').select('id, is_blocked, frozen_minor_at').in('id', ownerIds)
+        : Promise.resolve({ data: [] }),
+      viewerId && ownerIds.length
+        ? supabase
+            .from('user_blocks')
+            .select('blocker_id, blocked_id')
+            .or(`and(blocker_id.eq.${viewerId},blocked_id.in.(${list})),and(blocked_id.eq.${viewerId},blocker_id.in.(${list}))`)
+        : Promise.resolve({ data: [] }),
+    ])
+    const visibleOwners = new Set(
+      ((owners ?? []) as { id: string; is_blocked?: boolean; frozen_minor_at?: string | null }[])
+        .filter((o) => o.is_blocked !== true && o.frozen_minor_at == null)
+        .map((o) => o.id),
+    )
+    const blockedOwners = new Set<string>()
+    for (const b of (blocks ?? []) as { blocker_id: string; blocked_id: string }[]) {
+      blockedOwners.add(b.blocker_id === viewerId ? b.blocked_id : b.blocker_id)
     }
-  })()
-  const deliveryHost = Deno.env.get('CF_STREAM_CUSTOMER_HOST') || storedHost ||
-    'customer-vlcap0eaaguje56f.cloudflarestream.com'
-  return json({
-    videoId,
-    token,
-    hls: `https://${deliveryHost}/${token}/manifest/video.m3u8`,
-    dash: `https://${deliveryHost}/${token}/manifest/video.mpd`,
-    iframe: `https://${deliveryHost}/${token}/iframe`,
-    thumbnail: `https://${deliveryHost}/${token}/thumbnails/thumbnail.jpg`,
-    durationSeconds: v.duration_seconds,
-    expiresInSeconds: TOKEN_TTL_SECONDS,
-  })
+
+    const isRecruiter = viewerRole === 'club' || viewerRole === 'coach'
+    for (const v of videos) {
+      if (v.status !== 'ready' || !v.cf_uid) { out.set(v.id, { error: 'not_ready', status: 409 }); continue }
+      if (!visibleOwners.has(v.user_id) || blockedOwners.has(v.user_id)) { out.set(v.id, { error: 'not_found', status: 404 }); continue }
+      // ── Access control ──
+      const isOwner = viewerId !== null && viewerId === v.user_id
+      const allowed = v.visibility === 'public' || isOwner || (v.visibility === 'recruiters' && isRecruiter)
+      if (!allowed) { out.set(v.id, viewerId ? { error: 'forbidden', status: 403 } : { error: 'auth_required', status: 401 }); continue }
+      out.set(v.id, v)
+    }
+    return out
+  }
+
+  /** Mint a signed Cloudflare Stream token for one asset and build its URLs. */
+  async function mint(videoId: string, v: VideoRow) {
+    const exp = Math.floor(Date.now() / 1000) + TOKEN_TTL_SECONDS
+    let token: string
+    const signing = localSigningConfig()
+    if (signing) {
+      // Local RS256 signing with a Stream signing key — no Cloudflare call.
+      try {
+        token = await signStreamToken(v.cf_uid as string, exp, signing.keyId, signing.jwk)
+      } catch (err) {
+        return { error: 'token_sign_failed', status: 502, detail: String(err) }
+      }
+    } else {
+      const tokenRes = await fetch(
+        `https://api.cloudflare.com/client/v4/accounts/${accountId}/stream/${v.cf_uid}/token`,
+        {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${apiToken}`, 'Content-Type': 'application/json' },
+          // exp is enforced by CF; downscale/own-domain options could be added later.
+          body: JSON.stringify({ exp }),
+        },
+      )
+      const tokenJson = await tokenRes.json().catch(() => null)
+      if (!tokenRes.ok || !tokenJson?.success || !tokenJson?.result?.token) {
+        return { error: 'token_mint_failed', status: 502, detail: tokenJson?.errors }
+      }
+      token = tokenJson.result.token as string
+    }
+
+    // Signed delivery URLs — served from OUR account's customer subdomain,
+    // NEVER videodelivery.net. Both host the same assets and accept the same
+    // token, but videodelivery.net is TLS-intercepted and killed by ISP
+    // content filters (verified 2026-09-19: Allot DPI on Personal/Movistar
+    // "secure browsing" in Argentina re-signs its cert → every fetch fails →
+    // black players for those users, while customer-*.cloudflarestream.com
+    // passes untouched). Same host family as the stored thumbnail_url, so
+    // one CSP/CORS surface too.
+    //
+    // WHICH customer subdomain is per Cloudflare ACCOUNT, and staging and prod
+    // use different accounts. A hardcoded default 404s every signed URL on the
+    // other project (found 2026-09-21: all staging video had been dead since the
+    // 09-19 host change). So the host comes from the row itself: thumbnail_url
+    // is written by Cloudflare's webhook for THIS asset, which makes it correct
+    // by construction on any account. Env override first, prod default last.
+    const storedHost = (() => {
+      try {
+        const host = new URL(v.thumbnail_url ?? '').hostname
+        return /^customer-[a-z0-9]+\.cloudflarestream\.com$/.test(host) ? host : null
+      } catch {
+        return null
+      }
+    })()
+    const deliveryHost = Deno.env.get('CF_STREAM_CUSTOMER_HOST') || storedHost ||
+      'customer-vlcap0eaaguje56f.cloudflarestream.com'
+    return {
+      videoId,
+      token,
+      hls: `https://${deliveryHost}/${token}/manifest/video.m3u8`,
+      dash: `https://${deliveryHost}/${token}/manifest/video.mpd`,
+      iframe: `https://${deliveryHost}/${token}/iframe`,
+      thumbnail: `https://${deliveryHost}/${token}/thumbnails/thumbnail.jpg`,
+      durationSeconds: v.duration_seconds,
+      expiresInSeconds: TOKEN_TTL_SECONDS,
+    }
+  }
 })
+
+type VideoRow = {
+  id: string
+  user_id: string
+  visibility: string
+  status: string
+  cf_uid: string | null
+  playback_id: string | null
+  thumbnail_url: string | null
+  duration_seconds: number | null
+}
+type Denied = { error: string; status: number }
