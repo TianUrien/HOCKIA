@@ -98,6 +98,32 @@ Deno.serve(async (req) => {
     }
   }
 
+  // Profile mode: { profileVideos: { id | username, limit } } → { results, order }.
+  // Tokens for a profile's first video tiles, callable the moment the page
+  // knows whose profile it is — before the client has read the video list.
+  // The owner is known up front, so the video read, the owner fence and the
+  // block check run together; the access rules are the same as every mode.
+  if (body.profileVideos && typeof body.profileVideos === 'object') {
+    const ref = body.profileVideos as { id?: unknown; username?: unknown; limit?: unknown }
+    const limit = Math.min(Math.max(Number(ref.limit) || 4, 1), 8)
+    let ownerId = typeof ref.id === 'string' && ref.id ? ref.id : null
+    if (!ownerId && typeof ref.username === 'string' && ref.username) {
+      const { data } = await supabase.from('profiles').select('id').eq('username', ref.username).maybeSingle()
+      ownerId = (data as { id?: string } | null)?.id ?? null
+    }
+    if (!ownerId) return json({ results: {}, order: [] })
+    const resolved = await resolveProfileVideos(ownerId, limit)
+    const results: Record<string, unknown> = {}
+    const order: string[] = []
+    await Promise.all([...resolved].map(async ([id, r]) => {
+      if ('error' in r) return
+      const out = await mint(id, r)
+      if (!('error' in out)) results[id] = out
+    }))
+    for (const id of resolved.keys()) if (results[id]) order.push(id)
+    return json({ results, order })
+  }
+
   // Batch mode: { videoIds: [...] } → { results: { [id]: payload | { error, status } } }.
   // One auth check, one read for all rows / owners / blocks, and the
   // Cloudflare mints in parallel — a profile with six videos used to make
@@ -130,33 +156,60 @@ Deno.serve(async (req) => {
   /** Reads and access checks for a set of videos. Service-role reads so the
    *  visibility logic is explicit and auditable here, not left to RLS. */
   async function resolveVideos(ids: string[]): Promise<Map<string, VideoRow | Denied>> {
-    const out = new Map<string, VideoRow | Denied>()
-    const [{ id: viewerId, role: viewerRole }, { data: rows }] = await Promise.all([
+    const [viewer, { data: rows }] = await Promise.all([
+      viewerPromise,
+      supabase.from('player_videos').select('id, user_id, visibility, status, cf_uid, playback_id, thumbnail_url, duration_seconds').in('id', ids),
+    ])
+    const videos = (rows ?? []) as VideoRow[]
+    const fence = await ownerFence([...new Set(videos.map((v) => v.user_id))])
+    return decide(videos, viewer, fence)
+  }
+
+  /** A profile's first tiles, as the profile shows them: highlights first,
+   *  then full matches, newest display order first. One owner, so every read
+   *  runs at once. */
+  async function resolveProfileVideos(ownerId: string, limit: number): Promise<Map<string, VideoRow | Denied>> {
+    const [viewer, { data: rows }, fence] = await Promise.all([
       viewerPromise,
       supabase
         .from('player_videos')
-        .select('id, user_id, visibility, status, cf_uid, playback_id, thumbnail_url, duration_seconds')
-        .in('id', ids),
+        .select('id, user_id, visibility, status, cf_uid, playback_id, thumbnail_url, duration_seconds, kind')
+        .eq('user_id', ownerId)
+        .in('kind', ['highlight', 'full_match'])
+        .order('display_order', { ascending: false })
+        .order('created_at', { ascending: false })
+        .limit(limit * 2),
+      ownerFence([ownerId]),
     ])
-    const videos = (rows ?? []) as VideoRow[]
-    const ownerIds = [...new Set(videos.map((v) => v.user_id))]
-    const list = ownerIds.join(',')
+    const all = ((rows ?? []) as (VideoRow & { kind: string })[]).filter((v) => v.status === 'ready')
+    const half = Math.ceil(limit / 2)
+    const picked = [
+      ...all.filter((v) => v.kind === 'highlight').slice(0, half),
+      ...all.filter((v) => v.kind === 'full_match').slice(0, half),
+    ].slice(0, limit)
+    return decide(picked, viewer, fence)
+  }
 
-    // ── Hidden-profile fence (CLAUDE.md standing invariant) ──
-    // A banned or frozen-minor owner's videos are unplayable regardless of
-    // the video's own visibility; 404 so a hidden owner's asset reads as
-    // deleted. A viewer who blocked (or was blocked by) the owner cannot play
-    // their video either. Both reads run together.
-    const [{ data: owners }, { data: blocks }] = await Promise.all([
+  // ── Hidden-profile fence (CLAUDE.md standing invariant) ──
+  // A banned or frozen-minor owner's videos are unplayable regardless of
+  // the video's own visibility; 404 so a hidden owner's asset reads as
+  // deleted. A viewer who blocked (or was blocked by) the owner cannot play
+  // their video either. Both reads run together.
+  async function ownerFence(ownerIds: string[]): Promise<{ visibleOwners: Set<string>; blockedOwners: Set<string> }> {
+    const list = ownerIds.join(',')
+    const [{ data: owners }, blocks] = await Promise.all([
       ownerIds.length
         ? supabase.from('profiles').select('id, is_blocked, frozen_minor_at').in('id', ownerIds)
         : Promise.resolve({ data: [] }),
-      viewerId && ownerIds.length
-        ? supabase
-            .from('user_blocks')
-            .select('blocker_id, blocked_id')
-            .or(`and(blocker_id.eq.${viewerId},blocked_id.in.(${list})),and(blocked_id.eq.${viewerId},blocker_id.in.(${list}))`)
-        : Promise.resolve({ data: [] }),
+      (async () => {
+        const { id: viewerId } = await viewerPromise
+        if (!viewerId || !ownerIds.length) return { viewerId, rows: [] as { blocker_id: string; blocked_id: string }[] }
+        const { data } = await supabase
+          .from('user_blocks')
+          .select('blocker_id, blocked_id')
+          .or(`and(blocker_id.eq.${viewerId},blocked_id.in.(${list})),and(blocked_id.eq.${viewerId},blocker_id.in.(${list}))`)
+        return { viewerId, rows: (data ?? []) as { blocker_id: string; blocked_id: string }[] }
+      })(),
     ])
     const visibleOwners = new Set(
       ((owners ?? []) as { id: string; is_blocked?: boolean; frozen_minor_at?: string | null }[])
@@ -164,18 +217,24 @@ Deno.serve(async (req) => {
         .map((o) => o.id),
     )
     const blockedOwners = new Set<string>()
-    for (const b of (blocks ?? []) as { blocker_id: string; blocked_id: string }[]) {
-      blockedOwners.add(b.blocker_id === viewerId ? b.blocked_id : b.blocker_id)
-    }
+    for (const b of blocks.rows) blockedOwners.add(b.blocker_id === blocks.viewerId ? b.blocked_id : b.blocker_id)
+    return { visibleOwners, blockedOwners }
+  }
 
-    const isRecruiter = viewerRole === 'club' || viewerRole === 'coach'
+  function decide(
+    videos: VideoRow[],
+    viewer: { id: string | null; role: string | null },
+    fence: { visibleOwners: Set<string>; blockedOwners: Set<string> },
+  ): Map<string, VideoRow | Denied> {
+    const out = new Map<string, VideoRow | Denied>()
+    const isRecruiter = viewer.role === 'club' || viewer.role === 'coach'
     for (const v of videos) {
       if (v.status !== 'ready' || !v.cf_uid) { out.set(v.id, { error: 'not_ready', status: 409 }); continue }
-      if (!visibleOwners.has(v.user_id) || blockedOwners.has(v.user_id)) { out.set(v.id, { error: 'not_found', status: 404 }); continue }
+      if (!fence.visibleOwners.has(v.user_id) || fence.blockedOwners.has(v.user_id)) { out.set(v.id, { error: 'not_found', status: 404 }); continue }
       // ── Access control ──
-      const isOwner = viewerId !== null && viewerId === v.user_id
+      const isOwner = viewer.id !== null && viewer.id === v.user_id
       const allowed = v.visibility === 'public' || isOwner || (v.visibility === 'recruiters' && isRecruiter)
-      if (!allowed) { out.set(v.id, viewerId ? { error: 'forbidden', status: 403 } : { error: 'auth_required', status: 401 }); continue }
+      if (!allowed) { out.set(v.id, viewer.id ? { error: 'forbidden', status: 403 } : { error: 'auth_required', status: 401 }); continue }
       out.set(v.id, v)
     }
     return out

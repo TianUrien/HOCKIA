@@ -40,6 +40,8 @@ const SAFETY_MS = 60_000
 export function clearPlaybackTokenCache(): void {
   cache.clear()
   inflight.clear()
+  prefetched.clear()
+  pendingPrefetch = null
 }
 
 export function peekPlaybackToken(videoId: string): PlaybackToken | null {
@@ -129,6 +131,16 @@ function enqueue(videoId: string): Promise<PlaybackToken> {
 }
 
 export function getPlaybackToken(videoId: string, opts: { force?: boolean } = {}): Promise<PlaybackToken> {
+  // A profile prefetch in flight probably carries this token: wait for it
+  // (bounded) rather than minting the same video twice.
+  if (!opts.force && pendingPrefetch && !peekPlaybackToken(videoId) && !inflight.has(videoId)) {
+    const waitFor = pendingPrefetch
+    const bounded = Promise.race([waitFor, new Promise<void>((res) => setTimeout(res, PREFETCH_WAIT_MS))])
+    return bounded.then(() => {
+      if (pendingPrefetch === waitFor) pendingPrefetch = null
+      return getPlaybackToken(videoId, opts)
+    })
+  }
   if (!opts.force) {
     const hit = peekPlaybackToken(videoId)
     if (hit) return Promise.resolve(hit)
@@ -155,39 +167,67 @@ export function sizedThumbnail(thumbnail: string, width: number, height?: number
 }
 
 /*
- * Prefetch for a profile's first video tiles. A cold public profile read its
- * video list only after the profile gates (profile row, ages, block checks)
- * had run, so the token mint started ~1.3 s in and the posters landed ~2.8 s
- * in. Called as soon as the profile id is known, this reads the same first
- * rows the profile shows, mints their tokens in one batch and warms the
- * first posters in the HTTP cache, all while the gates run. Safe to call for
- * any profile: the token function enforces visibility, owner hiding and
- * blocks itself, and nothing here renders.
+ * Prefetch for a profile's first video tiles. The page calls this the moment
+ * it knows whose profile it is (id or username from the URL), before the
+ * profile row, the gates or the video list. ONE call to the token function
+ * ({ profileVideos }) reads the first tiles server-side, runs the same access
+ * checks as every other mode, and returns their tokens; the first posters are
+ * then warmed in the HTTP cache. Tiles that render while it is in flight wait
+ * for it instead of minting the same tokens again. Safe for any profile:
+ * nothing here renders, and a denied video simply isn't returned.
  */
 const prefetched = new Set<string>()
 /** Poster size of the profile's first tiles (224×126 CSS px at 2×). */
 const TILE_POSTER = { width: 448, height: 252 }
+/** A profile prefetch in flight; getPlaybackToken waits for it (bounded). */
+let pendingPrefetch: Promise<void> | null = null
+const PREFETCH_WAIT_MS = 2500
 
-export function prefetchProfileVideoPosters(profileId: string | null | undefined, limit = 4): void {
-  if (!profileId || prefetched.has(profileId) || typeof window === 'undefined') return
-  prefetched.add(profileId)
-  void (async () => {
-    const { data } = await supabase
-      .from('player_videos')
-      .select('id, kind, status')
-      .eq('user_id', profileId)
-      .in('kind', ['highlight', 'full_match'])
-      .order('display_order', { ascending: false })
-      .order('created_at', { ascending: false })
-      .limit(limit * 2)
-    const rows = ((data ?? []) as { id: string; kind: string; status: string | null }[]).filter((v) => v.status === 'ready' || v.status === null)
-    // The profile shows highlights first, then full matches; warm the first
-    // tiles of each row.
-    const first = [...rows.filter((v) => v.kind === 'highlight').slice(0, 2), ...rows.filter((v) => v.kind === 'full_match').slice(0, 2)].slice(0, limit)
-    await Promise.all(first.map((v) => getPlaybackToken(v.id).then((t) => {
-      const img = new Image()
-      img.decoding = 'async'
-      img.src = sizedThumbnail(t.thumbnail, TILE_POSTER.width, TILE_POSTER.height)
-    }).catch(() => { /* denied or dead: the tile handles it when it renders */ })))
-  })().catch(() => { prefetched.delete(profileId) })
+function warmPoster(t: PlaybackToken) {
+  const img = new Image()
+  img.decoding = 'async'
+  img.src = sizedThumbnail(t.thumbnail, TILE_POSTER.width, TILE_POSTER.height)
+}
+
+type ProfileRef = { id?: string | null; username?: string | null }
+
+export function prefetchProfileVideoPosters(ref: ProfileRef | string | null | undefined, limit = 4): void {
+  const r: ProfileRef = typeof ref === 'string' ? { id: ref } : ref ?? {}
+  const key = r.id ? `id:${r.id}` : r.username ? `u:${r.username.toLowerCase()}` : null
+  if (!key || prefetched.has(key) || typeof window === 'undefined') return
+  prefetched.add(key)
+  const run = (async () => {
+    const { data, error } = await supabase.functions.invoke('video-playback-token', {
+      body: { profileVideos: { id: r.id ?? undefined, username: r.username ?? undefined, limit } },
+    })
+    const payload = data as { results?: Record<string, TokenPayload>; order?: string[] } | null
+    if (!error && payload?.results) {
+      for (const id of payload.order ?? Object.keys(payload.results)) {
+        const p = payload.results[id]
+        if (!p?.thumbnail) continue
+        const t = peekPlaybackToken(id) ?? toToken(p)
+        cache.set(id, t)
+        warmPoster(t)
+      }
+      return
+    }
+    // Older function without profile mode: read the list, then mint.
+    if (r.id) await legacyPrefetch(r.id, limit)
+  })().catch(() => { prefetched.delete(key) })
+  const p: Promise<void> = run.finally(() => { if (pendingPrefetch === p) pendingPrefetch = null })
+  pendingPrefetch = p
+}
+
+async function legacyPrefetch(profileId: string, limit: number) {
+  const { data } = await supabase
+    .from('player_videos')
+    .select('id, kind, status')
+    .eq('user_id', profileId)
+    .in('kind', ['highlight', 'full_match'])
+    .order('display_order', { ascending: false })
+    .order('created_at', { ascending: false })
+    .limit(limit * 2)
+  const rows = ((data ?? []) as { id: string; kind: string; status: string | null }[]).filter((v) => v.status === 'ready' || v.status === null)
+  const first = [...rows.filter((v) => v.kind === 'highlight').slice(0, 2), ...rows.filter((v) => v.kind === 'full_match').slice(0, 2)].slice(0, limit)
+  await Promise.all(first.map((v) => getPlaybackToken(v.id).then(warmPoster).catch(() => { /* the tile handles it */ })))
 }
