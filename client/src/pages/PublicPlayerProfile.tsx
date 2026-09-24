@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
+import { prefetchProfileVideoPosters } from '@/lib/playbackToken'
 import { supabase } from '../lib/supabase'
 import { logger } from '../lib/logger'
 import { requestCache } from '../lib/requestCache'
@@ -102,6 +103,11 @@ export default function PublicPlayerProfile() {
     } catch { /* fail open */ return false }
   }
 
+  // Start the first video posters now, in parallel with the profile gates
+  // (see prefetchProfileVideoPosters). With a username URL the id arrives
+  // with the profile row below.
+  useEffect(() => { if (id) prefetchProfileVideoPosters(id) }, [id])
+
   useEffect(() => {
     let cancelled = false
     const fetchProfile = async () => {
@@ -147,6 +153,7 @@ export default function PublicPlayerProfile() {
             if (!data) return null
             // Age is server-computed (raw DOB is owner-only post age-gate).
             const profileId = (data as unknown as { id: string }).id
+            prefetchProfileVideoPosters(profileId)
             const { data: ages } = await supabase.rpc('get_profile_ages', { p_ids: [profileId] })
             const serverAge = ages?.find((a) => a.profile_id === profileId)?.age ?? null
             return { ...(data as object), server_age: serverAge } as unknown as PublicProfile
