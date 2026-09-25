@@ -40,7 +40,7 @@ const { supabaseFromBuilder, supabaseFromSpy, supabaseUpsertSpy, supabaseInvokeS
     supabaseFromSpy: vi.fn(() => builder),
     supabaseUpsertSpy: upsertSpy,
     supabaseInvokeSpy: vi.fn(),
-    authState: { profile: null as { id: string; role: string } | null },
+    authState: { profile: null as { id: string; role: string; coach_recruits_for_team?: boolean } | null },
     clubFitState: { isApplicable: true },
   }
 })
@@ -126,6 +126,17 @@ describe('useAIOpinion', () => {
     if (result.current.status.kind !== 'not_applicable') throw new Error('expected not_applicable')
     expect(result.current.status.reason).toBe('not_recruiter')
     expect(supabaseFromSpy).not.toHaveBeenCalled()
+    expect(supabaseInvokeSpy).not.toHaveBeenCalled()
+  })
+
+  it('a coach looking for a role is not a recruiter (founder ruling 2026-09-25)', async () => {
+    authState.profile = { id: 'viewer-coach', role: 'coach', coach_recruits_for_team: false }
+    const { result } = renderHook(() => useAIOpinion(baseCandidate))
+    await waitFor(() => {
+      expect(result.current.status.kind).toBe('not_applicable')
+    })
+    if (result.current.status.kind !== 'not_applicable') throw new Error('expected not_applicable')
+    expect(result.current.status.reason).toBe('not_recruiter')
     expect(supabaseInvokeSpy).not.toHaveBeenCalled()
   })
 
