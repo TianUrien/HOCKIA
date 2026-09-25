@@ -170,8 +170,10 @@ export default function VacancyDetailView({
     tags.push(vacancy.position.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()))
   }
   // Matching Increment #3/#4 — surface recruiter intent on the opportunity.
+  // The level sought is the recruiter's private yardstick: only the publisher
+  // sees it (founder rule: players/coaches never see level pills).
   if (isPlayerOpportunity) {
-    const level = levelSoughtLabel(vacancy.level_sought)
+    const level = isPublisher ? levelSoughtLabel(vacancy.level_sought) : null
     if (level) tags.push(level)
     const comp = compensationLabel(vacancy.compensation)
     if (comp) tags.push(comp)
