@@ -23,7 +23,7 @@
  */
 
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Bookmark, BookmarkCheck, MessageSquare, UserPlus, UserCheck, Clock } from 'lucide-react'
+import { Bookmark, BookmarkCheck, Check, MessageSquare, UserPlus, UserCheck } from 'lucide-react'
 import type { ConversationOrigin } from '@/types/chat'
 import { useIsProfileSaved } from '@/hooks/useSavedProfiles'
 import { useFriendship } from '@/hooks/useFriendship'
@@ -147,7 +147,7 @@ function AddFriendAction({ playerId, playerName, compact }: { playerId: string; 
     return <ActionButton compact={compact} active disabled icon={UserCheck} text="Friends" label={`Friends with ${playerName}`} onClick={() => {}} />
   }
   if (isOutgoingRequest) {
-    return <ActionButton compact={compact} disabled icon={Clock} text="Requested" label={`Friend request sent to ${playerName}`} onClick={() => {}} />
+    return <ActionButton compact={compact} disabled icon={Check} text="Requested" label={`Friend request sent to ${playerName}`} onClick={() => {}} />
   }
   return (
     <ActionButton
