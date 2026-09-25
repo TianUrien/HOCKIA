@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   defaultTitle, draftFromRow, draftToRow, emptyDraft, hardnessFootnote, locationFromClub, normalizeDuration,
-  playerChecklist, recruitingTarget, startLabel, stepProblem, type PostRoleDraft,
+  playerChecklist, recruitingTarget, startLabel, stepProblem, TEAMS, type PostRoleDraft,
 } from '@/lib/postRole'
 import type { Vacancy } from '@/lib/supabase'
 
@@ -89,5 +89,26 @@ describe('Post a role · copy and checks', () => {
     expect(startLabel('2026-09-01', new Date('2026-06-01'))).toBe('Sep 1')
     expect(startLabel('2027-01-15', new Date('2026-06-01'))).toBe('Jan 15, 2027')
     expect(defaultTitle({ type: 'player', position: 'forward', gender: 'Women' })).toBe('Women\'s forward')
+  })
+})
+
+// Founder ruling 2026-09-25 (C) / Figma D1.6: no youth PLAYER roles; the DB
+// rejects them (CHECK opportunities_player_role_not_youth).
+describe('Post a role · no youth player roles', () => {
+  it('offers only adult teams', () => {
+    expect(TEAMS.map((t) => t.value)).toEqual(['Men', 'Women', 'Mixed'])
+  })
+
+  it('blocks Continue on a youth team and never writes one for a player role', () => {
+    expect(stepProblem(base({ gender: 'Boys' }), 1)).toBe('Choose the team.')
+    expect(stepProblem(base({ gender: 'Girls' }), 3)).toBe('Choose the team.')
+    expect(draftToRow(base({ gender: 'Girls' }), 'c', 'draft').gender).toBeNull()
+  })
+
+  it('opens a legacy youth player role with no team; coach roles keep theirs', () => {
+    const row = { ...(draftToRow(base(), 'c', 'draft') as unknown as Vacancy), id: 'd1' }
+    expect(draftFromRow({ ...row, gender: 'Boys' }).gender).toBeNull()
+    expect(draftFromRow({ ...row, gender: 'Women' }).gender).toBe('Women')
+    expect(draftFromRow({ ...row, opportunity_type: 'coach', gender: 'Girls' }).gender).toBe('Girls')
   })
 })

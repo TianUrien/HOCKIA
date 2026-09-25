@@ -21,6 +21,7 @@ import { useNavigate, useParams, Link } from 'react-router-dom'
 import Footer from '@/components/Footer'
 import { useAuthStore } from '@/lib/auth'
 import { supabase } from '@/lib/supabase'
+import { FullMatchVisibilitySetting } from '@/components/settings/FullMatchVisibilitySetting'
 import { logger } from '@/lib/logger'
 import Header from '@/components/Header'
 import SettingsMobile, { type SettingsSection } from '@/components/settings/SettingsMobile'
@@ -931,6 +932,7 @@ export default function SettingsPage() {
 
             {expandedSection === 'privacy' && (
               <div className="px-4 pb-4 space-y-3">
+                <FullMatchVisibilitySetting />
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div className="flex-1 pr-4">
                     <p className="text-gray-900 font-medium text-sm">Anonymous Browsing</p>

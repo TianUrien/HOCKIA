@@ -27,6 +27,7 @@ type PublicProfileBase = Pick<
   | 'bio'
   | 'highlight_video_url'
   | 'highlight_visibility'
+  | 'full_match_visibility'
   | 'nationality'
   | 'nationality_country_id'
   | 'nationality2_country_id'

@@ -5,6 +5,9 @@ import { useAuthStore } from '@/lib/auth'
 import Input from '../Input'
 import { isTopFocusTrap, useFocusTrap } from '@/hooks/useFocusTrap'
 import { useNativeVideoUpload } from '@/hooks/useNativeVideoUpload'
+import { supabase } from '@/lib/supabase'
+import { logger } from '@/lib/logger'
+import { fullMatchVisibilityOf } from '@/lib/recruiter'
 
 /**
  * UploadVideoModal — native highlight-video upload (Cloudflare Stream).
@@ -23,10 +26,13 @@ export default function UploadVideoModal({ isOpen, onClose, onUploaded, kind = '
   const [file, setFile] = useState<File | null>(null)
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  // A new full match starts from the owner's default (Settings › Privacy);
-  // the per-video setting wins from then on. Highlights are public by default.
-  const defaultVisibility = useAuthStore((s) => s.profile?.highlight_visibility)
-  const [visibility, setVisibility] = useState<'public' | 'recruiters'>(kind === 'full_match' && defaultVisibility === 'recruiters' ? 'recruiters' : 'public')
+  // A new full match starts from the owner's master switch (Settings ›
+  // Privacy, profiles.full_match_visibility); highlights start public. The
+  // server applies the master switch to every new full match, so a different
+  // choice here is saved as a per-video exception right after the upload.
+  const fullMatchDefault = useAuthStore((s) => fullMatchVisibilityOf(s.profile))
+  const initialVisibility: 'public' | 'recruiters' = kind === 'full_match' ? fullMatchDefault : 'public'
+  const [visibility, setVisibility] = useState<'public' | 'recruiters'>(initialVisibility)
   const dialogRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const titleId = useId()
@@ -38,9 +44,9 @@ export default function UploadVideoModal({ isOpen, onClose, onUploaded, kind = '
 
   useEffect(() => {
     if (isOpen) {
-      setFile(null); setTitle(''); setDescription(''); setVisibility('public'); reset()
+      setFile(null); setTitle(''); setDescription(''); setVisibility(initialVisibility); reset()
     }
-  }, [isOpen, reset])
+  }, [isOpen, reset, initialVisibility])
 
   useEffect(() => {
     if (!isOpen) return
@@ -75,6 +81,10 @@ export default function UploadVideoModal({ isOpen, onClose, onUploaded, kind = '
   const handleSubmit = async () => {
     if (!file || !title.trim() || busy) return
     const id = await upload(file, { title: title.trim(), description: description.trim() || undefined, visibility, kind })
+    if (id && kind === 'full_match' && visibility !== fullMatchDefault) {
+      const { error: visError } = await supabase.from('player_videos').update({ visibility }).eq('id', id)
+      if (visError) logger.error('[UploadVideoModal] per-video visibility failed', visError)
+    }
     if (id && phase !== 'error') onUploaded(id)
   }
 
@@ -166,7 +176,7 @@ export default function UploadVideoModal({ isOpen, onClose, onUploaded, kind = '
               <div>
                 <span className="mb-1 block text-sm font-medium text-gray-700">Who can watch</span>
                 <div className="grid grid-cols-2 gap-2">
-                  {([['public', 'Everyone'], ['recruiters', 'Recruiters only']] as const).map(([val, label]) => (
+                  {([['public', 'Everyone'], ['recruiters', 'Clubs & coaches']] as const).map(([val, label]) => (
                     <button
                       key={val}
                       type="button"
@@ -183,7 +193,7 @@ export default function UploadVideoModal({ isOpen, onClose, onUploaded, kind = '
                 </div>
                 <p className="mt-1 text-xs text-gray-500">
                   {visibility === 'recruiters'
-                    ? 'Only clubs and coaches will be able to play this video.'
+                    ? 'Only clubs and coaches who recruit can play this video.'
                     : 'Anyone viewing your profile can play this video.'}
                 </p>
               </div>

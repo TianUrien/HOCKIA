@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from 'react'
-import { ArrowLeft, ArrowRight, Check, ChevronDown, ExternalLink, Film, Lock, Plus, Trash2, Video, X } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { ArrowLeft, ArrowRight, Check, ChevronDown, ChevronRight, ExternalLink, Film, Lock, Plus, Trash2, Video, X } from 'lucide-react'
 import { DetailNavBar } from '@/components/ui/DetailNavBar'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import ConfirmActionModal from '@/components/ConfirmActionModal'
@@ -19,6 +20,7 @@ import { getImageUrl, getImageSrcSet } from '@/lib/imageUrl'
 import { SmoothImage } from '@/components/ui/SmoothImage'
 import { formatVideoDuration } from '@/lib/videoCopy'
 import { invalidateProfile } from '@/lib/profile'
+import { fullMatchVisibilityOf } from '@/lib/recruiter'
 
 /**
  * Manage media (Figma 145:758): everything that shows on the profile,
@@ -75,6 +77,8 @@ function Section({ title, action, onAction, secondary, onSecondary, children }: 
 
 export default function ManageMediaScreen({ profileId, onBack }: ManageMediaScreenProps) {
   const { profile, refreshProfile } = useAuthStore()
+  const navigate = useNavigate()
+  const fullMatchAudience = fullMatchVisibilityOf(profile) === 'public' ? 'Everyone on Hockia' : 'Clubs & coaches'
   const addToast = useToastStore((s) => s.addToast)
   const videos = useProfileVideos(profileId)
   const fullGames = useFullGameVideos(profileId)
@@ -206,6 +210,14 @@ export default function ManageMediaScreen({ profileId, onBack }: ManageMediaScre
         </Section>
 
         <Section title="Full match video" action={fullMatches.length || fullGames.videos.length ? 'Add' : undefined} onAction={() => setFullMatchChoice(true)}>
+          {/* The player's master switch (profiles.full_match_visibility) —
+              one place to change who can watch every full match. */}
+          <button type="button" onClick={() => navigate('/settings/privacy')} className="flex h-11 w-full items-center gap-2 rounded-card bg-surface-grouped px-3.5 text-left" data-testid="manage-media-full-match-audience">
+            <Lock className="h-4 w-4 shrink-0 text-ink-2" strokeWidth={2} aria-hidden="true" />
+            <span className="flex-1 text-row text-ink-1">Who can watch</span>
+            <span className="text-row text-ink-2">{fullMatchAudience}</span>
+            <ChevronRight className="h-4 w-4 shrink-0 text-ink-3" strokeWidth={2} aria-hidden="true" />
+          </button>
           {fullMatches.map((v) => <VideoCard key={v.id} video={v} onPlay={() => setPlaying(v)} onVisibility={() => setVisibilityFor(v)} onDelete={() => setPending({ kind: 'video', video: v })} />)}
           {fullGames.videos.map((l) => (
             <div key={l.id} className="flex items-center gap-3">
@@ -283,7 +295,7 @@ export default function ManageMediaScreen({ profileId, onBack }: ManageMediaScre
             <h2 className="text-title text-ink-1">Who can watch</h2>
             <p className="mt-1 truncate text-secondary text-ink-2">{visibilityFor.title}</p>
             <div className="mt-3 divide-y divide-line overflow-hidden rounded-card bg-surface-grouped">
-              {([['recruiters', 'Clubs & coaches', 'Recruiters only.'], ['public', 'Everyone on Hockia', 'Any signed-in member.']] as const).map(([value, title, sub]) => {
+              {([['recruiters', 'Clubs & coaches', 'Clubs and coaches who recruit.'], ['public', 'Everyone on Hockia', 'Anyone on Hockia can watch.']] as const).map(([value, title, sub]) => {
                 const on = (visibilityFor.visibility ?? 'public') === value
                 return (
                   <button key={value} type="button" role="radio" aria-checked={on} onClick={() => void setVisibility(visibilityFor, value)} className="flex w-full items-center gap-3 px-4 py-3 text-left">

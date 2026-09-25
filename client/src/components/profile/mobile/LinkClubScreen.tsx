@@ -10,6 +10,7 @@ import { useCountries } from '@/hooks/useCountries'
 import { getImageUrl } from '@/lib/imageUrl'
 import { logger } from '@/lib/logger'
 import { cn } from '@/lib/utils'
+import { searchClubsInCountry, type LinkClubMatch } from '@/lib/linkClubSearch'
 import type { ClubProfileShape } from '@/pages/ClubDashboard'
 
 const FeedbackModal = lazy(() => import('@/components/FeedbackModal'))
@@ -30,17 +31,7 @@ interface LinkClubScreenProps {
   onLinked: () => void
 }
 
-type Match = {
-  id: string
-  name: string
-  crest: string | null
-  countryId: number
-  province: string | null
-  isClaimed: boolean
-  menLeagueId: number | null
-  womenLeagueId: number | null
-  leagueName: string | null
-}
+type Match = LinkClubMatch
 type League = { id: number; name: string; tier: number | null; province: string | null; provinceId: number | null }
 type Side = 'men' | 'women'
 type Pick = { kind: 'existing'; match: Match } | { kind: 'new' } | null
@@ -74,15 +65,10 @@ export default function LinkClubScreen({ profile, onCancel, onLinked }: LinkClub
     let cancelled = false
     setSearching(true)
     const t = setTimeout(async () => {
-      const { data, error: err } = await supabase.rpc('search_world_clubs', { p_query: q, p_limit: 40 })
+      const { matches: found, error: err } = await searchClubsInCountry(q, countryId)
       if (cancelled) return
       if (err) logger.debug('[LinkClubScreen] search failed', err)
-      const rows = (data ?? []) as Array<{ id: string; club_name: string; avatar_url: string | null; country_id: number; province_name: string | null; is_claimed: boolean; men_league_id: number | null; women_league_id: number | null; men_league_name: string | null; women_league_name: string | null }>
-      setMatches(rows.filter((r) => r.country_id === countryId).slice(0, 8).map((r) => ({
-        id: r.id, name: r.club_name, crest: r.avatar_url, countryId: r.country_id, province: r.province_name,
-        isClaimed: r.is_claimed, menLeagueId: r.men_league_id, womenLeagueId: r.women_league_id,
-        leagueName: r.men_league_name ?? r.women_league_name ?? null,
-      })))
+      setMatches(found)
       setSearching(false)
     }, 250)
     return () => { cancelled = true; clearTimeout(t) }

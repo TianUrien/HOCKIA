@@ -2,6 +2,7 @@ import { useState, useEffect, type ReactNode } from 'react'
 import { Video, Trash2, Lock } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
+import { isRecruiterProfile } from '@/lib/recruiter'
 import { logger } from '@/lib/logger'
 import { useAuthStore } from '@/lib/auth'
 import type { Profile } from '@/lib/supabase'
@@ -75,7 +76,9 @@ export default function MediaTab({ profileId, readOnly = false, renderHeader, sh
     // `if (isOwnProfile) return true`, which silently bypassed the privacy
     // toggle in Network View — owner thought "Recruiters only" was ignored.
     if (visibility === 'public') return true
-    return viewerRole === 'club' || viewerRole === 'coach'
+    // Recruiters = clubs + coaches who recruit (SQL is_recruiter). viewerRole
+    // and authProfile are the same person here (callers pass the viewer).
+    return isRecruiterProfile({ role: viewerRole, coach_recruits_for_team: authProfile?.coach_recruits_for_team })
   })()
 
   const openManageModal = () => setShowAddVideoModal(true)

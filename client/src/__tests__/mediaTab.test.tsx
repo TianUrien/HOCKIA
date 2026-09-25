@@ -17,12 +17,17 @@ const profileMocks = vi.hoisted(() => ({
 
 vi.mock('@/lib/profile', () => profileMocks)
 
+vi.mock('@/hooks/useVideoAccessSummary', () => ({
+  useVideoAccessSummary: () => ({ lockedFullMatches: 0, lockedHighlights: 0 }),
+}))
+
 type AuthStoreState = {
   user: { id: string } | null
   profile: {
     id: string
     role: string
     highlight_video_url: string | null
+    coach_recruits_for_team?: boolean
   } | null
 }
 
@@ -316,7 +321,11 @@ describe('MediaTab — highlight visibility toggle', () => {
     expect(screen.queryByText('Highlight Video Restricted')).not.toBeInTheDocument()
   })
 
-  it('shows video to coaches even when restricted', async () => {
+  it('shows video to recruiting coaches even when restricted', async () => {
+    // MediaTab reads the viewer's recruit flag from the auth store (the
+    // harness reuses that profile as the displayed one, so role stays player;
+    // the viewer's role comes from the viewerRole prop).
+    setAuthState({ profile: { id: 'user-1', role: 'player', highlight_video_url: 'https://youtu.be/abc123', coach_recruits_for_team: true } })
     render(
       <MediaTab
         readOnly
@@ -332,6 +341,25 @@ describe('MediaTab — highlight visibility toggle', () => {
     })
 
     expect(screen.queryByText('Highlight Video Restricted')).not.toBeInTheDocument()
+  })
+
+  it('keeps a restricted highlight locked for a coach who does not recruit', async () => {
+    // Recruiter = club, or coach with coach_recruits_for_team (SQL is_recruiter).
+    setAuthState({ profile: { id: 'user-1', role: 'player', highlight_video_url: 'https://youtu.be/abc123', coach_recruits_for_team: false } })
+    render(
+      <MediaTab
+        readOnly
+        highlightVisibility="recruiters"
+        viewerRole="coach"
+        isOwnProfile={false}
+        showGallery={false}
+      />
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText('Highlight Video Restricted')).toBeInTheDocument()
+    })
+    expect(screen.queryByLabelText('Play highlight video')).not.toBeInTheDocument()
   })
 
   it('Network View honours the privacy toggle for the owner — restricted shows when recruiters-only is set', async () => {

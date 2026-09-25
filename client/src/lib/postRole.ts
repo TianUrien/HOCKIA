@@ -1,6 +1,7 @@
 import type { Database } from '@/lib/database.types'
 import type { Vacancy } from '@/lib/supabase'
 import { formatDurationText, genderPill } from '@/lib/opportunityCopy'
+import { isYouthGender, playerRoleGender } from '@/lib/youthRoles'
 import { humanizeToken } from '@/lib/identity'
 import { pruneSpecialistSkillsForPosition } from '@/lib/specialistSkills'
 
@@ -62,12 +63,14 @@ export const COACH_POSITIONS: { value: RolePosition; label: string }[] = [
   { value: 'other_coach', label: 'Other' },
 ]
 
+/**
+ * Teams a PLAYER role can target. No Boys/Girls: under-18s are never
+ * recruitable (founder ruling 2026-09-25; the DB rejects them too).
+ */
 export const TEAMS: { value: RoleGender; label: string }[] = [
   { value: 'Men', label: 'Men' },
   { value: 'Women', label: 'Women' },
   { value: 'Mixed', label: 'Mixed' },
-  { value: 'Boys', label: 'Boys' },
-  { value: 'Girls', label: 'Girls' },
 ]
 
 export const LEVELS: { value: RoleLevel; label: string }[] = [
@@ -169,7 +172,8 @@ export function draftFromRow(v: Vacancy): PostRoleDraft {
     type: v.opportunity_type ?? 'player',
     position: v.position ?? null,
     positionRequired: v.position_required ?? false,
-    gender: v.gender ?? null,
+    // A legacy youth player role opens with no team, so the club has to pick an adult one.
+    gender: (v.opportunity_type ?? 'player') === 'player' ? playerRoleGender(v.gender) : v.gender ?? null,
     title: v.title ?? '',
     level,
     levelRequired: v.level_required ?? false,
@@ -210,7 +214,7 @@ export type Step = 1 | 2 | 3
 export function stepProblem(d: PostRoleDraft, step: Step): string | null {
   if (step === 1) {
     if (!d.position) return d.type === 'player' ? 'Choose a position.' : 'Choose the role.'
-    if (d.type === 'player' && !d.gender) return 'Choose the team.'
+    if (d.type === 'player' && (!d.gender || isYouthGender(d.gender))) return 'Choose the team.'
     if (d.title.trim().length > TITLE_MAX) return `Keep the title to ${TITLE_MAX} characters.`
     if (d.skillsRequired && d.skills.length === 0) return 'Pick a specialist skill, or make it nice to have.'
     return null
@@ -231,7 +235,7 @@ export function draftToRow(d: PostRoleDraft, clubId: string, status: 'draft' | '
     opportunity_type: d.type,
     position: d.position,
     position_required: player && d.positionRequired,
-    gender: player ? d.gender : null,
+    gender: player ? playerRoleGender(d.gender) : null,
     title: d.title.trim().slice(0, TITLE_MAX) || defaultTitle(d) || 'New role',
     level_sought: d.level,
     level_required: player && d.levelRequired && d.level !== null,
