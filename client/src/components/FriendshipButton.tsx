@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Check, Loader2, Shield, UserMinus, UserPlus, UserX, Clock, ChevronDown } from 'lucide-react'
+import { Check, Loader2, Shield, UserMinus, UserPlus, UserX, ChevronDown } from 'lucide-react'
 import { useFriendship } from '@/hooks/useFriendship'
 import { useToastStore } from '@/lib/toast'
 import { cn } from '@/lib/utils'
@@ -153,8 +153,10 @@ export default function FriendshipButton({ profileId, className }: FriendshipBut
 
     if (isOutgoingRequest) {
       return {
+        // Grey "Requested" + check everywhere (founder ruling 2026-09-25) —
+        // matches the phone surfaces (HeroIdentityCard, MemberPreviewSheet).
         label: 'Requested',
-        icon: <Clock className="h-4 w-4 flex-shrink-0" />,
+        icon: <Check className="h-4 w-4 flex-shrink-0" />,
         className: 'border-gray-300 bg-gray-50 text-gray-600 hover:bg-gray-100',
         hasDropdown: true,
       }
@@ -197,8 +199,14 @@ export default function FriendshipButton({ profileId, className }: FriendshipBut
       >
         {/* No leading status icon in the dropdown states: the colored pill + the
             chevron already convey state (the "Following ▾" pattern), and dropping it
-            keeps the label fully readable in the tight mobile action row. */}
-        {mutating && <Loader2 className="h-4 w-4 animate-spin flex-shrink-0" />}
+            keeps the label fully readable in the tight mobile action row.
+            Exception: the pending outbound request is grey "Requested" WITH a
+            check everywhere (founder ruling 2026-09-25), like the phone. */}
+        {mutating ? (
+          <Loader2 className="h-4 w-4 animate-spin flex-shrink-0" />
+        ) : (
+          isOutgoingRequest && !isFriend && config.icon
+        )}
         <span className="truncate">{config.label}</span>
         <ChevronDown className={cn('h-4 w-4 flex-shrink-0 transition-transform', menuOpen && 'rotate-180')} />
       </button>

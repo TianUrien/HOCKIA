@@ -20,8 +20,9 @@ export function playerApplicationStatusBadge(
     case 'maybe':
       return { label: 'Under consideration', className: 'bg-amber-100 text-amber-800' }
     case 'rejected':
-      // Soft, non-judgmental tone — a clear "no" without feeling punishing.
-      return { label: 'Not selected', className: 'bg-rose-50 text-rose-700' }
+      // Founder ruling 2026-09-25: grey, never rose/red — not being selected
+      // is not an error. One grey state, matching opportunityCopy's tone 'grey'.
+      return { label: 'Not selected', className: 'bg-gray-100 text-gray-600' }
     case 'no_response':
       // Auto-expiry terminal state (Task 3b). Copy is deliberately NEUTRAL
       // about the club: many teams answer off-platform (15/21 opportunities

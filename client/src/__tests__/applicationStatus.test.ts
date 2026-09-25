@@ -22,6 +22,14 @@ describe('playerApplicationStatusBadge', () => {
     expect(playerApplicationStatusBadge('maybe')?.label).toBe('Under consideration')
     expect(playerApplicationStatusBadge('rejected')?.label).toBe('Not selected')
   })
+  it('renders "Not selected" in grey, never rose/red (founder ruling 2026-09-25)', () => {
+    const badge = playerApplicationStatusBadge('rejected')
+    expect(badge?.className).toBe('bg-gray-100 text-gray-600')
+    expect(badge?.className).not.toMatch(/rose|red/)
+    // One grey state: same treatment as the neutral auto-expiry badge.
+    expect(badge?.className).toBe(playerApplicationStatusBadge('no_response')?.className)
+    expect(badge?.label.toLowerCase()).not.toContain('declined')
+  })
   it('returns null for pending/unknown (no badge, never the raw enum)', () => {
     expect(playerApplicationStatusBadge('pending')).toBeNull()
     expect(playerApplicationStatusBadge(null)).toBeNull()
