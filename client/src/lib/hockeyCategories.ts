@@ -105,6 +105,14 @@ export const OPPORTUNITY_GENDERS: readonly OpportunityGender[] = [
   'Mixed',
 ]
 
+/**
+ * The teams a PLAYER role can target — and so the only values a player-facing
+ * Category filter offers. No Girls/Boys: under-18s are never recruitable
+ * (founder ruling 2026-09-25; DB CHECK opportunities_player_role_not_youth).
+ * OPPORTUNITY_GENDERS stays the full enum for coach/staff roles and mappings.
+ */
+export const PLAYER_ROLE_GENDERS: readonly OpportunityGender[] = ['Men', 'Women', 'Mixed']
+
 /** UI label for an opportunity_gender value. 'Men' → "Adult Men" so a club
  * vacancy posted before Phase 3d still reads naturally in the new vocabulary. */
 export function opportunityGenderToDisplay(value: string | null | undefined): string {
