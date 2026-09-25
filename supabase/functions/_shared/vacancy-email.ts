@@ -701,3 +701,89 @@ export async function claimFirstAnnouncement(
     return { outcome: 'error', message: e instanceof Error ? e.message : String(e) }
   }
 }
+
+// =============================================================================
+// ANNOUNCEMENT FAILURE ALERTING (founder 2026-09-26)
+// The announcement is claimed BEFORE sending and there is deliberately no
+// automatic retry (a retry storm could mass-mail every player). The price of
+// that is: if the send fails after the claim, the role is never announced.
+// That must never happen silently — every post-claim failure goes to Sentry
+// with the opportunity + club ids so someone can resend it manually.
+// =============================================================================
+
+export const ANNOUNCEMENT_FAILED_MESSAGE = 'Vacancy announcement failed — resend manually'
+
+export type AnnouncementFailureStage = 'recipients' | 'send' | 'exception'
+
+export interface AnnouncementFailureInput {
+  opportunityId: string
+  clubId: string
+  correlationId?: string
+  stage: AnnouncementFailureStage
+  /** Recipients successfully sent / failed (send stage). */
+  sent?: number
+  failed?: number
+  totalRecipients?: number
+  /** Underlying error text (Resend / DB / exception message). */
+  cause?: string
+}
+
+/** Same shape as _shared/sentry.ts captureException, injected for tests. */
+export type CaptureFn = (
+  error: unknown,
+  context?: {
+    functionName?: string
+    correlationId?: string
+    tags?: Record<string, string>
+    extra?: Record<string, unknown>
+  },
+) => void
+
+/**
+ * Decide whether a finished send needs a "resend manually" alert.
+ * - 'failed'  : nobody got it (every recipient failed) — the role is unannounced.
+ * - 'partial' : some recipients failed — they will never get it either.
+ * - 'ok'      : nothing failed.
+ * `recipientsError` is set when the recipient query failed part-way, so the
+ * audience itself was incomplete even if every send succeeded.
+ */
+export function announcementSendOutcome(
+  stats: { sent: number; failed: number },
+  recipientsError?: string | null,
+): 'ok' | 'partial' | 'failed' {
+  const incomplete = stats.failed > 0 || Boolean(recipientsError)
+  if (!incomplete) return 'ok'
+  return stats.sent === 0 ? 'failed' : 'partial'
+}
+
+/** Report a post-claim announcement failure. Never throws. */
+export function reportAnnouncementFailure(capture: CaptureFn, input: AnnouncementFailureInput): void {
+  try {
+    const partial = (input.sent ?? 0) > 0
+    const message = partial
+      ? `${ANNOUNCEMENT_FAILED_MESSAGE} (partial: ${input.sent} sent, ${input.failed ?? 0} failed)`
+      : ANNOUNCEMENT_FAILED_MESSAGE
+    capture(new Error(`${message} — opportunity ${input.opportunityId}`), {
+      functionName: 'notify-vacancy',
+      correlationId: input.correlationId,
+      tags: {
+        alert: 'vacancy_announcement_failed',
+        stage: input.stage,
+        opportunity_id: input.opportunityId,
+        club_id: input.clubId,
+      },
+      extra: {
+        opportunityId: input.opportunityId,
+        clubId: input.clubId,
+        stage: input.stage,
+        sent: input.sent ?? 0,
+        failed: input.failed ?? 0,
+        totalRecipients: input.totalRecipients ?? null,
+        cause: input.cause ?? null,
+        action: 'Role was claimed as announced but not (fully) emailed; no automatic retry. Resend manually.',
+      },
+    })
+  } catch {
+    // Alerting must never break the function.
+  }
+}

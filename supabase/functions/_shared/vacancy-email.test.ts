@@ -18,8 +18,11 @@ import {
   type AnnouncementRpcClient,
   type VacancyPayload,
   type VacancyRecord,
+  ANNOUNCEMENT_FAILED_MESSAGE,
+  announcementSendOutcome,
   claimFirstAnnouncement,
   isVacancyNewlyPublished,
+  reportAnnouncementFailure,
 } from './vacancy-email.ts'
 
 const rec = (status: string): VacancyRecord => ({
@@ -133,4 +136,76 @@ Deno.test('notify-vacancy claims before fetching recipients or sending', async (
 Deno.test('notify-vacancy no longer dedupes with a short email_sends time window', async () => {
   const src = await Deno.readTextFile(new URL('../notify-vacancy/index.ts', import.meta.url))
   assert(!/\.from\('email_sends'\)/.test(src), 'dedupe must use the DB claim, not an email_sends lookback')
+})
+
+// ── 4. post-claim failure alerting (founder 2026-09-26) ─────────────────────
+// No automatic retry after the claim, so a failed send must reach Sentry with
+// the opportunity + club ids and a "resend manually" message.
+
+Deno.test('announcementSendOutcome: all failed / partial / ok / recipient query failed', () => {
+  assertEquals(announcementSendOutcome({ sent: 0, failed: 5 }), 'failed')
+  assertEquals(announcementSendOutcome({ sent: 3, failed: 2 }), 'partial')
+  assertEquals(announcementSendOutcome({ sent: 5, failed: 0 }), 'ok')
+  // Everything suppressed/filtered: nothing sent, nothing failed -> not an error.
+  assertEquals(announcementSendOutcome({ sent: 0, failed: 0 }), 'ok')
+  // Recipient page query failed part-way: audience incomplete.
+  assertEquals(announcementSendOutcome({ sent: 4, failed: 0 }, 'timeout'), 'partial')
+  assertEquals(announcementSendOutcome({ sent: 0, failed: 0 }, 'timeout'), 'failed')
+})
+
+type Captured = { error: unknown; context?: { tags?: Record<string, string>; extra?: Record<string, unknown>; functionName?: string } }
+
+Deno.test('reportAnnouncementFailure sends a "resend manually" alert tagged with opportunity + club ids', () => {
+  const captured: Captured[] = []
+  reportAnnouncementFailure((error, context) => captured.push({ error, context }), {
+    opportunityId: 'opp-1',
+    clubId: 'club-9',
+    correlationId: 'abcd1234',
+    stage: 'send',
+    sent: 0,
+    failed: 12,
+    totalRecipients: 12,
+    cause: 'Resend 500',
+  })
+  assertEquals(captured.length, 1)
+  const { error, context } = captured[0]
+  assert(error instanceof Error)
+  assert(error.message.startsWith(ANNOUNCEMENT_FAILED_MESSAGE), error.message)
+  assert(error.message.includes('opp-1'))
+  assertEquals(context?.functionName, 'notify-vacancy')
+  assertEquals(context?.tags?.opportunity_id, 'opp-1')
+  assertEquals(context?.tags?.club_id, 'club-9')
+  assertEquals(context?.tags?.stage, 'send')
+  assertEquals(context?.extra?.opportunityId, 'opp-1')
+  assertEquals(context?.extra?.clubId, 'club-9')
+  assertEquals(context?.extra?.failed, 12)
+  assertEquals(context?.extra?.cause, 'Resend 500')
+})
+
+Deno.test('reportAnnouncementFailure marks a partial send and never throws', () => {
+  const captured: Captured[] = []
+  reportAnnouncementFailure((error, context) => captured.push({ error, context }), {
+    opportunityId: 'opp-2', clubId: 'club-2', stage: 'send', sent: 8, failed: 2, totalRecipients: 10,
+  })
+  assert((captured[0].error as Error).message.includes('partial: 8 sent, 2 failed'))
+  // A throwing reporter must not break the function.
+  reportAnnouncementFailure(() => { throw new Error('sentry down') }, {
+    opportunityId: 'opp-3', clubId: 'club-3', stage: 'exception', cause: 'x',
+  })
+})
+
+Deno.test('notify-vacancy alerts on every post-claim failure path', async () => {
+  const src = await Deno.readTextFile(new URL('../notify-vacancy/index.ts', import.meta.url))
+  const body = src.slice(src.indexOf('Deno.serve('))
+  const claimAt = body.indexOf('await claimFirstAnnouncement(')
+  const afterClaim = body.slice(claimAt)
+  // recipients query failure, failed/partial send, and the catch-all exception
+  assert(afterClaim.includes("stage: 'recipients'"), 'recipient-fetch failure must be reported')
+  assert(afterClaim.includes('announcementSendOutcome(emailResult.stats'), 'send outcome must be checked')
+  assert(afterClaim.includes("stage: 'exception'"), 'exceptions after the claim must be reported')
+  assert(body.includes('claimedVacancy = vacancy'), 'the catch block must know the claim was won')
+  assert(
+    (body.match(/reportAnnouncementFailure\(captureException/g) ?? []).length >= 3,
+    'all three failure paths report via captureException',
+  )
 })
