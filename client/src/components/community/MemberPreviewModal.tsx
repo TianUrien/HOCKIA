@@ -43,6 +43,7 @@ import { useToastStore } from '@/lib/toast'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import { useIsProfileSaved } from '@/hooks/useSavedProfiles'
+import { isRecruitingViewer } from '@/lib/recruiterAccess'
 import QuickActionsRow from '@/components/recruiting/QuickActionsRow'
 import { useWorldClubLogo, getClubLevelBand } from '@/hooks/useWorldClubLogo'
 import { categoryToBandTarget } from '@/hooks/useInterest'
@@ -78,7 +79,10 @@ interface MemberPreviewModalProps {
 
 export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps) {
   const { user, profile } = useAuthStore()
-  const isRecruiterViewer = profile?.role === 'club' || profile?.role === 'coach'
+  // Recruiters = clubs + coaches who recruit for a team. Everyone else
+  // (players, candidate coaches, umpires, brands) gets the half-sheet with
+  // no Evidence tier (founder rule 2026-09-25).
+  const isRecruiterViewer = isRecruitingViewer(profile)
   const navigate = useNavigate()
   const location = useLocation()
   const { addToast } = useToastStore()
