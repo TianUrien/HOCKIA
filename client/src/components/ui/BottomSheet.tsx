@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import type { ReactNode } from 'react'
 import { createPortal } from 'react-dom'
-import { useFocusTrap } from '@/hooks/useFocusTrap'
+import { isTopFocusTrap, useFocusTrap } from '@/hooks/useFocusTrap'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import { cn } from '@/lib/utils'
 
@@ -29,7 +29,11 @@ export function BottomSheet({ open, onClose, ariaLabel, children, className }: B
     // Lets other floating UI (SettingsSheet, popovers) close themselves.
     document.dispatchEvent(new Event('hockia:overlay-opened'))
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose()
+      if (event.key !== 'Escape') return
+      // Another overlay (lightbox, sign-in sheet) is open on top: its own
+      // Escape closes it; this sheet stays.
+      if (!isTopFocusTrap(panelRef.current)) return
+      onClose()
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)

@@ -60,7 +60,7 @@ vi.mock('@/hooks/useWorldClubLogo', () => ({
   getClubLevelBand: () => null,
   prefetchWorldClubLogos: vi.fn(),
 }))
-vi.mock('@/hooks/useFocusTrap', () => ({ useFocusTrap: () => {} }))
+vi.mock('@/hooks/useFocusTrap', () => ({ useFocusTrap: () => {}, isTopFocusTrap: () => true }))
 vi.mock('@/hooks/useBodyScrollLock', () => ({ useBodyScrollLock: () => {} }))
 
 // LocationAutocomplete → a button that selects a fixed city/country.

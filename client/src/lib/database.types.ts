@@ -3145,6 +3145,39 @@ export type Database = {
           },
         ]
       }
+      opportunity_first_publications: {
+        Row: {
+          email_claimed_at: string | null
+          first_published_at: string
+          opportunity_id: string
+        }
+        Insert: {
+          email_claimed_at?: string | null
+          first_published_at?: string
+          opportunity_id: string
+        }
+        Update: {
+          email_claimed_at?: string | null
+          first_published_at?: string
+          opportunity_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opportunity_first_publications_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: true
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunity_first_publications_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: true
+            referencedRelation: "public_opportunities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       opportunity_inbox_state: {
         Row: {
           last_seen_at: string
@@ -8012,6 +8045,10 @@ export type Database = {
       }
       check_signup_rate_limit: { Args: { p_email: string }; Returns: Json }
       check_user_post_rate_limit: { Args: { p_user_id: string }; Returns: Json }
+      claim_opportunity_announcement_email: {
+        Args: { p_opportunity_id: string }
+        Returns: boolean
+      }
       claim_world_club: {
         Args: {
           p_men_league_id?: number

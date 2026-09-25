@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useId, useRef, type ReactNode } from 'react'
 import { X } from 'lucide-react'
 import Button from './Button'
-import { useFocusTrap } from '@/hooks/useFocusTrap'
+import { isTopFocusTrap, useFocusTrap } from '@/hooks/useFocusTrap'
 
 interface ConfirmActionModalProps {
   isOpen: boolean
@@ -46,6 +46,8 @@ export default function ConfirmActionModal({
     if (!isOpen) return
 
     const handleKeyDown = (event: KeyboardEvent) => {
+      // Another trapped overlay is on top: its Escape closes it, not this one.
+      if (event.key === 'Escape' && !isTopFocusTrap(dialogRef.current)) return
       if (event.key === 'Escape') {
         event.preventDefault()
         handleClose()

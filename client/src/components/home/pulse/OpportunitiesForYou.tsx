@@ -9,10 +9,10 @@ import { recordModuleImpression, trackModuleClick, useImpressionOnce } from '@/l
 
 /**
  * "Opportunities for you" (Home redesign V2, player Pulse): a horizontal rail
- * of open roles ranked by the transparent rule-based match % (Q4). In
- * 'matched' mode each card carries its %; in 'newest' fallback mode the same
- * cards show recency instead — never a lonely low %(§C). Urgency chip when a
- * deadline is ≤ 7 days out.
+ * of open roles ranked by the transparent rule-based match % (Q4). The % is
+ * only used for ordering: cards show recency, never a score or a "Matched"
+ * chip (players never see match language). Urgency chip when a deadline is
+ * ≤ 7 days out.
  *
  * Collapses entirely when nothing survives the apply-gates (§C: no empty rail).
  */
@@ -97,7 +97,7 @@ export function OpportunitiesForYou({
   title?: string
 }) {
   const navigate = useNavigate()
-  const { loading, mode, items } = useOpportunitiesForYou(enabled, forRole)
+  const { loading, items } = useOpportunitiesForYou(enabled, forRole)
   const ref = useImpressionOnce(() => recordModuleImpression(moduleId, position))
 
   if (!enabled || loading || items.length === 0) return null
@@ -111,7 +111,8 @@ export function OpportunitiesForYou({
     <section ref={ref} className="mb-6">
       <SectionHeader
         title={title}
-        chip={mode === 'matched' ? { label: 'Matched', tone: 'new' } : undefined}
+        /* No "Matched" chip: match language is recruiter-only (founder
+           rule 2026-09-25); the section title already says "for you". */
         action={
           <button
             type="button"

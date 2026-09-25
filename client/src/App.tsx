@@ -6,6 +6,7 @@ import { logger } from '@/lib/logger'
 import { initGA, trackPageView } from '@/lib/analytics'
 import * as Sentry from '@sentry/react'
 import { ProtectedRoute, ErrorBoundary, Layout, SentryTestButton } from '@/components'
+import RecruiterOnlyRoute from '@/components/RecruiterOnlyRoute'
 import ToastContainer from '@/components/ToastContainer'
 import UploadIndicator from '@/components/UploadIndicator'
 import { ProfileImagePreviewProvider } from '@/components/ProfileImagePreviewProvider'
@@ -518,9 +519,10 @@ function App() {
                 <Route path="/dashboard/opportunities/:opportunityId/edit" element={<ErrorBoundary fallback={<RouteErrorFallback />}><PostRoleEntry /></ErrorBoundary>} />
                 <Route path="/dashboard/opportunities/:opportunityId/applicants" element={<ErrorBoundary fallback={<RouteErrorFallback />}><ApplicantsEntry /></ErrorBoundary>} />
                 <Route path="/dashboard/opportunities/:opportunityId/applicants/:applicationId" element={<ErrorBoundary fallback={<RouteErrorFallback />}><ApplicantReviewEntry /></ErrorBoundary>} />
-                <Route path="/dashboard/saved" element={<ErrorBoundary fallback={<RouteErrorFallback />}><SavedCandidatesPage /></ErrorBoundary>} />
-                <Route path="/dashboard/shortlists" element={<ErrorBoundary fallback={<RouteErrorFallback />}><ShortlistsIndexPage /></ErrorBoundary>} />
-                <Route path="/dashboard/shortlists/:id" element={<ErrorBoundary fallback={<RouteErrorFallback />}><ShortlistDetailPage /></ErrorBoundary>} />
+                {/* Save / shortlists: clubs + recruiting coaches only. */}
+                <Route path="/dashboard/saved" element={<ErrorBoundary fallback={<RouteErrorFallback />}><RecruiterOnlyRoute><SavedCandidatesPage /></RecruiterOnlyRoute></ErrorBoundary>} />
+                <Route path="/dashboard/shortlists" element={<ErrorBoundary fallback={<RouteErrorFallback />}><RecruiterOnlyRoute><ShortlistsIndexPage /></RecruiterOnlyRoute></ErrorBoundary>} />
+                <Route path="/dashboard/shortlists/:id" element={<ErrorBoundary fallback={<RouteErrorFallback />}><RecruiterOnlyRoute><ShortlistDetailPage /></RecruiterOnlyRoute></ErrorBoundary>} />
 
                 {/* Network-only profile routes (alias for clarity; still behind auth) */}
                 <Route path="/members/:username" element={<PublicPlayerProfile />} />

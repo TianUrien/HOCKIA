@@ -34,7 +34,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
-import { useFocusTrap } from '@/hooks/useFocusTrap'
+import { isTopFocusTrap, useFocusTrap } from '@/hooks/useFocusTrap'
 import QuickActionsRow from './QuickActionsRow'
 import { getImageUrl } from '@/lib/imageUrl'
 import RolePlaceholder from '@/components/RolePlaceholder'
@@ -234,6 +234,8 @@ export function CandidatePreviewSheet({ member, onClose }: CandidatePreviewSheet
   useEffect(() => {
     if (!member) return
     const handleKey = (e: KeyboardEvent) => {
+      // Another trapped overlay is on top: its Escape closes it, not this one.
+      if (e.key === 'Escape' && !isTopFocusTrap(contentRef.current)) return
       if (e.key === 'Escape') requestClose()
     }
     document.addEventListener('keydown', handleKey)

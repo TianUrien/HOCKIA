@@ -15,7 +15,7 @@ import { Search, ArrowLeft, X, Clock, Loader2, SearchX, Shield, ChevronRight, Br
 import { Avatar, RoleBadge } from '@/components'
 import { useSearch } from '@/hooks/useSearch'
 import { useRecentSearches } from '@/hooks/useRecentSearches'
-import { useFocusTrap } from '@/hooks/useFocusTrap'
+import { isTopFocusTrap, useFocusTrap } from '@/hooks/useFocusTrap'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import type { SearchResult, SearchPostResult, SearchPersonResult, SearchClubResult, SearchOpportunityResult as SearchOpportunityResultType } from '@/hooks/useSearch'
 
@@ -216,6 +216,8 @@ export function SearchOverlay({ triggerClassName }: { triggerClassName?: string 
   useEffect(() => {
     if (!isOpen) return
     const handleEscape = (e: KeyboardEvent) => {
+      // Another trapped overlay is on top: its Escape closes it, not this one.
+      if (e.key === 'Escape' && !isTopFocusTrap(overlayRef.current)) return
       if (e.key === 'Escape') handleClose()
     }
     document.addEventListener('keydown', handleEscape)

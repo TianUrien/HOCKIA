@@ -30,33 +30,17 @@ interface RecentSave {
   role: string | null
 }
 
-/** Recruiters (club/coach) save *candidates*; players save mixed
- *  profiles (clubs, coaches, other players) they want to revisit or
- *  message — so the copy flexes by role. The data + fetch + route are
- *  identical; only the framing changes. */
-interface SavedCandidatesCardProps {
-  variant?: 'recruiter' | 'player'
-}
-
-const VARIANT_COPY = {
-  recruiter: {
-    title: 'Saved Candidates',
-    subtitle: "Players you've bookmarked from Community",
-    emptyCount: 'No saved candidates yet',
-    emptyHint:
-      'Tap the bookmark icon on any player card in Community to save them here. Only you can see this list — saved players are never notified.',
-  },
-  player: {
-    title: 'Saved Profiles',
-    subtitle: 'People you saved to revisit later',
-    emptyCount: 'No saved profiles yet',
-    emptyHint:
-      'Tap the bookmark icon on any profile to save them here. Only you can see this list — saved people are never notified.',
-  },
+/** Recruiter-only (clubs + recruiting coaches): Save is not offered to
+ *  players or to coaches who are only looking for a role. */
+const copy = {
+  title: 'Saved Candidates',
+  subtitle: "Players you've bookmarked from Community",
+  emptyCount: 'No saved candidates yet',
+  emptyHint:
+    'Tap the bookmark icon on any player card in Community to save them here. Only you can see this list — saved players are never notified.',
 } as const
 
-export default function SavedCandidatesCard({ variant = 'recruiter' }: SavedCandidatesCardProps) {
-  const copy = VARIANT_COPY[variant]
+export default function SavedCandidatesCard() {
   const { user } = useAuthStore()
   const navigate = useNavigate()
 

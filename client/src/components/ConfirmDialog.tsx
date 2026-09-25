@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { AlertTriangle, X } from 'lucide-react'
 import { logger } from '@/lib/logger'
-import { useFocusTrap } from '@/hooks/useFocusTrap'
+import { isTopFocusTrap, useFocusTrap } from '@/hooks/useFocusTrap'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 
 /**
@@ -56,6 +56,8 @@ export default function ConfirmDialog({
   useEffect(() => {
     if (!isOpen) return
     const handleKey = (e: KeyboardEvent) => {
+      // Another trapped overlay is on top: its Escape closes it, not this one.
+      if (e.key === 'Escape' && !isTopFocusTrap(dialogRef.current)) return
       if (e.key === 'Escape' && !isSubmitting) {
         e.preventDefault()
         onClose()
