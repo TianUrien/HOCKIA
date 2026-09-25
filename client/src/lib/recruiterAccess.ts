@@ -18,3 +18,16 @@ export function isRecruitingViewer(profile: RecruiterAccessProfile | null | unde
   if (profile.role === 'club') return true
   return profile.role === 'coach' && profile.coach_recruits_for_team === true
 }
+
+/**
+ * The role a recruiting scope reshapes Community to ('player' | 'coach'), or
+ * null. Only a recruiting viewer's scope reshapes anything: a candidate coach
+ * (or a player) with a stale scope row gets the plain, un-reshaped page.
+ */
+export function recruitingScopedRole(
+  profile: RecruiterAccessProfile | null | undefined,
+  activeTargetRole: string | null | undefined,
+): 'player' | 'coach' | null {
+  if (!isRecruitingViewer(profile)) return null
+  return activeTargetRole === 'player' || activeTargetRole === 'coach' ? activeTargetRole : null
+}

@@ -7,7 +7,7 @@ import {
   evidenceFilterActive,
   getActiveFilterChips,
 } from '@/lib/communityActiveFilters'
-import { isRecruitingViewer } from '@/lib/recruiterAccess'
+import { isRecruitingViewer, recruitingScopedRole } from '@/lib/recruiterAccess'
 
 /**
  * Founder 2026-09-26: Community "sort by evidence" and "Enough evidence+"
@@ -63,5 +63,28 @@ describe('Community evidence sort/filter gate', () => {
     const page = readFileSync(resolve(__dirname, '../pages/CommunityPage.tsx'), 'utf-8')
     expect(page).toMatch(/canUseEvidence && \(filters\.role === 'player' \|\| filters\.role === 'coach'\) && \(\s*<option value="evidence">/)
     expect(page).toMatch(/updateFilter\('evidenceEnoughOnly', false\)/)
+  })
+})
+
+describe('Community scope reshaping follows the recruiter rule', () => {
+  it('clubs and recruiting coaches get their scope role', () => {
+    expect(recruitingScopedRole(VIEWERS.club, 'player')).toBe('player')
+    expect(recruitingScopedRole(VIEWERS.recruitingCoach, 'coach')).toBe('coach')
+    expect(recruitingScopedRole(VIEWERS.club, 'custom')).toBeNull()
+    expect(recruitingScopedRole(VIEWERS.club, null)).toBeNull()
+  })
+
+  it('a candidate coach behaves like a player: no reshaping even with a scope row', () => {
+    for (const v of [VIEWERS.candidateCoach, VIEWERS.player, VIEWERS.brand, VIEWERS.umpire, VIEWERS.anon]) {
+      expect(recruitingScopedRole(v, 'player')).toBeNull()
+      expect(recruitingScopedRole(v, 'coach')).toBeNull()
+    }
+  })
+
+  it('CommunityPage derives recruiter + scope from the shared rule, not role === coach', () => {
+    const page = readFileSync(resolve(__dirname, '../pages/CommunityPage.tsx'), 'utf-8')
+    expect(page).toMatch(/const isRecruiterViewer = isRecruitingViewer\(viewerProfile\)/)
+    expect(page).toMatch(/const scopedRole = recruitingScopedRole\(viewerProfile, activeRecruitingRole\)/)
+    expect(page).not.toMatch(/viewerProfile\?\.role === 'coach'/)
   })
 })

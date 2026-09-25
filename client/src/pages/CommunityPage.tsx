@@ -36,7 +36,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { useAuthStore } from '@/lib/auth'
 import { useCountries } from '@/hooks/useCountries'
 import { getActiveFilterChips } from '@/lib/communityActiveFilters'
-import { isRecruitingViewer } from '@/lib/recruiterAccess'
+import { isRecruitingViewer, recruitingScopedRole } from '@/lib/recruiterAccess'
 import { useActiveRecruitingTargetRole } from '@/hooks/useRecruitingContext'
 import ContextSwitcher from '@/components/recruiting/ContextSwitcher'
 import CoachContextNudge from '@/components/recruiting/CoachContextNudge'
@@ -81,15 +81,16 @@ export default function CommunityPage() {
   // the primary axis for reshaping Community: a coach-scope should surface
   // COACHES, a player-scope should surface PLAYERS.
   const activeRecruitingRole = useActiveRecruitingTargetRole()
-  const isRecruiterViewer = viewerProfile?.role === 'club' || viewerProfile?.role === 'coach'
+  // Recruiter = club, or coach who recruits for a team (founder ruling
+  // 2026-09-25). A coach looking for a role is a candidate: no scope
+  // reshaping, no context-fit ranking, no Recruiter Match hint — the page
+  // behaves exactly as it does for a player.
+  const isRecruiterViewer = isRecruitingViewer(viewerProfile)
   // A scope "reshapes" Community only when: viewer is a recruiter, a scope
   // is active, AND it carries a role we can filter on. (target_role is only
   // 'player' or 'coach' today; category-only/custom scopes don't hard-filter
   // by role.)
-  const scopedRole: 'player' | 'coach' | null =
-    isRecruiterViewer && (activeRecruitingRole === 'player' || activeRecruitingRole === 'coach')
-      ? activeRecruitingRole
-      : null
+  const scopedRole = recruitingScopedRole(viewerProfile, activeRecruitingRole)
   // "Show everyone" escape — the recruiter can widen past the auto role
   // filter without clearing the scope (Fit ranking + category still apply).
   // Reset whenever the scoped role changes so a new scope re-focuses.
