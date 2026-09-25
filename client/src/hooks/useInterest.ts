@@ -17,6 +17,7 @@
 
 import { useMemo } from 'react'
 import { useAuthStore } from '@/lib/auth'
+import { isRecruitingViewer } from '@/lib/recruiterAccess'
 import { useCountries } from '@/hooks/useCountries'
 import { computeInterest, type InterestResult, type InterestCandidateFields } from '@/lib/interestFit'
 import { getClubLevelBand } from '@/hooks/useWorldClubLogo'
@@ -52,7 +53,8 @@ export function useInterest(
   candidate: InterestCandidateInput | null | undefined,
 ): InterestResult {
   const { profile: viewer } = useAuthStore()
-  const isRecruiter = viewer?.role === 'club' || viewer?.role === 'coach'
+  // Recruiters only: clubs + coaches who recruit (founder rule 2026-09-25).
+  const isRecruiter = isRecruitingViewer(viewer)
   const targetRole = useActiveRecruitingTargetRole()
   const targetLocationCountry = useActiveRecruitingTargetLocation()
   const targetStartDate = useActiveRecruitingTargetStartDate()

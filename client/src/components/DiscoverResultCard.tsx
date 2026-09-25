@@ -7,6 +7,8 @@ import { ConditionalAvailabilityPill } from '@/components/AvailabilityPill'
 import { isOpenToAvailability } from '@/lib/availabilityLabel'
 import type { DiscoverResult } from '@/hooks/useDiscover'
 import { getSpecializationLabel } from '@/lib/coachSpecializations'
+import { useAuthStore } from '@/lib/auth'
+import { isRecruitingViewer } from '@/lib/recruiterAccess'
 
 interface DiscoverResultCardProps {
   result: DiscoverResult
@@ -76,6 +78,9 @@ function KeyInfoRow({ label, value }: { label: string; value: string }) {
 export default function DiscoverResultCard({ result }: DiscoverResultCardProps) {
   const navigate = useNavigate()
   const [expanded, setExpanded] = useState(false)
+  // Match language is recruiter-only (founder rule 2026-09-25): players and
+  // coaches looking for a role never see "Strong / Good match" pills.
+  const showFit = useAuthStore((s) => isRecruitingViewer(s.profile))
 
   const isWorldClub = result.result_type === 'world_club'
 
@@ -114,7 +119,7 @@ export default function DiscoverResultCard({ result }: DiscoverResultCardProps) 
   const baseLine = result.base_location || result.base_country_name
   const club = !isWorldClub ? result.current_club : null
 
-  const fitPreset = result.fit_level ? FIT_LEVEL_PRESET[result.fit_level] : null
+  const fitPreset = showFit && result.fit_level ? FIT_LEVEL_PRESET[result.fit_level] : null
 
   const availabilityPill = !isWorldClub && isOpenToAvailability(result.role, result) ? (
     <ConditionalAvailabilityPill

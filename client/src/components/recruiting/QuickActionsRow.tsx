@@ -17,15 +17,20 @@
  *     MoreActionsMenu; off by default for cleaner Community cards,
  *     can be enabled for surfaces that need list management).
  *
- * Visibility: hidden for own-profile or anonymous viewers. Save + Message +
- * Add friend are available to any authenticated non-self viewer. More menu
- * hidden by default (can be enabled with showMoreMenu).
+ * Visibility: hidden for own-profile or anonymous viewers. Message + Add
+ * friend are available to any authenticated non-self viewer. Save and the
+ * More menu (shortlist actions) render only for recruiters — clubs and
+ * coaches who recruit for a team (founder rule 2026-09-25: players and
+ * candidate coaches have no Save). More menu hidden by default (can be
+ * enabled with showMoreMenu).
  */
 
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Bookmark, BookmarkCheck, Check, MessageSquare, UserPlus, UserCheck } from 'lucide-react'
 import type { ConversationOrigin } from '@/types/chat'
 import { useIsProfileSaved } from '@/hooks/useSavedProfiles'
+import { useAuthStore } from '@/lib/auth'
+import { isRecruitingViewer } from '@/lib/recruiterAccess'
 import { useFriendship } from '@/hooks/useFriendship'
 import { useToastStore } from '@/lib/toast'
 import { trackDbEvent } from '@/lib/trackDbEvent'
@@ -73,6 +78,7 @@ export default function QuickActionsRow({
   const navigate = useNavigate()
   const location = useLocation()
   const savedState = useIsProfileSaved(playerId)
+  const canSave = useAuthStore((s) => isRecruitingViewer(s.profile))
 
   if (savedState.isOwnProfile) return null
   if (!savedState.isAuthenticated) {
@@ -102,15 +108,17 @@ export default function QuickActionsRow({
 
   return (
     <div className={['inline-flex items-center gap-1', className].join(' ')}>
-      <ActionButton
-        compact={compact}
-        active={savedState.isSaved}
-        onClick={() => void savedState.toggle()}
-        disabled={savedState.mutating}
-        label={labelSave}
-        icon={savedState.isSaved ? BookmarkCheck : Bookmark}
-        text={savedState.isSaved ? 'Saved' : 'Save'}
-      />
+      {canSave && (
+        <ActionButton
+          compact={compact}
+          active={savedState.isSaved}
+          onClick={() => void savedState.toggle()}
+          disabled={savedState.mutating}
+          label={labelSave}
+          icon={savedState.isSaved ? BookmarkCheck : Bookmark}
+          text={savedState.isSaved ? 'Saved' : 'Save'}
+        />
+      )}
 
       <ActionButton
         compact={compact}
@@ -124,7 +132,7 @@ export default function QuickActionsRow({
         <AddFriendAction playerId={playerId} playerName={playerName} compact={compact} />
       )}
 
-      {showMoreMenu && (
+      {showMoreMenu && canSave && (
         <MoreActionsMenu
           playerId={playerId}
           playerName={playerName}

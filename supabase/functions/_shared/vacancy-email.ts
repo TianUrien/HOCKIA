@@ -654,3 +654,50 @@ export function isVacancyNewlyPublished(payload: VacancyPayload): boolean {
   
   return false
 }
+
+/**
+ * Minimal RPC surface needed by claimFirstAnnouncement (keeps it unit-testable
+ * without a real Supabase client).
+ */
+export interface AnnouncementRpcClient {
+  rpc(
+    fn: 'claim_opportunity_announcement_email',
+    args: { p_opportunity_id: string },
+  ): PromiseLike<{ data: boolean | null; error: { message: string } | null }>
+}
+
+export type AnnouncementClaim =
+  | { outcome: 'claimed' }
+  | { outcome: 'already_announced' }
+  | { outcome: 'error'; message: string }
+
+/**
+ * Founder ruling E: the new-role email goes out ONLY the first time a role is
+ * published — never again when the club closes and reopens or renews it.
+ *
+ * `status` flipping to 'open' is not enough to tell a first publish from a
+ * reopen (and published_at is re-stamped on every reopen), so the decision
+ * lives in the DB: claim_opportunity_announcement_email() atomically stamps
+ * opportunity_first_publications.email_claimed_at and returns true exactly
+ * once per opportunity, ever. That also makes webhook double-delivery and
+ * concurrent deliveries safe.
+ *
+ * Fails CLOSED: any error or unexpected result means "do not send". A missed
+ * announcement is recoverable; a mass re-send to every player is not.
+ */
+export async function claimFirstAnnouncement(
+  supabase: AnnouncementRpcClient,
+  opportunityId: string,
+): Promise<AnnouncementClaim> {
+  try {
+    const { data, error } = await supabase.rpc('claim_opportunity_announcement_email', {
+      p_opportunity_id: opportunityId,
+    })
+    if (error) return { outcome: 'error', message: error.message }
+    if (data === true) return { outcome: 'claimed' }
+    if (data === false) return { outcome: 'already_announced' }
+    return { outcome: 'error', message: `unexpected claim result: ${JSON.stringify(data)}` }
+  } catch (e) {
+    return { outcome: 'error', message: e instanceof Error ? e.message : String(e) }
+  }
+}

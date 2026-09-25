@@ -4,7 +4,9 @@
  * Locks in:
  *   - Returns null for anonymous viewers
  *   - Returns null when viewer is the profile's own user
- *   - Renders Save + Message + ⋯ for authenticated non-self players
+ *   - Save + ⋯ (shortlist actions) are recruiter-only: clubs and coaches
+ *     who recruit for a team (founder rule 2026-09-25). Players and
+ *     candidate coaches get Message + Add friend only.
  *   - Never renders the removed Invite/Compare placeholders (any role)
  *   - Save click delegates to useIsProfileSaved.toggle
  *   - Message click uses onMessage override when provided
@@ -31,9 +33,9 @@ vi.mock('@/lib/supabase', () => ({
 }))
 
 // Per-test mutable auth state — set viewer role + id from the helper below.
-const authState: { profile: { id: string; role: string } | null } = { profile: null }
+const authState: { profile: { id: string; role: string; coach_recruits_for_team?: boolean } | null } = { profile: null }
 vi.mock('@/lib/auth', () => ({
-  useAuthStore: () => authState,
+  useAuthStore: (selector?: (s: typeof authState) => unknown) => (selector ? selector(authState) : authState),
 }))
 
 // useIsProfileSaved — per-test mutable so we can flip auth + saved.
@@ -79,8 +81,8 @@ vi.mock('react-router-dom', async () => {
 
 import QuickActionsRow from '@/components/recruiting/QuickActionsRow'
 
-function setViewer(opts: { role: string | null; isAuthenticated?: boolean; isOwnProfile?: boolean; isSaved?: boolean }) {
-  authState.profile = opts.role ? { id: 'viewer-1', role: opts.role } : null
+function setViewer(opts: { role: string | null; recruits?: boolean; isAuthenticated?: boolean; isOwnProfile?: boolean; isSaved?: boolean }) {
+  authState.profile = opts.role ? { id: 'viewer-1', role: opts.role, coach_recruits_for_team: opts.recruits ?? false } : null
   savedState.isAuthenticated = opts.isAuthenticated ?? Boolean(opts.role)
   savedState.isOwnProfile = opts.isOwnProfile ?? false
   savedState.isSaved = opts.isSaved ?? false
@@ -112,13 +114,35 @@ describe('QuickActionsRow', () => {
     expect(container.firstChild).toBeNull()
   })
 
-  it('renders Save + Message + Add friend by default (no More menu)', () => {
+  it('a player viewer gets Message + Add friend but never Save or the ⋯ menu', () => {
     setViewer({ role: 'player' })
-    renderRow()
-    expect(screen.getByRole('button', { name: /save jordan hall/i })).toBeInTheDocument()
+    renderRow({ showMoreMenu: true })
+    expect(screen.queryByRole('button', { name: /save jordan hall/i })).not.toBeInTheDocument()
+    expect(screen.queryByText('Save')).not.toBeInTheDocument()
+    expect(screen.queryByText('Saved')).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: /message jordan hall/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /add jordan hall as a friend/i })).toBeInTheDocument()
     expect(screen.queryByTestId('more-actions-menu')).not.toBeInTheDocument()
+  })
+
+  it('a player viewer never sees "Saved" even for a legacy saved row', () => {
+    setViewer({ role: 'player', isSaved: true })
+    renderRow()
+    expect(screen.queryByText('Saved')).not.toBeInTheDocument()
+  })
+
+  it('a coach who is not recruiting gets no Save', () => {
+    setViewer({ role: 'coach', recruits: false })
+    renderRow({ showMoreMenu: true })
+    expect(screen.queryByRole('button', { name: /save jordan hall/i })).not.toBeInTheDocument()
+    expect(screen.queryByTestId('more-actions-menu')).not.toBeInTheDocument()
+  })
+
+  it('a recruiting coach gets Save and the ⋯ menu when enabled', () => {
+    setViewer({ role: 'coach', recruits: true })
+    renderRow({ showMoreMenu: true })
+    expect(screen.getByRole('button', { name: /save jordan hall/i })).toBeInTheDocument()
+    expect(screen.getByTestId('more-actions-menu')).toBeInTheDocument()
   })
 
   it('never renders the removed Invite/Compare placeholders for non-recruiters', () => {
@@ -147,14 +171,14 @@ describe('QuickActionsRow', () => {
   })
 
   it('renders "Saved" label + active state when already saved', () => {
-    setViewer({ role: 'player', isSaved: true })
+    setViewer({ role: 'club', isSaved: true })
     renderRow()
     expect(screen.getByRole('button', { name: /remove jordan hall from saved/i })).toBeInTheDocument()
     expect(screen.getByText('Saved')).toBeInTheDocument()
   })
 
   it('invokes useIsProfileSaved.toggle when Save is clicked', async () => {
-    setViewer({ role: 'player' })
+    setViewer({ role: 'club' })
     renderRow()
     await userEvent.click(screen.getByRole('button', { name: /save jordan hall/i }))
     expect(savedState.toggle).toHaveBeenCalledTimes(1)

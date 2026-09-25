@@ -20,6 +20,7 @@ import {
   generateEmailText,
   sendEmailsIndividually,
   isVacancyNewlyPublished,
+  claimFirstAnnouncement,
 } from '../_shared/vacancy-email.ts'
 import { renderTemplate } from '../_shared/email-renderer.ts'
 import { sendTrackedBatch, RecipientInfo } from '../_shared/email-sender.ts'
@@ -40,6 +41,8 @@ import { sendTrackedBatch, RecipientInfo } from '../_shared/email-sender.ts'
  * 1. Only processes vacancies from NON-test accounts
  * 2. Never sends to test recipients or test accounts
  * 3. Only sends when vacancy is newly published (status becomes 'open')
+ *    AND it has never been announced before (first publish only; reopen and
+ *    renewal never re-send — see claimFirstAnnouncement)
  * 4. Recipients are queried from database based on role matching
  * 
  * Webhook configuration:
@@ -290,32 +293,41 @@ Deno.serve(async (req: Request) => {
     })
 
     // ==========================================================================
-    // IDEMPOTENCY CHECK: Prevent duplicate sends from webhook double-delivery.
-    // Match on the stamped vacancy_id in metadata (see sendTrackedBatch call
-    // below), NOT an ilike on the subject — a `%title%` substring match
-    // over-suppressed a legitimate send whenever an UNRELATED recent vacancy's
-    // subject merely contained this title (e.g. two clubs both posting a
-    // generic "Goalkeeper", or "Coach" inside "Assistant Coach").
+    // FIRST-PUBLISH-ONLY GUARD (founder ruling E, 2026-09-26)
+    // A role is announced by email ONCE — the first time it is published.
+    // Closing and reopening, renewing, or a webhook re-delivery never re-sends.
+    // The old guard only looked back 10 minutes in email_sends, so a club
+    // toggling closed->open every ~11 minutes re-mailed every opted-in player.
+    // The claim is atomic in the DB (opportunity_first_publications), so only
+    // one delivery can ever win it. Fails closed: on error, do not send.
     // ==========================================================================
-    const { count: alreadySentCount } = await supabase
-      .from('email_sends')
-      .select('id', { count: 'exact', head: true })
-      .eq('template_key', 'vacancy_notification')
-      .eq('status', 'sent')
-      .gte('sent_at', new Date(Date.now() - 10 * 60 * 1000).toISOString())
-      .eq('metadata->>vacancy_id', vacancy.id)
+    const claim = await claimFirstAnnouncement(supabase, vacancy.id)
 
-    if (alreadySentCount && alreadySentCount > 0) {
-      logger.info('Idempotency guard: vacancy notification already sent recently', {
+    if (claim.outcome === 'error') {
+      logger.error('Announcement claim failed - not sending', {
         vacancyId: vacancy.id,
-        vacancyTitle: vacancy.title,
-        existingSendCount: alreadySentCount,
+        error: claim.message,
+      })
+      captureException(new Error(`notify-vacancy claim failed: ${claim.message}`), {
+        functionName: 'notify-vacancy',
+        correlationId,
+      })
+      return new Response(
+        JSON.stringify({ error: 'Announcement claim failed', vacancyId: vacancy.id }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    if (claim.outcome === 'already_announced') {
+      logger.info('Role already announced once - not re-sending (reopen/renewal/duplicate)', {
+        vacancyId: vacancy.id,
+        previousStatus: payload.old_record?.status,
       })
       return new Response(
         JSON.stringify({
           success: true,
           mode: 'REAL',
-          message: 'Duplicate webhook — notification already sent',
+          message: 'Ignored - role was already announced',
           vacancyId: vacancy.id,
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -403,8 +415,7 @@ Deno.serve(async (req: Request) => {
       text: baseText,
       templateKey: 'vacancy_notification',
       logger,
-      // Stamp the vacancy id on every success row so the idempotency check
-      // above can match precisely on a re-delivery (no fuzzy subject match).
+      // Stamp the vacancy id on every success row (audit / analytics).
       metadata: { vacancy_id: vacancy.id },
       renderForRecipient: (r: RecipientInfo) => {
         const firstName = r.recipientName
