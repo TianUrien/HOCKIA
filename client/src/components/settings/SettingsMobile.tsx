@@ -12,6 +12,7 @@ import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
 import { logger } from '@/lib/logger'
 import { usePushSubscription } from '@/hooks/usePushSubscription'
+import { useFullMatchPrivacyNotice } from '@/hooks/useFullMatchPrivacyNotice'
 import { useBlockedUsers } from '@/hooks/useBlockedUsers'
 import { roleLabel } from '@/lib/identity'
 import { getImageUrl } from '@/lib/imageUrl'
@@ -98,7 +99,8 @@ function Hub({ go }: { go: (s: SettingsSection | 'account') => void }) {
 
   const provider = PROVIDER[(user?.app_metadata?.provider as string | undefined) ?? 'email'] ?? 'email'
   const preference = read<string | null>('opportunity_preference', null)
-  const visibility = read<string>('highlight_visibility', 'recruiters')
+  const fullMatches = read<string>('full_match_visibility', 'recruiters')
+  const isPlayer = profile?.role === 'player'
   const languages = (profile?.languages ?? []).filter(Boolean)
   const dob = longDate(profile?.date_of_birth)
   const name = profile?.full_name?.trim() || 'Your profile'
@@ -134,7 +136,7 @@ function Hub({ go }: { go: (s: SettingsSection | 'account') => void }) {
 
       <SettingsGroup label="Preferences">
         <SettingsRow title="Notifications" value="Per type" icon={<Bell className="h-4 w-4" strokeWidth={2} />} onClick={() => go('notifications')} />
-        <SettingsRow title="Privacy" value={!isClub ? (visibility === 'public' ? 'Everyone' : 'Clubs & coaches') : undefined} icon={<Lock className="h-4 w-4" strokeWidth={2} />} iconClassName="bg-positive-soft text-positive" onClick={() => go('privacy')} />
+        <SettingsRow title="Privacy" value={isPlayer ? (fullMatches === 'public' ? 'Everyone' : 'Clubs & coaches') : undefined} icon={<Lock className="h-4 w-4" strokeWidth={2} />} iconClassName="bg-positive-soft text-positive" onClick={() => go('privacy')} />
         <SettingsRow title="Language" value="English" icon={<Languages className="h-4 w-4" strokeWidth={2} />} iconClassName="bg-[#e8edfd] text-[#3b5bdb]" />
       </SettingsGroup>
 
@@ -269,27 +271,33 @@ function Notifications({ back }: { back: () => void }) {
 function Privacy({ back, go }: { back: () => void; go: (s: SettingsSection) => void }) {
   const { read, write, toggle, busy } = useProfileWriter()
   const { blockedIds } = useBlockedUsers()
-  const isClub = useAuthStore((st) => st.profile?.role) === 'club'
-  const visibility = read<string>('highlight_visibility', 'recruiters')
+  const { profile } = useAuthStore()
+  const { resolveNotice } = useFullMatchPrivacyNotice()
+  const visibility = read<string>('full_match_visibility', 'recruiters')
   const options = useMemo(() => [
-    { value: 'recruiters', title: 'Clubs & coaches', subtitle: 'Recruiters only. Highlights and reels stay public.' },
-    { value: 'public', title: 'Everyone on Hockia', subtitle: 'Any signed-in member.' },
+    { value: 'recruiters', title: 'Clubs & coaches', subtitle: 'Clubs and coaches who recruit. Highlights and reels stay public.' },
+    { value: 'public', title: 'Everyone on Hockia', subtitle: 'Anyone on Hockia can watch them.' },
   ], [])
+  const choose = async (value: string) => {
+    if (visibility === value) return
+    // Answering here also answers the one-time notice, so it never re-asks.
+    if (await write({ full_match_visibility: value }, 'full_match_visibility')) void resolveNotice(value === 'public')
+  }
 
   return (
     <Screen parent="Settings" title="Privacy" onBack={back}>
-      {!isClub && (
-      <SettingsGroup label="Default for new full matches" footer="Full matches carry the most detail about how you play, so they are locked to recruiters by default. You can change any single video from Manage media.">
-        {options.map((o) => (
-          <button key={o.value} type="button" role="radio" aria-checked={visibility === o.value} disabled={busy === 'highlight_visibility'} onClick={() => { if (visibility !== o.value) void write({ highlight_visibility: o.value }, 'highlight_visibility') }} className="flex w-full items-center gap-3 px-4 py-3 text-left">
-            <span className="min-w-0 flex-1">
-              <span className="block text-body text-ink-1">{o.title}</span>
-              <span className="block text-secondary text-ink-2">{o.subtitle}</span>
-            </span>
-            {visibility === o.value && <Check className="h-5 w-5 shrink-0 text-hockia-primary" strokeWidth={2.4} />}
-          </button>
-        ))}
-      </SettingsGroup>
+      {profile?.role === 'player' && (
+        <SettingsGroup label="Who can watch your full matches" footer="Applies to all your full matches. You can still change a single video in Manage media.">
+          {options.map((o) => (
+            <button key={o.value} type="button" role="radio" aria-checked={visibility === o.value} disabled={busy === 'full_match_visibility'} onClick={() => void choose(o.value)} className="flex w-full items-center gap-3 px-4 py-3 text-left" data-testid={`full-match-visibility-${o.value}`}>
+              <span className="min-w-0 flex-1">
+                <span className="block text-body text-ink-1">{o.title}</span>
+                <span className="block text-secondary text-ink-2">{o.subtitle}</span>
+              </span>
+              {visibility === o.value && <Check className="h-5 w-5 shrink-0 text-hockia-primary" strokeWidth={2.4} />}
+            </button>
+          ))}
+        </SettingsGroup>
       )}
 
       <SettingsGroup label="Visibility">

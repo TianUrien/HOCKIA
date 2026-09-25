@@ -8,14 +8,17 @@
 //   1. Look up the player_videos row.
 //   2. Enforce visibility:
 //        - 'public'     → anyone (incl. anon) may play.
-//        - 'recruiters' → only club/coach roles (or the owner) may play.
+//        - 'recruiters' → only recruiters (or the owner) may play. A
+//          recruiter is a club, or a coach with coach_recruits_for_team,
+//          and not a hidden profile — public.is_recruiter(uid), the same
+//          definition the player_videos SELECT policy uses.
 //      This is the enforcement that's IMPOSSIBLE with a public
 //      YouTube/Drive URL — it's the whole reason for native upload.
 //   3. Mint a short-lived (TTL) signed Cloudflare Stream token and return
 //      the HLS/dash manifest URLs + a signed thumbnail URL.
 //
 // Auth: optional JWT. Anonymous callers may only get tokens for public
-// ready videos; recruiters-only requires a club/coach JWT.
+// ready videos; recruiters-only requires a recruiter's JWT.
 //
 // Cloudflare config (Phase 3 secrets):
 //   CF_ACCOUNT_ID
@@ -52,12 +55,15 @@ Deno.serve(async (req) => {
   // Optional auth — anonymous is allowed for public videos. Resolved in the
   // background so it overlaps the video read instead of preceding it.
   const jwt = req.headers.get('Authorization')?.replace(/^Bearer\s+/i, '') ?? ''
-  const viewerPromise: Promise<{ id: string | null; role: string | null }> = (async () => {
-    if (!jwt) return { id: null, role: null }
+  const viewerPromise: Promise<Viewer> = (async () => {
+    if (!jwt) return { id: null, recruiter: false }
     const { data: userData } = await supabase.auth.getUser(jwt)
-    if (!userData?.user) return { id: null, role: null }
-    const { data: prof } = await supabase.from('profiles').select('role').eq('id', userData.user.id).single()
-    return { id: userData.user.id, role: (prof as { role?: string } | null)?.role ?? null }
+    if (!userData?.user) return { id: null, recruiter: false }
+    // One recruiter definition for RLS and this function (SQL is_recruiter).
+    // Fails closed: an RPC error means "not a recruiter".
+    const { data: recruiter, error } = await supabase.rpc('is_recruiter', { p_uid: userData.user.id })
+    if (error) console.error('[video-playback-token] is_recruiter failed', error.message)
+    return { id: userData.user.id, recruiter: recruiter === true }
   })()
 
   let body: Record<string, unknown>
@@ -223,11 +229,11 @@ Deno.serve(async (req) => {
 
   function decide(
     videos: VideoRow[],
-    viewer: { id: string | null; role: string | null },
+    viewer: Viewer,
     fence: { visibleOwners: Set<string>; blockedOwners: Set<string> },
   ): Map<string, VideoRow | Denied> {
     const out = new Map<string, VideoRow | Denied>()
-    const isRecruiter = viewer.role === 'club' || viewer.role === 'coach'
+    const isRecruiter = viewer.recruiter
     for (const v of videos) {
       if (v.status !== 'ready' || !v.cf_uid) { out.set(v.id, { error: 'not_ready', status: 409 }); continue }
       if (!fence.visibleOwners.has(v.user_id) || fence.blockedOwners.has(v.user_id)) { out.set(v.id, { error: 'not_found', status: 404 }); continue }
@@ -318,3 +324,4 @@ type VideoRow = {
   duration_seconds: number | null
 }
 type Denied = { error: string; status: number }
+type Viewer = { id: string | null; recruiter: boolean }

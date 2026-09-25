@@ -996,4 +996,60 @@ describe.skipIf(skip)('RLS Policy Isolation', () => {
       }
     })
   })
+
+  // =========================================================================
+  // FULL-MATCH PRIVACY (migration 20260926120000)
+  // Full matches default to clubs + recruiting coaches; the player's master
+  // switch is profiles.full_match_visibility. Read-only assertions — the
+  // switch itself is covered by supabase/tests/security/full_match_privacy.probe.sql
+  // (rolled back), so these never flip shared staging state.
+  // =========================================================================
+  describe('full-match privacy', () => {
+    it('the player can read their own master switch', async () => {
+      const { data, error } = await player.client
+        .from('profiles')
+        .select('full_match_visibility')
+        .eq('id', player.userId)
+        .single()
+      expect(error).toBeNull()
+      expect(['public', 'recruiters']).toContain(data?.full_match_visibility)
+    })
+
+    it('a non-recruiter sees no recruiters-only full-match rows, but gets their count', async () => {
+      const { data: rows } = await brand.client
+        .from('player_videos')
+        .select('id, visibility')
+        .eq('user_id', player.userId)
+        .eq('kind', 'full_match')
+      for (const row of rows ?? []) expect(row.visibility).toBe('public')
+
+      const { data: summary, error } = await brand.client.rpc('get_video_access_summary', { p_profile_id: player.userId })
+      expect(error).toBeNull()
+      const locked = (summary as { locked_full_matches?: number } | null)?.locked_full_matches
+      expect(typeof locked).toBe('number')
+    })
+
+    it('a club reads every full match a player has, and sees nothing locked', async () => {
+      const { data: summary, error } = await club.client.rpc('get_video_access_summary', { p_profile_id: player.userId })
+      expect(error).toBeNull()
+      expect((summary as { locked_full_matches?: number } | null)?.locked_full_matches).toBe(0)
+    })
+
+    it('get_my_pulse never returns the one-time privacy notice', async () => {
+      const { data, error } = await player.client.rpc('get_my_pulse', { p_limit: 50 })
+      expect(error).toBeNull()
+      for (const item of (data ?? []) as { item_type: string }[]) {
+        expect(item.item_type).not.toBe('full_match_privacy_default')
+      }
+    })
+
+    it('another member cannot flip a player\'s master switch', async () => {
+      const { data } = await club.client
+        .from('profiles')
+        .update({ full_match_visibility: 'public' })
+        .eq('id', player.userId)
+        .select('id')
+      expect(data ?? []).toHaveLength(0)
+    })
+  })
 })

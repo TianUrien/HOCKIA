@@ -87,9 +87,23 @@ export function useFullGameVideos(targetUserId: string | null | undefined): UseF
           .single()
         if (insertError) throw insertError
         if (!data) return null
+        // The server gives every new full match the player's master switch
+        // (profiles.full_match_visibility). A different explicit choice is a
+        // per-video exception, saved right after the insert.
+        let row = data
+        if (input.visibility && data.visibility !== input.visibility) {
+          const { data: updated, error: visError } = await supabase
+            .from('player_full_game_videos')
+            .update({ visibility: input.visibility })
+            .eq('id', data.id)
+            .select('*')
+            .single()
+          if (visError) logger.error('[useFullGameVideos] per-video visibility failed', visError)
+          else if (updated) row = updated
+        }
         // Optimistic prepend in display order; the next refetch reconciles.
-        setVideos((prev) => sortVideos([data, ...prev]))
-        return data
+        setVideos((prev) => sortVideos([row, ...prev]))
+        return row
       } catch (err) {
         logger.error('[useFullGameVideos] addVideo failed', err)
         return null

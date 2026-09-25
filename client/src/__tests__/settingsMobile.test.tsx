@@ -1,7 +1,8 @@
 /**
  * Phone Settings is shared by every role. Player-only rows (availability,
- * "Looking for", the full-match default, date of birth, languages, My
- * applications / New roles) must not show for a club — a club flipping
+ * "Looking for", date of birth, languages, My
+ * applications / New roles) must not show for a club; the full-match setting is
+ * players-only (Phase 1 step 3) — a club flipping
  * "Open to opportunities" here used to drive its Recruiting pill.
  */
 import { render, screen } from '@testing-library/react'
@@ -29,6 +30,7 @@ vi.mock('@/hooks/useBlockedUsers', () => ({ useBlockedUsers: () => ({ blockedIds
 vi.mock('@/components/BlockedAccountsList', () => ({ default: () => null }))
 vi.mock('@/components/DeleteAccountModal', () => ({ default: () => null }))
 vi.mock('@/lib/analytics', () => ({ trackPushSubscribe: vi.fn(), trackPushUnsubscribe: vi.fn() }))
+vi.mock('@/hooks/useFullMatchPrivacyNotice', () => ({ useFullMatchPrivacyNotice: () => ({ resolveNotice: vi.fn() }) }))
 
 import SettingsMobile, { type SettingsSection } from '@/components/settings/SettingsMobile'
 
@@ -83,14 +85,18 @@ describe('SettingsMobile · notifications and privacy', () => {
     expect(screen.getByText('New roles')).toBeTruthy()
   })
 
-  it('the full-match default is hidden for a club, shown for a player', () => {
+  it('the full-match setting is for players only (hidden for clubs and coaches)', () => {
     as('club')
-    const { unmount } = renderAt('privacy')
-    expect(screen.queryByText('Default for new full matches')).toBeNull()
+    const club = renderAt('privacy')
+    expect(screen.queryByText('Who can watch your full matches')).toBeNull()
     expect(screen.getByText('Browse anonymously')).toBeTruthy()
-    unmount()
+    club.unmount()
+    as('coach')
+    const coach = renderAt('privacy')
+    expect(screen.queryByText('Who can watch your full matches')).toBeNull()
+    coach.unmount()
     as('player')
     renderAt('privacy')
-    expect(screen.getByText('Default for new full matches')).toBeTruthy()
+    expect(screen.getByText('Who can watch your full matches')).toBeTruthy()
   })
 })

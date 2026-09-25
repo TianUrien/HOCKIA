@@ -6,6 +6,7 @@ import FullGameVideoFormModal from './FullGameVideoFormModal'
 import Skeleton from './Skeleton'
 import { useToastStore } from '@/lib/toast'
 import { useFullGameVideos, type FullGameVideo } from '@/hooks/useFullGameVideos'
+import { useVideoAccessSummary } from '@/hooks/useVideoAccessSummary'
 import { cn } from '@/lib/utils'
 
 /**
@@ -70,6 +71,9 @@ export default function FullGameVideosSection({
   readOnly = false,
 }: FullGameVideosSectionProps) {
   const { videos, isLoading, addVideo, updateVideo, deleteVideo } = useFullGameVideos(playerUserId)
+  // Visitors who are not recruiters get a count of what RLS hid from them,
+  // so the section reads "for clubs and coaches" instead of vanishing.
+  const { lockedFullMatches } = useVideoAccessSummary(playerUserId, { enabled: readOnly })
   const { addToast } = useToastStore()
   const [showFormModal, setShowFormModal] = useState(false)
   const [editingVideo, setEditingVideo] = useState<FullGameVideo | null>(null)
@@ -113,9 +117,10 @@ export default function FullGameVideosSection({
   // Visitor mode + zero videos → hide the entire section (no orphan
   // header). Owner mode keeps the header so the empty-state nudge can
   // motivate the first add. RLS filters which rows the visitor sees;
-  // an anonymous / player visitor sees only `visibility='public'` rows,
-  // a club / coach visitor sees public + recruiters.
-  if (readOnly && !isLoading && videos.length === 0) {
+  // an anonymous / player / non-recruiting coach visitor sees only
+  // `visibility='public'` rows (plus a locked count), a club or a coach who
+  // recruits sees public + recruiters.
+  if (readOnly && !isLoading && videos.length === 0 && lockedFullMatches === 0) {
     return null
   }
 
@@ -150,7 +155,7 @@ export default function FullGameVideosSection({
           <Skeleton className="h-24 w-full rounded-xl" variant="rectangular" />
           <Skeleton className="h-24 w-full rounded-xl" variant="rectangular" />
         </div>
-      ) : videos.length === 0 ? (
+      ) : videos.length === 0 && lockedFullMatches === 0 ? (
         readOnly ? null : (
           <div className="rounded-xl border-2 border-dashed border-gray-200 bg-gray-50/50 p-6 text-center">
             <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
@@ -164,6 +169,19 @@ export default function FullGameVideosSection({
         )
       ) : (
         <ul className="space-y-2">
+          {lockedFullMatches > 0 && (
+            <li className="flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 p-4" data-testid="full-game-videos-locked">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-gray-700 ring-1 ring-gray-200">
+                <Lock className="h-4 w-4" aria-hidden="true" />
+              </span>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-gray-900">
+                  {lockedFullMatches === 1 ? '1 full match' : `${lockedFullMatches} full matches`} for clubs and coaches only
+                </p>
+                <p className="text-xs text-gray-500">Only clubs and coaches who recruit can watch full matches.</p>
+              </div>
+            </li>
+          )}
           {videos.map((v) => (
             <FullGameVideoRow
               key={v.id}
@@ -227,12 +245,12 @@ function FullGameVideoRow({ video, readOnly, onEdit, onDelete }: FullGameVideoRo
             {isRecruiterOnly && (
               <span
                 className={cn(
-                  'inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700',
+                  'inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-700',
                 )}
-                title="Visible to clubs and coaches only"
+                title="Visible to clubs and coaches who recruit"
               >
                 <Lock className="h-2.5 w-2.5" aria-hidden="true" />
-                Recruiters only
+                Clubs &amp; coaches
               </span>
             )}
           </div>

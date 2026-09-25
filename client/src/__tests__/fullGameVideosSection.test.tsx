@@ -8,6 +8,12 @@ vi.mock('@/hooks/useFullGameVideos', () => ({
   useFullGameVideos: (...args: unknown[]) => mockUseFullGameVideos(...args),
 }))
 
+// Locked-count hook (get_video_access_summary) — zero unless a test sets it.
+const mockAccess = vi.fn(() => ({ lockedFullMatches: 0, lockedHighlights: 0 }))
+vi.mock('@/hooks/useVideoAccessSummary', () => ({
+  useVideoAccessSummary: () => mockAccess(),
+}))
+
 vi.mock('@/lib/toast', () => ({
   useToastStore: () => ({ addToast: vi.fn() }),
 }))
@@ -139,7 +145,7 @@ describe('FullGameVideosSection', () => {
     expect(link.rel).toContain('noopener')
   })
 
-  it('shows the "Recruiters only" badge when visibility=recruiters', () => {
+  it('shows the "Clubs & coaches" badge when visibility=recruiters', () => {
     mockUseFullGameVideos.mockReturnValue({
       videos: [{ ...baseVideo, visibility: 'recruiters' }],
       isLoading: false,
@@ -152,7 +158,26 @@ describe('FullGameVideosSection', () => {
 
     render(<FullGameVideosSection playerUserId="player-1" />)
 
-    expect(screen.getByText(/Recruiters only/i)).toBeInTheDocument()
+    expect(screen.getByText(/Clubs & coaches/i)).toBeInTheDocument()
+  })
+
+  it('shows a locked card to a non-recruiter visitor when full matches are hidden from them', () => {
+    mockAccess.mockReturnValueOnce({ lockedFullMatches: 2, lockedHighlights: 0 })
+    mockUseFullGameVideos.mockReturnValue({
+      videos: [],
+      isLoading: false,
+      error: null,
+      refetch: vi.fn(),
+      addVideo: vi.fn(),
+      updateVideo: vi.fn(),
+      deleteVideo: vi.fn(),
+    })
+
+    render(<FullGameVideosSection playerUserId="player-1" readOnly />)
+
+    // RLS returned no rows, but the section still says what is there.
+    expect(screen.getByTestId('full-game-videos-locked')).toHaveTextContent('2 full matches for clubs and coaches only')
+    expect(screen.queryByText('No match videos yet')).not.toBeInTheDocument()
   })
 
   it('renders nothing for the missing-everything edge case (no opponent, no context, no player line)', () => {
