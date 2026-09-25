@@ -75,4 +75,12 @@ export const qk = {
   /** Conversation list page keyed by pagination cursor (MessagesPage). */
   conversations: (userId: string | null, cursor: string) =>
     ['conversations', 'page', userId, cursor] as const,
+  /** Locked full-match / highlight counts for a profile, as this viewer
+   *  sees it (get_video_access_summary). Viewer id is part of the key: the
+   *  answer differs for the owner, recruiters and everyone else. */
+  videoAccessSummary: (profileId: string | null, viewerId: string | null) =>
+    ['videos', 'access-summary', profileId, viewerId] as const,
+  /** The owner's pending one-time full-match privacy notice (user_pulse_items). */
+  fullMatchPrivacyNotice: (userId: string | null) =>
+    ['pulse', 'full-match-privacy-notice', userId] as const,
 }

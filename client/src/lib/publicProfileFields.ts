@@ -22,6 +22,8 @@ export const PUBLIC_PROFILE_FIELDS_LIST = [
   'bio',
   'highlight_video_url',
   'highlight_visibility',
+  // Full-match master switch (Phase 1 · step 3) — labels the owner's lock.
+  'full_match_visibility',
   'nationality',
   'nationality_country_id',
   'nationality2_country_id',

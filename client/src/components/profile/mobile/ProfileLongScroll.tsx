@@ -2,9 +2,11 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Check, ChevronRight, ExternalLink, Flag, Heart, Lock, Plus } from 'lucide-react'
 import { useProfileScrollData, type ScrollCareerEntry, type ScrollFullGameLink, type ScrollVideo } from '@/hooks/useProfileScrollData'
-import { ProfileVideoTile } from './ProfileVideoTile'
+import { LockedVideoTile, ProfileVideoTile } from './ProfileVideoTile'
 import { VideoAccessSheets, type VideoBlock } from './VideoAccessSheets'
 import { useAuthStore } from '@/lib/auth'
+import { isRecruiterProfile, fullMatchVisibilityOf } from '@/lib/recruiter'
+import { useVideoAccessSummary } from '@/hooks/useVideoAccessSummary'
 import { useTrustedReferences, type PublicReferenceCard } from '@/hooks/useTrustedReferences'
 import { useCountries } from '@/hooks/useCountries'
 import { MediaLightbox } from '@/components/home/MediaLightbox'
@@ -205,18 +207,27 @@ export default function ProfileLongScroll({ profile, readOnly, onEdit, onOpenVid
   const [photoIndex, setPhotoIndex] = useState<number | null>(null)
   const [composer, setComposer] = useState(false)
 
-  const lockFullMatches = profile.highlight_visibility === 'recruiters'
-  const viewerRole = useAuthStore((st) => st.profile?.role ?? null)
+  // Full-match privacy (Phase 1 · step 3): the owner's master switch decides
+  // the lock label; for everyone else it is what the rows say, plus the
+  // rows RLS hid from them (counted by get_video_access_summary).
+  const viewer = useAuthStore((st) => st.profile)
   const signedIn = useAuthStore((st) => Boolean(st.user))
-  const canWatchLocked = owner || viewerRole === 'club' || viewerRole === 'coach'
+  const canWatchLocked = owner || isRecruiterProfile(viewer)
+  const access = useVideoAccessSummary(profileId, { enabled: !owner })
+  const lockFullMatches = owner
+    ? fullMatchVisibilityOf(profile) === 'recruiters'
+    : access.lockedFullMatches > 0 || data.fullMatches.some((v) => v.visibility === 'recruiters') || data.fullGameLinks.some((l) => l.visibility === 'recruiters')
+  const lockedFull = owner ? 0 : access.lockedFullMatches
+  const lockedHighlights = owner ? 0 : access.lockedHighlights
   const [videoBlock, setVideoBlock] = useState<VideoBlock>(null)
+  const showLocked = () => setVideoBlock(signedIn ? 'locked' : 'join')
   const openVideo = (v: ScrollVideo, locked: boolean) => {
     if (!signedIn && !owner) setVideoBlock('join')
     else if (locked && !canWatchLocked) setVideoBlock('locked')
     else setPlayer(v)
   }
-  const highlightCount = data.highlights.length + (profile.highlight_video_url ? 1 : 0)
-  const fullMatchCount = data.fullMatches.length + data.fullGameLinks.length
+  const highlightCount = data.highlights.length + (profile.highlight_video_url ? 1 : 0) + lockedHighlights
+  const fullMatchCount = data.fullMatches.length + data.fullGameLinks.length + lockedFull
   const videoTotal = highlightCount + fullMatchCount + data.reels.length
   useEffect(() => {
     if (!data.loading) onVideoCount?.(videoTotal)
@@ -298,7 +309,7 @@ export default function ProfileLongScroll({ profile, readOnly, onEdit, onOpenVid
         <section className="flex flex-col gap-4" data-testid="profile-video-section">
           <SectionHeader title="Video" action={owner ? 'Manage' : videoTotal > 0 ? `See all ${videoTotal}` : null} onAction={owner ? onManageVideos : onOpenVideos} />
           {videoTotal === 0 && !data.loading && empty('Add your first highlight', onManageVideos)}
-          {(data.highlights.length > 0 || profile.highlight_video_url) && (
+          {highlightCount > 0 && (
             <VideoRow label="Highlights" count={highlightCount}>
               {data.highlights.map((v, i) => <ProfileVideoTile key={v.id} video={v} locked={v.visibility === 'recruiters'} canWatch={canWatchLocked} eager={i < 2} priority={i === 0} onOpen={() => openVideo(v, v.visibility === 'recruiters')} className="h-[126px] w-[224px] shrink-0 snap-start" />)}
               {profile.highlight_video_url && (
@@ -307,12 +318,14 @@ export default function ProfileLongScroll({ profile, readOnly, onEdit, onOpenVid
                   <span className="text-secondary font-semibold text-white">Linked highlight</span>
                 </a>
               )}
+              {Array.from({ length: lockedHighlights }, (_, i) => <LockedVideoTile key={`locked-h-${i}`} label="Highlight" onOpen={showLocked} className="h-[126px] w-[224px] shrink-0 snap-start" />)}
             </VideoRow>
           )}
           {fullMatchCount > 0 && (
             <VideoRow label="Full matches" count={fullMatchCount} lockLabel={lockFullMatches ? 'Clubs & coaches' : null}>
               {data.fullMatches.map((v, i) => <ProfileVideoTile key={v.id} video={v} locked={lockFullMatches || v.visibility === 'recruiters'} canWatch={canWatchLocked} eager={i < 2} onOpen={() => openVideo(v, lockFullMatches || v.visibility === 'recruiters')} className="h-[126px] w-[224px] shrink-0 snap-start" />)}
               {data.fullGameLinks.map((l) => <LinkTile key={l.id} link={l} />)}
+              {Array.from({ length: lockedFull }, (_, i) => <LockedVideoTile key={`locked-f-${i}`} onOpen={showLocked} className="h-[126px] w-[224px] shrink-0 snap-start" />)}
             </VideoRow>
           )}
           {data.reels.length > 0 && (

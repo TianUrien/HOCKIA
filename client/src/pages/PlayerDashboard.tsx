@@ -25,6 +25,7 @@ import RecruitmentPrefsNudge from '@/components/dashboard/RecruitmentPrefsNudge'
 import PlayerBentoGrid from '@/components/dashboard/bento/PlayerBentoGrid'
 import ScoutingCard from '@/components/profile/ScoutingCard'
 import ProfileLongScroll from '@/components/profile/mobile/ProfileLongScroll'
+import { FullMatchPrivacyNotice } from '@/components/home/FullMatchPrivacyNotice'
 import FriendsScreen from '@/components/profile/mobile/FriendsScreen'
 import CareerScreen from '@/components/profile/mobile/CareerScreen'
 import ReferencesScreen from '@/components/profile/mobile/ReferencesScreen'
@@ -714,6 +715,10 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
 
         {!(isPhone && showPhoneScroll) && (
         <div className={showPhoneScroll ? 'hidden space-y-5 md:space-y-6 lg:block' : 'space-y-5 md:space-y-6'}>
+        {/* One-time full-match privacy notice (desktop v1 banner). Players
+            answer it once; renders nothing afterwards. */}
+        {!readOnly && isLanding && <FullMatchPrivacyNotice variant="banner" />}
+
         {/* G.10 — private 5-item recruitment-readiness checklist.
             Owner-only on the landing view; replaces the legacy
             "Profile complete %" arc that used to sit in HeroIdentityCard. */}
