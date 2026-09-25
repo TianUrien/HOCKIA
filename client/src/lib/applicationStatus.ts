@@ -18,7 +18,9 @@ export function playerApplicationStatusBadge(
     case 'shortlisted':
       return { label: 'Shortlisted', className: 'bg-emerald-100 text-emerald-800' }
     case 'maybe':
-      return { label: 'Under consideration', className: 'bg-amber-100 text-amber-800' }
+      // Amber is reserved for "the viewer must act soon" (founder 2026-09-26).
+      // The player can't act on "under consideration", so it's neutral grey.
+      return { label: 'Under consideration', className: 'bg-gray-100 text-gray-600' }
     case 'rejected':
       // Founder ruling 2026-09-25: grey, never rose/red — not being selected
       // is not an error. One grey state, matching opportunityCopy's tone 'grey'.

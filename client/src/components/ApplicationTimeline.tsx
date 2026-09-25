@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Send, Eye, CheckCircle, Clock, Sparkles } from 'lucide-react'
+import { Send, Eye, CheckCircle, CircleDot, Clock, Sparkles } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
@@ -49,8 +49,9 @@ function statusDotClass(status: string): string {
   switch (status) {
     case 'shortlisted':
       return 'bg-emerald-500'
+    // Amber only when the viewer must act soon (founder 2026-09-26): the
+    // player can't act on "Under consideration", so it's neutral grey too.
     case 'maybe':
-      return 'bg-amber-500'
     case 'rejected':
     case 'no_response':
       // "Not selected" is grey, not an error colour (founder ruling 2026-09-25).
@@ -219,7 +220,8 @@ export default function ApplicationTimeline({ opportunityId }: ApplicationTimeli
     if (badge) {
       nodes.push({
         key: 'status',
-        icon: currentStatus === 'rejected' || currentStatus === 'no_response' ? Clock : CheckCircle,
+        // A final outcome is not a wait: neutral dot, never a Clock.
+        icon: currentStatus === 'rejected' || currentStatus === 'no_response' ? CircleDot : CheckCircle,
         label: badge.label,
         date: currentStatusRow?.created_at ?? null,
         dotClass: statusDotClass(currentStatus),
