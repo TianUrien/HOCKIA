@@ -4,6 +4,7 @@ import type { PostMediaItem } from '@/types/homeFeed'
 
 vi.mock('@/hooks/useFocusTrap', () => ({
   useFocusTrap: vi.fn(),
+  isTopFocusTrap: () => true,
 }))
 
 import { MediaLightbox } from '@/components/home/MediaLightbox'

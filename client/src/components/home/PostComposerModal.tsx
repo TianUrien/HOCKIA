@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { Loader2, Search, Shield, X, ImagePlus, CircleHelp } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
-import { useFocusTrap } from '@/hooks/useFocusTrap'
+import { isTopFocusTrap, useFocusTrap } from '@/hooks/useFocusTrap'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import { identityLine } from '@/lib/identity'
 import { useUserPosts, type PostImage } from '@/hooks/useUserPosts'
@@ -147,6 +147,8 @@ export function PostComposerModal({
   useEffect(() => {
     if (!isOpen) return
     const handleEscape = (e: KeyboardEvent) => {
+      // Another trapped overlay is on top: its Escape closes it, not this one.
+      if (e.key === 'Escape' && !isTopFocusTrap(dialogRef.current)) return
       if (e.key === 'Escape' && !isSubmitting) handleCloseRef.current?.()
     }
     document.addEventListener('keydown', handleEscape)

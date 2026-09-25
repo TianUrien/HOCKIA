@@ -11,7 +11,7 @@ import { pruneSpecialistSkillsForPosition } from '@/lib/specialistSkills'
 import type { LocationSelection } from '@/components/LocationAutocomplete'
 import { logger } from '@/lib/logger'
 import { optimizeAvatarImage, validateImage } from '@/lib/imageOptimization'
-import { useFocusTrap } from '@/hooks/useFocusTrap'
+import { isTopFocusTrap, useFocusTrap } from '@/hooks/useFocusTrap'
 import { useCountries } from '@/hooks/useCountries'
 import { invalidateProfile } from '@/lib/profile'
 import { useToastStore } from '@/lib/toast'
@@ -520,6 +520,8 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
     }
 
     const handleKeyDown = (event: KeyboardEvent) => {
+      // Another trapped overlay is on top: its Escape closes it, not this one.
+      if (event.key === 'Escape' && !isTopFocusTrap(dialogRef.current)) return
       if (event.key === 'Escape') {
         event.preventDefault()
         handleDismiss()

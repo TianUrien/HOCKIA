@@ -40,7 +40,7 @@ import RolePlaceholder from '@/components/RolePlaceholder'
 import SignInPromptModal from '@/components/SignInPromptModal'
 import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
-import { useFocusTrap } from '@/hooks/useFocusTrap'
+import { isTopFocusTrap, useFocusTrap } from '@/hooks/useFocusTrap'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import { useIsProfileSaved } from '@/hooks/useSavedProfiles'
 import QuickActionsRow from '@/components/recruiting/QuickActionsRow'
@@ -205,6 +205,8 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
   useEffect(() => {
     if (!member) return
     const handleKey = (e: KeyboardEvent) => {
+      // Another trapped overlay is on top: its Escape closes it, not this one.
+      if (e.key === 'Escape' && !isTopFocusTrap(contentRef.current)) return
       if (e.key === 'Escape') requestClose()
     }
     document.addEventListener('keydown', handleKey)
