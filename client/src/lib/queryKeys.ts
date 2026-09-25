@@ -37,9 +37,6 @@ export const qk = {
   /** Coach's open opportunities + applicant totals (CoachPostedOpportunitiesCard). */
   coachPostedOpportunities: (profileId: string | null) =>
     ['opportunities', 'coach-posted', profileId] as const,
-  /** publisher_responsiveness tier for one publisher (club's own Pulse nudge). */
-  publisherTier: (publisherId: string | null) =>
-    ['publisher-responsiveness', 'one', publisherId] as const,
   /** Batch world_clubs logo + league-metadata prefetch (useWorldClubLogo). */
   worldClubLogosBatch: (sortedIds: string[]) =>
     ['world-club-logos', 'batch', sortedIds.join(',')] as const,
