@@ -9442,7 +9442,7 @@ export type Database = {
         }[]
       }
       search_world_clubs: {
-        Args: { p_limit?: number; p_query: string }
+        Args: { p_country_id?: number; p_limit?: number; p_query: string }
         Returns: {
           avatar_url: string
           club_name: string
