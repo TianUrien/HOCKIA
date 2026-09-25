@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useRef, useCallback } from 'react'
 import { format } from 'date-fns'
-import { ShieldCheck, Plus, Clock3, AlertTriangle, UserPlus, ArrowRight } from 'lucide-react'
+import { ShieldCheck, Plus, Clock3, Check, UserPlus, ArrowRight } from 'lucide-react'
 import { logger } from '@/lib/logger'
 import Avatar from './Avatar'
 import RoleBadge from './RoleBadge'
@@ -382,9 +382,12 @@ export default function TrustedReferencesSection({
       </header>
 
       {canCollectReferences && pendingReferences.length > 0 && (
-        <div className="rounded-3xl border border-amber-200 bg-amber-50/80 p-4">
-          <div className="flex items-center gap-2 text-amber-800">
-            <AlertTriangle className="h-4 w-4" />
+        // Outgoing requests: the owner is waiting on someone else and can't act,
+        // so this is neutral grey, not amber (founder amber rule 2026-09-26) —
+        // same "Requested" + check pattern as an outgoing friend request.
+        <div className="rounded-3xl border border-gray-200 bg-gray-50/80 p-4">
+          <div className="flex items-center gap-2 text-gray-700">
+            <UserPlus className="h-4 w-4" />
             <p className="text-sm font-semibold">
               {pendingReferences.length === 1
                 ? '1 reference request waiting for approval'
@@ -393,7 +396,7 @@ export default function TrustedReferencesSection({
           </div>
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             {pendingReferences.map((pending) => (
-              <div key={pending.id} className="flex items-center gap-3 rounded-2xl border border-amber-100 bg-white/70 px-4 py-3">
+              <div key={pending.id} className="flex items-center gap-3 rounded-2xl border border-gray-100 bg-white/70 px-4 py-3">
                 <Avatar
                   src={pending.profile?.avatarUrl}
                   initials={pending.profile?.fullName?.slice(0, 2) ?? '?'}
@@ -414,7 +417,10 @@ export default function TrustedReferencesSection({
                     )}
                   </div>
                 </div>
-                <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">Pending</span>
+                <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-600">
+                  <Check className="h-3 w-3" aria-hidden="true" />
+                  Requested
+                </span>
               </div>
             ))}
           </div>
