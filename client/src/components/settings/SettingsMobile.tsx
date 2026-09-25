@@ -1,6 +1,6 @@
 import { lazy, Suspense, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Bell, Check, FileText, HelpCircle, Languages, Lock, MessageSquare } from 'lucide-react'
+import { Bell, Check, FileText, HelpCircle, Languages, Lock, MessageSquare, Shield } from 'lucide-react'
 import { DetailNavBar } from '@/components/ui/DetailNavBar'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
@@ -15,6 +15,7 @@ import { usePushSubscription } from '@/hooks/usePushSubscription'
 import { useBlockedUsers } from '@/hooks/useBlockedUsers'
 import { roleLabel } from '@/lib/identity'
 import { getImageUrl } from '@/lib/imageUrl'
+import { isRecruitableRole } from '@/lib/settingsRoles'
 import { OPPORTUNITY_PREF_LABEL } from '@/lib/candidateIntent'
 import { trackPushSubscribe, trackPushUnsubscribe } from '@/lib/analytics'
 import type { Profile } from '@/lib/supabase'
@@ -101,6 +102,8 @@ function Hub({ go }: { go: (s: SettingsSection | 'account') => void }) {
   const languages = (profile?.languages ?? []).filter(Boolean)
   const dob = longDate(profile?.date_of_birth)
   const name = profile?.full_name?.trim() || 'Your profile'
+  const recruitable = isRecruitableRole(profile?.role)
+  const isClub = profile?.role === 'club'
 
   return (
     <Screen parent="Profile" title="Settings" onBack={() => navigate('/dashboard/profile')}>
@@ -115,22 +118,30 @@ function Hub({ go }: { go: (s: SettingsSection | 'account') => void }) {
         </button>
       </SettingsGroup>
 
+      {isClub && (
+        <SettingsGroup label="Club">
+          <SettingsRow title="Club & league" icon={<Shield className="h-4 w-4" strokeWidth={2} />} onClick={() => navigate('/dashboard/profile?tab=league')} />
+        </SettingsGroup>
+      )}
+
+      {recruitable && (
       <SettingsGroup label="Availability" footer="Clubs filter by this. Your week asks you to confirm it now and then.">
         <SettingsRow title="Open to play" subtitle="Shown on your profile and in Community." trailing={<SettingsSwitch label="Open to play" checked={read('open_to_play', false)} disabled={busy === 'open_to_play'} onChange={() => void toggle('open_to_play', false)} />} />
         <SettingsRow title="Open to opportunities" subtitle="Clubs and coaches can reach out about roles." trailing={<SettingsSwitch label="Open to opportunities" checked={read('open_to_opportunities', false)} disabled={busy === 'open_to_opportunities'} onChange={() => void toggle('open_to_opportunities', false)} />} />
         <SettingsRow title="Looking for" subtitle={preference ? `${OPPORTUNITY_PREF_LABEL[preference] ?? preference} roles` : 'Not set'} onClick={() => setLookingFor(true)} />
       </SettingsGroup>
+      )}
 
       <SettingsGroup label="Preferences">
         <SettingsRow title="Notifications" value="Per type" icon={<Bell className="h-4 w-4" strokeWidth={2} />} onClick={() => go('notifications')} />
-        <SettingsRow title="Privacy" value={visibility === 'public' ? 'Everyone' : 'Clubs & coaches'} icon={<Lock className="h-4 w-4" strokeWidth={2} />} iconClassName="bg-positive-soft text-positive" onClick={() => go('privacy')} />
+        <SettingsRow title="Privacy" value={!isClub ? (visibility === 'public' ? 'Everyone' : 'Clubs & coaches') : undefined} icon={<Lock className="h-4 w-4" strokeWidth={2} />} iconClassName="bg-positive-soft text-positive" onClick={() => go('privacy')} />
         <SettingsRow title="Language" value="English" icon={<Languages className="h-4 w-4" strokeWidth={2} />} iconClassName="bg-[#e8edfd] text-[#3b5bdb]" />
       </SettingsGroup>
 
-      <SettingsGroup label="Account" footer="Date of birth is only used to keep Hockia 16+. It never shows on your profile.">
+      <SettingsGroup label="Account" footer={isClub ? undefined : 'Date of birth is only used to keep Hockia 16+. It never shows on your profile.'}>
         <SettingsRow title="Email & sign-in" value={provider === 'email' ? 'Email' : provider} onClick={() => go('account')} />
-        {dob && <SettingsRow title="Date of birth" value={dob} />}
-        {languages.length > 0 && <SettingsRow title="Languages" subtitle={languages.join(' · ')} />}
+        {!isClub && dob && <SettingsRow title="Date of birth" value={dob} />}
+        {!isClub && languages.length > 0 && <SettingsRow title="Languages" subtitle={languages.join(' · ')} />}
       </SettingsGroup>
 
       <SettingsGroup label="Support">
@@ -177,17 +188,23 @@ function Hub({ go }: { go: (s: SettingsSection | 'account') => void }) {
   )
 }
 
-const KINDS: { column: Extract<BoolColumn, `notify_${string}`>; title: string; subtitle: string }[] = [
+type Kind = { column: Extract<BoolColumn, `notify_${string}`>; title: string; subtitle: string; recruitableOnly?: boolean }
+const KINDS: Kind[] = [
   { column: 'notify_messages', title: 'Messages', subtitle: 'From clubs, coaches and friends.' },
-  { column: 'notify_applications', title: 'My applications', subtitle: 'A club replied, shortlisted you, or a role closed.' },
-  { column: 'notify_opportunities', title: 'New roles', subtitle: 'Roles that match your position, gender and passports.' },
+  { column: 'notify_applications', title: 'My applications', subtitle: 'A club replied, shortlisted you, or a role closed.', recruitableOnly: true },
+  { column: 'notify_opportunities', title: 'New roles', subtitle: 'Roles that match your position, gender and passports.', recruitableOnly: true },
   { column: 'notify_friends', title: 'Friend requests', subtitle: 'New requests and accepted ones.' },
   { column: 'notify_references', title: 'References', subtitle: 'A friend asks for one, or writes you one.' },
   { column: 'notify_profile_views', title: 'Profile views', subtitle: 'Weekly summary of who looked at you.' },
 ]
 
+/** Clubs don't apply to roles, so no My applications / New roles for them. */
+function kindsFor(role: string | null | undefined): Kind[] {
+  return role === 'club' ? KINDS.filter((k) => !k.recruitableOnly) : KINDS
+}
+
 function Notifications({ back }: { back: () => void }) {
-  const { user } = useAuthStore()
+  const { user, profile } = useAuthStore()
   const addToast = useToastStore((s) => s.addToast)
   const push = usePushSubscription()
   const { read, write, toggle, busy } = useProfileWriter()
@@ -228,7 +245,7 @@ function Notifications({ back }: { back: () => void }) {
       </SettingsGroup>
 
       <SettingsGroup label="Tell me about" trailingLabels={['Push', 'Email']} footer="Push and Email move together for now — each type has one setting. Email for messages and profile views is bundled into a digest, never one email per event.">
-        {KINDS.map((k) => {
+        {kindsFor(profile?.role).map((k) => {
           const on = read<boolean>(k.column, true)
           return (
             <SettingsRow
@@ -252,6 +269,7 @@ function Notifications({ back }: { back: () => void }) {
 function Privacy({ back, go }: { back: () => void; go: (s: SettingsSection) => void }) {
   const { read, write, toggle, busy } = useProfileWriter()
   const { blockedIds } = useBlockedUsers()
+  const isClub = useAuthStore((st) => st.profile?.role) === 'club'
   const visibility = read<string>('highlight_visibility', 'recruiters')
   const options = useMemo(() => [
     { value: 'recruiters', title: 'Clubs & coaches', subtitle: 'Recruiters only. Highlights and reels stay public.' },
@@ -260,6 +278,7 @@ function Privacy({ back, go }: { back: () => void; go: (s: SettingsSection) => v
 
   return (
     <Screen parent="Settings" title="Privacy" onBack={back}>
+      {!isClub && (
       <SettingsGroup label="Default for new full matches" footer="Full matches carry the most detail about how you play, so they are locked to recruiters by default. You can change any single video from Manage media.">
         {options.map((o) => (
           <button key={o.value} type="button" role="radio" aria-checked={visibility === o.value} disabled={busy === 'highlight_visibility'} onClick={() => { if (visibility !== o.value) void write({ highlight_visibility: o.value }, 'highlight_visibility') }} className="flex w-full items-center gap-3 px-4 py-3 text-left">
@@ -271,6 +290,7 @@ function Privacy({ back, go }: { back: () => void; go: (s: SettingsSection) => v
           </button>
         ))}
       </SettingsGroup>
+      )}
 
       <SettingsGroup label="Visibility">
         <SettingsRow title="Browse anonymously" subtitle="Clubs won’t see that you looked at them — and you won’t see who looked at you." trailing={<SettingsSwitch label="Browse anonymously" checked={read('browse_anonymously', false)} disabled={busy === 'browse_anonymously'} onChange={() => void toggle('browse_anonymously', false)} />} />
