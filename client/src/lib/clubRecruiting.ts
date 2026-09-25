@@ -69,12 +69,17 @@ export function fitChipLabel(state: FitState | null | undefined): string | null 
   return null
 }
 
-/** compute_club_fit wants the target exactly as the role's gender value ("Men" / "Women" / "Mixed"). */
-export function fitTarget(gender: string | null | undefined): string | null {
+/**
+ * compute_club_fit's target: "Men" / "Women" / "Mixed" (Figma D1.2). Never a
+ * raw youth value — _target_accepts_category has no Boys/Girls branch and
+ * _club_level_band would band Boys against the women's league. Player roles
+ * can't be youth (DB CHECK, ruling 2026-09-25); a youth coach/staff role ranks
+ * against the same side's pool, like recruitingTarget in lib/postRole.
+ */
+export function fitTarget(gender: string | null | undefined): 'Men' | 'Women' | 'Mixed' | null {
   if (!gender) return null
-  const g = gender.trim()
-  const canonical: Record<string, string> = { men: 'Men', women: 'Women', mixed: 'Mixed', boys: 'Boys', girls: 'Girls' }
-  return canonical[g.toLowerCase()] ?? g
+  const canonical: Record<string, 'Men' | 'Women' | 'Mixed'> = { men: 'Men', women: 'Women', mixed: 'Mixed', boys: 'Men', girls: 'Women' }
+  return canonical[gender.trim().toLowerCase()] ?? null
 }
 
 export interface FitComponents { gender_match?: number; competition_proximity?: number; availability?: number; recency?: number }

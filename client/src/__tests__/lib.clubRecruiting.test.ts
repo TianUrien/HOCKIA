@@ -47,6 +47,11 @@ describe('club recruiting copy', () => {
     expect(fitTarget('men')).toBe('Men')
     expect(fitTarget('Women')).toBe('Women')
     expect(fitTarget('mixed')).toBe('Mixed')
+    // Never a raw youth value into compute_club_fit (no Boys/Girls branch in the DB).
+    expect(fitTarget('Boys')).toBe('Men')
+    expect(fitTarget('girls')).toBe('Women')
+    expect(fitTarget('Veterans')).toBeNull()
+    expect(fitTarget(null)).toBeNull()
   })
 
   it('names the missing side for Level instead of a number', () => {
