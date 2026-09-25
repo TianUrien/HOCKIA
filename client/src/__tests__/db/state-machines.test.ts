@@ -131,77 +131,51 @@ describe.skipIf(skip)('State Machine Transitions', () => {
   // PROFILE REFERENCES
   // =========================================================================
   describe('profile_references', () => {
+    // References are written ONLY through the SECURITY DEFINER RPCs the app uses
+    // (request_reference / respond_reference / remove_reference). Direct table
+    // writes were closed in 20260926100000_phase1_close_client_write_holes: they let
+    // an endorser flip a revoked reference back to accepted.
     let friendshipId: string | null = null
     let referenceId: string | null = null
+    // request_reference allows 3 requests per requester per rolling 24h and 5 accepted
+    // references in total. CI runs this suite many times a day on the shared staging
+    // accounts, so when a limit is hit the lifecycle tests skip (like missing fixtures).
+    let skipReason: string | null = null
 
-    let revokedSlotId: string | null = null
+    const activeReferences = async () => {
+      const { data } = await player.client
+        .from('profile_references')
+        .select('id, requester_id, status')
+        .or(
+          `and(requester_id.eq.${player.userId},reference_id.eq.${coach.userId}),and(requester_id.eq.${coach.userId},reference_id.eq.${player.userId})`
+        )
+        .in('status', ['pending', 'accepted'])
+      return data ?? []
+    }
 
     beforeAll(async () => {
-      // Ensure an accepted friendship exists between player and coach
-      // Clean up existing friendships
-      await player.client
-        .from('profile_friendships')
-        .delete()
-        .or(
-          `and(user_one.eq.${player.userId},user_two.eq.${coach.userId}),and(user_one.eq.${coach.userId},user_two.eq.${player.userId})`
-        )
-
-      // Revoke any existing active references between them
-      // (No DELETE policy exists on profile_references — use UPDATE to 'revoked')
-      await player.client
-        .from('profile_references')
-        .update({ status: 'revoked' })
-        .eq('requester_id', player.userId)
-        .eq('reference_id', coach.userId)
-        .in('status', ['pending', 'accepted'])
-
-      // Also revoke the reverse direction (coach requested, player is reference)
-      await coach.client
-        .from('profile_references')
-        .update({ status: 'revoked' })
-        .eq('requester_id', coach.userId)
-        .eq('reference_id', player.userId)
-        .in('status', ['pending', 'accepted'])
-
-      // Ensure player has < 5 accepted references (max_references = 5).
-      // If at the limit, temporarily revoke one to make room for the test.
-      const { data: accepted } = await player.client
-        .from('profile_references')
-        .select('id')
-        .eq('requester_id', player.userId)
-        .eq('status', 'accepted')
-
-      if (accepted && accepted.length >= 5) {
-        revokedSlotId = accepted[0].id
-        await player.client
-          .from('profile_references')
-          .update({ status: 'revoked' })
-          .eq('id', revokedSlotId)
+      // Clear any active reference between player and coach, as the requester would.
+      for (const ref of await activeReferences()) {
+        const who = ref.requester_id === player.userId ? player : coach
+        await who.client.rpc('remove_reference', { p_reference_id: ref.id })
       }
 
-      // Create and accept friendship
-      // Check if an accepted friendship already exists (left over from the
-      // friendship describe block that runs right before this one).
+      // Ensure an accepted friendship between player and coach (reuse one left over
+      // from the friendship block above, or create it).
       const { data: existing } = await player.client
         .from('profile_friendships')
         .select('id, status')
         .or(
           `and(user_one.eq.${player.userId},user_two.eq.${coach.userId}),and(user_one.eq.${coach.userId},user_two.eq.${player.userId})`
         )
-        .single()
+        .maybeSingle()
 
       if (existing?.status === 'accepted') {
-        // Already accepted — reuse it
         friendshipId = existing.id
       } else {
-        // Delete any non-accepted leftover and create fresh
         if (existing) {
-          await player.client
-            .from('profile_friendships')
-            .delete()
-            .eq('id', existing.id)
+          await player.client.from('profile_friendships').delete().eq('id', existing.id)
         }
-
         const { data: f, error: fErr } = await player.client
           .from('profile_friendships')
           .insert({
@@ -212,7 +186,6 @@ describe.skipIf(skip)('State Machine Transitions', () => {
           })
           .select('id')
           .single()
-
         if (fErr) throw new Error(`Friendship insert failed: ${fErr.message}`)
         friendshipId = f?.id ?? null
 
@@ -221,63 +194,57 @@ describe.skipIf(skip)('State Machine Transitions', () => {
             .from('profile_friendships')
             .update({ status: 'accepted' })
             .eq('id', friendshipId)
-
           if (acceptErr) throw new Error(`Friendship accept failed: ${acceptErr.message}`)
         }
       }
     })
 
     afterAll(async () => {
-      // Clean up: revoke the reference (no DELETE policy)
-      if (referenceId) {
-        await player.client
-          .from('profile_references')
-          .update({ status: 'revoked' })
-          .eq('id', referenceId)
-      }
-      // Restore the temporarily revoked reference slot
-      if (revokedSlotId) {
-        await player.client
-          .from('profile_references')
-          .update({ status: 'accepted' })
-          .eq('id', revokedSlotId)
+      // Leave no active reference behind (the requester removes it, as in the app).
+      for (const ref of await activeReferences()) {
+        const who = ref.requester_id === player.userId ? player : coach
+        await who.client.rpc('remove_reference', { p_reference_id: ref.id })
       }
       if (friendshipId) {
-        await player.client
-          .from('profile_friendships')
-          .delete()
-          .eq('id', friendshipId)
+        await player.client.from('profile_friendships').delete().eq('id', friendshipId)
       }
     })
 
-    it('can request a reference from an accepted friend (→ pending)', async () => {
-      const { data, error } = await player.client
-        .from('profile_references')
-        .insert({
-          requester_id: player.userId,
-          reference_id: coach.userId,
-          relationship_type: 'teammate',
-          status: 'pending',
-        })
-        .select('id, status')
-        .single()
+    it('direct INSERT is refused — requests go through request_reference', async () => {
+      const { error } = await player.client.from('profile_references').insert({
+        requester_id: player.userId,
+        reference_id: coach.userId,
+        relationship_type: 'teammate',
+        status: 'pending',
+      })
+      expect(error).not.toBeNull()
+    })
 
+    it('can request a reference from an accepted friend (→ pending)', async () => {
+      const { data, error } = await player.client.rpc('request_reference', {
+        p_reference_id: coach.userId,
+        p_relationship_type: 'teammate',
+        p_request_note: 'DB test',
+      })
+
+      if (error && /per day|already have 5/i.test(error.message)) {
+        skipReason = error.message
+        console.warn(`  ⏭  request_reference limit reached — skipping the lifecycle tests: ${error.message}`)
+        return
+      }
       expect(error).toBeNull()
       expect(data?.status).toBe('pending')
       referenceId = data?.id ?? null
     })
 
     it('reference can accept (pending → accepted)', async () => {
-      if (!referenceId) return
+      if (!referenceId || skipReason) return
 
-      const { error } = await coach.client
-        .from('profile_references')
-        .update({
-          status: 'accepted',
-          endorsement_text: 'Great player, DB test.',
-        })
-        .eq('id', referenceId)
-
+      const { error } = await coach.client.rpc('respond_reference', {
+        p_reference_id: referenceId,
+        p_accept: true,
+        p_endorsement: 'Great player, DB test.',
+      })
       expect(error).toBeNull()
 
       const { data: check } = await coach.client
@@ -291,33 +258,25 @@ describe.skipIf(skip)('State Machine Transitions', () => {
     })
 
     it('cannot revert accepted reference back to pending', async () => {
-      if (!referenceId) return
+      if (!referenceId || skipReason) return
 
-      const { error } = await player.client
+      await player.client
         .from('profile_references')
         .update({ status: 'pending' })
         .eq('id', referenceId)
 
-      // Trigger should block this
-      if (!error) {
-        const { data: check } = await player.client
-          .from('profile_references')
-          .select('status')
-          .eq('id', referenceId)
-          .single()
-
-        expect(check?.status).not.toBe('pending')
-      }
+      const { data: check } = await player.client
+        .from('profile_references')
+        .select('status')
+        .eq('id', referenceId)
+        .single()
+      expect(check?.status).toBe('accepted')
     })
 
     it('requester can revoke an accepted reference', async () => {
-      if (!referenceId) return
+      if (!referenceId || skipReason) return
 
-      const { error } = await player.client
-        .from('profile_references')
-        .update({ status: 'revoked' })
-        .eq('id', referenceId)
-
+      const { error } = await player.client.rpc('remove_reference', { p_reference_id: referenceId })
       expect(error).toBeNull()
 
       const { data: check } = await player.client
@@ -329,6 +288,22 @@ describe.skipIf(skip)('State Machine Transitions', () => {
       expect(check?.status).toBe('revoked')
       expect(check?.revoked_at).not.toBeNull()
     })
+
+    it('endorser cannot bring a revoked reference back to accepted', async () => {
+      if (!referenceId || skipReason) return
+
+      await coach.client
+        .from('profile_references')
+        .update({ status: 'accepted', endorsement_text: 'Restored by the endorser' })
+        .eq('id', referenceId)
+
+      const { data: check } = await player.client
+        .from('profile_references')
+        .select('status')
+        .eq('id', referenceId)
+        .single()
+      expect(check?.status).toBe('revoked')
+    })
   })
 
   // =========================================================================
@@ -337,16 +312,12 @@ describe.skipIf(skip)('State Machine Transitions', () => {
   describe('profile_references — friendship guard', () => {
     it('cannot request reference without an accepted friendship', async () => {
       // Use a non-existent user — no friendship can exist
-      const { error } = await player.client
-        .from('profile_references')
-        .insert({
-          requester_id: player.userId,
-          reference_id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
-          relationship_type: 'teammate',
-          status: 'pending',
-        })
+      const { error } = await player.client.rpc('request_reference', {
+        p_reference_id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+        p_relationship_type: 'teammate',
+      })
 
-      // Should be rejected by the friendship guard trigger or FK constraint
+      // Rejected by the friendship check in request_reference (or its daily limit)
       expect(error).not.toBeNull()
     })
   })
