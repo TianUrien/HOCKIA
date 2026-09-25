@@ -180,7 +180,7 @@ function Hub({ go }: { go: (s: SettingsSection | 'account') => void }) {
 const KINDS: { column: Extract<BoolColumn, `notify_${string}`>; title: string; subtitle: string }[] = [
   { column: 'notify_messages', title: 'Messages', subtitle: 'From clubs, coaches and friends.' },
   { column: 'notify_applications', title: 'My applications', subtitle: 'A club replied, shortlisted you, or a role closed.' },
-  { column: 'notify_opportunities', title: 'New roles', subtitle: 'Roles that match your position, gender and passports.' },
+  { column: 'notify_opportunities', title: 'New roles', subtitle: 'New roles for your position, team and passports.' },
   { column: 'notify_friends', title: 'Friend requests', subtitle: 'New requests and accepted ones.' },
   { column: 'notify_references', title: 'References', subtitle: 'A friend asks for one, or writes you one.' },
   { column: 'notify_profile_views', title: 'Profile views', subtitle: 'Weekly summary of who looked at you.' },

@@ -13,7 +13,7 @@ import { useScopedMatches } from '@/hooks/useScopedMatches'
  *
  * Every number is one the Pulse modules already compute from existing
  * queries — this card adds no data source:
- *   player / coach : roles that match you · profile views · club replies
+ *   player / coach : roles for you · profile views · club replies
  *   club           : fit your search · new applicants · profile views
  *   brand / umpire : profile views
  * "Club replies" = applications a club has acted on (no longer pending).
@@ -41,7 +41,7 @@ export function YourWeekCard() {
   const replies = apps.applications.filter((a) => a.status !== 'pending').length
   const stats: Stat[] = isTalent
     ? [
-        { value: matched, label: matched === 1 ? 'role matches you' : 'roles match you' },
+        { value: matched, label: matched === 1 ? 'role for you' : 'roles for you' },
         { value: views, label: views === 1 ? 'profile view' : 'profile views' },
         { value: replies, label: replies === 1 ? 'club reply' : 'club replies' },
       ]
