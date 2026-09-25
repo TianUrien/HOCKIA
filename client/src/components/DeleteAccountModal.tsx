@@ -3,7 +3,7 @@ import { X, AlertTriangle, Loader2 } from 'lucide-react'
 import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from '../lib/supabase'
 import { logger } from '../lib/logger'
 import { useAuthStore } from '../lib/auth'
-import { useFocusTrap } from '@/hooks/useFocusTrap'
+import { isTopFocusTrap, useFocusTrap } from '@/hooks/useFocusTrap'
 import { clearAllProfileDraftsForUser } from '@/lib/profileDrafts'
 
 interface DeleteAccountModalProps {
@@ -40,6 +40,8 @@ export default function DeleteAccountModal({ isOpen, onClose, userEmail }: Delet
     }
 
     const handleKeyDown = (event: KeyboardEvent) => {
+      // Another trapped overlay is on top: its Escape closes it, not this one.
+      if (event.key === 'Escape' && !isTopFocusTrap(dialogRef.current)) return
       if (event.key === 'Escape') {
         event.preventDefault()
         handleClose()

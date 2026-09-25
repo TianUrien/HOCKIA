@@ -9,7 +9,7 @@ import ConfirmDialog from './ConfirmDialog'
 import LocationAutocomplete from './LocationAutocomplete'
 import type { LocationSelection } from './LocationAutocomplete'
 import { useCountries } from '@/hooks/useCountries'
-import { useFocusTrap } from '@/hooks/useFocusTrap'
+import { isTopFocusTrap, useFocusTrap } from '@/hooks/useFocusTrap'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import { useToastStore } from '@/lib/toast'
 import { trackDbEvent } from '@/lib/trackDbEvent'
@@ -338,6 +338,8 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
   useEffect(() => {
     if (!isOpen) return
     const handleKeyDown = (event: KeyboardEvent) => {
+      // Another trapped overlay is on top: its Escape closes it, not this one.
+      if (event.key === 'Escape' && !isTopFocusTrap(dialogRef.current)) return
       // While the discard-confirm dialog is open, it owns Escape.
       if (event.key === 'Escape' && !showDiscardConfirm) {
         event.preventDefault()

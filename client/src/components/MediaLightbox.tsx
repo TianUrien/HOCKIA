@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { X } from 'lucide-react'
-import { useFocusTrap } from '@/hooks/useFocusTrap'
+import { isTopFocusTrap, useFocusTrap } from '@/hooks/useFocusTrap'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import NativeVideoPlayer from './media/NativeVideoPlayer'
 
@@ -31,6 +31,8 @@ export default function MediaLightbox({ media, onClose }: MediaLightboxProps) {
   useEffect(() => {
     if (!media) return
     const handleKeyDown = (event: KeyboardEvent) => {
+      // Another trapped overlay is on top: its Escape closes it, not this one.
+      if (event.key === 'Escape' && !isTopFocusTrap(dialogRef.current)) return
       if (event.key === 'Escape') {
         event.preventDefault()
         onClose()

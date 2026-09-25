@@ -7,7 +7,7 @@ import Avatar from './Avatar'
 import { useNotificationStore } from '@/lib/notifications'
 import { useToastStore } from '@/lib/toast'
 import { cn } from '@/lib/utils'
-import { useFocusTrap } from '@/hooks/useFocusTrap'
+import { isTopFocusTrap, useFocusTrap } from '@/hooks/useFocusTrap'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import type { NotificationKind, NotificationRecord } from '@/lib/api/notifications'
 import { getNotificationConfig, resolveNotificationRoute } from './notifications/config'
@@ -97,6 +97,8 @@ export default function NotificationsDrawer() {
     }
 
     const handleKeyDown = (event: KeyboardEvent) => {
+      // Another trapped overlay is on top: its Escape closes it, not this one.
+      if (event.key === 'Escape' && !isTopFocusTrap(drawerRef.current)) return
       if (event.key === 'Escape' && isOpen) {
         toggleDrawer(false)
       }
