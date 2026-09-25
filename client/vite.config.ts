@@ -55,7 +55,10 @@ export default defineConfig(({ mode }) => {
   // imported 372KB of admin-only charting to reach the jsx helper — putting
   // recharts in the critical path of every page. As a lazy-only dep it stays
   // inside the admin pages' own dynamic chunks where it belongs.
-  const LAZY_ONLY_DEPS = /node_modules\/(posthog-js|recharts|d3-|victory)\//
+  // papaparse (admin CSV import) and tus-js-client + its deps (video upload, now a
+  // dynamic import in lib/uploadManager.ts) added 2026-09-25: both sat in the eager
+  // vendor chunk, costing ~21KB of first-load gzip no visitor needs on first paint.
+  const LAZY_ONLY_DEPS = /node_modules\/(posthog-js|recharts|d3-|victory|papaparse|tus-js-client|js-base64|buffer-from|lodash\.throttle|proper-lockfile|url-parse|requires-port|querystringify|combine-errors|is-stream)\//
 
   return {
     plugins: [
