@@ -25,6 +25,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { isRecruitingViewer } from '@/lib/recruiterAccess'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
@@ -124,10 +125,10 @@ export function useAIOpinion(
   const requestSeq = useRef(0)
 
   const viewerId = viewer?.id ?? null
-  const viewerRole = viewer?.role ?? null
   const candidateId = candidate?.id ?? null
   const isOwnProfile = Boolean(viewerId && candidateId && viewerId === candidateId)
-  const isRecruiter = viewerRole === 'club' || viewerRole === 'coach'
+  // Clubs and coaches who recruit for a team (founder ruling 2026-09-25).
+  const isRecruiter = isRecruitingViewer(viewer)
 
   const fetchOpinion = useCallback(
     async (forceRefresh = false) => {

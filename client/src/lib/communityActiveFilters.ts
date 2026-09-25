@@ -1,4 +1,4 @@
-import type { CommunityFilters } from '@/components/community/communityFilters'
+import type { CommunityFilters, SortOption } from '@/components/community/communityFilters'
 import { CATEGORY_LABELS } from '@/lib/hockeyCategories'
 import { COACH_SPECIALIZATIONS } from '@/lib/coachSpecializations'
 
@@ -17,6 +17,24 @@ export interface ActiveFilterChip {
 const titleCase = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
 /**
+ * Evidence sort + "Enough evidence+" filter are recruiter tools (founder
+ * 2026-09-26): clubs and recruiting coaches only (isRecruitingViewer).
+ * For everyone else the option isn't offered, and a sort/filter state that
+ * still carries it (session state, a stale link) falls back to the default
+ * sort / no filter. These two helpers are the single fallback rule.
+ */
+export function effectiveCommunitySort(sort: SortOption, canUseEvidence: boolean): SortOption {
+  return sort === 'evidence' && !canUseEvidence ? 'newest' : sort
+}
+
+export function evidenceFilterActive(
+  filters: Pick<CommunityFilters, 'evidenceEnoughOnly'>,
+  canUseEvidence: boolean,
+): boolean {
+  return filters.evidenceEnoughOnly && canUseEvidence
+}
+
+/**
  * Derive the active-filter chips from the current filter state. One chip per
  * VALUE for multi-select facets (each position / nationality / etc. removable
  * individually). The chip count is also the "Filters · N" badge number.
@@ -25,6 +43,7 @@ export function getActiveFilterChips(
   filters: CommunityFilters,
   countries: { id: number; name: string }[],
   update: <K extends keyof CommunityFilters>(key: K, value: CommunityFilters[K]) => void,
+  { canUseEvidence = false }: { canUseEvidence?: boolean } = {},
 ): ActiveFilterChip[] {
   const chips: ActiveFilterChip[] = []
   const countryName = (id: number) => countries.find((c) => c.id === id)?.name ?? `#${id}`
@@ -57,7 +76,7 @@ export function getActiveFilterChips(
   if (filters.hasVideo) {
     chips.push({ id: 'hasVideo', label: 'Has video', onRemove: () => update('hasVideo', false) })
   }
-  if (filters.evidenceEnoughOnly) {
+  if (evidenceFilterActive(filters, canUseEvidence)) {
     chips.push({ id: 'evidence', label: 'Enough evidence+', onRemove: () => update('evidenceEnoughOnly', false) })
   }
   if (filters.availability !== 'all') {

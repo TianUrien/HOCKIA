@@ -21,6 +21,8 @@ import { useAuthStore } from '@/lib/auth'
 import { computeClubFit } from '@/lib/clubFit'
 import { computeCoachFit } from '@/lib/coachFit'
 import { computeEvidence } from '@/lib/evidence'
+import { isRecruitingViewer } from '@/lib/recruiterAccess'
+import { effectiveCommunitySort, evidenceFilterActive } from '@/lib/communityActiveFilters'
 import { computeInterest } from '@/lib/interestFit'
 import { computeRecruiterVerdict, type RecruiterVerdict } from '@/lib/recruiterVerdict'
 import {
@@ -207,7 +209,12 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     ? 'anon'
     : isCurrentUserTestAccount ? 'test' : 'std'
 
-  const { searchQuery, filters, sort, applyContextFit, clearFilters, isNarrowed } = state
+  const { searchQuery, filters, sort: requestedSort, applyContextFit, clearFilters, isNarrowed } = state
+  // Evidence sort/filter are recruiter-only (clubs + recruiting coaches);
+  // anyone else carrying them in state falls back to newest / no filter.
+  const canUseEvidence = isRecruitingViewer(currentUserProfile)
+  const sort = effectiveCommunitySort(requestedSort, canUseEvidence)
+  const evidenceOnly = evidenceFilterActive(filters, canUseEvidence)
   // Active recruiting context (recruiter-only; null otherwise). When the
   // recruiter explicitly opts in via `applyContextFit`, the grid sorts
   // best-fit-first FOR THIS CONTEXT instead of the viewer's own profile
@@ -727,7 +734,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     if (filters.hasVideo) {
       result = result.filter(hasVideoMember)
     }
-    if (filters.evidenceEnoughOnly) {
+    if (evidenceOnly) {
       // Opt-in narrow to Strong/Enough evidence (the existing weighted model).
       result = result.filter((m) => {
         const lvl = memberEvidence(m).level
@@ -863,7 +870,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     }
 
     return result
-  }, [allMembers, filters, sort, currentUserProfile, applyContextFit, contextTarget, contextTargetRole, contextTargetPosition, contextTargetSpecialists, contextMustHaves, euFilterActive, euCountryIds, countries, openRoleCounts])
+  }, [allMembers, filters, sort, evidenceOnly, currentUserProfile, applyContextFit, contextTarget, contextTargetRole, contextTargetPosition, contextTargetSpecialists, contextMustHaves, euFilterActive, euCountryIds, countries, openRoleCounts])
 
   // Recruiter Match is "active" only while an active scope ranks PLAYERS by
   // fit — a coach scope ranks coaches, so the player match bar stays off.

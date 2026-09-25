@@ -130,7 +130,7 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
   const navigate = useNavigate()
   const { user, profile: viewerProfile } = useAuthStore()
   // Increment #2 — recruitment preferences are recruiter-facing only.
-  const isRecruiterViewer = viewerProfile?.role === 'club' || viewerProfile?.role === 'coach'
+  const isRecruiterViewer = isRecruitingViewer(viewerProfile)
   const { getCountryById } = useCountries()
   const intent = summarizeCandidateIntent(profile, (id) => getCountryById(id)?.name)
   const showIntent = isRecruiterViewer && intent.hasAny

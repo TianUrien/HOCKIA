@@ -54,7 +54,7 @@ vi.mock('@/lib/sentryHelpers', () => ({
 
 // Hoisted auth state — mutated by setAuthRole() helper per-test
 const authState = vi.hoisted(() => ({
-  profile: null as { id: string; role: string } | null,
+  profile: null as { id: string; role: string; coach_recruits_for_team?: boolean } | null,
 }))
 vi.mock('@/lib/auth', () => ({
   useAuthStore: () => authState,
@@ -97,8 +97,12 @@ function buildRow(overrides: Partial<RecruitingContextRow>): RecruitingContextRo
   }
 }
 
-function setAuthRole(role: 'club' | 'coach' | 'player' | 'brand' | 'umpire' | null) {
-  authState.profile = role ? { id: OWNER, role } : null
+/** 'coach' = a coach who recruits for a team (the recruiter case);
+ *  'candidate_coach' = a coach looking for a role (not a recruiter). */
+function setAuthRole(role: 'club' | 'coach' | 'candidate_coach' | 'player' | 'brand' | 'umpire' | null) {
+  if (role === 'coach') authState.profile = { id: OWNER, role: 'coach', coach_recruits_for_team: true }
+  else if (role === 'candidate_coach') authState.profile = { id: OWNER, role: 'coach', coach_recruits_for_team: false }
+  else authState.profile = role ? { id: OWNER, role } : null
 }
 
 /** Plant state directly so the chip's loading guard doesn't return
@@ -141,6 +145,20 @@ describe('ContextSwitcher render gate', () => {
       expect(container).toBeEmptyDOMElement()
     },
   )
+
+  it('hides for a coach looking for a role (not a recruiter, founder ruling 2026-09-25)', () => {
+    setAuthRole('candidate_coach')
+    useRecruitingContextStore.setState({
+      ownerId: OWNER,
+      eligibleRole: 'coach',
+      rows: [],
+      loading: false,
+      fetchedForOwner: OWNER,
+    })
+    const { container } = render(<ContextSwitcher />)
+    expect(container).toBeEmptyDOMElement()
+    expect(screen.queryByText(/set scope to enable club fit/i)).not.toBeInTheDocument()
+  })
 
   it('hides for anonymous viewers (no profile)', () => {
     setAuthRole(null)

@@ -180,6 +180,44 @@ describe('Trusted references flow', () => {
         requestNote: null
       })
     })
+    // Success state reads "Requested", never "Request sent" (founder 2026-09-26).
+    expect(await screen.findByText('Requested')).toBeInTheDocument()
+    expect(screen.queryByText(/request sent/i)).toBeNull()
+  })
+
+  it('shows the owner\'s outgoing requests as grey "Requested" + check, never amber "Pending"', () => {
+    const pendingReference: ReferenceCard = {
+      id: 'ref-p1',
+      relationshipType: 'Teammate',
+      requestNote: null,
+      endorsementText: null,
+      status: 'pending',
+      createdAt: new Date('2024-04-01').toISOString(),
+      respondedAt: null,
+      acceptedAt: null,
+      profile: {
+        id: 'friend-2',
+        fullName: 'Riley Captain',
+        role: 'player',
+        username: 'riley',
+        avatarUrl: null,
+        baseLocation: 'Paris',
+        position: null,
+        currentClub: 'Legends United',
+        nationalityCountryId: null,
+        nationality2CountryId: null
+      }
+    }
+    mockUseTrustedReferences.mockReturnValue(createHookState({ pendingReferences: [pendingReference] }))
+
+    const { container } = renderSection('player')
+
+    const pill = screen.getByText('Requested')
+    expect(pill.querySelector('svg.lucide-check')).not.toBeNull()
+    expect(pill.className).toMatch(/bg-gray-100/)
+    expect(pill.className).toMatch(/text-gray-600/)
+    expect(screen.queryByText('Pending')).toBeNull()
+    expect(container.innerHTML).not.toMatch(/amber/)
   })
 
   it('enables owners to approve or decline incoming requests', async () => {
