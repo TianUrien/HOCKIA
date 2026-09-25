@@ -14,7 +14,7 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { X, Mail, Copy, Check } from 'lucide-react'
 import { SUPPORT_EMAIL, openSupportEmail, copySupportEmail, useContactModal } from '@/lib/contact'
-import { useFocusTrap } from '@/hooks/useFocusTrap'
+import { isTopFocusTrap, useFocusTrap } from '@/hooks/useFocusTrap'
 
 export default function ContactModal() {
   const isOpen = useContactModal((s) => s.isOpen)
@@ -31,7 +31,10 @@ export default function ContactModal() {
   // Escape to close
   useEffect(() => {
     if (!isOpen) return
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') close() }
+    const onKey = (e: KeyboardEvent) => {
+      // Another trapped overlay is on top: its Escape closes it, not this one.
+      if (e.key === 'Escape' && isTopFocusTrap(dialogRef.current)) close()
+    }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
   }, [isOpen, close])

@@ -1,5 +1,5 @@
 import { X, SlidersHorizontal } from 'lucide-react'
-import { opportunityGenderToDisplay, OPPORTUNITY_GENDERS, type OpportunityGender } from '@/lib/hockeyCategories'
+import { opportunityGenderToDisplay, PLAYER_ROLE_GENDERS, type OpportunityGender } from '@/lib/hockeyCategories'
 
 const POSITIONS = ['goalkeeper', 'defender', 'midfielder', 'forward']
 
@@ -41,15 +41,15 @@ export default function OpportunityQuickFilters({
     else onSetType('all')
   }
 
-  // Cycle through category: all → Adult Men → Adult Women → Girls → Boys → Mixed → all.
-  // Phase 3d — covers all five enum values for the mobile chip cycle.
+  // Cycle through category: all → Adult Men → Adult Women → Mixed → all.
+  // No Girls/Boys: player roles are adult-only (founder ruling 2026-09-25).
   const cycleGender = () => {
     if (gender === 'all') {
-      onSetGender(OPPORTUNITY_GENDERS[0])
+      onSetGender(PLAYER_ROLE_GENDERS[0])
       return
     }
-    const idx = OPPORTUNITY_GENDERS.indexOf(gender)
-    const next = OPPORTUNITY_GENDERS[idx + 1]
+    const idx = PLAYER_ROLE_GENDERS.indexOf(gender)
+    const next = idx === -1 ? undefined : PLAYER_ROLE_GENDERS[idx + 1]
     onSetGender(next ?? 'all')
   }
 

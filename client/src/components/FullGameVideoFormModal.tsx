@@ -2,7 +2,7 @@ import { useEffect, useId, useRef, useState } from 'react'
 import { Loader2, Lock, X } from 'lucide-react'
 import Button from './Button'
 import Input from './Input'
-import { useFocusTrap } from '@/hooks/useFocusTrap'
+import { isTopFocusTrap, useFocusTrap } from '@/hooks/useFocusTrap'
 import { useToastStore } from '@/lib/toast'
 import { useAuthStore } from '@/lib/auth'
 import { fullMatchVisibilityOf } from '@/lib/recruiter'
@@ -119,6 +119,8 @@ export default function FullGameVideoFormModal({
   useEffect(() => {
     if (!isOpen) return
     const onKey = (event: KeyboardEvent) => {
+      // Another trapped overlay is on top: its Escape closes it, not this one.
+      if (event.key === 'Escape' && !isTopFocusTrap(dialogRef.current)) return
       if (event.key === 'Escape' && !isSaving) {
         event.preventDefault()
         onClose()

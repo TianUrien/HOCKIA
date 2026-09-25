@@ -3,7 +3,7 @@ import { X, UploadCloud, Loader2, CheckCircle2, AlertCircle, Film } from 'lucide
 import Button from '../Button'
 import { useAuthStore } from '@/lib/auth'
 import Input from '../Input'
-import { useFocusTrap } from '@/hooks/useFocusTrap'
+import { isTopFocusTrap, useFocusTrap } from '@/hooks/useFocusTrap'
 import { useNativeVideoUpload } from '@/hooks/useNativeVideoUpload'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
@@ -51,6 +51,8 @@ export default function UploadVideoModal({ isOpen, onClose, onUploaded, kind = '
   useEffect(() => {
     if (!isOpen) return
     const onKey = (e: KeyboardEvent) => {
+      // Another trapped overlay is on top: its Escape closes it, not this one.
+      if (e.key === 'Escape' && !isTopFocusTrap(dialogRef.current)) return
       if (e.key === 'Escape' && !busy) { e.preventDefault(); onClose() }
     }
     document.addEventListener('keydown', onKey)

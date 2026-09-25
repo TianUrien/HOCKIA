@@ -40,9 +40,10 @@ import RolePlaceholder from '@/components/RolePlaceholder'
 import SignInPromptModal from '@/components/SignInPromptModal'
 import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
-import { useFocusTrap } from '@/hooks/useFocusTrap'
+import { isTopFocusTrap, useFocusTrap } from '@/hooks/useFocusTrap'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import { useIsProfileSaved } from '@/hooks/useSavedProfiles'
+import { isRecruitingViewer } from '@/lib/recruiterAccess'
 import QuickActionsRow from '@/components/recruiting/QuickActionsRow'
 import { useWorldClubLogo, getClubLevelBand } from '@/hooks/useWorldClubLogo'
 import { categoryToBandTarget } from '@/hooks/useInterest'
@@ -78,7 +79,10 @@ interface MemberPreviewModalProps {
 
 export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps) {
   const { user, profile } = useAuthStore()
-  const isRecruiterViewer = profile?.role === 'club' || profile?.role === 'coach'
+  // Recruiters = clubs + coaches who recruit for a team. Everyone else
+  // (players, candidate coaches, umpires, brands) gets the half-sheet with
+  // no Evidence tier (founder rule 2026-09-25).
+  const isRecruiterViewer = isRecruitingViewer(profile)
   const navigate = useNavigate()
   const location = useLocation()
   const { addToast } = useToastStore()
@@ -205,6 +209,8 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
   useEffect(() => {
     if (!member) return
     const handleKey = (e: KeyboardEvent) => {
+      // Another trapped overlay is on top: its Escape closes it, not this one.
+      if (e.key === 'Escape' && !isTopFocusTrap(contentRef.current)) return
       if (e.key === 'Escape') requestClose()
     }
     document.addEventListener('keydown', handleKey)
@@ -363,11 +369,11 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
               <span className="inline-block w-12 h-1.5 rounded-full bg-gray-400/80" aria-hidden="true" />
             </div>
             {/* Save button moved INTO QuickActionsRow above the
-                sticky footer (Spec G.5 mount). Players viewing other
-                profiles still get a Save action via QuickActionsRow;
-                recruiters get the full row (Save + Message + Invite
-                + Compare + ⋯). Removing the corner bookmark de-
-                clutters the hero image area. */}
+                sticky footer (Spec G.5 mount). QuickActionsRow shows
+                Save only to recruiters (clubs + recruiting coaches);
+                players and candidate coaches get Message / Add friend.
+                Removing the corner bookmark de-clutters the hero
+                image area. */}
             <button
               type="button"
               onClick={requestClose}
@@ -675,7 +681,8 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
               Compare (recruiter-only, disabled until built), and
               overflow with Move-to-list / Add note. The row
               auto-hides for own-profile + anonymous viewers; for
-              non-recruiters only Save + Message + ⋯ render. */}
+              non-recruiters only Message (+ Add friend) render —
+              Save is recruiter-only. */}
           {showSaveButton && (
             <div className="px-4 pb-3 flex justify-center">
               <QuickActionsRow

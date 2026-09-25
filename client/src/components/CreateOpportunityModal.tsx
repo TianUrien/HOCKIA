@@ -9,13 +9,14 @@ import ConfirmDialog from './ConfirmDialog'
 import LocationAutocomplete from './LocationAutocomplete'
 import type { LocationSelection } from './LocationAutocomplete'
 import { useCountries } from '@/hooks/useCountries'
-import { useFocusTrap } from '@/hooks/useFocusTrap'
+import { isTopFocusTrap, useFocusTrap } from '@/hooks/useFocusTrap'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import { useToastStore } from '@/lib/toast'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import { trackVacancyCreate } from '@/lib/analytics'
 import SpecialistSkillsSelect from '@/components/SpecialistSkillsSelect'
 import { pruneSpecialistSkillsForPosition } from '@/lib/specialistSkills'
+import { isYouthGender, playerRoleGender, YOUTH_PLAYER_ROLE_MESSAGE } from '@/lib/youthRoles'
 import { LEVEL_SOUGHT_OPTIONS, COMPENSATION_OPTIONS, RECRUITMENT_PROBLEM_OPTIONS, levelSoughtFromBand } from '@/lib/opportunityIntent'
 import { getClubLevelBand, prefetchWorldClubLogos } from '@/hooks/useWorldClubLogo'
 import { assessPostingQuality } from '@/lib/opportunityQuality'
@@ -58,7 +59,11 @@ const buildInitialFormData = (vacancy?: Vacancy | null, initialOpportunityType?:
   opportunity_type: vacancy?.opportunity_type || initialOpportunityType || 'player',
   title: vacancy?.title || '',
   position: vacancy?.position || undefined,
-  gender: vacancy?.gender || undefined,
+  // A legacy youth PLAYER role opens with no category (under-18s are never
+  // recruitable), so saving asks for an adult one. Coach roles keep theirs.
+  gender: ((vacancy?.opportunity_type || initialOpportunityType || 'player') === 'player'
+    ? playerRoleGender(vacancy?.gender)
+    : vacancy?.gender) || undefined,
   description: vacancy?.description || '',
   location_city: vacancy?.location_city || '',
   location_country: vacancy?.location_country || '',
@@ -338,6 +343,8 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
   useEffect(() => {
     if (!isOpen) return
     const handleKeyDown = (event: KeyboardEvent) => {
+      // Another trapped overlay is on top: its Escape closes it, not this one.
+      if (event.key === 'Escape' && !isTopFocusTrap(dialogRef.current)) return
       // While the discard-confirm dialog is open, it owns Escape.
       if (event.key === 'Escape' && !showDiscardConfirm) {
         event.preventDefault()
@@ -502,6 +509,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
     if (formData.opportunity_type === 'player') {
       if (!formData.position) newErrors.position = 'Position is required'
       if (!formData.gender) newErrors.gender = 'Category is required'
+      else if (isYouthGender(formData.gender)) newErrors.gender = YOUTH_PLAYER_ROLE_MESSAGE
     }
     if (!formData.location_city?.trim()) newErrors.location_city = 'City is required'
     if (!formData.location_country?.trim()) newErrors.location_country = 'Country is required'
@@ -859,7 +867,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                   <select
                     value={formData.gender || ''}
                     onChange={(e) =>
-                      handleInputChange('gender', e.target.value as 'Men' | 'Women' | 'Girls' | 'Boys' | 'Mixed')
+                      handleInputChange('gender', e.target.value as 'Men' | 'Women' | 'Mixed')
                     }
                     aria-required="true"
                     aria-invalid={errors.gender ? true : undefined}
@@ -870,12 +878,11 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                   >
                     <option value="">Select category</option>
                     {/* Display labels are the new Phase 3 vocabulary; stored
-                        values stay as the legacy enum for back-compat. New
-                        Girls / Boys / Mixed values were added in 3d. */}
+                        values stay as the legacy enum for back-compat. No
+                        Girls / Boys: player roles are adult-only (founder
+                        ruling 2026-09-25; the DB rejects them). */}
                     <option value="Men">Adult Men</option>
                     <option value="Women">Adult Women</option>
-                    <option value="Girls">Girls</option>
-                    <option value="Boys">Boys</option>
                     <option value="Mixed">Mixed</option>
                   </select>
                   {errors.gender && <p className="mt-1 text-sm text-red-600">{errors.gender}</p>}

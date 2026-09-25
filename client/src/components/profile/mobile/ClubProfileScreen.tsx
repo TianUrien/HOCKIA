@@ -152,10 +152,12 @@ export default function ClubProfileScreen({
   const bio = profile.club_bio?.trim() || null
   const bioLong = (bio?.length ?? 0) > 180
   const website = profile.website?.trim() || null
-  const recruiting = profile.open_to_opportunities === true
   const linked = Boolean(profile.current_world_club_id)
   const friendCount = profile.accepted_friend_count ?? 0
   const openRoles = data.openRoles
+  // Recruiting = the club has at least one open role (DEV NOTE). Not
+  // profiles.open_to_opportunities: that is a player/coach availability flag.
+  const recruiting = openRoles.length > 0
   const crestUrl = profile.avatar_url ? getImageUrl(profile.avatar_url, 'avatar-md') ?? profile.avatar_url : null
   const hasCover = data.photos.length > 0
   const glass = hasCover ? 'bg-black/40 text-white' : 'bg-white/90 text-ink-1 shadow-sm'

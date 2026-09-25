@@ -549,7 +549,8 @@ export default function ClubDashboard({
               sendingMessage={sendingMessage}
               onOpenFriends={() => handleTabChange('friends')}
               onOpenSquad={() => handleTabChange('members')}
-              onOpenRoles={() => handleTabChange('opportunities')}
+              // Phone only: the Club v2 Opportunities screen (OpportunitiesEntry), not the v1 tab.
+              onOpenRoles={() => navigate('/opportunities')}
               onPostRole={handleCreateOpportunity}
               onOpenClubLeague={() => handleTabChange('league')}
               onOpenPosts={() => handleTabChange('posts')}

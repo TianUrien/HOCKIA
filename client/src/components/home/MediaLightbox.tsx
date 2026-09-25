@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
 import { identityLine } from '@/lib/identity'
 import { X, ChevronLeft, ChevronRight, Play, Pause, Volume2, VolumeX, Maximize, Share2, Heart, MessageCircle } from 'lucide-react'
-import { useFocusTrap } from '@/hooks/useFocusTrap'
+import { isTopFocusTrap, useFocusTrap } from '@/hooks/useFocusTrap'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import { useSwipeGesture } from '@/hooks/useSwipeGesture'
 import { getImageUrl, getLqipUrl } from '@/lib/imageUrl'
@@ -128,6 +128,8 @@ export function MediaLightbox({ images, initialIndex, onClose, author, caption, 
   // Keyboard navigation + Escape
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Another trapped overlay is on top: it owns the keyboard.
+      if (!isTopFocusTrap(dialogRef.current)) return
       switch (e.key) {
         case 'Escape':
           onClose()

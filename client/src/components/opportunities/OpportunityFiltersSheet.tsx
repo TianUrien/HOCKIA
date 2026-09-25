@@ -22,11 +22,10 @@ const POSITIONS = [
   { value: 'midfielder', label: 'Midfielder' },
   { value: 'forward', label: 'Forward' },
 ]
+// No Girls/Boys: player roles are adult-only (founder ruling 2026-09-25).
 const CATEGORIES = [
   { value: 'Women', label: "Women's" },
   { value: 'Men', label: "Men's" },
-  { value: 'Girls', label: 'Girls' },
-  { value: 'Boys', label: 'Boys' },
   { value: 'Mixed', label: 'Mixed' },
 ]
 

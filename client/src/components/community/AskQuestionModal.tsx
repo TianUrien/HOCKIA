@@ -7,7 +7,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { X } from 'lucide-react'
 import { QUESTION_CATEGORIES, CATEGORY_LABELS } from '@/types/questions'
-import { useFocusTrap } from '@/hooks/useFocusTrap'
+import { isTopFocusTrap, useFocusTrap } from '@/hooks/useFocusTrap'
 import type { QuestionCategory, CreateQuestionInput } from '@/types/questions'
 
 interface AskQuestionModalProps {
@@ -43,6 +43,8 @@ export function AskQuestionModal({
   // Handle escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
+      // Another trapped overlay is on top: its Escape closes it, not this one.
+      if (e.key === 'Escape' && !isTopFocusTrap(dialogRef.current)) return
       if (e.key === 'Escape' && isOpen) {
         onClose()
       }

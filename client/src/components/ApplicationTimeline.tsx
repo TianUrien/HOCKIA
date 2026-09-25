@@ -52,8 +52,8 @@ function statusDotClass(status: string): string {
     case 'maybe':
       return 'bg-amber-500'
     case 'rejected':
-      return 'bg-rose-400'
     case 'no_response':
+      // "Not selected" is grey, not an error colour (founder ruling 2026-09-25).
       return 'bg-gray-400'
     default:
       return 'bg-gray-300'
