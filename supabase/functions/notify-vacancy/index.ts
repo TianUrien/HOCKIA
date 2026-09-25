@@ -1,4 +1,3 @@
-// deno-lint-ignore-file no-explicit-any
 // NOTE: This file runs on Supabase Edge Functions (Deno runtime).
 // Some TS tooling in the workspace may not include Deno types, so we declare a minimal Deno shape.
 declare const Deno: {
@@ -18,7 +17,6 @@ import {
   createLogger,
   generateEmailHtml,
   generateEmailText,
-  sendEmailsIndividually,
   isVacancyNewlyPublished,
   claimFirstAnnouncement,
   announcementSendOutcome,
