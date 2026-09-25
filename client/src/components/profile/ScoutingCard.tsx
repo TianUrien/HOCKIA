@@ -39,6 +39,7 @@ import { useInterest, categoryToBandTarget } from '@/hooks/useInterest'
 import { getClubLevelBand, prefetchWorldClubLogos } from '@/hooks/useWorldClubLogo'
 import InterestSignal from '@/components/recruiting/InterestSignal'
 import { useIsProfileSaved } from '@/hooks/useSavedProfiles'
+import { isRecruitingViewer } from '@/lib/recruiterAccess'
 import ClubFitChip from '@/components/recruiting/ClubFitChip'
 import ProvenSignal from '@/components/recruiting/ProvenSignal'
 import { useClubFit } from '@/hooks/useClubFit'
@@ -178,7 +179,10 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
   // Increment #3 — player specialist tags (read-only chips).
   const specialistSkills = specialistSkillLabels(profile.specialist_skills)
   const [counts, setCounts] = useState<EvidenceCounts | null>(null)
-  const savedState = useIsProfileSaved(profile.id)
+  // Save / shortlist actions are for clubs and recruiting coaches only
+  // (founder rule 2026-09-25) — players and candidate coaches get no Save.
+  const canSave = isRecruitingViewer(viewerProfile)
+  const savedState = useIsProfileSaved(canSave ? profile.id : null)
   // Phase 2C — Coach Fit for coach profiles. NOT_APPLICABLE (chip null)
   // for players or when no coach scope is active.
   const coachFit = useCoachFit(
@@ -529,32 +533,35 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
         </dl>
       )}
 
-      {/* Zone 3 — Pinned recruitment actions. */}
-      {user && user.id !== profile.id && (
+      {/* Zone 3 — Pinned recruitment actions (recruiters only) + the
+          Journey link (every signed-in visitor). */}
+      {user && user.id !== profile.id && (canSave || showJourneyLink) && (
         <div className="mt-5 pt-4 border-t border-gray-100">
           <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => void savedState.toggle()}
-              disabled={savedState.mutating}
-              className={`inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-50 ${
-                savedState.isSaved
-                  ? 'bg-hockia-primary/10 text-hockia-primary hover:bg-hockia-primary/15'
-                  : 'bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white hover:opacity-95'
-              }`}
-            >
-              {savedState.isSaved ? (
-                <>
-                  <BookmarkCheck className="h-4 w-4" />
-                  Saved
-                </>
-              ) : (
-                <>
-                  <Bookmark className="h-4 w-4" />
-                  Shortlist
-                </>
-              )}
-            </button>
+            {canSave && (
+              <button
+                type="button"
+                onClick={() => void savedState.toggle()}
+                disabled={savedState.mutating}
+                className={`inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-50 ${
+                  savedState.isSaved
+                    ? 'bg-hockia-primary/10 text-hockia-primary hover:bg-hockia-primary/15'
+                    : 'bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white hover:opacity-95'
+                }`}
+              >
+                {savedState.isSaved ? (
+                  <>
+                    <BookmarkCheck className="h-4 w-4" />
+                    Saved
+                  </>
+                ) : (
+                  <>
+                    <Bookmark className="h-4 w-4" />
+                    Shortlist
+                  </>
+                )}
+              </button>
+            )}
             {/* Message moved to HeroIdentityCard's CTA row (2026-05-29) —
                 it's a universal visitor action and belongs in the hero,
                 not in the recruiter-specific ScoutingCard zone. Two
@@ -565,10 +572,12 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
             {/* ⋯ — Move to list / Add note. Same menu used by
                 QuickActionsRow on tile surfaces, so behavior +
                 telemetry stay consistent. */}
-            <MoreActionsMenu
-              playerId={profile.id}
-              playerName={profile.full_name ?? 'this player'}
-            />
+            {canSave && (
+              <MoreActionsMenu
+                playerId={profile.id}
+                playerName={profile.full_name ?? 'this player'}
+              />
+            )}
             {showJourneyLink && (
               <button
                 type="button"
