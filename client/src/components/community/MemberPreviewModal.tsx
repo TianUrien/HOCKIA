@@ -363,11 +363,11 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
               <span className="inline-block w-12 h-1.5 rounded-full bg-gray-400/80" aria-hidden="true" />
             </div>
             {/* Save button moved INTO QuickActionsRow above the
-                sticky footer (Spec G.5 mount). Players viewing other
-                profiles still get a Save action via QuickActionsRow;
-                recruiters get the full row (Save + Message + Invite
-                + Compare + ⋯). Removing the corner bookmark de-
-                clutters the hero image area. */}
+                sticky footer (Spec G.5 mount). QuickActionsRow shows
+                Save only to recruiters (clubs + recruiting coaches);
+                players and candidate coaches get Message / Add friend.
+                Removing the corner bookmark de-clutters the hero
+                image area. */}
             <button
               type="button"
               onClick={requestClose}
@@ -675,7 +675,8 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
               Compare (recruiter-only, disabled until built), and
               overflow with Move-to-list / Add note. The row
               auto-hides for own-profile + anonymous viewers; for
-              non-recruiters only Save + Message + ⋯ render. */}
+              non-recruiters only Message (+ Add friend) render —
+              Save is recruiter-only. */}
           {showSaveButton && (
             <div className="px-4 pb-3 flex justify-center">
               <QuickActionsRow

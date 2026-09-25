@@ -6,6 +6,7 @@ import MediaCard from './MediaCard'
 import AboutMeCard from './AboutMeCard'
 import CommunityCard from './CommunityCard'
 import SavedCandidatesCard from './SavedCandidatesCard'
+import { isRecruitingViewer } from '@/lib/recruiterAccess'
 import type { Profile } from '@/lib/supabase'
 import type { PlayerProfileShape } from '@/pages/PlayerDashboard'
 
@@ -123,7 +124,8 @@ export default function CoachBentoGrid({
             onCreateOpportunity={onCreateOpportunity}
             onManageOpportunities={onManageOpportunities}
           />
-          <SavedCandidatesCard />
+          {/* Save is for recruiting coaches only (founder rule 2026-09-25). */}
+          {isRecruitingViewer(profile) && <SavedCandidatesCard />}
           <CommunityCard
             profile={profile as Pick<Profile, 'id' | 'accepted_friend_count' | 'accepted_reference_count' | 'post_count'>}
             onOpenTab={(tab) => onOpenTab(tab)}
