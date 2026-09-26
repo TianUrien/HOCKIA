@@ -40,6 +40,7 @@ import {
   type TargetCategory,
 } from './recruitingContext'
 import { isOpenToAny } from './hockeyCategories'
+import { isRecruitingViewer } from './recruiterAccess'
 
 export type CoachFitState = 'green' | 'yellow' | 'grey'
 
@@ -160,8 +161,9 @@ export function computeCoachFit(
   options?: ComputeCoachFitOptions,
 ): CoachFitResult {
   if (!viewerProfile || !candidate) return NOT_APPLICABLE
-  // Recruiter surfaces only — clubs and coaches.
-  if (viewerProfile.role !== 'club' && viewerProfile.role !== 'coach') return NOT_APPLICABLE
+  // Recruiter surfaces only — clubs, and coaches who recruit for a team
+  // (founder ruling 2026-09-26; mirrors SQL public.is_recruiter).
+  if (!isRecruitingViewer(viewerProfile)) return NOT_APPLICABLE
   // Candidate must be a coach.
   if (candidate.role !== 'coach') return NOT_APPLICABLE
   // The scope must explicitly seek a coach. (Player/null scopes never

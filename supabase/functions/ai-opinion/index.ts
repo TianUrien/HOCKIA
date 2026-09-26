@@ -17,7 +17,8 @@
  *   500 { error: 'internal' }
  *
  * Behaviour:
- *   1. Auth check (must be authenticated club/coach).
+ *   1. Auth check (must be an authenticated club, or a coach with
+ *      coach_recruits_for_team = true).
  *   2. Resolve viewer's effective target (override from recruiting_context
  *      or profile-derived for clubs). Same logic as clubFit.ts.
  *   3. Fetch viewer + player facts + both sides' league bands.
@@ -256,12 +257,16 @@ interface ProfileRow {
   // position fit against the opening's sought position (incl. must-have).
   position: string | null
   secondary_position: string | null
+  // Founder ruling 2026-09-26 — Fit counts ONLY coaches who recruit. A coach
+  // viewer passes the recruiter gate only when this is true (mirrors SQL
+  // public.is_recruiter).
+  coach_recruits_for_team: boolean | null
 }
 
 async function fetchProfile(supabase: ReturnType<typeof getServiceClient>, id: string): Promise<ProfileRow | null> {
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, role, full_name, current_world_club_id, playing_category, coaching_categories, open_to_play, open_to_coach, open_to_opportunities, last_active_at, accepted_reference_count, career_entry_count, highlight_video_url, full_game_video_count, current_club, level_target, opportunity_preference, relocation_willingness, available_from, coach_specialization, specialist_skills, position, secondary_position')
+    .select('id, role, full_name, current_world_club_id, playing_category, coaching_categories, open_to_play, open_to_coach, open_to_opportunities, last_active_at, accepted_reference_count, career_entry_count, highlight_video_url, full_game_video_count, current_club, level_target, opportunity_preference, relocation_willingness, available_from, coach_specialization, specialist_skills, position, secondary_position, coach_recruits_for_team')
     .eq('id', id)
     .maybeSingle()
   if (error) throw error
@@ -769,8 +774,14 @@ serve(async (req: Request) => {
     })
   }
 
-  // 4) Recruiter gate — club or coach only (matches ClubFitChip + spec).
-  if (viewer.role !== 'club' && viewer.role !== 'coach') {
+  // 4) Recruiter gate — a club, or a coach who recruits for a team (founder
+  // ruling 2026-09-26: Fit counts ONLY coaches who recruit; mirrors SQL
+  // public.is_recruiter + client isRecruitingViewer). Candidate coaches are
+  // refused with the same 403 recruiter_only as any other non-recruiter.
+  const viewerIsRecruiter =
+    viewer.role === 'club' ||
+    (viewer.role === 'coach' && viewer.coach_recruits_for_team === true)
+  if (!viewerIsRecruiter) {
     return new Response(JSON.stringify({ error: 'recruiter_only' }), {
       status: 403,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

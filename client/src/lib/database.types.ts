@@ -9715,6 +9715,12 @@ export type Database = {
         | "rejected"
         | "no_response"
         | "withdrawn"
+        | "offered"
+        | "accepted"
+        | "signed_pending_confirmation"
+        | "signed"
+        | "offer_declined"
+        | "filled"
       comment_rating: "positive" | "neutral" | "negative"
       comment_status: "visible" | "hidden" | "reported" | "deleted"
       friendship_status:
@@ -9773,6 +9779,7 @@ export type Database = {
         | "club_invitation_received"
         | "club_invitation_accepted"
         | "applications_expired"
+        | "recruiting_update"
       profile_reference_status: "pending" | "accepted" | "declined" | "revoked"
       question_category:
         | "trials_club_selection"
@@ -9925,6 +9932,12 @@ export const Constants = {
         "rejected",
         "no_response",
         "withdrawn",
+        "offered",
+        "accepted",
+        "signed_pending_confirmation",
+        "signed",
+        "offer_declined",
+        "filled",
       ],
       comment_rating: ["positive", "neutral", "negative"],
       comment_status: ["visible", "hidden", "reported", "deleted"],
@@ -9987,6 +10000,7 @@ export const Constants = {
         "club_invitation_received",
         "club_invitation_accepted",
         "applications_expired",
+        "recruiting_update",
       ],
       profile_reference_status: ["pending", "accepted", "declined", "revoked"],
       question_category: [

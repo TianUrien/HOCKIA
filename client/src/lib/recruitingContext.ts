@@ -32,6 +32,11 @@ export interface RecruitingContextProfileFields {
   // proximity, so we just need the FK to be present (or not) to know
   // whether we have a club anchor.
   current_world_club_id: string | null
+  // Founder ruling 2026-09-26: Fit counts ONLY coaches who recruit. A coach
+  // viewer is a recruiter only when this is true (mirrors SQL
+  // public.is_recruiter). Optional so club-only callers can omit it, but
+  // every coach-viewer caller MUST pass it or the coach loses Fit.
+  coach_recruits_for_team?: boolean | null
 }
 
 /**

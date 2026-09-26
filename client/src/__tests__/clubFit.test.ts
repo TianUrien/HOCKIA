@@ -311,14 +311,39 @@ describe('computeClubFit', () => {
   // ── Sprint 3: coach viewers ─────────────────────────────────────
   // Coaches have no profile-derived target (no league columns); they
   // rely on the active recruiting_context's overrideTarget for the
-  // Fit chip to mean anything.
+  // Fit chip to mean anything. Founder ruling 2026-09-26: only coaches who
+  // RECRUIT (coach_recruits_for_team === true) count as Fit viewers.
   const baseCoach = {
     role: 'coach' as const,
     womens_league_division: null,
     mens_league_division: null,
     current_world_club_id: 'club-uuid',
     competition_level_band: null,
+    coach_recruits_for_team: true,
   }
+
+  it('candidate coach (coach_recruits_for_team false) → NOT_APPLICABLE even with overrideTarget', () => {
+    const result = computeClubFit({ ...baseCoach, coach_recruits_for_team: false }, baseFemalePlayer, {
+      overrideTarget: 'Women',
+    })
+    expect(result.isApplicable).toBe(false)
+  })
+
+  it('coach with coach_recruits_for_team missing/null → NOT_APPLICABLE (fail closed)', () => {
+    const { coach_recruits_for_team: _omit, ...coachNoFlag } = baseCoach
+    void _omit
+    expect(computeClubFit(coachNoFlag, baseFemalePlayer, { overrideTarget: 'Women' }).isApplicable).toBe(false)
+    expect(
+      computeClubFit({ ...baseCoach, coach_recruits_for_team: null }, baseFemalePlayer, { overrideTarget: 'Women' }).isApplicable,
+    ).toBe(false)
+  })
+
+  it('club viewer is applicable regardless of coach_recruits_for_team', () => {
+    const result = computeClubFit({ ...womensClub, coach_recruits_for_team: false }, baseFemalePlayer, {
+      overrideTarget: 'Women',
+    })
+    expect(result.isApplicable).toBe(true)
+  })
 
   it('coach viewer without override → NOT_APPLICABLE', () => {
     const result = computeClubFit(baseCoach, baseFemalePlayer)
