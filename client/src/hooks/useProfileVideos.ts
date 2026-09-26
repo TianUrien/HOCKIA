@@ -19,15 +19,15 @@ export type ProfileVideo = {
 }
 export type ProfileFullGameLink = Database['public']['Tables']['player_full_game_videos']['Row']
 
-export function useProfileVideos(profileId: string | null | undefined) {
+export function useProfileVideos(profileId: string | null | undefined, enabled = true) {
   const [videos, setVideos] = useState<ProfileVideo[]>([])
   const [links, setLinks] = useState<ProfileFullGameLink[]>([])
-  const [loading, setLoading] = useState(Boolean(profileId))
+  const [loading, setLoading] = useState(Boolean(profileId) && enabled)
   const [nonce, setNonce] = useState(0)
   const reload = useCallback(() => setNonce((n) => n + 1), [])
 
   useEffect(() => {
-    if (!profileId) { setLoading(false); return }
+    if (!profileId || !enabled) { setLoading(false); return }
     let cancelled = false
     setLoading(true)
     void (async () => {
@@ -51,7 +51,7 @@ export function useProfileVideos(profileId: string | null | undefined) {
       setLoading(false)
     })()
     return () => { cancelled = true }
-  }, [profileId, nonce])
+  }, [profileId, enabled, nonce])
 
   return { videos, links, loading, reload }
 }

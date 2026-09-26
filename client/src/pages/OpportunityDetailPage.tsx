@@ -115,9 +115,7 @@ export default function OpportunityDetailPage() {
       // accepting). This stops the Home-feed "Apply Now" from dead-ending on a
       // still-open opportunity whose deadline merely lapsed. A passed deadline
       // is surfaced as informational text, not a block.
-      if (opportunityData.status !== 'open') {
-        setIsClosed(true)
-      }
+      setIsClosed(opportunityData.status !== 'open')
 
       // Check if this is a test opportunity and current user is not a test account
       type WorldClubJoin = {
@@ -319,25 +317,9 @@ export default function OpportunityDetailPage() {
     )
   }
 
-  if (isClosed) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <div className="flex items-center justify-center" style={{ height: 'calc(100vh - 80px)', paddingTop: '80px' }}>
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">This Opportunity Has Closed</h1>
-            <p className="text-gray-600 mb-6">This position is no longer accepting applications.</p>
-            <button
-              onClick={() => navigate('/opportunities')}
-              className="px-6 py-3 bg-gradient-to-r from-hockia-primary to-hockia-secondary text-white rounded-lg hover:opacity-90 transition-opacity"
-            >
-              Browse Open Opportunities
-            </button>
-          </div>
-        </div>
-      </div>
-    )
-  }
+  // A closed role is no longer a dead-end page: it renders below in its
+  // closed state (greyed, "Closed", no Apply) with the viewer's own
+  // application if they applied — see OpportunityDetailMobile.
 
   // Determine what happens when user clicks "Apply"
   const handleApplyClick = () => {
@@ -374,7 +356,7 @@ export default function OpportunityDetailPage() {
   })()
 
   // Determine if user can apply (or should see the apply button)
-  const canShowApplyButton = !hasApplied && (
+  const canShowApplyButton = !isClosed && !hasApplied && (
     !user || // Not logged in - show button to trigger sign-in prompt
     (profile?.role === 'player' && opportunity.opportunity_type === 'player') ||
     (profile?.role === 'coach' && opportunity.opportunity_type === 'coach')
@@ -382,14 +364,17 @@ export default function OpportunityDetailPage() {
 
   return (
     <>
-      {/* Structured data for AI discoverability */}
-      <OpportunityJsonLd
-        vacancy={opportunity} 
-        club={{
-          name: club.full_name || 'Unknown Club',
-          logoUrl: club.avatar_url,
-        }}
-      />
+      {/* Structured data for AI discoverability — open roles only: a closed
+          role must not be advertised as a live job posting. */}
+      {!isClosed && (
+        <OpportunityJsonLd
+          vacancy={opportunity}
+          club={{
+            name: club.full_name || 'Unknown Club',
+            logoUrl: club.avatar_url,
+          }}
+        />
+      )}
       
       <div className="min-h-screen bg-white lg:bg-gray-50">
         <Header mobileHidden />
@@ -407,6 +392,7 @@ export default function OpportunityDetailPage() {
             applicationStatus={applicationStatus}
             canApply={canShowApplyButton}
             isPublisher={Boolean(user && user.id === opportunity.club_id)}
+            isClosed={isClosed}
             onApply={handleApplyClick}
             onMessage={handleMessageClick}
           />
@@ -440,6 +426,7 @@ export default function OpportunityDetailPage() {
             onApply={canShowApplyButton ? handleApplyClick : undefined}
             hasApplied={hasApplied}
             applicationStatus={applicationStatus}
+            isClosed={isClosed}
           />
         </div>
       </div>

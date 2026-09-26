@@ -8,7 +8,7 @@ import { logger } from '../lib/logger'
 import { useAuthStore } from '../lib/auth'
 import { useToastStore } from '@/lib/toast'
 import type { Vacancy } from '../lib/supabase'
-import { opportunityGenderToTeamLabel } from '@/lib/hockeyCategories'
+import { roleTeamLabel } from '@/lib/opportunityCopy'
 import Button from './Button'
 import CreateOpportunityModal from './CreateOpportunityModal'
 import ApplyToOpportunityModal from './ApplyToOpportunityModal'
@@ -17,7 +17,7 @@ import PublishConfirmationModal from './PublishConfirmationModal'
 import DeleteOpportunityModal from './DeleteOpportunityModal'
 import Skeleton, { OpportunityCardSkeleton } from './Skeleton'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
-import { closeRolePatch, reopenRolePatch } from '@/lib/roleLifecycle'
+import { closeRolePatch, closeRoleToast, reopenRolePatch } from '@/lib/roleLifecycle'
 
 type VacancyWithCount = Vacancy & { applicant_count: number | null }
 
@@ -511,7 +511,7 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
       // which reads as the page navigating away.
       setStatusFilter('closed')
       setVacancyToClose(null)
-      addToast(reason === 'filled' ? 'Marked as filled — congrats on the signing!' : 'Opportunity closed.', 'success')
+      addToast(closeRoleToast(reason), 'success')
     } catch (error) {
       logger.error('Error closing vacancy:', error)
       reportSupabaseError('vacancies.close', error, {
@@ -807,14 +807,12 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
           {vacancies.filter(v => statusFilter === 'all' || v.status === statusFilter).map((vacancy) => {
             const locationLabel = [vacancy.location_city, vacancy.location_country].filter(Boolean).join(', ')
 
-            // Compound badge: "Player · Men's · Forward" (Phase 3d — handles
-            // all 5 enum values via opportunityGenderToTeamLabel).
+            // Compound badge: "Player · Men's · Forward" / "Coach · Girls · Head Coach".
+            // The team shows on coach roles too.
             const badgeParts: string[] = []
             badgeParts.push(vacancy.opportunity_type === 'player' ? 'Player' : 'Coach')
-            if (vacancy.opportunity_type === 'player' && vacancy.gender) {
-              const teamLabel = opportunityGenderToTeamLabel(vacancy.gender)
-              if (teamLabel) badgeParts.push(teamLabel.replace(' Team', ''))
-            }
+            const teamLabel = roleTeamLabel(vacancy.gender)
+            if (teamLabel) badgeParts.push(teamLabel)
             if (vacancy.position) {
               badgeParts.push(vacancy.position.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()))
             }

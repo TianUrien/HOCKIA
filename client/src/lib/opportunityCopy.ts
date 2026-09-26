@@ -48,6 +48,15 @@ export function genderPill(gender: string | null | undefined): GenderPill | null
 }
 
 /**
+ * The team a role is for — Men's / Women's / Mixed / Boys / Girls — on player
+ * AND coach roles (a coach is hired for a team too). Desktop cards and detail
+ * use this; the phone reads the same words from genderPill / roleHeadline.
+ */
+export function roleTeamLabel(gender: string | null | undefined): string | null {
+  return genderPill(gender)?.label ?? null
+}
+
+/**
  * duration_text as the reader should see it. The column holds free text
  * ("3 months", "Season March-September") and, from the old form, bare numbers
  * ("7", "3") that meant months. A bare integer becomes "N months"; anything
@@ -174,6 +183,7 @@ export function applicationStatusPill(
     case 'rejected': return { label: L.rejected, tone: 'grey' }
     case 'withdrawn': return { label: L.withdrawn, tone: 'grey' }
     case 'no_response': return { label: L.no_response, tone: 'grey' }
+    case 'filled': return { label: L.filled, tone: 'grey' }
     default: {
       if (!roleOpen) return { label: 'Role closed', tone: 'grey' }
       const days = appliedAt ? differenceInCalendarDays(now, new Date(appliedAt)) : 0
@@ -181,6 +191,39 @@ export function applicationStatusPill(
       return { label: L.pending, tone: 'neutral' }
     }
   }
+}
+
+/**
+ * What a role page shows once the role is closed (founder 2026-09-26): the
+ * role itself stays readable but greyed with a "Closed" label and no Apply.
+ * An applicant sees their OWN application (status, applied date, the club's
+ * note); anyone else sees "This role is closed" and a way to open roles. The
+ * publisher keeps their own view. Never other applicants or counts.
+ */
+export type ClosedRoleView = 'open' | 'applicant' | 'visitor' | 'publisher'
+export function closedRoleView(o: { isClosed: boolean; hasApplied: boolean; isPublisher: boolean }): ClosedRoleView {
+  if (!o.isClosed) return 'open'
+  if (o.isPublisher) return 'publisher'
+  return o.hasApplied ? 'applicant' : 'visitor'
+}
+
+/**
+ * The club's own decline note, as the applicant reads it. Only a note the
+ * club wrote (ai_feedback.source 'club') for the CURRENT status counts —
+ * never an AI explanation or a stale note from an earlier status.
+ */
+export function clubNoteFromFeedback(aiFeedback: unknown, status: string | null | undefined): string | null {
+  if (status !== 'rejected' || !aiFeedback || typeof aiFeedback !== 'object' || Array.isArray(aiFeedback)) return null
+  const fb = aiFeedback as Record<string, unknown>
+  if (fb.source !== 'club' || fb.status !== 'rejected' || typeof fb.message !== 'string') return null
+  return fb.message.trim() || null
+}
+
+/** "Applied Sep 3, 2026" — the full date on a closed role's application block. */
+export function appliedOnLine(appliedAt: string | null | undefined): string | null {
+  if (!appliedAt) return null
+  const d = new Date(appliedAt)
+  return Number.isNaN(d.getTime()) ? null : `Applied ${format(d, 'MMM d, yyyy')}`
 }
 
 export const APPLICATION_TONE_CLASS: Record<ApplicationTone, string> = {

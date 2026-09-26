@@ -41,9 +41,12 @@ interface TimelineNode {
   subtext?: string | null
 }
 
-// 'no_response' is terminal like a response (renders a status node), but is
-// produced by the auto-expiry sweep, not the club — no AI pass exists for it.
-const RESPONDED = ['shortlisted', 'maybe', 'rejected', 'no_response']
+// 'no_response' and 'filled' are terminal like a response (they render a
+// status node), but no AI pass exists for them: no_response comes from the
+// auto-expiry sweep, filled from the club closing the role.
+const RESPONDED = ['shortlisted', 'maybe', 'rejected', 'no_response', 'filled']
+const DETERMINISTIC = ['no_response', 'filled']
+const FINAL_OUTCOMES = ['rejected', 'no_response', 'filled']
 
 function statusDotClass(status: string): string {
   switch (status) {
@@ -54,6 +57,7 @@ function statusDotClass(status: string): string {
     case 'maybe':
     case 'rejected':
     case 'no_response':
+    case 'filled':
       // "Not selected" is grey, not an error colour (founder ruling 2026-09-25).
       return 'bg-gray-400'
     default:
@@ -157,9 +161,9 @@ export default function ApplicationTimeline({ opportunityId }: ApplicationTimeli
         setAiMessage(null)
         return
       }
-      if (status === 'no_response') {
+      if (DETERMINISTIC.includes(status)) {
         // application-feedback only explains real club responses; the
-        // deterministic copy IS the message for auto-expiries.
+        // deterministic copy IS the message for auto-expiries and filled roles.
         setAiMessage(applicationStatusFallbackMessage(status, null))
         return
       }
@@ -221,7 +225,7 @@ export default function ApplicationTimeline({ opportunityId }: ApplicationTimeli
       nodes.push({
         key: 'status',
         // A final outcome is not a wait: neutral dot, never a Clock.
-        icon: currentStatus === 'rejected' || currentStatus === 'no_response' ? CircleDot : CheckCircle,
+        icon: FINAL_OUTCOMES.includes(currentStatus) ? CircleDot : CheckCircle,
         label: badge.label,
         date: currentStatusRow?.created_at ?? null,
         dotClass: statusDotClass(currentStatus),
