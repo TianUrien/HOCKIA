@@ -1284,7 +1284,7 @@ export function PostComposerModal({
               {/* Remaining count only inside the last 50 characters, lightest ink. */}
               {MAX_CONTENT_LENGTH - content.length <= 50 && (
                 <div className="flex justify-end">
-                  <span className="text-caption tabular-nums text-ink-4">{MAX_CONTENT_LENGTH - content.length}</span>
+                  <span className="text-caption tabular-nums text-ink-3">{MAX_CONTENT_LENGTH - content.length}</span>
                 </div>
               )}
             </div>

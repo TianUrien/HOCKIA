@@ -200,7 +200,7 @@ export default function ClubLeagueScreen({ profile, onBack, onLink }: ClubLeague
               {leagueRow('women', 'Women’s teams', women, true)}
             </div>
           </div>
-          <p className="px-9 pt-2 text-caption leading-4 text-ink-4">The league of your top team in each. It shows on your roles and profile.</p>
+          <p className="px-9 pt-2 text-caption leading-4 text-ink-3">The league of your top team in each. It shows on your roles and profile.</p>
           {note && !loading && (
             <div className="mx-5 mt-3 flex items-start gap-2.5 rounded-card bg-surface-grouped px-3.5 py-3 text-secondary leading-[18px] text-ink-2" data-testid="club-league-band-note">
               <Info className="mt-0.5 h-4 w-4 shrink-0 text-ink-3" strokeWidth={2} />

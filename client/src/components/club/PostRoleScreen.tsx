@@ -16,9 +16,9 @@ import { SettingsSwitch } from '@/components/settings/settingsUi'
 import { BENEFIT_TILES, genderPill } from '@/lib/opportunityCopy'
 import { clubLeagueLine } from '@/lib/clubProfileCopy'
 import {
-  COACH_POSITIONS, DESCRIPTION_MAX, DURATION_OPTIONS, LEVELS, PACKAGE_KEYS, PAY_OPTIONS, PLAYER_POSITIONS, TEAMS, TITLE_MAX,
-  draftAsVacancy, draftFromRow, draftToRow, emptyDraft, hardnessFootnote, locationFromClub, playerChecklist, recruitingTarget,
-  skillsFor, startLabel, stepProblem, type PostRoleDraft, type Step,
+  COACH_POSITIONS, COACH_TEAM_HINT, DESCRIPTION_MAX, DURATION_OPTIONS, LEVELS, PACKAGE_KEYS, PAY_OPTIONS, PLAYER_POSITIONS, TITLE_MAX,
+  checkStepCopy, draftAsVacancy, draftFromRow, draftToRow, emptyDraft, hardnessFootnote, locationFromClub, recruitingTarget, roleChecklist, rolePostedPath,
+  skillsFor, startLabel, stepProblem, switchRoleType, teamsFor, type PostRoleDraft, type Step,
 } from '@/lib/postRole'
 import { cn } from '@/lib/utils'
 
@@ -26,8 +26,9 @@ import { cn } from '@/lib/utils'
  * Post a role (Figma 04 Club 330:318 The role → 330:431 The offer →
  * 330:596 Check and post). A full-screen flow on phones: Save draft at any
  * step (status draft, shown under Opportunities → Open with a "Draft" pill),
- * Cancel with changes asks to keep a draft, Post role opens the role and
- * scopes Find players to it. Every field maps 1:1 onto opportunities.
+ * Cancel with changes asks to keep a draft, Post role opens the role,
+ * scopes Find players to it and shows Role posted (D1.26). Every field maps
+ * 1:1 onto opportunities.
  */
 interface Props {
   /** An existing draft to continue; null = a new role. */
@@ -225,8 +226,9 @@ export default function PostRoleScreen({ draftId }: Props) {
         })
         if (error) logger.warn('[PostRole] recruiting context not activated', error)
       }
-      addToast('Role posted', 'success')
-      navigate('/opportunities', { replace: true, state: { highlight: id } })
+      // Role posted has its own route, so a refresh re-renders it from the
+      // saved role; replace keeps Back from reopening the form.
+      navigate(rolePostedPath(id), { replace: true, state: { role: { type: draft.type, position: draft.position } } })
     } catch (err) {
       logger.error('[PostRole] post failed', err)
       addToast('Could not post the role. Try again.', 'error')
@@ -284,7 +286,7 @@ export default function PostRoleScreen({ draftId }: Props) {
     }
   }
 
-  const copy = STEP_COPY[step]
+  const copy = step === 3 ? { ...STEP_COPY[3], sub: checkStepCopy(draft.type).sub } : STEP_COPY[step]
   const fromClub = (() => { const c = locationFromClub(defaults); return c.city === draft.city && c.country === draft.country && Boolean(c.city) })()
   const flag = countries.find((c) => c.name === draft.country)?.flag_emoji ?? null
   const league = draft.gender === 'Women' || draft.gender === 'Girls'
@@ -318,7 +320,7 @@ export default function PostRoleScreen({ draftId }: Props) {
         {step === 1 && (
           <>
             <div className="px-5 pt-5">
-              <Segments label="Role type" value={draft.type} options={[{ value: 'player', label: 'Player' }, { value: 'coach', label: 'Coach' }]} onChange={(v) => { touched.current = true; setDraft((d) => ({ ...d, type: v, position: null, skills: [] })) }} />
+              <Segments label="Role type" value={draft.type} options={[{ value: 'player', label: 'Player' }, { value: 'coach', label: 'Coach' }]} onChange={(v) => { touched.current = true; setProblem(null); setDraft((d) => switchRoleType(d, v)) }} />
             </div>
             <Section
               label={isPlayer ? 'Position' : 'Role'}
@@ -331,11 +333,9 @@ export default function PostRoleScreen({ draftId }: Props) {
                 <Chips label="Role" values={draft.position ? [draft.position] : []} options={COACH_POSITIONS} onToggle={(v) => set('position', v as PostRoleDraft['position'])} />
               )}
             </Section>
-            {isPlayer && (
-              <Section label="Team" trailing={<span className="flex items-center gap-1 text-[13px] text-ink-3"><Lock className="h-3.5 w-3.5" strokeWidth={2} /> Always required</span>} hint="Players outside this team can’t apply.">
-                <Segments label="Team" value={draft.gender} options={TEAMS} onChange={(v) => set('gender', v)} />
-              </Section>
-            )}
+            <Section label="Team" trailing={<span className="flex items-center gap-1 text-[13px] text-ink-3"><Lock className="h-3.5 w-3.5" strokeWidth={2} /> Always required</span>} hint={isPlayer ? 'Players outside this team can’t apply.' : COACH_TEAM_HINT}>
+              <Segments label="Team" value={draft.gender} options={teamsFor(draft.type)} onChange={(v) => set('gender', v)} />
+            </Section>
             <Section label="Title" trailing={<Muted>Optional</Muted>} hint={`Shown above the position. Up to ${TITLE_MAX} characters.`}>
               <input
                 value={draft.title}
@@ -469,9 +469,9 @@ export default function PostRoleScreen({ draftId }: Props) {
             </Section>
             <section className="px-5 pt-3">
               <div className="rounded-[16px] border border-line p-4" data-testid="post-role-checklist">
-                <h2 className="text-body font-semibold text-ink-1">What players ask first</h2>
+                <h2 className="text-body font-semibold text-ink-1">{checkStepCopy(draft.type).checklistTitle}</h2>
                 <ul className="mt-2 space-y-2">
-                  {playerChecklist(draft).map((c) => (
+                  {roleChecklist(draft).map((c) => (
                     <li key={c.key} className="flex items-center gap-2.5 text-[15px] text-ink-1">
                       <span className={cn('flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full', c.ok ? 'bg-positive-soft text-positive' : 'border-[1.5px] border-line')}>
                         {c.ok && <Check className="h-3.5 w-3.5" strokeWidth={3} />}

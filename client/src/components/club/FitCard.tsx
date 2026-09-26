@@ -27,7 +27,7 @@ export function FitCard({ state, rows, className }: { state: FitState | null | u
           </span>
         </div>
       ))}
-      <p className="text-caption text-ink-4">Only clubs see fit. It reads the profile — nothing else.</p>
+      <p className="text-caption text-ink-3">Only clubs see fit. It reads the profile — nothing else.</p>
     </div>
   )
 }

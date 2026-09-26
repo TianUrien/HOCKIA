@@ -63,8 +63,9 @@ export default function MobileBottomNav() {
     const isModalFlow = location.pathname === '/dashboard/profile/link' ||
       // D2 Cancel / Save screens: Passports & permits, Open to play (Figma D2.3, D2.4).
       location.pathname === '/dashboard/profile/passports' || location.pathname === '/dashboard/profile/open-to-play' ||
-      // Post a role: a full-screen flow with its own Continue bar (Figma 04 Club 330:318).
-      location.pathname === '/dashboard/opportunities/new' || /^\/dashboard\/opportunities\/[^/]+\/edit$/.test(location.pathname) ||
+      // Post a role: a full-screen flow with its own Continue bar (Figma 04 Club 330:318),
+      // and its Role posted screen (D1.26) with its own buttons.
+      location.pathname === '/dashboard/opportunities/new' || /^\/dashboard\/opportunities\/[^/]+\/(edit|posted)$/.test(location.pathname) ||
       // Applicant review carries its own decision bar (Figma 04 Club 326:319).
       /^\/dashboard\/opportunities\/[^/]+\/applicants\/[^/]+$/.test(location.pathname)
     setIsHidden(hiddenRoutes.some((route) => location.pathname === route) || isImmersiveMessagesView || isOpportunityDetail || isModalFlow)

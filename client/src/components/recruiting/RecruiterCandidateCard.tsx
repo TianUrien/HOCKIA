@@ -366,7 +366,7 @@ export default function RecruiterCandidateCard({ member, verdict, onPreview, pri
         <p className="mt-px truncate text-secondary text-ink-2" title={tileDetail(member)}>
           {tileDetail(member)}
         </p>
-        <div className="mt-px flex h-[18px] items-center overflow-hidden text-secondary text-ink-4">
+        <div className="mt-px flex h-[18px] items-center overflow-hidden text-secondary text-ink-3">
           {hasNationality ? (
             <DualNationalityDisplay
               primaryCountryId={member.nationality_country_id}
