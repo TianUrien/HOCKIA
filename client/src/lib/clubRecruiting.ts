@@ -93,13 +93,11 @@ export function fitRows(c: FitComponents, ctx: {
   roleGender: string | null
   playerCategoryLabel: string | null
   firstName: string
-  pronoun?: 'his' | 'her' | 'their'
   lastActiveDays: number | null
   playerClub: string | null
   playerLeagueKnown: boolean
   clubLeagueKnown: boolean
 }): FitRow[] {
-  const pron = ctx.pronoun ?? 'their'
   const roleWord = ctx.roleGender ? `a ${ctx.roleGender}’s role`.replace('Mixed’s', 'Mixed') : 'this role'
   const category: FitRow = {
     key: 'category', label: 'Category', ok: (c.gender_match ?? 0) >= 1,
@@ -120,8 +118,8 @@ export function fitRows(c: FitComponents, ctx: {
   let levelDetail: string
   if (!ctx.playerLeagueKnown) {
     levelDetail = ctx.playerClub
-      ? `Can’t compare yet — ${pron} club, ${ctx.playerClub}, has no league on Hockia.`
-      : `Can’t compare yet — no club with a league on ${pron} profile.`
+      ? `Can’t compare yet — plays for ${ctx.playerClub}, which has no league on Hockia.`
+      : 'Can’t compare yet — no club with a league on the profile.'
   } else if (!ctx.clubLeagueKnown) {
     levelDetail = 'Can’t compare yet — your league has no level on Hockia.'
   } else if (prox >= 0.75) {

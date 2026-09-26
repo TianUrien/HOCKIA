@@ -56,12 +56,12 @@ describe('club recruiting copy', () => {
 
   it('names the missing side for Level instead of a number', () => {
     const rows = fitRows({ gender_match: 1, availability: 0.8, recency: 0.7, competition_proximity: 0 }, {
-      roleGender: 'Men', playerCategoryLabel: 'Adult men', firstName: 'Leandro', pronoun: 'his', lastActiveDays: 2,
+      roleGender: 'Men', playerCategoryLabel: 'Adult men', firstName: 'Leandro', lastActiveDays: 2,
       playerClub: 'Old Lions', playerLeagueKnown: false, clubLeagueKnown: true,
     })
     expect(rows.map((r) => r.ok)).toEqual([true, true, true, false])
     expect(rows[2].detail).toBe('On Hockia 2 days ago')
-    expect(rows[3].detail).toBe('Can’t compare yet — his club, Old Lions, has no league on Hockia.')
+    expect(rows[3].detail).toBe('Can’t compare yet — plays for Old Lions, which has no league on Hockia.')
     expect(rows.some((r) => /%/.test(r.detail))).toBe(false)
   })
 

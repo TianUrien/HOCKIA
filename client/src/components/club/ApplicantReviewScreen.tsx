@@ -57,7 +57,6 @@ const monthDay = (iso: string | null) => {
   const d = new Date(iso)
   return Number.isNaN(d.getTime()) ? null : `${MONTH[d.getMonth()]} ${d.getDate()}`
 }
-const pronounsFor = (g: string | null) => (/^(men|male|man|m)$/i.test(g ?? '') ? { obj: 'him' as const, pos: 'his' as const } : /^(women|female|woman|f)$/i.test(g ?? '') ? { obj: 'her' as const, pos: 'her' as const } : { obj: 'them' as const, pos: 'their' as const })
 
 export default function ApplicantReviewScreen({ roleId, applicationId }: Props) {
   const navigate = useNavigate()
@@ -144,7 +143,6 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
 
   const p = review?.person
   const firstName = p?.full_name?.trim().split(/\s+/)[0] || 'this player'
-  const pron = pronounsFor(p?.gender ?? null)
   const rows = useMemo(() => {
     if (!review) return []
     const lastDays = review.person.last_active_at ? Math.max(0, Math.floor((Date.now() - new Date(review.person.last_active_at).getTime()) / 86_400_000)) : null
@@ -152,13 +150,12 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
       roleGender: review.roleGender,
       playerCategoryLabel: categoryToDisplay(review.person.playing_category) || null,
       firstName,
-      pronoun: pron.pos,
       lastActiveDays: lastDays,
       playerClub: review.playerClub?.name ?? null,
       playerLeagueKnown: Boolean(review.playerClub?.leagueBanded),
       clubLeagueKnown: review.clubLeagueBanded,
     })
-  }, [review, firstName, pron.pos])
+  }, [review, firstName])
 
   const countryRow = (id: number | null) => {
     const c = id ? countries.find((x) => x.id === id) : null
@@ -366,7 +363,7 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
             <h2 className="px-5 pb-2 pt-[22px] text-[22px] font-bold leading-7 tracking-[-0.176px] text-ink-1">References</h2>
             <div className="flex flex-col gap-3 px-5 pb-7">
               {acceptedReferences.length === 0
-                ? <p className="text-[14px] leading-5 text-ink-2">No references yet. References come from friends on Hockia — {pron.pos} coaches and teammates can write one.</p>
+                ? <p className="text-[14px] leading-5 text-ink-2">No references yet. References come from friends on Hockia — coaches and teammates can write one.</p>
                 : acceptedReferences.slice(0, 2).map((r) => (
                   <ReferenceCard key={r.id} reference={r} onOpen={() => navigate(`/players/id/${p.id}/references`, { state: { from: location.pathname } })} />
                 ))}
@@ -398,7 +395,7 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
       )}
 
       {p && (
-        <DeclineSheet open={declining} applicationId={applicationId} firstName={firstName} pronoun={pron.obj} onCancel={() => setDeclining(false)} onSend={decline} />
+        <DeclineSheet open={declining} applicationId={applicationId} firstName={firstName} onCancel={() => setDeclining(false)} onSend={decline} />
       )}
     </div>
   )
