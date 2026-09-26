@@ -93,7 +93,12 @@ export interface FitCandidateFields {
    *  switched proximity from same-country tier distance to this
    *  global band, eliminating the cross-country dead zone. Null
    *  when the player has no club linked or the club has no league
-   *  → competition_proximity = 0. */
+   *  → competition_proximity = 0.
+   *  D2 (founder ruling 2026-09-26): NEVER derive this from the player's
+   *  own profiles.mens/womens_league_id — that league is SELF-REPORTED
+   *  (typed when their club has no league on Hockia) and must not count
+   *  for level or fit. Use the world club's league only (getClubLevelBand,
+   *  or levelBandForFit() in lib/keyFacts.ts, which returns null for it). */
   competition_level_band?: number | null
   open_to_play: boolean | null
   open_to_coach: boolean | null
