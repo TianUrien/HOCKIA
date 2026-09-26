@@ -5,10 +5,9 @@ import type { Vacancy } from '../lib/supabase'
 import { Avatar, StorageImage } from './index'
 import Button from './Button'
 import type { WorldClubInfo } from './OpportunityCard'
-import { opportunityGenderToTeamLabel } from '@/lib/hockeyCategories'
 import { levelSoughtLabel, compensationLabel, recruitmentProblemLabel } from '@/lib/opportunityIntent'
 import { specialistSkillLabels } from '@/lib/specialistSkills'
-import { formatDurationText } from '@/lib/opportunityCopy'
+import { APPLICATION_TONE_CLASS, applicationStatusPill, closedRoleView, formatDurationText, roleTeamLabel } from '@/lib/opportunityCopy'
 import { getShareOrigin } from '@/lib/profileShare'
 import { useAuthStore } from '@/lib/auth'
 import { useCountries } from '@/hooks/useCountries'
@@ -34,6 +33,8 @@ interface VacancyDetailViewProps {
    *  shows no badge (the submitted pill already conveys it). */
   applicationStatus?: string | null
   hideClubProfileButton?: boolean
+  /** The role no longer takes applications. Defaults to status === 'closed'. */
+  isClosed?: boolean
 }
 
 const BENEFIT_CONFIG: Record<string, { icon: React.ComponentType<{ className?: string }>; label: string; iconColor: string }> = {
@@ -87,6 +88,7 @@ export default function VacancyDetailView({
   hasApplied = false,
   applicationStatus = null,
   hideClubProfileButton = false,
+  isClosed,
 }: VacancyDetailViewProps) {
   const navigate = useNavigate()
   const { user, profile } = useAuthStore()
@@ -111,6 +113,11 @@ export default function VacancyDetailView({
   // detail sheet's only action being a literal Close button when the
   // publisher opened their own opportunity.
   const isPublisher = Boolean(user && user.id === vacancy.club_id)
+  // Closed role: readable, "Closed" label, no Apply; the applicant keeps
+  // their own application (status + timeline), everyone else gets a pointer
+  // to open roles. Same rule as the phone page (closedRoleView).
+  const closedView = closedRoleView({ isClosed: isClosed ?? vacancy.status === 'closed', hasApplied, isPublisher })
+  const closed = closedView !== 'open'
 
   const cardType = getCardType(publisherRole, worldClub, publisherOrganization)
   const watermarkName = cardType === 'club' ? (worldClub?.clubName || clubName) : clubName
@@ -154,18 +161,15 @@ export default function VacancyDetailView({
 
   const isImmediate = !vacancy.start_date
 
-  // Build tag pills. Phase 3d — opportunityGenderToTeamLabel covers all
-  // five enum values (Men/Women/Girls/Boys/Mixed) with possessive labels.
-  // Gender + position are player-only concepts; suppress them on coach
-  // opportunities even if legacy rows happen to carry stale values.
+  // Build tag pills. The team (Men's / Women's / Mixed / Boys / Girls) shows
+  // on player AND coach roles — a coach is hired for a team too. Position
+  // stays player-only.
   const tags: string[] = []
   const isPlayerOpportunity = vacancy.opportunity_type === 'player'
   if (isPlayerOpportunity) tags.push('Player')
   if (vacancy.opportunity_type === 'coach') tags.push('Coach')
-  if (isPlayerOpportunity && vacancy.gender) {
-    const teamLabel = opportunityGenderToTeamLabel(vacancy.gender)
-    if (teamLabel) tags.push(teamLabel.replace(' Team', ''))
-  }
+  const teamLabel = roleTeamLabel(vacancy.gender)
+  if (teamLabel) tags.push(teamLabel)
   if (isPlayerOpportunity && vacancy.position) {
     tags.push(vacancy.position.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()))
   }
@@ -300,7 +304,7 @@ export default function VacancyDetailView({
             {/* Top row: badges + share */}
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                {isUrgent && (
+                {isUrgent && !closed && (
                   <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-orange-50 text-orange-600 border border-orange-100">
                     <AlertTriangle className="w-3 h-3" />
                     URGENT
@@ -322,7 +326,12 @@ export default function VacancyDetailView({
             </div>
 
             {/* Title */}
-            <h1 className="text-2xl font-bold text-gray-900 mb-4 leading-tight">
+            {closed && (
+              <span className="mb-2 inline-flex items-center rounded-full bg-surface-grouped px-2.5 py-1 text-xs font-semibold text-ink-2" data-testid="role-closed-label">
+                Closed
+              </span>
+            )}
+            <h1 className={`text-2xl font-bold mb-4 leading-tight ${closed ? 'text-ink-2' : 'text-gray-900'}`}>
               {vacancy.title}
             </h1>
 
@@ -496,6 +505,34 @@ export default function VacancyDetailView({
                   <Users className="w-4 h-4" />
                   View applicants
                 </Button>
+              ) : closedView === 'applicant' ? (
+                // Closed with an application: grey, the status in the one set
+                // of words (applicationStatusPill); the timeline below carries
+                // the dates and the club's message.
+                <div className="flex-1 flex flex-col items-center justify-center gap-1.5 px-4 py-3 rounded-xl border border-gray-200 bg-gray-50" data-testid="own-application">
+                  <p className="text-sm font-semibold text-ink-2">This role is closed</p>
+                  {(() => {
+                    const pill = applicationStatusPill(applicationStatus ?? 'pending', null, false)
+                    return (
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${APPLICATION_TONE_CLASS[pill.tone]}`} data-testid="own-application-status">
+                        {pill.label}
+                      </span>
+                    )
+                  })()}
+                </div>
+              ) : closedView === 'visitor' ? (
+                <div className="flex-1 flex items-start gap-2.5 px-4 py-3 rounded-xl border border-gray-200 bg-gray-50" data-testid="role-closed-notice">
+                  <Info className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
+                  <div className="text-sm">
+                    <p className="font-semibold text-gray-800">This role is closed</p>
+                    <p className="text-gray-600 mt-0.5">
+                      It&rsquo;s no longer taking applications.{' '}
+                      <button type="button" onClick={() => { onClose(); navigate('/opportunities') }} className="font-semibold text-hockia-primary hover:underline">
+                        See open roles
+                      </button>
+                    </p>
+                  </div>
+                </div>
               ) : hasApplied ? (
                 <div className="flex-1 flex flex-col items-center justify-center gap-1.5 px-4 py-3 rounded-xl border border-hockia-primary/15 bg-hockia-primary/5">
                   <div className="flex items-center gap-2 font-semibold text-sm text-hockia-primary">
@@ -566,7 +603,7 @@ export default function VacancyDetailView({
             {/* Eligibility nudge — shown when the user CAN apply but their
                 profile is missing data we'd use to confirm a fit. Never
                 blocks; just points them at the gap. */}
-            {onApply && !hasApplied && !isPublisher && eligibility.eligible && eligibility.incompleteProfile && (
+            {onApply && !closed && !hasApplied && !isPublisher && eligibility.eligible && eligibility.incompleteProfile && (
               <div className="mt-3 flex items-start gap-2.5 px-4 py-3 rounded-xl border border-blue-100 bg-blue-50">
                 <Info className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
                 <div className="text-sm text-blue-900">
@@ -586,7 +623,7 @@ export default function VacancyDetailView({
                 one or more of this opening's must-have criteria. Warn-only:
                 Apply stays enabled, but they know the recruiter would read
                 them "Out of scope". */}
-            {onApply && !hasApplied && !isPublisher && eligibility.eligible && mustHaveWarnings.length > 0 && (
+            {onApply && !closed && !hasApplied && !isPublisher && eligibility.eligible && mustHaveWarnings.length > 0 && (
               <div className="mt-3 flex items-start gap-2.5 px-4 py-3 rounded-xl border border-amber-200 bg-amber-50">
                 <Info className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
                 <div className="text-sm text-amber-900">

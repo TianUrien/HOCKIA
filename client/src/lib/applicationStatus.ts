@@ -13,6 +13,9 @@ export const APPLICATION_STATUS_LABELS: Record<string, string> = {
   rejected: 'Not selected',
   withdrawn: 'Withdrawn',
   no_response: 'No reply',
+  // The club closed the role as filled (founder 2026-09-26: "Role filled",
+  // grey — it's an outcome, not a verdict on the player).
+  filled: 'Role filled',
 }
 
 export function applicationStatusLabel(status: string | null | undefined): string | null {
@@ -53,6 +56,9 @@ export function playerApplicationStatusBadge(
       // carry WhatsApp/email contacts), so "no response" would blame them
       // for a silence that may not exist. Never blame either side.
       return { label: APPLICATION_STATUS_LABELS.no_response, className: 'bg-gray-100 text-gray-600' }
+    case 'filled':
+      // Closed outcome → grey, like every other one the player can't act on.
+      return { label: APPLICATION_STATUS_LABELS.filled, className: 'bg-gray-100 text-gray-600' }
     default:
       return null
   }
@@ -180,6 +186,10 @@ export function applicationStatusFallbackMessage(
       // responses) — this deterministic line IS the player-facing message.
       // Neutral about the club: they may have answered off-platform.
       return "This application is no longer active on HOCKIA. Applications close automatically after a while without an update here, so you're never left waiting — your energy is better spent on what's open now."
+    case 'filled':
+      // Deterministic like no_response (application-feedback doesn't cover
+      // it). Same words as the 'filled' notification.
+      return 'This role has been filled. Thanks for applying — new roles are open.'
     default:
       return null
   }

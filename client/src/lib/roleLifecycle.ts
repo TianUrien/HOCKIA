@@ -53,7 +53,9 @@ export function reopenRolePatch(applicationDeadline: string | null | undefined, 
   return patch
 }
 
-/** Toast after a close, in the club's words. */
+/** Toast after a close — phone sheet and desktop tab share it. A club closing
+ *  as filled hasn't necessarily signed through Hockia, so no congratulations:
+ *  just what happened and that applicants were told (founder copy 2026-09-26). */
 export function closeRoleToast(outcome: RoleCloseOutcome): string {
-  return outcome === 'filled' ? 'Marked as filled — congrats on the signing!' : 'Role closed.'
+  return outcome === 'filled' ? 'Role closed as filled. Applicants have been told.' : 'Role closed.'
 }

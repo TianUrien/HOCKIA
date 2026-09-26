@@ -55,6 +55,7 @@ import { KeyFactsGrid, PermitAttentionRow } from '@/components/profile/KeyFactsG
 import { AppliedToCard, FitForRoleCard, ShortlistRoleSheet } from '@/components/profile/ClubViewCards'
 import { UndoToast } from '@/components/club/UndoToast'
 import { useProfileKeyFacts, type VideoCounts } from '@/hooks/useProfileKeyFacts'
+import { useProfileVideoTotal } from '@/hooks/useProfileVideoTotal'
 import { useClubViewOfPlayer } from '@/hooks/useClubViewOfPlayer'
 import { useCountries } from '@/hooks/useCountries'
 import { isRecruitingViewer } from '@/lib/recruiterAccess'
@@ -533,6 +534,11 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
   const keyFactsViewer: KeyFactsViewer = !readOnly ? 'owner' : viewAsClub || isRecruitingViewer(authProfile) ? 'recruiter' : 'public'
   const d2 = isPhone && activeTab === 'profile'
   const keyFacts = useProfileKeyFacts({ profile, viewer: keyFactsViewer, videoCounts, enabled: d2 })
+  // Desktop never mounts the phone long scroll that reports videoCounts, so
+  // it counts the same tiles itself (highlights + full matches + reels +
+  // locked recruiters-only tiles) instead of full_game_video_count.
+  const desktopVideoTotal = useProfileVideoTotal(profile, { own: !readOnly, enabled: !isPhone })
+  const heroVideoTotal = isPhone ? videoTotal : desktopVideoTotal
   const clubView = useClubViewOfPlayer(isPhone && readOnly && !isOwnProfile && profile ? profile : null)
   const [rolePicker, setRolePicker] = useState(false)
   const { countries: allCountries } = useCountries()
@@ -784,7 +790,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
           onReferencesClick={openReferencesLeaf}
           onCareerClick={() => handleTabChange('journey')}
           onVideosClick={() => handleTabChange('videos')}
-          videoTotal={videoTotal}
+          videoTotal={heroVideoTotal}
           d2={d2}
           onViewAsClub={handleViewAsClub}
           onOpenToPlay={() => openOwnerLeaf('open-to-play')}
