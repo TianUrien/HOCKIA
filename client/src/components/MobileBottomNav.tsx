@@ -6,7 +6,8 @@ import { hapticSelection } from '@/lib/haptics'
 import { trackSignupCtaClick } from '@/lib/analytics'
 import { useAuthStore } from '@/lib/auth'
 import { cn } from '@/lib/utils'
-import { useInboxDot } from '@/lib/inboxSeen'
+import { useInboxSegmentDots } from '@/hooks/useInboxSegmentDots'
+import { inboxTabDot } from '@/lib/inboxSegmentDots'
 
 interface NavItem {
   id: string
@@ -27,7 +28,7 @@ interface NavItem {
 export default function MobileBottomNav() {
   const { user, profile, location, isActive, handleNavigate } = useNavigation()
   const pointerTapRef = useRef(false)
-  const inboxDot = useInboxDot()
+  const inboxDot = inboxTabDot(useInboxSegmentDots())
   const authLoading = useAuthStore((s) => s.loading)
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false)
   const [isHidden, setIsHidden] = useState(false)
@@ -168,8 +169,8 @@ export default function MobileBottomNav() {
     { id: 'home', label: 'Home', path: '/home', icon: Home },
     { id: 'community', label: 'Community', path: '/community', icon: Users },
     { id: 'opportunities', label: 'Opportunities', path: '/opportunities', icon: Briefcase },
-    // Unread messages, or activity/requests newer than the last time that
-    // segment was opened (lib/inboxSeen).
+    // On whenever any Inbox segment (Messages / Requests / Activity) has a
+    // dot — the same rule as the segment dots (lib/inboxSegmentDots).
     { id: 'inbox', label: 'Inbox', path: '/inbox', icon: Inbox, dot: inboxDot },
   ]
 

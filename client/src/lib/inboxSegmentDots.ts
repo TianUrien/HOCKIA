@@ -32,3 +32,21 @@ export function computeInboxSegmentDots({
     activity: notifications.some((n) => !n.readAt && !n.clearedAt),
   }
 }
+
+/** The tab-bar Inbox dot: on whenever any Inbox segment carries a dot. */
+export function inboxTabDot(dots: InboxSegmentDots): boolean {
+  return dots.messages || dots.requests || dots.activity
+}
+
+/** Pending requests the viewer received (their own sent requests excluded). */
+export function countIncomingPendingRequests(
+  edges: Iterable<{ status: string | null; requester_id: string | null }>,
+  viewerId: string | null | undefined,
+): number {
+  if (!viewerId) return 0
+  let count = 0
+  for (const edge of edges) {
+    if (edge.status === 'pending' && edge.requester_id !== viewerId) count += 1
+  }
+  return count
+}

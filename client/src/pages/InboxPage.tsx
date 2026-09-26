@@ -11,8 +11,9 @@ import { InboxActivity } from '@/components/inbox/InboxActivity'
 import { useFriendRequests } from '@/hooks/useFriendRequests'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { useScrollRestore } from '@/hooks/useScrollRestore'
-import { markInboxSegmentSeen } from '@/lib/inboxSeen'
 import { useInboxSegmentDots } from '@/hooks/useInboxSegmentDots'
+import { loadFriendshipEdges } from '@/hooks/friendshipEdgeCache'
+import { useAuthStore } from '@/lib/auth'
 
 const SEGMENTS = ['messages', 'requests', 'activity'] as const
 type Segment = (typeof SEGMENTS)[number]
@@ -35,13 +36,14 @@ export default function InboxPage() {
   const [composeOpen, setComposeOpen] = useState(false)
   const requests = useFriendRequests()
   // A red dot (never a number) on each segment holding something unread.
-  const dots = useInboxSegmentDots(requests.incoming.length)
+  const dots = useInboxSegmentDots()
 
-  // Opening Requests or Activity is what clears the tab dot for that kind —
-  // landing on Inbox alone does not.
+  // Opening Inbox re-reads the shared friendship edges so the Requests dot
+  // (and the tab-bar dot, which shares it) matches the list shown here.
+  const viewerId = useAuthStore((s) => s.profile?.id ?? null)
   useEffect(() => {
-    if (active === 'activity' || active === 'requests') markInboxSegmentSeen(active)
-  }, [active])
+    if (viewerId) void loadFriendshipEdges(viewerId, true)
+  }, [viewerId])
 
   const setSegment = (next: Segment) => {
     navigate(next === 'messages' ? '/inbox' : `/inbox/${next}`, { replace: true })
