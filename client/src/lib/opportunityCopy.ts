@@ -145,13 +145,21 @@ export function roleBenefits(v: Pick<Vacancy, 'benefits'>): BenefitTile[] {
     .map((b) => BENEFIT_TILES[b])
 }
 
-export type ApplicationTone = 'positive' | 'amber' | 'grey' | 'neutral'
-export interface ApplicationStatusPill { label: string; tone: ApplicationTone }
+// No amber here: amber is only for a viewer who must act (founder ruling
+// 2026-09-26), and a player waiting on a club can't.
+export type ApplicationTone = 'positive' | 'grey' | 'neutral'
+export interface ApplicationStatusPill {
+  label: string
+  tone: ApplicationTone
+  /** Pending for 14+ days on an open role — drives My applications'
+   *  "No reply after two weeks?" hint (the pill itself stays grey). */
+  waitingLong?: boolean
+}
 
 /**
  * Status words for My applications. "No reply · 16d" is a real status after
- * two weeks without an answer; closed outcomes keep their words in grey —
- * no shame colours.
+ * two weeks without an answer; it and every closed outcome are grey for the
+ * player — no shame colours, no urgency the player can't act on.
  */
 export function applicationStatusPill(
   status: string,
@@ -169,7 +177,7 @@ export function applicationStatusPill(
     default: {
       if (!roleOpen) return { label: 'Role closed', tone: 'grey' }
       const days = appliedAt ? differenceInCalendarDays(now, new Date(appliedAt)) : 0
-      if (days >= 14) return { label: `${L.no_response} · ${days}d`, tone: 'amber' }
+      if (days >= 14) return { label: `${L.no_response} · ${days}d`, tone: 'grey', waitingLong: true }
       return { label: L.pending, tone: 'neutral' }
     }
   }
@@ -177,7 +185,6 @@ export function applicationStatusPill(
 
 export const APPLICATION_TONE_CLASS: Record<ApplicationTone, string> = {
   positive: 'bg-positive-soft text-positive',
-  amber: 'bg-[#fdf1e4] text-[#b45309]',
   grey: 'bg-surface-grouped text-ink-2',
   neutral: 'bg-hockia-soft text-hockia-primary',
 }

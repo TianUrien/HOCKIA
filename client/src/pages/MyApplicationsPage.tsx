@@ -16,8 +16,8 @@ type Segment = 'active' | 'closed'
 
 /**
  * My applications (Figma 101:353, 115:1382). Where "Applied · 3" lands.
- * "No reply · 16d" is a real status in amber; closed outcomes keep their
- * words in grey. The one piece of advice is the one the data supports:
+ * "No reply · 16d" is a real status; it and closed outcomes keep their words
+ * in grey (amber only when the viewer must act). The one piece of advice is the one the data supports:
  * clubs answer messages, so message them.
  */
 export default function MyApplicationsPage() {
@@ -31,7 +31,7 @@ export default function MyApplicationsPage() {
   const active = useMemo(() => rows.filter((r) => r.active), [rows])
   const closed = useMemo(() => rows.filter((r) => !r.active), [rows])
   const list = segment === 'active' ? active : closed
-  const waitingLongest = active.find((r) => r.status === 'pending' && applicationStatusPill(r.status, r.appliedAt, r.roleOpen).tone === 'amber')
+  const waitingLongest = active.find((r) => r.status === 'pending' && applicationStatusPill(r.status, r.appliedAt, r.roleOpen).waitingLong === true)
 
   const renderRow = (r: MyApplicationRow) => {
     const pill = applicationStatusPill(r.status, r.appliedAt, r.roleOpen)

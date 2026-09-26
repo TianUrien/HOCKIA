@@ -3,7 +3,7 @@ import {
   draftFromRow, draftToEditPatch, draftToRow, emptyDraft, levelHint, offerStepCopy, type PostRoleDraft,
 } from '@/lib/postRole'
 import { closeRolePatch, closeRoleToast, reopenRolePatch } from '@/lib/roleLifecycle'
-import { APPLICATION_STATUS_LABELS, applicationNote, applicationStatusLabel, playerApplicationStatusBadge } from '@/lib/applicationStatus'
+import { APPLICATION_STATUS_LABELS, applicationNote, applicationStatusLabel, closedApplicationNote, isDecidableApplicationStatus, playerApplicationStatusBadge } from '@/lib/applicationStatus'
 import { applicationStatusPill, roleHeadline, showFullMatchNudge } from '@/lib/opportunityCopy'
 import { brandCategoryLabel, positionLabel } from '@/lib/identity'
 import type { Vacancy } from '@/lib/supabase'
@@ -114,5 +114,23 @@ describe('Enum labels in feed cards', () => {
     expect(positionLabel('other_coach')).toBe('Coach')
     expect(positionLabel(null)).toBeNull()
     expect(brandCategoryLabel('coaching')).toBe('Coaching & Training')
+  })
+})
+
+describe('Round 1 follow-up', () => {
+  it('"No reply · Nd" is grey for the player, and still flags the long wait', () => {
+    const now = new Date('2026-09-26T12:00:00Z')
+    const pill = applicationStatusPill('pending', '2026-09-06T12:00:00Z', true, now)
+    expect(pill).toEqual({ label: 'No reply · 20d', tone: 'grey', waitingLong: true })
+    expect(applicationStatusPill('pending', '2026-09-20T12:00:00Z', true, now).waitingLong).toBeUndefined()
+    for (const s of ['pending', 'shortlisted', 'maybe', 'rejected', 'withdrawn', 'no_response', 'filled']) {
+      expect(applicationStatusPill(s, '2026-01-01T00:00:00Z', true, now).tone).not.toBe('amber')
+    }
+  })
+  it('only open review statuses get the decision bar', () => {
+    for (const s of ['pending', 'shortlisted', 'maybe', 'rejected']) expect(isDecidableApplicationStatus(s)).toBe(true)
+    for (const s of ['filled', 'withdrawn', 'no_response', 'offered', 'signed', null]) expect(isDecidableApplicationStatus(s)).toBe(false)
+    expect(closedApplicationNote('filled', 'Ana')).toBe('This role was filled. You can still message Ana.')
+    expect(closedApplicationNote('no_response', 'Ana')).toMatch(/^This application closed without a reply/)
   })
 })

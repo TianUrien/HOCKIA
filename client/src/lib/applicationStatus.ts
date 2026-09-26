@@ -198,3 +198,22 @@ export function applicationNote(metadata: unknown): string | null {
   const text = raw.trim()
   return text ? text.slice(0, 1000) : null
 }
+
+/** Statuses a club can still move with Decline / Maybe / Shortlist. Anything
+ *  else (no_response, filled, withdrawn, and the signing statuses) is past
+ *  review: the phone review shows a grey note instead of the decision bar. */
+const DECIDABLE_APPLICATION_STATUSES = new Set(['pending', 'shortlisted', 'maybe', 'rejected'])
+
+export function isDecidableApplicationStatus(status: string | null | undefined): boolean {
+  return !!status && DECIDABLE_APPLICATION_STATUSES.has(status)
+}
+
+/** The grey note that replaces the decision bar on a closed application. */
+export function closedApplicationNote(status: string | null | undefined, firstName: string): string {
+  switch (status) {
+    case 'no_response': return `This application closed without a reply. You can still message ${firstName}.`
+    case 'filled': return `This role was filled. You can still message ${firstName}.`
+    case 'withdrawn': return `${firstName} withdrew this application. You can still message ${firstName}.`
+    default: return `This application is past review. You can still message ${firstName}.`
+  }
+}

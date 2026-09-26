@@ -17,7 +17,7 @@ import { useProfileScrollData } from '@/hooks/useProfileScrollData'
 import { useTrustedReferences } from '@/hooks/useTrustedReferences'
 import { markRoleApplicantViewed, patchRoleApplicantStatus } from '@/hooks/useRoleApplicants'
 import { holdDecision } from '@/lib/pendingDecisions'
-import { WITHDRAWN_APPLICATION_MESSAGE, applicationNote } from '@/lib/applicationStatus'
+import { WITHDRAWN_APPLICATION_MESSAGE, applicationNote, closedApplicationNote, isDecidableApplicationStatus } from '@/lib/applicationStatus'
 import { useUndoToast } from '@/lib/undoToast'
 import { getImageUrl } from '@/lib/imageUrl'
 import { categoryToDisplay } from '@/lib/hockeyCategories'
@@ -215,8 +215,11 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
   const videos = scroll.fullGameLinks.length + scroll.fullMatches.length + scroll.highlights.length
   const avatar = p?.avatar_url ? getImageUrl(p.avatar_url, 'avatar-lg') ?? p.avatar_url : null
   const statusNote = review && review.status !== 'pending'
-    ? { shortlisted: 'You shortlisted this player.', maybe: 'You marked this player maybe.', rejected: 'You declined this application.', no_response: 'Closed without a reply.' }[review.status] ?? null
+    ? { shortlisted: 'You shortlisted this player.', maybe: 'You marked this player maybe.', rejected: 'You declined this application.', no_response: 'Closed without a reply.', filled: 'This role was filled.', withdrawn: 'Withdrawn by the applicant.' }[review.status] ?? null
     : null
+  // Closed applications (no reply, filled, withdrawn, signing statuses) can't
+  // be re-decided: no decision bar, just the grey note with Message.
+  const decidable = review ? isDecidableApplicationStatus(review.status) : false
 
   return (
     <div className="flex h-[100dvh] flex-col bg-white pt-[env(safe-area-inset-top)] lg:hidden" data-testid="applicant-review-screen">
@@ -367,7 +370,7 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
       </div>
 
       {/* Decision bar */}
-      {p && review && review.status !== 'no_response' && (
+      {p && review && decidable && (
         <div className="fixed inset-x-0 bottom-0 border-t border-line bg-white px-4 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-3" data-testid="decision-bar">
           <div className="flex gap-2">
             <button type="button" onClick={() => setDeclining(true)} disabled={review.status === 'rejected'} className="flex h-[46px] flex-1 items-center justify-center rounded-full bg-surface-grouped text-[16px] font-semibold text-[#e5484d] disabled:opacity-40">Decline</button>
@@ -381,9 +384,9 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
           </button>
         </div>
       )}
-      {p && review?.status === 'no_response' && (
-        <div className="fixed inset-x-0 bottom-0 flex items-center gap-2 border-t border-line bg-white px-4 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-3 text-secondary text-ink-2">
-          <Lock className="h-4 w-4 shrink-0 text-ink-3" strokeWidth={2} /> This application closed without a reply. You can still message {firstName}.
+      {p && review && !decidable && (
+        <div className="fixed inset-x-0 bottom-0 flex items-center gap-2 border-t border-line bg-white px-4 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-3 text-secondary text-ink-2" data-testid="closed-application-note">
+          <Lock className="h-4 w-4 shrink-0 text-ink-3" strokeWidth={2} /> {closedApplicationNote(review.status, firstName)}
           <button type="button" onClick={() => void message()} className="ml-auto shrink-0 font-semibold text-hockia-primary">Message</button>
         </div>
       )}
