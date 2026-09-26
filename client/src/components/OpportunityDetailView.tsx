@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { X, MapPin, Calendar, Clock, Home, Car, Globe as GlobeIcon, Plane, Utensils, Briefcase, Shield, GraduationCap, Mail, Phone, CheckCircle, AlertTriangle, DollarSign, Dumbbell, Award, Share2, Flag, Users, Info } from 'lucide-react'
+import { X, MapPin, Calendar, Clock, Home, Car, Globe as GlobeIcon, Plane, Utensils, Briefcase, Shield, GraduationCap, Mail, Phone, CheckCircle, AlertTriangle, DollarSign, Dumbbell, Award, Share2, Flag, Users, Info, MessageCircle } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import type { Vacancy } from '../lib/supabase'
 import { Avatar, StorageImage } from './index'
@@ -35,6 +35,8 @@ interface VacancyDetailViewProps {
   hideClubProfileButton?: boolean
   /** The role no longer takes applications. Defaults to status === 'closed'. */
   isClosed?: boolean
+  /** Message the club. Shown on a CLOSED role to the applicant only. */
+  onMessage?: () => void
 }
 
 const BENEFIT_CONFIG: Record<string, { icon: React.ComponentType<{ className?: string }>; label: string; iconColor: string }> = {
@@ -89,6 +91,7 @@ export default function VacancyDetailView({
   applicationStatus = null,
   hideClubProfileButton = false,
   isClosed,
+  onMessage,
 }: VacancyDetailViewProps) {
   const navigate = useNavigate()
   const { user, profile } = useAuthStore()
@@ -519,6 +522,17 @@ export default function VacancyDetailView({
                       </span>
                     )
                   })()}
+                  {onMessage && (
+                    <button
+                      type="button"
+                      onClick={onMessage}
+                      className="mt-1 inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-semibold text-gray-800 hover:bg-gray-100 transition-colors"
+                      data-testid="closed-message-club"
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                      Message the club
+                    </button>
+                  )}
                 </div>
               ) : closedView === 'visitor' ? (
                 <div className="flex-1 flex items-start gap-2.5 px-4 py-3 rounded-xl border border-gray-200 bg-gray-50" data-testid="role-closed-notice">

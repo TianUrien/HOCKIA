@@ -46,7 +46,8 @@ interface OpportunityDetailMobileProps {
  *
  * A CLOSED role (opened from My applications or a notification) is still
  * this page, greyed with a "Closed" label and no Apply: an applicant sees
- * their own application block (status, applied date, the club's note);
+ * their own application block (status, applied date, the club's note) and
+ * a "Message the club" bar;
  * anyone else sees "This role is closed" with a link to open roles.
  */
 export function OpportunityDetailMobile({
@@ -300,6 +301,16 @@ export function OpportunityDetailMobile({
               </button>
             )}
           </div>
+        </div>
+      )}
+
+      {/* Closed role, viewer applied: no Apply, but they can still message
+          the club about their application. Visitors get no bar at all. */}
+      {closedView === 'applicant' && (
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-white px-5 pb-[max(env(safe-area-inset-bottom),0.625rem)] pt-2.5 lg:hidden" data-testid="closed-message-bar">
+          <button type="button" onClick={onMessage} className="flex h-[52px] w-full items-center justify-center gap-2 rounded-full bg-surface-grouped text-body font-semibold text-ink-1 active:opacity-90">
+            <MessageCircle className="h-5 w-5" strokeWidth={1.6} /> Message the club
+          </button>
         </div>
       )}
     </div>

@@ -42,6 +42,11 @@ vi.mock('@/lib/supabase', () => {
   }
 })
 
+// Uploaded videos (player_videos) come from their own hook; none by default.
+vi.mock('@/hooks/useProfileVideos', () => ({
+  useProfileVideos: () => ({ videos: [], links: [], loading: false, reload: () => {} }),
+}))
+
 vi.mock('@/lib/logger', () => ({
   logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }))

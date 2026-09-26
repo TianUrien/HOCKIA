@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { playerApplicationStatusBadge, applicationStatusFallbackMessage, applicationStatusLabel } from '@/lib/applicationStatus'
+import { clubNoteFromFeedback } from '@/lib/opportunityCopy'
 
 /**
  * Player-facing application timeline (Phase 3-5 of application-clarity).
@@ -38,8 +39,13 @@ interface TimelineNode {
   date: string | null
   dotClass: string
   message?: string | null
+  /** Who wrote `message`: the AI explanation (sparkle), the club's own
+   *  decline note (plain "The club's note"), or fixed copy (plain). */
+  messageKind?: MessageKind
   subtext?: string | null
 }
+
+type MessageKind = 'ai' | 'club' | 'plain'
 
 // 'no_response' and 'filled' are terminal like a response (they render a
 // status node), but no AI pass exists for them: no_response comes from the
@@ -92,6 +98,7 @@ export default function ApplicationTimeline({ opportunityId }: ApplicationTimeli
   const [history, setHistory] = useState<HistoryRow[]>([])
   const [firstViewedAt, setFirstViewedAt] = useState<string | null>(null)
   const [aiMessage, setAiMessage] = useState<string | null>(null)
+  const [messageKind, setMessageKind] = useState<MessageKind>('ai')
   const [deadline, setDeadline] = useState<string | null>(null)
   const [resolved, setResolved] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -105,7 +112,7 @@ export default function ApplicationTimeline({ opportunityId }: ApplicationTimeli
       // Resolve the player's OWN application for this opportunity.
       const { data: app } = await supabase
         .from('opportunity_applications')
-        .select('id, status, applied_at')
+        .select('id, status, applied_at, ai_feedback')
         .eq('opportunity_id', opportunityId)
         .eq('applicant_id', user.id)
         .maybeSingle()
@@ -161,9 +168,18 @@ export default function ApplicationTimeline({ opportunityId }: ApplicationTimeli
         setAiMessage(null)
         return
       }
+      // A decline note the club wrote itself is shown as the club's words,
+      // never dressed up as AI (same rule as the phone card).
+      const clubNote = clubNoteFromFeedback((app as { ai_feedback?: unknown }).ai_feedback, status)
+      if (clubNote) {
+        setMessageKind('club')
+        setAiMessage(clubNote)
+        return
+      }
       if (DETERMINISTIC.includes(status)) {
         // application-feedback only explains real club responses; the
         // deterministic copy IS the message for auto-expiries and filled roles.
+        setMessageKind('plain')
         setAiMessage(applicationStatusFallbackMessage(status, null))
         return
       }
@@ -178,14 +194,18 @@ export default function ApplicationTimeline({ opportunityId }: ApplicationTimeli
         if (cancelled) return
         if (error) {
           logger.warn('application-feedback invoke failed', error)
+          setMessageKind('plain')
           setAiMessage(fallback)
           return
         }
         const msg = (data as { message?: string | null } | null)?.message
-        setAiMessage(typeof msg === 'string' && msg.trim() ? msg : fallback)
+        const hasMsg = typeof msg === 'string' && msg.trim()
+        setMessageKind(hasMsg ? 'ai' : 'plain')
+        setAiMessage(hasMsg ? msg : fallback)
       } catch (err) {
         if (!cancelled) {
           logger.warn('application-feedback error', err)
+          setMessageKind('plain')
           setAiMessage(fallback)
         }
       }
@@ -230,6 +250,7 @@ export default function ApplicationTimeline({ opportunityId }: ApplicationTimeli
         date: currentStatusRow?.created_at ?? null,
         dotClass: statusDotClass(currentStatus),
         message: aiMessage,
+        messageKind,
       })
     }
   } else if (!responded) {
@@ -264,12 +285,19 @@ export default function ApplicationTimeline({ opportunityId }: ApplicationTimeli
                   {node.date && <span className="flex-shrink-0 text-xs text-gray-400">{formatDate(node.date)}</span>}
                 </div>
                 {node.subtext && <p className="mt-1 text-xs text-gray-500">{node.subtext}</p>}
-                {node.message && (
-                  <p className="mt-1.5 flex gap-1.5 rounded-lg bg-white p-2.5 text-xs leading-relaxed text-gray-600 ring-1 ring-gray-100">
-                    <Sparkles className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-hockia-primary" />
+                {node.message && node.messageKind === 'club' ? (
+                  <div className="mt-1.5 rounded-lg bg-white p-2.5 ring-1 ring-gray-100" data-testid="timeline-club-note">
+                    <p className="text-xs font-semibold text-gray-500">The club’s note</p>
+                    <p className="mt-1 whitespace-pre-wrap break-words text-xs leading-relaxed text-gray-700">{node.message}</p>
+                  </div>
+                ) : node.message ? (
+                  <p className="mt-1.5 flex gap-1.5 rounded-lg bg-white p-2.5 text-xs leading-relaxed text-gray-600 ring-1 ring-gray-100" data-testid="timeline-message">
+                    {node.messageKind !== 'plain' && (
+                      <Sparkles className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-hockia-primary" data-testid="timeline-ai-sparkle" />
+                    )}
                     <span>{node.message}</span>
                   </p>
-                )}
+                ) : null}
               </div>
             </li>
           )
