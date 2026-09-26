@@ -9,6 +9,10 @@ import SpecialistSkillsSelect from '@/components/SpecialistSkillsSelect'
 import SocialLinksInput from '@/components/SocialLinksInput'
 import WorldClubSearch from '@/components/WorldClubSearch'
 import { SettingsSwitch } from '@/components/settings/settingsUi'
+import { PlayerLeagueField } from './PlayerLeagueField'
+import { leagueSideFor } from '@/lib/profileD2'
+import { usePlayerLeague } from '@/hooks/usePlayerLeague'
+import { SELF_REPORTED_LABEL } from '@/lib/keyFacts'
 import type { LocationSelection } from '@/components/LocationAutocomplete'
 import { supabase } from '@/lib/supabase'
 import type { Profile } from '@/lib/supabase'
@@ -16,7 +20,7 @@ import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
 import { logger } from '@/lib/logger'
 import { useCountries } from '@/hooks/useCountries'
-import { getPlayerLeagueName, useWorldClubLogo } from '@/hooks/useWorldClubLogo'
+import { useWorldClubLogo } from '@/hooks/useWorldClubLogo'
 import { optimizeAvatarImage, validateImage } from '@/lib/imageOptimization'
 import { isNativePlatform, pickImageNative } from '@/lib/nativeImagePicker'
 import { deleteStorageObject } from '@/lib/storage'
@@ -46,6 +50,10 @@ export type EditField =
 interface EditProfileScreenProps {
   field?: EditField | null
   onDone: () => void
+  /** D2: Passports → the Passports & permits screen (players). */
+  onOpenPassports?: () => void
+  /** D2: the Availability group → the Open to play screen (players). */
+  onOpenToPlay?: () => void
 }
 
 const POSITIONS = ['goalkeeper', 'defender', 'midfielder', 'forward'] as const
@@ -79,7 +87,7 @@ function Group({ label, children }: { label: string; children: React.ReactNode }
   )
 }
 
-export default function EditProfileScreen({ field = null, onDone }: EditProfileScreenProps) {
+export default function EditProfileScreen({ field = null, onDone, onOpenPassports, onOpenToPlay }: EditProfileScreenProps) {
   const { user, profile, refreshProfile } = useAuthStore()
   const addToast = useToastStore((s) => s.addToast)
   const { countries, getCountryById } = useCountries()
@@ -91,6 +99,12 @@ export default function EditProfileScreen({ field = null, onDone }: EditProfileS
   // Draft of the field being edited — reset every time an editor opens.
   const [draft, setDraft] = useState<Record<string, unknown>>({})
   const clubCrest = useWorldClubLogo((draft.current_world_club_id as string | null | undefined) ?? profile?.current_world_club_id ?? null)
+  const { league } = usePlayerLeague({
+    playerId: profile?.role === 'player' ? profile.id : null,
+    worldClubId: profile?.current_world_club_id ?? null,
+    playingCategory: profile?.playing_category ?? null,
+    signedIn: Boolean(user),
+  })
 
   useEffect(() => {
     if (!editing || !profile) return
@@ -109,6 +123,9 @@ export default function EditProfileScreen({ field = null, onDone }: EditProfileS
       location_selected: Boolean(profile.base_location),
       current_club: profile.current_club ?? '',
       current_world_club_id: profile.current_world_club_id ?? null,
+      own_league_id: profile[leagueSideFor(profile.playing_category)] ?? null,
+      own_league_name: null,
+      club_league_name: null,
       specialist_skills: profile.specialist_skills ?? [],
       bio: profile.bio ?? '',
       available_from: profile.available_from ?? '',
@@ -185,8 +202,18 @@ export default function EditProfileScreen({ field = null, onDone }: EditProfileS
         if (!d<string>('base_location').trim()) return setError('Location is required.')
         return persist({ base_location: d<string>('base_location'), base_city: d<string>('base_city') || null, base_country_id: d<number | null>('base_country_id') || null })
       }
-      case 'club':
-        return persist({ current_club: d<string>('current_club').trim() || null, current_world_club_id: d<string | null>('current_world_club_id') })
+      case 'club': {
+        const patch: Record<string, unknown> = { current_club: d<string>('current_club').trim() || null, current_world_club_id: d<string | null>('current_world_club_id') }
+        // The player's own league only when their club has none on Hockia
+        // (self-reported; never counted for level or fit).
+        if (profile.role === 'player' && !d<string | null>('club_league_name')) {
+          const side = leagueSideFor(profile.playing_category)
+          const ownId = d<number | null>('own_league_id')
+          patch[side] = ownId
+          if (ownId !== (profile[side] ?? null)) patch[side === 'mens_league_id' ? 'mens_league_division' : 'womens_league_division'] = d<string | null>('own_league_name')
+        }
+        return persist(patch)
+      }
       case 'skills':
         return persist({ specialist_skills: pruneSpecialistSkillsForPosition(d<string[]>('specialist_skills'), profile.position ?? '') })
       case 'about': {
@@ -254,7 +281,7 @@ export default function EditProfileScreen({ field = null, onDone }: EditProfileS
   const held = [profile.nationality_country_id, profile.nationality2_country_id].map((id) => (typeof id === 'number' ? countries.find((c) => c.id === id) : undefined)).filter((c): c is NonNullable<typeof c> => Boolean(c))
   const passports = nationalityLine(held, { label: 'demonym' }) ?? (profile.nationality?.trim() || null)
   const positions = [profile.position, profile.secondary_position].filter(Boolean).map((p) => humanizeToken(p)).join(' · ') || null
-  const league = getPlayerLeagueName(profile.current_world_club_id, profile.playing_category)
+  const leagueLine = league ? (league.source === 'self_reported' ? `${league.name} · ${SELF_REPORTED_LABEL}` : league.name) : null
   const available = [profile.available_from ? monthYear(profile.available_from) : null, profile.availability_duration ? DURATION_LABEL[profile.availability_duration] ?? null : null].filter(Boolean).join(' · ') || null
   const links = Object.keys((profile.social_links ?? {}) as Record<string, string>).filter((k) => ((profile.social_links ?? {}) as Record<string, string>)[k])
   const name = profile.full_name?.trim() || 'Your profile'
@@ -262,7 +289,7 @@ export default function EditProfileScreen({ field = null, onDone }: EditProfileS
   const p = profile as Profile
 
   const TITLE: Record<EditField, string> = {
-    name: 'Name', position: 'Position', category: 'Category', dob: 'Date of birth', passports: 'Passports', base: 'Base location', club: 'Current club',
+    name: 'Name', position: 'Position', category: 'Category', dob: 'Date of birth', passports: 'Passports', base: 'Base location', club: p.role === 'player' ? 'Club & league' : 'Current club',
     skills: 'Skills', about: 'About', availability: 'Available from', relocation: 'Relocation', contact: 'Contact email', links: 'Social links',
   }
 
@@ -291,24 +318,36 @@ export default function EditProfileScreen({ field = null, onDone }: EditProfileS
         </Group>
 
         <Group label="Passports & base">
-          <Row label="Passports" value={passports ? (held.length === 1 ? `${passports} · Add second` : passports) : null} onClick={() => setEditing('passports')} />
+          <Row label="Passports" value={passports ? (held.length === 1 ? `${passports} · Add second` : passports) : null} onClick={onOpenPassports ?? (() => setEditing('passports'))} />
           <Row label="Base location" value={p.base_location?.trim() || null} onClick={() => setEditing('base')} />
         </Group>
 
         <Group label="Hockey">
           <Row label="Current club" value={p.current_club?.trim() || null} onClick={() => setEditing('club')} />
-          {league && <Row label="League" value={league} locked />}
+          {p.role === 'player'
+            ? <Row label="League" value={leagueLine} locked={league?.source === 'club'} onClick={() => setEditing('club')} />
+            : null}
           <Row label="Skills" value={(p.specialist_skills ?? []).map((sk) => humanizeToken(sk)).join(' · ') || null} onClick={() => setEditing('skills')} />
           <Row label="About" value={p.bio?.trim() || null} onClick={() => setEditing('about')} />
         </Group>
 
         <Group label="Availability">
-          <div className="flex min-h-[44px] items-center gap-3 py-2.5">
-            <span className="w-[116px] shrink-0 text-row text-ink-2">Open to play</span>
-            <span className="min-w-0 flex-1 text-row text-ink-1">{p.open_to_play ? 'On' : 'Off'}</span>
-            <SettingsSwitch label="Open to play" checked={Boolean(p.open_to_play)} disabled={saving} onChange={() => void persist({ open_to_play: !p.open_to_play })} />
-          </div>
-          <Row label="Available from" value={available} onClick={() => setEditing('availability')} />
+          {onOpenToPlay ? (
+            <>
+              {/* D2.4: Open to play is set on its own screen (switch + when + consent). */}
+              <Row label="Open to play" value={p.open_to_play ? 'On' : 'Off'} onClick={onOpenToPlay} />
+              <Row label="Available from" value={available} onClick={onOpenToPlay} />
+            </>
+          ) : (
+            <>
+              <div className="flex min-h-[44px] items-center gap-3 py-2.5">
+                <span className="w-[116px] shrink-0 text-row text-ink-2">Open to play</span>
+                <span className="min-w-0 flex-1 text-row text-ink-1">{p.open_to_play ? 'On' : 'Off'}</span>
+                <SettingsSwitch label="Open to play" checked={Boolean(p.open_to_play)} disabled={saving} onChange={() => void persist({ open_to_play: !p.open_to_play })} />
+              </div>
+              <Row label="Available from" value={available} onClick={() => setEditing('availability')} />
+            </>
+          )}
           <Row label="Relocation" value={p.relocation_willingness ? RELOCATION_LABEL[p.relocation_willingness] ?? null : null} onClick={() => setEditing('relocation')} />
         </Group>
 
@@ -378,6 +417,16 @@ export default function EditProfileScreen({ field = null, onDone }: EditProfileS
                   onChange={(value) => set({ current_club: value })}
                   onClubSelect={(club) => set({ current_club: club.club_name, current_world_club_id: club.id })}
                   onClubClear={() => set({ current_world_club_id: null })}
+                />
+              )}
+              {editing === 'club' && p.role === 'player' && (
+                <PlayerLeagueField
+                  worldClubId={d<string | null>('current_world_club_id') ?? null}
+                  fallbackCountryId={p.base_country_id ?? p.nationality_country_id ?? null}
+                  playingCategory={p.playing_category ?? null}
+                  value={d<number | null>('own_league_id') ?? null}
+                  onChange={(id, name) => set({ own_league_id: id, own_league_name: name })}
+                  onClubLeague={(name) => set({ club_league_name: name })}
                 />
               )}
 

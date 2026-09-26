@@ -10,6 +10,7 @@
  * is true (16–17-year-olds and unknown ages don't get it).
  */
 import { supabase } from '@/lib/supabase'
+import { isMissingBackendError } from '@/lib/missingBackend'
 import { isAvailabilityDuration, type AvailabilityDuration } from '@/lib/availabilityDuration'
 
 export {
@@ -82,4 +83,25 @@ export async function canToggleOpenToPlay(profileId: string): Promise<boolean> {
   const { data, error } = await supabase.rpc('can_toggle_open_to_play', { p_uid: profileId })
   if (error) return false
   return data === true
+}
+
+/**
+ * Like canToggleOpenToPlay, but tells "the RPC isn't deployed here yet" (null)
+ * apart from a real answer, so the screen can fall back to the date of birth
+ * it already has instead of hiding the switch from everyone.
+ */
+export async function checkCanToggleOpenToPlay(profileId: string): Promise<boolean | null> {
+  const { data, error } = await supabase.rpc('can_toggle_open_to_play', { p_uid: profileId })
+  if (error) return isMissingBackendError(error) ? null : false
+  return data === true
+}
+
+/** 18+ by a known date of birth ('YYYY-MM-DD'), UTC calendar — mirrors profile_is_adult(). */
+export function isAdultByDob(dob: string | null | undefined, today: Date = new Date()): boolean {
+  const m = dob ? /^(\d{4})-(\d{2})-(\d{2})/.exec(dob) : null
+  if (!m) return false
+  const y = Number(m[1]); const mo = Number(m[2]); const d = Number(m[3])
+  const ty = today.getUTCFullYear(); const tm = today.getUTCMonth() + 1; const td = today.getUTCDate()
+  const age = ty - y - (tm < mo || (tm === mo && td < d) ? 1 : 0)
+  return age >= 18
 }
