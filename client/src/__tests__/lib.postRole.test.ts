@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import {
   defaultTitle, draftFromRow, draftToRow, emptyDraft, hardnessFootnote, locationFromClub, normalizeDuration,
-  playerChecklist, recruitingTarget, startLabel, stepProblem, TEAMS, type PostRoleDraft,
+  playerChecklist, recruitingTarget, replyWindowLine, rolePostedCopy, startLabel, stepProblem, switchRoleType, teamsFor,
+  COACH_TEAMS, COACH_TEAM_HINT, TEAMS, type PostRoleDraft,
 } from '@/lib/postRole'
 import type { Vacancy } from '@/lib/supabase'
 
@@ -35,7 +36,7 @@ describe('Post a role · mapping', () => {
 
   it('clears player-only fields on a coach role', () => {
     const row = draftToRow(base({ type: 'coach', position: 'head_coach', positionRequired: true, payRequired: true, pay: 'paid', skills: ['drag_flicker'] }), 'c', 'draft')
-    expect(row).toMatchObject({ gender: null, position_required: false, compensation_required: false, specialist_skills_wanted: [], title: 'Head coach', status: 'draft' })
+    expect(row).toMatchObject({ gender: 'Men', position_required: false, compensation_required: false, specialist_skills_wanted: [], title: 'Men\'s head coach', status: 'draft' })
   })
 
   it('never saves a must-have with nothing chosen', () => {
@@ -65,7 +66,8 @@ describe('Post a role · copy and checks', () => {
     expect(stepProblem(base({ gender: null }), 1)).toBe('Choose the team.')
     expect(stepProblem(base(), 1)).toBeNull()
     expect(stepProblem(base({ city: '' }), 2)).toBe('Add where the role is.')
-    expect(stepProblem(base({ type: 'coach', position: 'head_coach', gender: null }), 1)).toBeNull()
+    expect(stepProblem(base({ type: 'coach', position: 'head_coach', gender: null }), 1)).toBe('Choose the team.')
+    expect(stepProblem(base({ type: 'coach', position: 'head_coach', gender: 'Girls' }), 1)).toBeNull()
   })
 
   it('ticks what players ask first, with no score', () => {
@@ -110,5 +112,61 @@ describe('Post a role · no youth player roles', () => {
     expect(draftFromRow({ ...row, gender: 'Boys' }).gender).toBeNull()
     expect(draftFromRow({ ...row, gender: 'Women' }).gender).toBe('Women')
     expect(draftFromRow({ ...row, opportunity_type: 'coach', gender: 'Girls' }).gender).toBe('Girls')
+  })
+})
+
+// Founder ruling 2026-09-26: coach roles pick a team like player roles, Boys/Girls included.
+describe('Post a role · coach role team', () => {
+  const coach = (over: Partial<PostRoleDraft> = {}) => base({ type: 'coach', position: 'head_coach', ...over })
+
+  it('offers Boys and Girls on coach roles only', () => {
+    expect(COACH_TEAMS.map((t) => t.value)).toEqual(['Men', 'Women', 'Mixed', 'Boys', 'Girls'])
+    expect(teamsFor('coach')).toBe(COACH_TEAMS)
+    expect(teamsFor('player')).toBe(TEAMS)
+    expect(COACH_TEAM_HINT).toBe('Boys and Girls are for coach and staff roles only.')
+  })
+
+  it('writes and reads back a coach role team, Boys/Girls included', () => {
+    const row = draftToRow(coach({ gender: 'Girls', title: '' }), 'c', 'open')
+    expect(row).toMatchObject({ opportunity_type: 'coach', gender: 'Girls', title: 'Girls head coach' })
+    expect(draftFromRow({ ...(row as unknown as Vacancy), id: 'c1' }).gender).toBe('Girls')
+  })
+
+  it('asks a legacy coach draft without a team for one', () => {
+    const legacy = draftFromRow({ ...(draftToRow(coach(), 'c', 'draft') as unknown as Vacancy), gender: null, id: 'c2' })
+    expect(legacy.gender).toBeNull()
+    expect(stepProblem(legacy, 1)).toBe('Choose the team.')
+    expect(stepProblem(legacy, 3)).toBe('Choose the team.')
+  })
+
+  it('keeps the team when switching type, clearing Boys/Girls on the way to Player', () => {
+    expect(switchRoleType(base({ gender: 'Women' }), 'coach')).toMatchObject({ type: 'coach', gender: 'Women', position: null })
+    expect(switchRoleType(coach({ gender: 'Mixed' }), 'player')).toMatchObject({ type: 'player', gender: 'Mixed', position: null })
+    expect(switchRoleType(coach({ gender: 'Boys' }), 'player')).toMatchObject({ type: 'player', gender: null })
+    const same = base()
+    expect(switchRoleType(same, 'player')).toBe(same)
+  })
+
+  it('never lists a coach role team as a blocker, and speaks of coaches', () => {
+    expect(hardnessFootnote(coach({ gender: 'Girls' }))).toBe('Nothing blocks coaches; everything here ranks them.')
+    expect(hardnessFootnote(coach({ gender: 'Girls', euPassport: true }))).toBe('Always required: EU passport. Everything else ranks coaches, it doesn’t block them.')
+  })
+})
+
+describe('Role posted (D1.26)', () => {
+  it('titles the screen by position and points Find at the right pool', () => {
+    expect(rolePostedCopy({ type: 'player', position: 'midfielder' })).toMatchObject({
+      title: 'Midfielder is live', findLabel: 'Find players for this role', findPath: '/community/players', pushTitle: 'Know when players apply',
+    })
+    expect(rolePostedCopy({ type: 'coach', position: 'head_coach' })).toMatchObject({
+      title: 'Head coach is live', findLabel: 'Find coaches for this role', findPath: '/community/coaches',
+    })
+    expect(rolePostedCopy({ type: 'player', position: 'midfielder' }).body).toMatch(/^Players who fit can find it in Opportunities now\./)
+    expect(rolePostedCopy({ type: 'coach', position: 'head_coach' }).body).toMatch(/^Coaches who fit/)
+  })
+
+  it('uses the configured reply window', () => {
+    expect(replyWindowLine(14)).toBe('Answer each applicant within 14 days. After that, their application closes on its own.')
+    expect(replyWindowLine(21)).toMatch(/within 21 days/)
   })
 })

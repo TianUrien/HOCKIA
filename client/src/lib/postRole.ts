@@ -73,6 +73,28 @@ export const TEAMS: { value: RoleGender; label: string }[] = [
   { value: 'Mixed', label: 'Mixed' },
 ]
 
+/**
+ * Teams a COACH role can target: the player teams plus Boys and Girls
+ * (founder ruling 2026-09-26). Required like a player role's team.
+ */
+export const COACH_TEAMS: { value: RoleGender; label: string }[] = [
+  ...TEAMS,
+  { value: 'Boys', label: 'Boys' },
+  { value: 'Girls', label: 'Girls' },
+]
+
+export function teamsFor(type: RoleType): typeof TEAMS {
+  return type === 'player' ? TEAMS : COACH_TEAMS
+}
+
+export { COACH_TEAM_HINT } from '@/lib/youthRoles'
+
+/** Player ↔ Coach: the team stays, except Boys/Girls, which a player role can't use. */
+export function switchRoleType(d: PostRoleDraft, type: RoleType): PostRoleDraft {
+  if (d.type === type) return d
+  return { ...d, type, position: null, skills: [], gender: type === 'player' ? playerRoleGender(d.gender) : d.gender }
+}
+
 export const LEVELS: { value: RoleLevel; label: string }[] = [
   { value: 'competitive', label: 'Competitive' },
   { value: 'high_performance', label: 'High performance' },
@@ -199,12 +221,11 @@ function positionLabel(position: RolePosition | null): string | null {
   return [...PLAYER_POSITIONS, ...COACH_POSITIONS].find((p) => p.value === position)?.label ?? humanizeToken(position)
 }
 
-/** Title when the club leaves it empty: "Men's midfielder" (the column is NOT NULL). */
+/** Title when the club leaves it empty: "Men's midfielder", "Girls head coach" (the column is NOT NULL). */
 export function defaultTitle(d: Pick<PostRoleDraft, 'type' | 'position' | 'gender'>): string {
   const pos = positionLabel(d.position)
   if (!pos) return ''
-  if (d.type !== 'player') return pos
-  const team = genderPill(d.gender)?.label
+  const team = genderPill(d.type === 'player' ? playerRoleGender(d.gender) : d.gender)?.label
   return team ? `${team} ${pos.toLowerCase()}` : pos
 }
 
@@ -214,7 +235,8 @@ export type Step = 1 | 2 | 3
 export function stepProblem(d: PostRoleDraft, step: Step): string | null {
   if (step === 1) {
     if (!d.position) return d.type === 'player' ? 'Choose a position.' : 'Choose the role.'
-    if (d.type === 'player' && (!d.gender || isYouthGender(d.gender))) return 'Choose the team.'
+    // Every role names its team; a player role only an adult one.
+    if (!d.gender || (d.type === 'player' && isYouthGender(d.gender))) return 'Choose the team.'
     if (d.title.trim().length > TITLE_MAX) return `Keep the title to ${TITLE_MAX} characters.`
     if (d.skillsRequired && d.skills.length === 0) return 'Pick a specialist skill, or make it nice to have.'
     return null
@@ -227,7 +249,7 @@ export function stepProblem(d: PostRoleDraft, step: Step): string | null {
   return stepProblem(d, 1) ?? stepProblem(d, 2)
 }
 
-/** The opportunities row for this draft. Player-only fields are cleared for coach roles. */
+/** The opportunities row for this draft. Player-only fields are cleared for coach roles; the team is kept for both. */
 export function draftToRow(d: PostRoleDraft, clubId: string, status: 'draft' | 'open'): Database['public']['Tables']['opportunities']['Insert'] {
   const player = d.type === 'player'
   return {
@@ -235,7 +257,7 @@ export function draftToRow(d: PostRoleDraft, clubId: string, status: 'draft' | '
     opportunity_type: d.type,
     position: d.position,
     position_required: player && d.positionRequired,
-    gender: player ? playerRoleGender(d.gender) : null,
+    gender: player ? playerRoleGender(d.gender) : d.gender,
     title: d.title.trim().slice(0, TITLE_MAX) || defaultTitle(d) || 'New role',
     level_sought: d.level,
     level_required: player && d.levelRequired && d.level !== null,
@@ -275,9 +297,14 @@ export function playerChecklist(d: PostRoleDraft): ChecklistItem[] {
   ]
 }
 
-/** "Must have: Midfielder. Always required: Men's team. Everything else ranks players, it doesn't block them." */
+/**
+ * "Must have: Midfielder. Always required: Men's team. Everything else ranks
+ * players, it doesn't block them." Coach roles are never gated by team
+ * (lib/opportunityEligibility), so their team isn't listed as a blocker.
+ */
 export function hardnessFootnote(d: PostRoleDraft): string {
   const must: string[] = []
+  const who = d.type === 'player' ? 'players' : 'coaches'
   if (d.type === 'player') {
     if (d.positionRequired && d.position) must.push(positionLabel(d.position) as string)
     if (d.levelRequired && d.level) must.push(LEVELS.find((l) => l.value === d.level)?.label ?? d.level)
@@ -292,7 +319,7 @@ export function hardnessFootnote(d: PostRoleDraft): string {
   const parts: string[] = []
   if (must.length) parts.push(`Must have: ${must.join(', ')}.`)
   if (always.length) parts.push(`Always required: ${always.join(', ')}.`)
-  parts.push(must.length || always.length ? 'Everything else ranks players, it doesn’t block them.' : 'Nothing blocks players; everything here ranks them.')
+  parts.push(must.length || always.length ? `Everything else ranks ${who}, it doesn’t block them.` : `Nothing blocks ${who}; everything here ranks them.`)
   return parts.join(' ')
 }
 
@@ -311,4 +338,34 @@ export function startLabel(iso: string | null, now = new Date()): string | null 
   if (Number.isNaN(d.getTime())) return null
   const month = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getMonth()]
   return d.getFullYear() === now.getFullYear() ? `${month} ${d.getDate()}` : `${month} ${d.getDate()}, ${d.getFullYear()}`
+}
+
+export interface RolePostedCopy {
+  title: string
+  body: string
+  findLabel: string
+  findPath: string
+  pushTitle: string
+}
+
+/**
+ * Role posted (Figma 04 Club D1.26 368:780; DEV NOTE 368:1098). Title =
+ * "<position> is live". Coach roles find coaches, not players (founder
+ * ruling 2026-09-26).
+ */
+export function rolePostedCopy(d: Pick<PostRoleDraft, 'type' | 'position'>): RolePostedCopy {
+  const player = d.type === 'player'
+  const who = player ? 'players' : 'coaches'
+  return {
+    title: `${positionLabel(d.position) ?? 'Your role'} is live`,
+    body: `${player ? 'Players' : 'Coaches'} who fit can find it in Opportunities now. Every applicant lands in To review, and we’ll let you know.`,
+    findLabel: `Find ${who} for this role`,
+    findPath: player ? '/community/players' : '/community/coaches',
+    pushTitle: `Know when ${who} apply`,
+  }
+}
+
+/** The reply window line; `days` = application_response_settings.expiry_days. */
+export function replyWindowLine(days: number): string {
+  return `Answer each applicant within ${days} ${days === 1 ? 'day' : 'days'}. After that, their application closes on its own.`
 }
