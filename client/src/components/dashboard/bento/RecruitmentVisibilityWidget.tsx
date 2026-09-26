@@ -36,6 +36,8 @@ import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import type { Profile } from '@/lib/supabase'
 import type { ProfileStrengthBucket } from '@/hooks/useProfileStrength'
+import { useProfileVideos } from '@/hooks/useProfileVideos'
+import { playerVideoChecklist, type PlayerVideoChecklist } from '@/lib/playerVideoChecklist'
 
 interface RecruitmentVisibilityWidgetProps {
   profile: Profile
@@ -93,14 +95,20 @@ export default function RecruitmentVisibilityWidget({
     }
   }, [profile.id, isCoach])
 
+  // Uploaded highlights / full matches live in player_videos, not on the
+  // profile row — the video rows count too, not just the old highlight link
+  // and the linked full games (same rule as the server completeness score).
+  const { videos, loading: videosLoading } = useProfileVideos(profile.id, !isCoach)
+  const videoChecklist = playerVideoChecklist(profile, videos)
+
   const items = isCoach
     ? buildCoachItems(profile)
-    : buildPlayerItems(profile, hasRepTeam ?? false)
+    : buildPlayerItems(profile, hasRepTeam ?? false, videoChecklist)
 
   const completedCount = items.filter((i) => i.completed).length
   const total = items.length
-  // Don't tease the headline number while the rep-team query is in flight.
-  const headlineReady = hasRepTeam !== null
+  // Don't tease the headline number while the rep-team / video queries are in flight.
+  const headlineReady = hasRepTeam !== null && (isCoach || !videosLoading)
 
   return (
     <section
@@ -142,21 +150,21 @@ export default function RecruitmentVisibilityWidget({
   )
 }
 
-function buildPlayerItems(profile: Profile, hasRepTeam: boolean): VisibilityItem[] {
+function buildPlayerItems(profile: Profile, hasRepTeam: boolean, video: PlayerVideoChecklist): VisibilityItem[] {
   return [
     {
       id: 'highlight-video',
       label: 'Highlight video',
       hint: 'Recruiters watch this first — the single highest-signal artifact on your profile.',
       actionLabel: 'Add',
-      completed: Boolean(profile.highlight_video_url?.trim()),
+      completed: video.hasHighlight,
       bucket: {
         id: 'highlight-video',
         label: 'Highlight video',
         description: '',
         unlockCopy: '',
         weight: 0,
-        completed: Boolean(profile.highlight_video_url?.trim()),
+        completed: video.hasHighlight,
         action: { type: 'add-video' },
       },
     },
@@ -165,14 +173,14 @@ function buildPlayerItems(profile: Profile, hasRepTeam: boolean): VisibilityItem
       label: 'Full match video',
       hint: 'Shows decision-making across 60+ minutes — the depth recruiters look for after the highlight.',
       actionLabel: 'Upload',
-      completed: (profile.full_game_video_count ?? 0) > 0,
+      completed: video.hasFullMatch,
       bucket: {
         id: 'full-match-footage',
         label: 'Full match footage',
         description: '',
         unlockCopy: '',
         weight: 0,
-        completed: (profile.full_game_video_count ?? 0) > 0,
+        completed: video.hasFullMatch,
         action: { type: 'tab', tab: 'media' },
       },
     },

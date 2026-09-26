@@ -52,3 +52,18 @@ export function useBottomPrompt(id: string, visible: boolean): boolean {
 
   return isOtherActive(id)
 }
+
+/** Id an in-page push ask (e.g. Role posted's "Turn on" card) registers under. */
+export const INLINE_PUSH_ASK = 'push-inline'
+
+/** Whether the prompt `id` currently holds a slot (reactive). */
+export function useBottomPromptActive(id: string): boolean {
+  const [, rerender] = useReducer((x: number) => x + 1, 0)
+  useEffect(() => {
+    listeners.add(rerender)
+    return () => {
+      listeners.delete(rerender)
+    }
+  }, [])
+  return active.has(id)
+}

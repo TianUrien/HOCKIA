@@ -44,6 +44,7 @@ export function useRecruitingScope(): { scope: ViewerScopeInputs | null; loading
         womens_league_division: (viewerProfile as { womens_league_division?: string | null }).womens_league_division ?? null,
         mens_league_division: (viewerProfile as { mens_league_division?: string | null }).mens_league_division ?? null,
         current_world_club_id: viewerProfile.current_world_club_id ?? null,
+        coach_recruits_for_team: viewerProfile.coach_recruits_for_team ?? null,
       },
       contextTarget,
       targetRole,

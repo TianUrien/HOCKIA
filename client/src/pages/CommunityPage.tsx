@@ -98,7 +98,16 @@ export default function CommunityPage() {
   useEffect(() => { setShowEveryone(false) }, [scopedRole])
   // The scope is actively reshaping the page (role filter applied) when a
   // scopedRole exists and the user hasn't widened to everyone.
-  const scopeReshaping = scopedRole !== null && !showEveryone
+  // Landing straight on a role tab that differs from the scope's role (e.g.
+  // Role posted → "Find coaches" while a player scope is active) escapes the
+  // scope in the SAME render. Waiting for the escape effect below left one
+  // render pinned to the scope's role, which fired a fetch for the wrong role.
+  const tabEscapesScope = (() => {
+    if (scopedRole === null || tab === undefined) return false
+    const tabRole = (ROLE_FILTER_BY_TAB as Record<string, string | undefined>)[tab]
+    return tabRole !== undefined && tabRole !== scopedRole
+  })()
+  const scopeReshaping = scopedRole !== null && !showEveryone && !tabEscapesScope
 
   // Scroll restoration between Members ↔ Questions toggle (and across
   // role chips). React Router's default scrolls to top on route change;
@@ -478,7 +487,7 @@ export default function CommunityPage() {
                   </p>
                   <button
                     type="button"
-                    onClick={() => setShowEveryone((v) => !v)}
+                    onClick={() => (tabEscapesScope ? navigate(roleToPath(scopedRole)) : setShowEveryone((v) => !v))}
                     className="flex-shrink-0 whitespace-nowrap text-xs font-semibold text-hockia-primary transition active:scale-95 hover:underline"
                   >
                     {scopeReshaping ? 'Show everyone' : `Show ${scopedRole === 'coach' ? 'coaches' : 'players'} only`}

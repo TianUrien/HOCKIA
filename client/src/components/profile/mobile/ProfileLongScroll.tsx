@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Check, ChevronRight, ExternalLink, Flag, Heart, Lock, Plus } from 'lucide-react'
+import { Check, ChevronRight, ExternalLink, Flag, Heart, Lock, Plus, Target } from 'lucide-react'
 import { useProfileScrollData, type ScrollCareerEntry, type ScrollFullGameLink, type ScrollVideo } from '@/hooks/useProfileScrollData'
 import { LockedVideoTile, ProfileVideoTile } from './ProfileVideoTile'
 import { VideoAccessSheets, type VideoBlock } from './VideoAccessSheets'
@@ -16,23 +16,22 @@ import { getImageUrl, getImageSrcSet } from '@/lib/imageUrl'
 import { SmoothImage } from '@/components/ui/SmoothImage'
 import { humanizeToken, identityLine } from '@/lib/identity'
 import { categoryToDisplay } from '@/lib/hockeyCategories'
-import { DURATION_LABEL, RELOCATION_LABEL } from '@/lib/candidateIntent'
+import { RELOCATION_LABEL } from '@/lib/candidateIntent'
 import { careerSpan, isCurrentEntry } from '@/lib/careerCopy'
-import { nationalityLine } from '@/lib/nationalityLine'
 import { cn } from '@/lib/utils'
 import type { PlayerProfileShape } from '@/pages/PlayerDashboard'
 import type { UserPostFeedItem } from '@/types/homeFeed'
 
 /**
- * Phone profile long scroll (Figma 03 Player › Profile own / public):
- * Profile strength (owner) · Video · References · Career · Photos · Posts ·
- * About, under the identity block. Every section is a preview; the number
- * in the stats strip and the section links open the complete collection.
- * Header actions follow the stats-strip rule — "See all N" in both modes;
- * owner verbs (Ask for a reference, Add photos, New post) are the empty-state
- * rows only, and the tools live inside the leaf screens. Video keeps Manage
- * for the owner. Public mode is read-only and viewer-relative (RLS already
- * fences recruiters-only rows).
+ * Phone profile long scroll under the identity block and the six key facts
+ * (Figma D2.1 club view / D2.2 owner): Videos · Career · Specialist skills ·
+ * References · Friends · Photos · Posts · About (founder ruling 2026-09-26 —
+ * no Profile-strength card, no stats strip; Friends is a row; About drops the
+ * rows the key facts already show). Every section is a preview; "See all N"
+ * opens the complete collection. Owner verbs (Ask for a reference, Add photos,
+ * New post) are the empty-state rows only, and the tools live inside the leaf
+ * screens. Public mode is read-only and viewer-relative (RLS already fences
+ * recruiters-only rows). Club-only cards come in through the slots.
  */
 interface ProfileLongScrollProps {
   profile: PlayerProfileShape
@@ -47,8 +46,16 @@ interface ProfileLongScrollProps {
   onOpenCareer: () => void
   onOpenPhotos: () => void
   onOpenPosts: () => void
-  /** Highlights + full matches + reels — the number the stats strip shows. */
-  onVideoCount?: (count: number) => void
+  /** Friends row → the Friends leaf. */
+  onOpenFriends: () => void
+  /** Owner: Specialist skills empty row → the skills editor. */
+  onEditSkills?: () => void
+  /** Video counts once loaded — the Video key fact reads them. */
+  onVideoCounts?: (counts: { total: number; highlights: number; fullMatches: number }) => void
+  /** Club view: "Applied to …" sits above Videos. */
+  topSlot?: ReactNode
+  /** Club view: "Fit for this role" sits between Videos and Career (Figma D2.1). */
+  afterVideosSlot?: ReactNode
 }
 
 const MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -196,7 +203,7 @@ function FactRow({ label, value }: { label: string; value: string | null }) {
   )
 }
 
-export default function ProfileLongScroll({ profile, readOnly, onEdit, onOpenVideos, onManageVideos, onOpenReferences, onOpenReference, onOpenCareer, onOpenPhotos, onOpenPosts, onVideoCount }: ProfileLongScrollProps) {
+export default function ProfileLongScroll({ profile, readOnly, onEdit, onOpenVideos, onManageVideos, onOpenReferences, onOpenReference, onOpenCareer, onOpenPhotos, onOpenPosts, onOpenFriends, onEditSkills, onVideoCounts, topSlot, afterVideosSlot }: ProfileLongScrollProps) {
   const navigate = useNavigate()
   const owner = !readOnly
   const profileId = profile.id ?? null
@@ -230,45 +237,25 @@ export default function ProfileLongScroll({ profile, readOnly, onEdit, onOpenVid
   const fullMatchCount = data.fullMatches.length + data.fullGameLinks.length + lockedFull
   const videoTotal = highlightCount + fullMatchCount + data.reels.length
   useEffect(() => {
-    if (!data.loading) onVideoCount?.(videoTotal)
-  }, [data.loading, videoTotal, onVideoCount])
+    if (!data.loading) onVideoCounts?.({ total: videoTotal, highlights: highlightCount, fullMatches: fullMatchCount })
+  }, [data.loading, videoTotal, highlightCount, fullMatchCount, onVideoCounts])
   const referenceCount = profile.accepted_reference_count ?? acceptedReferences.length
   const careerCount = profile.career_entry_count ?? data.career.length
 
-  // Profile strength — the same five recruiter signals the desktop
-  // checklist (RecruitmentVisibilityWidget) counts, as a compact card.
-  const strength = useMemo(() => {
-    if (!owner) return null
-    const items: { label: string; done: boolean; open: () => void }[] = [
-      { label: 'highlight video', done: highlightCount > 0, open: onOpenVideos },
-      { label: 'full match', done: fullMatchCount > 0 || (profile.full_game_video_count ?? 0) > 0, open: onOpenVideos },
-      { label: 'current club', done: Boolean(profile.current_world_club_id), open: onEdit },
-      { label: 'reference', done: referenceCount > 0, open: onOpenReferences },
-      { label: 'representative team', done: data.career.some((c) => c.entryType === 'national_team'), open: onOpenCareer },
-    ]
-    const done = items.filter((i) => i.done).length
-    const next = items.find((i) => !i.done) ?? null
-    return { done, total: items.length, next }
-  }, [owner, highlightCount, fullMatchCount, referenceCount, profile.full_game_video_count, profile.current_world_club_id, data.career, onOpenVideos, onEdit, onOpenReferences, onOpenCareer])
-
-  const passports = useMemo(() => {
-    const ids = [profile.nationality_country_id, profile.nationality2_country_id].filter((id): id is number => typeof id === 'number')
-    const found = ids.map((id) => countries.find((c) => c.id === id)).filter((c): c is NonNullable<typeof c> => Boolean(c))
-    return nationalityLine(found) ?? (profile.nationality?.trim() || null)
-  }, [countries, profile.nationality_country_id, profile.nationality2_country_id, profile.nationality])
-
-  const age = profile.server_age ?? (profile.date_of_birth ? Math.floor((Date.now() - new Date(profile.date_of_birth).getTime()) / 31_557_600_000) : null)
-  const category = [categoryToDisplay(profile.playing_category) || null, age ? String(age) : null].filter(Boolean).join(' · ') || null
-  const available = profile.available_from
-    ? [`From ${monthYear(profile.available_from)}`, profile.availability_duration ? DURATION_LABEL[profile.availability_duration] ?? null : null].filter(Boolean).join(' · ')
-    : profile.availability_duration ? DURATION_LABEL[profile.availability_duration] ?? null : null
+    // Passports, availability and age are key facts now — About keeps the rest.
+  const category = categoryToDisplay(profile.playing_category) || null
   const relocation = profile.relocation_willingness ? RELOCATION_LABEL[profile.relocation_willingness] ?? null : null
   const bio = profile.bio?.trim() || null
-  const hasAbout = Boolean(bio || passports || category || available || relocation)
+  const hasAbout = Boolean(bio || category || relocation)
+  const skills = (profile.specialist_skills ?? []).filter(Boolean)
+  const friendCount = profile.accepted_friend_count ?? 0
 
   const showVideo = owner || videoTotal > 0
-  const showReferences = owner || referenceCount > 0
+  // Visitors see an empty References section too (Figma D2.1) — it says where references come from.
+  const showReferences = true
   const showCareer = owner || careerCount > 0
+  const showSkills = owner || skills.length > 0
+  const showFriends = owner || friendCount > 0
   const showPhotos = owner || data.photos.length > 0
   const showPosts = owner || data.posts.length > 0
 
@@ -280,34 +267,11 @@ export default function ProfileLongScroll({ profile, readOnly, onEdit, onOpenVid
 
   return (
     <div className="flex flex-col gap-7 px-5 pb-6 pt-1" data-testid="profile-long-scroll">
-      {strength && (
-        <button
-          type="button"
-          onClick={() => (strength.next ? strength.next.open() : navigate('/settings/privacy'))}
-          className="rounded-card border border-line bg-white p-4 text-left"
-          data-testid="profile-strength-card"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-row font-semibold text-ink-1">Profile strength</span>
-            <span className="text-row font-semibold text-positive">{strength.done} of {strength.total}</span>
-          </div>
-          <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-surface-grouped">
-            <div className="h-full rounded-full bg-positive" style={{ width: `${(strength.done / strength.total) * 100}%` }} />
-          </div>
-          <div className="mt-2.5 flex items-center justify-between gap-3">
-            <p className="text-secondary text-ink-2">
-              {strength.next
-                ? `${strength.done} of ${strength.total} added. Next: add a ${strength.next.label}.`
-                : lockFullMatches ? 'Complete. Full matches are visible to clubs & coaches only.' : 'Complete. Every signal recruiters look for is on your profile.'}
-            </p>
-            <span className="shrink-0 text-secondary font-semibold text-hockia-primary">{strength.next ? 'Add' : 'Who can see'}</span>
-          </div>
-        </button>
-      )}
+      {topSlot}
 
       {showVideo && (
         <section className="flex flex-col gap-4" data-testid="profile-video-section">
-          <SectionHeader title="Video" action={owner ? 'Manage' : videoTotal > 0 ? `See all ${videoTotal}` : null} onAction={owner ? onManageVideos : onOpenVideos} />
+          <SectionHeader title="Videos" action={videoTotal > 0 ? `See all ${videoTotal}` : owner ? 'Manage' : null} onAction={videoTotal > 0 ? onOpenVideos : onManageVideos} />
           {videoTotal === 0 && !data.loading && empty('Add your first highlight', onManageVideos)}
           {highlightCount > 0 && (
             <VideoRow label="Highlights" count={highlightCount}>
@@ -336,18 +300,7 @@ export default function ProfileLongScroll({ profile, readOnly, onEdit, onOpenVid
         </section>
       )}
 
-      {showReferences && (
-        <section className="flex flex-col gap-3" data-testid="profile-references-section">
-          <SectionHeader title="References" count={referenceCount} action={referenceCount > 0 ? `See all ${referenceCount}` : null} onAction={onOpenReferences} />
-          {referenceCount === 0 && !refsLoading && empty('Ask for a reference', onOpenReferences)}
-          {acceptedReferences.slice(0, 2).map((r) => <ReferenceCard key={r.id} reference={r} onOpen={() => onOpenReference(r.id)} />)}
-          {referenceCount > 2 && (
-            <button type="button" onClick={onOpenReferences} className="flex h-[46px] items-center justify-center gap-1 rounded-full bg-hockia-soft text-row font-semibold text-hockia-primary">
-              See all {referenceCount} references <ChevronRight className="h-4 w-4" strokeWidth={2} />
-            </button>
-          )}
-        </section>
-      )}
+      {afterVideosSlot}
 
       {showCareer && (
         <section className="flex flex-col gap-4" data-testid="profile-career-section">
@@ -359,6 +312,46 @@ export default function ProfileLongScroll({ profile, readOnly, onEdit, onOpenVid
             </div>
           )}
         </section>
+      )}
+
+      {showSkills && (
+        <section className="flex flex-col gap-3" data-testid="profile-skills-section">
+          <SectionHeader title="Specialist skills" action={owner && skills.length > 0 ? 'Edit' : null} onAction={onEditSkills} />
+          {skills.length === 0 && owner && onEditSkills && empty('Add your specialist skills', onEditSkills)}
+          {skills.length > 0 && (
+            <div className="flex flex-wrap gap-x-3.5 gap-y-2">
+              {skills.map((skill) => (
+                <span key={skill} className="inline-flex items-center gap-[7px] text-row text-ink-1">
+                  <span className="flex h-[22px] w-[22px] items-center justify-center rounded-[6px] bg-hockia-soft text-hockia-primary"><Target className="h-3.5 w-3.5" strokeWidth={1.8} /></span>
+                  {humanizeToken(skill)}
+                </span>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+
+      {showReferences && (
+        <section className="flex flex-col gap-3" data-testid="profile-references-section">
+          <SectionHeader title="References" count={referenceCount > 0 ? referenceCount : null} action={referenceCount > 0 ? `See all ${referenceCount}` : null} onAction={onOpenReferences} />
+          {referenceCount === 0 && !refsLoading && (owner
+            ? empty('Ask for a reference', onOpenReferences)
+            : <p className="text-row leading-[21px] text-ink-2">No references yet. References come from friends on Hockia — coaches and teammates can write one.</p>)}
+          {acceptedReferences.slice(0, 2).map((r) => <ReferenceCard key={r.id} reference={r} onOpen={() => onOpenReference(r.id)} />)}
+          {referenceCount > 2 && (
+            <button type="button" onClick={onOpenReferences} className="flex h-[46px] items-center justify-center gap-1 rounded-full bg-hockia-soft text-row font-semibold text-hockia-primary">
+              See all {referenceCount} references <ChevronRight className="h-4 w-4" strokeWidth={2} />
+            </button>
+          )}
+        </section>
+      )}
+
+      {showFriends && (
+        <button type="button" onClick={onOpenFriends} className="flex h-[52px] w-full items-center gap-3 rounded-card bg-surface-grouped px-4 text-left" data-testid="profile-friends-row">
+          <span className="flex-1 text-row font-semibold text-ink-1">Friends</span>
+          <span className="text-row text-ink-2 tabular-nums">{friendCount}</span>
+          <ChevronRight className="h-4 w-4 text-ink-4" strokeWidth={2} />
+        </button>
       )}
 
       {showPhotos && (
@@ -394,9 +387,7 @@ export default function ProfileLongScroll({ profile, readOnly, onEdit, onOpenVid
           <SectionHeader title="About" action={owner ? 'Edit' : null} onAction={onEdit} />
           {bio ? <p className="whitespace-pre-line text-row leading-[21px] text-ink-1">{bio}</p> : owner && empty('Write a short bio', onEdit)}
           <div className="divide-y divide-line">
-            <FactRow label="Passports" value={passports} />
             <FactRow label="Category" value={category} />
-            <FactRow label="Available" value={available} />
             <FactRow label="Relocation" value={relocation} />
           </div>
         </section>

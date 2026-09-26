@@ -159,12 +159,14 @@ describe('CreateOpportunityModal — must-have payload (Phase 3c)', () => {
     expect(screen.queryByRole('switch')).toBeNull()
 
     await user.type(screen.getByLabelText(/Opportunity Title/), 'Head Coach — Youth')
+    await user.selectOptions(screen.getByTitle('Category'), 'Girls')
     await user.click(screen.getByTestId('stub-set-location'))
     await user.click(screen.getByRole('button', { name: /Publish now/ }))
 
     await waitFor(() => expect(insertMock).toHaveBeenCalledTimes(1))
     expect(insertPayload).toMatchObject({
       opportunity_type: 'coach',
+      gender: 'Girls',
       position_required: false,
       level_required: false,
       compensation_required: false,
@@ -216,5 +218,39 @@ describe('CreateOpportunityModal — no youth player roles', () => {
     await user.click(screen.getByRole('button', { name: /Update Opportunity/ }))
     expect(await screen.findByText('Category is required')).toBeInTheDocument()
     expect(updateMock).not.toHaveBeenCalled()
+  })
+})
+
+// Founder ruling 2026-09-26: coach roles get the same team picker plus Boys/Girls, required.
+describe('CreateOpportunityModal — coach role team', () => {
+  const coachVacancy = (gender: string | null) => ({
+    id: 'opp-c', opportunity_type: 'coach', title: 'Head coach', position: 'head_coach', gender,
+    location_city: 'Amsterdam', location_country: 'Netherlands',
+  }) as unknown as Parameters<typeof CreateOpportunityModal>[0]['editingVacancy']
+
+  it('offers Boys and Girls on a coach role, with the hint', () => {
+    renderModal({ initialOpportunityType: 'coach' })
+    const values = Array.from((screen.getByTitle('Category') as HTMLSelectElement).options).map((o) => o.value)
+    expect(values).toEqual(['', 'Men', 'Women', 'Mixed', 'Boys', 'Girls'])
+    expect(screen.getByText('Boys and Girls are for coach and staff roles only.')).toBeInTheDocument()
+  })
+
+  it('keeps a coach role\'s team on edit (no longer erased)', async () => {
+    renderModal({ editingVacancy: coachVacancy('Men') })
+    expect((screen.getByTitle('Category') as HTMLSelectElement).value).toBe('Men')
+    await user.click(screen.getByRole('button', { name: /Update Opportunity/ }))
+    await waitFor(() => expect(updateMock).toHaveBeenCalledTimes(1))
+    expect(updatePayload).toMatchObject({ opportunity_type: 'coach', gender: 'Men' })
+  })
+
+  it('asks a legacy coach role without a team for one', async () => {
+    renderModal({ editingVacancy: coachVacancy(null) })
+    await user.click(screen.getByRole('button', { name: /Update Opportunity/ }))
+    expect(await screen.findByText('Category is required')).toBeInTheDocument()
+    expect(updateMock).not.toHaveBeenCalled()
+    await user.selectOptions(screen.getByTitle('Category'), 'Boys')
+    await user.click(screen.getByRole('button', { name: /Update Opportunity/ }))
+    await waitFor(() => expect(updateMock).toHaveBeenCalledTimes(1))
+    expect(updatePayload).toMatchObject({ gender: 'Boys' })
   })
 })

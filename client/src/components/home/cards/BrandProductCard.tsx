@@ -1,4 +1,5 @@
 import { BadgeCheck, ExternalLink } from 'lucide-react'
+import { brandCategoryLabel } from '@/lib/identity'
 import { FeedImageCarousel } from '../FeedImageCarousel'
 import { FeedCard, FeedCardBody, FeedCardFooter, FeedCardHeader, FeedCardMedia } from '../FeedCard'
 import type { BrandProductFeedItem } from '@/types/homeFeed'
@@ -27,7 +28,7 @@ export function BrandProductCard({ item }: BrandProductCardProps) {
         role="brand"
         createdAt={item.created_at}
         profilePath={`/brands/${item.brand_slug}`}
-        subtitle={item.brand_category}
+        subtitle={brandCategoryLabel(item.brand_category)}
         right={item.brand_is_verified ? (
           <BadgeCheck className="h-5 w-5 flex-shrink-0 text-blue-500" aria-label="Verified brand" />
         ) : undefined}

@@ -38,6 +38,9 @@ export interface PostRoleDraft {
   benefits: string[]
   /** Free-text extras from older roles; kept as written. */
   customBenefits: string[]
+  /** Package keys the form has no tile for (e.g. meals, education on older
+   *  roles). Not editable here, but written back so editing never drops them. */
+  otherBenefits: string[]
   euPassport: boolean
   description: string
 }
@@ -72,6 +75,28 @@ export const TEAMS: { value: RoleGender; label: string }[] = [
   { value: 'Women', label: 'Women' },
   { value: 'Mixed', label: 'Mixed' },
 ]
+
+/**
+ * Teams a COACH role can target: the player teams plus Boys and Girls
+ * (founder ruling 2026-09-26). Required like a player role's team.
+ */
+export const COACH_TEAMS: { value: RoleGender; label: string }[] = [
+  ...TEAMS,
+  { value: 'Boys', label: 'Boys' },
+  { value: 'Girls', label: 'Girls' },
+]
+
+export function teamsFor(type: RoleType): typeof TEAMS {
+  return type === 'player' ? TEAMS : COACH_TEAMS
+}
+
+export { COACH_TEAM_HINT } from '@/lib/youthRoles'
+
+/** Player ↔ Coach: the team stays, except Boys/Girls, which a player role can't use. */
+export function switchRoleType(d: PostRoleDraft, type: RoleType): PostRoleDraft {
+  if (d.type === type) return d
+  return { ...d, type, position: null, skills: [], gender: type === 'player' ? playerRoleGender(d.gender) : d.gender }
+}
 
 export const LEVELS: { value: RoleLevel; label: string }[] = [
   { value: 'competitive', label: 'Competitive' },
@@ -159,6 +184,7 @@ export function emptyDraft(defaults: ClubDefaults): PostRoleDraft {
     payRequired: false,
     benefits: [],
     customBenefits: [],
+    otherBenefits: [],
     euPassport: false,
     description: '',
   }
@@ -189,6 +215,7 @@ export function draftFromRow(v: Vacancy): PostRoleDraft {
     payRequired: v.compensation_required ?? false,
     benefits: (v.benefits ?? []).filter((b) => (PACKAGE_KEYS as readonly string[]).includes(b)),
     customBenefits: v.custom_benefits ?? [],
+    otherBenefits: (v.benefits ?? []).filter((b) => !(PACKAGE_KEYS as readonly string[]).includes(b)),
     euPassport: v.eu_passport_required ?? false,
     description: v.description ?? '',
   }
@@ -199,12 +226,11 @@ function positionLabel(position: RolePosition | null): string | null {
   return [...PLAYER_POSITIONS, ...COACH_POSITIONS].find((p) => p.value === position)?.label ?? humanizeToken(position)
 }
 
-/** Title when the club leaves it empty: "Men's midfielder" (the column is NOT NULL). */
+/** Title when the club leaves it empty: "Men's midfielder", "Girls head coach" (the column is NOT NULL). */
 export function defaultTitle(d: Pick<PostRoleDraft, 'type' | 'position' | 'gender'>): string {
   const pos = positionLabel(d.position)
   if (!pos) return ''
-  if (d.type !== 'player') return pos
-  const team = genderPill(d.gender)?.label
+  const team = genderPill(d.type === 'player' ? playerRoleGender(d.gender) : d.gender)?.label
   return team ? `${team} ${pos.toLowerCase()}` : pos
 }
 
@@ -214,7 +240,8 @@ export type Step = 1 | 2 | 3
 export function stepProblem(d: PostRoleDraft, step: Step): string | null {
   if (step === 1) {
     if (!d.position) return d.type === 'player' ? 'Choose a position.' : 'Choose the role.'
-    if (d.type === 'player' && (!d.gender || isYouthGender(d.gender))) return 'Choose the team.'
+    // Every role names its team; a player role only an adult one.
+    if (!d.gender || (d.type === 'player' && isYouthGender(d.gender))) return 'Choose the team.'
     if (d.title.trim().length > TITLE_MAX) return `Keep the title to ${TITLE_MAX} characters.`
     if (d.skillsRequired && d.skills.length === 0) return 'Pick a specialist skill, or make it nice to have.'
     return null
@@ -227,15 +254,15 @@ export function stepProblem(d: PostRoleDraft, step: Step): string | null {
   return stepProblem(d, 1) ?? stepProblem(d, 2)
 }
 
-/** The opportunities row for this draft. Player-only fields are cleared for coach roles. */
-export function draftToRow(d: PostRoleDraft, clubId: string, status: 'draft' | 'open'): Database['public']['Tables']['opportunities']['Insert'] {
+/** The opportunities row for this draft. Player-only fields are cleared for coach roles; the team is kept for both. */
+export function draftToRow(d: PostRoleDraft, clubId: string, status: 'draft' | 'open'): OpportunityInsert {
   const player = d.type === 'player'
   return {
     club_id: clubId,
     opportunity_type: d.type,
     position: d.position,
     position_required: player && d.positionRequired,
-    gender: player ? playerRoleGender(d.gender) : null,
+    gender: player ? playerRoleGender(d.gender) : d.gender,
     title: d.title.trim().slice(0, TITLE_MAX) || defaultTitle(d) || 'New role',
     level_sought: d.level,
     level_required: player && d.levelRequired && d.level !== null,
@@ -249,12 +276,27 @@ export function draftToRow(d: PostRoleDraft, clubId: string, status: 'draft' | '
     location_required: player && d.locationRequired,
     compensation: d.pay,
     compensation_required: player && d.payRequired && d.pay !== null,
-    benefits: d.benefits,
+    benefits: [...d.benefits, ...(d.otherBenefits ?? []).filter((b) => !d.benefits.includes(b))],
     custom_benefits: d.customBenefits,
     eu_passport_required: d.euPassport,
     description: d.description.trim().slice(0, DESCRIPTION_MAX) || null,
     status,
   }
+}
+
+type OpportunityInsert = Database['public']['Tables']['opportunities']['Insert']
+export type OpportunityEditPatch = Omit<OpportunityInsert, 'status' | 'club_id' | 'published_at'>
+
+/**
+ * The update for editing a role that is already live (open or closed): every
+ * form field, but never status, published_at or club_id — editing must not
+ * re-publish, re-date or unpublish the role. filled_via_hockia and the close
+ * fields are not form fields, so they are never sent either.
+ */
+export function draftToEditPatch(d: PostRoleDraft, clubId: string): OpportunityEditPatch {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { status: _status, club_id: _clubId, published_at: _publishedAt, ...patch } = draftToRow(d, clubId, 'open')
+  return patch
 }
 
 /** The role as the preview card renders it (Vacancy shape, no id yet). */
@@ -264,6 +306,56 @@ export function draftAsVacancy(d: PostRoleDraft, clubId: string): Vacancy {
 }
 
 export interface ChecklistItem { key: string; label: string; ok: boolean }
+
+/**
+ * Step 3's "What players ask first" (DEV NOTE 330:781): client-side, no
+ * score. Coach roles get the coach version, built only from fields the form
+ * collects (founder review 2026-09-26).
+ */
+export function roleChecklist(d: PostRoleDraft): ChecklistItem[] {
+  return d.type === 'player' ? playerChecklist(d) : coachChecklist(d)
+}
+
+/** Step 3 headings: who the preview and checklist speak for. */
+export function checkStepCopy(type: RoleType): { sub: string; checklistTitle: string } {
+  const who = type === 'player' ? 'players' : 'coaches'
+  return { sub: `Step 3 of 3 · How ${who} will see it`, checklistTitle: `What ${who} ask first` }
+}
+
+/**
+ * Level hint (founder copy 2026-09-26). The level ranks applicants and is
+ * never shown to them — RoleCard, the role page and My applications carry
+ * no level.
+ */
+export function levelHint(type: RoleType): string {
+  return `Used to rank applicants. ${type === 'player' ? 'Players' : 'Coaches'} don’t see it.`
+}
+
+/** Step 2 ("The offer") hints, in the words of who the role is for. */
+export function offerStepCopy(type: RoleType): { when: string; package: string; euPassport: string } {
+  if (type === 'player') {
+    return {
+      when: 'Players mark when they’re free; we match it to your start.',
+      package: 'Housing and flights are what relocating players ask about first.',
+      euPassport: 'Only players with an EU passport can apply.',
+    }
+  }
+  return {
+    when: 'Coaches mark when they’re free; we match it to your start.',
+    package: 'Housing and visa support are what relocating coaches ask about first.',
+    euPassport: 'Only coaches with an EU passport can apply.',
+  }
+}
+
+export function coachChecklist(d: PostRoleDraft): ChecklistItem[] {
+  return [
+    { key: 'when', label: 'Start date and contract length', ok: Boolean(d.startDate && d.duration) },
+    { key: 'pay', label: 'Pay', ok: d.pay !== null },
+    { key: 'relocation', label: 'Housing and visa support', ok: d.benefits.includes('housing') && d.benefits.includes('visa') },
+    { key: 'team', label: 'Team and level', ok: Boolean(d.gender && d.level) },
+    { key: 'about', label: 'A few lines about the role and the squad', ok: d.description.trim().length >= 40 },
+  ]
+}
 
 /** "What players ask first" (DEV NOTE 330:781): client-side, no score. */
 export function playerChecklist(d: PostRoleDraft): ChecklistItem[] {
@@ -275,9 +367,14 @@ export function playerChecklist(d: PostRoleDraft): ChecklistItem[] {
   ]
 }
 
-/** "Must have: Midfielder. Always required: Men's team. Everything else ranks players, it doesn't block them." */
+/**
+ * "Must have: Midfielder. Always required: Men's team. Everything else ranks
+ * players, it doesn't block them." Coach roles are never gated by team
+ * (lib/opportunityEligibility), so their team isn't listed as a blocker.
+ */
 export function hardnessFootnote(d: PostRoleDraft): string {
   const must: string[] = []
+  const who = d.type === 'player' ? 'players' : 'coaches'
   if (d.type === 'player') {
     if (d.positionRequired && d.position) must.push(positionLabel(d.position) as string)
     if (d.levelRequired && d.level) must.push(LEVELS.find((l) => l.value === d.level)?.label ?? d.level)
@@ -292,7 +389,7 @@ export function hardnessFootnote(d: PostRoleDraft): string {
   const parts: string[] = []
   if (must.length) parts.push(`Must have: ${must.join(', ')}.`)
   if (always.length) parts.push(`Always required: ${always.join(', ')}.`)
-  parts.push(must.length || always.length ? 'Everything else ranks players, it doesn’t block them.' : 'Nothing blocks players; everything here ranks them.')
+  parts.push(must.length || always.length ? `Everything else ranks ${who}, it doesn’t block them.` : `Nothing blocks ${who}; everything here ranks them.`)
   return parts.join(' ')
 }
 
@@ -311,4 +408,39 @@ export function startLabel(iso: string | null, now = new Date()): string | null 
   if (Number.isNaN(d.getTime())) return null
   const month = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getMonth()]
   return d.getFullYear() === now.getFullYear() ? `${month} ${d.getDate()}` : `${month} ${d.getDate()}, ${d.getFullYear()}`
+}
+
+/** Role posted's own route, so a refresh re-renders it from the saved role. */
+export function rolePostedPath(roleId: string): string {
+  return `/dashboard/opportunities/${roleId}/posted`
+}
+
+export interface RolePostedCopy {
+  title: string
+  body: string
+  findLabel: string
+  findPath: string
+  pushTitle: string
+}
+
+/**
+ * Role posted (Figma 04 Club D1.26 368:780; DEV NOTE 368:1098). Title =
+ * "<position> is live". Coach roles find coaches, not players (founder
+ * ruling 2026-09-26).
+ */
+export function rolePostedCopy(d: Pick<PostRoleDraft, 'type' | 'position'>): RolePostedCopy {
+  const player = d.type === 'player'
+  const who = player ? 'players' : 'coaches'
+  return {
+    title: `${positionLabel(d.position) ?? 'Your role'} is live`,
+    body: `${player ? 'Players' : 'Coaches'} who fit can find it in Opportunities now. Every applicant lands in To review, and we’ll let you know.`,
+    findLabel: `Find ${who} for this role`,
+    findPath: player ? '/community/players' : '/community/coaches',
+    pushTitle: `Know when ${who} apply`,
+  }
+}
+
+/** The reply window line; `days` = application_response_settings.expiry_days. */
+export function replyWindowLine(days: number): string {
+  return `Answer each applicant within ${days} ${days === 1 ? 'day' : 'days'}. After that, their application closes on its own.`
 }

@@ -2,7 +2,7 @@ import { MapPin, Calendar, Clock, Home, Car, Globe as GlobeIcon, Plane, Utensils
 import { useNavigate } from 'react-router-dom'
 import type { Vacancy } from '../lib/supabase'
 import Avatar from './Avatar'
-import { opportunityGenderToTeamLabel } from '@/lib/hockeyCategories'
+import { roleTeamLabel } from '@/lib/opportunityCopy'
 import { getTimeAgo } from '@/lib/utils'
 
 export interface WorldClubInfo {
@@ -113,20 +113,17 @@ export default function OpportunityCard({
     return new Date(dateString).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
   }
 
-  // Key pills — team category + position. Both are player-only concepts,
-  // so they are suppressed on coach openings even if a legacy row carries
-  // stale values (mirrors OpportunityDetailView).
+  // Key pills — team + position. The team (Men's / Women's / Mixed / Boys /
+  // Girls) applies to coach roles too: a coach is hired for a team. Position
+  // stays player-only (mirrors OpportunityDetailView).
+  const teamLabel = roleTeamLabel(vacancy.gender)
   const pills: string[] = []
-  if (isPlayerOpening && vacancy.gender) {
-    const teamLabel = opportunityGenderToTeamLabel(vacancy.gender)
-    if (teamLabel) pills.push(teamLabel.replace(' Team', ''))
-  }
+  if (!isPlayerOpening) pills.push('Coach')
+  if (teamLabel) pills.push(teamLabel)
   if (isPlayerOpening && vacancy.position) {
     pills.push(vacancy.position.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()))
   }
-  // Parity — coach openings carry no structured category/position, so
-  // fall back to a single role pill rather than leaving the row empty.
-  if (pills.length === 0) pills.push(isPlayerOpening ? 'Player' : 'Coach')
+  if (pills.length === 0) pills.push('Player')
 
   const benefits = vacancy.benefits || []
   const visibleBenefits = benefits.slice(0, MAX_VISIBLE_PERKS)

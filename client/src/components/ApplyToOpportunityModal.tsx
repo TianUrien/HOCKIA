@@ -253,7 +253,7 @@ export default function ApplyToVacancyModal({
           {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
           Send application
         </button>
-        <p className="text-center text-secondary text-ink-4">
+        <p className="text-center text-secondary text-ink-3">
           {blocked ? blockedFooter : 'Your profile, career and highlights are sent automatically. Withdraw any time from My applications.'}
         </p>
       </div>

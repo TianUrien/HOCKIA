@@ -40,7 +40,7 @@ interface WorldClubSearchProps {
   error?: string
   disabled?: boolean
   id?: string
-  /** 'field' = the Figma redesign form input (grey #F2F2F7 surface, radius 12,
+  /** 'field' = the Figma redesign form input (grey #F4F4F7 surface, radius 12,
    *  50px, 28px crest on the left, chevron on the right). Search behaviour is
    *  identical in both appearances. */
   appearance?: 'default' | 'field'

@@ -20,6 +20,7 @@ export type ResponseKind =
   | 'soft_error'            // transient failure — calm UI, recoverable
   | 'clarifying_question'   // medium-confidence intent, ask user to disambiguate
   | 'canned_redirect'       // opportunity / product redirects (Phase 0)
+  | 'opportunity_results'   // open roles a player / coach can apply to
 
 export interface AppliedSearch {
   entity: 'clubs' | 'players' | 'coaches' | 'brands' | 'umpires' | null

@@ -10,8 +10,10 @@ import { Eye, ArrowLeft } from 'lucide-react'
  * This component is fixed positioned below the header (top-16 accounts for header height)
  * and includes a spacer div to push content down.
  */
-export default function PublicViewBanner({ compactOnPhone = false }: { /** Player profile (Figma Public view): the phone has no app header, so the
-   *  banner is a slim in-flow bar there; desktop keeps the fixed banner. */ compactOnPhone?: boolean } = {}) {
+export default function PublicViewBanner({ compactOnPhone = false, clubView = false }: { /** Player profile (Figma Public view): the phone has no app header, so the
+   *  banner is a slim in-flow bar there; desktop keeps the fixed banner. */ compactOnPhone?: boolean
+  /** D2 "View as club": the phone bar says it's the club view. */
+  clubView?: boolean } = {}) {
   const navigate = useNavigate()
 
   const handleReturnToDashboard = () => {
@@ -23,7 +25,9 @@ export default function PublicViewBanner({ compactOnPhone = false }: { /** Playe
       {compactOnPhone && (
         <div className="flex items-center gap-2 bg-ink-1 px-5 pb-2.5 pt-[max(10px,env(safe-area-inset-top))] text-white lg:hidden">
           <Eye className="h-4 w-4 shrink-0" aria-hidden="true" />
-          <p className="min-w-0 flex-1 truncate text-secondary"><span className="font-semibold">Public view</span> · how other members see you</p>
+          <p className="min-w-0 flex-1 truncate text-secondary">{clubView
+            ? <><span className="font-semibold">Club view</span> · how clubs see you</>
+            : <><span className="font-semibold">Public view</span> · how other members see you</>}</p>
           <button type="button" onClick={handleReturnToDashboard} className="shrink-0 text-secondary font-semibold text-white underline-offset-2">Done</button>
         </div>
       )}

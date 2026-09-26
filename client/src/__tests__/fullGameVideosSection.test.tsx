@@ -176,7 +176,7 @@ describe('FullGameVideosSection', () => {
     render(<FullGameVideosSection playerUserId="player-1" readOnly />)
 
     // RLS returned no rows, but the section still says what is there.
-    expect(screen.getByTestId('full-game-videos-locked')).toHaveTextContent('2 full matches for clubs and coaches only')
+    expect(screen.getByTestId('full-game-videos-locked')).toHaveTextContent('2 full matches for clubs & recruiting coaches only')
     expect(screen.queryByText('No match videos yet')).not.toBeInTheDocument()
   })
 

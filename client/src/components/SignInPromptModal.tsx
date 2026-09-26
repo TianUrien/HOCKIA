@@ -86,7 +86,7 @@ export default function SignInPromptModal({
         >
           Log in
         </button>
-        <p className="text-center text-secondary text-ink-4">Free. It takes a minute.</p>
+        <p className="text-center text-secondary text-ink-3">Free. It takes a minute.</p>
       </div>
     </BottomSheet>
   )

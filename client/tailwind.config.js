@@ -68,14 +68,25 @@ export default {
         'hockia-primary': '#6c2bd9',
         'hockia-secondary': '#7c3aed',
         'hockia-accent': '#ec4899',
-        'hockia-success': '#10b981',
+        'hockia-success': '#15803d', // = Foundations status/positive (was #10b981)
         'hockia-warning': '#f59e0b',
-        'hockia-danger': '#ef4444',
+        'hockia-danger': '#dc2626', // = Foundations status/danger (was #ef4444)
         'hockia-orange': '#ff9500',
-        // Figma "New-Hockia" 03 Player tokens (2026-09-20) — 01 Foundations / Hockia / Color
+        // Figma "New-Hockia" · 02 Foundations · collection "Hockia / Color" is
+        // the SOURCE OF TRUTH for these (founder ruling 2026-09-26):
+        //   brand/primary #6C2BD9 · brand/soft #F1EAFD · ink/primary #0F0F14 ·
+        //   ink/secondary #5B5B6B · ink/tertiary #6F6F7C · ink/quaternary #AEAEB2 ·
+        //   surface/base #FFFFFF · surface/muted #F4F4F7 · line/default #E6E6EC ·
+        //   status/positive #15803D · status/positive-soft #E8F7EE ·
+        //   status/danger #DC2626 · media/placeholder #1C1B22.
         'hockia-soft': '#f1eafd',
-        ink: { 1: '#0f0f14', 2: '#5b5b6b', 3: '#8e8e9a', 4: '#aeaeb2' },
-        surface: { muted: '#f4f4f7', grouped: '#f2f2f7' },
+        // ink-3 = ink/tertiary, darkened 2026-09-26 (was #8e8e9a) so body text
+        // passes AA: 4.95 on white, 4.51 on surface-muted.
+        // ink-4 = ink/quaternary, NON-TEXT ONLY: placeholders, disabled icons,
+        // chevrons, dividers (2.2:1 on white). Readable text uses ink-3.
+        ink: { 1: '#0f0f14', 2: '#5b5b6b', 3: '#6f6f7c', 4: '#aeaeb2' },
+        // grouped = the grey grouped surface; aligned to surface/muted (was #f2f2f7).
+        surface: { muted: '#f4f4f7', grouped: '#f4f4f7' },
         line: '#e6e6ec',
         positive: { DEFAULT: '#15803d', soft: '#e8f7ee' },
         // Gold = TRUST (references). Never the amber warning hue: amber

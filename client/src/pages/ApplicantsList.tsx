@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Users, Star, HelpCircle, XCircle, Inbox, Search, X, Clock } from 'lucide-react'
+import { ArrowLeft, Users, Star, HelpCircle, XCircle, Inbox, Search, X, Clock, CheckCircle2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
@@ -21,6 +21,8 @@ interface TierGroup {
   icon: typeof Star
   iconClass: string
   statuses: ApplicationStatus[]
+  /** Past review: shown for the record, no status menu. */
+  readOnly?: boolean
 }
 
 const TIER_GROUPS: TierGroup[] = [
@@ -34,6 +36,9 @@ const TIER_GROUPS: TierGroup[] = [
   // arms, a club would read "5 applicants" above 2 cards. They get their own
   // tier: still the club's applicants, just past the response window.
   { key: 'expired', label: 'Expired (no response)', icon: Clock, iconClass: 'text-gray-400', statuses: ['no_response'] },
+  // The role was filled (by someone else or this applicant): kept visible so
+  // the header count matches the cards, but closed — no status changes.
+  { key: 'filled', label: 'Role filled', icon: CheckCircle2, iconClass: 'text-gray-400', statuses: ['filled'], readOnly: true },
 ]
 
 export default function ApplicantsList() {
@@ -491,7 +496,7 @@ export default function ApplicantsList() {
                       <ApplicantCard
                         key={application.id}
                         application={application}
-                        onStatusChange={handleStatusChange}
+                        onStatusChange={group.readOnly ? undefined : handleStatusChange}
                         isUpdating={updatingId === application.id}
                         referenceInfo={referenceMap.get(application.applicant_id) ?? null}
                       />

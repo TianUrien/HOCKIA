@@ -231,12 +231,17 @@ export function buildPushPayload(
           body = `You're being considered for ${position}.`
           break
         case 'maybe':
-          title = `${club} reviewed your application`
-          body = `Your application for ${position} is under consideration.`
+          title = `${club} replied to your application`
+          body = `Open your application for ${position} to see the update.`
           break
         case 'rejected':
           title = `${club} updated your application`
           body = `You weren't selected for ${position} this time.`
+          break
+        case 'filled':
+          // Founder copy 2026-09-26; mirrors client config.ts.
+          title = `${club} filled the role`
+          body = `${humanPos ?? vacancyTitle ?? 'The role'} has been filled. Thanks for applying — new roles are open.`
           break
         default:
           title = `${club} updated your application`
@@ -249,6 +254,18 @@ export function buildPushPayload(
         // the listing page. Falls back to the listing if metadata is missing.
         url: opportunityId ? `/opportunities/${opportunityId}` : '/opportunities',
         tag: vacancyTitle ? `app-${vacancyTitle}` : 'application-status',
+      }
+    }
+
+    // ── Invite / offer / signing steps (server writes title + summary) ──
+    case 'recruiting_update': {
+      const targetUrl = getString(metadata, 'target_url')
+      const event = getString(metadata, 'event')
+      return {
+        title: getString(metadata, 'title') || 'Recruiting update',
+        body: getString(metadata, 'summary') || 'Open HOCKIA to see what changed.',
+        url: targetUrl && targetUrl.startsWith('/') ? targetUrl : '/messages',
+        tag: event ? `recruiting-${event}` : 'recruiting',
       }
     }
 

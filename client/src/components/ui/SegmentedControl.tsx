@@ -5,6 +5,8 @@ export interface SegmentOption<T extends string> {
   label: string
   /** Rendered as "Label · N" when > 0 (Figma: "Requests · 4"). */
   count?: number
+  /** Small red "new" dot after the label — no number (Inbox segments). */
+  dot?: boolean
 }
 
 interface SegmentedControlProps<T extends string> {
@@ -46,6 +48,7 @@ export function SegmentedControl<T extends string>({
             type="button"
             role="tab"
             aria-selected={active}
+            aria-label={option.dot ? `${label}, new` : undefined}
             onClick={() => onChange(option.value)}
             className={cn(
               'flex h-[30px] flex-1 items-center justify-center rounded-tile text-secondary transition-colors',
@@ -55,6 +58,9 @@ export function SegmentedControl<T extends string>({
             )}
           >
             {label}
+            {option.dot && (
+              <span aria-hidden="true" data-testid={`segment-dot-${option.value}`} className="ml-1.5 h-2 w-2 shrink-0 rounded-full bg-hockia-danger" />
+            )}
           </button>
         )
       })}

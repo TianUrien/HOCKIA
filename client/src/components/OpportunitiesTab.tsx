@@ -8,7 +8,7 @@ import { logger } from '../lib/logger'
 import { useAuthStore } from '../lib/auth'
 import { useToastStore } from '@/lib/toast'
 import type { Vacancy } from '../lib/supabase'
-import { opportunityGenderToTeamLabel } from '@/lib/hockeyCategories'
+import { roleTeamLabel } from '@/lib/opportunityCopy'
 import Button from './Button'
 import CreateOpportunityModal from './CreateOpportunityModal'
 import ApplyToOpportunityModal from './ApplyToOpportunityModal'
@@ -17,6 +17,7 @@ import PublishConfirmationModal from './PublishConfirmationModal'
 import DeleteOpportunityModal from './DeleteOpportunityModal'
 import Skeleton, { OpportunityCardSkeleton } from './Skeleton'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
+import { closeRolePatch, closeRoleToast, reopenRolePatch } from '@/lib/roleLifecycle'
 
 type VacancyWithCount = Vacancy & { applicant_count: number | null }
 
@@ -221,9 +222,6 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
   const [showPublishModal, setShowPublishModal] = useState(false)
   const [vacancyToPublish, setVacancyToPublish] = useState<Vacancy | null>(null)
   const [vacancyToClose, setVacancyToClose] = useState<Vacancy | null>(null)
-  // Q5 (Home redesign): closes are typed. 'filled' feeds the role_filled
-  // market-moves card; the via-HOCKIA toggle is the investor stat.
-  const [filledViaHockia, setFilledViaHockia] = useState(false)
   // Delete confirmation modal state
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [vacancyToDelete, setVacancyToDelete] = useState<Vacancy | null>(null)
@@ -500,11 +498,9 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
       })
       const { error } = await supabase
         .from('opportunities')
-        .update({
-          status: 'closed',
-          closed_reason: reason,
-          filled_via_hockia: reason === 'filled' ? filledViaHockia : null,
-        } as never)
+        // "Filled through Hockia" comes only from a signing the player
+        // confirmed (confirm_signing); a club can't claim it by hand.
+        .update(closeRolePatch(reason) as never)
         .eq('id', vacancyId)
 
       if (error) throw error
@@ -515,8 +511,7 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
       // which reads as the page navigating away.
       setStatusFilter('closed')
       setVacancyToClose(null)
-      setFilledViaHockia(false)
-      addToast(reason === 'filled' ? 'Marked as filled — congrats on the signing!' : 'Opportunity closed.', 'success')
+      addToast(closeRoleToast(reason), 'success')
     } catch (error) {
       logger.error('Error closing vacancy:', error)
       reportSupabaseError('vacancies.close', error, {
@@ -551,19 +546,7 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
       // filled. Also clear closed_at, and if the deadline has already passed
       // extend it 30 days (mirrors apply_renewal_action) so the daily sweep
       // doesn't re-close the role next morning and fire another renewal email.
-      const reopenUpdate: Record<string, unknown> = {
-        status: 'open',
-        closed_reason: null,
-        filled_via_hockia: null,
-        auto_closed_at: null,
-        closed_at: null,
-      }
-      const todayStr = new Date().toISOString().slice(0, 10)
-      if (vacancy.application_deadline && vacancy.application_deadline.slice(0, 10) < todayStr) {
-        const extended = new Date()
-        extended.setUTCDate(extended.getUTCDate() + 30)
-        reopenUpdate.application_deadline = extended.toISOString().slice(0, 10)
-      }
+      const reopenUpdate = reopenRolePatch(vacancy.application_deadline)
       const { error } = await supabase
         .from('opportunities')
         .update(reopenUpdate as never)
@@ -824,14 +807,12 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
           {vacancies.filter(v => statusFilter === 'all' || v.status === statusFilter).map((vacancy) => {
             const locationLabel = [vacancy.location_city, vacancy.location_country].filter(Boolean).join(', ')
 
-            // Compound badge: "Player · Men's · Forward" (Phase 3d — handles
-            // all 5 enum values via opportunityGenderToTeamLabel).
+            // Compound badge: "Player · Men's · Forward" / "Coach · Girls · Head Coach".
+            // The team shows on coach roles too.
             const badgeParts: string[] = []
             badgeParts.push(vacancy.opportunity_type === 'player' ? 'Player' : 'Coach')
-            if (vacancy.opportunity_type === 'player' && vacancy.gender) {
-              const teamLabel = opportunityGenderToTeamLabel(vacancy.gender)
-              if (teamLabel) badgeParts.push(teamLabel.replace(' Team', ''))
-            }
+            const teamLabel = roleTeamLabel(vacancy.gender)
+            if (teamLabel) badgeParts.push(teamLabel)
             if (vacancy.position) {
               badgeParts.push(vacancy.position.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()))
             }
@@ -1060,15 +1041,6 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
               It will stop accepting applications. Existing applicants stay attached — you can reopen it any time.
             </p>
             <p className="mt-3 text-sm font-medium text-gray-900">Did you fill this role?</p>
-            <label className="mt-2 flex items-start gap-2.5 text-sm text-gray-600 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={filledViaHockia}
-                onChange={(e) => setFilledViaHockia(e.target.checked)}
-                className="mt-0.5 h-4 w-4 rounded border-gray-300 text-hockia-primary focus:ring-hockia-primary"
-              />
-              <span>The hire came through HOCKIA</span>
-            </label>
             <div className="mt-4 flex flex-col gap-2">
               <button
                 type="button"

@@ -147,7 +147,7 @@ export function InboxMessages({ onCompose }: InboxMessagesProps) {
                   <span className="min-w-0 flex-1">
                     <span className="flex items-baseline justify-between gap-2">
                       <span className="truncate text-row font-semibold text-ink-1">{name}</span>
-                      <span className="shrink-0 text-secondary text-ink-4">{formatInboxTime(row.conversation_last_message_at ?? row.last_message_sent_at)}</span>
+                      <span className="shrink-0 text-secondary text-ink-3">{formatInboxTime(row.conversation_last_message_at ?? row.last_message_sent_at)}</span>
                     </span>
                     <span className="block truncate text-secondary text-ink-2">{identityLine(row.other_participant_role)}</span>
                     <span className={cn('block truncate text-secondary', unread ? 'font-medium text-ink-1' : 'text-ink-2')}>{preview}</span>

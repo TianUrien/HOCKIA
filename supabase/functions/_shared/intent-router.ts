@@ -566,3 +566,116 @@ export function entityTypeToRole(t: EntityType): string | null {
     default: return null
   }
 }
+
+// ── Candidate-side role seeking (player / coach viewers) ──────────────────
+//
+// A PLAYER typing "clubs looking for a midfielder in Europe", "open roles
+// for me" or "midfielder roles with housing" wants ROLES they can apply to.
+// The recruiter-shaped rules above read those queries as a people search
+// ("midfielder" → players; "clubs looking for" → clubs), which is right for
+// a club scouting talent and wrong for a candidate: on staging (2026-09-26)
+// it returned zero players and an answer full of internal values.
+//
+// This check runs only once the viewer's role is known. It never changes
+// what a club, brand or umpire gets.
+
+/** Words that name a role / vacancy rather than a person. */
+const ROLE_NOUNS: RegExp[] = [
+  /\broles?\b(?!\s+models?\b)/i,
+  /\bopportunit(?:y|ies)\b/i,
+  /\bvacanc(?:y|ies)\b/i,
+  /\bopenings?\b/i,
+  /\bjobs?\b/i,
+  /\btrials?\b/i,
+  /\btr(?:y|ial)[- ]?outs?\b/i,
+  /\bcontracts?\b/i,
+  /\b(?:open|available) positions?\b/i,
+  /\bpositions? (?:open|available)\b/i,
+  /\boportunidad(?:es)?\b/i,
+  /\bvacantes?\b/i,
+]
+
+/** "clubs (that are) looking for / need / hiring …" */
+const CLUBS_RECRUITING = /\b(?:clubs?|teams?|academ(?:y|ies)|clubes|equipos)\b[^.?!]{0,30}?\b(?:looking for|seeking|searching for|hiring|recruiting|recruit|in need of|needs?|needing|wants?|wanting|buscan|busca|necesitan)\b/i
+
+/** "who's looking for a midfielder", "anyone hiring" — no entity named. */
+const ANYONE_RECRUITING = /\b(?:who'?s|who is|who are|anyone|anybody|any club|someone)\b[^.?!]{0,20}?\b(?:looking for|seeking|hiring|recruiting|in need of|needs?|needing)\b/i
+
+/** The candidate talking about their own next move. */
+const SELF_MOVE: RegExp[] = [
+  /\bwhere (?:can|could|should) i (?:play|coach|go|apply)\b/i,
+  /\b(?:clubs?|teams?) (?:i|that i) (?:can|could) (?:join|apply|play|sign)\b/i,
+  /\bapply (?:to|for)\b/i,
+]
+
+/**
+ * A people-first query: the thing being searched is people ("players who
+ * want a trial", "find coaches with contracts"). Candidates do search people
+ * too — those must stay a people search.
+ */
+const PEOPLE_FIRST = /^\s*(?:(?:please\s+)?(?:find|show|search|list|get|give)(?:\s+me)?(?:\s+for)?\s+)?(?:(?:all|some|the|any|\d+)\s+)?(?:(?:good|top|best|young|experienced|female|male|women'?s|men'?s)\s+)*(?:players|coaches|umpires|people|athletes|defenders|midfielders|forwards|goalkeepers|keepers|strikers|jugador(?:es|as))\b/i
+
+const COACH_WORD = /\bcoach(?:es|ing)?\b|\bentrenador(?:es|a)?\b|\banalyst\b|\bsports scientist\b/i
+
+/**
+ * True when a player (or a coach looking for work) is asking for ROLES.
+ *
+ * - player: any role noun, a club-recruiting phrase, "who's looking for…",
+ *   or a self-move phrase — unless the query is people-first.
+ * - coach: coaches also recruit, so only an explicit role noun or a
+ *   club-recruiting phrase that names coaching, and never when the query
+ *   names a player position (that is a coach scouting players).
+ * - everyone else: always false.
+ */
+export function isRoleSeekingQuery(query: string, viewerRole: string | null | undefined): boolean {
+  const q = (query ?? '').trim()
+  if (!q) return false
+  if (viewerRole !== 'player' && viewerRole !== 'coach') return false
+  if (PEOPLE_FIRST.test(q)) return false
+
+  const roleNoun = ROLE_NOUNS.some(p => p.test(q))
+  const clubsRecruiting = CLUBS_RECRUITING.test(q)
+
+  if (viewerRole === 'player') {
+    return roleNoun || clubsRecruiting || ANYONE_RECRUITING.test(q) || SELF_MOVE.some(p => p.test(q))
+  }
+
+  // Coach viewer.
+  const namesPlayerPosition = PLAYERS.some(p => p.test(q))
+  if (namesPlayerPosition && !COACH_WORD.test(q)) return false
+  if (roleNoun) return true
+  if (clubsRecruiting && COACH_WORD.test(q)) return true
+  return SELF_MOVE.some(p => p.test(q))
+}
+
+/**
+ * Router outcomes a role-seeking override may replace. Self / help /
+ * knowledge / owner-pipeline intents are never hijacked — "how do I apply
+ * to opportunities" stays a how-to, "who applied to my opening" stays the
+ * owner flow.
+ */
+const OVERRIDABLE: ReadonlySet<EntityType> = new Set<EntityType>([
+  'opportunities', 'clubs', 'players', 'coaches', 'unknown',
+])
+
+/**
+ * Viewer-aware routing on top of `classifyEntityType`. Returns the routed
+ * intent unchanged unless the viewer is a candidate asking for roles, in
+ * which case it becomes a HIGH-confidence `opportunities` intent.
+ */
+export function routeForViewer(
+  routed: RoutedIntent,
+  query: string,
+  viewerRole: string | null | undefined,
+): RoutedIntent {
+  if (!OVERRIDABLE.has(routed.entity_type)) return routed
+  if (routed.entity_type === 'opportunities' && (viewerRole === 'player' || viewerRole === 'coach')) {
+    return { ...routed, confidence: 'high' }
+  }
+  if (!isRoleSeekingQuery(query, viewerRole)) return routed
+  return {
+    entity_type: 'opportunities',
+    confidence: 'high',
+    matched_signals: [...routed.matched_signals, 'candidate_role_seeking'],
+  }
+}

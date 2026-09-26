@@ -2,7 +2,8 @@
  * Coach Fit math (Phase 2C) — specialization-only v1.
  *
  * Contract:
- *   - NOT_APPLICABLE unless: viewer is club/coach, candidate is a coach,
+ *   - NOT_APPLICABLE unless: viewer is a club or a RECRUITING coach
+ *     (coach_recruits_for_team), candidate is a coach,
  *     and the scope seeks a coach (targetRole === 'coach').
  *   - When a specific coaching role IS sought, specialization is the dominant
  *     signal (0.8) + category a tiebreak (0.2). When NONE is sought (an open
@@ -126,9 +127,26 @@ describe('computeCoachFit', () => {
     expect(r.state).toBe('grey')
   })
 
-  it('coach viewer (not just club) can produce a coach-fit result', () => {
-    const coachViewer = { ...club, role: 'coach' as const }
+  it('RECRUITING coach viewer (not just club) can produce a coach-fit result', () => {
+    const coachViewer = { ...club, role: 'coach' as const, coach_recruits_for_team: true }
     expect(computeCoachFit(coachViewer, headCoach, COACH_SCOPE).isApplicable).toBe(true)
+  })
+
+  // Founder ruling 2026-09-26: Fit counts ONLY coaches who recruit.
+  it('candidate coach viewer (coach_recruits_for_team false) → NOT_APPLICABLE', () => {
+    const coachViewer = { ...club, role: 'coach' as const, coach_recruits_for_team: false }
+    expect(computeCoachFit(coachViewer, headCoach, COACH_SCOPE).isApplicable).toBe(false)
+  })
+
+  it('coach viewer with no coach_recruits_for_team flag → NOT_APPLICABLE (fail closed)', () => {
+    const coachViewer = { ...club, role: 'coach' as const }
+    expect(computeCoachFit(coachViewer, headCoach, COACH_SCOPE).isApplicable).toBe(false)
+  })
+
+  it('brand / umpire / player viewers → NOT_APPLICABLE', () => {
+    for (const role of ['brand', 'umpire', 'player'] as const) {
+      expect(computeCoachFit({ ...club, role }, headCoach, COACH_SCOPE).isApplicable).toBe(false)
+    }
   })
 
   it('open-to-any coaching categories count as a category match', () => {

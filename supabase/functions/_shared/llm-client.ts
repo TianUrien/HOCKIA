@@ -14,6 +14,7 @@
  */
 
 import { renderFeatureKnowledge } from './hockia-features.ts'
+import { labelFor, labelForInline, scrubInternalValues } from './display-labels.ts'
 
 /**
  * Claude model ID for the 'claude' provider path. Env-driven so the model can
@@ -143,7 +144,7 @@ export interface LLMCallMeta {
  * quality/latency comparisons across prompt iterations don't require git
  * archaeology.
  */
-export const PROMPT_VERSION = '2026-06-13.intent-filters'
+export const PROMPT_VERSION = '2026-09-26.human-labels'
 
 const EMPTY_META: LLMCallMeta = { retry_count: 0, usage: null }
 
@@ -310,11 +311,14 @@ function buildUserContextBlock(ctx: UserContext): string {
     // list (or ['any']). The model uses this to seed target_category for
     // club / opportunity searches when the user doesn't specify one.
     if (ctx.role === 'player' && ctx.playing_category) {
-      lines.push(`- Playing category: ${ctx.playing_category}.`)
+      // Label first so answers read naturally; the filter value stays in
+      // brackets because the parse prompt seeds target_category from it.
+      // (Model-written text is scrubbed of such tokens before it ships.)
+      lines.push(`- Playing category: ${labelFor(ctx.playing_category)} (filter value: ${ctx.playing_category}).`)
     }
     if (ctx.role === 'coach' && ctx.coaching_categories && ctx.coaching_categories.length > 0) {
       const isAny = ctx.coaching_categories.includes('any')
-      lines.push(`- Coaching categories: ${isAny ? 'any (open to all)' : ctx.coaching_categories.join(', ')}.`)
+      lines.push(`- Coaching categories: ${isAny ? 'any (open to all)' : ctx.coaching_categories.map(c => `${labelFor(c)} (filter value: ${c})`).join(', ')}.`)
     }
     if (ctx.position) {
       const positions = [ctx.position, ctx.secondary_position].filter(Boolean).join(' / ')
@@ -476,6 +480,7 @@ USER CONTEXT AWARENESS:
 - When the user says "my league", "my club", "my team", or "nearby", resolve those from their CURRENT USER CONTEXT.
 - The user's hockey-category context (Playing Category for players, Coaching Categories for coaches) tells you which target_category to use when they don't specify one. Apply it ONLY when the search target is clubs, opportunities, or teams — and only if the user's category is a single concrete value (e.g. adult_women). Coaches with "Any category" or multiple categories should NOT auto-seed — leave target_category unset and let the user broaden.
 - If no user context is provided, behave generically as before.
+- Never write internal field names or filter values (snake_case such as adult_men, open_to_opportunities, head_coach) in any message the user reads — use plain words ("men's", "open to opportunities", "head coach").
 
 SELF-REFLECTION & PROFILE GUIDANCE (use the respond tool):
 - "Who am I?" / "What do you know about me?" / "What's in my profile?" → Summarise the CURRENT USER CONTEXT in 2-3 sentences. Use only fields that are present.
@@ -1703,6 +1708,7 @@ Your job: replace the templated "didn't find anything" message with a richer, he
 CRITICAL RULES:
 - Plain text only. No markdown — no asterisks for bold, no underscores, no #, no ---, no - bullets. Numbered lists (1. 2. 3.) are fine; the frontend renders them naturally.
 - Do NOT invent profile data. The user-context block is the ONLY source of truth.
+- Never write internal field names or snake_case values (e.g. target_category, adult_men, open_to_opportunities). Use plain words: "men's", "open to opportunities".
 - Do NOT use motivational filler ("you've got this!", "keep going!").
 - Do NOT mention quality, talent, reputation, reliability, "high quality" — only criteria-fit and discoverability.
 - Tone: warm, practical, honest. Like a smart hockey friend who knows the user.
@@ -1732,8 +1738,11 @@ function buildNoResultsUserMessage(ctx: NoResultsContext): string {
   // Stringify search criteria the same way the shortlist builder does.
   const criteriaLines: string[] = []
   if (ctx.searchCriteria.roles?.length) criteriaLines.push(`- roles: ${ctx.searchCriteria.roles.join(', ')}`)
-  if (ctx.searchCriteria.positions?.length) criteriaLines.push(`- positions: ${ctx.searchCriteria.positions.join(', ')}`)
-  if (ctx.searchCriteria.target_category) criteriaLines.push(`- target_category: ${ctx.searchCriteria.target_category}`)
+  // Values are passed as human labels, never raw enum tokens — the model
+  // echoes whatever it is given, and "adult_men" / "open_to_opportunities"
+  // reached users verbatim (staging audit 2026-09-26).
+  if (ctx.searchCriteria.positions?.length) criteriaLines.push(`- positions: ${ctx.searchCriteria.positions.map(labelForInline).join(', ')}`)
+  if (ctx.searchCriteria.target_category) criteriaLines.push(`- team category: ${labelFor(ctx.searchCriteria.target_category)}`)
   if (ctx.searchCriteria.gender) criteriaLines.push(`- gender (legacy): ${ctx.searchCriteria.gender}`)
   if (ctx.searchCriteria.min_age != null) criteriaLines.push(`- min_age: ${ctx.searchCriteria.min_age}`)
   if (ctx.searchCriteria.max_age != null) criteriaLines.push(`- max_age: ${ctx.searchCriteria.max_age}`)
@@ -1741,13 +1750,13 @@ function buildNoResultsUserMessage(ctx: NoResultsContext): string {
   if (ctx.searchCriteria.nationalities?.length) criteriaLines.push(`- nationalities: ${ctx.searchCriteria.nationalities.join(', ')}`)
   if (ctx.searchCriteria.locations?.length) criteriaLines.push(`- locations: ${ctx.searchCriteria.locations.join(', ')}`)
   if (ctx.searchCriteria.countries?.length) criteriaLines.push(`- countries: ${ctx.searchCriteria.countries.join(', ')}`)
-  if (ctx.searchCriteria.availability) criteriaLines.push(`- availability: ${ctx.searchCriteria.availability}`)
+  if (ctx.searchCriteria.availability) criteriaLines.push(`- availability: ${labelFor(ctx.searchCriteria.availability)}`)
   if (ctx.searchCriteria.min_references != null) criteriaLines.push(`- min_references: ${ctx.searchCriteria.min_references}`)
-  if (ctx.searchCriteria.coach_specializations?.length) criteriaLines.push(`- coach_specializations: ${ctx.searchCriteria.coach_specializations.join(', ')}`)
+  if (ctx.searchCriteria.coach_specializations?.length) criteriaLines.push(`- coach specializations: ${ctx.searchCriteria.coach_specializations.map(labelForInline).join(', ')}`)
   const criteriaBlock = criteriaLines.length > 0 ? criteriaLines.join('\n') : '(no explicit constraints — broad search)'
 
   const seedNote = ctx.categorySource === 'context' && ctx.effectiveCategory
-    ? `\nIMPORTANT — target_category=${ctx.effectiveCategory} was AUTO-SEEDED from the user's profile (their playing/coaching/umpiring category), not from the query text. The user may not realize this filter is on. Mention it explicitly in your response.`
+    ? `\nIMPORTANT — the team category (${labelFor(ctx.effectiveCategory)}) was AUTO-SEEDED from the user's profile (their playing/coaching/umpiring category), not from the query text. The user may not realize this filter is on. Mention it explicitly in your response.`
     : ''
 
   return `USER QUERY: "${ctx.userQuery.replace(/"/g, "'")}"
@@ -1912,11 +1921,22 @@ async function composeNoResultsWithOpenAI(ctx: NoResultsContext): Promise<NoResu
 export async function composeNoResults(ctx: NoResultsContext): Promise<{ result: NoResultsResponse; meta: LLMCallMeta }> {
   const provider = Deno.env.get('LLM_PROVIDER') || 'gemini'
 
+  let out: { result: NoResultsResponse; meta: LLMCallMeta }
   switch (provider) {
-    case 'gemini':  return composeNoResultsWithGemini(ctx)
-    case 'claude':  return composeNoResultsWithClaude(ctx)
-    case 'openai':  return { result: await composeNoResultsWithOpenAI(ctx), meta: EMPTY_META }
-    default:        return composeNoResultsWithGemini(ctx)
+    case 'gemini':  out = await composeNoResultsWithGemini(ctx); break
+    case 'claude':  out = await composeNoResultsWithClaude(ctx); break
+    case 'openai':  out = { result: await composeNoResultsWithOpenAI(ctx), meta: EMPTY_META }; break
+    default:        out = await composeNoResultsWithGemini(ctx)
+  }
+  // Safety net — the prompt already forbids raw enum values, but the text
+  // goes straight to the user, so scrub it too.
+  return {
+    ...out,
+    result: {
+      ...out.result,
+      ai_message: scrubInternalValues(out.result.ai_message),
+      follow_up_query: out.result.follow_up_query ? scrubInternalValues(out.result.follow_up_query) : out.result.follow_up_query,
+    },
   }
 }
 

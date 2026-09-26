@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { positionLabel, roleLabel } from '@/lib/identity'
 import { ChevronRight } from 'lucide-react'
 import { Avatar } from '@/components'
 import type { ScopedMatch } from '@/hooks/useScopedMatches'
@@ -67,8 +68,8 @@ export function AvailableNowRail({ matches, loading, voice = 'club', poolRole = 
               <span className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white bg-emerald-500" aria-label="Open to opportunities" />
             </div>
             <p className="mt-2 truncate text-sm font-semibold text-[#14141c]">{m.full_name}</p>
-            <p className="truncate text-xs capitalize text-gray-500">
-              {m.position ? m.position.replace(/_/g, ' ') : m.role}
+            <p className="truncate text-xs text-gray-500">
+              {positionLabel(m.position) ?? roleLabel(m.role)}
             </p>
             {m.inScope ? (
               <p className="mt-1 text-sm font-black text-hockia-primary">{m.pct}% match</p>

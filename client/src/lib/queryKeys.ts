@@ -77,4 +77,8 @@ export const qk = {
   /** The owner's pending one-time full-match privacy notice (user_pulse_items). */
   fullMatchPrivacyNotice: (userId: string | null) =>
     ['pulse', 'full-match-privacy-notice', userId] as const,
+  /** A player's visas & work permits (player_work_permits; RLS: owner + recruiters). */
+  workPermits: (playerId: string | null) => ['work-permits', playerId] as const,
+  /** Whether the Open to play switch is offered to this profile (18+ players). */
+  canToggleOpenToPlay: (profileId: string | null) => ['open-to-play', 'can-toggle', profileId] as const,
 }

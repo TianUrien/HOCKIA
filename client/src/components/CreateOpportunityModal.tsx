@@ -16,7 +16,7 @@ import { trackDbEvent } from '@/lib/trackDbEvent'
 import { trackVacancyCreate } from '@/lib/analytics'
 import SpecialistSkillsSelect from '@/components/SpecialistSkillsSelect'
 import { pruneSpecialistSkillsForPosition } from '@/lib/specialistSkills'
-import { isYouthGender, playerRoleGender, YOUTH_PLAYER_ROLE_MESSAGE } from '@/lib/youthRoles'
+import { COACH_TEAM_HINT, isYouthGender, playerRoleGender, YOUTH_PLAYER_ROLE_MESSAGE } from '@/lib/youthRoles'
 import { LEVEL_SOUGHT_OPTIONS, COMPENSATION_OPTIONS, RECRUITMENT_PROBLEM_OPTIONS, levelSoughtFromBand } from '@/lib/opportunityIntent'
 import { getClubLevelBand, prefetchWorldClubLogos } from '@/hooks/useWorldClubLogo'
 import { assessPostingQuality } from '@/lib/opportunityQuality'
@@ -60,7 +60,8 @@ const buildInitialFormData = (vacancy?: Vacancy | null, initialOpportunityType?:
   title: vacancy?.title || '',
   position: vacancy?.position || undefined,
   // A legacy youth PLAYER role opens with no category (under-18s are never
-  // recruitable), so saving asks for an adult one. Coach roles keep theirs.
+  // recruitable), so saving asks for an adult one. Coach roles keep theirs
+  // (Boys/Girls included); a legacy coach role with none is asked for one.
   gender: ((vacancy?.opportunity_type || initialOpportunityType || 'player') === 'player'
     ? playerRoleGender(vacancy?.gender)
     : vacancy?.gender) || undefined,
@@ -424,7 +425,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
       const next = { ...prev, [field]: value }
       if (field === 'opportunity_type' && value === 'coach') {
         next.position = undefined  // reset — coach has different position options
-        next.gender = undefined
+        // The team stays: coach roles use the same categories (plus Boys/Girls).
         next.specialist_skills_wanted = []  // coach opps have no specialist tags
         // Phase 3c — the must-have toggles are a player-opportunity feature;
         // clear every hardness flag so a stale must-have can't persist on a
@@ -438,6 +439,11 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
       }
       // Increment #3 — drop GK-only tags (Sweeper Keeper) when the position
       // moves away from goalkeeper, so a gated tag can't leak via stale state.
+      // Back to a player role: a youth team isn't valid there (DB CHECK
+      // opportunities_player_role_not_youth), so it clears; adult teams stay.
+      if (field === 'opportunity_type' && value === 'player') {
+        next.gender = playerRoleGender(prev.gender) || undefined
+      }
       if (field === 'position') {
         next.specialist_skills_wanted = pruneSpecialistSkillsForPosition(prev.specialist_skills_wanted, value)
       }
@@ -448,7 +454,6 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
       if (field === 'opportunity_type' && value === 'coach') {
         const updated = { ...prevErrors }
         delete updated.position
-        delete updated.gender
         delete updated[field]
         // Clear any must-have validation errors — the toggles are hidden for
         // coach opps (Phase 3c).
@@ -505,11 +510,14 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
     const newErrors: Record<string, string> = {}
 
     if (!formData.title?.trim()) newErrors.title = 'Title is required'
-    // Only validate position and category for player opportunities
+    // Position is required for player opportunities; the category for every
+    // role (founder ruling 2026-09-26), adult-only for player roles.
     if (formData.opportunity_type === 'player') {
       if (!formData.position) newErrors.position = 'Position is required'
       if (!formData.gender) newErrors.gender = 'Category is required'
       else if (isYouthGender(formData.gender)) newErrors.gender = YOUTH_PLAYER_ROLE_MESSAGE
+    } else if (!formData.gender) {
+      newErrors.gender = 'Category is required'
     }
     if (!formData.location_city?.trim()) newErrors.location_city = 'City is required'
     if (!formData.location_country?.trim()) newErrors.location_country = 'Country is required'
@@ -569,7 +577,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
         opportunity_type: formData.opportunity_type || 'player',
         title: formData.title!,
         position: formData.position || null,
-        gender: formData.opportunity_type === 'player' ? formData.gender! : null,
+        gender: formData.gender || null,
         description: formData.description || null,
         location_city: formData.location_city!,
         location_country: formData.location_country!,
@@ -858,8 +866,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                   )}
                 </div>
 
-                {/* Gender - Only for player opportunities */}
-                {formData.opportunity_type === 'player' && (
+                {/* Category (team) — every role; Boys/Girls on coach roles only */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Category <span className="text-red-500">*</span>
@@ -867,7 +874,7 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                   <select
                     value={formData.gender || ''}
                     onChange={(e) =>
-                      handleInputChange('gender', e.target.value as 'Men' | 'Women' | 'Mixed')
+                      handleInputChange('gender', e.target.value || undefined)
                     }
                     aria-required="true"
                     aria-invalid={errors.gender ? true : undefined}
@@ -878,16 +885,24 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                   >
                     <option value="">Select category</option>
                     {/* Display labels are the new Phase 3 vocabulary; stored
-                        values stay as the legacy enum for back-compat. No
-                        Girls / Boys: player roles are adult-only (founder
+                        values stay as the legacy enum for back-compat. Girls /
+                        Boys on coach roles only: player roles are adult-only (founder
                         ruling 2026-09-25; the DB rejects them). */}
                     <option value="Men">Adult Men</option>
                     <option value="Women">Adult Women</option>
                     <option value="Mixed">Mixed</option>
+                    {formData.opportunity_type !== 'player' && (
+                      <>
+                        <option value="Boys">Boys</option>
+                        <option value="Girls">Girls</option>
+                      </>
+                    )}
                   </select>
                   {errors.gender && <p className="mt-1 text-sm text-red-600">{errors.gender}</p>}
+                  {formData.opportunity_type !== 'player' && !errors.gender && (
+                    <p className="mt-1 text-xs text-gray-500">{COACH_TEAM_HINT}</p>
+                  )}
                 </div>
-                )}
               </div>
 
               {/* Specialist skills wanted (Matching Increment #3) — player

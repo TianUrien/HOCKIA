@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Camera, Check, ChevronLeft, MapPin, MessageCircle, Settings, Share, Shield, Sparkles, Target, UserPlus } from 'lucide-react'
+import { Camera, Check, ChevronLeft, Eye, MapPin, MessageCircle, Pencil, Settings, Share, Shield, Sparkles, Star, Target, UserPlus } from 'lucide-react'
 import { Avatar, DualNationalityDisplay, LastActivePill, VerifiedBadge } from '@/components'
 import ProfileActionMenu from '@/components/ProfileActionMenu'
 import SettingsSheet from '@/components/SettingsSheet'
@@ -42,6 +42,20 @@ interface HeroIdentityCardProps {
   currentClubLogo?: string | null
   /** Hide brand badge for brand viewers per existing parent logic. */
   authProfileRole?: string | null
+  /**
+   * D2 · 30-second profile (phone): the key facts replace the stats strip,
+   * the owner's second button is "View as club", and a recruiting viewer gets
+   * Shortlist · Message. Desktop stays v1 (stats strip, Public view).
+   */
+  d2?: boolean
+  /** The six key-fact tiles (and anything under them), rendered where the stats strip was. */
+  keyFacts?: ReactNode
+  /** Owner: "View as club". */
+  onViewAsClub?: () => void
+  /** Owner: the Open to play pill opens the Open to play screen. */
+  onOpenToPlay?: () => void
+  /** Club / recruiting coach viewer: Shortlist replaces Add friend. `preview` = the owner's "View as club" (inert). */
+  recruiterActions?: { onShortlist: () => void; shortlisted: boolean; busy?: boolean; preview?: boolean } | null
 }
 
 const SOCIAL_COLORS: Record<SocialPlatform, string> = {
@@ -79,6 +93,11 @@ export default function HeroIdentityCard({
   videoTotal,
   currentClubLogo,
   authProfileRole,
+  d2 = false,
+  keyFacts,
+  onViewAsClub,
+  onOpenToPlay,
+  recruiterActions,
 }: HeroIdentityCardProps) {
   const navigate = useNavigate()
   const { user } = useAuthStore()
@@ -225,12 +244,17 @@ export default function HeroIdentityCard({
             )}
           </div>
           <div className="mb-1 flex min-w-0 flex-wrap items-center gap-1.5">
-            {(isAvailable || isRecruiterMode) && (
+            {(isAvailable || isRecruiterMode) && (d2 && isOwnerView && !isCoach && onOpenToPlay ? (
+              <button type="button" onClick={onOpenToPlay} className="inline-flex items-center gap-1.5 rounded-full bg-positive-soft px-3 py-[7px] text-secondary font-semibold text-[#1b8a3f]" data-testid="open-to-play-pill">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#1b8a3f]" aria-hidden="true" />
+                {availabilityLabel}
+              </button>
+            ) : (
               <span className="inline-flex items-center gap-1.5 rounded-full bg-positive-soft px-3 py-[7px] text-secondary font-semibold text-[#1b8a3f]">
                 <span className="h-1.5 w-1.5 rounded-full bg-[#1b8a3f]" aria-hidden="true" />
                 {isRecruiterMode ? 'Recruiting' : availabilityLabel}
               </span>
-            )}
+            ))}
             {/* "Active today" — Settings › Privacy › show_last_active drives it (DEV NOTE). */}
             <LastActivePill lastActiveAt={full.last_active_at ?? null} showLastActive={full.show_last_active ?? null} />
           </div>
@@ -308,13 +332,44 @@ export default function HeroIdentityCard({
         )}
 
         <div className="mt-4 flex items-stretch gap-2.5">
-          {isOwnerView ? (
+          {isOwnerView && d2 ? (
+            <>
+              <button type="button" onClick={onEdit} className="flex h-[46px] flex-1 items-center justify-center gap-1.5 rounded-full bg-hockia-primary text-[16px] font-semibold text-white active:opacity-90">
+                <Pencil className="h-[18px] w-[18px]" strokeWidth={1.8} /> Edit profile
+              </button>
+              <button type="button" onClick={onViewAsClub ?? onViewPublic} className="flex h-[46px] flex-1 items-center justify-center gap-1.5 rounded-full bg-surface-grouped text-[16px] font-semibold text-ink-1 active:bg-gray-200">
+                <Eye className="h-[18px] w-[18px]" strokeWidth={1.8} /> View as club
+              </button>
+            </>
+          ) : isOwnerView ? (
             <>
               <button type="button" onClick={onEdit} className="flex h-[46px] flex-1 items-center justify-center rounded-full bg-hockia-primary text-[16px] font-semibold text-white active:opacity-90">
                 Edit profile
               </button>
               <button type="button" onClick={onViewPublic} className="flex h-[46px] flex-1 items-center justify-center rounded-full bg-surface-grouped text-[16px] font-semibold text-ink-1 active:bg-gray-200">
                 Public view
+              </button>
+            </>
+          ) : recruiterActions ? (
+            <>
+              <button
+                type="button"
+                onClick={recruiterActions.preview ? undefined : recruiterActions.onShortlist}
+                aria-disabled={recruiterActions.preview || undefined}
+                disabled={recruiterActions.busy}
+                className={`flex h-[46px] flex-1 items-center justify-center gap-1.5 rounded-full text-[16px] font-semibold disabled:opacity-60 ${recruiterActions.shortlisted ? 'bg-hockia-soft text-hockia-primary' : 'bg-hockia-primary text-white'}`}
+                data-testid="shortlist-button"
+              >
+                <Star className="h-[18px] w-[18px]" strokeWidth={1.8} fill={recruiterActions.shortlisted ? 'currentColor' : 'none'} /> {recruiterActions.shortlisted ? 'Shortlisted' : 'Shortlist'}
+              </button>
+              <button
+                type="button"
+                onClick={recruiterActions.preview ? undefined : onMessage}
+                aria-disabled={recruiterActions.preview || undefined}
+                disabled={sendingMessage}
+                className="flex h-[46px] flex-1 items-center justify-center gap-1.5 rounded-full bg-surface-grouped text-[16px] font-semibold text-ink-1 disabled:opacity-60"
+              >
+                <MessageCircle className="h-[18px] w-[18px]" strokeWidth={1.8} /> {sendingMessage ? 'Opening…' : 'Message'}
               </button>
             </>
           ) : isVisitorView ? (
@@ -333,13 +388,18 @@ export default function HeroIdentityCard({
           ) : null}
         </div>
 
-        {/* Stats strip — the number opens the complete collection. */}
+        {/* D2: the six key facts replace the stats strip (phone). */}
+        {d2 ? (
+          keyFacts ? <div className="mt-3.5">{keyFacts}</div> : null
+        ) : (
+        /* Stats strip — the number opens the complete collection. */
         <div className="mt-3.5 flex divide-x divide-line rounded-card bg-surface-grouped">
           {stat(friendCount, 'Friends', onFriendsClick)}
           {stat(referenceCount, 'References', onReferencesClick)}
           {stat(careerCount, 'Career', onCareerClick)}
           {stat(videoCount, 'Videos', onVideosClick)}
         </div>
+        )}
       </div>
 
       <SignInPromptModal isOpen={signIn !== null} onClose={() => setSignIn(null)} title="Sign in to add friends" action="connect" />

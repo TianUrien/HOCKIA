@@ -3,6 +3,7 @@ import { Send, Eye, CheckCircle2, ChevronRight, type LucideIcon } from 'lucide-r
 import { useMyApplications } from '@/hooks/useMyApplications'
 import { SectionHeader } from './SectionHeader'
 import { recordModuleImpression, trackModuleClick, useImpressionOnce } from '@/lib/homeInstrumentation'
+import { applicationStatusPill } from '@/lib/opportunityCopy'
 
 /**
  * "Your applications" (Home redesign V2, player Pulse). The anxiety-loop
@@ -15,17 +16,15 @@ import { recordModuleImpression, trackModuleClick, useImpressionOnce } from '@/l
 const MODULE_ID = 'your_applications'
 const POSITION = 1
 
-// Amber rule (founder 2026-09-26): amber only when the VIEWER must act soon.
-// A player waiting on a club can't act, so "Pending" is the same neutral grey
-// as "Not selected" / "No longer active" — and no Clock (it reads as urgency).
-function statusPill(status: string, viewed: boolean): { label: string; className: string; Icon: LucideIcon } {
-  if (status === 'shortlisted' || status === 'maybe') {
-    return { label: 'In review', className: 'bg-[#e7f9ee] text-[#047857]', Icon: CheckCircle2 }
-  }
-  if (viewed) {
-    return { label: 'Viewed by club', className: 'bg-[#f4f0fd] text-hockia-primary', Icon: Eye }
-  }
-  return { label: 'Pending', className: 'bg-gray-100 text-gray-600', Icon: Send }
+// Words = My applications' (founder ruling 2026-09-26: one set of status
+// labels everywhere, via applicationStatusPill). Colours stay under the amber
+// rule: amber only when the VIEWER must act soon — a player waiting on a club
+// can't act, so every waiting state is neutral grey, with no Clock. The eye
+// icon still tells the player the club opened it.
+function statusPill(status: string, appliedAt: string | null, roleOpen: boolean, viewed: boolean): { label: string; className: string; Icon: LucideIcon } {
+  const { label, tone } = applicationStatusPill(status, appliedAt, roleOpen)
+  if (tone === 'positive') return { label, className: 'bg-[#e7f9ee] text-[#047857]', Icon: CheckCircle2 }
+  return { label, className: 'bg-gray-100 text-gray-600', Icon: viewed ? Eye : Send }
 }
 
 export function YourApplications({ enabled }: { enabled: boolean }) {
@@ -45,7 +44,7 @@ export function YourApplications({ enabled }: { enabled: boolean }) {
       />
       <div className="space-y-2">
         {applications.map((app) => {
-          const pill = statusPill(app.status, app.viewed_by_club)
+          const pill = statusPill(app.status, app.applied_at, app.role_open ?? true, app.viewed_by_club)
           // Unreadable opportunity (hidden club / deleted): an inert row, not
           // a dead link — the application itself is still the player's record.
           if (!app.available) {

@@ -1,4 +1,5 @@
 import { BadgeCheck } from 'lucide-react'
+import { brandCategoryLabel } from '@/lib/identity'
 import { getImageUrl } from '@/lib/imageUrl'
 import { FeedCard, FeedCardBody, FeedCardHeader, FeedCardMedia } from '../FeedCard'
 import type { BrandPostFeedItem } from '@/types/homeFeed'
@@ -22,7 +23,7 @@ export function BrandPostCard({ item }: BrandPostCardProps) {
         role="brand"
         createdAt={item.created_at}
         profilePath={`/brands/${item.brand_slug}`}
-        subtitle={item.brand_category}
+        subtitle={brandCategoryLabel(item.brand_category)}
         right={item.brand_is_verified ? (
           <BadgeCheck className="h-5 w-5 flex-shrink-0 text-blue-500" aria-label="Verified brand" />
         ) : undefined}

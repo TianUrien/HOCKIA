@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { Briefcase, MapPin } from 'lucide-react'
+import { positionLabel } from '@/lib/identity'
 import type { SearchOpportunityResult as SearchOpportunityResultType } from '@/hooks/useSearch'
 
 interface SearchOpportunityResultProps {
@@ -11,9 +12,7 @@ export function SearchOpportunityResult({ result }: SearchOpportunityResultProps
     .filter(Boolean)
     .join(', ')
 
-  const position = result.position
-    ? result.position.charAt(0).toUpperCase() + result.position.slice(1)
-    : null
+  const position = positionLabel(result.position)
 
   return (
     <Link

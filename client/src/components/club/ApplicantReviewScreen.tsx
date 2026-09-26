@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Check, ExternalLink, Lock, MessageCircle, Minus, Target } from 'lucide-react'
+import { Check, ExternalLink, Lock, MessageCircle, Target } from 'lucide-react'
 import { DetailNavBar } from '@/components/ui/DetailNavBar'
 import ProfileActionMenu from '@/components/ProfileActionMenu'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
 import { ProfileVideoTile } from '@/components/profile/mobile/ProfileVideoTile'
 import { CareerRow, ReferenceCard } from '@/components/profile/mobile/ProfileLongScroll'
-import { FitChip } from './FitChip'
+import { FitCard } from './FitCard'
 import { DeclineSheet } from './DeclineSheet'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
@@ -17,7 +17,7 @@ import { useProfileScrollData } from '@/hooks/useProfileScrollData'
 import { useTrustedReferences } from '@/hooks/useTrustedReferences'
 import { markRoleApplicantViewed, patchRoleApplicantStatus } from '@/hooks/useRoleApplicants'
 import { holdDecision } from '@/lib/pendingDecisions'
-import { WITHDRAWN_APPLICATION_MESSAGE } from '@/lib/applicationStatus'
+import { WITHDRAWN_APPLICATION_MESSAGE, applicationNote, closedApplicationNote, isDecidableApplicationStatus } from '@/lib/applicationStatus'
 import { useUndoToast } from '@/lib/undoToast'
 import { getImageUrl } from '@/lib/imageUrl'
 import { categoryToDisplay } from '@/lib/hockeyCategories'
@@ -57,7 +57,6 @@ const monthDay = (iso: string | null) => {
   const d = new Date(iso)
   return Number.isNaN(d.getTime()) ? null : `${MONTH[d.getMonth()]} ${d.getDate()}`
 }
-const pronounsFor = (g: string | null) => (/^(men|male|man|m)$/i.test(g ?? '') ? { obj: 'him' as const, pos: 'his' as const } : /^(women|female|woman|f)$/i.test(g ?? '') ? { obj: 'her' as const, pos: 'her' as const } : { obj: 'them' as const, pos: 'their' as const })
 
 export default function ApplicantReviewScreen({ roleId, applicationId }: Props) {
   const navigate = useNavigate()
@@ -144,7 +143,6 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
 
   const p = review?.person
   const firstName = p?.full_name?.trim().split(/\s+/)[0] || 'this player'
-  const pron = pronounsFor(p?.gender ?? null)
   const rows = useMemo(() => {
     if (!review) return []
     const lastDays = review.person.last_active_at ? Math.max(0, Math.floor((Date.now() - new Date(review.person.last_active_at).getTime()) / 86_400_000)) : null
@@ -152,13 +150,12 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
       roleGender: review.roleGender,
       playerCategoryLabel: categoryToDisplay(review.person.playing_category) || null,
       firstName,
-      pronoun: pron.pos,
       lastActiveDays: lastDays,
       playerClub: review.playerClub?.name ?? null,
       playerLeagueKnown: Boolean(review.playerClub?.leagueBanded),
       clubLeagueKnown: review.clubLeagueBanded,
     })
-  }, [review, firstName, pron.pos])
+  }, [review, firstName])
 
   const countryRow = (id: number | null) => {
     const c = id ? countries.find((x) => x.id === id) : null
@@ -214,11 +211,15 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
     else navigate(`/messages?new=${p.id}`, { state })
   }
 
+  const note = review ? applicationNote(review.metadata) : null
   const videos = scroll.fullGameLinks.length + scroll.fullMatches.length + scroll.highlights.length
   const avatar = p?.avatar_url ? getImageUrl(p.avatar_url, 'avatar-lg') ?? p.avatar_url : null
   const statusNote = review && review.status !== 'pending'
-    ? { shortlisted: 'You shortlisted this player.', maybe: 'You marked this player maybe.', rejected: 'You declined this application.', no_response: 'Closed without a reply.' }[review.status] ?? null
+    ? { shortlisted: 'You shortlisted this player.', maybe: 'You marked this player maybe.', rejected: 'You declined this application.', no_response: 'Closed without a reply.', filled: 'This role was filled.', withdrawn: 'Withdrawn by the applicant.' }[review.status] ?? null
     : null
+  // Closed applications (no reply, filled, withdrawn, signing statuses) can't
+  // be re-decided: no decision bar, just the grey note with Message.
+  const decidable = review ? isDecidableApplicationStatus(review.status) : false
 
   return (
     <div className="flex h-[100dvh] flex-col bg-white pt-[env(safe-area-inset-top)] lg:hidden" data-testid="applicant-review-screen">
@@ -239,33 +240,26 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
               <div className="min-w-0 flex-1">
                 <h1 className="text-[24px] font-bold leading-[30px] tracking-[-0.144px] text-ink-1">{p.full_name}</h1>
                 <p className="truncate text-[14px] leading-[19px] text-ink-2">{personRoleLine({ role: p.role, position: p.position, secondaryPosition: p.secondary_position })}</p>
-                <p className={cn('text-caption', isDaysLeftUrgent(days) ? 'font-semibold text-[#b45309]' : 'text-ink-4')}>{appliedLine}</p>
+                <p className={cn('text-caption', isDaysLeftUrgent(days) ? 'font-semibold text-[#b45309]' : 'text-ink-3')}>{appliedLine}</p>
                 <button type="button" onClick={() => navigate(`/players/id/${p.id}`, { state: { from: location.pathname } })} className="text-[14px] font-semibold text-hockia-primary">View full profile</button>
               </div>
             </div>
 
             {statusNote && <p className="mx-5 mb-3 rounded-card bg-surface-grouped px-3.5 py-2.5 text-secondary text-ink-2">{statusNote}</p>}
 
+            {/* The applicant's note from the Apply sheet — their words, first. */}
+            {note && (
+              <section className="px-5 pb-4" data-testid="applicant-note">
+                <div className="rounded-2xl border border-line bg-white px-3.5 py-3">
+                  <h2 className="text-secondary font-semibold text-ink-2">In their words</h2>
+                  <p className="mt-1 whitespace-pre-wrap break-words text-row leading-[21px] text-ink-1">{note}</p>
+                </div>
+              </section>
+            )}
+
             {/* Fit — clubs only */}
             <div className="px-5">
-              <div className="flex flex-col gap-3 rounded-2xl bg-surface-grouped p-4" data-testid="fit-card">
-                <div className="flex items-center justify-between">
-                  <span className="text-row font-semibold text-ink-1">Fit for this role</span>
-                  <FitChip state={review.fit?.state} />
-                </div>
-                {rows.map((r) => (
-                  <div key={r.key} className="flex items-start gap-2.5">
-                    <span className={cn('mt-px flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full', r.ok ? 'bg-positive-soft text-positive' : 'bg-white text-ink-3')}>
-                      {r.ok ? <Check className="h-3.5 w-3.5" strokeWidth={2.6} /> : <Minus className="h-3.5 w-3.5" strokeWidth={2.6} />}
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-[14px] font-semibold leading-[19px] text-ink-1">{r.label}</span>
-                      <span className="block text-secondary text-ink-2">{r.detail}</span>
-                    </span>
-                  </div>
-                ))}
-                <p className="text-caption text-ink-4">Only clubs see fit. It reads the profile — nothing else.</p>
-              </div>
+              <FitCard state={review.fit?.state} rows={rows} />
             </div>
 
             {/* Facts */}
@@ -366,7 +360,7 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
             <h2 className="px-5 pb-2 pt-[22px] text-[22px] font-bold leading-7 tracking-[-0.176px] text-ink-1">References</h2>
             <div className="flex flex-col gap-3 px-5 pb-7">
               {acceptedReferences.length === 0
-                ? <p className="text-[14px] leading-5 text-ink-2">No references yet. References come from friends on Hockia — {pron.pos} coaches and teammates can write one.</p>
+                ? <p className="text-[14px] leading-5 text-ink-2">No references yet. References come from friends on Hockia — coaches and teammates can write one.</p>
                 : acceptedReferences.slice(0, 2).map((r) => (
                   <ReferenceCard key={r.id} reference={r} onOpen={() => navigate(`/players/id/${p.id}/references`, { state: { from: location.pathname } })} />
                 ))}
@@ -376,7 +370,7 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
       </div>
 
       {/* Decision bar */}
-      {p && review && review.status !== 'no_response' && (
+      {p && review && decidable && (
         <div className="fixed inset-x-0 bottom-0 border-t border-line bg-white px-4 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-3" data-testid="decision-bar">
           <div className="flex gap-2">
             <button type="button" onClick={() => setDeclining(true)} disabled={review.status === 'rejected'} className="flex h-[46px] flex-1 items-center justify-center rounded-full bg-surface-grouped text-[16px] font-semibold text-[#e5484d] disabled:opacity-40">Decline</button>
@@ -390,15 +384,15 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
           </button>
         </div>
       )}
-      {p && review?.status === 'no_response' && (
-        <div className="fixed inset-x-0 bottom-0 flex items-center gap-2 border-t border-line bg-white px-4 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-3 text-secondary text-ink-2">
-          <Lock className="h-4 w-4 shrink-0 text-ink-3" strokeWidth={2} /> This application closed without a reply. You can still message {firstName}.
+      {p && review && !decidable && (
+        <div className="fixed inset-x-0 bottom-0 flex items-center gap-2 border-t border-line bg-white px-4 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-3 text-secondary text-ink-2" data-testid="closed-application-note">
+          <Lock className="h-4 w-4 shrink-0 text-ink-3" strokeWidth={2} /> {closedApplicationNote(review.status, firstName)}
           <button type="button" onClick={() => void message()} className="ml-auto shrink-0 font-semibold text-hockia-primary">Message</button>
         </div>
       )}
 
       {p && (
-        <DeclineSheet open={declining} applicationId={applicationId} firstName={firstName} pronoun={pron.obj} onCancel={() => setDeclining(false)} onSend={decline} />
+        <DeclineSheet open={declining} applicationId={applicationId} firstName={firstName} hasName={Boolean(p.full_name?.trim())} onCancel={() => setDeclining(false)} onSend={decline} />
       )}
     </div>
   )

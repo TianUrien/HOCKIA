@@ -1,0 +1,21 @@
+# HOCKIA uptime + synthetic monitor. Deploy: see README.md.
+# account_id is passed via CLOUDFLARE_ACCOUNT_ID at deploy time (not committed).
+name = "hockia-uptime-monitor"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+workers_dev = false
+
+[triggers]
+crons = ["*/5 * * * *", "0 */6 * * *"]
+
+[vars]
+SITE_URL = "https://inhockia.com"
+SUPABASE_URL = "https://xtertgftujnebubxgqit.supabase.co"
+ALERT_FROM = "HOCKIA Monitor <monitor@inhockia.com>"
+
+# KV namespace for alert state; id filled in at first deploy (see README.md).
+[[kv_namespaces]]
+binding = "STATE"
+id = "3c4fb21acf1141cbad957b223b310296"
+
+# Secrets (wrangler secret put): SUPABASE_ANON_KEY, RESEND_API_KEY, ALERT_TO

@@ -38,6 +38,7 @@ import {
   type TargetCategory,
 } from './recruitingContext'
 import { specialistSkillLabel } from './specialistSkills'
+import { isRecruitingViewer } from './recruiterAccess'
 
 export type ClubFitState = 'green' | 'yellow' | 'grey'
 
@@ -93,7 +94,12 @@ export interface FitCandidateFields {
    *  switched proximity from same-country tier distance to this
    *  global band, eliminating the cross-country dead zone. Null
    *  when the player has no club linked or the club has no league
-   *  → competition_proximity = 0. */
+   *  → competition_proximity = 0.
+   *  D2 (founder ruling 2026-09-26): NEVER derive this from the player's
+   *  own profiles.mens/womens_league_id — that league is SELF-REPORTED
+   *  (typed when their club has no league on Hockia) and must not count
+   *  for level or fit. Use the world club's league only (getClubLevelBand,
+   *  or levelBandForFit() in lib/keyFacts.ts, which returns null for it). */
   competition_level_band?: number | null
   open_to_play: boolean | null
   open_to_coach: boolean | null
@@ -278,12 +284,15 @@ export function computeClubFit(
   options?: ComputeClubFitOptions,
 ): ClubFitResult {
   if (!viewerProfile || !candidate) return NOT_APPLICABLE
-  // Viewer must be a club or coach. Brands / umpires / players / anon
-  // never see Fit. The target is resolved below from override OR
-  // profile derivation; override-only viewers (coaches with a chosen
-  // context, clubs without leagues but with a context) are accepted
-  // here even though they have no profile-derived target.
-  if (viewerProfile.role !== 'club' && viewerProfile.role !== 'coach') return NOT_APPLICABLE
+  // Viewer must be a recruiter: a club, or a coach who recruits for a team
+  // (founder ruling 2026-09-26 — Fit counts ONLY coaches who recruit;
+  // mirrors SQL public.is_recruiter). Candidate coaches, brands, umpires,
+  // players and anon never see Fit. The target is resolved below from
+  // override OR profile derivation; override-only viewers (recruiting
+  // coaches with a chosen context, clubs without leagues but with a
+  // context) are accepted here even though they have no profile-derived
+  // target.
+  if (!isRecruitingViewer(viewerProfile)) return NOT_APPLICABLE
   // Candidate must be a player. The chip stays hidden on coach / club /
   // umpire / brand candidates so we never surface a misleading signal
   // for roles whose Fit math isn't defined.

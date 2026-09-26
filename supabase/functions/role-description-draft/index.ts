@@ -9,59 +9,10 @@
 
 import { getCorsHeaders } from '../_shared/cors.ts'
 import { getServiceClient } from '../_shared/supabase-client.ts'
+import { type Answers, clean, facts, stripPlaceholders, template } from '../_shared/role-description-copy.ts'
 
 const MODEL = Deno.env.get('CLAUDE_MODEL') || 'claude-sonnet-4-6'
 const MAX_CHARS = 700
-
-type Answers = {
-  type?: string
-  position?: string | null
-  team?: string | null
-  title?: string | null
-  level?: string | null
-  skills?: string[]
-  start?: string | null
-  duration?: string | null
-  city?: string | null
-  country?: string | null
-  pay?: string | null
-  package?: string[]
-  euPassport?: boolean
-}
-
-const clean = (s: unknown, max = 80) => (typeof s === 'string' ? s.replace(/\s+/g, ' ').trim().slice(0, max) : '')
-const human = (s: string) => s.replace(/_/g, ' ')
-
-function facts(a: Answers, clubName: string, league: string | null): string[] {
-  const out: string[] = []
-  out.push(`Club: ${clubName}${league ? ` (${league})` : ''}`)
-  const role = [clean(a.team), human(clean(a.position))].filter(Boolean).join(' ')
-  if (role) out.push(`Looking for: ${a.type === 'coach' ? 'a coach — ' : 'a player — '}${role}`)
-  if (clean(a.title)) out.push(`Role title: ${clean(a.title, 120)}`)
-  if (clean(a.level)) out.push(`Level: ${human(clean(a.level))}`)
-  const skills = (a.skills ?? []).map((s) => human(clean(s))).filter(Boolean)
-  if (skills.length) out.push(`Specialist skills wanted: ${skills.join(', ')}`)
-  if (clean(a.start) || clean(a.duration)) out.push(`When: ${[clean(a.start) && `from ${clean(a.start)}`, clean(a.duration)].filter(Boolean).join(', ')}`)
-  const place = [clean(a.city), clean(a.country)].filter(Boolean).join(', ')
-  if (place) out.push(`Where: ${place}`)
-  if (clean(a.pay)) out.push(`Pay: ${a.pay === 'unpaid_development' ? 'unpaid / development' : human(clean(a.pay))}`)
-  const pkg = (a.package ?? []).map((s) => human(clean(s))).filter(Boolean)
-  if (pkg.length) out.push(`Package: ${pkg.join(', ')}`)
-  if (a.euPassport) out.push('EU passport required')
-  return out
-}
-
-function template(a: Answers, clubName: string): string {
-  const role = [clean(a.team), human(clean(a.position))].filter(Boolean).join(' ') || 'player'
-  const place = clean(a.city) || clean(a.country)
-  const lines = [`${clubName} is looking for a ${role.toLowerCase()}${place ? ` to join us in ${place}` : ''}.`]
-  const when = [clean(a.start) && `from ${clean(a.start)}`, clean(a.duration) && `for ${clean(a.duration).toLowerCase()}`].filter(Boolean).join(' ')
-  if (when) lines.push(`The role runs ${when}.`)
-  const pkg = (a.package ?? []).map((s) => human(clean(s))).filter(Boolean)
-  if (pkg.length) lines.push(`We offer ${pkg.join(', ')}.`)
-  lines.push('Tell us about your season so far and when you are available.')
-  return lines.join(' ')
-}
 
 Deno.serve(async (req) => {
   const cors = getCorsHeaders(req.headers.get('Origin'))
@@ -109,7 +60,8 @@ Deno.serve(async (req) => {
             'You write the "About the role" text for a field hockey club posting a role on Hockia.',
             'Write as the club, first person plural ("we"), warm and plain. 3–5 short sentences, under 600 characters.',
             'Use ONLY the facts given. Never invent training days, facilities, salaries, results or promises.',
-            'Where a detail players usually ask about is missing (training days, the city, the season), leave a short bracketed prompt for the club to fill, e.g. "[training days]".',
+            'If a detail is missing, leave it out. Never write placeholders, brackets or blanks for the club to fill.',
+            'Write the team naturally, e.g. "a midfielder for our men\'s team", never "a Men midfielder".',
             'No emoji, no hashtags, no headings, no bullet points.',
             'Reply with the text only.',
           ].join('\n'),
@@ -119,7 +71,7 @@ Deno.serve(async (req) => {
     })
     if (!res.ok) throw new Error(`anthropic ${res.status}`)
     const data = await res.json() as { content: Array<{ type: string; text?: string }> }
-    const text = data.content.filter((c) => c.type === 'text').map((c) => c.text ?? '').join('').trim()
+    const text = stripPlaceholders(data.content.filter((c) => c.type === 'text').map((c) => c.text ?? '').join('').trim())
     if (!text || text.length > MAX_CHARS) throw new Error('empty or too long')
     return json({ description: text, source: 'ai' })
   } catch (err) {

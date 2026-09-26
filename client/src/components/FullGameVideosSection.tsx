@@ -176,7 +176,7 @@ export default function FullGameVideosSection({
               </span>
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-gray-900">
-                  {lockedFullMatches === 1 ? '1 full match' : `${lockedFullMatches} full matches`} for clubs and coaches only
+                  {lockedFullMatches === 1 ? '1 full match' : `${lockedFullMatches} full matches`} for clubs &amp; recruiting coaches only
                 </p>
                 <p className="text-xs text-gray-500">Only clubs and coaches who recruit can watch full matches.</p>
               </div>

@@ -104,7 +104,7 @@ export function InboxActivity() {
                     <span className={cn('block text-row text-ink-1', unread ? 'font-semibold' : 'font-medium')}>{config.getTitle(notification)}</span>
                     {actor?.role && <span className="block text-secondary text-ink-2">{identityLine(actor.role)}</span>}
                     {description && <span className="block text-secondary text-ink-2">{description}</span>}
-                    <span className="block pt-0.5 text-secondary text-ink-4">{formatActivityAge(notification.createdAt)}</span>
+                    <span className="block pt-0.5 text-secondary text-ink-3">{formatActivityAge(notification.createdAt)}</span>
                     {isFriendRequest && (
                       <span className="mt-2 flex gap-1.5">
                         <button

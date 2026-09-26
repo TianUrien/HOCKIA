@@ -327,8 +327,8 @@ describe('getNotificationConfig', () => {
     const meta = { club_name: 'CASI', vacancy_title: 'Arquera — Club Atlético de San Isidro (CASI)' }
     const maybe = createNotification({ kind: 'vacancy_application_status', metadata: { ...meta, status: 'maybe' } })
     const mc = getNotificationConfig(maybe)
-    expect(mc.getTitle(maybe)).toBe('CASI reviewed your application')
-    expect(mc.getDescription?.(maybe)).toBe('Your application for Arquera is under consideration.')
+    expect(mc.getTitle(maybe)).toBe('CASI replied to your application')
+    expect(mc.getDescription?.(maybe)).toBe('Open your application for Arquera to see the update.')
     expect(mc.getTitle(maybe)).not.toContain('maybe') // no raw enum value leaks
 
     const shortlisted = createNotification({ kind: 'vacancy_application_status', metadata: { ...meta, status: 'shortlisted' } })
@@ -336,6 +336,38 @@ describe('getNotificationConfig', () => {
 
     const rejected = createNotification({ kind: 'vacancy_application_status', metadata: { ...meta, status: 'rejected' } })
     expect(getNotificationConfig(rejected).getTitle(rejected)).toBe('CASI updated your application')
+
+    const filled = createNotification({ kind: 'vacancy_application_status', metadata: { ...meta, status: 'filled' } })
+    expect(getNotificationConfig(filled).getTitle(filled)).toBe('CASI filled the role')
+    expect(getNotificationConfig(filled).getDescription?.(filled)).toBe(
+      'Arquera — Club Atlético de San Isidro (CASI) has been filled. Thanks for applying — new roles are open.',
+    )
+    const filledPos = createNotification({
+      kind: 'vacancy_application_status',
+      metadata: { ...meta, status: 'filled', position: 'midfielder' },
+    })
+    expect(getNotificationConfig(filledPos).getDescription?.(filledPos)).toBe(
+      'Midfielder has been filled. Thanks for applying — new roles are open.',
+    )
+    const filledBare = createNotification({ kind: 'vacancy_application_status', metadata: { status: 'filled' } })
+    expect(getNotificationConfig(filledBare).getTitle(filledBare)).toBe('The club filled the role')
+    expect(getNotificationConfig(filledBare).getDescription?.(filledBare)).toBe(
+      'The role has been filled. Thanks for applying — new roles are open.',
+    )
+  })
+
+  it('recruiting_update renders the server-written title, summary and target', () => {
+    const notification = createNotification({
+      kind: 'recruiting_update',
+      metadata: { event: 'offer_received', title: 'CASI sent you an offer', summary: 'Arquera', target_url: '/messages/abc' },
+    })
+    const config = getNotificationConfig(notification)
+    expect(config.getTitle(notification)).toBe('CASI sent you an offer')
+    expect(config.getDescription?.(notification)).toBe('Arquera')
+    expect(resolveNotificationRoute(notification)).toBe('/messages/abc')
+
+    const bare = createNotification({ kind: 'recruiting_update', metadata: {} })
+    expect(getNotificationConfig(bare).getTitle(bare)).toBe('Recruiting update')
   })
 
   // Routing contracts for the post-References/Friends-split notification

@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { isTopFocusTrap, useFocusTrap } from '@/hooks/useFocusTrap'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
-import { identityLine } from '@/lib/identity'
+import { identityLine, positionLabel } from '@/lib/identity'
 import { useUserPosts, type PostImage } from '@/hooks/useUserPosts'
 import { validateImage, optimizeImage } from '@/lib/imageOptimization'
 import { useUploadManager } from '@/lib/uploadManager'
@@ -1004,7 +1004,7 @@ export function PostComposerModal({
                                   <RoleBadge role={person.role} />
                                 </div>
                                 <p className="text-xs text-gray-500 truncate">
-                                  {[person.position, person.current_club, person.base_location].filter(Boolean).join(' · ')}
+                                  {[positionLabel(person.position), person.current_club, person.base_location].filter(Boolean).join(' · ')}
                                 </p>
                               </div>
                             </button>
@@ -1037,7 +1037,7 @@ export function PostComposerModal({
                         <RoleBadge role={selectedPerson.role} />
                       </div>
                       <p className="text-xs text-gray-500 truncate">
-                        {[selectedPerson.position, selectedPerson.current_club].filter(Boolean).join(' · ')}
+                        {[positionLabel(selectedPerson.position), selectedPerson.current_club].filter(Boolean).join(' · ')}
                       </p>
                     </div>
                     <button
@@ -1284,7 +1284,7 @@ export function PostComposerModal({
               {/* Remaining count only inside the last 50 characters, lightest ink. */}
               {MAX_CONTENT_LENGTH - content.length <= 50 && (
                 <div className="flex justify-end">
-                  <span className="text-caption tabular-nums text-ink-4">{MAX_CONTENT_LENGTH - content.length}</span>
+                  <span className="text-caption tabular-nums text-ink-3">{MAX_CONTENT_LENGTH - content.length}</span>
                 </div>
               )}
             </div>

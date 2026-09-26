@@ -1,8 +1,8 @@
 name: Uptime Monitor
 
+# Manual only: production uptime runs on the Cloudflare worker
+# (ops/uptime-worker, every 5 min, email alerts). Kept for a manual check.
 on:
-  schedule:
-    - cron: '*/5 * * * *'
   workflow_dispatch:
 
 permissions:

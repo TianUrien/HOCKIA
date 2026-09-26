@@ -47,6 +47,7 @@ function toViewerProfile(
     womens_league_division: (profile as { womens_league_division?: string | null }).womens_league_division ?? null,
     mens_league_division: (profile as { mens_league_division?: string | null }).mens_league_division ?? null,
     current_world_club_id: clubId,
+    coach_recruits_for_team: profile.coach_recruits_for_team ?? null,
     competition_level_band: getClubLevelBand(clubId, effectiveTarget),
   }
 }

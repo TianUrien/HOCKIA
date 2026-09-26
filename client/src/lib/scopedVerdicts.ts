@@ -52,6 +52,9 @@ export interface ViewerScopeInputs {
     womens_league_division: string | null
     mens_league_division: string | null
     current_world_club_id: string | null
+    /** Founder ruling 2026-09-26: a coach viewer is a recruiter (and gets
+     *  Fit) only when this is true. Callers MUST thread it from the profile. */
+    coach_recruits_for_team?: boolean | null
   }
   contextTarget: RecruitingTargetCategory | null
   targetRole: string | null
@@ -86,6 +89,7 @@ export function computeScopedVerdicts(
     womens_league_division: scope.viewer.womens_league_division,
     mens_league_division: scope.viewer.mens_league_division,
     current_world_club_id: scope.viewer.current_world_club_id,
+    coach_recruits_for_team: scope.viewer.coach_recruits_for_team ?? null,
     competition_level_band: getClubLevelBand(scope.viewer.current_world_club_id, scope.contextTarget),
   }
   const interestScopeOptions = {

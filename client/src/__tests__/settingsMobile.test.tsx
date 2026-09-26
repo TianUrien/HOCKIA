@@ -52,6 +52,12 @@ describe('SettingsMobile · hub', () => {
     expect(screen.queryByText('Club & league')).toBeNull()
   })
 
+  it('a player’s Open to play row opens the Open to play screen (no inline switch)', () => {
+    renderAt('hub')
+    expect(screen.queryByRole('switch', { name: 'Open to play' })).toBeNull()
+    expect(screen.getByRole('button', { name: /Open to play/ })).toBeTruthy()
+  })
+
   it('a coach keeps availability', () => {
     as('coach')
     renderAt('hub')

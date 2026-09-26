@@ -1,8 +1,8 @@
 name: Synthetic Monitoring
 
+# Manual only: the scheduled HTTP checks run on the Cloudflare uptime worker
+# (ops/uptime-worker). Run this for a full browser smoke test on production.
 on:
-  schedule:
-    - cron: '0 */6 * * *'
   workflow_dispatch:
 
 permissions:
@@ -44,7 +44,7 @@ jobs:
         with:
           name: synthetic-report-${{ github.run_id }}
           path: client/playwright-report
-          retention-days: 7
+          retention-days: 3
 
       - name: Create issue on failure
         if: failure()

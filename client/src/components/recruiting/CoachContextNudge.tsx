@@ -15,7 +15,8 @@
  * makes the value exchange explicit at landing.
  *
  * Visibility:
- *   - Only renders for coaches (other roles hidden — clubs get Fit
+ *   - Only renders for coaches who recruit for a team (coach_recruits_for_team;
+ *     founder ruling 2026-09-26). Candidate coaches are hidden — clubs get Fit
  *     without context, players/brands/umpires/anon don't get Fit at all).
  *   - Only when there's NO active recruiting context.
  *   - Dismissible — once the user taps × or sets a context, the
@@ -67,7 +68,10 @@ export default function CoachContextNudge({ className = '' }: CoachContextNudgeP
     if (dismissed) writeDismissed()
   }, [dismissed])
 
-  if (viewer?.role !== 'coach') return null
+  // Recruiting coaches only (founder ruling 2026-09-26 — Fit counts ONLY
+  // coaches who recruit). A candidate coach has no Fit to unlock, so the
+  // nudge would promise something they can never get.
+  if (viewer?.role !== 'coach' || viewer.coach_recruits_for_team !== true) return null
   // Setting any active context resolves the underlying value-gap, so
   // the banner self-hides without needing the dismiss flag.
   if (loading || active) return null
