@@ -73,7 +73,7 @@ export function InboxRequests({ incoming, outgoing, loading, pendingId, respond 
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-row font-semibold text-ink-1">{name}</span>
                     <span className="block truncate text-secondary text-ink-2">{identityLine(person?.role, person?.position)}</span>
-                    <span className="block text-secondary text-ink-4">
+                    <span className="block text-secondary text-ink-3">
                       {outcome === 'accepted' ? 'Now friends' : outcome === 'declined' ? 'Declined' : `Requested · ${formatActivityAge(request.createdAt)}`}
                     </span>
                   </span>

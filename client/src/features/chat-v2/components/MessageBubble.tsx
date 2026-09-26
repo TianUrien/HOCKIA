@@ -160,12 +160,12 @@ export function MessageBubble({
   return (
     <div className={cn('space-y-1', isGroupedWithPrevious ? '' : 'mt-2')}>
       {showDayDivider && (
-        <div className="py-3 text-caption font-semibold text-ink-4">
+        <div className="py-3 text-caption font-semibold text-ink-3">
           {dayLabel(new Date(message.sent_at))}
         </div>
       )}
       {showTimestamp && !showDayDivider && (
-        <div className="py-2 text-center text-caption text-ink-4">
+        <div className="py-2 text-center text-caption text-ink-3">
           {format(new Date(message.sent_at), 'HH:mm')}
         </div>
       )}

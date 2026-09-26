@@ -45,7 +45,7 @@ export function RoleCard({ vacancy, clubName, clubLogo, publisherRole, countryFl
             <p className="truncate text-row font-semibold text-ink-1">{clubName}</p>
             {placeLine && <p className="truncate text-secondary text-ink-2">{placeLine}</p>}
           </div>
-          <span className="flex shrink-0 items-center gap-1 text-secondary text-ink-4">
+          <span className="flex shrink-0 items-center gap-1 text-secondary text-ink-3">
             <Clock className="h-[13px] w-[13px]" strokeWidth={1.8} />
             {formatActivityAge(vacancy.created_at)}
           </span>

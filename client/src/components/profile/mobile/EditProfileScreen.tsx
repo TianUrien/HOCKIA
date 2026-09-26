@@ -386,7 +386,7 @@ export default function EditProfileScreen({ field = null, onDone }: EditProfileS
               {editing === 'about' && (
                 <>
                   <textarea autoFocus value={d<string>('bio') ?? ''} maxLength={BIO_MAX} rows={7} onChange={(e) => set({ bio: e.target.value })} aria-label="About" className="w-full rounded-[12px] bg-surface-grouped p-3.5 text-body text-ink-1 placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-hockia-primary/30" placeholder="A few lines about you and your hockey." />
-                  {BIO_MAX - (d<string>('bio') ?? '').length <= 50 && <p className="text-right text-caption text-ink-4">{BIO_MAX - (d<string>('bio') ?? '').length}</p>}
+                  {BIO_MAX - (d<string>('bio') ?? '').length <= 50 && <p className="text-right text-caption text-ink-3">{BIO_MAX - (d<string>('bio') ?? '').length}</p>}
                 </>
               )}
 
