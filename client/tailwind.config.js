@@ -68,14 +68,22 @@ export default {
         'hockia-primary': '#6c2bd9',
         'hockia-secondary': '#7c3aed',
         'hockia-accent': '#ec4899',
-        'hockia-success': '#10b981',
+        'hockia-success': '#15803d', // = Foundations status/positive (was #10b981)
         'hockia-warning': '#f59e0b',
-        'hockia-danger': '#ef4444',
+        'hockia-danger': '#dc2626', // = Foundations status/danger (was #ef4444)
         'hockia-orange': '#ff9500',
-        // Figma "New-Hockia" 03 Player tokens (2026-09-20) — 01 Foundations / Hockia / Color
+        // Figma "New-Hockia" · 02 Foundations · collection "Hockia / Color" is
+        // the SOURCE OF TRUTH for these (founder ruling 2026-09-26):
+        //   brand/primary #6C2BD9 · brand/soft #F1EAFD · ink/primary #0F0F14 ·
+        //   ink/secondary #5B5B6B · ink/tertiary #8E8E9A · surface/base #FFFFFF ·
+        //   surface/muted #F4F4F7 · line/default #E6E6EC · status/positive
+        //   #15803D · status/positive-soft #E8F7EE · status/danger #DC2626 ·
+        //   media/placeholder #1C1B22.
+        // ink-4 has no Foundations variable (kept at the iOS tertiary label grey).
         'hockia-soft': '#f1eafd',
         ink: { 1: '#0f0f14', 2: '#5b5b6b', 3: '#8e8e9a', 4: '#aeaeb2' },
-        surface: { muted: '#f4f4f7', grouped: '#f2f2f7' },
+        // grouped = the grey grouped surface; aligned to surface/muted (was #f2f2f7).
+        surface: { muted: '#f4f4f7', grouped: '#f4f4f7' },
         line: '#e6e6ec',
         positive: { DEFAULT: '#15803d', soft: '#e8f7ee' },
         // Gold = TRUST (references). Never the amber warning hue: amber
