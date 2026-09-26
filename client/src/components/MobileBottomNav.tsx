@@ -6,14 +6,15 @@ import { hapticSelection } from '@/lib/haptics'
 import { trackSignupCtaClick } from '@/lib/analytics'
 import { useAuthStore } from '@/lib/auth'
 import { cn } from '@/lib/utils'
-import { useInboxDot } from '@/lib/inboxSeen'
+import { useInboxSegmentDots } from '@/hooks/useInboxSegmentDots'
+import { inboxTabDot } from '@/lib/inboxSegmentDots'
 
 interface NavItem {
   id: string
   label: string
   path: string
   icon: React.ComponentType<{ className?: string; strokeWidth?: number }>
-  /** Unread indicator (Figma tab bar carries no counts — a quiet dot). */
+  /** Unread indicator (Figma tab bar carries no counts — a red status/danger dot). */
   dot?: boolean
 }
 
@@ -27,7 +28,7 @@ interface NavItem {
 export default function MobileBottomNav() {
   const { user, profile, location, isActive, handleNavigate } = useNavigation()
   const pointerTapRef = useRef(false)
-  const inboxDot = useInboxDot()
+  const inboxDot = inboxTabDot(useInboxSegmentDots())
   const authLoading = useAuthStore((s) => s.loading)
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false)
   const [isHidden, setIsHidden] = useState(false)
@@ -107,7 +108,7 @@ export default function MobileBottomNav() {
       >
         <span className="relative flex h-[26px] w-[26px] items-center justify-center">
           <Icon className="h-[26px] w-[26px]" strokeWidth={active ? 2.2 : 1.85} />
-          {item.dot && <span aria-label="Unread" className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-hockia-primary ring-2 ring-white" />}
+          {item.dot && <span aria-label="Unread" className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-hockia-danger ring-2 ring-white" />}
         </span>
         {/* Labels hide below 360px where five 10px labels no longer share a row. */}
         <span className="hidden text-tab min-[360px]:inline">{item.label}</span>
@@ -168,8 +169,8 @@ export default function MobileBottomNav() {
     { id: 'home', label: 'Home', path: '/home', icon: Home },
     { id: 'community', label: 'Community', path: '/community', icon: Users },
     { id: 'opportunities', label: 'Opportunities', path: '/opportunities', icon: Briefcase },
-    // Unread messages, or activity/requests newer than the last time that
-    // segment was opened (lib/inboxSeen).
+    // On whenever any Inbox segment (Messages / Requests / Activity) has a
+    // dot — the same rule as the segment dots (lib/inboxSegmentDots).
     { id: 'inbox', label: 'Inbox', path: '/inbox', icon: Inbox, dot: inboxDot },
   ]
 
