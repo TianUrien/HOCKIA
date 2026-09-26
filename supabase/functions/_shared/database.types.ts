@@ -3540,6 +3540,68 @@ export type Database = {
           },
         ]
       }
+      player_work_permits: {
+        Row: {
+          country_id: number
+          created_at: string
+          expires_on: string | null
+          id: string
+          player_id: string
+          type: string
+          updated_at: string
+          valid_from: string | null
+        }
+        Insert: {
+          country_id: number
+          created_at?: string
+          expires_on?: string | null
+          id?: string
+          player_id: string
+          type: string
+          updated_at?: string
+          valid_from?: string | null
+        }
+        Update: {
+          country_id?: number
+          created_at?: string
+          expires_on?: string | null
+          id?: string
+          player_id?: string
+          type?: string
+          updated_at?: string
+          valid_from?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_work_permits_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_work_permits_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_work_permits_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_pending_country_review"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_work_permits_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_self"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       post_comments: {
         Row: {
           author_id: string
@@ -8028,6 +8090,7 @@ export type Database = {
       }
       attest_org_operator_adult: { Args: never; Returns: Json }
       block_user: { Args: { p_blocked_id: string }; Returns: undefined }
+      can_toggle_open_to_play: { Args: { p_uid: string }; Returns: boolean }
       check_application_rate_limit: {
         Args: { p_user_id: string }
         Returns: Json
@@ -8883,6 +8946,7 @@ export type Database = {
       get_my_ambassador_invitations: { Args: never; Returns: Json }
       get_my_brand: { Args: never; Returns: Json }
       get_my_brand_analytics: { Args: { p_days?: number }; Returns: Json }
+      get_my_profile_completeness: { Args: never; Returns: Json }
       get_my_profile_view_stats: { Args: { p_days?: number }; Returns: Json }
       get_my_profile_viewers: {
         Args: { p_days?: number; p_limit?: number }
@@ -9154,6 +9218,7 @@ export type Database = {
       is_platform_admin: { Args: never; Returns: boolean }
       is_recruiter: { Args: { p_uid: string }; Returns: boolean }
       is_staging_env: { Args: never; Returns: boolean }
+      is_suggestible: { Args: { p_uid: string }; Returns: boolean }
       is_test_opportunity: {
         Args: { opportunity_club_id: string }
         Returns: boolean
@@ -9282,12 +9347,38 @@ export type Database = {
         }[]
       }
       outreach_status_priority: { Args: { p_status: string }; Returns: number }
+      player_completeness_parts: {
+        Args: { p: Database["public"]["Tables"]["profiles"]["Row"] }
+        Returns: Json
+      }
+      player_league: {
+        Args: { p_uid: string }
+        Returns: {
+          counts_for_level: boolean
+          league_id: number
+          league_name: string
+          level_band: number
+          source: string
+        }[]
+      }
       process_storage_cleanup_queue: {
         Args: { p_batch?: number; p_grace_period?: string }
         Returns: number
       }
+      profile_has_eu_passport: { Args: { p_uid: string }; Returns: boolean }
+      profile_is_adult: { Args: { p_date_of_birth: string }; Returns: boolean }
       profile_is_hidden: {
         Args: { p_frozen_minor_at: string; p_is_blocked: boolean }
+        Returns: boolean
+      }
+      profile_is_suggestible: {
+        Args: {
+          p_date_of_birth: string
+          p_frozen_minor_at: string
+          p_is_blocked: boolean
+          p_open_to_play: boolean
+          p_role: string
+        }
         Returns: boolean
       }
       profile_is_uncontactable: {
@@ -9555,6 +9646,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      set_open_to_play: {
+        Args: { p_available_from?: string; p_duration?: string; p_open: boolean }
+        Returns: Json
+      }
       set_profile_comment_status: {
         Args: {
           p_comment_id: string
@@ -9706,6 +9801,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      work_permit_status: {
+        Args: { p_expires_on: string; p_today?: string; p_valid_from: string }
+        Returns: string
+      }
     }
     Enums: {
       application_status:
@@ -9715,6 +9814,12 @@ export type Database = {
         | "rejected"
         | "no_response"
         | "withdrawn"
+        | "offered"
+        | "accepted"
+        | "signed_pending_confirmation"
+        | "signed"
+        | "offer_declined"
+        | "filled"
       comment_rating: "positive" | "neutral" | "negative"
       comment_status: "visible" | "hidden" | "reported" | "deleted"
       friendship_status:
@@ -9773,6 +9878,7 @@ export type Database = {
         | "club_invitation_received"
         | "club_invitation_accepted"
         | "applications_expired"
+        | "recruiting_update"
       profile_reference_status: "pending" | "accepted" | "declined" | "revoked"
       question_category:
         | "trials_club_selection"
@@ -9925,6 +10031,12 @@ export const Constants = {
         "rejected",
         "no_response",
         "withdrawn",
+        "offered",
+        "accepted",
+        "signed_pending_confirmation",
+        "signed",
+        "offer_declined",
+        "filled",
       ],
       comment_rating: ["positive", "neutral", "negative"],
       comment_status: ["visible", "hidden", "reported", "deleted"],
@@ -9987,6 +10099,7 @@ export const Constants = {
         "club_invitation_received",
         "club_invitation_accepted",
         "applications_expired",
+        "recruiting_update",
       ],
       profile_reference_status: ["pending", "accepted", "declined", "revoked"],
       question_category: [

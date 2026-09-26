@@ -9,6 +9,7 @@ const ClubOpportunitiesScreen = lazy(() => import('@/components/club/ClubOpportu
 const ApplicantsScreen = lazy(() => import('@/components/club/ApplicantsScreen'))
 const ApplicantReviewScreen = lazy(() => import('@/components/club/ApplicantReviewScreen'))
 const PostRoleScreen = lazy(() => import('@/components/club/PostRoleScreen'))
+const RolePostedScreen = lazy(() => import('@/components/club/RolePostedScreen'))
 
 const OpportunitiesPage = lazy(() => import('@/pages/OpportunitiesPage'))
 const ApplicantsList = lazy(() => import('@/pages/ApplicantsList'))
@@ -67,4 +68,16 @@ export function PostRoleEntry() {
   const { opportunityId } = useParams<{ opportunityId?: string }>()
   if (!isPhone || (role && role !== 'club')) return <Navigate to="/opportunities" replace />
   return <Screen><PostRoleScreen key={opportunityId ?? 'new'} draftId={opportunityId ?? null} /></Screen>
+}
+
+/** Role posted (Figma 04 Club D1.26): phone clubs only; the screen loads the
+ *  role itself, so a refresh shows the same screen. Desktop → Opportunities. */
+export function RolePostedEntry() {
+  const isPhone = useMediaQuery(PHONE)
+  const role = useAuthStore((s) => s.profile?.role)
+  const { opportunityId } = useParams<{ opportunityId: string }>()
+  if (!opportunityId) return <Navigate to="/opportunities" replace />
+  if (!isPhone || (role && role !== 'club')) return <Navigate to="/opportunities" replace state={{ highlight: opportunityId }} />
+  if (!role) return <Blank />
+  return <Screen><RolePostedScreen key={opportunityId} roleId={opportunityId} /></Screen>
 }
