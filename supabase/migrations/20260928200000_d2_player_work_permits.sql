@@ -9,6 +9,9 @@
 --     EU-passport only (check_application_eligibility is not touched here).
 --   * Expiry = an amber row on the owner's profile and permits screen; no email
 --     or push. work_permit_status() exposes expiring_soon (<= 30 days) / expired.
+--   * Expiry is OPTIONAL for every permit type. A permit with no expiry is valid
+--     (never expiring_soon / expired); a future start date still makes it
+--     not_yet_valid.
 --
 -- Passports stay in profiles.nationality_country_id / nationality2_country_id
 -- (max two). EU status is derived from them (eu_country_ids()), never typed.
@@ -23,19 +26,19 @@ CREATE TABLE IF NOT EXISTS public.player_work_permits (
   country_id  integer     NOT NULL REFERENCES public.countries(id),
   type        text        NOT NULL,
   valid_from  date,
-  expires_on  date        NOT NULL,
+  expires_on  date,
   created_at  timestamptz NOT NULL DEFAULT timezone('utc', now()),
   updated_at  timestamptz NOT NULL DEFAULT timezone('utc', now()),
   CONSTRAINT player_work_permits_type_check
     CHECK (type IN ('visa', 'work_permit', 'residency')),
   CONSTRAINT player_work_permits_dates_check
-    CHECK (valid_from IS NULL OR valid_from <= expires_on),
+    CHECK (valid_from IS NULL OR expires_on IS NULL OR valid_from <= expires_on),
   CONSTRAINT player_work_permits_expires_sane
-    CHECK (expires_on >= DATE '2000-01-01' AND expires_on <= DATE '2100-12-31')
+    CHECK (expires_on IS NULL OR (expires_on >= DATE '2000-01-01' AND expires_on <= DATE '2100-12-31'))
 );
 
 CREATE INDEX IF NOT EXISTS idx_player_work_permits_player
-  ON public.player_work_permits (player_id, expires_on DESC);
+  ON public.player_work_permits (player_id, expires_on DESC NULLS FIRST);
 
 COMMENT ON TABLE public.player_work_permits IS
   'D2: visas / work permits / residency a player holds. Owner full CRUD; recruiters '
@@ -52,17 +55,16 @@ IMMUTABLE
 SET search_path = public
 AS $$
   SELECT CASE
-    WHEN p_expires_on IS NULL                        THEN 'expired'
-    WHEN p_expires_on < p_today                      THEN 'expired'
-    WHEN p_valid_from IS NOT NULL AND p_valid_from > p_today THEN 'not_yet_valid'
-    WHEN p_expires_on - p_today <= 30                THEN 'expiring_soon'
-    ELSE 'valid'
+    WHEN p_expires_on IS NOT NULL AND p_expires_on < p_today       THEN 'expired'
+    WHEN p_valid_from IS NOT NULL AND p_valid_from > p_today       THEN 'not_yet_valid'
+    WHEN p_expires_on IS NOT NULL AND p_expires_on - p_today <= 30 THEN 'expiring_soon'
+    ELSE 'valid'   -- includes a permit with no expiry
   END
 $$;
 
 COMMENT ON FUNCTION public.work_permit_status(date, date, date) IS
   'D2: valid | expiring_soon (expires within 30 days, still valid) | expired | not_yet_valid. '
-  'valid and expiring_soon both count as a valid permit.';
+  'valid and expiring_soon both count as a valid permit. No expiry (NULL) = valid unless the start is in the future.';
 
 REVOKE ALL ON FUNCTION public.work_permit_status(date, date, date) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.work_permit_status(date, date, date) TO anon, authenticated, service_role;

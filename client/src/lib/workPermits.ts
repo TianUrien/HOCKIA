@@ -9,6 +9,8 @@
  * Founder rulings 2026-09-26: permits are SHOWN, never enforced (application
  * eligibility stays EU-passport only); details are visible to the owner and to
  * recruiters only (RLS); expiry is an amber row for the owner, no email/push.
+ * Expiry is optional for every type: a permit with no expiry is valid (never
+ * expiring soon / expired); a future start date still makes it not yet valid.
  */
 
 export const WORK_PERMIT_TYPES = ['visa', 'work_permit', 'residency'] as const
@@ -34,7 +36,7 @@ export interface WorkPermitRow {
   country_id: number
   type: string
   valid_from: string | null
-  expires_on: string
+  expires_on: string | null
   created_at: string
   updated_at: string
 }
@@ -71,10 +73,11 @@ export function workPermitStatus(
 ): WorkPermitStatus {
   const expires = dayNumber(expiresOn)
   const now = todayNumber(today)
-  if (expires === null || expires < now) return 'expired'
+  if (expires !== null && expires < now) return 'expired'
   const from = dayNumber(validFrom)
   if (from !== null && from > now) return 'not_yet_valid'
-  if (expires - now <= EXPIRING_SOON_DAYS) return 'expiring_soon'
+  if (expires !== null && expires - now <= EXPIRING_SOON_DAYS) return 'expiring_soon'
+  // No expiry (or none given) = valid.
   return 'valid'
 }
 
@@ -97,23 +100,27 @@ export interface WorkPermitDraft {
   country_id: number | null
   type: string | null
   valid_from?: string | null
-  expires_on: string | null
+  /** Optional for every permit type. */
+  expires_on?: string | null
 }
 
-export type WorkPermitDraftError = 'country_required' | 'type_invalid' | 'expiry_required' | 'dates_out_of_order'
+export type WorkPermitDraftError = 'country_required' | 'type_invalid' | 'date_invalid' | 'dates_out_of_order'
 
 /** Client-side check before a write (the table's CHECK constraints are the real guard). */
 export function validateWorkPermitDraft(draft: WorkPermitDraft): WorkPermitDraftError | null {
   if (!draft.country_id) return 'country_required'
   if (!isWorkPermitType(draft.type)) return 'type_invalid'
-  const expires = dayNumber(draft.expires_on)
-  if (expires === null) return 'expiry_required'
-  const from = dayNumber(draft.valid_from ?? null)
-  if (from !== null && from > expires) return 'dates_out_of_order'
+  // Both dates are optional, but a date that is given must be a real date.
+  const expiresGiven = typeof draft.expires_on === 'string' && draft.expires_on.trim() !== ''
+  const fromGiven = typeof draft.valid_from === 'string' && draft.valid_from.trim() !== ''
+  const expires = expiresGiven ? dayNumber(draft.expires_on) : null
+  const from = fromGiven ? dayNumber(draft.valid_from) : null
+  if ((expiresGiven && expires === null) || (fromGiven && from === null)) return 'date_invalid'
+  if (from !== null && expires !== null && from > expires) return 'dates_out_of_order'
   return null
 }
 
-/** Valid permits first (soonest expiry first), then not-yet-valid, then expired. */
+/** Valid permits first (soonest expiry first, no-expiry last), then not-yet-valid, then expired. */
 export function sortWorkPermits<T extends Pick<WorkPermitRow, 'valid_from' | 'expires_on'>>(
   rows: readonly T[],
   today: Date = new Date(),
@@ -123,6 +130,6 @@ export function sortWorkPermits<T extends Pick<WorkPermitRow, 'valid_from' | 'ex
     const ra = rank[workPermitStatus(a.valid_from, a.expires_on, today)]
     const rb = rank[workPermitStatus(b.valid_from, b.expires_on, today)]
     if (ra !== rb) return ra - rb
-    return (dayNumber(a.expires_on) ?? 0) - (dayNumber(b.expires_on) ?? 0)
+    return (dayNumber(a.expires_on) ?? Number.MAX_SAFE_INTEGER) - (dayNumber(b.expires_on) ?? Number.MAX_SAFE_INTEGER)
   })
 }

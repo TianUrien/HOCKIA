@@ -101,6 +101,21 @@ describe('useWorkPermits', () => {
     await waitFor(() => expect(m.selectCalls).toBe(2))
   })
 
+  it('a permit without an expiry is sent with expires_on null', async () => {
+    const { result } = renderHook(() => useWorkPermits('player-1'), { wrapper: wrapper() })
+    await act(async () => {
+      expect(await result.current.addPermit({ country_id: 4, type: 'visa', expires_on: '' })).toMatchObject({ ok: true })
+    })
+    expect(m.insert).toHaveBeenCalledWith({ player_id: 'player-1', country_id: 4, type: 'visa', valid_from: null, expires_on: null })
+  })
+
+  it('an open-ended permit is valid and sorts after dated ones', async () => {
+    m.rows.push({ id: 'c', player_id: 'player-1', country_id: 3, type: 'residency', valid_from: null, expires_on: null, created_at: '', updated_at: '' })
+    const { result } = renderHook(() => useWorkPermits('player-1'), { wrapper: wrapper() })
+    await waitFor(() => expect(result.current.permits).toHaveLength(3))
+    expect(result.current.permits.map((p) => [p.id, p.status])).toEqual([['b', 'expiring_soon'], ['a', 'valid'], ['c', 'valid']])
+  })
+
   it('invalid drafts never reach the server', async () => {
     const { result } = renderHook(() => useWorkPermits('player-1'), { wrapper: wrapper() })
     const r = await result.current.addPermit({ country_id: 3, type: 'passport', expires_on: '2030-01-01' })

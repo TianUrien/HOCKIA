@@ -81,7 +81,8 @@ export interface PermitInput {
   flag?: string | null
   type: string
   validFrom: string | null
-  expiresOn: string
+  /** Optional: a permit with no expiry is valid and shows no "until" date. */
+  expiresOn: string | null
 }
 
 export interface LeagueInput {
@@ -288,11 +289,16 @@ function passportFact<Id extends string>(
       // Recruiters see valid permits only; the owner sees every permit with its
       // status (amber row for expiring soon / expired).
       if (!isOwner && !valid) continue
+      // No expiry → no date on the line ("🇬🇧 United Kingdom · Visa").
       const until = formatMonth(permit.expiresOn)
+      const from = status === 'not_yet_valid' ? formatMonth(permit.validFrom) : null
+      const when = status === 'expired'
+        ? `expired ${until ?? ''}`.trim()
+        : [from ? `from ${from}` : null, until ? `until ${until}` : null].filter(Boolean).join(' ') || null
       const text = [
         withFlag(permit.countryName, permit.flag),
         workPermitTypeLabel(permit.type),
-        status === 'expired' ? `expired ${until ?? ''}`.trim() : until ? `until ${until}` : null,
+        when,
       ].filter(Boolean).join(' · ')
       extraLines.push(isOwner ? { text, status } : { text })
     }

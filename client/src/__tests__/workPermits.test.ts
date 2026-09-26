@@ -33,9 +33,14 @@ describe('workPermitStatus (mirrors the SQL function)', () => {
     expect(workPermitStatus(null, '2026-09-26', TODAY)).toBe('expiring_soon')
   })
 
-  it('a missing or junk expiry is treated as expired', () => {
-    expect(workPermitStatus(null, null, TODAY)).toBe('expired')
-    expect(workPermitStatus(null, 'soon', TODAY)).toBe('expired')
+  it('no expiry = valid, never expiring soon or expired (founder ruling: expiry optional)', () => {
+    expect(workPermitStatus(null, null, TODAY)).toBe('valid')
+    expect(workPermitStatus('2020-01-01', null, TODAY)).toBe('valid')
+    expect(workPermitStatus('2026-09-26', undefined, TODAY)).toBe('valid')
+  })
+
+  it('no expiry but a future start date = not yet valid', () => {
+    expect(workPermitStatus('2026-10-01', null, TODAY)).toBe('not_yet_valid')
   })
 
   it('a start date today or earlier does not block validity', () => {
@@ -45,8 +50,10 @@ describe('workPermitStatus (mirrors the SQL function)', () => {
 })
 
 describe('validity and attention', () => {
-  it('expiring soon still counts as valid', () => {
+  it('expiring soon still counts as valid; so does no expiry', () => {
     expect(isWorkPermitValid(null, '2026-10-01', TODAY)).toBe(true)
+    expect(isWorkPermitValid(null, null, TODAY)).toBe(true)
+    expect(isWorkPermitValid('2027-01-01', null, TODAY)).toBe(false)
     expect(isWorkPermitValid(null, '2026-09-01', TODAY)).toBe(false)
     expect(isWorkPermitValid('2027-01-01', '2027-06-01', TODAY)).toBe(false)
   })
@@ -66,23 +73,34 @@ describe('validateWorkPermitDraft', () => {
     expect(validateWorkPermitDraft(ok)).toBeNull()
   })
 
+  it('expiry is optional for every type', () => {
+    for (const type of ['visa', 'work_permit', 'residency']) {
+      expect(validateWorkPermitDraft({ country_id: 5, type, expires_on: null })).toBeNull()
+      expect(validateWorkPermitDraft({ country_id: 5, type })).toBeNull()
+      expect(validateWorkPermitDraft({ country_id: 5, type, expires_on: '  ' })).toBeNull()
+    }
+    expect(validateWorkPermitDraft({ country_id: 5, type: 'visa', valid_from: '2030-01-01', expires_on: null })).toBeNull()
+  })
+
   it('flags each missing / invalid field', () => {
     expect(validateWorkPermitDraft({ ...ok, country_id: null })).toBe('country_required')
     expect(validateWorkPermitDraft({ ...ok, type: 'passport' })).toBe('type_invalid')
-    expect(validateWorkPermitDraft({ ...ok, expires_on: null })).toBe('expiry_required')
+    expect(validateWorkPermitDraft({ ...ok, expires_on: 'soon' })).toBe('date_invalid')
+    expect(validateWorkPermitDraft({ ...ok, valid_from: 'yesterday' })).toBe('date_invalid')
     expect(validateWorkPermitDraft({ ...ok, valid_from: '2027-02-01' })).toBe('dates_out_of_order')
   })
 })
 
 describe('sortWorkPermits and labels', () => {
-  it('valid first (soonest expiry first), then not yet valid, then expired', () => {
+  it('valid first (soonest expiry first, no expiry last), then not yet valid, then expired', () => {
     const rows = [
+      { id: 'open-ended', valid_from: null, expires_on: null },
       { id: 'expired', valid_from: null, expires_on: '2026-01-01' },
       { id: 'later', valid_from: null, expires_on: '2028-01-01' },
       { id: 'future', valid_from: '2027-01-01', expires_on: '2027-06-01' },
       { id: 'soon', valid_from: null, expires_on: '2026-10-01' },
     ]
-    expect(sortWorkPermits(rows, TODAY).map((r) => r.id)).toEqual(['soon', 'later', 'future', 'expired'])
+    expect(sortWorkPermits(rows, TODAY).map((r) => r.id)).toEqual(['soon', 'later', 'open-ended', 'future', 'expired'])
   })
 
   it('type labels with a safe fallback', () => {

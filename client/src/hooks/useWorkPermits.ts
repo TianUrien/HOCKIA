@@ -49,7 +49,7 @@ export function useWorkPermits(playerId: string | null | undefined, opts?: { ena
         .from('player_work_permits')
         .select(COLUMNS)
         .eq('player_id', id as string)
-        .order('expires_on', { ascending: true })
+        .order('expires_on', { ascending: true, nullsFirst: false })
       if (selectError) throw selectError
       return (rows ?? []) as WorkPermitRow[]
     },
@@ -82,8 +82,8 @@ export function useWorkPermits(playerId: string | null | undefined, opts?: { ena
         player_id: id,
         country_id: draft.country_id as number,
         type: draft.type as string,
-        valid_from: draft.valid_from ?? null,
-        expires_on: draft.expires_on as string,
+        valid_from: draft.valid_from?.trim() ? draft.valid_from : null,
+        expires_on: draft.expires_on?.trim() ? draft.expires_on : null,
       })
       .select(COLUMNS)
       .single()
@@ -104,8 +104,8 @@ export function useWorkPermits(playerId: string | null | undefined, opts?: { ena
       .update({
         country_id: draft.country_id as number,
         type: draft.type as string,
-        valid_from: draft.valid_from ?? null,
-        expires_on: draft.expires_on as string,
+        valid_from: draft.valid_from?.trim() ? draft.valid_from : null,
+        expires_on: draft.expires_on?.trim() ? draft.expires_on : null,
       })
       .eq('id', permitId)
       .eq('player_id', id)

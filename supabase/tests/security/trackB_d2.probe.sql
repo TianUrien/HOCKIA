@@ -34,6 +34,7 @@ DECLARE
   v_eu    int;
   v_noneu int;
   v_league int;
+  v_id_pct int;
   v_persona record;
 BEGIN
   SELECT id INTO v_country FROM countries WHERE code = 'GB' LIMIT 1;
@@ -172,15 +173,37 @@ BEGIN
     v_out := v_out || E'\n' || v_line;
   END;
 
+  -- ── 2f. Expiry is optional for every type: owner saves, recruiter reads ──
+  BEGIN
+    PERFORM set_config('request.jwt.claims', json_build_object('sub', c_player, 'role', 'authenticated')::text, true);
+    EXECUTE 'SET LOCAL ROLE authenticated';
+    INSERT INTO player_work_permits (player_id, country_id, type) VALUES (c_player, v_country, 'visa');
+    INSERT INTO player_work_permits (player_id, country_id, type) VALUES (c_player, v_country, 'work_permit');
+    INSERT INTO player_work_permits (player_id, country_id, type, valid_from) VALUES (c_player, v_country, 'residency', current_date - 10);
+    SELECT count(*) FILTER (WHERE work_permit_status(valid_from, expires_on) = 'valid') INTO v_n
+      FROM player_work_permits WHERE player_id = c_player AND expires_on IS NULL;
+    PERFORM set_config('request.jwt.claims', json_build_object('sub', c_club, 'role', 'authenticated')::text, true);
+    SELECT count(*) INTO v_m FROM player_work_permits WHERE player_id = c_player AND expires_on IS NULL;
+    v_line := format('2f no-expiry permits (visa, work permit, residency): valid=%s, recruiter sees=%s → %s', v_n, v_m,
+      CASE WHEN v_n = 3 AND v_m = 3 THEN 'PASS' ELSE 'FAIL' END);
+    RAISE EXCEPTION 'probe_undo';
+  EXCEPTION WHEN others THEN
+    IF SQLERRM <> 'probe_undo' THEN v_line := '2f no-expiry permits → FAIL (' || SQLERRM || ')'; END IF;
+    v_out := v_out || E'\n' || v_line;
+  END;
+
   -- ── 3. Permit status ──
   v_txt := concat_ws(',',
     work_permit_status(NULL, current_date + 60),
     work_permit_status(NULL, current_date + 30),
     work_permit_status(NULL, current_date),
     work_permit_status(NULL, current_date - 1),
-    work_permit_status(current_date + 5, current_date + 90));
-  v_line := format('3  permit status 60d,30d,0d,-1d,future-start = %s → %s', v_txt,
-    CASE WHEN v_txt = 'valid,expiring_soon,expiring_soon,expired,not_yet_valid' THEN 'PASS' ELSE 'FAIL' END);
+    work_permit_status(current_date + 5, current_date + 90),
+    work_permit_status(NULL, NULL),
+    work_permit_status(current_date - 5, NULL),
+    work_permit_status(current_date + 5, NULL));
+  v_line := format('3  permit status 60d,30d,0d,-1d,future-start,no-expiry,past-start+no-expiry,future-start+no-expiry = %s → %s', v_txt,
+    CASE WHEN v_txt = 'valid,expiring_soon,expiring_soon,expired,not_yet_valid,valid,valid,not_yet_valid' THEN 'PASS' ELSE 'FAIL' END);
   v_out := v_out || E'\n' || v_line;
 
   -- ── 4. Open to play: adult ──
@@ -363,6 +386,28 @@ BEGIN
     RAISE EXCEPTION 'probe_undo';
   EXCEPTION WHEN others THEN
     IF SQLERRM <> 'probe_undo' THEN v_line := '7b permit bonus → FAIL (' || SQLERRM || ')'; END IF;
+    v_out := v_out || E'\n' || v_line;
+  END;
+
+  BEGIN
+    UPDATE profiles SET bio = NULL WHERE id = c_player;
+    SELECT profile_completeness_pct INTO v_n FROM profiles WHERE id = c_player;
+    PERFORM set_config('request.jwt.claims', json_build_object('sub', c_player, 'role', 'authenticated')::text, true);
+    EXECUTE 'SET LOCAL ROLE authenticated';
+    INSERT INTO player_work_permits (player_id, country_id, type, valid_from)
+      VALUES (c_player, v_country, 'visa', current_date + 30);           -- starts later: no bonus yet
+    EXECUTE 'RESET ROLE';
+    SELECT profile_completeness_pct INTO v_m FROM profiles WHERE id = c_player;
+    PERFORM set_config('request.jwt.claims', json_build_object('sub', c_player, 'role', 'authenticated')::text, true);
+    EXECUTE 'SET LOCAL ROLE authenticated';
+    INSERT INTO player_work_permits (player_id, country_id, type) VALUES (c_player, v_country, 'residency');  -- no expiry: valid
+    EXECUTE 'RESET ROLE';
+    SELECT profile_completeness_pct INTO v_id_pct FROM profiles WHERE id = c_player;
+    v_line := format('7d no-expiry permit bonus: base %s, future-start only %s, + open-ended %s → %s', v_n, v_m, v_id_pct,
+      CASE WHEN v_m = v_n AND v_id_pct = LEAST(100, v_n + 5) THEN 'PASS' ELSE 'FAIL' END);
+    RAISE EXCEPTION 'probe_undo';
+  EXCEPTION WHEN others THEN
+    IF SQLERRM <> 'probe_undo' THEN v_line := '7d no-expiry bonus → FAIL (' || SQLERRM || ')'; END IF;
     v_out := v_out || E'\n' || v_line;
   END;
 

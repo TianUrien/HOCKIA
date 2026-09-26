@@ -3544,7 +3544,7 @@ export type Database = {
         Row: {
           country_id: number
           created_at: string
-          expires_on: string
+          expires_on: string | null
           id: string
           player_id: string
           type: string
@@ -3554,7 +3554,7 @@ export type Database = {
         Insert: {
           country_id: number
           created_at?: string
-          expires_on: string
+          expires_on?: string | null
           id?: string
           player_id: string
           type: string
@@ -3564,7 +3564,7 @@ export type Database = {
         Update: {
           country_id?: number
           created_at?: string
-          expires_on?: string
+          expires_on?: string | null
           id?: string
           player_id?: string
           type?: string

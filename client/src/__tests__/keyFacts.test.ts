@@ -283,6 +283,7 @@ describe('permits on the passport tile', () => {
     { countryName: 'Australia', flag: '🇦🇺', type: 'work_permit', validFrom: null, expiresOn: '2026-10-10' },
     { countryName: 'Ireland', flag: '🇮🇪', type: 'residency', validFrom: null, expiresOn: '2026-01-31' },
     { countryName: 'New Zealand', flag: '🇳🇿', type: 'visa', validFrom: '2027-01-01', expiresOn: '2027-12-31' },
+    { countryName: 'Canada', flag: '🇨🇦', type: 'residency', validFrom: null, expiresOn: null },
   ]
   const input = { ...leandro, permits }
 
@@ -291,6 +292,7 @@ describe('permits on the passport tile', () => {
     expect(f.extraLines).toEqual([
       { text: '🇬🇧 United Kingdom · Visa · until Mar 2027' },
       { text: '🇦🇺 Australia · Work permit · until Oct 2026' },
+      { text: '🇨🇦 Canada · Residency' },
     ])
   })
 
@@ -302,8 +304,24 @@ describe('permits on the passport tile', () => {
 
   it('the owner sees every permit with its status (amber for expiring soon / expired)', () => {
     const f = byId(buildPlayerKeyFacts(input, { viewer: 'owner', today: TODAY }), 'passport')
-    expect(f.extraLines.map((l) => l.status)).toEqual(['valid', 'expiring_soon', 'expired', 'not_yet_valid'])
+    expect(f.extraLines.map((l) => l.status)).toEqual(['valid', 'expiring_soon', 'expired', 'not_yet_valid', 'valid'])
     expect(f.extraLines[2].text).toBe('🇮🇪 Ireland · Residency · expired Jan 2026')
+    expect(f.extraLines[3].text).toBe('🇳🇿 New Zealand · Visa · from Jan 2027 until Dec 2027')
+    expect(f.extraLines[4].text).toBe('🇨🇦 Canada · Residency')
+  })
+
+  it('a permit with no expiry is valid and shows no date; a future start still hides it from recruiters', () => {
+    const onlyOpen = { ...leandro, permits: [
+      { countryName: 'United Kingdom', flag: '🇬🇧', type: 'visa', validFrom: null, expiresOn: null },
+      { countryName: 'Japan', flag: '🇯🇵', type: 'work_permit', validFrom: '2027-04-01', expiresOn: null },
+    ] }
+    const rec = byId(buildPlayerKeyFacts(onlyOpen, { viewer: 'recruiter', today: TODAY }), 'passport')
+    expect(rec.extraLines).toEqual([{ text: '🇬🇧 United Kingdom · Visa' }])
+    const own = byId(buildPlayerKeyFacts(onlyOpen, { viewer: 'owner', today: TODAY }), 'passport')
+    expect(own.extraLines).toEqual([
+      { text: '🇬🇧 United Kingdom · Visa', status: 'valid' },
+      { text: '🇯🇵 Japan · Work permit · from Apr 2027', status: 'not_yet_valid' },
+    ])
   })
 
   it('permits never change the EU line (shown, not enforced)', () => {
@@ -315,7 +333,7 @@ describe('permits on the passport tile', () => {
     const f = byId(buildPlayerKeyFacts({ ...input, passports: [] }, { viewer: 'recruiter', today: TODAY }), 'passport')
     expect(f.missing).toBe(true)
     expect(f.value).toBe(NOT_GIVEN)
-    expect(f.extraLines).toHaveLength(2)
+    expect(f.extraLines).toHaveLength(3)
   })
 })
 
