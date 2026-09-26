@@ -3,7 +3,7 @@
 name = "hockia-uptime-monitor"
 main = "src/index.js"
 compatibility_date = "2026-09-01"
-workers_dev = true
+workers_dev = false
 
 [triggers]
 crons = ["*/5 * * * *", "0 */6 * * *"]
@@ -16,6 +16,6 @@ ALERT_FROM = "HOCKIA Monitor <monitor@inhockia.com>"
 # KV namespace for alert state; id filled in at first deploy (see README.md).
 [[kv_namespaces]]
 binding = "STATE"
-id = "REPLACE_AT_DEPLOY"
+id = "3c4fb21acf1141cbad957b223b310296"
 
 # Secrets (wrangler secret put): SUPABASE_ANON_KEY, RESEND_API_KEY, ALERT_TO
