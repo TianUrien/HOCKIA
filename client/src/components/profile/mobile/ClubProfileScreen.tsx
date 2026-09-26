@@ -354,7 +354,7 @@ export default function ClubProfileScreen({
       <div className="flex gap-6 px-5" role="tablist" aria-label="Club profile sections">
         {TABS.map((t) => (
           <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)} className="flex flex-col items-center gap-[9px] pt-0.5">
-            <span className={cn('text-row font-semibold', tab === t.id ? 'text-ink-1' : 'text-ink-4')}>{t.label}</span>
+            <span className={cn('text-row font-semibold', tab === t.id ? 'text-ink-1' : 'text-ink-3')}>{t.label}</span>
             <span className={cn('h-0.5 w-full rounded-[1px]', tab === t.id ? 'bg-ink-1' : 'bg-transparent')} />
           </button>
         ))}

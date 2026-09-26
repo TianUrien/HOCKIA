@@ -34,7 +34,7 @@ export function displaySource(source: string | null | undefined): string {
 
 /** Sources that mean "no channel" — never a winner, always grey. */
 export const NON_CHANNEL_COLORS: Record<string, string> = { direct: '#9ca3af', direct_app: '#6b7280', unknown: '#d1d5db' }
-const SOURCE_PALETTE = ['#6d28d9', '#2563eb', '#059669', '#d97706', '#e11d48', '#0891b2', '#65a30d', '#db2777', '#4f46e5', '#0d9488']
+const SOURCE_PALETTE = ['#6c2bd9', '#2563eb', '#059669', '#d97706', '#e11d48', '#0891b2', '#65a30d', '#db2777', '#4f46e5', '#0d9488']
 
 export function isNonChannel(source: string): boolean {
   return source in NON_CHANNEL_COLORS

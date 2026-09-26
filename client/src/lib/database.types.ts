@@ -4316,6 +4316,7 @@ export type Database = {
           club_bio: string | null
           club_history: string | null
           club_media_count: number
+          coach_current_role: string | null
           coach_recruits_for_team: boolean
           coach_specialization: string | null
           coach_specialization_custom: string | null
@@ -4426,6 +4427,7 @@ export type Database = {
           club_bio?: string | null
           club_history?: string | null
           club_media_count?: number
+          coach_current_role?: string | null
           coach_recruits_for_team?: boolean
           coach_specialization?: string | null
           coach_specialization_custom?: string | null
@@ -4536,6 +4538,7 @@ export type Database = {
           club_bio?: string | null
           club_history?: string | null
           club_media_count?: number
+          coach_current_role?: string | null
           coach_recruits_for_team?: boolean
           coach_specialization?: string | null
           coach_specialization_custom?: string | null
@@ -6532,6 +6535,7 @@ export type Database = {
           club_bio: string | null
           club_history: string | null
           club_media_count: number | null
+          coach_current_role: string | null
           coach_recruits_for_team: boolean | null
           coach_specialization: string | null
           coach_specialization_custom: string | null
@@ -6640,6 +6644,7 @@ export type Database = {
           club_bio?: string | null
           club_history?: string | null
           club_media_count?: number | null
+          coach_current_role?: string | null
           coach_recruits_for_team?: boolean | null
           coach_specialization?: string | null
           coach_specialization_custom?: string | null
@@ -6748,6 +6753,7 @@ export type Database = {
           club_bio?: string | null
           club_history?: string | null
           club_media_count?: number | null
+          coach_current_role?: string | null
           coach_recruits_for_team?: boolean | null
           coach_specialization?: string | null
           coach_specialization_custom?: string | null
@@ -8209,6 +8215,7 @@ export type Database = {
           club_bio: string | null
           club_history: string | null
           club_media_count: number
+          coach_current_role: string | null
           coach_recruits_for_team: boolean
           coach_specialization: string | null
           coach_specialization_custom: string | null
@@ -8438,6 +8445,7 @@ export type Database = {
           club_bio: string | null
           club_history: string | null
           club_media_count: number
+          coach_current_role: string | null
           coach_recruits_for_team: boolean
           coach_specialization: string | null
           coach_specialization_custom: string | null

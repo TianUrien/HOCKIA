@@ -3201,7 +3201,15 @@ Deno.serve(async (req) => {
       start_date: string | null; availability_required: boolean
       specialists: string[] | null; specialists_required: boolean
     } | null = null
+    // Only recruiters (a club, or a coach who recruits for a team — the SQL
+    // is_recruiter rule) have a recruiting scope. A coach who stopped
+    // recruiting can still have an old active row; it must not filter search.
+    let viewerIsRecruiter = false
     if (userContext?.role === 'club' || userContext?.role === 'coach') {
+      const { data: recruiterFlag } = await adminClient.rpc('is_recruiter', { p_uid: user.id })
+      viewerIsRecruiter = recruiterFlag === true
+    }
+    if (viewerIsRecruiter) {
       const { data: scopeRow } = await adminClient
         .from('recruiting_context')
         .select('target_role, target_position, target_compensation, target_location_country, target_start_date, target_specialists, position_required, compensation_required, location_required, availability_required, specialists_required')

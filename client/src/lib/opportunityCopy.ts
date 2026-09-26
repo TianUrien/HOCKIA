@@ -93,7 +93,7 @@ export const BENEFIT_TILES: Record<string, BenefitTile> = {
   flights: { key: 'flights', label: 'Flights', icon: Plane, tileClass: 'bg-[#e0f4f9] text-[#0e7490]', detail: 'Covered' },
   job: { key: 'job', label: 'Job', icon: Briefcase, tileClass: 'bg-[#e8e7fd] text-[#4338ca]', detail: 'Work arranged alongside hockey' },
   insurance: { key: 'insurance', label: 'Insurance', icon: Shield, tileClass: 'bg-[#fee2e2] text-[#b91c1c]', detail: 'Covered by the club' },
-  bonuses: { key: 'bonuses', label: 'Bonuses', icon: DollarSign, tileClass: 'bg-[#e8f7ee] text-[#15803d]', detail: 'Performance bonuses' },
+  bonuses: { key: 'bonuses', label: 'Bonuses', icon: DollarSign, tileClass: 'bg-positive-soft text-positive', detail: 'Performance bonuses' },
   visa: { key: 'visa', label: 'Visa', icon: Globe, tileClass: 'bg-[#e0f4f9] text-[#0e7490]', detail: 'Sponsorship arranged' },
   car: { key: 'car', label: 'Car', icon: Car, tileClass: 'bg-[#fdf1e4] text-[#b45309]', detail: 'Provided by the club' },
   equipment: { key: 'equipment', label: 'Equipment', icon: Dumbbell, tileClass: 'bg-[#e6f6f4] text-[#0f766e]', detail: 'Kit and stick provided' },

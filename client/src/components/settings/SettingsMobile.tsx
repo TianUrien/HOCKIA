@@ -128,7 +128,12 @@ function Hub({ go }: { go: (s: SettingsSection | 'account') => void }) {
 
       {recruitable && (
       <SettingsGroup label="Availability" footer="Clubs filter by this. Your week asks you to confirm it now and then.">
-        <SettingsRow title="Open to play" subtitle="Shown on your profile and in Community." trailing={<SettingsSwitch label="Open to play" checked={read('open_to_play', false)} disabled={busy === 'open_to_play'} onChange={() => void toggle('open_to_play', false)} />} />
+        {isPlayer ? (
+          // D2.4: players set Open to play on its own screen (switch + when + consent).
+          <SettingsRow title="Open to play" subtitle="Shown on your profile and in Community." value={read('open_to_play', false) ? 'On' : 'Off'} onClick={() => navigate('/dashboard/profile/open-to-play')} />
+        ) : (
+          <SettingsRow title="Open to play" subtitle="Shown on your profile and in Community." trailing={<SettingsSwitch label="Open to play" checked={read('open_to_play', false)} disabled={busy === 'open_to_play'} onChange={() => void toggle('open_to_play', false)} />} />
+        )}
         <SettingsRow title="Open to opportunities" subtitle="Clubs and coaches can reach out about roles." trailing={<SettingsSwitch label="Open to opportunities" checked={read('open_to_opportunities', false)} disabled={busy === 'open_to_opportunities'} onChange={() => void toggle('open_to_opportunities', false)} />} />
         <SettingsRow title="Looking for" subtitle={preference ? `${OPPORTUNITY_PREF_LABEL[preference] ?? preference} roles` : 'Not set'} onClick={() => setLookingFor(true)} />
       </SettingsGroup>
