@@ -57,7 +57,6 @@ const monthDay = (iso: string | null) => {
   const d = new Date(iso)
   return Number.isNaN(d.getTime()) ? null : `${MONTH[d.getMonth()]} ${d.getDate()}`
 }
-const pronounsFor = (g: string | null) => (/^(men|male|man|m)$/i.test(g ?? '') ? { obj: 'him' as const, pos: 'his' as const } : /^(women|female|woman|f)$/i.test(g ?? '') ? { obj: 'her' as const, pos: 'her' as const } : { obj: 'them' as const, pos: 'their' as const })
 
 export default function ApplicantReviewScreen({ roleId, applicationId }: Props) {
   const navigate = useNavigate()
@@ -144,7 +143,6 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
 
   const p = review?.person
   const firstName = p?.full_name?.trim().split(/\s+/)[0] || 'this player'
-  const pron = pronounsFor(p?.gender ?? null)
   const rows = useMemo(() => {
     if (!review) return []
     const lastDays = review.person.last_active_at ? Math.max(0, Math.floor((Date.now() - new Date(review.person.last_active_at).getTime()) / 86_400_000)) : null
@@ -380,7 +378,7 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
       )}
 
       {p && (
-        <DeclineSheet open={declining} applicationId={applicationId} firstName={firstName} pronoun={pron.obj} onCancel={() => setDeclining(false)} onSend={decline} />
+        <DeclineSheet open={declining} applicationId={applicationId} firstName={firstName} hasName={Boolean(p.full_name?.trim())} onCancel={() => setDeclining(false)} onSend={decline} />
       )}
     </div>
   )

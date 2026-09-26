@@ -18,14 +18,15 @@ interface DeclineSheetProps {
   open: boolean
   applicationId: string
   firstName: string
-  pronoun: 'him' | 'her' | 'them'
+  /** False when the profile has no name and firstName is a generic fallback. */
+  hasName?: boolean
   onCancel: () => void
   onSend: (reason: string, message: string) => void
 }
 
 const MAX = 600
 
-export function DeclineSheet({ open, applicationId, firstName, pronoun, onCancel, onSend }: DeclineSheetProps) {
+export function DeclineSheet({ open, applicationId, firstName, hasName = true, onCancel, onSend }: DeclineSheetProps) {
   const [reason, setReason] = useState<string | null>(null)
   const [note, setNote] = useState('')
   const [edited, setEdited] = useState(false)
@@ -56,15 +57,13 @@ export function DeclineSheet({ open, applicationId, firstName, pronoun, onCancel
   }, [open, reason, edited, applicationId])
 
   const canSend = Boolean(reason) && note.trim().length > 0 && note.length <= MAX && !drafting
-  const pronounPossessive = pronoun === 'him' ? 'his' : pronoun === 'her' ? 'her' : 'their'
-  const subject = pronoun === 'him' ? 'He’ll' : pronoun === 'her' ? 'She’ll' : 'They’ll'
 
   return (
     <BottomSheet open={open} onClose={onCancel} ariaLabel={`Decline ${firstName}`}>
       <div className="flex flex-col gap-3.5 px-5 pb-6 pt-1" data-testid="decline-sheet">
         <div className="pt-1">
           <h2 className="text-[22px] font-bold leading-7 tracking-[-0.11px] text-ink-1">Decline {firstName}?</h2>
-          <p className="mt-1 text-[14px] leading-5 text-ink-2">Pick a reason. Hockia writes {pronoun} a kind note from it — change anything before it goes.</p>
+          <p className="mt-1 text-[14px] leading-5 text-ink-2">{hasName ? `Pick a reason. Hockia writes ${firstName} a kind note from it — change anything before it goes.` : 'Pick a reason. Hockia turns it into a kind note — change anything before it goes.'}</p>
         </div>
         <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Reason">
           {DECLINE_REASON_CHIPS.map((r) => (
@@ -96,7 +95,7 @@ export function DeclineSheet({ open, applicationId, firstName, pronoun, onCancel
             />
           </div>
         )}
-        <p className="text-caption text-ink-3">{subject} see this note on {pronounPossessive} application and in the email about it.</p>
+        <p className="text-caption text-ink-3">This note appears on the application and in the email about it.</p>
         <button
           type="button"
           disabled={!canSend}
