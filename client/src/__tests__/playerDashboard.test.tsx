@@ -168,6 +168,7 @@ vi.mock('@/hooks/useProfileKeyFacts', () => ({
 }))
 // Desktop hero video count (useQuery inside; this tree has no QueryClient).
 vi.mock('@/hooks/useProfileVideoTotal', () => ({ useProfileVideoTotal: () => null }))
+vi.mock('@/hooks/useProfileVideos', () => ({ useProfileVideos: () => ({ videos: [], links: [], loading: false, reload: () => {} }) }))
 vi.mock('@/hooks/useClubViewOfPlayer', () => ({
   useClubViewOfPlayer: () => ({ enabled: false, isClub: false, roles: [], application: null, fitRole: null, fit: null, shortlisted: false, shortlistedRoleIds: [], busy: false, shortlistForRole: vi.fn(), shortlistDefault: vi.fn() }),
 }))

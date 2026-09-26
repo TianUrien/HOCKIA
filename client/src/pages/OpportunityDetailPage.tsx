@@ -427,6 +427,7 @@ export default function OpportunityDetailPage() {
             hasApplied={hasApplied}
             applicationStatus={applicationStatus}
             isClosed={isClosed}
+            onMessage={handleMessageClick}
           />
         </div>
       </div>
