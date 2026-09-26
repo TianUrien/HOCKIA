@@ -38,6 +38,7 @@ import { useEffect, useMemo } from 'react'
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
+import { isRecruitingViewer } from '@/lib/recruiterAccess'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
 import type { Database } from '@/lib/database.types'
 
@@ -101,8 +102,10 @@ export interface UseRecruitingContextResult {
 interface RecruitingContextStoreState {
   ownerId: string | null
   /** Viewer's role; gates whether the store ever issues a fetch.
-   *  null means "viewer not loaded / no role yet"; non-recruiter
-   *  roles also stay null after eligibility check fails. */
+   *  null means "viewer not loaded / no role yet"; non-recruiters
+   *  (players, candidate coaches, brands, umpires) also stay null after
+   *  the eligibility check fails. 'coach' is only ever set for a coach
+   *  who recruits for a team (founder ruling 2026-09-26). */
   eligibleRole: 'club' | 'coach' | null
   rows: RecruitingContextRow[]
   loading: boolean
@@ -110,7 +113,13 @@ interface RecruitingContextStoreState {
   /** Set on the first fetch attempt for a given owner so consumers
    *  can avoid re-triggering it from every mount. */
   fetchedForOwner: string | null
-  setViewer: (ownerId: string | null, role: string | null | undefined) => void
+  /** `coachRecruitsForTeam` = the viewer's profiles.coach_recruits_for_team.
+   *  A coach is eligible ONLY when it is true (mirrors SQL is_recruiter). */
+  setViewer: (
+    ownerId: string | null,
+    role: string | null | undefined,
+    coachRecruitsForTeam?: boolean | null,
+  ) => void
   /** Idempotent fetch trigger — safe to call from multiple effects in
    *  the same render commit; only the first wins. */
   ensureFetched: () => Promise<void>
@@ -124,8 +133,16 @@ interface RecruitingContextStoreState {
   clearError: () => void
 }
 
-function isEligibleRole(role: string | null | undefined): role is 'club' | 'coach' {
-  return role === 'club' || role === 'coach'
+/** Recruiters only (founder ruling 2026-09-26 — Fit counts ONLY coaches who
+ *  recruit): a club, or a coach with coach_recruits_for_team === true. Same
+ *  rule as isRecruitingViewer / SQL public.is_recruiter. A candidate coach
+ *  never fetches or uses recruiting contexts. */
+function eligibleRecruiterRole(
+  role: string | null | undefined,
+  coachRecruitsForTeam: boolean | null | undefined,
+): 'club' | 'coach' | null {
+  if (!isRecruitingViewer({ role, coach_recruits_for_team: coachRecruitsForTeam })) return null
+  return role === 'club' ? 'club' : 'coach'
 }
 
 /** Monotonic fetch token. Every doFetch call increments this and
@@ -176,8 +193,8 @@ export const useRecruitingContextStore = create<RecruitingContextStoreState>((se
   error: null,
   fetchedForOwner: null,
 
-  setViewer: (ownerId, role) => {
-    const eligibleRole = isEligibleRole(role) ? role : null
+  setViewer: (ownerId, role, coachRecruitsForTeam) => {
+    const eligibleRole = eligibleRecruiterRole(role, coachRecruitsForTeam)
     const current = get()
     if (current.ownerId === ownerId && current.eligibleRole === eligibleRole) return
     set({
@@ -397,6 +414,7 @@ export function useRecruitingContext(): UseRecruitingContextResult {
   const { profile: viewer } = useAuthStore()
   const viewerId = viewer?.id ?? null
   const viewerRole = viewer?.role ?? null
+  const viewerRecruits = viewer?.coach_recruits_for_team ?? null
 
   const rows = useRecruitingContextStore((s) => s.rows)
   const loading = useRecruitingContextStore((s) => s.loading)
@@ -413,12 +431,12 @@ export function useRecruitingContext(): UseRecruitingContextResult {
   const clearError = useRecruitingContextStore((s) => s.clearError)
 
   useEffect(() => {
-    setViewer(viewerId, viewerRole)
-  }, [viewerId, viewerRole, setViewer])
+    setViewer(viewerId, viewerRole, viewerRecruits)
+  }, [viewerId, viewerRole, viewerRecruits, setViewer])
 
   useEffect(() => {
     void ensureFetched()
-  }, [viewerId, viewerRole, ensureFetched])
+  }, [viewerId, viewerRole, viewerRecruits, ensureFetched])
 
   const active = rows.find((r) => r.is_active) ?? null
 
@@ -478,6 +496,7 @@ export function useActiveRecruitingTarget(): RecruitingTargetCategory | null {
   const { profile: viewer } = useAuthStore()
   const viewerId = viewer?.id ?? null
   const viewerRole = viewer?.role ?? null
+  const viewerRecruits = viewer?.coach_recruits_for_team ?? null
 
   const setViewer = useRecruitingContextStore((s) => s.setViewer)
   const ensureFetched = useRecruitingContextStore((s) => s.ensureFetched)
@@ -487,12 +506,12 @@ export function useActiveRecruitingTarget(): RecruitingTargetCategory | null {
   })
 
   useEffect(() => {
-    setViewer(viewerId, viewerRole)
-  }, [viewerId, viewerRole, setViewer])
+    setViewer(viewerId, viewerRole, viewerRecruits)
+  }, [viewerId, viewerRole, viewerRecruits, setViewer])
 
   useEffect(() => {
     void ensureFetched()
-  }, [viewerId, viewerRole, ensureFetched])
+  }, [viewerId, viewerRole, viewerRecruits, ensureFetched])
 
   return target
 }
@@ -516,6 +535,7 @@ export function useActiveRecruitingTargetRole(): string | null {
   const { profile: viewer } = useAuthStore()
   const viewerId = viewer?.id ?? null
   const viewerRole = viewer?.role ?? null
+  const viewerRecruits = viewer?.coach_recruits_for_team ?? null
 
   const setViewer = useRecruitingContextStore((s) => s.setViewer)
   const ensureFetched = useRecruitingContextStore((s) => s.ensureFetched)
@@ -525,12 +545,12 @@ export function useActiveRecruitingTargetRole(): string | null {
   })
 
   useEffect(() => {
-    setViewer(viewerId, viewerRole)
-  }, [viewerId, viewerRole, setViewer])
+    setViewer(viewerId, viewerRole, viewerRecruits)
+  }, [viewerId, viewerRole, viewerRecruits, setViewer])
 
   useEffect(() => {
     void ensureFetched()
-  }, [viewerId, viewerRole, ensureFetched])
+  }, [viewerId, viewerRole, viewerRecruits, ensureFetched])
 
   return role
 }
@@ -543,6 +563,7 @@ export function useActiveRecruitingTargetPosition(): string | null {
   const { profile: viewer } = useAuthStore()
   const viewerId = viewer?.id ?? null
   const viewerRole = viewer?.role ?? null
+  const viewerRecruits = viewer?.coach_recruits_for_team ?? null
 
   const setViewer = useRecruitingContextStore((s) => s.setViewer)
   const ensureFetched = useRecruitingContextStore((s) => s.ensureFetched)
@@ -552,12 +573,12 @@ export function useActiveRecruitingTargetPosition(): string | null {
   })
 
   useEffect(() => {
-    setViewer(viewerId, viewerRole)
-  }, [viewerId, viewerRole, setViewer])
+    setViewer(viewerId, viewerRole, viewerRecruits)
+  }, [viewerId, viewerRole, viewerRecruits, setViewer])
 
   useEffect(() => {
     void ensureFetched()
-  }, [viewerId, viewerRole, ensureFetched])
+  }, [viewerId, viewerRole, viewerRecruits, ensureFetched])
 
   return position
 }
@@ -571,6 +592,7 @@ export function useActiveRecruitingEuRequired(): boolean {
   const { profile: viewer } = useAuthStore()
   const viewerId = viewer?.id ?? null
   const viewerRole = viewer?.role ?? null
+  const viewerRecruits = viewer?.coach_recruits_for_team ?? null
 
   const setViewer = useRecruitingContextStore((s) => s.setViewer)
   const ensureFetched = useRecruitingContextStore((s) => s.ensureFetched)
@@ -580,12 +602,12 @@ export function useActiveRecruitingEuRequired(): boolean {
   })
 
   useEffect(() => {
-    setViewer(viewerId, viewerRole)
-  }, [viewerId, viewerRole, setViewer])
+    setViewer(viewerId, viewerRole, viewerRecruits)
+  }, [viewerId, viewerRole, viewerRecruits, setViewer])
 
   useEffect(() => {
     void ensureFetched()
-  }, [viewerId, viewerRole, ensureFetched])
+  }, [viewerId, viewerRole, viewerRecruits, ensureFetched])
 
   return euRequired
 }
@@ -610,6 +632,7 @@ export function useActiveRecruitingMustHaves(): RecruitingMustHaves {
   const { profile: viewer } = useAuthStore()
   const viewerId = viewer?.id ?? null
   const viewerRole = viewer?.role ?? null
+  const viewerRecruits = viewer?.coach_recruits_for_team ?? null
 
   const setViewer = useRecruitingContextStore((s) => s.setViewer)
   const ensureFetched = useRecruitingContextStore((s) => s.ensureFetched)
@@ -626,12 +649,12 @@ export function useActiveRecruitingMustHaves(): RecruitingMustHaves {
   const specialists = useRecruitingContextStore((s) => Boolean(s.rows.find((r) => r.is_active)?.specialists_required))
 
   useEffect(() => {
-    setViewer(viewerId, viewerRole)
-  }, [viewerId, viewerRole, setViewer])
+    setViewer(viewerId, viewerRole, viewerRecruits)
+  }, [viewerId, viewerRole, viewerRecruits, setViewer])
 
   useEffect(() => {
     void ensureFetched()
-  }, [viewerId, viewerRole, ensureFetched])
+  }, [viewerId, viewerRole, viewerRecruits, ensureFetched])
 
   return useMemo(
     () => ({ position, level, compensation, location, availability, specialists }),
@@ -646,6 +669,7 @@ export function useActiveRecruitingTargetLocation(): string | null {
   const { profile: viewer } = useAuthStore()
   const viewerId = viewer?.id ?? null
   const viewerRole = viewer?.role ?? null
+  const viewerRecruits = viewer?.coach_recruits_for_team ?? null
 
   const setViewer = useRecruitingContextStore((s) => s.setViewer)
   const ensureFetched = useRecruitingContextStore((s) => s.ensureFetched)
@@ -655,12 +679,12 @@ export function useActiveRecruitingTargetLocation(): string | null {
   })
 
   useEffect(() => {
-    setViewer(viewerId, viewerRole)
-  }, [viewerId, viewerRole, setViewer])
+    setViewer(viewerId, viewerRole, viewerRecruits)
+  }, [viewerId, viewerRole, viewerRecruits, setViewer])
 
   useEffect(() => {
     void ensureFetched()
-  }, [viewerId, viewerRole, ensureFetched])
+  }, [viewerId, viewerRole, viewerRecruits, ensureFetched])
 
   return location
 }
@@ -675,6 +699,7 @@ export function useActiveRecruitingTargetSpecialists(): string[] {
   const { profile: viewer } = useAuthStore()
   const viewerId = viewer?.id ?? null
   const viewerRole = viewer?.role ?? null
+  const viewerRecruits = viewer?.coach_recruits_for_team ?? null
 
   const setViewer = useRecruitingContextStore((s) => s.setViewer)
   const ensureFetched = useRecruitingContextStore((s) => s.ensureFetched)
@@ -687,12 +712,12 @@ export function useActiveRecruitingTargetSpecialists(): string[] {
   })
 
   useEffect(() => {
-    setViewer(viewerId, viewerRole)
-  }, [viewerId, viewerRole, setViewer])
+    setViewer(viewerId, viewerRole, viewerRecruits)
+  }, [viewerId, viewerRole, viewerRecruits, setViewer])
 
   useEffect(() => {
     void ensureFetched()
-  }, [viewerId, viewerRole, ensureFetched])
+  }, [viewerId, viewerRole, viewerRecruits, ensureFetched])
 
   return specialists
 }
@@ -703,6 +728,7 @@ export function useActiveRecruitingTargetStartDate(): string | null {
   const { profile: viewer } = useAuthStore()
   const viewerId = viewer?.id ?? null
   const viewerRole = viewer?.role ?? null
+  const viewerRecruits = viewer?.coach_recruits_for_team ?? null
 
   const setViewer = useRecruitingContextStore((s) => s.setViewer)
   const ensureFetched = useRecruitingContextStore((s) => s.ensureFetched)
@@ -712,12 +738,12 @@ export function useActiveRecruitingTargetStartDate(): string | null {
   })
 
   useEffect(() => {
-    setViewer(viewerId, viewerRole)
-  }, [viewerId, viewerRole, setViewer])
+    setViewer(viewerId, viewerRole, viewerRecruits)
+  }, [viewerId, viewerRole, viewerRecruits, setViewer])
 
   useEffect(() => {
     void ensureFetched()
-  }, [viewerId, viewerRole, ensureFetched])
+  }, [viewerId, viewerRole, viewerRecruits, ensureFetched])
 
   return startDate
 }
@@ -729,6 +755,7 @@ export function useActiveRecruitingTargetLevel(): string | null {
   const { profile: viewer } = useAuthStore()
   const viewerId = viewer?.id ?? null
   const viewerRole = viewer?.role ?? null
+  const viewerRecruits = viewer?.coach_recruits_for_team ?? null
 
   const setViewer = useRecruitingContextStore((s) => s.setViewer)
   const ensureFetched = useRecruitingContextStore((s) => s.ensureFetched)
@@ -738,12 +765,12 @@ export function useActiveRecruitingTargetLevel(): string | null {
   })
 
   useEffect(() => {
-    setViewer(viewerId, viewerRole)
-  }, [viewerId, viewerRole, setViewer])
+    setViewer(viewerId, viewerRole, viewerRecruits)
+  }, [viewerId, viewerRole, viewerRecruits, setViewer])
 
   useEffect(() => {
     void ensureFetched()
-  }, [viewerId, viewerRole, ensureFetched])
+  }, [viewerId, viewerRole, viewerRecruits, ensureFetched])
 
   return level
 }
@@ -755,6 +782,7 @@ export function useActiveRecruitingTargetCompensation(): string | null {
   const { profile: viewer } = useAuthStore()
   const viewerId = viewer?.id ?? null
   const viewerRole = viewer?.role ?? null
+  const viewerRecruits = viewer?.coach_recruits_for_team ?? null
 
   const setViewer = useRecruitingContextStore((s) => s.setViewer)
   const ensureFetched = useRecruitingContextStore((s) => s.ensureFetched)
@@ -764,12 +792,12 @@ export function useActiveRecruitingTargetCompensation(): string | null {
   })
 
   useEffect(() => {
-    setViewer(viewerId, viewerRole)
-  }, [viewerId, viewerRole, setViewer])
+    setViewer(viewerId, viewerRole, viewerRecruits)
+  }, [viewerId, viewerRole, viewerRecruits, setViewer])
 
   useEffect(() => {
     void ensureFetched()
-  }, [viewerId, viewerRole, ensureFetched])
+  }, [viewerId, viewerRole, viewerRecruits, ensureFetched])
 
   return compensation
 }
@@ -784,18 +812,19 @@ export function useHasActiveRecruitingScope(): boolean {
   const { profile: viewer } = useAuthStore()
   const viewerId = viewer?.id ?? null
   const viewerRole = viewer?.role ?? null
+  const viewerRecruits = viewer?.coach_recruits_for_team ?? null
 
   const setViewer = useRecruitingContextStore((s) => s.setViewer)
   const ensureFetched = useRecruitingContextStore((s) => s.ensureFetched)
   const hasActive = useRecruitingContextStore((s) => s.rows.some((r) => r.is_active))
 
   useEffect(() => {
-    setViewer(viewerId, viewerRole)
-  }, [viewerId, viewerRole, setViewer])
+    setViewer(viewerId, viewerRole, viewerRecruits)
+  }, [viewerId, viewerRole, viewerRecruits, setViewer])
 
   useEffect(() => {
     void ensureFetched()
-  }, [viewerId, viewerRole, ensureFetched])
+  }, [viewerId, viewerRole, viewerRecruits, ensureFetched])
 
   return hasActive
 }
@@ -808,6 +837,7 @@ export function useActiveRecruitingTargetProblem(): string | null {
   const { profile: viewer } = useAuthStore()
   const viewerId = viewer?.id ?? null
   const viewerRole = viewer?.role ?? null
+  const viewerRecruits = viewer?.coach_recruits_for_team ?? null
 
   const setViewer = useRecruitingContextStore((s) => s.setViewer)
   const ensureFetched = useRecruitingContextStore((s) => s.ensureFetched)
@@ -817,12 +847,12 @@ export function useActiveRecruitingTargetProblem(): string | null {
   })
 
   useEffect(() => {
-    setViewer(viewerId, viewerRole)
-  }, [viewerId, viewerRole, setViewer])
+    setViewer(viewerId, viewerRole, viewerRecruits)
+  }, [viewerId, viewerRole, viewerRecruits, setViewer])
 
   useEffect(() => {
     void ensureFetched()
-  }, [viewerId, viewerRole, ensureFetched])
+  }, [viewerId, viewerRole, viewerRecruits, ensureFetched])
 
   return problem
 }

@@ -787,6 +787,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
         womens_league_division: (currentUserProfile as { womens_league_division?: string | null }).womens_league_division ?? null,
         mens_league_division: (currentUserProfile as { mens_league_division?: string | null }).mens_league_division ?? null,
         current_world_club_id: currentUserProfile.current_world_club_id ?? null,
+        coach_recruits_for_team: currentUserProfile.coach_recruits_for_team ?? null,
         // Viewer's own league band (scope-targeted) so competition_proximity can compare.
         competition_level_band: getClubLevelBand(currentUserProfile.current_world_club_id ?? null, contextTarget),
       }
@@ -910,6 +911,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
       womens_league_division: (currentUserProfile as { womens_league_division?: string | null }).womens_league_division ?? null,
       mens_league_division: (currentUserProfile as { mens_league_division?: string | null }).mens_league_division ?? null,
       current_world_club_id: currentUserProfile.current_world_club_id ?? null,
+      coach_recruits_for_team: currentUserProfile.coach_recruits_for_team ?? null,
       // Viewer's own league band (scope-targeted) so competition_proximity can compare.
       competition_level_band: getClubLevelBand(currentUserProfile.current_world_club_id ?? null, contextTarget),
     }
@@ -991,6 +993,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
       womens_league_division: (currentUserProfile as { womens_league_division?: string | null }).womens_league_division ?? null,
       mens_league_division: (currentUserProfile as { mens_league_division?: string | null }).mens_league_division ?? null,
       current_world_club_id: currentUserProfile.current_world_club_id ?? null,
+      coach_recruits_for_team: currentUserProfile.coach_recruits_for_team ?? null,
     }
     const fitOptions = {
       overrideTarget: contextTarget,
