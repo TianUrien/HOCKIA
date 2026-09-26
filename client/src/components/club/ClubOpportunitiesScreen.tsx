@@ -75,7 +75,7 @@ function RoleCard({ role, expiryDays, onReview }: { role: ClubRole; expiryDays: 
     <article className="flex flex-col gap-3 rounded-[18px] border border-line bg-white p-4" data-testid="club-role-card">
       <div className="flex items-center justify-between gap-2">
         <span className="min-w-0 truncate text-secondary font-semibold text-ink-2">{role.title}</span>
-        <span className="flex shrink-0 items-center gap-1 text-secondary text-ink-4">
+        <span className="flex shrink-0 items-center gap-1 text-secondary text-ink-3">
           <Clock className="h-3.5 w-3.5" strokeWidth={2} /> {open ? `Posted ${monthDay(role.published_at ?? role.created_at)}` : closedLabel(role)}
         </span>
       </div>
@@ -112,7 +112,7 @@ function RoleCard({ role, expiryDays, onReview }: { role: ClubRole; expiryDays: 
         {stat(p.declined, 'Declined')}
       </button>
       {p.closed > 0 && (
-        <p className="flex items-center gap-1.5 text-caption text-ink-4">
+        <p className="flex items-center gap-1.5 text-caption text-ink-3">
           <Info className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
           {p.closed} more closed without a reply after {expiryDays} days
         </p>

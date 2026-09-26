@@ -50,12 +50,12 @@ html {
 /* HOCKIA Brand Colors & Custom Properties */
 :root {
   /* Primary Brand Colors */
-  --color-hockia-primary: #6d28d9;
+  --color-hockia-primary: #6c2bd9; /* Foundations brand/primary */
   --color-hockia-secondary: #7c3aed;
   --color-hockia-accent: #ec4899;
-  --color-hockia-success: #10b981;
+  --color-hockia-success: #15803d; /* Foundations status/positive */
   --color-hockia-warning: #f59e0b;
-  --color-hockia-danger: #ef4444;
+  --color-hockia-danger: #dc2626; /* Foundations status/danger */
   --color-hockia-orange: #ff9500;
 
   /* Layout metrics */

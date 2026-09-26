@@ -161,6 +161,14 @@ vi.mock('@/components/profile/mobile/FriendsScreen', () => ({
 vi.mock('@/components/profile/mobile/ReferencesScreen', () => ({
   default: () => <div data-testid="references-screen" />,
 }))
+// D2 phone-only data (key facts, club view) — React Query hooks, stubbed here;
+// they have their own suites.
+vi.mock('@/hooks/useProfileKeyFacts', () => ({
+  useProfileKeyFacts: () => ({ facts: [], viewer: 'owner', attentionPermits: [], permits: [], league: null }),
+}))
+vi.mock('@/hooks/useClubViewOfPlayer', () => ({
+  useClubViewOfPlayer: () => ({ enabled: false, isClub: false, roles: [], application: null, fitRole: null, fit: null, shortlisted: false, shortlistedRoleIds: [], busy: false, shortlistForRole: vi.fn(), shortlistDefault: vi.fn() }),
+}))
 // This suite asserts the DESKTOP body; the phone tree mounts only under 1024px.
 vi.mock('@/hooks/useMediaQuery', () => ({ useMediaQuery: () => false }))
 vi.mock('@/components/home/FullMatchPrivacyNotice', () => ({ FullMatchPrivacyNotice: () => null }))

@@ -45,6 +45,14 @@ import { usePortfolioAnchorScroll } from '@/hooks/usePortfolioAnchorScroll'
 import PortfolioSectionNav from '@/components/profile/PortfolioSectionNav'
 import PublicConnectionsPage from '@/components/profile/PublicConnectionsPage'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { useProfileKeyFacts } from '@/hooks/useProfileKeyFacts'
+import { useClubViewOfPlayer } from '@/hooks/useClubViewOfPlayer'
+import { KeyFactsGrid } from '@/components/profile/KeyFactsGrid'
+import { ShortlistRoleSheet } from '@/components/profile/ClubViewCards'
+import { isRecruitingViewer } from '@/lib/recruiterAccess'
+import type { KeyFactsViewer } from '@/lib/keyFacts'
+import type { PlayerProfileShape } from '@/pages/PlayerDashboard'
 
 // `?section=` query param → DOM anchor id. Drives the deep-link scroll
 // for notifications and shareable URLs. Mirrors PlayerDashboard so
@@ -436,6 +444,16 @@ export default function CoachDashboard({
   }
   usePortfolioAnchorScroll(readOnly ? portfolioAnchors[activeTab] ?? null : null)
 
+  // D2 · coach key facts (phone): specialization · categories · current role ·
+  // available · passport · age replace the stats strip. Desktop stays v1.
+  const isPhone = useMediaQuery('(max-width: 1023px)')
+  const d2 = isPhone && activeTab === 'profile'
+  const viewAsClub = readOnly && isOwnProfile && searchParams.get('view') === 'club'
+  const keyFactsViewer: KeyFactsViewer = !readOnly ? 'owner' : viewAsClub || isRecruitingViewer(authProfile) ? 'recruiter' : 'public'
+  const keyFacts = useProfileKeyFacts({ profile: profile as unknown as PlayerProfileShape | null, viewer: keyFactsViewer, videoCounts: null, enabled: d2 })
+  const clubView = useClubViewOfPlayer(isPhone && readOnly && !isOwnProfile && profile ? profile : null)
+  const [rolePicker, setRolePicker] = useState(false)
+
   if (!profile) return null
 
   const handleSendMessage = async () => {
@@ -558,7 +576,7 @@ export default function CoachDashboard({
     <div className="min-h-screen bg-gray-50">
       <Header mobileHidden={!readOnly} />
 
-      {readOnly && isOwnProfile && <PublicViewBanner />}
+      {readOnly && isOwnProfile && <PublicViewBanner compactOnPhone={viewAsClub} clubView={viewAsClub} />}
 
       <main className="max-w-7xl mx-auto px-4 md:px-6 ${readOnly ? 'pt-24' : 'pt-[max(env(safe-area-inset-top),0.75rem)] lg:pt-24'} pb-12 space-y-5 md:space-y-6">
         {!readOnly && <ProfileTopBar />}
@@ -628,7 +646,41 @@ export default function CoachDashboard({
           sendingMessage={sendingMessage}
           onFriendsClick={handleFriendsClick}
           onReferencesClick={handleReferencesClick}
+          d2={d2}
+          onViewAsClub={() => navigate(`/coaches/${profile.username ? profile.username : `id/${profile.id}`}?view=club`)}
+          recruiterActions={
+            viewAsClub
+              ? { onShortlist: () => undefined, shortlisted: false, preview: true }
+              : clubView.enabled
+                ? {
+                    // Shortlist per role: one open coach role → straight in; several → picker; none → default list.
+                    onShortlist: () => {
+                      if (clubView.roles.length === 0) void clubView.shortlistDefault()
+                      else if (clubView.roles.length === 1) void clubView.shortlistForRole(clubView.roles[0])
+                      else setRolePicker(true)
+                    },
+                    shortlisted: clubView.shortlisted,
+                    busy: clubView.busy,
+                  }
+                : null
+          }
+          keyFacts={d2 ? (
+            <div className="flex flex-col gap-3">
+              <KeyFactsGrid facts={keyFacts.facts} onAction={readOnly ? undefined : () => setShowEditModal(true)} />
+              {!readOnly && <p className="text-caption text-ink-2">Clubs see these six first. Complete profiles are suggested to clubs more often.</p>}
+            </div>
+          ) : null}
         />
+        {clubView.enabled && (
+          <ShortlistRoleSheet
+            open={rolePicker}
+            roles={clubView.roles}
+            shortlistedRoleIds={clubView.shortlistedRoleIds}
+            appliedRoleId={clubView.application?.role.id ?? null}
+            onPick={(role) => { setRolePicker(false); void clubView.shortlistForRole(role) }}
+            onClose={() => setRolePicker(false)}
+          />
+        )}
 
         {/* G.10 — private 5-item recruitment-readiness checklist for
             coaches. Same component as PlayerDashboard; the widget

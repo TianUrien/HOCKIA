@@ -93,13 +93,13 @@ export function fitRows(c: FitComponents, ctx: {
   roleGender: string | null
   playerCategoryLabel: string | null
   firstName: string
-  pronoun?: 'his' | 'her' | 'their'
   lastActiveDays: number | null
   playerClub: string | null
   playerLeagueKnown: boolean
+  /** The only league on the profile is the one the player typed (never counted for level). */
+  playerLeagueSelfReported?: boolean
   clubLeagueKnown: boolean
 }): FitRow[] {
-  const pron = ctx.pronoun ?? 'their'
   const roleWord = ctx.roleGender ? `a ${ctx.roleGender}’s role`.replace('Mixed’s', 'Mixed') : 'this role'
   const category: FitRow = {
     key: 'category', label: 'Category', ok: (c.gender_match ?? 0) >= 1,
@@ -118,10 +118,13 @@ export function fitRows(c: FitComponents, ctx: {
   }
   const prox = c.competition_proximity ?? 0
   let levelDetail: string
+  // Neutral wording — no pronouns on any club surface (founder ruling 2026-09-26).
   if (!ctx.playerLeagueKnown) {
-    levelDetail = ctx.playerClub
-      ? `Can’t compare yet — ${pron} club, ${ctx.playerClub}, has no league on Hockia.`
-      : `Can’t compare yet — no club with a league on ${pron} profile.`
+    levelDetail = ctx.playerLeagueSelfReported
+      ? 'Can’t compare yet — league is self-reported'
+      : ctx.playerClub
+        ? `Can’t compare yet — Club: ${ctx.playerClub} has no league on Hockia.`
+        : 'Can’t compare yet — no club with a league on the profile.'
   } else if (!ctx.clubLeagueKnown) {
     levelDetail = 'Can’t compare yet — your league has no level on Hockia.'
   } else if (prox >= 0.75) {
