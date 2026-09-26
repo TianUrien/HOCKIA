@@ -159,7 +159,7 @@ export function PostMediaUploader({
             <Film className="h-5 w-5" strokeWidth={1.8} />
           </button>
         )}
-        <p className="text-secondary text-ink-4">
+        <p className="text-secondary text-ink-3">
           {allowVideo ? `Photo or video · up to ${maxItems}` : `Photos · up to ${maxItems}`}
         </p>
         {fileInputs}

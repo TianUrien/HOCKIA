@@ -16,7 +16,7 @@ interface CountrySelectProps {
   /** If true, shows nationality name instead of country name */
   showNationality?: boolean
   className?: string
-  /** 'field' = the Figma redesign form input (grey #F2F2F7 surface, radius 12,
+  /** 'field' = the Figma redesign form input (grey #F4F4F7 surface, radius 12,
    *  50px, no border). Behaviour is identical in both appearances. */
   appearance?: 'default' | 'field'
 }

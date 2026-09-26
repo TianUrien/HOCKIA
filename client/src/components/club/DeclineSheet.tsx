@@ -96,7 +96,7 @@ export function DeclineSheet({ open, applicationId, firstName, pronoun, onCancel
             />
           </div>
         )}
-        <p className="text-caption text-ink-4">{subject} see this note on {pronounPossessive} application and in the email about it.</p>
+        <p className="text-caption text-ink-3">{subject} see this note on {pronounPossessive} application and in the email about it.</p>
         <button
           type="button"
           disabled={!canSend}

@@ -62,7 +62,7 @@ export default function WriteReferenceSheet({ open, onClose, forName, relationsh
             placeholder={`What did ${who} bring to the team? Be specific — clubs read these.`}
             className="w-full resize-none rounded-[14px] bg-surface-grouped p-3.5 text-body leading-[22px] text-ink-1 placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-hockia-primary/30"
           />
-          {remaining <= 50 && <span className="pointer-events-none absolute bottom-2.5 right-3 text-caption text-ink-4">{remaining}</span>}
+          {remaining <= 50 && <span className="pointer-events-none absolute bottom-2.5 right-3 text-caption text-ink-3">{remaining}</span>}
         </div>
         {error && <p role="alert" className="mt-2 text-secondary text-red-600">{error}</p>}
 

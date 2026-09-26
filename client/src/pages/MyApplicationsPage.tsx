@@ -56,7 +56,7 @@ export default function MyApplicationsPage() {
             ) : (
               <span className="mt-1 flex items-center gap-2">
                 <span className={`rounded-full px-2 py-0.5 text-caption font-semibold ${APPLICATION_TONE_CLASS[pill.tone]}`}>{pill.label}</span>
-                <span className="text-caption text-ink-4">{appliedLine(r.appliedAt)}</span>
+                <span className="text-caption text-ink-3">{appliedLine(r.appliedAt)}</span>
               </span>
             )}
           </span>
