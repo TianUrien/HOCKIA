@@ -21,8 +21,9 @@ export default function DiscoverFilterChips({ filters }: DiscoverFilterChipsProp
   }
 
   if (filters.positions?.length) {
+    // Positions arrive as enum values ("head_coach") — never show those raw.
     filters.positions.forEach(p => chips.push({
-      label: p.charAt(0).toUpperCase() + p.slice(1),
+      label: (p.charAt(0).toUpperCase() + p.slice(1)).replace(/_/g, ' '),
       color: 'bg-purple-100 text-purple-800',
     }))
   }
@@ -69,7 +70,7 @@ export default function DiscoverFilterChips({ filters }: DiscoverFilterChipsProp
   if (filters.availability) {
     const label = filters.availability === 'open_to_play' ? 'Open to play'
       : filters.availability === 'open_to_coach' ? 'Open to coach'
-      : 'Open to offers'
+      : 'Open to opportunities'
     chips.push({ label, color: 'bg-emerald-100 text-emerald-800' })
   }
 
