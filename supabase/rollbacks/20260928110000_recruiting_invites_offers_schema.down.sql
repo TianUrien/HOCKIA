@@ -131,6 +131,8 @@ $function$;
 
 -- 20260928120000
 DROP TRIGGER IF EXISTS trg_opportunity_recruiting_close ON public.opportunities;
+DROP TRIGGER IF EXISTS trg_guard_opportunity_filled_via_hockia ON public.opportunities;
+DROP FUNCTION IF EXISTS public.guard_opportunity_filled_via_hockia();
 DROP TRIGGER IF EXISTS trg_mark_invite_applied ON public.opportunity_applications;
 DROP FUNCTION IF EXISTS public.expire_offers_and_invites();
 DROP FUNCTION IF EXISTS public.fill_role(uuid);

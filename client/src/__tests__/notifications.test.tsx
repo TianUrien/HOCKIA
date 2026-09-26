@@ -340,7 +340,19 @@ describe('getNotificationConfig', () => {
     const filled = createNotification({ kind: 'vacancy_application_status', metadata: { ...meta, status: 'filled' } })
     expect(getNotificationConfig(filled).getTitle(filled)).toBe('CASI filled the role')
     expect(getNotificationConfig(filled).getDescription?.(filled)).toBe(
-      'Arquera has been filled. Thanks for applying — new roles are open.',
+      'Arquera — Club Atlético de San Isidro (CASI) has been filled. Thanks for applying — new roles are open.',
+    )
+    const filledPos = createNotification({
+      kind: 'vacancy_application_status',
+      metadata: { ...meta, status: 'filled', position: 'midfielder' },
+    })
+    expect(getNotificationConfig(filledPos).getDescription?.(filledPos)).toBe(
+      'Midfielder has been filled. Thanks for applying — new roles are open.',
+    )
+    const filledBare = createNotification({ kind: 'vacancy_application_status', metadata: { status: 'filled' } })
+    expect(getNotificationConfig(filledBare).getTitle(filledBare)).toBe('The club filled the role')
+    expect(getNotificationConfig(filledBare).getDescription?.(filledBare)).toBe(
+      'The role has been filled. Thanks for applying — new roles are open.',
     )
   })
 

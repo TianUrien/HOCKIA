@@ -16,9 +16,10 @@
 --
 -- Founder rulings 2026-09-26 implemented here:
 --   invites   max 20 per publisher per rolling 24 h, 5 in the account's first 7 days;
---             one open invite per player per club; never to under-18s (by DOB; unknown
---             DOB is refused too) or players not open to play; expire with the role or
---             after 14 days.
+--             one open invite per player per club; never to under-18s by DOB (an unknown
+--             DOB is allowed — founder answer 2026-09-26; frozen minors and hidden
+--             accounts are refused) or players not open to play; expire with the role
+--             or after 14 days.
 --   offers    club may withdraw before the answer (back to shortlisted, player told);
 --             each edit = new version, previous superseded; terms private to the two.
 --   player    may withdraw any time until confirming a signing, never after.
@@ -258,6 +259,39 @@ CREATE TRIGGER trg_opportunity_recruiting_close
   EXECUTE FUNCTION public.handle_opportunity_recruiting_close();
 
 
+-- "Filled through Hockia" comes only from a signing the player confirmed
+-- (confirm_signing / fill_role run as the owner). A direct client write can't set
+-- it to true: the stored value is kept silently, so older app versions that still
+-- send the old checkbox value close the role normally. Clearing it (reopen) is
+-- allowed. Existing rows are untouched.
+CREATE OR REPLACE FUNCTION public.guard_opportunity_filled_via_hockia()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path = public
+AS $$
+BEGIN
+  IF current_user <> 'authenticated' THEN
+    RETURN NEW;
+  END IF;
+  IF NEW.filled_via_hockia IS TRUE THEN
+    IF TG_OP = 'INSERT' THEN
+      NEW.filled_via_hockia := NULL;
+    ELSIF OLD.filled_via_hockia IS NOT TRUE THEN
+      NEW.filled_via_hockia := OLD.filled_via_hockia;
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.guard_opportunity_filled_via_hockia() FROM PUBLIC, anon, authenticated;
+
+DROP TRIGGER IF EXISTS trg_guard_opportunity_filled_via_hockia ON public.opportunities;
+CREATE TRIGGER trg_guard_opportunity_filled_via_hockia
+  BEFORE INSERT OR UPDATE ON public.opportunities
+  FOR EACH ROW EXECUTE FUNCTION public.guard_opportunity_filled_via_hockia();
+
+
 -- ═══ Invite → application (AFTER half of the link from 20260928110000) ═════════
 
 CREATE OR REPLACE FUNCTION public.mark_invite_applied()
@@ -359,7 +393,6 @@ BEGIN
   IF v_player.id IS NULL
      OR v_player.id = v_uid
      OR NOT coalesce(v_player.onboarding_completed, false)
-     OR v_player.date_of_birth IS NULL
      OR public.is_minor(v_player.id)
      OR public.profile_is_uncontactable(v_player.is_blocked, v_player.frozen_minor_at, v_player.role,
                                         v_player.date_of_birth, v_player.dob_required_since)
@@ -1046,7 +1079,8 @@ BEGIN
     v_uid,
     v_club_name,
     coalesce(initcap(replace(v_opp.position::text, '_', ' ')), initcap(v_opp.opportunity_type::text)),
-    to_char(v_start, 'YYYY'),
+    -- Season style, e.g. '2026–27' (founder answer 2026-09-26).
+    to_char(v_start, 'YYYY') || '–' || to_char(v_start + interval '1 year', 'YY'),
     coalesce(nullif(btrim(v_opp.level_sought), ''),
              CASE WHEN v_opp.gender::text IN ('Women', 'Girls') THEN v_pub.womens_league_division
                   WHEN v_opp.gender::text IN ('Men', 'Boys') THEN v_pub.mens_league_division END,

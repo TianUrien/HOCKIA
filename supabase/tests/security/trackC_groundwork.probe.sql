@@ -87,16 +87,29 @@ BEGIN
     v_out := v_out || E'\n' || v_line;
   END;
 
-  -- D2 unknown DOB is refused
+  -- D2 unknown DOB is allowed (founder answer 2026-09-26)
   BEGIN
-    UPDATE profiles SET date_of_birth = NULL WHERE id = c_player;
+    UPDATE profiles SET date_of_birth = NULL, dob_required_since = NULL WHERE id = c_player;
     PERFORM set_config('request.jwt.claims', json_build_object('sub', c_club, 'role', 'authenticated')::text, true);
     EXECUTE 'SET LOCAL ROLE authenticated';
     v_res := send_invite(c_player, o7, NULL);
-    v_line := 'FAIL D2 invite to a player with no DOB → allowed';
+    v_line := 'PASS D2 invite to a player with no DOB → allowed';
     RAISE EXCEPTION 'probe_undo';
   EXCEPTION WHEN others THEN
-    IF SQLERRM <> 'probe_undo' THEN v_line := CASE WHEN SQLERRM LIKE '%can''t be invited%' THEN 'PASS' ELSE 'FAIL' END || ' D2 invite to a player with no DOB → refused (' || SQLERRM || ')'; END IF;
+    IF SQLERRM <> 'probe_undo' THEN v_line := 'FAIL D2 invite to a player with no DOB → ' || SQLERRM; END IF;
+    v_out := v_out || E'\n' || v_line;
+  END;
+
+  -- D2b a frozen (minor) account is refused even with an adult DOB on file
+  BEGIN
+    UPDATE profiles SET frozen_minor_at = now() WHERE id = c_player;
+    PERFORM set_config('request.jwt.claims', json_build_object('sub', c_club, 'role', 'authenticated')::text, true);
+    EXECUTE 'SET LOCAL ROLE authenticated';
+    v_res := send_invite(c_player, o7, NULL);
+    v_line := 'FAIL D2b invite to a frozen account → allowed';
+    RAISE EXCEPTION 'probe_undo';
+  EXCEPTION WHEN others THEN
+    IF SQLERRM <> 'probe_undo' THEN v_line := CASE WHEN SQLERRM LIKE '%can''t be invited%' THEN 'PASS' ELSE 'FAIL' END || ' D2b invite to a frozen account → refused (' || SQLERRM || ')'; END IF;
     v_out := v_out || E'\n' || v_line;
   END;
 
@@ -850,11 +863,11 @@ BEGIN
     v_res := confirm_signing(app_b, true);
     EXECUTE 'RESET ROLE';
     SELECT a.status::text || '/' || (a.signed_at IS NOT NULL)::text INTO v_txt FROM opportunity_applications a WHERE a.id = app_b;
-    SELECT count(*) INTO v_n FROM career_history WHERE application_id = app_b AND signed_via_hockia AND user_id = c_player;
+    SELECT count(*) INTO v_n FROM career_history WHERE application_id = app_b AND signed_via_hockia AND user_id = c_player AND years ~ '^[0-9]{4}–[0-9]{2}$';
     SELECT count(*) INTO v_m FROM club_members WHERE club_profile_id = c_club AND member_profile_id = c_player AND status = 'active';
     SELECT o.status::text || '/' || coalesce(o.closed_reason, '-') || '/' || coalesce(o.filled_via_hockia::text, '-') || '/open_to_play=' || p.open_to_play
       INTO v_txt2 FROM opportunities o, profiles p WHERE o.id = o2 AND p.id = c_player;
-    v_line := format('%s B18 confirm → app=%s career=%s squad=%s role/profile=%s',
+    v_line := format('%s B18 confirm → app=%s career(season style)=%s squad=%s role/profile=%s',
                      CASE WHEN v_txt = 'signed/true' AND v_n = 1 AND v_m = 1 AND v_txt2 = 'closed/filled/true/open_to_play=false' THEN 'PASS' ELSE 'FAIL' END,
                      v_txt, v_n, v_m, v_txt2);
   EXCEPTION WHEN others THEN
@@ -1043,6 +1056,48 @@ BEGIN
     v_line := 'FAIL C6 club rejects directly → ' || SQLERRM;
   END;
   v_out := v_out || E'\n' || v_line;
+
+  -- ════ E · "filled through Hockia" only from a confirmed signing ═══════════════
+
+  -- E1 a club closing a role can't claim filled_via_hockia (kept as stored)
+  BEGIN
+    PERFORM set_config('request.jwt.claims', json_build_object('sub', c_club, 'role', 'authenticated')::text, true);
+    EXECUTE 'SET LOCAL ROLE authenticated';
+    UPDATE opportunities SET status = 'closed', closed_reason = 'filled', filled_via_hockia = true WHERE id = o7;
+    GET DIAGNOSTICS v_n = ROW_COUNT;
+    EXECUTE 'RESET ROLE';
+    SELECT o.status::text || '/' || coalesce(o.closed_reason, '-') || '/' || coalesce(o.filled_via_hockia::text, 'null')
+      INTO v_txt FROM opportunities o WHERE o.id = o7;
+    v_line := format('%s E1 club closes as filled claiming via Hockia (%s row) → %s',
+                     CASE WHEN v_n = 1 AND v_txt = 'closed/filled/null' THEN 'PASS' ELSE 'FAIL' END, v_n, v_txt);
+    RAISE EXCEPTION 'probe_undo';
+  EXCEPTION WHEN others THEN
+    IF SQLERRM <> 'probe_undo' THEN v_line := 'FAIL E1 close as filled → ' || SQLERRM; END IF;
+    v_out := v_out || E'\n' || v_line;
+  END;
+
+  -- E2 a club creating a role can't pre-set it; clearing on reopen still works
+  BEGIN
+    PERFORM set_config('request.jwt.claims', json_build_object('sub', c_club, 'role', 'authenticated')::text, true);
+    EXECUTE 'SET LOCAL ROLE authenticated';
+    INSERT INTO opportunities (club_id, opportunity_type, title, location_city, location_country, status, filled_via_hockia)
+    VALUES (c_club, 'player', '[PROBE] Track C role E2', 'Dublin', 'Ireland', 'draft', true)
+    RETURNING coalesce(filled_via_hockia::text, 'null') INTO v_txt;
+    EXECUTE 'RESET ROLE';
+    PERFORM set_config('request.jwt.claims', '', true);
+    UPDATE opportunities SET status = 'closed', closed_reason = 'filled', filled_via_hockia = true WHERE id = o6;
+    PERFORM set_config('request.jwt.claims', json_build_object('sub', c_club, 'role', 'authenticated')::text, true);
+    EXECUTE 'SET LOCAL ROLE authenticated';
+    UPDATE opportunities SET status = 'open', closed_reason = NULL, filled_via_hockia = NULL WHERE id = o6;
+    EXECUTE 'RESET ROLE';
+    SELECT coalesce(filled_via_hockia::text, 'null') INTO v_txt2 FROM opportunities WHERE id = o6;
+    v_line := format('%s E2 client insert with via Hockia → %s; reopen clears server value → %s',
+                     CASE WHEN v_txt = 'null' AND v_txt2 = 'null' THEN 'PASS' ELSE 'FAIL' END, v_txt, v_txt2);
+    RAISE EXCEPTION 'probe_undo';
+  EXCEPTION WHEN others THEN
+    IF SQLERRM <> 'probe_undo' THEN v_line := 'FAIL E2 insert/reopen → ' || SQLERRM; END IF;
+    v_out := v_out || E'\n' || v_line;
+  END;
 
   EXECUTE 'RESET ROLE';
   RAISE EXCEPTION 'PROBE RESULTS:%', v_out;

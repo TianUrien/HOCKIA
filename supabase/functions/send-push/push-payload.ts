@@ -239,8 +239,9 @@ export function buildPushPayload(
           body = `You weren't selected for ${position} this time.`
           break
         case 'filled':
+          // Founder copy 2026-09-26; mirrors client config.ts.
           title = `${club} filled the role`
-          body = `${position} has been filled. Thanks for applying — new roles are open.`
+          body = `${humanPos ?? vacancyTitle ?? 'The role'} has been filled. Thanks for applying — new roles are open.`
           break
         default:
           title = `${club} updated your application`
