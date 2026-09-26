@@ -15,7 +15,7 @@ import { profilePath } from '@/lib/profileNavigation'
 /**
  * Videos — all (Figma 153:581): where "N Videos" and "See all N" land — the
  * same three groups as the profile, as a grid. Videos a viewer cannot watch
- * show as locked tiles ("Clubs and coaches only") so a player understands why
+ * show as locked tiles ("Clubs & recruiting coaches only") so a player understands why
  * they cannot press play; a club, a recruiting coach or the owner sees the
  * same screen unlocked. A tile opens the Video player
  * (Figma 188:582 — the app's one media viewer): full-screen, author and

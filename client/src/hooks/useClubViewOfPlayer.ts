@@ -25,7 +25,9 @@ import type { Json } from '@/lib/database.types'
  *    ("Applied to …" card — RLS shows clubs the applications to their roles);
  *  - fitRole + fit: compute_club_fit for the role that matters here — the one
  *    applied to, else the active recruiting context's role, else the only open
- *    role. Club viewers only; hidden when grey (the card handles that);
+ *    role. Any recruiting viewer — a club or a coach who recruits sees the
+ *    Fit card like a club (founder rule); hidden when grey (the card handles
+ *    that);
  *  - shortlist(role): Shortlist per role (founder ruling 2026-09-25 #9). The
  *    player applied to that role → shortlist the application (held for the
  *    undo window like Applicant review); otherwise → the club's list named
@@ -68,6 +70,19 @@ export function pickFitRole(opts: { application: ClubViewApplication | null; rol
   const active = opts.activeOpportunityId ? opts.roles.find((r) => r.id === opts.activeOpportunityId) : null
   if (active) return active
   return opts.roles.length === 1 ? opts.roles[0] : null
+}
+
+/**
+ * The leagues the viewer's level is compared from: their current club's
+ * leagues (what compute_club_fit bands by), plus the profile's own league ids
+ * (clubs). A coach with neither gets "Can't compare yet".
+ */
+export function viewerLeagueIds(
+  viewer: { mens_league_id?: number | null; womens_league_id?: number | null } | null | undefined,
+  viewerWorldClub: { men_league_id: number | null; women_league_id: number | null } | null,
+): number[] {
+  const ids = [viewerWorldClub?.men_league_id, viewerWorldClub?.women_league_id, viewer?.mens_league_id, viewer?.womens_league_id]
+  return ids.filter((x, i, a): x is number => typeof x === 'number' && a.indexOf(x) === i)
 }
 
 export function useClubViewOfPlayer(player: ClubViewPlayer | null) {
@@ -138,17 +153,24 @@ export function useClubViewOfPlayer(player: ClubViewPlayer | null) {
 
   const { data: fit = null } = useQuery({
     queryKey: ['club-view', 'fit', viewerId, playerId, fitRole?.id ?? null],
-    enabled: isClub && kind === 'player' && !!fitRole && !!fitTarget(fitRole.gender),
+    // Same "viewer recruits" rule as the rest of the club view: clubs and
+    // coaches who recruit (lib/recruiterAccess). compute_club_fit enforces
+    // the same rule server-side and returns no row for anyone else.
+    enabled: recruits && kind === 'player' && !!fitRole && !!fitTarget(fitRole.gender),
     staleTime: 60_000,
     queryFn: async (): Promise<ClubViewFit | null> => {
       const role = fitRole as ClubRole
-      const clubLeagueIds = [viewer?.mens_league_id, viewer?.womens_league_id].filter((x): x is number => typeof x === 'number')
-      const [{ data: fitData, error }, wc, clubLeagues] = await Promise.all([
+      const [{ data: fitData, error }, wc, viewerWc] = await Promise.all([
         supabase.rpc('compute_club_fit', { p_owner_id: viewerId as string, p_player_id: playerId as string, p_target: fitTarget(role.gender) as string, p_region: null as unknown as string, p_opportunity_id: role.id }),
         player?.current_world_club_id
           ? supabase.from('world_clubs').select('men_league_id, women_league_id').eq('id', player.current_world_club_id).maybeSingle()
           : Promise.resolve({ data: null }),
-        clubLeagueIds.length ? supabase.from('world_leagues').select('level_band_global').in('id', clubLeagueIds) : Promise.resolve({ data: [] }),
+        // compute_club_fit bands the viewer by their current club's league —
+        // a club's own, or the club a recruiting coach coaches at (coaches
+        // have no mens/womens_league_id of their own).
+        viewer?.current_world_club_id
+          ? supabase.from('world_clubs').select('men_league_id, women_league_id').eq('id', viewer.current_world_club_id).maybeSingle()
+          : Promise.resolve({ data: null }),
       ])
       if (error) throw error
       const row = (fitData as { state: FitState; components: FitComponents }[] | null)?.[0]
@@ -162,11 +184,18 @@ export function useClubViewOfPlayer(player: ClubViewPlayer | null) {
         const { data: lg } = await supabase.from('world_leagues').select('level_band_global').in('id', ids)
         playerLeagueBanded = ((lg ?? []) as { level_band_global: number | null }[]).some((l) => l.level_band_global !== null)
       }
+      const vw = viewerWc.data as { men_league_id: number | null; women_league_id: number | null } | null
+      const clubLeagueIds = viewerLeagueIds(viewer, vw)
+      let clubLeagueBanded = false
+      if (clubLeagueIds.length) {
+        const { data: lg } = await supabase.from('world_leagues').select('level_band_global').in('id', clubLeagueIds)
+        clubLeagueBanded = ((lg ?? []) as { level_band_global: number | null }[]).some((l) => l.level_band_global !== null)
+      }
       return {
         state: row.state,
         components: row.components,
         playerLeagueBanded,
-        clubLeagueBanded: ((clubLeagues.data ?? []) as { level_band_global: number | null }[]).some((l) => l.level_band_global !== null),
+        clubLeagueBanded,
       }
     },
   })

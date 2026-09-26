@@ -8,6 +8,12 @@ import { assert, assertEquals } from 'https://deno.land/std@0.208.0/assert/mod.t
 import {
   buildNoOpportunitiesMessage,
   buildOpportunityMessage,
+  includeTestPublisherRoles,
+  isStagingProject,
+  mergeOpportunityRows,
+  testPublisherRowsToOpportunityRows,
+  withoutAppliedRoles,
+  type TestPublisherRoleRow,
   parseOpportunityQuery,
   runOpportunitySearch,
   toOpportunityResult,
@@ -176,4 +182,81 @@ Deno.test('copy is readable and gender-neutral', () => {
   assert(msg.startsWith('There are no midfielder roles in Europe with housing'))
   assert(!/\b(he|she|his|her|guys)\b/i.test(msg))
   assert(!/_/.test(msg))
+})
+
+// ── Test accounts (staging only) ──────────────────────────────────────────
+
+const STAGING_URL = 'https://ivjkdaylalhsteyyclvl.supabase.co'
+const PROD_URL = 'https://xtertgftujnebubxgqit.supabase.co'
+
+function testRow(p: Omit<Partial<TestPublisherRoleRow>, 'publisher'> & { publisher?: Partial<NonNullable<TestPublisherRoleRow['publisher']>> | null }): TestPublisherRoleRow {
+  const base = row({})
+  const { publisher, ...rest } = p
+  return {
+    id: base.id, title: '[QA] 4a Persist Test', opportunity_type: 'player', position: 'midfielder', gender: 'Men',
+    location_city: 'London', location_country: 'England', application_deadline: null, benefits: [], custom_benefits: [],
+    eu_passport_required: false, created_at: base.created_at, organization_name: null,
+    publisher: publisher === null ? null : { full_name: 'E2E Test Club', avatar_url: null, is_test_account: true, onboarding_completed: true, is_blocked: false, frozen_minor_at: null, ...publisher },
+    world_club: null,
+    ...rest,
+  }
+}
+
+Deno.test('test roles: only a test viewer on staging — production never shows them', () => {
+  assert(includeTestPublisherRoles({ supabaseUrl: STAGING_URL, viewerIsTest: true }))
+  assert(!includeTestPublisherRoles({ supabaseUrl: STAGING_URL, viewerIsTest: false }))
+  assert(!includeTestPublisherRoles({ supabaseUrl: STAGING_URL, viewerIsTest: null }))
+  assert(!includeTestPublisherRoles({ supabaseUrl: PROD_URL, viewerIsTest: true }))
+  assert(!includeTestPublisherRoles({ supabaseUrl: PROD_URL, viewerIsTest: false }))
+  assert(!includeTestPublisherRoles({ supabaseUrl: '', viewerIsTest: true }))
+  assert(isStagingProject(STAGING_URL))
+  assert(!isStagingProject(PROD_URL))
+  assert(!isStagingProject(undefined))
+})
+
+Deno.test('test roles keep the view\'s other rules: onboarded, not blocked, not frozen', () => {
+  const ok = testRow({})
+  const rows = testPublisherRowsToOpportunityRows([
+    ok,
+    testRow({ publisher: { onboarding_completed: false } }),
+    testRow({ publisher: { is_blocked: true } }),
+    testRow({ publisher: { frozen_minor_at: '2026-01-01T00:00:00Z' } }),
+    testRow({ publisher: { is_test_account: false } }),
+    testRow({ publisher: null }),
+  ])
+  assertEquals(rows.map(r => r.id), [ok.id])
+  assertEquals(rows[0].club_name, 'E2E Test Club')
+})
+
+Deno.test('staging test player: "open roles for me" finds the open test roles (#15)', () => {
+  // The view only returns real publishers — on staging those are women's roles.
+  const realWomen = row({ gender: 'Women', position: 'goalkeeper', location_country: 'Spain' })
+  const persist = testRow({ title: '[QA] 4a Persist Test' })
+  const argentina = testRow({ title: '[QA] 4b HP + Development', location_country: 'Argentina' })
+  const viewer: Viewer = { role: 'player', gender: 'men', euEligible: false, position: 'midfielder', secondaryPosition: 'forward' }
+
+  const before = runOpportunitySearch('open roles for me', [realWomen], COUNTRIES, viewer, TODAY)
+  assertEquals(before.matched.length, 0)
+
+  const pool = mergeOpportunityRows([realWomen], testPublisherRowsToOpportunityRows([persist, argentina]))
+  const all = runOpportunitySearch('open roles for me', pool, COUNTRIES, viewer, TODAY)
+  assertEquals(all.matched.map(r => r.id).sort(), [persist.id, argentina.id].sort())
+  const mids = runOpportunitySearch('midfielder roles', pool, COUNTRIES, viewer, TODAY)
+  assertEquals(mids.matched.length, 2)
+  const england = runOpportunitySearch('roles in England', pool, COUNTRIES, viewer, TODAY)
+  assertEquals(england.landed, 'original')
+  assertEquals(england.matched.map(r => r.id), [persist.id])
+})
+
+Deno.test('merge: de-duplicates by id, newest first', () => {
+  const a = row({ created_at: '2026-09-01T00:00:00Z' })
+  const b = row({ created_at: '2026-09-20T00:00:00Z' })
+  assertEquals(mergeOpportunityRows([a], [b, a]).map(r => r.id), [b.id, a.id])
+})
+
+Deno.test('roles already applied to are not offered again', () => {
+  const a = row({})
+  const b = row({})
+  assertEquals(withoutAppliedRoles([a, b], [a.id]).map(r => r.id), [b.id])
+  assertEquals(withoutAppliedRoles([a, b], []).length, 2)
 })

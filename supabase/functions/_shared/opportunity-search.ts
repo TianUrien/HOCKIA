@@ -87,6 +87,102 @@ export interface OpportunityCriteria {
   regionLabel: string | null
 }
 
+// ── Test accounts ──────────────────────────────────────────────────────────
+
+/** The staging project's ref — the only place test roles may be surfaced. */
+export const STAGING_PROJECT_REF = 'ivjkdaylalhsteyyclvl'
+
+/**
+ * `public_opportunities` never lists roles posted by test accounts. On
+ * staging a test viewer (the E2E / QA accounts) must see them — every role
+ * on staging is a test role, and the Opportunities page already shows them —
+ * or "open roles for me" answers "none" while the page lists several.
+ * Production is unchanged: test roles stay hidden from everyone.
+ */
+export function includeTestPublisherRoles(opts: { supabaseUrl: string | null | undefined; viewerIsTest: boolean | null | undefined }): boolean {
+  return opts.viewerIsTest === true && isStagingProject(opts.supabaseUrl)
+}
+
+/** True only for the staging project's URL (SUPABASE_URL). */
+export function isStagingProject(supabaseUrl: string | null | undefined): boolean {
+  return (supabaseUrl ?? '').includes(STAGING_PROJECT_REF)
+}
+
+/** A test publisher's open role, read from `opportunities` with its publisher. */
+export interface TestPublisherRoleRow {
+  id: string
+  title: string | null
+  opportunity_type: OpportunityType | null
+  position: string | null
+  gender: OpportunityGender | null
+  location_city: string | null
+  location_country: string | null
+  application_deadline: string | null
+  benefits: string[] | null
+  custom_benefits: string[] | null
+  eu_passport_required: boolean | null
+  created_at: string | null
+  organization_name: string | null
+  publisher: {
+    full_name: string | null
+    avatar_url: string | null
+    is_test_account: boolean | null
+    onboarding_completed: boolean | null
+    is_blocked: boolean | null
+    frozen_minor_at: string | null
+  } | null
+  world_club: { club_name: string | null; avatar_url: string | null } | null
+}
+
+/**
+ * Shape test-publisher rows like `public_opportunities` rows, keeping the
+ * view's other visibility rules (onboarded, not blocked, not frozen).
+ */
+export function testPublisherRowsToOpportunityRows(rows: TestPublisherRoleRow[]): OpportunityRow[] {
+  return rows
+    .filter(r => r.publisher
+      && r.publisher.is_test_account === true
+      && r.publisher.onboarding_completed === true
+      && r.publisher.is_blocked !== true
+      && !r.publisher.frozen_minor_at)
+    .map(r => ({
+      id: r.id,
+      title: r.title,
+      opportunity_type: r.opportunity_type,
+      position: r.position,
+      gender: r.gender,
+      location_city: r.location_city,
+      location_country: r.location_country,
+      application_deadline: r.application_deadline,
+      benefits: r.benefits,
+      custom_benefits: r.custom_benefits,
+      eu_passport_required: r.eu_passport_required,
+      created_at: r.created_at,
+      club_name: r.publisher?.full_name ?? null,
+      club_logo_url: r.publisher?.avatar_url ?? null,
+      organization_name: r.organization_name,
+      world_club_name: r.world_club?.club_name ?? null,
+      world_club_avatar_url: r.world_club?.avatar_url ?? null,
+    }))
+}
+
+/** Union two row sets by id, newest first (created_at desc). */
+export function mergeOpportunityRows(a: OpportunityRow[], b: OpportunityRow[]): OpportunityRow[] {
+  const byId = new Map<string, OpportunityRow>()
+  for (const r of [...a, ...b]) if (!byId.has(r.id)) byId.set(r.id, r)
+  return [...byId.values()].sort((x, y) => (y.created_at ?? '').localeCompare(x.created_at ?? ''))
+}
+
+/**
+ * Drop roles the viewer already applied to — every answer says "you can
+ * apply to", and a role can only be applied to once. Same rule as the
+ * Opportunities page's "For you" list.
+ */
+export function withoutAppliedRoles(rows: OpportunityRow[], appliedIds: Iterable<string>): OpportunityRow[] {
+  const applied = new Set(appliedIds)
+  return applied.size ? rows.filter(r => !applied.has(r.id)) : rows
+}
+
 // ── Parsing ────────────────────────────────────────────────────────────────
 
 const PLAYER_POSITION_PATTERNS: Array<[string, RegExp]> = [
