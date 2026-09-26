@@ -81,13 +81,13 @@ export function LockedVideoTile({ label = 'Full match', onOpen, className }: { l
     <button
       type="button"
       onClick={onOpen}
-      aria-label={`${label} — for clubs and coaches only`}
+      aria-label={`${label} — for clubs & recruiting coaches only`}
       data-testid="locked-video-tile"
       className={cn('relative flex flex-col items-center justify-center gap-1.5 overflow-hidden rounded-card bg-surface-grouped px-3 text-center', className)}
     >
       <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-ink-1 shadow-[0_0_0_1px_rgba(20,20,28,0.06)]"><Lock className="h-4 w-4" strokeWidth={2} aria-hidden="true" /></span>
       <span className="text-caption font-semibold text-ink-1">{label}</span>
-      <span className="text-caption text-ink-2">Clubs and coaches only</span>
+      <span className="text-caption text-ink-2">Clubs &amp; recruiting coaches only</span>
     </button>
   )
 }

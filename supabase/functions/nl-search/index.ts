@@ -24,8 +24,14 @@ import {
   describeRoleNoun,
   buildOpportunityMessage,
   buildNoOpportunitiesMessage,
+  includeTestPublisherRoles,
+  isStagingProject,
+  mergeOpportunityRows,
+  testPublisherRowsToOpportunityRows,
+  withoutAppliedRoles,
   type CountryRef,
   type OpportunityRow,
+  type TestPublisherRoleRow,
   type Viewer as CandidateViewer,
 } from '../_shared/opportunity-search.ts'
 import { labelFor, scrubInternalValues } from '../_shared/display-labels.ts'
@@ -1325,9 +1331,11 @@ const OPPORTUNITY_RESULT_CAP = 10
  * "midfielder roles with housing".
  *
  * Reads `public_opportunities` (open roles only; hidden / test / not-onboarded
- * publishers already excluded by the view), keeps the roles this viewer can
- * apply to (same EU-passport + team-gender rules as the
- * check_application_eligibility trigger, deadline not passed), and widens
+ * publishers already excluded by the view) — plus, on staging only, test
+ * publishers' open roles when the viewer is a test account — keeps the roles
+ * this viewer can apply to (not applied to yet; same EU-passport +
+ * team-gender rules as the check_application_eligibility trigger; deadline
+ * not passed), and widens
  * empty geography country → region → worldwide, naming the rung in the copy.
  * No scores, applicant counts or level pills are computed or returned.
  */
@@ -1392,7 +1400,7 @@ async function handleCandidateOpportunitySearch(params: {
   }
 
   try {
-    const [oppRes, countriesRes] = await Promise.all([
+    const [oppRes, countriesRes, appliedRes] = await Promise.all([
       adminClient
         .from('public_opportunities')
         .select('id, title, opportunity_type, position, gender, location_city, location_country, application_deadline, benefits, custom_benefits, eu_passport_required, created_at, club_name, club_logo_url, organization_name, world_club_name, world_club_avatar_url')
@@ -1400,10 +1408,33 @@ async function handleCandidateOpportunitySearch(params: {
         .order('created_at', { ascending: false })
         .limit(500),
       adminClient.from('countries').select('name, common_name, region'),
+      adminClient.from('opportunity_applications').select('opportunity_id').eq('applicant_id', userId),
     ])
     if (oppRes.error) throw oppRes.error
-    const rows = (oppRes.data ?? []) as OpportunityRow[]
+    let rows = (oppRes.data ?? []) as OpportunityRow[]
+
+    // Staging + test viewer: the view hides test publishers, but every role
+    // on staging is a test role (the Opportunities page shows them there).
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
+    if (isStagingProject(supabaseUrl)) {
+      const { data: me } = await adminClient.from('profiles').select('is_test_account').eq('id', userId).maybeSingle()
+      if (includeTestPublisherRoles({ supabaseUrl, viewerIsTest: me?.is_test_account === true })) {
+        const testRes = await adminClient
+          .from('opportunities')
+          .select('id, title, opportunity_type, position, gender, location_city, location_country, application_deadline, benefits, custom_benefits, eu_passport_required, created_at, organization_name, publisher:profiles!opportunities_club_id_fkey!inner(full_name, avatar_url, is_test_account, onboarding_completed, is_blocked, frozen_minor_at), world_club:world_clubs!opportunities_world_club_id_fkey(club_name, avatar_url)')
+          .eq('status', 'open')
+          .eq('opportunity_type', viewer.role)
+          .eq('publisher.is_test_account', true)
+          .order('created_at', { ascending: false })
+          .limit(500)
+        // Non-fatal: the real roles above still answer the question.
+        if (testRes.error) captureException(testRes.error, { functionName: 'nl-search', correlationId, extra: { phase: 'candidate_roles_test_publishers' } })
+        else rows = mergeOpportunityRows(rows, testPublisherRowsToOpportunityRows((testRes.data ?? []) as TestPublisherRoleRow[]))
+      }
+    }
     const countries = (countriesRes.data ?? []) as CountryRef[]
+    // Already applied → not "a role you can apply to" (non-fatal if unread).
+    rows = withoutAppliedRoles(rows, ((appliedRes?.data ?? []) as { opportunity_id: string }[]).map(a => a.opportunity_id))
 
     const today = new Date().toISOString().slice(0, 10)
     const { criteria, matched, landed, askedLabel, widenedRegion } =
