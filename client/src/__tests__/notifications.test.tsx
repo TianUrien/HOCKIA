@@ -336,6 +336,26 @@ describe('getNotificationConfig', () => {
 
     const rejected = createNotification({ kind: 'vacancy_application_status', metadata: { ...meta, status: 'rejected' } })
     expect(getNotificationConfig(rejected).getTitle(rejected)).toBe('CASI updated your application')
+
+    const filled = createNotification({ kind: 'vacancy_application_status', metadata: { ...meta, status: 'filled' } })
+    expect(getNotificationConfig(filled).getTitle(filled)).toBe('CASI filled the role')
+    expect(getNotificationConfig(filled).getDescription?.(filled)).toBe(
+      'Arquera has been filled. Thanks for applying — new roles are open.',
+    )
+  })
+
+  it('recruiting_update renders the server-written title, summary and target', () => {
+    const notification = createNotification({
+      kind: 'recruiting_update',
+      metadata: { event: 'offer_received', title: 'CASI sent you an offer', summary: 'Arquera', target_url: '/messages/abc' },
+    })
+    const config = getNotificationConfig(notification)
+    expect(config.getTitle(notification)).toBe('CASI sent you an offer')
+    expect(config.getDescription?.(notification)).toBe('Arquera')
+    expect(resolveNotificationRoute(notification)).toBe('/messages/abc')
+
+    const bare = createNotification({ kind: 'recruiting_update', metadata: {} })
+    expect(getNotificationConfig(bare).getTitle(bare)).toBe('Recruiting update')
   })
 
   // Routing contracts for the post-References/Friends-split notification
