@@ -2,7 +2,9 @@
  * CoachContextNudge — visibility + dismissal contract.
  *
  * Locks in:
- *   - Renders for coaches with no active context (the value gap path).
+ *   - Renders for RECRUITING coaches (coach_recruits_for_team) with no
+ *     active context (the value gap path). Candidate coaches are hidden
+ *     (founder ruling 2026-09-26 — Fit counts ONLY coaches who recruit).
  *   - Hidden for non-coach roles (clubs derive Fit from profile; others
  *     don't get Fit at all).
  *   - Hidden when an active context exists (the gap is closed).
@@ -27,7 +29,7 @@ vi.mock('@/lib/supabase', () => ({
 }))
 
 // Per-test mutable auth state.
-const authState: { profile: { id: string; role: string } | null } = { profile: null }
+const authState: { profile: { id: string; role: string; coach_recruits_for_team?: boolean | null } | null } = { profile: null }
 vi.mock('@/lib/auth', () => ({
   useAuthStore: () => authState,
 }))
@@ -54,7 +56,10 @@ import CoachContextNudge from '@/components/recruiting/CoachContextNudge'
 const DISMISS_KEY = 'hockia.coach-context-nudge-dismissed'
 
 function setCoach() {
-  authState.profile = { id: 'coach-1', role: 'coach' }
+  authState.profile = { id: 'coach-1', role: 'coach', coach_recruits_for_team: true }
+}
+function setCandidateCoach(recruits: boolean | null = false) {
+  authState.profile = { id: 'coach-2', role: 'coach', coach_recruits_for_team: recruits }
 }
 function setClub() {
   authState.profile = { id: 'club-1', role: 'club' }
@@ -81,6 +86,18 @@ describe('CoachContextNudge', () => {
     expect(screen.getByTestId('coach-context-nudge')).toBeInTheDocument()
     expect(screen.getByText(/unlock club fit on every player/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /set scope/i })).toBeInTheDocument()
+  })
+
+  it('hidden for a candidate coach (coach_recruits_for_team false)', () => {
+    setCandidateCoach(false)
+    const { container } = render(<CoachContextNudge />)
+    expect(container.firstChild).toBeNull()
+  })
+
+  it('hidden for a coach whose coach_recruits_for_team is unknown (null)', () => {
+    setCandidateCoach(null)
+    const { container } = render(<CoachContextNudge />)
+    expect(container.firstChild).toBeNull()
   })
 
   it('hidden for club viewer (their Fit derives from profile)', () => {

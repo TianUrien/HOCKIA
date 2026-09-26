@@ -73,6 +73,11 @@ const applicationStatusCopy = (notification: NotificationRecord): { title: strin
       return { title: `${club} reviewed your application`, body: `Your application for ${position} is under consideration.` }
     case 'rejected':
       return { title: `${club} updated your application`, body: `You weren't selected for ${position} this time.` }
+    case 'filled': {
+      // Founder copy 2026-09-26. Role name falls back to the full title, then "The role".
+      const role = humanizePosition(getMetadataString(notification, 'position')) ?? vacancyTitle ?? 'The role'
+      return { title: `${club} filled the role`, body: `${role} has been filled. Thanks for applying — new roles are open.` }
+    }
     default:
       return { title: `${club} updated your application`, body: `Your application for ${position} was updated.` }
   }
@@ -371,6 +376,17 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
         : null
     },
     getRoute: () => '/dashboard/profile?tab=profile&section=viewers',
+  },
+  // Invite / offer / signing steps (Track C). The server writes the readable
+  // title + summary into metadata, so the copy lives in one place (SQL) and
+  // clients that predate this kind still show the summary via defaultConfig.
+  recruiting_update: {
+    icon: Handshake,
+    badgeText: 'Recruiting',
+    accentClassName: 'bg-emerald-50 text-emerald-700',
+    getTitle: (notification) => getMetadataString(notification, 'title') || 'Recruiting update',
+    getDescription: (notification) => getMetadataString(notification, 'summary'),
+    getRoute: defaultConfig.getRoute,
   },
   system_announcement: {
     icon: Megaphone,

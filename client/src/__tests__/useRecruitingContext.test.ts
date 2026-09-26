@@ -172,9 +172,33 @@ describe('setViewer', () => {
     expect(s.loading).toBe(true)
   })
 
-  it('coach viewer → eligibleRole=coach', () => {
-    useRecruitingContextStore.getState().setViewer(OWNER_A, 'coach')
+  it('recruiting coach viewer (coach_recruits_for_team) → eligibleRole=coach', () => {
+    useRecruitingContextStore.getState().setViewer(OWNER_A, 'coach', true)
     expect(useRecruitingContextStore.getState().eligibleRole).toBe('coach')
+    expect(useRecruitingContextStore.getState().loading).toBe(true)
+  })
+
+  // Founder ruling 2026-09-26: Fit counts ONLY coaches who recruit.
+  it('candidate coach (coach_recruits_for_team false / null / omitted) → eligibleRole=null, loading false', () => {
+    for (const recruits of [false, null, undefined]) {
+      useRecruitingContextStore.getState().setViewer(null, null)
+      useRecruitingContextStore.getState().setViewer(OWNER_A, 'coach', recruits)
+      const s = useRecruitingContextStore.getState()
+      expect(s.eligibleRole).toBe(null)
+      expect(s.loading).toBe(false)
+    }
+  })
+
+  it('coach flipping coach_recruits_for_team on becomes eligible (same owner)', () => {
+    useRecruitingContextStore.getState().setViewer(OWNER_A, 'coach', false)
+    expect(useRecruitingContextStore.getState().eligibleRole).toBe(null)
+    useRecruitingContextStore.getState().setViewer(OWNER_A, 'coach', true)
+    expect(useRecruitingContextStore.getState().eligibleRole).toBe('coach')
+  })
+
+  it('club viewer is eligible regardless of the coach flag', () => {
+    useRecruitingContextStore.getState().setViewer(OWNER_A, 'club', false)
+    expect(useRecruitingContextStore.getState().eligibleRole).toBe('club')
   })
 
   it('player viewer → eligibleRole=null, loading flipped to false (no fetch will run)', () => {
@@ -205,6 +229,20 @@ describe('ensureFetched', () => {
     useRecruitingContextStore.getState().setViewer(OWNER_A, 'player')
     await useRecruitingContextStore.getState().ensureFetched()
     expect(fromMock).not.toHaveBeenCalled()
+  })
+
+  it('does nothing for a candidate coach (coach_recruits_for_team false)', async () => {
+    useRecruitingContextStore.getState().setViewer(OWNER_A, 'coach', false)
+    await useRecruitingContextStore.getState().ensureFetched()
+    expect(fromMock).not.toHaveBeenCalled()
+  })
+
+  it('fetches for a recruiting coach', async () => {
+    const { chain } = buildSelectChain([buildRow({})])
+    fromMock.mockReturnValue(chain)
+    useRecruitingContextStore.getState().setViewer(OWNER_A, 'coach', true)
+    await useRecruitingContextStore.getState().ensureFetched()
+    expect(fromMock).toHaveBeenCalledTimes(1)
   })
 
   it('does nothing when there is no owner', async () => {
