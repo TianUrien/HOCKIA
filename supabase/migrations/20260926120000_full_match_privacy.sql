@@ -58,36 +58,28 @@ COMMENT ON COLUMN public.profiles.full_match_visibility IS
 GRANT SELECT (full_match_visibility) ON public.profiles TO anon, authenticated;
 GRANT INSERT (full_match_visibility), UPDATE (full_match_visibility) ON public.profiles TO authenticated;
 
--- profiles_self: expose the new column (appended; existing column order kept).
-CREATE OR REPLACE VIEW public.profiles_self
-WITH (security_barrier = true, security_invoker = true) AS
- SELECT id, email, role, full_name, username, base_location, nationality, "position",
-    secondary_position, gender, date_of_birth, avatar_url, highlight_video_url, current_club,
-    club_history, bio, club_bio, league_division, contact_email, contact_email_public, website,
-    year_founded, onboarding_completed, version, created_at, updated_at, social_links,
-    is_test_account, notify_opportunities, notify_applications, nationality_country_id,
-    base_country_id, nationality2_country_id, is_blocked, blocked_at, blocked_reason, blocked_by,
-    open_to_play, open_to_coach, womens_league_division, mens_league_division,
-    onboarding_started_at, onboarding_completed_at, open_to_opportunities, last_active_at,
-    mens_league_id, womens_league_id, world_region_id, highlight_visibility,
-    brand_representation, search_vector, notify_friends, notify_references, notify_messages,
-    last_message_email_at, notify_push, current_world_club_id, base_city,
-    accepted_reference_count, career_entry_count, accepted_friend_count, post_count,
-    browse_anonymously, notify_profile_views, last_profile_view_email_at, last_platform,
-    coach_specialization, coach_specialization_custom, is_verified, verified_at, verified_by,
-    umpire_level, federation, umpire_since, officiating_specialization, languages,
-    umpire_appointment_count, last_officiated_at, playing_category, coaching_categories,
-    umpiring_categories, category_confirmation_needed, coach_recruits_for_team,
-    availability_confirmed_at, last_meaningful_update_at, last_check_in_prompt_at,
-    last_profile_view_pulse_at, full_game_video_count, show_last_active,
-    profile_completeness_pct, relocation_willingness, relocation_countries_open,
-    relocation_countries_excluded, level_target, opportunity_preference, available_from,
-    availability_duration, specialist_skills, contact_email_masked, available_for_appointments,
-    gallery_photo_count, club_media_count, frozen_minor_at, dob_required_since,
-    org_attested_18plus_at,
-    full_match_visibility
-   FROM public.profiles
-  WHERE id = (SELECT auth.uid());
+-- profiles_self: expose the new column, appended after the view's EXISTING columns.
+-- The column order differs between environments (contact_email_public sits at a
+-- different position on prod and staging), and CREATE OR REPLACE VIEW can only
+-- append, so the select list is built from the view's current columns.
+DO $view$
+DECLARE
+  v_cols text;
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_attribute
+              WHERE attrelid = 'public.profiles_self'::regclass
+                AND attname = 'full_match_visibility' AND NOT attisdropped) THEN
+    RETURN;
+  END IF;
+  SELECT string_agg(quote_ident(attname), ', ' ORDER BY attnum) INTO v_cols
+    FROM pg_attribute
+   WHERE attrelid = 'public.profiles_self'::regclass AND attnum > 0 AND NOT attisdropped;
+  EXECUTE format(
+    'CREATE OR REPLACE VIEW public.profiles_self WITH (security_barrier = true, security_invoker = true) AS '
+    'SELECT %s, full_match_visibility FROM public.profiles WHERE id = (SELECT auth.uid())',
+    v_cols);
+END
+$view$;
 
 -- ── 2. Who counts as a recruiter (the single definition) ──────────────────
 CREATE OR REPLACE FUNCTION public.is_recruiter(p_uid uuid)
