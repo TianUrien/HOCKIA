@@ -10,7 +10,7 @@ import { ConversationSkeleton } from '@/components/Skeleton'
 import { useMyApplicationsAll, type MyApplicationRow } from '@/hooks/useMyApplicationsAll'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { useScrollRestore } from '@/hooks/useScrollRestore'
-import { APPLICATION_TONE_CLASS, appliedLine, applicationStatusPill, genderPill, roleTitle } from '@/lib/opportunityCopy'
+import { APPLICATION_TONE_CLASS, appliedLine, applicationStatusPill, roleHeadline } from '@/lib/opportunityCopy'
 
 type Segment = 'active' | 'closed'
 
@@ -35,8 +35,10 @@ export default function MyApplicationsPage() {
 
   const renderRow = (r: MyApplicationRow) => {
     const pill = applicationStatusPill(r.status, r.appliedAt, r.roleOpen)
-    const category = r.opportunityType === 'player' ? genderPill(r.gender)?.label : null
-    const headline = r.title ? [roleTitle({ position: r.position, title: r.title, opportunity_type: r.opportunityType ?? 'player' }), category].filter(Boolean).join(' · ') : 'Role no longer available'
+    // Title first, then position · team (the role title was missing, so two
+    // roles for the same position read identically).
+    const role = r.title ? roleHeadline({ position: r.position, title: r.title, opportunity_type: r.opportunityType ?? 'player', gender: r.gender }) : null
+    const headline = role?.title ?? 'Role no longer available'
     const sub = [r.club?.name, r.country].filter(Boolean).join(' · ')
     return (
       <li key={r.id}>
@@ -47,7 +49,8 @@ export default function MyApplicationsPage() {
         >
           <EntityAvatar src={r.club?.avatarUrl} name={r.club?.name} role={r.club?.role ?? 'club'} size={52} />
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-row font-semibold text-ink-1">{headline}</span>
+            <span className="block truncate text-row font-semibold text-ink-1" data-testid="application-role-title">{headline}</span>
+            {role?.detail && <span className="block truncate text-secondary text-ink-2">{role.detail}</span>}
             {sub && <span className="block truncate text-secondary text-ink-2">{sub}</span>}
             {r.hasClubNote ? (
               <span className="mt-1 block text-secondary text-ink-2" data-testid="club-note-line">

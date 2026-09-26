@@ -1,4 +1,5 @@
 import { UserPlus } from 'lucide-react'
+import { positionLabel } from '@/lib/identity'
 import { NationalityCardDisplay } from '@/components'
 import { FeedCard, FeedCardAction, FeedCardBody, FeedCardCaption, FeedCardFooter, FeedCardHeader, profilePathForRole } from '../FeedCard'
 import type { MemberJoinedFeedItem } from '@/types/homeFeed'
@@ -34,7 +35,7 @@ export function MemberJoinedCard({ item }: MemberJoinedCardProps) {
             {item.nationality_country_id && (
               <NationalityCardDisplay primaryCountryId={item.nationality_country_id} />
             )}
-            {item.position && <span>{item.position}</span>}
+            {item.position && <span>{positionLabel(item.position)}</span>}
           </div>
         </FeedCardBody>
       )}

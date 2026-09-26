@@ -8,6 +8,7 @@ import { useClubRoles, type ClubRole } from '@/hooks/useClubRoles'
 import { formatDurationText, genderPill, isPaid, roleBenefits, roleTitle } from '@/lib/opportunityCopy'
 import { waitingNotice } from '@/lib/clubRecruiting'
 import { cn } from '@/lib/utils'
+import { RoleActions } from './RoleActions'
 
 
 /**
@@ -59,7 +60,7 @@ function DraftCard({ role, onContinue }: { role: ClubRole; onContinue: () => voi
   )
 }
 
-function RoleCard({ role, expiryDays, onReview }: { role: ClubRole; expiryDays: number; onReview: () => void }) {
+function RoleCard({ role, expiryDays, onReview, onChanged }: { role: ClubRole; expiryDays: number; onReview: () => void; onChanged: () => void }) {
   const pill = genderPill(role.gender)
   const benefits = roleBenefits(role)
   const paid = isPaid(role)
@@ -77,6 +78,7 @@ function RoleCard({ role, expiryDays, onReview }: { role: ClubRole; expiryDays: 
         <span className="min-w-0 truncate text-secondary font-semibold text-ink-2">{role.title}</span>
         <span className="flex shrink-0 items-center gap-1 text-secondary text-ink-3">
           <Clock className="h-3.5 w-3.5" strokeWidth={2} /> {open ? `Posted ${monthDay(role.published_at ?? role.created_at)}` : closedLabel(role)}
+          <RoleActions role={role} onChanged={onChanged} />
         </span>
       </div>
       <div className="flex items-center gap-2">
@@ -191,7 +193,7 @@ export default function ClubOpportunitiesScreen() {
         )}
         {roles.map((r) => (r.status === 'draft'
           ? <DraftCard key={r.id} role={r} onContinue={() => navigate(`/dashboard/opportunities/${r.id}/edit`)} />
-          : <RoleCard key={r.id} role={r} expiryDays={data.expiryDays} onReview={() => navigate(applicantsPath(r.id), { state: { from: '/opportunities' } })} />
+          : <RoleCard key={r.id} role={r} expiryDays={data.expiryDays} onReview={() => navigate(applicantsPath(r.id), { state: { from: '/opportunities' } })} onChanged={data.refresh} />
         ))}
 
         {segment === 'open' && (

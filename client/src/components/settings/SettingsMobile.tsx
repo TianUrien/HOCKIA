@@ -42,6 +42,14 @@ function longDate(iso: string | null | undefined): string | null {
   const m = iso ? /^(\d{4})-(\d{2})-(\d{2})/.exec(iso) : null
   return m ? `${Number(m[3])} ${MONTH[Number(m[2]) - 1]} ${m[1]}` : null
 }
+/** Accurate DOB copy: the profile shows the age (key facts), never the date;
+ *  for players it also keeps club-facing search 18+ (D2 search fence). */
+function dobFooter(isPlayer: boolean): string {
+  return isPlayer
+    ? 'Used for your age on your profile and to keep club search 18+. Only your age is shown, never the date.'
+    : 'Used for your age on your profile. Only your age is shown, never the date.'
+}
+
 const PROVIDER: Record<string, string> = { google: 'Google', apple: 'Apple', email: 'email' }
 
 function useProfileWriter() {
@@ -145,7 +153,7 @@ function Hub({ go }: { go: (s: SettingsSection | 'account') => void }) {
         <SettingsRow title="Language" value="English" icon={<Languages className="h-4 w-4" strokeWidth={2} />} iconClassName="bg-[#e8edfd] text-[#3b5bdb]" />
       </SettingsGroup>
 
-      <SettingsGroup label="Account" footer={isClub ? undefined : 'Date of birth is only used to keep Hockia 16+. It never shows on your profile.'}>
+      <SettingsGroup label="Account" footer={isClub ? undefined : dobFooter(isPlayer)}>
         <SettingsRow title="Email & sign-in" value={provider === 'email' ? 'Email' : provider} onClick={() => go('account')} />
         {!isClub && dob && <SettingsRow title="Date of birth" value={dob} />}
         {!isClub && languages.length > 0 && <SettingsRow title="Languages" subtitle={languages.join(' · ')} />}

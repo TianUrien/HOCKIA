@@ -17,6 +17,7 @@ import PublishConfirmationModal from './PublishConfirmationModal'
 import DeleteOpportunityModal from './DeleteOpportunityModal'
 import Skeleton, { OpportunityCardSkeleton } from './Skeleton'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
+import { closeRolePatch, reopenRolePatch } from '@/lib/roleLifecycle'
 
 type VacancyWithCount = Vacancy & { applicant_count: number | null }
 
@@ -497,12 +498,9 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
       })
       const { error } = await supabase
         .from('opportunities')
-        .update({
-          status: 'closed',
-          closed_reason: reason,
-          // "Filled through Hockia" comes only from a signing the player
-          // confirmed (confirm_signing); a club can't claim it by hand.
-        } as never)
+        // "Filled through Hockia" comes only from a signing the player
+        // confirmed (confirm_signing); a club can't claim it by hand.
+        .update(closeRolePatch(reason) as never)
         .eq('id', vacancyId)
 
       if (error) throw error
@@ -548,19 +546,7 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
       // filled. Also clear closed_at, and if the deadline has already passed
       // extend it 30 days (mirrors apply_renewal_action) so the daily sweep
       // doesn't re-close the role next morning and fire another renewal email.
-      const reopenUpdate: Record<string, unknown> = {
-        status: 'open',
-        closed_reason: null,
-        filled_via_hockia: null,
-        auto_closed_at: null,
-        closed_at: null,
-      }
-      const todayStr = new Date().toISOString().slice(0, 10)
-      if (vacancy.application_deadline && vacancy.application_deadline.slice(0, 10) < todayStr) {
-        const extended = new Date()
-        extended.setUTCDate(extended.getUTCDate() + 30)
-        reopenUpdate.application_deadline = extended.toISOString().slice(0, 10)
-      }
+      const reopenUpdate = reopenRolePatch(vacancy.application_deadline)
       const { error } = await supabase
         .from('opportunities')
         .update(reopenUpdate as never)

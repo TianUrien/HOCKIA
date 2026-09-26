@@ -3,9 +3,9 @@ import type { Vacancy } from '@/lib/supabase'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
 import { formatActivityAge } from '@/lib/inboxTime'
 import {
-  REQUIREMENT_TILE, SPECIALIST_TILE, compensationText, genderPill, roleBenefits, roleTitle, whenLine,
+  REQUIREMENT_TILE, SPECIALIST_TILE, compensationText, genderPill, roleBenefits, roleHeadline, whenLine,
 } from '@/lib/opportunityCopy'
-import { humanizeToken } from '@/lib/identity'
+import { humanizeToken, positionLabel } from '@/lib/identity'
 
 export interface RoleCardProps {
   vacancy: Vacancy
@@ -24,12 +24,15 @@ export interface RoleCardProps {
 
 /**
  * Role card (Figma Opportunities v2): crest · club · place · league · age,
- * position + category pill, start & duration, package tiles, then a
+ * the role title, then position + category pill, start & duration, package tiles, then a
  * full-width solid Apply — or tinted Applied with a check, which opens the
  * applied detail. No level, no counts, no reply time.
  */
 export function RoleCard({ vacancy, clubName, clubLogo, publisherRole, countryFlag, league, applied, canApply, onOpen, onApply }: RoleCardProps) {
   const pill = vacancy.opportunity_type === 'player' ? genderPill(vacancy.gender) : null
+  // The club's title leads; position (or coaching role) + team sit under it.
+  const headline = roleHeadline(vacancy)
+  const positionText = positionLabel(vacancy.position)
   const place = [vacancy.location_city, vacancy.location_country].map((s) => s?.trim()).filter(Boolean).join(', ')
   const placeLine = [countryFlag && place ? `${countryFlag} ${place}` : place, league].filter(Boolean).join(' · ')
   const benefits = roleBenefits(vacancy)
@@ -38,7 +41,7 @@ export function RoleCard({ vacancy, clubName, clubLogo, publisherRole, countryFl
 
   return (
     <article className="rounded-[18px] border border-line bg-white px-4 py-3.5" data-testid="role-card">
-      <button type="button" onClick={onOpen} className="block w-full text-left" aria-label={`${roleTitle(vacancy)} at ${clubName}`}>
+      <button type="button" onClick={onOpen} className="block w-full text-left" aria-label={`${headline.title} at ${clubName}`}>
         <div className="flex items-center gap-3">
           <EntityAvatar src={clubLogo} name={clubName} role={publisherRole ?? 'club'} size={44} />
           <div className="min-w-0 flex-1">
@@ -51,10 +54,13 @@ export function RoleCard({ vacancy, clubName, clubLogo, publisherRole, countryFl
           </span>
         </div>
 
-        <div className="mt-3 flex items-center gap-2">
-          <h3 className="text-title text-ink-1">{roleTitle(vacancy)}</h3>
-          {pill && <span className={`rounded-full px-2 py-0.5 text-secondary font-semibold ${pill.className}`}>{pill.label}</span>}
-        </div>
+        <h3 className="mt-3 line-clamp-2 break-words text-title text-ink-1">{headline.title}</h3>
+        {pill ? (
+          <div className="mt-1 flex items-center gap-2">
+            {positionText && <span className="text-[15px] font-semibold text-ink-2">{positionText}</span>}
+            <span className={`rounded-full px-2 py-0.5 text-secondary font-semibold ${pill.className}`}>{pill.label}</span>
+          </div>
+        ) : headline.detail && <p className="mt-1 text-[15px] font-semibold text-ink-2">{headline.detail}</p>}
 
         <p className="mt-2 flex items-center gap-1.5 text-[14px] leading-[19px] text-ink-2">
           <Calendar className="h-[15px] w-[15px]" strokeWidth={1.6} />

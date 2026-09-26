@@ -21,6 +21,8 @@ export interface MyApplication {
   opportunity_title: string
   club_name: string | null
   viewed_by_club: boolean
+  /** The role is still open (a pending application on a closed role reads "Role closed"). */
+  role_open: boolean
   /** False when the joined opportunity is unreadable (hidden club or truly
    *  deleted) — the row renders as "no longer available", not a dead link.
    *  Closed roles stay readable via the applicant SELECT policy. */
@@ -46,7 +48,7 @@ export function useMyApplications(enabled: boolean) {
       // name; the FK is disambiguated because opportunities has two.
       const { data, error } = await supabase
         .from('opportunity_applications')
-        .select('id, opportunity_id, status, applied_at, opportunities(title, profiles!opportunities_club_id_fkey(full_name))')
+        .select('id, opportunity_id, status, applied_at, opportunities(title, status, profiles!opportunities_club_id_fkey(full_name))')
         .eq('applicant_id', userId)
         .in('status', [...ACTIVE_STATUSES])
         .order('applied_at', { ascending: false })
@@ -59,7 +61,7 @@ export function useMyApplications(enabled: boolean) {
         return
       }
       const rows = (data ?? []).map((r) => {
-        const opp = r.opportunities as { title?: string; profiles?: { full_name?: string } } | null
+        const opp = r.opportunities as { title?: string; status?: string | null; profiles?: { full_name?: string } } | null
         return {
           id: r.id as string,
           opportunity_id: r.opportunity_id as string,
@@ -68,6 +70,7 @@ export function useMyApplications(enabled: boolean) {
           opportunity_title: opp?.title ?? 'Role no longer available',
           club_name: opp?.profiles?.full_name ?? null,
           viewed_by_club: false,
+          role_open: opp?.status === 'open',
           available: opp != null,
         }
       })

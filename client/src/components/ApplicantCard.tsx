@@ -6,8 +6,9 @@ import { supabase } from '@/lib/supabase'
 import type { OpportunityApplicationWithApplicant } from '@/lib/supabase'
 import type { Database } from '@/lib/database.types'
 import { getInitials } from '@/lib/utils'
+import { positionLabel } from '@/lib/identity'
 import { logger } from '@/lib/logger'
-import { APPLICATION_STATUS_REASONS } from '@/lib/applicationStatus'
+import { APPLICATION_STATUS_REASONS, applicationNote } from '@/lib/applicationStatus'
 
 type ApplicationStatus = Database['public']['Enums']['application_status']
 
@@ -72,6 +73,7 @@ export default function ApplicantCard({ application, onStatusChange, isUpdating,
   })
 
   const currentTier = getCurrentTier(application.status)
+  const note = applicationNote(application.metadata)
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
@@ -165,7 +167,7 @@ export default function ApplicantCard({ application, onStatusChange, isUpdating,
           </button>
 
           <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-600 sm:text-sm">
-            {positions.length > 0 ? <span className="font-medium">{positions.join(' • ')}</span> : null}
+            {positions.length > 0 ? <span className="font-medium">{positions.map((p) => positionLabel(p) ?? p).join(' • ')}</span> : null}
             {positions.length > 0 && applicant.base_location ? <span>•</span> : null}
             {applicant.base_location ? (
               <div className="flex items-center gap-1">
@@ -178,6 +180,12 @@ export default function ApplicantCard({ application, onStatusChange, isUpdating,
           <div className="mt-2 text-xs text-gray-500 sm:text-sm">
             Applied {formatDate(application.applied_at)}
           </div>
+
+          {note && (
+            <p className="mt-2 whitespace-pre-wrap break-words rounded-lg bg-gray-50 px-3 py-2 text-sm text-gray-700" data-testid="applicant-card-note">
+              <span className="font-medium text-gray-900">Note: </span>{note}
+            </p>
+          )}
 
           {referenceInfo && referenceInfo.count > 0 && (
             <div className="mt-2 space-y-0.5">

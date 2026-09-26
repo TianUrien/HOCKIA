@@ -17,7 +17,7 @@ import { useProfileScrollData } from '@/hooks/useProfileScrollData'
 import { useTrustedReferences } from '@/hooks/useTrustedReferences'
 import { markRoleApplicantViewed, patchRoleApplicantStatus } from '@/hooks/useRoleApplicants'
 import { holdDecision } from '@/lib/pendingDecisions'
-import { WITHDRAWN_APPLICATION_MESSAGE } from '@/lib/applicationStatus'
+import { WITHDRAWN_APPLICATION_MESSAGE, applicationNote } from '@/lib/applicationStatus'
 import { useUndoToast } from '@/lib/undoToast'
 import { getImageUrl } from '@/lib/imageUrl'
 import { categoryToDisplay } from '@/lib/hockeyCategories'
@@ -211,6 +211,7 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
     else navigate(`/messages?new=${p.id}`, { state })
   }
 
+  const note = review ? applicationNote(review.metadata) : null
   const videos = scroll.fullGameLinks.length + scroll.fullMatches.length + scroll.highlights.length
   const avatar = p?.avatar_url ? getImageUrl(p.avatar_url, 'avatar-lg') ?? p.avatar_url : null
   const statusNote = review && review.status !== 'pending'
@@ -242,6 +243,16 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
             </div>
 
             {statusNote && <p className="mx-5 mb-3 rounded-card bg-surface-grouped px-3.5 py-2.5 text-secondary text-ink-2">{statusNote}</p>}
+
+            {/* The applicant's note from the Apply sheet — their words, first. */}
+            {note && (
+              <section className="px-5 pb-4" data-testid="applicant-note">
+                <div className="rounded-2xl border border-line bg-white px-3.5 py-3">
+                  <h2 className="text-secondary font-semibold text-ink-2">In their words</h2>
+                  <p className="mt-1 whitespace-pre-wrap break-words text-row leading-[21px] text-ink-1">{note}</p>
+                </div>
+              </section>
+            )}
 
             {/* Fit — clubs only */}
             <div className="px-5">
