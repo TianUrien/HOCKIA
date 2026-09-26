@@ -86,6 +86,9 @@ export default function PassportsPermitsScreen({ onDone }: PassportsPermitsScree
   const [passportPick, setPassportPick] = useState<number | null>(null)
   const [permitSheet, setPermitSheet] = useState<PermitDraftRow | null>(null)
   const [sheetError, setSheetError] = useState<string | null>(null)
+  // The permit sheet's last failed check. The message shows only while that
+  // same check still fails, so it clears the moment the field is fixed.
+  const [permitErrorCode, setPermitErrorCode] = useState<WorkPermitDraftError | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -148,19 +151,23 @@ export default function PassportsPermitsScreen({ onDone }: PassportsPermitsScree
   }
 
   const openPermit = (row: PermitDraftRow | null) => {
-    setSheetError(null)
+    setPermitErrorCode(null)
     setPermitSheet(row ? { ...row } : { key: newKey(), id: null, country_id: null, type: null, valid_from: '', expires_on: '' })
   }
   const applyPermit = () => {
     if (!permitSheet) return
     const invalid = validateWorkPermitDraft({ country_id: permitSheet.country_id, type: permitSheet.type, valid_from: permitSheet.valid_from, expires_on: permitSheet.expires_on })
-    if (invalid) { setSheetError(DRAFT_ERROR[invalid]); return }
+    if (invalid) { setPermitErrorCode(invalid); return }
     setPermits((prev) => {
       const list = prev ?? []
       return list.some((p) => p.key === permitSheet.key) ? list.map((p) => (p.key === permitSheet.key ? permitSheet : p)) : [...list, permitSheet]
     })
     setPermitSheet(null)
   }
+  const permitError = permitSheet && permitErrorCode
+    && validateWorkPermitDraft({ country_id: permitSheet.country_id, type: permitSheet.type, valid_from: permitSheet.valid_from, expires_on: permitSheet.expires_on }) === permitErrorCode
+    ? DRAFT_ERROR[permitErrorCode]
+    : null
   const removePermit = () => {
     if (!permitSheet) return
     if (permitSheet.id) setRemoved((r) => [...r, permitSheet.id as string])
@@ -290,7 +297,7 @@ export default function PassportsPermitsScreen({ onDone }: PassportsPermitsScree
       <BottomSheet open={passportSheet !== null} onClose={() => setPassportSheet(null)} ariaLabel="Passport">
         <div className="flex flex-col gap-4 px-5 pb-3 pt-1">
           <h2 className="text-title text-ink-1">{passportSheet === 1 ? 'Second passport' : 'Passport'}</h2>
-          <CountrySelect appearance="field" label="Country" value={passportPick} onChange={setPassportPick} />
+          <CountrySelect appearance="field" label="Country" value={passportPick} onChange={(id) => { setPassportPick(id); setSheetError(null) }} />
           <p className="text-caption text-ink-3">Whether it’s an EU passport is worked out from the country.</p>
           {sheetError && <p role="alert" className="text-secondary text-red-600">{sheetError}</p>}
           <button type="button" onClick={applyPassport} className="flex h-[50px] w-full items-center justify-center rounded-full bg-hockia-primary text-body font-semibold text-white">Done</button>
@@ -327,7 +334,7 @@ export default function PassportsPermitsScreen({ onDone }: PassportsPermitsScree
               </div>
             </div>
             <p className="text-caption text-ink-3">No expiry date means it doesn’t expire. Clubs and recruiting coaches see valid visas and permits; nobody else does.</p>
-            {sheetError && <p role="alert" className="text-secondary text-red-600">{sheetError}</p>}
+            {permitError && <p role="alert" className="text-secondary text-red-600">{permitError}</p>}
             <button type="button" onClick={applyPermit} className="flex h-[50px] w-full items-center justify-center rounded-full bg-hockia-primary text-body font-semibold text-white">Done</button>
             {draftPermits.some((p) => p.key === permitSheet.key) && (
               <button type="button" onClick={removePermit} className="h-11 text-row font-semibold text-red-600">Remove</button>

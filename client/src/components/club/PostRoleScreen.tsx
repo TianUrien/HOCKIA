@@ -17,9 +17,10 @@ import { BENEFIT_TILES, genderPill } from '@/lib/opportunityCopy'
 import { clubLeagueLine } from '@/lib/clubProfileCopy'
 import {
   COACH_POSITIONS, COACH_TEAM_HINT, DESCRIPTION_MAX, DURATION_OPTIONS, LEVELS, PACKAGE_KEYS, PAY_OPTIONS, PLAYER_POSITIONS, TITLE_MAX,
-  checkStepCopy, draftAsVacancy, draftFromRow, draftToRow, emptyDraft, hardnessFootnote, locationFromClub, recruitingTarget, roleChecklist, rolePostedPath,
-  skillsFor, startLabel, stepProblem, switchRoleType, teamsFor, type PostRoleDraft, type Step,
+  checkStepCopy, draftAsVacancy, draftFromRow, draftToEditPatch, draftToRow, emptyDraft, hardnessFootnote, locationFromClub, recruitingTarget, roleChecklist, rolePostedPath,
+  levelHint, offerStepCopy, skillsFor, startLabel, stepProblem, switchRoleType, teamsFor, type PostRoleDraft, type Step,
 } from '@/lib/postRole'
+import { useRecruitingContextStore } from '@/hooks/useRecruitingContext'
 import { cn } from '@/lib/utils'
 
 /**
@@ -31,7 +32,8 @@ import { cn } from '@/lib/utils'
  * 1:1 onto opportunities.
  */
 interface Props {
-  /** An existing draft to continue; null = a new role. */
+  /** An existing role: a draft to continue, or a live (open/closed) role to
+   *  edit. null = a new role. */
   draftId: string | null
 }
 
@@ -127,6 +129,9 @@ export default function PostRoleScreen({ draftId }: Props) {
   const [step, setStep] = useState<Step>(1)
   const [draft, setDraft] = useState<PostRoleDraft>(() => emptyDraft(defaults))
   const [loaded, setLoaded] = useState(draftId === null)
+  // Set when editing a role that is already live: its status is kept as is.
+  const [liveStatus, setLiveStatus] = useState<'open' | 'closed' | null>(null)
+  const editing = liveStatus !== null
   const initial = useRef<string>('')
   const [problem, setProblem] = useState<string | null>(null)
   const [saving, setSaving] = useState<null | 'draft' | 'post'>(null)
@@ -146,17 +151,18 @@ export default function PostRoleScreen({ draftId }: Props) {
     initial.current = JSON.stringify(fresh)
   }, [draftId, defaults, profile])
 
-  // Continue a draft.
+  // Continue a draft, or edit a live role (the club's own only).
   useEffect(() => {
     if (draftId === null || !profile?.id) return
     let cancelled = false
     void supabase.from('opportunities').select('*').eq('id', draftId).eq('club_id', profile.id).maybeSingle().then(({ data }) => {
       if (cancelled) return
       const row = data as Vacancy | null
-      if (!row || row.status !== 'draft') {
+      if (!row || (row.status !== 'draft' && row.status !== 'open' && row.status !== 'closed')) {
         navigate('/opportunities', { replace: true })
         return
       }
+      if (row.status !== 'draft') setLiveStatus(row.status)
       const d = draftFromRow(row)
       setDraft(d)
       initial.current = JSON.stringify(d)
@@ -206,7 +212,45 @@ export default function PostRoleScreen({ draftId }: Props) {
     }
   }
 
+  // Scope Find players / Find coaches to this role (DEV NOTE 330:781), then
+  // refresh the shared recruiting store so Community reads the NEW scope, not
+  // the one it cached before this role existed.
+  const scopeToRole = async (id: string) => {
+    const { error } = await supabase.rpc('activate_opportunity_recruiting_context', {
+      p_opportunity_id: id,
+      // A coach role's team is not a player category; the RPC takes null.
+      p_target_category: (isPlayer ? recruitingTarget(draft.gender) : null) as string,
+      p_region: (draft.city || null) as string,
+      p_label: draftToRow(draft, profile!.id, 'open').title,
+    })
+    if (error) logger.warn('[PostRole] recruiting context not activated', error)
+    await useRecruitingContextStore.getState().refresh()
+  }
+
+  const saveEdit = async () => {
+    const p = stepProblem(draft, 3)
+    if (p) { setProblem(p); return }
+    if (saving || !draft.id || !profile?.id) return
+    setSaving('post')
+    try {
+      const { error } = await supabase.from('opportunities').update(draftToEditPatch(draft, profile.id) as never).eq('id', draft.id).eq('club_id', profile.id)
+      if (error) throw error
+      initial.current = JSON.stringify(draft)
+      // The role's recruiting scope copies its fields; re-sync it when it's the active one.
+      const active = useRecruitingContextStore.getState().rows.find((r) => r.is_active)
+      if (liveStatus === 'open' && active?.opportunity_id === draft.id) await scopeToRole(draft.id)
+      addToast('Role updated', 'success')
+      navigate('/opportunities', { replace: true, state: { highlight: draft.id } })
+    } catch (err) {
+      logger.error('[PostRole] edit failed', err)
+      addToast('Could not save the changes. Try again.', 'error')
+    } finally {
+      setSaving(null)
+    }
+  }
+
   const post = async () => {
+    if (editing) { await saveEdit(); return }
     const p = stepProblem(draft, 3)
     if (p) { setProblem(p); return }
     if (saving) return
@@ -215,17 +259,7 @@ export default function PostRoleScreen({ draftId }: Props) {
       const id = await save('open')
       if (!id) return
       initial.current = JSON.stringify(draft)
-      // Find players ranks for this role from now on (DEV NOTE 330:781).
-      const target = recruitingTarget(draft.gender)
-      if (target && isPlayer) {
-        const { error } = await supabase.rpc('activate_opportunity_recruiting_context', {
-          p_opportunity_id: id,
-          p_target_category: target,
-          p_region: (draft.city || null) as string,
-          p_label: draftToRow(draft, profile!.id, 'open').title,
-        })
-        if (error) logger.warn('[PostRole] recruiting context not activated', error)
-      }
+      await scopeToRole(id)
       // Role posted has its own route, so a refresh re-renders it from the
       // saved role; replace keeps Back from reopening the form.
       navigate(rolePostedPath(id), { replace: true, state: { role: { type: draft.type, position: draft.position } } })
@@ -286,7 +320,7 @@ export default function PostRoleScreen({ draftId }: Props) {
     }
   }
 
-  const copy = step === 3 ? { ...STEP_COPY[3], sub: checkStepCopy(draft.type).sub } : STEP_COPY[step]
+  const copy = step === 3 ? { ...STEP_COPY[3], title: editing ? 'Check and save' : STEP_COPY[3].title, sub: checkStepCopy(draft.type).sub } : STEP_COPY[step]
   const fromClub = (() => { const c = locationFromClub(defaults); return c.city === draft.city && c.country === draft.country && Boolean(c.city) })()
   const flag = countries.find((c) => c.name === draft.country)?.flag_emoji ?? null
   const league = draft.gender === 'Women' || draft.gender === 'Girls'
@@ -301,10 +335,12 @@ export default function PostRoleScreen({ draftId }: Props) {
             {copy.back && <ChevronLeft className="-ml-1.5 h-6 w-6" strokeWidth={2} />}
             {copy.back ?? 'Cancel'}
           </button>
-          <span className="pointer-events-none absolute inset-x-28 text-center text-body font-semibold text-ink-1">New role</span>
-          <button type="button" onClick={() => void saveDraft()} disabled={!loaded || saving !== null} className="flex h-11 items-center text-body text-hockia-primary disabled:opacity-40">
-            {saving === 'draft' ? 'Saving…' : 'Save draft'}
-          </button>
+          <span className="pointer-events-none absolute inset-x-28 text-center text-body font-semibold text-ink-1">{editing ? 'Edit role' : 'New role'}</span>
+          {editing ? <span aria-hidden="true" /> : (
+            <button type="button" onClick={() => void saveDraft()} disabled={!loaded || saving !== null} className="flex h-11 items-center text-body text-hockia-primary disabled:opacity-40">
+              {saving === 'draft' ? 'Saving…' : 'Save draft'}
+            </button>
+          )}
         </div>
         <div className="flex gap-1.5 px-5 pb-1 pt-1" aria-hidden="true">
           {[1, 2, 3].map((n) => <span key={n} className={cn('h-[3px] flex-1 rounded-full', n <= step ? 'bg-hockia-primary' : 'bg-line')} />)}
@@ -336,7 +372,7 @@ export default function PostRoleScreen({ draftId }: Props) {
             <Section label="Team" trailing={<span className="flex items-center gap-1 text-[13px] text-ink-3"><Lock className="h-3.5 w-3.5" strokeWidth={2} /> Always required</span>} hint={isPlayer ? 'Players outside this team can’t apply.' : COACH_TEAM_HINT}>
               <Segments label="Team" value={draft.gender} options={teamsFor(draft.type)} onChange={(v) => set('gender', v)} />
             </Section>
-            <Section label="Title" trailing={<Muted>Optional</Muted>} hint={`Shown above the position. Up to ${TITLE_MAX} characters.`}>
+            <Section label="Title" trailing={<Muted>Optional</Muted>} hint={`The role’s headline, shown above the position. Up to ${TITLE_MAX} characters.`}>
               <input
                 value={draft.title}
                 onChange={(e) => set('title', e.target.value.slice(0, TITLE_MAX))}
@@ -349,7 +385,7 @@ export default function PostRoleScreen({ draftId }: Props) {
             <Section
               label="Level"
               trailing={isPlayer ? <HardnessPill label="Level" on={draft.levelRequired} onToggle={() => set('levelRequired', !draft.levelRequired)} /> : <Muted>Optional</Muted>}
-              hint="Shown to players and used to rank them."
+              hint={levelHint(draft.type)}
             >
               <Segments label="Level" value={draft.level} options={LEVELS} onChange={(v) => set('level', draft.level === v ? null : v)} />
             </Section>
@@ -366,7 +402,7 @@ export default function PostRoleScreen({ draftId }: Props) {
             <Section
               label="When"
               trailing={isPlayer ? <HardnessPill label="When" on={draft.availabilityRequired} onToggle={() => set('availabilityRequired', !draft.availabilityRequired)} /> : <Muted>Optional</Muted>}
-              hint="Players mark when they’re free; we match it to your start."
+              hint={offerStepCopy(draft.type).when}
             >
               <div className="grid grid-cols-2 gap-3">
                 <label className="block">
@@ -404,7 +440,7 @@ export default function PostRoleScreen({ draftId }: Props) {
             <Section label="Pay" trailing={isPlayer ? <HardnessPill label="Pay" on={draft.payRequired} onToggle={() => set('payRequired', !draft.payRequired)} /> : <Muted>Optional</Muted>}>
               <Segments label="Pay" value={draft.pay} options={PAY_OPTIONS} onChange={(v) => set('pay', draft.pay === v ? null : v)} />
             </Section>
-            <Section label="Package" trailing={<Muted>Optional</Muted>} hint="Housing and flights are what relocating players ask about first.">
+            <Section label="Package" trailing={<Muted>Optional</Muted>} hint={offerStepCopy(draft.type).package}>
               <div className="grid grid-cols-2 gap-2.5" role="group" aria-label="Package">
                 {PACKAGE_KEYS.map((k) => {
                   const tile = BENEFIT_TILES[k]
@@ -426,7 +462,7 @@ export default function PostRoleScreen({ draftId }: Props) {
               <div className="flex items-center gap-3 rounded-[12px] bg-surface-grouped px-4 py-3">
                 <div className="min-w-0 flex-1">
                   <p className="text-body font-semibold text-ink-1">EU passport required</p>
-                  <p className="text-[13px] leading-[17px] text-ink-2">Only players with an EU passport can apply.</p>
+                  <p className="text-[13px] leading-[17px] text-ink-2">{offerStepCopy(draft.type).euPassport}</p>
                 </div>
                 <SettingsSwitch label="EU passport required" checked={draft.euPassport} onChange={() => set('euPassport', !draft.euPassport)} />
               </div>
@@ -490,7 +526,9 @@ export default function PostRoleScreen({ draftId }: Props) {
       <div className="shrink-0 border-t border-line bg-white px-4 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-2.5">
         {problem && <p role="alert" className="pb-2 text-center text-secondary text-[#dc2626]">{problem}</p>}
         <button type="button" onClick={next} disabled={!loaded || saving !== null} className="flex h-[50px] w-full items-center justify-center rounded-full bg-hockia-primary text-body font-semibold text-white active:opacity-90 disabled:opacity-60">
-          {step === 3 ? (saving === 'post' ? 'Posting…' : 'Post role') : 'Continue'}
+          {step === 3
+            ? (editing ? (saving === 'post' ? 'Saving…' : 'Save changes') : (saving === 'post' ? 'Posting…' : 'Post role'))
+            : 'Continue'}
         </button>
       </div>
 
@@ -513,7 +551,18 @@ export default function PostRoleScreen({ draftId }: Props) {
         </div>
       </BottomSheet>
 
-      <BottomSheet open={confirmCancel} onClose={() => setConfirmCancel(false)} ariaLabel="Save as draft?">
+      <BottomSheet open={confirmCancel && editing} onClose={() => setConfirmCancel(false)} ariaLabel="Discard changes?">
+        <div className="px-5 pb-[max(env(safe-area-inset-bottom),1rem)] pt-2">
+          <h2 className="text-[20px] font-bold text-ink-1">Discard changes?</h2>
+          <p className="mt-1 text-row text-ink-2">The role stays as it was.</p>
+          <div className="mt-4 flex flex-col gap-2.5">
+            <button type="button" onClick={() => { setConfirmCancel(false); navigate('/opportunities') }} className="flex h-[50px] items-center justify-center rounded-full bg-surface-grouped text-body font-semibold text-[#dc2626]">Discard</button>
+            <button type="button" onClick={() => setConfirmCancel(false)} className="flex h-11 items-center justify-center text-body text-ink-2">Keep editing</button>
+          </div>
+        </div>
+      </BottomSheet>
+
+      <BottomSheet open={confirmCancel && !editing} onClose={() => setConfirmCancel(false)} ariaLabel="Save as draft?">
         <div className="px-5 pb-[max(env(safe-area-inset-bottom),1rem)] pt-2">
           <h2 className="text-[20px] font-bold text-ink-1">Save as draft?</h2>
           <p className="mt-1 text-row text-ink-2">Keep what you’ve written and finish the role later from Opportunities.</p>

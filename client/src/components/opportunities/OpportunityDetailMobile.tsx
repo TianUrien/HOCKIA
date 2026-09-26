@@ -12,10 +12,10 @@ import { useAuthStore } from '@/lib/auth'
 import { useCountries } from '@/hooks/useCountries'
 import { checkOpportunityEligibility } from '@/lib/opportunityEligibility'
 import { getShareOrigin } from '@/lib/profileShare'
-import { humanizeToken, identityLine } from '@/lib/identity'
+import { humanizeToken, identityLine, positionLabel } from '@/lib/identity'
 import {
   APPLICATION_TONE_CLASS, SPECIALIST_TILE, applicationStatusPill, compensationText, deadlineLine, genderPill,
-  postedLine, roleBenefits, roleTitle, startsLine,
+  postedLine, roleBenefits, roleHeadline, startsLine,
 } from '@/lib/opportunityCopy'
 
 interface OpportunityDetailMobileProps {
@@ -55,6 +55,10 @@ export function OpportunityDetailMobile({
   const eligibility = checkOpportunityEligibility(vacancy, profile, countries)
   const lacksEuPassport = vacancy.eu_passport_required === true && !eligibility.eligible && /EU passport/i.test(eligibility.reason ?? '')
   const pill = vacancy.opportunity_type === 'player' ? genderPill(vacancy.gender) : null
+  const headline = roleHeadline(vacancy)
+  // Secondary line: position (or coaching role) + the team. A player role
+  // keeps its coloured team pill; a coach role reads "Head coach · Boys".
+  const positionText = positionLabel(vacancy.position)
   const place = [vacancy.location_city, vacancy.location_country].map((s) => s?.trim()).filter(Boolean).join(', ')
   const clubLine = [identityLine(publisherRole ?? 'club'), countryFlag && place ? `${countryFlag} ${place}` : place, league].filter(Boolean).join(' · ')
   const benefits = roleBenefits(vacancy)
@@ -89,7 +93,7 @@ export function OpportunityDetailMobile({
     const url = `${getShareOrigin()}/opportunities/${vacancy.id}`
     try {
       if (typeof navigator !== 'undefined' && navigator.share) {
-        await navigator.share({ title: `${roleTitle(vacancy)} · ${clubName}`, url })
+        await navigator.share({ title: `${headline.title} · ${clubName}`, url })
         return
       }
       await navigator.clipboard.writeText(url)
@@ -126,10 +130,13 @@ export function OpportunityDetailMobile({
       </button>
 
       <div className="px-5 pb-1.5 pt-2.5">
-        <div className="flex items-center gap-2.5">
-          <h1 className="text-[28px] font-bold leading-[34px] text-ink-1">{roleTitle(vacancy)}</h1>
-          {pill && <span className={`rounded-full px-2 py-0.5 text-secondary font-semibold ${pill.className}`}>{pill.label}</span>}
-        </div>
+        <h1 className="break-words text-[28px] font-bold leading-[34px] text-ink-1" data-testid="role-title">{headline.title}</h1>
+        {pill ? (
+          <div className="mt-1 flex items-center gap-2">
+            {positionText && <span className="text-row font-semibold text-ink-2">{positionText}</span>}
+            <span className={`rounded-full px-2 py-0.5 text-secondary font-semibold ${pill.className}`}>{pill.label}</span>
+          </div>
+        ) : headline.detail && <p className="mt-1 text-row font-semibold text-ink-2">{headline.detail}</p>}
         <p className="mt-2 flex items-center gap-1.5 text-row text-ink-2">
           <Calendar className="h-4 w-4" strokeWidth={1.6} /> {startsLine(vacancy)}
         </p>
@@ -194,7 +201,6 @@ export function OpportunityDetailMobile({
       {(vacancy.description?.trim() || (vacancy.requirements ?? []).length > 0) && (
         <section className="px-5 pt-[18px]">
           <h2 className="text-body font-semibold text-ink-1">In the club’s words</h2>
-          {vacancy.title && vacancy.title !== roleTitle(vacancy) && <p className="mt-2 text-row font-semibold text-ink-1">{vacancy.title}</p>}
           {vacancy.description?.trim() && <p className="mt-1 whitespace-pre-wrap text-row text-ink-2">“{vacancy.description.trim()}”</p>}
           {(vacancy.requirements ?? []).length > 0 && <p className="mt-2 whitespace-pre-wrap text-row text-ink-2">{(vacancy.requirements ?? []).join(' · ')}</p>}
         </section>

@@ -5,6 +5,7 @@ import { DetailNavBar } from '@/components/ui/DetailNavBar'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
 import { FitChip } from './FitChip'
 import { UndoToast } from './UndoToast'
+import { RoleActions } from './RoleActions'
 import { useAuthStore } from '@/lib/auth'
 import { useCountries } from '@/hooks/useCountries'
 import { useRoleApplicants, type Applicant } from '@/hooks/useRoleApplicants'
@@ -73,7 +74,14 @@ export default function ApplicantsScreen({ roleId }: { roleId: string }) {
 
   return (
     <div className="min-h-screen bg-white pb-28 lg:hidden" data-testid="applicants-screen">
-      <DetailNavBar parent="Opportunities" fallbackPath="/opportunities" onBack={() => navigate('/opportunities')} />
+      <DetailNavBar
+        parent="Opportunities"
+        fallbackPath="/opportunities"
+        onBack={() => navigate('/opportunities')}
+        trailing={role && clubId && role.club_id === clubId && role.status !== 'draft'
+          ? <RoleActions role={role} onChanged={data.refresh} className="flex h-11 w-11 items-center justify-center rounded-full text-hockia-primary" />
+          : undefined}
+      />
       {role && (
         <div className="px-5 pb-3.5 pt-0.5">
           <div className="flex items-center gap-2">

@@ -3,7 +3,7 @@ import { Send, Eye, CheckCircle, CircleDot, Clock, Sparkles } from 'lucide-react
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
-import { playerApplicationStatusBadge, applicationStatusFallbackMessage } from '@/lib/applicationStatus'
+import { playerApplicationStatusBadge, applicationStatusFallbackMessage, applicationStatusLabel } from '@/lib/applicationStatus'
 
 /**
  * Player-facing application timeline (Phase 3-5 of application-clarity).
@@ -50,7 +50,7 @@ function statusDotClass(status: string): string {
     case 'shortlisted':
       return 'bg-emerald-500'
     // Amber only when the viewer must act soon (founder 2026-09-26): the
-    // player can't act on "Under consideration", so it's neutral grey too.
+    // player can't act on "Replied", so it's neutral grey too.
     case 'maybe':
     case 'rejected':
     case 'no_response':
@@ -232,7 +232,7 @@ export default function ApplicationTimeline({ opportunityId }: ApplicationTimeli
     nodes.push({
       key: 'awaiting',
       icon: Clock,
-      label: "Awaiting the club's decision",
+      label: applicationStatusLabel('pending') ?? 'In review',
       date: null,
       dotClass: 'bg-gray-300',
       subtext: deadline ? `The club has until ${formatDate(deadline)} to respond.` : null,

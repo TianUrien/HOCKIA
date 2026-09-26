@@ -70,7 +70,7 @@ const applicationStatusCopy = (notification: NotificationRecord): { title: strin
     case 'shortlisted':
       return { title: `${club} shortlisted you`, body: `You're being considered for ${position}.` }
     case 'maybe':
-      return { title: `${club} reviewed your application`, body: `Your application for ${position} is under consideration.` }
+      return { title: `${club} replied to your application`, body: `Open your application for ${position} to see the update.` }
     case 'rejected':
       return { title: `${club} updated your application`, body: `You weren't selected for ${position} this time.` }
     case 'filled': {

@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { positionLabel } from '@/lib/identity'
 import { Hourglass, ChevronRight } from 'lucide-react'
 import { Avatar } from '@/components'
 import { useOpportunitiesForYou, daysUntilDeadline, type OpportunityForYou } from '@/hooks/useOpportunitiesForYou'
@@ -55,8 +56,8 @@ function OpportunityRailCard({ item, onOpen }: {
 
       <div className="mt-2 flex min-h-[1.5rem] flex-wrap items-center gap-1.5">
         {item.position && (
-          <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-medium capitalize text-blue-700">
-            {item.position.replace(/_/g, ' ')}
+          <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-medium text-blue-700">
+            {positionLabel(item.position)}
           </span>
         )}
         {item.gender && (

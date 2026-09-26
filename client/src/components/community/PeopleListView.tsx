@@ -266,6 +266,12 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
   const [page, setPage] = usePageState('community-page', 1)
   const [hasMore, setHasMore] = useState(true)
   const sentinelRef = useRef<HTMLDivElement>(null)
+  // Latest fetchMembers call. A role/filter flip (e.g. a recruiting scope
+  // resolving while landing on /community/coaches) fires two fetches; the
+  // older one (a big player pool + logo prefetch) can land LAST and
+  // overwrite the new role's rows, leaving "All members · 4" over an empty
+  // grid that nothing re-fetches until reload. Only the newest call writes.
+  const fetchSeqRef = useRef(0)
 
   // Track whether this is a restored (back/forward) navigation
   const isRestoredRef = useRef(navigationType === 'POP')
@@ -369,6 +375,8 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
       p_limit: 500,
     }
     const queryKey = qk.communityMembers(viewerScope, JSON.stringify(rpcParams))
+    const seq = ++fetchSeqRef.current
+    const isLatest = () => seq === fetchSeqRef.current
 
     // Fastest path: fresh data already in the query cache → hand it
     // back synchronously, never touch isLoading or measure.
@@ -442,6 +450,8 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
         await prefetchWorldClubLogos(worldClubIds)
       }
 
+      // A newer fetch (different role / filters) owns the grid now.
+      if (!isLatest()) return
       setBaseMembers(members)
       // INTENTIONAL: do NOT setAllMembers(members) here. The post-
       // render effect below ([searchQuery, clientFilteredMembers, …])
@@ -462,7 +472,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
         logger.error('Error fetching members:', error)
       }
     } finally {
-      setIsLoading(false)
+      if (isLatest()) setIsLoading(false)
     }
   }, [viewerScope, filters.role, filters.position, filters.coachSpecializations, filters.categories,
       filters.officiatingSpecializations, filters.nationalityCountryIds, filters.euOnly,

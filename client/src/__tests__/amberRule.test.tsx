@@ -31,21 +31,21 @@ import { playerApplicationStatusBadge } from '@/lib/applicationStatus'
 const AMBER = /amber|yellow|#b45309|#fef3c7/i
 
 describe('amber rule — player waiting states are grey', () => {
-  it('Pulse "Pending" pill is neutral grey with no Clock', () => {
+  it('Pulse waiting pill ("In review") is neutral grey with no Clock', () => {
     render(
       <MemoryRouter>
         <YourApplications enabled />
       </MemoryRouter>,
     )
-    const pill = screen.getByText('Pending')
+    const pill = screen.getByText('In review')
     expect(pill.className).not.toMatch(AMBER)
     expect(pill.className).toContain('bg-gray-100 text-gray-600')
     expect(pill.querySelector('svg')?.getAttribute('class') ?? '').not.toMatch(/clock/)
   })
 
-  it('"Under consideration" badge is the same grey as "Not selected"', () => {
+  it('"Replied" badge is the same grey as "Not selected"', () => {
     const maybe = playerApplicationStatusBadge('maybe')
-    expect(maybe?.label).toBe('Under consideration')
+    expect(maybe?.label).toBe('Replied')
     expect(maybe?.className).not.toMatch(AMBER)
     expect(maybe?.className).toBe(playerApplicationStatusBadge('rejected')?.className)
   })

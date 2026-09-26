@@ -20,7 +20,7 @@ const assertKind = (s: string | null) => {
 describe('playerApplicationStatusBadge', () => {
   it('maps responded statuses to human, non-enum labels', () => {
     expect(playerApplicationStatusBadge('shortlisted')?.label).toBe('Shortlisted')
-    expect(playerApplicationStatusBadge('maybe')?.label).toBe('Under consideration')
+    expect(playerApplicationStatusBadge('maybe')?.label).toBe('Replied')
     expect(playerApplicationStatusBadge('rejected')?.label).toBe('Not selected')
   })
   it('renders "Not selected" in grey, never rose/red (founder ruling 2026-09-25)', () => {

@@ -38,6 +38,9 @@ export interface PostRoleDraft {
   benefits: string[]
   /** Free-text extras from older roles; kept as written. */
   customBenefits: string[]
+  /** Package keys the form has no tile for (e.g. meals, education on older
+   *  roles). Not editable here, but written back so editing never drops them. */
+  otherBenefits: string[]
   euPassport: boolean
   description: string
 }
@@ -181,6 +184,7 @@ export function emptyDraft(defaults: ClubDefaults): PostRoleDraft {
     payRequired: false,
     benefits: [],
     customBenefits: [],
+    otherBenefits: [],
     euPassport: false,
     description: '',
   }
@@ -211,6 +215,7 @@ export function draftFromRow(v: Vacancy): PostRoleDraft {
     payRequired: v.compensation_required ?? false,
     benefits: (v.benefits ?? []).filter((b) => (PACKAGE_KEYS as readonly string[]).includes(b)),
     customBenefits: v.custom_benefits ?? [],
+    otherBenefits: (v.benefits ?? []).filter((b) => !(PACKAGE_KEYS as readonly string[]).includes(b)),
     euPassport: v.eu_passport_required ?? false,
     description: v.description ?? '',
   }
@@ -250,7 +255,7 @@ export function stepProblem(d: PostRoleDraft, step: Step): string | null {
 }
 
 /** The opportunities row for this draft. Player-only fields are cleared for coach roles; the team is kept for both. */
-export function draftToRow(d: PostRoleDraft, clubId: string, status: 'draft' | 'open'): Database['public']['Tables']['opportunities']['Insert'] {
+export function draftToRow(d: PostRoleDraft, clubId: string, status: 'draft' | 'open'): OpportunityInsert {
   const player = d.type === 'player'
   return {
     club_id: clubId,
@@ -271,12 +276,27 @@ export function draftToRow(d: PostRoleDraft, clubId: string, status: 'draft' | '
     location_required: player && d.locationRequired,
     compensation: d.pay,
     compensation_required: player && d.payRequired && d.pay !== null,
-    benefits: d.benefits,
+    benefits: [...d.benefits, ...(d.otherBenefits ?? []).filter((b) => !d.benefits.includes(b))],
     custom_benefits: d.customBenefits,
     eu_passport_required: d.euPassport,
     description: d.description.trim().slice(0, DESCRIPTION_MAX) || null,
     status,
   }
+}
+
+type OpportunityInsert = Database['public']['Tables']['opportunities']['Insert']
+export type OpportunityEditPatch = Omit<OpportunityInsert, 'status' | 'club_id' | 'published_at'>
+
+/**
+ * The update for editing a role that is already live (open or closed): every
+ * form field, but never status, published_at or club_id — editing must not
+ * re-publish, re-date or unpublish the role. filled_via_hockia and the close
+ * fields are not form fields, so they are never sent either.
+ */
+export function draftToEditPatch(d: PostRoleDraft, clubId: string): OpportunityEditPatch {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { status: _status, club_id: _clubId, published_at: _publishedAt, ...patch } = draftToRow(d, clubId, 'open')
+  return patch
 }
 
 /** The role as the preview card renders it (Vacancy shape, no id yet). */
@@ -300,6 +320,31 @@ export function roleChecklist(d: PostRoleDraft): ChecklistItem[] {
 export function checkStepCopy(type: RoleType): { sub: string; checklistTitle: string } {
   const who = type === 'player' ? 'players' : 'coaches'
   return { sub: `Step 3 of 3 · How ${who} will see it`, checklistTitle: `What ${who} ask first` }
+}
+
+/**
+ * Level hint (founder copy 2026-09-26). The level ranks applicants and is
+ * never shown to them — RoleCard, the role page and My applications carry
+ * no level.
+ */
+export function levelHint(type: RoleType): string {
+  return `Used to rank applicants. ${type === 'player' ? 'Players' : 'Coaches'} don’t see it.`
+}
+
+/** Step 2 ("The offer") hints, in the words of who the role is for. */
+export function offerStepCopy(type: RoleType): { when: string; package: string; euPassport: string } {
+  if (type === 'player') {
+    return {
+      when: 'Players mark when they’re free; we match it to your start.',
+      package: 'Housing and flights are what relocating players ask about first.',
+      euPassport: 'Only players with an EU passport can apply.',
+    }
+  }
+  return {
+    when: 'Coaches mark when they’re free; we match it to your start.',
+    package: 'Housing and visa support are what relocating coaches ask about first.',
+    euPassport: 'Only coaches with an EU passport can apply.',
+  }
 }
 
 export function coachChecklist(d: PostRoleDraft): ChecklistItem[] {

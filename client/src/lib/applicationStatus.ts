@@ -1,4 +1,26 @@
 /**
+ * The ONE set of words for an application's status, shown to the applicant
+ * everywhere (founder ruling 2026-09-26: the My applications labels win —
+ * Pulse, the application timeline, the role page and notifications reuse
+ * them). `pending` reads "In review"; My applications additionally shows
+ * "No reply · Nd" / "Role closed" for a pending application (see
+ * applicationStatusPill in lib/opportunityCopy).
+ */
+export const APPLICATION_STATUS_LABELS: Record<string, string> = {
+  pending: 'In review',
+  shortlisted: 'Shortlisted',
+  maybe: 'Replied',
+  rejected: 'Not selected',
+  withdrawn: 'Withdrawn',
+  no_response: 'No reply',
+}
+
+export function applicationStatusLabel(status: string | null | undefined): string | null {
+  if (!status) return null
+  return APPLICATION_STATUS_LABELS[status] ?? null
+}
+
+/**
  * Player-facing badge for an application status, shown on the opportunity detail
  * once the player has applied. Keeps the club's response HUMAN and kind — never a
  * raw enum value ("maybe"), never harsh.
@@ -16,21 +38,21 @@ export function playerApplicationStatusBadge(
 ): { label: string; className: string } | null {
   switch (status) {
     case 'shortlisted':
-      return { label: 'Shortlisted', className: 'bg-emerald-100 text-emerald-800' }
+      return { label: APPLICATION_STATUS_LABELS.shortlisted, className: 'bg-emerald-100 text-emerald-800' }
     case 'maybe':
       // Amber is reserved for "the viewer must act soon" (founder 2026-09-26).
-      // The player can't act on "under consideration", so it's neutral grey.
-      return { label: 'Under consideration', className: 'bg-gray-100 text-gray-600' }
+      // The player can't act on "Replied", so it's neutral grey.
+      return { label: APPLICATION_STATUS_LABELS.maybe, className: 'bg-gray-100 text-gray-600' }
     case 'rejected':
       // Founder ruling 2026-09-25: grey, never rose/red — not being selected
       // is not an error. One grey state, matching opportunityCopy's tone 'grey'.
-      return { label: 'Not selected', className: 'bg-gray-100 text-gray-600' }
+      return { label: APPLICATION_STATUS_LABELS.rejected, className: 'bg-gray-100 text-gray-600' }
     case 'no_response':
       // Auto-expiry terminal state (Task 3b). Copy is deliberately NEUTRAL
       // about the club: many teams answer off-platform (15/21 opportunities
       // carry WhatsApp/email contacts), so "no response" would blame them
       // for a silence that may not exist. Never blame either side.
-      return { label: 'No longer active', className: 'bg-gray-100 text-gray-600' }
+      return { label: APPLICATION_STATUS_LABELS.no_response, className: 'bg-gray-100 text-gray-600' }
     default:
       return null
   }
@@ -147,8 +169,8 @@ export function applicationStatusFallbackMessage(
       return "Good news — you've been shortlisted. Keep your profile sharp while the club reviews."
     case 'maybe':
       return reasonCopy
-        ? `You're still under consideration. ${reasonCopy}`
-        : "You're still under consideration — no decision yet."
+        ? `The club replied — no final decision yet. ${reasonCopy}`
+        : 'The club replied — no final decision yet.'
     case 'rejected':
       return reasonCopy
         ? `You weren't selected this time. ${reasonCopy} Keep going — the right fit is out there.`
@@ -160,5 +182,38 @@ export function applicationStatusFallbackMessage(
       return "This application is no longer active on HOCKIA. Applications close automatically after a while without an update here, so you're never left waiting — your energy is better spent on what's open now."
     default:
       return null
+  }
+}
+
+/**
+ * The applicant's own note, sent with the application (Apply sheet → saved as
+ * opportunity_applications.metadata.message; the server caps it at 1000
+ * characters). Returns the trimmed text, or null when there is none. Render it
+ * as plain text (React escapes it) with pre-wrap + break-words.
+ */
+export function applicationNote(metadata: unknown): string | null {
+  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) return null
+  const raw = (metadata as Record<string, unknown>).message
+  if (typeof raw !== 'string') return null
+  const text = raw.trim()
+  return text ? text.slice(0, 1000) : null
+}
+
+/** Statuses a club can still move with Decline / Maybe / Shortlist. Anything
+ *  else (no_response, filled, withdrawn, and the signing statuses) is past
+ *  review: the phone review shows a grey note instead of the decision bar. */
+const DECIDABLE_APPLICATION_STATUSES = new Set(['pending', 'shortlisted', 'maybe', 'rejected'])
+
+export function isDecidableApplicationStatus(status: string | null | undefined): boolean {
+  return !!status && DECIDABLE_APPLICATION_STATUSES.has(status)
+}
+
+/** The grey note that replaces the decision bar on a closed application. */
+export function closedApplicationNote(status: string | null | undefined, firstName: string): string {
+  switch (status) {
+    case 'no_response': return `This application closed without a reply. You can still message ${firstName}.`
+    case 'filled': return `This role was filled. You can still message ${firstName}.`
+    case 'withdrawn': return `${firstName} withdrew this application. You can still message ${firstName}.`
+    default: return `This application is past review. You can still message ${firstName}.`
   }
 }

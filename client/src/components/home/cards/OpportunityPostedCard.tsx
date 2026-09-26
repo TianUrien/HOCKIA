@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { positionLabel } from '@/lib/identity'
 import { Briefcase, MapPin, BadgeCheck } from 'lucide-react'
 import { StorageImage } from '@/components'
 import { FeedCard, FeedCardBody, FeedCardCaption, FeedCardFooter, FeedCardHeader, FeedCardPrimaryAction, profilePathForRole } from '../FeedCard'
@@ -44,7 +45,7 @@ export function OpportunityPostedCard({ item }: OpportunityPostedCardProps) {
           <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-gray-600">
             {item.position && (
               <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
-                {item.position}
+                {positionLabel(item.position)}
               </span>
             )}
             {item.gender && (

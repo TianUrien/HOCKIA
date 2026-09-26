@@ -231,8 +231,8 @@ export function buildPushPayload(
           body = `You're being considered for ${position}.`
           break
         case 'maybe':
-          title = `${club} reviewed your application`
-          body = `Your application for ${position} is under consideration.`
+          title = `${club} replied to your application`
+          body = `Open your application for ${position} to see the update.`
           break
         case 'rejected':
           title = `${club} updated your application`

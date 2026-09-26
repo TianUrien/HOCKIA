@@ -327,8 +327,8 @@ describe('getNotificationConfig', () => {
     const meta = { club_name: 'CASI', vacancy_title: 'Arquera — Club Atlético de San Isidro (CASI)' }
     const maybe = createNotification({ kind: 'vacancy_application_status', metadata: { ...meta, status: 'maybe' } })
     const mc = getNotificationConfig(maybe)
-    expect(mc.getTitle(maybe)).toBe('CASI reviewed your application')
-    expect(mc.getDescription?.(maybe)).toBe('Your application for Arquera is under consideration.')
+    expect(mc.getTitle(maybe)).toBe('CASI replied to your application')
+    expect(mc.getDescription?.(maybe)).toBe('Open your application for Arquera to see the update.')
     expect(mc.getTitle(maybe)).not.toContain('maybe') // no raw enum value leaks
 
     const shortlisted = createNotification({ kind: 'vacancy_application_status', metadata: { ...meta, status: 'shortlisted' } })

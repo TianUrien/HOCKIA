@@ -12,12 +12,26 @@ import {
 import { format, differenceInCalendarDays } from 'date-fns'
 import type { Vacancy } from '@/lib/supabase'
 import { compensationLabel } from '@/lib/opportunityIntent'
-import { humanizeToken } from '@/lib/identity'
+import { humanizeToken, positionLabel } from '@/lib/identity'
+import { APPLICATION_STATUS_LABELS } from '@/lib/applicationStatus'
 
 /** "Forward" — the position is the headline; free-text title is the fallback. */
 export function roleTitle(v: { position: string | null; title: string; opportunity_type: string | null }): string {
   if (v.opportunity_type === 'player' && v.position) return humanizeToken(v.position) ?? v.title
   return v.title
+}
+
+/**
+ * A role's headline: the club's title (opportunities.title) first, then the
+ * position (or coaching role) · team as the secondary line — "[QA] Midfielder
+ * test" over "Midfielder · Men's". No counts, fit or level, ever.
+ */
+export function roleHeadline(v: { position: string | null; title: string | null; opportunity_type: string | null; gender?: string | null }): { title: string; detail: string | null } {
+  const pos = v.position ? positionLabel(v.position) : null
+  const team = genderPill(v.gender ?? null)?.label ?? null
+  const detail = [pos, team].filter(Boolean).join(' · ') || null
+  const title = v.title?.trim() || detail || 'Role'
+  return { title, detail }
 }
 
 export interface GenderPill { label: string; className: string }
@@ -131,13 +145,21 @@ export function roleBenefits(v: Pick<Vacancy, 'benefits'>): BenefitTile[] {
     .map((b) => BENEFIT_TILES[b])
 }
 
-export type ApplicationTone = 'positive' | 'amber' | 'grey' | 'neutral'
-export interface ApplicationStatusPill { label: string; tone: ApplicationTone }
+// No amber here: amber is only for a viewer who must act (founder ruling
+// 2026-09-26), and a player waiting on a club can't.
+export type ApplicationTone = 'positive' | 'grey' | 'neutral'
+export interface ApplicationStatusPill {
+  label: string
+  tone: ApplicationTone
+  /** Pending for 14+ days on an open role — drives My applications'
+   *  "No reply after two weeks?" hint (the pill itself stays grey). */
+  waitingLong?: boolean
+}
 
 /**
  * Status words for My applications. "No reply · 16d" is a real status after
- * two weeks without an answer; closed outcomes keep their words in grey —
- * no shame colours.
+ * two weeks without an answer; it and every closed outcome are grey for the
+ * player — no shame colours, no urgency the player can't act on.
  */
 export function applicationStatusPill(
   status: string,
@@ -145,24 +167,24 @@ export function applicationStatusPill(
   roleOpen: boolean,
   now = new Date(),
 ): ApplicationStatusPill {
+  const L = APPLICATION_STATUS_LABELS
   switch (status) {
-    case 'shortlisted': return { label: 'Shortlisted', tone: 'positive' }
-    case 'maybe': return { label: 'Replied', tone: 'positive' }
-    case 'rejected': return { label: 'Not selected', tone: 'grey' }
-    case 'withdrawn': return { label: 'Withdrawn', tone: 'grey' }
-    case 'no_response': return { label: 'No reply', tone: 'grey' }
+    case 'shortlisted': return { label: L.shortlisted, tone: 'positive' }
+    case 'maybe': return { label: L.maybe, tone: 'positive' }
+    case 'rejected': return { label: L.rejected, tone: 'grey' }
+    case 'withdrawn': return { label: L.withdrawn, tone: 'grey' }
+    case 'no_response': return { label: L.no_response, tone: 'grey' }
     default: {
       if (!roleOpen) return { label: 'Role closed', tone: 'grey' }
       const days = appliedAt ? differenceInCalendarDays(now, new Date(appliedAt)) : 0
-      if (days >= 14) return { label: `No reply · ${days}d`, tone: 'amber' }
-      return { label: 'In review', tone: 'neutral' }
+      if (days >= 14) return { label: `${L.no_response} · ${days}d`, tone: 'grey', waitingLong: true }
+      return { label: L.pending, tone: 'neutral' }
     }
   }
 }
 
 export const APPLICATION_TONE_CLASS: Record<ApplicationTone, string> = {
   positive: 'bg-positive-soft text-positive',
-  amber: 'bg-[#fdf1e4] text-[#b45309]',
   grey: 'bg-surface-grouped text-ink-2',
   neutral: 'bg-hockia-soft text-hockia-primary',
 }
@@ -175,4 +197,14 @@ export function appliedLine(appliedAt: string | null, now = new Date()): string 
   if (days < 7) return `Applied ${days}d`
   if (days < 30) return `Applied ${Math.round(days / 7)}w`
   return `Applied ${format(new Date(appliedAt), 'MMM d')}`
+}
+
+/**
+ * Application sent: the "Add a full match video" nudge only for a player who
+ * has none yet (player_videos kind=full_match + player_full_game_videos
+ * links). Unknown count (still loading / failed) → no nudge, so a player who
+ * already has matches never sees it flash.
+ */
+export function showFullMatchNudge(role: string | null | undefined, fullMatchCount: number | null): boolean {
+  return role === 'player' && fullMatchCount === 0
 }
