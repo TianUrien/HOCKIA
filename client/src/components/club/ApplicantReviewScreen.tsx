@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Check, ExternalLink, Lock, MessageCircle, Minus, Target } from 'lucide-react'
+import { Check, ExternalLink, Lock, MessageCircle, Target } from 'lucide-react'
 import { DetailNavBar } from '@/components/ui/DetailNavBar'
 import ProfileActionMenu from '@/components/ProfileActionMenu'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
 import { ProfileVideoTile } from '@/components/profile/mobile/ProfileVideoTile'
 import { CareerRow, ReferenceCard } from '@/components/profile/mobile/ProfileLongScroll'
-import { FitChip } from './FitChip'
+import { FitCard } from './FitCard'
 import { DeclineSheet } from './DeclineSheet'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
@@ -248,24 +248,7 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
 
             {/* Fit — clubs only */}
             <div className="px-5">
-              <div className="flex flex-col gap-3 rounded-2xl bg-surface-grouped p-4" data-testid="fit-card">
-                <div className="flex items-center justify-between">
-                  <span className="text-row font-semibold text-ink-1">Fit for this role</span>
-                  <FitChip state={review.fit?.state} />
-                </div>
-                {rows.map((r) => (
-                  <div key={r.key} className="flex items-start gap-2.5">
-                    <span className={cn('mt-px flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full', r.ok ? 'bg-positive-soft text-positive' : 'bg-white text-ink-3')}>
-                      {r.ok ? <Check className="h-3.5 w-3.5" strokeWidth={2.6} /> : <Minus className="h-3.5 w-3.5" strokeWidth={2.6} />}
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-[14px] font-semibold leading-[19px] text-ink-1">{r.label}</span>
-                      <span className="block text-secondary text-ink-2">{r.detail}</span>
-                    </span>
-                  </div>
-                ))}
-                <p className="text-caption text-ink-4">Only clubs see fit. It reads the profile — nothing else.</p>
-              </div>
+              <FitCard state={review.fit?.state} rows={rows} />
             </div>
 
             {/* Facts */}

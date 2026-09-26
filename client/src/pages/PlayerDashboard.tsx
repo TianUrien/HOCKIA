@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowLeft } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
@@ -51,6 +51,19 @@ import PortfolioSectionNav from '@/components/profile/PortfolioSectionNav'
 import PublicConnectionsPage from '@/components/profile/PublicConnectionsPage'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { KeyFactsGrid, PermitAttentionRow } from '@/components/profile/KeyFactsGrid'
+import { AppliedToCard, FitForRoleCard, ShortlistRoleSheet } from '@/components/profile/ClubViewCards'
+import { UndoToast } from '@/components/club/UndoToast'
+import { useProfileKeyFacts, type VideoCounts } from '@/hooks/useProfileKeyFacts'
+import { useClubViewOfPlayer } from '@/hooks/useClubViewOfPlayer'
+import { useCountries } from '@/hooks/useCountries'
+import { isRecruitingViewer } from '@/lib/recruiterAccess'
+import type { KeyFactAction, KeyFactsViewer } from '@/lib/keyFacts'
+import type { ChecklistKey } from '@/lib/openToPlayScreen'
+
+// D2 owner leaves — lazy so they stay out of the profile chunk until opened.
+const PassportsPermitsScreen = lazy(() => import('@/components/profile/mobile/PassportsPermitsScreen'))
+const OpenToPlayScreen = lazy(() => import('@/components/profile/mobile/OpenToPlayScreen'))
 
 // `?section=` query param → DOM anchor id. Used by the deep-link scroll
 // hook so notifications like ?tab=profile&section=viewers land on the
@@ -68,7 +81,7 @@ const PLAYER_SECTION_ANCHORS = {
   posts: 'community-posts',
 } as const
 
-type TabType = 'profile' | 'edit' | 'media' | 'videos' | 'gallery' | 'journey' | 'references' | 'friends' | 'comments' | 'posts' | 'community'
+type TabType = 'profile' | 'edit' | 'media' | 'videos' | 'gallery' | 'journey' | 'references' | 'friends' | 'comments' | 'posts' | 'community' | 'passports' | 'open-to-play'
 
 // Centralised whitelist so URL parsing + push handlers stay in sync.
 // 'media' is new in the Bento redesign — MediaCard CTAs land here so the
@@ -79,7 +92,8 @@ type TabType = 'profile' | 'edit' | 'media' | 'videos' | 'gallery' | 'journey' |
 // target from the CommunityCard — individual tile clicks still deep-link
 // to the dedicated section pages.
 // 'videos' = the Videos — all leaf (phone); desktop shows the media surface.
-const VALID_TABS: TabType[] = ['profile', 'edit', 'media', 'videos', 'gallery', 'journey', 'references', 'friends', 'comments', 'posts', 'community']
+// 'passports' / 'open-to-play' = the D2 owner leaves (Passports & permits, Open to play).
+const VALID_TABS: TabType[] = ['profile', 'edit', 'media', 'videos', 'gallery', 'journey', 'references', 'friends', 'comments', 'posts', 'community', 'passports', 'open-to-play']
 
 // Legacy ?tab=X aliases — mirror of CoachDashboard's map. CASI production
 // QA flagged ?tab=connections silently routing to overview because
@@ -185,6 +199,8 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
     comments: 'Comments',
     posts: 'Posts',
     community: 'My Network',
+    passports: 'Passports & permits',
+    'open-to-play': 'Open to play',
   }
   const visitorTabSuffix: Record<TabType, string | null> = {
     profile: null,
@@ -198,6 +214,8 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
     comments: 'Comments',
     posts: 'Posts',
     community: 'Community',
+    passports: null,
+    'open-to-play': null,
   }
   const computedTitle = visitedName
     ? visitorTabSuffix[activeTab]
@@ -225,7 +243,9 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
     }
   }, [sectionFromRoute, sectionIsValid, readOnly, routeParams.username, routeParams.id, navigate])
   const [showEditModal, setShowEditModal] = useState(false)
-  const [videoTotal, setVideoTotal] = useState<number | null>(null)
+  const [videoCounts, setVideoCounts] = useState<(VideoCounts & { total: number }) | null>(null)
+  const videoTotal = videoCounts?.total ?? null
+  const onVideoCounts = useCallback((c: VideoCounts & { total: number }) => setVideoCounts(c), [])
   // Phone and desktop bodies are different trees. Mount only the one on
   // screen — hiding the other with CSS would still run all of its fetches.
   const isPhone = useMediaQuery('(max-width: 1023px)')
@@ -505,6 +525,18 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
   }
   usePortfolioAnchorScroll(readOnly ? portfolioAnchors[activeTab] ?? null : null)
 
+  // ── D2 · 30-second profile (phone) ─────────────────────────────────────
+  // Key facts replace the stats strip; the owner gets Add links, a club (or
+  // recruiting coach) gets the permit line + Shortlist, "View as club" shows
+  // the owner the recruiter version. Desktop stays v1.
+  const viewAsClub = readOnly && isOwnProfile && searchParams.get('view') === 'club'
+  const keyFactsViewer: KeyFactsViewer = !readOnly ? 'owner' : viewAsClub || isRecruitingViewer(authProfile) ? 'recruiter' : 'public'
+  const d2 = isPhone && activeTab === 'profile'
+  const keyFacts = useProfileKeyFacts({ profile, viewer: keyFactsViewer, videoCounts, enabled: d2 })
+  const clubView = useClubViewOfPlayer(isPhone && readOnly && !isOwnProfile && profile ? profile : null)
+  const [rolePicker, setRolePicker] = useState(false)
+  const { countries: allCountries } = useCountries()
+
   if (!profile) return null
 
   // Friend-request notifications deep-link to the Friends section's incoming
@@ -562,6 +594,45 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
     navigate(`${base}/${slug}`)
   }
 
+  // "View as club": the public profile rendered with the recruiter key facts.
+  const handleViewAsClub = () => {
+    const base = profile.role === 'coach' ? '/coaches' : '/players'
+    const slug = profile.username ? profile.username : `id/${profile.id}`
+    navigate(`${base}/${slug}?view=club`)
+  }
+
+  // D2 owner leaves live under /dashboard/profile/<leaf> (push, so Back returns).
+  const openOwnerLeaf = (leaf: 'passports' | 'open-to-play' | 'media') => navigate(`/dashboard/profile/${leaf}`)
+
+  // Owner Add links on the key facts (DEV NOTE 396:98): league → Club & league,
+  // date → Open to play, passport → Passports & permits.
+  const handleKeyFactAction = (action: KeyFactAction) => {
+    switch (action) {
+      case 'add_position': return openEdit('position')
+      case 'add_club':
+      case 'add_league': return openEdit('club')
+      case 'add_availability':
+      case 'add_date': return openOwnerLeaf('open-to-play')
+      case 'add_passport': return openOwnerLeaf('passports')
+      case 'add_video': return openOwnerLeaf('media')
+      default: return openEdit()
+    }
+  }
+  const handleChecklistAdd = (key: ChecklistKey | 'dob') => {
+    if (key === 'passport') openOwnerLeaf('passports')
+    else if (key === 'video') openOwnerLeaf('media')
+    else if (key === 'league') openEdit('club')
+    else openEdit('dob')
+  }
+
+  // Shortlist per role: one open role → straight in; several → the picker;
+  // none → the default shortlist.
+  const handleShortlist = () => {
+    if (clubView.roles.length === 0) void clubView.shortlistDefault()
+    else if (clubView.roles.length === 1) void clubView.shortlistForRole(clubView.roles[0])
+    else setRolePicker(true)
+  }
+
   // References number / "See all N" / a reference card → the References leaf
   // (phone) or the references section (desktop). Never the Community hub.
   const openReferencesLeaf = () => {
@@ -581,7 +652,16 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
   // Phone leaf screens (Figma: the number in the stats strip opens the
   // complete collection). One screen per collection, own / public modes.
   // 'media' = Manage media for the owner; a visitor's /media is Videos — all.
+  // D2 owner leaves (Passports & permits, Open to play) render on any width —
+  // the Apply sheet's ?field=passports / ?field=availability land there too.
+  const editField = searchParams.get('field') as EditField | null
+  const d2Leaf: 'passports' | 'open-to-play' | null = readOnly ? null
+    : activeTab === 'passports' || (isPhone && activeTab === 'edit' && editField === 'passports') ? 'passports'
+    : activeTab === 'open-to-play' || (isPhone && activeTab === 'edit' && editField === 'availability') ? 'open-to-play'
+    : null
+  const leaveLeaf = () => (location.key !== 'default' ? navigate(-1) : handleTabChange('profile'))
   const phoneLeaf: 'friends' | 'career' | 'references' | 'videos' | 'edit' | 'media' | 'gallery' | null =
+    d2Leaf ? null :
     activeTab === 'edit' && !readOnly ? 'edit' : activeTab === 'gallery' ? 'gallery' : activeTab === 'media' ? (readOnly ? 'videos' : 'media') : activeTab === 'friends' ? 'friends' : activeTab === 'journey' ? 'career' : activeTab === 'references' ? 'references' : activeTab === 'videos' ? 'videos' : null
 
   return (
@@ -590,7 +670,17 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
       <Header mobileHidden />
 
       {/* Public View Banner - shown when user views their own profile in public mode */}
-      {readOnly && isOwnProfile && <PublicViewBanner compactOnPhone />}
+      {readOnly && isOwnProfile && <PublicViewBanner compactOnPhone clubView={viewAsClub} />}
+
+      {d2Leaf && (
+        <Suspense fallback={<div className="min-h-screen bg-white" />}>
+          <div className="mx-auto max-w-lg lg:pt-24">
+            {d2Leaf === 'passports'
+              ? <PassportsPermitsScreen onDone={leaveLeaf} />
+              : <OpenToPlayScreen onDone={leaveLeaf} onAdd={handleChecklistAdd} />}
+          </div>
+        </Suspense>
+      )}
 
       {isPhone && phoneLeaf === 'friends' && (
         <FriendsScreen
@@ -602,7 +692,12 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
         />
       )}
       {isPhone && phoneLeaf === 'edit' && (
-        <EditProfileScreen field={(searchParams.get('field') as EditField | null) ?? null} onDone={() => handleTabChange('profile')} />
+        <EditProfileScreen
+          field={editField}
+          onDone={() => handleTabChange('profile')}
+          onOpenPassports={() => openOwnerLeaf('passports')}
+          onOpenToPlay={() => openOwnerLeaf('open-to-play')}
+        />
       )}
       {isPhone && phoneLeaf === 'gallery' && (
         <GalleryScreen profile={profile as Profile} mode={readOnly ? 'public' : 'own'} onBack={() => handleTabChange('profile')} />
@@ -632,7 +727,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
         <CareerScreen profileId={profile.id} mode={readOnly ? 'public' : 'own'} onBack={() => handleTabChange('profile')} />
       )}
 
-      {!(isPhone && phoneLeaf) && (
+      {!(isPhone && phoneLeaf) && !d2Leaf && (
       <main className={`max-w-7xl mx-auto px-4 md:px-6 pt-0 lg:pt-24 pb-12 space-y-5 md:space-y-6${phoneLeaf ? ' hidden lg:block' : ''}`}>
         {readOnly && !isOwnProfile && (
           <button
@@ -690,6 +785,34 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
           onCareerClick={() => handleTabChange('journey')}
           onVideosClick={() => handleTabChange('videos')}
           videoTotal={videoTotal}
+          d2={d2}
+          onViewAsClub={handleViewAsClub}
+          onOpenToPlay={() => openOwnerLeaf('open-to-play')}
+          recruiterActions={
+            viewAsClub
+              ? { onShortlist: () => undefined, shortlisted: false, preview: true }
+              : clubView.enabled
+                ? { onShortlist: handleShortlist, shortlisted: clubView.shortlisted, busy: clubView.busy }
+                : null
+          }
+          keyFacts={d2 ? (
+            <div className="flex flex-col gap-3">
+              <KeyFactsGrid facts={keyFacts.facts} onAction={readOnly ? undefined : handleKeyFactAction} />
+              {!readOnly && keyFacts.attentionPermits.map((permit) => {
+                const c = allCountries.find((x) => x.id === permit.country_id)
+                return (
+                  <PermitAttentionRow
+                    key={permit.id}
+                    permit={{ id: permit.id, type: permit.type, expires_on: permit.expires_on, status: permit.status, countryName: c ? c.common_name || c.name : 'Your', flag: c?.flag_emoji ?? null }}
+                    onClick={() => openOwnerLeaf('passports')}
+                  />
+                )
+              })}
+              {!readOnly && (
+                <p className="text-caption text-ink-2" data-testid="key-facts-hint">Clubs see these six first. Complete profiles are suggested to clubs more often.</p>
+              )}
+            </div>
+          ) : null}
         />
 
         {/* Phone: Figma Profile own / public — one long scroll under the
@@ -708,8 +831,33 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
               onOpenCareer={() => handleTabChange('journey')}
               onOpenPhotos={() => handleTabChange('gallery')}
               onOpenPosts={() => handleTabChange('posts')}
-              onVideoCount={setVideoTotal}
+              onOpenFriends={() => handleTabChange('friends')}
+              onEditSkills={() => openEdit('skills')}
+              onVideoCounts={onVideoCounts}
+              pronoun={keyFacts.pronoun}
+              topSlot={clubView.application ? (
+                <AppliedToCard
+                  application={clubView.application}
+                  onOpen={() => navigate(`/dashboard/opportunities/${clubView.application?.role.id}/applicants/${clubView.application?.id}`)}
+                />
+              ) : null}
+              afterVideosSlot={clubView.fit && clubView.fitRole ? (
+                <FitForRoleCard fit={clubView.fit} role={clubView.fitRole} player={profile} pronoun={keyFacts.pronoun} />
+              ) : null}
             />
+            {clubView.enabled && (
+              <>
+                <ShortlistRoleSheet
+                  open={rolePicker}
+                  roles={clubView.roles}
+                  shortlistedRoleIds={clubView.shortlistedRoleIds}
+                  appliedRoleId={clubView.application?.role.id ?? null}
+                  onPick={(role) => { setRolePicker(false); void clubView.shortlistForRole(role) }}
+                  onClose={() => setRolePicker(false)}
+                />
+                <UndoToast />
+              </>
+            )}
           </div>
         )}
 

@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { qk } from '@/lib/queryKeys'
+import { isMissingBackendError } from '@/lib/missingBackend'
 import {
   sortWorkPermits,
   validateWorkPermitDraft,
@@ -44,6 +45,8 @@ export function useWorkPermits(playerId: string | null | undefined, opts?: { ena
     queryKey: qk.workPermits(id),
     enabled: !!id && !!viewerId && (opts?.enabled ?? true),
     staleTime: 60_000,
+    // Table not deployed on this environment yet → don't retry, read as empty.
+    retry: (count, err) => !isMissingBackendError(err) && count < 2,
     queryFn: async (): Promise<WorkPermitRow[]> => {
       const { data: rows, error: selectError } = await supabase
         .from('player_work_permits')
@@ -138,6 +141,8 @@ export function useWorkPermits(playerId: string | null | undefined, opts?: { ena
     permits,
     loading: isLoading,
     error: error ?? null,
+    /** False when player_work_permits isn't deployed on this environment yet. */
+    available: !(error && isMissingBackendError(error)),
     isOwner,
     /** Owner only: any permit expiring within 30 days or expired (amber row). */
     needsAttention: isOwner && permits.some((p) => p.status === 'expiring_soon' || p.status === 'expired'),

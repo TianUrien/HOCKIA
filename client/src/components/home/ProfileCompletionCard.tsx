@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Camera, Building2, UserPlus, Shield, X } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
-import { useProfileStrength } from '@/hooks/useProfileStrength'
+import { useProfileCompleteness } from '@/hooks/useProfileCompleteness'
 import { OWN_PROFILE_EDIT_PATH } from '@/lib/profileNavigation'
 import type { Profile } from '@/lib/supabase'
 
@@ -24,8 +24,12 @@ const DISMISSED_ITEMS_KEY = 'profile-completion-dismissed-items'
  * profile is incomplete. Shows one step at a time, ordered by AI data value.
  * Dismissible per-item; fully hidden at 80%+ or after 3 dismissals.
  *
- * Player-only by design: useProfileStrength is the player-bucket calculator
- * and would surface a misleading % for other roles. Coach/club/brand/umpire
+ * The percentage is the server's completeness score (get_my_profile_completeness,
+ * D2) — the same number Community shows; before that RPC is deployed it falls
+ * back to the client-side useProfileStrength calculator.
+ *
+ * Player-only by design: the player formula would surface a misleading % for
+ * other roles. Coach/club/brand/umpire
  * get role-correct nudges via NextStepCard + FreshnessCard on their own
  * dashboards.
  */
@@ -38,7 +42,7 @@ export default function ProfileCompletionCard() {
   const playerProfile = (profile as Profile | null)?.role === 'player'
     ? (profile as Profile)
     : null
-  const profileStrength = useProfileStrength(playerProfile)
+  const profileStrength = useProfileCompleteness(playerProfile !== null)
   const [dismissedItems, setDismissedItems] = useState<Set<string>>(() => {
     try {
       const stored = localStorage.getItem(DISMISSED_ITEMS_KEY)
