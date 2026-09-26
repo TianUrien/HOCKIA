@@ -39,6 +39,7 @@ export function useCoachFit(
           womens_league_division: null,
           mens_league_division: null,
           current_world_club_id: viewerProfile.current_world_club_id ?? null,
+          coach_recruits_for_team: viewerProfile.coach_recruits_for_team ?? null,
         }
       : null
     return computeCoachFit(viewer, candidate, {

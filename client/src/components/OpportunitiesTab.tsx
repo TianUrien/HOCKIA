@@ -221,9 +221,6 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
   const [showPublishModal, setShowPublishModal] = useState(false)
   const [vacancyToPublish, setVacancyToPublish] = useState<Vacancy | null>(null)
   const [vacancyToClose, setVacancyToClose] = useState<Vacancy | null>(null)
-  // Q5 (Home redesign): closes are typed. 'filled' feeds the role_filled
-  // market-moves card; the via-HOCKIA toggle is the investor stat.
-  const [filledViaHockia, setFilledViaHockia] = useState(false)
   // Delete confirmation modal state
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [vacancyToDelete, setVacancyToDelete] = useState<Vacancy | null>(null)
@@ -503,7 +500,8 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
         .update({
           status: 'closed',
           closed_reason: reason,
-          filled_via_hockia: reason === 'filled' ? filledViaHockia : null,
+          // "Filled through Hockia" comes only from a signing the player
+          // confirmed (confirm_signing); a club can't claim it by hand.
         } as never)
         .eq('id', vacancyId)
 
@@ -515,7 +513,6 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
       // which reads as the page navigating away.
       setStatusFilter('closed')
       setVacancyToClose(null)
-      setFilledViaHockia(false)
       addToast(reason === 'filled' ? 'Marked as filled — congrats on the signing!' : 'Opportunity closed.', 'success')
     } catch (error) {
       logger.error('Error closing vacancy:', error)
@@ -1060,15 +1057,6 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
               It will stop accepting applications. Existing applicants stay attached — you can reopen it any time.
             </p>
             <p className="mt-3 text-sm font-medium text-gray-900">Did you fill this role?</p>
-            <label className="mt-2 flex items-start gap-2.5 text-sm text-gray-600 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={filledViaHockia}
-                onChange={(e) => setFilledViaHockia(e.target.checked)}
-                className="mt-0.5 h-4 w-4 rounded border-gray-300 text-hockia-primary focus:ring-hockia-primary"
-              />
-              <span>The hire came through HOCKIA</span>
-            </label>
             <div className="mt-4 flex flex-col gap-2">
               <button
                 type="button"
