@@ -17,6 +17,7 @@ import { useProfileScrollData } from '@/hooks/useProfileScrollData'
 import { useTrustedReferences } from '@/hooks/useTrustedReferences'
 import { markRoleApplicantViewed, patchRoleApplicantStatus } from '@/hooks/useRoleApplicants'
 import { holdDecision } from '@/lib/pendingDecisions'
+import { WITHDRAWN_APPLICATION_MESSAGE } from '@/lib/applicationStatus'
 import { useUndoToast } from '@/lib/undoToast'
 import { getImageUrl } from '@/lib/imageUrl'
 import { categoryToDisplay } from '@/lib/hockeyCategories'
@@ -177,8 +178,9 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
     if (!review) return
     const prev = review.status
     const metadata = { ...review.metadata, status_reason: null } as unknown as Json
-    holdDecision({ kind: 'status', applicationId, status, metadata }, (ok) => {
+    holdDecision({ kind: 'status', applicationId, status, metadata }, (ok, withdrawn) => {
       if (ok) trackDbEvent('applicant_status_change', 'application', applicationId, { new_status: status, reason: null })
+      else if (withdrawn) { patchRoleApplicantStatus(roleId, applicationId, 'withdrawn'); addToast(WITHDRAWN_APPLICATION_MESSAGE, 'info') }
       else { patchRoleApplicantStatus(roleId, applicationId, prev); addToast('Couldn’t save that decision. Please try again.', 'error') }
     })
     patchRoleApplicantStatus(roleId, applicationId, status)
@@ -190,8 +192,9 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
     if (!review) return
     const prev = review.status
     setDeclining(false)
-    holdDecision({ kind: 'decline', applicationId, reason, message }, (ok) => {
+    holdDecision({ kind: 'decline', applicationId, reason, message }, (ok, withdrawn) => {
       if (ok) trackDbEvent('applicant_status_change', 'application', applicationId, { new_status: 'rejected', reason })
+      else if (withdrawn) { patchRoleApplicantStatus(roleId, applicationId, 'withdrawn'); addToast(WITHDRAWN_APPLICATION_MESSAGE, 'info') }
       else { patchRoleApplicantStatus(roleId, applicationId, prev); addToast('Couldn’t send the decline. Please try again.', 'error') }
     })
     patchRoleApplicantStatus(roleId, applicationId, 'rejected')

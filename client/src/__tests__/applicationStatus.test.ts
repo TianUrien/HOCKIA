@@ -5,6 +5,7 @@ import {
   applicationStatusFallbackMessage,
   applicationReasonLabel,
   APPLICATION_STATUS_REASONS,
+  isWithdrawnApplicationError,
 } from '@/lib/applicationStatus'
 
 // Words that would make status copy feel blaming/harsh — the whole feature exists
@@ -81,5 +82,26 @@ describe('reason taxonomy', () => {
     expect(codes).toContain('video_missing')
     expect(applicationReasonLabel('position_filled')).toBe('Position already filled')
     expect(applicationReasonLabel('nope')).toBeNull()
+  })
+})
+
+describe('isWithdrawnApplicationError', () => {
+  it('matches the DB guard error and the zero-row marker', async () => {
+    expect(await isWithdrawnApplicationError({ message: 'A withdrawn application cannot be changed', code: '42501' })).toBe(true)
+    expect(await isWithdrawnApplicationError(new Error('A withdrawn application cannot be changed'))).toBe(true)
+  })
+
+  it("matches application-feedback's 409 withdrawn response only", async () => {
+    const withdrawn = new Response(JSON.stringify({ error: 'withdrawn' }), { status: 409 })
+    const other409 = new Response(JSON.stringify({ error: 'conflict' }), { status: 409 })
+    const serverError = new Response(JSON.stringify({ error: 'update_failed' }), { status: 500 })
+    expect(await isWithdrawnApplicationError({ message: 'Edge Function returned a non-2xx status code', context: withdrawn })).toBe(true)
+    expect(await isWithdrawnApplicationError({ message: 'Edge Function returned a non-2xx status code', context: other409 })).toBe(false)
+    expect(await isWithdrawnApplicationError({ message: 'Edge Function returned a non-2xx status code', context: serverError })).toBe(false)
+  })
+
+  it('ignores other errors', async () => {
+    expect(await isWithdrawnApplicationError(new Error('network down'))).toBe(false)
+    expect(await isWithdrawnApplicationError(null)).toBe(false)
   })
 })

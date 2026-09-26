@@ -6,7 +6,7 @@ const updateEq = vi.fn()
 vi.mock('@/lib/supabase', () => ({
   supabase: {
     functions: { invoke: (...a: unknown[]) => invokeMock(...a) },
-    from: () => ({ update: () => ({ eq: (...a: unknown[]) => updateEq(...a) }) }),
+    from: () => ({ update: () => ({ eq: (...a: unknown[]) => ({ select: () => updateEq(...a) }) }) }),
   },
 }))
 
@@ -83,12 +83,20 @@ describe('held decisions (5 s Undo)', () => {
   })
 
   it('writes after the window', async () => {
-    updateEq.mockResolvedValue({ error: null })
+    updateEq.mockResolvedValue({ data: [{ id: 'a2' }], error: null })
     const done = vi.fn()
     holdDecision({ kind: 'status', applicationId: 'a2', status: 'maybe', metadata: {} }, done)
     await vi.advanceTimersByTimeAsync(UNDO_WINDOW_MS + 100)
     expect(updateEq).toHaveBeenCalledWith('id', 'a2')
-    expect(done).toHaveBeenCalledWith(true)
+    expect(done).toHaveBeenCalledWith(true, undefined)
+  })
+
+  it('reports a withdrawn application when the update matches no row', async () => {
+    updateEq.mockResolvedValue({ data: [], error: null })
+    const done = vi.fn()
+    holdDecision({ kind: 'status', applicationId: 'a4', status: 'shortlisted', metadata: {} }, done)
+    await vi.advanceTimersByTimeAsync(UNDO_WINDOW_MS + 100)
+    expect(done).toHaveBeenCalledWith(false, true)
   })
 
   it('sends a decline through the feedback function in one call, and flushes when the page hides', async () => {
