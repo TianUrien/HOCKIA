@@ -60,7 +60,7 @@ vi.mock('@/hooks/useWorldClubLogo', () => ({
   getClubLevelBand: () => null,
   prefetchWorldClubLogos: vi.fn(),
 }))
-vi.mock('@/hooks/useFocusTrap', () => ({ useFocusTrap: () => {} }))
+vi.mock('@/hooks/useFocusTrap', () => ({ useFocusTrap: () => {}, isTopFocusTrap: () => true }))
 vi.mock('@/hooks/useBodyScrollLock', () => ({ useBodyScrollLock: () => {} }))
 
 // LocationAutocomplete → a button that selects a fixed city/country.
@@ -194,5 +194,27 @@ describe('CreateOpportunityModal — must-have payload (Phase 3c)', () => {
     await user.click(screen.getByRole('button', { name: /Update Opportunity/ }))
     await waitFor(() => expect(updateMock).toHaveBeenCalledTimes(1))
     expect(updatePayload).toMatchObject({ position_required: true })
+  })
+})
+
+// Founder ruling 2026-09-25 (C): no youth PLAYER roles (the DB rejects them too).
+describe('CreateOpportunityModal — no youth player roles', () => {
+  it('offers only adult categories for a player role', () => {
+    renderModal()
+    const values = Array.from((screen.getByTitle('Category') as HTMLSelectElement).options).map((o) => o.value)
+    expect(values).toEqual(['', 'Men', 'Women', 'Mixed'])
+  })
+
+  it('a legacy youth player role opens with no category and cannot be saved until one is picked', async () => {
+    const editingVacancy = {
+      id: 'opp-y', opportunity_type: 'player', title: 'U16 Boys', position: 'midfielder', gender: 'Boys',
+      location_city: 'Amsterdam', location_country: 'Netherlands',
+    } as unknown as Parameters<typeof CreateOpportunityModal>[0]['editingVacancy']
+
+    renderModal({ editingVacancy })
+    expect((screen.getByTitle('Category') as HTMLSelectElement).value).toBe('')
+    await user.click(screen.getByRole('button', { name: /Update Opportunity/ }))
+    expect(await screen.findByText('Category is required')).toBeInTheDocument()
+    expect(updateMock).not.toHaveBeenCalled()
   })
 })

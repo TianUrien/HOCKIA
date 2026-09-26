@@ -6,6 +6,7 @@ import { logger } from '@/lib/logger'
 import { initGA, trackPageView } from '@/lib/analytics'
 import * as Sentry from '@sentry/react'
 import { ProtectedRoute, ErrorBoundary, Layout, SentryTestButton } from '@/components'
+import RecruiterOnlyRoute from '@/components/RecruiterOnlyRoute'
 import ToastContainer from '@/components/ToastContainer'
 import UploadIndicator from '@/components/UploadIndicator'
 import { ProfileImagePreviewProvider } from '@/components/ProfileImagePreviewProvider'
@@ -82,11 +83,13 @@ const CompleteProfile = lazyWithRetry(() => import('@/pages/CompleteProfile'))
 const DashboardRouter = lazyWithRetry(() => import('@/pages/DashboardRouter'))
 const HomePage = lazyWithRetry(() => import('@/pages/HomePage'))
 const PulsePage = lazyWithRetry(() => import('@/pages/PulsePage'))
-const OpportunitiesPage = lazyWithRetry(() => import('@/pages/OpportunitiesPage'))
+const OpportunitiesEntry = lazyWithRetry(() => import('@/pages/ClubRecruitingRoutes').then((m) => ({ default: m.OpportunitiesEntry })))
 const OpportunityDetailPage = lazyWithRetry(() => import('@/pages/OpportunityDetailPage'))
 const CommunityPage = lazyWithRetry(() => import('@/pages/CommunityPage'))
 const QuestionDetailPage = lazyWithRetry(() => import('@/pages/QuestionDetailPage'))
-const ApplicantsList = lazyWithRetry(() => import('@/pages/ApplicantsList'))
+const ApplicantsEntry = lazyWithRetry(() => import('@/pages/ClubRecruitingRoutes').then((m) => ({ default: m.ApplicantsEntry })))
+const ApplicantReviewEntry = lazyWithRetry(() => import('@/pages/ClubRecruitingRoutes').then((m) => ({ default: m.ApplicantReviewEntry })))
+const PostRoleEntry = lazyWithRetry(() => import('@/pages/ClubRecruitingRoutes').then((m) => ({ default: m.PostRoleEntry })))
 const SavedCandidatesPage = lazyWithRetry(() => import('@/pages/SavedCandidatesPage'))
 const ShortlistsIndexPage = lazyWithRetry(() => import('@/pages/ShortlistsIndexPage'))
 const ShortlistDetailPage = lazyWithRetry(() => import('@/pages/ShortlistDetailPage'))
@@ -374,8 +377,6 @@ function App() {
     }
   }, [])
 
-  const isProduction = import.meta.env.MODE === 'production' || import.meta.env.VITE_ENVIRONMENT === 'production'
-
   return (
     <ErrorBoundary>
       <BrowserRouter>
@@ -394,7 +395,7 @@ function App() {
           <SessionTracker />
           <ScrollToTop />
           <KeyboardShortcutsManager />
-          {!isProduction && <SentryTestButton />}
+          {import.meta.env.DEV && <SentryTestButton />}
           <ShortLinkGate>
           <TermsGate>
           <AgeGate>
@@ -483,7 +484,7 @@ function App() {
                 <Route path="/community/questions" element={<Navigate to="/home" replace />} />
                 <Route path="/community/:tab" element={<ErrorBoundary fallback={<RouteErrorFallback />}><CommunityPage /></ErrorBoundary>} />
                 <Route path="/community/questions/:questionId" element={<ErrorBoundary fallback={<RouteErrorFallback />}><QuestionDetailPage /></ErrorBoundary>} />
-                <Route path="/opportunities" element={<ErrorBoundary fallback={<RouteErrorFallback />}><OpportunitiesPage /></ErrorBoundary>} />
+                <Route path="/opportunities" element={<ErrorBoundary fallback={<RouteErrorFallback />}><OpportunitiesEntry /></ErrorBoundary>} />
                 <Route path="/opportunities/applications" element={<ErrorBoundary fallback={<RouteErrorFallback />}><MyApplicationsPage /></ErrorBoundary>} />
                 <Route path="/opportunities/:id" element={<ErrorBoundary fallback={<RouteErrorFallback />}><OpportunityDetailPage /></ErrorBoundary>} />
                 <Route path="/messages" element={<ErrorBoundary fallback={<RouteErrorFallback />}><MessagesPage /></ErrorBoundary>} />
@@ -514,10 +515,14 @@ function App() {
                     /:section, their dashboard renders its landing
                     (section param is silently ignored, no crash). */}
                 <Route path="/dashboard/profile/:section" element={<ErrorBoundary fallback={<RouteErrorFallback />}><DashboardRouter /></ErrorBoundary>} />
-                <Route path="/dashboard/opportunities/:opportunityId/applicants" element={<ErrorBoundary fallback={<RouteErrorFallback />}><ApplicantsList /></ErrorBoundary>} />
-                <Route path="/dashboard/saved" element={<ErrorBoundary fallback={<RouteErrorFallback />}><SavedCandidatesPage /></ErrorBoundary>} />
-                <Route path="/dashboard/shortlists" element={<ErrorBoundary fallback={<RouteErrorFallback />}><ShortlistsIndexPage /></ErrorBoundary>} />
-                <Route path="/dashboard/shortlists/:id" element={<ErrorBoundary fallback={<RouteErrorFallback />}><ShortlistDetailPage /></ErrorBoundary>} />
+                <Route path="/dashboard/opportunities/new" element={<ErrorBoundary fallback={<RouteErrorFallback />}><PostRoleEntry /></ErrorBoundary>} />
+                <Route path="/dashboard/opportunities/:opportunityId/edit" element={<ErrorBoundary fallback={<RouteErrorFallback />}><PostRoleEntry /></ErrorBoundary>} />
+                <Route path="/dashboard/opportunities/:opportunityId/applicants" element={<ErrorBoundary fallback={<RouteErrorFallback />}><ApplicantsEntry /></ErrorBoundary>} />
+                <Route path="/dashboard/opportunities/:opportunityId/applicants/:applicationId" element={<ErrorBoundary fallback={<RouteErrorFallback />}><ApplicantReviewEntry /></ErrorBoundary>} />
+                {/* Save / shortlists: clubs + recruiting coaches only. */}
+                <Route path="/dashboard/saved" element={<ErrorBoundary fallback={<RouteErrorFallback />}><RecruiterOnlyRoute><SavedCandidatesPage /></RecruiterOnlyRoute></ErrorBoundary>} />
+                <Route path="/dashboard/shortlists" element={<ErrorBoundary fallback={<RouteErrorFallback />}><RecruiterOnlyRoute><ShortlistsIndexPage /></RecruiterOnlyRoute></ErrorBoundary>} />
+                <Route path="/dashboard/shortlists/:id" element={<ErrorBoundary fallback={<RouteErrorFallback />}><RecruiterOnlyRoute><ShortlistDetailPage /></RecruiterOnlyRoute></ErrorBoundary>} />
 
                 {/* Network-only profile routes (alias for clarity; still behind auth) */}
                 <Route path="/members/:username" element={<PublicPlayerProfile />} />

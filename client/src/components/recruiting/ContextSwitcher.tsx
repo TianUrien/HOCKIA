@@ -22,6 +22,7 @@
  */
 
 import { useState } from 'react'
+import { isRecruitingViewer } from '@/lib/recruiterAccess'
 import { ChevronDown, Target, X } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
 import { useRecruitingContext } from '@/hooks/useRecruitingContext'
@@ -38,7 +39,9 @@ export default function ContextSwitcher({ className = '' }: ContextSwitcherProps
   const [clearing, setClearing] = useState(false)
 
   const viewerRole = viewer?.role
-  if (viewerRole !== 'club' && viewerRole !== 'coach') return null
+  // Recruiter tool: clubs and coaches who recruit for a team only (founder
+  // ruling 2026-09-25). A coach looking for a role never sees the chip.
+  if (!isRecruitingViewer(viewer)) return null
   // F4 (QA): during the COLD-load fetch, render an invisible placeholder
   // matching the chip's intrinsic height so the surrounding layout
   // doesn't reflow when the real chip pops in. Was a 2-3s empty gap

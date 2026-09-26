@@ -2,8 +2,10 @@ import { useEffect, useId, useRef, useState } from 'react'
 import { Loader2, Lock, X } from 'lucide-react'
 import Button from './Button'
 import Input from './Input'
-import { useFocusTrap } from '@/hooks/useFocusTrap'
+import { isTopFocusTrap, useFocusTrap } from '@/hooks/useFocusTrap'
 import { useToastStore } from '@/lib/toast'
+import { useAuthStore } from '@/lib/auth'
+import { fullMatchVisibilityOf } from '@/lib/recruiter'
 import { validateAndNormalizeVideoUrl, VIDEO_URL_HOSTS_HUMAN } from '@/lib/videoUrlValidator'
 import type { FullGameVideo, FullGameVideoVisibility } from '@/hooks/useFullGameVideos'
 
@@ -14,9 +16,10 @@ import type { FullGameVideo, FullGameVideoVisibility } from '@/hooks/useFullGame
  * (shared via @/lib/videoUrlValidator), so users learn one mental model
  * about which platforms are accepted.
  *
- * Visibility toggle mirrors profiles.highlight_visibility ('public' vs
- * 'recruiters'). RLS enforces the actual filtering — the toggle just
- * picks which side the row falls on.
+ * Visibility starts from the player's master switch
+ * (profiles.full_match_visibility, Settings › Privacy); 'recruiters' means
+ * clubs and coaches who recruit. RLS enforces the actual filtering — the
+ * toggle just picks which side the row falls on.
  *
  * URL-only — no file upload. Direct upload is a future storage sprint.
  */
@@ -71,7 +74,8 @@ export default function FullGameVideoFormModal({
   const [positionPlayed, setPositionPlayed] = useState('')
   const [shirtNumber, setShirtNumber] = useState<string>('')
   const [minutesPlayed, setMinutesPlayed] = useState<string>('')
-  const [visibility, setVisibility] = useState<FullGameVideoVisibility>('public')
+  const fullMatchDefault = useAuthStore((s) => fullMatchVisibilityOf(s.profile))
+  const [visibility, setVisibility] = useState<FullGameVideoVisibility>(fullMatchDefault)
   const [notes, setNotes] = useState('')
   const [error, setError] = useState('')
   const [isSaving, setIsSaving] = useState(false)
@@ -93,7 +97,7 @@ export default function FullGameVideoFormModal({
       setPositionPlayed(initialValue.position_played ?? '')
       setShirtNumber(initialValue.shirt_number?.toString() ?? '')
       setMinutesPlayed(initialValue.minutes_played?.toString() ?? '')
-      setVisibility((initialValue.visibility as FullGameVideoVisibility) ?? 'public')
+      setVisibility((initialValue.visibility as FullGameVideoVisibility) ?? fullMatchDefault)
       setNotes(initialValue.notes ?? '')
     } else {
       setVideoUrl('')
@@ -105,16 +109,18 @@ export default function FullGameVideoFormModal({
       setPositionPlayed('')
       setShirtNumber('')
       setMinutesPlayed('')
-      setVisibility('public')
+      setVisibility(fullMatchDefault)
       setNotes('')
     }
     setError('')
-  }, [isOpen, initialValue])
+  }, [isOpen, initialValue, fullMatchDefault])
 
   // Esc-to-close (disabled mid-save so we don't drop a request).
   useEffect(() => {
     if (!isOpen) return
     const onKey = (event: KeyboardEvent) => {
+      // Another trapped overlay is on top: its Escape closes it, not this one.
+      if (event.key === 'Escape' && !isTopFocusTrap(dialogRef.current)) return
       if (event.key === 'Escape' && !isSaving) {
         event.preventDefault()
         onClose()
@@ -353,9 +359,9 @@ export default function FullGameVideoFormModal({
                   />
                   <span>
                     <span className="block font-medium text-gray-900 inline-flex items-center gap-1">
-                      <Lock className="h-3 w-3" /> Recruiters only
+                      <Lock className="h-3 w-3" /> Clubs &amp; coaches
                     </span>
-                    <span className="block text-xs text-gray-500">Only clubs and coaches can watch.</span>
+                    <span className="block text-xs text-gray-500">Only clubs and coaches who recruit can watch.</span>
                   </span>
                 </label>
               </div>

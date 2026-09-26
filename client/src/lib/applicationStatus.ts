@@ -18,10 +18,13 @@ export function playerApplicationStatusBadge(
     case 'shortlisted':
       return { label: 'Shortlisted', className: 'bg-emerald-100 text-emerald-800' }
     case 'maybe':
-      return { label: 'Under consideration', className: 'bg-amber-100 text-amber-800' }
+      // Amber is reserved for "the viewer must act soon" (founder 2026-09-26).
+      // The player can't act on "under consideration", so it's neutral grey.
+      return { label: 'Under consideration', className: 'bg-gray-100 text-gray-600' }
     case 'rejected':
-      // Soft, non-judgmental tone — a clear "no" without feeling punishing.
-      return { label: 'Not selected', className: 'bg-rose-50 text-rose-700' }
+      // Founder ruling 2026-09-25: grey, never rose/red — not being selected
+      // is not an error. One grey state, matching opportunityCopy's tone 'grey'.
+      return { label: 'Not selected', className: 'bg-gray-100 text-gray-600' }
     case 'no_response':
       // Auto-expiry terminal state (Task 3b). Copy is deliberately NEUTRAL
       // about the club: many teams answer off-platform (15/21 opportunities
@@ -69,6 +72,29 @@ const REASON_LABEL_BY_CODE: Record<string, string> = Object.fromEntries(
 export function applicationReasonLabel(code: string | null | undefined): string | null {
   if (!code) return null
   return REASON_LABEL_BY_CODE[code] ?? null
+}
+
+/** Shown to a club that tries to change an application the player withdrew. */
+export const WITHDRAWN_APPLICATION_MESSAGE = 'This player withdrew their application'
+
+/**
+ * True when a status write was refused because the application is withdrawn:
+ * the DB guard's error on a direct update, or application-feedback's 409.
+ */
+export async function isWithdrawnApplicationError(err: unknown): Promise<boolean> {
+  if (!err || typeof err !== 'object') return false
+  const e = err as { message?: unknown; context?: unknown }
+  if (typeof e.message === 'string' && e.message.includes('withdrawn application cannot be changed')) return true
+  const res = e.context
+  if (res instanceof Response && res.status === 409) {
+    try {
+      const body = (await res.clone().json()) as { error?: string } | null
+      return body?.error === 'withdrawn'
+    } catch {
+      return false
+    }
+  }
+  return false
 }
 
 /**

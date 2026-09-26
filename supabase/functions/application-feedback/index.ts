@@ -19,6 +19,17 @@
  *      + length. ANY failure (no key, API error, banned vocabulary, bad shape)
  *      falls back to deterministic copy (tagged source:'fallback').
  *
+ * Club modes (Figma 04 Club · Decline, 326:528), caller = the role's publisher:
+ *   POST { mode: 'draft', application_id, reason }
+ *     → { message, source }  a kind note in the CLUB's voice for that reason,
+ *       not cached; the club edits it before sending.
+ *   POST { mode: 'decline', application_id, reason, message }
+ *     → { ok: true }  ONE service-role update: status → rejected,
+ *       metadata.status_reason, ai_feedback = { message, status, reason,
+ *       source: 'club' }. One update so the status history, the player
+ *       notification and the queued status email all see the note.
+ *   A club-sent note is served to the player as-is (never regenerated).
+ *
  * Tone contract (system prompt AND fallback): never blame the player, never imply
  * they aren't good enough, stay honest (no false hope), and offer ONE constructive
  * next step where one genuinely exists. The deterministic copy below mirrors
@@ -41,6 +52,13 @@ const BANNED = [
   'loser', 'worthless', 'mediocre', 'pathetic',
 ]
 const RESPONDED = ['shortlisted', 'maybe', 'rejected']
+// The nine reason codes the club picker offers (client/src/lib/applicationStatus.ts).
+const REASON_CODES = [
+  'position_filled', 'different_position', 'different_level', 'timing', 'location',
+  'eligibility', 'profile_incomplete', 'video_missing', 'other',
+]
+// A club may edit the drafted note; keep it a note, not a letter.
+const CLUB_NOTE_MAX_CHARS = 600
 
 interface StatusContext {
   status: string
@@ -103,6 +121,37 @@ RULES (strict):
 - Output JSON exactly: {"message": "..."} and nothing else.`
 }
 
+// Club's own voice for the Decline draft ("we"), addressed to the player.
+function clubSystemPrompt(): string {
+  return `You draft a SHORT note (2-3 sentences, max ${MESSAGE_MAX_CHARS} characters) that a field-hockey CLUB sends to a player whose application it is declining. Write in the club's voice ("we"), addressed to the player ("you").
+
+RULES (strict):
+- Thank them for applying for the named role with the named club.
+- Say kindly that they weren't selected this time. Reflect the club's stated reason honestly; never blame the player or imply they aren't good enough.
+- Where the reason allows, offer ONE constructive next step. No false hope, no filler, no invented facts.
+- Output JSON exactly: {"message": "..."} and nothing else.`
+}
+
+function clubFallbackMessage(ctx: StatusContext): string {
+  const why: Record<string, string> = {
+    position_filled: "we've already filled the position",
+    different_position: "we're prioritising a different position for this squad",
+    different_level: "we're looking for a different playing level for this squad",
+    timing: "the timing and availability didn't line up this season",
+    location: "the location or relocation didn't work out for this role",
+    eligibility: 'there was a passport or eligibility requirement for this role',
+    profile_incomplete: 'we needed more detail on your profile to move forward',
+    video_missing: 'we needed match footage to move forward',
+  }
+  const reason = ctx.reason ? why[ctx.reason] : null
+  const next = ctx.reason === 'video_missing' || ctx.reason === 'different_level'
+    ? ' Keep your full matches up to date for similar roles.'
+    : ctx.reason === 'profile_incomplete' ? ' A fuller profile helps clubs picture you faster.' : ''
+  return reason
+    ? `Thanks for applying for the ${ctx.position} role with ${ctx.clubName}. You weren't selected this time because ${reason}.${next}`
+    : `Thanks for applying for the ${ctx.position} role with ${ctx.clubName}. You weren't selected this time, but we appreciate your interest.`
+}
+
 function userPrompt(ctx: StatusContext): string {
   return JSON.stringify({
     status: ctx.status,
@@ -114,7 +163,7 @@ function userPrompt(ctx: StatusContext): string {
   })
 }
 
-async function callClaude(ctx: StatusContext): Promise<string> {
+async function callClaude(ctx: StatusContext, voice: 'player' | 'club' = 'player'): Promise<string> {
   const apiKey = Deno.env.get('ANTHROPIC_API_KEY')
   if (!apiKey) throw new Error('ANTHROPIC_API_KEY not configured')
   const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -128,7 +177,7 @@ async function callClaude(ctx: StatusContext): Promise<string> {
       model: MODEL,
       max_tokens: 256,
       // Cache the identical system prompt across calls (5-min window).
-      system: [{ type: 'text', text: systemPrompt(), cache_control: { type: 'ephemeral' } }],
+      system: [{ type: 'text', text: voice === 'club' ? clubSystemPrompt() : systemPrompt(), cache_control: { type: 'ephemeral' } }],
       messages: [{ role: 'user', content: userPrompt(ctx) }],
     }),
   })
@@ -192,21 +241,84 @@ serve(async (req: Request) => {
 
     // 2) Body.
     let applicationId: string
+    let mode: 'read' | 'draft' | 'decline' = 'read'
+    let bodyReason: string | null = null
+    let bodyMessage: string | null = null
     try {
-      const body = await req.json() as { application_id?: string }
+      const body = await req.json() as { application_id?: string; mode?: string; reason?: string; message?: string }
       if (!body.application_id || typeof body.application_id !== 'string') throw new Error()
       applicationId = body.application_id
+      if (body.mode === 'draft' || body.mode === 'decline') mode = body.mode
+      bodyReason = typeof body.reason === 'string' ? body.reason : null
+      bodyMessage = typeof body.message === 'string' ? body.message : null
     } catch {
       return jsonResponse({ error: 'missing_application_id' }, 400, corsHeaders)
     }
 
-    // 3) Fetch application + verify ownership.
+    // 3) Fetch application.
     const { data: app } = await supabase
       .from('opportunity_applications')
       .select('id, opportunity_id, applicant_id, status, metadata, ai_feedback')
       .eq('id', applicationId)
       .maybeSingle()
     if (!app) return jsonResponse({ error: 'not_found' }, 404, corsHeaders)
+
+    // ── Club modes: the caller must publish the role ──
+    if (mode !== 'read') {
+      const { data: opp } = await supabase
+        .from('opportunities')
+        .select('id, title, club_id, position')
+        .eq('id', app.opportunity_id)
+        .maybeSingle()
+      if (!opp || opp.club_id !== userId) return jsonResponse({ error: 'forbidden' }, 403, corsHeaders)
+      // A withdrawn application is final. This function writes as service role,
+      // so the DB guard (guard_application_client_write) does not apply here.
+      if (app.status === 'withdrawn') return jsonResponse({ error: 'withdrawn' }, 409, corsHeaders)
+      if (!bodyReason || !REASON_CODES.includes(bodyReason)) return jsonResponse({ error: 'invalid_reason' }, 400, corsHeaders)
+      const { data: club } = await supabase.from('profiles').select('full_name').eq('id', userId).maybeSingle()
+      const title = opp.title ?? 'this role'
+      const ctx: StatusContext = {
+        status: 'rejected',
+        reason: bodyReason,
+        position: humanizePosition(opp.position) ?? derivePosition(title) ?? 'this role',
+        clubName: club?.full_name ?? 'our club',
+        opportunityTitle: title,
+      }
+
+      if (mode === 'draft') {
+        try {
+          return jsonResponse({ message: await callClaude(ctx, 'club'), source: 'ai' }, 200, corsHeaders)
+        } catch (err) {
+          console.warn('application-feedback: club draft fallback —', String(err))
+          return jsonResponse({ message: clubFallbackMessage(ctx), source: 'fallback' }, 200, corsHeaders)
+        }
+      }
+
+      // decline — one update carries status, reason and the note.
+      const note = (bodyMessage ?? '').trim()
+      if (!note || note.length > CLUB_NOTE_MAX_CHARS) return jsonResponse({ error: 'invalid_message' }, 400, corsHeaders)
+      const prevMeta: Record<string, unknown> =
+        app.metadata && typeof app.metadata === 'object' && !Array.isArray(app.metadata)
+          ? (app.metadata as Record<string, unknown>)
+          : {}
+      const { error: updErr } = await supabase
+        .from('opportunity_applications')
+        .update({
+          status: 'rejected',
+          // changed_via stays null = an in-app decision (the history table only
+          // accepts email_action / auto_expiry / minor_freeze).
+          metadata: { ...prevMeta, status_reason: bodyReason, changed_via: null } as unknown as Json,
+          ai_feedback: { message: note, status: 'rejected', reason: bodyReason, source: 'club' } as unknown as Json,
+        })
+        .eq('id', applicationId)
+      if (updErr) {
+        console.error('application-feedback decline failed', updErr)
+        return jsonResponse({ error: 'update_failed' }, 500, corsHeaders)
+      }
+      return jsonResponse({ ok: true }, 200, corsHeaders)
+    }
+
+    // ── Player read: must own the application ──
     if (app.applicant_id !== userId) return jsonResponse({ error: 'forbidden' }, 403, corsHeaders)
 
     const status = String(app.status)
@@ -229,8 +341,9 @@ serve(async (req: Request) => {
       app.ai_feedback && typeof app.ai_feedback === 'object' && !Array.isArray(app.ai_feedback)
         ? (app.ai_feedback as Record<string, unknown>)
         : null
+    // A note the club wrote (Decline sheet) is served exactly as sent.
     if (
-      cache && cache.source === 'ai' &&
+      cache && (cache.source === 'ai' || cache.source === 'club') &&
       cache.status === status && (cache.reason ?? null) === reason &&
       typeof cache.message === 'string'
     ) {

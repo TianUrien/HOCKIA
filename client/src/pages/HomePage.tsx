@@ -5,6 +5,7 @@ import { Header } from '@/components'
 import { HomeFeed } from '@/components/home/HomeFeed'
 import { PostComposer } from '@/components/home/PostComposer'
 import { YourWeekCard } from '@/components/home/YourWeekCard'
+import { FullMatchPrivacyNotice } from '@/components/home/FullMatchPrivacyNotice'
 import { SearchOverlay } from '@/components/search/SearchOverlay'
 import { PullToRefresh } from '@/components/PullToRefresh'
 import { useScrollRestore } from '@/hooks/useScrollRestore'
@@ -41,6 +42,8 @@ export default function HomePage() {
               resting pill stays where it was. One instance either way. */}
           <div className="px-4 pt-3 md:px-6">
             <SearchOverlay triggerClassName="hidden lg:block lg:mb-3" />
+            {/* One-time, players only; renders nothing once answered. */}
+            <FullMatchPrivacyNotice className="mb-3" />
             <YourWeekCard />
           </div>
 

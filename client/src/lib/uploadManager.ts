@@ -1,5 +1,7 @@
 import { create } from 'zustand'
-import { Upload as TusUpload } from 'tus-js-client'
+// Type-only: tus-js-client (+ its node polyfills) is loaded on demand in step 3 so it
+// stays out of the first-load bundle (auth.ts → uploadManager is on the eager path).
+import type { Upload as TusUpload } from 'tus-js-client'
 import { supabase } from './supabase'
 import { validateVideoFull } from './imageOptimization'
 import { logger } from './logger'
@@ -201,8 +203,10 @@ export const useUploadManager = create<UploadManagerState>((set, get) => {
           if (isCancelled()) return
 
           // Step 3 — push bytes straight to Cloudflare (never through our server)
+          const { Upload: TusUploadCtor } = await import('tus-js-client')
+          if (isCancelled()) return
           await new Promise<void>((resolve, reject) => {
-            const tus = new TusUpload(file, {
+            const tus = new TusUploadCtor(file, {
               uploadUrl: created.tusUploadUrl,
               chunkSize: CF_CHUNK_SIZE,
               retryDelays: [0, 3000, 6000, 12000],

@@ -246,7 +246,7 @@ export default function AddReferenceModal({ isOpen, onClose, friends, onSubmit, 
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100">
               <CheckCircle className="h-6 w-6 text-emerald-600" />
             </div>
-            <p className="mt-3 text-lg font-semibold text-gray-900">Request sent</p>
+            <p className="mt-3 text-lg font-semibold text-gray-900">Requested</p>
             <p className="mt-1 text-sm text-gray-500">
               {selectedFriend?.fullName} will be notified
             </p>

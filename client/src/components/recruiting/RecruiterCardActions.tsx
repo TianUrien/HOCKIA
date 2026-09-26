@@ -10,7 +10,7 @@
  */
 import { useNavigate, useLocation } from 'react-router-dom'
 import {
-  Bookmark, BookmarkCheck, MessageSquare, UserPlus, UserCheck, Clock, Loader2,
+  Bookmark, BookmarkCheck, MessageSquare, UserPlus, UserCheck, Check, Loader2,
 } from 'lucide-react'
 import type { ComponentType } from 'react'
 import { useIsProfileSaved } from '@/hooks/useSavedProfiles'
@@ -81,7 +81,7 @@ function AddFriendItem({ playerId, playerName }: { playerId: string; playerName:
     return <ActionItem label="Friends" icon={UserCheck} active disabled onClick={() => {}} ariaLabel={`Friends with ${playerName}`} />
   }
   if (isOutgoingRequest) {
-    return <ActionItem label="Requested" icon={Clock} disabled onClick={() => {}} ariaLabel={`Friend request sent to ${playerName}`} />
+    return <ActionItem label="Requested" icon={Check} disabled onClick={() => {}} ariaLabel={`Friend request sent to ${playerName}`} />
   }
   return (
     <ActionItem

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useRef } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useState, useRef } from 'react'
 import ProfileTopBar from '@/components/dashboard/ProfileTopBar'
 import { ArrowLeft } from 'lucide-react'
 import { useNavigate, useParams, useSearchParams, useLocation } from 'react-router-dom'
@@ -36,6 +36,11 @@ import { usePortfolioAnchorScroll } from '@/hooks/usePortfolioAnchorScroll'
 import PortfolioSectionNav from '@/components/profile/PortfolioSectionNav'
 import PublicConnectionsPage from '@/components/profile/PublicConnectionsPage'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
+// Club v2 phone screens: own chunks, so desktop never downloads them.
+const ClubProfileScreen = lazy(() => import('@/components/profile/mobile/ClubProfileScreen'))
+const ClubLeagueScreen = lazy(() => import('@/components/profile/mobile/ClubLeagueScreen'))
+const LinkClubScreen = lazy(() => import('@/components/profile/mobile/LinkClubScreen'))
 
 // `?section=` query param → DOM anchor id. Drives the deep-link scroll
 // for notifications + shareable URLs (e.g. ?section=viewers).
@@ -51,6 +56,8 @@ type TabType =
   | 'comments'
   | 'posts'
   | 'opportunities'
+  | 'league'
+  | 'link'
 
 const VALID_TABS: TabType[] = [
   'profile',
@@ -60,6 +67,8 @@ const VALID_TABS: TabType[] = [
   'comments',
   'posts',
   'opportunities',
+  'league',
+  'link',
 ]
 
 // Legacy section aliases. 'vacancies' → 'opportunities' (PR #101);
@@ -78,7 +87,7 @@ const LEGACY_SECTION_ALIASES: Record<string, TabType> = {
 const resolveLegacySection = (section: string | undefined): TabType | null =>
   section && LEGACY_SECTION_ALIASES[section] ? LEGACY_SECTION_ALIASES[section] : null
 
-type ClubProfileShape =
+export type ClubProfileShape =
   Partial<Profile> &
   Pick<
     Profile,
@@ -147,6 +156,8 @@ export default function ClubDashboard({
     comments: 'Comments',
     posts: 'Posts',
     opportunities: 'Opportunities',
+    league: 'Club & league',
+    link: 'Link your club',
   }
   const visitorTabSuffix: Record<TabType, string | null> = {
     profile: null,
@@ -156,6 +167,8 @@ export default function ClubDashboard({
     comments: 'Comments',
     posts: 'Posts',
     opportunities: 'Opportunities',
+    league: null,
+    link: null,
   }
   const computedTitle = visitedName
     ? visitorTabSuffix[activeTab]
@@ -232,6 +245,23 @@ export default function ClubDashboard({
   useSearchAppearances({
     profileId: readOnly ? null : (profileData?.id ?? authProfile?.id ?? null),
   })
+
+  // Phone: the Figma Club profile (own / public) replaces the bento and the
+  // portfolio on the landing view only — section pages keep their surface.
+  const isPhone = useMediaQuery('(max-width: 1023px)')
+
+  // Club & league (Figma 338:424) is a phone leaf for the owner. Anywhere
+  // else the section falls back to the landing with the editor open.
+  const isLeagueLeaf = activeTab === 'league' && !readOnly && isPhone
+  const isLinkLeaf = activeTab === 'link' && !readOnly && isPhone
+  useEffect(() => {
+    if ((activeTab !== 'league' || isLeagueLeaf) && (activeTab !== 'link' || isLinkLeaf)) return
+    if (readOnly) {
+      if (visitorBasePath) navigate(visitorBasePath, { replace: true })
+    } else {
+      navigate('/dashboard/profile?action=edit', { replace: true })
+    }
+  }, [activeTab, isLeagueLeaf, isLinkLeaf, readOnly, visitorBasePath, navigate])
 
   const sectionParam = searchParams.get('section')
   const profileId = profile?.id ?? null
@@ -480,6 +510,8 @@ export default function ClubDashboard({
   }
 
   const handleCreateOpportunity = () => {
+    // Phone: the Post a role flow (Figma 04 Club 330:318). Desktop keeps the modal.
+    if (isPhone) { navigate('/dashboard/opportunities/new'); return }
     setTriggerCreateVacancy(true)
     handleTabChange('opportunities')
   }
@@ -488,11 +520,45 @@ export default function ClubDashboard({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header mobileHidden={!readOnly} />
+      {/* Phone landing: the cover carries share · gear (owner) or back · share
+          (visitor) — no app header there, like the player screen. */}
+      <Header mobileHidden={!readOnly || isLanding} />
 
-      {readOnly && isOwnProfile && <PublicViewBanner />}
+      {readOnly && isOwnProfile && <PublicViewBanner compactOnPhone={isLanding} />}
 
-      <main className="max-w-7xl mx-auto px-4 md:px-6 ${readOnly ? 'pt-24' : 'pt-[max(env(safe-area-inset-top),0.75rem)] lg:pt-24'} pb-12 space-y-5 md:space-y-6">
+      {(isLeagueLeaf || isLinkLeaf) && (
+        <Suspense fallback={<div className="min-h-screen bg-white" />}>
+          {isLeagueLeaf && <ClubLeagueScreen profile={profile} onBack={() => handleTabChange('profile')} onLink={() => handleTabChange('link')} />}
+          {isLinkLeaf && <LinkClubScreen profile={profile} onCancel={() => handleTabChange('league')} onLinked={() => handleTabChange('league')} />}
+        </Suspense>
+      )}
+
+      {!isLeagueLeaf && !isLinkLeaf && (
+      <main className={`max-w-7xl mx-auto px-4 md:px-6 ${isLanding ? 'pt-0' : readOnly ? 'pt-24' : 'pt-[max(env(safe-area-inset-top),0.75rem)]'} lg:pt-24 pb-12 space-y-5 md:space-y-6`}>
+        {isPhone && isLanding ? (
+          <div className="-mx-4 md:-mx-6">
+            <Suspense fallback={<div className="min-h-screen bg-white" />}>
+            <ClubProfileScreen
+              profile={profile}
+              readOnly={readOnly}
+              isOwnProfile={isOwnProfile}
+              authProfileRole={authProfile?.role}
+              onEdit={() => setShowEditModal(true)}
+              onViewPublic={handleViewPublic}
+              onMessage={() => void handleSendMessage()}
+              sendingMessage={sendingMessage}
+              onOpenFriends={() => handleTabChange('friends')}
+              onOpenSquad={() => handleTabChange('members')}
+              // Phone only: the Club v2 Opportunities screen (OpportunitiesEntry), not the v1 tab.
+              onOpenRoles={() => navigate('/opportunities')}
+              onPostRole={handleCreateOpportunity}
+              onOpenClubLeague={() => handleTabChange('league')}
+              onOpenPosts={() => handleTabChange('posts')}
+            />
+            </Suspense>
+          </div>
+        ) : (
+        <>
         {!readOnly && <ProfileTopBar />}
         {readOnly && !isOwnProfile && (
           <button
@@ -771,7 +837,10 @@ export default function ClubDashboard({
             </div>
           </div>
         )}
+        </>
+        )}
       </main>
+      )}
 
       <EditProfileModal isOpen={showEditModal} onClose={() => setShowEditModal(false)} role="club" />
 

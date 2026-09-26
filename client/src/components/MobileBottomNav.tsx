@@ -59,7 +59,13 @@ export default function MobileBottomNav() {
     // Detail screens with their own fixed action bar (Figma Opportunity
     // detail: Message / Apply) carry no tab bar — back is the way out.
     const isOpportunityDetail = /^\/opportunities\/(?!applications$)[^/]+$/.test(location.pathname)
-    setIsHidden(hiddenRoutes.some((route) => location.pathname === route) || isImmersiveMessagesView || isOpportunityDetail)
+    // Modal flows with their own bottom action (Figma 04 Club · Link your club).
+    const isModalFlow = location.pathname === '/dashboard/profile/link' ||
+      // Post a role: a full-screen flow with its own Continue bar (Figma 04 Club 330:318).
+      location.pathname === '/dashboard/opportunities/new' || /^\/dashboard\/opportunities\/[^/]+\/edit$/.test(location.pathname) ||
+      // Applicant review carries its own decision bar (Figma 04 Club 326:319).
+      /^\/dashboard\/opportunities\/[^/]+\/applicants\/[^/]+$/.test(location.pathname)
+    setIsHidden(hiddenRoutes.some((route) => location.pathname === route) || isImmersiveMessagesView || isOpportunityDetail || isModalFlow)
   }, [location.pathname, location.search])
 
   if (isHidden || isKeyboardOpen) return null
@@ -164,7 +170,10 @@ export default function MobileBottomNav() {
     { id: 'inbox', label: 'Inbox', path: '/inbox', icon: Inbox, dot: inboxDot },
   ]
 
-  const onProfile = location.pathname.startsWith('/dashboard')
+  // A role's applicants and reviews live under /dashboard/opportunities but
+  // belong to the Opportunities tab (Figma 04 Club · Applicants).
+  const onClubRecruiting = location.pathname.startsWith('/dashboard/opportunities')
+  const onProfile = location.pathname.startsWith('/dashboard') && !onClubRecruiting
   const initials =
     (profile?.full_name ?? '')
       .trim()
@@ -182,7 +191,7 @@ export default function MobileBottomNav() {
 
       <nav className={barClassName} aria-label="Main">
         <div className="flex items-stretch px-1.5">
-          {navItems.map((item) => renderTab(item, isActive(item.path) || (item.id === 'inbox' && isActive('/messages'))))}
+          {navItems.map((item) => renderTab(item, isActive(item.path) || (item.id === 'inbox' && isActive('/messages')) || (item.id === 'opportunities' && onClubRecruiting)))}
 
           {/* Profile = the member's own avatar (Figma tab/Profile). */}
           <button

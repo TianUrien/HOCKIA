@@ -26,8 +26,9 @@ vi.mock('@/components/dashboard/bento/CommunityCard', () => ({
   default: () => <div data-testid="community-card" />,
 }))
 // SavedCandidatesCard pulls in @/lib/supabase at import time (count
-// fetch), which throws without env vars in the unit env — mock it like
-// the other child cards so PlayerBentoGrid stays composition-only.
+// fetch), which throws without env vars in the unit env. PlayerBentoGrid
+// no longer mounts it (players have no Save); the mock stays so the
+// absence assertion below fails loudly if it is ever re-added.
 vi.mock('@/components/dashboard/bento/SavedCandidatesCard', () => ({
   default: () => <div data-testid="saved-candidates-card" />,
 }))
@@ -89,6 +90,13 @@ describe('PlayerBentoGrid', () => {
     // Owner-only cards hidden
     expect(screen.queryByTestId('opportunities-card')).not.toBeInTheDocument()
     expect(screen.queryByTestId('basic-info-card')).not.toBeInTheDocument()
+  })
+
+  it('never renders a Saved Profiles card — players have no Save (owner or visitor)', () => {
+    const { rerender } = render(wrap(<PlayerBentoGrid {...sharedProps} readOnly={false} />))
+    expect(screen.queryByTestId('saved-candidates-card')).not.toBeInTheDocument()
+    rerender(wrap(<PlayerBentoGrid {...sharedProps} readOnly />))
+    expect(screen.queryByTestId('saved-candidates-card')).not.toBeInTheDocument()
   })
 
   it('uses a grid wrapper with the matching variant test id', () => {

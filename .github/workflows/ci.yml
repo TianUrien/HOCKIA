@@ -13,6 +13,11 @@ jobs:
   security:
     name: Security Checks
     runs-on: ubuntu-latest
+    # Private repo: gitleaks-action lists the PR's commits, which needs an
+    # explicit pull-requests read grant on the job token.
+    permissions:
+      contents: read
+      pull-requests: read
 
     steps:
       - name: Checkout repository
@@ -254,13 +259,23 @@ jobs:
           # HARD limit (470KB / 480KB today): it never moves, and if a later
           # leaf pushes first-load past 480KB the answer is splitting, not
           # raising. ~180KB headroom restored.
-          if [ "$TOTAL_JS" -gt 4096000 ]; then
-            echo "::warning::Bundle nearing raw budget: ${TOTAL_KB}KB / 4350KB ($(( TOTAL_KB * 100 / 4350 ))%)"
+          # Budget bumped 4350KB → 4600KB on 2026-09-25 (founder-approved) — Club v2
+          # leaves 4+5 (Opportunities, Applicants, Review, Decline, Post a role) took
+          # raw to 4390KB. They are lazy, phone-only screens and there is no new
+          # dependency. Lazy-loading CANNOT lower this metric: it sums every chunk,
+          # eager or not, and splitting only adds per-chunk glue (3ddb1e09 measured
+          # +8KB). 4600KB covers leaves 6–10 at the observed ~25–45KB per leaf; the
+          # per-change growth warning below flags any single change that adds a lot.
+          # TODO(bundle): retire the v1 club desktop screens once desktop adopts
+          # Club v2 (they are still reachable at >=1024px), then lower this gate.
+          echo "RAW_TOTAL_BYTES=${TOTAL_JS}" >> "$GITHUB_ENV"
+          if [ "$TOTAL_JS" -gt 4505600 ]; then
+            echo "::warning::Bundle nearing raw budget: ${TOTAL_KB}KB / 4600KB ($(( TOTAL_KB * 100 / 4600 ))%)"
           fi
 
-          # Secondary gate: raw total must stay under 4.35MB
-          if [ "$TOTAL_JS" -gt 4454400 ]; then
-            echo "::error::Raw bundle budget exceeded! ${TOTAL_KB}KB > 4350KB"
+          # Secondary gate: raw total must stay under 4.6MB
+          if [ "$TOTAL_JS" -gt 4710400 ]; then
+            echo "::error::Raw bundle budget exceeded! ${TOTAL_KB}KB > 4600KB"
             exit 1
           fi
 
@@ -271,6 +286,35 @@ jobs:
               echo "::warning::Large chunk: $(basename "$f") is $((SIZE / 1024))KB (> 512KB)"
             fi
           done
+
+      # Per-change growth warning (never fails the build). Builds the base — the
+      # PR's base commit, or the previous commit on a push — and warns when this
+      # change adds more than 50KB of raw JS. A normal Club v2 leaf adds 25–45KB;
+      # more than that usually means a new heavy dependency or code leaking out
+      # of a lazy chunk. Reuses this job's node_modules, so a change that also
+      # edits package-lock is compared approximately.
+      - name: Bundle growth vs base (warning only)
+        continue-on-error: true
+        working-directory: ./client
+        env:
+          VITE_SUPABASE_URL: https://example.supabase.co
+          VITE_SUPABASE_ANON_KEY: placeholder-key-for-build-verification
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" = "0000000000000000000000000000000000000000" ]; then
+            echo "No base commit to compare against; skipping."
+            exit 0
+          fi
+          git fetch --no-tags --depth=1 origin "$BASE_SHA"
+          git worktree add --detach "$RUNNER_TEMP/base" "$BASE_SHA"
+          ln -s "$PWD/node_modules" "$RUNNER_TEMP/base/client/node_modules"
+          (cd "$RUNNER_TEMP/base/client" && npm run build > /dev/null)
+          BASE_JS=$(cat "$RUNNER_TEMP"/base/client/dist/assets/*.js | wc -c)
+          DELTA=$(( RAW_TOTAL_BYTES - BASE_JS ))
+          echo "Raw JS: base $((BASE_JS / 1024))KB → this change $((RAW_TOTAL_BYTES / 1024))KB (delta $((DELTA / 1024))KB)"
+          if [ "$DELTA" -gt 51200 ]; then
+            echo "::warning::This change adds $((DELTA / 1024))KB of raw JS (> 50KB). Check for a new dependency or code leaking out of a lazy chunk."
+          fi
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4

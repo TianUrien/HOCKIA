@@ -21,14 +21,15 @@ let cachedKey: { id: string; key: CryptoKey } | null = null
 
 async function importSigningKey(keyId: string, jwkBase64: string): Promise<CryptoKey> {
   if (cachedKey?.id === keyId) return cachedKey.key
-  const jwk = JSON.parse(atob(jwkBase64)) as JsonWebKey
+  const jwk = JSON.parse(atob(jwkBase64.trim())) as JsonWebKey
   const key = await crypto.subtle.importKey('jwk', jwk, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['sign'])
   cachedKey = { id: keyId, key }
   return key
 }
 
 /** Signs a Stream playback token for `videoUid`, valid until `expSeconds` (epoch s). */
-export async function signStreamToken(videoUid: string, expSeconds: number, keyId: string, jwkBase64: string): Promise<string> {
+export async function signStreamToken(videoUid: string, expSeconds: number, rawKeyId: string, jwkBase64: string): Promise<string> {
+  const keyId = rawKeyId.trim()
   const key = await importSigningKey(keyId, jwkBase64)
   const header = b64url(enc.encode(JSON.stringify({ alg: 'RS256', kid: keyId })))
   // Same claims as a token from Cloudflare's token API (sub, kid, exp, nbf).
@@ -48,7 +49,9 @@ export async function signStreamToken(videoUid: string, expSeconds: number, keyI
  */
 export function localSigningConfig(): { keyId: string; jwk: string } | null {
   if ((Deno.env.get('CF_STREAM_LOCAL_SIGNING') ?? '').toLowerCase() !== 'on') return null
-  const keyId = Deno.env.get('CF_STREAM_KEY_ID')
-  const jwk = Deno.env.get('CF_STREAM_JWK')
+  // Trim: a secret pasted with a trailing newline names a key that doesn't
+  // exist, and Cloudflare answers 401 (2026-09-24: 33-char key id).
+  const keyId = Deno.env.get('CF_STREAM_KEY_ID')?.trim()
+  const jwk = Deno.env.get('CF_STREAM_JWK')?.trim()
   return keyId && jwk ? { keyId, jwk } : null
 }

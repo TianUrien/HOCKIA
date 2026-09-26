@@ -12,7 +12,9 @@ import ConfirmActionModal from '../ConfirmActionModal'
  * NativeVideosSection — the player's natively-uploaded (Cloudflare Stream)
  * videos. Owner sees an "Upload" CTA + delete controls + their own
  * processing/failed rows; visitors see only ready rows that RLS exposes
- * to them (public always; recruiters-only to club/coach).
+ * to them (public always; recruiters-only to clubs and coaches who
+ * recruit — SQL is_recruiter). Hidden full matches are counted in
+ * FullGameVideosSection's locked card.
  *
  * This runs ALONGSIDE the legacy embed highlight (hybrid). Embeds keep
  * working; native upload is the new, reliable primary path.
@@ -187,7 +189,7 @@ export default function NativeVideosSection({ playerUserId, readOnly, hasLegacyH
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-gray-900">{v.title}</p>
                   {v.visibility === 'recruiters' && (
-                    <span className="text-[11px] font-medium text-hockia-primary">Recruiters only</span>
+                    <span className="text-[11px] font-medium text-gray-600">Clubs &amp; coaches</span>
                   )}
                 </div>
                 {!readOnly && (

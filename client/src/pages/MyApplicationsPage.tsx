@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
 import { Header } from '@/components'
 import { DetailNavBar } from '@/components/ui/DetailNavBar'
+import { backLabelFrom } from '@/lib/backLabel'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
 import { ConversationSkeleton } from '@/components/Skeleton'
@@ -41,17 +42,23 @@ export default function MyApplicationsPage() {
       <li key={r.id}>
         <button
           type="button"
-          onClick={() => r.title && navigate(`/opportunities/${r.opportunityId}`)}
+          onClick={() => r.title && navigate(`/opportunities/${r.opportunityId}`, { state: { from: location.pathname } })}
           className="flex w-full items-center gap-3 px-5 py-3 text-left active:bg-surface-muted"
         >
           <EntityAvatar src={r.club?.avatarUrl} name={r.club?.name} role={r.club?.role ?? 'club'} size={52} />
           <span className="min-w-0 flex-1">
             <span className="block truncate text-row font-semibold text-ink-1">{headline}</span>
             {sub && <span className="block truncate text-secondary text-ink-2">{sub}</span>}
-            <span className="mt-1 flex items-center gap-2">
-              <span className={`rounded-full px-2 py-0.5 text-caption font-semibold ${APPLICATION_TONE_CLASS[pill.tone]}`}>{pill.label}</span>
-              <span className="text-caption text-ink-4">{appliedLine(r.appliedAt)}</span>
-            </span>
+            {r.hasClubNote ? (
+              <span className="mt-1 block text-secondary text-ink-2" data-testid="club-note-line">
+                Not selected · <span className="font-semibold text-hockia-primary">Read the club’s note</span>
+              </span>
+            ) : (
+              <span className="mt-1 flex items-center gap-2">
+                <span className={`rounded-full px-2 py-0.5 text-caption font-semibold ${APPLICATION_TONE_CLASS[pill.tone]}`}>{pill.label}</span>
+                <span className="text-caption text-ink-4">{appliedLine(r.appliedAt)}</span>
+              </span>
+            )}
           </span>
           {r.title && <ChevronRight className="h-[18px] w-[18px] shrink-0 text-ink-4" strokeWidth={1.6} />}
         </button>
@@ -63,7 +70,7 @@ export default function MyApplicationsPage() {
     <div className="min-h-screen bg-white">
       <Header mobileHidden />
       <main className="mx-auto max-w-2xl pb-24 pt-[env(safe-area-inset-top)] lg:pt-24">
-        <DetailNavBar parent="Opportunities" title="My applications" fallbackPath="/opportunities" />
+        <DetailNavBar parent={backLabelFrom(location.state, 'Opportunities')} title="My applications" showParent wideParent fallbackPath="/opportunities" />
         <h1 className="hidden px-5 pb-2 text-title text-ink-1 lg:block">My applications</h1>
 
         <div className="px-5 pb-1.5 pt-2">
@@ -84,7 +91,7 @@ export default function MyApplicationsPage() {
           <div className="px-5 py-12 text-center">
             <p className="text-row font-semibold text-ink-1">{segment === 'active' ? 'No active applications' : 'Nothing closed yet'}</p>
             <p className="mt-1 text-secondary text-ink-2">
-              {segment === 'active' ? 'Roles you apply to show up here with the club’s answer.' : 'Declined and closed roles keep their outcome here.'}
+              {segment === 'active' ? 'Roles you apply to show up here with the club’s answer.' : 'Roles you weren’t selected for, and closed roles, keep their outcome here.'}
             </p>
             {segment === 'active' && (
               <button type="button" onClick={() => navigate('/opportunities')} className="mt-4 rounded-full bg-hockia-primary px-5 py-2.5 text-row font-semibold text-white">

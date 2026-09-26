@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { Clock, Eye, CheckCircle2, ChevronRight } from 'lucide-react'
+import { Send, Eye, CheckCircle2, ChevronRight, type LucideIcon } from 'lucide-react'
 import { useMyApplications } from '@/hooks/useMyApplications'
 import { SectionHeader } from './SectionHeader'
 import { recordModuleImpression, trackModuleClick, useImpressionOnce } from '@/lib/homeInstrumentation'
@@ -15,14 +15,17 @@ import { recordModuleImpression, trackModuleClick, useImpressionOnce } from '@/l
 const MODULE_ID = 'your_applications'
 const POSITION = 1
 
-function statusPill(status: string, viewed: boolean): { label: string; className: string; Icon: typeof Clock } {
+// Amber rule (founder 2026-09-26): amber only when the VIEWER must act soon.
+// A player waiting on a club can't act, so "Pending" is the same neutral grey
+// as "Not selected" / "No longer active" — and no Clock (it reads as urgency).
+function statusPill(status: string, viewed: boolean): { label: string; className: string; Icon: LucideIcon } {
   if (status === 'shortlisted' || status === 'maybe') {
     return { label: 'In review', className: 'bg-[#e7f9ee] text-[#047857]', Icon: CheckCircle2 }
   }
   if (viewed) {
     return { label: 'Viewed by club', className: 'bg-[#f4f0fd] text-hockia-primary', Icon: Eye }
   }
-  return { label: 'Pending', className: 'bg-[#fef3c7] text-[#b45309]', Icon: Clock }
+  return { label: 'Pending', className: 'bg-gray-100 text-gray-600', Icon: Send }
 }
 
 export function YourApplications({ enabled }: { enabled: boolean }) {

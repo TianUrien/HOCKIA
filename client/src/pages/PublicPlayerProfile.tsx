@@ -27,6 +27,7 @@ type PublicProfileBase = Pick<
   | 'bio'
   | 'highlight_video_url'
   | 'highlight_visibility'
+  | 'full_match_visibility'
   | 'nationality'
   | 'nationality_country_id'
   | 'nationality2_country_id'
@@ -103,10 +104,10 @@ export default function PublicPlayerProfile() {
     } catch { /* fail open */ return false }
   }
 
-  // Start the first video posters now, in parallel with the profile gates
-  // (see prefetchProfileVideoPosters). With a username URL the id arrives
-  // with the profile row below.
-  useEffect(() => { if (id) prefetchProfileVideoPosters(id) }, [id])
+  // Start the first video posters now, in parallel with the profile row and
+  // gates (see prefetchProfileVideoPosters): by id or by username, whichever
+  // the URL carries.
+  useEffect(() => { prefetchProfileVideoPosters(id ? { id } : { username }) }, [id, username])
 
   useEffect(() => {
     let cancelled = false
@@ -153,7 +154,6 @@ export default function PublicPlayerProfile() {
             if (!data) return null
             // Age is server-computed (raw DOB is owner-only post age-gate).
             const profileId = (data as unknown as { id: string }).id
-            prefetchProfileVideoPosters(profileId)
             const { data: ages } = await supabase.rpc('get_profile_ages', { p_ids: [profileId] })
             const serverAge = ages?.find((a) => a.profile_id === profileId)?.age ?? null
             return { ...(data as object), server_age: serverAge } as unknown as PublicProfile

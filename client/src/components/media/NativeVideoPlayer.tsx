@@ -135,7 +135,7 @@ export default function NativeVideoPlayer({
           return
         }
         if ((code === 403 || code === 401) && !isOwner) {
-          setErrorMsg('Visible to recruiters (clubs and coaches) only.')
+          setErrorMsg('Visible to clubs and coaches who recruit.')
           setCanRetry(false)
           setState('error')
           return

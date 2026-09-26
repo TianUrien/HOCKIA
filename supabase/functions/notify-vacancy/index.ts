@@ -1,4 +1,3 @@
-// deno-lint-ignore-file no-explicit-any
 // NOTE: This file runs on Supabase Edge Functions (Deno runtime).
 // Some TS tooling in the workspace may not include Deno types, so we declare a minimal Deno shape.
 declare const Deno: {
@@ -18,8 +17,10 @@ import {
   createLogger,
   generateEmailHtml,
   generateEmailText,
-  sendEmailsIndividually,
   isVacancyNewlyPublished,
+  claimFirstAnnouncement,
+  announcementSendOutcome,
+  reportAnnouncementFailure,
 } from '../_shared/vacancy-email.ts'
 import { renderTemplate } from '../_shared/email-renderer.ts'
 import { sendTrackedBatch, RecipientInfo } from '../_shared/email-sender.ts'
@@ -40,6 +41,8 @@ import { sendTrackedBatch, RecipientInfo } from '../_shared/email-sender.ts'
  * 1. Only processes vacancies from NON-test accounts
  * 2. Never sends to test recipients or test accounts
  * 3. Only sends when vacancy is newly published (status becomes 'open')
+ *    AND it has never been announced before (first publish only; reopen and
+ *    renewal never re-send — see claimFirstAnnouncement)
  * 4. Recipients are queried from database based on role matching
  * 
  * Webhook configuration:
@@ -95,7 +98,7 @@ async function fetchEligibleRecipients(
   supabase: SupabaseClient<Database>,
   vacancy: VacancyRecord,
   logger: ReturnType<typeof createLogger>
-): Promise<RecipientInfo[]> {
+): Promise<{ recipients: RecipientInfo[]; error: string | null }> {
   const targetRole = vacancy.opportunity_type // 'player' or 'coach'
 
   logger.info('Fetching eligible recipients (paginated)', {
@@ -107,6 +110,9 @@ async function fetchEligibleRecipients(
   const eligible: RecipientInfo[] = []
   let offset = 0
   let hasMore = true
+  // A failed page means the audience is incomplete — surfaced to the caller
+  // so the (already-claimed) announcement is reported, not silently short.
+  let fetchError: string | null = null
 
   while (hasMore) {
     const { data: profiles, error } = await supabase
@@ -127,6 +133,7 @@ async function fetchEligibleRecipients(
 
     if (error) {
       logger.error('Failed to fetch recipient profiles', { error: error.message, offset })
+      fetchError = error.message
       break
     }
 
@@ -164,7 +171,7 @@ async function fetchEligibleRecipients(
     pagesQueried: Math.ceil(offset / RECIPIENT_PAGE_SIZE) || 1,
   })
 
-  return eligible
+  return { recipients: eligible, error: fetchError }
 }
 
 Deno.serve(async (req: Request) => {
@@ -181,6 +188,11 @@ Deno.serve(async (req: Request) => {
   // service_role token, which an attacker cannot mint. See _shared/webhook-auth.ts.
   const unauthorized = assertServiceRole(req)
   if (unauthorized) return unauthorized
+
+  // Set once the first-announcement claim is won. From then on there is NO
+  // automatic retry (a re-delivery sees 'already_announced'), so any failure
+  // must be alerted as "resend manually" — see reportAnnouncementFailure.
+  let claimedVacancy: VacancyRecord | null = null
 
   try {
     logger.info('=== REAL MODE: Received webhook request ===')
@@ -290,40 +302,65 @@ Deno.serve(async (req: Request) => {
     })
 
     // ==========================================================================
-    // IDEMPOTENCY CHECK: Prevent duplicate sends from webhook double-delivery.
-    // Match on the stamped vacancy_id in metadata (see sendTrackedBatch call
-    // below), NOT an ilike on the subject — a `%title%` substring match
-    // over-suppressed a legitimate send whenever an UNRELATED recent vacancy's
-    // subject merely contained this title (e.g. two clubs both posting a
-    // generic "Goalkeeper", or "Coach" inside "Assistant Coach").
+    // FIRST-PUBLISH-ONLY GUARD (founder ruling E, 2026-09-26)
+    // A role is announced by email ONCE — the first time it is published.
+    // Closing and reopening, renewing, or a webhook re-delivery never re-sends.
+    // The old guard only looked back 10 minutes in email_sends, so a club
+    // toggling closed->open every ~11 minutes re-mailed every opted-in player.
+    // The claim is atomic in the DB (opportunity_first_publications), so only
+    // one delivery can ever win it. Fails closed: on error, do not send.
     // ==========================================================================
-    const { count: alreadySentCount } = await supabase
-      .from('email_sends')
-      .select('id', { count: 'exact', head: true })
-      .eq('template_key', 'vacancy_notification')
-      .eq('status', 'sent')
-      .gte('sent_at', new Date(Date.now() - 10 * 60 * 1000).toISOString())
-      .eq('metadata->>vacancy_id', vacancy.id)
+    const claim = await claimFirstAnnouncement(supabase, vacancy.id)
 
-    if (alreadySentCount && alreadySentCount > 0) {
-      logger.info('Idempotency guard: vacancy notification already sent recently', {
+    if (claim.outcome === 'error') {
+      logger.error('Announcement claim failed - not sending', {
         vacancyId: vacancy.id,
-        vacancyTitle: vacancy.title,
-        existingSendCount: alreadySentCount,
+        error: claim.message,
+      })
+      captureException(new Error(`notify-vacancy claim failed: ${claim.message}`), {
+        functionName: 'notify-vacancy',
+        correlationId,
+      })
+      return new Response(
+        JSON.stringify({ error: 'Announcement claim failed', vacancyId: vacancy.id }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    if (claim.outcome === 'already_announced') {
+      logger.info('Role already announced once - not re-sending (reopen/renewal/duplicate)', {
+        vacancyId: vacancy.id,
+        previousStatus: payload.old_record?.status,
       })
       return new Response(
         JSON.stringify({
           success: true,
           mode: 'REAL',
-          message: 'Duplicate webhook — notification already sent',
+          message: 'Ignored - role was already announced',
           vacancyId: vacancy.id,
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
+    claimedVacancy = vacancy
+
     // Fetch eligible recipients based on vacancy type
-    const recipients = await fetchEligibleRecipients(supabase, vacancy, logger)
+    const { recipients, error: recipientsError } = await fetchEligibleRecipients(supabase, vacancy, logger)
+
+    if (recipients.length === 0 && recipientsError) {
+      reportAnnouncementFailure(captureException, {
+        opportunityId: vacancy.id,
+        clubId: vacancy.club_id,
+        correlationId,
+        stage: 'recipients',
+        cause: recipientsError,
+      })
+      return new Response(
+        JSON.stringify({ error: 'Failed to fetch recipients', vacancyId: vacancy.id }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
 
     if (recipients.length === 0) {
       logger.info('No eligible recipients found - skipping email send')
@@ -403,8 +440,7 @@ Deno.serve(async (req: Request) => {
       text: baseText,
       templateKey: 'vacancy_notification',
       logger,
-      // Stamp the vacancy id on every success row so the idempotency check
-      // above can match precisely on a re-delivery (no fuzzy subject match).
+      // Stamp the vacancy id on every success row (audit / analytics).
       metadata: { vacancy_id: vacancy.id },
       renderForRecipient: (r: RecipientInfo) => {
         const firstName = r.recipientName
@@ -428,6 +464,20 @@ Deno.serve(async (req: Request) => {
       })
     }
 
+    const outcome = announcementSendOutcome(emailResult.stats, recipientsError)
+    if (outcome !== 'ok') {
+      reportAnnouncementFailure(captureException, {
+        opportunityId: vacancy.id,
+        clubId: vacancy.club_id,
+        correlationId,
+        stage: emailResult.stats.failed > 0 ? 'send' : 'recipients',
+        sent: emailResult.stats.sent,
+        failed: emailResult.stats.failed,
+        totalRecipients: emailResult.stats.totalRecipients,
+        cause: recipientsError ?? `${emailResult.stats.failed} Resend send(s) failed`,
+      })
+    }
+
     logger.info('=== REAL MODE: Notification completed ===', {
       vacancyId: vacancy.id,
       sentCount: emailResult.stats.sent,
@@ -438,9 +488,10 @@ Deno.serve(async (req: Request) => {
 
     return new Response(
       JSON.stringify({
-        success: true,
+        success: outcome === 'ok',
         mode: 'REAL',
         message: 'Production notifications sent via Batch API',
+        announcementOutcome: outcome,
         sentCount: emailResult.stats.sent,
         failedCount: emailResult.stats.failed,
         stats: emailResult.stats,
@@ -452,7 +503,18 @@ Deno.serve(async (req: Request) => {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     logger.error('Unexpected error', { error: errorMessage })
-    captureException(error, { functionName: 'notify-vacancy', correlationId })
+    if (claimedVacancy) {
+      // Claimed but not (fully) sent, and nothing will retry it.
+      reportAnnouncementFailure(captureException, {
+        opportunityId: claimedVacancy.id,
+        clubId: claimedVacancy.club_id,
+        correlationId,
+        stage: 'exception',
+        cause: errorMessage,
+      })
+    } else {
+      captureException(error, { functionName: 'notify-vacancy', correlationId })
+    }
     return new Response(
       JSON.stringify({ error: errorMessage }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

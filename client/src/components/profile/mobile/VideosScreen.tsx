@@ -5,21 +5,24 @@ import { MediaLightbox } from '@/components/home/MediaLightbox'
 import { useAuthStore } from '@/lib/auth'
 import { useProfileVideos, type ProfileFullGameLink, type ProfileVideo } from '@/hooks/useProfileVideos'
 import { VideoAccessSheets, type VideoBlock } from './VideoAccessSheets'
-import { ProfileVideoTile } from './ProfileVideoTile'
+import { LockedVideoTile, ProfileVideoTile } from './ProfileVideoTile'
+import { isRecruiterProfile, fullMatchVisibilityOf } from '@/lib/recruiter'
+import { useVideoAccessSummary } from '@/hooks/useVideoAccessSummary'
 import { formatVideoDuration } from '@/lib/videoCopy'
 import { getImageUrl } from '@/lib/imageUrl'
 import { profilePath } from '@/lib/profileNavigation'
 
 /**
  * Videos — all (Figma 153:581): where "N Videos" and "See all N" land — the
- * same three groups as the profile, as a grid. Full matches keep the lock so
- * a player understands why they cannot press play; a club, a coach or the
- * owner sees the same screen unlocked. A tile opens the Video player
+ * same three groups as the profile, as a grid. Videos a viewer cannot watch
+ * show as locked tiles ("Clubs and coaches only") so a player understands why
+ * they cannot press play; a club, a recruiting coach or the owner sees the
+ * same screen unlocked. A tile opens the Video player
  * (Figma 188:582 — the app's one media viewer): full-screen, author and
  * View profile over the video, X to go back.
  */
 interface VideosScreenProps {
-  profile: { id: string; full_name?: string | null; username?: string | null; avatar_url?: string | null; role?: string | null; highlight_video_url?: string | null; highlight_visibility?: string | null }
+  profile: { id: string; full_name?: string | null; username?: string | null; avatar_url?: string | null; role?: string | null; highlight_video_url?: string | null; highlight_visibility?: string | null; full_match_visibility?: string | null }
   mode: 'own' | 'public'
   onBack: () => void
   /** Owner only — Manage media. */
@@ -56,17 +59,20 @@ const linkTitle = (l: ProfileFullGameLink) => l.match_title?.trim() || (l.oppone
 
 export default function VideosScreen({ profile, mode, onBack, onManage }: VideosScreenProps) {
   const own = mode === 'own'
-  const viewerRole = useAuthStore((s) => s.profile?.role ?? null)
+  const viewer = useAuthStore((s) => s.profile)
   const signedIn = useAuthStore((s) => Boolean(s.user))
   const { videos, links, loading } = useProfileVideos(profile.id)
   const [playing, setPlaying] = useState<ProfileVideo | null>(null)
   const [block, setBlock] = useState<VideoBlock>(null)
 
-  // Recruiters-only videos play for the owner, clubs and coaches — the token
-  // function enforces the same rule server-side.
-  const canWatchLocked = own || viewerRole === 'club' || viewerRole === 'coach'
-  const lockFullMatches = profile.highlight_visibility === 'recruiters'
-  const isLocked = (v: ProfileVideo) => v.visibility === 'recruiters' || (v.kind === 'full_match' && lockFullMatches)
+  // Recruiters-only videos play for the owner, clubs and coaches who recruit
+  // — RLS and the token function enforce the same rule (SQL is_recruiter).
+  const canWatchLocked = own || isRecruiterProfile(viewer)
+  const access = useVideoAccessSummary(profile.id, { enabled: !own })
+  const lockedFull = own ? 0 : access.lockedFullMatches
+  const lockedHighlights = own ? 0 : access.lockedHighlights
+  const isLocked = (v: ProfileVideo) => v.visibility === 'recruiters'
+  const showLocked = () => setBlock(signedIn ? 'locked' : 'join')
   // Guests get the one Join sheet; members who can't watch get the reason.
   const open = (v: ProfileVideo) => {
     if (!signedIn && !own) setBlock('join')
@@ -77,8 +83,11 @@ export default function VideosScreen({ profile, mode, onBack, onManage }: Videos
   const highlights = videos.filter((v) => v.kind === 'highlight')
   const fullMatches = videos.filter((v) => v.kind === 'full_match')
   const reels = videos.filter((v) => v.kind === 'reel')
-  const highlightCount = highlights.length + (profile.highlight_video_url ? 1 : 0)
-  const fullCount = fullMatches.length + links.length
+  const highlightCount = highlights.length + (profile.highlight_video_url ? 1 : 0) + lockedHighlights
+  const fullCount = fullMatches.length + links.length + lockedFull
+  const lockFullMatches = own
+    ? fullMatchVisibilityOf(profile) === 'recruiters'
+    : lockedFull > 0 || fullMatches.some(isLocked) || links.some((l) => l.visibility === 'recruiters')
   const total = highlightCount + fullCount + reels.length
   const firstName = profile.full_name?.trim().split(/\s+/)[0] || null
   const avatar = profile.avatar_url ? getImageUrl(profile.avatar_url, 'avatar-md') ?? profile.avatar_url : null
@@ -110,14 +119,16 @@ export default function VideosScreen({ profile, mode, onBack, onManage }: Videos
                 <div className="grid grid-cols-2 gap-2.5">
                   {highlights.map((v, i) => <ProfileVideoTile key={v.id} video={v} locked={isLocked(v)} canWatch={canWatchLocked} eager={i < 4} priority={i === 0} size={{ width: 180, height: 101 }} onOpen={() => open(v)} className="aspect-[16/9] w-full" />)}
                   {profile.highlight_video_url && <LinkTile title="Linked highlight" href={profile.highlight_video_url} />}
+                  {Array.from({ length: lockedHighlights }, (_, i) => <LockedVideoTile key={`locked-h-${i}`} label="Highlight" onOpen={showLocked} className="aspect-[16/9] w-full" />)}
                 </div>
               </Group>
             )}
             {fullCount > 0 && (
-              <Group title="Full matches" count={fullCount} lockLabel={lockFullMatches || fullMatches.some(isLocked) || links.some((l) => l.visibility === 'recruiters') ? 'Clubs & coaches' : null}>
+              <Group title="Full matches" count={fullCount} lockLabel={lockFullMatches ? 'Clubs & coaches' : null}>
                 <div className="grid grid-cols-2 gap-2.5">
                   {fullMatches.map((v, i) => <ProfileVideoTile key={v.id} video={v} locked={isLocked(v)} canWatch={canWatchLocked} eager={i < 4} size={{ width: 180, height: 101 }} onOpen={() => open(v)} className="aspect-[16/9] w-full" />)}
                   {links.map((l) => <LinkTile key={l.id} title={linkTitle(l)} href={l.video_url} date={l.match_date} locked={l.visibility === 'recruiters'} />)}
+                  {Array.from({ length: lockedFull }, (_, i) => <LockedVideoTile key={`locked-f-${i}`} onOpen={showLocked} className="aspect-[16/9] w-full" />)}
                 </div>
               </Group>
             )}

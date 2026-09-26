@@ -13,6 +13,7 @@
  */
 
 import { useNavigate, Link } from 'react-router-dom'
+import { isRecruitingViewer } from '@/lib/recruiterAccess'
 import { ArrowLeft, BookmarkCheck, Trash2, ExternalLink } from 'lucide-react'
 import HockeyContextLine from '@/components/recruiting/HockeyContextLine'
 import Header from '@/components/Header'
@@ -29,7 +30,7 @@ export default function SavedCandidatesPage() {
   // umpires) saves mixed "profiles" — clubs, coaches, players they want
   // to revisit. Same list + data; only the framing changes. Mirrors the
   // SavedCandidatesCard variant copy.
-  const isRecruiter = profile?.role === 'club' || profile?.role === 'coach'
+  const isRecruiter = isRecruitingViewer(profile)
   const noun = isRecruiter ? 'Saved Candidates' : 'Saved Profiles'
   useDocumentTitle(noun)
   const navigate = useNavigate()

@@ -2,16 +2,16 @@ import { useCallback } from 'react'
 import * as Sentry from '@sentry/react'
 
 const SentryTestButton = () => {
-  const isProduction =
-    import.meta.env.MODE === 'production' ||
-    import.meta.env.VITE_ENVIRONMENT === 'production'
+  // Local dev server only. Every built bundle — staging and production —
+  // has DEV false, so the button can never overlap a real screen there.
+  const isDevServer = import.meta.env.DEV
 
   const triggerTestError = useCallback(() => {
     Sentry.captureMessage('Developer-triggered Sentry test event')
     throw new Error('Sentry test button error')
   }, [])
 
-  if (isProduction) {
+  if (!isDevServer) {
     return null
   }
 

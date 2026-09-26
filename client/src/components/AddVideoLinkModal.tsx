@@ -6,7 +6,7 @@ import { useAuthStore } from '@/lib/auth'
 import Button from './Button'
 import Input from './Input'
 import type { Profile } from '@/lib/supabase'
-import { useFocusTrap } from '@/hooks/useFocusTrap'
+import { isTopFocusTrap, useFocusTrap } from '@/hooks/useFocusTrap'
 import { invalidateProfile } from '@/lib/profile'
 
 interface AddVideoLinkModalProps {
@@ -31,6 +31,8 @@ export default function AddVideoLinkModal({ isOpen, onClose, currentVideoUrl }: 
     if (!isOpen) return
 
     const handleKeyDown = (event: KeyboardEvent) => {
+      // Another trapped overlay is on top: its Escape closes it, not this one.
+      if (event.key === 'Escape' && !isTopFocusTrap(dialogRef.current)) return
       if (event.key === 'Escape' && !isLoading) {
         event.preventDefault()
         onClose()

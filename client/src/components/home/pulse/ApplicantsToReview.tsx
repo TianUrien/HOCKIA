@@ -1,24 +1,20 @@
 import { useNavigate } from 'react-router-dom'
-import { Users, Zap, ChevronRight } from 'lucide-react'
-import { useAuthStore } from '@/lib/auth'
-import { usePublisherResponsiveness } from '@/hooks/usePublisherResponsiveness'
+import { Users, MessageCircle, ChevronRight } from 'lucide-react'
 import type { RolesHealthTotals } from '@/hooks/useRolesHealth'
 import { recordModuleImpression, trackModuleClick, useImpressionOnce } from '@/lib/homeInstrumentation'
 
 /**
  * "Applicants to review" (club Pulse, Home V2 Phase 2): the triage card that
  * attacks the pending-application pile — pending total, "N new" badge (never
- * opened), and the response nudge. The nudge uses the club's REAL
- * responsiveness tier (publisher_responsiveness, 72h = fast) — no invented
- * statistics. Collapses at 0 pending (§C).
+ * opened), and the response nudge. The nudge is ONE generic line (founder
+ * 2026-09-26) — no responsiveness read, no speed claims about the club.
+ * Collapses at 0 pending (§C).
  */
 const MODULE_ID = 'applicants_review'
 const POSITION = 2
 
 export function ApplicantsToReview({ totals, loading }: { totals: RolesHealthTotals; loading: boolean }) {
   const navigate = useNavigate()
-  const profileId = useAuthStore((s) => s.profile?.id)
-  const tier = usePublisherResponsiveness(profileId ?? null)
   const ref = useImpressionOnce(() => recordModuleImpression(MODULE_ID, POSITION))
 
   if (loading || totals.pending === 0) return null
@@ -46,10 +42,8 @@ export function ApplicantsToReview({ totals, loading }: { totals: RolesHealthTot
             )}
           </p>
           <p className="mt-0.5 flex items-center gap-1 text-xs text-gray-500">
-            <Zap className="h-3 w-3 text-emerald-500" />
-            {tier === 'fast'
-              ? 'You respond fast — players notice. Keep it up.'
-              : 'Quick replies win players — respond within 3 days to stay ahead.'}
+            <MessageCircle className="h-3 w-3 text-hockia-primary" />
+            Answer every applicant. Players remember the clubs that reply.
           </p>
         </div>
         <ChevronRight className="h-4 w-4 flex-shrink-0 text-gray-500" />

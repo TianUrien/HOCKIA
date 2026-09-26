@@ -3145,6 +3145,39 @@ export type Database = {
           },
         ]
       }
+      opportunity_first_publications: {
+        Row: {
+          email_claimed_at: string | null
+          first_published_at: string
+          opportunity_id: string
+        }
+        Insert: {
+          email_claimed_at?: string | null
+          first_published_at?: string
+          opportunity_id: string
+        }
+        Update: {
+          email_claimed_at?: string | null
+          first_published_at?: string
+          opportunity_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opportunity_first_publications_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: true
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunity_first_publications_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: true
+            referencedRelation: "public_opportunities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       opportunity_inbox_state: {
         Row: {
           last_seen_at: string
@@ -4237,6 +4270,7 @@ export type Database = {
           federation: string | null
           frozen_minor_at: string | null
           full_game_video_count: number
+          full_match_visibility: string
           full_name: string | null
           gallery_photo_count: number
           gender: string | null
@@ -4346,6 +4380,7 @@ export type Database = {
           federation?: string | null
           frozen_minor_at?: string | null
           full_game_video_count?: number
+          full_match_visibility?: string
           full_name?: string | null
           gallery_photo_count?: number
           gender?: string | null
@@ -4455,6 +4490,7 @@ export type Database = {
           federation?: string | null
           frozen_minor_at?: string | null
           full_game_video_count?: number
+          full_match_visibility?: string
           full_name?: string | null
           gallery_photo_count?: number
           gender?: string | null
@@ -6450,6 +6486,7 @@ export type Database = {
           federation: string | null
           frozen_minor_at: string | null
           full_game_video_count: number | null
+          full_match_visibility: string | null
           full_name: string | null
           gallery_photo_count: number | null
           gender: string | null
@@ -6557,6 +6594,7 @@ export type Database = {
           federation?: string | null
           frozen_minor_at?: string | null
           full_game_video_count?: number | null
+          full_match_visibility?: string | null
           full_name?: string | null
           gallery_photo_count?: number | null
           gender?: string | null
@@ -6664,6 +6702,7 @@ export type Database = {
           federation?: string | null
           frozen_minor_at?: string | null
           full_game_video_count?: number | null
+          full_match_visibility?: string | null
           full_name?: string | null
           gallery_photo_count?: number | null
           gender?: string | null
@@ -8012,6 +8051,10 @@ export type Database = {
       }
       check_signup_rate_limit: { Args: { p_email: string }; Returns: Json }
       check_user_post_rate_limit: { Args: { p_user_id: string }; Returns: Json }
+      claim_opportunity_announcement_email: {
+        Args: { p_opportunity_id: string }
+        Returns: boolean
+      }
       claim_world_club: {
         Args: {
           p_men_league_id?: number
@@ -8119,6 +8162,7 @@ export type Database = {
           federation: string | null
           frozen_minor_at: string | null
           full_game_video_count: number
+          full_match_visibility: string
           full_name: string | null
           gallery_photo_count: number
           gender: string | null
@@ -8347,6 +8391,7 @@ export type Database = {
           federation: string | null
           frozen_minor_at: string | null
           full_game_video_count: number
+          full_match_visibility: string
           full_name: string | null
           gallery_photo_count: number
           gender: string | null
@@ -9087,6 +9132,10 @@ export type Database = {
           unread_count: number
         }[]
       }
+      get_video_access_summary: {
+        Args: { p_profile_id: string }
+        Returns: Json
+      }
       hard_delete_profile_relations: {
         Args: { p_batch?: number; p_user_id: string }
         Returns: Json
@@ -9103,6 +9152,7 @@ export type Database = {
       }
       is_current_user_test_account: { Args: never; Returns: boolean }
       is_platform_admin: { Args: never; Returns: boolean }
+      is_recruiter: { Args: { p_uid: string }; Returns: boolean }
       is_staging_env: { Args: never; Returns: boolean }
       is_test_opportunity: {
         Args: { opportunity_club_id: string }
@@ -9442,7 +9492,7 @@ export type Database = {
         }[]
       }
       search_world_clubs: {
-        Args: { p_limit?: number; p_query: string }
+        Args: { p_country_id?: number; p_limit?: number; p_query: string }
         Returns: {
           avatar_url: string
           club_name: string

@@ -36,6 +36,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { useAuthStore } from '@/lib/auth'
 import { useCountries } from '@/hooks/useCountries'
 import { getActiveFilterChips } from '@/lib/communityActiveFilters'
+import { isRecruitingViewer, recruitingScopedRole } from '@/lib/recruiterAccess'
 import { useActiveRecruitingTargetRole } from '@/hooks/useRecruitingContext'
 import ContextSwitcher from '@/components/recruiting/ContextSwitcher'
 import CoachContextNudge from '@/components/recruiting/CoachContextNudge'
@@ -71,21 +72,25 @@ export default function CommunityPage() {
   // actionable for them; a club wants "Featured players" first
   // because that's their recruitment surface. The viewer's own role
   // goes LAST in their stack — they've already seen themselves.
-  const { profile: viewerProfile } = useAuthStore()
+  const { profile: viewerProfile, loading: authLoading } = useAuthStore()
+  // Evidence sort + "Enough evidence+" are recruiter tools: clubs and coaches
+  // who recruit for a team only (founder 2026-09-26).
+  const canUseEvidence = isRecruitingViewer(viewerProfile)
   // The sought ROLE of the active scope ('player' | 'coach' | null),
   // server-derived from the linked opportunity's opportunity_type. This is
   // the primary axis for reshaping Community: a coach-scope should surface
   // COACHES, a player-scope should surface PLAYERS.
   const activeRecruitingRole = useActiveRecruitingTargetRole()
-  const isRecruiterViewer = viewerProfile?.role === 'club' || viewerProfile?.role === 'coach'
+  // Recruiter = club, or coach who recruits for a team (founder ruling
+  // 2026-09-25). A coach looking for a role is a candidate: no scope
+  // reshaping, no context-fit ranking, no Recruiter Match hint — the page
+  // behaves exactly as it does for a player.
+  const isRecruiterViewer = isRecruitingViewer(viewerProfile)
   // A scope "reshapes" Community only when: viewer is a recruiter, a scope
   // is active, AND it carries a role we can filter on. (target_role is only
   // 'player' or 'coach' today; category-only/custom scopes don't hard-filter
   // by role.)
-  const scopedRole: 'player' | 'coach' | null =
-    isRecruiterViewer && (activeRecruitingRole === 'player' || activeRecruitingRole === 'coach')
-      ? activeRecruitingRole
-      : null
+  const scopedRole = recruitingScopedRole(viewerProfile, activeRecruitingRole)
   // "Show everyone" escape — the recruiter can widen past the auto role
   // filter without clearing the scope (Fit ranking + category still apply).
   // Reset whenever the scoped role changes so a new scope re-focuses.
@@ -168,7 +173,7 @@ export default function CommunityPage() {
   // Removable active-filter chips shown below the search bar; its length is also
   // the "Filters · N" badge count. Role is intentionally excluded (the chip row
   // already shows it). Rebuilt each render so onRemove closes over current state.
-  const activeFilterChips = getActiveFilterChips(filters, countries, updateFilter)
+  const activeFilterChips = getActiveFilterChips(filters, countries, updateFilter, { canUseEvidence })
 
   // Auto-apply context-fit ranking whenever a scope is active (the opt-in
   // "Best matches first" toggle is gone — a scope now reshapes by default).
@@ -256,11 +261,21 @@ export default function CommunityPage() {
   // Evidence sort only applies to player/coach (orgs have no evidence model).
   // Snap back to "newest" when the role changes to one that can't support it,
   // so the sort <select> value always matches a rendered option.
+  // Non-recruiters never get it either: a sort/filter carried in session
+  // state falls back to the default (waits for auth so a recruiter's state
+  // isn't wiped before their profile loads).
   useEffect(() => {
     if (sort === 'evidence' && filters.role !== 'player' && filters.role !== 'coach') {
       setSort('newest')
+    } else if (sort === 'evidence' && !authLoading && !canUseEvidence) {
+      setSort('newest')
     }
-  }, [sort, filters.role, setSort])
+  }, [sort, filters.role, setSort, authLoading, canUseEvidence])
+  useEffect(() => {
+    if (filters.evidenceEnoughOnly && !authLoading && !canUseEvidence) {
+      updateFilter('evidenceEnoughOnly', false)
+    }
+  }, [filters.evidenceEnoughOnly, authLoading, canUseEvidence, updateFilter])
 
   // Escape the scope's hard role filter when the user explicitly taps a role
   // tab that differs from the sought role — and RE-focus when they tap back to
@@ -434,7 +449,7 @@ export default function CommunityPage() {
                   >
                     <option value="newest">Newest</option>
                     <option value="completeness">Most complete</option>
-                    {(filters.role === 'player' || filters.role === 'coach') && (
+                    {canUseEvidence && (filters.role === 'player' || filters.role === 'coach') && (
                       <option value="evidence">Strongest evidence</option>
                     )}
                   </select>

@@ -20,6 +20,8 @@ export interface MyApplicationRow {
   club: { id: string; name: string; avatarUrl: string | null; role: string | null } | null
   /** Active = the club can still answer; closed = an outcome or a closed role. */
   active: boolean
+  /** Declined with a note from the club (Figma 04 Club · Decline): shown as "Read the club's note". */
+  hasClubNote: boolean
 }
 
 /**
@@ -36,7 +38,7 @@ export function useMyApplicationsAll() {
     if (!userId) { setRows([]); setLoading(false); return }
     const { data, error } = await supabase
       .from('opportunity_applications')
-      .select('id, opportunity_id, status, applied_at, opportunities(id, title, position, gender, opportunity_type, status, location_country, club_id, profiles!opportunities_club_id_fkey(id, full_name, avatar_url, role))')
+      .select('id, opportunity_id, status, applied_at, ai_feedback, opportunities(id, title, position, gender, opportunity_type, status, location_country, club_id, profiles!opportunities_club_id_fkey(id, full_name, avatar_url, role))')
       .eq('applicant_id', userId)
       .order('applied_at', { ascending: false })
     if (error) {
@@ -67,6 +69,12 @@ export function useMyApplicationsAll() {
         country: opp?.location_country ?? null,
         club: opp?.profiles ? { id: opp.profiles.id, name: opp.profiles.full_name ?? 'Club', avatarUrl: opp.profiles.avatar_url, role: opp.profiles.role } : null,
         active: roleOpen && ACTIVE_STATUSES.has(status),
+        hasClubNote: (() => {
+          const fb = (r as { ai_feedback?: unknown }).ai_feedback
+          if (!fb || typeof fb !== 'object' || Array.isArray(fb)) return false
+          const f = fb as Record<string, unknown>
+          return status === 'rejected' && f.status === 'rejected' && f.source === 'club' && typeof f.message === 'string' && f.message.trim().length > 0
+        })(),
       }
     })
     setRows(mapped)

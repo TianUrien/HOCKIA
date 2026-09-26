@@ -1,7 +1,7 @@
 import { useEffect, useRef, type ReactNode } from 'react'
 import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { useFocusTrap } from '@/hooks/useFocusTrap'
+import { isTopFocusTrap, useFocusTrap } from '@/hooks/useFocusTrap'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import { useAnimatedPresence } from '@/hooks/useAnimatedPresence'
 
@@ -29,7 +29,10 @@ export default function Modal({ isOpen, onClose, children, className, showClose 
   useEffect(() => {
     if (!isOpen) return
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+      if (e.key !== 'Escape') return
+      // Another trapped overlay is open on top of this modal: leave it be.
+      if (!isTopFocusTrap(dialogRef.current)) return
+      onClose()
     }
     document.addEventListener('keydown', handleEscape)
     return () => {

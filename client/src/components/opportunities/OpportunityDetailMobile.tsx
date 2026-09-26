@@ -1,7 +1,10 @@
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { supabase } from '@/lib/supabase'
 import { Calendar, Check, ChevronRight, Clock, MessageCircle, Share } from 'lucide-react'
 import type { Vacancy } from '@/lib/supabase'
 import { DetailNavBar } from '@/components/ui/DetailNavBar'
+import { backLabelFrom } from '@/lib/backLabel'
 import { IconButton } from '@/components/ui/IconButton'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
 import { useToastStore } from '@/lib/toast'
@@ -43,6 +46,7 @@ export function OpportunityDetailMobile({
   vacancy, clubName, clubLogo, clubId, publisherRole, countryFlag, league, hasApplied, applicationStatus, canApply, isPublisher, onApply, onMessage,
 }: OpportunityDetailMobileProps) {
   const navigate = useNavigate()
+  const location = useLocation()
   const addToast = useToastStore((s) => s.addToast)
   const profile = useAuthStore((s) => s.profile)
   const { countries } = useCountries()
@@ -57,6 +61,29 @@ export function OpportunityDetailMobile({
   const customBenefits = vacancy.custom_benefits ?? []
   const specialists = vacancy.specialist_skills_wanted ?? []
   const status = hasApplied ? applicationStatusPill(applicationStatus ?? 'pending', null, vacancy.status === 'open') : null
+  // Players only ever see "Not selected": one grey state in the footer, no chip.
+  const notSelected = hasApplied && applicationStatus === 'rejected'
+
+  // A decline can carry the club's own note (Figma 04 Club · Decline). The
+  // player reads it here, where My applications' "Read the club's note" lands.
+  const [clubNote, setClubNote] = useState<string | null>(null)
+  const userId = profile?.id ?? null
+  useEffect(() => {
+    if (!hasApplied || applicationStatus !== 'rejected' || !userId) { setClubNote(null); return }
+    let cancelled = false
+    void supabase
+      .from('opportunity_applications')
+      .select('ai_feedback')
+      .eq('opportunity_id', vacancy.id)
+      .eq('applicant_id', userId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (cancelled) return
+        const fb = (data as { ai_feedback?: Record<string, unknown> | null } | null)?.ai_feedback
+        setClubNote(fb && fb.source === 'club' && fb.status === 'rejected' && typeof fb.message === 'string' ? fb.message : null)
+      })
+    return () => { cancelled = true }
+  }, [hasApplied, applicationStatus, userId, vacancy.id])
 
   const share = async () => {
     const url = `${getShareOrigin()}/opportunities/${vacancy.id}`
@@ -84,7 +111,7 @@ export function OpportunityDetailMobile({
   return (
     <div className="bg-white pb-[calc(72px+env(safe-area-inset-bottom))]">
       <DetailNavBar
-        parent="Opportunities"
+        parent={backLabelFrom(location.state, 'Opportunities')}
         fallbackPath="/opportunities"
         trailing={<IconButton label="Share" onClick={() => void share()}><Share className="h-6 w-6" strokeWidth={1.8} /></IconButton>}
       />
@@ -110,6 +137,16 @@ export function OpportunityDetailMobile({
           <Clock className="mt-0.5 h-[13px] w-[13px] shrink-0" strokeWidth={1.6} /> {postedLine(vacancy)}
         </p>
       </div>
+
+      {clubNote && (
+        <section className="px-5 pt-3.5" data-testid="club-note">
+          <div className="rounded-card bg-surface-grouped p-3.5">
+            <p className="text-secondary font-semibold text-ink-2">Not selected · The club’s note</p>
+            <p className="mt-1.5 whitespace-pre-wrap text-row leading-[21px] text-ink-1">{clubNote}</p>
+            <p className="mt-1.5 text-caption text-ink-3">From {clubName}</p>
+          </div>
+        </section>
+      )}
 
       <section className="px-5 pt-3.5">
         <h2 className="text-body font-semibold text-ink-1">What the club offers</h2>
@@ -172,10 +209,10 @@ export function OpportunityDetailMobile({
 
       {!isPublisher && (canApply || hasApplied) && (
         <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-white px-5 pb-[max(env(safe-area-inset-bottom),0.625rem)] pt-2.5 lg:hidden">
-          {hasApplied && status && (
+          {hasApplied && status && !notSelected && (
             <div className="mb-2 flex items-center justify-between">
               <span className={`rounded-full px-2 py-0.5 text-caption font-semibold ${APPLICATION_TONE_CLASS[status.tone]}`}>{status.label}</span>
-              <button type="button" onClick={() => navigate('/opportunities/applications')} className="text-secondary font-semibold text-hockia-primary">
+              <button type="button" onClick={() => navigate('/opportunities/applications', { state: { from: location.pathname } })} className="text-secondary font-semibold text-hockia-primary">
                 View my applications
               </button>
             </div>
@@ -184,7 +221,11 @@ export function OpportunityDetailMobile({
             <button type="button" onClick={onMessage} aria-label="Message club" className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full bg-surface-grouped text-ink-1">
               <MessageCircle className="h-5 w-5" strokeWidth={1.6} />
             </button>
-            {hasApplied ? (
+            {notSelected ? (
+              <span className="flex h-[52px] flex-1 items-center justify-center rounded-full bg-surface-grouped text-body font-semibold text-ink-2" data-testid="not-selected-state">
+                Not selected
+              </span>
+            ) : hasApplied ? (
               <span className="flex h-[52px] flex-1 items-center justify-center gap-2 rounded-full bg-hockia-soft text-body font-semibold text-hockia-primary">
                 <Check className="h-[18px] w-[18px]" strokeWidth={2.5} /> Applied
               </span>

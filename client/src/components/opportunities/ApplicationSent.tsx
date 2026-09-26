@@ -1,5 +1,5 @@
 import { createPortal } from 'react-dom'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { Check, Sparkles, X } from 'lucide-react'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
@@ -19,6 +19,7 @@ interface ApplicationSentProps {
  */
 export function ApplicationSent({ clubName, clubLogo, publisherRole, onClose }: ApplicationSentProps) {
   const navigate = useNavigate()
+  const location = useLocation()
   useBodyScrollLock(true)
   if (typeof document === 'undefined') return null
 
@@ -50,7 +51,7 @@ export function ApplicationSent({ clubName, clubLogo, publisherRole, onClose }: 
       <div className="flex flex-col gap-2.5 px-5 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-2">
         <button
           type="button"
-          onClick={() => { onClose(); navigate('/opportunities/applications') }}
+          onClick={() => { onClose(); navigate('/opportunities/applications', { state: { from: location.pathname } }) }}
           className="flex h-[52px] w-full items-center justify-center rounded-full bg-hockia-primary text-body font-semibold text-white"
         >
           View my applications
