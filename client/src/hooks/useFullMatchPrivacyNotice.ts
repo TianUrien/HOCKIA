@@ -8,7 +8,8 @@ import { qk } from '@/lib/queryKeys'
 export const FULL_MATCH_NOTICE_TYPE = 'full_match_privacy_default'
 
 /**
- * The one-time "your full matches are now for clubs and coaches" notice.
+ * The one-time "your full matches are now for clubs and coaches" notice,
+ * shown only to players who already had full matches.
  *
  * Stored server-side as a user_pulse_items row (one per player, inserted by
  * migration 20260926120000) so "seen" carries across phone, desktop and
@@ -29,6 +30,10 @@ export function useFullMatchPrivacyNotice() {
         .from('user_pulse_items')
         .select('id')
         .eq('item_type', FULL_MATCH_NOTICE_TYPE)
+        // Only players who had full matches when the default changed see it
+        // (founder ruling 2026-09-26); the rest start private with nothing to
+        // explain. Their rows stay undismissed and are never shown.
+        .eq('metadata->>had_full_matches', 'true')
         .is('dismissed_at', null)
         .limit(1)
         .maybeSingle()
