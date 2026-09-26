@@ -56,6 +56,11 @@ export function getClubLevelBand(
  * gender-appropriate league based on the player's playing_category.
  * Mirrors the SQL CASE in get_top_community_members so server- and
  * client-rendered cards display the same name.
+ *
+ * Reads the linked WORLD CLUB's league only (the verified one). A league the
+ * player typed themselves (profiles.mens/womens_league_id — D2 "Add league",
+ * self-reported) is deliberately not read here: it is shown with a
+ * "self-reported" label by lib/keyFacts.ts and never feeds level / fit.
  */
 export function getPlayerLeagueName(
   worldClubId: string | null | undefined,

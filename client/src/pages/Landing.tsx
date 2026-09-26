@@ -122,7 +122,7 @@ function LandingNav({ onCta }: { onCta: (cta: 'create_profile', place: string) =
           <Link
             to="/signup"
             onClick={() => onCta('create_profile', 'nav')}
-            className="rounded-xl bg-[#7c3aed] px-5 py-[11px] text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#6d28d9] active:scale-[0.98]"
+            className="rounded-xl bg-[#7c3aed] px-5 py-[11px] text-sm font-semibold text-white shadow-sm transition-all hover:bg-hockia-primary active:scale-[0.98]"
           >
             Create a profile
           </Link>

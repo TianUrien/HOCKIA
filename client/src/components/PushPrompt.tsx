@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Bell, X } from 'lucide-react'
 import { usePushSubscription } from '@/hooks/usePushSubscription'
-import { useBottomPrompt } from '@/lib/bottomPrompt'
+import { INLINE_PUSH_ASK, useBottomPrompt, useBottomPromptActive } from '@/lib/bottomPrompt'
 import {
   trackPushSubscribe,
   trackPushPromptShown,
@@ -15,7 +15,9 @@ export default function PushPrompt() {
   const push = usePushSubscription()
   const [visible, setVisible] = useState(false)
   const hasTrackedShow = useRef(false)
-  useBottomPrompt('push', visible)
+  // A screen asking in place (Role posted) wins; never show the same ask twice.
+  const inlineAsk = useBottomPromptActive(INLINE_PUSH_ASK)
+  useBottomPrompt('push', visible && !inlineAsk)
 
   // Determine visibility
   useEffect(() => {
@@ -59,7 +61,7 @@ export default function PushPrompt() {
     setVisible(false)
   }
 
-  if (!visible) return null
+  if (!visible || inlineAsk) return null
 
   // Prerender snapshot (scripts/prerender-landing.mjs): overlays must
   // never be baked into the static landing HTML. Placed AFTER all hooks

@@ -126,7 +126,7 @@ export default function ApplicantsScreen({ roleId }: { roleId: string }) {
                   ) : null}
                 </span>
                 <span className="flex shrink-0 items-center gap-0.5">
-                  {right && <span className={cn('text-secondary', isDaysLeftUrgent(days) ? 'font-semibold text-[#b45309]' : 'text-ink-4')}>{right}</span>}
+                  {right && <span className={cn('text-secondary', isDaysLeftUrgent(days) ? 'font-semibold text-[#b45309]' : 'text-ink-3')}>{right}</span>}
                   <ChevronRight className="h-[18px] w-[18px] text-ink-4" strokeWidth={2} />
                 </span>
               </button>

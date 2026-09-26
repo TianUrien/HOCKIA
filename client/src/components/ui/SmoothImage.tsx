@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils'
  *   within 1.5 screens of the viewport (an IntersectionObserver, not the
  *   browser's own lazy threshold, which is too short for a fast scroll on a
  *   slow link). Once near, it loads eagerly.
- * - Placeholder: the box keeps its neutral surface (#F2F2F7) until the bitmap
+ * - Placeholder: the box keeps its neutral surface (#F4F4F7) until the bitmap
  *   has decoded, then fades in over 150ms. `decoding="async"` keeps the
  *   decode off the main thread.
  * - `priority` = above the fold: eager + fetchpriority=high.

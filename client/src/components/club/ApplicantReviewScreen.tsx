@@ -239,7 +239,7 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
               <div className="min-w-0 flex-1">
                 <h1 className="text-[24px] font-bold leading-[30px] tracking-[-0.144px] text-ink-1">{p.full_name}</h1>
                 <p className="truncate text-[14px] leading-[19px] text-ink-2">{personRoleLine({ role: p.role, position: p.position, secondaryPosition: p.secondary_position })}</p>
-                <p className={cn('text-caption', isDaysLeftUrgent(days) ? 'font-semibold text-[#b45309]' : 'text-ink-4')}>{appliedLine}</p>
+                <p className={cn('text-caption', isDaysLeftUrgent(days) ? 'font-semibold text-[#b45309]' : 'text-ink-3')}>{appliedLine}</p>
                 <button type="button" onClick={() => navigate(`/players/id/${p.id}`, { state: { from: location.pathname } })} className="text-[14px] font-semibold text-hockia-primary">View full profile</button>
               </div>
             </div>
@@ -264,7 +264,7 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
                     </span>
                   </div>
                 ))}
-                <p className="text-caption text-ink-4">Only clubs see fit. It reads the profile — nothing else.</p>
+                <p className="text-caption text-ink-3">Only clubs see fit. It reads the profile — nothing else.</p>
               </div>
             </div>
 
