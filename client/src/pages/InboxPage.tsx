@@ -12,6 +12,7 @@ import { useFriendRequests } from '@/hooks/useFriendRequests'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { useScrollRestore } from '@/hooks/useScrollRestore'
 import { markInboxSegmentSeen } from '@/lib/inboxSeen'
+import { useInboxSegmentDots } from '@/hooks/useInboxSegmentDots'
 
 const SEGMENTS = ['messages', 'requests', 'activity'] as const
 type Segment = (typeof SEGMENTS)[number]
@@ -33,6 +34,8 @@ export default function InboxPage() {
   const active: Segment = isSegment(segment) ? segment : 'messages'
   const [composeOpen, setComposeOpen] = useState(false)
   const requests = useFriendRequests()
+  // A red dot (never a number) on each segment holding something unread.
+  const dots = useInboxSegmentDots(requests.incoming.length)
 
   // Opening Requests or Activity is what clears the tab dot for that kind —
   // landing on Inbox alone does not.
@@ -66,9 +69,9 @@ export default function InboxPage() {
             value={active}
             onChange={setSegment}
             options={[
-              { value: 'messages', label: 'Messages' },
-              { value: 'requests', label: 'Requests', count: requests.incoming.length },
-              { value: 'activity', label: 'Activity' },
+              { value: 'messages', label: 'Messages', dot: dots.messages },
+              { value: 'requests', label: 'Requests', dot: dots.requests },
+              { value: 'activity', label: 'Activity', dot: dots.activity },
             ]}
           />
         </div>

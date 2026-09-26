@@ -13,7 +13,7 @@ interface NavItem {
   label: string
   path: string
   icon: React.ComponentType<{ className?: string; strokeWidth?: number }>
-  /** Unread indicator (Figma tab bar carries no counts — a quiet dot). */
+  /** Unread indicator (Figma tab bar carries no counts — a red status/danger dot). */
   dot?: boolean
 }
 
@@ -107,7 +107,7 @@ export default function MobileBottomNav() {
       >
         <span className="relative flex h-[26px] w-[26px] items-center justify-center">
           <Icon className="h-[26px] w-[26px]" strokeWidth={active ? 2.2 : 1.85} />
-          {item.dot && <span aria-label="Unread" className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-hockia-primary ring-2 ring-white" />}
+          {item.dot && <span aria-label="Unread" className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-hockia-danger ring-2 ring-white" />}
         </span>
         {/* Labels hide below 360px where five 10px labels no longer share a row. */}
         <span className="hidden text-tab min-[360px]:inline">{item.label}</span>
