@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   defaultTitle, draftFromRow, draftToRow, emptyDraft, hardnessFootnote, locationFromClub, normalizeDuration,
-  playerChecklist, recruitingTarget, replyWindowLine, rolePostedCopy, startLabel, stepProblem, switchRoleType, teamsFor,
+  checkStepCopy, coachChecklist, playerChecklist, recruitingTarget, replyWindowLine, roleChecklist, rolePostedPath, rolePostedCopy, startLabel, stepProblem, switchRoleType, teamsFor,
   COACH_TEAMS, COACH_TEAM_HINT, TEAMS, type PostRoleDraft,
 } from '@/lib/postRole'
 import type { Vacancy } from '@/lib/supabase'
@@ -168,5 +168,27 @@ describe('Role posted (D1.26)', () => {
   it('uses the configured reply window', () => {
     expect(replyWindowLine(14)).toBe('Answer each applicant within 14 days. After that, their application closes on its own.')
     expect(replyWindowLine(21)).toMatch(/within 21 days/)
+  })
+})
+
+// Founder review 2026-09-26: step 3 speaks for coaches on a coach role.
+describe('Post a role · step 3 for coach roles', () => {
+  it('headings name coaches on coach roles, players on player roles', () => {
+    expect(checkStepCopy('coach')).toEqual({ sub: 'Step 3 of 3 · How coaches will see it', checklistTitle: 'What coaches ask first' })
+    expect(checkStepCopy('player')).toEqual({ sub: 'Step 3 of 3 · How players will see it', checklistTitle: 'What players ask first' })
+  })
+
+  it('ticks what coaches ask first from fields the form collects', () => {
+    const d = base({ type: 'coach', position: 'head_coach', gender: 'Girls', startDate: '2026-09-01', duration: 'Full season', pay: 'paid', benefits: ['housing', 'visa'], level: null })
+    const items = coachChecklist(d)
+    expect(items.map((i) => i.label)).toEqual(['Start date and contract length', 'Pay', 'Housing and visa support', 'Team and level', 'A few lines about the role and the squad'])
+    expect(items.map((i) => i.ok)).toEqual([true, true, true, false, false])
+    expect(coachChecklist({ ...d, level: 'elite' })[3].ok).toBe(true)
+    expect(roleChecklist(d)).toEqual(items)
+    expect(roleChecklist(base())).toEqual(playerChecklist(base()))
+  })
+
+  it('Role posted has its own route', () => {
+    expect(rolePostedPath('abc')).toBe('/dashboard/opportunities/abc/posted')
   })
 })

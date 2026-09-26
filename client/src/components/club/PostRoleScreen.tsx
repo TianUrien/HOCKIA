@@ -17,10 +17,9 @@ import { BENEFIT_TILES, genderPill } from '@/lib/opportunityCopy'
 import { clubLeagueLine } from '@/lib/clubProfileCopy'
 import {
   COACH_POSITIONS, COACH_TEAM_HINT, DESCRIPTION_MAX, DURATION_OPTIONS, LEVELS, PACKAGE_KEYS, PAY_OPTIONS, PLAYER_POSITIONS, TITLE_MAX,
-  draftAsVacancy, draftFromRow, draftToRow, emptyDraft, hardnessFootnote, locationFromClub, playerChecklist, recruitingTarget,
+  checkStepCopy, draftAsVacancy, draftFromRow, draftToRow, emptyDraft, hardnessFootnote, locationFromClub, recruitingTarget, roleChecklist, rolePostedPath,
   skillsFor, startLabel, stepProblem, switchRoleType, teamsFor, type PostRoleDraft, type Step,
 } from '@/lib/postRole'
-import RolePostedScreen from '@/components/club/RolePostedScreen'
 import { cn } from '@/lib/utils'
 
 /**
@@ -135,7 +134,6 @@ export default function PostRoleScreen({ draftId }: Props) {
   const [confirmCancel, setConfirmCancel] = useState(false)
   const [whereOpen, setWhereOpen] = useState(false)
   const [whereText, setWhereText] = useState('')
-  const [posted, setPosted] = useState<{ id: string; draft: Pick<PostRoleDraft, 'type' | 'position'> } | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
 
   // A new role: prefill Where from the club profile as it loads (profile,
@@ -228,7 +226,9 @@ export default function PostRoleScreen({ draftId }: Props) {
         })
         if (error) logger.warn('[PostRole] recruiting context not activated', error)
       }
-      setPosted({ id, draft: { type: draft.type, position: draft.position } })
+      // Role posted has its own route, so a refresh re-renders it from the
+      // saved role; replace keeps Back from reopening the form.
+      navigate(rolePostedPath(id), { replace: true, state: { role: { type: draft.type, position: draft.position } } })
     } catch (err) {
       logger.error('[PostRole] post failed', err)
       addToast('Could not post the role. Try again.', 'error')
@@ -286,14 +286,12 @@ export default function PostRoleScreen({ draftId }: Props) {
     }
   }
 
-  const copy = STEP_COPY[step]
+  const copy = step === 3 ? { ...STEP_COPY[3], sub: checkStepCopy(draft.type).sub } : STEP_COPY[step]
   const fromClub = (() => { const c = locationFromClub(defaults); return c.city === draft.city && c.country === draft.country && Boolean(c.city) })()
   const flag = countries.find((c) => c.name === draft.country)?.flag_emoji ?? null
   const league = draft.gender === 'Women' || draft.gender === 'Girls'
     ? clubLeagueLine(null, profile?.womens_league_division)?.replace(/ · women$/, '')
     : clubLeagueLine(profile?.mens_league_division, null)?.replace(/ · men$/, '')
-
-  if (posted) return <RolePostedScreen roleId={posted.id} draft={posted.draft} />
 
   return (
     <div className="flex h-[100dvh] flex-col bg-white pt-[env(safe-area-inset-top)] lg:hidden" data-testid="post-role-screen">
@@ -471,9 +469,9 @@ export default function PostRoleScreen({ draftId }: Props) {
             </Section>
             <section className="px-5 pt-3">
               <div className="rounded-[16px] border border-line p-4" data-testid="post-role-checklist">
-                <h2 className="text-body font-semibold text-ink-1">What players ask first</h2>
+                <h2 className="text-body font-semibold text-ink-1">{checkStepCopy(draft.type).checklistTitle}</h2>
                 <ul className="mt-2 space-y-2">
-                  {playerChecklist(draft).map((c) => (
+                  {roleChecklist(draft).map((c) => (
                     <li key={c.key} className="flex items-center gap-2.5 text-[15px] text-ink-1">
                       <span className={cn('flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full', c.ok ? 'bg-positive-soft text-positive' : 'border-[1.5px] border-line')}>
                         {c.ok && <Check className="h-3.5 w-3.5" strokeWidth={3} />}

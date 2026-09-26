@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { Bell, Check, Clock, X } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
@@ -14,15 +14,19 @@ import { replyWindowLine, rolePostedCopy, type PostRoleDraft } from '@/lib/postR
 
 /**
  * Role posted (Figma 04 Club D1.26 368:780; DEV NOTE 368:1098). Shown after
- * Post role succeeds. Find <players|coaches> for this role → Community with
+ * Post role succeeds, on its own route (/dashboard/opportunities/:id/posted)
+ * so a refresh re-renders it from the saved role. The role must be the
+ * club's own and open; otherwise → Opportunities (highlighting it when it's
+ * the club's). Find <players|coaches> for this role → Community with
  * the role's recruiting context active (player roles); Done and × →
  * Opportunities with the new card on top. The push card shows only while
  * the club has no push subscription, and stops after two dismissals.
  */
 interface Props {
   roleId: string
-  draft: Pick<PostRoleDraft, 'type' | 'position'>
 }
+
+type PostedRole = Pick<PostRoleDraft, 'type' | 'position'>
 
 const PUSH_DISMISS_KEY = 'hockia-role-posted-push-dismissals'
 const PUSH_DISMISS_MAX = 2
@@ -44,14 +48,33 @@ function recordDismissal() {
   }
 }
 
-export default function RolePostedScreen({ roleId, draft }: Props) {
+export default function RolePostedScreen({ roleId }: Props) {
   const navigate = useNavigate()
+  const location = useLocation()
   const profile = useAuthStore((s) => s.profile)
   const push = usePushSubscription()
-  const copy = rolePostedCopy(draft)
+  // Straight after Post role the form hands over what it posted, so the
+  // screen paints at once; the saved row below is what decides.
+  const handed = (location.state as { role?: PostedRole } | null)?.role ?? null
+  const [role, setRole] = useState<PostedRole | null>(handed)
   const [expiryDays, setExpiryDays] = useState<number | null>(null)
   const [dismissals] = useState(readDismissals)
   const [turnedOn, setTurnedOn] = useState(false)
+
+  const clubId = profile?.id ?? null
+  useEffect(() => {
+    if (!clubId) return
+    let cancelled = false
+    void supabase.from('opportunities').select('id, club_id, status, opportunity_type, position').eq('id', roleId).maybeSingle().then(({ data, error }) => {
+      if (cancelled) return
+      if (error) logger.warn('[RolePosted] role not loaded', error)
+      const row = data as { club_id: string; status: string | null; opportunity_type: PostedRole['type'] | null; position: PostedRole['position'] } | null
+      if (!row || row.club_id !== clubId) { navigate('/opportunities', { replace: true }); return }
+      if (row.status !== 'open') { navigate('/opportunities', { replace: true, state: { highlight: roleId } }); return }
+      setRole({ type: row.opportunity_type ?? 'player', position: row.position })
+    })
+    return () => { cancelled = true }
+  }, [clubId, roleId, navigate])
 
   useEffect(() => {
     let cancelled = false
@@ -63,7 +86,7 @@ export default function RolePostedScreen({ roleId, draft }: Props) {
     return () => { cancelled = true }
   }, [])
 
-  const showPush = push.isSupported && !push.isSubscribed && !turnedOn && push.permission !== 'denied' && push.permission !== 'granted' && dismissals < PUSH_DISMISS_MAX
+  const showPush = role !== null && push.isSupported && !push.isSubscribed && !turnedOn && push.permission !== 'denied' && push.permission !== 'granted' && dismissals < PUSH_DISMISS_MAX
   // Holds the push slot so the global PushPrompt doesn't stack on this card.
   useBottomPrompt(INLINE_PUSH_ASK, showPush)
   // Leaving with the card still up counts as one dismissal.
@@ -82,6 +105,9 @@ export default function RolePostedScreen({ roleId, draft }: Props) {
       // Denied or failed: the hook logs it; the card hides once permission is denied.
     }
   }
+
+  if (!role) return <div className="min-h-screen bg-white" />
+  const copy = rolePostedCopy(role)
 
   return (
     <div className="flex h-[100dvh] flex-col bg-white pt-[env(safe-area-inset-top)] lg:hidden" data-testid="role-posted-screen">

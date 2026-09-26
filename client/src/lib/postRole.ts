@@ -287,6 +287,31 @@ export function draftAsVacancy(d: PostRoleDraft, clubId: string): Vacancy {
 
 export interface ChecklistItem { key: string; label: string; ok: boolean }
 
+/**
+ * Step 3's "What players ask first" (DEV NOTE 330:781): client-side, no
+ * score. Coach roles get the coach version, built only from fields the form
+ * collects (founder review 2026-09-26).
+ */
+export function roleChecklist(d: PostRoleDraft): ChecklistItem[] {
+  return d.type === 'player' ? playerChecklist(d) : coachChecklist(d)
+}
+
+/** Step 3 headings: who the preview and checklist speak for. */
+export function checkStepCopy(type: RoleType): { sub: string; checklistTitle: string } {
+  const who = type === 'player' ? 'players' : 'coaches'
+  return { sub: `Step 3 of 3 · How ${who} will see it`, checklistTitle: `What ${who} ask first` }
+}
+
+export function coachChecklist(d: PostRoleDraft): ChecklistItem[] {
+  return [
+    { key: 'when', label: 'Start date and contract length', ok: Boolean(d.startDate && d.duration) },
+    { key: 'pay', label: 'Pay', ok: d.pay !== null },
+    { key: 'relocation', label: 'Housing and visa support', ok: d.benefits.includes('housing') && d.benefits.includes('visa') },
+    { key: 'team', label: 'Team and level', ok: Boolean(d.gender && d.level) },
+    { key: 'about', label: 'A few lines about the role and the squad', ok: d.description.trim().length >= 40 },
+  ]
+}
+
 /** "What players ask first" (DEV NOTE 330:781): client-side, no score. */
 export function playerChecklist(d: PostRoleDraft): ChecklistItem[] {
   return [
@@ -338,6 +363,11 @@ export function startLabel(iso: string | null, now = new Date()): string | null 
   if (Number.isNaN(d.getTime())) return null
   const month = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getMonth()]
   return d.getFullYear() === now.getFullYear() ? `${month} ${d.getDate()}` : `${month} ${d.getDate()}, ${d.getFullYear()}`
+}
+
+/** Role posted's own route, so a refresh re-renders it from the saved role. */
+export function rolePostedPath(roleId: string): string {
+  return `/dashboard/opportunities/${roleId}/posted`
 }
 
 export interface RolePostedCopy {
