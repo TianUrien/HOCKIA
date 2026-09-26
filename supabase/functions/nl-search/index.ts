@@ -17,7 +17,18 @@ import type { Database } from '../_shared/database.types.ts'
 import { getCorsHeaders } from '../_shared/cors.ts'
 import { captureException } from '../_shared/sentry.ts'
 import { parseSearchQuery, synthesizeQualitativeInsights, composeNoResults, answerPlatformHelp, PROMPT_VERSION, type LLMCallMeta, type ParsedFilters, type SearchIntent, type HistoryTurn, type ProfileQualitativeData, type UserContext } from '../_shared/llm-client.ts'
-import { classifyEntityType, entityTypeToRole, hasRecruitingIntent, type RoutedIntent } from '../_shared/intent-router.ts'
+import { classifyEntityType, entityTypeToRole, hasRecruitingIntent, routeForViewer, type RoutedIntent } from '../_shared/intent-router.ts'
+import {
+  runOpportunitySearch,
+  toOpportunityResult,
+  describeRoleNoun,
+  buildOpportunityMessage,
+  buildNoOpportunitiesMessage,
+  type CountryRef,
+  type OpportunityRow,
+  type Viewer as CandidateViewer,
+} from '../_shared/opportunity-search.ts'
+import { labelFor, scrubInternalValues } from '../_shared/display-labels.ts'
 import { detectInternationalIntent, countryMentionedOutsideSpans, tournamentAliasPatterns, tournamentIncludesDomestic, rowTextLevel, rowTextMatchesCountry, BIO_NT_MARKERS, hasNationalTeamIntent } from '../_shared/international-taxonomy.ts'
 import { resolveFeatureCta } from '../_shared/hockia-features.ts'
 import {
@@ -1294,6 +1305,177 @@ async function handleOwnApplicantsIntent(params: {
   }
 }
 
+/** Map a player's category / legacy gender to the team-gender rule. */
+function viewerTeamGender(ctx: UserContext): 'men' | 'women' | null {
+  const cat = (ctx.playing_category ?? '').toLowerCase()
+  if (cat === 'adult_men' || cat === 'boys') return 'men'
+  if (cat === 'adult_women' || cat === 'girls') return 'women'
+  const g = (ctx.gender ?? '').trim().toLowerCase()
+  if (g === 'men' || g === 'man' || g === 'male') return 'men'
+  if (g === 'women' || g === 'woman' || g === 'female') return 'women'
+  return null
+}
+
+/** Roles shown in one response; the rest are one tap away on /opportunities. */
+const OPPORTUNITY_RESULT_CAP = 10
+
+/**
+ * Candidate-side role search — a player (or a coach looking for work) asked
+ * for roles: "clubs looking for a midfielder in Europe", "open roles for me",
+ * "midfielder roles with housing".
+ *
+ * Reads `public_opportunities` (open roles only; hidden / test / not-onboarded
+ * publishers already excluded by the view), keeps the roles this viewer can
+ * apply to (same EU-passport + team-gender rules as the
+ * check_application_eligibility trigger, deadline not passed), and widens
+ * empty geography country → region → worldwide, naming the rung in the copy.
+ * No scores, applicant counts or level pills are computed or returned.
+ */
+async function handleCandidateOpportunitySearch(params: {
+  // deno-lint-ignore no-explicit-any
+  adminClient: any
+  userId: string
+  query: string
+  userContext: UserContext
+  routed: RoutedIntent
+  originalEntityType: string
+  llmProvider: string
+  startTime: number
+  correlationId: string
+  headers: Record<string, string>
+}): Promise<Response> {
+  const { adminClient, userId, query, userContext, routed, originalEntityType, llmProvider, startTime, correlationId, headers } = params
+
+  const viewer: CandidateViewer = {
+    role: userContext.role === 'coach' ? 'coach' : 'player',
+    gender: userContext.role === 'player' ? viewerTeamGender(userContext) : null,
+    // Unknown nationality never blocks — only a known non-EU one does.
+    euEligible: (userContext.nationality_name || userContext.nationality2_name) ? userContext.eu_passport : null,
+    position: userContext.position,
+    secondaryPosition: userContext.secondary_position,
+  }
+
+  const respond = (envelope: Record<string, unknown>, meta: Record<string, unknown>, count: number) => {
+    fireAndForget(logDiscoveryEvent(adminClient, {
+      user_id: userId,
+      role: userContext.role,
+      query_text: query,
+      intent: 'search',
+      parsed_filters: {
+        _meta: {
+          handler: 'candidate_roles',
+          router_entity_type: originalEntityType,
+          router_confidence: routed.confidence,
+          router_signals: routed.matched_signals,
+          ...meta,
+        },
+      } as any,
+      result_count: count,
+      has_qualitative: false,
+      llm_provider: llmProvider,
+      response_time_ms: Date.now() - startTime,
+      error_message: null,
+      prompt_tokens: 0, completion_tokens: 0, cached_tokens: 0,
+      prompt_version: PROMPT_VERSION,
+      fallback_used: false, retry_count: 0,
+    }))
+    return new Response(JSON.stringify({
+      success: true,
+      data: [],
+      total: count,
+      has_more: false,
+      parsed_filters: null,
+      summary: null,
+      applied: null,
+      ...envelope,
+    }), { status: 200, headers: { ...headers, 'Content-Type': 'application/json' } })
+  }
+
+  try {
+    const [oppRes, countriesRes] = await Promise.all([
+      adminClient
+        .from('public_opportunities')
+        .select('id, title, opportunity_type, position, gender, location_city, location_country, application_deadline, benefits, custom_benefits, eu_passport_required, created_at, club_name, club_logo_url, organization_name, world_club_name, world_club_avatar_url')
+        .eq('opportunity_type', viewer.role)
+        .order('created_at', { ascending: false })
+        .limit(500),
+      adminClient.from('countries').select('name, common_name, region'),
+    ])
+    if (oppRes.error) throw oppRes.error
+    const rows = (oppRes.data ?? []) as OpportunityRow[]
+    const countries = (countriesRes.data ?? []) as CountryRef[]
+
+    const today = new Date().toISOString().slice(0, 10)
+    const { criteria, matched, landed, askedLabel, widenedRegion } =
+      runOpportunitySearch(query, rows, countries, viewer, today)
+    const noun = describeRoleNoun(criteria)
+    const meta = {
+      kind: matched.length ? 'opportunity_results' : 'no_results',
+      opportunity_type: criteria.opportunityType,
+      positions: criteria.positions,
+      benefits: criteria.benefits,
+      genders: criteria.genders,
+      geo_asked: askedLabel,
+      geo_softened_to: landed === 'original' ? null : landed,
+      pool_size: rows.length,
+    }
+
+    const filterChips = [
+      ...criteria.positions.map(p => labelFor(p)),
+      ...criteria.genders.map(g => g === 'Men' ? "Men's" : g === 'Women' ? "Women's" : g),
+      ...(askedLabel ? [askedLabel] : []),
+      ...criteria.benefits.map(b => labelFor(b)),
+    ]
+
+    if (matched.length === 0) {
+      const hasNarrowing = criteria.positions.length > 0 || criteria.benefits.length > 0 || criteria.genders.length > 0
+      const actions: SuggestedAction[] = []
+      if (hasNarrowing) {
+        actions.push({ label: 'Show all open roles', intent: { type: 'free_text', query: viewer.role === 'coach' ? 'Show me all open coaching roles' : 'Show me all open roles for me' } })
+      }
+      actions.push({ label: 'Improve my profile', intent: { type: 'free_text', query: 'Improve my profile' } })
+      return respond({
+        kind: 'no_results' as ResponseKind,
+        ai_message: buildNoOpportunitiesMessage(criteria, askedLabel),
+        opportunities: [],
+        opportunity_filters: filterChips,
+        suggested_actions: actions,
+        cta: { label: 'Browse all opportunities', route: '/opportunities' },
+      }, meta, 0)
+    }
+
+    const shown = matched.slice(0, OPPORTUNITY_RESULT_CAP).map(toOpportunityResult)
+    const aiMessage = landed === 'original'
+      ? buildOpportunityMessage(matched.length, criteria, askedLabel)
+      : describeSoftening(landed, {
+          noun: noun.plural,
+          nounSingular: noun.singular,
+          count: matched.length,
+          countryLabel: askedLabel,
+          regionLabel: widenedRegion,
+        })
+
+    return respond({
+      kind: 'opportunity_results' as ResponseKind,
+      ai_message: aiMessage,
+      opportunities: shown,
+      opportunity_filters: filterChips,
+      suggested_actions: [] as SuggestedAction[],
+      cta: matched.length > shown.length ? { label: 'See all open roles', route: '/opportunities' } : null,
+    }, meta, matched.length)
+  } catch (err) {
+    captureException(err, { functionName: 'nl-search', correlationId, extra: { phase: 'candidate_roles' } })
+    return respond({
+      kind: 'soft_error' as ResponseKind,
+      ai_message: "I had trouble loading open roles just now. Try again in a moment.",
+      suggested_actions: [
+        { label: 'Try again', intent: { type: 'retry' } },
+      ] as SuggestedAction[],
+      cta: { label: 'Browse all opportunities', route: '/opportunities' },
+    }, { kind: 'soft_error' }, 0)
+  }
+}
+
 /** Graceful degradation: the LLM parse failed (timeout, transient error, or
  *  provider quota). Re-use the user's raw query as full-text input to the
  *  existing discover_profiles RPC so the user still gets results. */
@@ -2187,6 +2369,31 @@ Deno.serve(async (req) => {
 
     pendingUserRole = userContext?.role ?? null
 
+    // ── Candidate role search ──────────────────────────────────────────
+    // A player (or a coach looking for work) asking for ROLES — "clubs
+    // looking for a midfielder in Europe", "open roles for me" — gets the
+    // open opportunities they can apply to. The keyword router above reads
+    // those as people searches (right for a recruiter, wrong for a
+    // candidate), so re-route once the viewer's role is known.
+    if (userContext && (userContext.role === 'player' || userContext.role === 'coach')) {
+      const viewerIntent = routeForViewer(intent, query, userContext.role)
+      if (viewerIntent.entity_type === 'opportunities' && viewerIntent.confidence === 'high') {
+        pendingIntentEntityType = 'opportunities'
+        return handleCandidateOpportunitySearch({
+          adminClient,
+          userId: user.id,
+          query,
+          userContext,
+          routed: viewerIntent,
+          originalEntityType: intent.entity_type,
+          llmProvider,
+          startTime,
+          correlationId,
+          headers,
+        })
+      }
+    }
+
     // ── Phase 0 canned responses ───────────────────────────────────────
     // Opportunities and products are not yet searchable by the AI (Phase 1).
     // Rather than sending the query to the LLM and risking a mixed-profile
@@ -2309,7 +2516,7 @@ Deno.serve(async (req) => {
             has_more: false,
             parsed_filters: null,
             summary: null,
-            ai_message: helpResult.answer,
+            ai_message: scrubInternalValues(helpResult.answer),
             // Reuses the canned_redirect kind — CannedRedirectCard renders
             // the message + the explicit `cta` button.
             kind: 'canned_redirect' as ResponseKind,
@@ -2427,7 +2634,7 @@ Deno.serve(async (req) => {
           has_more: false,
           parsed_filters: null,
           summary: null,
-          ai_message: llmResult.message,
+          ai_message: scrubInternalValues(llmResult.message),
           // Phase 1A envelope additions (PR-1, additive only).
           kind: 'text' as ResponseKind,
           applied: null,
@@ -2806,7 +3013,7 @@ Deno.serve(async (req) => {
           has_more: false,
           parsed_filters: wcFilters,
           summary: wcFilters.summary || `${mapped.length} club result${mapped.length === 1 ? '' : 's'}.`,
-          ai_message: wcAiMessage,
+          ai_message: scrubInternalValues(wcAiMessage),
           kind: wcResponseKind,
           applied: wcApplied,
           suggested_actions: wcSuggestedActions,
@@ -4174,8 +4381,8 @@ Deno.serve(async (req) => {
         total: result.total,
         has_more: result.has_more,
         parsed_filters: parsed,
-        summary: parsed.summary || `Found ${result.total} result${result.total === 1 ? '' : 's'}.`,
-        ai_message: aiMessage,
+        summary: scrubInternalValues(parsed.summary || `Found ${result.total} result${result.total === 1 ? '' : 's'}.`),
+        ai_message: scrubInternalValues(aiMessage),
         // Phase 1A envelope additions (PR-1, additive only).
         kind: responseKind,
         applied,

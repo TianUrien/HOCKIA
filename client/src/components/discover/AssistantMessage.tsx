@@ -4,6 +4,7 @@ import { useDiscoverChat } from '@/hooks/useDiscover'
 import CannedRedirectCard from './CannedRedirectCard'
 import ClarifyingQuestionCard from './ClarifyingQuestionCard'
 import NoResultsCard from './NoResultsCard'
+import OpportunityResultsResponse from './OpportunityResultsResponse'
 import RecommendationResponse from './RecommendationResponse'
 import SearchResultsResponse from './SearchResultsResponse'
 import SoftErrorCard from './SoftErrorCard'
@@ -97,7 +98,33 @@ export default function AssistantMessage({ msg }: AssistantMessageProps) {
 
     // Successful response — pick by kind.
     switch (msg.kind) {
+      case 'opportunity_results':
+        return (
+          <OpportunityResultsResponse
+            message={msg.content}
+            opportunities={msg.opportunities ?? []}
+            filters={msg.opportunity_filters ?? []}
+            cta={msg.cta}
+            suggestedActions={msg.suggested_actions}
+            onAction={handleAction}
+          />
+        )
+
       case 'no_results':
+        // An empty role search keeps its own card: the searched-for chips
+        // and the way to every open role must stay visible.
+        if (msg.opportunity_filters) {
+          return (
+            <OpportunityResultsResponse
+              message={msg.content}
+              opportunities={[]}
+              filters={msg.opportunity_filters}
+              cta={msg.cta}
+              suggestedActions={msg.suggested_actions}
+              onAction={handleAction}
+            />
+          )
+        }
         return (
           <NoResultsCard
             applied={msg.applied ?? null}
@@ -186,7 +213,7 @@ export default function AssistantMessage({ msg }: AssistantMessageProps) {
   // A search-results message renders full-width: the flat, edge-to-edge
   // result list needs the room — the chat avatar indent + 85% width cap
   // would crush it on mobile. Other assistant messages keep avatar + bubble.
-  if (msg.kind === 'results') {
+  if (msg.kind === 'results' || msg.kind === 'opportunity_results') {
     return <div className="w-full animate-fadeSlideIn">{body}</div>
   }
 

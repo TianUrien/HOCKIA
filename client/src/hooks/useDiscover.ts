@@ -115,6 +115,7 @@ export type ResponseKind =
   | 'clarifying_question'   // medium-confidence intent (wired in PR-4)
   | 'canned_redirect'       // opportunity / product redirects
   | 'recommendation'        // Phase 5 — owner recruitment recommendations
+  | 'opportunity_results'   // open roles a player / coach can apply to
 
 export interface AppliedSearch {
   entity: 'clubs' | 'players' | 'coaches' | 'brands' | 'umpires' | null
@@ -183,6 +184,24 @@ export interface RecommendationRow {
   navigate_to: string
 }
 
+/**
+ * One open role returned to a player / coach asking Hockia AI for roles.
+ * Every field is display-ready (labels, never enum values) and nothing
+ * scores the viewer — no match level, applicant count or reply time.
+ */
+export interface OpportunityResultItem {
+  id: string
+  title: string
+  position_label: string | null
+  category_label: string | null
+  location_label: string | null
+  organization: string | null
+  logo_url: string | null
+  benefit_labels: string[]
+  deadline: string | null
+  navigate_to: string
+}
+
 export interface DiscoverResponse {
   success: boolean
   data: DiscoverResult[]
@@ -208,6 +227,10 @@ export interface DiscoverResponse {
   recommendations?: RecommendationRow[]
   /** Phase 5 — single-line nudge about other openings worth visiting. */
   secondary_note?: string | null
+  /** Candidate role search — open roles the viewer can apply to. */
+  opportunities?: OpportunityResultItem[]
+  /** Candidate role search — human-readable labels of what was searched. */
+  opportunity_filters?: string[]
 }
 
 // ── Chat message types ──────────────────────────────────────────────────
@@ -234,6 +257,9 @@ export interface DiscoverChatMessage {
   /** Phase 5 — optional nudge below the cards ("you also have N pending
    *  applicants on your Midfielder opening — want me to surface those?"). */
   secondary_note?: string | null
+  /** Candidate role search — open roles + the searched-for labels. */
+  opportunities?: OpportunityResultItem[]
+  opportunity_filters?: string[]
   timestamp: number
   status: 'sending' | 'complete' | 'error'
   error?: string
@@ -384,6 +410,8 @@ export const useDiscoverChat = create<DiscoverChatStore>((set, get) => ({
                 is_compound: result.is_compound,
                 recommendations: result.recommendations,
                 secondary_note: result.secondary_note,
+                opportunities: result.opportunities,
+                opportunity_filters: result.opportunity_filters,
                 status: 'complete' as const,
                 // Phase 1A — persist the structured envelope so the dispatcher
                 // can render the right component. All optional; old rows
