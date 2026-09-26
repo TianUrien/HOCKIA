@@ -56,8 +56,6 @@ interface ProfileLongScrollProps {
   topSlot?: ReactNode
   /** Club view: "Fit for this role" sits between Videos and Career (Figma D2.1). */
   afterVideosSlot?: ReactNode
-  /** "his coaches and teammates" in the empty References copy. */
-  pronoun?: 'his' | 'her' | 'their'
 }
 
 const MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -205,7 +203,7 @@ function FactRow({ label, value }: { label: string; value: string | null }) {
   )
 }
 
-export default function ProfileLongScroll({ profile, readOnly, onEdit, onOpenVideos, onManageVideos, onOpenReferences, onOpenReference, onOpenCareer, onOpenPhotos, onOpenPosts, onOpenFriends, onEditSkills, onVideoCounts, topSlot, afterVideosSlot, pronoun = 'their' }: ProfileLongScrollProps) {
+export default function ProfileLongScroll({ profile, readOnly, onEdit, onOpenVideos, onManageVideos, onOpenReferences, onOpenReference, onOpenCareer, onOpenPhotos, onOpenPosts, onOpenFriends, onEditSkills, onVideoCounts, topSlot, afterVideosSlot }: ProfileLongScrollProps) {
   const navigate = useNavigate()
   const owner = !readOnly
   const profileId = profile.id ?? null
@@ -338,7 +336,7 @@ export default function ProfileLongScroll({ profile, readOnly, onEdit, onOpenVid
           <SectionHeader title="References" count={referenceCount > 0 ? referenceCount : null} action={referenceCount > 0 ? `See all ${referenceCount}` : null} onAction={onOpenReferences} />
           {referenceCount === 0 && !refsLoading && (owner
             ? empty('Ask for a reference', onOpenReferences)
-            : <p className="text-row leading-[21px] text-ink-2">No references yet. References come from friends on Hockia — {pronoun} coaches and teammates can write one.</p>)}
+            : <p className="text-row leading-[21px] text-ink-2">No references yet. References come from friends on Hockia — coaches and teammates can write one.</p>)}
           {acceptedReferences.slice(0, 2).map((r) => <ReferenceCard key={r.id} reference={r} onOpen={() => onOpenReference(r.id)} />)}
           {referenceCount > 2 && (
             <button type="button" onClick={onOpenReferences} className="flex h-[46px] items-center justify-center gap-1 rounded-full bg-hockia-soft text-row font-semibold text-hockia-primary">

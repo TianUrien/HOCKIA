@@ -3,11 +3,13 @@ import { useAuthStore } from '@/lib/auth'
 import { useCountries, isEuCountryCode, type Country } from '@/hooks/useCountries'
 import { useWorkPermits, type WorkPermitWithStatus } from '@/hooks/useWorkPermits'
 import { usePlayerLeague } from '@/hooks/usePlayerLeague'
+import { useCoachCurrentRole } from '@/hooks/useCoachCurrentRole'
 import {
   buildCoachKeyFacts,
   buildPlayerKeyFacts,
   type KeyFact,
   type KeyFactsViewer,
+  type LeagueInput,
   type PassportInput,
   type PermitInput,
 } from '@/lib/keyFacts'
@@ -32,15 +34,8 @@ export interface ProfileKeyFactsResult {
   /** Owner only: permits expiring within 30 days or expired (amber row). */
   attentionPermits: WorkPermitWithStatus[]
   permits: WorkPermitWithStatus[]
-  /** Pronoun for club-facing copy ("his club", "her club", "their club"). */
-  pronoun: 'his' | 'her' | 'their'
-}
-
-export function pronounFor(gender: string | null | undefined, category?: string | null): 'his' | 'her' | 'their' {
-  const g = (gender ?? '').toLowerCase()
-  if (/^(men|male|man|m)$/.test(g) || category === 'adult_men' || category === 'boys') return 'his'
-  if (/^(women|female|woman|f)$/.test(g) || category === 'adult_women' || category === 'girls') return 'her'
-  return 'their'
+  /** The league on "Plays at" (verified club league or self-reported). */
+  league: LeagueInput | null
 }
 
 export function ageFromDob(dob: string | null | undefined, today: Date = new Date()): number | null {
@@ -91,6 +86,7 @@ export function useProfileKeyFacts(opts: {
     signedIn,
   })
 
+  const coachRole = useCoachCurrentRole(opts.profile, enabled && isCoach)
   const age = viewer === 'owner' ? ageFromDob(profile.date_of_birth) ?? profile.server_age ?? null : profile.server_age ?? ageFromDob(profile.date_of_birth)
 
   const facts = useMemo<KeyFact[]>(() => {
@@ -101,7 +97,8 @@ export function useProfileKeyFacts(opts: {
         specialization: profile.coach_specialization ?? null,
         specializationCustom: profile.coach_specialization_custom ?? null,
         categories: profile.coaching_categories ?? null,
-        currentRole: null,
+        // Falls back to the current club, then "Not given" / "Not set" (lib/keyFacts).
+        currentRole: coachRole,
         currentClubName: profile.current_club ?? null,
         openToCoach: profile.open_to_coach ?? null,
         availableFrom: profile.available_from ?? null,
@@ -124,8 +121,8 @@ export function useProfileKeyFacts(opts: {
       highlightCount: videoCounts?.highlights ?? (profile.highlight_video_url ? 1 : 0),
       age,
     }, { viewer })
-  }, [enabled, profile, countries, isCoach, league, permits, readsPermits, videoCounts, viewer, age])
+  }, [enabled, profile, countries, isCoach, coachRole, league, permits, readsPermits, videoCounts, viewer, age])
 
   const attentionPermits = viewer === 'owner' ? permits.filter((p) => p.status === 'expiring_soon' || p.status === 'expired') : []
-  return { facts, viewer, attentionPermits, permits, pronoun: pronounFor(profile.gender, profile.playing_category) }
+  return { facts, viewer, attentionPermits, permits, league: isCoach ? null : league }
 }

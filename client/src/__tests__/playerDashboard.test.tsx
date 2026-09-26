@@ -164,7 +164,7 @@ vi.mock('@/components/profile/mobile/ReferencesScreen', () => ({
 // D2 phone-only data (key facts, club view) — React Query hooks, stubbed here;
 // they have their own suites.
 vi.mock('@/hooks/useProfileKeyFacts', () => ({
-  useProfileKeyFacts: () => ({ facts: [], viewer: 'owner', attentionPermits: [], permits: [], pronoun: 'their' }),
+  useProfileKeyFacts: () => ({ facts: [], viewer: 'owner', attentionPermits: [], permits: [], league: null }),
 }))
 vi.mock('@/hooks/useClubViewOfPlayer', () => ({
   useClubViewOfPlayer: () => ({ enabled: false, isClub: false, roles: [], application: null, fitRole: null, fit: null, shortlisted: false, shortlistedRoleIds: [], busy: false, shortlistForRole: vi.fn(), shortlistDefault: vi.fn() }),

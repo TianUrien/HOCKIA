@@ -834,7 +834,6 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
               onOpenFriends={() => handleTabChange('friends')}
               onEditSkills={() => openEdit('skills')}
               onVideoCounts={onVideoCounts}
-              pronoun={keyFacts.pronoun}
               topSlot={clubView.application ? (
                 <AppliedToCard
                   application={clubView.application}
@@ -842,7 +841,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
                 />
               ) : null}
               afterVideosSlot={clubView.fit && clubView.fitRole ? (
-                <FitForRoleCard fit={clubView.fit} role={clubView.fitRole} player={profile} pronoun={keyFacts.pronoun} />
+                <FitForRoleCard fit={clubView.fit} role={clubView.fitRole} player={profile} leagueSelfReported={keyFacts.league?.source === 'self_reported'} />
               ) : null}
             />
             {clubView.enabled && (

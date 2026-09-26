@@ -27,11 +27,12 @@ export function AppliedToCard({ application, onOpen }: { application: ClubViewAp
   )
 }
 
-export function FitForRoleCard({ fit, role, player, pronoun }: {
+export function FitForRoleCard({ fit, role, player, leagueSelfReported = false }: {
   fit: ClubViewFit
   role: ClubRole
   player: { playing_category?: string | null; last_active_at?: string | null; current_club?: string | null; full_name?: string | null }
-  pronoun: 'his' | 'her' | 'their'
+  /** The profile's league is self-reported → "league is self-reported". */
+  leagueSelfReported?: boolean
 }) {
   // Grey fit → no card (founder ruling: hidden when fit is grey).
   if (fit.state === 'grey') return null
@@ -40,7 +41,7 @@ export function FitForRoleCard({ fit, role, player, pronoun }: {
     roleGender: role.gender,
     playerCategoryLabel: categoryToDisplay(player.playing_category ?? null) || null,
     firstName: player.full_name?.trim().split(/\s+/)[0] || 'this player',
-    pronoun,
+    playerLeagueSelfReported: leagueSelfReported,
     lastActiveDays: lastDays,
     playerClub: player.current_club?.trim() || null,
     playerLeagueKnown: fit.playerLeagueBanded,

@@ -93,6 +93,8 @@ type ProfileFormData = {
   brand_representation: string
   coach_specialization: CoachSpecialization | ''
   coach_specialization_custom: string
+  /** D2 key fact "Current role" ("Head coach, U21 women"), max 60. */
+  coach_current_role: string
   // Phase 1A.4 (v5 plan): coach dual-mode flag. Toggled here for existing
   // coaches; new coaches set it on onboarding step 3.
   coach_recruits_for_team: boolean
@@ -138,6 +140,8 @@ const getInitialContactEmail = (profile?: Profile | null): string => profile?.co
 // 10,000-char Bio still counted toward profile completeness without any
 // warning.
 const FULL_NAME_MAX_LENGTH = 80
+/** profiles_coach_current_role_length CHECK (20260928250000). */
+const COACH_CURRENT_ROLE_MAX = 60
 const BIO_MAX_LENGTH = 1500
 // Year-founded bounds for clubs. 1850 predates organised field hockey
 // clubs comfortably; the upper bound is the current year (no future
@@ -276,6 +280,7 @@ const buildInitialFormData = (profile?: Profile | null): ProfileFormData => ({
   brand_representation: profile?.brand_representation || '',
   coach_specialization: (profile?.coach_specialization as CoachSpecialization) || '',
   coach_specialization_custom: profile?.coach_specialization_custom || '',
+  coach_current_role: profile?.coach_current_role ?? '',
   coach_recruits_for_team: Boolean(profile?.coach_recruits_for_team),
   umpire_level: profile?.umpire_level ?? '',
   federation: profile?.federation ?? '',
@@ -350,6 +355,8 @@ function candidateIntentUpdate(formData: ProfileFormData): Record<string, unknow
 
 export default function EditProfileModal({ isOpen, onClose, role }: EditProfileModalProps) {
   const { profile, setProfile } = useAuthStore()
+  // D2: the column arrives with 20260928250000; before that the field is hidden.
+  const hasCoachCurrentRole = Boolean(profile && 'coach_current_role' in profile)
   const { addToast } = useToastStore()
   const { getCountryById } = useCountries()
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -746,6 +753,9 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
         ? formData.coach_specialization_custom.trim() || null
         : null
       optimisticUpdate.coach_recruits_for_team = formData.coach_recruits_for_team
+      // Only where the column exists (profiles_self select * returns it) — an
+      // environment without the D2 migration would reject the whole save.
+      if (hasCoachCurrentRole) optimisticUpdate.coach_current_role = formData.coach_current_role.trim().slice(0, COACH_CURRENT_ROLE_MAX) || null
       Object.assign(optimisticUpdate, candidateIntentUpdate(formData))
     } else if (role === 'umpire') {
       const umpireSinceYear = formSnapshot.umpire_since ? parseInt(formSnapshot.umpire_since, 10) : null
@@ -1253,6 +1263,19 @@ export default function EditProfileModal({ isOpen, onClose, role }: EditProfileM
                     ))}
                   </select>
                 </div>
+
+                {hasCoachCurrentRole && (
+                  <div>
+                    <Input
+                      label="Current role"
+                      placeholder="Head coach, U21 women"
+                      maxLength={COACH_CURRENT_ROLE_MAX}
+                      value={formData.coach_current_role}
+                      onChange={(e) => setFormData({ ...formData, coach_current_role: e.target.value })}
+                    />
+                    <p className="mt-1 text-xs text-gray-500">Shown on your profile under Current role. Leave it empty to show your club.</p>
+                  </div>
+                )}
 
                 {formData.coach_specialization === 'other' && (
                   <Input
