@@ -271,6 +271,9 @@ serve(async (req: Request) => {
         .eq('id', app.opportunity_id)
         .maybeSingle()
       if (!opp || opp.club_id !== userId) return jsonResponse({ error: 'forbidden' }, 403, corsHeaders)
+      // A withdrawn application is final. This function writes as service role,
+      // so the DB guard (guard_application_client_write) does not apply here.
+      if (app.status === 'withdrawn') return jsonResponse({ error: 'withdrawn' }, 409, corsHeaders)
       if (!bodyReason || !REASON_CODES.includes(bodyReason)) return jsonResponse({ error: 'invalid_reason' }, 400, corsHeaders)
       const { data: club } = await supabase.from('profiles').select('full_name').eq('id', userId).maybeSingle()
       const title = opp.title ?? 'this role'

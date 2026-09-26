@@ -74,6 +74,29 @@ export function applicationReasonLabel(code: string | null | undefined): string 
   return REASON_LABEL_BY_CODE[code] ?? null
 }
 
+/** Shown to a club that tries to change an application the player withdrew. */
+export const WITHDRAWN_APPLICATION_MESSAGE = 'This player withdrew their application'
+
+/**
+ * True when a status write was refused because the application is withdrawn:
+ * the DB guard's error on a direct update, or application-feedback's 409.
+ */
+export async function isWithdrawnApplicationError(err: unknown): Promise<boolean> {
+  if (!err || typeof err !== 'object') return false
+  const e = err as { message?: unknown; context?: unknown }
+  if (typeof e.message === 'string' && e.message.includes('withdrawn application cannot be changed')) return true
+  const res = e.context
+  if (res instanceof Response && res.status === 409) {
+    try {
+      const body = (await res.clone().json()) as { error?: string } | null
+      return body?.error === 'withdrawn'
+    } catch {
+      return false
+    }
+  }
+  return false
+}
+
 /**
  * Deterministic, kind, player-facing explanation for a reason code. This is the
  * FALLBACK used when the AI explanation is unavailable, and the baseline the AI

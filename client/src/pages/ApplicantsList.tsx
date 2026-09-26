@@ -10,6 +10,7 @@ import ApplicantCard from '@/components/ApplicantCard'
 import type { ApplicantReferenceInfo } from '@/components/ApplicantCard'
 import { logger } from '@/lib/logger'
 import { trackDbEvent } from '@/lib/trackDbEvent'
+import { isWithdrawnApplicationError, WITHDRAWN_APPLICATION_MESSAGE } from '@/lib/applicationStatus'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 
 type ApplicationStatus = Database['public']['Enums']['application_status']
@@ -251,12 +252,15 @@ export default function ApplicantsList() {
     )
 
     try {
-      const { error: updateError } = await supabase
+      const { data: updated, error: updateError } = await supabase
         .from('opportunity_applications')
         .update({ status: newStatus, metadata: nextMeta })
         .eq('id', applicationId)
+        .select('id')
 
       if (updateError) throw updateError
+      // Clubs can't see withdrawn applications (RLS), so the update matches no row.
+      if (!updated?.length) throw new Error('A withdrawn application cannot be changed')
       trackDbEvent('applicant_status_change', 'application', applicationId, { new_status: newStatus, reason: reason ?? null })
     } catch (err) {
       // Revert optimistic update
@@ -267,8 +271,12 @@ export default function ApplicantsList() {
           return app
         })
       )
-      logger.error('Error updating application status:', err)
-      addToast('Failed to update status. Please try again.', 'error')
+      if (await isWithdrawnApplicationError(err)) {
+        addToast(WITHDRAWN_APPLICATION_MESSAGE, 'info')
+      } else {
+        logger.error('Error updating application status:', err)
+        addToast('Failed to update status. Please try again.', 'error')
+      }
 
       // Refetch to ensure consistency
       if (opportunityId) {

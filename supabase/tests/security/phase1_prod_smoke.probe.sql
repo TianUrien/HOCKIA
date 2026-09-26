@@ -4,6 +4,8 @@
 -- rolls back: the final RAISE undoes every write. All outbound HTTP from triggers goes
 -- through pg_net (queued rows), so a rollback also cancels every email, push and webhook.
 -- Expected: every line "OK". Run before the migration (proves the test) and after.
+-- N1-N3 replay the exact writes of the store apps (Android 1.17 / iOS 1.3.16, commit 14512848).
+-- P1-P3 and V1 run only once migrations 20260926120000 / 20260926140000 are applied (SKIP before).
 
 DO $smoke$
 DECLARE
@@ -12,6 +14,7 @@ DECLARE
   c_player constant uuid := '776c41c2-acde-454d-ae29-7364f2764fff';  -- e2e-player@playr.test
   c_conv   constant uuid := 'd41b3316-27e5-4343-a4c8-c986d09d763a';  -- club ↔ player
   v_opp uuid; v_app uuid; v_msg uuid; v_ref1 uuid; v_ref2 uuid; v_post uuid;
+  v_opp2 uuid; v_app2 uuid; v_conv2 uuid; v_fgv uuid; v_opp3 uuid; v_n1 int; v_n2 int;
   v_txt text; v_out text := ''; v_step text;
 BEGIN
   -- fixtures (as the migration owner; rolled back with everything else)
@@ -112,6 +115,93 @@ BEGIN
   PERFORM mark_conversation_messages_read(c_conv, NULL);
   PERFORM delete_message(v_msg);
   v_out := v_out || E'\nOK ' || v_step;
+
+  -- ── Store apps (Android 1.17 / iOS 1.3.16, commit 14512848): their exact payloads ──
+  v_step := 'N1 store app: apply without a note (ApplyToOpportunityModal payload)';
+  EXECUTE 'RESET ROLE';
+  INSERT INTO opportunities (club_id, title, location_city, location_country, status, opportunity_type, gender)
+  VALUES (c_club, '[SMOKE] Defender', 'Test', 'Test', 'open', 'player', 'Mixed') RETURNING id INTO v_opp2;
+  PERFORM set_config('request.jwt.claims', json_build_object('sub', c_player, 'role', 'authenticated')::text, true);
+  EXECUTE 'SET LOCAL ROLE authenticated';
+  INSERT INTO opportunity_applications (opportunity_id, applicant_id, status)
+  VALUES (v_opp2, c_player, 'pending') RETURNING id INTO v_app2;
+  v_out := v_out || E'\nOK ' || v_step;
+
+  v_step := 'N2 store app: start a new conversation (useChat payload)';
+  INSERT INTO conversations (participant_one_id, participant_two_id, origin)
+  VALUES (c_player, c_coach, 'Direct') RETURNING id INTO v_conv2;
+  INSERT INTO messages (conversation_id, sender_id, content, idempotency_key)
+  VALUES (v_conv2, c_player, 'Smoke test first message', gen_random_uuid()::text);
+  v_out := v_out || E'\nOK ' || v_step;
+
+  v_step := 'N3 store app: undo a failed first send (conversation delete)';
+  DELETE FROM conversations WHERE id = v_conv2;
+  v_out := v_out || E'\nOK ' || v_step;
+
+  -- ── A withdrawn application is final ──
+  v_step := 'W1 club cannot change a withdrawn application';
+  EXECUTE 'RESET ROLE';
+  UPDATE opportunity_applications SET status = 'withdrawn' WHERE id = v_app2;
+  PERFORM set_config('request.jwt.claims', json_build_object('sub', c_club, 'role', 'authenticated')::text, true);
+  EXECUTE 'SET LOCAL ROLE authenticated';
+  -- Clubs can't see withdrawn rows (RLS), so the update matches nothing; the
+  -- guard trigger's "withdrawn application cannot be changed" is defence in depth.
+  UPDATE opportunity_applications SET status = 'shortlisted' WHERE id = v_app2;
+  GET DIAGNOSTICS v_n1 = ROW_COUNT;
+  EXECUTE 'RESET ROLE';
+  SELECT status::text INTO v_txt FROM opportunity_applications WHERE id = v_app2;
+  IF v_n1 <> 0 OR v_txt <> 'withdrawn' THEN RAISE EXCEPTION 'withdrawn application changed (% rows, now %)', v_n1, v_txt; END IF;
+  v_out := v_out || E'\nOK ' || v_step;
+
+  -- ── Full-match privacy (migration 20260926120000; skipped before it) ──
+  EXECUTE 'RESET ROLE';
+  IF EXISTS (SELECT 1 FROM information_schema.columns
+              WHERE table_schema = 'public' AND table_name = 'profiles' AND column_name = 'full_match_visibility') THEN
+    v_step := 'P1 a new full match defaults to clubs & coaches only';
+    INSERT INTO player_full_game_videos (user_id, video_url, match_title)
+    VALUES (c_player, 'https://youtu.be/smoke-test', '[SMOKE] full match') RETURNING id INTO v_fgv;
+    SELECT visibility INTO v_txt FROM player_full_game_videos WHERE id = v_fgv;
+    IF v_txt <> 'recruiters' THEN RAISE EXCEPTION 'visibility is %', v_txt; END IF;
+    v_out := v_out || E'\nOK ' || v_step;
+
+    v_step := 'P2 the club sees it, a coach who does not recruit does not';
+    PERFORM set_config('request.jwt.claims', json_build_object('sub', c_club, 'role', 'authenticated')::text, true);
+    EXECUTE 'SET LOCAL ROLE authenticated';
+    IF NOT EXISTS (SELECT 1 FROM player_full_game_videos WHERE id = v_fgv) THEN RAISE EXCEPTION 'club cannot see it'; END IF;
+    EXECUTE 'RESET ROLE';
+    PERFORM set_config('request.jwt.claims', json_build_object('sub', c_coach, 'role', 'authenticated')::text, true);
+    EXECUTE 'SET LOCAL ROLE authenticated';
+    IF EXISTS (SELECT 1 FROM player_full_game_videos WHERE id = v_fgv) THEN RAISE EXCEPTION 'non-recruiting coach can see it'; END IF;
+    EXECUTE 'RESET ROLE';
+    v_out := v_out || E'\nOK ' || v_step;
+
+    v_step := 'P3 signed-out visitors cannot see it';
+    PERFORM set_config('request.jwt.claims', '{"role":"anon"}', true);
+    EXECUTE 'SET LOCAL ROLE anon';
+    IF EXISTS (SELECT 1 FROM player_full_game_videos WHERE id = v_fgv) THEN RAISE EXCEPTION 'anon can see it'; END IF;
+    EXECUTE 'RESET ROLE';
+    v_out := v_out || E'\nOK ' || v_step;
+  ELSE
+    v_out := v_out || E'\nSKIP P1-P3 full-match privacy (migration 20260926120000 not applied yet)';
+  END IF;
+
+  -- ── A role is announced once (migration 20260926140000; skipped before it) ──
+  IF to_regclass('public.opportunity_first_publications') IS NOT NULL THEN
+    v_step := 'V1 first publish notifies, reopening does not';
+    INSERT INTO opportunities (club_id, title, location_city, location_country, status, opportunity_type, gender)
+    VALUES (c_club, '[SMOKE] Goalkeeper', 'Test', 'Test', 'draft', 'player', 'Mixed') RETURNING id INTO v_opp3;
+    UPDATE opportunities SET status = 'open' WHERE id = v_opp3;
+    SELECT count(*) INTO v_n1 FROM profile_notifications WHERE kind = 'opportunity_published' AND source_entity_id = v_opp3;
+    IF NOT EXISTS (SELECT 1 FROM opportunity_first_publications WHERE opportunity_id = v_opp3) THEN RAISE EXCEPTION 'no first-publication marker'; END IF;
+    UPDATE opportunities SET status = 'closed' WHERE id = v_opp3;
+    DELETE FROM profile_notifications WHERE kind = 'opportunity_published' AND source_entity_id = v_opp3;
+    UPDATE opportunities SET status = 'open' WHERE id = v_opp3;
+    SELECT count(*) INTO v_n2 FROM profile_notifications WHERE kind = 'opportunity_published' AND source_entity_id = v_opp3;
+    IF v_n2 <> 0 THEN RAISE EXCEPTION 'reopen re-notified % people (first publish: %)', v_n2, v_n1; END IF;
+    v_out := v_out || E'\nOK ' || v_step || ' (first publish notified ' || v_n1 || ')';
+  ELSE
+    v_out := v_out || E'\nSKIP V1 announce-once (migration 20260926140000 not applied yet)';
+  END IF;
 
   EXECUTE 'RESET ROLE';
   RAISE EXCEPTION 'SMOKE RESULTS (all rolled back):%', v_out;
