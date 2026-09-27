@@ -42,6 +42,8 @@ const ClubLeagueScreen = lazy(() => import('@/components/profile/mobile/ClubLeag
 const LinkClubScreen = lazy(() => import('@/components/profile/mobile/LinkClubScreen'))
 // Squad — own (Figma 04 Club D1.15): phone leaf for the owner; desktop keeps the v1 Members tab.
 const SquadScreen = lazy(() => import('@/components/club/SquadScreen'))
+// Club photos (Photos row of Edit club profile, D1.27): phone leaf for the owner; desktop keeps the v1 Media section.
+const ClubManageMediaScreen = lazy(() => import('@/components/club/ClubManageMediaScreen'))
 
 // `?section=` query param → DOM anchor id. Drives the deep-link scroll
 // for notifications + shareable URLs (e.g. ?section=viewers).
@@ -215,6 +217,15 @@ export default function ClubDashboard({
   const [showEditModal, setShowEditModal] = useState(false)
   const [showSignInPrompt, setShowSignInPrompt] = useState(false)
 
+  // Phone: the Figma Club profile (own / public) replaces the bento and the
+  // portfolio on the landing view only — section pages keep their surface.
+  const isPhone = useMediaQuery('(max-width: 1023px)')
+  // Phone owners edit on Edit club profile (Figma D1.27); desktop keeps the modal.
+  const openEditor = () => {
+    if (isPhone) navigate('/dashboard/club/edit')
+    else setShowEditModal(true)
+  }
+
   // ?action=edit deep-link from Home cards opens the editor. Owner view only —
   // never in the read-only public profile render. Ref-guarded so it fires once
   // and a later searchParams change can't reopen it.
@@ -223,9 +234,10 @@ export default function ClubDashboard({
     if (readOnly || editDeepLinkRef.current) return
     if (searchParams.get('action') === 'edit') {
       editDeepLinkRef.current = true
-      setShowEditModal(true)
+      if (isPhone) navigate('/dashboard/club/edit', { replace: true })
+      else setShowEditModal(true)
     }
-  }, [readOnly, searchParams])
+  }, [readOnly, searchParams, isPhone, navigate])
   const [sendingMessage, setSendingMessage] = useState(false)
   const [triggerCreateVacancy, setTriggerCreateVacancy] = useState(false)
   const [memberCount, setMemberCount] = useState<number | null>(null)
@@ -247,15 +259,13 @@ export default function ClubDashboard({
     profileId: readOnly ? null : (profileData?.id ?? authProfile?.id ?? null),
   })
 
-  // Phone: the Figma Club profile (own / public) replaces the bento and the
-  // portfolio on the landing view only — section pages keep their surface.
-  const isPhone = useMediaQuery('(max-width: 1023px)')
 
   // Club & league (Figma 338:424) is a phone leaf for the owner. Anywhere
   // else the section falls back to the landing with the editor open.
   const isLeagueLeaf = activeTab === 'league' && !readOnly && isPhone
   const isLinkLeaf = activeTab === 'link' && !readOnly && isPhone
   const isSquadLeaf = activeTab === 'members' && !readOnly && isPhone
+  const isMediaLeaf = activeTab === 'media' && !readOnly && isPhone
   useEffect(() => {
     if ((activeTab !== 'league' || isLeagueLeaf) && (activeTab !== 'link' || isLinkLeaf)) return
     if (readOnly) {
@@ -519,6 +529,7 @@ export default function ClubDashboard({
   }
 
   const isLanding = activeTab === 'profile'
+  const fromEdit = searchParams.get('from') === 'edit'
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -528,15 +539,30 @@ export default function ClubDashboard({
 
       {readOnly && isOwnProfile && <PublicViewBanner compactOnPhone={isLanding} />}
 
-      {(isLeagueLeaf || isLinkLeaf || isSquadLeaf) && (
+      {(isLeagueLeaf || isLinkLeaf || isSquadLeaf || isMediaLeaf) && (
         <Suspense fallback={<div className="min-h-screen bg-white" />}>
-          {isLeagueLeaf && <ClubLeagueScreen profile={profile} onBack={() => handleTabChange('profile')} onLink={() => handleTabChange('link')} />}
+          {isLeagueLeaf && (
+            <ClubLeagueScreen
+              profile={profile}
+              // Opened from Edit club profile (?from=edit): back names and returns there.
+              parent={fromEdit ? 'Edit profile' : 'Profile'}
+              onBack={() => (fromEdit ? navigate('/dashboard/club/edit') : handleTabChange('profile'))}
+              onLink={() => handleTabChange('link')}
+            />
+          )}
           {isLinkLeaf && <LinkClubScreen profile={profile} onCancel={() => handleTabChange('league')} onLinked={() => handleTabChange('league')} />}
           {isSquadLeaf && <SquadScreen profile={profile} onBack={() => handleTabChange('profile')} />}
+          {isMediaLeaf && (
+            <ClubManageMediaScreen
+              clubId={profile.id}
+              parent={fromEdit ? 'Edit profile' : 'Profile'}
+              onBack={() => (fromEdit ? navigate('/dashboard/club/edit') : handleTabChange('profile'))}
+            />
+          )}
         </Suspense>
       )}
 
-      {!isLeagueLeaf && !isLinkLeaf && !isSquadLeaf && (
+      {!isLeagueLeaf && !isLinkLeaf && !isSquadLeaf && !isMediaLeaf && (
       <main className={`max-w-7xl mx-auto px-4 md:px-6 ${isLanding ? 'pt-0' : readOnly ? 'pt-24' : 'pt-[max(env(safe-area-inset-top),0.75rem)]'} lg:pt-24 pb-12 space-y-5 md:space-y-6`}>
         {isPhone && isLanding ? (
           <div className="-mx-4 md:-mx-6">
@@ -546,7 +572,7 @@ export default function ClubDashboard({
               readOnly={readOnly}
               isOwnProfile={isOwnProfile}
               authProfileRole={authProfile?.role}
-              onEdit={() => setShowEditModal(true)}
+              onEdit={openEditor}
               onViewPublic={handleViewPublic}
               onMessage={() => void handleSendMessage()}
               sendingMessage={sendingMessage}

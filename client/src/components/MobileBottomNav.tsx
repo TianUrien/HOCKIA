@@ -68,7 +68,9 @@ export default function MobileBottomNav() {
       // and its Role posted screen (D1.26) with its own buttons.
       location.pathname === '/dashboard/opportunities/new' || /^\/dashboard\/opportunities\/[^/]+\/(edit|posted)$/.test(location.pathname) ||
       // Applicant review carries its own decision bar (Figma 04 Club 326:319).
-      /^\/dashboard\/opportunities\/[^/]+\/applicants\/[^/]+$/.test(location.pathname)
+      /^\/dashboard\/opportunities\/[^/]+\/applicants\/[^/]+$/.test(location.pathname) ||
+      // Edit club profile: back / Done, no tab bar (Figma 04 Club D1.27).
+      location.pathname === '/dashboard/club/edit'
     setIsHidden(hiddenRoutes.some((route) => location.pathname === route) || isImmersiveMessagesView || isOpportunityDetail || isModalFlow)
   }, [location.pathname, location.search])
 
