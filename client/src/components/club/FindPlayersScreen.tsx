@@ -5,7 +5,7 @@ import { DetailNavBar } from '@/components/ui/DetailNavBar'
 import { ScoutPlayerRow } from './ScoutPlayerRow'
 import { RankedForSheet } from './RankedForSheet'
 import { useCountries, EU_COUNTRY_CODES } from '@/hooks/useCountries'
-import { opportunityGenderToTarget } from '@/hooks/useRecruitingContext'
+import { opportunityGenderToTarget, useRecruitingViewKind } from '@/hooks/useRecruitingContext'
 import { useFindPlayers, useOwnLeague, useRoleShortlist, useScoutingContext, useShortlistWrites } from '@/hooks/useScouting'
 import {
   applyFindFilters,
@@ -34,6 +34,9 @@ export default function FindPlayersScreen() {
   const navigate = useNavigate()
   const location = useLocation()
   const [params, setParams] = useSearchParams()
+  // Only PLAYER roles rank players here (round 6): a coach-role context
+  // stays stored for the Coaches tab.
+  useRecruitingViewKind('player')
   const scouting = useScoutingContext()
   const { ctx, roleTitle, openRoles, viewer } = scouting
   const isClub = viewer?.role === 'club'

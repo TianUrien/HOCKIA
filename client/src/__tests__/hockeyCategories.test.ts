@@ -27,8 +27,8 @@ describe('CATEGORY_LABELS', () => {
 
 describe('categoryToDisplay', () => {
   it('returns labelled strings for valid categories', () => {
-    expect(categoryToDisplay('adult_women')).toBe('Adult Women')
-    expect(categoryToDisplay('adult_men')).toBe('Adult Men')
+    expect(categoryToDisplay('adult_women')).toBe('Adult women')
+    expect(categoryToDisplay('adult_men')).toBe('Adult men')
     expect(categoryToDisplay('girls')).toBe('Girls')
     expect(categoryToDisplay('boys')).toBe('Boys')
     expect(categoryToDisplay('mixed')).toBe('Mixed')
@@ -45,8 +45,8 @@ describe('categoryToDisplay', () => {
 
 describe('categoriesToDisplay', () => {
   it('joins multiple specific categories with commas', () => {
-    expect(categoriesToDisplay(['adult_women', 'girls'])).toBe('Adult Women, Girls')
-    expect(categoriesToDisplay(['adult_men', 'boys', 'mixed'])).toBe('Adult Men, Boys, Mixed')
+    expect(categoriesToDisplay(['adult_women', 'girls'])).toBe('Adult women, Girls')
+    expect(categoriesToDisplay(['adult_men', 'boys', 'mixed'])).toBe('Adult men, Boys, Mixed')
   })
 
   it("collapses to 'Any category' when the array is the sentinel", () => {
@@ -118,8 +118,8 @@ describe('playingCategoryToLegacyGender', () => {
 
 describe('opportunityGenderToDisplay', () => {
   it('renders legacy Men / Women as the new "Adult" labels', () => {
-    expect(opportunityGenderToDisplay('Men')).toBe('Adult Men')
-    expect(opportunityGenderToDisplay('Women')).toBe('Adult Women')
+    expect(opportunityGenderToDisplay('Men')).toBe('Adult men')
+    expect(opportunityGenderToDisplay('Women')).toBe('Adult women')
   })
 
   it('renders Girls / Boys / Mixed verbatim', () => {
@@ -156,11 +156,11 @@ describe('opportunityGenderToTeamLabel', () => {
 
 describe('playingCategoryToOpportunityGender (player → vacancy filter)', () => {
   // The user's specific verification cases:
-  it('matches Adult Men player to legacy Men opportunity', () => {
+  it('matches Adult men player to legacy Men opportunity', () => {
     expect(playingCategoryToOpportunityGender('adult_men')).toBe('Men')
   })
 
-  it('matches Adult Women player to legacy Women opportunity', () => {
+  it('matches Adult women player to legacy Women opportunity', () => {
     expect(playingCategoryToOpportunityGender('adult_women')).toBe('Women')
   })
 

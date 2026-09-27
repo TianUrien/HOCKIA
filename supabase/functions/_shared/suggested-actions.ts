@@ -43,15 +43,15 @@ export interface AppliedSearch {
 /** Display label for a category enum value — used by chip text + role_summary. */
 function categoryDisplay(category: string | null | undefined): string {
   if (!category) return ''
-  if (category === 'adult_women') return 'Adult Women'
-  if (category === 'adult_men') return 'Adult Men'
+  if (category === 'adult_women') return 'Adult women'
+  if (category === 'adult_men') return 'Adult men'
   if (category === 'girls') return 'Girls'
   if (category === 'boys') return 'Boys'
   if (category === 'mixed') return 'Mixed'
   return ''
 }
 
-/** Possessive role-summary form. Adult Women → "women's"; Girls → "girls'";
+/** Possessive role-summary form. Adult women → "women's"; Girls → "girls'";
  * Mixed → "mixed" (no apostrophe — reads better). Falls back to legacy
  * gender_label for adult_men / adult_women if category isn't set yet. */
 function categorySummaryForm(applied: Pick<AppliedSearch, 'category_label' | 'gender_label'> | null): string {
@@ -153,7 +153,7 @@ export function getNoResultsActions(applied: AppliedSearch | null, userRole: str
   }
 
   // 3. Remove the seeded filter. Phase 3e — chip label uses the user-facing
-  //    category name ("Adult Women", "Girls", etc.) instead of "men/women".
+  //    category name ("Adult women", "Girls", etc.) instead of "men/women".
   //    Falls back to legacy gender_label so any AppliedSearch produced before
   //    the category_label rollout still generates a sensible chip.
   //    Phase 4 — query matches label exactly. The QUERY_FORBIDS_CATEGORY_SEED
@@ -162,7 +162,7 @@ export function getNoResultsActions(applied: AppliedSearch | null, userRole: str
   const seededLabel = applied?.category_label
     ? categoryDisplay(applied.category_label)
     : applied?.gender_label
-      ? (applied.gender_label === 'Men' ? 'Adult Men' : 'Adult Women')
+      ? (applied.gender_label === 'Men' ? 'Adult men' : 'Adult women')
       : null
   if (seededLabel) {
     actions.push({

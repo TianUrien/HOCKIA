@@ -5,6 +5,7 @@ import { LargeTitleBar } from '@/components/ui/LargeTitleBar'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { useAuthStore } from '@/lib/auth'
 import { useRoleShortlist, useScoutingContext } from '@/hooks/useScouting'
+import { useRecruitingViewKind } from '@/hooks/useRecruitingContext'
 import { useClubRoles, type ClubRole } from '@/hooks/useClubRoles'
 import { formatDurationText, genderPill, isPaid, roleBenefits, rolePostedAt, roleTitle } from '@/lib/opportunityCopy'
 import { waitingNotice } from '@/lib/clubRecruiting'
@@ -147,6 +148,9 @@ export default function ClubOpportunitiesScreen() {
   const publishedOpen = data.open.filter((r) => r.status === 'open').length
   // "Shortlist · N" = the list for the ACTIVE role (the one Shortlist opens on;
   // with no context, the no-context list) — same hook, same number.
+  // Only PLAYER roles rank players here (round 6): a coach-role context
+  // stays stored for the Coaches tab.
+  useRecruitingViewKind('player')
   const scouting = useScoutingContext()
   const scoutRoleId = scouting.ctx?.type === 'opportunity' ? scouting.ctx.opportunity_id : null
   const activeShortlist = useRoleShortlist(scouting.ctx, scoutRoleId, scouting.roleTitle)

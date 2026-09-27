@@ -38,3 +38,16 @@ Deno.test('scrubInternalValues leaves ordinary copy unchanged', () => {
   assertEquals(scrubInternalValues(s), s)
   assertEquals(scrubInternalValues(''), '')
 })
+
+Deno.test('positionLabel: the app label for role / profile positions (round 6)', async () => {
+  const { positionLabel } = await import('./display-labels.ts')
+  assertEquals(positionLabel('head_coach'), 'Head coach')
+  assertEquals(positionLabel('Head_coach'), 'Head coach')
+  assertEquals(positionLabel('midfielder'), 'Midfielder')
+  assertEquals(positionLabel('other_coach'), 'Coach')
+  assertEquals(positionLabel('strength_conditioning'), 'Strength & conditioning')
+  assertEquals(positionLabel('some_new_value'), 'Some new value')
+  assertEquals(positionLabel('other'), 'Other')
+  assertEquals(positionLabel(null), null)
+  assertEquals(positionLabel('  '), null)
+})

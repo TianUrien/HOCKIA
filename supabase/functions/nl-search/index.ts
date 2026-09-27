@@ -3388,11 +3388,11 @@ Deno.serve(async (req) => {
 
     // Phase 1A — when the query is a "broaden" follow-up (chip-driven),
     // skip the UserContext seeding entirely. Updated regex to match the
-    // new chip wording ("Remove [Adult Women] filter", "Show all categories")
+    // new chip wording ("Remove [Adult women] filter", "Show all categories")
     // plus the legacy gender phrasings still in flight.
     // Phase 4 chip-label fix — extended to match the short "Remove X filter"
     // chip queries that ship from the no-results catalog when label === query
-    // (e.g. "Remove Adult Women filter", "Remove Girls filter"). Without
+    // (e.g. "Remove Adult women filter", "Remove Girls filter"). Without
     // matching these, the auto-seed re-applies on the broaden tap and the
     // chip silently does nothing.
     const QUERY_FORBIDS_CATEGORY_SEED =

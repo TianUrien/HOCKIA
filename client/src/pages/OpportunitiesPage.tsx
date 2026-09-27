@@ -652,8 +652,8 @@ export default function OpportunitiesPage() {
                 value={filters.gender}
                 options={[
                   { value: 'all', label: 'All' },
-                  { value: 'Men', label: 'Adult Men' },
-                  { value: 'Women', label: 'Adult Women' },
+                  { value: 'Men', label: 'Adult men' },
+                  { value: 'Women', label: 'Adult women' },
                   { value: 'Mixed', label: 'Mixed' },
                 ]}
                 onChange={(v) => setFilters(prev => ({ ...prev, gender: v as FiltersState['gender'] }))}

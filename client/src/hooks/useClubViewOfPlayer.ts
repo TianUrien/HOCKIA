@@ -8,7 +8,7 @@ import { useUndoToast } from '@/lib/undoToast'
 import { holdDecision } from '@/lib/pendingDecisions'
 import { WITHDRAWN_APPLICATION_MESSAGE } from '@/lib/applicationStatus'
 import { useShortlists } from '@/hooks/useShortlists'
-import { useRecruitingContext } from '@/hooks/useRecruitingContext'
+import { effectiveContextRow, useRecruitingContext } from '@/hooks/useRecruitingContext'
 import { markSavedProfileId, useIsProfileSaved } from '@/hooks/useSavedProfiles'
 import { isRecruitingViewer } from '@/lib/recruiterAccess'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
@@ -23,9 +23,10 @@ import type { Json } from '@/lib/database.types'
  *  - roles: the viewer's open roles of the profile's kind (player / coach);
  *  - application: the player's latest application to one of the viewer's roles
  *    ("Applied to …" card — RLS shows clubs the applications to their roles);
- *  - fitRole + fit: compute_club_fit for the role that matters here — the one
- *    applied to, else the active recruiting context's role, else the only open
- *    role. Any recruiting viewer — a club or a coach who recruits sees the
+ *  - fitRole + fit: compute_club_fit for the role that matters here — the
+ *    active "Ranked for" role (the recruiting context Find players / Community
+ *    set, of the profile's kind), else the one applied to, else the only open
+ *    role (founder ruling 2026-09-27, round 6). Any recruiting viewer — a club or a coach who recruits sees the
  *    Fit card like a club (founder rule); hidden when grey (the card handles
  *    that);
  *  - shortlist(role): Shortlist per role (founder ruling 2026-09-25 #9). The
@@ -65,10 +66,15 @@ export interface ClubViewPlayer {
   current_world_club_id?: string | null
 }
 
+/**
+ * The role the Fit card measures (founder ruling 2026-09-27, round 6): the
+ * active "Ranked for" role when it is one of the viewer's open roles of this
+ * kind, else the role the player applied to, else the only open role.
+ */
 export function pickFitRole(opts: { application: ClubViewApplication | null; roles: ClubRole[]; activeOpportunityId: string | null }): ClubRole | null {
-  if (opts.application) return opts.application.role
   const active = opts.activeOpportunityId ? opts.roles.find((r) => r.id === opts.activeOpportunityId) : null
   if (active) return active
+  if (opts.application) return opts.application.role
   return opts.roles.length === 1 ? opts.roles[0] : null
 }
 
@@ -95,8 +101,11 @@ export function useClubViewOfPlayer(player: ClubViewPlayer | null) {
   const viewerId = viewer?.id ?? null
   const playerId = player?.id ?? null
   const kind = player?.role === 'coach' ? 'coach' : 'player'
-  const { active: activeContext } = useRecruitingContext()
-  const activeOpportunityId = activeContext?.opportunity_id ?? null
+  // The context of THIS profile's kind: a player profile follows the Players
+  // "Ranked for" role even while a coach role is the stored context (round 6).
+  const { active: activeContext, available, kindNone } = useRecruitingContext()
+  const kindContext = available?.length ? effectiveContextRow(available, kind, kindNone) : activeContext
+  const activeOpportunityId = kindContext?.opportunity_id ?? null
   const { lists, create } = useShortlists()
   const saved = useIsProfileSaved(recruits ? playerId : null)
   const [shortlistedRoleIds, setShortlistedRoleIds] = useState<string[]>([])

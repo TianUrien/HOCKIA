@@ -129,8 +129,8 @@ export const MAX_LIMIT = 100
 
 export const VALID_POSITIONS = ['goalkeeper', 'defender', 'midfielder', 'forward']
 // Phase 3d — extended with Girls / Boys / Mixed. Old 'Men' / 'Women' values
-// remain valid (backward-compatible). UI surfaces label them "Adult Men" /
-// "Adult Women" while keeping the legacy enum on the wire.
+// remain valid (backward-compatible). UI surfaces label them "Adult men" /
+// "Adult women" while keeping the legacy enum on the wire.
 export const VALID_GENDERS = ['Men', 'Women', 'Girls', 'Boys', 'Mixed']
 export const VALID_OPPORTUNITY_TYPES = ['player', 'coach']
 export const VALID_PRIORITIES = ['high', 'medium', 'low']

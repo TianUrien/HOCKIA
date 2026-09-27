@@ -1,4 +1,5 @@
 // NOTE: This file runs on Supabase Edge Functions (Deno runtime).
+import { positionLabel } from './display-labels.ts'
 declare const Deno: { env: { get(key: string): string | undefined } }
 
 /**
@@ -39,9 +40,8 @@ export interface VacancyPayload {
 
 export function generateEmailHtml(vacancy: VacancyRecord, clubName: string): string {
   // Safe field extraction with fallbacks
-  const position = vacancy.position 
-    ? vacancy.position.charAt(0).toUpperCase() + vacancy.position.slice(1) 
-    : null
+  // "head_coach" → "Head coach" (the app's label), never the raw token.
+  const position = positionLabel(vacancy.position)
   
   // Build location string, handling missing city or country
   const city = vacancy.location_city?.trim() || null
@@ -117,9 +117,8 @@ export function generateEmailHtml(vacancy: VacancyRecord, clubName: string): str
 
 export function generateEmailText(vacancy: VacancyRecord, clubName: string): string {
   // Safe field extraction with fallbacks
-  const position = vacancy.position 
-    ? vacancy.position.charAt(0).toUpperCase() + vacancy.position.slice(1) 
-    : null
+  // "head_coach" → "Head coach" (the app's label), never the raw token.
+  const position = positionLabel(vacancy.position)
   
   // Build location string, handling missing city or country
   const city = vacancy.location_city?.trim() || null

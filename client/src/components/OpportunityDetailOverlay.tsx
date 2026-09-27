@@ -15,7 +15,9 @@
  * Deep-link / shared URLs still go to OpportunityDetailPage (the route).
  */
 
+import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
+import { getImageUrl } from '@/lib/imageUrl'
 import { useOpportunityDetail } from '@/hooks/useOpportunityDetail'
 import OpportunityPreviewModal from './OpportunityPreviewModal'
 
@@ -24,15 +26,31 @@ interface OpportunityDetailOverlayProps {
   onClose: () => void
   /** Bubbled up when the user applies, so a host can update its own state. */
   onApplied?: (opportunityId: string) => void
+  /** The publisher's logo the launching card already shows (Home feed). The
+   *  pop-up header uses it when the fetched profile has none, and it is
+   *  fetched at header size on open so the header never paints the grey
+   *  placeholder while the role loads (round 6). */
+  clubLogo?: string | null
 }
 
 export default function OpportunityDetailOverlay({
   opportunityId,
   onClose,
   onApplied,
+  clubLogo = null,
 }: OpportunityDetailOverlayProps) {
   const { opportunity, club, worldClub, hasApplied, applicationStatus, isLoading, notFound, setHasApplied } =
     useOpportunityDetail(opportunityId)
+
+  // Warm the header-size logo while the role loads (same URL the header's
+  // StorageImage requests), so it is cached by the time the pop-up mounts.
+  useEffect(() => {
+    const src = getImageUrl(clubLogo, 'avatar-md')
+    if (!src || typeof Image === 'undefined') return
+    const img = new Image()
+    img.decoding = 'async'
+    img.src = src
+  }, [clubLogo])
 
   let content: React.ReactNode
 
@@ -78,7 +96,7 @@ export default function OpportunityDetailOverlay({
     content = (
       <OpportunityPreviewModal
         vacancy={opportunity}
-        clubInfo={club}
+        clubInfo={club.avatar_url || !clubLogo ? club : { ...club, avatar_url: clubLogo }}
         worldClub={worldClub}
         hasApplied={hasApplied}
         applicationStatus={applicationStatus}

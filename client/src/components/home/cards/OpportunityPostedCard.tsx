@@ -111,6 +111,7 @@ export function OpportunityPostedCard({ item }: OpportunityPostedCardProps) {
       {showDetail && (
         <OpportunityDetailOverlay
           opportunityId={item.opportunity_id}
+          clubLogo={item.club_logo}
           onClose={() => setShowDetail(false)}
         />
       )}
