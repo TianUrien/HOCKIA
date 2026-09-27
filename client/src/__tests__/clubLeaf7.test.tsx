@@ -9,7 +9,8 @@ import {
   ageFrom,
   clubShortName,
   inviteStateFor,
-  isInvitableAge,
+  inviteErrorMessage,
+  isInvitable,
   joinCountLine,
   squadRoleLine,
   squadSettingsSubtitle,
@@ -51,13 +52,19 @@ describe('copy helpers', () => {
 })
 
 describe('invite search rules', () => {
-  it('18+ with a known date of birth only', () => {
+  it('players: 18+ with a known date of birth; coaches are not age-gated (D2 rule, as on the server)', () => {
     expect(ageFrom('2008-09-28', NOW)).toBe(17)
     expect(ageFrom('2008-09-27', NOW)).toBe(18)
-    expect(isInvitableAge('2008-09-27', NOW)).toBe(true)
-    expect(isInvitableAge('2010-01-01', NOW)).toBe(false)
-    expect(isInvitableAge(null, NOW)).toBe(false)
-    expect(isInvitableAge('not a date', NOW)).toBe(false)
+    expect(isInvitable('player', '2008-09-27', NOW)).toBe(true)
+    expect(isInvitable('player', '2010-01-01', NOW)).toBe(false)
+    expect(isInvitable('player', null, NOW)).toBe(false)
+    expect(isInvitable('player', 'not a date', NOW)).toBe(false)
+    expect(isInvitable('coach', null, NOW)).toBe(true)
+  })
+  it('maps the server refusal to a friendly message', () => {
+    expect(inviteErrorMessage({ code: 'not_invitable', error: 'raw' })).toBe('This person can’t be invited yet.')
+    expect(inviteErrorMessage({ error: 'Already a member' })).toBe('Already a member')
+    expect(inviteErrorMessage({})).toBe('Could not send the invitation.')
   })
   it('a row is on the squad, pending, or invitable', () => {
     const members = new Set(['m'])
@@ -202,5 +209,14 @@ describe('SquadScreen (D1.15)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Invite' }))
     await waitFor(() => expect(squad.invite).toHaveBeenCalledWith('x'))
     expect(toast.addToast).toHaveBeenCalledWith('Invitation sent to Name x', 'success')
+  })
+
+  it('a server refusal (under 18 / no date of birth) shows the friendly message', async () => {
+    squad.search.rows = [{ ...person('y'), current_club: null }]
+    squad.invite.mockResolvedValue({ success: false, code: 'not_invitable', error: "This person can't be invited yet." })
+    renderScreen()
+    fireEvent.change(screen.getByPlaceholderText('Invite someone on Hockia'), { target: { value: 'Na' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Invite' }))
+    await waitFor(() => expect(toast.addToast).toHaveBeenCalledWith('This person can’t be invited yet.', 'error'))
   })
 })

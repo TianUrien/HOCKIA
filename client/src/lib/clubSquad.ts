@@ -54,11 +54,14 @@ export function ageFrom(dob: string | null | undefined, now: Date = new Date()):
 }
 
 /**
- * The invite search is a club-facing list of people, so it follows the 18+
- * rule of Find players (founder ruling 2026-09-26): a known date of birth and
- * 18 or older. A club's existing squad is never filtered by age.
+ * The invite search is a club-facing list of people, so it follows the D2
+ * club-facing age rule (founder ruling 2026-09-26), the same one the server
+ * enforces in invite_club_member: players need a known date of birth and 18+;
+ * coaches are not age-gated (as in D2 search). A club's existing squad is
+ * never filtered by age.
  */
-export function isInvitableAge(dob: string | null | undefined, now: Date = new Date()): boolean {
+export function isInvitable(role: string, dob: string | null | undefined, now: Date = new Date()): boolean {
+  if (role !== 'player') return true
   const age = ageFrom(dob, now)
   return age !== null && age >= 18
 }
@@ -78,4 +81,4 @@ export function joinCountLine(count: number | null | undefined): string | null {
   return `${count} joined with this link`
 }
 
-export { squadSettingsSubtitle } from './clubSquadCopy'
+export { squadSettingsSubtitle, inviteErrorMessage, NOT_INVITABLE_MESSAGE } from './clubSquadCopy'

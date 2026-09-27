@@ -9,7 +9,7 @@ import { useBlockedUsers } from '@/hooks/useBlockedUsers'
 import { useToastStore } from '@/lib/toast'
 import { getImageUrl } from '@/lib/imageUrl'
 import { buildClubInviteUrl } from '@/lib/clubMembership'
-import { clubShortName, inviteStateFor, joinCountLine, squadRoleLine, type SquadPerson } from '@/lib/clubSquad'
+import { clubShortName, inviteErrorMessage, inviteStateFor, joinCountLine, squadRoleLine, type SquadPerson } from '@/lib/clubSquad'
 import { STATUS_TONE_PILL, STATUS_TONE_TEXT, invitationPendingTone } from '@/lib/statusTone'
 import { cn } from '@/lib/utils'
 
@@ -88,7 +88,7 @@ export default function SquadScreen({ profile, onBack }: SquadScreenProps) {
     const res = await squad.invite(p.id)
     setInvitingId(null)
     if (res.success) addToast(`Invitation sent to ${p.full_name?.trim() || 'them'}`, 'success')
-    else addToast(res.error ?? 'Could not send the invitation.', 'error')
+    else addToast(inviteErrorMessage(res), 'error')
   }
 
   const confirmMenu = async () => {

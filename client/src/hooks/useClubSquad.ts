@@ -13,7 +13,7 @@ import {
   removeClubMember,
   revokeClubInviteLink,
 } from '@/lib/clubMembership'
-import { isInvitableAge, type SquadPerson } from '@/lib/clubSquad'
+import { isInvitable, type SquadPerson } from '@/lib/clubSquad'
 
 /**
  * Data behind Squad — own (Figma 04 Club D1.15, DEV NOTE 338:702).
@@ -213,7 +213,7 @@ export function useClubSquad(clubId: string | null) {
   }
 }
 
-/** "Invite someone on Hockia": onboarded players and coaches by name, 18+ only, never blocked or hidden. */
+/** "Invite someone on Hockia": onboarded players (18+ by DOB) and coaches by name, never blocked or hidden. */
 export function useInviteSearch(clubId: string | null, query: string, blockedIds: ReadonlySet<string>) {
   const showTest = useShowTestAccounts()
   const q = query.trim()
@@ -237,7 +237,7 @@ export function useInviteSearch(clubId: string | null, query: string, blockedIds
       const { data, error } = await req
       if (error) throw error
       return ((data ?? []) as Array<InviteSearchResult & { date_of_birth: string | null }>)
-        .filter((p) => p.id !== clubId && isInvitableAge(p.date_of_birth))
+        .filter((p) => p.id !== clubId && isInvitable(p.role, p.date_of_birth))
         .map(({ date_of_birth: _dob, ...p }) => { void _dob; return p })
     },
   })
