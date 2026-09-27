@@ -23,7 +23,7 @@ export const ROLE_COLOR_PALETTE: Record<Role, RoleColorEntry> = {
   coach:  { bg: '#F0FDFA', text: '#0D9488' },
   club:   { bg: '#FFF7ED', text: '#EA580C' },
   brand:  { bg: '#FFF1F2', text: '#E11D48' },
-  umpire: { bg: '#FEFCE8', text: '#A16207' },
+  umpire: { bg: '#F4F4F7', text: '#5B5B6B' }, // surface/muted + ink/secondary
 }
 
 const FALLBACK_COLORS: RoleColorEntry = { bg: '#F3F4F6', text: '#4B5563' }

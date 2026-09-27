@@ -1,5 +1,6 @@
 import { ShieldAlert } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { STATUS_TONE_PILL, pendingVerificationTone } from '@/lib/statusTone'
 
 interface PendingVerificationBadgeProps {
   /** Whether the club has been verified by HOCKIA admin. */
@@ -8,6 +9,10 @@ interface PendingVerificationBadgeProps {
   className?: string
   /** Compact (icon-only) vs full (icon + text) display. */
   variant?: 'full' | 'compact'
+  /** True only for the person who must verify (amber for them, grey for
+   *  everyone else — founder ruling 2026-09-26). The club claim is verified
+   *  by HOCKIA admin, so every in-app viewer sees grey. */
+  viewerMustVerify?: boolean
 }
 
 /**
@@ -30,6 +35,7 @@ export default function PendingVerificationBadge({
   verified,
   className,
   variant = 'full',
+  viewerMustVerify = false,
 }: PendingVerificationBadgeProps) {
   // VerifiedBadge handles the verified=true state; this is purely the
   // "not yet verified" signal.
@@ -47,7 +53,8 @@ export default function PendingVerificationBadge({
         // a large heading (e.g., the club dashboard h1): without them, the
         // badge inherits the heading's tall line-height and its text wraps
         // when the row is space-constrained, producing a fat oval.
-        'inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 text-amber-700 leading-none whitespace-nowrap',
+        'inline-flex items-center gap-1 rounded-full leading-none whitespace-nowrap',
+        STATUS_TONE_PILL[pendingVerificationTone(viewerMustVerify)],
         variant === 'compact' ? 'px-1.5 py-1' : 'px-2 py-1 text-[11px] font-medium',
         className,
       )}

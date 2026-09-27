@@ -56,15 +56,15 @@ describe('ProfileActionMenu — blocked state per target', () => {
     answerBlocked(new Set())
     render(menu('target-a'))
     openMenu()
-    await waitFor(() => expect(screen.getByText('Block User')).toBeInTheDocument())
-    expect(screen.queryByText('Unblock User')).not.toBeInTheDocument()
+    await waitFor(() => expect(screen.getByText('Block')).toBeInTheDocument())
+    expect(screen.queryByText('Unblock')).not.toBeInTheDocument()
   })
 
   it('offers Unblock for a target that IS blocked', async () => {
     answerBlocked(new Set(['target-b']))
     render(menu('target-b'))
     openMenu()
-    await waitFor(() => expect(screen.getByText('Unblock User')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText('Unblock')).toBeInTheDocument())
   })
 
   it('RE-DERIVES on target change: blocked → not blocked must offer Block again', async () => {
@@ -73,11 +73,11 @@ describe('ProfileActionMenu — blocked state per target', () => {
     answerBlocked(new Set(['target-blocked']))
     const { rerender } = render(menu('target-blocked'))
     openMenu()
-    await waitFor(() => expect(screen.getByText('Unblock User')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText('Unblock')).toBeInTheDocument())
 
     rerender(menu('target-clean'))
-    await waitFor(() => expect(screen.getByText('Block User')).toBeInTheDocument())
-    expect(screen.queryByText('Unblock User')).not.toBeInTheDocument()
+    await waitFor(() => expect(screen.getByText('Block')).toBeInTheDocument())
+    expect(screen.queryByText('Unblock')).not.toBeInTheDocument()
   })
 
   it('ignores a STALE response that resolves after the target changed', async () => {
@@ -99,7 +99,7 @@ describe('ProfileActionMenu — blocked state per target', () => {
     await new Promise((r) => setTimeout(r, 30))
 
     openMenu()
-    await waitFor(() => expect(screen.getByText('Block User')).toBeInTheDocument())
-    expect(screen.queryByText('Unblock User')).not.toBeInTheDocument()
+    await waitFor(() => expect(screen.getByText('Block')).toBeInTheDocument())
+    expect(screen.queryByText('Unblock')).not.toBeInTheDocument()
   })
 })

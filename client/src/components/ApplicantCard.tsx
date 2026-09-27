@@ -26,8 +26,8 @@ const TIER_OPTIONS: { tier: ShortlistTier; label: string; icon: typeof Star; pil
     tier: 'maybe',
     label: 'Maybe',
     icon: HelpCircle,
-    pillClass: 'bg-amber-50 text-amber-700 border-amber-200',
-    menuActiveClass: 'bg-amber-50',
+    pillClass: 'bg-surface-grouped text-ink-2 border-line',
+    menuActiveClass: 'bg-surface-grouped',
   },
   {
     tier: 'rejected',

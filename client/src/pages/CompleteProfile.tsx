@@ -1259,8 +1259,8 @@ export default function CompleteProfile() {
                   className="w-full p-4 border-2 border-gray-200 rounded-xl hover:border-hockia-primary hover:bg-purple-50 transition-all text-left group disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center group-hover:from-amber-200 group-hover:to-orange-200 transition-colors">
-                      <Flag className="w-6 h-6 text-amber-700" />
+                    <div className="w-12 h-12 rounded-full bg-surface-muted flex items-center justify-center group-hover:bg-line transition-colors">
+                      <Flag className="w-6 h-6 text-ink-2" />
                     </div>
                     <div>
                       <h4 className="font-semibold text-gray-900">I'm an Umpire</h4>

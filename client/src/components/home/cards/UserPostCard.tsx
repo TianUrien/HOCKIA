@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useMemo, lazy, Suspense } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MoreHorizontal, Pencil, Trash2, Flag, CircleHelp } from 'lucide-react'
+import { Pencil, Trash2, Flag, CircleHelp } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
 import { usePostInteractions } from '@/hooks/usePostInteractions'
 import { useUserPosts } from '@/hooks/useUserPosts'
@@ -13,6 +13,8 @@ import { PostComposerModal } from '../PostComposerModal'
 import { FeedCard, FeedCardBody, FeedCardHeader, FeedCardMedia, profilePathForRole } from '../FeedCard'
 import { Avatar } from '@/components'
 import ReportUserModal from '@/components/ReportUserModal'
+import { MENU_ICON_CLASS, REPORT_MENU_LABEL } from '@/lib/report'
+import { MoreMenu, type MoreMenuItem } from '@/components/safety/MoreMenu'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { identityLine } from '@/lib/identity'
 import { getShareOrigin } from '@/lib/profileShare'
@@ -47,7 +49,6 @@ export function UserPostCard({ item, onLikeUpdate, onDelete, detail = false }: U
 
   const isQuestion = item.post_type === 'question'
   const [showComments, setShowComments] = useState(detail)
-  const [showMenu, setShowMenu] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [localCommentCount, setLocalCommentCount] = useState(item.comment_count)
@@ -114,7 +115,6 @@ export function UserPostCard({ item, onLikeUpdate, onDelete, detail = false }: U
   // so deletion goes through ConfirmDialog.
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const handleDeleteClick = useCallback(() => {
-    setShowMenu(false)
     setShowDeleteConfirm(true)
   }, [])
   const handleDelete = useCallback(async () => {
@@ -150,59 +150,16 @@ export function UserPostCard({ item, onLikeUpdate, onDelete, detail = false }: U
     }
   }, [detailPath, item.author_name, addToast])
 
+  // Figma "…" (phones: the shared action sheet; desktop: popover) — same
+  // component as profiles, chats and roles.
+  const menuItems: MoreMenuItem[] = isOwner
+    ? [
+        { key: 'edit', label: isQuestion ? 'Edit question' : 'Edit post', icon: <Pencil className={MENU_ICON_CLASS} strokeWidth={1.8} />, onSelect: () => setIsEditing(true) },
+        { key: 'delete', label: isQuestion ? 'Delete question' : 'Delete post', icon: <Trash2 className={MENU_ICON_CLASS} strokeWidth={1.8} />, destructive: true, onSelect: handleDeleteClick },
+      ]
+    : [{ key: 'report', label: REPORT_MENU_LABEL, icon: <Flag className={MENU_ICON_CLASS} strokeWidth={1.8} />, onSelect: () => setShowReport(true) }]
   const menu = user ? (
-    <div className="relative">
-      <button
-        type="button"
-        aria-label="Post options"
-        aria-haspopup="menu"
-        aria-expanded={showMenu}
-        onClick={() => setShowMenu(!showMenu)}
-        className="-mr-2 flex h-11 w-11 items-center justify-center rounded-full text-ink-4 transition-colors hover:bg-surface-muted hover:text-ink-1"
-      >
-        <MoreHorizontal className="h-5 w-5" />
-      </button>
-
-      {showMenu && (
-        <>
-          <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
-          <div role="menu" className="absolute right-0 top-full z-20 mt-1 w-40 rounded-card border border-line bg-white py-1 shadow-lg">
-            {isOwner ? (
-              <>
-                <button
-                  type="button"
-                  role="menuitem"
-                  onClick={() => { setShowMenu(false); setIsEditing(true) }}
-                  className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-gray-800 hover:bg-gray-50"
-                >
-                  <Pencil className="h-4 w-4" />
-                  {isQuestion ? 'Edit question' : 'Edit post'}
-                </button>
-                <button
-                  type="button"
-                  role="menuitem"
-                  onClick={handleDeleteClick}
-                  className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-red-600 hover:bg-red-50"
-                >
-                  <Trash2 className="h-4 w-4" />
-                  {isQuestion ? 'Delete question' : 'Delete post'}
-                </button>
-              </>
-            ) : (
-              <button
-                type="button"
-                role="menuitem"
-                onClick={() => { setShowMenu(false); setShowReport(true) }}
-                className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-gray-800 hover:bg-gray-50"
-              >
-                <Flag className="h-4 w-4" />
-                {isQuestion ? 'Report question' : 'Report post'}
-              </button>
-            )}
-          </div>
-        </>
-      )}
-    </div>
+    <MoreMenu items={menuItems} label="Post options" title={item.author_name ?? undefined} triggerClassName="-mr-2 flex h-11 w-11 items-center justify-center rounded-full text-ink-4 transition-colors hover:bg-surface-muted hover:text-ink-1" testId="post-more-menu" />
   ) : null
 
   const body = item.content.trim() ? (

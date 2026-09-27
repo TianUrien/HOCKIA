@@ -39,7 +39,7 @@ const PALETTES: Record<RoleAvatarRole, RolePalette> = {
   coach: { bgFrom: '#D1FAE5', bgTo: '#F0FDF4', fill: '#10B981' },
   club: { bgFrom: '#FFEDD5', bgTo: '#FFF7ED', fill: '#F97316' },
   brand: { bgFrom: '#FFE4E6', bgTo: '#FFF1F2', fill: '#F43F5E' },
-  umpire: { bgFrom: '#FEF3C7', bgTo: '#FEFCE8', fill: '#D97706' },
+  umpire: { bgFrom: '#E6E6EC', bgTo: '#F4F4F7', fill: '#6F6F7C' }, // line / surface-muted / ink-3
 }
 
 interface RolePlaceholderProps {

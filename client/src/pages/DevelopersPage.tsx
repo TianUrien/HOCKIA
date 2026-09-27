@@ -191,8 +191,8 @@ export default function DevelopersPage() {
           {/* Quick Start */}
           <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
             <div className="flex items-start gap-4 mb-6">
-              <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center flex-shrink-0">
-                <Zap className="w-5 h-5 text-amber-600" />
+              <div className="w-10 h-10 bg-hockia-soft rounded-xl flex items-center justify-center flex-shrink-0">
+                <Zap className="w-5 h-5 text-hockia-primary" />
               </div>
               <div>
                 <h2 className="text-2xl font-semibold text-gray-900">Quick Start</h2>

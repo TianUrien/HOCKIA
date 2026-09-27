@@ -1,5 +1,6 @@
 import { differenceInCalendarDays } from 'date-fns'
 import { humanizeToken, roleLabel } from '@/lib/identity'
+import { NO_REPLY_DAYS, STATUS_TONE_TEXT, noReplyTone } from '@/lib/statusTone'
 
 /**
  * Copy and arithmetic for the club's recruiting screens (Figma 04 Club ·
@@ -28,6 +29,24 @@ export function daysLeftLabel(days: number | null): string | null {
 
 export function isDaysLeftUrgent(days: number | null): boolean {
   return days !== null && days <= DAYS_LEFT_AMBER
+}
+
+/**
+ * The club owes this pending application an answer soon: it closes within
+ * DAYS_LEFT_AMBER days, or it has gone NO_REPLY_DAYS (14) without a reply.
+ * Club-facing only — the same "No reply · 14d+" is grey for the player
+ * (lib/statusTone noReplyTone).
+ */
+export function isClubReplyUrgent(appliedAt: string | null | undefined, daysLeft: number | null, now = new Date()): boolean {
+  if (isDaysLeftUrgent(daysLeft)) return true
+  if (!appliedAt) return false
+  const d = new Date(appliedAt)
+  return !Number.isNaN(d.getTime()) && differenceInCalendarDays(now, d) >= NO_REPLY_DAYS
+}
+
+/** Text colour for the club's reply-by line: amber when the club must act. */
+export function clubReplyLineClass(urgent: boolean): string {
+  return urgent ? `font-semibold ${STATUS_TONE_TEXT[noReplyTone('club')]}` : 'text-ink-3'
 }
 
 export type AppStatus = 'pending' | 'shortlisted' | 'maybe' | 'rejected' | 'no_response' | 'withdrawn' | string

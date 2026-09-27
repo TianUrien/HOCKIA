@@ -85,8 +85,8 @@ test.describe('@smoke UGC safety (Apple Guideline 1.2)', () => {
     await moreButton.click()
 
     // Both options should be present
-    await expect(page.getByText('Report User')).toBeVisible({ timeout: 5000 })
-    await expect(page.getByText('Block User')).toBeVisible({ timeout: 5000 })
+    await expect(page.getByText('Report', { exact: true })).toBeVisible({ timeout: 5000 })
+    await expect(page.getByText('Block', { exact: true })).toBeVisible({ timeout: 5000 })
   })
 
   // Report UI is verified in "report and block buttons appear" test above.
@@ -99,25 +99,18 @@ test.describe('@smoke UGC safety (Apple Guideline 1.2)', () => {
 
     // Open action menu > Report
     await page.getByRole('button', { name: /more actions/i }).click()
-    await page.getByText('Report User').click()
+    await page.getByText('Report', { exact: true }).click()
 
-    // Modal appears
-    await expect(page.getByRole('heading', { name: /Report User/i })).toBeVisible({ timeout: 5000 })
+    // Sheet appears
+    await expect(page.getByRole('heading', { name: /Report this profile/i })).toBeVisible({ timeout: 5000 })
 
-    // Fill form
-    await page.getByLabel('Report category').selectOption('spam')
-    await page.getByPlaceholder('Please describe what happened...').fill('E2E automated test report — please ignore')
+    // Pick a reason (the note is optional)
+    await page.getByRole('radio', { name: 'Spam or scam' }).click()
+    await page.getByPlaceholder('Add details that help us review it').fill('E2E automated test report — please ignore')
 
-    // Submit
-    await page.getByRole('button', { name: /Submit Report/i }).click()
-
-    // Success
-    await expect(page.getByText('Report Submitted')).toBeVisible({ timeout: 10000 })
-    await expect(page.getByText('within 24 hours')).toBeVisible()
-
-    // Close
-    await page.getByRole('button', { name: 'Done' }).click()
-    await expect(page.getByText('Report Submitted')).not.toBeVisible({ timeout: 5000 })
+    // Submit → toast
+    await page.getByRole('button', { name: /Send report/i }).click()
+    await expect(page.getByText("Thanks. We'll review it.")).toBeVisible({ timeout: 10000 })
   })
 
   // Block toggle has a flaky notification overlay in E2E — block button visibility
@@ -130,15 +123,15 @@ test.describe('@smoke UGC safety (Apple Guideline 1.2)', () => {
     await expect(page.getByRole('heading', { level: 1, name: /e2e test fc/i })).toBeVisible({ timeout: 20000 })
     const moreButton = page.getByRole('button', { name: /more actions/i })
     await moreButton.click()
-    await page.getByText('Block User').click()
+    await page.getByText('Block', { exact: true }).click()
     await page.waitForTimeout(2000)
 
     await page.goto(`/clubs/${E2E_CLUB_USERNAME}`)
     await dismissGates(page)
     await page.getByRole('button', { name: /more actions/i }).click()
-    await expect(page.getByText('Unblock User')).toBeVisible({ timeout: 5000 })
+    await expect(page.getByText('Unblock', { exact: true })).toBeVisible({ timeout: 5000 })
 
-    await page.getByText('Unblock User').click()
+    await page.getByText('Unblock', { exact: true }).click()
   })
 
   test('post three-dot menu shows report option for other users posts', async ({ page }) => {
@@ -159,7 +152,7 @@ test.describe('@smoke UGC safety (Apple Guideline 1.2)', () => {
     await postOptions.first().click()
 
     // Should show either Report (other's post) or Edit/Delete (own post)
-    const reportBtn = page.getByText('Report post')
+    const reportBtn = page.getByText('Report', { exact: true })
     const editBtn = page.getByText('Edit post')
 
     const hasReport = await reportBtn.isVisible({ timeout: 3000 }).catch(() => false)

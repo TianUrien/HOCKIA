@@ -73,29 +73,29 @@ export default function FreshnessCard({ nudge, onAction }: FreshnessCardProps) {
   }
 
   return (
-    <div className="relative rounded-xl border border-amber-200 bg-amber-50/60 p-4 sm:p-5 shadow-sm">
+    <div className="relative rounded-xl border border-hockia-primary/15 bg-hockia-soft/60 p-4 sm:p-5 shadow-sm">
       <button
         type="button"
         onClick={handleDismiss}
         aria-label="Dismiss this nudge"
-        className="absolute top-2.5 right-2.5 p-1.5 rounded-full text-amber-700/60 hover:text-amber-900 hover:bg-amber-100 transition-colors"
+        className="absolute top-2.5 right-2.5 p-1.5 rounded-full text-ink-3 hover:text-ink-1 hover:bg-hockia-soft transition-colors"
       >
         <X className="w-4 h-4" />
       </button>
 
       <div className="flex items-start gap-3 pr-8">
-        <div className="flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-full bg-amber-100 text-amber-700">
+        <div className="flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-full bg-hockia-soft text-hockia-primary">
           <Clock className="w-4 h-4" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-800 mb-0.5">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-hockia-primary mb-0.5">
             Keep it fresh
           </p>
           <p className="text-sm text-gray-800 leading-relaxed">{nudge.message}</p>
           <button
             type="button"
             onClick={handleAction}
-            className="mt-2.5 inline-flex items-center gap-1.5 rounded-full bg-amber-600 text-white px-3.5 py-1.5 text-xs font-semibold shadow-sm hover:bg-amber-700 transition-colors"
+            className="mt-2.5 inline-flex items-center gap-1.5 rounded-full bg-hockia-primary text-white px-3.5 py-1.5 text-xs font-semibold shadow-sm hover:bg-[#6b1fd4] transition-colors"
           >
             {nudge.ctaLabel}
             <ArrowRight className="w-3.5 h-3.5" />

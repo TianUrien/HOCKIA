@@ -86,17 +86,17 @@ export default function TrustedReferenceCard({
       className={cn(
         // Softer gold styling - premium but not "warning box"
         'relative flex flex-col overflow-hidden rounded-2xl',
-        'border border-amber-200/50 bg-gradient-to-b from-white via-white to-amber-50/30',
+        'border border-gold-line/40 bg-gradient-to-b from-white via-white to-gold-soft/60',
         'p-5 text-slate-900',
-        'shadow-sm shadow-amber-100/40',
-        'transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:shadow-amber-100/50',
+        'shadow-sm shadow-gold-soft/60',
+        'transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:shadow-gold-soft/80',
         layoutClasses,
         className
       )}
     >
       {/* Subtle quote watermark - smaller and more subtle */}
       <Quote
-        className="pointer-events-none absolute -right-1 -top-1 h-12 w-12 rotate-12 text-amber-100/40"
+        className="pointer-events-none absolute -right-1 -top-1 h-12 w-12 rotate-12 text-gold-soft"
         aria-hidden
       />
 
@@ -176,7 +176,7 @@ export default function TrustedReferenceCard({
 
       {/* Endorsement Quote - only if text exists */}
       {endorsementDisplay && (
-        <div className="relative mt-4 border-t border-amber-100/40 pt-3 text-center">
+        <div className="relative mt-4 border-t border-gold-line/25 pt-3 text-center">
           <p
             className={cn(
               'text-sm leading-relaxed text-slate-600',
@@ -192,7 +192,7 @@ export default function TrustedReferenceCard({
             <button
               type="button"
               onClick={() => setIsExpanded(!isExpanded)}
-              className="mt-2 text-sm font-medium text-amber-600 hover:text-amber-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
+              className="mt-2 text-sm font-medium text-gold hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-line focus-visible:ring-offset-2"
             >
               {isExpanded ? 'Show less' : 'Read more'}
             </button>
@@ -204,7 +204,7 @@ export default function TrustedReferenceCard({
       {(secondaryAction || onMessage) && (
         <div className={cn(
           'mt-4 flex flex-wrap items-center justify-center gap-2 pt-3',
-          !endorsementDisplay && 'border-t border-amber-100/40'
+          !endorsementDisplay && 'border-t border-gold-line/25'
         )}>
           {onMessage && (
             <button

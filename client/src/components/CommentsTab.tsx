@@ -617,7 +617,7 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
             <article
               className={cn(
                 'rounded-2xl border border-gray-100 bg-white p-5 shadow-sm',
-                highlightedCommentIds?.has(existingComment.id) && 'border-amber-200 shadow-lg shadow-amber-100 ring-2 ring-amber-200'
+                highlightedCommentIds?.has(existingComment.id) && 'border-hockia-primary/30 shadow-lg shadow-hockia-soft ring-2 ring-hockia-primary/20'
               )}
             >
               <div className="flex items-start gap-3">
@@ -772,7 +772,7 @@ export default function CommentsTab({ profileId, highlightedCommentIds, profileR
                   key={comment.id}
                   className={cn(
                     'rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition-transform',
-                    isHighlighted && 'border-amber-200 shadow-lg shadow-amber-100 ring-2 ring-amber-200'
+                    isHighlighted && 'border-hockia-primary/30 shadow-lg shadow-hockia-soft ring-2 ring-hockia-primary/20'
                   )}
                   data-highlighted={isHighlighted || undefined}
                 >

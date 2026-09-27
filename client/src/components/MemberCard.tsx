@@ -206,7 +206,7 @@ export default function MemberCard({
             />
             {tier && <TierBadge tier={tier} size="sm" />}
             {(accepted_reference_count ?? 0) > 0 && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-[10px] font-medium">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gold-soft text-gold text-[10px] font-medium">
                 <Shield className="w-2.5 h-2.5" />
                 Trusted by {accepted_reference_count}
               </span>

@@ -606,11 +606,11 @@ export default function OpportunitiesPage() {
               listings today, so Apply is hidden for umpires. Kept low-key so
               it informs without blocking the browsing experience. */}
           {isUmpire && (
-            <div className="mx-5 mb-6 flex items-start gap-3 rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 lg:mx-0">
-              <Shield className="w-5 h-5 text-amber-700 flex-shrink-0 mt-0.5" />
-              <div className="text-sm text-amber-900">
+            <div className="mx-5 mb-6 flex items-start gap-3 rounded-xl bg-surface-grouped border border-line px-4 py-3 lg:mx-0">
+              <Shield className="w-5 h-5 text-ink-2 flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-ink-1">
                 <p className="font-medium">Browse-only for umpires right now</p>
-                <p className="text-amber-800 mt-0.5">
+                <p className="text-ink-2 mt-0.5">
                   Opportunities here are player and coach roster openings.
                   You can see what clubs are building, but Apply is hidden.
                   Umpire appointments and assessments will live here when we open them.

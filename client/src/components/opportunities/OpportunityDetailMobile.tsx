@@ -7,6 +7,9 @@ import { DetailNavBar } from '@/components/ui/DetailNavBar'
 import { backLabelFrom } from '@/lib/backLabel'
 import { IconButton } from '@/components/ui/IconButton'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
+import { MoreMenu } from '@/components/safety/MoreMenu'
+import { useReportAction } from '@/components/safety/useReportAction'
+import { canReport } from '@/lib/report'
 import { useToastStore } from '@/lib/toast'
 import { useAuthStore } from '@/lib/auth'
 import { useCountries } from '@/hooks/useCountries'
@@ -58,6 +61,8 @@ export function OpportunityDetailMobile({
   const addToast = useToastStore((s) => s.addToast)
   const profile = useAuthStore((s) => s.profile)
   const { countries } = useCountries()
+  const report = useReportAction({ targetId: vacancy.club_id, subject: 'role', contentId: vacancy.id })
+  const showMore = !isPublisher && canReport(profile?.id, vacancy.club_id)
   // Same two rules as the apply sheet and the DB trigger, so the block is
   // never a surprise two taps later.
   const eligibility = checkOpportunityEligibility(vacancy, profile, countries)
@@ -133,8 +138,14 @@ export function OpportunityDetailMobile({
       <DetailNavBar
         parent={backLabelFrom(location.state, 'Opportunities')}
         fallbackPath="/opportunities"
-        trailing={<IconButton label="Share" onClick={() => void share()}><Share className="h-6 w-6" strokeWidth={1.8} /></IconButton>}
+        trailing={(
+          <span className="flex items-center">
+            <IconButton label="Share" onClick={() => void share()}><Share className="h-6 w-6" strokeWidth={1.8} /></IconButton>
+            {showMore && <MoreMenu items={[report.item]} label="More options" title={vacancy.title ?? undefined} triggerClassName="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-ink-1" iconClassName="h-6 w-6" testId="role-more-menu" />}
+          </span>
+        )}
       />
+      {report.sheet}
 
       <button type="button" onClick={openClub} className="flex w-full items-center gap-3 px-5 py-2 text-left active:bg-surface-muted">
         <EntityAvatar src={clubLogo} name={clubName} role={publisherRole ?? 'club'} size={56} />

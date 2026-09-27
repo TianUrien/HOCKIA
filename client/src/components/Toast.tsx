@@ -1,7 +1,8 @@
 import { useEffect } from 'react'
 import { CheckCircle, XCircle, Info, X } from 'lucide-react'
 
-export type ToastType = 'success' | 'error' | 'info'
+/** neutral = quiet grey info (e.g. "This person isn't accepting requests.") — never red. */
+export type ToastType = 'success' | 'error' | 'info' | 'neutral'
 
 interface ToastProps {
   message: string
@@ -22,18 +23,21 @@ export default function Toast({ message, type, onClose, duration = 4000 }: Toast
     success: CheckCircle,
     error: XCircle,
     info: Info,
+    neutral: Info,
   }
 
   const colors = {
     success: 'bg-green-50 border-green-200 text-green-800',
     error: 'bg-red-50 border-red-200 text-red-800',
     info: 'bg-blue-50 border-blue-200 text-blue-800',
+    neutral: 'bg-surface-grouped border-line text-ink-1',
   }
 
   const iconColors = {
     success: 'text-green-600',
     error: 'text-red-600',
     info: 'text-blue-600',
+    neutral: 'text-ink-2',
   }
 
   const Icon = icons[type]

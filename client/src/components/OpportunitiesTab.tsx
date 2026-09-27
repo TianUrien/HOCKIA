@@ -95,7 +95,7 @@ function VacancyActionMenu({ vacancy, disabled, onEdit, onDuplicate, onPublish, 
     menuItems.push({
       key: 'close',
       label: 'Close opportunity',
-      icon: <Archive className="w-4 h-4 text-amber-600" />,
+      icon: <Archive className="w-4 h-4 text-ink-2" />,
       onClick: () => {
         closeMenu()
         onClose(vacancy)
@@ -663,7 +663,7 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
     if (!status) return null
 
     const config: Record<string, { style: string; icon: React.ComponentType<{ className?: string }>; label: string }> = {
-      draft: { style: 'bg-amber-50 text-amber-700 border border-amber-200', icon: AlertCircle, label: 'Draft' },
+      draft: { style: 'bg-surface-grouped text-ink-2 border border-line', icon: AlertCircle, label: 'Draft' },
       open: { style: 'bg-hockia-primary/5 text-hockia-primary border border-hockia-primary/15', icon: CheckCircle, label: 'Published' },
       closed: { style: 'bg-gray-100 text-gray-600 border border-gray-200', icon: XCircle, label: 'Closed' },
     }
@@ -879,7 +879,7 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
 
                 {/* Draft hint */}
                 {!readOnly && vacancy.status === 'draft' && (
-                  <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700">
+                  <p className="mt-3 rounded-lg bg-surface-grouped px-3 py-2 text-xs font-medium text-ink-2">
                     Draft — publish when you're ready to go live.
                   </p>
                 )}

@@ -21,6 +21,7 @@ import { careerSpan, isCurrentEntry } from '@/lib/careerCopy'
 import { cn } from '@/lib/utils'
 import type { PlayerProfileShape } from '@/pages/PlayerDashboard'
 import type { UserPostFeedItem } from '@/types/homeFeed'
+import { VideoLockBadge } from './VideoLockBadge'
 
 /**
  * Phone profile long scroll under the identity block and the six key facts
@@ -99,7 +100,7 @@ function LinkTile({ link }: { link: ScrollFullGameLink }) {
     >
       <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-white/15 text-white"><ExternalLink className="h-3 w-3" /></span>
       {link.visibility === 'recruiters' && (
-        <span className="absolute left-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-black/55 text-white"><Lock className="h-3 w-3" strokeWidth={2.2} /></span>
+        <VideoLockBadge />
       )}
       <span className="truncate text-secondary font-semibold text-white">{title}</span>
       {link.match_date && <span className="text-caption text-white/75">{monthYear(link.match_date)}</span>}

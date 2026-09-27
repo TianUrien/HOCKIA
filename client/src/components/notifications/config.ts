@@ -146,7 +146,7 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
   profile_comment_created: {
     icon: MessageCircle,
     badgeText: 'Profile comment',
-    accentClassName: 'bg-amber-50 text-amber-700',
+    accentClassName: 'bg-surface-grouped text-ink-2',
     getTitle: (notification) => `${getActorName(notification)} commented on your profile`,
     getDescription: (notification) => getMetadataString(notification, 'snippet'),
     getRoute: () => commentRoute,
@@ -154,7 +154,7 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
   user_post_comment_received: {
     icon: MessageCircle,
     badgeText: 'Post comment',
-    accentClassName: 'bg-amber-50 text-amber-700',
+    accentClassName: 'bg-surface-grouped text-ink-2',
     getTitle: (notification) => `${getActorName(notification)} commented on your post`,
     getDescription: (notification) => getMetadataString(notification, 'snippet'),
     getRoute: () => '/home',
@@ -162,7 +162,7 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
   profile_comment_reply: {
     icon: MessageCircle,
     badgeText: 'Comment reply',
-    accentClassName: 'bg-amber-50 text-amber-700',
+    accentClassName: 'bg-surface-grouped text-ink-2',
     getTitle: (notification) => `${getActorName(notification)} replied to a profile comment`,
     getDescription: (notification) => getMetadataString(notification, 'snippet'),
     getRoute: () => commentRoute,

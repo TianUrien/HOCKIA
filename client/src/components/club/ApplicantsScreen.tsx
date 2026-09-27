@@ -11,7 +11,7 @@ import { useCountries } from '@/hooks/useCountries'
 import { useRoleApplicants, type Applicant } from '@/hooks/useRoleApplicants'
 import { getImageUrl } from '@/lib/imageUrl'
 import { genderPill, roleTitle } from '@/lib/opportunityCopy'
-import { daysLeftLabel, daysLeftToReply, isDaysLeftUrgent, personRoleLine, pipelineOf } from '@/lib/clubRecruiting'
+import { clubReplyLineClass, daysLeftLabel, daysLeftToReply, isClubReplyUrgent, personRoleLine, pipelineOf } from '@/lib/clubRecruiting'
 import { cn } from '@/lib/utils'
 
 /**
@@ -134,7 +134,7 @@ export default function ApplicantsScreen({ roleId }: { roleId: string }) {
                   ) : null}
                 </span>
                 <span className="flex shrink-0 items-center gap-0.5">
-                  {right && <span className={cn('text-secondary', isDaysLeftUrgent(days) ? 'font-semibold text-[#b45309]' : 'text-ink-3')}>{right}</span>}
+                  {right && <span className={cn('text-secondary', clubReplyLineClass(a.status === 'pending' && isClubReplyUrgent(a.appliedAt, days)))}>{right}</span>}
                   <ChevronRight className="h-[18px] w-[18px] text-ink-4" strokeWidth={2} />
                 </span>
               </button>

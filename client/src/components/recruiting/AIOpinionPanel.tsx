@@ -297,8 +297,8 @@ export default function AIOpinionPanel({ candidate, className = '' }: AIOpinionP
                     className={[
                       'inline-flex h-5 w-5 items-center justify-center rounded-full transition',
                       rating === 'down'
-                        ? 'bg-amber-100 text-amber-700'
-                        : 'text-gray-400 hover:text-amber-600 hover:bg-amber-50',
+                        ? 'bg-surface-grouped text-ink-1'
+                        : 'text-gray-400 hover:text-ink-1 hover:bg-surface-grouped',
                       submitting ? 'opacity-50' : '',
                     ].join(' ')}
                   >
@@ -320,12 +320,12 @@ export default function AIOpinionPanel({ candidate, className = '' }: AIOpinionP
 
           {reasonOpen && rating === 'down' && (
             <div
-              className="mt-2.5 rounded-lg border border-amber-200 bg-amber-50/50 p-2.5"
+              className="mt-2.5 rounded-lg border border-line bg-surface-grouped p-2.5"
               data-testid="ai-opinion-feedback-reason"
             >
               <label
                 htmlFor="ai-opinion-feedback-reason-input"
-                className="block text-[10px] font-semibold text-amber-800"
+                className="block text-[10px] font-semibold text-ink-2"
               >
                 What was off? (optional)
               </label>
@@ -335,7 +335,7 @@ export default function AIOpinionPanel({ candidate, className = '' }: AIOpinionP
                 onChange={(e) => setReasonText(e.target.value.slice(0, 500))}
                 rows={2}
                 placeholder="e.g. the level comparison was inverted, or it missed a key fact…"
-                className="mt-1 w-full resize-none rounded border border-amber-200 bg-white px-2 py-1.5 text-xs text-gray-800 placeholder:text-gray-400 focus:border-amber-400 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                className="mt-1 w-full resize-none rounded border border-line bg-white px-2 py-1.5 text-xs text-gray-800 placeholder:text-gray-400 focus:border-hockia-primary/40 focus:outline-none focus:ring-1 focus:ring-hockia-primary/30"
               />
               <div className="mt-1.5 flex items-center justify-end gap-2 text-[10px]">
                 <button
@@ -349,7 +349,7 @@ export default function AIOpinionPanel({ candidate, className = '' }: AIOpinionP
                   type="button"
                   onClick={() => void handleReasonSubmit()}
                   disabled={submitting || reasonText.trim().length === 0}
-                  className="rounded bg-amber-600 px-2 py-1 font-medium text-white hover:bg-amber-700 disabled:opacity-40"
+                  className="rounded bg-hockia-primary px-2 py-1 font-medium text-white hover:bg-[#6b1fd4] disabled:opacity-40"
                 >
                   Send
                 </button>
