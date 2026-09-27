@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { Camera, Check, ChevronLeft, Eye, MapPin, MessageCircle, Pencil, Settings, Share, Shield, Sparkles, Star, Target, UserPlus } from 'lucide-react'
 import { Avatar, DualNationalityDisplay, LastActivePill, VerifiedBadge } from '@/components'
 import ProfileActionMenu from '@/components/ProfileActionMenu'
+import type { MoreMenuItem } from '@/components/safety/MoreMenu'
+import { MENU_ICON_CLASS } from '@/lib/report'
 import SettingsSheet from '@/components/SettingsSheet'
 import SignInPromptModal from '@/components/SignInPromptModal'
 import { useAuthStore } from '@/lib/auth'
@@ -167,6 +169,18 @@ export default function HeroIdentityCard({
     return { label: 'Add friend', icon: <UserPlus className="h-[18px] w-[18px]" strokeWidth={2} />, cls: 'bg-hockia-primary text-white', disabled: friendship.mutating }
   })()
 
+  // Club view (Figma D1.16 · DEV NOTE 355:899): Shortlist takes the primary
+  // button, so Add friend moves into the "…" menu, above Report.
+  const recruiterFriendItems: MoreMenuItem[] = recruiterActions && !recruiterActions.preview && friendButton && !friendship.isFriend
+    ? [{
+        key: 'friend',
+        label: friendship.isOutgoingRequest ? 'Friend request sent' : friendship.isIncomingRequest ? 'Accept friend request' : 'Add friend',
+        icon: <UserPlus className={MENU_ICON_CLASS} strokeWidth={1.8} />,
+        disabled: friendButton.disabled,
+        onSelect: addFriend,
+      }]
+    : []
+
   const stat = (value: number, label: string, onClick?: () => void) => (
     <button
       type="button"
@@ -211,7 +225,7 @@ export default function HeroIdentityCard({
                 <span className="hidden lg:inline-flex"><SettingsSheet className="!h-9 !w-9 !min-h-0 !min-w-0 !rounded-full !bg-white/90 !text-ink-1 shadow-sm backdrop-blur" /></span>
               </>
             )}
-            {isVisitorView && <ProfileActionMenu targetId={profile.id} targetName={profile.full_name ?? 'this user'} triggerClassName={GLASS} iconClassName="h-[18px] w-[18px]" />}
+            {isVisitorView && <ProfileActionMenu targetId={profile.id} targetName={profile.full_name ?? 'this user'} leadingItems={recruiterFriendItems} triggerClassName={GLASS} iconClassName="h-[18px] w-[18px]" />}
           </div>
         </div>
       </div>

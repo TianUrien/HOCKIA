@@ -27,6 +27,8 @@ import { getPlayerLeagueName } from '@/hooks/useWorldClubLogo'
 import { recruiterDisplayTier, type RecruiterVerdict, type VerdictDisplayTier } from '@/lib/recruiterVerdict'
 import { availabilityLabel } from '@/lib/availabilityLabel'
 import { openRolesLabel } from '@/hooks/useOpenRoleCounts'
+import { FitChip } from '@/components/club/FitChip'
+import { fitChipLabel, type FitState } from '@/lib/clubRecruiting'
 
 /** Fields the card reads — a structural subset of the Community member row, so
  *  PeopleListView can pass `member` straight through. Most are optional so a
@@ -88,6 +90,10 @@ interface RecruiterCandidateCardProps {
    *  null) → NEUTRAL mode (no active recruiting scope for this member). */
   verdict?: RecruiterVerdict | null
   onPreview: () => void
+  /** Club view (Figma D1.17): the server fit for the active context — green
+   *  "Strong fit", yellow "Possible fit", grey or null renders nothing. Only
+   *  ever passed for clubs and coaches who recruit. */
+  fitState?: FitState | null
   /** Eager-load + high fetch-priority the avatar. Set true ONLY for the
    *  first row of the Community grid / carousel (the most-viewed image
    *  surface) so it paints instantly; everyone else stays lazy. */
@@ -284,7 +290,7 @@ function tileDetail(member: RecruiterCardMember): string {
  * In CONTEXT mode (a recruiter with an active scope) the pill is the verdict
  * chip and a "% match" line joins the text block. Tap → preview.
  */
-export default function RecruiterCandidateCard({ member, verdict, onPreview, priority = false }: RecruiterCandidateCardProps) {
+export default function RecruiterCandidateCard({ member, verdict, fitState = null, onPreview, priority = false }: RecruiterCandidateCardProps) {
   const name = member.full_name?.trim() || 'Unknown'
   const initials = name.split(' ').map((w) => w[0]).filter(Boolean).join('').slice(0, 2).toUpperCase() || '?'
 
@@ -316,7 +322,9 @@ export default function RecruiterCandidateCard({ member, verdict, onPreview, pri
 
   const ariaLabel = inContext
     ? `${name} — ${chip.label} (${pct}% match). Tap to preview.`
-    : `${name} — ${detailLine(member)}. Tap to preview.`
+    : fitState && fitChipLabel(fitState)
+      ? `${name} — ${detailLine(member)}, ${fitChipLabel(fitState)}. Tap to open the profile.`
+      : `${name} — ${detailLine(member)}. Tap to preview.`
 
   return (
     <button
@@ -378,6 +386,11 @@ export default function RecruiterCandidateCard({ member, verdict, onPreview, pri
             <span>Nationality not listed</span>
           )}
         </div>
+        {!inContext && fitChipLabel(fitState) && (
+          <div className="mt-1.5">
+            <FitChip state={fitState} />
+          </div>
+        )}
         {inContext && (
           <div className="mt-1.5">
             <div className="h-[3px] w-full overflow-hidden rounded-full bg-gray-100" aria-hidden="true">
