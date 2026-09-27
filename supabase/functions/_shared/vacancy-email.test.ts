@@ -209,3 +209,26 @@ Deno.test('notify-vacancy alerts on every post-claim failure path', async () => 
     'all three failure paths report via captureException',
   )
 })
+
+// Round 6 (QA 2026-09-27): the new-role email read "Head_coach" — a raw token
+// capitalised. Both the HTML and the text part use the app's position label.
+Deno.test('new-role email shows the position label, never the raw token', async () => {
+  const { generateEmailHtml, generateEmailText } = await import('./vacancy-email.ts')
+  const coach: VacancyRecord = { ...rec('open'), title: 'Head coach wanted', position: 'head_coach', opportunity_type: 'coach' }
+  const html = generateEmailHtml(coach, 'Test Club')
+  const text = generateEmailText(coach, 'Test Club')
+  assert(html.includes('Head coach'), 'html has "Head coach"')
+  assert(!html.includes('Head_coach') && !html.includes('head_coach'), 'html has no raw token')
+  assert(text.includes('Position: Head coach'), 'text has "Position: Head coach"')
+  assert(!text.includes('_coach'), 'text has no raw token')
+  const other: VacancyRecord = { ...rec('open'), position: 'other_coach', opportunity_type: 'coach' }
+  assert(generateEmailText(other, 'Test Club').includes('Position: Coach'))
+  assert(generateEmailText(rec('open'), 'Test Club').includes('Position: Goalkeeper'))
+})
+
+Deno.test('notify-vacancy builds the position with the shared label helper', async () => {
+  const src = await Deno.readTextFile(new URL('../notify-vacancy/index.ts', import.meta.url))
+  assert(src.includes("import { positionLabel } from '../_shared/display-labels.ts'"))
+  assert(src.includes('positionLabel(vacancy.position)'))
+  assert(!/vacancy\.position\.charAt\(0\)\.toUpperCase\(\)/.test(src), 'no raw capitalisation left')
+})

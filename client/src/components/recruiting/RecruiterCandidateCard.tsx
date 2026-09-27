@@ -90,6 +90,9 @@ interface RecruiterCandidateCardProps {
    *  null) → NEUTRAL mode (no active recruiting scope for this member). */
   verdict?: RecruiterVerdict | null
   onPreview: () => void
+  /** The tap opens the full profile (recruiters on phone Community), not the
+   *  preview — the screen-reader label says "Opens profile." then. */
+  opensProfile?: boolean
   /** Club view (Figma D1.17): the server fit for the active context — green
    *  "Strong fit", yellow "Possible fit", grey or null renders nothing. Only
    *  ever passed for clubs and coaches who recruit. */
@@ -290,7 +293,7 @@ function tileDetail(member: RecruiterCardMember): string {
  * In CONTEXT mode (a recruiter with an active scope) the pill is the verdict
  * chip and a "% match" line joins the text block. Tap → preview.
  */
-export default function RecruiterCandidateCard({ member, verdict, fitState = null, onPreview, priority = false }: RecruiterCandidateCardProps) {
+export default function RecruiterCandidateCard({ member, verdict, fitState = null, onPreview, opensProfile = false, priority = false }: RecruiterCandidateCardProps) {
   const name = member.full_name?.trim() || 'Unknown'
   const initials = name.split(' ').map((w) => w[0]).filter(Boolean).join('').slice(0, 2).toUpperCase() || '?'
 
@@ -320,11 +323,13 @@ export default function RecruiterCandidateCard({ member, verdict, fitState = nul
   // ── NEUTRAL mode (no verdict) ───────────────────────────────────────────
   const availability = availabilityChip(member)
 
+  // Round 6: say where the tap goes — the full profile or the preview.
+  const tapHint = opensProfile ? 'Opens profile.' : 'Tap to preview.'
   const ariaLabel = inContext
-    ? `${name} — ${chip.label} (${pct}% match). Tap to preview.`
+    ? `${name} — ${chip.label} (${pct}% match). ${tapHint}`
     : fitState && fitChipLabel(fitState)
-      ? `${name} — ${detailLine(member)}, ${fitChipLabel(fitState)}. Tap to open the profile.`
-      : `${name} — ${detailLine(member)}. Tap to preview.`
+      ? `${name} — ${detailLine(member)}, ${fitChipLabel(fitState)}. ${tapHint}`
+      : `${name} — ${detailLine(member)}. ${tapHint}`
 
   return (
     <button

@@ -1271,6 +1271,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
                     member={member}
                     fitState={clubFit.fit.get(member.id)?.state ?? null}
                     onPreview={() => openProfile(`/players/id/${member.id}`)}
+                    opensProfile
                     priority={i < 4}
                   />
                 )
@@ -1298,6 +1299,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
                     member={member}
                     verdict={cmd.verdict}
                     onPreview={directPath ? () => openProfile(directPath) : () => setCandidatePreview({ member })}
+                    opensProfile={!!directPath}
                     priority={i < 4}
                   />
                 )
@@ -1310,6 +1312,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
                   key={member.id}
                   member={member}
                   onPreview={directPath ? () => openProfile(directPath) : () => setPreviewMember(member)}
+                  opensProfile={!!directPath}
                   priority={i < 4}
                 />
               )

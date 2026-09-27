@@ -20,6 +20,8 @@ import { Plus, Trash2, Check, AlertCircle, Briefcase, Loader2 } from 'lucide-rea
 import Modal from '../Modal'
 import {
   useRecruitingContext,
+  useRecruitingContextStore,
+  contextKind,
   opportunityGenderToTarget,
   type RecruitingContextRow,
   type RecruitingTargetCategory,
@@ -74,6 +76,9 @@ export default function ContextEditSheet({ isOpen, onClose }: ContextEditSheetPr
   //   - 'error'   : fetch failed
   //   - 'loaded'  : fetched (ownedOpps may be empty)
   type OppsStatus = 'idle' | 'loading' | 'error' | 'loaded'
+  // Coaches tab → coach roles only; Players screens → player roles only
+  // (round 6). Other screens list every role.
+  const viewKind = useRecruitingContextStore((s) => s.viewKind)
   const [ownedOpps, setOwnedOpps] = useState<OwnedOpportunity[]>([])
   const [oppsStatus, setOppsStatus] = useState<OppsStatus>('idle')
 
@@ -84,11 +89,13 @@ export default function ContextEditSheet({ isOpen, onClose }: ContextEditSheetPr
     // the picker with finished work. The active-context case (if a
     // recruiter scoped to an opp that later closed) is handled by
     // visibleOpps below, which synthesizes a row from the context.
-    const { data, error: fetchError } = await supabase
+    let q = supabase
       .from('opportunities')
       .select('id, title, gender, location_city, status')
       .eq('club_id', user.id)
       .eq('status', 'open')
+    if (viewKind) q = q.eq('opportunity_type', viewKind)
+    const { data, error: fetchError } = await q
       .order('created_at', { ascending: false })
       .limit(50)
     if (signal.cancelled) return
@@ -107,7 +114,7 @@ export default function ContextEditSheet({ isOpen, onClose }: ContextEditSheetPr
       })),
     )
     setOppsStatus('loaded')
-  }, [user])
+  }, [user, viewKind])
 
   useEffect(() => {
     if (!isOpen || !user) return
@@ -410,7 +417,7 @@ export default function ContextEditSheet({ isOpen, onClose }: ContextEditSheetPr
               rows — those surface under "Your opportunities" instead
               so the picker stays organized by source. */}
           <ul className="space-y-2">
-            {available.filter((row) => row.type !== 'opportunity').map((row) => {
+            {available.filter((row) => row.type !== 'opportunity' && (!viewKind || contextKind(row) === viewKind)).map((row) => {
               const isActive = row.id === active?.id
               return (
                 <li

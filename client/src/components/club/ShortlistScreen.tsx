@@ -10,6 +10,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { useCountries } from '@/hooks/useCountries'
 import { useOwnLeague, useRoleShortlist, useScoutingContext, useShortlistEntryActions, type ShortlistEntry } from '@/hooks/useScouting'
+import { useRecruitingViewKind } from '@/hooks/useRecruitingContext'
 import {
   contextFitTarget,
   contextPillLabel,
@@ -36,6 +37,9 @@ export default function ShortlistScreen() {
   const navigate = useNavigate()
   const location = useLocation()
   const user = useAuthStore((s) => s.user)
+  // Only PLAYER roles rank players here (round 6): a coach-role context
+  // stays stored for the Coaches tab.
+  useRecruitingViewKind('player')
   const scouting = useScoutingContext()
   const { ctx, roleTitle, openRoles } = scouting
   const roleId = ctx?.type === 'opportunity' ? ctx.opportunity_id : null

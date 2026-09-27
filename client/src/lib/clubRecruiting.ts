@@ -156,6 +156,30 @@ export function fitPositionRow(c: FitComponents): FitRow | null {
   }
 }
 
+/** "Men’s", "Women’s", "Mixed", "Boys", "Girls" — the role's team, for Fit copy. */
+export function roleTeamWord(gender: string | null | undefined): string | null {
+  const g = gender?.trim().toLowerCase()
+  if (g === 'men') return 'Men’s'
+  if (g === 'women') return 'Women’s'
+  if (g === 'mixed') return 'Mixed'
+  if (g === 'boys') return 'Boys'
+  if (g === 'girls') return 'Girls'
+  return null
+}
+
+/**
+ * A CONFIRMED miss that compute_club_fit turns into "no chip" (grey): a wrong
+ * position the profile does name (round 5 — goalkeeper / position-required
+ * roles), or a playing category the role is not for (round 6 — women on a
+ * Men’s role, men on a Women’s role). The profile Fit card still shows then,
+ * without a chip, so the recruiter sees why.
+ */
+export function fitHasConfirmedMiss(c: FitComponents, playerCategory: string | null | undefined): boolean {
+  const wrongPosition = c.position_match === 0 && !!c.candidate_position
+  const wrongCategory = (c.gender_match ?? 0) < 1 && !!playerCategory
+  return wrongPosition || wrongCategory
+}
+
 /**
  * The components of compute_club_fit as plain checks (DEV NOTE 327:563):
  * Position (when the role has one) + the original four.
@@ -172,12 +196,14 @@ export function fitRows(c: FitComponents, ctx: {
   playerLeagueSelfReported?: boolean
   clubLeagueKnown: boolean
 }): FitRow[] {
-  const roleWord = ctx.roleGender ? `a ${ctx.roleGender}’s role`.replace('Mixed’s', 'Mixed') : 'this role'
+  const team = roleTeamWord(ctx.roleGender)
+  const roleWord = team ? `a ${team} role` : 'this role'
   const category: FitRow = {
     key: 'category', label: 'Category', ok: (c.gender_match ?? 0) >= 1,
     detail: (c.gender_match ?? 0) >= 1
       ? `${ctx.playerCategoryLabel ?? 'Category'} — matches ${roleWord}`
-      : ctx.playerCategoryLabel ? `${ctx.playerCategoryLabel} — doesn’t match ${roleWord}` : 'No playing category on the profile yet',
+      // Round 6: a category mismatch is a no-chip miss — say what the role is for.
+      : ctx.playerCategoryLabel ? `${ctx.playerCategoryLabel} — ${team ? `the role is for ${team}` : 'doesn’t match this role'}` : 'No playing category on the profile yet',
   }
   const open: FitRow = {
     key: 'open', label: 'Open to play', ok: (c.availability ?? 0) >= 0.6,

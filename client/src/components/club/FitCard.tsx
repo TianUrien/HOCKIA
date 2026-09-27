@@ -9,11 +9,11 @@ import { cn } from '@/lib/utils'
  * The four compute_club_fit components as plain checks; Level names the
  * missing side instead of ever showing a number.
  */
-export function FitCard({ state, rows, className }: { state: FitState | null | undefined; rows: FitRow[]; className?: string }) {
+export function FitCard({ state, rows, className, title = 'Fit for this role' }: { state: FitState | null | undefined; rows: FitRow[]; className?: string; title?: string }) {
   return (
     <div className={cn('flex flex-col gap-3 rounded-2xl bg-surface-grouped p-4', className)} data-testid="fit-card">
-      <div className="flex items-center justify-between">
-        <span className="text-row font-semibold text-ink-1">Fit for this role</span>
+      <div className="flex items-center justify-between gap-3">
+        <span className="min-w-0 truncate text-row font-semibold text-ink-1" data-testid="fit-card-title">{title}</span>
         <FitChip state={state} />
       </div>
       {rows.map((r) => (

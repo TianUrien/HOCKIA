@@ -103,9 +103,11 @@ describe('parseCompleteness', () => {
 describe('pickFitRole', () => {
   const a = { id: 'a', title: 'A', gender: 'Men' }
   const b = { id: 'b', title: 'B', gender: 'Women' }
-  it('applied role first, then the active context role, then the only open role', () => {
+  // Round 6 ruling (2026-09-27): the active "Ranked for" role wins over the applied role.
+  it('the active context role first, then the applied role, then the only open role', () => {
     const application = { id: 'x', status: 'pending', appliedAt: null, metadata: {}, role: b, expiryDays: 14 }
-    expect(pickFitRole({ application, roles: [a, b], activeOpportunityId: 'a' })).toBe(b)
+    expect(pickFitRole({ application, roles: [a, b], activeOpportunityId: 'a' })).toBe(a)
+    expect(pickFitRole({ application, roles: [a, b], activeOpportunityId: null })).toBe(b)
     expect(pickFitRole({ application: null, roles: [a, b], activeOpportunityId: 'a' })).toBe(a)
     expect(pickFitRole({ application: null, roles: [a], activeOpportunityId: null })).toBe(a)
     expect(pickFitRole({ application: null, roles: [a, b], activeOpportunityId: null })).toBeNull()

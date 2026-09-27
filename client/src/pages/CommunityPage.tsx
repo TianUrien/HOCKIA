@@ -37,7 +37,7 @@ import { useAuthStore } from '@/lib/auth'
 import { useCountries } from '@/hooks/useCountries'
 import { getActiveFilterChips } from '@/lib/communityActiveFilters'
 import { isRecruitingViewer, recruitingScopedRole } from '@/lib/recruiterAccess'
-import { useActiveRecruitingTargetRole } from '@/hooks/useRecruitingContext'
+import { useActiveRecruitingTargetRole, useRecruitingViewKind } from '@/hooks/useRecruitingContext'
 import ContextSwitcher from '@/components/recruiting/ContextSwitcher'
 import CoachContextNudge from '@/components/recruiting/CoachContextNudge'
 import { ClubViewPlayersHeader } from '@/components/community/ClubViewPlayersHeader'
@@ -82,6 +82,10 @@ export default function CommunityPage() {
   // server-derived from the linked opportunity's opportunity_type. This is
   // the primary axis for reshaping Community: a coach-scope should surface
   // COACHES, a player-scope should surface PLAYERS.
+  // Players tab ranks by PLAYER roles only, Coaches tab by COACH roles only
+  // (founder ruling 2026-09-27, round 6): each tab reads its own kind's
+  // context without clearing the other's. Other tabs read the stored one.
+  useRecruitingViewKind(tab === 'players' ? 'player' : tab === 'coaches' ? 'coach' : null)
   const activeRecruitingRole = useActiveRecruitingTargetRole()
   // Recruiter = club, or coach who recruits for a team (founder ruling
   // 2026-09-25). A coach looking for a role is a candidate: no scope

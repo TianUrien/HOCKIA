@@ -105,3 +105,34 @@ export function scrubInternalValues(text: string | null | undefined): string {
   )
   return out
 }
+
+/**
+ * Role / profile position → the label the app shows ("head_coach" → "Head
+ * coach", "midfielder" → "Midfielder", "other_coach" → "Coach"). Same map as
+ * the client's positionLabel (client/src/lib/identity.ts POSITION_LABELS) —
+ * keep them in step; client/src/__tests__/roundSix.test.tsx checks parity.
+ * Unknown values are humanised ("some_value" → "Some value"), never raw.
+ */
+export const POSITION_LABELS: Record<string, string> = {
+  goalkeeper: 'Goalkeeper',
+  defender: 'Defender',
+  midfielder: 'Midfielder',
+  forward: 'Forward',
+  head_coach: 'Head coach',
+  assistant_coach: 'Assistant coach',
+  youth_coach: 'Youth coach',
+  goalkeeper_coach: 'Goalkeeper coach',
+  strength_conditioning: 'Strength & conditioning',
+  performance_analyst: 'Performance analyst',
+  sports_scientist: 'Sports scientist',
+  other_coach: 'Coach',
+}
+
+export function positionLabel(value: string | null | undefined): string | null {
+  if (!value || !String(value).trim()) return null
+  const v = String(value).trim()
+  const hit = POSITION_LABELS[v.toLowerCase()]
+  if (hit) return hit
+  const words = v.replace(/_/g, ' ').replace(/\s+/g, ' ').toLowerCase()
+  return words.charAt(0).toUpperCase() + words.slice(1)
+}
