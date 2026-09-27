@@ -2,6 +2,7 @@ import { lazy, Suspense, type ReactNode } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { useAuthStore } from '@/lib/auth'
+import { isRecruitingViewer } from '@/lib/recruiterAccess'
 
 // Every screen is its own chunk: players on /opportunities and desktop
 // clubs never download the club phone screens.
@@ -10,6 +11,8 @@ const ApplicantsScreen = lazy(() => import('@/components/club/ApplicantsScreen')
 const ApplicantReviewScreen = lazy(() => import('@/components/club/ApplicantReviewScreen'))
 const PostRoleScreen = lazy(() => import('@/components/club/PostRoleScreen'))
 const RolePostedScreen = lazy(() => import('@/components/club/RolePostedScreen'))
+const FindPlayersScreen = lazy(() => import('@/components/club/FindPlayersScreen'))
+const ShortlistScreen = lazy(() => import('@/components/club/ShortlistScreen'))
 
 const OpportunitiesPage = lazy(() => import('@/pages/OpportunitiesPage'))
 const ApplicantsList = lazy(() => import('@/pages/ApplicantsList'))
@@ -80,4 +83,25 @@ export function RolePostedEntry() {
   if (!isPhone || (role && role !== 'club')) return <Navigate to="/opportunities" replace state={{ highlight: opportunityId }} />
   if (!role) return <Blank />
   return <Screen><RolePostedScreen key={opportunityId} roleId={opportunityId} /></Screen>
+}
+
+/** Find players (Figma 04 Club D1.9) and the per-role Shortlist (D1.10):
+ *  phones, for clubs and coaches who recruit. Desktop keeps Community and the
+ *  v1 shortlists; everyone else goes to Community / Home. Query params
+ *  (?role=, ?context=none) pass through to Find players. */
+export function FindPlayersEntry() {
+  const isPhone = useMediaQuery(PHONE)
+  const profile = useAuthStore((s) => s.profile)
+  if (!profile) return <Blank />
+  if (!isPhone || !isRecruitingViewer(profile)) return <Navigate to="/community/players" replace />
+  return <Screen><FindPlayersScreen /></Screen>
+}
+
+export function ShortlistEntry() {
+  const isPhone = useMediaQuery(PHONE)
+  const profile = useAuthStore((s) => s.profile)
+  if (!profile) return <Blank />
+  if (!isRecruitingViewer(profile)) return <Navigate to="/home" replace />
+  if (!isPhone) return <Navigate to="/dashboard/shortlists" replace />
+  return <Screen><ShortlistScreen /></Screen>
 }

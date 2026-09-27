@@ -55,9 +55,10 @@ export default function SavedCandidatesCard() {
     staleTime: 30_000,
     queryFn: async (): Promise<{ count: number; recent: RecentSave[] }> => {
       const [countRes, recentRes] = await Promise.all([
+        // Distinct players: one player can sit on several shortlists.
         supabase
           .from('saved_profiles')
-          .select('id', { count: 'exact', head: true })
+          .select('saved_profile_id')
           .eq('owner_id', userId as string),
         supabase
           .from('saved_profiles')
@@ -71,7 +72,7 @@ export default function SavedCandidatesCard() {
           `)
           .eq('owner_id', userId as string)
           .order('created_at', { ascending: false })
-          .limit(3),
+          .limit(12),
       ])
       if (countRes.error) {
         logger.warn('[SavedCandidatesCard] count failed', countRes.error)
@@ -83,10 +84,13 @@ export default function SavedCandidatesCard() {
         saved_profile_id: string
         profile: { full_name: string | null; avatar_url: string | null; role: string | null } | null
       }>
+      const seen = new Set<string>()
       return {
-        count: countRes.count ?? 0,
+        count: new Set(((countRes.data ?? []) as { saved_profile_id: string }[]).map((r) => r.saved_profile_id)).size,
         recent: rows
           .filter((r) => r.profile !== null)
+          .filter((r) => (seen.has(r.saved_profile_id) ? false : (seen.add(r.saved_profile_id), true)))
+          .slice(0, 3)
           .map((r) => ({
             saved_profile_id: r.saved_profile_id,
             full_name: r.profile!.full_name,
