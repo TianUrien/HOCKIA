@@ -29,6 +29,14 @@ export const qk = {
     ['applications', 'active-count', profileId] as const,
   /** Club member count via get_club_members RPC (ClubMembersCard). */
   clubMemberCount: (clubId: string | null) => ['club-members', 'count', clubId] as const,
+  /** Squad — own (Club v2 D1.15): the roster from get_club_members, enriched. */
+  clubSquadMembers: (clubId: string | null) => ['club-members', 'squad', clubId] as const,
+  /** Squad — own: invitations the club sent that are still pending. */
+  clubSquadPending: (clubId: string | null) => ['club-members', 'pending', clubId] as const,
+  /** Squad — own: the club's active invite link (token + join_count). */
+  clubInviteLink: (clubId: string | null) => ['club-members', 'invite-link', clubId] as const,
+  /** Squad — own: "Invite someone on Hockia" name search. */
+  clubInviteSearch: (clubId: string | null, query: string) => ['club-members', 'invite-search', clubId, query] as const,
   /** Recruiter's saved_profiles count + 3 most recent (SavedCandidatesCard). */
   savedCandidates: (userId: string | null) => ['saved-candidates', 'card', userId] as const,
   /** Coach applied/shortlisted application counts (CoachApplicationsCard). */
