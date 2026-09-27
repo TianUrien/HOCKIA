@@ -33,3 +33,9 @@ export function friendRequestErrorMessage(error: unknown, fallback: string): str
   // Never echo other raw trigger text either.
   return /blocked|not available/i.test(msg) ? FRIEND_REQUEST_BLOCKED_MESSAGE : msg
 }
+
+/** Toast colour for a friend-request failure: the blocked line is a quiet
+ *  grey info toast (founder ruling), anything else stays an error. */
+export function friendRequestToastType(message: string): 'neutral' | 'error' {
+  return message === FRIEND_REQUEST_BLOCKED_MESSAGE ? 'neutral' : 'error'
+}

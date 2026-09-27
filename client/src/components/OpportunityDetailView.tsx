@@ -44,7 +44,7 @@ interface VacancyDetailViewProps {
 
 const BENEFIT_CONFIG: Record<string, { icon: React.ComponentType<{ className?: string }>; label: string; iconColor: string }> = {
   housing: { icon: Home, label: 'Housing', iconColor: 'text-blue-500' },
-  car: { icon: Car, label: 'Car', iconColor: 'text-amber-500' },
+  car: { icon: Car, label: 'Car', iconColor: 'text-hockia-primary' },
   visa: { icon: GlobeIcon, label: 'Visa', iconColor: 'text-emerald-500' },
   flights: { icon: Plane, label: 'Flights', iconColor: 'text-purple-500' },
   meals: { icon: Utensils, label: 'Meals', iconColor: 'text-orange-500' },

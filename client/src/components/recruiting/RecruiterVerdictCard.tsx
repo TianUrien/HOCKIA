@@ -111,7 +111,7 @@ export default function RecruiterVerdictCard({ verdict, className = '', showMatc
           ))}
           {verdict.caveats.map((c, i) => (
             <li key={`c-${i}`} className="flex gap-1.5 text-[13px] text-gray-500 leading-snug">
-              <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-amber-500" aria-hidden="true" />
+              <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-ink-3" aria-hidden="true" />
               <span>{c}</span>
             </li>
           ))}

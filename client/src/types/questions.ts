@@ -33,7 +33,7 @@ export const CATEGORY_LABELS: Record<QuestionCategory, string> = {
 // Category badge colors (Tailwind classes)
 export const CATEGORY_COLORS: Record<QuestionCategory, { bg: string; text: string }> = {
   trials_club_selection: { bg: 'bg-blue-100', text: 'text-blue-700' },
-  visas_moving_abroad: { bg: 'bg-amber-100', text: 'text-amber-700' },
+  visas_moving_abroad: { bg: 'bg-hockia-soft', text: 'text-hockia-primary' },
   scholarships_universities: { bg: 'bg-pink-100', text: 'text-pink-700' },
   highlights_visibility: { bg: 'bg-orange-100', text: 'text-orange-700' },
   training_performance: { bg: 'bg-red-100', text: 'text-red-700' },

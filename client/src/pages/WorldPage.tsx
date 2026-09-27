@@ -97,7 +97,7 @@ export default function WorldPage() {
       'Europe': 'bg-purple-100 text-purple-700',
       'Oceania': 'bg-cyan-100 text-cyan-700',
       'North America': 'bg-green-100 text-green-700',
-      'Asia': 'bg-amber-100 text-amber-700',
+      'Asia': 'bg-hockia-soft text-hockia-primary',
       'Africa': 'bg-orange-100 text-orange-700',
     }
     return colors[region] || 'bg-gray-100 text-gray-700'

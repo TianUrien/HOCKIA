@@ -1,9 +1,10 @@
 import { useState, useCallback, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, Flag, MoreHorizontal, Trash2, Shield } from 'lucide-react'
+import { ArrowRight, Flag, Trash2, Shield } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
 import ReportUserModal from '@/components/ReportUserModal'
-import { REPORT_MENU_LABEL } from '@/lib/report'
+import { MENU_ICON_CLASS, REPORT_MENU_LABEL } from '@/lib/report'
+import { MoreMenu, type MoreMenuItem } from '@/components/safety/MoreMenu'
 import { usePostInteractions } from '@/hooks/usePostInteractions'
 import { useUserPosts } from '@/hooks/useUserPosts'
 import { Avatar } from '@/components'
@@ -28,7 +29,6 @@ export function TransferAnnouncementCard({ item, onLikeUpdate, onDelete }: Trans
   const meta = item.metadata as TransferMetadata
 
   const [showComments, setShowComments] = useState(false)
-  const [showMenu, setShowMenu] = useState(false)
   const [showReport, setShowReport] = useState(false)
   const [localCommentCount, setLocalCommentCount] = useState(item.comment_count)
   const [lightboxOpen, setLightboxOpen] = useState(false)
@@ -87,7 +87,6 @@ export function TransferAnnouncementCard({ item, onLikeUpdate, onDelete }: Trans
 
   const handleDelete = useCallback(async () => {
     if (!confirm('Are you sure you want to delete this announcement?')) return
-    setShowMenu(false)
 
     const result = await deletePost(item.post_id)
     if (result.success) {
@@ -99,48 +98,11 @@ export function TransferAnnouncementCard({ item, onLikeUpdate, onDelete }: Trans
     setLocalCommentCount(newCount)
   }, [])
 
+  const menuItems: MoreMenuItem[] = isOwner
+    ? [{ key: 'delete', label: 'Delete post', icon: <Trash2 className={MENU_ICON_CLASS} strokeWidth={1.8} />, destructive: true, onSelect: () => void handleDelete() }]
+    : [{ key: 'report', label: REPORT_MENU_LABEL, icon: <Flag className={MENU_ICON_CLASS} strokeWidth={1.8} />, onSelect: () => setShowReport(true) }]
   const menu = user ? (
-    <div className="relative">
-      <button
-        type="button"
-        aria-label="Post options"
-        aria-haspopup="menu"
-        aria-expanded={showMenu}
-        onClick={() => setShowMenu(!showMenu)}
-        className="-mr-2 flex h-11 w-11 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
-      >
-        <MoreHorizontal className="h-5 w-5" />
-      </button>
-
-      {showMenu && (
-        <>
-          <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
-          <div role="menu" className="absolute right-0 top-full z-20 mt-1 w-40 rounded-xl border border-gray-100 bg-white py-1 shadow-lg">
-            {isOwner ? (
-              <button
-                type="button"
-                role="menuitem"
-                onClick={handleDelete}
-                className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-red-600 hover:bg-red-50"
-              >
-                <Trash2 className="h-4 w-4" />
-                Delete post
-              </button>
-            ) : (
-              <button
-                type="button"
-                role="menuitem"
-                onClick={() => { setShowMenu(false); setShowReport(true) }}
-                className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-gray-800 hover:bg-gray-50"
-              >
-                <Flag className="h-4 w-4" />
-                {REPORT_MENU_LABEL}
-              </button>
-            )}
-          </div>
-        </>
-      )}
-    </div>
+    <MoreMenu items={menuItems} label="Post options" title={item.author_name ?? undefined} triggerClassName="-mr-2 flex h-11 w-11 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900" testId="post-more-menu" />
   ) : null
 
   const clubAvatar = (

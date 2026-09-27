@@ -12,6 +12,7 @@ import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import type { NotificationKind, NotificationRecord } from '@/lib/api/notifications'
 import { getNotificationConfig, resolveNotificationRoute } from './notifications/config'
 import { trackDbEvent } from '@/lib/trackDbEvent'
+import { friendRequestToastType } from '@/lib/friendshipErrors'
 
 const FRIEND_REQUEST_KINDS = new Set<NotificationKind>(['friend_request_received'])
 const AMBASSADOR_REQUEST_KINDS = new Set<NotificationKind>(['ambassador_request_received'])
@@ -116,7 +117,7 @@ export default function NotificationsDrawer() {
   const handleFriendRequest = async (friendshipId: string, action: 'accept' | 'decline') => {
     const result = await respondToFriendRequest({ friendshipId, action })
     if (result !== true) {
-      addToast(typeof result === 'string' ? result : 'Could not update the friend request. Please try again.', 'error')
+      { const msg = typeof result === 'string' ? result : 'Could not update the friend request. Please try again.'; addToast(msg, friendRequestToastType(msg)) }
       return
     }
 

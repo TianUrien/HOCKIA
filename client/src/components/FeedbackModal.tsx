@@ -28,7 +28,7 @@ const CATEGORIES: Array<{
   iconColor: string
 }> = [
   { id: 'bug',       label: 'Something is broken',   description: 'A bug or error',           icon: Bug,           iconColor: 'text-rose-600' },
-  { id: 'confusing', label: 'Something is confusing', description: 'Unclear UX or copy',      icon: HelpCircle,    iconColor: 'text-amber-600' },
+  { id: 'confusing', label: 'Something is confusing', description: 'Unclear UX or copy',      icon: HelpCircle,    iconColor: 'text-ink-2' },
   { id: 'idea',      label: 'Idea or feature request', description: 'Something missing',     icon: Sparkles,      iconColor: 'text-hockia-primary' },
   { id: 'praise',    label: 'Love it',                description: 'Tell us what works',     icon: Heart,         iconColor: 'text-pink-500' },
   { id: 'other',     label: 'Other',                  description: 'Anything else',          icon: MessageSquare, iconColor: 'text-gray-600' },

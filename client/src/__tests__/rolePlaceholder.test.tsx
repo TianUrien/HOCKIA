@@ -136,7 +136,7 @@ describe('Avatar — role-placeholder fallback', () => {
       coach: '#D1FAE5',
       club: '#FFEDD5',
       brand: '#FFE4E6',
-      umpire: '#FEF3C7',
+      umpire: '#E6E6EC',
     }
     for (const [role, expectedFirstStop] of Object.entries(expected)) {
       const { container, unmount } = render(<Avatar role={role} alt="X" />)

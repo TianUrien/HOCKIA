@@ -10,6 +10,7 @@ import { formatActivityAge } from '@/lib/inboxTime'
 import { identityLine } from '@/lib/identity'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import { cn } from '@/lib/utils'
+import { friendRequestToastType } from '@/lib/friendshipErrors'
 
 /**
  * Inbox › Activity (Figma 100:531): profile views, club replies, expired
@@ -48,7 +49,7 @@ export function InboxActivity() {
     const friendshipId = notification.sourceEntityId
     if (!friendshipId) return
     const result = await respondToFriendRequest({ friendshipId, action })
-    if (result !== true) addToast(typeof result === 'string' ? result : 'Could not update the request. Please try again.', 'error')
+    if (result !== true) { const msg = typeof result === 'string' ? result : 'Could not update the request. Please try again.'; addToast(msg, friendRequestToastType(msg)) }
   }
 
   if (loading && rows.length === 0) {

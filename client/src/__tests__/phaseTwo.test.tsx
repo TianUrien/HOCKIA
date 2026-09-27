@@ -45,6 +45,13 @@ import { invitationPendingTone, noReplyTone, pendingVerificationTone, STATUS_TON
 import { isClubReplyUrgent, clubReplyLineClass } from '@/lib/clubRecruiting'
 import { applicationStatusPill } from '@/lib/opportunityCopy'
 import PendingVerificationBadge from '@/components/PendingVerificationBadge'
+import Toast from '@/components/Toast'
+import { friendRequestToastType } from '@/lib/friendshipErrors'
+import { BENEFIT_TILES } from '@/lib/opportunityCopy'
+import { CATEGORY_COLORS } from '@/types/questions'
+import { ROLE_COLOR_PALETTE } from '@/lib/roleColors'
+import RoleBadge from '@/components/RoleBadge'
+import { MoreMenu } from '@/components/safety/MoreMenu'
 
 /** Labels of an open "…" menu (phone sheet in jsdom: max-width queries match). */
 async function menuItems(testId: string): Promise<string[]> {
@@ -210,5 +217,35 @@ describe('4 · Viewer-dependent colours', () => {
     expect(screen.getByLabelText('Pending verification').className).not.toContain('amber')
     rerender(<PendingVerificationBadge verified={false} viewerMustVerify />)
     expect(screen.getByLabelText('Pending verification').className).toContain('text-amber-600')
+  })
+})
+
+describe('v2 · founder follow-ups', () => {
+  it('the blocked line is a neutral grey toast — no red, no error icon', () => {
+    expect(friendRequestToastType(FRIEND_REQUEST_BLOCKED_MESSAGE)).toBe('neutral')
+    expect(friendRequestToastType('Unable to send friend request.')).toBe('error')
+    render(<Toast message={FRIEND_REQUEST_BLOCKED_MESSAGE} type="neutral" onClose={vi.fn()} duration={0} />)
+    const toast = screen.getByRole('alert')
+    expect(toast.className).toContain('bg-surface-grouped')
+    expect(toast.className).not.toMatch(/red/)
+    expect(toast.querySelector('.lucide-circle-x, .lucide-x-circle')).toBeNull()
+  })
+
+  it('decorative colours are off amber (one accent per group)', () => {
+    expect(BENEFIT_TILES.car.tileClass).toBe('bg-hockia-soft text-hockia-primary')
+    expect(BENEFIT_TILES.meals.tileClass).toBe('bg-hockia-soft text-hockia-primary')
+    expect(CATEGORY_COLORS.visas_moving_abroad).toEqual({ bg: 'bg-hockia-soft', text: 'text-hockia-primary' })
+    expect(ROLE_COLOR_PALETTE.umpire).toEqual({ bg: '#F4F4F7', text: '#5B5B6B' })
+    render(<RoleBadge role="umpire" />)
+    expect(screen.getByText('Umpire').className).toContain('text-ink-2')
+  })
+
+  it('post "…" on phones opens the shared bottom sheet', async () => {
+    const onSelect = vi.fn()
+    render(<MoreMenu items={[{ key: 'report', label: 'Report', onSelect }]} label="Post options" testId="post-more-menu" />)
+    fireEvent.click(screen.getByRole('button', { name: 'Post options' }))
+    expect(await menuItems('post-more-menu')).toEqual(['Report'])
+    fireEvent.click(screen.getByRole('button', { name: 'Report' }))
+    expect(onSelect).toHaveBeenCalled()
   })
 })

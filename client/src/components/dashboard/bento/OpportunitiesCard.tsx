@@ -104,7 +104,7 @@ export default function OpportunitiesCard({ ownerProfileId, onViewOpportunities,
             </p>
           </div>
           {activeCount === 0 ? (
-            <Zap className="h-4 w-4 text-amber-400" aria-hidden="true" />
+            <Zap className="h-4 w-4 text-ink-4" aria-hidden="true" />
           ) : (
             <ChevronRight className="h-4 w-4 text-gray-400" aria-hidden="true" />
           )}

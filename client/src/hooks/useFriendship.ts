@@ -13,7 +13,7 @@ import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
 import { useNotificationStore } from '@/lib/notifications'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
-import { friendRequestErrorMessage } from '@/lib/friendshipErrors'
+import { friendRequestErrorMessage, friendRequestToastType } from '@/lib/friendshipErrors'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 
 type FriendStatus = Database['public']['Enums']['friendship_status']
@@ -136,7 +136,8 @@ export function useFriendship(profileId: string): FriendshipState {
         feature: 'friends',
         operation: 'send_request'
       })
-      addToast(friendRequestErrorMessage(error, 'Unable to send friend request. Please try again.'), 'error')
+      const msg = friendRequestErrorMessage(error, 'Unable to send friend request. Please try again.')
+      addToast(msg, friendRequestToastType(msg))
     } finally {
       setMutating(false)
     }
@@ -179,7 +180,8 @@ export function useFriendship(profileId: string): FriendshipState {
           feature: 'friends',
           operation: 'update_friendship'
         })
-        addToast(friendRequestErrorMessage(error, 'Unable to update friendship. Please try again.'), 'error')
+        const msg = friendRequestErrorMessage(error, 'Unable to update friendship. Please try again.')
+        addToast(msg, friendRequestToastType(msg))
         // A rejected transition usually means the cached edge is stale
         // (accepted from the notifications panel, another device...) —
         // refetch so the card self-heals instead of looping the error.

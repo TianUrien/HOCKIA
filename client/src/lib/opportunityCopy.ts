@@ -119,9 +119,9 @@ export const BENEFIT_TILES: Record<string, BenefitTile> = {
   insurance: { key: 'insurance', label: 'Insurance', icon: Shield, tileClass: 'bg-[#fee2e2] text-[#b91c1c]', detail: 'Covered by the club' },
   bonuses: { key: 'bonuses', label: 'Bonuses', icon: DollarSign, tileClass: 'bg-positive-soft text-positive', detail: 'Performance bonuses' },
   visa: { key: 'visa', label: 'Visa', icon: Globe, tileClass: 'bg-[#e0f4f9] text-[#0e7490]', detail: 'Sponsorship arranged' },
-  car: { key: 'car', label: 'Car', icon: Car, tileClass: 'bg-[#fdf1e4] text-[#b45309]', detail: 'Provided by the club' },
+  car: { key: 'car', label: 'Car', icon: Car, tileClass: 'bg-hockia-soft text-hockia-primary', detail: 'Provided by the club' },
   equipment: { key: 'equipment', label: 'Equipment', icon: Dumbbell, tileClass: 'bg-[#e6f6f4] text-[#0f766e]', detail: 'Kit and stick provided' },
-  meals: { key: 'meals', label: 'Meals', icon: Utensils, tileClass: 'bg-[#fdf1e4] text-[#b45309]', detail: 'Provided by the club' },
+  meals: { key: 'meals', label: 'Meals', icon: Utensils, tileClass: 'bg-hockia-soft text-hockia-primary', detail: 'Provided by the club' },
   education: { key: 'education', label: 'Education', icon: GraduationCap, tileClass: 'bg-[#e8e7fd] text-[#4338ca]', detail: 'Study alongside hockey' },
 }
 

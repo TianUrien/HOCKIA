@@ -786,8 +786,8 @@ export default function ClubClaimStep({ onComplete, onSkip, profileId }: ClubCla
               </p>
             </>
           ) : (
-            <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl">
-              <p className="text-sm text-amber-800">
+            <div className="p-4 bg-surface-grouped border border-line rounded-xl">
+              <p className="text-sm text-ink-2">
                 No leagues are available for your region yet. You can add league information later from your club dashboard.
               </p>
             </div>

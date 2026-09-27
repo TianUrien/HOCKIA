@@ -217,7 +217,7 @@ const AVATAR_TINTS = [
   'bg-sky-50 text-sky-600',
   'bg-rose-50 text-rose-500',
   'bg-teal-50 text-teal-600',
-  'bg-amber-50 text-amber-600',
+  'bg-hockia-soft text-hockia-primary',
   'bg-emerald-50 text-emerald-600',
   'bg-blue-50 text-blue-500',
 ]

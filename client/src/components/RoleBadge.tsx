@@ -13,7 +13,7 @@ const roleStyles: Record<string, string> = {
   coach: 'bg-[#F0FDFA] text-[#0f766e]',
   club: 'bg-[#FFF7ED] text-[#c2410c]',
   brand: 'bg-[#FFF1F2] text-[#be123c]',
-  umpire: 'bg-[#FEFCE8] text-[#A16207]', // warm amber — distinct from the other four at a glance
+  umpire: 'bg-surface-muted text-ink-2', // ink (Foundations) — neutral like an umpire's kit, never amber
 }
 
 const formatRoleLabel = (value: string) => {
