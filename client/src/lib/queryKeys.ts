@@ -71,9 +71,9 @@ export const qk = {
   /** Open vacancies feed with joins (OpportunitiesPage). */
   openVacancies: (testScope: string, filterKey: string) =>
     ['opportunities', 'open-feed', testScope, filterKey] as const,
-  /** Vacancy ids the user has applied to (OpportunitiesPage). */
+  /** The user's applications — vacancy id + status (OpportunitiesPage). */
   userApplications: (userId: string | null) =>
-    ['applications', 'applied-ids', userId] as const,
+    ['applications', 'applied-rows', userId] as const,
   /** Conversation list page keyed by pagination cursor (MessagesPage). */
   conversations: (userId: string | null, cursor: string) =>
     ['conversations', 'page', userId, cursor] as const,

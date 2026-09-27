@@ -5,7 +5,7 @@ import { useDiscoverChat } from '@/hooks/useDiscover'
 import DiscoverChat from '@/components/DiscoverChat'
 import { useAuthStore } from '@/lib/auth'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
-import { getFirstName } from '@/lib/profile'
+import { greetingName } from '@/lib/profile'
 
 /** Default examples for unauthenticated visits + the universal fallback set.
  *  Every role-specific example list also keeps a search prompt so the user
@@ -100,7 +100,8 @@ export default function DiscoverPage() {
   // profile hasn't loaded yet we fall back to the generic example set so the
   // empty state never blocks on a network round-trip; once the profile
   // arrives the examples swap to the role-aware variant.
-  const firstName = getFirstName(profile?.full_name ?? null)
+  // Clubs: "Hi <club name>!"; people keep their first name.
+  const firstName = greetingName(profile)
   const exampleQueries = useMemo(() => {
     if (profile?.role === 'coach') {
       return buildCoachExamples(profile.coach_recruits_for_team ?? false)

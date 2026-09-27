@@ -174,6 +174,9 @@ export default function OpportunitiesPage() {
   const [clubs, setClubs] = useState<Record<string, { id: string; full_name: string; avatar_url: string | null; role: string | null; current_club: string | null; womens_league_division: string | null; mens_league_division: string | null }>>({})
   const [worldClubsMap, setWorldClubsMap] = useState<Record<string, { id: string; clubName: string; avatarUrl: string | null; countryName: string | null; flagEmoji: string | null; leagueName: string | null }>>({})
   const [userApplications, setUserApplications] = useState<string[]>([])
+  // The viewer's own status per applied role — the preview shows the real
+  // status (No reply, Shortlisted…) instead of a generic "submitted".
+  const [applicationStatuses, setApplicationStatuses] = useState<Record<string, string>>({})
   const [showCreateModal, setShowCreateModal] = useState(false)
 
   // Modal preview state — opening an opportunity from the list shows
@@ -390,20 +393,21 @@ export default function OpportunitiesPage() {
     await monitor.measure('fetch_user_applications', async () => {
       const shouldSkipCache = options?.skipCache === true
       try {
-        const appliedVacancyIds = await queryClient.fetchQuery({
+        const appliedRows = await queryClient.fetchQuery({
           queryKey: qk.userApplications(user.id),
           staleTime: shouldSkipCache ? 0 : 30_000,
           retry: false,
           queryFn: async () => {
             const { data, error } = await supabase
               .from('opportunity_applications')
-              .select('opportunity_id')
+              .select('opportunity_id, status')
               .eq('applicant_id', user.id)
             if (error) throw error
-            return (data as { opportunity_id: string }[])?.map(app => app.opportunity_id) || []
+            return (data as { opportunity_id: string; status: string | null }[]) ?? []
           },
         })
-        setUserApplications(appliedVacancyIds)
+        setUserApplications(appliedRows.map((app) => app.opportunity_id))
+        setApplicationStatuses(Object.fromEntries(appliedRows.filter((a) => a.status).map((a) => [a.opportunity_id, a.status as string])))
       } catch (error) {
         logger.error('Error fetching user applications:', error)
       }
@@ -935,6 +939,7 @@ export default function OpportunitiesPage() {
           clubInfo={clubs[previewVacancy.club_id]}
           worldClub={previewVacancy.world_club_id ? worldClubsMap[previewVacancy.world_club_id] ?? null : null}
           hasApplied={userApplications.includes(previewVacancy.id)}
+          applicationStatus={applicationStatuses[previewVacancy.id] ?? null}
           onClose={() => setPreviewVacancy(null)}
           onApplicationSuccess={(vacancyId) => {
             setUserApplications(prev => prev.includes(vacancyId) ? prev : [...prev, vacancyId])

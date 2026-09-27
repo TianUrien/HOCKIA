@@ -6,6 +6,7 @@
 
 import { assert, assertEquals } from 'https://deno.land/std@0.208.0/assert/mod.ts'
 import {
+  buildIneligibleMessage,
   buildNoOpportunitiesMessage,
   buildOpportunityMessage,
   includeTestPublisherRoles,
@@ -273,4 +274,46 @@ Deno.test('a recruiting coach is never offered a role they published', () => {
   const pool = withoutOwnRoles(withoutAppliedRoles([own, clubs, appliedTo], [appliedTo.id]), [own.id])
   const out = runOpportunitySearch('open roles for me', pool, COUNTRIES, coach, '2026-09-27')
   assertEquals(out.matched.map(r => r.title), ['Coach Test 5'])
+})
+
+Deno.test('round 5: "England" is labelled England — never "United Kingdom, England"', () => {
+  const viewer: Viewer = { role: 'player', gender: 'men', euEligible: true, position: null, secondaryPosition: null }
+  const c = parseOpportunityQuery('open roles in England', viewer, COUNTRIES)
+  assertEquals(c.countryLabel, 'England')
+  // United Kingdom still matches for filtering (England is one of its aliases).
+  assert(c.countryNames.includes('united kingdom'))
+  assert(c.countryNames.includes('england'))
+  // Named through an alias only → the country itself.
+  assertEquals(parseOpportunityQuery('roles in the UK', viewer, COUNTRIES).countryLabel, 'United Kingdom')
+})
+
+Deno.test('round 5: roles exist where asked but none the viewer can apply to → says so honestly', () => {
+  const viewer: Viewer = { role: 'player', gender: 'men', euEligible: false, position: null, secondaryPosition: null }
+  const englandEu = row({ location_country: 'England', eu_passport_required: true, gender: 'Men' })
+  const englandWomen = row({ location_country: 'England', gender: 'Women' })
+  const spain = row({ location_country: 'Spain', gender: 'Men' })
+
+  // Nothing applyable anywhere.
+  const none = runOpportunitySearch('open roles in England', [englandEu, englandWomen], COUNTRIES, viewer, TODAY)
+  assertEquals(none.matched.length, 0)
+  assertEquals(none.ineligibleInAsked, 2)
+  assertEquals(buildIneligibleMessage(none.criteria, none.askedLabel), 'There are open roles in England, but none you can apply to right now.')
+
+  // Widened to the region.
+  const widened = runOpportunitySearch('open roles in England', [englandEu, englandWomen, spain], COUNTRIES, viewer, TODAY)
+  assertEquals(widened.landed, 'region')
+  assertEquals(widened.ineligibleInAsked, 2)
+  assertEquals(
+    buildIneligibleMessage(widened.criteria, widened.askedLabel, { count: widened.matched.length, region: widened.widenedRegion }),
+    'There are open roles in England, but none you can apply to right now — here is 1 open role you can apply to elsewhere in Europe.',
+  )
+
+  // No roles there at all → the old "no roles" path (ineligibleInAsked 0).
+  const empty = runOpportunitySearch('open roles in Germany', [spain], COUNTRIES, viewer, TODAY)
+  assertEquals(empty.ineligibleInAsked, 0)
+
+  // Applyable roles where asked → nothing to explain.
+  const ok = runOpportunitySearch('open roles in Spain', [spain], COUNTRIES, viewer, TODAY)
+  assertEquals(ok.landed, 'original')
+  assertEquals(ok.ineligibleInAsked, 0)
 })

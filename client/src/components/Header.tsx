@@ -1,9 +1,17 @@
 import { useEffect, useRef } from 'react'
 import { Home, Users, Briefcase, Bell, Inbox, Sparkles, Store, Search } from 'lucide-react'
 import { openSearchOverlay } from '@/lib/searchOverlayBus'
-import { AvatarMenu, NotificationBadge } from '@/components'
+import { AvatarMenu } from '@/components'
 import { useNavigation } from '@/hooks/useNavigation'
 import { useAuthStore } from '@/lib/auth'
+import { useInboxSegmentDots } from '@/hooks/useInboxSegmentDots'
+import { inboxTabDot } from '@/lib/inboxSegmentDots'
+
+/** Unread indicator — a red dot, never a number (founder rule: no counts), the
+ *  same dot and the same rules as the phone tab bar (MobileBottomNav). */
+function NavDot({ className }: { className: string }) {
+  return <span aria-label="Unread" data-testid="header-unread-dot" className={`absolute h-2 w-2 rounded-full bg-hockia-danger ring-2 ring-white ${className}`} />
+}
 
 /** `mobileHidden`: screens that carry their own title row (the Profile
  *  screen, founder ruling 2026-09-19) drop the app header below lg. */
@@ -14,10 +22,11 @@ export default function Header({ mobileHidden = false }: { mobileHidden?: boolea
     isActive,
     handleNavigate,
     toggleNotificationDrawer,
-    unreadCount,
-    opportunityCount,
-    notificationCount,
   } = useNavigation()
+  // Same dots as the phone: Inbox = any Inbox segment has something new;
+  // the bell = the Activity segment's dot. Opportunities carries none.
+  const segmentDots = useInboxSegmentDots()
+  const inboxDot = inboxTabDot(segmentDots)
   const authLoading = useAuthStore((s) => s.loading)
   const headerRef = useRef<HTMLElement>(null)
 
@@ -144,11 +153,11 @@ export default function Header({ mobileHidden = false }: { mobileHidden?: boolea
               <>
                 {/* Primary nav links */}
                 {([
-                  { path: '/home', label: 'Home', icon: Home, badge: undefined as number | undefined },
-                  { path: '/community', label: 'Community', icon: Users, badge: undefined as number | undefined },
-                  { path: '/opportunities', label: 'Opportunities', icon: Briefcase, badge: opportunityCount as number | undefined },
-                  { path: '/inbox', label: 'Inbox', icon: Inbox, badge: (unreadCount + notificationCount) as number | undefined },
-                ]).map(({ path, label, icon: Icon, badge }) => (
+                  { path: '/home', label: 'Home', icon: Home, dot: false },
+                  { path: '/community', label: 'Community', icon: Users, dot: false },
+                  { path: '/opportunities', label: 'Opportunities', icon: Briefcase, dot: false },
+                  { path: '/inbox', label: 'Inbox', icon: Inbox, dot: inboxDot },
+                ]).map(({ path, label, icon: Icon, dot }) => (
                   <button
                     key={path}
                     onClick={() => handleNavigate(path)}
@@ -163,7 +172,7 @@ export default function Header({ mobileHidden = false }: { mobileHidden?: boolea
                       <Icon className="w-4.5 h-4.5" />
                       <span>{label}</span>
                     </div>
-                    {badge !== undefined && <NotificationBadge count={badge} className="-right-1 -top-1" />}
+                    {dot && <NavDot className="right-1 top-1" />}
                   </button>
                 ))}
 
@@ -206,7 +215,7 @@ export default function Header({ mobileHidden = false }: { mobileHidden?: boolea
                   title="Notifications"
                 >
                   <Bell className="w-5 h-5" />
-                  <NotificationBadge count={notificationCount} className="-right-0.5 -top-0.5" />
+                  {segmentDots.activity && <NavDot className="right-1.5 top-1.5" />}
                 </button>
 
                 {/* Avatar dropdown — Settings + Sign out moved off the
@@ -219,10 +228,10 @@ export default function Header({ mobileHidden = false }: { mobileHidden?: boolea
               <>
                 {/* Unauthenticated primary nav links */}
                 {([
-                  { path: '/marketplace', label: 'Marketplace', icon: Store, badge: undefined as number | undefined },
-                  { path: '/opportunities', label: 'Opportunities', icon: Briefcase, badge: opportunityCount as number | undefined },
-                  { path: '/community', label: 'Community', icon: Users, badge: undefined as number | undefined },
-                ]).map(({ path, label, icon: Icon, badge }) => (
+                  { path: '/marketplace', label: 'Marketplace', icon: Store },
+                  { path: '/opportunities', label: 'Opportunities', icon: Briefcase },
+                  { path: '/community', label: 'Community', icon: Users },
+                ]).map(({ path, label, icon: Icon }) => (
                   <button
                     key={path}
                     onClick={() => handleNavigate(path)}
@@ -237,7 +246,6 @@ export default function Header({ mobileHidden = false }: { mobileHidden?: boolea
                       <Icon className="w-4.5 h-4.5" />
                       <span>{label}</span>
                     </div>
-                    {badge !== undefined && <NotificationBadge count={badge} className="-right-1 -top-1" />}
                   </button>
                 ))}
 

@@ -31,6 +31,20 @@ export function getFirstName(fullName: string | null | undefined): string | null
   return trimmed.split(/\s+/)[0]
 }
 
+/**
+ * The name Hockia AI greets with: a person's first name ("Hi Ana!"), but an
+ * organisation's whole name — "Hi E2E Test FC!", never "Hi E2E!" (the first
+ * word of a club name isn't a name). Clubs and brands are organisations.
+ */
+export function greetingName(profile: { full_name?: string | null; role?: string | null } | null | undefined): string | null {
+  if (!profile) return null
+  if (profile.role === 'club' || profile.role === 'brand') {
+    const name = profile.full_name?.trim().replace(/\s+/g, ' ')
+    return name || null
+  }
+  return getFirstName(profile.full_name ?? null)
+}
+
 export function derivePublicContactEmail(profile: ContactEmailCarrier): DerivedContactEmail {
   const contactEmail = profile.contact_email?.trim() || null
   const shouldShow = Boolean(profile.contact_email_public)

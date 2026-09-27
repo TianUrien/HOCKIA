@@ -86,6 +86,7 @@ vi.mock('@/hooks/useNavigation', () => ({
   }),
 }))
 vi.mock('@/lib/logger', () => ({ logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() } }))
+vi.mock('@/hooks/useInboxSegmentDots', () => ({ useInboxSegmentDots: () => ({ messages: false, requests: false, activity: false }) }))
 
 import OpportunityPreviewModal from '@/components/OpportunityPreviewModal'
 import ApplicationTimeline from '@/components/ApplicationTimeline'
@@ -325,8 +326,10 @@ describe('club screens', () => {
   })
 
   it('role toasts: close, reopen, and "Changes saved." after an edit', () => {
-    expect(read('../components/club/RoleActions.tsx')).toContain("addToast('Role reopened.', 'success')")
-    expect(read('../components/club/RoleActions.tsx')).toContain("addToast(closeRoleToast(outcome), 'success')")
+    // Round 5: the reopen copy is shared with desktop; the filled toast knows how many were waiting.
+    expect(read('../components/club/RoleActions.tsx')).toContain("addToast(REOPEN_ROLE_TOAST, 'success')")
+    expect(read('../lib/roleLifecycle.ts')).toContain("export const REOPEN_ROLE_TOAST = 'Role reopened.'")
+    expect(read('../components/club/RoleActions.tsx')).toContain("addToast(closeRoleToast(outcome, waiting), 'success')")
     expect(read('../components/club/PostRoleScreen.tsx')).toContain("addToast('Changes saved.', 'success')")
   })
 })

@@ -16,7 +16,6 @@ import { canReport } from '@/lib/report'
 import { useCountries } from '@/hooks/useCountries'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import { checkOpportunityEligibility, opportunityMustHaveWarnings } from '@/lib/opportunityEligibility'
-import { playerApplicationStatusBadge } from '@/lib/applicationStatus'
 import ApplicationTimeline from './ApplicationTimeline'
 
 interface VacancyDetailViewProps {
@@ -32,13 +31,12 @@ interface VacancyDetailViewProps {
   onApply?: () => void
   hasApplied?: boolean
   /** The viewing player's OWN application status (shortlisted/maybe/rejected).
-   *  Renders a clear, human badge under "Application Submitted"; pending/unknown
-   *  shows no badge (the submitted pill already conveys it). */
+   *  Shown as the real status (applicationStatusPill) under "You applied". */
   applicationStatus?: string | null
   hideClubProfileButton?: boolean
   /** The role no longer takes applications. Defaults to status === 'closed'. */
   isClosed?: boolean
-  /** Message the club. Shown on a CLOSED role to the applicant only. */
+  /** Message the club. Shown to the applicant only (open or closed role). */
   onMessage?: () => void
 }
 
@@ -455,8 +453,8 @@ export default function VacancyDetailView({
               </div>
             )}
 
-            {/* Deadline */}
-            {vacancy.application_deadline && (
+            {/* Deadline — never on a closed role (it no longer takes applications). */}
+            {vacancy.application_deadline && !closed && (
               <div className="mb-5">
                 <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Application Deadline</p>
                 <div className="flex items-center gap-2 text-[15px] text-gray-600">
@@ -557,19 +555,34 @@ export default function VacancyDetailView({
                   </div>
                 </div>
               ) : hasApplied ? (
-                <div className="flex-1 flex flex-col items-center justify-center gap-1.5 px-4 py-3 rounded-xl border border-hockia-primary/15 bg-hockia-primary/5">
+                // Open role, the viewer applied: the REAL status in the one set of
+                // words (applicationStatusPill — same as the timeline and My
+                // applications), never a generic "submitted" once it has moved
+                // on (e.g. No reply). Message the club whenever the application exists.
+                <div className="flex-1 flex flex-col items-center justify-center gap-1.5 px-4 py-3 rounded-xl border border-hockia-primary/15 bg-hockia-primary/5" data-testid="own-application-open">
                   <div className="flex items-center gap-2 font-semibold text-sm text-hockia-primary">
                     <CheckCircle className="w-4 h-4" />
-                    Application Submitted
+                    You applied
                   </div>
                   {(() => {
-                    const badge = playerApplicationStatusBadge(applicationStatus)
-                    return badge ? (
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${badge.className}`}>
-                        {badge.label}
+                    const pill = applicationStatusPill(applicationStatus ?? 'pending', null, true)
+                    return (
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${APPLICATION_TONE_CLASS[pill.tone]}`} data-testid="own-application-status">
+                        {pill.label}
                       </span>
-                    ) : null
+                    )
                   })()}
+                  {onMessage && (
+                    <button
+                      type="button"
+                      onClick={onMessage}
+                      className="mt-1 inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-semibold text-gray-800 hover:bg-gray-100 transition-colors"
+                      data-testid="open-message-club"
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                      Message the club
+                    </button>
+                  )}
                 </div>
               ) : onApply && !eligibility.eligible ? (
                 // Ineligible — the opportunity stays fully readable, but

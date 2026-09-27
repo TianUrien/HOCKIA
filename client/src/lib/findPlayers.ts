@@ -42,7 +42,11 @@ export interface PoolPlayer {
 export interface ScoutRow extends PoolPlayer {
   fitState: FitState | null
   fitScore: number | null
+  /** Highlights the profile shows: uploaded + the legacy highlight link (playerMediaCounts). */
   highlights: number
+  /** Full matches the profile shows: linked + uploaded (playerMediaCounts). Falls back
+   *  to full_game_video_count (linked only) when not enriched. */
+  fullMatches?: number
   age: number | null
   league: LeagueInput | null
   availabilityDuration: string | null
@@ -51,6 +55,11 @@ export interface ScoutRow extends PoolPlayer {
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000
+
+/** Full matches the profile shows (linked + uploaded), same count as the profile. */
+export function rowFullMatches(r: Pick<ScoutRow, 'full_game_video_count'> & { fullMatches?: number }): number {
+  return typeof r.fullMatches === 'number' ? r.fullMatches : r.full_game_video_count ?? 0
+}
 
 function daysAgo(iso: string | null | undefined, now: Date): number | null {
   if (!iso) return null
@@ -89,7 +98,7 @@ export function evidenceLine(e: { fullMatches: number; highlights: number; caree
  * highlights, career entries — then most recently active. `byFit: false`
  * (no context, or the club's league has no level) ranks by evidence only.
  */
-export function rankScoutRows<T extends Pick<ScoutRow, 'fitScore' | 'full_game_video_count' | 'highlights' | 'career_entry_count' | 'last_active_at'>>(rows: T[], opts: { byFit: boolean }): T[] {
+export function rankScoutRows<T extends Pick<ScoutRow, 'fitScore' | 'full_game_video_count' | 'fullMatches' | 'highlights' | 'career_entry_count' | 'last_active_at'>>(rows: T[], opts: { byFit: boolean }): T[] {
   const n = (v: number | null | undefined) => (typeof v === 'number' ? v : 0)
   return [...rows].sort((a, b) => {
     if (opts.byFit) {
@@ -98,7 +107,7 @@ export function rankScoutRows<T extends Pick<ScoutRow, 'fitScore' | 'full_game_v
       if (fa !== fb) return fb - fa
     }
     const diffs = [
-      n(b.full_game_video_count) - n(a.full_game_video_count),
+      rowFullMatches(b) - rowFullMatches(a),
       b.highlights - a.highlights,
       n(b.career_entry_count) - n(a.career_entry_count),
     ]
@@ -112,10 +121,10 @@ export function holdsEuPassport(n1: number | null | undefined, n2: number | null
   return [n1, n2].some((id) => typeof id === 'number' && euIds.has(id))
 }
 
-export function applyFindFilters<T extends Pick<ScoutRow, 'open_to_play' | 'full_game_video_count' | 'nationality_country_id' | 'nationality2_country_id' | 'applicationId'>>(rows: T[], active: Set<FindFilter>, euIds: Set<number>): T[] {
+export function applyFindFilters<T extends Pick<ScoutRow, 'open_to_play' | 'full_game_video_count' | 'fullMatches' | 'nationality_country_id' | 'nationality2_country_id' | 'applicationId'>>(rows: T[], active: Set<FindFilter>, euIds: Set<number>): T[] {
   return rows.filter((r) => {
     if (active.has('open') && !r.open_to_play) return false
-    if (active.has('full_match') && !((r.full_game_video_count ?? 0) > 0)) return false
+    if (active.has('full_match') && !(rowFullMatches(r) > 0)) return false
     if (active.has('eu') && !holdsEuPassport(r.nationality_country_id, r.nationality2_country_id, euIds)) return false
     if (active.has('not_applied') && r.applicationId) return false
     return true

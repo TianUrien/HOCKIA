@@ -96,10 +96,27 @@ export function startsLine(v: Pick<Vacancy, 'start_date' | 'duration_text'>): st
   return duration ? `Starts ${when} · ${duration}` : `Starts ${when}`
 }
 
-/** "Posted 3 days ago · No deadline — closes when filled". */
-export function postedLine(v: Pick<Vacancy, 'created_at' | 'application_deadline'>, now = new Date()): string {
-  const days = differenceInCalendarDays(now, new Date(v.created_at))
+/**
+ * When a role counts as "posted" — the SAME date on every surface (club card,
+ * player detail). created_at: it never moves, and it's what Opportunities
+ * "Newest" sorts by (founder ruling 2026-08-13). published_at is re-stamped on
+ * every reopen, so it would make a reopened role look new to one side only.
+ */
+export function rolePostedAt(v: Pick<Vacancy, 'created_at'>): string {
+  return v.created_at
+}
+
+/**
+ * "Posted 3 days ago · No deadline — closes when filled". A CLOSED role never
+ * talks about deadlines or "closes when filled": "Posted 3 days ago · Closed Sep 26, 2026".
+ */
+export function postedLine(v: Pick<Vacancy, 'created_at' | 'application_deadline'> & { closed_at?: string | null }, now = new Date(), closed = false): string {
+  const days = differenceInCalendarDays(now, new Date(rolePostedAt(v)))
   const posted = days <= 0 ? 'Posted today' : days === 1 ? 'Posted yesterday' : `Posted ${days} days ago`
+  if (closed) {
+    const c = v.closed_at ? new Date(v.closed_at) : null
+    return `${posted} · ${c && !Number.isNaN(c.getTime()) ? `Closed ${format(c, 'MMM d, yyyy')}` : 'Closed'}`
+  }
   return `${posted} · ${deadlineLine(v)}`
 }
 

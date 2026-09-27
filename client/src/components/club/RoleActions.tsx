@@ -1,15 +1,19 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MoreHorizontal, Pencil, RotateCcw, XCircle } from 'lucide-react'
+import { MoreHorizontal, Pencil, RotateCcw, Search, XCircle } from 'lucide-react'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { useToastStore } from '@/lib/toast'
-import { closeRolePatch, closeRoleToast, reopenRolePatch, type RoleCloseOutcome } from '@/lib/roleLifecycle'
+import { useFindForRole } from '@/hooks/useFindForRole'
+import { CLOSE_NOT_FILLED_LABEL, closeRolePatch, closeRoleToast, REOPEN_ROLE_TOAST, reopenRolePatch, type RoleCloseOutcome } from '@/lib/roleLifecycle'
+import { countWaitingApplicants } from '@/lib/roleWaiting'
 
 /**
  * The "…" menu on a club's own role (phone Club v2): Edit role, Close role
- * (asks Filled vs Not filled), Reopen role for a closed one. Same writes as
+ * (asks Filled vs Not filled), Reopen role for a closed one, and — on an open
+ * role — Find players / Find coaches for this role (activates the role's
+ * recruiting context first, like Role posted). Same writes as
  * the desktop Opportunities tab (lib/roleLifecycle). Render it only for the
  * owning club — the update is also scoped to club_id, and RLS refuses others.
  */
@@ -19,6 +23,10 @@ export interface RoleActionsRole {
   status: string | null
   title: string
   application_deadline: string | null
+  /** For "Find … for this role" (open roles only). */
+  opportunity_type?: string | null
+  gender?: string | null
+  location_city?: string | null
 }
 
 interface Props {
@@ -34,6 +42,7 @@ export function RoleActions({ role, onChanged, className }: Props) {
   const addToast = useToastStore((s) => s.addToast)
   const [sheet, setSheet] = useState<null | 'menu' | 'close'>(null)
   const [busy, setBusy] = useState(false)
+  const { findForRole, finding } = useFindForRole()
   const isOpen = role.status === 'open'
   const isClosed = role.status === 'closed'
 
@@ -41,10 +50,11 @@ export function RoleActions({ role, onChanged, className }: Props) {
     if (busy) return
     setBusy(true)
     try {
+      const waiting = outcome === 'filled' ? await countWaitingApplicants(role.id) : 0
       const { error } = await supabase.from('opportunities').update(closeRolePatch(outcome) as never).eq('id', role.id).eq('club_id', role.club_id)
       if (error) throw error
       setSheet(null)
-      addToast(closeRoleToast(outcome), 'success')
+      addToast(closeRoleToast(outcome, waiting), 'success')
       onChanged()
     } catch (err) {
       logger.error('[RoleActions] close failed', err)
@@ -61,13 +71,26 @@ export function RoleActions({ role, onChanged, className }: Props) {
       const { error } = await supabase.from('opportunities').update(reopenRolePatch(role.application_deadline) as never).eq('id', role.id).eq('club_id', role.club_id)
       if (error) throw error
       setSheet(null)
-      addToast('Role reopened.', 'success')
+      addToast(REOPEN_ROLE_TOAST, 'success')
       onChanged()
     } catch (err) {
       logger.error('[RoleActions] reopen failed', err)
       addToast('Could not reopen the role. Try again.', 'error')
     } finally {
       setBusy(false)
+    }
+  }
+
+  const isPlayerRole = role.opportunity_type !== 'coach'
+  const find = async () => {
+    if (finding) return
+    try {
+      const to = await findForRole({ id: role.id, type: isPlayerRole ? 'player' : 'coach', title: role.title, gender: role.gender ?? null, city: role.location_city ?? null })
+      setSheet(null)
+      navigate(to)
+    } catch (err) {
+      logger.error('[RoleActions] find for role failed', err)
+      addToast('Could not open the search. Try again.', 'error')
     }
   }
 
@@ -90,6 +113,11 @@ export function RoleActions({ role, onChanged, className }: Props) {
         <div className="px-5 pb-[max(env(safe-area-inset-bottom),1rem)] pt-1" data-testid="role-actions-sheet">
           <p className="truncate pb-3 text-center text-secondary font-semibold text-ink-2">{role.title}</p>
           <div className="divide-y divide-line overflow-hidden rounded-card bg-surface-grouped">
+            {isOpen && (
+              <button type="button" className={item} disabled={finding} onClick={() => void find()} data-testid="role-actions-find">
+                <Search className="h-[18px] w-[18px] text-ink-2" strokeWidth={1.8} /> {isPlayerRole ? 'Find players for this role' : 'Find coaches for this role'}
+              </button>
+            )}
             <button type="button" className={item} onClick={() => { setSheet(null); navigate(`/dashboard/opportunities/${role.id}/edit`) }}>
               <Pencil className="h-[18px] w-[18px] text-ink-2" strokeWidth={1.8} /> Edit role
             </button>
@@ -115,7 +143,7 @@ export function RoleActions({ role, onChanged, className }: Props) {
           <p className="mt-3 text-row font-semibold text-ink-1">Did you fill it?</p>
           <div className="mt-3 flex flex-col gap-2.5">
             <button type="button" disabled={busy} onClick={() => void close('filled')} className="flex h-[50px] items-center justify-center rounded-full bg-hockia-primary text-body font-semibold text-white disabled:opacity-60">Filled</button>
-            <button type="button" disabled={busy} onClick={() => void close('withdrawn')} className="flex h-[50px] items-center justify-center rounded-full bg-surface-grouped text-body font-semibold text-ink-1 disabled:opacity-60">Not filled / no longer needed</button>
+            <button type="button" disabled={busy} onClick={() => void close('withdrawn')} className="flex h-[50px] items-center justify-center rounded-full bg-surface-grouped text-body font-semibold text-ink-1 disabled:opacity-60">{CLOSE_NOT_FILLED_LABEL}</button>
             <button type="button" onClick={() => setSheet(null)} className="flex h-11 items-center justify-center text-body text-ink-2">Cancel</button>
           </div>
         </div>
