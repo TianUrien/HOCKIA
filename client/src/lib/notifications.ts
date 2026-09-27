@@ -6,6 +6,7 @@ import { qk } from './queryKeys'
 import { logger } from './logger'
 import { invalidateFriendshipEdges } from '@/hooks/friendshipEdgeCache'
 import { friendRequestErrorMessage } from './friendshipErrors'
+import { MY_CLUB_INVITATIONS_KEY, isClubInviteUnavailable } from './clubInviteCopy'
 import {
   fetchNotificationsPage,
   markNotificationRead as markNotificationReadRpc,
@@ -125,7 +126,8 @@ interface NotificationState {
   /** true on success; otherwise the message to show (never raw DB text). */
   respondToFriendRequest: (params: { friendshipId: string; action: 'accept' | 'decline' }) => Promise<true | string>
   respondToAmbassadorRequest: (params: { ambassadorId: string; action: 'accept' | 'decline' }) => Promise<boolean>
-  respondToClubInvite: (params: { clubMemberId: string; action: 'accept' | 'decline' }) => Promise<boolean>
+  /** true on success; 'unavailable' when the club cancelled it or it was already answered. */
+  respondToClubInvite: (params: { clubMemberId: string; action: 'accept' | 'decline' }) => Promise<true | 'unavailable' | false>
   dismissBySource: (kind: NotificationKind, sourceId: string | null) => void
 }
 
@@ -760,6 +762,25 @@ export const useNotificationStore = create<NotificationState>((set, get) => {
 
       set({ pendingClubInviteId: clubMemberId })
 
+      // Drop the invitation everywhere it shows (Activity, drawer, Inbox ›
+      // Requests) — after an answer, and when it turns out to be gone.
+      const removeLocally = () => {
+        set((state) => {
+          const next = state.notifications.filter(
+            (item) => !(item.kind === 'club_invitation_received' && item.sourceEntityId === clubMemberId)
+          )
+          return {
+            pendingClubInviteId: null,
+            notifications: next,
+            unreadCount: next.filter((item) => !item.readAt && !item.clearedAt).length,
+          }
+        })
+        void queryClient.invalidateQueries({ queryKey: MY_CLUB_INVITATIONS_KEY })
+        setTimeout(() => {
+          void get().refresh({ bypassCache: true })
+        }, 500)
+      }
+
       try {
         const { data, error } = await supabase.rpc('respond_to_club_invite', {
           p_club_member_id: clubMemberId,
@@ -773,23 +794,15 @@ export const useNotificationStore = create<NotificationState>((set, get) => {
 
         const result = data as { success: boolean; error?: string }
         if (!result.success) {
+          if (isClubInviteUnavailable(result.error)) {
+            removeLocally()
+            return 'unavailable'
+          }
           logger.error('[NOTIFICATIONS] Club invite response failed', result.error)
           return false
         }
 
-        // Optimistically remove the notification from local state
-        set((state) => ({
-          pendingClubInviteId: null,
-          notifications: state.notifications.filter((item) => item.sourceEntityId !== clubMemberId),
-          unreadCount: state.notifications.filter(
-            (item) => item.sourceEntityId !== clubMemberId && !item.readAt && !item.clearedAt
-          ).length,
-        }))
-
-        setTimeout(() => {
-          void get().refresh({ bypassCache: true })
-        }, 500)
-
+        removeLocally()
         return true
       } finally {
         set((state) => (state.pendingClubInviteId === clubMemberId ? { pendingClubInviteId: null } : {}))

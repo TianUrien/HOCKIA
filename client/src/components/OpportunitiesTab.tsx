@@ -341,6 +341,9 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
 
     setSelectedVacancy(vacancy)
     setShowApplyModal(true)
+    // Applying straight from a card skips the detail view that loads the
+    // club's name — load it so the sheet never reads "Apply to the club".
+    if (!clubName) void loadClubIdentity(vacancy.club_id)
   }
 
   const canUserApply = (vacancy: Vacancy): boolean => {
@@ -362,6 +365,41 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
     return true
   }
 
+  // The publisher's name + crest for the detail view and the Apply sheet.
+  const loadClubIdentity = async (clubId: string) => {
+    try {
+      Sentry.addBreadcrumb({
+        category: 'supabase',
+        message: 'vacancies.fetch_club_profile',
+        data: { clubId },
+        level: 'info'
+      })
+      const { data: clubData, error } = await supabase
+        .from('profiles')
+        .select('full_name, avatar_url')
+        .eq('id', clubId)
+        .single()
+
+      if (error) {
+        throw error
+      }
+
+      if (clubData) {
+        setClubName(clubData.full_name || 'Unknown Club')
+        setClubLogo(clubData.avatar_url)
+      }
+    } catch (error) {
+      logger.error('Error fetching club details:', error)
+      reportSupabaseError('vacancies.fetch_club_profile', error, {
+        clubId
+      }, {
+        feature: 'vacancies',
+        operation: 'load_club_profile'
+      })
+      setClubName('Unknown Club')
+    }
+  }
+
   const handleViewDetails = async (vacancy: Vacancy) => {
     // The club's own role (the only place a CLOSED role opens on desktop):
     // its name and logo are already in memory — use them at once instead of
@@ -379,38 +417,7 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
     setDetailVacancy(vacancy)
     setShowDetailModal(true)
 
-    // Fetch club details
-    try {
-      Sentry.addBreadcrumb({
-        category: 'supabase',
-        message: 'vacancies.fetch_club_profile',
-        data: { clubId: vacancy.club_id },
-        level: 'info'
-      })
-      const { data: clubData, error } = await supabase
-        .from('profiles')
-        .select('full_name, avatar_url')
-        .eq('id', vacancy.club_id)
-        .single()
-
-      if (error) {
-        throw error
-      }
-
-      if (clubData) {
-        setClubName(clubData.full_name || 'Unknown Club')
-        setClubLogo(clubData.avatar_url)
-      }
-    } catch (error) {
-      logger.error('Error fetching club details:', error)
-      reportSupabaseError('vacancies.fetch_club_profile', error, {
-        clubId: vacancy.club_id
-      }, {
-        feature: 'vacancies',
-        operation: 'load_club_profile'
-      })
-      setClubName('Unknown Club')
-    }
+    await loadClubIdentity(vacancy.club_id)
   }
 
   const handleCreateNew = async () => {
@@ -987,6 +994,8 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
             setSelectedVacancy(null)
           }}
           vacancy={selectedVacancy}
+          clubName={clubName || null}
+          clubLogo={clubLogo}
           onSuccess={(vacancyId) => {
             setUserApplications(prev => new Set([...prev, vacancyId]))
           }}

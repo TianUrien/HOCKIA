@@ -22,6 +22,7 @@ import {
 } from 'lucide-react'
 import type { NotificationKind, NotificationRecord } from '@/lib/api/notifications'
 import { formatRelationshipType } from '@/lib/utils'
+import { positionLabel } from '@/lib/identity'
 
 export type NotificationRenderConfig = {
   icon: LucideIcon
@@ -250,7 +251,9 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
       const city = getMetadataString(notification, 'location_city')
       const country = getMetadataString(notification, 'location_country')
       const location = [city, country].filter(Boolean).join(', ')
-      const parts = [position ? position.charAt(0).toUpperCase() + position.slice(1) : null, location || null].filter(Boolean)
+      // positionLabel covers player positions and coach roles ('head_coach'
+      // → 'Head coach'), so the raw enum never reaches the row.
+      const parts = [positionLabel(position), location || null].filter(Boolean)
       return parts.length > 0 ? parts.join(' \u2022 ') : null
     },
     getRoute: opportunityDetailRoute,

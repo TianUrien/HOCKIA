@@ -179,7 +179,10 @@ export default function SquadScreen({ profile, onBack }: SquadScreenProps) {
                   onOpen={() => openProfile(p)}
                   divider={i < search.rows.length - 1}
                   testId="squad-search-row"
-                  trailing={state === 'member' ? (
+                  // Rows pad 16px for the icon-sized trailing controls (…, ›);
+                  // solid controls sit 4px further in so they end 20px from
+                  // the edge like every other row.
+                  trailing={<span className="mr-1 flex shrink-0 items-center">{state === 'member' ? (
                     <span className="shrink-0 text-secondary text-ink-2">On your squad</span>
                   ) : state === 'pending' ? (
                     <PendingPill />
@@ -188,7 +191,7 @@ export default function SquadScreen({ profile, onBack }: SquadScreenProps) {
                       {invitingId === p.id && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />}
                       Invite
                     </button>
-                  )}
+                  )}</span>}
                 />
               )
             })}

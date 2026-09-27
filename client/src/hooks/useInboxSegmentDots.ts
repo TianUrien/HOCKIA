@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useAuthStore } from '@/lib/auth'
 import { useNotificationStore } from '@/lib/notifications'
 import { useUnreadMessages } from '@/hooks/useUnreadMessages'
+import { useMyClubInvitations } from '@/hooks/useClubInvitations'
 import {
   getFriendshipEdgeState,
   loadFriendshipEdges,
@@ -26,6 +27,7 @@ export function useInboxSegmentDots(): InboxSegmentDots {
   const notificationsLoading = useNotificationStore((s) => s.loading)
   const notificationsUserId = useNotificationStore((s) => s.userId)
   const viewerId = useAuthStore((s) => s.profile?.id ?? undefined)
+  const clubInvitations = useMyClubInvitations().invitations.length
   const [, forceRender] = useState(0)
 
   useEffect(() => {
@@ -59,7 +61,7 @@ export function useInboxSegmentDots(): InboxSegmentDots {
   const incomingRequests = countIncomingPendingRequests(edges ? edges.values() : [], viewerId)
 
   return useMemo(
-    () => computeInboxSegmentDots({ unreadMessages, incomingRequests, notifications }),
-    [unreadMessages, incomingRequests, notifications],
+    () => computeInboxSegmentDots({ unreadMessages, incomingRequests, clubInvitations, notifications }),
+    [unreadMessages, incomingRequests, clubInvitations, notifications],
   )
 }

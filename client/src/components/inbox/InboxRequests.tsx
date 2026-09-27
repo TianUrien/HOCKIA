@@ -7,6 +7,7 @@ import { identityLine } from '@/lib/identity'
 import { formatActivityAge } from '@/lib/inboxTime'
 import { profilePath } from '@/lib/profileNavigation'
 import type { FriendRequest, FriendRequestAction } from '@/hooks/useFriendRequests'
+import type { MyClubInvitation } from '@/lib/clubInvitations'
 
 interface InboxRequestsProps {
   incoming: FriendRequest[]
@@ -14,6 +15,10 @@ interface InboxRequestsProps {
   loading: boolean
   pendingId: string | null
   respond: (friendshipId: string, action: FriendRequestAction) => Promise<boolean>
+  /** Pending squad invitations addressed to the viewer (always listed first). */
+  clubInvitations?: MyClubInvitation[]
+  clubInvitePendingId?: string | null
+  respondToClubInvite?: (clubMemberId: string, action: 'accept' | 'decline') => Promise<boolean>
 }
 
 type Resolved = 'accepted' | 'declined'
@@ -24,7 +29,16 @@ type Resolved = 'accepted' | 'declined'
  * quiet confirmation instead of vanishing. Sent requests sit below as
  * "Waiting".
  */
-export function InboxRequests({ incoming, outgoing, loading, pendingId, respond }: InboxRequestsProps) {
+export function InboxRequests({
+  incoming,
+  outgoing,
+  loading,
+  pendingId,
+  respond,
+  clubInvitations = [],
+  clubInvitePendingId = null,
+  respondToClubInvite,
+}: InboxRequestsProps) {
   // Rows the member has just acted on stay visible with their outcome until
   // the next visit (design note: "the row becomes a quiet confirmation").
   const [resolved, setResolved] = useState<Record<string, Resolved>>({})
@@ -53,11 +67,27 @@ export function InboxRequests({ incoming, outgoing, loading, pendingId, respond 
   }
 
   return (
-    <section aria-label="Friend requests">
-      <p className="px-5 pb-2 text-secondary text-ink-2">Friends can message you, see your full media and write you a reference.</p>
+    <section aria-label="Requests">
+      <p className="px-5 pb-2 text-secondary text-ink-2">Friend requests and club invitations.</p>
+
+      {/* Squad invitations sit at the top while pending, read or not (Figma D1
+          DEV NOTE: the invitee accepts in Inbox › Requests). Accept or Decline
+          removes the row; the toast confirms. */}
+      {clubInvitations.length > 0 && respondToClubInvite && (
+        <ul aria-label="Club invitations" data-testid="inbox-club-invitations">
+          {clubInvitations.map((invite) => (
+            <ClubInvitationRow
+              key={invite.clubMemberId}
+              invite={invite}
+              busy={clubInvitePendingId === invite.clubMemberId}
+              respond={respondToClubInvite}
+            />
+          ))}
+        </ul>
+      )}
 
       {rows.length === 0 ? (
-        <p className="px-5 py-8 text-center text-row text-ink-2">No requests right now.</p>
+        clubInvitations.length > 0 ? null : <p className="px-5 py-8 text-center text-row text-ink-2">No requests right now.</p>
       ) : (
         <ul>
           {rows.map((request) => {
@@ -138,6 +168,46 @@ export function InboxRequests({ incoming, outgoing, loading, pendingId, respond 
         </>
       )}
     </section>
+  )
+}
+
+function ClubInvitationRow({ invite, busy, respond }: {
+  invite: MyClubInvitation
+  busy: boolean
+  respond: (clubMemberId: string, action: 'accept' | 'decline') => Promise<boolean>
+}) {
+  const name = invite.club.fullName ?? invite.club.username ?? 'A club'
+  const to = profilePath('club', invite.club.username, invite.club.id)
+  return (
+    <li className="flex items-center gap-3 px-5 py-3" data-testid="inbox-club-invitation">
+      <RowLink to={to} className="flex min-w-0 flex-1 items-center gap-3">
+        <EntityAvatar src={invite.club.avatarUrl} name={name} role="club" size={48} />
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-row font-semibold text-ink-1">{name}</span>
+          <span className="block text-secondary text-ink-2">Invited you to join their club</span>
+          <span className="block text-secondary text-ink-3">Club invitation · {formatActivityAge(invite.createdAt)}</span>
+        </span>
+      </RowLink>
+      <span className="flex shrink-0 items-center gap-1.5">
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => void respond(invite.clubMemberId, 'accept')}
+          className="flex h-[34px] items-center rounded-full bg-hockia-primary px-3.5 text-[14px] font-semibold text-white disabled:opacity-60"
+        >
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Accept'}
+        </button>
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => void respond(invite.clubMemberId, 'decline')}
+          aria-label={`Decline ${name}'s invitation`}
+          className="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-surface-grouped text-ink-1 disabled:opacity-60"
+        >
+          <X className="h-4 w-4" strokeWidth={2.25} />
+        </button>
+      </span>
+    </li>
   )
 }
 

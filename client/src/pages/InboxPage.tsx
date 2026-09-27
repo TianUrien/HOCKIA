@@ -9,6 +9,8 @@ import { InboxMessages } from '@/components/inbox/InboxMessages'
 import { InboxRequests } from '@/components/inbox/InboxRequests'
 import { InboxActivity } from '@/components/inbox/InboxActivity'
 import { useFriendRequests } from '@/hooks/useFriendRequests'
+import { useMyClubInvitations } from '@/hooks/useClubInvitations'
+import { useRespondToClubInvite } from '@/hooks/useRespondToClubInvite'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { useScrollRestore } from '@/hooks/useScrollRestore'
 import { useInboxSegmentDots } from '@/hooks/useInboxSegmentDots'
@@ -35,6 +37,8 @@ export default function InboxPage() {
   const active: Segment = isSegment(segment) ? segment : 'messages'
   const [composeOpen, setComposeOpen] = useState(false)
   const requests = useFriendRequests()
+  const { invitations: clubInvitations } = useMyClubInvitations()
+  const clubInvite = useRespondToClubInvite()
   // A red dot (never a number) on each segment holding something unread.
   const dots = useInboxSegmentDots()
 
@@ -86,6 +90,9 @@ export default function InboxPage() {
             loading={requests.loading}
             pendingId={requests.pendingId}
             respond={requests.respond}
+            clubInvitations={clubInvitations}
+            clubInvitePendingId={clubInvite.pendingId}
+            respondToClubInvite={clubInvite.respond}
           />
         )}
         {active === 'activity' && <InboxActivity />}

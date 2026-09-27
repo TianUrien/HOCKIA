@@ -11,6 +11,8 @@ interface InboxSegmentDotInput {
   unreadMessages: number
   /** Pending friend requests the viewer received (sent requests excluded). */
   incomingRequests: number
+  /** Pending squad invitations addressed to the viewer (Inbox › Requests). */
+  clubInvitations?: number
   /** profile_notifications rows as held by the notification store. */
   notifications: ReadonlyArray<{ readAt: string | null; clearedAt: string | null }>
 }
@@ -18,17 +20,18 @@ interface InboxSegmentDotInput {
 /**
  * Which Inbox segments carry a "new" dot (never a number). Each rule mirrors
  * what its segment already shows: Messages = any unread thread, Requests =
- * any pending received request, Activity = any row the Activity list renders
+ * any pending received request or squad invitation, Activity = any row the Activity list renders
  * as unread (not cleared, not read).
  */
 export function computeInboxSegmentDots({
   unreadMessages,
   incomingRequests,
+  clubInvitations = 0,
   notifications,
 }: InboxSegmentDotInput): InboxSegmentDots {
   return {
     messages: unreadMessages > 0,
-    requests: incomingRequests > 0,
+    requests: incomingRequests > 0 || clubInvitations > 0,
     activity: notifications.some((n) => !n.readAt && !n.clearedAt),
   }
 }
