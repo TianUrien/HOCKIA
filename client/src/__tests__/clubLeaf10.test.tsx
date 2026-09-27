@@ -3,7 +3,7 @@
  * D1.27; DEV NOTES 368:1093 and 368:1103). Pure helpers first, then the two
  * screens with their data mocked.
  */
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { act, fireEvent, render, renderHook, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
@@ -72,12 +72,24 @@ const db = vi.hoisted(() => ({
   update: vi.fn(),
   eq: vi.fn(),
   count: 2 as number,
+  media: [] as Array<{ id: string; file_url: string; caption: string | null; order_index: number; created_at: string }>,
+  deleteReturns: [{ id: 'x' }] as unknown[],
+  calls: [] as string[],
 }))
+vi.mock('@/lib/storage', () => ({ deleteStorageObject: vi.fn(() => { db.calls.push('storage-delete'); return Promise.resolve() }) }))
 vi.mock('@/lib/supabase', () => ({
   supabase: {
     from: (table: string) => {
       if (table === 'club_media') {
-        return { select: () => ({ eq: () => Promise.resolve({ count: db.count, error: null }) }) }
+        return {
+          select: (_cols: string, opts?: { head?: boolean }) => (opts?.head
+            ? { eq: () => Promise.resolve({ count: db.count, error: null }) }
+            : { eq: () => ({ order: () => ({ order: () => Promise.resolve({ data: db.media, error: null }) }) }) }),
+          delete: () => {
+            db.calls.push('row-delete')
+            return { eq: () => ({ select: () => Promise.resolve({ data: db.deleteReturns, error: null }) }) }
+          },
+        }
       }
       return {
         update: (patch: unknown) => {
@@ -172,7 +184,7 @@ describe('ClubEditScreen (D1.27)', () => {
     fireEvent.click(row('Club & league'))
     expect(navigateMock).toHaveBeenLastCalledWith('/dashboard/profile/league?from=edit')
     fireEvent.click(row('Photos'))
-    expect(navigateMock).toHaveBeenLastCalledWith('/dashboard/profile/media')
+    expect(navigateMock).toHaveBeenLastCalledWith('/dashboard/profile/media?from=edit')
   })
 
   it('name: required, saves full_name only', async () => {
@@ -321,5 +333,111 @@ describe('ClubEditEntry (/dashboard/club/edit)', () => {
     auth.state = { ...auth.state, profile: { ...club, role: 'player' } }
     renderEntry()
     expect(await screen.findByText('v1 profile')).toBeTruthy()
+  })
+})
+
+// ── Club Manage media (Photos row) ──────────────────────────────────
+
+vi.mock('@/hooks/useClubProfileScrollData', () => ({ clearClubProfileScrollCache: vi.fn() }))
+vi.mock('@/components/home/MediaLightbox', () => ({ MediaLightbox: () => null }))
+
+describe('useClubMedia', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    db.calls = []
+    db.deleteReturns = [{ id: 'p1' }]
+    db.media = [
+      { id: 'p1', file_url: 'https://x/club-media/c/1.jpg', caption: null, order_index: 1, created_at: '2026-09-01' },
+      { id: 'p2', file_url: 'https://x/club-media/c/2.jpg', caption: null, order_index: 0, created_at: '2026-09-02' },
+    ]
+  })
+  const load = async () => {
+    const { useClubMedia } = await vi.importActual<typeof import('@/hooks/useClubMedia')>('@/hooks/useClubMedia')
+    const hook = renderHook(() => useClubMedia('club-1'))
+    await waitFor(() => expect(hook.result.current.loading).toBe(false))
+    return hook
+  }
+  it('loads club_media newest-first', async () => {
+    const { result } = await load()
+    expect(result.current.photos.map((p) => p.id)).toEqual(['p1', 'p2'])
+    expect(result.current.photos[0].url).toBe('https://x/club-media/c/1.jpg')
+  })
+  it('delete: the row first, the storage object only after it succeeded', async () => {
+    const { result } = await load()
+    let ok = false
+    await act(async () => { ok = await result.current.remove(result.current.photos[0]) })
+    expect(ok).toBe(true)
+    expect(db.calls).toEqual(['row-delete', 'storage-delete'])
+    expect(result.current.photos.map((p) => p.id)).toEqual(['p2'])
+  })
+  it('a refused delete (no row back) keeps the file and the photo', async () => {
+    db.deleteReturns = []
+    const { result } = await load()
+    let ok = true
+    await act(async () => { ok = await result.current.remove(result.current.photos[0]) })
+    expect(ok).toBe(false)
+    expect(db.calls).toEqual(['row-delete'])
+    expect(result.current.photos).toHaveLength(2)
+  })
+})
+
+const clubMedia = vi.hoisted(() => ({
+  state: { photos: [] as Array<{ id: string; url: string; caption: string | null; orderIndex: number }>, loading: false, busy: false },
+  add: vi.fn(), remove: vi.fn(), reorder: vi.fn(),
+}))
+
+describe('ClubManageMediaScreen', () => {
+  let Screen: typeof import('@/components/club/ClubManageMediaScreen').default
+  // The real screen against a stubbed hook (the hook is tested above).
+  beforeEach(async () => {
+    vi.clearAllMocks()
+    vi.resetModules()
+    vi.doMock('@/hooks/useClubMedia', () => ({
+      useClubMedia: () => ({ ...clubMedia.state, add: clubMedia.add, remove: clubMedia.remove, reorder: clubMedia.reorder, reload: vi.fn() }),
+    }))
+    Screen = (await import('@/components/club/ClubManageMediaScreen')).default
+    clubMedia.state = { photos: [], loading: false, busy: false }
+  })
+  const photo = (id: string, i: number) => ({ id, url: `https://x/club-media/c/${id}.jpg`, caption: null, orderIndex: i })
+
+  it('empty: one clear add action, no Reorder; back names its parent', () => {
+    const onBack = vi.fn()
+    render(<MemoryRouter><Screen clubId="club-1" parent="Edit profile" onBack={onBack} /></MemoryRouter>)
+    expect(screen.getByRole('heading', { name: 'Media' })).toBeTruthy()
+    expect(screen.getByText('Photos · 0')).toBeTruthy()
+    expect(screen.getByTestId('club-media-empty').textContent).toContain('Add photos of your club')
+    expect(screen.queryByRole('button', { name: 'Reorder' })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Back to Edit profile' }))
+    expect(onBack).toHaveBeenCalled()
+  })
+
+  it('adds the picked files', async () => {
+    clubMedia.add.mockResolvedValue({ added: 2, failed: [] })
+    render(<MemoryRouter><Screen clubId="club-1" parent="Profile" onBack={vi.fn()} /></MemoryRouter>)
+    const files = [new File(['a'], 'a.jpg', { type: 'image/jpeg' }), new File(['b'], 'b.jpg', { type: 'image/jpeg' })]
+    fireEvent.change(screen.getByTestId('club-media-input'), { target: { files } })
+    await waitFor(() => expect(clubMedia.add).toHaveBeenCalledWith(files))
+    expect(toast.addToast).toHaveBeenCalledWith('2 photos added.', 'success')
+  })
+
+  it('reorder stages moves and deletes; Cancel throws them away, Done saves after confirming deletes', async () => {
+    clubMedia.state.photos = [photo('a', 2), photo('b', 1), photo('c', 0)]
+    clubMedia.remove.mockResolvedValue(true)
+    clubMedia.reorder.mockResolvedValue(true)
+    render(<MemoryRouter><Screen clubId="club-1" parent="Profile" onBack={vi.fn()} /></MemoryRouter>)
+    expect(screen.getByText('Photos · 3')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Reorder' }))
+    fireEvent.click(screen.getAllByRole('button', { name: 'Delete photo' })[2])
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(clubMedia.remove).not.toHaveBeenCalled()
+    expect(screen.getAllByRole('button', { name: /Photo \d/ })).toHaveLength(3)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Reorder' }))
+    fireEvent.click(screen.getAllByRole('button', { name: 'Move later' })[0])
+    fireEvent.click(screen.getAllByRole('button', { name: 'Delete photo' })[2])
+    fireEvent.click(screen.getByRole('button', { name: 'Done' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Remove' }))
+    await waitFor(() => expect(clubMedia.remove).toHaveBeenCalledWith(photo('c', 0)))
+    await waitFor(() => expect(clubMedia.reorder).toHaveBeenCalledWith([photo('b', 1), photo('a', 2)]))
   })
 })

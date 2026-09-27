@@ -30,7 +30,7 @@ import {
  * club mode. Player-only fields go; club fields come in. Each row opens its
  * own sheet and saves just that field, with the same columns and rules as the
  * v1 club editor. Type is fixed. Club & league opens its own screen (338:424);
- * Photos opens the club's media. Empty values read "Add" in brand colour.
+ * Photos opens the club's Manage media. Empty values read "Add" in brand colour.
  * Back ("Profile") and Done return to the club profile.
  */
 type Field = 'name' | 'year' | 'country' | 'city' | 'about' | 'website' | 'links' | 'contact'
@@ -267,7 +267,7 @@ export default function ClubEditScreen() {
 
         <Group label="About">
           <Row label="About" value={profile.club_bio?.trim() || null} multiline onClick={() => setEditing('about')} />
-          <Row label="Photos" value={photosRowValue(photoCount)} onClick={() => navigate('/dashboard/profile/media')} />
+          <Row label="Photos" value={photosRowValue(photoCount)} onClick={() => navigate('/dashboard/profile/media?from=edit')} />
         </Group>
 
         <Group label="Contact">
