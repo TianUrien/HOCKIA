@@ -53,6 +53,11 @@ vi.mock('@/lib/logger', () => ({
 
 import CommunityCard from '@/components/dashboard/bento/CommunityCard'
 
+// ScoutingCard / MediaCard count uploaded videos (useProfileVideos); keep it inert here.
+vi.mock('@/hooks/useProfileVideos', () => ({
+  useProfileVideos: () => ({ videos: [], links: [], loading: false, reload: () => {} }),
+}))
+
 const baseProfile = {
   id: 'profile-1',
   accepted_friend_count: 0,

@@ -256,6 +256,11 @@ describe('coach profile + settings', () => {
     expect(src).not.toContain('<ContextSwitcher')
     expect(src).not.toContain('<ProfileTopBar')
   })
+  it('the club’s own profile has no recruiting-context chip either (it stays on Community / Saved)', () => {
+    expect(read('../pages/ClubDashboard.tsx')).not.toContain('<ContextSwitcher')
+    expect(read('../pages/CommunityPage.tsx')).toContain('<ContextSwitcher')
+    expect(read('../pages/SavedCandidatesPage.tsx')).toContain('<ContextSwitcher')
+  })
 })
 
 // ── 6. Club screens ─────────────────────────────────────────────────────────
@@ -274,10 +279,33 @@ describe('club screens', () => {
     expect(screen.getByTestId('detail-overlay')).toBeTruthy()
   })
 
-  it('everyone else still gets Apply', () => {
+  it('a player gets Apply on a player role', () => {
     render(<MemoryRouter><OpportunityPostedCard item={feedItem} /></MemoryRouter>)
     expect(screen.getByRole('button', { name: 'Apply' })).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'View role' })).toBeNull()
+  })
+
+  it('a coach gets Apply on a coach role, View role on a player role', () => {
+    authState = { user: { id: 'coach-1' }, profile: { id: 'coach-1', role: 'coach' } }
+    const { unmount } = render(<MemoryRouter><OpportunityPostedCard item={{ ...feedItem, opportunity_type: 'coach' }} /></MemoryRouter>)
+    expect(screen.getByRole('button', { name: 'Apply' })).toBeTruthy()
+    unmount()
+    render(<MemoryRouter><OpportunityPostedCard item={{ ...feedItem, opportunity_type: 'player' }} /></MemoryRouter>)
+    expect(screen.queryByRole('button', { name: 'Apply' })).toBeNull()
+    expect(screen.getByRole('button', { name: 'View role' })).toBeTruthy()
+  })
+
+  it('other clubs, brands and umpires get View role, and a player gets View role on a coach role', () => {
+    for (const role of ['club', 'brand', 'umpire']) {
+      authState = { user: { id: `${role}-9` }, profile: { id: `${role}-9`, role } }
+      const { unmount } = render(<MemoryRouter><OpportunityPostedCard item={feedItem} /></MemoryRouter>)
+      expect(screen.queryByRole('button', { name: 'Apply' })).toBeNull()
+      expect(screen.getByRole('button', { name: 'View role' })).toBeTruthy()
+      unmount()
+    }
+    authState = { user: { id: 'player-1' }, profile: { id: 'player-1', role: 'player' } }
+    render(<MemoryRouter><OpportunityPostedCard item={{ ...feedItem, opportunity_type: 'coach' }} /></MemoryRouter>)
+    expect(screen.queryByRole('button', { name: 'Apply' })).toBeNull()
   })
 
   it('the club phone header has a Hockia AI (sparkles) button to /discover; players do not', () => {
