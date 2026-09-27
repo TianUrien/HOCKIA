@@ -8,6 +8,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import inboxSource from '@/pages/InboxPage.tsx?raw'
 import {
   applicationCardDetail,
   applicationCardTitle,
@@ -15,7 +16,6 @@ import {
   clubWeekStats,
   inboxWaitingNotice,
   pickApplication,
-  requestsLabel,
   type ClubApplication,
 } from '@/lib/clubInbox'
 import { emptyContextDraft, newContextPayload, newContextProblem } from '@/lib/newContext'
@@ -98,10 +98,8 @@ describe('club Inbox', () => {
     expect(inboxWaitingNotice([{ waiting: true, applied: true }, { waiting: true, applied: false }])?.sub).toBe('1 of them applied to your roles.')
     expect(inboxWaitingNotice([{ waiting: true, applied: false }])).toEqual({ title: '1 person waiting for a first reply', sub: null })
   })
-  it('Requests shows a count for clubs only', () => {
-    expect(requestsLabel(true, 10)).toBe('Requests · 10')
-    expect(requestsLabel(true, 0)).toBe('Requests')
-    expect(requestsLabel(false, 10)).toBe('Requests')
+  it('Requests keeps the red dot for clubs too (founder 2026-09-27) — no count', () => {
+    expect(inboxSource).not.toMatch(/Requests · /)
   })
 })
 
@@ -180,7 +178,7 @@ describe('Settings — club', () => {
     expect(isValidContactEmail('')).toBe(true)
     expect(isValidContactEmail('nope')).toBe(false)
     expect(isValidContactEmail('a@b.co')).toBe(true)
-    expect(CLUB_EDIT_PATH).toBe('/dashboard/profile?action=edit')
+    expect(CLUB_EDIT_PATH).toBe('/dashboard/club/edit')
   })
   it('the hub shows the club identity, the Club group and its footnote', () => {
     render(withClient(<SettingsMobile section="hub" />))

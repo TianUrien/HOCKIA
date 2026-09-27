@@ -48,11 +48,6 @@ export function inboxWaitingNotice(rows: { waiting: boolean; applied: boolean }[
   return { title, sub }
 }
 
-/** Inbox › Requests label: clubs see the count (Figma D1.19), players a dot. */
-export function requestsLabel(isClubV2: boolean, incoming: number): string {
-  return isClubV2 && incoming > 0 ? `Requests · ${incoming}` : 'Requests'
-}
-
 // ── Chat context card (DEV NOTES 355:919, 355:923) ───────────────────────
 export interface ClubApplication {
   id: string

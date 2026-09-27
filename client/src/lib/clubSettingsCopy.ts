@@ -6,9 +6,8 @@ import { clubLeadLeague } from '@/lib/clubProfileCopy'
  * footnote.
  */
 
-/** Edit club profile. Leaf 10 builds the v2 screen; this is the existing
- *  entry point that opens the club's profile editor today. */
-export const CLUB_EDIT_PATH = '/dashboard/profile?action=edit'
+/** Edit club profile (D1.27). On desktop / non-club the route redirects to the old editor. */
+export const CLUB_EDIT_PATH = '/dashboard/club/edit'
 
 export const CLUB_GROUP_FOOTER = 'Your league and crest show on your roles and profile. Recruiting lives in Opportunities.'
 

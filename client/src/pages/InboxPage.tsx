@@ -16,8 +16,6 @@ import { useScrollRestore } from '@/hooks/useScrollRestore'
 import { useInboxSegmentDots } from '@/hooks/useInboxSegmentDots'
 import { loadFriendshipEdges } from '@/hooks/friendshipEdgeCache'
 import { useAuthStore } from '@/lib/auth'
-import { useMediaQuery } from '@/hooks/useMediaQuery'
-import { requestsLabel } from '@/lib/clubInbox'
 
 const SEGMENTS = ['messages', 'requests', 'activity'] as const
 type Segment = (typeof SEGMENTS)[number]
@@ -47,11 +45,6 @@ export default function InboxPage() {
   // Opening Inbox re-reads the shared friendship edges so the Requests dot
   // (and the tab-bar dot, which shares it) matches the list shown here.
   const viewerId = useAuthStore((s) => s.profile?.id ?? null)
-  // Club v2 (Figma D1.19; DEV NOTE 355:914): clubs see "Requests · N" (pending
-  // requests they didn't send); everyone else keeps the red dot, never a number.
-  const viewerRole = useAuthStore((s) => s.profile?.role ?? null)
-  const isPhone = useMediaQuery('(max-width: 1023px)')
-  const isClubV2 = viewerRole === 'club' && isPhone
   useEffect(() => {
     if (viewerId) void loadFriendshipEdges(viewerId, true)
   }, [viewerId])
@@ -83,7 +76,7 @@ export default function InboxPage() {
             onChange={setSegment}
             options={[
               { value: 'messages', label: 'Messages', dot: dots.messages },
-              { value: 'requests', label: requestsLabel(isClubV2, requests.incoming.length), dot: dots.requests && !(isClubV2 && requests.incoming.length > 0) },
+              { value: 'requests', label: 'Requests', dot: dots.requests },
               { value: 'activity', label: 'Activity', dot: dots.activity },
             ]}
           />
