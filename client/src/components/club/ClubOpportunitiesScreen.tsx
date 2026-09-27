@@ -141,6 +141,9 @@ export default function ClubOpportunitiesScreen() {
     return hit ? [hit, ...list.filter((r) => r.id !== highlight)] : list
   }, [segment, data.open, data.closed, highlight])
   const postRole = () => navigate('/dashboard/opportunities/new')
+  // Find players, ranked for this role (DEV NOTE 327:554): with one open player role, that role.
+  const playerRoles = data.open.filter((r) => r.status === 'open' && r.opportunity_type === 'player')
+  const findPlayersPath = playerRoles.length === 1 ? `/dashboard/find-players?role=${playerRoles[0].id}` : '/dashboard/find-players'
 
   const pending = useMemo(() => data.open.flatMap((r) => r.pendingAppliedAt), [data.open])
   const notice = waitingNotice(pending, data.expiryDays)
@@ -198,13 +201,13 @@ export default function ClubOpportunitiesScreen() {
 
         {segment === 'open' && (
           <div className="overflow-hidden rounded-2xl bg-surface-grouped" data-testid="club-scouting-group">
-            <button type="button" onClick={() => navigate('/community/players')} className="flex h-[52px] w-full items-center gap-3 pl-3.5 pr-2.5 text-left">
+            <button type="button" onClick={() => navigate(findPlayersPath)} className="flex h-[52px] w-full items-center gap-3 pl-3.5 pr-2.5 text-left">
               <span className="flex h-8 w-8 items-center justify-center rounded-[9px] bg-hockia-soft text-hockia-primary"><Users className="h-[18px] w-[18px]" strokeWidth={2} /></span>
               <span className="flex-1 text-[16px] font-medium text-ink-1">Find players for this role</span>
               <ChevronRight className="h-[18px] w-[18px] text-ink-4" strokeWidth={2} />
             </button>
             <div className="ml-[58px] h-[0.5px] bg-line" />
-            <button type="button" onClick={() => navigate('/dashboard/shortlists')} className="flex h-[52px] w-full items-center gap-3 pl-3.5 pr-2.5 text-left">
+            <button type="button" onClick={() => navigate('/dashboard/shortlist', { state: { parent: 'Opportunities' } })} className="flex h-[52px] w-full items-center gap-3 pl-3.5 pr-2.5 text-left">
               <span className="flex h-8 w-8 items-center justify-center rounded-[9px] bg-hockia-soft text-hockia-primary"><Star className="h-[18px] w-[18px]" strokeWidth={2} /></span>
               <span className="flex-1 text-[16px] font-medium text-ink-1">Shortlist</span>
               <span className="text-[16px] text-ink-2 tabular-nums">{data.shortlistCount}</span>

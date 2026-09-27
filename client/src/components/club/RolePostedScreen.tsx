@@ -17,8 +17,8 @@ import { replyWindowLine, rolePostedCopy, type PostRoleDraft } from '@/lib/postR
  * Post role succeeds, on its own route (/dashboard/opportunities/:id/posted)
  * so a refresh re-renders it from the saved role. The role must be the
  * club's own and open; otherwise → Opportunities (highlighting it when it's
- * the club's). Find <players|coaches> for this role → Community with
- * the role's recruiting context active (player roles); Done and × →
+ * the club's). Find players for this role → Find players (D1.9) with this
+ * role's recruiting context active; coach roles → Community; Done and × →
  * Opportunities with the new card on top. The push card shows only while
  * the club has no push subscription, and stops after two dismissals.
  */
@@ -151,7 +151,7 @@ export default function RolePostedScreen({ roleId }: Props) {
       </div>
 
       <div className="flex shrink-0 flex-col gap-2.5 px-5 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-2">
-        <button type="button" onClick={() => leave(copy.findPath)} className="flex h-[52px] w-full items-center justify-center rounded-full bg-hockia-primary px-[18px] text-[17px] font-semibold text-white active:opacity-90">
+        <button type="button" onClick={() => leave(role.type === 'player' ? `/dashboard/find-players?role=${roleId}` : copy.findPath)} className="flex h-[52px] w-full items-center justify-center rounded-full bg-hockia-primary px-[18px] text-[17px] font-semibold text-white active:opacity-90">
           {copy.findLabel}
         </button>
         <button type="button" onClick={done} className="flex h-[52px] w-full items-center justify-center rounded-full bg-surface-grouped px-[18px] text-[17px] font-semibold text-ink-1">
