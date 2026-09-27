@@ -1,16 +1,18 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { Bell, Check, Clock, X } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { trackPushSubscribe } from '@/lib/analytics'
 import { usePushSubscription } from '@/hooks/usePushSubscription'
+import { opportunityGenderToTarget, useRecruitingContext } from '@/hooks/useRecruitingContext'
 import { INLINE_PUSH_ASK, useBottomPrompt } from '@/lib/bottomPrompt'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
 import { IconButton } from '@/components/ui/IconButton'
 import { DEFAULT_EXPIRY_DAYS } from '@/lib/clubRecruiting'
-import { replyWindowLine, rolePostedCopy, type PostRoleDraft } from '@/lib/postRole'
+import { replyWindowLine, roleFindPath, rolePostedCopy, type PostRoleDraft } from '@/lib/postRole'
 
 /**
  * Role posted (Figma 04 Club D1.26 368:780; DEV NOTE 368:1098). Shown after
@@ -27,6 +29,13 @@ interface Props {
 }
 
 type PostedRole = Pick<PostRoleDraft, 'type' | 'position'>
+
+/** What activating this role's recruiting scope needs (the saved row). */
+interface ScopeFields {
+  title: string | null
+  gender: string | null
+  city: string | null
+}
 
 const PUSH_DISMISS_KEY = 'hockia-role-posted-push-dismissals'
 const PUSH_DISMISS_MAX = 2
@@ -53,6 +62,8 @@ export default function RolePostedScreen({ roleId }: Props) {
   const location = useLocation()
   const profile = useAuthStore((s) => s.profile)
   const push = usePushSubscription()
+  const queryClient = useQueryClient()
+  const { activateForOpportunity } = useRecruitingContext()
   // Straight after Post role the form hands over what it posted, so the
   // screen paints at once; the saved row below is what decides.
   const handed = (location.state as { role?: PostedRole } | null)?.role ?? null
@@ -60,18 +71,21 @@ export default function RolePostedScreen({ roleId }: Props) {
   const [expiryDays, setExpiryDays] = useState<number | null>(null)
   const [dismissals] = useState(readDismissals)
   const [turnedOn, setTurnedOn] = useState(false)
+  const [scope, setScope] = useState<ScopeFields | null>(null)
+  const [finding, setFinding] = useState(false)
 
   const clubId = profile?.id ?? null
   useEffect(() => {
     if (!clubId) return
     let cancelled = false
-    void supabase.from('opportunities').select('id, club_id, status, opportunity_type, position').eq('id', roleId).maybeSingle().then(({ data, error }) => {
+    void supabase.from('opportunities').select('id, club_id, status, opportunity_type, position, title, gender, location_city').eq('id', roleId).maybeSingle().then(({ data, error }) => {
       if (cancelled) return
       if (error) logger.warn('[RolePosted] role not loaded', error)
-      const row = data as { club_id: string; status: string | null; opportunity_type: PostedRole['type'] | null; position: PostedRole['position'] } | null
+      const row = data as { club_id: string; status: string | null; opportunity_type: PostedRole['type'] | null; position: PostedRole['position']; title?: string | null; gender?: string | null; location_city?: string | null } | null
       if (!row || row.club_id !== clubId) { navigate('/opportunities', { replace: true }); return }
       if (row.status !== 'open') { navigate('/opportunities', { replace: true, state: { highlight: roleId } }); return }
       setRole({ type: row.opportunity_type ?? 'player', position: row.position })
+      setScope({ title: row.title ?? null, gender: row.gender ?? null, city: row.location_city?.trim() || null })
     })
     return () => { cancelled = true }
   }, [clubId, roleId, navigate])
@@ -95,6 +109,26 @@ export default function RolePostedScreen({ roleId }: Props) {
     navigate(to, { replace: true, state })
   }
   const done = () => leave('/opportunities', { highlight: roleId })
+
+  // Find players / Find coaches for THIS role: make it the active recruiting
+  // context first (same scope Post role writes), so Community / Find players
+  // never open on whichever role was active before. Waits for the store to
+  // refresh, so the next screen reads the new scope on its first render.
+  const findForRole = async () => {
+    if (!role || finding) return
+    setFinding(true)
+    const isPlayer = role.type === 'player'
+    await activateForOpportunity({
+      opportunityId: roleId,
+      // A coach role's team is not a player category; the RPC takes null.
+      target: isPlayer ? opportunityGenderToTarget(scope?.gender) : null,
+      region: scope?.city ?? null,
+      label: scope?.title ?? null,
+    })
+    // Find players' role list may be cached from before this role existed.
+    void queryClient.invalidateQueries({ queryKey: ['scouting', 'open-roles'] })
+    leave(roleFindPath(role.type, roleId))
+  }
 
   const turnOn = async () => {
     try {
@@ -151,7 +185,7 @@ export default function RolePostedScreen({ roleId }: Props) {
       </div>
 
       <div className="flex shrink-0 flex-col gap-2.5 px-5 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-2">
-        <button type="button" onClick={() => leave(role.type === 'player' ? `/dashboard/find-players?role=${roleId}` : copy.findPath)} className="flex h-[52px] w-full items-center justify-center rounded-full bg-hockia-primary px-[18px] text-[17px] font-semibold text-white active:opacity-90">
+        <button type="button" onClick={() => void findForRole()} disabled={finding || !scope} className="flex h-[52px] w-full items-center justify-center rounded-full bg-hockia-primary px-[18px] text-[17px] font-semibold text-white active:opacity-90 disabled:opacity-60">
           {copy.findLabel}
         </button>
         <button type="button" onClick={done} className="flex h-[52px] w-full items-center justify-center rounded-full bg-surface-grouped px-[18px] text-[17px] font-semibold text-ink-1">
