@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { lazy, Suspense, useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { User, MapPin, Calendar, Building2, Camera, UserRound, Briefcase, Users, Store, Flag, X, ChevronRight, Check } from 'lucide-react'
 import * as Sentry from '@sentry/react'
@@ -24,6 +24,8 @@ import { validateOnboardingStep, type WizardStep } from '@/lib/onboardingValidat
 import { UMPIRE_LEVEL_SUGGESTIONS } from '@/lib/umpireLevels'
 import { FEDERATION_SUGGESTIONS } from '@/lib/umpireFederations'
 import { LANGUAGE_SUGGESTIONS } from '@/lib/languages'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { showsClubSetup } from '@/lib/clubSetup'
 import {
   type PlayingCategory,
   type CoachUmpireCategory,
@@ -31,6 +33,9 @@ import {
   isValidPlayingCategory,
   isValidCategoryArray,
 } from '@/lib/hockeyCategories'
+
+// Club set-up (Figma 04 Club D1.24): phone clubs only, in its own chunk.
+const ClubSetupFlow = lazy(() => import('@/components/club/ClubSetupFlow'))
 
 type UserRole = 'player' | 'coach' | 'club' | 'brand' | 'umpire'
 
@@ -60,6 +65,13 @@ export default function CompleteProfile() {
   // Mutex ref to prevent concurrent profile creation attempts (race condition guard)
   const profileCreationMutexRef = useRef(false)
   const { user, profile, loading: authLoading, profileStatus, fetchProfile } = useAuthStore()
+  // Club v2 is phone-only: phone clubs get the D1.24 set-up instead of the
+  // classic form below; desktop and every other role keep today's flow.
+  const isPhone = useMediaQuery('(max-width: 1023px)')
+  // Set once the club set-up has finished and is sending the club to
+  // Opportunities, so the already-onboarded redirect below doesn't race it
+  // to /dashboard/profile. Never set on any other path.
+  const clubSetupFinishedRef = useRef(false)
   const { getCountryById } = useCountries()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -370,6 +382,7 @@ export default function CompleteProfile() {
     // data with whatever the form's pre-filled state happens to contain
     // (which has known gaps for some fields, see the prefill effect).
     if (profile?.onboarding_completed) {
+      if (clubSetupFinishedRef.current) return
       logger.debug('[COMPLETE_PROFILE] User already onboarded, redirecting to dashboard')
       navigate('/dashboard/profile', { replace: true })
     }
@@ -1280,6 +1293,32 @@ export default function CompleteProfile() {
           </div>
         </div>
       </div>
+    )
+  }
+
+  // Club set-up (D1.24) for phone clubs that haven't finished onboarding. The
+  // guards above (auth, brand, already-onboarded → dashboard) run first.
+  if (profile && showsClubSetup(userRole, isPhone, profile.onboarding_completed)) {
+    const finishClubSetup = async () => {
+      const current = useAuthStore.getState().profile ?? profile
+      localStorage.setItem('hockia-onboarding-completed', '1')
+      trackOnboardingComplete('club')
+      trackDbEvent('onboarding_completed', 'profile', user.id, { role: 'club' })
+      submitSignupAttribution(user.id)
+      const wallAction = consumeWallIntent()
+      if (wallAction) trackDbEvent('registration_from_wall', 'profile', user.id, { action: wallAction, role: 'club' })
+      // The route gate must see onboarding_completed before the route change,
+      // and this page's already-onboarded redirect must not win the race to
+      // /dashboard/profile. Then refetch for real.
+      clubSetupFinishedRef.current = true
+      useAuthStore.getState().setProfile({ ...current, onboarding_completed: true })
+      navigate('/opportunities', { replace: true })
+      void invalidateProfile({ userId: user.id, reason: 'club-setup-complete' })
+    }
+    return (
+      <Suspense fallback={<div className="min-h-screen bg-white" />}>
+        <ClubSetupFlow onFinished={finishClubSetup} />
+      </Suspense>
     )
   }
 
