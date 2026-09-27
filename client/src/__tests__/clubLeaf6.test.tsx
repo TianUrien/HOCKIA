@@ -235,8 +235,19 @@ beforeEach(() => {
 })
 
 describe('Find players screen (D1.9)', () => {
+  const showEveryone = () => fireEvent.click(screen.getByRole('button', { name: 'Open to play' }))
+
+  it('Open to play is on by default; switching it off lists every adult', () => {
+    renderAt(<FindPlayersScreen />)
+    expect(screen.getByRole('button', { name: 'Open to play' }).getAttribute('aria-pressed')).toBe('true')
+    expect(screen.getAllByTestId('find-player-row').map((r) => r.querySelector('span span')?.textContent)).toEqual(['Facundo Diaz'])
+    showEveryone()
+    expect(screen.getAllByTestId('find-player-row')).toHaveLength(4)
+  })
+
   it('ranks by fit, never lists under-18s, and shows fit chips (grey = none)', () => {
     renderAt(<FindPlayersScreen />)
+    showEveryone()
     const names = screen.getAllByTestId('find-player-row').map((r) => r.querySelector('span span')?.textContent)
     expect(names).toEqual(['Facundo Diaz', 'Mitchell Eager', 'Leandro Bica', 'Grey Fit'])
     expect(screen.queryByText('Too Young')).toBeNull()
@@ -247,20 +258,26 @@ describe('Find players screen (D1.9)', () => {
     expect(screen.getByText('Active yesterday')).toBeTruthy()
   })
 
-  it('applicants show Applied instead of +; ✓ removes; + shortlists to the role list', () => {
+  it('applicants show Applied instead of +; ✓ removes; + adds to the active role list', () => {
     renderAt(<FindPlayersScreen />)
+    showEveryone()
     expect(screen.getByRole('button', { name: 'Applied' })).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Remove Facundo Diaz from the shortlist' }))
     expect(scoutingState.remove).toHaveBeenCalledWith('p1')
     fireEvent.click(screen.getByRole('button', { name: 'Shortlist Mitchell Eager' }))
-    expect(scoutingState.add).toHaveBeenCalledWith('p3', 'Mitchell')
+    expect(scoutingState.add).toHaveBeenCalledWith('p3')
+  })
+
+  it('header count is the active role list count', () => {
+    renderAt(<FindPlayersScreen />)
+    expect(screen.getByTestId('find-players-shortlist-link').textContent).toBe('Shortlist · 2')
   })
 
   it('filters narrow the list', () => {
     renderAt(<FindPlayersScreen />)
-    fireEvent.click(screen.getByRole('button', { name: 'Open to play' }))
-    expect(screen.getAllByTestId('find-player-row')).toHaveLength(1)
-    fireEvent.click(screen.getByRole('button', { name: 'Open to play' }))
+    showEveryone()
+    fireEvent.click(screen.getByRole('button', { name: 'Full match' }))
+    expect(screen.getAllByTestId('find-player-row')).toHaveLength(2)
     fireEvent.click(screen.getByRole('button', { name: 'Not applied' }))
     expect(screen.queryByText('Leandro Bica')).toBeNull()
   })

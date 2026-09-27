@@ -12,7 +12,7 @@ import { isRecruitingViewer } from '@/lib/recruiterAccess'
 import { playingCategoriesForTarget } from '@/lib/recruitingContext'
 import { useRecruitingContext } from '@/hooks/useRecruitingContext'
 import { useShortlists } from '@/hooks/useShortlists'
-import { markSavedProfileId, unmarkSavedProfileId } from '@/hooks/useSavedProfiles'
+import { markSavedProfileId, resyncSavedProfileIds } from '@/hooks/useSavedProfiles'
 import { useBlockedUsers } from '@/hooks/useBlockedUsers'
 import type { LeagueInput } from '@/lib/keyFacts'
 import type { FitState } from '@/lib/clubRecruiting'
@@ -295,16 +295,9 @@ export function useShortlistWrites(roleTitle: string | null) {
   }, [list, viewerId, roleTitle, refresh])
 
   const inList = useCallback((playerId: string) => !!list && saved.some((s) => s.saved_profile_id === playerId && s.shortlist_id === list.id), [list, saved])
-  const otherListName = useCallback((playerId: string) => {
-    const row = saved.find((s) => s.saved_profile_id === playerId)
-    if (!row || (list && row.shortlist_id === list.id)) return null
-    return lists.find((l) => l.id === row.shortlist_id)?.name ?? 'another'
-  }, [saved, list, lists])
-
-  const add = useCallback(async (playerId: string, firstName: string) => {
+  const add = useCallback(async (playerId: string) => {
     if (!viewerId) return
-    const other = otherListName(playerId)
-    if (other) { addToast(`${firstName} is already on your “${other}” shortlist`, 'info'); return }
+    // Always the active role's list: a player may sit on several roles' lists.
     const target = await ensureList()
     if (!target) { addToast('Couldn’t shortlist. Please try again.', 'error'); return }
     const temp: SavedRow = { id: `tmp-${playerId}`, saved_profile_id: playerId, shortlist_id: target.id, note: null, created_at: new Date().toISOString() }
@@ -321,7 +314,7 @@ export function useShortlistWrites(roleTitle: string | null) {
     void queryClient.invalidateQueries({ queryKey: savedKey })
     void queryClient.invalidateQueries({ queryKey: ['scouting', 'shortlist'] })
     void refresh()
-  }, [viewerId, otherListName, ensureList, queryClient, savedKey, addToast, refresh])
+  }, [viewerId, ensureList, queryClient, savedKey, addToast, refresh])
 
   const remove = useCallback(async (playerId: string) => {
     if (!viewerId || !list) return
@@ -334,7 +327,7 @@ export function useShortlistWrites(roleTitle: string | null) {
       addToast('Couldn’t remove. Please try again.', 'error')
       return
     }
-    unmarkSavedProfileId(viewerId, playerId)
+    void resyncSavedProfileIds(viewerId)
     trackDbEvent('shortlist.item_removed', 'shortlist', list.id, { player_id: playerId, source: 'find_players' })
     void queryClient.invalidateQueries({ queryKey: ['scouting', 'shortlist'] })
     void refresh()
@@ -455,7 +448,7 @@ export function useShortlistEntryActions(queryKey: readonly unknown[]) {
       addToast('Couldn’t remove. Please try again.', 'error')
       return
     }
-    unmarkSavedProfileId(viewerId, entry.id)
+    void resyncSavedProfileIds(viewerId)
     trackDbEvent('shortlist.item_removed', 'shortlist_item', entry.savedId, { source: 'shortlist_v2' })
     void queryClient.invalidateQueries({ queryKey: ['scouting', 'saved', viewerId] })
     addToast(`${firstName} removed from the shortlist`, 'success')

@@ -39,7 +39,8 @@ export default function FindPlayersScreen() {
   const roleId = ctx?.type === 'opportunity' ? ctx.opportunity_id : null
   const { countries } = useCountries()
   const euIds = useMemo(() => new Set(countries.filter((c) => EU_COUNTRY_CODES.has(c.code)).map((c) => c.id)), [countries])
-  const [filters, setFilters] = useState<Set<FindFilter>>(new Set())
+  // Open to play is on by default (Figma D1.9); switch it off to see every adult player.
+  const [filters, setFilters] = useState<Set<FindFilter>>(() => new Set<FindFilter>(['open']))
   const [sheet, setSheet] = useState(false)
   const target = contextFitTarget(ctx)
   const ownLeague = useOwnLeague(target)
@@ -95,7 +96,6 @@ export default function FindPlayersScreen() {
     if (isClub && roleId && r.applicationId) navigate(`/dashboard/opportunities/${roleId}/applicants/${r.applicationId}`, { state: { from: location.pathname } })
     else openProfile(r)
   }
-  const firstName = (r: ScoutRow) => r.full_name?.trim().split(/\s+/)[0] || 'Player'
   const count = shortlist.rows.length
 
   return (
@@ -164,7 +164,7 @@ export default function FindPlayersScreen() {
                 </button>
               )
               : (
-                <button type="button" onClick={() => void writes.add(r.id, firstName(r))} aria-label={`Shortlist ${r.full_name ?? 'player'}`} aria-pressed="false" className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-grouped text-ink-1">
+                <button type="button" onClick={() => void writes.add(r.id)} aria-label={`Shortlist ${r.full_name ?? 'player'}`} aria-pressed="false" className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-grouped text-ink-1">
                   <Plus className="h-[18px] w-[18px]" strokeWidth={2.2} />
                 </button>
               )
