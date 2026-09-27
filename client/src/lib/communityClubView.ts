@@ -58,3 +58,15 @@ export function clubViewSortOptions(fitActive: boolean): { value: 'newest' | 'ev
     { value: 'completeness', label: 'Most complete' },
   ]
 }
+
+/**
+ * Where a card opens for a club or a recruiting coach on phone Community:
+ * players (D1.17 · DEV NOTE 355:905) and coaches (founder 2026-09-27) go
+ * straight to the full profile — recruiters skip the Member preview. Other
+ * roles keep the preview (null).
+ */
+export function recruiterCardProfilePath(member: { id: string; role: string }): string | null {
+  if (member.role === 'player') return `/players/id/${member.id}`
+  if (member.role === 'coach') return `/coaches/id/${member.id}`
+  return null
+}

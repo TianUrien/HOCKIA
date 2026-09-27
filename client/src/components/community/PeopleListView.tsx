@@ -50,7 +50,7 @@ import { useRecruitingContext } from '@/hooks/useRecruitingContext'
 import { useOwnLeague } from '@/hooks/useScouting'
 import { useCommunityClubFit } from '@/hooks/useCommunityClubFit'
 import { contextFitTarget, type ContextLike } from '@/lib/findPlayers'
-import { rankCommunityClubView } from '@/lib/communityClubView'
+import { rankCommunityClubView, recruiterCardProfilePath } from '@/lib/communityClubView'
 
 export interface Profile {
   id: string
@@ -173,6 +173,9 @@ interface PeopleListViewProps {
    *  Player cards carry the server fit chip, "Best fit" ranks by
    *  compute_club_fit then evidence, and a card opens the full profile. */
   clubView?: boolean
+  /** Phone + a club or a coach who recruits: player and coach cards open the
+   *  full profile instead of a preview (D1.17; founder 2026-09-27 for coaches). */
+  recruiterDirectProfiles?: boolean
 }
 
 /** Player has at least one video proof signal (highlight or full-game). */
@@ -191,7 +194,7 @@ const memberEvidence = (m: Profile) =>
     current_world_club_id: m.current_world_club_id ?? null,
   })
 
-export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilteredCountChange, onVideoCountChange, scopeReshaping = false, clubView = false }: PeopleListViewProps) {
+export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilteredCountChange, onVideoCountChange, scopeReshaping = false, clubView = false, recruiterDirectProfiles = false }: PeopleListViewProps) {
   const navigationType = useNavigationType()
   const navigate = useNavigate()
   const location = useLocation()
@@ -1189,6 +1192,9 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
   // "No members found" empty state only renders once genuinely settled — never
   // as a flash while a re-fetch is in flight (e.g. right after clearing a
   // recruiting scope, which re-fetches under a new role filter).
+  // Full profile in club mode; back returns here (D1.16 back label).
+  const openProfile = (path: string) => navigate(path, { state: { from: `${location.pathname}${location.search}` } })
+
   const isBusy = isLoading || isSearching || authLoading
   const showSkeletons = isBusy && displayedMembers.length === 0
   const isReshaping = isLoading && displayedMembers.length > 0
@@ -1264,11 +1270,14 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
                     key={member.id}
                     member={member}
                     fitState={clubFit.fit.get(member.id)?.state ?? null}
-                    onPreview={() => navigate(`/players/id/${member.id}`, { state: { from: `${location.pathname}${location.search}` } })}
+                    onPreview={() => openProfile(`/players/id/${member.id}`)}
                     priority={i < 4}
                   />
                 )
               }
+              // Coaches (and players outside club view) open the full profile
+              // for recruiters on phone too — no preview step.
+              const directPath = recruiterDirectProfiles ? recruiterCardProfilePath(member) : null
               const md = matchById.get(member.id)
               if (playerMatchActive && member.role === 'player' && md) {
                 return (
@@ -1288,7 +1297,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
                     key={member.id}
                     member={member}
                     verdict={cmd.verdict}
-                    onPreview={() => setCandidatePreview({ member })}
+                    onPreview={directPath ? () => openProfile(directPath) : () => setCandidatePreview({ member })}
                     priority={i < 4}
                   />
                 )
@@ -1300,7 +1309,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
                 <RecruiterCandidateCard
                   key={member.id}
                   member={member}
-                  onPreview={() => setPreviewMember(member)}
+                  onPreview={directPath ? () => openProfile(directPath) : () => setPreviewMember(member)}
                   priority={i < 4}
                 />
               )

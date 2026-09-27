@@ -515,6 +515,7 @@ export default function CommunityPage() {
                   onVideoCountChange={setVideoCount}
                   scopeReshaping={scopeReshaping}
                   clubView={clubView}
+                  recruiterDirectProfiles={isPhone && isRecruiterViewer}
                 />
               </div>
             </>

@@ -7,7 +7,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { clubViewSortOptions, rankCommunityClubView } from '@/lib/communityClubView'
+import { clubViewSortOptions, rankCommunityClubView, recruiterCardProfilePath } from '@/lib/communityClubView'
 
 // ── mocks for the rendered components ─────────────────────────────────────
 const scouting = {
@@ -83,6 +83,17 @@ describe('Community club view ranking', () => {
   it('labels the default sort "Best fit" only while a player context ranks the grid', () => {
     expect(clubViewSortOptions(true).map((o) => o.label)).toEqual(['Best fit', 'Strongest evidence', 'Most complete'])
     expect(clubViewSortOptions(false)[0].label).toBe('Newest')
+  })
+})
+
+// ── recruiter card tap → full profile (players: DEV NOTE 355:905; coaches: founder 2026-09-27)
+describe('recruiter card destination on phone Community', () => {
+  it('player and coach cards open the full profile', () => {
+    expect(recruiterCardProfilePath({ id: 'p1', role: 'player' })).toBe('/players/id/p1')
+    expect(recruiterCardProfilePath({ id: 'c1', role: 'coach' })).toBe('/coaches/id/c1')
+  })
+  it('clubs, brands and umpires keep the member preview', () => {
+    for (const role of ['club', 'brand', 'umpire']) expect(recruiterCardProfilePath({ id: 'x', role })).toBeNull()
   })
 })
 
