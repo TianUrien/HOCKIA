@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, useId } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, useId, type ReactNode } from 'react'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { useChat } from '@/hooks/useChat'
 import { useSafeArea } from '@/hooks/useSafeArea'
@@ -25,6 +25,12 @@ interface ChatWindowV2Props {
   isImmersiveMobile?: boolean
   /** Phone back-label beside the chevron ("Inbox", or where the chat was opened from). */
   backLabel?: string
+  /** Pinned above the messages (club v2: the application card, DEV NOTE 355:919). */
+  topSlot?: ReactNode
+  /** Replaces the default empty state for a new conversation (DEV NOTE 355:923). */
+  emptyState?: ReactNode
+  /** Club v2: no read receipts. */
+  hideReceipts?: boolean
 }
 
 export default function ChatWindowV2({
@@ -36,6 +42,9 @@ export default function ChatWindowV2({
   onConversationRead,
   isImmersiveMobile = false,
   backLabel,
+  topSlot,
+  emptyState,
+  hideReceipts = false,
 }: ChatWindowV2Props) {
   const {
     messages,
@@ -262,6 +271,7 @@ export default function ChatWindowV2({
         isMobile={isMobile}
         conversationId={conversation.id}
       />
+      {topSlot}
       <div className="relative flex-1 min-h-0 overflow-hidden">
         <div
           ref={scrollContainerRef}
@@ -269,7 +279,7 @@ export default function ChatWindowV2({
           className={`chat-scroll-container absolute inset-0 overflow-y-auto overscroll-contain ${isMobile ? 'bg-white' : 'bg-gray-50'} ${scrollPaddingClasses}`}
         >
           {messages.length === 0 ? (
-            <EmptyState />
+            emptyState ?? <EmptyState />
           ) : (
             <MessageList
               messages={messages}
@@ -282,6 +292,7 @@ export default function ChatWindowV2({
               deleteMessage={deleteMessage}
               isLoadingMore={isLoadingMore}
               unreadMetadata={unreadMetadata}
+              hideReceipts={hideReceipts}
             />
           )}
           <NewMessagesToast

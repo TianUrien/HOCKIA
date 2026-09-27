@@ -19,6 +19,9 @@ import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
+import { useClubApplicationWith } from '@/hooks/useClubInbox'
+import { ApplicantChatEmpty, ChatApplicationCard } from '@/components/club/ChatApplicationCard'
+import { APPLICANT_CHAT_EMPTY } from '@/lib/clubInbox'
 
 interface ConversationDBRow {
   id: string
@@ -83,7 +86,9 @@ interface Conversation {
 
 /** "‹ Inbox" by default; when the chat was opened from somewhere else, name
  *  that destination ("‹ Profile", "‹ Opportunity"); "Back" only as a fallback. */
-function backLabelFor(state: { returnTo?: unknown; from?: unknown } | null): string {
+function backLabelFor(state: { returnTo?: unknown; from?: unknown; backLabel?: unknown } | null): string {
+  // The opener names itself (Applicant review → the applicant's first name, D1.21).
+  if (typeof state?.backLabel === 'string' && state.backLabel.trim()) return state.backLabel.trim()
   const path = typeof state?.returnTo === 'string' ? state.returnTo : typeof state?.from === 'string' ? state.from : null
   if (!path) return 'Inbox'
   if (/^\/(players|coaches|clubs|brands|umpires)\b/.test(path)) return 'Profile'
@@ -97,7 +102,7 @@ function backLabelFor(state: { returnTo?: unknown; from?: unknown } | null): str
 }
 
 export default function MessagesPage() {
-  const { user } = useAuthStore()
+  const { user, profile: viewerProfile } = useAuthStore()
   const location = useLocation()
   const navigate = useNavigate()
   const { conversationId: conversationIdParam } = useParams<{ conversationId?: string }>()
@@ -578,6 +583,10 @@ export default function MessagesPage() {
     : combinedConversations
 
   const selectedConversation = combinedConversations.find((conv) => conv.id === selectedConversationId)
+  // Club v2 Chat (Figma D1.20 / D1.21): the application card on top, a useful
+  // empty line for a new chat with an applicant, no read receipts. Phones only.
+  const clubV2Chat = isPhone && viewerProfile?.role === 'club'
+  const { data: chatApplication = null } = useClubApplicationWith(user?.id ?? null, selectedConversation?.otherParticipant?.id ?? null, clubV2Chat)
   const hasActiveConversation = Boolean(selectedConversationId)
 
   // Title: chat thread shows the other participant's name when known so
@@ -1204,7 +1213,10 @@ export default function MessagesPage() {
                 conversation={selectedConversation}
                 currentUserId={user?.id || ''}
                 onBack={handleBackToList}
-                backLabel={backLabelFor(location.state as { returnTo?: unknown; from?: unknown } | null)}
+                backLabel={backLabelFor(location.state as { returnTo?: unknown; from?: unknown; backLabel?: unknown } | null)}
+                topSlot={clubV2Chat && chatApplication ? <ChatApplicationCard app={chatApplication.app} expiryDays={chatApplication.expiryDays} /> : undefined}
+                emptyState={clubV2Chat && chatApplication ? <ApplicantChatEmpty {...APPLICANT_CHAT_EMPTY} /> : undefined}
+                hideReceipts={clubV2Chat}
                 onMessageSent={handleConversationMessageEvent}
                 onConversationCreated={handleConversationCreated}
                 onConversationRead={handleConversationRead}

@@ -103,7 +103,23 @@ export interface UpdateContextInput {
   competition_id?: number | null
   region?: string | null
   label?: string | null
+  /** Saved-search criteria (Club v2 D1.23 "New context" — the Post a role
+   *  step-1 fields). The opportunity RPC copies these from the role; a custom
+   *  context writes them here (owner-only RLS on recruiting_context). */
+  target_role?: 'player' | 'coach' | null
+  target_position?: string | null
+  target_level?: string | null
+  target_specialists?: string[]
+  position_required?: boolean
+  level_required?: boolean
+  specialists_required?: boolean
 }
+
+const UPDATE_KEYS = [
+  'target_category', 'competition_id', 'region', 'label',
+  'target_role', 'target_position', 'target_level', 'target_specialists',
+  'position_required', 'level_required', 'specialists_required',
+] as const satisfies readonly (keyof UpdateContextInput)[]
 
 export interface ActivateOpportunityContextInput {
   opportunityId: string
@@ -440,10 +456,7 @@ export const useRecruitingContextStore = create<RecruitingContextStoreState>((se
     // the caller didn't mean to touch. Null is preserved — callers
     // use null to explicitly clear a field.
     const patch: Record<string, unknown> = {}
-    if ('target_category' in input) patch.target_category = input.target_category
-    if ('competition_id' in input) patch.competition_id = input.competition_id
-    if ('region' in input) patch.region = input.region
-    if ('label' in input) patch.label = input.label
+    for (const key of UPDATE_KEYS) if (key in input) patch[key] = input[key]
     if (Object.keys(patch).length === 0) return
 
     const { error: updateError } = await supabase
