@@ -419,8 +419,17 @@ export interface RolePostedCopy {
   title: string
   body: string
   findLabel: string
-  findPath: string
   pushTitle: string
+}
+
+/**
+ * Where "Find … for this role" goes: player roles → Find players ranked for
+ * the role (?role= also activates it there on a direct link); coach roles →
+ * Community coaches. The caller activates the role's recruiting context
+ * before navigating, so the next screen is scoped to THIS role.
+ */
+export function roleFindPath(type: PostRoleDraft['type'], roleId: string): string {
+  return type === 'player' ? `/dashboard/find-players?role=${encodeURIComponent(roleId)}` : '/community/coaches'
 }
 
 /**
@@ -435,7 +444,6 @@ export function rolePostedCopy(d: Pick<PostRoleDraft, 'type' | 'position'>): Rol
     title: `${positionLabel(d.position) ?? 'Your role'} is live`,
     body: `${player ? 'Players' : 'Coaches'} who fit can find it in Opportunities now. Every applicant lands in To review, and we’ll let you know.`,
     findLabel: `Find ${who} for this role`,
-    findPath: player ? '/community/players' : '/community/coaches',
     pushTitle: `Know when ${who} apply`,
   }
 }

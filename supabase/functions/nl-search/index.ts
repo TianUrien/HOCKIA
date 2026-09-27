@@ -29,6 +29,7 @@ import {
   mergeOpportunityRows,
   testPublisherRowsToOpportunityRows,
   withoutAppliedRoles,
+  withoutOwnRoles,
   type CountryRef,
   type OpportunityRow,
   type TestPublisherRoleRow,
@@ -1333,7 +1334,7 @@ const OPPORTUNITY_RESULT_CAP = 10
  * Reads `public_opportunities` (open roles only; hidden / test / not-onboarded
  * publishers already excluded by the view) — plus, on staging only, test
  * publishers' open roles when the viewer is a test account — keeps the roles
- * this viewer can apply to (not applied to yet; same EU-passport +
+ * this viewer can apply to (not their own, not applied to yet; same EU-passport +
  * team-gender rules as the check_application_eligibility trigger; deadline
  * not passed), and widens
  * empty geography country → region → worldwide, naming the rung in the copy.
@@ -1400,7 +1401,7 @@ async function handleCandidateOpportunitySearch(params: {
   }
 
   try {
-    const [oppRes, countriesRes, appliedRes] = await Promise.all([
+    const [oppRes, countriesRes, appliedRes, ownRes] = await Promise.all([
       adminClient
         .from('public_opportunities')
         .select('id, title, opportunity_type, position, gender, location_city, location_country, application_deadline, benefits, custom_benefits, eu_passport_required, created_at, club_name, club_logo_url, organization_name, world_club_name, world_club_avatar_url')
@@ -1409,8 +1410,12 @@ async function handleCandidateOpportunitySearch(params: {
         .limit(500),
       adminClient.from('countries').select('name, common_name, region'),
       adminClient.from('opportunity_applications').select('opportunity_id').eq('applicant_id', userId),
+      // The viewer's own roles (a recruiting coach posts roles too).
+      adminClient.from('opportunities').select('id').eq('club_id', userId),
     ])
     if (oppRes.error) throw oppRes.error
+    // Fatal if unread: without it the viewer's own role could be offered back.
+    if (ownRes?.error) throw ownRes.error
     let rows = (oppRes.data ?? []) as OpportunityRow[]
 
     // Staging + test viewer: the view hides test publishers, but every role
@@ -1435,6 +1440,8 @@ async function handleCandidateOpportunitySearch(params: {
     const countries = (countriesRes.data ?? []) as CountryRef[]
     // Already applied → not "a role you can apply to" (non-fatal if unread).
     rows = withoutAppliedRoles(rows, ((appliedRes?.data ?? []) as { opportunity_id: string }[]).map(a => a.opportunity_id))
+    // Never offer the viewer a role they published (prod and staging alike).
+    rows = withoutOwnRoles(rows, ((ownRes?.data ?? []) as { id: string }[]).map(r => r.id))
 
     const today = new Date().toISOString().slice(0, 10)
     const { criteria, matched, landed, askedLabel, widenedRegion } =
