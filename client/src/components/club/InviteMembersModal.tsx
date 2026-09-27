@@ -11,6 +11,8 @@ import {
   searchInvitableMembers,
   type MemberSearchResult,
 } from '@/lib/clubMembership'
+import { inviteErrorMessage } from '@/lib/clubSquadCopy'
+import { positionLabel } from '@/lib/identity'
 
 interface InviteMembersModalProps {
   isOpen: boolean
@@ -122,7 +124,7 @@ export default function InviteMembersModal({ isOpen, onClose, onInvited }: Invit
       addToast(`Invitation sent to ${member.full_name ?? 'member'}.`, 'success')
       onInvited?.()
     } else {
-      addToast(res.error ?? 'Could not send the invitation.', 'error')
+      addToast(inviteErrorMessage(res), 'error')
     }
   }
 
@@ -221,7 +223,7 @@ export default function InviteMembersModal({ isOpen, onClose, onInvited }: Invit
                 <ul className="divide-y divide-gray-100">
                   {results.map((m) => {
                     const isInvited = invited.has(m.id)
-                    const meta = [m.position ? m.position.charAt(0).toUpperCase() + m.position.slice(1) : null, m.current_club || m.base_location].filter(Boolean).join(' · ')
+                    const meta = [positionLabel(m.position), m.current_club || m.base_location].filter(Boolean).join(' · ')
                     return (
                       <li key={m.id} className="flex items-center gap-3 py-2.5">
                         <Avatar src={m.avatar_url} alt={m.full_name ?? ''} initials={m.full_name ? m.full_name.split(' ').map((n) => n[0]).join('') : '?'} size="md" role={m.role} />

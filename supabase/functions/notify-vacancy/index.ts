@@ -9,6 +9,7 @@ import { getServiceClient } from '../_shared/supabase-client.ts'
 import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import type { Database } from '../_shared/database.types.ts'
 import { corsHeaders } from '../_shared/cors.ts'
+import { positionLabel } from '../_shared/display-labels.ts'
 import { assertServiceRole } from '../_shared/webhook-auth.ts'
 import { captureException } from '../_shared/sentry.ts'
 import {
@@ -379,9 +380,8 @@ Deno.serve(async (req: Request) => {
 
     // Generate email content — try DB template first, fall back to hardcoded
     const clubName = clubProfile.full_name || 'Unknown Club'
-    const position = vacancy.position
-      ? vacancy.position.charAt(0).toUpperCase() + vacancy.position.slice(1)
-      : ''
+    // "head_coach" → "Head coach" (the app's label), never the raw token.
+    const position = positionLabel(vacancy.position) ?? ''
     const city = vacancy.location_city?.trim() || ''
     const country = vacancy.location_country?.trim() || ''
     const location = city && country ? `${city}, ${country}` : city || country || ''

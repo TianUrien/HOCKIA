@@ -67,6 +67,21 @@ export function pipelineOf(statuses: AppStatus[]): Pipeline {
   return p
 }
 
+/**
+ * The applicants header line: "3 applied since Sep 12" — "since" is the FIRST
+ * application still counted (not withdrawn), i.e. the real applications window.
+ * The role's published_at is re-stamped on every reopen and created_at can
+ * predate publishing (drafts), so neither describes when applications came in.
+ */
+export function appliedSinceLine(apps: { status: AppStatus; appliedAt: string | null }[], formatDay: (iso: string) => string | null): string {
+  const counted = apps.filter((a) => a.status !== 'withdrawn')
+  if (!counted.length) return 'No applicants yet'
+  const first = counted.map((a) => a.appliedAt).filter((x): x is string => Boolean(x)).sort()[0]
+  const n = `${counted.length} applied`
+  const day = first ? formatDay(first) : null
+  return day ? `${n} since ${day}` : n
+}
+
 /** "3 applicants waiting for a reply" + "The oldest closes in 5 days if you don't answer." */
 export function waitingNotice(pendingAppliedAt: (string | null)[], expiryDays = DEFAULT_EXPIRY_DAYS, now = new Date()): { title: string; detail: string | null } | null {
   const dates = pendingAppliedAt.filter((d): d is string => Boolean(d))
@@ -101,11 +116,73 @@ export function fitTarget(gender: string | null | undefined): 'Men' | 'Women' | 
   return canonical[gender.trim().toLowerCase()] ?? null
 }
 
-export interface FitComponents { gender_match?: number; competition_proximity?: number; availability?: number; recency?: number }
-export interface FitRow { key: 'category' | 'open' | 'active' | 'level'; label: string; ok: boolean; detail: string }
+export interface FitComponents {
+  gender_match?: number
+  competition_proximity?: number
+  availability?: number
+  recency?: number
+  /** Round 5 (20260930100000_club_fit_position): present only when the role has
+   *  a position. 1 = primary match, 0.5 = secondary, 0 = no match. */
+  position_match?: number
+  role_position?: string | null
+  candidate_position?: string | null
+  candidate_secondary_position?: string | null
+}
+export interface FitRow { key: 'position' | 'category' | 'open' | 'active' | 'level'; label: string; ok: boolean; detail: string }
+
+/** "Goalkeeper", "Head coach", "Other" (other_coach) — the role vocabulary. */
+function fitPositionLabel(token: string | null | undefined): string | null {
+  if (!token) return null
+  if (token === 'other_coach' || token === 'other') return 'Other'
+  if (token === 'strength_conditioning') return 'Strength & conditioning'
+  return humanizeToken(token)
+}
 
 /**
- * The four components of compute_club_fit as plain checks (DEV NOTE 327:563).
+ * The Position row (founder ruling 2026-09-27): only when the role has a
+ * position. Gender-neutral, no pronouns.
+ */
+export function fitPositionRow(c: FitComponents): FitRow | null {
+  if (typeof c.position_match !== 'number' || !c.role_position) return null
+  const role = fitPositionLabel(c.role_position) ?? 'this position'
+  const primary = fitPositionLabel(c.candidate_position)
+  if (c.position_match >= 1) return { key: 'position', label: 'Position', ok: true, detail: `Plays ${role} — matches` }
+  if (c.position_match > 0) {
+    return { key: 'position', label: 'Position', ok: false, detail: `${primary ?? 'Another position'} — plays ${role} as a second position` }
+  }
+  return {
+    key: 'position', label: 'Position', ok: false,
+    detail: primary ? `${primary} — the role is for a ${role}` : `No position on the profile yet — the role is for a ${role}`,
+  }
+}
+
+/** "Men’s", "Women’s", "Mixed", "Boys", "Girls" — the role's team, for Fit copy. */
+export function roleTeamWord(gender: string | null | undefined): string | null {
+  const g = gender?.trim().toLowerCase()
+  if (g === 'men') return 'Men’s'
+  if (g === 'women') return 'Women’s'
+  if (g === 'mixed') return 'Mixed'
+  if (g === 'boys') return 'Boys'
+  if (g === 'girls') return 'Girls'
+  return null
+}
+
+/**
+ * A CONFIRMED miss that compute_club_fit turns into "no chip" (grey): a wrong
+ * position the profile does name (round 5 — goalkeeper / position-required
+ * roles), or a playing category the role is not for (round 6 — women on a
+ * Men’s role, men on a Women’s role). The profile Fit card still shows then,
+ * without a chip, so the recruiter sees why.
+ */
+export function fitHasConfirmedMiss(c: FitComponents, playerCategory: string | null | undefined): boolean {
+  const wrongPosition = c.position_match === 0 && !!c.candidate_position
+  const wrongCategory = (c.gender_match ?? 0) < 1 && !!playerCategory
+  return wrongPosition || wrongCategory
+}
+
+/**
+ * The components of compute_club_fit as plain checks (DEV NOTE 327:563):
+ * Position (when the role has one) + the original four.
  * Level names the missing side instead of ever showing 0%.
  */
 export function fitRows(c: FitComponents, ctx: {
@@ -119,12 +196,14 @@ export function fitRows(c: FitComponents, ctx: {
   playerLeagueSelfReported?: boolean
   clubLeagueKnown: boolean
 }): FitRow[] {
-  const roleWord = ctx.roleGender ? `a ${ctx.roleGender}’s role`.replace('Mixed’s', 'Mixed') : 'this role'
+  const team = roleTeamWord(ctx.roleGender)
+  const roleWord = team ? `a ${team} role` : 'this role'
   const category: FitRow = {
     key: 'category', label: 'Category', ok: (c.gender_match ?? 0) >= 1,
     detail: (c.gender_match ?? 0) >= 1
       ? `${ctx.playerCategoryLabel ?? 'Category'} — matches ${roleWord}`
-      : ctx.playerCategoryLabel ? `${ctx.playerCategoryLabel} — doesn’t match ${roleWord}` : 'No playing category on the profile yet',
+      // Round 6: a category mismatch is a no-chip miss — say what the role is for.
+      : ctx.playerCategoryLabel ? `${ctx.playerCategoryLabel} — ${team ? `the role is for ${team}` : 'doesn’t match this role'}` : 'No playing category on the profile yet',
   }
   const open: FitRow = {
     key: 'open', label: 'Open to play', ok: (c.availability ?? 0) >= 0.6,
@@ -154,7 +233,8 @@ export function fitRows(c: FitComponents, ctx: {
     levelDetail = 'Plays at a very different level'
   }
   const level: FitRow = { key: 'level', label: 'Level', ok: prox >= 0.75, detail: levelDetail }
-  return [category, open, active, level]
+  const position = fitPositionRow(c)
+  return position ? [position, category, open, active, level] : [category, open, active, level]
 }
 
 /** Short chip labels for the nine reason codes (Decline sheet, Figma 326:528). */

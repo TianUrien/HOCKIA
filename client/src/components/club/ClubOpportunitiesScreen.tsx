@@ -5,8 +5,9 @@ import { LargeTitleBar } from '@/components/ui/LargeTitleBar'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { useAuthStore } from '@/lib/auth'
 import { useRoleShortlist, useScoutingContext } from '@/hooks/useScouting'
+import { useRecruitingViewKind } from '@/hooks/useRecruitingContext'
 import { useClubRoles, type ClubRole } from '@/hooks/useClubRoles'
-import { formatDurationText, genderPill, isPaid, roleBenefits, roleTitle } from '@/lib/opportunityCopy'
+import { formatDurationText, genderPill, isPaid, roleBenefits, rolePostedAt, roleTitle } from '@/lib/opportunityCopy'
 import { waitingNotice } from '@/lib/clubRecruiting'
 import { cn } from '@/lib/utils'
 import { RoleActions } from './RoleActions'
@@ -78,7 +79,7 @@ function RoleCard({ role, expiryDays, onReview, onChanged }: { role: ClubRole; e
       <div className="flex items-center justify-between gap-2">
         <span className="min-w-0 truncate text-secondary font-semibold text-ink-2">{role.title}</span>
         <span className="flex shrink-0 items-center gap-1 text-secondary text-ink-3">
-          <Clock className="h-3.5 w-3.5" strokeWidth={2} /> {open ? `Posted ${monthDay(role.published_at ?? role.created_at)}` : closedLabel(role)}
+          <Clock className="h-3.5 w-3.5" strokeWidth={2} /> {open ? `Posted ${monthDay(rolePostedAt(role))}` : closedLabel(role)}
           <RoleActions role={role} onChanged={onChanged} />
         </span>
       </div>
@@ -142,8 +143,14 @@ export default function ClubOpportunitiesScreen() {
     return hit ? [hit, ...list.filter((r) => r.id !== highlight)] : list
   }, [segment, data.open, data.closed, highlight])
   const postRole = () => navigate('/dashboard/opportunities/new')
+  // "Open · N" counts published open roles only — drafts are listed under Open
+  // but aren't open (same number as desktop's "Published").
+  const publishedOpen = data.open.filter((r) => r.status === 'open').length
   // "Shortlist · N" = the list for the ACTIVE role (the one Shortlist opens on;
   // with no context, the no-context list) — same hook, same number.
+  // Only PLAYER roles rank players here (round 6): a coach-role context
+  // stays stored for the Coaches tab.
+  useRecruitingViewKind('player')
   const scouting = useScoutingContext()
   const scoutRoleId = scouting.ctx?.type === 'opportunity' ? scouting.ctx.opportunity_id : null
   const activeShortlist = useRoleShortlist(scouting.ctx, scoutRoleId, scouting.roleTitle)
@@ -175,7 +182,7 @@ export default function ClubOpportunitiesScreen() {
           ariaLabel="Role status"
           value={segment}
           onChange={setSegment}
-          options={[{ value: 'open', label: 'Open', count: data.open.length }, { value: 'closed', label: 'Closed', count: data.closed.length }]}
+          options={[{ value: 'open', label: 'Open', count: publishedOpen }, { value: 'closed', label: 'Closed', count: data.closed.length }]}
         />
       </div>
 

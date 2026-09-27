@@ -1,6 +1,7 @@
 import { lazy, Suspense, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Bell, Check, FileText, HelpCircle, Languages, Lock, MessageSquare, Shield } from 'lucide-react'
+import { Bell, Check, FileText, HelpCircle, Languages, Lock, MessageSquare, Shield, Users } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
 import { DetailNavBar } from '@/components/ui/DetailNavBar'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
@@ -19,9 +20,26 @@ import { getImageUrl } from '@/lib/imageUrl'
 import { isRecruitableRole } from '@/lib/settingsRoles'
 import { OPPORTUNITY_PREF_LABEL } from '@/lib/candidateIntent'
 import { trackPushSubscribe, trackPushUnsubscribe } from '@/lib/analytics'
+import { qk } from '@/lib/queryKeys'
+import { squadSettingsSubtitle } from '@/lib/clubSquadCopy'
 import type { Profile } from '@/lib/supabase'
 
 const FeedbackModal = lazy(() => import('@/components/FeedbackModal'))
+
+/** Club → Squad & invites (Figma D1.22 353:1078) → Squad — own (D1.15). */
+function SquadSettingsRow({ clubId, onOpen }: { clubId: string | null; onOpen: () => void }) {
+  const { data } = useQuery({
+    queryKey: qk.clubMemberCount(clubId),
+    enabled: Boolean(clubId),
+    staleTime: 30_000,
+    queryFn: async () => {
+      const { data: rows, error } = await supabase.rpc('get_club_members', { p_profile_id: clubId!, p_limit: 1, p_offset: 0 })
+      if (error) throw error
+      return rows && rows.length > 0 ? rows[0].total_count : 0
+    },
+  })
+  return <SettingsRow title="Squad & invites" subtitle={squadSettingsSubtitle(data)} icon={<Users className="h-4 w-4" strokeWidth={2} />} onClick={onOpen} />
+}
 
 /**
  * Phone Settings (Figma Settings v2 · Settings — Notifications · Settings —
@@ -131,6 +149,7 @@ function Hub({ go }: { go: (s: SettingsSection | 'account') => void }) {
       {isClub && (
         <SettingsGroup label="Club">
           <SettingsRow title="Club & league" icon={<Shield className="h-4 w-4" strokeWidth={2} />} onClick={() => navigate('/dashboard/profile?tab=league')} />
+          <SquadSettingsRow clubId={profile?.id ?? null} onOpen={() => navigate('/dashboard/profile/members')} />
         </SettingsGroup>
       )}
 

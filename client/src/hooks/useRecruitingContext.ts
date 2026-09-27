@@ -34,7 +34,7 @@
  *     write will silently 403.
  */
 
-import { useEffect, useMemo } from 'react'
+import { useEffect, useLayoutEffect, useMemo } from 'react'
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
@@ -42,9 +42,52 @@ import { isRecruitingViewer } from '@/lib/recruiterAccess'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
 import type { Database } from '@/lib/database.types'
 
-export type RecruitingContextRow = Database['public']['Tables']['recruiting_context']['Row']
+export type RecruitingContextRow = Database['public']['Tables']['recruiting_context']['Row'] & {
+  /** The linked role's status (embedded on fetch; round 6). Only an OPEN
+   *  role can be a screen's fallback context. Absent on locally built rows. */
+  opportunity_status?: string | null
+}
 export type RecruitingContextType = 'club' | 'opportunity' | 'custom'
 export type RecruitingTargetCategory = 'Men' | 'Women' | 'Mixed'
+
+export type RecruitingViewKind = 'player' | 'coach' | null
+export type KindNone = { player: boolean; coach: boolean }
+const NO_KIND_NONE: KindNone = { player: false, coach: false }
+
+/** The kind of people a context ranks: coach roles rank coaches; player roles
+ *  and saved searches (no target_role) rank players. */
+export function contextKind(row: { target_role?: string | null }): 'player' | 'coach' {
+  return row.target_role === 'coach' ? 'coach' : 'player'
+}
+
+/**
+ * The context a screen of `kind` uses (founder ruling 2026-09-27, round 6):
+ * the stored active context when it is of that kind; when the stored active
+ * context is of the OTHER kind, the most recently used context of an OPEN role
+ * of this kind (the other screen's context is left untouched; none → none) — unless "No context" was
+ * picked here. No stored active context → none (a cleared context stays
+ * cleared). kind null → the stored active context, whatever its kind.
+ */
+export function effectiveContextRow<T extends { id: string; is_active: boolean; type?: string | null; target_role?: string | null; opportunity_status?: string | null; updated_at?: string | null; created_at?: string | null }>(
+  rows: T[],
+  kind: RecruitingViewKind,
+  kindNone: KindNone | null | undefined = NO_KIND_NONE,
+): T | null {
+  const active = rows.find((r) => r.is_active) ?? null
+  if (!kind || !active) return active
+  if (contextKind(active) === kind) return active
+  if (kindNone?.[kind]) return null
+  const ts = (r: T) => `${r.updated_at ?? ''}|${r.created_at ?? ''}`
+  // The fallback must be an OPEN role of this kind (founder 2026-09-27):
+  // closed / draft roles and saved searches never stand in; none → no context.
+  const mine = rows.filter((r) => contextKind(r) === kind && r.type === 'opportunity' && r.opportunity_status === 'open').sort((a, b) => (ts(a) < ts(b) ? 1 : ts(a) > ts(b) ? -1 : 0))
+  return mine[0] ?? null
+}
+
+/** The active row for the current screen kind (store selector). */
+export function selectActiveRow(s: { rows: RecruitingContextRow[]; viewKind?: RecruitingViewKind; kindNone?: KindNone }): RecruitingContextRow | null {
+  return effectiveContextRow(s.rows, s.viewKind ?? null, s.kindNone)
+}
 
 export interface CreateContextInput {
   type?: RecruitingContextType
@@ -70,7 +113,10 @@ export interface ActivateOpportunityContextInput {
 }
 
 export interface UseRecruitingContextResult {
+  /** The active context for the current screen kind (see effectiveContextRow). */
   active: RecruitingContextRow | null
+  /** Per-kind "No context" picks (local; see the store). */
+  kindNone: KindNone
   available: RecruitingContextRow[]
   loading: boolean
   error: string | null
@@ -131,6 +177,16 @@ interface RecruitingContextStoreState {
   update: (id: string, input: UpdateContextInput) => Promise<void>
   remove: (id: string) => Promise<void>
   clearError: () => void
+  /** Which kind of role the current screen ranks (founder ruling
+   *  2026-09-27, round 6): Players tab / Find players / Shortlist = 'player',
+   *  Coaches tab = 'coach', anything else = null (the stored active row,
+   *  unchanged). Set by useRecruitingViewKind; never written to the DB. */
+  viewKind: RecruitingViewKind
+  /** "No context" picked on a screen of this kind while the stored active
+   *  context belongs to the OTHER kind — kept local so the other screen's
+   *  context is never cleared. */
+  kindNone: KindNone
+  setViewKind: (kind: RecruitingViewKind) => void
 }
 
 /** Recruiters only (founder ruling 2026-09-26 — Fit counts ONLY coaches who
@@ -166,7 +222,7 @@ async function doFetch(
   const myToken = ++latestFetchToken
   const { data, error: fetchError } = await supabase
     .from('recruiting_context')
-    .select('*')
+    .select('*, opportunity:opportunities!recruiting_context_opportunity_id_fkey(status)')
     .eq('owner_id', ownerId)
     .order('is_active', { ascending: false })
     .order('created_at', { ascending: false })
@@ -176,7 +232,13 @@ async function doFetch(
     set({ error: 'Could not load recruiting contexts', loading: false })
     return
   }
-  set({ rows: (data ?? []) as RecruitingContextRow[], loading: false })
+  // Flatten the embedded role status onto the row (round 6: fallback
+  // contexts must be open roles).
+  const rows = ((data ?? []) as (RecruitingContextRow & { opportunity?: { status?: string | null } | null })[]).map(({ opportunity, ...r }) => ({
+    ...r,
+    opportunity_status: opportunity?.status ?? null,
+  }))
+  set({ rows, loading: false })
 }
 
 /** Exported for unit tests. Production code should use the
@@ -192,6 +254,12 @@ export const useRecruitingContextStore = create<RecruitingContextStoreState>((se
   loading: true,
   error: null,
   fetchedForOwner: null,
+  viewKind: null,
+  kindNone: NO_KIND_NONE,
+
+  setViewKind: (kind) => {
+    if (get().viewKind !== kind) set({ viewKind: kind })
+  },
 
   setViewer: (ownerId, role, coachRecruitsForTeam) => {
     const eligibleRole = eligibleRecruiterRole(role, coachRecruitsForTeam)
@@ -203,6 +271,7 @@ export const useRecruitingContextStore = create<RecruitingContextStoreState>((se
       rows: [],
       error: null,
       fetchedForOwner: null,
+      kindNone: NO_KIND_NONE,
       // Non-eligible viewers will never trigger a fetch, so flip
       // loading off immediately to unblock UI that gates on it.
       loading: Boolean(ownerId && eligibleRole),
@@ -242,9 +311,13 @@ export const useRecruitingContextStore = create<RecruitingContextStoreState>((se
     // update with zero perceptible delay, and the trailing refresh()
     // silently reconciles against server truth. On failure we refresh()
     // to roll back to the real state.
-    set((s) => ({
-      rows: s.rows.map((r) => ({ ...r, is_active: r.id === id })),
-    }))
+    set((s) => {
+      const row = s.rows.find((r) => r.id === id)
+      return {
+        rows: s.rows.map((r) => ({ ...r, is_active: r.id === id })),
+        kindNone: row ? { ...s.kindNone, [contextKind(row)]: false } : s.kindNone,
+      }
+    })
     // Atomic RPC — deactivate-others + activate-target in one txn.
     // Failure rolls back the deactivate, so the owner is never left
     // with zero active contexts.
@@ -264,8 +337,16 @@ export const useRecruitingContextStore = create<RecruitingContextStoreState>((se
   },
 
   clearActive: async () => {
-    const { ownerId, eligibleRole, refresh } = get()
+    const { ownerId, eligibleRole, refresh, viewKind, rows, kindNone } = get()
     if (!ownerId || !eligibleRole) return
+    // "No context" on a Players screen while the stored context is a coach
+    // role (or the reverse): keep the other screen's context — only this
+    // kind goes to "No context" (round 6).
+    const stored = rows.find((r) => r.is_active)
+    if (viewKind && stored && contextKind(stored) !== viewKind) {
+      set({ kindNone: { ...kindNone, [viewKind]: true } })
+      return
+    }
     // Plain UPDATE flipping is_active=false. Safe under multi-tab:
     // we only deactivate; the partial unique index allows zero
     // actives. No RPC needed because we never create or activate.
@@ -326,6 +407,7 @@ export const useRecruitingContextStore = create<RecruitingContextStoreState>((se
     // picker from dimming-and-snapping while the RPC round-trips.
     set((s) => ({
       rows: s.rows.map((r) => ({ ...r, is_active: r.opportunity_id === opportunityId })),
+      kindNone: NO_KIND_NONE,
     }))
     // Atomic find-or-create + activate RPC. The server enforces
     // ownership of the opportunity and dedupes via the partial
@@ -438,10 +520,13 @@ export function useRecruitingContext(): UseRecruitingContextResult {
     void ensureFetched()
   }, [viewerId, viewerRole, viewerRecruits, ensureFetched])
 
-  const active = rows.find((r) => r.is_active) ?? null
+  const viewKind = useRecruitingContextStore((s) => s.viewKind)
+  const kindNone = useRecruitingContextStore((s) => s.kindNone)
+  const active = effectiveContextRow(rows, viewKind, kindNone)
 
   return {
     active,
+    kindNone,
     available: rows,
     loading,
     error,
@@ -501,7 +586,7 @@ export function useActiveRecruitingTarget(): RecruitingTargetCategory | null {
   const setViewer = useRecruitingContextStore((s) => s.setViewer)
   const ensureFetched = useRecruitingContextStore((s) => s.ensureFetched)
   const target = useRecruitingContextStore((s) => {
-    const row = s.rows.find((r) => r.is_active)
+    const row = selectActiveRow(s)
     return (row?.target_category ?? null) as RecruitingTargetCategory | null
   })
 
@@ -540,7 +625,7 @@ export function useActiveRecruitingTargetRole(): string | null {
   const setViewer = useRecruitingContextStore((s) => s.setViewer)
   const ensureFetched = useRecruitingContextStore((s) => s.ensureFetched)
   const role = useRecruitingContextStore((s) => {
-    const row = s.rows.find((r) => r.is_active)
+    const row = selectActiveRow(s)
     return (row?.target_role ?? null) as string | null
   })
 
@@ -568,7 +653,7 @@ export function useActiveRecruitingTargetPosition(): string | null {
   const setViewer = useRecruitingContextStore((s) => s.setViewer)
   const ensureFetched = useRecruitingContextStore((s) => s.ensureFetched)
   const position = useRecruitingContextStore((s) => {
-    const row = s.rows.find((r) => r.is_active)
+    const row = selectActiveRow(s)
     return (row?.target_position ?? null) as string | null
   })
 
@@ -597,7 +682,7 @@ export function useActiveRecruitingEuRequired(): boolean {
   const setViewer = useRecruitingContextStore((s) => s.setViewer)
   const ensureFetched = useRecruitingContextStore((s) => s.ensureFetched)
   const euRequired = useRecruitingContextStore((s) => {
-    const row = s.rows.find((r) => r.is_active)
+    const row = selectActiveRow(s)
     return Boolean(row?.eu_required)
   })
 
@@ -641,12 +726,12 @@ export function useActiveRecruitingMustHaves(): RecruitingMustHaves {
   // the store selector would change identity every render and loop forever
   // (same hazard noted on the specialists selector). The object is assembled
   // once below via useMemo over the six stable booleans.
-  const position = useRecruitingContextStore((s) => Boolean(s.rows.find((r) => r.is_active)?.position_required))
-  const level = useRecruitingContextStore((s) => Boolean(s.rows.find((r) => r.is_active)?.level_required))
-  const compensation = useRecruitingContextStore((s) => Boolean(s.rows.find((r) => r.is_active)?.compensation_required))
-  const location = useRecruitingContextStore((s) => Boolean(s.rows.find((r) => r.is_active)?.location_required))
-  const availability = useRecruitingContextStore((s) => Boolean(s.rows.find((r) => r.is_active)?.availability_required))
-  const specialists = useRecruitingContextStore((s) => Boolean(s.rows.find((r) => r.is_active)?.specialists_required))
+  const position = useRecruitingContextStore((s) => Boolean(selectActiveRow(s)?.position_required))
+  const level = useRecruitingContextStore((s) => Boolean(selectActiveRow(s)?.level_required))
+  const compensation = useRecruitingContextStore((s) => Boolean(selectActiveRow(s)?.compensation_required))
+  const location = useRecruitingContextStore((s) => Boolean(selectActiveRow(s)?.location_required))
+  const availability = useRecruitingContextStore((s) => Boolean(selectActiveRow(s)?.availability_required))
+  const specialists = useRecruitingContextStore((s) => Boolean(selectActiveRow(s)?.specialists_required))
 
   useEffect(() => {
     setViewer(viewerId, viewerRole, viewerRecruits)
@@ -674,7 +759,7 @@ export function useActiveRecruitingTargetLocation(): string | null {
   const setViewer = useRecruitingContextStore((s) => s.setViewer)
   const ensureFetched = useRecruitingContextStore((s) => s.ensureFetched)
   const location = useRecruitingContextStore((s) => {
-    const row = s.rows.find((r) => r.is_active)
+    const row = selectActiveRow(s)
     return (row?.target_location_country ?? null) as string | null
   })
 
@@ -707,7 +792,7 @@ export function useActiveRecruitingTargetSpecialists(): string[] {
   // render would change the store snapshot every time and loop forever
   // (Max update depth). The row's own array is a stable reference.
   const specialists = useRecruitingContextStore((s) => {
-    const row = s.rows.find((r) => r.is_active)
+    const row = selectActiveRow(s)
     return (row?.target_specialists ?? EMPTY_SPECIALISTS) as string[]
   })
 
@@ -733,7 +818,7 @@ export function useActiveRecruitingTargetStartDate(): string | null {
   const setViewer = useRecruitingContextStore((s) => s.setViewer)
   const ensureFetched = useRecruitingContextStore((s) => s.ensureFetched)
   const startDate = useRecruitingContextStore((s) => {
-    const row = s.rows.find((r) => r.is_active)
+    const row = selectActiveRow(s)
     return (row?.target_start_date ?? null) as string | null
   })
 
@@ -760,7 +845,7 @@ export function useActiveRecruitingTargetLevel(): string | null {
   const setViewer = useRecruitingContextStore((s) => s.setViewer)
   const ensureFetched = useRecruitingContextStore((s) => s.ensureFetched)
   const level = useRecruitingContextStore((s) => {
-    const row = s.rows.find((r) => r.is_active)
+    const row = selectActiveRow(s)
     return (row?.target_level ?? null) as string | null
   })
 
@@ -787,7 +872,7 @@ export function useActiveRecruitingTargetCompensation(): string | null {
   const setViewer = useRecruitingContextStore((s) => s.setViewer)
   const ensureFetched = useRecruitingContextStore((s) => s.ensureFetched)
   const compensation = useRecruitingContextStore((s) => {
-    const row = s.rows.find((r) => r.is_active)
+    const row = selectActiveRow(s)
     return (row?.target_compensation ?? null) as string | null
   })
 
@@ -816,7 +901,7 @@ export function useHasActiveRecruitingScope(): boolean {
 
   const setViewer = useRecruitingContextStore((s) => s.setViewer)
   const ensureFetched = useRecruitingContextStore((s) => s.ensureFetched)
-  const hasActive = useRecruitingContextStore((s) => s.rows.some((r) => r.is_active))
+  const hasActive = useRecruitingContextStore((s) => selectActiveRow(s) !== null)
 
   useEffect(() => {
     setViewer(viewerId, viewerRole, viewerRecruits)
@@ -842,7 +927,7 @@ export function useActiveRecruitingTargetProblem(): string | null {
   const setViewer = useRecruitingContextStore((s) => s.setViewer)
   const ensureFetched = useRecruitingContextStore((s) => s.ensureFetched)
   const problem = useRecruitingContextStore((s) => {
-    const row = s.rows.find((r) => r.is_active)
+    const row = selectActiveRow(s)
     return (row?.target_problem ?? null) as string | null
   })
 
@@ -855,4 +940,18 @@ export function useActiveRecruitingTargetProblem(): string | null {
   }, [viewerId, viewerRole, viewerRecruits, ensureFetched])
 
   return problem
+}
+
+/**
+ * Declares which kind of role the mounted screen ranks (round 6): 'player'
+ * on the Players tab / Find players / Shortlist, 'coach' on the Coaches tab.
+ * Every active-context selector then reads that kind's context; reset on
+ * unmount so other screens see the stored context.
+ */
+export function useRecruitingViewKind(kind: RecruitingViewKind): void {
+  const setViewKind = useRecruitingContextStore((s) => s.setViewKind)
+  useLayoutEffect(() => {
+    setViewKind(kind)
+    return () => setViewKind(null)
+  }, [kind, setViewKind])
 }

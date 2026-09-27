@@ -37,9 +37,11 @@ import { useAuthStore } from '@/lib/auth'
 import { useCountries } from '@/hooks/useCountries'
 import { getActiveFilterChips } from '@/lib/communityActiveFilters'
 import { isRecruitingViewer, recruitingScopedRole } from '@/lib/recruiterAccess'
-import { useActiveRecruitingTargetRole } from '@/hooks/useRecruitingContext'
+import { useActiveRecruitingTargetRole, useRecruitingViewKind } from '@/hooks/useRecruitingContext'
 import ContextSwitcher from '@/components/recruiting/ContextSwitcher'
 import CoachContextNudge from '@/components/recruiting/CoachContextNudge'
+import { ClubViewPlayersHeader } from '@/components/community/ClubViewPlayersHeader'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 
 const VALID_TABS: CommunityTab[] = ['all', 'players', 'coaches', 'clubs', 'umpires', 'brands', 'questions']
 
@@ -80,6 +82,10 @@ export default function CommunityPage() {
   // server-derived from the linked opportunity's opportunity_type. This is
   // the primary axis for reshaping Community: a coach-scope should surface
   // COACHES, a player-scope should surface PLAYERS.
+  // Players tab ranks by PLAYER roles only, Coaches tab by COACH roles only
+  // (founder ruling 2026-09-27, round 6): each tab reads its own kind's
+  // context without clearing the other's. Other tabs read the stored one.
+  useRecruitingViewKind(tab === 'players' ? 'player' : tab === 'coaches' ? 'coach' : null)
   const activeRecruitingRole = useActiveRecruitingTargetRole()
   // Recruiter = club, or coach who recruits for a team (founder ruling
   // 2026-09-25). A coach looking for a role is a candidate: no scope
@@ -172,6 +178,12 @@ export default function CommunityPage() {
   // "Show everyone" clears this back to the chip-driven filter.
   const memberRoleFilter: 'player' | 'coach' | 'club' | 'umpire' | 'brand' | undefined =
     scopeReshaping ? scopedRole! : chipRoleFilter
+
+  // Club view (Figma D1.17 352:995): phone, a club or a coach who recruits,
+  // players listed → "Players · Best fit", the Ranked for pill, fit chips and
+  // cards that open the full profile. Club v2 is phone-only; desktop stays v1.
+  const isPhone = useMediaQuery('(max-width: 1023px)')
+  const clubView = isPhone && isRecruiterViewer && isMembers && memberRoleFilter === 'player'
 
   // Lifted filter state. searchQuery is seeded from the URL ?q= param
   // on first mount via the hook's initial value; the sync effects
@@ -339,12 +351,12 @@ export default function CommunityPage() {
           </div>
 
           {/* Recruiter-only ContextSwitcher self-hides for everyone else. */}
-          <ContextSwitcher className="mb-3" />
+          {!clubView && <ContextSwitcher className="mb-3" />}
 
           {/* Educational hint — Recruiter Match needs a real recruiting
               context. Without one we never show fit/match language, so tell
               the recruiter how to turn it on. Recruiter-only, no-context. */}
-          {isRecruiterViewer && !scopedRole && (
+          {isRecruiterViewer && !scopedRole && !clubView && (
             <div className="mb-4 flex items-start gap-2 rounded-xl border border-hockia-primary/15 bg-hockia-primary/[0.04] px-3.5 py-2.5 text-xs leading-snug text-gray-600">
               <Sparkles className="mt-0.5 h-4 w-4 flex-shrink-0 text-hockia-primary" aria-hidden="true" />
               <span>
@@ -439,6 +451,7 @@ export default function CommunityPage() {
                   narrowing (search/drawer active), total otherwise. The
                   featured carousel that sat here was removed in the
                   2026-09-19 redesign ("more simple"). */}
+              {clubView ? <ClubViewPlayersHeader sort={sort} onSort={setSort} /> : (
               <section id="community-all-members" className="scroll-mt-20 mb-3 flex items-center justify-between gap-3">
                 <h2 className="min-w-0 truncate text-[17px] font-bold text-gray-900">
                   {isNarrowed ? 'Matching members' : 'All members'}
@@ -465,12 +478,13 @@ export default function CommunityPage() {
                   <ChevronDown className="pointer-events-none absolute right-1 h-4 w-4" aria-hidden="true" />
                 </label>
               </section>
+              )}
 
               {/* Scoped-state banner — when a scope reshapes the page, make
                   it explicit that results are role-filtered + ranked for
                   the active recruiting search, with a one-tap escape to
                   widen back to everyone (without clearing the scope). */}
-              {scopedRole && (
+              {scopedRole && !(clubView && activeTab === 'players') && (
                 <div className="mb-3 flex items-center justify-between gap-3 rounded-xl border border-hockia-primary/20 bg-hockia-primary/[0.04] px-4 py-2.5">
                   <p className="min-w-0 text-xs text-gray-700">
                     {/* Keyed so the banner copy crossfades when toggling between
@@ -504,6 +518,8 @@ export default function CommunityPage() {
                   onFilteredCountChange={setFilteredCount}
                   onVideoCountChange={setVideoCount}
                   scopeReshaping={scopeReshaping}
+                  clubView={clubView}
+                  recruiterDirectProfiles={isPhone && isRecruiterViewer}
                 />
               </div>
             </>

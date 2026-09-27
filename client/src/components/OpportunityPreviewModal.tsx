@@ -128,6 +128,12 @@ export default function OpportunityPreviewModal({
         isOpen={showApplyModal}
         onClose={() => setShowApplyModal(false)}
         vacancy={vacancy}
+        // Same club identity the role page passes, so the sheet never falls
+        // back to "Apply to the club" with a placeholder crest.
+        clubName={worldClub?.clubName || clubInfo?.full_name || null}
+        clubLogo={worldClub?.avatarUrl || clubInfo?.avatar_url || null}
+        publisherRole={clubInfo?.role ?? null}
+        league={worldClub?.leagueName || leagueDivision}
         onSuccess={(vacancyId) => {
           setShowApplyModal(false)
           onApplicationSuccess?.(vacancyId)

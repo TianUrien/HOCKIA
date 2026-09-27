@@ -30,11 +30,14 @@ export function DeclineSheet({ open, applicationId, firstName, hasName = true, o
   const [reason, setReason] = useState<string | null>(null)
   const [note, setNote] = useState('')
   const [edited, setEdited] = useState(false)
+  // The last text Hockia AI drafted: the sparkle shows only while the note IS
+  // that draft, untouched (round 5) — once the club rewrites it, it's theirs.
+  const [aiDraft, setAiDraft] = useState<string | null>(null)
   const [drafting, setDrafting] = useState(false)
   const reqRef = useRef(0)
 
   useEffect(() => {
-    if (!open) { setReason(null); setNote(''); setEdited(false) }
+    if (!open) { setReason(null); setNote(''); setEdited(false); setAiDraft(null) }
   }, [open])
 
   useEffect(() => {
@@ -48,6 +51,7 @@ export function DeclineSheet({ open, applicationId, firstName, hasName = true, o
         if (error) throw error
         const msg = (data as { message?: string } | null)?.message ?? ''
         setNote(msg)
+        setAiDraft(msg || null)
       } catch (err) {
         logger.warn('[DeclineSheet] draft failed', err)
       } finally {
@@ -56,6 +60,7 @@ export function DeclineSheet({ open, applicationId, firstName, hasName = true, o
     })()
   }, [open, reason, edited, applicationId])
 
+  const showsAiDraft = drafting || (aiDraft !== null && note === aiDraft)
   const canSend = Boolean(reason) && note.trim().length > 0 && note.length <= MAX && !drafting
 
   return (
@@ -81,9 +86,13 @@ export function DeclineSheet({ open, applicationId, firstName, hasName = true, o
         </div>
         {reason && (
           <div className="flex flex-col gap-2 rounded-card bg-surface-grouped p-3.5">
-            <span className="flex items-center gap-1.5 text-caption font-semibold text-hockia-primary">
-              <Sparkles className="h-3.5 w-3.5" strokeWidth={2} /> {drafting ? 'Drafting with Hockia AI…' : edited ? 'Your note' : 'Drafted by Hockia AI · tap to edit'}
-            </span>
+            {showsAiDraft ? (
+              <span className="flex items-center gap-1.5 text-caption font-semibold text-hockia-primary" data-testid="decline-note-ai">
+                <Sparkles className="h-3.5 w-3.5" strokeWidth={2} /> {drafting ? 'Drafting with Hockia AI…' : 'Drafted by Hockia AI · tap to edit'}
+              </span>
+            ) : (
+              <span className="text-caption font-semibold text-ink-2" data-testid="decline-note-own">Your note</span>
+            )}
             <textarea
               value={note}
               onChange={(e) => { setNote(e.target.value); setEdited(true) }}

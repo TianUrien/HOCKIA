@@ -170,7 +170,7 @@ export default function DevelopersPage() {
               <ul className="list-none space-y-2 ml-4">
                 <li>• Position title and type (player or coach)</li>
                 <li>• Location (city and country)</li>
-                <li>• Team category (Adult Men, Adult Women, Girls, Boys, Mixed)</li>
+                <li>• Team category (Adult men, Adult women, Girls, Boys, Mixed)</li>
                 <li>• Requirements and benefits offered</li>
                 <li>• Club name and logo</li>
                 <li>• Application deadline and start date</li>

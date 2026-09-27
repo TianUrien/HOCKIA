@@ -308,15 +308,24 @@ export function parseOpportunityQuery(
   // Countries named directly ("in Spain"). Two-letter aliases ("us") are
   // only honoured in upper case so "roles for us" is not the USA.
   const countryNames: string[] = []
-  let countryLabel: string | null = null
+  // Label = only the country the person NAMED. "England" also matches United
+  // Kingdom through its aliases (kept for filtering), but the copy must say
+  // "England", never "United Kingdom, England".
+  const named: string[] = []
+  const viaAlias: string[] = []
   for (const c of countries) {
     const names = namesFor(c)
-    const hit = names.some(n => n.length <= 2 ? new RegExp(`\\b${n.toUpperCase()}\\b`).test(q) : wordIn(q, n))
+    const matches = (n: string) => n.length <= 2 ? new RegExp(`\\b${n.toUpperCase()}\\b`).test(q) : wordIn(q, n)
+    const hit = names.some(matches)
     if (hit) {
       countryNames.push(...names)
-      countryLabel = countryLabel ? `${countryLabel}, ${c.common_name || c.name}` : (c.common_name || c.name)
+      const own = [c.name, c.common_name].filter((n): n is string => !!n).map(n => n.toLowerCase())
+      if (own.some(matches)) named.push(c.common_name || c.name)
+      else viaAlias.push(c.common_name || c.name)
     }
   }
+  const labelParts = named.length ? named : viaAlias
+  const countryLabel: string | null = labelParts.length ? Array.from(new Set(labelParts)).join(', ') : null
 
   return {
     opportunityType,
@@ -376,12 +385,13 @@ export function filterOpportunities(
   viewer: Viewer,
   geo: GeoFilter,
   today: string,
+  opts: { ignoreEligibility?: boolean } = {},
 ): OpportunityRow[] {
   const geoSet = new Set(geo.countryNames)
   return rows.filter(row => {
     if (row.opportunity_type !== criteria.opportunityType) return false
     if (deadlinePassed(row.application_deadline, today)) return false
-    if (!viewerCanApply(row, viewer)) return false
+    if (!opts.ignoreEligibility && !viewerCanApply(row, viewer)) return false
     if (criteria.positions.length && !(row.position && criteria.positions.includes(row.position))) return false
     if (criteria.genders.length) {
       // Coach roles are often posted without a team category — keep those.
@@ -493,6 +503,27 @@ export function buildNoOpportunitiesMessage(criteria: OpportunityCriteria, geoLa
     : `There are no open roles${where} you can apply to right now. New roles are posted all the time — keep your profile up to date so clubs can find you too.`
 }
 
+/**
+ * Roles exist where the person asked, but none they can apply to (EU passport,
+ * team category). Honest instead of "no roles in England on HOCKIA yet":
+ *   "There are open roles in England, but none you can apply to right now."
+ * With widened results, it goes on to name them:
+ *   "… right now — here are 3 you can apply to elsewhere in Europe."
+ */
+export function buildIneligibleMessage(
+  criteria: OpportunityCriteria,
+  askedLabel: string | null,
+  widened: { count: number; region: string | null } | null = null,
+): string {
+  const noun = describeRoleNoun(criteria)
+  const where = askedLabel ? ` in ${askedLabel}` : ' on HOCKIA'
+  const head = `There are ${noun.plural}${where}${benefitsPhrase(criteria)}, but none you can apply to right now`
+  if (!widened || widened.count === 0) return `${head}.`
+  const n = widened.count === 1 ? `is 1 ${noun.singular}` : `are ${widened.count} ${noun.plural}`
+  const elsewhere = widened.region ? `elsewhere in ${widened.region}` : 'elsewhere in the world'
+  return `${head} — here ${n} you can apply to ${elsewhere}.`
+}
+
 // ── Orchestration (pure) ───────────────────────────────────────────────────
 
 export type LandedStep = 'original' | 'region' | 'worldwide'
@@ -506,6 +537,10 @@ export interface OpportunitySearchOutcome {
   askedLabel: string | null
   /** The region we widened into, when landed === 'region'. */
   widenedRegion: string | null
+  /** Roles matching the query where the person asked (first rung) that the
+   *  viewer CAN'T apply to (EU passport / team category) — only counted when
+   *  none there are applyable. 0 otherwise. */
+  ineligibleInAsked: number
 }
 
 /**
@@ -554,11 +589,17 @@ export function runOpportunitySearch(
   }
   if (matched.length === 0) landed = rungs[0]
 
+  // Nothing applyable where they asked: are there roles there at all?
+  const ineligibleInAsked = landed.step === 'original' && matched.length > 0
+    ? 0
+    : filterOpportunities(rows, criteria, viewer, { countryNames: rungs[0].names }, today, { ignoreEligibility: true }).length
+
   return {
     criteria,
     matched: orderOpportunities(matched, viewer),
     landed: landed.step,
     askedLabel,
     widenedRegion: landed.step === 'region' ? landed.region : null,
+    ineligibleInAsked,
   }
 }

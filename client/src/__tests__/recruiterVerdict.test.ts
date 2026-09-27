@@ -46,14 +46,14 @@ describe('computeRecruiterVerdict', () => {
 
   it('green fit + strong proven + strong interest → Pursue, highlights from positives only', () => {
     const r = computeRecruiterVerdict({
-      fit: fit('green', { positives: ['Plays Adult Men — matches your team category.'] }),
+      fit: fit('green', { positives: ['Plays Adult men — matches your team category.'] }),
       evidence: evidence('strong', { reasons: ['Full match footage available.'] }),
       interest: interest('strong', { positives: ['Open to relocating.'] }),
     })
     expect(r.tier).toBe('pursue')
     expect(r.headline).toBe('Excellent')
     expect(r.highlights).toEqual([
-      'Plays Adult Men — matches your team category.',
+      'Plays Adult men — matches your team category.',
       'Full match footage available.',
       'Open to relocating.',
     ])
@@ -88,14 +88,14 @@ describe('computeRecruiterVerdict', () => {
 
   it('grey fit (category mismatch) can never be Pursue/Worth considering — capped at Longshot', () => {
     const r = computeRecruiterVerdict({
-      fit: fit('grey', { caveats: ['Plays Adult Women — different from your team category.'] }),
+      fit: fit('grey', { caveats: ['Plays Adult women — different from your team category.'] }),
       evidence: evidence('strong', { reasons: ['Full match footage available.'] }),
       interest: interest('strong', { positives: ['Open to relocating.'] }),
     })
     // Raw points (0 + 1.2 + 1.6 = 2.8) clear pursue, but the grey cap pulls
     // it back: doesn't fit → at best a longshot.
     expect(r.tier).toBe('longshot')
-    expect(r.caveats).toContain('Plays Adult Women — different from your team category.')
+    expect(r.caveats).toContain('Plays Adult women — different from your team category.')
   })
 
   it('grey fit from a POSITION mismatch (goalkeeper scope, midfielder) → never Excellent (the Arquera bug)', () => {

@@ -11,7 +11,7 @@ export function FitChip({ state }: { state: FitState | null | undefined }) {
   if (!label) return null
   const strong = state === 'green'
   return (
-    <span className={cn('inline-flex items-center gap-1.5 rounded-full py-1 pl-2 pr-2.5', strong ? 'bg-positive-soft' : 'bg-[#ededf2]')} data-testid="fit-chip">
+    <span className={cn('inline-flex shrink-0 items-center gap-1.5 rounded-full py-1 pl-2 pr-2.5', strong ? 'bg-positive-soft' : 'bg-[#ededf2]')} data-testid="fit-chip">
       <span className="flex items-end gap-[2px]" aria-hidden="true">
         <span className={cn('h-[5px] w-[3px] rounded-[1px]', strong ? 'bg-positive' : 'bg-ink-1')} />
         <span className={cn('h-[7.5px] w-[3px] rounded-[1px]', strong ? 'bg-positive' : 'bg-ink-1')} />

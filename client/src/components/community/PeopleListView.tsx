@@ -7,7 +7,7 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { Loader2 } from 'lucide-react'
-import { useNavigationType } from 'react-router-dom'
+import { useLocation, useNavigate, useNavigationType } from 'react-router-dom'
 import RecruiterCandidateCard from '@/components/recruiting/RecruiterCandidateCard'
 import { useOpenRoleCounts } from '@/hooks/useOpenRoleCounts'
 import { logger } from '@/lib/logger'
@@ -46,6 +46,11 @@ import { useScrollRestore } from '@/hooks/useScrollRestore'
 import { prefetchWorldClubLogos, getClubLevelBand } from '@/hooks/useWorldClubLogo'
 import { logSearchAppearances } from '@/lib/searchAppearances'
 import type { CommunityFiltersState } from './communityFilters'
+import { useRecruitingContext } from '@/hooks/useRecruitingContext'
+import { useOwnLeague } from '@/hooks/useScouting'
+import { useCommunityClubFit } from '@/hooks/useCommunityClubFit'
+import { contextFitTarget, type ContextLike } from '@/lib/findPlayers'
+import { rankCommunityClubView, recruiterCardProfilePath } from '@/lib/communityClubView'
 
 export interface Profile {
   id: string
@@ -164,6 +169,13 @@ interface PeopleListViewProps {
    *  Phase 2D: gates the EU-eligibility hard filter so it applies only in
    *  the scoped view and is lifted the moment the user widens to everyone. */
   scopeReshaping?: boolean
+  /** Club view (Figma D1.17): phone, a recruiting viewer, players listed.
+   *  Player cards carry the server fit chip, "Best fit" ranks by
+   *  compute_club_fit then evidence, and a card opens the full profile. */
+  clubView?: boolean
+  /** Phone + a club or a coach who recruits: player and coach cards open the
+   *  full profile instead of a preview (D1.17; founder 2026-09-27 for coaches). */
+  recruiterDirectProfiles?: boolean
 }
 
 /** Player has at least one video proof signal (highlight or full-game). */
@@ -182,8 +194,10 @@ const memberEvidence = (m: Profile) =>
     current_world_club_id: m.current_world_club_id ?? null,
   })
 
-export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilteredCountChange, onVideoCountChange, scopeReshaping = false }: PeopleListViewProps) {
+export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilteredCountChange, onVideoCountChange, scopeReshaping = false, clubView = false, recruiterDirectProfiles = false }: PeopleListViewProps) {
   const navigationType = useNavigationType()
+  const navigate = useNavigate()
+  const location = useLocation()
   // `loading` flips false once the auth session + profile resolve.
   // Gating the fetch on it prevents the historical double-fire:
   //   render 1 — profile null → viewerScope='anon' → fetch as anon
@@ -255,6 +269,14 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
   )
   const euFilterActive = scopeReshaping && euRequired
 
+  // Club view fit (D1.17 · DEV NOTE 355:905) — server fit for the active
+  // context, the same source Find players reads.
+  const { active: activeContext } = useRecruitingContext()
+  const clubCtx = clubView ? (activeContext as ContextLike | null) : null
+  const clubFitTarget = contextFitTarget(clubCtx)
+  const ownLeague = useOwnLeague(clubView ? clubFitTarget : null)
+  const clubRankByFit = !!clubFitTarget && !(ownLeague && ownLeague.band === null)
+
   const [baseMembers, setBaseMembers] = useState<Profile[]>([])
   const [allMembers, setAllMembers] = useState<Profile[]>([])
   const [displayedMembers, setDisplayedMembers] = useState<Profile[]>([])
@@ -297,8 +319,14 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     let cancelled = false
     const run = async () => {
       try {
+        // The viewer never lists themself (round 6): when the viewer could be in
+        // this pool (same role, or All), take them out of the total too —
+        // checked against the same server search, so hidden / test / under-18
+        // rules stay the server's.
+        const me = isAnon ? null : currentUserProfile
+        const meInScope = !!me?.id && !!me.full_name?.trim() && (!roleFilter || roleFilter === me.role)
         const count = await queryClient.fetchQuery({
-          queryKey: qk.communityCount(roleFilter ?? 'all', 'search-total'),
+          queryKey: qk.communityCount(roleFilter ?? 'all', meInScope ? `search-total:${me?.id}` : 'search-total'),
           staleTime: 30_000,
           retry: false,
           // The count comes from the same server search as the grid
@@ -313,7 +341,15 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
             })
             if (error) throw error
             const total = (data as { total?: number } | null)?.total
-            return typeof total === 'number' ? total : 0
+            const n = typeof total === 'number' ? total : 0
+            if (!meInScope || n === 0) return n
+            const { data: mine } = await supabase.rpc('community_search_members', {
+              p_role: roleFilter ?? undefined,
+              p_search_text: me?.full_name?.trim() ?? '',
+              p_limit: 50,
+            })
+            const rows = ((mine as { results?: { id: string }[] } | null)?.results ?? [])
+            return rows.some((r) => r.id === me?.id) ? n - 1 : n
           },
         })
         if (cancelled) return
@@ -334,7 +370,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     return () => {
       cancelled = true
     }
-  }, [authLoading, isAnon, roleFilter, onTotalCountChange])
+  }, [authLoading, isAnon, roleFilter, onTotalCountChange, currentUserProfile])
 
   // Fetch members from Supabase. Critical: measure() is INSIDE
   // requestCache.dedupe so the module-level dedupe controls whether
@@ -630,9 +666,16 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
   }, [isAnon, searchQuery, clientFilteredMembers, performServerSearch])
 
   // Client-side filtering (all filters)
+  const clubFitIds = useMemo(() => (clubView ? allMembers.filter((m) => m.role === 'player').map((m) => m.id) : []), [clubView, allMembers])
+  const clubFit = useCommunityClubFit(clubFitIds, clubFitTarget ? clubCtx?.id ?? null : null, clubView)
+
   const filteredMembers = useMemo(() => {
     let result = allMembers
 
+    // The viewer never appears in their own Community lists (round 6).
+    if (currentUserProfile?.id) {
+      result = result.filter(m => m.id !== currentUserProfile.id)
+    }
     if (filters.role !== 'all') {
       result = result.filter(m => m.role === filters.role)
     }
@@ -792,7 +835,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     // the scope names no specialization, mirroring the player path).
     const useCoachContextFit =
       applyContextFit && contextTargetRole === 'coach'
-    if (sort === 'newest' && currentUserProfile && (useContextFit || useCoachContextFit)) {
+    if (!clubView && sort === 'newest' && currentUserProfile && (useContextFit || useCoachContextFit)) {
       const viewerCtx = {
         role: currentUserProfile.role,
         womens_league_division: (currentUserProfile as { womens_league_division?: string | null }).womens_league_division ?? null,
@@ -881,8 +924,13 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
         .map(({ m }) => m)
     }
 
+    // Club view "Best fit" (D1.17): open to play first, then fit, then evidence.
+    if (clubView && sort === 'newest') {
+      result = rankCommunityClubView(result, clubFit.fit, clubFit.highlights, { byFit: clubRankByFit })
+    }
+
     return result
-  }, [allMembers, filters, sort, evidenceOnly, currentUserProfile, applyContextFit, contextTarget, contextTargetRole, contextTargetPosition, contextTargetSpecialists, contextMustHaves, euFilterActive, euCountryIds, countries, openRoleCounts])
+  }, [allMembers, filters, sort, evidenceOnly, currentUserProfile, applyContextFit, contextTarget, contextTargetRole, contextTargetPosition, contextTargetSpecialists, contextMustHaves, euFilterActive, euCountryIds, countries, openRoleCounts, clubView, clubFit.fit, clubFit.highlights, clubRankByFit])
 
   // Recruiter Match is "active" only while an active scope ranks PLAYERS by
   // fit — a coach scope ranks coaches, so the player match bar stays off.
@@ -1162,6 +1210,9 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
   // "No members found" empty state only renders once genuinely settled — never
   // as a flash while a re-fetch is in flight (e.g. right after clearing a
   // recruiting scope, which re-fetches under a new role filter).
+  // Full profile in club mode; back returns here (D1.16 back label).
+  const openProfile = (path: string) => navigate(path, { state: { from: `${location.pathname}${location.search}` } })
+
   const isBusy = isLoading || isSearching || authLoading
   const showSkeletons = isBusy && displayedMembers.length === 0
   const isReshaping = isLoading && displayedMembers.length > 0
@@ -1228,6 +1279,24 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
               // scope, coaches under a coach scope); everyone else keeps the
               // compact tile. The card is role-agnostic; only the score
               // source differs (Club Fit vs Coach Fit).
+              // Club view (D1.17): player cards get the server fit chip and
+              // open the full profile in club mode — clubs skip the Member
+              // preview (DEV NOTE 355:905). Other roles list as usual.
+              if (clubView && member.role === 'player') {
+                return (
+                  <RecruiterCandidateCard
+                    key={member.id}
+                    member={member}
+                    fitState={clubFit.fit.get(member.id)?.state ?? null}
+                    onPreview={() => openProfile(`/players/id/${member.id}`)}
+                    opensProfile
+                    priority={i < 4}
+                  />
+                )
+              }
+              // Coaches (and players outside club view) open the full profile
+              // for recruiters on phone too — no preview step.
+              const directPath = recruiterDirectProfiles ? recruiterCardProfilePath(member) : null
               const md = matchById.get(member.id)
               if (playerMatchActive && member.role === 'player' && md) {
                 return (
@@ -1247,7 +1316,8 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
                     key={member.id}
                     member={member}
                     verdict={cmd.verdict}
-                    onPreview={() => setCandidatePreview({ member })}
+                    onPreview={directPath ? () => openProfile(directPath) : () => setCandidatePreview({ member })}
+                    opensProfile={!!directPath}
                     priority={i < 4}
                   />
                 )
@@ -1259,7 +1329,8 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
                 <RecruiterCandidateCard
                   key={member.id}
                   member={member}
-                  onPreview={() => setPreviewMember(member)}
+                  onPreview={directPath ? () => openProfile(directPath) : () => setPreviewMember(member)}
+                  opensProfile={!!directPath}
                   priority={i < 4}
                 />
               )

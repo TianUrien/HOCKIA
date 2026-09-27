@@ -11,7 +11,7 @@ import { useCountries } from '@/hooks/useCountries'
 import { useRoleApplicants, type Applicant } from '@/hooks/useRoleApplicants'
 import { getImageUrl } from '@/lib/imageUrl'
 import { genderPill, roleTitle } from '@/lib/opportunityCopy'
-import { clubReplyLineClass, daysLeftLabel, daysLeftToReply, isClubReplyUrgent, personRoleLine, pipelineOf } from '@/lib/clubRecruiting'
+import { clubReplyLineClass, daysLeftLabel, daysLeftToReply, isClubReplyUrgent, personRoleLine, pipelineOf, appliedSinceLine } from '@/lib/clubRecruiting'
 import { cn } from '@/lib/utils'
 
 /**
@@ -89,7 +89,7 @@ export default function ApplicantsScreen({ roleId }: { roleId: string }) {
             {pill && <span className={cn('rounded-full px-2 py-0.5 text-secondary font-semibold', pill.className)}>{pill.label}</span>}
           </div>
           <p className="text-[14px] leading-[19px] text-ink-2">
-            {[role.title, `${p.total} applied since ${monthDay(role.published_at ?? role.created_at)}`].filter(Boolean).join(' · ')}
+            {[role.title, appliedSinceLine(data.applicants, monthDay)].filter(Boolean).join(' · ')}
           </p>
         </div>
       )}

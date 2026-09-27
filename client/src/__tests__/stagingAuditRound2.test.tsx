@@ -34,7 +34,7 @@ import { OpportunityDetailMobile } from '@/components/opportunities/OpportunityD
 
 describe('close-as-filled toast', () => {
   it('states the outcome and that applicants were told — no congratulations', () => {
-    expect(closeRoleToast('filled')).toBe('Role closed as filled. Applicants have been told.')
+    expect(closeRoleToast('filled', 2)).toBe('Role closed as filled. Applicants have been told.')
     expect(closeRoleToast('filled')).not.toMatch(/congrat/i)
     expect(closeRoleToast('withdrawn')).toBe('Role closed.')
   })

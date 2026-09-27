@@ -13,6 +13,7 @@ import InviteMembersModal from '@/components/club/InviteMembersModal'
 import { getClubInvitations, removeClubMember, type ClubInvitation } from '@/lib/clubMembership'
 import type { Database } from '@/lib/database.types'
 import { STATUS_TONE_TEXT, invitationPendingTone } from '@/lib/statusTone'
+import { positionLabel } from '@/lib/identity'
 
 type ClubMember = Database['public']['Functions']['get_club_members']['Returns'][number]
 
@@ -27,7 +28,9 @@ const PAGE_SIZE = 30
 /** Build a compact secondary line: position · location */
 function buildMeta(member: ClubMember): string {
   const parts: string[] = []
-  if (member.position) parts.push(member.position.charAt(0).toUpperCase() + member.position.slice(1))
+  // "head_coach" → "Head coach" — the app's label, never a raw token.
+  const position = positionLabel(member.position)
+  if (position) parts.push(position)
   if (member.base_location) parts.push(member.base_location)
   return parts.join(' · ')
 }

@@ -572,9 +572,9 @@ export function clubFitStateLabel(state: ClubFitState): string {
 function humanizeCategory(category: string): string {
   switch (category) {
     case 'adult_women':
-      return 'Adult Women'
+      return 'Adult women'
     case 'adult_men':
-      return 'Adult Men'
+      return 'Adult men'
     case 'girls':
       return 'Girls'
     case 'boys':

@@ -59,6 +59,10 @@ type ClubLeagues = { id: string; men_league_id: number | null; women_league_id: 
 interface Enrichment {
   fit: Map<string, { state: FitState; score: number }>
   highlights: Map<string, number>
+  /** Uploaded (ready) full matches per player — added to the linked count. */
+  fullMatchUploads: Map<string, number>
+  /** Legacy profiles.highlight_video_url set → one more highlight tile. */
+  legacyHighlight: Set<string>
   ages: Map<string, number>
   leagues: Map<string, LeagueInput | null>
   durations: Map<string, string | null>
@@ -73,7 +77,7 @@ interface Enrichment {
  */
 async function enrich(players: Pick<PoolPlayer, 'id' | 'current_world_club_id' | 'playing_category'>[], ctx: ContextLike | null, roleId: string | null): Promise<Enrichment> {
   const ids = players.map((p) => p.id)
-  const out: Enrichment = { fit: new Map(), highlights: new Map(), ages: new Map(), leagues: new Map(), durations: new Map(), applications: new Map() }
+  const out: Enrichment = { fit: new Map(), highlights: new Map(), fullMatchUploads: new Map(), legacyHighlight: new Set(), ages: new Map(), leagues: new Map(), durations: new Map(), applications: new Map() }
   if (!ids.length) return out
   const idChunks = chunks(ids)
   const target = contextFitTarget(ctx)
@@ -82,9 +86,9 @@ async function enrich(players: Pick<PoolPlayer, 'id' | 'current_world_club_id' |
     ctx && target
       ? Promise.all(idChunks.map((c) => supabase.rpc('get_club_fit_batch', { p_player_ids: c, p_context_id: ctx.id })))
       : Promise.resolve([]),
-    Promise.all(idChunks.map((c) => supabase.from('player_videos').select('user_id').in('user_id', c).eq('kind', 'highlight').eq('status', 'ready'))),
+    Promise.all(idChunks.map((c) => supabase.from('player_videos').select('user_id, kind').in('user_id', c).in('kind', ['highlight', 'full_match']).eq('status', 'ready'))),
     Promise.all(idChunks.map((c) => supabase.rpc('get_profile_ages', { p_ids: c }))),
-    Promise.all(idChunks.map((c) => supabase.from('profiles').select('id, mens_league_id, womens_league_id, availability_duration').in('id', c))),
+    Promise.all(idChunks.map((c) => supabase.from('profiles').select('id, mens_league_id, womens_league_id, availability_duration, highlight_video_url').in('id', c))),
     roleId
       ? supabase.from('opportunity_applications').select('id, applicant_id, status').eq('opportunity_id', roleId).neq('status', 'withdrawn')
       : Promise.resolve({ data: [], error: null }),
@@ -97,14 +101,18 @@ async function enrich(players: Pick<PoolPlayer, 'id' | 'current_world_club_id' |
     }
   }
   for (const r of videoRes) {
-    for (const v of (r.data ?? []) as { user_id: string }[]) out.highlights.set(v.user_id, (out.highlights.get(v.user_id) ?? 0) + 1)
+    for (const v of (r.data ?? []) as { user_id: string; kind: string }[]) {
+      const m = v.kind === 'full_match' ? out.fullMatchUploads : out.highlights
+      m.set(v.user_id, (m.get(v.user_id) ?? 0) + 1)
+    }
   }
   for (const r of ageRes) {
     for (const a of (r.data ?? []) as { profile_id: string; age: number | null }[]) if (typeof a.age === 'number') out.ages.set(a.profile_id, a.age)
   }
   const own = new Map<string, { men: number | null; women: number | null }>()
   for (const r of profRes) {
-    for (const p of (r.data ?? []) as { id: string; mens_league_id: number | null; womens_league_id: number | null; availability_duration: string | null }[]) {
+    for (const p of (r.data ?? []) as { id: string; mens_league_id: number | null; womens_league_id: number | null; availability_duration: string | null; highlight_video_url?: string | null }[]) {
+      if (p.highlight_video_url?.trim()) out.legacyHighlight.add(p.id)
       own.set(p.id, { men: p.mens_league_id, women: p.womens_league_id })
       out.durations.set(p.id, p.availability_duration ?? null)
     }
@@ -145,7 +153,10 @@ function toRow(p: PoolPlayer, e: Enrichment): ScoutRow {
     ...p,
     fitState: fit?.state ?? null,
     fitScore: fit?.score ?? null,
-    highlights: e.highlights.get(p.id) ?? 0,
+    // Same tiles as the profile (lib/playerVideoChecklist playerMediaCounts):
+    // highlights = uploaded + legacy link; full matches = linked + uploaded.
+    highlights: (e.highlights.get(p.id) ?? 0) + (e.legacyHighlight.has(p.id) ? 1 : 0),
+    fullMatches: (p.full_game_video_count ?? 0) + (e.fullMatchUploads.get(p.id) ?? 0),
     age: e.ages.get(p.id) ?? null,
     league: e.leagues.get(p.id) ?? null,
     availabilityDuration: e.durations.get(p.id) ?? null,

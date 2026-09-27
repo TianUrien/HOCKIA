@@ -53,9 +53,21 @@ export function reopenRolePatch(applicationDeadline: string | null | undefined, 
   return patch
 }
 
+/** Applications still waiting on the club — the ones a close-as-filled moves to
+ *  "Role filled" and notifies (public._fill_waiting_applications). */
+export const WAITING_APPLICATION_STATUSES = ['pending', 'shortlisted', 'maybe', 'offered', 'accepted'] as const
+
 /** Toast after a close — phone sheet and desktop tab share it. A club closing
  *  as filled hasn't necessarily signed through Hockia, so no congratulations:
- *  just what happened and that applicants were told (founder copy 2026-09-26). */
-export function closeRoleToast(outcome: RoleCloseOutcome): string {
-  return outcome === 'filled' ? 'Role closed as filled. Applicants have been told.' : 'Role closed.'
+ *  just what happened, and that applicants were told ONLY when some were still
+ *  waiting (founder copy 2026-09-26; round 5: never claim it with 0). */
+export function closeRoleToast(outcome: RoleCloseOutcome, waitingApplicants = 0): string {
+  if (outcome !== 'filled') return 'Role closed.'
+  return waitingApplicants > 0 ? 'Role closed as filled. Applicants have been told.' : 'Role closed as filled.'
 }
+
+/** Reopen toast — phone and desktop share it. */
+export const REOPEN_ROLE_TOAST = 'Role reopened.'
+
+/** The "not filled" close choice — phone and desktop share it. */
+export const CLOSE_NOT_FILLED_LABEL = 'Not filled / no longer needed'

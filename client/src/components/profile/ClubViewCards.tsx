@@ -2,13 +2,13 @@ import { Briefcase, Check, ChevronRight } from 'lucide-react'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { FitCard } from '@/components/club/FitCard'
 import { categoryToDisplay } from '@/lib/hockeyCategories'
-import { fitRows } from '@/lib/clubRecruiting'
+import { fitHasConfirmedMiss, fitRows } from '@/lib/clubRecruiting'
 import { appliedLine } from '@/lib/profileD2'
 import type { ClubRole, ClubViewApplication, ClubViewFit } from '@/hooks/useClubViewOfPlayer'
 
 /**
  * Club-only cards on a player's profile (Figma D2.1 club view 395:83):
- * "Applied to …" (395:167) and "Fit for this role" (395:178), plus the role
+ * "Applied to …" (395:167) and "Fit for <role>" (395:178), plus the role
  * picker the Shortlist button opens when the club has several open roles.
  * Never rendered for players (the parent gates on isRecruitingViewer).
  */
@@ -34,8 +34,10 @@ export function FitForRoleCard({ fit, role, player, leagueSelfReported = false }
   /** The profile's league is self-reported → "league is self-reported". */
   leagueSelfReported?: boolean
 }) {
-  // Grey fit → no card (founder ruling: hidden when fit is grey).
-  if (fit.state === 'grey') return null
+  // Grey fit → no card (founder ruling: hidden when fit is grey) — except a
+  // confirmed miss (wrong position / wrong category, round 6): the card shows
+  // without a chip so the recruiter sees why.
+  if (fit.state === 'grey' && !fitHasConfirmedMiss(fit.components, player.playing_category)) return null
   const lastDays = player.last_active_at ? Math.max(0, Math.floor((Date.now() - new Date(player.last_active_at).getTime()) / 86_400_000)) : null
   const rows = fitRows(fit.components, {
     roleGender: role.gender,
@@ -47,7 +49,9 @@ export function FitForRoleCard({ fit, role, player, leagueSelfReported = false }
     playerLeagueKnown: fit.playerLeagueBanded,
     clubLeagueKnown: fit.clubLeagueBanded,
   })
-  return <FitCard state={fit.state} rows={rows} />
+  // Names the role it measures (round 6): the active "Ranked for" role, else
+  // the one applied to, else the only open role.
+  return <FitCard state={fit.state} rows={rows} title={`Fit for ${role.title}`} />
 }
 
 export function ShortlistRoleSheet({ open, roles, shortlistedRoleIds, appliedRoleId, onPick, onClose }: {

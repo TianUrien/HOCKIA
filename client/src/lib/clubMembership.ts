@@ -2,7 +2,7 @@ import { supabase } from '@/lib/supabase'
 import { getShareOrigin } from '@/lib/profileShare'
 
 /** Shared result shape for the club-membership RPCs (all return jsonb). */
-type RpcResult<T = Record<string, unknown>> = { success: boolean; error?: string } & T
+type RpcResult<T = Record<string, unknown>> = { success: boolean; error?: string; code?: string } & T
 
 export interface ClubInvitation {
   club_member_id: string

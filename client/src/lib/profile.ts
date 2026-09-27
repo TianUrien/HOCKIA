@@ -4,7 +4,7 @@ import { logger } from './logger'
 // Pure helpers re-exported from profileHelpers so callers can import either
 // the auth-coupled `invalidateProfile` (this file) or the pure helpers
 // (profileHelpers.ts) without dragging the supabase init chain through tests.
-export { derivePublicContactEmail, getFirstName } from './profileHelpers'
+export { derivePublicContactEmail, getFirstName, greetingName } from './profileHelpers'
 
 interface InvalidateProfileOptions {
   userId?: string

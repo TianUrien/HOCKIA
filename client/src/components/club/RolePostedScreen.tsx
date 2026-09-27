@@ -1,18 +1,17 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { useQueryClient } from '@tanstack/react-query'
 import { Bell, Check, Clock, X } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 import { trackPushSubscribe } from '@/lib/analytics'
 import { usePushSubscription } from '@/hooks/usePushSubscription'
-import { opportunityGenderToTarget, useRecruitingContext } from '@/hooks/useRecruitingContext'
+import { useFindForRole } from '@/hooks/useFindForRole'
 import { INLINE_PUSH_ASK, useBottomPrompt } from '@/lib/bottomPrompt'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
 import { IconButton } from '@/components/ui/IconButton'
 import { DEFAULT_EXPIRY_DAYS } from '@/lib/clubRecruiting'
-import { replyWindowLine, roleFindPath, rolePostedCopy, type PostRoleDraft } from '@/lib/postRole'
+import { replyWindowLine, rolePostedCopy, type PostRoleDraft } from '@/lib/postRole'
 
 /**
  * Role posted (Figma 04 Club D1.26 368:780; DEV NOTE 368:1098). Shown after
@@ -62,8 +61,7 @@ export default function RolePostedScreen({ roleId }: Props) {
   const location = useLocation()
   const profile = useAuthStore((s) => s.profile)
   const push = usePushSubscription()
-  const queryClient = useQueryClient()
-  const { activateForOpportunity } = useRecruitingContext()
+  const { findForRole: activateAndFind, finding } = useFindForRole()
   // Straight after Post role the form hands over what it posted, so the
   // screen paints at once; the saved row below is what decides.
   const handed = (location.state as { role?: PostedRole } | null)?.role ?? null
@@ -72,7 +70,6 @@ export default function RolePostedScreen({ roleId }: Props) {
   const [dismissals] = useState(readDismissals)
   const [turnedOn, setTurnedOn] = useState(false)
   const [scope, setScope] = useState<ScopeFields | null>(null)
-  const [finding, setFinding] = useState(false)
 
   const clubId = profile?.id ?? null
   useEffect(() => {
@@ -116,18 +113,8 @@ export default function RolePostedScreen({ roleId }: Props) {
   // refresh, so the next screen reads the new scope on its first render.
   const findForRole = async () => {
     if (!role || finding) return
-    setFinding(true)
-    const isPlayer = role.type === 'player'
-    await activateForOpportunity({
-      opportunityId: roleId,
-      // A coach role's team is not a player category; the RPC takes null.
-      target: isPlayer ? opportunityGenderToTarget(scope?.gender) : null,
-      region: scope?.city ?? null,
-      label: scope?.title ?? null,
-    })
-    // Find players' role list may be cached from before this role existed.
-    void queryClient.invalidateQueries({ queryKey: ['scouting', 'open-roles'] })
-    leave(roleFindPath(role.type, roleId))
+    const to = await activateAndFind({ id: roleId, type: role.type, title: scope?.title ?? null, gender: scope?.gender ?? null, city: scope?.city ?? null })
+    leave(to)
   }
 
   const turnOn = async () => {

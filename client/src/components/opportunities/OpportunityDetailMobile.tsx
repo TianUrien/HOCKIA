@@ -175,7 +175,7 @@ export function OpportunityDetailMobile({
           <Calendar className="h-4 w-4" strokeWidth={1.6} /> {startsLine(vacancy)}
         </p>
         <p className="mt-1 flex items-start gap-1.5 text-secondary text-ink-3">
-          <Clock className="mt-0.5 h-[13px] w-[13px] shrink-0" strokeWidth={1.6} /> {postedLine(vacancy)}
+          <Clock className="mt-0.5 h-[13px] w-[13px] shrink-0" strokeWidth={1.6} /> {postedLine(vacancy, new Date(), closed)}
         </p>
       </div>
       </div>
@@ -242,7 +242,7 @@ export function OpportunityDetailMobile({
           ))}
           <li className="flex items-center gap-3 py-2">
             <span className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-surface-grouped text-ink-1"><Check className="h-4 w-4" strokeWidth={2} /></span>
-            <span><span className="block text-row font-semibold text-ink-1">{compensationText(vacancy)}</span>{!vacancy.compensation && <span className="block text-secondary text-ink-2">Ask the club when you apply</span>}</span>
+            <span><span className="block text-row font-semibold text-ink-1">{compensationText(vacancy)}</span>{!vacancy.compensation && !closed && <span className="block text-secondary text-ink-2">Ask the club when you apply</span>}</span>
           </li>
         </ul>
       </section>
@@ -264,7 +264,7 @@ export function OpportunityDetailMobile({
             </span>
           ))}
           {askRow('Available', startsLine(vacancy).replace(/^Starts /, ''))}
-          {askRow('Apply by', deadlineLine(vacancy).replace(/^Apply by /, ''))}
+          {!closed && askRow('Apply by', deadlineLine(vacancy).replace(/^Apply by /, ''))}
         </div>
       </section>
 

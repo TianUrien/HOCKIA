@@ -17,7 +17,7 @@ import { useToastStore } from '@/lib/toast'
 import { getImageUrl } from '@/lib/imageUrl'
 import { publicProfileShareUrl } from '@/lib/profileShare'
 import { genderPill, roleTitle } from '@/lib/opportunityCopy'
-import { humanizeToken, roleLabel } from '@/lib/identity'
+import { squadRoleLine } from '@/lib/clubSquad'
 import { clubLeagueLine, openRoleLine } from '@/lib/clubProfileCopy'
 import { logger } from '@/lib/logger'
 import { cn } from '@/lib/utils'
@@ -392,7 +392,7 @@ export default function ClubProfileScreen({
               <EntityAvatar src={m.avatarUrl ? getImageUrl(m.avatarUrl, 'avatar-md') ?? m.avatarUrl : null} name={m.fullName} role={m.role} size={40} />
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-row font-semibold text-ink-1">{m.fullName}</span>
-                <span className="block truncate text-secondary text-ink-2">{[roleLabel(m.role as 'player' | 'coach'), m.position ? humanizeToken(m.position) : null].filter(Boolean).join(' · ')}</span>
+                <span className="block truncate text-secondary text-ink-2">{squadRoleLine({ role: m.role, position: m.position, secondary_position: m.secondaryPosition, coach_specialization: m.coachSpecialization, coach_specialization_custom: m.coachSpecializationCustom })}</span>
               </span>
               <ChevronRight className="h-4 w-4 shrink-0 text-ink-4" strokeWidth={2} />
             </button>

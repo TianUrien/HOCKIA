@@ -5,13 +5,14 @@ import { DetailNavBar } from '@/components/ui/DetailNavBar'
 import { ScoutPlayerRow } from './ScoutPlayerRow'
 import { RankedForSheet } from './RankedForSheet'
 import { useCountries, EU_COUNTRY_CODES } from '@/hooks/useCountries'
-import { opportunityGenderToTarget } from '@/hooks/useRecruitingContext'
+import { opportunityGenderToTarget, useRecruitingViewKind } from '@/hooks/useRecruitingContext'
 import { useFindPlayers, useOwnLeague, useRoleShortlist, useScoutingContext, useShortlistWrites } from '@/hooks/useScouting'
 import {
   applyFindFilters,
   contextFitTarget,
   contextPillLabel,
   evidenceLine,
+  rowFullMatches,
   FIND_FILTERS,
   playerContexts,
   rankScoutRows,
@@ -33,6 +34,9 @@ export default function FindPlayersScreen() {
   const navigate = useNavigate()
   const location = useLocation()
   const [params, setParams] = useSearchParams()
+  // Only PLAYER roles rank players here (round 6): a coach-role context
+  // stays stored for the Coaches tab.
+  useRecruitingViewKind('player')
   const scouting = useScoutingContext()
   const { ctx, roleTitle, openRoles, viewer } = scouting
   const isClub = viewer?.role === 'club'
@@ -153,7 +157,7 @@ export default function FindPlayersScreen() {
 
       <div className="pt-1.5">
         {rows.map((r, i) => {
-          const ev = evidenceLine({ fullMatches: r.full_game_video_count ?? 0, highlights: r.highlights, career: r.career_entry_count ?? 0, lastActiveAt: r.last_active_at })
+          const ev = evidenceLine({ fullMatches: rowFullMatches(r), highlights: r.highlights, career: r.career_entry_count ?? 0, lastActiveAt: r.last_active_at })
           const saved = writes.inList(r.id)
           const trailing = r.applicationId
             ? <button type="button" onClick={() => openApplied(r)} className="rounded-full bg-surface-grouped px-3 py-1.5 text-secondary font-semibold text-ink-2">Applied</button>

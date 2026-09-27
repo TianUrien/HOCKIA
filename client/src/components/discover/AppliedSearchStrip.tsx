@@ -26,13 +26,13 @@ export default function AppliedSearchStrip({ applied }: AppliedSearchStripProps)
   if (applied.entity) {
     chips.push({ key: 'entity', label: applied.entity })
   }
-  // Phase 3e — prefer category_label (Adult Women / Girls / etc.). Fall back
+  // Phase 3e — prefer category_label (Adult women / Girls / etc.). Fall back
   // to legacy gender_label if a stale backend response is in flight, mapping
-  // 'Men' → "Adult Men" and 'Women' → "Adult Women" so chip text is consistent.
+  // 'Men' → "Adult men" and 'Women' → "Adult women" so chip text is consistent.
   const categoryChipLabel = applied.category_label
     ? categoryToDisplay(applied.category_label)
     : applied.gender_label
-      ? (applied.gender_label === 'Men' ? 'Adult Men' : 'Adult Women')
+      ? (applied.gender_label === 'Men' ? 'Adult men' : 'Adult women')
       : null
   if (categoryChipLabel) {
     chips.push({ key: 'category', label: categoryChipLabel })
