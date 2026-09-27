@@ -239,7 +239,7 @@ export default function PostRoleScreen({ draftId }: Props) {
       // The role's recruiting scope copies its fields; re-sync it when it's the active one.
       const active = useRecruitingContextStore.getState().rows.find((r) => r.is_active)
       if (liveStatus === 'open' && active?.opportunity_id === draft.id) await scopeToRole(draft.id)
-      addToast('Role updated', 'success')
+      addToast('Changes saved.', 'success')
       navigate('/opportunities', { replace: true, state: { highlight: draft.id } })
     } catch (err) {
       logger.error('[PostRole] edit failed', err)

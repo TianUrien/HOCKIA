@@ -25,12 +25,23 @@ export function KeyFactsGrid({ facts, onAction, className }: KeyFactsGridProps) 
         return (
           <div key={f.id} className="flex min-w-0 flex-col gap-0.5 rounded-card bg-surface-grouped p-3" data-testid={`key-fact-${f.id}`}>
             <span className="text-micro font-semibold uppercase tracking-[0.04em] text-ink-2">{f.label}</span>
-            <span className={cn('break-words text-row font-semibold', f.missing ? 'text-ink-3' : 'text-ink-1')}>{f.value}</span>
-            {f.detail && <span className="text-caption text-ink-2">{f.detail}</span>}
+            {f.valueLines && f.valueLines.length > 0 ? (
+              // Passports: one "flag name" per line, truncated, never wrapped mid-name.
+              <span className="flex min-w-0 flex-col" aria-label={f.value}>
+                {f.valueLines.map((line) => (
+                  <span key={line} className="truncate text-row font-semibold text-ink-1" data-testid="passport-line">{line}</span>
+                ))}
+              </span>
+            ) : (
+              <span className={cn('break-words text-row font-semibold', f.missing ? 'text-ink-3' : 'text-ink-1')}>{f.value}</span>
+            )}
+            {f.euTag ? (
+              <span className="mt-0.5 self-start rounded-full bg-hockia-soft px-2 py-0.5 text-caption font-semibold text-hockia-primary" data-testid="passport-eu-tag">EU passport</span>
+            ) : f.detail && <span className="text-caption text-ink-2">{f.detail}</span>}
             {f.extraLines.map((line) => {
               const amber = line.status === 'expiring_soon' || line.status === 'expired'
               return (
-                <span key={line.text} className={cn('text-caption', amber ? 'font-semibold text-amber-600' : 'text-ink-2')}>{line.text}</span>
+                <span key={line.text} className={cn('line-clamp-2 break-words text-caption', amber ? 'font-semibold text-amber-600' : 'text-ink-2')}>{line.text}</span>
               )
             })}
             {action && onAction && f.action && (

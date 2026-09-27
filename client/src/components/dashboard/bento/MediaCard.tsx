@@ -1,5 +1,7 @@
 import { Image as ImageIcon, Film, Play } from 'lucide-react'
 import { useGalleryCount, useClubMediaCount } from '@/hooks/useGalleryCount'
+import { useProfileVideos } from '@/hooks/useProfileVideos'
+import { playerMediaCounts } from '@/lib/playerVideoChecklist'
 import { cn } from '@/lib/utils'
 import DashboardCard from './DashboardCard'
 import type { Profile } from '@/lib/supabase'
@@ -7,8 +9,8 @@ import type { Profile } from '@/lib/supabase'
 /**
  * MediaCard — up to 3 tiles depending on role:
  *   Player:
- *     - Highlights      → profiles.highlight_video_url (0 or 1)
- *     - Full Matches    → profiles.full_game_video_count (denormalized)
+ *     - Highlights      → legacy highlight_video_url (0 or 1) + uploaded highlights
+ *     - Full Matches    → full_game_video_count (linked) + uploaded full matches
  *     - Gallery         → gallery_photos count (one extra query)
  *   Coach / Club (any non-player role):
  *     - Gallery only — coaches and clubs don't have highlight reels or
@@ -20,8 +22,8 @@ import type { Profile } from '@/lib/supabase'
  * `gallery_photos` table keyed by `user_id`; clubs use the separate
  * `club_media` table keyed by `club_id`.
  *
- * Highlight + full-game counts come from the profile row already in
- * memory, so only gallery requires a network round-trip.
+ * Uploaded videos come from useProfileVideos (players only), the legacy link
+ * and linked full games from the profile row (playerMediaCounts).
  */
 interface MediaCardProps {
   /** Subset of Profile that the card actually reads. */
@@ -50,8 +52,10 @@ export default function MediaCard({ profile, readOnly, onManageMedia, role = 'pl
   // Error → 0 keeps the card's empty-state behaviour from the pre-RQ version.
   const galleryCount = active.error ? 0 : active.count
 
-  const highlightCount = profile.highlight_video_url?.trim() ? 1 : 0
-  const fullMatchCount = profile.full_game_video_count ?? 0
+  // Uploaded highlights / full matches (player only) count alongside the
+  // legacy highlight link and the linked full games.
+  const { videos, loading: videosLoading } = useProfileVideos(isGalleryOnly ? null : profile.id, !isGalleryOnly)
+  const { highlights: highlightCount, fullMatches: fullMatchCount } = playerMediaCounts(profile, videos)
   const totalItems = isGalleryOnly
     ? galleryCount ?? 0
     : highlightCount + fullMatchCount + (galleryCount ?? 0)
@@ -91,14 +95,14 @@ export default function MediaCard({ profile, readOnly, onManageMedia, role = 'pl
             icon={Play}
             label="Highlights"
             count={highlightCount}
-            loading={false}
+            loading={videosLoading}
             isEmpty={highlightCount === 0}
           />
           <Tile
             icon={Film}
             label="Full matches"
             count={fullMatchCount}
-            loading={false}
+            loading={videosLoading}
             isEmpty={fullMatchCount === 0}
           />
           <Tile

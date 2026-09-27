@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { Eye, Flame, ChevronRight } from 'lucide-react'
 import { useWeeklyVisibility } from '@/hooks/useWeeklyVisibility'
+import { useAuthStore } from '@/lib/auth'
 import { AuroraHero, HeroLabel, HeroChip } from './AuroraHero'
 import { StatTile, StatTileRow } from './StatTile'
 import { recordModuleImpression, trackModuleClick, useImpressionOnce } from '@/lib/homeInstrumentation'
@@ -24,12 +25,15 @@ const VOICE = {
     moduleId: 'player_hero',
     emptyHeadline: 'Let clubs find you this week.',
     emptySub: 'Clubs are most active on Mondays. Mark yourself open to play and keep your profile sharp — active players get seen far more.',
+    /** Already open to play: no nudge to do what's done. */
+    emptySubWhenOpen: 'Clubs are most active on Mondays. Keep your profile sharp — active players get seen far more.',
     viewersTarget: '/dashboard/profile?tab=profile&section=viewers',
   },
   coach: {
     moduleId: 'coach_hero',
     emptyHeadline: 'Let clubs find you this week.',
     emptySub: 'Clubs are most active on Mondays. Keep your coaching profile sharp and your availability current.',
+    emptySubWhenOpen: 'Clubs are most active on Mondays. Keep your coaching profile sharp and your availability current.',
     viewersTarget: '/dashboard/profile?section=viewers',
   },
 } as const
@@ -42,6 +46,7 @@ export function PlayerHero({ voice = 'player' }: { voice?: 'player' | 'coach' })
   const navigate = useNavigate()
   const v = VOICE[voice]
   const { loading, visibility, streakDays } = useWeeklyVisibility(true)
+  const isOpen = useAuthStore((s) => (voice === 'coach' ? s.profile?.open_to_coach : s.profile?.open_to_play) === true)
   const ref = useImpressionOnce(() => recordModuleImpression(v.moduleId, POSITION))
 
   if (loading || !visibility) {
@@ -100,7 +105,7 @@ export function PlayerHero({ voice = 'player' }: { voice?: 'player' | 'coach' })
         ) : (
           <>
             <h1 className="mt-2 text-xl font-black leading-tight">{v.emptyHeadline}</h1>
-            <p className="mt-1 text-sm text-gray-600">{v.emptySub}</p>
+            <p className="mt-1 text-sm text-gray-600" data-testid="player-hero-empty-sub">{isOpen ? v.emptySubWhenOpen : v.emptySub}</p>
           </>
         )}
 

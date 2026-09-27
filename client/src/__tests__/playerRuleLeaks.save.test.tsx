@@ -95,6 +95,11 @@ vi.mock('@/components/dashboard/bento/SavedCandidatesCard', () => ({
 import ScoutingCard from '@/components/profile/ScoutingCard'
 import ClubHeroCard from '@/components/dashboard/bento/ClubHeroCard'
 
+// ScoutingCard / MediaCard count uploaded videos (useProfileVideos); keep it inert here.
+vi.mock('@/hooks/useProfileVideos', () => ({
+  useProfileVideos: () => ({ videos: [], links: [], loading: false, reload: () => {} }),
+}))
+
 const candidate = {
   id: 'player-9',
   role: 'player',

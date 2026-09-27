@@ -4,6 +4,11 @@ import { describe, it, expect, vi } from 'vitest'
 import PlayerBentoGrid from '@/components/dashboard/bento/PlayerBentoGrid'
 import type { PlayerProfileShape } from '@/pages/PlayerDashboard'
 
+// ScoutingCard / MediaCard count uploaded videos (useProfileVideos); keep it inert here.
+vi.mock('@/hooks/useProfileVideos', () => ({
+  useProfileVideos: () => ({ videos: [], links: [], loading: false, reload: () => {} }),
+}))
+
 // Stub out every child card so this test only verifies which cards
 // PlayerBentoGrid composes for owner vs visitor — the cards themselves
 // have their own concerns (supabase counts, edit modals) tested elsewhere.

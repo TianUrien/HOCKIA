@@ -35,10 +35,13 @@ const TRACKED_KEY = 'pwa-install-tracked-v2'
 async function persistInstallToDb(platform: 'ios' | 'android' | 'desktop'): Promise<boolean> {
   const userId = useAuthStore.getState().user?.id
   if (!userId) return false
+  // One row per (profile_id, platform), first install only: a repeat install
+  // is a no-op (ON CONFLICT DO NOTHING). A plain upsert would UPDATE the
+  // existing row, which members can't do on this table, and fail.
   const { error } = await supabase.from('pwa_installs')
     .upsert(
       { profile_id: userId, platform, user_agent: navigator.userAgent },
-      { onConflict: 'profile_id,platform' }
+      { onConflict: 'profile_id,platform', ignoreDuplicates: true }
     )
   if (error) {
     logger.warn('[PWA] Failed to persist install:', error.message)

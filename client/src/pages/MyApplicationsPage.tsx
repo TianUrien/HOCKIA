@@ -53,7 +53,7 @@ export default function MyApplicationsPage() {
             {role?.detail && <span className="block truncate text-secondary text-ink-2">{role.detail}</span>}
             {sub && <span className="block truncate text-secondary text-ink-2">{sub}</span>}
             {r.hasClubNote ? (
-              <span className="mt-1 block text-secondary text-ink-2" data-testid="club-note-line">
+              <span className="mt-1 block truncate text-secondary text-ink-2" data-testid="club-note-line">
                 Not selected · <span className="font-semibold text-hockia-primary">Read the club’s note</span>
               </span>
             ) : (
@@ -63,7 +63,7 @@ export default function MyApplicationsPage() {
               </span>
             )}
           </span>
-          {r.title && <ChevronRight className="h-[18px] w-[18px] shrink-0 text-ink-4" strokeWidth={1.6} />}
+          {r.title && <ChevronRight className="h-[18px] w-[18px] shrink-0 text-ink-4" strokeWidth={1.6} data-testid="application-row-chevron" />}
         </button>
       </li>
     )
@@ -103,7 +103,10 @@ export default function MyApplicationsPage() {
             )}
           </div>
         ) : (
-          <ul className="divide-y divide-line [&>li+li]:ml-[84px] [&>li+li]:pl-0 [&>li+li>button]:-ml-[84px]">
+          // Inset dividers: rows after the first start the line at the text
+          // (84px) and pull the button back out — widened by the same 84px so
+          // every row's chevron sits on the same right edge.
+          <ul className="divide-y divide-line [&>li+li]:ml-[84px] [&>li+li]:pl-0 [&>li+li>button]:-ml-[84px] [&>li+li>button]:w-[calc(100%+84px)]">
             {list.map(renderRow)}
           </ul>
         )}

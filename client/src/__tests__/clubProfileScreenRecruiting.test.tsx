@@ -33,6 +33,11 @@ vi.mock('@/components/ProfileActionMenu', () => ({ default: () => null }))
 import ClubProfileScreen from '@/components/profile/mobile/ClubProfileScreen'
 import type { ClubProfileShape } from '@/pages/ClubDashboard'
 
+// ScoutingCard / MediaCard count uploaded videos (useProfileVideos); keep it inert here.
+vi.mock('@/hooks/useProfileVideos', () => ({
+  useProfileVideos: () => ({ videos: [], links: [], loading: false, reload: () => {} }),
+}))
+
 const role = (id: string): ClubOpenRole => ({ id, title: 'Midfielder', position: 'midfielder', gender: 'Women', opportunityType: 'player', startDate: null, durationText: null })
 
 function renderScreen(profile: Partial<ClubProfileShape> = {}, props: { readOnly?: boolean; onOpenRoles?: () => void } = {}) {

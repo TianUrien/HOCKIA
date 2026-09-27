@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import type { ReactNode } from 'react'
 import { Plus, Edit2, Copy, Archive, MapPin, Calendar, Users, Eye, Rocket, RotateCcw, Trash2, Loader2, MoreHorizontal, CheckCircle, AlertCircle, XCircle, Briefcase } from 'lucide-react'
 import * as Sentry from '@sentry/react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { logger } from '../lib/logger'
 import { useAuthStore } from '../lib/auth'
@@ -196,6 +196,7 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
   const { user, profile, refreshProfile } = useAuthStore()
   const targetUserId = profileId || user?.id
   const navigate = useNavigate()
+  const location = useLocation()
   const { addToast } = useToastStore()
   const [vacancies, setVacancies] = useState<Vacancy[]>([])
   const [applicantCounts, setApplicantCounts] = useState<Record<string, number>>({})
@@ -1006,6 +1007,17 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
           }
           hasApplied={userApplications.has(detailVacancy.id)}
           hideClubProfileButton={true}
+          onMessage={
+            // Closed role + applicant only (OpportunityDetailView decides); never the publisher.
+            user && detailVacancy.club_id !== user.id
+              ? () => {
+                  const clubId = detailVacancy.club_id
+                  setShowDetailModal(false)
+                  setDetailVacancy(null)
+                  navigate(`/messages?new=${clubId}`, { state: { from: location.pathname } })
+                }
+              : undefined
+          }
         />
       )}
 

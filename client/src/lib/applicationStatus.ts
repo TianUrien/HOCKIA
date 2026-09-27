@@ -227,3 +227,14 @@ export function closedApplicationNote(status: string | null | undefined, firstNa
     default: return `This application is past review. You can still message ${firstName}.`
   }
 }
+
+/**
+ * Whose words an application-feedback message is, from its `source`
+ * ('ai' | 'fallback' | 'club'). Only 'ai' earns the AI sparkle; a missing
+ * source (an older deploy) is treated as plain copy.
+ */
+export function feedbackMessageKind(source: unknown): 'ai' | 'club' | 'plain' {
+  if (source === 'ai') return 'ai'
+  if (source === 'club') return 'club'
+  return 'plain'
+}

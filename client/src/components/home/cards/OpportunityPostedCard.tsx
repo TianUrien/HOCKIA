@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { positionLabel } from '@/lib/identity'
 import { Briefcase, MapPin, BadgeCheck } from 'lucide-react'
 import { StorageImage } from '@/components'
-import { FeedCard, FeedCardBody, FeedCardCaption, FeedCardFooter, FeedCardHeader, FeedCardPrimaryAction, profilePathForRole } from '../FeedCard'
+import { FeedCard, FeedCardAction, FeedCardBody, FeedCardCaption, FeedCardFooter, FeedCardHeader, FeedCardPrimaryAction, profilePathForRole } from '../FeedCard'
+import { useAuthStore } from '@/lib/auth'
 import type { OpportunityPostedFeedItem } from '@/types/homeFeed'
 import { opportunityGenderToTeamLabel } from '@/lib/hockeyCategories'
 import OpportunityDetailOverlay from '@/components/OpportunityDetailOverlay'
@@ -16,6 +17,15 @@ export function OpportunityPostedCard({ item }: OpportunityPostedCardProps) {
   // mounted underneath, so closing reveals it exactly where it was — no route
   // change, no unmount, no scroll jump). Deep links still use the route.
   const [showDetail, setShowDetail] = useState(false)
+  // "Apply" only for someone who can apply: a player on a player role, a coach
+  // on a coach role, never the publisher. Everyone else (clubs, brands,
+  // umpires, the publisher) gets a quiet "View role" that opens the same
+  // overlay — the publisher sees its applicants there.
+  const viewerId = useAuthStore((s) => s.user?.id ?? null)
+  const viewerRole = useAuthStore((s) => s.profile?.role ?? null)
+  const roleType = item.opportunity_type ?? 'player'
+  const canApply = Boolean(viewerId) && viewerId !== item.club_id
+    && ((viewerRole === 'player' && roleType === 'player') || (viewerRole === 'coach' && roleType === 'coach'))
 
   // The PUBLISHER is the card's author. Vacancies can be coach-published —
   // then club_id/club_name/club_logo carry the COACH's profile.
@@ -91,7 +101,11 @@ export function OpportunityPostedCard({ item }: OpportunityPostedCardProps) {
       </FeedCardBody>
 
       <FeedCardFooter>
-        <FeedCardPrimaryAction onClick={() => setShowDetail(true)}>Apply</FeedCardPrimaryAction>
+        {canApply ? (
+          <FeedCardPrimaryAction onClick={() => setShowDetail(true)}>Apply</FeedCardPrimaryAction>
+        ) : (
+          <FeedCardAction onClick={() => setShowDetail(true)}>View role</FeedCardAction>
+        )}
       </FeedCardFooter>
 
       {showDetail && (

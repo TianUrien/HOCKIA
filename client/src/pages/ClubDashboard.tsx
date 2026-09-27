@@ -15,7 +15,6 @@ import OpportunitiesTab from '@/components/OpportunitiesTab'
 import ProfilePostsTab from '@/components/ProfilePostsTab'
 import SignInPromptModal from '@/components/SignInPromptModal'
 import ClubHeroCard from '@/components/dashboard/bento/ClubHeroCard'
-import ContextSwitcher from '@/components/recruiting/ContextSwitcher'
 import ClubBentoGrid from '@/components/dashboard/bento/ClubBentoGrid'
 import ClubBasicInfoCard from '@/components/dashboard/bento/ClubBasicInfoCard'
 import ConnectionsPreview from '@/components/profile/ConnectionsPreview'
@@ -587,16 +586,8 @@ export default function ClubDashboard({
           </button>
         )}
 
-        {/* Own-profile only: surface the recruiter's active context
-            here so it's visible from their home base. The chip itself
-            self-hides for non-recruiter viewers; the isOwnProfile gate
-            additionally prevents a stranger-viewing-this-club from
-            seeing their OWN context floating on someone else's page. */}
-        {isOwnProfile && !readOnly && (
-          <div>
-            <ContextSwitcher />
-          </div>
-        )}
+        {/* No recruiting-context chip on the club's own profile: it scopes
+            search results, so it lives on Community, Find players and Saved. */}
 
         <ClubHeroCard
           profile={profile as Parameters<typeof ClubHeroCard>[0]['profile']}
