@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import type { UserPostFeedItem } from '@/types/homeFeed'
+import { coachSpecs } from '@/hooks/useClubSquad'
 
 /**
  * Data for the phone Club profile (Figma 04 Club › Club profile — own /
@@ -21,6 +22,10 @@ export type ClubMember = {
   avatarUrl: string | null
   role: string
   position: string | null
+  secondaryPosition: string | null
+  /** Coaches only — so the row reads "Coach · Head coach" like Squad does. */
+  coachSpecialization: string | null
+  coachSpecializationCustom: string | null
   currentClub: string | null
 }
 
@@ -132,12 +137,21 @@ export function useClubProfileScrollData(clubId: string | null | undefined, worl
         return row ? { id: row.id, name: row.name, band: row.level_band_global } : null
       }
 
-      const memberRows = (members.data ?? []) as Array<{ id: string; full_name: string; avatar_url: string | null; role: string; position: string | null; current_club: string | null; total_count: number; is_test_account: boolean }>
+      const memberRows = (members.data ?? []) as Array<{ id: string; full_name: string; avatar_url: string | null; role: string; position: string | null; secondary_position: string | null; current_club: string | null; total_count: number; is_test_account: boolean }>
+      // Coach specialty is not on get_club_members — same lookup Squad uses.
+      const specs = await coachSpecs(memberRows.filter((m) => m.role === 'coach').map((m) => m.id))
+      if (cancelled) return
       const postsPayload = (posts.data ?? null) as { items?: UserPostFeedItem[]; total?: number } | null
       const stats = (views.data ?? null) as { success?: boolean; total_views?: number } | null
       const next = {
         photos: ((photos.data ?? []) as Array<{ id: string; file_url: string; caption: string | null }>).map((p) => ({ id: p.id, url: p.file_url, caption: p.caption })),
-        members: memberRows.map((m) => ({ id: m.id, fullName: m.full_name, avatarUrl: m.avatar_url, role: m.role, position: m.position, currentClub: m.current_club })),
+        members: memberRows.map((m) => ({
+          id: m.id, fullName: m.full_name, avatarUrl: m.avatar_url, role: m.role, position: m.position,
+          secondaryPosition: m.secondary_position ?? null,
+          coachSpecialization: specs.get(m.id)?.coach_specialization ?? null,
+          coachSpecializationCustom: specs.get(m.id)?.coach_specialization_custom ?? null,
+          currentClub: m.current_club,
+        })),
         memberCount: memberRows[0]?.total_count ?? 0,
         openRoles: ((roles.data ?? []) as Array<{ id: string; title: string; position: string | null; gender: string | null; opportunity_type: string | null; start_date: string | null; duration_text: string | null }>).map((r) => ({
           id: r.id, title: r.title, position: r.position, gender: r.gender, opportunityType: r.opportunity_type, startDate: r.start_date, durationText: r.duration_text,

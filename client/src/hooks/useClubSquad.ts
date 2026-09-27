@@ -62,7 +62,7 @@ const MEMBER_LIMIT = 500
 type SpecRow = { id: string; coach_specialization: string | null; coach_specialization_custom: string | null }
 
 /** Coach specialty is not on get_club_members / get_club_invitations; fetch it for coaches only. */
-async function coachSpecs(ids: string[]): Promise<Map<string, SpecRow>> {
+export async function coachSpecs(ids: string[]): Promise<Map<string, SpecRow>> {
   const out = new Map<string, SpecRow>()
   if (ids.length === 0) return out
   const { data, error } = await supabase

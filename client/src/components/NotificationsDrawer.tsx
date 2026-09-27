@@ -13,10 +13,16 @@ import type { NotificationKind, NotificationRecord } from '@/lib/api/notificatio
 import { getNotificationConfig, resolveNotificationRoute } from './notifications/config'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import { friendRequestToastType } from '@/lib/friendshipErrors'
+import { useRespondToClubInvite } from '@/hooks/useRespondToClubInvite'
 
 const FRIEND_REQUEST_KINDS = new Set<NotificationKind>(['friend_request_received'])
 const AMBASSADOR_REQUEST_KINDS = new Set<NotificationKind>(['ambassador_request_received'])
 const CLUB_INVITE_KINDS = new Set<NotificationKind>(['club_invitation_received'])
+// A squad invitation still waiting on an answer stays under "New" even once
+// read — it must not sink under "Earlier" while it is actionable. (Answered or
+// cancelled invitations are cleared server-side, so they drop out.)
+const staysNew = (notification: NotificationRecord) =>
+  !notification.readAt || CLUB_INVITE_KINDS.has(notification.kind)
 const QUICK_FILTERS = [
   { id: 'all', label: 'All' },
   { id: 'unread', label: 'Unread' },
@@ -45,8 +51,7 @@ export default function NotificationsDrawer() {
   const pendingFriendshipId = useNotificationStore((state) => state.pendingFriendshipId)
   const respondToAmbassadorRequest = useNotificationStore((state) => state.respondToAmbassadorRequest)
   const pendingAmbassadorRequestId = useNotificationStore((state) => state.pendingAmbassadorRequestId)
-  const respondToClubInvite = useNotificationStore((state) => state.respondToClubInvite)
-  const pendingClubInviteId = useNotificationStore((state) => state.pendingClubInviteId)
+  const { respond: respondToClubInvite, pendingId: pendingClubInviteId } = useRespondToClubInvite()
 
   useFocusTrap({ containerRef: drawerRef, isActive: isOpen })
 
@@ -58,12 +63,12 @@ export default function NotificationsDrawer() {
   }, [notifications])
 
   const unreadNotifications = useMemo(
-    () => sortedNotifications.filter((notification) => !notification.readAt),
+    () => sortedNotifications.filter(staysNew),
     [sortedNotifications]
   )
 
   const earlierNotifications = useMemo(
-    () => sortedNotifications.filter((notification) => Boolean(notification.readAt)),
+    () => sortedNotifications.filter((notification) => !staysNew(notification)),
     [sortedNotifications]
   )
 
@@ -140,18 +145,9 @@ export default function NotificationsDrawer() {
     )
   }
 
-  const handleClubInvite = async (clubMemberId: string, action: 'accept' | 'decline') => {
-    const success = await respondToClubInvite({ clubMemberId, action })
-    if (!success) {
-      addToast('Could not update the club invitation. Please try again.', 'error')
-      return
-    }
-
-    addToast(
-      action === 'accept' ? 'You joined the club.' : 'Club invitation declined.',
-      'success'
-    )
-  }
+  // Shared with the phone Inbox (Requests + Activity): same RPC, same toasts,
+  // same "no longer available" handling.
+  const handleClubInvite = (clubMemberId: string, action: 'accept' | 'decline') => respondToClubInvite(clubMemberId, action)
 
   const resolvePublicProfilePath = (actor?: NotificationRecord['actor']) => {
     if (!actor?.id) {

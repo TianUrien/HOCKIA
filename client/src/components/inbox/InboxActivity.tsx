@@ -11,6 +11,7 @@ import { identityLine } from '@/lib/identity'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import { cn } from '@/lib/utils'
 import { friendRequestToastType } from '@/lib/friendshipErrors'
+import { useRespondToClubInvite } from '@/hooks/useRespondToClubInvite'
 
 /**
  * Inbox › Activity (Figma 100:531): profile views, club replies, expired
@@ -28,6 +29,7 @@ export function InboxActivity() {
   const markAllRead = useNotificationStore((s) => s.markAllRead)
   const respondToFriendRequest = useNotificationStore((s) => s.respondToFriendRequest)
   const pendingFriendshipId = useNotificationStore((s) => s.pendingFriendshipId)
+  const clubInvite = useRespondToClubInvite()
 
   const rows = useMemo(
     () =>
@@ -81,7 +83,16 @@ export function InboxActivity() {
             const description = config.getDescription?.(notification)
             const route = resolveNotificationRoute(notification)
             const isFriendRequest = notification.kind === 'friend_request_received'
-            const busy = pendingFriendshipId === notification.sourceEntityId
+            // Squad invitations answer inline too (same buttons as a friend
+            // request); the row itself still opens the club profile.
+            const isClubInvite = notification.kind === 'club_invitation_received' && Boolean(notification.sourceEntityId)
+            const busy = isClubInvite
+              ? clubInvite.pendingId === notification.sourceEntityId
+              : pendingFriendshipId === notification.sourceEntityId
+            const answer = (action: 'accept' | 'decline') => {
+              if (isClubInvite) void clubInvite.respond(notification.sourceEntityId!, action)
+              else void answerFriendRequest(notification, action)
+            }
             return (
               <li key={notification.id}>
                 <div
@@ -106,12 +117,12 @@ export function InboxActivity() {
                     {actor?.role && <span className="block text-secondary text-ink-2">{identityLine(actor.role)}</span>}
                     {description && <span className="block text-secondary text-ink-2">{description}</span>}
                     <span className="block pt-0.5 text-secondary text-ink-3">{formatActivityAge(notification.createdAt)}</span>
-                    {isFriendRequest && (
+                    {(isFriendRequest || isClubInvite) && (
                       <span className="mt-2 flex gap-1.5">
                         <button
                           type="button"
                           disabled={busy}
-                          onClick={(e) => { e.stopPropagation(); void answerFriendRequest(notification, 'accept') }}
+                          onClick={(e) => { e.stopPropagation(); answer('accept') }}
                           className="flex h-[34px] items-center rounded-full bg-hockia-primary px-3.5 text-[14px] font-semibold text-white disabled:opacity-60"
                         >
                           Accept
@@ -119,7 +130,7 @@ export function InboxActivity() {
                         <button
                           type="button"
                           disabled={busy}
-                          onClick={(e) => { e.stopPropagation(); void answerFriendRequest(notification, 'decline') }}
+                          onClick={(e) => { e.stopPropagation(); answer('decline') }}
                           className="flex h-[34px] items-center rounded-full bg-surface-grouped px-3.5 text-[14px] font-semibold text-ink-1 disabled:opacity-60"
                         >
                           Decline
