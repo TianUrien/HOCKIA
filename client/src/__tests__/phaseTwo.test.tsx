@@ -52,6 +52,7 @@ import { CATEGORY_COLORS } from '@/types/questions'
 import { ROLE_COLOR_PALETTE } from '@/lib/roleColors'
 import RoleBadge from '@/components/RoleBadge'
 import { MoreMenu } from '@/components/safety/MoreMenu'
+import { REGION_COLORS } from '@/lib/regionColors'
 
 /** Labels of an open "…" menu (phone sheet in jsdom: max-width queries match). */
 async function menuItems(testId: string): Promise<string[]> {
@@ -247,5 +248,15 @@ describe('v2 · founder follow-ups', () => {
     expect(await menuItems('post-more-menu')).toEqual(['Report'])
     fireEvent.click(screen.getByRole('button', { name: 'Report' }))
     expect(onSelect).toHaveBeenCalled()
+  })
+})
+
+describe('v3 · continent chips', () => {
+  it('every continent has its own hue; Europe is not purple; none is amber', () => {
+    const hues = Object.values(REGION_COLORS).map((c) => c.split(' ')[0])
+    expect(new Set(hues).size).toBe(hues.length)
+    expect(REGION_COLORS.Asia).toBe('bg-hockia-soft text-hockia-primary')
+    expect(REGION_COLORS.Europe).toBe('bg-rose-100 text-rose-700')
+    for (const c of Object.values(REGION_COLORS)) expect(c).not.toMatch(/amber|yellow|purple/)
   })
 })

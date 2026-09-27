@@ -13,6 +13,7 @@ import { Header } from '@/components'
 import WorldSearchDropdown from '@/components/WorldSearchDropdown'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { regionColor } from '@/lib/regionColors'
 
 interface CountryWithStats {
   country_id: number
@@ -90,18 +91,6 @@ export default function WorldPage() {
   const filteredCountries = countries.filter(country =>
     country.country_name.toLowerCase().includes(searchQuery.toLowerCase())
   )
-
-  const getRegionColor = (region: string) => {
-    const colors: Record<string, string> = {
-      'South America': 'bg-blue-100 text-blue-700',
-      'Europe': 'bg-purple-100 text-purple-700',
-      'Oceania': 'bg-cyan-100 text-cyan-700',
-      'North America': 'bg-green-100 text-green-700',
-      'Asia': 'bg-hockia-soft text-hockia-primary',
-      'Africa': 'bg-orange-100 text-orange-700',
-    }
-    return colors[region] || 'bg-gray-100 text-gray-700'
-  }
 
   // Get the correct flag URL based on country code (e.g. "GB-ENG" → "gb-eng")
   const getFlagUrl = (countryCode: string) => {
@@ -218,7 +207,7 @@ export default function WorldPage() {
 
                 {/* Region Badge */}
                 <div className="mb-4 flex items-center gap-2">
-                  <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${getRegionColor(country.region)}`}>
+                  <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${regionColor(country.region)}`}>
                     {country.region}
                   </span>
                   {!country.has_regions && (
