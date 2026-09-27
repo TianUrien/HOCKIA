@@ -91,6 +91,8 @@ const ApplicantsEntry = lazyWithRetry(() => import('@/pages/ClubRecruitingRoutes
 const ApplicantReviewEntry = lazyWithRetry(() => import('@/pages/ClubRecruitingRoutes').then((m) => ({ default: m.ApplicantReviewEntry })))
 const PostRoleEntry = lazyWithRetry(() => import('@/pages/ClubRecruitingRoutes').then((m) => ({ default: m.PostRoleEntry })))
 const RolePostedEntry = lazyWithRetry(() => import('@/pages/ClubRecruitingRoutes').then((m) => ({ default: m.RolePostedEntry })))
+const FindPlayersEntry = lazyWithRetry(() => import('@/pages/ClubRecruitingRoutes').then((m) => ({ default: m.FindPlayersEntry })))
+const ShortlistEntry = lazyWithRetry(() => import('@/pages/ClubRecruitingRoutes').then((m) => ({ default: m.ShortlistEntry })))
 const SavedCandidatesPage = lazyWithRetry(() => import('@/pages/SavedCandidatesPage'))
 const ShortlistsIndexPage = lazyWithRetry(() => import('@/pages/ShortlistsIndexPage'))
 const ShortlistDetailPage = lazyWithRetry(() => import('@/pages/ShortlistDetailPage'))
@@ -523,6 +525,8 @@ function App() {
                 <Route path="/dashboard/opportunities/:opportunityId/applicants/:applicationId" element={<ErrorBoundary fallback={<RouteErrorFallback />}><ApplicantReviewEntry /></ErrorBoundary>} />
                 {/* Save / shortlists: clubs + recruiting coaches only. */}
                 <Route path="/dashboard/saved" element={<ErrorBoundary fallback={<RouteErrorFallback />}><RecruiterOnlyRoute><SavedCandidatesPage /></RecruiterOnlyRoute></ErrorBoundary>} />
+                <Route path="/dashboard/find-players" element={<ErrorBoundary fallback={<RouteErrorFallback />}><FindPlayersEntry /></ErrorBoundary>} />
+                <Route path="/dashboard/shortlist" element={<ErrorBoundary fallback={<RouteErrorFallback />}><ShortlistEntry /></ErrorBoundary>} />
                 <Route path="/dashboard/shortlists" element={<ErrorBoundary fallback={<RouteErrorFallback />}><RecruiterOnlyRoute><ShortlistsIndexPage /></RecruiterOnlyRoute></ErrorBoundary>} />
                 <Route path="/dashboard/shortlists/:id" element={<ErrorBoundary fallback={<RouteErrorFallback />}><RecruiterOnlyRoute><ShortlistDetailPage /></RecruiterOnlyRoute></ErrorBoundary>} />
 

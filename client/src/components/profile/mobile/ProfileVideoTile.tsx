@@ -3,6 +3,7 @@ import { useSignedVideoThumbnail } from '@/hooks/useSignedVideoThumbnail'
 import { useNearViewport } from '@/hooks/useNearViewport'
 import { cn } from '@/lib/utils'
 import { formatVideoDuration } from '@/lib/videoCopy'
+import { VideoLockBadge } from './VideoLockBadge'
 
 /**
  * One video tile for the profile (Video rows), Videos — all (grid) and Manage
@@ -64,7 +65,7 @@ export function ProfileVideoTile({ video, portrait = false, locked = false, canW
       )}
       {loaded && <span className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-black/70 to-transparent" />}
       <span className={cn('absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full text-ink-1 transition-colors', loaded ? 'bg-white/95' : 'bg-white', compact ? 'h-8 w-8' : 'h-10 w-10')}><Play className={cn('ml-0.5 fill-current', compact ? 'h-3.5 w-3.5' : 'h-4 w-4')} /></span>
-      {locked && !compact && <span className="absolute left-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-black/55 text-white"><Lock className="h-3 w-3" strokeWidth={2.2} /></span>}
+      {locked && !compact && <VideoLockBadge />}
       {!portrait && !compact && <span className={cn('absolute bottom-2 left-2.5 right-14 truncate text-caption font-semibold', loaded ? 'text-white' : 'text-ink-1')}>{video.title}</span>}
       {dur && !compact && <span className={cn('absolute bottom-2 right-2 rounded-[6px] px-1.5 py-0.5 text-[11px] font-semibold', loaded ? 'bg-black/55 text-white' : 'bg-white text-ink-1')}>{dur}</span>}
     </button>

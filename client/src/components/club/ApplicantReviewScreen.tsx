@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Check, ExternalLink, Lock, MessageCircle, Target } from 'lucide-react'
+import { Check, ExternalLink, Lock, MessageCircle, Target, UserRound } from 'lucide-react'
 import { DetailNavBar } from '@/components/ui/DetailNavBar'
 import ProfileActionMenu from '@/components/ProfileActionMenu'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
@@ -23,8 +23,9 @@ import { getImageUrl } from '@/lib/imageUrl'
 import { categoryToDisplay } from '@/lib/hockeyCategories'
 import { specialistSkillLabel } from '@/lib/specialistSkills'
 import { trackDbEvent } from '@/lib/trackDbEvent'
-import { daysLeftLabel, daysLeftToReply, decisionToast, DEFAULT_EXPIRY_DAYS, fitRows, fitTarget, isDaysLeftUrgent, personRoleLine, type FitComponents, type FitState } from '@/lib/clubRecruiting'
+import { daysLeftLabel, daysLeftToReply, decisionToast, DEFAULT_EXPIRY_DAYS, clubReplyLineClass, fitRows, fitTarget, isClubReplyUrgent, personRoleLine, type FitComponents, type FitState } from '@/lib/clubRecruiting'
 import { cn } from '@/lib/utils'
+import { MENU_ICON_CLASS } from '@/lib/report'
 import type { Json } from '@/lib/database.types'
 
 /**
@@ -229,7 +230,18 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
         showParent
         wideParent
         onBack={backToApplicants}
-        trailing={p ? <ProfileActionMenu targetId={p.id} targetName={p.full_name ?? 'this player'} /> : undefined}
+        trailing={p ? (
+          // Founder ruling: the applicant "…" = Message · View full profile · Report.
+          <ProfileActionMenu
+            targetId={p.id}
+            targetName={p.full_name ?? 'this player'}
+            showBlock={false}
+            leadingItems={[
+              { key: 'message', label: 'Message', icon: <MessageCircle className={MENU_ICON_CLASS} strokeWidth={1.8} />, onSelect: () => void message() },
+              { key: 'profile', label: 'View full profile', icon: <UserRound className={MENU_ICON_CLASS} strokeWidth={1.8} />, onSelect: () => navigate(`/players/id/${p.id}`, { state: { from: location.pathname } }) },
+            ]}
+          />
+        ) : undefined}
       />
       <div className="flex-1 overflow-y-auto pb-40" onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 120)}>
         {error && <p className="px-5 py-6 text-row text-ink-2">{error}</p>}
@@ -240,7 +252,7 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
               <div className="min-w-0 flex-1">
                 <h1 className="text-[24px] font-bold leading-[30px] tracking-[-0.144px] text-ink-1">{p.full_name}</h1>
                 <p className="truncate text-[14px] leading-[19px] text-ink-2">{personRoleLine({ role: p.role, position: p.position, secondaryPosition: p.secondary_position })}</p>
-                <p className={cn('text-caption', isDaysLeftUrgent(days) ? 'font-semibold text-[#b45309]' : 'text-ink-3')}>{appliedLine}</p>
+                <p className={cn('text-caption', clubReplyLineClass(review.status === 'pending' && isClubReplyUrgent(review.appliedAt, days)))}>{appliedLine}</p>
                 <button type="button" onClick={() => navigate(`/players/id/${p.id}`, { state: { from: location.pathname } })} className="text-[14px] font-semibold text-hockia-primary">View full profile</button>
               </div>
             </div>

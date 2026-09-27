@@ -12,6 +12,7 @@ import ConfirmDialog from '@/components/ConfirmDialog'
 import InviteMembersModal from '@/components/club/InviteMembersModal'
 import { getClubInvitations, removeClubMember, type ClubInvitation } from '@/lib/clubMembership'
 import type { Database } from '@/lib/database.types'
+import { STATUS_TONE_TEXT, invitationPendingTone } from '@/lib/statusTone'
 
 type ClubMember = Database['public']['Functions']['get_club_members']['Returns'][number]
 
@@ -202,7 +203,7 @@ export default function ClubMembersTab({ profileId, isOwner = false }: ClubMembe
                 <span className="font-semibold text-gray-900 text-sm truncate">{inv.full_name}</span>
                 <RoleBadge role={inv.role as 'player' | 'coach'} />
               </div>
-              <p className="text-xs text-amber-600 mt-0.5">Invitation pending{inv.invited_via === 'link' ? ' · via link' : ''}</p>
+              <p className={`text-xs mt-0.5 ${STATUS_TONE_TEXT[invitationPendingTone()]}`}>Invitation pending{inv.invited_via === 'link' ? ' · via link' : ''}</p>
             </div>
             <button
               type="button"

@@ -79,8 +79,8 @@ const ENTRY_TYPE_VISUALS: Record<EntryTypeKey, EntryTypeVisual> = {
   certification: {
     label: 'Certification',
     Icon: Shield,
-    badgeClass: 'bg-amber-50 text-amber-800',
-    borderClass: 'border-l-amber-400',
+    badgeClass: 'bg-surface-grouped text-ink-2',
+    borderClass: 'border-l-ink-4',
   },
   panel: {
     label: 'Panel',
@@ -168,7 +168,7 @@ export default function UmpireAppointmentsSection({
     <section className="mt-6 bg-white rounded-2xl shadow-sm p-5 md:p-7 animate-slide-in-up">
       <div className="flex items-center justify-between gap-3 mb-5">
         <h2 className="text-2xl font-bold text-gray-900 inline-flex items-center gap-2">
-          <Award className="w-6 h-6 text-amber-700" />
+          <Award className="w-6 h-6 text-ink-2" />
           Officiating Journey
           {appointments.length > 0 && (
             <span className="text-base font-normal text-gray-400">
@@ -275,7 +275,7 @@ export default function UmpireAppointmentsSection({
                       {isAppointment && (a.match_level || formatLabel) && (
                         <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                           {a.match_level && (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-surface-grouped px-2 py-0.5 text-xs font-medium text-ink-2">
                               {a.match_level}
                             </span>
                           )}

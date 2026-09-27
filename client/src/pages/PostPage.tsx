@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Loader2, MoreHorizontal } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { useAuthStore } from '@/lib/auth'
 import { Header } from '@/components'
 import { UserPostCard } from '@/components/home/cards/UserPostCard'
 import { DetailNavBar } from '@/components/ui/DetailNavBar'
-import { IconButton } from '@/components/ui/IconButton'
+import { MoreMenu } from '@/components/safety/MoreMenu'
+import { useReportAction } from '@/components/safety/useReportAction'
+import { canReport } from '@/lib/report'
 import type { UserPostFeedItem, PostMediaItem, PostType, TransferMetadata, SigningMetadata } from '@/types/homeFeed'
 import type { Profile } from '@/lib/supabase'
 
@@ -141,6 +143,10 @@ export default function PostPage() {
     return () => { cancelled = true }
   }, [postId, user?.id])
 
+  // The nav bar's "…" (Figma Post detail): Report for someone else's post.
+  // The author edits / deletes from the card's own menu.
+  const report = useReportAction({ targetId: item?.author_id, subject: 'post', contentId: item?.post_id })
+
   if (loading) {
     return (
       <>
@@ -226,11 +232,14 @@ export default function PostPage() {
         <DetailNavBar
           parent="Home"
           fallbackPath="/home"
-          trailing={<IconButton label="More options" disabled><MoreHorizontal className="h-6 w-6" strokeWidth={1.8} /></IconButton>}
+          trailing={canReport(user?.id, item.author_id) ? (
+            <MoreMenu items={[report.item]} label="More options" triggerClassName="flex h-11 w-11 items-center justify-center text-ink-1" iconClassName="h-6 w-6" testId="post-more-menu" />
+          ) : undefined}
         />
         <div className="mx-auto max-w-2xl lg:px-4 lg:py-6">
           <UserPostCard item={item} onLikeUpdate={handleLikeUpdate} onDelete={handleDelete} detail />
         </div>
+        {report.sheet}
       </div>
     </>
   )

@@ -66,6 +66,12 @@ export interface KeyFact<Id extends string = string> {
   badge: 'self_reported' | null
   /** Extra lines under the fact (permit lines on the passport tile). */
   extraLines: KeyFactLine[]
+  /** Passport tile: one "flag name" entry per passport, drawn one per line so
+   *  two passports never wrap mid-name in a half-width tile. `value` keeps the
+   *  joined text for screen readers and plain-text use. */
+  valueLines?: string[]
+  /** Passport tile: the EU tag, drawn as a small pill instead of a text line. */
+  euTag?: boolean
   /** Owner only: the Add action for this gap, or null. */
   action: KeyFactAction | null
 }
@@ -312,6 +318,8 @@ function passportFact<Id extends string>(
   const anyEu = list.some((p) => p.isEu)
   return fact(id, 'Passport', {
     value: list.map((p) => withFlag(p.name.trim(), p.flag)).join(' · '),
+    valueLines: list.map((p) => withFlag(p.name.trim(), p.flag)),
+    euTag: anyEu,
     detail: anyEu ? 'EU passport' : 'No EU passport',
     extraLines,
     // Owner with one passport: "Add another" (second passport field).

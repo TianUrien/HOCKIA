@@ -58,10 +58,11 @@ describe('SettingsMobile · hub', () => {
     expect(screen.getByRole('button', { name: /Open to play/ })).toBeTruthy()
   })
 
-  it('a coach keeps availability', () => {
+  it('a coach keeps availability, as Open to coach', () => {
     as('coach')
     renderAt('hub')
-    expect(screen.getByText('Open to play')).toBeTruthy()
+    expect(screen.getByText('Open to coach')).toBeTruthy()
+    expect(screen.queryByText('Open to play')).toBeNull()
   })
 
   it('a club sees none of the player rows, and gets Club & league', () => {

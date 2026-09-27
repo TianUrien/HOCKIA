@@ -260,6 +260,7 @@ export default function ChatWindowV2({
         backLabel={backLabel}
         profilePath={profilePath}
         isMobile={isMobile}
+        conversationId={conversation.id}
       />
       <div className="relative flex-1 min-h-0 overflow-hidden">
         <div

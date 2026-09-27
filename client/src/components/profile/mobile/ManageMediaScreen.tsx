@@ -21,6 +21,7 @@ import { SmoothImage } from '@/components/ui/SmoothImage'
 import { formatVideoDuration } from '@/lib/videoCopy'
 import { invalidateProfile } from '@/lib/profile'
 import { fullMatchVisibilityOf } from '@/lib/recruiter'
+import { VideoLockBadge } from './VideoLockBadge'
 
 /**
  * Manage media (Figma 145:758): everything that shows on the profile,
@@ -221,7 +222,7 @@ export default function ManageMediaScreen({ profileId, onBack }: ManageMediaScre
           {fullMatches.map((v) => <VideoCard key={v.id} video={v} onPlay={() => setPlaying(v)} onVisibility={() => setVisibilityFor(v)} onDelete={() => setPending({ kind: 'video', video: v })} />)}
           {fullGames.videos.map((l) => (
             <div key={l.id} className="flex items-center gap-3">
-              <a href={l.video_url} target="_blank" rel="noopener noreferrer" className="relative flex h-[72px] w-[120px] shrink-0 items-center justify-center rounded-card bg-gradient-to-br from-ink-1 to-ink-2 text-white"><ExternalLink className="h-5 w-5" />{l.visibility === 'recruiters' && <span className="absolute left-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-black/55"><Lock className="h-2.5 w-2.5" strokeWidth={2.4} /></span>}</a>
+              <a href={l.video_url} target="_blank" rel="noopener noreferrer" className="relative flex h-[72px] w-[120px] shrink-0 items-center justify-center rounded-card bg-gradient-to-br from-ink-1 to-ink-2 text-white"><ExternalLink className="h-5 w-5" />{l.visibility === 'recruiters' && <VideoLockBadge size="sm" />}</a>
               <button type="button" onClick={() => setLinkForm({ open: true, edit: l })} className="min-w-0 flex-1 text-left"><span className="block truncate text-row font-semibold text-ink-1">{l.match_title || (l.opponent_team ? `vs ${l.opponent_team}` : 'Full match')}</span><span className="block truncate text-secondary text-ink-2">{[l.match_date?.slice(0, 7), l.competition].filter(Boolean).join(' · ') || 'Linked video'}</span></button>
               <button type="button" onClick={() => setPending({ kind: 'link', link: l })} aria-label={`Delete ${l.match_title || 'full match'}`} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-ink-3"><Trash2 className="h-4 w-4" strokeWidth={1.8} /></button>
             </div>

@@ -298,21 +298,22 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     const run = async () => {
       try {
         const count = await queryClient.fetchQuery({
-          queryKey: qk.communityCount(roleFilter ?? 'all', hideTestAccounts ? 'no-test' : 'all'),
+          queryKey: qk.communityCount(roleFilter ?? 'all', 'search-total'),
           staleTime: 30_000,
           retry: false,
+          // The count comes from the same server search as the grid
+          // (community_search_members `total`, no rows fetched), so it applies
+          // the same rules — 18+ players, hidden profiles, test visibility.
+          // A plain profiles head count over-counted ("All members · 8" over
+          // 5 cards).
           queryFn: async () => {
-            let q = supabase
-              .from('profiles')
-              .select('id', { count: 'exact', head: true })
-              .eq('onboarding_completed', true)
-            if (roleFilter) q = q.eq('role', roleFilter)
-            if (hideTestAccounts) {
-              q = q.or('is_test_account.is.null,is_test_account.eq.false')
-            }
-            const { count: c, error } = await q
+            const { data, error } = await supabase.rpc('community_search_members', {
+              p_role: roleFilter ?? undefined,
+              p_limit: 0,
+            })
             if (error) throw error
-            return c ?? 0
+            const total = (data as { total?: number } | null)?.total
+            return typeof total === 'number' ? total : 0
           },
         })
         if (cancelled) return
@@ -333,7 +334,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     return () => {
       cancelled = true
     }
-  }, [authLoading, isAnon, roleFilter, hideTestAccounts, onTotalCountChange])
+  }, [authLoading, isAnon, roleFilter, onTotalCountChange])
 
   // Fetch members from Supabase. Critical: measure() is INSIDE
   // requestCache.dedupe so the module-level dedupe controls whether

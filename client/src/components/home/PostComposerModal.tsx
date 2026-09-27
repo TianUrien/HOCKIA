@@ -1245,12 +1245,12 @@ export function PostComposerModal({
             {/* Draft-restored chip — only when content was loaded from a
                 saved draft, not for fresh-open or edit-existing-post. */}
             {draftRestored && !editingPost && mode === 'post' && content.length > 0 && (
-              <div className="flex items-center justify-between gap-2 px-3 py-2 mb-2 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800">
+              <div className="flex items-center justify-between gap-2 px-3 py-2 mb-2 bg-surface-grouped border border-line rounded-lg text-xs text-ink-2">
                 <span>Draft restored from your last session.</span>
                 <button
                   type="button"
                   onClick={handleDiscardDraft}
-                  className="font-medium underline hover:no-underline focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 rounded"
+                  className="font-medium underline hover:no-underline focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary rounded"
                 >
                   Discard
                 </button>

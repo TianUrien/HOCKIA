@@ -46,7 +46,7 @@ export default function DiscoverFilterChips({ filters }: DiscoverFilterChipsProp
       : filters.max_age != null
         ? `U${filters.max_age + 1}`
         : `${filters.min_age}+ yrs`
-    chips.push({ label: ageLabel, color: 'bg-amber-100 text-amber-800' })
+    chips.push({ label: ageLabel, color: 'bg-hockia-soft text-hockia-primary' })
   }
 
   if (filters.eu_passport) {
@@ -85,7 +85,7 @@ export default function DiscoverFilterChips({ filters }: DiscoverFilterChipsProp
   if (filters.leagues?.length) {
     filters.leagues.forEach(l => chips.push({
       label: l,
-      color: 'bg-yellow-100 text-yellow-800',
+      color: 'bg-hockia-soft text-hockia-primary',
     }))
   }
 

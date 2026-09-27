@@ -29,7 +29,8 @@ const tierStyles: Record<ProfileTier, { label: string; icon: typeof Sparkles; cl
   rising: {
     label: 'Looking good',
     icon: Sparkles,
-    classes: 'bg-amber-50 text-amber-700',
+    // Brand soft, not amber: amber is only for a viewer who must act.
+    classes: 'bg-hockia-soft text-hockia-primary',
   },
   elite: {
     // Renamed from "All set" — that label implied the profile was 100%

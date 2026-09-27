@@ -183,6 +183,17 @@ export function withoutAppliedRoles(rows: OpportunityRow[], appliedIds: Iterable
   return applied.size ? rows.filter(r => !applied.has(r.id)) : rows
 }
 
+/**
+ * Drop roles the viewer published themselves (opportunities.club_id = viewer)
+ * — a recruiting coach's own role is never "a role you can apply to".
+ * `public_opportunities` hides club_id, so the caller passes the ids of the
+ * viewer's own roles.
+ */
+export function withoutOwnRoles(rows: OpportunityRow[], ownRoleIds: Iterable<string>): OpportunityRow[] {
+  const own = new Set(ownRoleIds)
+  return own.size ? rows.filter(r => !own.has(r.id)) : rows
+}
+
 // ── Parsing ────────────────────────────────────────────────────────────────
 
 const PLAYER_POSITION_PATTERNS: Array<[string, RegExp]> = [

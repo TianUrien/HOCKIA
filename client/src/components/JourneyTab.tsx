@@ -78,8 +78,8 @@ const entryTypeMeta: Record<JourneyType, EntryTypeMeta> = {
   },
   achievement: {
     label: 'Achievement / Award',
-    dotClass: 'bg-amber-500/95 text-white',
-    badgeClass: 'bg-amber-50 text-amber-700',
+    dotClass: 'bg-hockia-primary/95 text-white',
+    badgeClass: 'bg-hockia-soft text-hockia-primary',
     icon: Trophy,
   },
   tournament: {

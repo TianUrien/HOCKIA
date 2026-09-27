@@ -9,8 +9,8 @@ import { DEFAULT_EXPIRY_DAYS, pipelineOf, type Pipeline } from '@/lib/clubRecrui
  * 327:547): the club's roles, each role's pipeline (pending → To review,
  * shortlisted, rejected → Declined, maybe, no_response → closed), the
  * pending applied_at dates for the amber notice, the expiry window from
- * application_response_settings, and the Shortlist count = saved players +
- * applicants shortlisted on this club's roles, one per player.
+ * application_response_settings. (The Shortlist count is the active role's
+ * list — useRoleShortlist in hooks/useScouting.)
  */
 export type ClubRole = Vacancy & {
   pipeline: Pipeline
@@ -22,12 +22,11 @@ export interface ClubRolesData {
   open: ClubRole[]
   closed: ClubRole[]
   expiryDays: number
-  shortlistCount: number
   refresh: () => void
 }
 
 export function useClubRoles(clubId: string | null | undefined): ClubRolesData {
-  const [state, setState] = useState<Omit<ClubRolesData, 'refresh'>>({ loading: true, open: [], closed: [], expiryDays: DEFAULT_EXPIRY_DAYS, shortlistCount: 0 })
+  const [state, setState] = useState<Omit<ClubRolesData, 'refresh'>>({ loading: true, open: [], closed: [], expiryDays: DEFAULT_EXPIRY_DAYS })
   const [nonce, setNonce] = useState(0)
   const refresh = useCallback(() => setNonce((n) => n + 1), [])
 
@@ -35,10 +34,9 @@ export function useClubRoles(clubId: string | null | undefined): ClubRolesData {
     if (!clubId) return
     let cancelled = false
     void (async () => {
-      const [{ data: roles, error }, { data: settings }, { data: saved }] = await Promise.all([
+      const [{ data: roles, error }, { data: settings }] = await Promise.all([
         supabase.from('opportunities').select('*').eq('club_id', clubId).in('status', ['draft', 'open', 'closed']).order('created_at', { ascending: false }),
         supabase.from('application_response_settings').select('expiry_days').limit(1).maybeSingle(),
-        supabase.from('saved_profiles').select('saved_profile_id').eq('owner_id', clubId),
       ])
       if (error) logger.debug('[useClubRoles] roles failed', error)
       const list = (roles ?? []) as Vacancy[]
@@ -61,10 +59,6 @@ export function useClubRoles(clubId: string | null | undefined): ClubRolesData {
           pendingAppliedAt: rows.filter((x) => x.status === 'pending' && x.applied_at).map((x) => x.applied_at as string),
         }
       })
-      const shortlisted = new Set<string>([
-        ...((saved ?? []) as { saved_profile_id: string }[]).map((s) => s.saved_profile_id),
-        ...((apps ?? []) as { applicant_id: string; status: string }[]).filter((a) => a.status === 'shortlisted').map((a) => a.applicant_id),
-      ])
       setState({
         loading: false,
         // Roles with applicants waiting first, oldest waiting first; then newest.
@@ -83,7 +77,6 @@ export function useClubRoles(clubId: string | null | undefined): ClubRolesData {
         ],
         closed: withPipeline.filter((r) => r.status === 'closed'),
         expiryDays: (settings as { expiry_days?: number } | null)?.expiry_days ?? DEFAULT_EXPIRY_DAYS,
-        shortlistCount: shortlisted.size,
       })
     })().catch((err) => {
       logger.debug('[useClubRoles] failed', err)

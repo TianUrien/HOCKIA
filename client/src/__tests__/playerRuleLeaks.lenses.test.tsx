@@ -31,6 +31,11 @@ vi.mock('@/lib/interestFit', () => ({
 import { useEvidence } from '@/hooks/useEvidence'
 import { useInterest } from '@/hooks/useInterest'
 
+// ScoutingCard / MediaCard count uploaded videos (useProfileVideos); keep it inert here.
+vi.mock('@/hooks/useProfileVideos', () => ({
+  useProfileVideos: () => ({ videos: [], links: [], loading: false, reload: () => {} }),
+}))
+
 // A candidate with strong evidence (match video + references + verified + club).
 const candidate = {
   role: 'player',

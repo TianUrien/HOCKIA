@@ -18,6 +18,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { trackReferenceModalOpen } from '@/lib/analytics'
 import { getInitials } from '@/lib/utils'
 import { profilePath } from '@/lib/profileNavigation'
+import { friendRequestErrorMessage, friendRequestToastType } from '@/lib/friendshipErrors'
 
 interface FriendsTabProps {
   profileId: string
@@ -241,7 +242,8 @@ export default function FriendsTab({ profileId, readOnly = false, profileRole, h
         }
       } catch (error) {
         logger.error('Failed to update friendship', error)
-        addToast('Unable to update friendship. Please try again.', 'error')
+        const msg = friendRequestErrorMessage(error, 'Unable to update friendship. Please try again.')
+        addToast(msg, friendRequestToastType(msg))
       } finally {
         setActionTarget(null)
       }

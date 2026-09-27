@@ -229,6 +229,10 @@ export function getTimeAgo(dateString: string, compact = false): string {
  */
 
 const TECHNICAL_ERROR_MAP: [RegExp, string][] = [
+  // Friendship trigger refusals (blocked either way / uncontactable account):
+  // one friendly line whoever blocked whom (founder ruling). Mirrors
+  // lib/friendshipErrors, which the friend-request call sites use directly.
+  [/friend request to a user you have blocked|^This user is not available right now\.?$/i, "This person isn't accepting requests."],
   [/row-level security/i, 'You don\'t have permission to do that.'],
   [/duplicate key|unique.?constraint|already exists/i, 'This already exists. Try refreshing the page.'],
   [/violates check constraint/i, 'Some of the data provided is invalid. Please review and try again.'],

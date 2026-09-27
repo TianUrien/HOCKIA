@@ -45,6 +45,8 @@ import ProvenSignal from '@/components/recruiting/ProvenSignal'
 import { useClubFit } from '@/hooks/useClubFit'
 import { useCoachFit } from '@/hooks/useCoachFit'
 import { useEvidence } from '@/hooks/useEvidence'
+import { useProfileVideos } from '@/hooks/useProfileVideos'
+import { playerMediaCounts } from '@/lib/playerVideoChecklist'
 import { computeRecruiterVerdict } from '@/lib/recruiterVerdict'
 import { availabilityLabel } from '@/lib/availabilityLabel'
 import RecruiterVerdictCard from '@/components/recruiting/RecruiterVerdictCard'
@@ -179,6 +181,8 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
   // Increment #3 — player specialist tags (read-only chips).
   const specialistSkills = specialistSkillLabels(profile.specialist_skills)
   const [counts, setCounts] = useState<EvidenceCounts | null>(null)
+  // The viewer's readable uploaded videos, for the Media line's counts.
+  const { videos: profileVideos } = useProfileVideos(profile.id)
   // Save / shortlist actions are for clubs and recruiting coaches only
   // (founder rule 2026-09-25) — players and candidate coaches get no Save.
   const canSave = isRecruitingViewer(viewerProfile)
@@ -399,12 +403,12 @@ export default function ScoutingCard({ profile, onViewJourney }: ScoutingCardPro
     })
   }
 
-  const hasHighlight = Boolean(profile.highlight_video_url)
+  // Uploaded highlights / full matches count with the legacy link and linked games.
+  const { highlights: highlightCount, fullMatches: fullGameCount } = playerMediaCounts(profile, profileVideos)
   const galleryCount = counts?.galleryPhotos ?? 0
-  const fullGameCount = profile.full_game_video_count ?? 0
-  if (hasHighlight || galleryCount > 0 || fullGameCount > 0) {
+  if (highlightCount > 0 || galleryCount > 0 || fullGameCount > 0) {
     const mediaParts: string[] = []
-    if (hasHighlight) mediaParts.push('1 highlight')
+    if (highlightCount > 0) mediaParts.push(`${highlightCount} highlight${highlightCount === 1 ? '' : 's'}`)
     if (fullGameCount > 0) mediaParts.push(`${fullGameCount} match${fullGameCount === 1 ? '' : 'es'}`)
     if (galleryCount > 0) mediaParts.push(`${galleryCount} photo${galleryCount === 1 ? '' : 's'}`)
     rows.push({

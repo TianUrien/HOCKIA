@@ -23,6 +23,7 @@ import { logger } from '@/lib/logger'
 import { formatRelationshipType } from '@/lib/utils'
 import { trackReferenceModalOpen } from '@/lib/analytics'
 import type { Profile } from '@/lib/supabase'
+import { STATUS_TONE_PILL, pendingVerificationTone } from '@/lib/statusTone'
 
 type TrustedReferencesState = ReturnType<typeof useTrustedReferences>
 
@@ -431,8 +432,9 @@ export default function CommunityReferencesSection({
               <h2 className="text-base font-semibold text-gray-900">Reference requests</h2>
               <p className="mt-0.5 text-xs text-gray-500">People asking you to vouch for them.</p>
             </div>
+            {/* The viewer is the one who must verify → amber (lib/statusTone). */}
             {incomingRequests.length > 0 && (
-              <span className="inline-flex items-center justify-center rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 flex-shrink-0">
+              <span className={`inline-flex items-center justify-center rounded-full px-2.5 py-1 text-xs font-semibold flex-shrink-0 ${STATUS_TONE_PILL[pendingVerificationTone(true)]}`}>
                 {incomingRequests.length}
               </span>
             )}
@@ -599,7 +601,7 @@ export default function CommunityReferencesSection({
                           className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
                             hasEndorsement
                               ? 'bg-emerald-50 text-emerald-700'
-                              : 'bg-amber-50 text-amber-700'
+                              : 'bg-surface-grouped text-ink-2'
                           }`}
                         >
                           {hasEndorsement ? 'Endorsed' : 'No endorsement'}

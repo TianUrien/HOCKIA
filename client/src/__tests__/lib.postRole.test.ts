@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   defaultTitle, draftFromRow, draftToRow, emptyDraft, hardnessFootnote, locationFromClub, normalizeDuration,
-  checkStepCopy, coachChecklist, playerChecklist, recruitingTarget, replyWindowLine, roleChecklist, rolePostedPath, rolePostedCopy, startLabel, stepProblem, switchRoleType, teamsFor,
+  checkStepCopy, coachChecklist, playerChecklist, recruitingTarget, replyWindowLine, roleChecklist, roleFindPath, rolePostedPath, rolePostedCopy, startLabel, stepProblem, switchRoleType, teamsFor,
   COACH_TEAMS, COACH_TEAM_HINT, TEAMS, type PostRoleDraft,
 } from '@/lib/postRole'
 import type { Vacancy } from '@/lib/supabase'
@@ -156,13 +156,18 @@ describe('Post a role · coach role team', () => {
 describe('Role posted (D1.26)', () => {
   it('titles the screen by position and points Find at the right pool', () => {
     expect(rolePostedCopy({ type: 'player', position: 'midfielder' })).toMatchObject({
-      title: 'Midfielder is live', findLabel: 'Find players for this role', findPath: '/community/players', pushTitle: 'Know when players apply',
+      title: 'Midfielder is live', findLabel: 'Find players for this role', pushTitle: 'Know when players apply',
     })
     expect(rolePostedCopy({ type: 'coach', position: 'head_coach' })).toMatchObject({
-      title: 'Head coach is live', findLabel: 'Find coaches for this role', findPath: '/community/coaches',
+      title: 'Head coach is live', findLabel: 'Find coaches for this role',
     })
     expect(rolePostedCopy({ type: 'player', position: 'midfielder' }).body).toMatch(/^Players who fit can find it in Opportunities now\./)
     expect(rolePostedCopy({ type: 'coach', position: 'head_coach' }).body).toMatch(/^Coaches who fit/)
+  })
+
+  it('Find goes to Find players for this role, or Community coaches', () => {
+    expect(roleFindPath('player', 'r1')).toBe('/dashboard/find-players?role=r1')
+    expect(roleFindPath('coach', 'r1')).toBe('/community/coaches')
   })
 
   it('uses the configured reply window', () => {

@@ -152,9 +152,10 @@ const useSavedProfileIdsStore = create<SavedProfileIdsStoreState>((set, get) => 
 // but the shortlist mutations (add/remove a player from a list, delete a
 // whole list) write to saved_profiles through a DIFFERENT path and used to
 // leave the set untouched — so the heart on a card went stale until a full
-// remount refetched. Because saved_profiles is UNIQUE(owner_id,
-// saved_profile_id), a player is saved to at most one list, so set
-// membership is unambiguous and a targeted add/remove is exact.
+// remount refetched. saved_profiles is UNIQUE per (shortlist_id,
+// saved_profile_id): a player may sit on several lists, and the set means
+// "on at least one list". Adding is exact (mark); removing one list row
+// re-derives the set (resyncSavedProfileIds), since other rows may remain.
 
 // These are owner-scoped: they only touch the set when the store is already
 // tracking `ownerId`. That prevents a mark from polluting a null/other-owner
@@ -168,7 +169,7 @@ export function markSavedProfileId(ownerId: string, profileId: string): void {
   if (store.ownerId === ownerId) store.addLocally(profileId)
 }
 
-/** A player's only saved row was removed → mark them unsaved. */
+/** Every saved row of a player was removed → mark them unsaved. */
 export function unmarkSavedProfileId(ownerId: string, profileId: string): void {
   const store = useSavedProfileIdsStore.getState()
   if (store.ownerId === ownerId) store.removeLocally(profileId)
@@ -401,7 +402,14 @@ export function useSavedProfilesList(): UseSavedProfilesListResult {
       return
     }
 
-    setItems((data ?? []) as unknown as SavedProfileSummary[])
+    // One entry per player: the same player can sit on several shortlists.
+    const seen = new Set<string>()
+    const unique = ((data ?? []) as unknown as SavedProfileSummary[]).filter((row) => {
+      if (seen.has(row.saved_profile_id)) return false
+      seen.add(row.saved_profile_id)
+      return true
+    })
+    setItems(unique)
     setLoading(false)
   }, [viewerId])
 

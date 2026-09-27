@@ -415,7 +415,7 @@ export default function UmpireDashboard({
                   }}
                 />
                 {profile.umpire_level && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-surface-grouped px-2.5 py-1 text-xs font-medium text-ink-2">
                     <Award className="w-3 h-3" />
                     {profile.umpire_level}
                   </span>
@@ -505,10 +505,10 @@ export default function UmpireDashboard({
             </div>
 
             {!hasCertification && (
-              <section className="mt-6 bg-gradient-to-br from-amber-50 to-yellow-50 border border-amber-200 rounded-2xl p-5 md:p-6">
+              <section className="mt-6 bg-hockia-soft/60 border border-hockia-primary/15 rounded-2xl p-5 md:p-6">
                 <div className="flex items-start gap-4">
-                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
-                    <Shield className="w-5 h-5 text-amber-700" />
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-hockia-soft flex items-center justify-center">
+                    <Shield className="w-5 h-5 text-hockia-primary" />
                   </div>
                   <div className="flex-1">
                     <h3 className="text-base font-semibold text-gray-900 mb-1">
@@ -612,7 +612,7 @@ export default function UmpireDashboard({
                 {hasCertification ? (
                   <section>
                     <h2 className="text-2xl font-bold text-gray-900 mb-5 inline-flex items-center gap-2">
-                      <Shield className="w-6 h-6 text-amber-700" />
+                      <Shield className="w-6 h-6 text-ink-2" />
                       Certification &amp; Level
                     </h2>
                     <dl className="grid grid-cols-1 sm:grid-cols-2 gap-5">

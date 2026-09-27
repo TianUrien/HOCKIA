@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { ArrowLeft, ChevronLeft } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
+import { ArrowLeft, ChevronLeft, UserRound } from 'lucide-react'
 import Avatar from '@/components/Avatar'
 import RoleBadge from '@/components/RoleBadge'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
@@ -10,6 +10,9 @@ import { humanizeToken, identityLine } from '@/lib/identity'
 import { getSpecializationLabel } from '@/lib/coachSpecializations'
 import type { ConversationParticipant } from '@/types/chat'
 import { cn } from '@/lib/utils'
+import { MENU_ICON_CLASS } from '@/lib/report'
+import { MoreMenu, type MoreMenuItem } from '@/components/safety/MoreMenu'
+import { useReportAction } from '@/components/safety/useReportAction'
 
 interface ChatHeaderProps {
   participant?: ConversationParticipant
@@ -18,6 +21,8 @@ interface ChatHeaderProps {
   backLabel?: string
   profilePath: string | null
   isMobile: boolean
+  /** The conversation, so a Report from the "…" says which chat it was. */
+  conversationId?: string
 }
 
 const fallbackName = 'HOCKIA Member'
@@ -59,10 +64,25 @@ function useParticipantDetail(participant: ConversationParticipant | undefined):
   return detail
 }
 
-export function ChatHeader({ participant, onBack, backLabel = 'Inbox', profilePath, isMobile }: ChatHeaderProps) {
+export function ChatHeader({ participant, onBack, backLabel = 'Inbox', profilePath, isMobile, conversationId }: ChatHeaderProps) {
   const participantName = participant?.full_name || participant?.username || fallbackName
   const initials = participant?.full_name?.charAt(0).toUpperCase() || 'P'
   const detail = useParticipantDetail(participant)
+  const navigate = useNavigate()
+  const report = useReportAction({ targetId: participant?.id, subject: 'chat', contentId: conversationId })
+
+  // "…" top right (Figma Chat): View profile · Report — same wording and
+  // place as every other "…" menu. The other person is never told.
+  const menuItems: MoreMenuItem[] = participant?.id ? [
+    ...(profilePath ? [{ key: 'profile', label: 'View profile', icon: <UserRound className={MENU_ICON_CLASS} strokeWidth={1.8} />, onSelect: () => navigate(profilePath) }] : []),
+    report.item,
+  ] : []
+  const menu = menuItems.length > 0 ? (
+    <>
+      <MoreMenu items={menuItems} title={participantName} label="Chat options" testId="chat-more-menu" triggerClassName={isMobile ? '-mr-2 flex h-11 w-11 shrink-0 items-center justify-center text-ink-1' : undefined} iconClassName={isMobile ? 'h-6 w-6' : undefined} />
+      {report.sheet}
+    </>
+  ) : null
 
   if (isMobile) {
     // Figma Chat (100:636): "‹ Inbox" in purple, 32px avatar (clubs squared),
@@ -89,6 +109,7 @@ export function ChatHeader({ participant, onBack, backLabel = 'Inbox', profilePa
         ) : (
           <div className="flex min-w-0 flex-1 items-center gap-2.5">{identity}</div>
         )}
+        {menu}
       </header>
     )
   }
@@ -126,6 +147,7 @@ export function ChatHeader({ participant, onBack, backLabel = 'Inbox', profilePa
         <Avatar src={participant?.avatar_url || undefined} alt={participantName} initials={initials} className="h-10 w-10 text-base ring-2 ring-gray-100" enablePreview={false} role={participant?.role} />
       )}
       {headerContents}
+      {menu}
     </header>
   )
 }

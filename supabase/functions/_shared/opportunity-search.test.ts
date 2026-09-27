@@ -13,6 +13,7 @@ import {
   mergeOpportunityRows,
   testPublisherRowsToOpportunityRows,
   withoutAppliedRoles,
+  withoutOwnRoles,
   type TestPublisherRoleRow,
   parseOpportunityQuery,
   runOpportunitySearch,
@@ -259,4 +260,17 @@ Deno.test('roles already applied to are not offered again', () => {
   const b = row({})
   assertEquals(withoutAppliedRoles([a, b], [a.id]).map(r => r.id), [b.id])
   assertEquals(withoutAppliedRoles([a, b], []).length, 2)
+})
+
+Deno.test('a recruiting coach is never offered a role they published', () => {
+  const own = row({ opportunity_type: 'coach', position: 'head_coach', gender: 'Men', title: "Head Coach — Men's team" })
+  const clubs = row({ opportunity_type: 'coach', position: 'head_coach', gender: 'Boys', title: 'Coach Test 5' })
+  const appliedTo = row({ opportunity_type: 'coach', position: 'head_coach', gender: null, title: 'Head Coach wanted' })
+  assertEquals(withoutOwnRoles([own, clubs], [own.id]).map(r => r.id), [clubs.id])
+  assertEquals(withoutOwnRoles([own, clubs], []).length, 2)
+  // The pipeline nl-search runs: applied-to and own roles out, then search.
+  const coach: Viewer = { role: 'coach', gender: 'men', euEligible: true, position: 'head_coach', secondaryPosition: null }
+  const pool = withoutOwnRoles(withoutAppliedRoles([own, clubs, appliedTo], [appliedTo.id]), [own.id])
+  const out = runOpportunitySearch('open roles for me', pool, COUNTRIES, coach, '2026-09-27')
+  assertEquals(out.matched.map(r => r.title), ['Coach Test 5'])
 })

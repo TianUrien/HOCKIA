@@ -249,9 +249,7 @@ export default function ClubProfileScreen({
               </button>
             )}
             {isVisitorView && (
-              <span className={cn(GLASS, '[&>button]:h-9 [&>button]:min-h-0 [&>button]:w-9 [&>button]:min-w-0 [&>button]:rounded-full [&>button]:hover:bg-transparent [&_svg]:!text-current')}>
-                <ProfileActionMenu targetId={profile.id} targetName={profile.full_name ?? 'this club'} />
-              </span>
+              <ProfileActionMenu targetId={profile.id} targetName={profile.full_name ?? 'this club'} triggerClassName={GLASS} iconClassName="h-[20px] w-[20px]" />
             )}
           </div>
         </div>

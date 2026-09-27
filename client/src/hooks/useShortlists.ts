@@ -27,7 +27,7 @@ import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
 import { trackDbEvent } from '@/lib/trackDbEvent'
-import { markSavedProfileId, unmarkSavedProfileId, resyncSavedProfileIds } from '@/hooks/useSavedProfiles'
+import { markSavedProfileId, resyncSavedProfileIds } from '@/hooks/useSavedProfiles'
 import type { Database } from '@/lib/database.types'
 
 export type ShortlistRow = Database['public']['Tables']['shortlists']['Row']
@@ -425,9 +425,9 @@ export function useShortlistItems(shortlistId: string | null | undefined): UseSh
       setItems(previous)
       return
     }
-    // saved_profiles is UNIQUE(owner_id, saved_profile_id) → this was the
-    // player's only saved row, so the card "Saved" heart must clear too.
-    if (removedProfileId) unmarkSavedProfileId(viewerId, removedProfileId)
+    // A player may sit on several lists (one row per list), so re-derive the
+    // card "Saved" heart instead of assuming this was their only row.
+    if (removedProfileId) void resyncSavedProfileIds(viewerId)
     trackDbEvent('shortlist.item_removed', 'shortlist_item', itemId)
   }, [viewerId, items, addToast])
 

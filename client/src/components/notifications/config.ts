@@ -74,8 +74,9 @@ const applicationStatusCopy = (notification: NotificationRecord): { title: strin
     case 'rejected':
       return { title: `${club} updated your application`, body: `You weren't selected for ${position} this time.` }
     case 'filled': {
-      // Founder copy 2026-09-26. Role name falls back to the full title, then "The role".
-      const role = humanizePosition(getMetadataString(notification, 'position')) ?? vacancyTitle ?? 'The role'
+      // Founder copy 2026-09-26; names the role by its title (round 4), falling back to
+      // the position, then "The role".
+      const role = vacancyTitle ?? humanizePosition(getMetadataString(notification, 'position')) ?? 'The role'
       return { title: `${club} filled the role`, body: `${role} has been filled. Thanks for applying — new roles are open.` }
     }
     default:
@@ -145,7 +146,7 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
   profile_comment_created: {
     icon: MessageCircle,
     badgeText: 'Profile comment',
-    accentClassName: 'bg-amber-50 text-amber-700',
+    accentClassName: 'bg-surface-grouped text-ink-2',
     getTitle: (notification) => `${getActorName(notification)} commented on your profile`,
     getDescription: (notification) => getMetadataString(notification, 'snippet'),
     getRoute: () => commentRoute,
@@ -153,7 +154,7 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
   user_post_comment_received: {
     icon: MessageCircle,
     badgeText: 'Post comment',
-    accentClassName: 'bg-amber-50 text-amber-700',
+    accentClassName: 'bg-surface-grouped text-ink-2',
     getTitle: (notification) => `${getActorName(notification)} commented on your post`,
     getDescription: (notification) => getMetadataString(notification, 'snippet'),
     getRoute: () => '/home',
@@ -161,7 +162,7 @@ const notificationConfigs: Partial<Record<NotificationKind, NotificationRenderCo
   profile_comment_reply: {
     icon: MessageCircle,
     badgeText: 'Comment reply',
-    accentClassName: 'bg-amber-50 text-amber-700',
+    accentClassName: 'bg-surface-grouped text-ink-2',
     getTitle: (notification) => `${getActorName(notification)} replied to a profile comment`,
     getDescription: (notification) => getMetadataString(notification, 'snippet'),
     getRoute: () => commentRoute,
