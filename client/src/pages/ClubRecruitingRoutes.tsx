@@ -13,6 +13,7 @@ const PostRoleScreen = lazy(() => import('@/components/club/PostRoleScreen'))
 const RolePostedScreen = lazy(() => import('@/components/club/RolePostedScreen'))
 const FindPlayersScreen = lazy(() => import('@/components/club/FindPlayersScreen'))
 const ShortlistScreen = lazy(() => import('@/components/club/ShortlistScreen'))
+const ClubEditScreen = lazy(() => import('@/components/club/ClubEditScreen'))
 
 const OpportunitiesPage = lazy(() => import('@/pages/OpportunitiesPage'))
 const ApplicantsList = lazy(() => import('@/pages/ApplicantsList'))
@@ -104,4 +105,14 @@ export function ShortlistEntry() {
   if (!isRecruitingViewer(profile)) return <Navigate to="/home" replace />
   if (!isPhone) return <Navigate to="/dashboard/shortlists" replace />
   return <Screen><ShortlistScreen /></Screen>
+}
+
+/** Edit club profile (Figma 04 Club D1.27): phone clubs only. Desktop clubs
+ *  (and anyone else) keep the v1 editor, opened by ?action=edit. */
+export function ClubEditEntry() {
+  const isPhone = useMediaQuery(PHONE)
+  const role = useAuthStore((s) => s.profile?.role)
+  if (!role) return <Blank />
+  if (!isPhone || role !== 'club') return <Navigate to="/dashboard/profile?action=edit" replace />
+  return <Screen><ClubEditScreen /></Screen>
 }

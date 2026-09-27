@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Calendar, ChevronRight, Clock, DollarSign, Info, Plus, Star, Users } from 'lucide-react'
+import { Briefcase, Calendar, ChevronRight, Clock, DollarSign, Info, Plus, Star, Users } from 'lucide-react'
 import { LargeTitleBar } from '@/components/ui/LargeTitleBar'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { useAuthStore } from '@/lib/auth'
@@ -9,6 +9,7 @@ import { useRecruitingViewKind } from '@/hooks/useRecruitingContext'
 import { useClubRoles, type ClubRole } from '@/hooks/useClubRoles'
 import { formatDurationText, genderPill, isPaid, roleBenefits, rolePostedAt, roleTitle } from '@/lib/opportunityCopy'
 import { waitingNotice } from '@/lib/clubRecruiting'
+import { isFirstRunOpportunities } from '@/lib/clubEdit'
 import { cn } from '@/lib/utils'
 import { RoleActions } from './RoleActions'
 
@@ -128,6 +129,36 @@ function RoleCard({ role, expiryDays, onReview, onChanged }: { role: ClubRole; e
   )
 }
 
+/**
+ * First run (Figma 04 Club D1.25, DEV NOTE 368:1093): a club with no roles
+ * yet. One clear action, Post a role, and a way to start scouting before
+ * posting. No segmented control, no waiting notice, no counters.
+ */
+function FirstRunOpportunities({ onPostRole, onFindPlayers }: { onPostRole: () => void; onFindPlayers: () => void }) {
+  return (
+    <div className="flex flex-col px-5" data-testid="club-opportunities-first-run">
+      <section className="mt-2 flex flex-col items-center rounded-[20px] bg-surface-grouped px-6 pb-6 pt-6 text-center">
+        <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-hockia-soft text-hockia-primary">
+          <Briefcase className="h-7 w-7" strokeWidth={1.8} />
+        </span>
+        <h2 className="mt-2.5 text-[20px] font-semibold leading-[25px] tracking-[-0.2px] text-ink-1">Post your first role</h2>
+        <p className="mt-2.5 text-[15px] leading-[21px] text-ink-2">Describe the role once. Players who fit find it in Opportunities and apply straight to you, and you review everyone here.</p>
+        <button type="button" onClick={onPostRole} className="mt-4 flex h-12 w-full items-center justify-center rounded-full bg-hockia-primary text-row font-semibold text-white">
+          Post a role
+        </button>
+      </section>
+      <p className="mt-3 px-1 pb-2 text-secondary text-ink-2">Not ready to post? Find players and shortlist them first.</p>
+      <div className="mt-3 overflow-hidden rounded-2xl bg-surface-grouped">
+        <button type="button" onClick={onFindPlayers} className="flex h-[52px] w-full items-center gap-3 pl-3.5 pr-2.5 text-left">
+          <span className="flex h-8 w-8 items-center justify-center rounded-[9px] bg-hockia-soft text-hockia-primary"><Users className="h-[18px] w-[18px]" strokeWidth={2} /></span>
+          <span className="flex-1 text-[16px] font-medium text-ink-1">Find players now</span>
+          <ChevronRight className="h-[18px] w-[18px] text-ink-4" strokeWidth={2} />
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export default function ClubOpportunitiesScreen() {
   const navigate = useNavigate()
   const profile = useAuthStore((s) => s.profile)
@@ -167,6 +198,8 @@ export default function ClubOpportunitiesScreen() {
     else setSegment('open')
   }
 
+  const firstRun = isFirstRunOpportunities(data.loading, data.open, data.closed)
+
   return (
     <div className="min-h-screen bg-white pb-28 lg:hidden" data-testid="club-opportunities-screen">
       <LargeTitleBar
@@ -177,6 +210,11 @@ export default function ClubOpportunitiesScreen() {
           </button>
         )}
       />
+      {firstRun ? (
+        // Find players now opens Find players with "No context" active.
+        <FirstRunOpportunities onPostRole={postRole} onFindPlayers={() => navigate('/dashboard/find-players?context=none')} />
+      ) : (
+      <>
       <div className="px-5 pb-3.5 pt-1">
         <SegmentedControl<Segment>
           ariaLabel="Role status"
@@ -203,7 +241,7 @@ export default function ClubOpportunitiesScreen() {
         {!data.loading && roles.length === 0 && (
           segment === 'open' ? (
             <button type="button" onClick={postRole} className="flex h-[52px] w-full items-center justify-between rounded-card bg-surface-grouped px-4 text-row text-ink-2">
-              Post your first role <Plus className="h-4 w-4 text-hockia-primary" strokeWidth={2.2} />
+              Post a role <Plus className="h-4 w-4 text-hockia-primary" strokeWidth={2.2} />
             </button>
           ) : <p className="py-2 text-row text-ink-3">No closed roles yet.</p>
         )}
@@ -230,6 +268,8 @@ export default function ClubOpportunitiesScreen() {
         )}
       </div>
 
+      </>
+      )}
     </div>
   )
 }
