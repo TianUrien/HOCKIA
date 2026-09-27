@@ -3,7 +3,9 @@
  * application status (Phase 5 of application-clarity).
  *
  *   POST { application_id }   (Bearer: the player's session JWT)
- *   → 200 { message: string | null, status, cached }
+ *   → 200 { message: string | null, status, cached, source }
+ *     source: 'ai' | 'fallback' | 'club' (null when there is no message). Older
+ *     clients ignore it; newer ones show the AI sparkle only for 'ai'.
  *
  * Flow:
  *   1. Auth — the requester must OWN the application.
@@ -330,7 +332,7 @@ serve(async (req: Request) => {
 
     // No club response yet → neutral, no LLM.
     if (!RESPONDED.includes(status)) {
-      return jsonResponse({ message: null, status, cached: false }, 200, corsHeaders)
+      return jsonResponse({ message: null, status, cached: false, source: null }, 200, corsHeaders)
     }
 
     // 3a) Cache hit? Lives in its OWN column (ai_feedback), never in metadata, so
@@ -347,7 +349,7 @@ serve(async (req: Request) => {
       cache.status === status && (cache.reason ?? null) === reason &&
       typeof cache.message === 'string'
     ) {
-      return jsonResponse({ message: cache.message, status, cached: true }, 200, corsHeaders)
+      return jsonResponse({ message: cache.message, status, cached: true, source: cache.source }, 200, corsHeaders)
     }
 
     // 4) Context: opportunity title + club name.
@@ -394,7 +396,7 @@ serve(async (req: Request) => {
     const feedback = { message, status, reason, source } as unknown as Json
     await supabase.from('opportunity_applications').update({ ai_feedback: feedback }).eq('id', applicationId)
 
-    return jsonResponse({ message, status, cached: false }, 200, corsHeaders)
+    return jsonResponse({ message, status, cached: false, source }, 200, corsHeaders)
   } catch (err) {
     console.error('application-feedback error', err)
     return jsonResponse({ error: 'internal_error' }, 500, corsHeaders)

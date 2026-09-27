@@ -18,6 +18,7 @@
  */
 
 import { useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import OpportunityDetailView from './OpportunityDetailView'
 import ApplyToOpportunityModal from './ApplyToOpportunityModal'
 import SignInPromptModal from './SignInPromptModal'
@@ -61,6 +62,8 @@ export default function OpportunityPreviewModal({
   const { user, profile } = useAuthStore()
   const [showApplyModal, setShowApplyModal] = useState(false)
   const [showSignInPrompt, setShowSignInPrompt] = useState(false)
+  const navigate = useNavigate()
+  const location = useLocation()
 
   const canShowApplyButton = !hasApplied && (
     !user ||
@@ -75,6 +78,14 @@ export default function OpportunityPreviewModal({
     } else if (canShowApplyButton) {
       setShowApplyModal(true)
     }
+  }
+
+  // Message the club — shown on a closed role to the applicant (same flow as
+  // OpportunityDetailPage). Only applicants see the button, so a user exists.
+  const handleMessageClick = () => {
+    if (!user) return
+    onClose()
+    navigate(`/messages?new=${vacancy.club_id}`, { state: { from: location.pathname } })
   }
 
   // Phase 3d — Women + Girls families map to women's league;
@@ -102,6 +113,7 @@ export default function OpportunityPreviewModal({
         onApply={canShowApplyButton ? handleApplyClick : undefined}
         hasApplied={hasApplied}
         applicationStatus={applicationStatus}
+        onMessage={handleMessageClick}
       />
 
       <SignInPromptModal

@@ -3,7 +3,7 @@ import { Send, Eye, CheckCircle, CircleDot, Clock, Sparkles } from 'lucide-react
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
-import { playerApplicationStatusBadge, applicationStatusFallbackMessage, applicationStatusLabel } from '@/lib/applicationStatus'
+import { playerApplicationStatusBadge, applicationStatusFallbackMessage, applicationStatusLabel, feedbackMessageKind } from '@/lib/applicationStatus'
 import { clubNoteFromFeedback } from '@/lib/opportunityCopy'
 
 /**
@@ -198,9 +198,12 @@ export default function ApplicationTimeline({ opportunityId }: ApplicationTimeli
           setAiMessage(fallback)
           return
         }
-        const msg = (data as { message?: string | null } | null)?.message
+        const payload = data as { message?: string | null; source?: string | null } | null
+        const msg = payload?.message
         const hasMsg = typeof msg === 'string' && msg.trim()
-        setMessageKind(hasMsg ? 'ai' : 'plain')
+        // The sparkle marks AI words only: the function says whose words these
+        // are ('ai' | 'fallback' | 'club'). No source (an older deploy) → no sparkle.
+        setMessageKind(hasMsg ? feedbackMessageKind(payload?.source) : 'plain')
         setAiMessage(hasMsg ? msg : fallback)
       } catch (err) {
         if (!cancelled) {

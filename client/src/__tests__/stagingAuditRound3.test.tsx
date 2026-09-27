@@ -193,7 +193,7 @@ describe('desktop timeline: whose words the note is', () => {
     tables.opportunity_applications = { id: 'app-1', status: 'rejected', applied_at: '2026-09-03T00:00:00Z', ai_feedback: null }
     tables.application_status_history = history
     tables.application_views = []
-    invoke.mockResolvedValue({ data: { message: 'A kind AI explanation.' }, error: null })
+    invoke.mockResolvedValue({ data: { message: 'A kind AI explanation.', source: 'ai' }, error: null })
     render(<ApplicationTimeline opportunityId="opp-1" />)
     await waitFor(() => expect(screen.getByTestId('timeline-message').textContent).toContain('A kind AI explanation.'))
     expect(screen.getByTestId('timeline-ai-sparkle')).toBeTruthy()

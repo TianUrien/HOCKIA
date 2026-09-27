@@ -100,6 +100,19 @@ export default function Header({ mobileHidden = false }: { mobileHidden?: boolea
               live on the Profile screen. */}
           {user && profile && (
             <div className="flex lg:hidden items-center">
+              {/* Clubs get a direct Hockia AI entry (sparkles) beside Search —
+                  the same /discover screen players reach from Search. */}
+              {profile.role === 'club' && (
+                <button
+                  type="button"
+                  onClick={() => handleNavigate('/discover')}
+                  className="relative min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full text-hockia-primary hover:bg-gray-100 transition-colors"
+                  aria-label="Hockia AI"
+                  data-testid="header-hockia-ai"
+                >
+                  <Sparkles className="w-[22px] h-[22px]" strokeWidth={1.75} />
+                </button>
+              )}
               <button
                 onClick={() => openSearchOverlay()}
                 className="relative min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full text-gray-900 hover:bg-gray-100 transition-colors"

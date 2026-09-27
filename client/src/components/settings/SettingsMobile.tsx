@@ -33,7 +33,7 @@ const FeedbackModal = lazy(() => import('@/components/FeedbackModal'))
 export type SettingsSection = 'hub' | 'notifications' | 'privacy' | 'blocked'
 
 type BoolColumn =
-  | 'open_to_play' | 'open_to_opportunities' | 'notify_push'
+  | 'open_to_play' | 'open_to_coach' | 'open_to_opportunities' | 'notify_push'
   | 'notify_messages' | 'notify_applications' | 'notify_opportunities' | 'notify_friends' | 'notify_references' | 'notify_profile_views'
   | 'browse_anonymously' | 'show_last_active' | 'contact_email_public'
 
@@ -140,7 +140,8 @@ function Hub({ go }: { go: (s: SettingsSection | 'account') => void }) {
           // D2.4: players set Open to play on its own screen (switch + when + consent).
           <SettingsRow title="Open to play" subtitle="Shown on your profile and in Community." value={read('open_to_play', false) ? 'On' : 'Off'} onClick={() => navigate('/dashboard/profile/open-to-play')} />
         ) : (
-          <SettingsRow title="Open to play" subtitle="Shown on your profile and in Community." trailing={<SettingsSwitch label="Open to play" checked={read('open_to_play', false)} disabled={busy === 'open_to_play'} onChange={() => void toggle('open_to_play', false)} />} />
+          // Coaches: their own flag (open_to_coach), same as the desktop availability strip.
+          <SettingsRow title="Open to coach" subtitle="Shown on your profile and in Community." trailing={<SettingsSwitch label="Open to coach" checked={read('open_to_coach', false)} disabled={busy === 'open_to_coach'} onChange={() => void toggle('open_to_coach', false)} />} />
         )}
         <SettingsRow title="Open to opportunities" subtitle="Clubs and coaches can reach out about roles." trailing={<SettingsSwitch label="Open to opportunities" checked={read('open_to_opportunities', false)} disabled={busy === 'open_to_opportunities'} onChange={() => void toggle('open_to_opportunities', false)} />} />
         <SettingsRow title="Looking for" subtitle={preference ? `${OPPORTUNITY_PREF_LABEL[preference] ?? preference} roles` : 'Not set'} onClick={() => setLookingFor(true)} />

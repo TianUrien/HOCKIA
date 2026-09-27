@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import ProfileTopBar from '@/components/dashboard/ProfileTopBar'
 import { ArrowLeft } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
@@ -12,7 +11,6 @@ import {
   CategoryConfirmationBanner,
 } from '@/components'
 import Header from '@/components/Header'
-import ContextSwitcher from '@/components/recruiting/ContextSwitcher'
 import JourneyTab from '@/components/JourneyTab'
 import MediaTab from '@/components/MediaTab'
 import CommentsTab from '@/components/CommentsTab'
@@ -578,8 +576,9 @@ export default function CoachDashboard({
 
       {readOnly && isOwnProfile && <PublicViewBanner compactOnPhone={viewAsClub} clubView={viewAsClub} />}
 
-      <main className="max-w-7xl mx-auto px-4 md:px-6 ${readOnly ? 'pt-24' : 'pt-[max(env(safe-area-inset-top),0.75rem)] lg:pt-24'} pb-12 space-y-5 md:space-y-6">
-        {!readOnly && <ProfileTopBar />}
+      {/* Own profile on phone: the hero cover carries Share + Settings (as for
+          players), so there is no separate Profile title row above it. */}
+      <main className={`max-w-7xl mx-auto px-4 md:px-6 ${readOnly ? 'pt-24' : 'pt-0 lg:pt-24'} pb-12 space-y-5 md:space-y-6`}>
         {readOnly && !isOwnProfile && (
           <button
             type="button"
@@ -620,15 +619,8 @@ export default function CoachDashboard({
             internally — no props needed. */}
         {!readOnly && isLanding && <ClubLinkPrompt onAddClub={() => setShowEditModal(true)} />}
 
-        {/* Own-profile only: recruiter context chip. The chip itself
-            self-hides for non-recruiter roles; the isOwnProfile gate
-            prevents a non-owner club/coach visitor from seeing their
-            OWN context floating on someone else's coach dashboard. */}
-        {isOwnProfile && !readOnly && (
-          <div>
-            <ContextSwitcher />
-          </div>
-        )}
+        {/* No recruiting-context chip on a coach's own profile (round 4):
+            it scopes search results, so it lives on Community / Saved. */}
 
         <HeroIdentityCard
           // PlayerProfileShape requires position: string | null but

@@ -9,7 +9,7 @@
 
 import { getCorsHeaders } from '../_shared/cors.ts'
 import { getServiceClient } from '../_shared/supabase-client.ts'
-import { type Answers, clean, facts, stripPlaceholders, template } from '../_shared/role-description-copy.ts'
+import { type Answers, clean, facts, leagueForTeam, stripPlaceholders, template } from '../_shared/role-description-copy.ts'
 
 const MODEL = Deno.env.get('CLAUDE_MODEL') || 'claude-sonnet-4-6'
 const MAX_CHARS = 700
@@ -41,8 +41,8 @@ Deno.serve(async (req) => {
     return json({ error: 'invalid_body' }, 400)
   }
   const clubName = clean(p.full_name) || 'Our club'
-  const team = clean(answers.team).toLowerCase()
-  const league = (team === 'women' || team === 'girls' ? p.womens_league_division : p.mens_league_division)?.trim() || null
+  // The client sends the pill label ("Women's"), so normalise before choosing the league.
+  const league = leagueForTeam(answers.team, p.mens_league_division, p.womens_league_division)
 
   const apiKey = Deno.env.get('ANTHROPIC_API_KEY')
   if (!apiKey) return json({ description: template(answers, clubName), source: 'template' })

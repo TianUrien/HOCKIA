@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { positionLabel } from '@/lib/identity'
 import { Briefcase, MapPin, BadgeCheck } from 'lucide-react'
 import { StorageImage } from '@/components'
-import { FeedCard, FeedCardBody, FeedCardCaption, FeedCardFooter, FeedCardHeader, FeedCardPrimaryAction, profilePathForRole } from '../FeedCard'
+import { FeedCard, FeedCardAction, FeedCardBody, FeedCardCaption, FeedCardFooter, FeedCardHeader, FeedCardPrimaryAction, profilePathForRole } from '../FeedCard'
+import { useAuthStore } from '@/lib/auth'
 import type { OpportunityPostedFeedItem } from '@/types/homeFeed'
 import { opportunityGenderToTeamLabel } from '@/lib/hockeyCategories'
 import OpportunityDetailOverlay from '@/components/OpportunityDetailOverlay'
@@ -16,6 +17,10 @@ export function OpportunityPostedCard({ item }: OpportunityPostedCardProps) {
   // mounted underneath, so closing reveals it exactly where it was — no route
   // change, no unmount, no scroll jump). Deep links still use the route.
   const [showDetail, setShowDetail] = useState(false)
+  // The publisher never gets "Apply" on its own role: a quiet "View role"
+  // opens the same overlay, where the publisher sees its applicants.
+  const viewerId = useAuthStore((s) => s.user?.id ?? null)
+  const isPublisher = Boolean(viewerId) && viewerId === item.club_id
 
   // The PUBLISHER is the card's author. Vacancies can be coach-published —
   // then club_id/club_name/club_logo carry the COACH's profile.
@@ -91,7 +96,11 @@ export function OpportunityPostedCard({ item }: OpportunityPostedCardProps) {
       </FeedCardBody>
 
       <FeedCardFooter>
-        <FeedCardPrimaryAction onClick={() => setShowDetail(true)}>Apply</FeedCardPrimaryAction>
+        {isPublisher ? (
+          <FeedCardAction onClick={() => setShowDetail(true)}>View role</FeedCardAction>
+        ) : (
+          <FeedCardPrimaryAction onClick={() => setShowDetail(true)}>Apply</FeedCardPrimaryAction>
+        )}
       </FeedCardFooter>
 
       {showDetail && (

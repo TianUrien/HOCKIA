@@ -48,6 +48,33 @@ export function teamPhrase(team: unknown): string | null {
   }
 }
 
+/** Normalised team key ("men" | "women" | "mixed" | "boys" | "girls") from the enum or the pill label. */
+export function teamKey(team: unknown): string | null {
+  const t = clean(team).toLowerCase().replace(/[’']s?$/, '').replace(/[’']/g, '')
+  return ['men', 'women', 'mixed', 'boys', 'girls'].includes(t) ? t : null
+}
+
+/**
+ * The club's league for the role's team: Women / Girls → women's league, Men / Boys →
+ * men's league. Mixed (or no team) uses a league only when the club has just one.
+ * Never borrows the other side's league when the matching one is empty.
+ */
+export function leagueForTeam(team: unknown, mensLeague: string | null | undefined, womensLeague: string | null | undefined): string | null {
+  const men = clean(mensLeague, 120) || null
+  const women = clean(womensLeague, 120) || null
+  switch (teamKey(team)) {
+    case 'women':
+    case 'girls':
+      return women
+    case 'men':
+    case 'boys':
+      return men
+    default:
+      if (men && women) return men === women ? men : null
+      return men ?? women
+  }
+}
+
 /** "a midfielder for the men's team" / "an assistant coach". */
 export function lookingFor(a: Answers): string {
   const noun = roleNoun(a)

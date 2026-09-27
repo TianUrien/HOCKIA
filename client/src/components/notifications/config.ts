@@ -74,8 +74,9 @@ const applicationStatusCopy = (notification: NotificationRecord): { title: strin
     case 'rejected':
       return { title: `${club} updated your application`, body: `You weren't selected for ${position} this time.` }
     case 'filled': {
-      // Founder copy 2026-09-26. Role name falls back to the full title, then "The role".
-      const role = humanizePosition(getMetadataString(notification, 'position')) ?? vacancyTitle ?? 'The role'
+      // Founder copy 2026-09-26; names the role by its title (round 4), falling back to
+      // the position, then "The role".
+      const role = vacancyTitle ?? humanizePosition(getMetadataString(notification, 'position')) ?? 'The role'
       return { title: `${club} filled the role`, body: `${role} has been filled. Thanks for applying — new roles are open.` }
     }
     default:
