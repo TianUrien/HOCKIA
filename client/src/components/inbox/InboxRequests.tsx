@@ -68,7 +68,7 @@ export function InboxRequests({
 
   return (
     <section aria-label="Requests">
-      <p className="px-5 pb-2 text-secondary text-ink-2">Friends can message you, see your full media and write you a reference.</p>
+      <p className="px-5 pb-2 text-secondary text-ink-2">Friend requests and club invitations.</p>
 
       {/* Squad invitations sit at the top while pending, read or not (Figma D1
           DEV NOTE: the invitee accepts in Inbox › Requests). Accept or Decline
