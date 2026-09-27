@@ -7,6 +7,7 @@
  */
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 type P = { id: string; role: string; full_name: string; date_of_birth: string | null; languages: string[]; avatar_url: null }
@@ -18,7 +19,7 @@ const authState = () => ({
   refreshProfile: vi.fn(),
 })
 
-vi.mock('@/lib/supabase', () => ({ supabase: { from: vi.fn() } }))
+vi.mock('@/lib/supabase', () => ({ supabase: { from: vi.fn(), rpc: vi.fn(async () => ({ data: [], error: null })) } }))
 vi.mock('@/lib/auth', () => ({
   useAuthStore: (sel?: (s: ReturnType<typeof authState>) => unknown) => (sel ? sel(authState()) : authState()),
 }))
@@ -37,7 +38,11 @@ import SettingsMobile, { type SettingsSection } from '@/components/settings/Sett
 const as = (role: string) => {
   profile = { id: 'u1', role, full_name: 'Someone', date_of_birth: '1995-04-02', languages: ['English', 'Spanish'], avatar_url: null }
 }
-const renderAt = (section: SettingsSection) => render(<MemoryRouter><SettingsMobile section={section} /></MemoryRouter>)
+const renderAt = (section: SettingsSection) => render(
+  <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+    <MemoryRouter><SettingsMobile section={section} /></MemoryRouter>
+  </QueryClientProvider>,
+)
 
 describe('SettingsMobile · hub', () => {
   beforeEach(() => as('player'))
@@ -72,6 +77,7 @@ describe('SettingsMobile · hub', () => {
       expect(screen.queryByText(t)).toBeNull()
     }
     expect(screen.getByText('Club & league')).toBeTruthy()
+    expect(screen.getByText('Squad & invites')).toBeTruthy()
     expect(screen.getByText('Email & sign-in')).toBeTruthy()
   })
 })

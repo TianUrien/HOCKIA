@@ -11,6 +11,7 @@ import {
   searchInvitableMembers,
   type MemberSearchResult,
 } from '@/lib/clubMembership'
+import { inviteErrorMessage } from '@/lib/clubSquadCopy'
 
 interface InviteMembersModalProps {
   isOpen: boolean
@@ -122,7 +123,7 @@ export default function InviteMembersModal({ isOpen, onClose, onInvited }: Invit
       addToast(`Invitation sent to ${member.full_name ?? 'member'}.`, 'success')
       onInvited?.()
     } else {
-      addToast(res.error ?? 'Could not send the invitation.', 'error')
+      addToast(inviteErrorMessage(res), 'error')
     }
   }
 
