@@ -22,6 +22,15 @@ export function clubLeagueLine(men: string | null | undefined, women: string | n
   return null
 }
 
+/**
+ * One league for a club in a tight spot (chat header): the one the club
+ * profile lists FIRST (clubLeagueLine: men, then women), so the chat never
+ * names a different league than the profile and the club's men's role pages.
+ */
+export function clubLeadLeague(men: string | null | undefined, women: string | null | undefined): string | null {
+  return men?.trim() || women?.trim() || null
+}
+
 /** "Open role · from Sep 1 · 7 months" — the public card's second line. */
 export function openRoleLine(role: Pick<ClubOpenRole, 'startDate' | 'durationText'>): string {
   const from = monthDay(role.startDate)

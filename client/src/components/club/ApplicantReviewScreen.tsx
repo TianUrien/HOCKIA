@@ -25,6 +25,7 @@ import { specialistSkillLabel } from '@/lib/specialistSkills'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import { daysLeftLabel, daysLeftToReply, decisionToast, DEFAULT_EXPIRY_DAYS, clubReplyLineClass, fitRows, fitTarget, isClubReplyUrgent, personRoleLine, type FitComponents, type FitState } from '@/lib/clubRecruiting'
 import { cn } from '@/lib/utils'
+import { profileVideoTotal } from '@/hooks/useProfileVideoTotal'
 import { MENU_ICON_CLASS } from '@/lib/report'
 import type { Json } from '@/lib/database.types'
 
@@ -43,6 +44,7 @@ type Person = {
   id: string; full_name: string | null; avatar_url: string | null; role: string | null; position: string | null; secondary_position: string | null
   nationality_country_id: number | null; nationality2_country_id: number | null; base_location: string | null; playing_category: string | null
   gender: string | null; last_active_at: string | null; current_club: string | null; current_world_club_id: string | null; specialist_skills: string[] | null
+  highlight_video_url?: string | null
 }
 type Review = {
   status: string; appliedAt: string | null; metadata: Record<string, unknown>
@@ -83,7 +85,7 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
       const { data: app, error: appErr } = await supabase
         .from('opportunity_applications')
         .select(`status, applied_at, metadata, opportunity_id,
-          applicant:applicant_id ( id, full_name, avatar_url, role, position, secondary_position, nationality_country_id, nationality2_country_id, base_location, playing_category, gender, last_active_at, current_club, current_world_club_id, specialist_skills )`)
+          applicant:applicant_id ( id, full_name, avatar_url, role, position, secondary_position, nationality_country_id, nationality2_country_id, base_location, playing_category, gender, last_active_at, current_club, current_world_club_id, specialist_skills, highlight_video_url )`)
         .eq('id', applicationId)
         .maybeSingle()
       if (cancelled) return
@@ -213,7 +215,16 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
   }
 
   const note = review ? applicationNote(review.metadata) : null
-  const videos = scroll.fullGameLinks.length + scroll.fullMatches.length + scroll.highlights.length
+  // Same number as the profile's Videos (profileVideoTotal): every tile, reels
+  // and the legacy highlight link included. Clubs see recruiters-only rows, so
+  // nothing is locked here.
+  const videos = profileVideoTotal({
+    videoRows: scroll.highlights.length + scroll.fullMatches.length + scroll.reels.length,
+    fullGameLinks: scroll.fullGameLinks.length,
+    hasLegacyHighlight: Boolean(p?.highlight_video_url?.trim()),
+    lockedFullMatches: 0,
+    lockedHighlights: 0,
+  })
   const avatar = p?.avatar_url ? getImageUrl(p.avatar_url, 'avatar-lg') ?? p.avatar_url : null
   const statusNote = review && review.status !== 'pending'
     ? { shortlisted: 'You shortlisted this player.', maybe: 'You marked this player maybe.', rejected: 'You declined this application.', no_response: 'Closed without a reply.', filled: 'This role was filled.', withdrawn: 'Withdrawn by the applicant.' }[review.status] ?? null

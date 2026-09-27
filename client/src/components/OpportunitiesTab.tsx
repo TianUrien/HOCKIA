@@ -17,7 +17,8 @@ import PublishConfirmationModal from './PublishConfirmationModal'
 import DeleteOpportunityModal from './DeleteOpportunityModal'
 import Skeleton, { OpportunityCardSkeleton } from './Skeleton'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
-import { closeRolePatch, closeRoleToast, reopenRolePatch } from '@/lib/roleLifecycle'
+import { CLOSE_NOT_FILLED_LABEL, closeRolePatch, closeRoleToast, REOPEN_ROLE_TOAST, reopenRolePatch } from '@/lib/roleLifecycle'
+import { countWaitingApplicants } from '@/lib/roleWaiting'
 
 type VacancyWithCount = Vacancy & { applicant_count: number | null }
 
@@ -362,6 +363,19 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
   }
 
   const handleViewDetails = async (vacancy: Vacancy) => {
+    // The club's own role (the only place a CLOSED role opens on desktop):
+    // its name and logo are already in memory — use them at once instead of
+    // painting the grey placeholder until a profile fetch lands (round 5).
+    if (profile && vacancy.club_id === profile.id) {
+      setClubName(profile.full_name || 'Unknown Club')
+      setClubLogo(profile.avatar_url ?? null)
+      setDetailVacancy(vacancy)
+      setShowDetailModal(true)
+      return
+    }
+    // Someone else's role: never show the previous club's identity meanwhile.
+    setClubName('')
+    setClubLogo(null)
     setDetailVacancy(vacancy)
     setShowDetailModal(true)
 
@@ -497,6 +511,7 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
         data: { vacancyId, reason },
         level: 'info'
       })
+      const waiting = reason === 'filled' ? await countWaitingApplicants(vacancyId) : 0
       const { error } = await supabase
         .from('opportunities')
         // "Filled through Hockia" comes only from a signing the player
@@ -512,7 +527,7 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
       // which reads as the page navigating away.
       setStatusFilter('closed')
       setVacancyToClose(null)
-      addToast(closeRoleToast(reason), 'success')
+      addToast(closeRoleToast(reason, waiting), 'success')
     } catch (error) {
       logger.error('Error closing vacancy:', error)
       reportSupabaseError('vacancies.close', error, {
@@ -556,7 +571,7 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
       if (error) throw error
       await fetchVacancies()
       setStatusFilter('open')
-      addToast('Opportunity reopened.', 'success')
+      addToast(REOPEN_ROLE_TOAST, 'success')
     } catch (error) {
       logger.error('Error reopening vacancy:', error)
       reportSupabaseError('vacancies.reopen', error, {
@@ -1059,14 +1074,14 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
                 onClick={() => void handleClose('filled')}
                 className="w-full rounded-lg bg-gradient-to-r from-hockia-primary to-hockia-secondary px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90"
               >
-                Filled ✓
+                Filled
               </button>
               <button
                 type="button"
                 onClick={() => void handleClose('withdrawn')}
                 className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
-                Just closing
+                {CLOSE_NOT_FILLED_LABEL}
               </button>
               <button
                 type="button"

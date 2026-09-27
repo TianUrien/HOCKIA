@@ -12,6 +12,7 @@ import {
   contextFitTarget,
   contextPillLabel,
   evidenceLine,
+  rowFullMatches,
   FIND_FILTERS,
   playerContexts,
   rankScoutRows,
@@ -153,7 +154,7 @@ export default function FindPlayersScreen() {
 
       <div className="pt-1.5">
         {rows.map((r, i) => {
-          const ev = evidenceLine({ fullMatches: r.full_game_video_count ?? 0, highlights: r.highlights, career: r.career_entry_count ?? 0, lastActiveAt: r.last_active_at })
+          const ev = evidenceLine({ fullMatches: rowFullMatches(r), highlights: r.highlights, career: r.career_entry_count ?? 0, lastActiveAt: r.last_active_at })
           const saved = writes.inList(r.id)
           const trailing = r.applicationId
             ? <button type="button" onClick={() => openApplied(r)} className="rounded-full bg-surface-grouped px-3 py-1.5 text-secondary font-semibold text-ink-2">Applied</button>

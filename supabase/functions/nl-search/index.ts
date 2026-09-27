@@ -23,6 +23,7 @@ import {
   toOpportunityResult,
   describeRoleNoun,
   buildOpportunityMessage,
+  buildIneligibleMessage,
   buildNoOpportunitiesMessage,
   includeTestPublisherRoles,
   isStagingProject,
@@ -1444,7 +1445,7 @@ async function handleCandidateOpportunitySearch(params: {
     rows = withoutOwnRoles(rows, ((ownRes?.data ?? []) as { id: string }[]).map(r => r.id))
 
     const today = new Date().toISOString().slice(0, 10)
-    const { criteria, matched, landed, askedLabel, widenedRegion } =
+    const { criteria, matched, landed, askedLabel, widenedRegion, ineligibleInAsked } =
       runOpportunitySearch(query, rows, countries, viewer, today)
     const noun = describeRoleNoun(criteria)
     const meta = {
@@ -1456,6 +1457,7 @@ async function handleCandidateOpportunitySearch(params: {
       geo_asked: askedLabel,
       geo_softened_to: landed === 'original' ? null : landed,
       pool_size: rows.length,
+      ineligible_in_asked: ineligibleInAsked,
     }
 
     const filterChips = [
@@ -1474,7 +1476,10 @@ async function handleCandidateOpportunitySearch(params: {
       actions.push({ label: 'Improve my profile', intent: { type: 'free_text', query: 'Improve my profile' } })
       return respond({
         kind: 'no_results' as ResponseKind,
-        ai_message: buildNoOpportunitiesMessage(criteria, askedLabel),
+        // Roles exist there, just none this viewer can apply to → say so.
+        ai_message: ineligibleInAsked > 0
+          ? buildIneligibleMessage(criteria, askedLabel)
+          : buildNoOpportunitiesMessage(criteria, askedLabel),
         opportunities: [],
         opportunity_filters: filterChips,
         suggested_actions: actions,
@@ -1485,7 +1490,9 @@ async function handleCandidateOpportunitySearch(params: {
     const shown = matched.slice(0, OPPORTUNITY_RESULT_CAP).map(toOpportunityResult)
     const aiMessage = landed === 'original'
       ? buildOpportunityMessage(matched.length, criteria, askedLabel)
-      : describeSoftening(landed, {
+      : ineligibleInAsked > 0
+        ? buildIneligibleMessage(criteria, askedLabel, { count: matched.length, region: widenedRegion })
+        : describeSoftening(landed, {
           noun: noun.plural,
           nounSingular: noun.singular,
           count: matched.length,
