@@ -631,7 +631,7 @@ export function MemberPreviewModal({ member, onClose }: MemberPreviewModalProps)
               ((member.accepted_reference_count ?? 0) > 0 || (member.accepted_friend_count ?? 0) > 0) && (
               <div className="flex flex-wrap gap-2">
                 {(member.accepted_reference_count ?? 0) > 0 && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-gold-soft px-2.5 py-1 text-xs font-medium text-gold">
                     <Shield className="w-3 h-3" />
                     Trusted by {member.accepted_reference_count}
                   </span>

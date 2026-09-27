@@ -14,6 +14,7 @@ import type { Vacancy } from '@/lib/supabase'
 import { compensationLabel } from '@/lib/opportunityIntent'
 import { humanizeToken, positionLabel } from '@/lib/identity'
 import { APPLICATION_STATUS_LABELS } from '@/lib/applicationStatus'
+import { NO_REPLY_DAYS } from '@/lib/statusTone'
 
 /** "Forward" — the position is the headline; free-text title is the fallback. */
 export function roleTitle(v: { position: string | null; title: string; opportunity_type: string | null }): string {
@@ -187,7 +188,9 @@ export function applicationStatusPill(
     default: {
       if (!roleOpen) return { label: 'Role closed', tone: 'grey' }
       const days = appliedAt ? differenceInCalendarDays(now, new Date(appliedAt)) : 0
-      if (days >= 14) return { label: `${L.no_response} · ${days}d`, tone: 'grey', waitingLong: true }
+      // The applicant waits on the club → grey; the club sees the same
+      // state in amber (lib/statusTone noReplyTone).
+      if (days >= NO_REPLY_DAYS) return { label: `${L.no_response} · ${days}d`, tone: 'grey', waitingLong: true }
       return { label: L.pending, tone: 'neutral' }
     }
   }

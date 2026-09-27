@@ -10,6 +10,9 @@ import { specialistSkillLabels } from '@/lib/specialistSkills'
 import { APPLICATION_TONE_CLASS, applicationStatusPill, closedRoleView, formatDurationText, roleTeamLabel } from '@/lib/opportunityCopy'
 import { getShareOrigin } from '@/lib/profileShare'
 import { useAuthStore } from '@/lib/auth'
+import { MoreMenu } from '@/components/safety/MoreMenu'
+import { useReportAction } from '@/components/safety/useReportAction'
+import { canReport } from '@/lib/report'
 import { useCountries } from '@/hooks/useCountries'
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock'
 import { checkOpportunityEligibility, opportunityMustHaveWarnings } from '@/lib/opportunityEligibility'
@@ -116,6 +119,8 @@ export default function VacancyDetailView({
   // detail sheet's only action being a literal Close button when the
   // publisher opened their own opportunity.
   const isPublisher = Boolean(user && user.id === vacancy.club_id)
+  const report = useReportAction({ targetId: vacancy.club_id, subject: 'role', contentId: vacancy.id })
+  const showMore = !isPublisher && canReport(user?.id, vacancy.club_id)
   // Closed role: readable, "Closed" label, no Apply; the applicant keeps
   // their own application (status + timeline), everyone else gets a pointer
   // to open roles. Same rule as the phone page (closedRoleView).
@@ -245,6 +250,7 @@ export default function VacancyDetailView({
           >
             <X className="w-5 h-5 text-gray-500" />
           </button>
+          {report.sheet}
 
           {/* ─── HERO SECTION (tinted + watermark) ─── */}
           {cardType === 'club' ? (
@@ -323,9 +329,12 @@ export default function VacancyDetailView({
                   </span>
                 )}
               </div>
-              <button type="button" onClick={handleShareClick} className="p-2 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors" aria-label="Share opportunity">
-                <Share2 className="w-[18px] h-[18px]" />
-              </button>
+              <div className="flex items-center">
+                <button type="button" onClick={handleShareClick} className="p-2 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors" aria-label="Share opportunity">
+                  <Share2 className="w-[18px] h-[18px]" />
+                </button>
+                {showMore && <MoreMenu items={[report.item]} label="More options" triggerClassName="p-2 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors" iconClassName="w-[18px] h-[18px]" testId="role-more-menu" />}
+              </div>
             </div>
 
             {/* Title */}

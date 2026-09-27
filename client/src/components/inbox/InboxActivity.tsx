@@ -47,8 +47,8 @@ export function InboxActivity() {
   const answerFriendRequest = async (notification: NotificationRecord, action: 'accept' | 'decline') => {
     const friendshipId = notification.sourceEntityId
     if (!friendshipId) return
-    const ok = await respondToFriendRequest({ friendshipId, action })
-    if (!ok) addToast('Could not update the request. Please try again.', 'error')
+    const result = await respondToFriendRequest({ friendshipId, action })
+    if (result !== true) addToast(typeof result === 'string' ? result : 'Could not update the request. Please try again.', 'error')
   }
 
   if (loading && rows.length === 0) {

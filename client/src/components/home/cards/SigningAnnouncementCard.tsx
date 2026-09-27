@@ -1,7 +1,9 @@
 import { useState, useCallback, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, MoreHorizontal, Trash2 } from 'lucide-react'
+import { ArrowRight, Flag, MoreHorizontal, Trash2 } from 'lucide-react'
 import { useAuthStore } from '@/lib/auth'
+import ReportUserModal from '@/components/ReportUserModal'
+import { REPORT_MENU_LABEL } from '@/lib/report'
 import { usePostInteractions } from '@/hooks/usePostInteractions'
 import { useUserPosts } from '@/hooks/useUserPosts'
 import { Avatar } from '@/components'
@@ -26,6 +28,7 @@ export function SigningAnnouncementCard({ item, onLikeUpdate, onDelete }: Signin
 
   const [showComments, setShowComments] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
+  const [showReport, setShowReport] = useState(false)
   const [localCommentCount, setLocalCommentCount] = useState(item.comment_count)
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [lightboxIndex, setLightboxIndex] = useState(0)
@@ -94,7 +97,7 @@ export function SigningAnnouncementCard({ item, onLikeUpdate, onDelete }: Signin
     setLocalCommentCount(newCount)
   }, [])
 
-  const menu = isOwner ? (
+  const menu = user ? (
     <div className="relative">
       <button
         type="button"
@@ -111,15 +114,27 @@ export function SigningAnnouncementCard({ item, onLikeUpdate, onDelete }: Signin
         <>
           <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
           <div role="menu" className="absolute right-0 top-full z-20 mt-1 w-40 rounded-xl border border-gray-100 bg-white py-1 shadow-lg">
-            <button
-              type="button"
-              role="menuitem"
-              onClick={handleDelete}
-              className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-red-600 hover:bg-red-50"
-            >
-              <Trash2 className="h-4 w-4" />
-              Delete post
-            </button>
+            {isOwner ? (
+              <button
+                type="button"
+                role="menuitem"
+                onClick={handleDelete}
+                className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-red-600 hover:bg-red-50"
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete post
+              </button>
+            ) : (
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => { setShowMenu(false); setShowReport(true) }}
+                className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-gray-800 hover:bg-gray-50"
+              >
+                <Flag className="h-4 w-4" />
+                {REPORT_MENU_LABEL}
+              </button>
+            )}
           </div>
         </>
       )}
@@ -233,6 +248,9 @@ export function SigningAnnouncementCard({ item, onLikeUpdate, onDelete }: Signin
           initialIndex={lightboxIndex}
           onClose={() => setLightboxOpen(false)}
         />
+      )}
+      {showReport && (
+        <ReportUserModal targetId={item.author_id} contentType="post" contentId={item.post_id} onClose={() => setShowReport(false)} />
       )}
     </FeedCard>
   )

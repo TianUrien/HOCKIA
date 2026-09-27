@@ -28,7 +28,7 @@ interface TierGroup {
 const TIER_GROUPS: TierGroup[] = [
   { key: 'unsorted', label: 'Unsorted', icon: Inbox, iconClass: 'text-gray-400', statuses: ['pending'] },
   { key: 'shortlisted', label: 'Good fit', icon: Star, iconClass: 'text-emerald-600', statuses: ['shortlisted'] },
-  { key: 'maybe', label: 'Maybe', icon: HelpCircle, iconClass: 'text-amber-600', statuses: ['maybe'] },
+  { key: 'maybe', label: 'Maybe', icon: HelpCircle, iconClass: 'text-ink-2', statuses: ['maybe'] },
   { key: 'not-a-fit', label: 'Not a fit', icon: XCircle, iconClass: 'text-red-500', statuses: ['rejected'] },
   // The expiry sweep flips un-triaged applications to 'no_response'. Those
   // rows are fetched (the publisher policy only hides 'withdrawn') and were

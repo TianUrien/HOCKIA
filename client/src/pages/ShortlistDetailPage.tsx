@@ -30,7 +30,7 @@ import {
 const STATUS_OPTIONS: { value: ShortlistItemStatus; label: string; pill: string }[] = [
   { value: 'unsorted', label: 'Unsorted', pill: 'bg-gray-100 text-gray-700' },
   { value: 'good_fit', label: 'Good fit', pill: 'bg-emerald-100 text-emerald-800' },
-  { value: 'maybe',    label: 'Maybe',    pill: 'bg-amber-100 text-amber-800' },
+  { value: 'maybe',    label: 'Maybe',    pill: 'bg-surface-grouped text-ink-2' },
   { value: 'not_a_fit',label: 'Not a fit',pill: 'bg-red-100 text-red-800' },
 ]
 

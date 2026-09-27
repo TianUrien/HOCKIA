@@ -912,7 +912,7 @@ export default function BrandDashboard() {
                           {pendingAmbassadors.map(ambassador => (
                             <div
                               key={ambassador.player_id}
-                              className="flex items-center gap-3 bg-amber-50 rounded-xl border border-amber-200 p-4"
+                              className="flex items-center gap-3 bg-surface-grouped rounded-xl border border-line p-4"
                             >
                               <Link
                                 to={`/players/id/${ambassador.player_id}`}
@@ -929,7 +929,7 @@ export default function BrandDashboard() {
                                     <p className="text-sm font-semibold text-gray-900 truncate">
                                       {ambassador.full_name || 'Unknown'}
                                     </p>
-                                    <span className="inline-flex shrink-0 items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
+                                    <span className="inline-flex shrink-0 items-center px-2 py-0.5 rounded-full text-xs font-medium bg-white text-ink-2">
                                       Pending
                                     </span>
                                   </div>

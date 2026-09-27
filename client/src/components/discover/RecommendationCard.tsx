@@ -19,7 +19,7 @@ const FIT_LEVEL_PRESET: Record<RecommendationRow['fit_level'], {
 // (that's the AI's primary surface; nothing to acknowledge).
 const TRIAGE_PRESET: Record<string, { bg: string; text: string }> = {
   shortlisted: { bg: 'bg-emerald-50', text: 'text-emerald-700' }, // Good fit
-  maybe: { bg: 'bg-amber-50', text: 'text-amber-700' },
+  maybe: { bg: 'bg-surface-grouped', text: 'text-ink-2' },
 }
 
 interface RecommendationCardProps {

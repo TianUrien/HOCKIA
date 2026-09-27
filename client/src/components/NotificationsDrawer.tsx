@@ -114,9 +114,9 @@ export default function NotificationsDrawer() {
   useBodyScrollLock(isOpen)
 
   const handleFriendRequest = async (friendshipId: string, action: 'accept' | 'decline') => {
-    const success = await respondToFriendRequest({ friendshipId, action })
-    if (!success) {
-      addToast('Could not update the friend request. Please try again.', 'error')
+    const result = await respondToFriendRequest({ friendshipId, action })
+    if (result !== true) {
+      addToast(typeof result === 'string' ? result : 'Could not update the friend request. Please try again.', 'error')
       return
     }
 

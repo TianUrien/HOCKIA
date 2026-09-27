@@ -222,7 +222,7 @@ export default function DiscoverResultCard({ result }: DiscoverResultCardProps) 
             )}
             {result.provenance === 'self_described' && (
               <p className="mt-1 text-xs">
-                <span className="inline-flex items-center rounded-full bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">
+                <span className="inline-flex items-center rounded-full bg-surface-grouped px-1.5 py-0.5 text-[10px] font-semibold text-ink-2">
                   Bio mention — not verified
                 </span>
               </p>

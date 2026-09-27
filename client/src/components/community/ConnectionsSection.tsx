@@ -10,6 +10,7 @@ import Avatar from '../Avatar'
 import RoleBadge from '../RoleBadge'
 import ConfirmActionModal from '../ConfirmActionModal'
 import type { Database } from '@/lib/database.types'
+import { friendRequestErrorMessage } from '@/lib/friendshipErrors'
 
 /**
  * ConnectionsSection — segmented Connections / Requests / Sent panel.
@@ -137,7 +138,7 @@ export default function ConnectionsSection({ profileId, profileRole, onAskToVouc
         addToast(msg, 'success')
       } catch (error) {
         logger.error('[ConnectionsSection] update failed', error)
-        addToast('Could not update connection. Please try again.', 'error')
+        addToast(friendRequestErrorMessage(error, 'Could not update connection. Please try again.'), 'error')
       } finally {
         setMutatingId(null)
       }

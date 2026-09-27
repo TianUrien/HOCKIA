@@ -211,7 +211,7 @@ export default function HeroIdentityCard({
                 <span className="hidden lg:inline-flex"><SettingsSheet className="!h-9 !w-9 !min-h-0 !min-w-0 !rounded-full !bg-white/90 !text-ink-1 shadow-sm backdrop-blur" /></span>
               </>
             )}
-            {isVisitorView && <ProfileActionMenu targetId={profile.id} targetName={profile.full_name ?? 'this user'} />}
+            {isVisitorView && <ProfileActionMenu targetId={profile.id} targetName={profile.full_name ?? 'this user'} triggerClassName={GLASS} iconClassName="h-[18px] w-[18px]" />}
           </div>
         </div>
       </div>

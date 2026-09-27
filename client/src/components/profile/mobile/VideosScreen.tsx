@@ -11,6 +11,7 @@ import { useVideoAccessSummary } from '@/hooks/useVideoAccessSummary'
 import { formatVideoDuration } from '@/lib/videoCopy'
 import { getImageUrl } from '@/lib/imageUrl'
 import { profilePath } from '@/lib/profileNavigation'
+import { VideoLockBadge } from './VideoLockBadge'
 
 /**
  * Videos — all (Figma 153:581): where "N Videos" and "See all N" land — the
@@ -35,7 +36,7 @@ function LinkTile({ title, href, date, locked }: { title: string; href: string; 
   return (
     <a href={href} target="_blank" rel="noopener noreferrer" className="relative flex aspect-[16/9] w-full flex-col justify-end overflow-hidden rounded-card bg-gradient-to-br from-ink-1 to-ink-2 p-2.5">
       <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-white/15 text-white"><ExternalLink className="h-3 w-3" /></span>
-      {locked && <span className="absolute left-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-black/55 text-white"><Lock className="h-3 w-3" strokeWidth={2.2} /></span>}
+      {locked && <VideoLockBadge />}
       <span className="truncate text-caption font-semibold text-white">{title}</span>
       {date && <span className="text-[11px] text-white/75">{date.slice(0, 7)}</span>}
     </a>

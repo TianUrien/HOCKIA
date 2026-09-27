@@ -5,6 +5,7 @@ import { queryClient } from './queryClient'
 import { qk } from './queryKeys'
 import { logger } from './logger'
 import { invalidateFriendshipEdges } from '@/hooks/friendshipEdgeCache'
+import { friendRequestErrorMessage } from './friendshipErrors'
 import {
   fetchNotificationsPage,
   markNotificationRead as markNotificationReadRpc,
@@ -121,7 +122,8 @@ interface NotificationState {
   markAllRead: () => Promise<void>
   clearCommentNotifications: () => Promise<void>
   claimCommentHighlights: () => string[]
-  respondToFriendRequest: (params: { friendshipId: string; action: 'accept' | 'decline' }) => Promise<boolean>
+  /** true on success; otherwise the message to show (never raw DB text). */
+  respondToFriendRequest: (params: { friendshipId: string; action: 'accept' | 'decline' }) => Promise<true | string>
   respondToAmbassadorRequest: (params: { ambassadorId: string; action: 'accept' | 'decline' }) => Promise<boolean>
   respondToClubInvite: (params: { clubMemberId: string; action: 'accept' | 'decline' }) => Promise<boolean>
   dismissBySource: (kind: NotificationKind, sourceId: string | null) => void
@@ -662,8 +664,9 @@ export const useNotificationStore = create<NotificationState>((set, get) => {
     },
 
     respondToFriendRequest: async ({ friendshipId, action }) => {
+      const failed = 'Could not update the friend request. Please try again.'
       if (!friendshipId) {
-        return false
+        return failed
       }
 
       set({ pendingFriendshipId: friendshipId })
@@ -677,7 +680,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => {
 
         if (error) {
           logger.error('[NOTIFICATIONS] Failed to update friend request', error)
-          return false
+          return friendRequestErrorMessage(error, failed)
         }
 
         // The friendship-edge cache (community cards, profile buttons) is

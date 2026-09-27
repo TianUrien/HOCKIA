@@ -217,8 +217,8 @@ function Card({ phase, onConfirmReject }: { phase: Phase; onConfirmReject: () =>
         case 'maybe':
           return (
             <>
-              <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mx-auto">
-                <HelpCircle className="w-6 h-6 text-amber-600" />
+              <div className="w-12 h-12 bg-surface-grouped rounded-full flex items-center justify-center mx-auto">
+                <HelpCircle className="w-6 h-6 text-ink-2" />
               </div>
               <h1 className="text-lg font-bold text-gray-900 mt-4">{name} marked as Maybe</h1>
               <p className="text-sm text-gray-600 mt-2">

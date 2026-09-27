@@ -13,6 +13,7 @@ import { PostComposerModal } from '../PostComposerModal'
 import { FeedCard, FeedCardBody, FeedCardHeader, FeedCardMedia, profilePathForRole } from '../FeedCard'
 import { Avatar } from '@/components'
 import ReportUserModal from '@/components/ReportUserModal'
+import { REPORT_MENU_LABEL } from '@/lib/report'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { identityLine } from '@/lib/identity'
 import { getShareOrigin } from '@/lib/profileShare'
@@ -196,7 +197,7 @@ export function UserPostCard({ item, onLikeUpdate, onDelete, detail = false }: U
                 className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-gray-800 hover:bg-gray-50"
               >
                 <Flag className="h-4 w-4" />
-                {isQuestion ? 'Report question' : 'Report post'}
+                {REPORT_MENU_LABEL}
               </button>
             )}
           </div>
