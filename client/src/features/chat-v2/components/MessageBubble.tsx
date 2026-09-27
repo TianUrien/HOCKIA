@@ -28,6 +28,8 @@ interface MessageBubbleProps {
   onEditSave: (id: string, content: string) => Promise<boolean>
   /** Soft-delete the message. Resolves true on success. */
   onDelete: (id: string) => Promise<boolean>
+  /** Club v2 chat (DEV NOTE 355:919): no read receipts — sending / failed still show. */
+  hideReceipts?: boolean
 }
 
 const MAX_LENGTH = 1000
@@ -43,7 +45,8 @@ export function MessageBubble({
   onRetry,
   onDeleteFailed,
   onEditSave,
-  onDelete
+  onDelete,
+  hideReceipts = false
 }: MessageBubbleProps) {
   const timestampLabel = format(new Date(message.sent_at), 'h:mm a')
 
@@ -336,7 +339,7 @@ export function MessageBubble({
                   <span className="inline-flex items-center gap-0.5 text-white/70">
                     {status === 'sending' ? (
                       <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" />
-                    ) : message.read_at ? (
+                    ) : hideReceipts ? null : message.read_at ? (
                       <CheckCheck className="h-3.5 w-3.5" aria-hidden="true" />
                     ) : (
                       <Check className="h-3.5 w-3.5" aria-hidden="true" />

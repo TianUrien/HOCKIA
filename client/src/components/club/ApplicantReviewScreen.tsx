@@ -209,7 +209,9 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
       .select('id')
       .or(`and(participant_one_id.eq.${user.id},participant_two_id.eq.${p.id}),and(participant_one_id.eq.${p.id},participant_two_id.eq.${user.id})`)
       .maybeSingle()
-    const state = { returnTo: location.pathname, from: location.pathname, messageOrigin: 'Opportunity' }
+    // Back label names where Chat returns (DEV NOTE 355:923: "Leandro"); a
+    // chat started here is an Application conversation.
+    const state = { returnTo: location.pathname, from: location.pathname, messageOrigin: 'Application', backLabel: p.full_name?.trim().split(/\s+/)[0] || undefined }
     if (conv?.id) navigate(`/messages?conversation=${conv.id}`, { state })
     else navigate(`/messages?new=${p.id}`, { state })
   }
