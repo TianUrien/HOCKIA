@@ -41,7 +41,7 @@ export default function OpportunityQuickFilters({
     else onSetType('all')
   }
 
-  // Cycle through category: all → Adult Men → Adult Women → Mixed → all.
+  // Cycle through category: all → Adult men → Adult women → Mixed → all.
   // No Girls/Boys: player roles are adult-only (founder ruling 2026-09-25).
   const cycleGender = () => {
     if (gender === 'all') {

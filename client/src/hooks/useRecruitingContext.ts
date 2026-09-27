@@ -42,7 +42,11 @@ import { isRecruitingViewer } from '@/lib/recruiterAccess'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
 import type { Database } from '@/lib/database.types'
 
-export type RecruitingContextRow = Database['public']['Tables']['recruiting_context']['Row']
+export type RecruitingContextRow = Database['public']['Tables']['recruiting_context']['Row'] & {
+  /** The linked role's status (embedded on fetch; round 6). Only an OPEN
+   *  role can be a screen's fallback context. Absent on locally built rows. */
+  opportunity_status?: string | null
+}
 export type RecruitingContextType = 'club' | 'opportunity' | 'custom'
 export type RecruitingTargetCategory = 'Men' | 'Women' | 'Mixed'
 
@@ -59,12 +63,12 @@ export function contextKind(row: { target_role?: string | null }): 'player' | 'c
 /**
  * The context a screen of `kind` uses (founder ruling 2026-09-27, round 6):
  * the stored active context when it is of that kind; when the stored active
- * context is of the OTHER kind, the most recently used context of this kind
- * (the other screen's context is left untouched) — unless "No context" was
+ * context is of the OTHER kind, the most recently used context of an OPEN role
+ * of this kind (the other screen's context is left untouched; none → none) — unless "No context" was
  * picked here. No stored active context → none (a cleared context stays
  * cleared). kind null → the stored active context, whatever its kind.
  */
-export function effectiveContextRow<T extends { id: string; is_active: boolean; target_role?: string | null; updated_at?: string | null; created_at?: string | null }>(
+export function effectiveContextRow<T extends { id: string; is_active: boolean; type?: string | null; target_role?: string | null; opportunity_status?: string | null; updated_at?: string | null; created_at?: string | null }>(
   rows: T[],
   kind: RecruitingViewKind,
   kindNone: KindNone | null | undefined = NO_KIND_NONE,
@@ -74,7 +78,9 @@ export function effectiveContextRow<T extends { id: string; is_active: boolean; 
   if (contextKind(active) === kind) return active
   if (kindNone?.[kind]) return null
   const ts = (r: T) => `${r.updated_at ?? ''}|${r.created_at ?? ''}`
-  const mine = rows.filter((r) => contextKind(r) === kind).sort((a, b) => (ts(a) < ts(b) ? 1 : ts(a) > ts(b) ? -1 : 0))
+  // The fallback must be an OPEN role of this kind (founder 2026-09-27):
+  // closed / draft roles and saved searches never stand in; none → no context.
+  const mine = rows.filter((r) => contextKind(r) === kind && r.type === 'opportunity' && r.opportunity_status === 'open').sort((a, b) => (ts(a) < ts(b) ? 1 : ts(a) > ts(b) ? -1 : 0))
   return mine[0] ?? null
 }
 
@@ -216,7 +222,7 @@ async function doFetch(
   const myToken = ++latestFetchToken
   const { data, error: fetchError } = await supabase
     .from('recruiting_context')
-    .select('*')
+    .select('*, opportunity:opportunities!recruiting_context_opportunity_id_fkey(status)')
     .eq('owner_id', ownerId)
     .order('is_active', { ascending: false })
     .order('created_at', { ascending: false })
@@ -226,7 +232,13 @@ async function doFetch(
     set({ error: 'Could not load recruiting contexts', loading: false })
     return
   }
-  set({ rows: (data ?? []) as RecruitingContextRow[], loading: false })
+  // Flatten the embedded role status onto the row (round 6: fallback
+  // contexts must be open roles).
+  const rows = ((data ?? []) as (RecruitingContextRow & { opportunity?: { status?: string | null } | null })[]).map(({ opportunity, ...r }) => ({
+    ...r,
+    opportunity_status: opportunity?.status ?? null,
+  }))
+  set({ rows, loading: false })
 }
 
 /** Exported for unit tests. Production code should use the

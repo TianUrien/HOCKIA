@@ -888,8 +888,8 @@ export default function CreateVacancyModal({ isOpen, onClose, onSuccess, editing
                         values stay as the legacy enum for back-compat. Girls /
                         Boys on coach roles only: player roles are adult-only (founder
                         ruling 2026-09-25; the DB rejects them). */}
-                    <option value="Men">Adult Men</option>
-                    <option value="Women">Adult Women</option>
+                    <option value="Men">Adult men</option>
+                    <option value="Women">Adult women</option>
                     <option value="Mixed">Mixed</option>
                     {formData.opportunity_type !== 'player' && (
                       <>

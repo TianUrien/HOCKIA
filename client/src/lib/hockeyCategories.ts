@@ -1,5 +1,5 @@
 // Hockey category vocabulary — Phase 3 replacement for the universal "gender"
-// field. Categories describe the hockey context (Adult Women, Adult Men,
+// field. Categories describe the hockey context (Adult women, Adult men,
 // Girls, Boys, Mixed), not personal identity. Players have a single category;
 // coaches and umpires can have multiple, plus an "Any category" sentinel.
 
@@ -26,8 +26,8 @@ export const COACH_UMPIRE_CATEGORIES: readonly CoachUmpireCategory[] = [
 ]
 
 export const CATEGORY_LABELS: Record<CoachUmpireCategory, string> = {
-  adult_women: 'Adult Women',
-  adult_men: 'Adult Men',
+  adult_women: 'Adult women',
+  adult_men: 'Adult men',
   girls: 'Girls',
   boys: 'Boys',
   mixed: 'Mixed',
@@ -89,7 +89,7 @@ export function playingCategoryToLegacyGender(
 // ────────────────────────────────────────────────────────────────────────
 // The DB `opportunity_gender` enum is the value clubs select when posting a
 // vacancy: 'Men' | 'Women' | 'Girls' | 'Boys' | 'Mixed'. The first two are
-// historical and continue to map to "Adult Men" / "Adult Women" in the UI;
+// historical and continue to map to "Adult men" / "Adult women" in the UI;
 // the last three were added in Phase 3d. We never rename the enum (would
 // break public API consumers), so the helpers here translate to/from the
 // player's playing_category vocabulary.
@@ -113,12 +113,12 @@ export const OPPORTUNITY_GENDERS: readonly OpportunityGender[] = [
  */
 export const PLAYER_ROLE_GENDERS: readonly OpportunityGender[] = ['Men', 'Women', 'Mixed']
 
-/** UI label for an opportunity_gender value. 'Men' → "Adult Men" so a club
+/** UI label for an opportunity_gender value. 'Men' → "Adult men" so a club
  * vacancy posted before Phase 3d still reads naturally in the new vocabulary. */
 export function opportunityGenderToDisplay(value: string | null | undefined): string {
   if (!value) return ''
-  if (value === 'Men') return 'Adult Men'
-  if (value === 'Women') return 'Adult Women'
+  if (value === 'Men') return 'Adult men'
+  if (value === 'Women') return 'Adult women'
   if (value === 'Girls') return 'Girls'
   if (value === 'Boys') return 'Boys'
   if (value === 'Mixed') return 'Mixed'
@@ -154,7 +154,7 @@ export function playingCategoryToOpportunityGender(
 
 /** Reverse of the above — used by the OpportunityFilters chip ordering and
  * the searchAppearances analytics row so a "Men" filter still maps cleanly
- * to "Adult Men" in any UI that's already category-aware. */
+ * to "Adult men" in any UI that's already category-aware. */
 export function opportunityGenderToPlayingCategory(
   value: string | null | undefined,
 ): PlayingCategory | null {

@@ -319,8 +319,14 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     let cancelled = false
     const run = async () => {
       try {
+        // The viewer never lists themself (round 6): when the viewer could be in
+        // this pool (same role, or All), take them out of the total too —
+        // checked against the same server search, so hidden / test / under-18
+        // rules stay the server's.
+        const me = isAnon ? null : currentUserProfile
+        const meInScope = !!me?.id && !!me.full_name?.trim() && (!roleFilter || roleFilter === me.role)
         const count = await queryClient.fetchQuery({
-          queryKey: qk.communityCount(roleFilter ?? 'all', 'search-total'),
+          queryKey: qk.communityCount(roleFilter ?? 'all', meInScope ? `search-total:${me?.id}` : 'search-total'),
           staleTime: 30_000,
           retry: false,
           // The count comes from the same server search as the grid
@@ -335,7 +341,15 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
             })
             if (error) throw error
             const total = (data as { total?: number } | null)?.total
-            return typeof total === 'number' ? total : 0
+            const n = typeof total === 'number' ? total : 0
+            if (!meInScope || n === 0) return n
+            const { data: mine } = await supabase.rpc('community_search_members', {
+              p_role: roleFilter ?? undefined,
+              p_search_text: me?.full_name?.trim() ?? '',
+              p_limit: 50,
+            })
+            const rows = ((mine as { results?: { id: string }[] } | null)?.results ?? [])
+            return rows.some((r) => r.id === me?.id) ? n - 1 : n
           },
         })
         if (cancelled) return
@@ -356,7 +370,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
     return () => {
       cancelled = true
     }
-  }, [authLoading, isAnon, roleFilter, onTotalCountChange])
+  }, [authLoading, isAnon, roleFilter, onTotalCountChange, currentUserProfile])
 
   // Fetch members from Supabase. Critical: measure() is INSIDE
   // requestCache.dedupe so the module-level dedupe controls whether
@@ -658,6 +672,10 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
   const filteredMembers = useMemo(() => {
     let result = allMembers
 
+    // The viewer never appears in their own Community lists (round 6).
+    if (currentUserProfile?.id) {
+      result = result.filter(m => m.id !== currentUserProfile.id)
+    }
     if (filters.role !== 'all') {
       result = result.filter(m => m.role === filters.role)
     }

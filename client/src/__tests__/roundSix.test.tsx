@@ -43,7 +43,7 @@ const row = (over: Partial<RecruitingContextRow>): RecruitingContextRow => ({
   opportunity_id: null, owner_id: 'o', position_required: false, region: null, specialists_required: false,
   target_category: 'Men', target_compensation: null, target_level: null, target_location_country: null,
   target_position: null, target_problem: null, target_role: 'player', target_specialists: [], target_start_date: null,
-  type: 'opportunity', updated_at: '2026-09-01T00:00:00Z',
+  type: 'opportunity', updated_at: '2026-09-01T00:00:00Z', opportunity_status: 'open',
   ...over,
 } as RecruitingContextRow)
 
@@ -154,6 +154,20 @@ describe('recruiting context per tab kind', () => {
     expect(effectiveContextRow([coachCtx], 'player')).toBeNull()
     expect(contextKind({ target_role: null })).toBe('player')
   })
+  it('the fallback must be an OPEN role of that kind: closed / draft roles and saved searches are skipped; none → no context', () => {
+    const closedNewest = row({ id: 'p-closed', updated_at: '2026-09-26T00:00:00Z', opportunity_status: 'closed' })
+    const draft = row({ id: 'p-draft', updated_at: '2026-09-25T00:00:00Z', opportunity_status: 'draft' })
+    const saved = row({ id: 'p-saved', type: 'custom', updated_at: '2026-09-24T00:00:00Z', opportunity_id: null, opportunity_status: null })
+    expect(effectiveContextRow([coachCtx, closedNewest, draft, saved, recentPlayer], 'player')?.id).toBe('p-new')
+    expect(effectiveContextRow([coachCtx, closedNewest, draft, saved], 'player')).toBeNull()
+    const closedCoach = row({ id: 'c-closed', target_role: 'coach', opportunity_status: 'closed' })
+    expect(effectiveContextRow([recentPlayer, closedCoach].map((r) => ({ ...r, is_active: r.id === 'p-new' })), 'coach')).toBeNull()
+    // The stored active context itself is still honoured on its own tab.
+    expect(effectiveContextRow([{ ...closedNewest, is_active: true }], 'player')?.id).toBe('p-closed')
+  })
+  it('the store embeds each role\'s status', () => {
+    expect(src('hooks/useRecruitingContext.ts')).toContain("opportunity:opportunities!recruiting_context_opportunity_id_fkey(status)")
+  })
   it('the Recruiting for sheet on the Players tab never lists a coach role', () => {
     const active = effectiveContextRow(rows, 'player')
     const listed = playerContexts(rows, new Set(['o1', 'o2']), active?.id ?? null).map((r) => r.id)
@@ -186,6 +200,24 @@ describe('recruiting context per tab kind', () => {
     }
     const sheet = src('components/recruiting/ContextEditSheet.tsx')
     expect(sheet).toContain("if (viewKind) q = q.eq('opportunity_type', viewKind)")
+  })
+})
+
+// ── Follow-up: the viewer never lists themself ──────────────────────────────
+describe('Community lists exclude the viewer', () => {
+  it('the grid drops the viewer and the total count does too', () => {
+    const plv = src('components/community/PeopleListView.tsx')
+    expect(plv).toContain('result = result.filter(m => m.id !== currentUserProfile.id)')
+    expect(plv).toContain("rows.some((r) => r.id === me?.id) ? n - 1 : n")
+  })
+})
+
+// ── Follow-up: category labels in sentence case ─────────────────────────────
+describe('category labels', () => {
+  it('sentence case everywhere', async () => {
+    const { categoryToDisplay, opportunityGenderToDisplay } = await import('@/lib/hockeyCategories')
+    expect(['adult_men', 'adult_women', 'boys', 'girls', 'mixed'].map(categoryToDisplay)).toEqual(['Adult men', 'Adult women', 'Boys', 'Girls', 'Mixed'])
+    expect(opportunityGenderToDisplay('Men')).toBe('Adult men')
   })
 })
 

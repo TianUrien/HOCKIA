@@ -34,7 +34,7 @@ export default function DiscoverFilterChips({ filters }: DiscoverFilterChipsProp
   const categoryLabel = filters.target_category
     ? categoryToDisplay(filters.target_category)
     : filters.gender
-      ? (filters.gender === 'Men' ? 'Adult Men' : filters.gender === 'Women' ? 'Adult Women' : null)
+      ? (filters.gender === 'Men' ? 'Adult men' : filters.gender === 'Women' ? 'Adult women' : null)
       : null
   if (categoryLabel) {
     chips.push({ label: categoryLabel, color: 'bg-gray-100 text-gray-800' })

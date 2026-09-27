@@ -67,7 +67,7 @@ Deno.test('getNoResultsActions: player searching women clubs (the screenshot)', 
   assertEquals(actions[0].label, 'Show all clubs')
   assertEquals(actions[1].label, 'Search by country')
   // Phase 3e renamed the category chips; 'Remove women filter' predates it.
-  assertEquals(actions[2].label, 'Remove Adult Women filter')
+  assertEquals(actions[2].label, 'Remove Adult women filter')
   assertEquals(actions[3].label, 'Find opportunities')
 })
 
