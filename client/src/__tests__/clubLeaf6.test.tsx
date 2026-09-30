@@ -202,6 +202,11 @@ vi.mock('@/lib/auth', () => ({ useAuthStore: (sel: (s: unknown) => unknown) => s
 vi.mock('@/lib/supabase', () => ({ supabase: { from: vi.fn(), rpc: vi.fn() } }))
 
 vi.mock('@/hooks/useMediaQuery', () => ({ useMediaQuery: () => scoutingState.isPhone }))
+// D3 invite data (its own suite: d3Invite.test.tsx) — nobody invited here, no limit reached.
+vi.mock('@/hooks/useInvites', () => ({
+  useClubInviteStatuses: () => ({ pillFor: () => null, loading: false }),
+  useInviteAllowance: () => ({ limit: 20, sent: 0, reached: false }),
+}))
 
 import FindPlayersScreen from '@/components/club/FindPlayersScreen'
 import { FindPlayersEntry, ShortlistEntry } from '@/pages/ClubRecruitingRoutes'

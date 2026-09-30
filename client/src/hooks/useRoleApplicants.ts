@@ -18,6 +18,8 @@ export interface Applicant {
   updatedAt: string | null
   metadata: Record<string, unknown>
   viewed: boolean
+  /** D3.4: the application came from an invite (opportunity_applications.invite_id). */
+  invited: boolean
   fit: { state: FitState; components: FitComponents } | null
   person: {
     id: string
@@ -48,7 +50,7 @@ export interface RoleApplicants {
 }
 
 type Row = {
-  id: string; status: string; applied_at: string | null; updated_at: string | null; metadata: unknown
+  id: string; status: string; applied_at: string | null; updated_at: string | null; metadata: unknown; invite_id?: string | null
   applicant: {
     id: string; full_name: string | null; avatar_url: string | null; role: string | null; position: string | null; secondary_position: string | null
     nationality_country_id: number | null; nationality2_country_id: number | null; base_location: string | null; playing_category: string | null
@@ -111,7 +113,7 @@ export function useRoleApplicants(roleId: string | null | undefined, clubId: str
         supabase.from('opportunities').select('*').eq('id', roleId).eq('club_id', clubId).maybeSingle(),
         supabase
           .from('opportunity_applications')
-          .select(`id, status, applied_at, updated_at, metadata,
+          .select(`id, status, applied_at, updated_at, metadata, invite_id,
             applicant:applicant_id ( id, full_name, avatar_url, role, position, secondary_position, nationality_country_id, nationality2_country_id, base_location, playing_category, last_active_at, current_club, current_world_club_id )`)
           .eq('opportunity_id', roleId),
         supabase.from('application_response_settings').select('expiry_days').limit(1).maybeSingle(),
@@ -143,6 +145,7 @@ export function useRoleApplicants(roleId: string | null | undefined, clubId: str
           updatedAt: r.updated_at,
           metadata: r.metadata && typeof r.metadata === 'object' && !Array.isArray(r.metadata) ? (r.metadata as Record<string, unknown>) : {},
           viewed: viewed.has(r.id),
+          invited: !!r.invite_id,
           fit: fitById.get(r.id) ?? null,
           person: {
             id: a.id, fullName: a.full_name?.trim() || 'Hockia member', avatarUrl: a.avatar_url, role: a.role, position: a.position, secondaryPosition: a.secondary_position,

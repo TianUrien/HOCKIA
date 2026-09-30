@@ -20,7 +20,8 @@ import { cn } from '@/lib/utils'
  * the most recent decision. A "New" dot until this club opens the
  * application; "days left" before it closes, amber at 5 or fewer
  * (time-sensitive). The role line shows under every name. Fit chip is
- * club-only.
+ * club-only. An application that came from an invite shows the Invited tag
+ * (Figma D3.4 393:452; DEV NOTE 394:111) — everything else is unchanged.
  */
 type Chip = 'pending' | 'shortlisted' | 'maybe' | 'rejected' | 'no_response'
 
@@ -123,7 +124,9 @@ export default function ApplicantsScreen({ roleId }: { roleId: string }) {
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-1.5">
                     <span className="truncate text-[16px] font-semibold leading-[21px] text-ink-1">{a.person.fullName}</span>
-                    {isNew && <span className="shrink-0 text-caption font-semibold text-hockia-primary">New</span>}
+                    {a.invited
+                      ? <span className="shrink-0 text-caption font-semibold text-hockia-primary" data-testid="applicant-invited-tag">Invited</span>
+                      : isNew && <span className="shrink-0 text-caption font-semibold text-hockia-primary">New</span>}
                   </span>
                   <span className="block truncate text-[14px] leading-[19px] text-ink-2">{personRoleLine(a.person)}</span>
                   {(a.fit?.state && a.fit.state !== 'grey') || country ? (
