@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
-import { Check, ChevronDown, ChevronRight, Info, Search, X } from 'lucide-react'
+import { Check, ChevronDown, ChevronLeft, ChevronRight, Info, Search, X } from 'lucide-react'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
 import CountrySelect from '@/components/CountrySelect'
@@ -29,6 +29,14 @@ interface LinkClubScreenProps {
   profile: ClubProfileShape
   onCancel: () => void
   onLinked: () => void
+  /** Onboarding (D1.24 DEV NOTE 368:1088, step 2 of the club set-up): "‹ Back"
+   *  instead of Cancel, "Step 2 of 2" under the title, "Skip for now" under
+   *  the primary action. */
+  mode?: 'default' | 'onboarding'
+  /** Onboarding only: finish without linking. */
+  onSkip?: () => void
+  /** Onboarding only: the finish step is running (disables the actions). */
+  finishing?: boolean
 }
 
 type Match = LinkClubMatch
@@ -36,7 +44,8 @@ type League = { id: number; name: string; tier: number | null; province: string 
 type Side = 'men' | 'women'
 type Pick = { kind: 'existing'; match: Match } | { kind: 'new' } | null
 
-export default function LinkClubScreen({ profile, onCancel, onLinked }: LinkClubScreenProps) {
+export default function LinkClubScreen({ profile, onCancel, onLinked, mode = 'default', onSkip, finishing = false }: LinkClubScreenProps) {
+  const onboarding = mode === 'onboarding'
   const fetchProfile = useAuthStore((s) => s.fetchProfile)
   const addToast = useToastStore((s) => s.addToast)
   const { countries } = useCountries()
@@ -168,15 +177,21 @@ export default function LinkClubScreen({ profile, onCancel, onLinked }: LinkClub
   return (
     <div className="flex min-h-screen flex-col bg-white lg:hidden" data-testid="link-club-screen">
       <div className="flex h-11 items-center justify-between px-4 pt-[env(safe-area-inset-top)]">
-        <button type="button" onClick={onCancel} className="w-[120px] text-left text-body text-hockia-primary">Cancel</button>
+        {onboarding ? (
+          <button type="button" onClick={onCancel} disabled={saving || finishing} aria-label="Back to About your club" className="-ml-2 flex w-[120px] items-center text-left text-body text-hockia-primary disabled:opacity-60">
+            <ChevronLeft className="h-6 w-6" strokeWidth={2} /> Back
+          </button>
+        ) : (
+          <button type="button" onClick={onCancel} className="w-[120px] text-left text-body text-hockia-primary">Cancel</button>
+        )}
         <h1 className="text-body font-semibold text-ink-1">Link your club</h1>
         <span className="w-[120px]" />
       </div>
 
-      <div className="flex-1 overflow-y-auto pb-28">
+      <div className={cn('flex-1 overflow-y-auto', onboarding ? 'pb-40' : 'pb-28')}>
         <div className="px-5 pb-2 pt-1.5">
           <h2 className="text-[28px] font-bold leading-[34px] tracking-[-0.28px] text-ink-1">Find your club</h2>
-          <p className="mt-1 text-[14px] leading-5 text-ink-2">Linking puts your league next to your name and lets fit compare levels.</p>
+          <p className="mt-1 text-[14px] leading-5 text-ink-2">{onboarding ? 'Step 2 of 2 · ' : ''}Linking puts your league next to your name and lets fit compare levels.</p>
         </div>
 
         <div className="px-5 pt-2.5">
@@ -306,11 +321,16 @@ export default function LinkClubScreen({ profile, onCancel, onLinked }: LinkClub
         <button
           type="button"
           onClick={() => void submit()}
-          disabled={!pick || saving}
+          disabled={!pick || saving || finishing}
           className="flex h-[50px] w-full items-center justify-center rounded-full bg-hockia-primary text-body font-semibold text-white disabled:opacity-40"
         >
           {saving ? 'Linking…' : pick?.kind === 'new' ? 'Add and link' : 'Link club'}
         </button>
+        {onboarding && onSkip && (
+          <button type="button" onClick={onSkip} disabled={saving || finishing} className="mt-1 flex h-11 w-full items-center justify-center text-body font-semibold text-hockia-primary disabled:opacity-60">
+            {finishing ? 'Finishing…' : 'Skip for now'}
+          </button>
+        )}
       </div>
 
       <BottomSheet open={picker !== null} onClose={() => setPicker(null)} ariaLabel={picker === 'women' ? 'Women’s teams league' : 'Men’s teams league'}>

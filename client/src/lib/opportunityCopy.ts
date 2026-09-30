@@ -13,7 +13,7 @@ import { format, differenceInCalendarDays } from 'date-fns'
 import type { Vacancy } from '@/lib/supabase'
 import { compensationLabel } from '@/lib/opportunityIntent'
 import { humanizeToken, positionLabel } from '@/lib/identity'
-import { APPLICATION_STATUS_LABELS } from '@/lib/applicationStatus'
+import { APPLICATION_STATUS_LABELS, ROLE_CLOSED_LABEL } from '@/lib/applicationStatus'
 import { NO_REPLY_DAYS } from '@/lib/statusTone'
 
 /** "Forward" — the position is the headline; free-text title is the fallback. */
@@ -203,7 +203,7 @@ export function applicationStatusPill(
     case 'no_response': return { label: L.no_response, tone: 'grey' }
     case 'filled': return { label: L.filled, tone: 'grey' }
     default: {
-      if (!roleOpen) return { label: 'Role closed', tone: 'grey' }
+      if (!roleOpen) return { label: ROLE_CLOSED_LABEL, tone: 'grey' }
       const days = appliedAt ? differenceInCalendarDays(now, new Date(appliedAt)) : 0
       // The applicant waits on the club → grey; the club sees the same
       // state in amber (lib/statusTone noReplyTone).

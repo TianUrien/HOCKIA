@@ -1,13 +1,13 @@
 import { lazy, Suspense, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Bell, Check, FileText, HelpCircle, Languages, Lock, MessageSquare, Shield, Users } from 'lucide-react'
+import { Bell, Check, ChevronRight, FileText, HelpCircle, Languages, Lock, MessageSquare } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { DetailNavBar } from '@/components/ui/DetailNavBar'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
 import BlockedAccountsList from '@/components/BlockedAccountsList'
 import DeleteAccountModal from '@/components/DeleteAccountModal'
-import { SettingsGroup, SettingsRow, SettingsSwitch } from './settingsUi'
+import { ContactEmailPublicRow, SettingsGroup, SettingsRow, SettingsSwitch, SheetActions } from './settingsUi'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
@@ -22,6 +22,7 @@ import { OPPORTUNITY_PREF_LABEL } from '@/lib/candidateIntent'
 import { trackPushSubscribe, trackPushUnsubscribe } from '@/lib/analytics'
 import { qk } from '@/lib/queryKeys'
 import { squadSettingsSubtitle } from '@/lib/clubSquadCopy'
+import { CLUB_EDIT_PATH, CLUB_GROUP_FOOTER, CONTACT_EMAIL_INTRO, clubLeagueSubtitle, contactEmailSubtitle, isValidContactEmail } from '@/lib/clubSettingsCopy'
 import type { Profile } from '@/lib/supabase'
 
 const FeedbackModal = lazy(() => import('@/components/FeedbackModal'))
@@ -38,7 +39,45 @@ function SquadSettingsRow({ clubId, onOpen }: { clubId: string | null; onOpen: (
       return rows && rows.length > 0 ? rows[0].total_count : 0
     },
   })
-  return <SettingsRow title="Squad & invites" subtitle={squadSettingsSubtitle(data)} icon={<Users className="h-4 w-4" strokeWidth={2} />} onClick={onOpen} />
+  return <SettingsRow title="Squad & invites" subtitle={squadSettingsSubtitle(data)} onClick={onOpen} />
+}
+
+/** Club → Contact email (DEV NOTE 355:927: contact_email, contact_email_public, default private). */
+function ContactEmailSheet({ open, onClose, email, isPublic, busy, onSave }: { open: boolean; onClose: () => void; email: string; isPublic: boolean; busy: boolean; onSave: (email: string | null, isPublic: boolean) => Promise<boolean> }) {
+  const [value, setValue] = useState(email)
+  const [pub, setPub] = useState(isPublic)
+  const [error, setError] = useState<string | null>(null)
+  const save = async () => {
+    if (!isValidContactEmail(value)) { setError('Enter an email like name@club.com, or leave it empty.'); return }
+    const trimmed = value.trim()
+    if (await onSave(trimmed || null, trimmed ? pub : false)) onClose()
+  }
+  return (
+    <BottomSheet open={open} onClose={onClose} ariaLabel="Contact email">
+      <div className="px-5 pb-3 pt-1" data-testid="contact-email-sheet">
+        <h2 className="text-title text-ink-1">Contact email</h2>
+        <p className="mt-1 text-secondary text-ink-2">{CONTACT_EMAIL_INTRO}</p>
+        <input
+          type="email"
+          inputMode="email"
+          autoCapitalize="none"
+          autoCorrect="off"
+          value={value}
+          onChange={(e) => { setValue(e.target.value); setError(null) }}
+          placeholder="name@club.com"
+          aria-label="Contact email"
+          className="mt-3 h-12 w-full rounded-[12px] bg-surface-grouped px-4 text-[17px] text-ink-1 placeholder:text-ink-4 focus:outline-none focus:ring-2 focus:ring-hockia-primary/30"
+        />
+        {error && <p role="alert" className="pt-1.5 text-[13px] text-red-600">{error}</p>}
+        <div className="mt-3">
+          <ContactEmailPublicRow checked={pub && value.trim() !== ''} disabled={value.trim() === ''} onChange={() => setPub((v) => !v)} />
+        </div>
+        <div className="mt-4">
+          <SheetActions onCancel={onClose} onSave={() => void save()} saving={busy} />
+        </div>
+      </div>
+    </BottomSheet>
+  )
 }
 
 /**
@@ -122,6 +161,7 @@ function Hub({ go }: { go: (s: SettingsSection | 'account') => void }) {
   const [feedback, setFeedback] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [signingOut, setSigningOut] = useState(false)
+  const [contactEmail, setContactEmail] = useState(false)
 
   const provider = PROVIDER[(user?.app_metadata?.provider as string | undefined) ?? 'email'] ?? 'email'
   const preference = read<string | null>('opportunity_preference', null)
@@ -136,20 +176,31 @@ function Hub({ go }: { go: (s: SettingsSection | 'account') => void }) {
   return (
     <Screen parent="Profile" title="Settings" onBack={() => navigate('/dashboard/profile')}>
       <SettingsGroup>
-        <button type="button" onClick={() => navigate('/dashboard/profile?action=edit')} className="flex w-full items-center gap-3.5 px-4 py-3.5 text-left">
+        <button type="button" onClick={() => navigate(isClub ? `${CLUB_EDIT_PATH}?from=settings` : '/dashboard/profile?action=edit')} className="flex w-full items-center gap-3.5 px-4 py-3.5 text-left" data-testid="settings-identity">
           <EntityAvatar src={profile?.avatar_url ? getImageUrl(profile.avatar_url, 'avatar-md') ?? profile.avatar_url : null} name={name} role={profile?.role} size={64} />
-          <span className="min-w-0 flex-1">
-            <span className="block truncate text-body font-semibold text-ink-1">{name}</span>
-            <span className="block truncate text-secondary text-ink-2">{user?.email}</span>
-            <span className="block truncate text-secondary text-ink-3">{roleLabel(profile?.role)} · signed in with {provider}</span>
-          </span>
+          {isClub ? (
+            // Figma D1.22: crest, club name, "Signed in with email", "Club · admin".
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-body font-semibold text-ink-1">{name}</span>
+              <span className="block truncate text-secondary text-ink-2">Signed in with {provider}</span>
+              <span className="block truncate text-secondary text-ink-3">Club · admin</span>
+            </span>
+          ) : (
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-body font-semibold text-ink-1">{name}</span>
+              <span className="block truncate text-secondary text-ink-2">{user?.email}</span>
+              <span className="block truncate text-secondary text-ink-3">{roleLabel(profile?.role)} · signed in with {provider}</span>
+            </span>
+          )}
+          {isClub && <ChevronRight className="h-4 w-4 shrink-0 text-ink-4" strokeWidth={2} aria-hidden="true" />}
         </button>
       </SettingsGroup>
 
       {isClub && (
-        <SettingsGroup label="Club">
-          <SettingsRow title="Club & league" icon={<Shield className="h-4 w-4" strokeWidth={2} />} onClick={() => navigate('/dashboard/profile?tab=league')} />
-          <SquadSettingsRow clubId={profile?.id ?? null} onOpen={() => navigate('/dashboard/profile/members')} />
+        <SettingsGroup label="Club" footer={CLUB_GROUP_FOOTER}>
+          <SettingsRow title="Club & league" subtitle={clubLeagueSubtitle(profile ?? {})} onClick={() => navigate('/dashboard/profile?tab=league&from=settings')} />
+          <SquadSettingsRow clubId={profile?.id ?? null} onOpen={() => navigate('/dashboard/profile/members?from=settings')} />
+          <SettingsRow title="Contact email" subtitle={contactEmailSubtitle(read<string | null>('contact_email', null), read<boolean>('contact_email_public', false))} onClick={() => setContactEmail(true)} />
         </SettingsGroup>
       )}
 
@@ -191,6 +242,17 @@ function Hub({ go }: { go: (s: SettingsSection | 'account') => void }) {
 
       <button type="button" onClick={() => setDeleting(true)} className="mx-auto mt-6 block py-2 text-row font-semibold text-red-600">Delete account</button>
       <p className="pt-1 text-center text-caption text-ink-3">Hockia · Made for field hockey</p>
+
+      {isClub && contactEmail && (
+        <ContactEmailSheet
+          open
+          onClose={() => setContactEmail(false)}
+          email={read<string | null>('contact_email', null) ?? ''}
+          isPublic={read<boolean>('contact_email_public', false)}
+          busy={busy === 'contact_email'}
+          onSave={(email, isPublic) => write({ contact_email: email, contact_email_public: isPublic }, 'contact_email')}
+        />
+      )}
 
       <BottomSheet open={lookingFor} onClose={() => setLookingFor(false)} ariaLabel="Looking for">
         <div className="px-5 pb-3 pt-1">
@@ -336,7 +398,10 @@ function Privacy({ back, go }: { back: () => void; go: (s: SettingsSection) => v
       <SettingsGroup label="Visibility">
         <SettingsRow title="Browse anonymously" subtitle="Clubs won’t see that you looked at them — and you won’t see who looked at you." trailing={<SettingsSwitch label="Browse anonymously" checked={read('browse_anonymously', false)} disabled={busy === 'browse_anonymously'} onChange={() => void toggle('browse_anonymously', false)} />} />
         <SettingsRow title="Show when I was last active" subtitle="“Active today” on your profile and in Chat." trailing={<SettingsSwitch label="Show when I was last active" checked={read('show_last_active', true)} disabled={busy === 'show_last_active'} onChange={() => void toggle('show_last_active', true)} />} />
-        <SettingsRow title="Show my contact email" subtitle="Off: clubs see it only once they reply to your application." trailing={<SettingsSwitch label="Show my contact email" checked={read('contact_email_public', false)} disabled={busy === 'contact_email_public'} onChange={() => void toggle('contact_email_public', false)} />} />
+        {/* Clubs set their contact email under Settings › Club (D1.22). */}
+        {profile?.role !== 'club' && (
+          <SettingsRow title="Show my contact email" subtitle="Off: clubs see it only once they reply to your application." trailing={<SettingsSwitch label="Show my contact email" checked={read('contact_email_public', false)} disabled={busy === 'contact_email_public'} onChange={() => void toggle('contact_email_public', false)} />} />
+        )}
       </SettingsGroup>
 
       <SettingsGroup label="Safety" footer="Blocked members can’t message you, see your profile, or find you in Community.">

@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { useToastStore } from '@/lib/toast'
 import { useFindForRole } from '@/hooks/useFindForRole'
+import { useRecruitingContextStore } from '@/hooks/useRecruitingContext'
 import { CLOSE_NOT_FILLED_LABEL, closeRolePatch, closeRoleToast, REOPEN_ROLE_TOAST, reopenRolePatch, type RoleCloseOutcome } from '@/lib/roleLifecycle'
 import { countWaitingApplicants } from '@/lib/roleWaiting'
 
@@ -53,6 +54,8 @@ export function RoleActions({ role, onChanged, className }: Props) {
       const waiting = outcome === 'filled' ? await countWaitingApplicants(role.id) : 0
       const { error } = await supabase.from('opportunities').update(closeRolePatch(outcome) as never).eq('id', role.id).eq('club_id', role.club_id)
       if (error) throw error
+      // A closed role never stays the active "Ranked for" context.
+      void useRecruitingContextStore.getState().roleStatusChanged(role.id, 'closed')
       setSheet(null)
       addToast(closeRoleToast(outcome, waiting), 'success')
       onChanged()
@@ -70,6 +73,7 @@ export function RoleActions({ role, onChanged, className }: Props) {
     try {
       const { error } = await supabase.from('opportunities').update(reopenRolePatch(role.application_deadline) as never).eq('id', role.id).eq('club_id', role.club_id)
       if (error) throw error
+      void useRecruitingContextStore.getState().roleStatusChanged(role.id, 'open')
       setSheet(null)
       addToast(REOPEN_ROLE_TOAST, 'success')
       onChanged()

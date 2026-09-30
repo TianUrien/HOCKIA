@@ -85,6 +85,17 @@ const BRAND_CATEGORY_LABELS: Record<string, string> = {
   other: 'Other',
 }
 
+/** A coach's specialisation in sentence case ("Head coach"), the custom
+ *  title for "other" — the one label every Club v2 surface uses (Inbox
+ *  rows, Squad lines, key facts, chat card, Fit panel). */
+export function coachSpecialtyLabel(spec: string | null | undefined, custom?: string | null): string | null {
+  const key = spec?.trim().toLowerCase() || null
+  const own = custom?.trim() || null
+  if (!key) return own
+  if (key === 'other' || key === 'other_coach') return own ?? 'Coach'
+  return positionLabel(key)
+}
+
 /** brands.category enum → label ("coaching" → "Coaching & Training"). */
 export function brandCategoryLabel(value: string | null | undefined): string | null {
   if (!value) return null

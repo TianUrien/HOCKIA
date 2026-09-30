@@ -11,9 +11,8 @@ import { useFriendsList, type FriendPerson } from '@/hooks/useFriendsList'
 import { useFriendsInCommon } from '@/hooks/useFriendsInCommon'
 import { useFriendship } from '@/hooks/useFriendship'
 import { useTrustedReferences } from '@/hooks/useTrustedReferences'
-import { getSpecializationLabel } from '@/lib/coachSpecializations'
 import { getImageUrl } from '@/lib/imageUrl'
-import { humanizeToken, identityLine } from '@/lib/identity'
+import { coachSpecialtyLabel, humanizeToken, identityLine } from '@/lib/identity'
 import { profilePath } from '@/lib/profileNavigation'
 
 /**
@@ -34,7 +33,7 @@ interface FriendsScreenProps {
 
 function detailFor(p: FriendPerson): string | null {
   if (p.role === 'player') return humanizeToken(p.position)
-  if (p.role === 'coach') return p.coachSpecialization ? getSpecializationLabel(p.coachSpecialization, p.coachSpecializationCustom) : null
+  if (p.role === 'coach') return coachSpecialtyLabel(p.coachSpecialization, p.coachSpecializationCustom)
   if (p.role === 'umpire') return p.umpireLevel
   return null
 }

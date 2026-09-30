@@ -14,11 +14,9 @@ import { useCoverPhoto } from '@/hooks/useCoverPhoto'
 import { getInitials } from '@/lib/utils'
 import { getImageUrl } from '@/lib/imageUrl'
 import { categoriesToDisplay, categoryToDisplay } from '@/lib/hockeyCategories'
-import { getSpecializationLabel } from '@/lib/coachSpecializations'
-import type { CoachSpecialization } from '@/lib/coachSpecializations'
 import { publicProfileShareUrl } from '@/lib/profileShare'
 import { SOCIAL_PLATFORMS, type SocialLinks, type SocialPlatform } from '@/lib/socialLinks'
-import { humanizeToken, roleLabel } from '@/lib/identity'
+import { coachSpecialtyLabel, humanizeToken, roleLabel } from '@/lib/identity'
 import { logger } from '@/lib/logger'
 import type { Profile } from '@/lib/supabase'
 import type { PlayerProfileShape } from '@/pages/PlayerDashboard'
@@ -118,7 +116,7 @@ export default function HeroIdentityCard({
     .filter((v, i, self): v is string => Boolean(v) && self.indexOf(v) === i)
     .map((p) => humanizeToken(p) ?? p)
   const specializationLabel = isCoach
-    ? getSpecializationLabel((profile.coach_specialization ?? null) as CoachSpecialization | null, profile.coach_specialization_custom ?? null)
+    ? coachSpecialtyLabel(profile.coach_specialization ?? null, profile.coach_specialization_custom ?? null)
     : null
   const coachingCategoriesLabel = isCoach ? categoriesToDisplay(profile.coaching_categories ?? null) : null
   const detail = isCoach

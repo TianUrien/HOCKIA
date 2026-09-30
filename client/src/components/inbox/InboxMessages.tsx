@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Search, X } from 'lucide-react'
+import { Clock, Search, X } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
@@ -9,6 +9,9 @@ import { ConversationSkeleton } from '@/components/Skeleton'
 import { identityLine } from '@/lib/identity'
 import { formatInboxTime } from '@/lib/inboxTime'
 import { cn } from '@/lib/utils'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { useClubInboxMeta } from '@/hooks/useClubInbox'
+import { clubInboxRoleLine, inboxWaitingNotice } from '@/lib/clubInbox'
 
 interface ConversationRpcRow {
   conversation_id: string
@@ -40,11 +43,19 @@ interface InboxMessagesProps {
  * name + time, role line, last message, purple unread dot. Tapping opens
  * the conversation. Reads the same `get_user_conversations` RPC as the
  * desktop Messages page.
+ *
+ * Club v2 on phones (Figma D1.19 353:502; DEV NOTE 355:914): every row says
+ * "Player · position", plus "Applied" when the person applied to one of the
+ * club's roles; an amber dot marks conversations the club has never written
+ * in, and an amber notice counts them (hidden at 0). Players see none of it.
  */
 export function InboxMessages({ onCompose }: InboxMessagesProps) {
   const navigate = useNavigate()
   const userId = useAuthStore((s) => s.user?.id ?? null)
   const [query, setQuery] = useState('')
+  const role = useAuthStore((s) => s.profile?.role ?? null)
+  const isPhone = useMediaQuery('(max-width: 1023px)')
+  const clubV2 = role === 'club' && isPhone
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: inboxConversationsKey(userId ?? 'anon'),
@@ -62,6 +73,9 @@ export function InboxMessages({ onCompose }: InboxMessagesProps) {
       return (rows ?? []) as ConversationRpcRow[]
     },
   })
+
+  const { data: meta } = useClubInboxMeta(userId, data ?? [], clubV2)
+  const notice = useMemo(() => (clubV2 && meta ? inboxWaitingNotice([...meta.values()]) : null), [clubV2, meta])
 
   const filtered = useMemo(() => {
     const rows = data ?? []
@@ -104,6 +118,18 @@ export function InboxMessages({ onCompose }: InboxMessagesProps) {
         </label>
       </div>
 
+      {notice && !query && (
+        <div className="px-5 pb-2">
+          <div className="flex items-center gap-3 rounded-2xl bg-[#fdf1e4] py-3 pl-3.5 pr-3" role="status" data-testid="club-inbox-waiting-notice">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-white text-[#b45309]"><Clock className="h-5 w-5" strokeWidth={2} aria-hidden="true" /></span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-row font-semibold text-ink-1">{notice.title}</span>
+              {notice.sub && <span className="block text-secondary text-[#b45309]">{notice.sub}</span>}
+            </span>
+          </div>
+        </div>
+      )}
+
       {isLoading ? (
         <div>
           <ConversationSkeleton />
@@ -121,7 +147,7 @@ export function InboxMessages({ onCompose }: InboxMessagesProps) {
         <div className="px-5 py-12 text-center">
           <p className="text-row font-semibold text-ink-1">{query ? 'No conversations match' : 'No messages yet'}</p>
           <p className="mt-1 text-secondary text-ink-2">
-            {query ? 'Try another name.' : 'Clubs answer messages far more often than they update applications.'}
+            {query ? 'Try another name.' : role === 'club' ? 'Messages from players, coaches and clubs show up here.' : 'Clubs answer messages far more often than they update applications.'}
           </p>
           {!query && (
             <button type="button" onClick={onCompose} className="mt-4 rounded-full bg-hockia-primary px-5 py-2.5 text-row font-semibold text-white">
@@ -136,6 +162,8 @@ export function InboxMessages({ onCompose }: InboxMessagesProps) {
             const name = row.other_participant_name ?? row.other_participant_username ?? 'HOCKIA member'
             const mine = row.last_message_sender_id === userId
             const preview = row.last_message_content ? `${mine ? 'You: ' : ''}${row.last_message_content}` : 'Say hello'
+            const m = clubV2 ? meta?.get(row.conversation_id) : undefined
+            const roleLine = m ? clubInboxRoleLine(row.other_participant_role, m.detail, m.applied) : identityLine(row.other_participant_role)
             return (
               <li key={row.conversation_id}>
                 <button
@@ -149,10 +177,14 @@ export function InboxMessages({ onCompose }: InboxMessagesProps) {
                       <span className="truncate text-row font-semibold text-ink-1">{name}</span>
                       <span className="shrink-0 text-secondary text-ink-3">{formatInboxTime(row.conversation_last_message_at ?? row.last_message_sent_at)}</span>
                     </span>
-                    <span className="block truncate text-secondary text-ink-2">{identityLine(row.other_participant_role)}</span>
+                    <span className="block truncate text-secondary text-ink-2">{roleLine}</span>
                     <span className={cn('block truncate text-secondary', unread ? 'font-medium text-ink-1' : 'text-ink-2')}>{preview}</span>
                   </span>
-                  {unread && <span aria-label="Unread" className="h-2 w-2 shrink-0 rounded-full bg-hockia-primary" />}
+                  {m?.waiting ? (
+                    <span aria-label="Waiting for your first reply" className="h-2 w-2 shrink-0 rounded-full bg-[#b45309]" data-testid="inbox-waiting-dot" />
+                  ) : unread ? (
+                    <span aria-label="Unread" className="h-2 w-2 shrink-0 rounded-full bg-hockia-primary" />
+                  ) : null}
                 </button>
               </li>
             )

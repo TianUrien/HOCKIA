@@ -1,5 +1,4 @@
-import { humanizeToken, roleLabel } from '@/lib/identity'
-import { humanizeCoachSpecialization } from '@/lib/coachFit'
+import { coachSpecialtyLabel, positionLabel, roleLabel } from '@/lib/identity'
 
 /**
  * Pure helpers behind Squad — own (Figma 04 Club D1.15, DEV NOTE 338:702).
@@ -21,16 +20,12 @@ export interface SquadPerson {
 /** DEV NOTE: rows always show the role — "Player · position" or "Coach · specialty". */
 export function squadRoleLine(p: Pick<SquadPerson, 'role' | 'position' | 'secondary_position' | 'coach_specialization' | 'coach_specialization_custom'>): string {
   if (p.role === 'coach') {
-    const spec = p.coach_specialization
-    const custom = p.coach_specialization_custom?.trim() || null
-    const label = spec && !/^other(_coach)?$/i.test(spec.trim())
-      ? humanizeCoachSpecialization(spec)
-      : custom ?? (spec ? humanizeCoachSpecialization(spec) : null)
+    const label = coachSpecialtyLabel(p.coach_specialization, p.coach_specialization_custom)
     return [roleLabel('coach'), label].filter(Boolean).join(' · ')
   }
   const positions = [p.position, p.secondary_position]
     .filter((v, i, a): v is string => Boolean(v) && a.indexOf(v) === i)
-    .map((v) => humanizeToken(v) ?? v)
+    .map((v) => positionLabel(v) ?? v)
   return [roleLabel('player'), ...positions].join(' · ')
 }
 

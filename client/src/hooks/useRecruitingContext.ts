@@ -74,14 +74,28 @@ export function effectiveContextRow<T extends { id: string; is_active: boolean; 
   kindNone: KindNone | null | undefined = NO_KIND_NONE,
 ): T | null {
   const active = rows.find((r) => r.is_active) ?? null
-  if (!kind || !active) return active
-  if (contextKind(active) === kind) return active
-  if (kindNone?.[kind]) return null
+  if (!active) return null
   const ts = (r: T) => `${r.updated_at ?? ''}|${r.created_at ?? ''}`
   // The fallback must be an OPEN role of this kind (founder 2026-09-27):
   // closed / draft roles and saved searches never stand in; none → no context.
-  const mine = rows.filter((r) => contextKind(r) === kind && r.type === 'opportunity' && r.opportunity_status === 'open').sort((a, b) => (ts(a) < ts(b) ? 1 : ts(a) > ts(b) ? -1 : 0))
-  return mine[0] ?? null
+  const fallback = (k: 'player' | 'coach') =>
+    rows.filter((r) => contextKind(r) === k && r.type === 'opportunity' && r.opportunity_status === 'open').sort((a, b) => (ts(a) < ts(b) ? 1 : ts(a) > ts(b) ? -1 : 0))[0] ?? null
+  // A stored role context whose role is no longer open counts as no context
+  // of that kind (Club v2 QA round 9): fall back like round 6. Rows built
+  // locally (status unknown) are taken as they are.
+  if (isStaleRoleContext(active)) {
+    const k = kind ?? contextKind(active)
+    return kindNone?.[k] ? null : fallback(k)
+  }
+  if (!kind) return active
+  if (contextKind(active) === kind) return active
+  if (kindNone?.[kind]) return null
+  return fallback(kind)
+}
+
+/** A role context whose role is known and no longer open (closed, draft, gone). */
+export function isStaleRoleContext(row: { type?: string | null; opportunity_status?: string | null }): boolean {
+  return row.type === 'opportunity' && row.opportunity_status !== undefined && row.opportunity_status !== 'open'
 }
 
 /** The active row for the current screen kind (store selector). */
@@ -103,7 +117,23 @@ export interface UpdateContextInput {
   competition_id?: number | null
   region?: string | null
   label?: string | null
+  /** Saved-search criteria (Club v2 D1.23 "New context" — the Post a role
+   *  step-1 fields). The opportunity RPC copies these from the role; a custom
+   *  context writes them here (owner-only RLS on recruiting_context). */
+  target_role?: 'player' | 'coach' | null
+  target_position?: string | null
+  target_level?: string | null
+  target_specialists?: string[]
+  position_required?: boolean
+  level_required?: boolean
+  specialists_required?: boolean
 }
+
+const UPDATE_KEYS = [
+  'target_category', 'competition_id', 'region', 'label',
+  'target_role', 'target_position', 'target_level', 'target_specialists',
+  'position_required', 'level_required', 'specialists_required',
+] as const satisfies readonly (keyof UpdateContextInput)[]
 
 export interface ActivateOpportunityContextInput {
   opportunityId: string
@@ -177,6 +207,12 @@ interface RecruitingContextStoreState {
   update: (id: string, input: UpdateContextInput) => Promise<void>
   remove: (id: string) => Promise<void>
   clearError: () => void
+  /** The club closed / reopened one of its roles (RoleActions, desktop
+   *  Opportunities tab): patch the role status onto its context and, when a
+   *  closed role was the stored active context, make the newest open role of
+   *  that kind active (else none) — so no screen keeps ranking for a closed
+   *  role (Club v2 QA round 9). */
+  roleStatusChanged: (opportunityId: string, status: string) => Promise<void>
   /** Which kind of role the current screen ranks (founder ruling
    *  2026-09-27, round 6): Players tab / Find players / Shortlist = 'player',
    *  Coaches tab = 'coach', anything else = null (the stored active row,
@@ -440,10 +476,7 @@ export const useRecruitingContextStore = create<RecruitingContextStoreState>((se
     // the caller didn't mean to touch. Null is preserved — callers
     // use null to explicitly clear a field.
     const patch: Record<string, unknown> = {}
-    if ('target_category' in input) patch.target_category = input.target_category
-    if ('competition_id' in input) patch.competition_id = input.competition_id
-    if ('region' in input) patch.region = input.region
-    if ('label' in input) patch.label = input.label
+    for (const key of UPDATE_KEYS) if (key in input) patch[key] = input[key]
     if (Object.keys(patch).length === 0) return
 
     const { error: updateError } = await supabase
@@ -476,6 +509,29 @@ export const useRecruitingContextStore = create<RecruitingContextStoreState>((se
   },
 
   clearError: () => set({ error: null }),
+
+  roleStatusChanged: async (opportunityId, status) => {
+    const { ownerId, eligibleRole, rows, refresh, activate } = get()
+    if (!ownerId || !eligibleRole) return
+    const hit = rows.filter((r) => r.opportunity_id === opportunityId)
+    if (!hit.length) return
+    const wasActive = status !== 'open' ? hit.find((r) => r.is_active) ?? null : null
+    const patched = rows.map((r) => (r.opportunity_id === opportunityId ? { ...r, opportunity_status: status } : r))
+    set({ rows: patched })
+    if (!wasActive) return
+    // Like any other closed role (round 6 rule): the newest OPEN role of the
+    // same kind takes over, else no context — persisted so every screen agrees.
+    const next = effectiveContextRow(patched, contextKind(wasActive))
+    if (next) { await activate(next.id); return }
+    set((s) => ({ rows: s.rows.map((r) => (r.id === wasActive.id ? { ...r, is_active: false } : r)) }))
+    const { error: updateError } = await supabase
+      .from('recruiting_context')
+      .update({ is_active: false })
+      .eq('owner_id', ownerId)
+      .eq('id', wasActive.id)
+    if (updateError) reportSupabaseError('useRecruitingContext.roleStatusChanged', updateError)
+    await refresh()
+  },
 }))
 
 /** Reset on sign-out / account switch. setViewer(null, null) drops the

@@ -128,7 +128,7 @@ describe('recruiting context + per-role shortlist', () => {
     expect(contextFitTarget(ctx({ id: 'c', target_role: 'coach' }))).toBeNull()
     expect(contextFitTarget(ctx({ id: 'c', target_category: null }))).toBeNull()
   })
-  it('lists open player roles and saved contexts, plus the active one', () => {
+  it('lists open player roles and saved contexts — a closed role never, even when active', () => {
     const rows = [
       ctx({ id: 'open', opportunity_id: 'r1' }),
       ctx({ id: 'closed', opportunity_id: 'r2' }),
@@ -136,7 +136,7 @@ describe('recruiting context + per-role shortlist', () => {
       ctx({ id: 'custom', type: 'custom', opportunity_id: null }),
       ctx({ id: 'activeClosed', opportunity_id: 'r4' }),
     ]
-    expect(playerContexts(rows, new Set(['r1', 'r3']), 'activeClosed').map((r) => r.id)).toEqual(['open', 'custom', 'activeClosed'])
+    expect(playerContexts(rows, new Set(['r1', 'r3']), 'activeClosed').map((r) => r.id)).toEqual(['open', 'custom'])
   })
   it('each role has its own list (named after the role); no role → default list', () => {
     const lists = [

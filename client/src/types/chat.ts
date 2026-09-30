@@ -66,6 +66,7 @@ export type ConversationOrigin =
   | 'Opportunity'
   | 'Hockia AI'
   | 'Direct'
+  | 'Application'
   | 'unknown'
 
 export interface Conversation {

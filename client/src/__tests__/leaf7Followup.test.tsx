@@ -304,7 +304,7 @@ describe('public club profile · Squad tab', () => {
       </MemoryRouter>,
     )
     fireEvent.click(screen.getByRole('tab', { name: 'Squad' }))
-    expect(screen.getByText('Coach · Head Coach')).toBeTruthy()
+    expect(screen.getByText('Coach · Head coach')).toBeTruthy()
     expect(screen.getByText('Player · Midfielder · Defender')).toBeTruthy()
   })
 })

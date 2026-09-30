@@ -20,6 +20,7 @@ interface MessageListProps {
     firstUnreadId: string | null
     unreadCount: number
   }
+  hideReceipts?: boolean
 }
 
 export function MessageList({
@@ -32,7 +33,8 @@ export function MessageList({
   editMessage,
   deleteMessage,
   isLoadingMore,
-  unreadMetadata
+  unreadMetadata,
+  hideReceipts = false
 }: MessageListProps) {
   const messageRefs = useRef(new Map<string, HTMLDivElement>())
 
@@ -131,6 +133,7 @@ export function MessageList({
             onDeleteFailed={deleteFailedMessage}
             onEditSave={editMessage}
             onDelete={deleteMessage}
+            hideReceipts={hideReceipts}
           />
         </div>
       ))}

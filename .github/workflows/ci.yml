@@ -292,16 +292,18 @@ jobs:
           # eager or not, and splitting only adds per-chunk glue (3ddb1e09 measured
           # +8KB). 4600KB covers leaves 6–10 at the observed ~25–45KB per leaf; the
           # per-change growth warning below flags any single change that adds a lot.
+          # Budget bumped 4600KB → 4800KB on 2026-09-27 (founder-approved) — Club v2
+          # leaves 9+10 took raw to 4614KB. First-load gate (480KB) is unchanged.
           # TODO(bundle): retire the v1 club desktop screens once desktop adopts
           # Club v2 (they are still reachable at >=1024px), then lower this gate.
           echo "RAW_TOTAL_BYTES=${TOTAL_JS}" >> "$GITHUB_ENV"
-          if [ "$TOTAL_JS" -gt 4505600 ]; then
-            echo "::warning::Bundle nearing raw budget: ${TOTAL_KB}KB / 4600KB ($(( TOTAL_KB * 100 / 4600 ))%)"
+          if [ "$TOTAL_JS" -gt 4812800 ]; then
+            echo "::warning::Bundle nearing raw budget: ${TOTAL_KB}KB / 4800KB ($(( TOTAL_KB * 100 / 4800 ))%)"
           fi
 
-          # Secondary gate: raw total must stay under 4.6MB
-          if [ "$TOTAL_JS" -gt 4710400 ]; then
-            echo "::error::Raw bundle budget exceeded! ${TOTAL_KB}KB > 4600KB"
+          # Secondary gate: raw total must stay under 4.8MB
+          if [ "$TOTAL_JS" -gt 4915200 ]; then
+            echo "::error::Raw bundle budget exceeded! ${TOTAL_KB}KB > 4800KB"
             exit 1
           fi
 
