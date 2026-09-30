@@ -6,8 +6,7 @@ import RoleBadge from '@/components/RoleBadge'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
 import { supabase } from '@/lib/supabase'
 import { getImageUrl } from '@/lib/imageUrl'
-import { humanizeToken, identityLine } from '@/lib/identity'
-import { getSpecializationLabel } from '@/lib/coachSpecializations'
+import { coachSpecialtyLabel, humanizeToken, identityLine } from '@/lib/identity'
 import type { ConversationParticipant } from '@/types/chat'
 import { cn } from '@/lib/utils'
 import { clubLeadLeague } from '@/lib/clubProfileCopy'
@@ -52,7 +51,7 @@ function useParticipantDetail(participant: ConversationParticipant | undefined):
         const role = data.role
         const extra =
           role === 'player' ? humanizeToken(data.position) :
-          role === 'coach' ? (data.coach_specialization ? getSpecializationLabel(data.coach_specialization, data.coach_specialization_custom) : null) :
+          role === 'coach' ? (data.coach_specialization ? coachSpecialtyLabel(data.coach_specialization, data.coach_specialization_custom) : null) :
           role === 'club' ? clubLeadLeague(data.mens_league_division, data.womens_league_division) :
           role === 'umpire' ? data.umpire_level : null
         const active = Boolean(data.show_last_active && data.last_active_at && Date.now() - new Date(data.last_active_at).getTime() < 86_400_000)

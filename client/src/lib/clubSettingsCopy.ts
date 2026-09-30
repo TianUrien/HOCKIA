@@ -19,6 +19,7 @@ export function clubLeagueSubtitle(p: { current_world_club_id?: string | null; m
 
 /** Contact email copy shared by Settings › Contact email and Edit profile
  *  (founder QA round 9): one switch label + help, one subtitle rule. */
+export const CONTACT_EMAIL_INTRO = 'So players and coaches can reach the club directly. Your sign-in email is never shown.'
 export const CONTACT_EMAIL_SWITCH_LABEL = 'Show on your profile'
 export const CONTACT_EMAIL_SWITCH_HELP = 'Off: players message you on Hockia.'
 
