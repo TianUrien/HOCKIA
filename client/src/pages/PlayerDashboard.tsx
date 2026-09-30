@@ -65,6 +65,8 @@ import type { ChecklistKey } from '@/lib/openToPlayScreen'
 // D2 owner leaves — lazy so they stay out of the profile chunk until opened.
 const PassportsPermitsScreen = lazy(() => import('@/components/profile/mobile/PassportsPermitsScreen'))
 const OpenToPlayScreen = lazy(() => import('@/components/profile/mobile/OpenToPlayScreen'))
+// D3.2 Invite to apply (club view only), opened on demand.
+const InviteSheet = lazy(() => import('@/components/club/InviteSheet'))
 
 // `?section=` query param → DOM anchor id. Used by the deep-link scroll
 // hook so notifications like ?tab=profile&section=viewers land on the
@@ -541,6 +543,7 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
   const heroVideoTotal = isPhone ? videoTotal : desktopVideoTotal
   const clubView = useClubViewOfPlayer(isPhone && readOnly && !isOwnProfile && profile ? profile : null)
   const [rolePicker, setRolePicker] = useState(false)
+  const [inviteOpen, setInviteOpen] = useState(false)
   const { countries: allCountries } = useCountries()
 
   if (!profile) return null
@@ -798,7 +801,12 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
             viewAsClub
               ? { onShortlist: () => undefined, shortlisted: false, preview: true }
               : clubView.enabled
-                ? { onShortlist: handleShortlist, shortlisted: clubView.shortlisted, busy: clubView.busy }
+                ? {
+                    onShortlist: handleShortlist,
+                    shortlisted: clubView.shortlisted,
+                    busy: clubView.busy,
+                    invite: clubView.invite ? { ...clubView.invite, onInvite: () => setInviteOpen(true) } : null,
+                  }
                 : null
           }
           keyFacts={d2 ? (
@@ -861,6 +869,16 @@ export default function PlayerDashboard({ profileData, readOnly = false, isOwnPr
                   onClose={() => setRolePicker(false)}
                 />
                 <UndoToast />
+                {inviteOpen && (
+                  <Suspense fallback={null}>
+                    <InviteSheet
+                      open={inviteOpen}
+                      player={{ id: profile.id, full_name: profile.full_name, avatar_url: profile.avatar_url, role: profile.role, position: profile.position, secondary_position: profile.secondary_position }}
+                      activeRoleId={clubView.fitRole?.id ?? null}
+                      onClose={() => setInviteOpen(false)}
+                    />
+                  </Suspense>
+                )}
               </>
             )}
           </div>

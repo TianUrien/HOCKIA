@@ -1,12 +1,16 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { Check, ChevronDown, Info, Plus, Star } from 'lucide-react'
 import { DetailNavBar } from '@/components/ui/DetailNavBar'
 import { ScoutPlayerRow } from './ScoutPlayerRow'
 import { RankedForSheet } from './RankedForSheet'
+import { InviteAction, InviteLimitNotice } from './InviteAction'
+import type { InviteSheetPlayer } from './InviteSheet'
 import { useCountries, EU_COUNTRY_CODES } from '@/hooks/useCountries'
 import { opportunityGenderToTarget, useRecruitingViewKind } from '@/hooks/useRecruitingContext'
 import { useFindPlayers, useOwnLeague, useRoleShortlist, useScoutingContext, useShortlistWrites } from '@/hooks/useScouting'
+import { useClubInviteStatuses, useInviteAllowance } from '@/hooks/useInvites'
+import { inviteLimitReason, isInvitablePlayer } from '@/lib/invites'
 import {
   applyFindFilters,
   contextFitTarget,
@@ -21,6 +25,9 @@ import {
   type ScoutRow,
 } from '@/lib/findPlayers'
 import { cn } from '@/lib/utils'
+
+// The invite sheet (D3.2) is its own chunk: opened on demand.
+const InviteSheet = lazy(() => import('./InviteSheet'))
 
 /**
  * Find players — club v2 (Figma 04 Club D1.9 332:318; DEV NOTE 332:738).
@@ -101,6 +108,12 @@ export default function FindPlayersScreen() {
     else openProfile(r)
   }
   const count = shortlist.rows.length
+  // D3 (DEV NOTE 394:98): the same Invite as on the Shortlist rows.
+  const [inviteFor, setInviteFor] = useState<InviteSheetPlayer | null>(null)
+  const rowIds = useMemo(() => rows.map((r) => r.id), [rows])
+  const inviteStatuses = useClubInviteStatuses(rowIds)
+  const allowance = useInviteAllowance()
+  const limitReason = allowance.reached ? inviteLimitReason(allowance.limit) : null
 
   return (
     <div className="min-h-screen bg-white pb-28 lg:hidden" data-testid="find-players-screen">
@@ -149,6 +162,7 @@ export default function FindPlayersScreen() {
         </div>
       )}
 
+      {limitReason && rows.length > 0 && <InviteLimitNotice reason={limitReason} />}
       {data.error && <p className="px-5 py-3 text-row text-ink-2">{data.error}</p>}
       {data.loading && <p className="px-5 py-4 text-row text-ink-3" aria-live="polite">Finding players…</p>}
       {!data.loading && !data.error && rows.length === 0 && (
@@ -159,19 +173,25 @@ export default function FindPlayersScreen() {
         {rows.map((r, i) => {
           const ev = evidenceLine({ fullMatches: rowFullMatches(r), highlights: r.highlights, career: r.career_entry_count ?? 0, lastActiveAt: r.last_active_at })
           const saved = writes.inList(r.id)
+          const shortlistToggle = saved
+            ? (
+              <button type="button" onClick={() => void writes.remove(r.id)} aria-label={`Remove ${r.full_name ?? 'player'} from the shortlist`} aria-pressed="true" className="flex h-9 w-9 items-center justify-center rounded-full bg-hockia-soft text-hockia-primary">
+                <Check className="h-[18px] w-[18px]" strokeWidth={2.4} />
+              </button>
+            )
+            : (
+              <button type="button" onClick={() => void writes.add(r.id)} aria-label={`Shortlist ${r.full_name ?? 'player'}`} aria-pressed="false" className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-grouped text-ink-1">
+                <Plus className="h-[18px] w-[18px]" strokeWidth={2.2} />
+              </button>
+            )
           const trailing = r.applicationId
             ? <button type="button" onClick={() => openApplied(r)} className="rounded-full bg-surface-grouped px-3 py-1.5 text-secondary font-semibold text-ink-2">Applied</button>
-            : saved
-              ? (
-                <button type="button" onClick={() => void writes.remove(r.id)} aria-label={`Remove ${r.full_name ?? 'player'} from the shortlist`} aria-pressed="true" className="flex h-9 w-9 items-center justify-center rounded-full bg-hockia-soft text-hockia-primary">
-                  <Check className="h-[18px] w-[18px]" strokeWidth={2.4} />
-                </button>
-              )
-              : (
-                <button type="button" onClick={() => void writes.add(r.id)} aria-label={`Shortlist ${r.full_name ?? 'player'}`} aria-pressed="false" className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-grouped text-ink-1">
-                  <Plus className="h-[18px] w-[18px]" strokeWidth={2.2} />
-                </button>
-              )
+            : (
+              <span className="flex items-center gap-2">
+                <InviteAction pill={inviteStatuses.pillFor(r.id)} invitable={isInvitablePlayer(r)} name={r.full_name} limitReason={limitReason} onInvite={() => setInviteFor(r)} />
+                {shortlistToggle}
+              </span>
+            )
           return (
             <div key={r.id}>
               <ScoutPlayerRow row={r} countries={countries} meta={ev} trailing={trailing} onOpen={() => openProfile(r)} testId="find-player-row" />
@@ -181,6 +201,11 @@ export default function FindPlayersScreen() {
         })}
       </div>
 
+      {inviteFor && (
+        <Suspense fallback={null}>
+          <InviteSheet open={!!inviteFor} player={inviteFor} activeRoleId={roleId} onClose={() => setInviteFor(null)} />
+        </Suspense>
+      )}
       <RankedForSheet open={sheet} contexts={contexts} activeId={ctx?.id ?? null} roles={scouting.roles} onPick={pick} onClose={() => setSheet(false)} />
     </div>
   )

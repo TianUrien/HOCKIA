@@ -8,6 +8,7 @@ import { useUndoToast } from '@/lib/undoToast'
 import { holdDecision } from '@/lib/pendingDecisions'
 import { WITHDRAWN_APPLICATION_MESSAGE } from '@/lib/applicationStatus'
 import { useShortlists } from '@/hooks/useShortlists'
+import { useProfileInviteAction } from '@/hooks/useInvites'
 import { effectiveContextRow, useRecruitingContext } from '@/hooks/useRecruitingContext'
 import { markSavedProfileId, useIsProfileSaved } from '@/hooks/useSavedProfiles'
 import { isRecruitingViewer } from '@/lib/recruiterAccess'
@@ -62,6 +63,7 @@ export interface ClubViewFit {
 export interface ClubViewPlayer {
   id: string
   role: string | null
+  open_to_play?: boolean | null
   full_name?: string | null
   current_world_club_id?: string | null
 }
@@ -210,6 +212,8 @@ export function useClubViewOfPlayer(player: ClubViewPlayer | null) {
   })
 
   const firstName = player?.full_name?.trim().split(/\s+/)[0] || 'This player'
+  // D3 (DEV NOTE 394:98): Invite on the club view, secondary to Shortlist.
+  const invite = useProfileInviteAction(recruits && player ? player : null)
 
   const shortlistForRole = useCallback(async (role: ClubRole) => {
     if (!viewerId || !playerId) return
@@ -280,5 +284,6 @@ export function useClubViewOfPlayer(player: ClubViewPlayer | null) {
     busy: busy || saved.mutating,
     shortlistForRole,
     shortlistDefault,
+    invite,
   }
 }

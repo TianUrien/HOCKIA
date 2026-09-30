@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { format, isToday, isYesterday } from 'date-fns'
 
@@ -13,6 +13,9 @@ import type { ChatMessage, MessageDeliveryStatus } from '@/types/chat'
 import { cn } from '@/lib/utils'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { SharedPostCard } from './SharedPostCard'
+
+// D3.3 invite card: its own chunk, loaded only when a thread has one.
+const InviteCard = lazy(() => import('./InviteCard'))
 
 interface MessageBubbleProps {
   message: ChatMessage
@@ -52,10 +55,13 @@ export function MessageBubble({
 
   const isDeleted = Boolean(message.deleted_at)
   const isSharedPost = message.metadata?.type === 'shared_post'
+  // Recruiting cards (D3 invite, server-posted steps) are fixed records: never edited or deleted.
+  const invite = message.metadata?.type === 'opportunity_invite' ? message.metadata : null
+  const isRecruitingEvent = message.metadata?.type === 'application_event'
   const isPersisted = status !== 'sending' && status !== 'failed' && !message.id.startsWith('optimistic-')
   // Own, delivered, not-yet-deleted messages can be managed. Shared-post cards
   // can be deleted but not edited (they aren't free text).
-  const canManage = isMine && isPersisted && !isDeleted
+  const canManage = isMine && isPersisted && !isDeleted && !invite && !isRecruitingEvent
   const canEdit = canManage && !isSharedPost
 
   const [showMenu, setShowMenu] = useState(false)
@@ -190,6 +196,17 @@ export function MessageBubble({
             Message deleted
           </div>
         </div>
+      ) : invite ? (
+        <div className={cn('flex', isMine ? 'justify-end' : 'justify-start')}>
+          <div className="w-full sm:max-w-[70%]">
+            <Suspense fallback={<div className="h-[260px] w-full animate-pulse rounded-[18px] bg-surface-grouped" />}>
+              <InviteCard inviteId={invite.invite_id} opportunityId={invite.opportunity_id} isMine={isMine} fallbackText={message.content} />
+            </Suspense>
+          </div>
+        </div>
+      ) : isRecruitingEvent ? (
+        // A recruiting step the server posts ("Facundo passed on Midfielder."): a quiet centred line, not a bubble.
+        <p className="mx-auto max-w-[85%] text-center text-caption leading-4 text-ink-3" data-testid="recruiting-event-line">{message.content}</p>
       ) : isEditing ? (
         <div className="flex justify-end">
           <div className="w-full max-w-[85%] sm:max-w-[70%]" data-testid="message-edit-editor">
