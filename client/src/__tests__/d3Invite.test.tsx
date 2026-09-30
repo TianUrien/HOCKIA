@@ -69,6 +69,7 @@ describe('the sheet copy (D3.2)', () => {
     expect(inviteErrorMessage({ message: 'This person can\'t be invited to this role' })).toBe('This player can’t be invited to this role.')
     expect(inviteErrorMessage({ message: 'This player already has an open invite from you' })).toBe('This player already has an open invite from you.')
     expect(inviteErrorMessage({ message: 'This player has already applied to one of your roles' })).toBe('This player has already applied to one of your roles.')
+    expect(inviteErrorMessage({ message: 'This player passed on this role' })).toBe('This player passed on this role.')
     expect(inviteErrorMessage({ message: 'boom' })).toBe('Couldn’t send the invite. Please try again.')
   })
 })
@@ -94,6 +95,7 @@ describe('the invite card state (D3.3)', () => {
 const inv = vi.hoisted(() => ({
   roles: [] as unknown[],
   reached: false,
+  declined: [] as string[],
   send: vi.fn(),
   decline: vi.fn(),
   card: null as unknown,
@@ -110,6 +112,7 @@ vi.mock('@/hooks/useInvites', () => ({
   inviteCardKey: (id: string) => ['invites', 'card', id],
   useInviteRoles: () => ({ roles: inv.roles, loading: false }),
   useInviteAllowance: () => ({ limit: 20, sent: inv.reached ? 20 : 3, reached: inv.reached }),
+  useClubInviteStatuses: () => ({ pillFor: () => null, declinedFor: () => inv.declined, loading: false }),
   useSendInvite: () => ({ send: inv.send, sending: false }),
   useInviteCard: () => ({ data: inv.card, loading: false, refetch: vi.fn() }),
   useDeclineInvite: () => ({ decline: inv.decline, busy: false }),
@@ -142,6 +145,7 @@ const inRouter = (el: React.ReactNode) => render(
 beforeEach(() => {
   inv.roles = [role(), role({ id: 'r2', title: 'Women’s 1st player', position: 'forward', gender: 'Women', benefits: [] })]
   inv.reached = false
+  inv.declined = []
   inv.send.mockReset().mockResolvedValue(null)
   inv.decline.mockReset().mockResolvedValue(true)
   inv.applicants = []
@@ -163,6 +167,9 @@ describe('row action (D3.1, DEV NOTE 394:98)', () => {
     expect(screen.getByTestId('invite-pill-applied').textContent).toBe('Applied')
     rerender(<InviteAction pill="invited" invitable name="Leandro" onInvite={onInvite} />)
     expect(screen.getByTestId('invite-pill-invited').textContent).toBe('Invited')
+    rerender(<InviteAction pill="passed" invitable name="Leandro" onInvite={onInvite} />)
+    expect(screen.getByTestId('invite-pill-passed').getAttribute('aria-label')).toBe('Passed on this role')
+    expect(screen.queryByTestId('invite-button')).toBeNull()
     rerender(<InviteAction pill={null} invitable={false} name="Too young" onInvite={onInvite} />)
     expect(screen.queryByTestId('invite-button')).toBeNull()
   })
@@ -208,6 +215,37 @@ describe('Invite sheet (D3.2)', () => {
     fireEvent.click(screen.getByTestId('invite-change-role'))
     fireEvent.click(screen.getAllByTestId('invite-role')[0])
     expect((screen.getByRole('textbox', { name: 'Note to Facundo' }) as HTMLTextAreaElement).value).toBe('My own words')
+  })
+
+  it('the template label has no sparkle (sparkle is for real AI text only)', () => {
+    render(<InviteSheet open player={player} activeRoleId="r1" onClose={vi.fn()} />)
+    const label = screen.getByTestId('invite-note-draft')
+    expect(label.textContent).toContain('Drafted from the role · tap to edit')
+    expect(label.querySelector('.lucide-sparkles')).toBeNull()
+    expect(label.querySelector('.lucide-pencil')).not.toBeNull()
+  })
+
+  it('a role the player passed on is never offered again; other roles stay invitable', async () => {
+    inv.declined = ['r1']
+    render(<InviteSheet open player={player} activeRoleId="r1" onClose={vi.fn()} />)
+    // The active role was passed on → the other role is preselected.
+    expect(screen.getByText('Forward · Women’s 1st player')).toBeTruthy()
+    expect(screen.queryByTestId('invite-change-role')).toBeNull()
+    fireEvent.click(screen.getByTestId('invite-role'))
+    const passedRow = screen.getAllByTestId('invite-role').find((r) => r.getAttribute('data-passed'))!
+    expect(passedRow.textContent).toContain('Passed on this role')
+    fireEvent.click(passedRow)
+    expect(screen.getAllByTestId('invite-role')).toHaveLength(2) // still picking: the passed role can't be chosen
+    fireEvent.click(screen.getAllByTestId('invite-role').find((r) => !r.getAttribute('data-passed'))!)
+    fireEvent.click(screen.getByTestId('invite-send'))
+    await waitFor(() => expect(inv.send).toHaveBeenCalledWith(expect.objectContaining({ opportunityId: 'r2' })))
+  })
+
+  it('passed on every open role → nothing to send', () => {
+    inv.declined = ['r1', 'r2']
+    render(<InviteSheet open player={player} activeRoleId="r1" onClose={vi.fn()} />)
+    expect(screen.getAllByTestId('invite-role').every((r) => r.textContent?.includes('Passed on this role'))).toBe(true)
+    expect((screen.getByTestId('invite-send') as HTMLButtonElement).disabled).toBe(true)
   })
 
   it('shows the server’s reason and stays open when the invite is refused', async () => {

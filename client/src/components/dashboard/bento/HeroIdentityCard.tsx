@@ -61,7 +61,7 @@ interface HeroIdentityCardProps {
     busy?: boolean
     preview?: boolean
     /** D3 (DEV NOTE 394:98): Invite, secondary to Shortlist — or the grey Invited pill. */
-    invite?: { pill: 'applied' | 'invited' | null; invitable: boolean; limitReason: string | null; onInvite: () => void } | null
+    invite?: { pill: 'applied' | 'invited' | 'passed' | null; invitable: boolean; limitReason: string | null; onInvite: () => void } | null
   } | null
 }
 
@@ -381,8 +381,14 @@ export default function HeroIdentityCard({
               >
                 <Star className="h-[18px] w-[18px]" strokeWidth={1.8} fill={recruiterActions.shortlisted ? 'currentColor' : 'none'} /> {recruiterActions.shortlisted ? 'Shortlisted' : 'Shortlist'}
               </button>
-              {recruiterActions.invite?.pill === 'invited' ? (
-                <span className="flex h-[46px] flex-1 items-center justify-center rounded-full bg-surface-grouped text-[16px] font-semibold text-ink-2" data-testid="profile-invited-pill">Invited</span>
+              {recruiterActions.invite?.pill === 'invited' || recruiterActions.invite?.pill === 'passed' ? (
+                <span
+                  className="flex h-[46px] flex-1 items-center justify-center rounded-full bg-surface-grouped text-[16px] font-semibold text-ink-2"
+                  aria-label={recruiterActions.invite.pill === 'passed' ? 'Passed on this role' : undefined}
+                  data-testid={recruiterActions.invite.pill === 'passed' ? 'profile-passed-pill' : 'profile-invited-pill'}
+                >
+                  {recruiterActions.invite.pill === 'passed' ? 'Passed' : 'Invited'}
+                </span>
               ) : recruiterActions.invite && !recruiterActions.invite.pill && recruiterActions.invite.invitable ? (
                 <button
                   type="button"

@@ -1,4 +1,5 @@
--- Probe for 20261001200000_send_invite_requires_dob.sql: who a club can invite to apply (D3).
+-- Probe for 20261001200000_send_invite_requires_dob.sql and
+-- 20261001210000_send_invite_no_reinvite_same_role.sql: who a club can invite to apply (D3).
 --
 -- Run on STAGING only (fixture ids are the E2E accounts there), via the SQL editor or
 -- MCP execute_sql, AFTER the migration. Nothing is ever kept: the block ends by
@@ -243,6 +244,60 @@ BEGIN
     RAISE EXCEPTION 'probe_undo';
   EXCEPTION WHEN others THEN
     IF SQLERRM <> 'probe_undo' THEN v_line := 'FAIL D1 coach without DOB → ' || SQLERRM; END IF;
+    v_out := v_out || E'\n' || v_line;
+  END;
+  EXECUTE 'RESET ROLE';
+
+  -- F1 the player passed on this role → the same role is refused
+  BEGIN
+    INSERT INTO opportunity_invites (opportunity_id, club_id, player_id, status, sent_at, expires_at, responded_at)
+    VALUES (o_player, c_club, c_player, 'declined', now() - interval '2 days', now() + interval '12 days', now() - interval '1 day');
+    PERFORM set_config('request.jwt.claims', json_build_object('sub', c_club, 'role', 'authenticated')::text, true);
+    EXECUTE 'SET LOCAL ROLE authenticated';
+    BEGIN
+      v_res := send_invite(c_player, o_player, NULL);
+      EXECUTE 'RESET ROLE';
+      v_line := format('FAIL F1 re-invite to a declined role → allowed %s', v_res);
+    EXCEPTION WHEN others THEN
+      EXECUTE 'RESET ROLE';
+      v_line := format('%s F1 re-invite to a declined role → "%s"',
+        CASE WHEN SQLERRM = 'This player passed on this role' THEN 'PASS' ELSE 'FAIL' END, SQLERRM);
+    END;
+    RAISE EXCEPTION 'probe_undo';
+  EXCEPTION WHEN others THEN
+    IF SQLERRM <> 'probe_undo' THEN v_line := 'FAIL F1 declined role → ' || SQLERRM; END IF;
+    v_out := v_out || E'\n' || v_line;
+  END;
+  EXECUTE 'RESET ROLE';
+
+  -- F2 the player passed on role A → role B of the same club is still allowed
+  BEGIN
+    INSERT INTO opportunity_invites (opportunity_id, club_id, player_id, status, sent_at, expires_at, responded_at)
+    VALUES (o_player, c_club, c_player, 'declined', now() - interval '2 days', now() + interval '12 days', now() - interval '1 day');
+    PERFORM set_config('request.jwt.claims', json_build_object('sub', c_club, 'role', 'authenticated')::text, true);
+    EXECUTE 'SET LOCAL ROLE authenticated';
+    v_res := send_invite(c_player, o_player2, NULL);
+    EXECUTE 'RESET ROLE';
+    v_line := format('%s F2 other role after a decline → %s', CASE WHEN v_res ? 'invite_id' THEN 'PASS' ELSE 'FAIL' END, v_res->>'invite_id');
+    RAISE EXCEPTION 'probe_undo';
+  EXCEPTION WHEN others THEN
+    IF SQLERRM <> 'probe_undo' THEN v_line := 'FAIL F2 other role after a decline → ' || SQLERRM; END IF;
+    v_out := v_out || E'\n' || v_line;
+  END;
+  EXECUTE 'RESET ROLE';
+
+  -- F3 control: an EXPIRED (not declined) invite on the same role doesn't block a new one
+  BEGIN
+    INSERT INTO opportunity_invites (opportunity_id, club_id, player_id, status, sent_at, expires_at)
+    VALUES (o_player, c_club, c_player, 'expired', now() - interval '20 days', now() - interval '6 days');
+    PERFORM set_config('request.jwt.claims', json_build_object('sub', c_club, 'role', 'authenticated')::text, true);
+    EXECUTE 'SET LOCAL ROLE authenticated';
+    v_res := send_invite(c_player, o_player, NULL);
+    EXECUTE 'RESET ROLE';
+    v_line := format('%s F3 same role after an expired invite → %s', CASE WHEN v_res ? 'invite_id' THEN 'PASS' ELSE 'FAIL' END, v_res->>'invite_id');
+    RAISE EXCEPTION 'probe_undo';
+  EXCEPTION WHEN others THEN
+    IF SQLERRM <> 'probe_undo' THEN v_line := 'FAIL F3 expired invite → ' || SQLERRM; END IF;
     v_out := v_out || E'\n' || v_line;
   END;
   EXECUTE 'RESET ROLE';

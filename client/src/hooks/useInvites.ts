@@ -42,16 +42,19 @@ export function useClubInviteStatuses(playerIds: string[]) {
   const viewerId = viewer?.id ?? null
   const enabled = isRecruitingViewer(viewer) && !!viewerId && playerIds.length > 0
   const ids = useMemo(() => [...new Set(playerIds)].sort(), [playerIds])
+  // The club's open player roles: a player who passed on every one of them shows "Passed".
+  const { roles } = useInviteRoles('player', enabled)
   const query = useQuery({
     queryKey: [...INVITES_KEY, 'statuses', viewerId, ids.join(',')],
     enabled,
     staleTime: 30_000,
-    queryFn: async (): Promise<Record<string, InvitePill>> => {
-      const out: Record<string, InvitePill> = {}
+    queryFn: async (): Promise<{ pills: Record<string, InvitePill>; declined: Record<string, string[]> }> => {
+      const pills: Record<string, InvitePill> = {}
+      const declined: Record<string, string[]> = {}
       const nowIso = new Date().toISOString()
       for (let i = 0; i < ids.length; i += 100) {
         const chunk = ids.slice(i, i + 100)
-        const [inv, apps] = await Promise.all([
+        const [inv, apps, passed] = await Promise.all([
           db.from('opportunity_invites').select('player_id').eq('club_id', viewerId as string).eq('status', 'sent').gt('expires_at', nowIso).in('player_id', chunk),
           supabase
             .from('opportunity_applications')
@@ -60,17 +63,35 @@ export function useClubInviteStatuses(playerIds: string[]) {
             .eq('opportunity.club_id', viewerId as string)
             .eq('opportunity.status', 'open')
             .in('status', [...OPEN_APPLICATION_STATUSES] as never),
+          // Roles the player passed on: never invited to those again (send_invite refuses).
+          db.from('opportunity_invites')
+            .select('player_id, opportunity_id, opportunity:opportunities!inner(status)')
+            .eq('club_id', viewerId as string)
+            .eq('status', 'declined')
+            .eq('opportunity.status', 'open')
+            .in('player_id', chunk),
         ])
         if (inv.error) reportSupabaseError('useInvites.statuses.invites', inv.error)
         if (apps.error) reportSupabaseError('useInvites.statuses.applications', apps.error)
-        for (const r of (inv.data ?? []) as { player_id: string }[]) out[r.player_id] = 'invited'
-        for (const r of (apps.data ?? []) as unknown as { applicant_id: string }[]) out[r.applicant_id] = 'applied'
+        if (passed.error) reportSupabaseError('useInvites.statuses.declined', passed.error)
+        for (const r of (inv.data ?? []) as { player_id: string }[]) pills[r.player_id] = 'invited'
+        for (const r of (apps.data ?? []) as unknown as { applicant_id: string }[]) pills[r.applicant_id] = 'applied'
+        for (const r of (passed.data ?? []) as { player_id: string; opportunity_id: string }[]) {
+          declined[r.player_id] = [...new Set([...(declined[r.player_id] ?? []), r.opportunity_id])]
+        }
       }
-      return out
+      return { pills, declined }
     },
   })
-  const map = query.data ?? {}
-  return { pillFor: (id: string): InvitePill | null => map[id] ?? null, loading: query.isLoading }
+  const data = query.data
+  const declinedFor = useCallback((id: string): string[] => data?.declined[id] ?? [], [data])
+  const pillFor = useCallback((id: string): InvitePill | null => {
+    const pill = data?.pills[id]
+    if (pill) return pill
+    const passed = data?.declined[id] ?? []
+    return roles.length > 0 && roles.every((r) => passed.includes(r.id)) ? 'passed' : null
+  }, [data, roles])
+  return { pillFor, declinedFor, loading: query.isLoading }
 }
 
 /** Invites this publisher sent in the last 24 hours vs the daily limit (5 in the first week, else 20). */

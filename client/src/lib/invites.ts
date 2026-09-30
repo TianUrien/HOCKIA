@@ -13,7 +13,8 @@ import { positionLabel } from '@/lib/identity'
 export type InviteStatus = 'sent' | 'applied' | 'declined' | 'expired'
 
 /** What the club sees in place of Invite for one player (brief: "otherwise their status pill"). */
-export type InvitePill = 'applied' | 'invited'
+/** passed = the player passed on every open role of this club (founder ruling 2026-10-01). */
+export type InvitePill = 'applied' | 'invited' | 'passed'
 
 /** Application statuses that keep a player "in the club's pipeline" (same list as send_invite). */
 export const OPEN_APPLICATION_STATUSES = ['pending', 'shortlisted', 'maybe', 'offered', 'accepted', 'signed_pending_confirmation'] as const
@@ -143,6 +144,7 @@ export function draftInviteNote(opts: { firstName: string; clubName: string | nu
 // ── Server errors → what the club reads ──
 
 const PASS_THROUGH = [
+  'This player passed on this role',
   'This person can’t be invited to this role',
   'This person can\'t be invited to this role',
   'This player has already applied to one of your roles',

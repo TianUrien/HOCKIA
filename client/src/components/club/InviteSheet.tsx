@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Check, Sparkles } from 'lucide-react'
+import { Check, Pencil } from 'lucide-react'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
 import { useAuthStore } from '@/lib/auth'
 import { getImageUrl } from '@/lib/imageUrl'
 import { personRoleLine } from '@/lib/clubRecruiting'
-import { useInviteAllowance, useInviteRoles, useSendInvite } from '@/hooks/useInvites'
+import { useClubInviteStatuses, useInviteAllowance, useInviteRoles, useSendInvite } from '@/hooks/useInvites'
 import {
   INVITE_NOTE_MAX,
   draftInviteNote,
@@ -54,19 +54,26 @@ export default function InviteSheet({ open, player, activeRoleId, onClose, onSen
   // One role card (Figma D3.2); with several open roles, tapping it lists the others.
   const [picking, setPicking] = useState(false)
   const firstName = firstNameOf(player?.full_name)
+  // Roles this player passed on can't be offered again (founder ruling 2026-10-01).
+  const playerIds = useMemo(() => (open && player ? [player.id] : []), [open, player])
+  const statuses = useClubInviteStatuses(playerIds)
+  const passed = player ? statuses.declinedFor(player.id) : []
+  const passedKey = passed.join(',')
+  const invitable = useMemo(() => roles.filter((r) => !passedKey.split(',').includes(r.id)), [roles, passedKey])
 
   // Fresh state every time the sheet opens for a player.
   useEffect(() => {
     if (!open) { setRoleId(null); setNote(''); setEdited(false); setError(null); setPicking(false) }
   }, [open, player?.id])
 
-  // Preselect the active role, else the only / newest open role.
+  // Preselect the active role, else the newest open role — never one the player passed on.
   useEffect(() => {
-    if (!open || roleId || roles.length === 0) return
-    setRoleId(roles.find((r) => r.id === activeRoleId)?.id ?? roles[0].id)
-  }, [open, roles, roleId, activeRoleId])
+    if (!open || invitable.length === 0) return
+    if (roleId && invitable.some((r) => r.id === roleId)) return
+    setRoleId(invitable.find((r) => r.id === activeRoleId)?.id ?? invitable[0].id)
+  }, [open, invitable, roleId, activeRoleId])
 
-  const role = useMemo(() => roles.find((r) => r.id === roleId) ?? null, [roles, roleId])
+  const role = useMemo(() => invitable.find((r) => r.id === roleId) ?? null, [invitable, roleId])
   const draft = useMemo(() => (role ? draftInviteNote({ firstName, clubName, role }) : ''), [role, firstName, clubName])
   // The draft follows the role until the club edits it.
   useEffect(() => { if (!edited) setNote(draft) }, [draft, edited])
@@ -103,31 +110,35 @@ export default function InviteSheet({ open, player, activeRoleId, onClose, onSen
           <p className="rounded-card bg-surface-grouped p-3.5 text-row text-ink-2" data-testid="invite-no-roles">Post a role first — an invite is always to one of your open roles.</p>
         ) : (
           <div className="flex flex-col gap-2" role="radiogroup" aria-label="Role">
-            {(picking ? roles : roles.filter((r) => r.id === roleId)).map((r) => {
+            {(picking ? roles : roles.filter((r) => r.id === roleId || (!role && passed.includes(r.id)))).map((r) => {
               const on = r.id === roleId
-              const offer = roleOfferLine(r)
+              const wasPassed = passed.includes(r.id)
+              const offer = wasPassed ? 'Passed on this role' : roleOfferLine(r)
               return (
                 <button
                   key={r.id}
                   type="button"
                   role="radio"
                   aria-checked={on}
+                  aria-disabled={wasPassed || undefined}
                   onClick={() => {
+                    if (wasPassed) return
                     setError(null)
                     if (picking) { setRoleId(r.id); setPicking(false) } else if (roles.length > 1) setPicking(true)
                   }}
                   className="flex w-full items-center gap-3 rounded-card bg-surface-grouped px-3.5 py-3 text-left"
                   data-testid="invite-role"
+                  data-passed={wasPassed || undefined}
                 >
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[16px] font-semibold leading-[21px] text-ink-1">{inviteRoleLabel(r)}</span>
-                    {offer && <span className="block truncate text-[14px] leading-[19px] text-ink-2">{offer}</span>}
+                    <span className={`block truncate text-[16px] font-semibold leading-[21px] ${wasPassed ? 'text-ink-3' : 'text-ink-1'}`}>{inviteRoleLabel(r)}</span>
+                    {offer && <span className={`block truncate text-[14px] leading-[19px] ${wasPassed ? 'text-ink-3' : 'text-ink-2'}`}>{offer}</span>}
                   </span>
                   {on && <Check className="h-5 w-5 shrink-0 text-hockia-primary" strokeWidth={2.2} aria-hidden="true" />}
                 </button>
               )
             })}
-            {!picking && roles.length > 1 && (
+            {!picking && invitable.length > 1 && (
               <button type="button" onClick={() => setPicking(true)} className="self-start py-1 text-secondary font-semibold text-hockia-primary" data-testid="invite-change-role">
                 Change role
               </button>
@@ -140,8 +151,8 @@ export default function InviteSheet({ open, player, activeRoleId, onClose, onSen
             <p className="pb-2 pt-4 text-caption font-semibold uppercase tracking-[0.4px] text-ink-2">Note</p>
             <div className="flex flex-col gap-1.5 rounded-card bg-surface-grouped p-3.5">
               {showsDraft ? (
-                <span className="flex items-center gap-1.5 text-caption font-semibold text-hockia-primary" data-testid="invite-note-draft">
-                  <Sparkles className="h-3.5 w-3.5" strokeWidth={2} aria-hidden="true" /> Drafted from the role · tap to edit
+                <span className="flex items-center gap-1.5 text-caption font-semibold text-ink-2" data-testid="invite-note-draft">
+                  <Pencil className="h-3.5 w-3.5" strokeWidth={2} aria-hidden="true" /> Drafted from the role · tap to edit
                 </span>
               ) : (
                 <span className="text-caption font-semibold text-ink-2">Your note</span>
