@@ -22,14 +22,14 @@ export function clubLeagueSubtitle(p: { current_world_club_id?: string | null; m
 export const CONTACT_EMAIL_SWITCH_LABEL = 'Show on your profile'
 export const CONTACT_EMAIL_SWITCH_HELP = 'Off: players message you on Hockia.'
 
-/** "Private · club@x.com" / "Shown on your profile"; empty → `empty`
+/** "Private · club@x.com" / "Shown on your profile · club@x.com"; empty → `empty`
  *  (Settings: "Private · players message you on Hockia"; Edit profile: null → "Add"). */
 export function contactEmailSubtitle(email: string | null | undefined, isPublic: boolean | null | undefined): string
 export function contactEmailSubtitle<E>(email: string | null | undefined, isPublic: boolean | null | undefined, empty: E): string | E
 export function contactEmailSubtitle(email: string | null | undefined, isPublic: boolean | null | undefined, empty: unknown = 'Private · players message you on Hockia'): unknown {
   const e = email?.trim()
   if (!e) return empty
-  return isPublic ? 'Shown on your profile' : `Private · ${e}`
+  return isPublic ? `Shown on your profile · ${e}` : `Private · ${e}`
 }
 
 export function isValidContactEmail(value: string): boolean {

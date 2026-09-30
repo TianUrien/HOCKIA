@@ -46,7 +46,7 @@ describe('Edit club helpers', () => {
     expect(photosRowValue(null)).toBeNull()
     expect(contactRowValue('a@b.co', false)).toBe('Private · a@b.co')
     expect(contactRowValue('a@b.co', null)).toBe('Private · a@b.co')
-    expect(contactRowValue('a@b.co', true)).toBe('Shown on your profile')
+    expect(contactRowValue('a@b.co', true)).toBe('Shown on your profile · a@b.co')
     expect(contactRowValue('', true)).toBeNull()
   })
   it('first run only once loaded and with no role at all (a draft counts as a role)', () => {

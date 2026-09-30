@@ -174,7 +174,7 @@ describe('Settings — club', () => {
     expect(clubLeagueSubtitle({ current_world_club_id: 'w', mens_league_division: 'Leinster Division 1A' })).toBe('Linked · Leinster Division 1A')
     expect(clubLeagueSubtitle({ current_world_club_id: null })).toBe('Not linked yet · link your club')
     expect(contactEmailSubtitle(null, false)).toBe('Private · players message you on Hockia')
-    expect(contactEmailSubtitle('a@b.co', true)).toBe('Shown on your profile')
+    expect(contactEmailSubtitle('a@b.co', true)).toBe('Shown on your profile · a@b.co')
     expect(contactEmailSubtitle('a@b.co', false)).toBe('Private · a@b.co')
     expect(isValidContactEmail('')).toBe(true)
     expect(isValidContactEmail('nope')).toBe(false)

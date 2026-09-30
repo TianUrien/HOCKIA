@@ -48,8 +48,8 @@ export function roleDetailOf(p: DetailRow | undefined): string | null {
 
 /**
  * Who is "waiting for a first reply" (founder ruling, Club v2 QA round 9):
- * the person has an application to one of the club's roles that is still
- * waiting on the club (WAITING_APPLICATION_STATUSES — not withdrawn /
+ * the person has an application to one of the club's OPEN roles that is
+ * still waiting on the club (WAITING_APPLICATION_STATUSES — not withdrawn /
  * declined / filled / expired), and the club has not sent a (non-deleted)
  * message in the conversation since that application — never, or only
  * before it. A chat with no open application is never waiting, however
@@ -77,7 +77,7 @@ export function useClubInboxMeta(clubId: string | null, rows: InboxConversationL
           .in('id', otherIds),
         supabase
           .from('opportunity_applications')
-          .select('applicant_id, status, applied_at, opportunity:opportunities!inner(club_id)')
+          .select('applicant_id, status, applied_at, opportunity:opportunities!inner(club_id, status)')
           .eq('opportunity.club_id', clubId as string)
           .in('applicant_id', otherIds)
           .neq('status', 'withdrawn'),
@@ -85,12 +85,14 @@ export function useClubInboxMeta(clubId: string | null, rows: InboxConversationL
       if (profiles.error) throw profiles.error
       if (apps.error) throw apps.error
       const byId = new Map(((profiles.data ?? []) as DetailRow[]).map((p) => [p.id, p]))
-      const appRows = (apps.data ?? []) as { applicant_id: string; status: string; applied_at: string | null }[]
+      const appRows = (apps.data ?? []) as unknown as { applicant_id: string; status: string; applied_at: string | null; opportunity: { status: string | null } | null }[]
       const appliedIds = new Set(appRows.map((a) => a.applicant_id))
       // Latest still-open application per person.
       const openAt = new Map<string, string>()
       for (const a of appRows) {
         if (!(WAITING_APPLICATION_STATUSES as readonly string[]).includes(a.status)) continue
+        // A pending application on a closed role no longer waits on the club.
+        if (a.opportunity?.status !== 'open') continue
         const at = a.applied_at ?? '1970-01-01T00:00:00Z'
         const prev = openAt.get(a.applicant_id)
         if (!prev || at > prev) openAt.set(a.applicant_id, at)
@@ -136,7 +138,7 @@ export function useClubApplicationWith(clubId: string | null, otherId: string | 
       const [{ data, error }, { data: settings }] = await Promise.all([
         supabase
           .from('opportunity_applications')
-          .select('id, status, applied_at, updated_at, opportunity:opportunities!inner(id, title, position, club_id)')
+          .select('id, status, applied_at, updated_at, opportunity:opportunities!inner(id, title, position, club_id, status)')
           .eq('applicant_id', otherId as string)
           .eq('opportunity.club_id', clubId as string)
           .neq('status', 'withdrawn')
@@ -145,7 +147,7 @@ export function useClubApplicationWith(clubId: string | null, otherId: string | 
         supabase.from('application_response_settings').select('expiry_days').limit(1).maybeSingle(),
       ])
       if (error) throw error
-      const apps = ((data ?? []) as unknown as { id: string; status: string; applied_at: string | null; updated_at: string | null; opportunity: { id: string; title: string | null; position: string | null } }[]).map((r) => ({
+      const apps = ((data ?? []) as unknown as { id: string; status: string; applied_at: string | null; updated_at: string | null; opportunity: { id: string; title: string | null; position: string | null; status?: string | null } }[]).map((r) => ({
         id: r.id,
         opportunityId: r.opportunity.id,
         status: r.status,
@@ -153,6 +155,7 @@ export function useClubApplicationWith(clubId: string | null, otherId: string | 
         updatedAt: r.updated_at,
         roleTitle: r.opportunity.title,
         rolePosition: r.opportunity.position,
+        roleStatus: r.opportunity.status ?? null,
       }))
       const app = pickApplication(apps)
       return app ? { app, expiryDays: (settings as { expiry_days?: number } | null)?.expiry_days ?? DEFAULT_EXPIRY_DAYS } : null

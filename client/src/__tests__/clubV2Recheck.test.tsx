@@ -30,7 +30,7 @@ vi.mock('@/lib/auth', () => ({
 }))
 
 import { isWaitingForFirstReply, roleDetailOf, useClubInboxMeta } from '@/hooks/useClubInbox'
-import { inboxWaitingNotice } from '@/lib/clubInbox'
+import { applicationCardDetail, inboxWaitingNotice, pickApplication } from '@/lib/clubInbox'
 import { contextPillLabel, playerContexts, type ContextLike } from '@/lib/findPlayers'
 import { effectiveContextRow, isStaleRoleContext, useRecruitingContextStore, type RecruitingContextRow } from '@/hooks/useRecruitingContext'
 import { RankedForSheet } from '@/components/club/RankedForSheet'
@@ -59,24 +59,28 @@ describe('waiting for a first reply', () => {
     expect(isWaitingForFirstReply('2026-09-27T14:50:42Z', '2026-09-28T09:00:00Z')).toBe(false)
   })
 
-  it('staging shape: the player with a pending application counts; the coach whose applications closed does not', async () => {
+  it('an open application on an OPEN role counts; closed applications and pending ones on closed roles do not', async () => {
     const rows = [
       { conversation_id: 'conv-player', other_participant_id: 'player', last_message_sender_id: 'player' },
       { conversation_id: 'conv-coach', other_participant_id: 'coach', last_message_sender_id: null },
       { conversation_id: 'conv-answered', other_participant_id: 'answered', last_message_sender_id: 'answered' },
+      { conversation_id: 'conv-closed', other_participant_id: 'closedOnly', last_message_sender_id: 'closedOnly' },
     ]
     db.tables = {
       profiles: [
         { id: 'player', role: 'player', position: 'midfielder' },
         { id: 'coach', role: 'coach', coach_specialization: 'head_coach' },
         { id: 'answered', role: 'player', position: 'forward' },
+        { id: 'closedOnly', role: 'player', position: 'defender' },
       ],
       opportunity_applications: [
-        { applicant_id: 'player', status: 'pending', applied_at: '2026-09-27T14:50:42Z' },
-        { applicant_id: 'player', status: 'maybe', applied_at: '2026-05-23T01:09:47Z' },
-        { applicant_id: 'player', status: 'rejected', applied_at: '2026-09-27T17:07:43Z' },
-        { applicant_id: 'coach', status: 'no_response', applied_at: '2026-07-15T00:00:00Z' },
-        { applicant_id: 'answered', status: 'shortlisted', applied_at: '2026-09-20T00:00:00Z' },
+        { applicant_id: 'player', status: 'pending', applied_at: '2026-09-29T10:00:00Z', opportunity: { status: 'open' } },
+        { applicant_id: 'player', status: 'maybe', applied_at: '2026-05-23T01:09:47Z', opportunity: { status: 'open' } },
+        { applicant_id: 'player', status: 'rejected', applied_at: '2026-09-27T17:07:43Z', opportunity: { status: 'closed' } },
+        { applicant_id: 'coach', status: 'no_response', applied_at: '2026-07-15T00:00:00Z', opportunity: { status: 'open' } },
+        { applicant_id: 'answered', status: 'shortlisted', applied_at: '2026-09-20T00:00:00Z', opportunity: { status: 'open' } },
+        // Pending on a CLOSED role (staging "[QA] Midfielder R5"): not waiting.
+        { applicant_id: 'closedOnly', status: 'pending', applied_at: '2026-09-27T14:50:42Z', opportunity: { status: 'closed' } },
       ],
       messages: [
         { conversation_id: 'conv-answered', sent_at: '2026-09-21T00:00:00Z' },
@@ -91,6 +95,7 @@ describe('waiting for a first reply', () => {
     expect(meta.get('conv-player')).toMatchObject({ waiting: true, applied: true, detail: 'Midfielder' })
     expect(meta.get('conv-coach')).toMatchObject({ waiting: false, applied: true, detail: 'Head coach' })
     expect(meta.get('conv-answered')?.waiting).toBe(false)
+    expect(meta.get('conv-closed')).toMatchObject({ waiting: false, applied: true })
     expect(inboxWaitingNotice([...meta.values()])?.title).toBe('1 person waiting for a first reply')
     // Only conversations with an open application are checked for club messages;
     // deleted messages never count.
@@ -144,15 +149,36 @@ describe('closed roles', () => {
     expect(screen.getByRole('radio', { name: /Open role/ }).getAttribute('aria-checked')).toBe('true')
   })
 
-  it('closing a role through the store drops it as the active context', async () => {
+  it('closing the active role through the store falls back to the newest open role of that kind', async () => {
     useRecruitingContextStore.setState({ ownerId: 'club', eligibleRole: 'club', rows: [{ ...r8, opportunity_status: 'open' }, older], loading: false, fetchedForOwner: 'club' })
-    db.tables.recruiting_context = [{ ...older }]
+    db.tables.recruiting_context = [{ ...r8, is_active: false, opportunity: { status: 'closed' } }, { ...older, is_active: true, opportunity: { status: 'open' } }]
+    const { supabase } = await import('@/lib/supabase')
+    const rpc = vi.mocked(supabase.rpc)
+    rpc.mockClear()
+    await act(async () => { await useRecruitingContextStore.getState().roleStatusChanged('r8', 'closed') })
+    expect(rpc).toHaveBeenCalledWith('set_active_recruiting_context', { p_id: 'ctx-open' })
+    expect(db.calls.some((c) => c.table === 'recruiting_context' && c.op === 'update')).toBe(false)
+    expect(useRecruitingContextStore.getState().rows.find((r) => r.is_active)?.id).toBe('ctx-open')
+  })
+
+  it('no other open role of that kind → no context', async () => {
+    useRecruitingContextStore.setState({ ownerId: 'club', eligibleRole: 'club', rows: [{ ...r8, opportunity_status: 'open' }], loading: false, fetchedForOwner: 'club' })
+    db.tables.recruiting_context = [{ ...r8, is_active: false, opportunity: { status: 'closed' } }]
     await act(async () => { await useRecruitingContextStore.getState().roleStatusChanged('r8', 'closed') })
     const deactivate = db.calls.filter((c) => c.table === 'recruiting_context' && c.op === 'update')
     expect(deactivate).toHaveLength(1)
     expect(deactivate[0].args[0]).toEqual({ is_active: false })
-    expect(db.calls.some((c) => c.table === 'recruiting_context' && c.op === 'eq' && c.args[0] === 'id' && c.args[1] === 'ctx-r8')).toBe(true)
     expect(useRecruitingContextStore.getState().rows.find((r) => r.is_active)).toBeUndefined()
+  })
+
+  it('the chat card: a pending application on a closed role reads "Role closed", never a countdown', () => {
+    const base = { id: 'a', opportunityId: 'o', status: 'pending', appliedAt: '2026-09-27T14:50:42Z', updatedAt: null, roleTitle: 'Midfielder R5', rolePosition: 'midfielder' }
+    const now = new Date('2026-09-30T12:00:00Z')
+    expect(applicationCardDetail({ ...base, roleStatus: 'closed' }, 14, now)).toEqual({ text: 'Sep 27 · Role closed', urgent: false })
+    expect(applicationCardDetail({ ...base, roleStatus: 'open' }, 14, now).text).toMatch(/days? left to reply/)
+    // The chat picks a pending application on an open role first.
+    const picked = pickApplication([{ ...base, id: 'closed', roleStatus: 'closed', appliedAt: '2026-09-01T00:00:00Z' }, { ...base, id: 'open', roleStatus: 'open' }])
+    expect(picked?.id).toBe('open')
   })
 
   it('both close paths tell the store', () => {
@@ -182,9 +208,9 @@ describe('contact email copy', () => {
     expect(CONTACT_EMAIL_SWITCH_LABEL).toBe('Show on your profile')
     expect(CONTACT_EMAIL_SWITCH_HELP).toBe('Off: players message you on Hockia.')
     expect(contactEmailSubtitle('a@b.co', false)).toBe('Private · a@b.co')
-    expect(contactEmailSubtitle('a@b.co', true)).toBe('Shown on your profile')
+    expect(contactEmailSubtitle('a@b.co', true)).toBe('Shown on your profile · a@b.co')
     expect(contactRowValue('a@b.co', false)).toBe('Private · a@b.co')
-    expect(contactRowValue('a@b.co', true)).toBe('Shown on your profile')
+    expect(contactRowValue('a@b.co', true)).toBe('Shown on your profile · a@b.co')
     expect(contactRowValue('', true)).toBeNull()
   })
 })

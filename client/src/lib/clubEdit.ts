@@ -64,7 +64,7 @@ export function photosRowValue(count: number | null): string | null {
   return `${count} photo${count === 1 ? '' : 's'}`
 }
 
-/** Contact email row: "Private · club@x.com" / "Shown on your profile"; empty → null ("Add"). */
+/** Contact email row: "Private · club@x.com" / "Shown on your profile · club@x.com"; empty → null ("Add"). */
 export function contactRowValue(email: string | null | undefined, isPublic: boolean | null | undefined): string | null {
   return contactEmailSubtitle(email, isPublic, null)
 }

@@ -18,6 +18,10 @@ export const APPLICATION_STATUS_LABELS: Record<string, string> = {
   filled: 'Role filled',
 }
 
+/** A pending application whose role is no longer open (My applications pill,
+ *  club chat card). */
+export const ROLE_CLOSED_LABEL = 'Role closed'
+
 export function applicationStatusLabel(status: string | null | undefined): string | null {
   if (!status) return null
   return APPLICATION_STATUS_LABELS[status] ?? null

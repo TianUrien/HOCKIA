@@ -209,8 +209,9 @@ interface RecruitingContextStoreState {
   clearError: () => void
   /** The club closed / reopened one of its roles (RoleActions, desktop
    *  Opportunities tab): patch the role status onto its context and, when a
-   *  closed role was the stored active context, deactivate it — so no screen
-   *  keeps ranking for a closed role (Club v2 QA round 9). */
+   *  closed role was the stored active context, make the newest open role of
+   *  that kind active (else none) — so no screen keeps ranking for a closed
+   *  role (Club v2 QA round 9). */
   roleStatusChanged: (opportunityId: string, status: string) => Promise<void>
   /** Which kind of role the current screen ranks (founder ruling
    *  2026-09-27, round 6): Players tab / Find players / Shortlist = 'player',
@@ -510,18 +511,19 @@ export const useRecruitingContextStore = create<RecruitingContextStoreState>((se
   clearError: () => set({ error: null }),
 
   roleStatusChanged: async (opportunityId, status) => {
-    const { ownerId, eligibleRole, rows, refresh } = get()
+    const { ownerId, eligibleRole, rows, refresh, activate } = get()
     if (!ownerId || !eligibleRole) return
     const hit = rows.filter((r) => r.opportunity_id === opportunityId)
     if (!hit.length) return
-    const closing = status !== 'open'
-    const wasActive = closing ? hit.find((r) => r.is_active) ?? null : null
-    set((s) => ({
-      rows: s.rows.map((r) => (r.opportunity_id === opportunityId
-        ? { ...r, opportunity_status: status, is_active: closing ? false : r.is_active }
-        : r)),
-    }))
+    const wasActive = status !== 'open' ? hit.find((r) => r.is_active) ?? null : null
+    const patched = rows.map((r) => (r.opportunity_id === opportunityId ? { ...r, opportunity_status: status } : r))
+    set({ rows: patched })
     if (!wasActive) return
+    // Like any other closed role (round 6 rule): the newest OPEN role of the
+    // same kind takes over, else no context — persisted so every screen agrees.
+    const next = effectiveContextRow(patched, contextKind(wasActive))
+    if (next) { await activate(next.id); return }
+    set((s) => ({ rows: s.rows.map((r) => (r.id === wasActive.id ? { ...r, is_active: false } : r)) }))
     const { error: updateError } = await supabase
       .from('recruiting_context')
       .update({ is_active: false })
