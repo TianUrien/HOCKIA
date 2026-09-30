@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ChevronRight, Lock } from 'lucide-react'
 import { DetailNavBar } from '@/components/ui/DetailNavBar'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
 import { CountrySelect, LocationAutocomplete } from '@/components'
 import SocialLinksInput from '@/components/SocialLinksInput'
-import { SettingsSwitch } from '@/components/settings/settingsUi'
+import { ContactEmailPublicRow, SheetActions } from '@/components/settings/settingsUi'
 import type { LocationSelection } from '@/components/LocationAutocomplete'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
@@ -72,6 +72,8 @@ function Group({ label, children }: { label: string; children: ReactNode }) {
 
 export default function ClubEditScreen() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const fromSettings = searchParams.get('from') === 'settings'
   const { user, profile, refreshProfile } = useAuthStore()
   const addToast = useToastStore((s) => s.addToast)
   const { getCountryById } = useCountries()
@@ -118,7 +120,9 @@ export default function ClubEditScreen() {
   if (!profile || !user) return null
   const d = <T,>(key: string) => draft[key] as T
   const set = (patch: Record<string, unknown>) => setDraft((prev) => ({ ...prev, ...patch }))
-  const toProfile = () => navigate('/dashboard/profile')
+  // Opened from Settings (?from=settings): back names and returns there.
+  const toParent = () => navigate(fromSettings ? '/settings' : '/dashboard/profile')
+  const via = fromSettings ? '&via=settings' : ''
 
   const persist = async (patch: Record<string, unknown>) => {
     setSaving(true)
@@ -231,7 +235,7 @@ export default function ClubEditScreen() {
   return (
     <div className="min-h-screen bg-white pb-12 lg:hidden" data-testid="club-edit-screen">
       <div className="sticky top-0 z-20 bg-white pt-[env(safe-area-inset-top)]">
-        <DetailNavBar parent="Profile" title="Edit profile" showParent onBack={toProfile} trailing={<button type="button" onClick={toProfile} className="h-11 px-3 text-body font-semibold text-hockia-primary">Done</button>} />
+        <DetailNavBar parent={fromSettings ? 'Settings' : 'Profile'} title="Edit profile" showParent onBack={toParent} trailing={<button type="button" onClick={toParent} className="h-11 px-3 text-body font-semibold text-hockia-primary">Done</button>} />
       </div>
 
       <div className="px-5">
@@ -261,13 +265,13 @@ export default function ClubEditScreen() {
             value={clubLeagueRowValue(Boolean(profile.current_world_club_id), profile.mens_league_division, profile.womens_league_division)}
             placeholder="Link your club"
             multiline
-            onClick={() => navigate('/dashboard/profile/league?from=edit')}
+            onClick={() => navigate(`/dashboard/profile/league?from=edit${via}`)}
           />
         </Group>
 
         <Group label="About">
           <Row label="About" value={profile.club_bio?.trim() || null} multiline onClick={() => setEditing('about')} />
-          <Row label="Photos" value={photosRowValue(photoCount)} onClick={() => navigate('/dashboard/profile/media?from=edit')} />
+          <Row label="Photos" value={photosRowValue(photoCount)} onClick={() => navigate(`/dashboard/profile/media?from=edit${via}`)} />
         </Group>
 
         <Group label="Contact">
@@ -318,18 +322,16 @@ export default function ClubEditScreen() {
               {editing === 'contact' && (
                 <>
                   <input autoFocus type="email" inputMode="email" autoCapitalize="none" value={d<string>('contact_email') ?? ''} onChange={(e) => set({ contact_email: e.target.value })} placeholder="contact@yourclub.com" aria-label="Contact email" className={input} />
-                  <div className="flex min-h-[44px] items-center gap-3">
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-row text-ink-1">Show to Hockia members</span>
-                      <span className="block text-caption text-ink-3">Off by default. Your login email is never shown.</span>
-                    </span>
-                    <SettingsSwitch label="Show to Hockia members" checked={Boolean(d<boolean>('contact_email_public'))} onChange={() => set({ contact_email_public: !d<boolean>('contact_email_public') })} />
-                  </div>
+                  <ContactEmailPublicRow
+                    checked={Boolean(d<boolean>('contact_email_public')) && (d<string>('contact_email') ?? '').trim() !== ''}
+                    disabled={(d<string>('contact_email') ?? '').trim() === ''}
+                    onChange={() => set({ contact_email_public: !d<boolean>('contact_email_public') })}
+                  />
                 </>
               )}
 
               {error && <p role="alert" className="text-secondary text-red-600">{error}</p>}
-              <button type="button" onClick={() => void save()} disabled={saving} className="flex h-[50px] w-full items-center justify-center rounded-full bg-hockia-primary text-body font-semibold text-white disabled:opacity-60">{saving ? 'Saving…' : 'Save'}</button>
+              <SheetActions onCancel={() => setEditing(null)} onSave={() => void save()} saving={saving} />
             </div>
           </div>
         )}

@@ -204,21 +204,27 @@ export interface ContextLike {
   opportunity_id: string | null
 }
 
-/** "Midfielder · Men's" (position + team), else the saved label. */
+/** A saved context's name; else "Midfielder · Men's" (position + team); else the label. */
 export function contextPillLabel(ctx: ContextLike | null): string {
   if (!ctx) return 'No context'
+  // A saved context's own name wins (the form says "Shown in Recruiting
+  // for"); unnamed ones — and role contexts — keep "Position · Team".
+  const name = ctx.type !== 'opportunity' ? ctx.label?.trim() : null
+  if (name) return name
   const pos = ctx.target_position ? positionLabel(ctx.target_position) : null
   const team = genderPill(ctx.target_category)?.label ?? null
   const joined = [pos, team].filter(Boolean).join(' · ')
   return joined || ctx.label?.trim() || 'Custom search'
 }
 
-/** Only contexts that rank PLAYERS: open player roles and saved (custom) searches — plus the active one, always. */
+/** Only contexts that rank PLAYERS: open player roles and saved (custom) searches — plus the active saved search. */
 export function playerContexts<T extends ContextLike>(rows: T[], openPlayerRoleIds: Set<string>, activeId: string | null = null): T[] {
   return rows.filter((r) => {
+    // A role context is listed only while its role is OPEN — even the active
+    // one (a closed role never stays ticked under "Your open roles").
+    if (r.type === 'opportunity' && !(r.opportunity_id && openPlayerRoleIds.has(r.opportunity_id))) return false
     if (r.id === activeId) return true
     if (r.target_role && r.target_role !== 'player') return false
-    if (r.type === 'opportunity') return !!r.opportunity_id && openPlayerRoleIds.has(r.opportunity_id)
     return true
   })
 }

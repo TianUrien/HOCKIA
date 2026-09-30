@@ -1,5 +1,6 @@
 import { identityLine, positionLabel } from '@/lib/identity'
 import { DEFAULT_EXPIRY_DAYS, daysLeftToReply, isDaysLeftUrgent } from '@/lib/clubRecruiting'
+import { ROLE_CLOSED_LABEL } from '@/lib/applicationStatus'
 
 /**
  * Club v2 Home, Inbox and Chat (Figma D1.18 352:1290, D1.19 353:502,
@@ -57,13 +58,21 @@ export interface ClubApplication {
   updatedAt: string | null
   roleTitle: string | null
   rolePosition: string | null
+  /** The role's status; a pending application on a role that isn't open no
+   *  longer waits on the club (founder, QA round 9). Absent → treated as open. */
+  roleStatus?: string | null
 }
 
-/** The application the chat talks about: one still waiting first (the one
- *  closing soonest), otherwise the most recent. */
+/** Still waiting on the club: pending AND the role is open. */
+function pendingOnOpenRole(a: Pick<ClubApplication, 'status' | 'roleStatus'>): boolean {
+  return a.status === 'pending' && (a.roleStatus == null || a.roleStatus === 'open')
+}
+
+/** The application the chat talks about: one still waiting first (pending on
+ *  an open role, the one closing soonest), otherwise the most recent. */
 export function pickApplication(apps: ClubApplication[]): ClubApplication | null {
   if (!apps.length) return null
-  const pending = apps.filter((a) => a.status === 'pending').sort((a, b) => (a.appliedAt ?? '').localeCompare(b.appliedAt ?? ''))
+  const pending = apps.filter(pendingOnOpenRole).sort((a, b) => (a.appliedAt ?? '').localeCompare(b.appliedAt ?? ''))
   if (pending.length) return pending[0]
   return [...apps].sort((a, b) => (b.appliedAt ?? '').localeCompare(a.appliedAt ?? ''))[0]
 }
@@ -94,6 +103,7 @@ const STATUS_NOTE: Record<string, string> = {
 export function applicationCardDetail(app: ClubApplication, expiryDays = DEFAULT_EXPIRY_DAYS, now = new Date()): { text: string; urgent: boolean } {
   const applied = monthDay(app.appliedAt)
   const join = (tail: string | null) => [applied, tail].filter(Boolean).join(' · ')
+  if (app.status === 'pending' && !pendingOnOpenRole(app)) return { text: join(ROLE_CLOSED_LABEL), urgent: false }
   if (app.status === 'pending') {
     const days = daysLeftToReply(app.appliedAt, expiryDays, now)
     const tail = days === null ? null : days === 0 ? 'closes today' : days === 1 ? '1 day left to reply' : `${days} days left to reply`
