@@ -22,7 +22,7 @@ import { OPPORTUNITY_PREF_LABEL } from '@/lib/candidateIntent'
 import { trackPushSubscribe, trackPushUnsubscribe } from '@/lib/analytics'
 import { qk } from '@/lib/queryKeys'
 import { squadSettingsSubtitle } from '@/lib/clubSquadCopy'
-import { CLUB_EDIT_PATH, CLUB_GROUP_FOOTER, clubLeagueSubtitle, contactEmailSubtitle, isValidContactEmail } from '@/lib/clubSettingsCopy'
+import { CLUB_EDIT_PATH, CLUB_GROUP_FOOTER, CONTACT_EMAIL_INTRO, clubLeagueSubtitle, contactEmailSubtitle, isValidContactEmail } from '@/lib/clubSettingsCopy'
 import type { Profile } from '@/lib/supabase'
 
 const FeedbackModal = lazy(() => import('@/components/FeedbackModal'))
@@ -56,7 +56,7 @@ function ContactEmailSheet({ open, onClose, email, isPublic, busy, onSave }: { o
     <BottomSheet open={open} onClose={onClose} ariaLabel="Contact email">
       <div className="px-5 pb-3 pt-1" data-testid="contact-email-sheet">
         <h2 className="text-title text-ink-1">Contact email</h2>
-        <p className="mt-1 text-secondary text-ink-2">So players and coaches can reach the club directly. Your sign-in email is never shown.</p>
+        <p className="mt-1 text-secondary text-ink-2">{CONTACT_EMAIL_INTRO}</p>
         <input
           type="email"
           inputMode="email"

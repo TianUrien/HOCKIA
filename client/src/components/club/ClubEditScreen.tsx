@@ -7,6 +7,7 @@ import { EntityAvatar } from '@/components/ui/EntityAvatar'
 import { CountrySelect, LocationAutocomplete } from '@/components'
 import SocialLinksInput from '@/components/SocialLinksInput'
 import { ContactEmailPublicRow, SheetActions } from '@/components/settings/settingsUi'
+import { CONTACT_EMAIL_INTRO } from '@/lib/clubSettingsCopy'
 import type { LocationSelection } from '@/components/LocationAutocomplete'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
@@ -321,6 +322,7 @@ export default function ClubEditScreen() {
 
               {editing === 'contact' && (
                 <>
+                  <p className="text-secondary text-ink-2">{CONTACT_EMAIL_INTRO}</p>
                   <input autoFocus type="email" inputMode="email" autoCapitalize="none" value={d<string>('contact_email') ?? ''} onChange={(e) => set({ contact_email: e.target.value })} placeholder="contact@yourclub.com" aria-label="Contact email" className={input} />
                   <ContactEmailPublicRow
                     checked={Boolean(d<boolean>('contact_email_public')) && (d<string>('contact_email') ?? '').trim() !== ''}
