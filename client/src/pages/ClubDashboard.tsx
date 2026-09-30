@@ -530,6 +530,12 @@ export default function ClubDashboard({
 
   const isLanding = activeTab === 'profile'
   const fromEdit = searchParams.get('from') === 'edit'
+  // Opened from Settings (?from=settings, or Edit profile opened from
+  // Settings: ?from=edit&via=settings): back names and returns there.
+  const fromSettings = searchParams.get('from') === 'settings'
+  const editPath = searchParams.get('via') === 'settings' ? '/dashboard/club/edit?from=settings' : '/dashboard/club/edit'
+  const leafParent = fromEdit ? 'Edit profile' : fromSettings ? 'Settings' : 'Profile'
+  const leafBack = () => (fromEdit ? navigate(editPath) : fromSettings ? navigate('/settings') : handleTabChange('profile'))
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -544,19 +550,19 @@ export default function ClubDashboard({
           {isLeagueLeaf && (
             <ClubLeagueScreen
               profile={profile}
-              // Opened from Edit club profile (?from=edit): back names and returns there.
-              parent={fromEdit ? 'Edit profile' : 'Profile'}
-              onBack={() => (fromEdit ? navigate('/dashboard/club/edit') : handleTabChange('profile'))}
+              // Opened from Edit club profile (?from=edit) or Settings: back names and returns there.
+              parent={leafParent}
+              onBack={leafBack}
               onLink={() => handleTabChange('link')}
             />
           )}
           {isLinkLeaf && <LinkClubScreen profile={profile} onCancel={() => handleTabChange('league')} onLinked={() => handleTabChange('league')} />}
-          {isSquadLeaf && <SquadScreen profile={profile} onBack={() => handleTabChange('profile')} />}
+          {isSquadLeaf && <SquadScreen profile={profile} parent={leafParent} onBack={leafBack} />}
           {isMediaLeaf && (
             <ClubManageMediaScreen
               clubId={profile.id}
-              parent={fromEdit ? 'Edit profile' : 'Profile'}
-              onBack={() => (fromEdit ? navigate('/dashboard/club/edit') : handleTabChange('profile'))}
+              parent={leafParent}
+              onBack={leafBack}
             />
           )}
         </Suspense>

@@ -7,7 +7,7 @@ import { BottomSheet } from '@/components/ui/BottomSheet'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
 import BlockedAccountsList from '@/components/BlockedAccountsList'
 import DeleteAccountModal from '@/components/DeleteAccountModal'
-import { SettingsGroup, SettingsRow, SettingsSwitch } from './settingsUi'
+import { ContactEmailPublicRow, SettingsGroup, SettingsRow, SettingsSwitch, SheetActions } from './settingsUi'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
@@ -69,16 +69,12 @@ function ContactEmailSheet({ open, onClose, email, isPublic, busy, onSave }: { o
           className="mt-3 h-12 w-full rounded-[12px] bg-surface-grouped px-4 text-[17px] text-ink-1 placeholder:text-ink-4 focus:outline-none focus:ring-2 focus:ring-hockia-primary/30"
         />
         {error && <p role="alert" className="pt-1.5 text-[13px] text-red-600">{error}</p>}
-        <div className="mt-3 overflow-hidden rounded-card bg-surface-grouped">
-          <SettingsRow
-            title="Show on your profile"
-            subtitle={pub ? 'Everyone on Hockia can see it.' : 'Off: players message you on Hockia.'}
-            trailing={<SettingsSwitch label="Show on your profile" checked={pub && value.trim() !== ''} disabled={value.trim() === ''} onChange={() => setPub((v) => !v)} />}
-          />
+        <div className="mt-3">
+          <ContactEmailPublicRow checked={pub && value.trim() !== ''} disabled={value.trim() === ''} onChange={() => setPub((v) => !v)} />
         </div>
-        <button type="button" onClick={() => void save()} disabled={busy} className="mt-4 flex h-[50px] w-full items-center justify-center rounded-full bg-hockia-primary text-body font-semibold text-white disabled:opacity-60">
-          {busy ? 'Saving…' : 'Save'}
-        </button>
+        <div className="mt-4">
+          <SheetActions onCancel={onClose} onSave={() => void save()} saving={busy} />
+        </div>
       </div>
     </BottomSheet>
   )
@@ -180,7 +176,7 @@ function Hub({ go }: { go: (s: SettingsSection | 'account') => void }) {
   return (
     <Screen parent="Profile" title="Settings" onBack={() => navigate('/dashboard/profile')}>
       <SettingsGroup>
-        <button type="button" onClick={() => navigate(isClub ? CLUB_EDIT_PATH : '/dashboard/profile?action=edit')} className="flex w-full items-center gap-3.5 px-4 py-3.5 text-left" data-testid="settings-identity">
+        <button type="button" onClick={() => navigate(isClub ? `${CLUB_EDIT_PATH}?from=settings` : '/dashboard/profile?action=edit')} className="flex w-full items-center gap-3.5 px-4 py-3.5 text-left" data-testid="settings-identity">
           <EntityAvatar src={profile?.avatar_url ? getImageUrl(profile.avatar_url, 'avatar-md') ?? profile.avatar_url : null} name={name} role={profile?.role} size={64} />
           {isClub ? (
             // Figma D1.22: crest, club name, "Signed in with email", "Club · admin".
@@ -202,8 +198,8 @@ function Hub({ go }: { go: (s: SettingsSection | 'account') => void }) {
 
       {isClub && (
         <SettingsGroup label="Club" footer={CLUB_GROUP_FOOTER}>
-          <SettingsRow title="Club & league" subtitle={clubLeagueSubtitle(profile ?? {})} onClick={() => navigate('/dashboard/profile?tab=league')} />
-          <SquadSettingsRow clubId={profile?.id ?? null} onOpen={() => navigate('/dashboard/profile/members')} />
+          <SettingsRow title="Club & league" subtitle={clubLeagueSubtitle(profile ?? {})} onClick={() => navigate('/dashboard/profile?tab=league&from=settings')} />
+          <SquadSettingsRow clubId={profile?.id ?? null} onOpen={() => navigate('/dashboard/profile/members?from=settings')} />
           <SettingsRow title="Contact email" subtitle={contactEmailSubtitle(read<string | null>('contact_email', null), read<boolean>('contact_email_public', false))} onClick={() => setContactEmail(true)} />
         </SettingsGroup>
       )}

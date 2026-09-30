@@ -44,9 +44,9 @@ describe('Edit club helpers', () => {
     expect(photosRowValue(1)).toBe('1 photo')
     expect(photosRowValue(0)).toBeNull()
     expect(photosRowValue(null)).toBeNull()
-    expect(contactRowValue('a@b.co', false)).toBe('Private')
-    expect(contactRowValue('a@b.co', null)).toBe('Private')
-    expect(contactRowValue('a@b.co', true)).toBe('Shown to members')
+    expect(contactRowValue('a@b.co', false)).toBe('Private · a@b.co')
+    expect(contactRowValue('a@b.co', null)).toBe('Private · a@b.co')
+    expect(contactRowValue('a@b.co', true)).toBe('Shown on your profile')
     expect(contactRowValue('', true)).toBeNull()
   })
   it('first run only once loaded and with no role at all (a draft counts as a role)', () => {
@@ -156,7 +156,7 @@ describe('ClubEditScreen (D1.27)', () => {
     expect(within(row('City')).getByText('Kilkenny')).toBeTruthy()
     expect(within(row('Club & league')).getByText('Linked · Leinster Division 1A')).toBeTruthy()
     expect(within(row('Website')).getByText('kilkennyhc.com')).toBeTruthy()
-    expect(within(row('Contact email')).getByText('Private')).toBeTruthy()
+    expect(within(row('Contact email')).getByText('Private · hello@kilkennyhc.com')).toBeTruthy()
     await waitFor(() => expect(within(row('Photos')).getByText('2 photos')).toBeTruthy())
     for (const gone of ['Position', 'Category', 'Date of birth', 'Passports', 'Open to play', 'Available from']) {
       expect(screen.queryByText(gone)).toBeNull()
@@ -221,11 +221,35 @@ describe('ClubEditScreen (D1.27)', () => {
   it('contact email: private by default; the switch shares it with members', async () => {
     renderEdit()
     fireEvent.click(row('Contact email'))
-    const sw = screen.getByRole('switch', { name: 'Show to Hockia members' })
+    const sw = screen.getByRole('switch', { name: 'Show on your profile' })
     expect(sw.getAttribute('aria-checked')).toBe('false')
     fireEvent.click(sw)
     fireEvent.click(screen.getByRole('button', { name: 'Save' }))
     await waitFor(() => expect(db.update).toHaveBeenCalledWith('profiles', { contact_email: 'hello@kilkennyhc.com', contact_email_public: true }))
+  })
+
+  it('opened from Settings: back reads Settings and returns there; leaves keep the way back', () => {
+    render(<MemoryRouter initialEntries={['/dashboard/club/edit?from=settings']}><ClubEditScreen /></MemoryRouter>)
+    fireEvent.click(screen.getByRole('button', { name: 'Back to Settings' }))
+    expect(navigateMock).toHaveBeenCalledWith('/settings')
+    fireEvent.click(row('Club & league'))
+    expect(navigateMock).toHaveBeenCalledWith('/dashboard/profile/league?from=edit&via=settings')
+  })
+
+  it('every edit sheet has Cancel: closes without saving', async () => {
+    renderEdit()
+    for (const label of ['Name', 'About', 'Contact email', 'Website']) {
+      fireEvent.click(row(label))
+      fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+      await waitFor(() => expect(screen.queryByRole('button', { name: 'Cancel' })).toBeNull())
+    }
+    expect(db.update).not.toHaveBeenCalled()
+  })
+
+  it('contact email switch uses the shared copy', () => {
+    renderEdit()
+    fireEvent.click(row('Contact email'))
+    expect(screen.getByText('Off: players message you on Hockia.')).toBeTruthy()
   })
 
   it('about: writes club_bio (not the player bio)', async () => {

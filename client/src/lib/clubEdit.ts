@@ -1,4 +1,5 @@
 import { clubLeadLeague } from '@/lib/clubProfileCopy'
+import { contactEmailSubtitle } from '@/lib/clubSettingsCopy'
 
 /**
  * Rules for Edit club profile (Figma 04 Club D1.27, DEV NOTE 368:1103) and the
@@ -63,10 +64,9 @@ export function photosRowValue(count: number | null): string | null {
   return `${count} photo${count === 1 ? '' : 's'}`
 }
 
-/** Contact email row: the visibility once an email is set (default private). */
+/** Contact email row: "Private · club@x.com" / "Shown on your profile"; empty → null ("Add"). */
 export function contactRowValue(email: string | null | undefined, isPublic: boolean | null | undefined): string | null {
-  if (!email?.trim()) return null
-  return isPublic ? 'Shown to members' : 'Private'
+  return contactEmailSubtitle(email, isPublic, null)
 }
 
 /**

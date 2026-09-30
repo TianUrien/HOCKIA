@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { CONTACT_EMAIL_SWITCH_HELP, CONTACT_EMAIL_SWITCH_LABEL } from '@/lib/clubSettingsCopy'
 
 /**
  * iOS grouped-list pieces for the phone Settings screens (Figma Settings v2 ·
@@ -68,4 +69,33 @@ export function SettingsRow({ title, subtitle, value, icon, iconClassName, onCli
   )
   const cls = 'flex w-full items-center gap-3 px-4 py-3 text-left min-h-[50px]'
   return onClick ? <button type="button" onClick={onClick} className={cls}>{body}</button> : <div className={cls}>{body}</div>
+}
+
+/** Club contact email visibility switch — Settings › Contact email and Edit
+ *  profile › Contact email share it (one label, one help line). */
+export function ContactEmailPublicRow({ checked, disabled, onChange }: { checked: boolean; disabled?: boolean; onChange: () => void }) {
+  return (
+    <div className="overflow-hidden rounded-card bg-surface-grouped" data-testid="contact-email-public-row">
+      <SettingsRow
+        title={CONTACT_EMAIL_SWITCH_LABEL}
+        subtitle={CONTACT_EMAIL_SWITCH_HELP}
+        trailing={<SettingsSwitch label={CONTACT_EMAIL_SWITCH_LABEL} checked={checked} disabled={disabled} onChange={onChange} />}
+      />
+    </div>
+  )
+}
+
+/** Cancel + Save under an edit sheet: Cancel closes without saving
+ *  (tap-outside and Escape still close too). */
+export function SheetActions({ onCancel, onSave, saving, saveLabel = 'Save' }: { onCancel: () => void; onSave: () => void; saving?: boolean; saveLabel?: string }) {
+  return (
+    <div className="flex gap-3">
+      <button type="button" onClick={onCancel} disabled={saving} className="flex h-[50px] flex-1 items-center justify-center rounded-full bg-surface-grouped text-body font-semibold text-ink-1 disabled:opacity-60">
+        Cancel
+      </button>
+      <button type="button" onClick={onSave} disabled={saving} className="flex h-[50px] flex-1 items-center justify-center rounded-full bg-hockia-primary text-body font-semibold text-white disabled:opacity-60">
+        {saving ? 'Saving…' : saveLabel}
+      </button>
+    </div>
+  )
 }

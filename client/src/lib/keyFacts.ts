@@ -24,7 +24,7 @@
  *  - EU status is derived from the passports, never typed.
  */
 import { categoriesToDisplay } from '@/lib/hockeyCategories'
-import { getSpecializationLabel } from '@/lib/coachSpecializations'
+import { coachSpecialtyLabel } from '@/lib/identity'
 import { AVAILABILITY_DURATION_LABELS, isAvailabilityDuration } from '@/lib/availabilityDuration'
 import { workPermitStatus, workPermitTypeLabel, type WorkPermitStatus } from '@/lib/workPermits'
 
@@ -377,7 +377,7 @@ export function buildCoachKeyFacts(input: CoachKeyFactsInput, options: KeyFactsO
 
   const specialization = clean(input.specialization)
     ? fact('specialization', 'Specialization', {
-        value: getSpecializationLabel(input.specialization, input.specializationCustom),
+        value: coachSpecialtyLabel(input.specialization, input.specializationCustom) ?? 'Coach',
       })
     : missingFact('specialization', 'Specialization', viewer, 'add_specialization')
 

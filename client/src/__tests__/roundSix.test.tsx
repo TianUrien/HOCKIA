@@ -162,8 +162,10 @@ describe('recruiting context per tab kind', () => {
     expect(effectiveContextRow([coachCtx, closedNewest, draft, saved], 'player')).toBeNull()
     const closedCoach = row({ id: 'c-closed', target_role: 'coach', opportunity_status: 'closed' })
     expect(effectiveContextRow([recentPlayer, closedCoach].map((r) => ({ ...r, is_active: r.id === 'p-new' })), 'coach')).toBeNull()
-    // The stored active context itself is still honoured on its own tab.
-    expect(effectiveContextRow([{ ...closedNewest, is_active: true }], 'player')?.id).toBe('p-closed')
+    // A stored active context whose role closed counts as none (QA round 9):
+    // the most recent open role of that kind stands in, else none.
+    expect(effectiveContextRow([{ ...closedNewest, is_active: true }], 'player')).toBeNull()
+    expect(effectiveContextRow([{ ...closedNewest, is_active: true }, recentPlayer], 'player')?.id).toBe('p-new')
   })
   it('the store embeds each role\'s status', () => {
     expect(src('hooks/useRecruitingContext.ts')).toContain("opportunity:opportunities!recruiting_context_opportunity_id_fkey(status)")

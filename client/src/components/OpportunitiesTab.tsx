@@ -18,6 +18,7 @@ import DeleteOpportunityModal from './DeleteOpportunityModal'
 import Skeleton, { OpportunityCardSkeleton } from './Skeleton'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
 import { CLOSE_NOT_FILLED_LABEL, closeRolePatch, closeRoleToast, REOPEN_ROLE_TOAST, reopenRolePatch } from '@/lib/roleLifecycle'
+import { useRecruitingContextStore } from '@/hooks/useRecruitingContext'
 import { countWaitingApplicants } from '@/lib/roleWaiting'
 
 type VacancyWithCount = Vacancy & { applicant_count: number | null }
@@ -527,6 +528,7 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
         .eq('id', vacancyId)
 
       if (error) throw error
+      void useRecruitingContextStore.getState().roleStatusChanged(vacancyId, 'closed')
 
       await fetchVacancies()
       // Keep the row visible after close — without this the user is
@@ -576,6 +578,7 @@ export default function VacanciesTab({ profileId, readOnly = false, triggerCreat
         .eq('id', vacancy.id)
 
       if (error) throw error
+      void useRecruitingContextStore.getState().roleStatusChanged(vacancy.id, 'open')
       await fetchVacancies()
       setStatusFilter('open')
       addToast(REOPEN_ROLE_TOAST, 'success')
