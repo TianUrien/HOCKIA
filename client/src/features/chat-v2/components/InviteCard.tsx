@@ -1,7 +1,6 @@
 import { lazy, Suspense, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
-import { Check } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { supabase, type Vacancy } from '@/lib/supabase'
@@ -25,8 +24,8 @@ const ApplyToOpportunityModal = lazy(() => import('@/components/ApplyToOpportuni
  * role". Expired / role closed → the card greys out.
  *
  * The club (sender) sees the same card with a grey status line instead of
- * the actions ("Invitation pending" — founder ruling 2026-09-26: grey for the
- * club). If the invite can't be read, the plain message text shows instead.
+ * the actions ("Invitation pending", "<name> applied" — founder ruling
+ * 2026-09-26: grey for the club; the player's own "Applied" is grey too). If the invite can't be read, the plain message text shows instead.
  */
 interface Props {
   inviteId: string
@@ -149,10 +148,10 @@ export default function InviteCard({ inviteId, opportunityId, isMine, fallbackTe
         <div className="mt-3.5 flex items-center justify-between gap-3">
           {state.line && (
             <span
-              className={cn('inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-secondary font-semibold', state.tone === 'positive' ? 'bg-positive-soft text-positive' : 'bg-surface-grouped text-ink-2')}
+              className="inline-flex items-center rounded-full bg-surface-grouped px-3 py-1.5 text-secondary font-semibold text-ink-2"
               data-testid="invite-card-status"
+              data-tone={state.tone}
             >
-              {state.tone === 'positive' && <Check className="h-3.5 w-3.5" strokeWidth={2.4} aria-hidden="true" />}
               {state.line}
             </span>
           )}

@@ -49,7 +49,7 @@ import type { CommunityFiltersState } from './communityFilters'
 import { useRecruitingContext } from '@/hooks/useRecruitingContext'
 import { useOwnLeague } from '@/hooks/useScouting'
 import { useCommunityClubFit } from '@/hooks/useCommunityClubFit'
-import { contextFitTarget, type ContextLike } from '@/lib/findPlayers'
+import { contextFitTarget, keepAdultPlayers, type ContextLike } from '@/lib/findPlayers'
 import { rankCommunityClubView, recruiterCardProfilePath } from '@/lib/communityClubView'
 
 export interface Profile {
@@ -227,6 +227,8 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
   // Evidence sort/filter are recruiter-only (clubs + recruiting coaches);
   // anyone else carrying them in state falls back to newest / no filter.
   const canUseEvidence = isRecruitingViewer(currentUserProfile)
+  // Club-facing viewer (club or recruiting coach): players listed only when 18+ with a known date of birth.
+  const clubFacing = canUseEvidence
   const sort = effectiveCommunitySort(requestedSort, canUseEvidence)
   const evidenceOnly = evidenceFilterActive(filters, canUseEvidence)
   // Active recruiting context (recruiter-only; null otherwise). When the
@@ -544,7 +546,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
 
       try {
         const members = await queryClient.fetchQuery({
-          queryKey: qk.communitySearch(viewerScope, roleKey, query),
+          queryKey: qk.communitySearch(clubFacing ? `${viewerScope}:club` : viewerScope, roleKey, query),
           staleTime: 20_000,
           retry: false,
           queryFn: async () => {
@@ -573,7 +575,19 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
               .limit(200)
 
             if (error) throw error
-            const members = ((data || []) as unknown) as Profile[]
+            let members = ((data || []) as unknown) as Profile[]
+
+            // This fallback reads profiles directly, so it doesn't get the
+            // grid RPC's 18+ fence: for a club-facing viewer, keep players
+            // only when they are 18+ with a known date of birth (server age).
+            if (clubFacing) {
+              const playerIds = members.filter(m => m.role === 'player').map(m => m.id)
+              if (playerIds.length > 0) {
+                const { data: ages, error: agesError } = await supabase.rpc('get_profile_ages', { p_ids: playerIds })
+                if (agesError) throw agesError
+                members = keepAdultPlayers(members, (ages ?? []) as { profile_id: string; age: number | null }[])
+              }
+            }
 
             // Resolve brand slugs + completion fields for brand cards
             const brandIds = members.filter(m => m.role === 'brand').map(m => m.id)
@@ -633,7 +647,7 @@ export function PeopleListView({ roleFilter, state, onTotalCountChange, onFilter
         setIsSearching(false)
       }
     }, { query })
-  }, [hideTestAccounts, viewerScope, roleFilter, setPage])
+  }, [hideTestAccounts, viewerScope, roleFilter, setPage, clubFacing])
 
   // Client-side search filtering (instant, for both grid and suggestions)
   const clientFilteredMembers = useMemo(() => {
