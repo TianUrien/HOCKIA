@@ -142,6 +142,25 @@ export default function ChatWindowV2({
     lastMessageIdRef.current = null
   }, [conversation.id])
 
+  // Stay pinned to the newest message when the thread grows in place. Cards
+  // that load after the first paint (D3 invite cards: a 260px placeholder,
+  // then the real card) pushed the bottom away without a scroll, so the
+  // thread opened short of the latest message and the next send had to
+  // travel the whole gap. Only follows when the reader was at the bottom
+  // (last measured distance), never while older messages are being prepended.
+  const threadMounted = !loading && messages.length > 0
+  useEffect(() => {
+    if (!threadMounted) return
+    const content = scrollContainerRef.current?.firstElementChild
+    if (!content || typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(() => {
+      if (!initialScrollDoneRef.current || anchorRef.current !== null) return
+      if (getDistanceFromBottom() <= 120) scrollToBottom('auto')
+    })
+    observer.observe(content)
+    return () => observer.disconnect()
+  }, [conversation.id, threadMounted, getDistanceFromBottom, scrollToBottom])
+
   // Keep the newest messages visible across keyboard open/close. The
   // visual-viewport resize shrinks (or restores) the message list; if the
   // user was already near the bottom, follow the viewport down to the
