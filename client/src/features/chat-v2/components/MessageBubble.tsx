@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { format, isToday, isYesterday } from 'date-fns'
 
@@ -13,6 +13,9 @@ import type { ChatMessage, MessageDeliveryStatus } from '@/types/chat'
 import { cn } from '@/lib/utils'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { SharedPostCard } from './SharedPostCard'
+
+// D3.3 invite card: its own chunk, loaded only when a thread has one.
+const InviteCard = lazy(() => import('./InviteCard'))
 
 interface MessageBubbleProps {
   message: ChatMessage
@@ -34,6 +37,33 @@ interface MessageBubbleProps {
 
 const MAX_LENGTH = 1000
 
+type MenuPos = { top?: number; bottom?: number; right: number }
+
+// Where the menu goes for the trigger's current rect. With `onlyIfVisible`,
+// null when the trigger is gone or scrolled out of the visible thread.
+function menuPosFor(el: HTMLElement | null, onlyIfVisible = false): MenuPos | null {
+  if (!el || !el.isConnected) return null
+  const rect = el.getBoundingClientRect()
+  if (onlyIfVisible) {
+    const scroller = el.closest('.chat-scroll-container')
+    const area = scroller ? scroller.getBoundingClientRect() : { top: 0, bottom: window.innerHeight }
+    if (rect.bottom <= area.top || rect.top >= area.bottom) return null
+  }
+  // Right-anchor the menu to the trigger, but clamp so it can't overflow the
+  // viewport's left edge. For the sender's OWN (right-aligned) bubble the ⋯
+  // trigger sits at the LEFT of the bubble, so an unclamped right-anchor
+  // pushed the w-36 (144px) menu off-screen left — clipping "Edit"/"Delete".
+  const MENU_WIDTH = 144
+  const right = Math.min(
+    Math.max(8, window.innerWidth - rect.right),
+    window.innerWidth - MENU_WIDTH - 8
+  )
+  const MENU_EST_HEIGHT = 96
+  return rect.top > MENU_EST_HEIGHT + 12
+    ? { bottom: window.innerHeight - rect.top + 6, right }
+    : { top: rect.bottom + 6, right }
+}
+
 export function MessageBubble({
   message,
   isMine,
@@ -52,10 +82,13 @@ export function MessageBubble({
 
   const isDeleted = Boolean(message.deleted_at)
   const isSharedPost = message.metadata?.type === 'shared_post'
+  // Recruiting cards (D3 invite, server-posted steps) are fixed records: never edited or deleted.
+  const invite = message.metadata?.type === 'opportunity_invite' ? message.metadata : null
+  const isRecruitingEvent = message.metadata?.type === 'application_event'
   const isPersisted = status !== 'sending' && status !== 'failed' && !message.id.startsWith('optimistic-')
   // Own, delivered, not-yet-deleted messages can be managed. Shared-post cards
   // can be deleted but not edited (they aren't free text).
-  const canManage = isMine && isPersisted && !isDeleted
+  const canManage = isMine && isPersisted && !isDeleted && !invite && !isRecruitingEvent
   const canEdit = canManage && !isSharedPost
 
   const [showMenu, setShowMenu] = useState(false)
@@ -69,40 +102,38 @@ export function MessageBubble({
   // bubble wrapper uses `contain: paint`, which would clip an in-flow absolute
   // popover. Position is computed from the trigger's rect, opening upward when
   // there's room (recent messages sit near the bottom / composer).
-  const [menuPos, setMenuPos] = useState<{ top?: number; bottom?: number; right: number } | null>(null)
+  const [menuPos, setMenuPos] = useState<MenuPos | null>(null)
 
   const openMenu = () => {
-    const el = triggerRef.current
-    if (!el) return
-    const rect = el.getBoundingClientRect()
-    // Right-anchor the menu to the trigger, but clamp so it can't overflow the
-    // viewport's left edge. For the sender's OWN (right-aligned) bubble the ⋯
-    // trigger sits at the LEFT of the bubble, so an unclamped right-anchor
-    // pushed the w-36 (144px) menu off-screen left — clipping "Edit"/"Delete".
-    const MENU_WIDTH = 144
-    const right = Math.min(
-      Math.max(8, window.innerWidth - rect.right),
-      window.innerWidth - MENU_WIDTH - 8
-    )
-    const MENU_EST_HEIGHT = 96
-    if (rect.top > MENU_EST_HEIGHT + 12) {
-      setMenuPos({ bottom: window.innerHeight - rect.top + 6, right })
-    } else {
-      setMenuPos({ top: rect.bottom + 6, right })
-    }
+    const pos = menuPosFor(triggerRef.current)
+    if (!pos) return
+    setMenuPos(pos)
     setShowMenu(true)
   }
 
-  // A fixed-position menu would drift from its trigger on scroll/resize — just
-  // close it instead.
+  // The thread scrolls on its own while the menu is open: the auto-scroll to
+  // the newest message after a send, and cards that finish loading and grow
+  // (D3 invite cards). Closing on every scroll event made the menu vanish a
+  // frame after it opened, so keep it pinned to its trigger instead and only
+  // close once the trigger leaves the visible thread.
   useEffect(() => {
     if (!showMenu) return
-    const close = () => setShowMenu(false)
-    window.addEventListener('scroll', close, true)
-    window.addEventListener('resize', close)
+    let frame = 0
+    const follow = () => {
+      if (frame) return
+      frame = requestAnimationFrame(() => {
+        frame = 0
+        const pos = menuPosFor(triggerRef.current, true)
+        if (pos) setMenuPos(pos)
+        else setShowMenu(false)
+      })
+    }
+    window.addEventListener('scroll', follow, true)
+    window.addEventListener('resize', follow)
     return () => {
-      window.removeEventListener('scroll', close, true)
-      window.removeEventListener('resize', close)
+      if (frame) cancelAnimationFrame(frame)
+      window.removeEventListener('scroll', follow, true)
+      window.removeEventListener('resize', follow)
     }
   }, [showMenu])
 
@@ -190,6 +221,17 @@ export function MessageBubble({
             Message deleted
           </div>
         </div>
+      ) : invite ? (
+        <div className={cn('flex', isMine ? 'justify-end' : 'justify-start')}>
+          <div className="w-full sm:max-w-[70%]">
+            <Suspense fallback={<div className="h-[260px] w-full animate-pulse rounded-[18px] bg-surface-grouped" />}>
+              <InviteCard inviteId={invite.invite_id} opportunityId={invite.opportunity_id} isMine={isMine} fallbackText={message.content} />
+            </Suspense>
+          </div>
+        </div>
+      ) : isRecruitingEvent ? (
+        // A recruiting step the server posts ("Facundo passed on Midfielder."): a quiet centred line, not a bubble.
+        <p className="mx-auto max-w-[85%] text-center text-caption leading-4 text-ink-3" data-testid="recruiting-event-line">{message.content}</p>
       ) : isEditing ? (
         <div className="flex justify-end">
           <div className="w-full max-w-[85%] sm:max-w-[70%]" data-testid="message-edit-editor">

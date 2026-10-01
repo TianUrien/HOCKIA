@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Check, ChevronDown, Lock, MessageCircle, Star } from 'lucide-react'
 import { DetailNavBar } from '@/components/ui/DetailNavBar'
@@ -6,11 +6,15 @@ import { BottomSheet } from '@/components/ui/BottomSheet'
 import { ScoutPlayerRow } from './ScoutPlayerRow'
 import { RankedForSheet } from './RankedForSheet'
 import { UndoToast } from './UndoToast'
+import { InviteAction, InviteLimitNotice } from './InviteAction'
+import type { InviteSheetPlayer } from './InviteSheet'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { useCountries } from '@/hooks/useCountries'
 import { useOwnLeague, useRoleShortlist, useScoutingContext, useShortlistEntryActions, type ShortlistEntry } from '@/hooks/useScouting'
 import { useRecruitingViewKind } from '@/hooks/useRecruitingContext'
+import { useClubInviteStatuses, useInviteAllowance } from '@/hooks/useInvites'
+import { inviteLimitReason, isInvitablePlayer } from '@/lib/invites'
 import {
   contextFitTarget,
   contextPillLabel,
@@ -32,6 +36,8 @@ import { cn } from '@/lib/utils'
  */
 type Chip = 'all' | 'applied' | 'scouted'
 const NOTE_MAX = 500
+// The invite sheet (D3.2) is its own chunk: opened on demand.
+const InviteSheet = lazy(() => import('./InviteSheet'))
 
 export default function ShortlistScreen() {
   const navigate = useNavigate()
@@ -54,6 +60,11 @@ export default function ShortlistScreen() {
   const [noteFor, setNoteFor] = useState<ShortlistEntry | null>(null)
   const [noteText, setNoteText] = useState('')
   useEffect(() => { setNoteText(noteFor?.note ?? '') }, [noteFor])
+  const [inviteFor, setInviteFor] = useState<InviteSheetPlayer | null>(null)
+  const rowIds = useMemo(() => data.rows.map((r) => r.id), [data.rows])
+  const inviteStatuses = useClubInviteStatuses(rowIds)
+  const allowance = useInviteAllowance()
+  const limitReason = allowance.reached ? inviteLimitReason(allowance.limit) : null
 
   const parent = (location.state as { parent?: string } | null)?.parent ?? 'Opportunities'
   const levelUnknown = !!target && !!ownLeague && ownLeague.band === null
@@ -112,6 +123,7 @@ export default function ShortlistScreen() {
         <ChevronDown className="h-3.5 w-3.5" strokeWidth={2} aria-hidden="true" />
       </button>
 
+      {limitReason && list.length > 0 && <InviteLimitNotice reason={limitReason} />}
       {data.error && <p className="px-5 py-3 text-row text-ink-2">{data.error}</p>}
       {data.loading && <p className="px-5 py-4 text-row text-ink-3" aria-live="polite">Loading…</p>}
       {!data.loading && !data.error && list.length === 0 && (
@@ -137,9 +149,18 @@ export default function ShortlistScreen() {
                 meta={{ kind: 'custom', text: source, icon: app ? <Check className="h-3.5 w-3.5 shrink-0" strokeWidth={2} aria-hidden="true" /> : <Star className="h-3.5 w-3.5 shrink-0" strokeWidth={1.8} aria-hidden="true" /> }}
                 below={r.note ? <span className="mt-2 block border-l-2 border-hockia-primary pl-2.5 text-[14px] leading-[19px] text-ink-1" data-testid="shortlist-note">{r.note}</span> : null}
                 trailing={(
-                  <button type="button" onClick={() => void message(r)} aria-label={`Message ${r.full_name ?? 'player'}`} className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-grouped text-ink-1">
-                    <MessageCircle className="h-[18px] w-[18px]" strokeWidth={1.8} />
-                  </button>
+                  <span className="flex items-center gap-2">
+                    <InviteAction
+                      pill={app ? 'applied' : inviteStatuses.pillFor(r.id)}
+                      invitable={isInvitablePlayer(r)}
+                      name={r.full_name}
+                      limitReason={limitReason}
+                      onInvite={() => setInviteFor(r)}
+                    />
+                    <button type="button" onClick={() => void message(r)} aria-label={`Message ${r.full_name ?? 'player'}`} className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-grouped text-ink-1">
+                      <MessageCircle className="h-[18px] w-[18px]" strokeWidth={1.8} />
+                    </button>
+                  </span>
                 )}
                 onOpen={() => navigate(`/players/id/${r.id}`, { state: { from: location.pathname } })}
                 onLongPress={() => setMenuFor(r)}
@@ -194,6 +215,11 @@ export default function ShortlistScreen() {
         </div>
       </BottomSheet>
 
+      {inviteFor && (
+        <Suspense fallback={null}>
+          <InviteSheet open={!!inviteFor} player={inviteFor} activeRoleId={roleId} onClose={() => setInviteFor(null)} />
+        </Suspense>
+      )}
       <RankedForSheet open={sheet} contexts={contexts} activeId={ctx?.id ?? null} roles={scouting.roles} onPick={pick} onClose={() => setSheet(false)} />
       <UndoToast />
     </div>

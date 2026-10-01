@@ -13,7 +13,23 @@ export interface SharedPostMetadata {
   thumbnail_url: string | null
 }
 
-export type MessageMetadata = SharedPostMetadata
+/** D3: the invite card send_invite posts (conversations.origin = Invitation). Server-written only. */
+export interface OpportunityInviteMetadata {
+  type: 'opportunity_invite'
+  invite_id: string
+  opportunity_id: string
+}
+
+/** A recruiting step the server posts into the thread ("Facundo passed on Midfielder."). */
+export interface ApplicationEventMetadata {
+  type: 'application_event'
+  event: string
+  invite_id?: string
+  application_id?: string
+  opportunity_id?: string
+}
+
+export type MessageMetadata = SharedPostMetadata | OpportunityInviteMetadata | ApplicationEventMetadata
 
 export interface Message {
   id: string

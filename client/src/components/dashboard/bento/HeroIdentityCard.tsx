@@ -55,7 +55,14 @@ interface HeroIdentityCardProps {
   /** Owner: the Open to play pill opens the Open to play screen. */
   onOpenToPlay?: () => void
   /** Club / recruiting coach viewer: Shortlist replaces Add friend. `preview` = the owner's "View as club" (inert). */
-  recruiterActions?: { onShortlist: () => void; shortlisted: boolean; busy?: boolean; preview?: boolean } | null
+  recruiterActions?: {
+    onShortlist: () => void
+    shortlisted: boolean
+    busy?: boolean
+    preview?: boolean
+    /** D3 (DEV NOTE 394:98): Invite, secondary to Shortlist — or the grey Invited pill. */
+    invite?: { pill: 'applied' | 'invited' | 'passed' | null; invitable: boolean; limitReason: string | null; onInvite: () => void } | null
+  } | null
 }
 
 const SOCIAL_COLORS: Record<SocialPlatform, string> = {
@@ -374,6 +381,26 @@ export default function HeroIdentityCard({
               >
                 <Star className="h-[18px] w-[18px]" strokeWidth={1.8} fill={recruiterActions.shortlisted ? 'currentColor' : 'none'} /> {recruiterActions.shortlisted ? 'Shortlisted' : 'Shortlist'}
               </button>
+              {recruiterActions.invite?.pill === 'invited' || recruiterActions.invite?.pill === 'passed' ? (
+                <span
+                  className="flex h-[46px] flex-1 items-center justify-center rounded-full bg-surface-grouped text-[16px] font-semibold text-ink-2"
+                  aria-label={recruiterActions.invite.pill === 'passed' ? 'Passed on this role' : undefined}
+                  data-testid={recruiterActions.invite.pill === 'passed' ? 'profile-passed-pill' : 'profile-invited-pill'}
+                >
+                  {recruiterActions.invite.pill === 'passed' ? 'Passed' : 'Invited'}
+                </span>
+              ) : recruiterActions.invite && !recruiterActions.invite.pill && recruiterActions.invite.invitable ? (
+                <button
+                  type="button"
+                  onClick={recruiterActions.invite.onInvite}
+                  disabled={!!recruiterActions.invite.limitReason}
+                  title={recruiterActions.invite.limitReason ?? undefined}
+                  className="flex h-[46px] flex-1 items-center justify-center rounded-full bg-hockia-soft text-[16px] font-semibold text-hockia-primary disabled:opacity-50"
+                  data-testid="profile-invite-button"
+                >
+                  Invite
+                </button>
+              ) : null}
               <button
                 type="button"
                 onClick={recruiterActions.preview ? undefined : onMessage}
@@ -399,6 +426,9 @@ export default function HeroIdentityCard({
             </>
           ) : null}
         </div>
+        {recruiterActions?.invite?.invitable && !recruiterActions.invite.pill && recruiterActions.invite.limitReason && (
+          <p className="mt-2 text-caption text-ink-3" data-testid="profile-invite-limit">{recruiterActions.invite.limitReason}</p>
+        )}
 
         {/* D2: the six key facts replace the stats strip (phone). */}
         {d2 ? (
