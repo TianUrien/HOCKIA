@@ -180,8 +180,11 @@ export interface InviteCardState {
   actionable: boolean
   /** One line under the note when the card is not actionable (or always, for the club). */
   line: string | null
-  /** Tone of that line: grey for everything except "Applied", which is the positive tint. */
-  tone: 'grey' | 'positive'
+  /**
+   * Tone of that line: always grey — every invite status is a closed outcome or
+   * a wait for both sides; amber only when the viewer must act (founder rule).
+   */
+  tone: 'grey'
 }
 
 /**
@@ -203,7 +206,7 @@ export function inviteCardState(opts: {
   const status: InviteStatus = lapsed ? 'expired' : opts.status
   const who = opts.playerFirstName || 'The player'
   if (status === 'applied') {
-    return { muted: false, actionable: false, line: opts.viewer === 'player' ? 'Applied' : `${who} applied`, tone: 'positive' }
+    return { muted: false, actionable: false, line: opts.viewer === 'player' ? 'Applied' : `${who} applied`, tone: 'grey' }
   }
   if (status === 'declined') {
     return { muted: true, actionable: false, line: opts.viewer === 'player' ? 'You passed on this role' : `${who} passed on this role`, tone: 'grey' }

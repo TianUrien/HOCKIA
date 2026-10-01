@@ -270,3 +270,17 @@ export function shortlistSourceLine(e: { applied: boolean; position: string | nu
 export function shortlistHeaderLine(count: number): string {
   return `${count === 1 ? '1 player' : `${count} players`} · only your club sees this`
 }
+
+/**
+ * Club-facing lists show players only when they are 18+ with a known date of
+ * birth (founder ruling 2026-09-26); other roles (coaches, clubs…) are not
+ * age-checked. `ages` = get_profile_ages rows (no date of birth → no row).
+ */
+export function keepAdultPlayers<T extends { id: string; role: string | null }>(members: T[], ages: { profile_id: string; age: number | null }[]): T[] {
+  const ageById = new Map(ages.map((a) => [a.profile_id, a.age]))
+  return members.filter((m) => {
+    if (m.role !== 'player') return true
+    const age = ageById.get(m.id)
+    return typeof age === 'number' && age >= 18
+  })
+}

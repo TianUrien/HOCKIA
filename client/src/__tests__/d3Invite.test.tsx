@@ -228,14 +228,15 @@ describe('Invite sheet (D3.2)', () => {
   it('a role the player passed on is never offered again; other roles stay invitable', async () => {
     inv.declined = ['r1']
     render(<InviteSheet open player={player} activeRoleId="r1" onClose={vi.fn()} />)
-    // The active role was passed on → the other role is preselected.
-    expect(screen.getByText('Forward · Women’s 1st player')).toBeTruthy()
-    expect(screen.queryByTestId('invite-change-role')).toBeNull()
-    fireEvent.click(screen.getByTestId('invite-role'))
+    // The active role was passed on → said so, nothing preselected, the club picks.
+    expect(screen.getByTestId('invite-passed-active').textContent).toBe('Facundo passed on Midfielder · Men’s 1st player — choose another role.')
+    expect(screen.getAllByTestId('invite-role')).toHaveLength(2)
+    expect(screen.getAllByTestId('invite-role').every((r) => r.getAttribute('aria-checked') === 'false')).toBe(true)
+    expect((screen.getByTestId('invite-send') as HTMLButtonElement).disabled).toBe(true)
     const passedRow = screen.getAllByTestId('invite-role').find((r) => r.getAttribute('data-passed'))!
     expect(passedRow.textContent).toContain('Passed on this role')
     fireEvent.click(passedRow)
-    expect(screen.getAllByTestId('invite-role')).toHaveLength(2) // still picking: the passed role can't be chosen
+    expect(screen.getAllByTestId('invite-role')).toHaveLength(2) // the passed role can't be chosen
     fireEvent.click(screen.getAllByTestId('invite-role').find((r) => !r.getAttribute('data-passed'))!)
     fireEvent.click(screen.getByTestId('invite-send'))
     await waitFor(() => expect(inv.send).toHaveBeenCalledWith(expect.objectContaining({ opportunityId: 'r2' })))

@@ -53,6 +53,8 @@ export default function InviteSheet({ open, player, activeRoleId, onClose, onSen
   const [error, setError] = useState<string | null>(null)
   // One role card (Figma D3.2); with several open roles, tapping it lists the others.
   const [picking, setPicking] = useState(false)
+  // The club chose a role itself (vs the automatic preselection).
+  const [userPicked, setUserPicked] = useState(false)
   const firstName = firstNameOf(player?.full_name)
   // Roles this player passed on can't be offered again (founder ruling 2026-10-01).
   const playerIds = useMemo(() => (open && player ? [player.id] : []), [open, player])
@@ -60,18 +62,29 @@ export default function InviteSheet({ open, player, activeRoleId, onClose, onSen
   const passed = player ? statuses.declinedFor(player.id) : []
   const passedKey = passed.join(',')
   const invitable = useMemo(() => roles.filter((r) => !passedKey.split(',').includes(r.id)), [roles, passedKey])
+  // The active "Ranked for" role is one the player passed on: say so and let
+  // the club choose another role — never switch to a different role silently.
+  const passedActiveRole = useMemo(
+    () => (activeRoleId && passedKey.split(',').includes(activeRoleId) ? roles.find((r) => r.id === activeRoleId) ?? null : null),
+    [roles, activeRoleId, passedKey],
+  )
+  const choosing = !!passedActiveRole && !userPicked
 
   // Fresh state every time the sheet opens for a player.
   useEffect(() => {
-    if (!open) { setRoleId(null); setNote(''); setEdited(false); setError(null); setPicking(false) }
+    if (!open) { setRoleId(null); setNote(''); setEdited(false); setError(null); setPicking(false); setUserPicked(false) }
   }, [open, player?.id])
 
-  // Preselect the active role, else the newest open role — never one the player passed on.
+  // Preselect the active role, else the newest open role — never one the player
+  // passed on. When the active role is one they passed on, nothing is preselected:
+  // the club picks a role (Send stays disabled until it does).
   useEffect(() => {
-    if (!open || invitable.length === 0) return
+    if (!open) return
+    if (choosing) { if (roleId !== null) setRoleId(null); return }
+    if (invitable.length === 0) return
     if (roleId && invitable.some((r) => r.id === roleId)) return
     setRoleId(invitable.find((r) => r.id === activeRoleId)?.id ?? invitable[0].id)
-  }, [open, invitable, roleId, activeRoleId])
+  }, [open, invitable, roleId, activeRoleId, choosing])
 
   const role = useMemo(() => invitable.find((r) => r.id === roleId) ?? null, [invitable, roleId])
   const draft = useMemo(() => (role ? draftInviteNote({ firstName, clubName, role }) : ''), [role, firstName, clubName])
@@ -81,7 +94,8 @@ export default function InviteSheet({ open, player, activeRoleId, onClose, onSen
 
   const avatar = player?.avatar_url ? getImageUrl(player.avatar_url, 'avatar-md') ?? player.avatar_url : null
   const blockedByLimit = allowance.reached
-  const canSend = !!player && !!role && !sending && !blockedByLimit && note.length <= INVITE_NOTE_MAX
+  // Wait for the passed-on roles before Send, so a passed role is never sent by a fast tap.
+  const canSend = !!player && !!role && !statuses.loading && !sending && !blockedByLimit && note.length <= INVITE_NOTE_MAX
 
   const submit = async () => {
     if (!player || !role || !canSend) return
@@ -104,13 +118,18 @@ export default function InviteSheet({ open, player, activeRoleId, onClose, onSen
         </div>
 
         <p className="pb-2 text-caption font-semibold uppercase tracking-[0.4px] text-ink-2">Role</p>
+        {choosing && passedActiveRole && (
+          <p className="pb-2 text-secondary leading-[18px] text-ink-2" role="status" data-testid="invite-passed-active">
+            {firstNameOf(player?.full_name, 'The player')} passed on {inviteRoleLabel(passedActiveRole)} — choose another role.
+          </p>
+        )}
         {loading ? (
           <p className="rounded-card bg-surface-grouped p-3.5 text-row text-ink-3">Loading roles…</p>
         ) : roles.length === 0 ? (
           <p className="rounded-card bg-surface-grouped p-3.5 text-row text-ink-2" data-testid="invite-no-roles">Post a role first — an invite is always to one of your open roles.</p>
         ) : (
           <div className="flex flex-col gap-2" role="radiogroup" aria-label="Role">
-            {(picking ? roles : roles.filter((r) => r.id === roleId || (!role && passed.includes(r.id)))).map((r) => {
+            {(picking || choosing ? roles : roles.filter((r) => r.id === roleId || (!role && passed.includes(r.id)))).map((r) => {
               const on = r.id === roleId
               const wasPassed = passed.includes(r.id)
               const offer = wasPassed ? 'Passed on this role' : roleOfferLine(r)
@@ -124,7 +143,7 @@ export default function InviteSheet({ open, player, activeRoleId, onClose, onSen
                   onClick={() => {
                     if (wasPassed) return
                     setError(null)
-                    if (picking) { setRoleId(r.id); setPicking(false) } else if (roles.length > 1) setPicking(true)
+                    if (picking || choosing) { setRoleId(r.id); setPicking(false); setUserPicked(true) } else if (roles.length > 1) setPicking(true)
                   }}
                   className="flex w-full items-center gap-3 rounded-card bg-surface-grouped px-3.5 py-3 text-left"
                   data-testid="invite-role"
@@ -138,7 +157,7 @@ export default function InviteSheet({ open, player, activeRoleId, onClose, onSen
                 </button>
               )
             })}
-            {!picking && invitable.length > 1 && (
+            {!picking && !choosing && invitable.length > 1 && (
               <button type="button" onClick={() => setPicking(true)} className="self-start py-1 text-secondary font-semibold text-hockia-primary" data-testid="invite-change-role">
                 Change role
               </button>
