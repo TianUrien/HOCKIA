@@ -149,17 +149,17 @@ export default function ConfirmSigningPage() {
 
   return shell(
     <div className="flex flex-1 flex-col" data-testid="signing-confirm">
-      <div className="flex flex-1 flex-col items-center pt-20 text-center">
-        <Crest src={club.avatar_url} name={clubName} size={96} />
+      <div className="flex flex-1 flex-col items-center pt-10 text-center">
+        <Crest src={club.avatar_url} name={clubName} size={80} />
         <h1 className="mt-5 text-[26px] font-bold leading-8 tracking-[-0.3px] text-ink-1">{confirmSigningTitle(clubName)}</h1>
         <p className="mt-2 text-[16px] leading-[23px] text-ink-2">Confirm it and it goes on your career, with “Signed through Hockia”.</p>
         <dl className="mt-6 w-full overflow-hidden rounded-2xl bg-surface-grouped text-left">
           {rows.filter(([, v]) => !!v).map(([k, v], i) => (
             <div key={k}>
               {i > 0 && <div className="ml-4 h-[0.5px] bg-line" />}
-              <div className="flex min-h-[45px] items-center justify-between gap-3 px-4">
+              <div className="flex min-h-[45px] items-start justify-between gap-3 px-4 py-3">
                 <dt className="shrink-0 text-[15px] text-ink-2">{k}</dt>
-                <dd className="min-w-0 truncate text-right text-[15px] text-ink-1">{v}</dd>
+                <dd className="min-w-0 break-words text-right text-[15px] text-ink-1">{v}</dd>
               </div>
             </div>
           ))}

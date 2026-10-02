@@ -94,7 +94,9 @@ describe('D4 offer card: colour depends on the viewer', () => {
 describe('D4 player: own status, withdraw', () => {
   it('player sees Shortlisted → Offer → Signed for road statuses only', () => {
     expect(playerRoadSteps('pending')).toBeNull()
-    expect(playerRoadSteps('offered')?.map((s) => s.done)).toEqual([true, true, false])
+    expect(playerRoadSteps('offered')?.map((s) => s.done)).toEqual([true, false, false])
+    expect(playerRoadSteps('offered')?.[1].current).toBe(true)
+    expect(playerRoadSteps('accepted')?.map((s) => s.done)).toEqual([true, true, false])
     expect(playerRoadSteps('signed')?.every((s) => s.done)).toBe(true)
     expect(playerRoadHint('signed_pending_confirmation')).toMatch(/Confirm it/)
   })

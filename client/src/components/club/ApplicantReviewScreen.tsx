@@ -516,8 +516,8 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
               <span className="truncate">{mainAction === 'make_offer' ? 'Make an offer' : mainAction === 'edit_offer' ? 'Edit offer' : 'Mark as signed'}</span>
             </button>
           ) : waitingLine ? (
-            <span className="flex h-12 min-w-0 flex-1 items-center justify-center rounded-full bg-surface-grouped px-3 text-secondary font-semibold text-ink-2" data-testid="road-waiting">
-              <span className="truncate">{waitingLine}</span>
+            <span className="flex min-h-12 min-w-0 flex-1 items-center justify-center rounded-[20px] bg-surface-grouped px-3 py-1.5 text-center text-secondary font-semibold leading-[17px] text-ink-2" data-testid="road-waiting">
+              <span className="break-words">{waitingLine}</span>
             </span>
           ) : null}
         </div>

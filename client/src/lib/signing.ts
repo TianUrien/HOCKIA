@@ -430,15 +430,16 @@ export function signingShareText(clubName: string): string {
 
 // ── Player statuses (My applications: Shortlisted → Offer → Signed) ──
 
-export interface PlayerStep { label: string; done: boolean }
+export interface PlayerStep { label: string; done: boolean; current?: boolean }
 
 /** Players see the same steps on My applications, their own status only (DEV NOTE 391:23). */
 export function playerRoadSteps(status: string): PlayerStep[] | null {
   if (!isOnRoad(status)) return null
-  const offer = status === 'offered' || status === 'accepted' || status === 'signed_pending_confirmation' || status === 'signed'
+  // Offer ticks once the player ACCEPTS; while it waits it's the current step.
+  const offer = status === 'accepted' || status === 'signed_pending_confirmation' || status === 'signed'
   return [
     { label: 'Shortlisted', done: true },
-    { label: 'Offer', done: offer },
+    { label: 'Offer', done: offer, current: status === 'offered' },
     { label: 'Signed', done: status === 'signed' },
   ]
 }

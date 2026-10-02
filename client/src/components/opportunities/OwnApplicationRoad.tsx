@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Check } from 'lucide-react'
-import ConfirmDialog from '@/components/ConfirmDialog'
+import { BottomSheet } from '@/components/ui/BottomSheet'
+import { useToastStore } from '@/lib/toast'
 import { useSigningActions } from '@/hooks/useSigning'
 import { WITHDRAW_TITLE, canWithdraw, playerRoadHint, playerRoadSteps, withdrawBody } from '@/lib/signing'
 import { cn } from '@/lib/utils'
@@ -31,10 +32,10 @@ export function PlayerRoadSteps({ status, className }: { status: string; classNa
       {steps.map((s, i) => (
         <li key={s.label} className="flex items-center gap-1.5">
           {i > 0 && <span className={cn('h-px w-4', s.done ? 'bg-positive' : 'bg-line')} aria-hidden="true" />}
-          <span className={cn('flex items-center gap-1 text-caption font-semibold', s.done ? 'text-positive' : 'text-ink-3')} data-done={s.done}>
+          <span className={cn('flex items-center gap-1 text-caption font-semibold', s.done ? 'text-positive' : s.current ? 'text-hockia-primary' : 'text-ink-3')} data-done={s.done} data-current={s.current ? 'true' : undefined}>
             {s.done
               ? <Check className="h-3.5 w-3.5" strokeWidth={3} aria-hidden="true" />
-              : <span className="h-2.5 w-2.5 rounded-full border-[1.5px] border-ink-4" aria-hidden="true" />}
+              : <span className={cn('h-2.5 w-2.5 rounded-full border-[1.5px]', s.current ? 'border-hockia-primary' : 'border-ink-4')} aria-hidden="true" />}
             {s.label}
           </span>
         </li>
@@ -46,14 +47,22 @@ export function PlayerRoadSteps({ status, className }: { status: string; classNa
 export default function OwnApplicationRoad({ applicationId, status, onMessage, onChanged, className }: Props) {
   const { withdrawApplication } = useSigningActions()
   const [confirming, setConfirming] = useState(false)
+  const [withdrawing, setWithdrawing] = useState(false)
+  const addToast = useToastStore((s) => s.addToast)
   const hint = playerRoadHint(status)
   const steps = playerRoadSteps(status)
   const withdrawable = canWithdraw(status)
   if (!steps && !withdrawable) return null
 
   const withdraw = async () => {
+    setWithdrawing(true)
     const res = await withdrawApplication(applicationId)
-    if (!res.ok) throw new Error(res.error)
+    setWithdrawing(false)
+    if (!res.ok) {
+      addToast(res.error || 'Couldn’t withdraw. Please try again.', 'error')
+      return
+    }
+    setConfirming(false)
     onChanged('withdrawn')
   }
 
@@ -90,17 +99,18 @@ export default function OwnApplicationRoad({ applicationId, status, onMessage, o
           Withdraw application
         </button>
       )}
-      <ConfirmDialog
-        isOpen={confirming}
-        onClose={() => setConfirming(false)}
-        onConfirm={withdraw}
-        title={WITHDRAW_TITLE}
-        message={withdrawBody(status)}
-        confirmLabel="Withdraw"
-        cancelLabel="Keep it"
-        variant="danger"
-        testId="withdraw-application-confirm"
-      />
+      <BottomSheet open={confirming} onClose={() => setConfirming(false)} ariaLabel={WITHDRAW_TITLE}>
+        <div className="px-5 pb-2 pt-2 text-center" data-testid="withdraw-application-confirm">
+          <h2 className="text-[22px] font-bold leading-7 tracking-[-0.2px] text-ink-1">{WITHDRAW_TITLE}</h2>
+          <p className="mt-2 text-[15px] leading-[21px] text-ink-2">{withdrawBody(status)}</p>
+          <button type="button" onClick={() => void withdraw()} disabled={withdrawing} className="mt-5 flex h-[50px] w-full items-center justify-center rounded-full bg-red-600 text-[16px] font-semibold text-white disabled:opacity-60" data-testid="withdraw-application-yes">
+            {withdrawing ? 'Withdrawing…' : 'Withdraw'}
+          </button>
+          <button type="button" onClick={() => setConfirming(false)} className="mt-1 flex h-11 w-full items-center justify-center text-[16px] font-semibold text-ink-1">
+            Keep it
+          </button>
+        </div>
+      </BottomSheet>
     </section>
   )
 }
