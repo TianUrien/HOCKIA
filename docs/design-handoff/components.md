@@ -20,7 +20,7 @@ corrects it in [IMPLEMENTATION_FEEDBACK.md](IMPLEMENTATION_FEEDBACK.md).
 
 | Component | Node | Variants / properties | Usage | Code counterpart |
 |---|---|---|---|---|
-| Tag | `459:2050` | Tone: Brand, Neutral, Positive · Label | New / Invited / audience labels (Brand), passive states (Neutral) | — |
+| Tag | `459:2050` | Tone: Brand, Neutral, Positive, Warning, Gold · Label | New / Invited / audience labels (Brand), passive states (Neutral) | — |
 | Fit badge | `459:2043` | Fit: Strong, Possible | Club-only. Bar meter so meaning never relies on colour | `club/FitCard.tsx` (related) |
 | Callout | `460:23` | Text, Icon | One explanatory note per screen, at the end of the content | — |
 | Banner | `470:160` | Tone: Warning, Info, Positive · Title, Message, Show chevron | Tappable attention item at the top of a screen. Warning only when the viewer must act soon | — |
@@ -46,7 +46,7 @@ corrects it in [IMPLEMENTATION_FEEDBACK.md](IMPLEMENTATION_FEEDBACK.md).
 
 | Component | Node | Variants / properties | Usage | Code counterpart |
 |---|---|---|---|---|
-| List item / Player | `460:1973` | Status: Invite, Applied, Saved, Scout · Name, Meta, Country, Evidence, Note, Show applied tag | Shortlist and Find players rows; actions under the content so text never wraps | — |
+| List item / Player | `460:1973` | Status: Invite, Applied, Saved, Scout · Name, Meta, Country, Evidence, Note, Show applied tag | Shortlist and Find players rows; actions in a trailing column, text truncates to one line (founder ruling) | — |
 | List item / Applicant | `460:2018` | Urgency: Default, Warning · Name, Meta, Country, Deadline, Show tag | Review queue; Warning at ≤ 5 days left | — |
 | List item / Menu | `470:168` | Label, Value, Icon | Rows inside a grouped card | — |
 | List item / Switch | `472:186` | Title, Description | Setting with a switch | `SettingsSwitch` in `settings/settingsUi.tsx` |
@@ -58,10 +58,13 @@ corrects it in [IMPLEMENTATION_FEEDBACK.md](IMPLEMENTATION_FEEDBACK.md).
 | Field header | `472:180` | Requirement: Must have, Nice to have, Always required, Optional, None | Form labels with the matching rule | — |
 | Video thumbnail | `468:132` | Type: Full match, Highlight | Video rails | — |
 | Skill item | `468:143` | Label | Specialist skills | — |
+| Timeline step | `480:198` | State: Done, Current, Upcoming, Skipped · Title, Detail, Show action | Road to signing (`lib/signing.ts` roadSteps): trial never Current; skipped offer = grey dash | `club/RoadToSigningCard.tsx` |
+| Checkbox row | `480:211` | Checked · Title, Description | Optional side effect in a confirm sheet (Close the role) | `club/MarkSignedSheet.tsx` |
+| Message / Offer card | `480:5154` | Eyebrow, Title, Start, Pay, Package, Open until, Footnote | Offer in a conversation; deadline amber only for the player in the last 5 days | `features/chat-v2/components/OfferCard.tsx` (keep height stable) |
 | Message / Invitation card | `465:2194` | Eyebrow, Title, When, Pay, Package, League, Message | Invitation in a conversation | `features/chat-v2/components/InviteCard.tsx` (keep height stable) |
 
 ## Icons
 
-28 icon components (`Icon/*`, section "Icons", `458:83`). In code, icons come
+29 icon components (`Icon/*`, section "Icons", `458:83`). In code, icons come
 from `lucide-react` or inline SVG only; map each Figma icon to its lucide
 equivalent rather than adding a library.

@@ -4,6 +4,11 @@
 
 | Date | Decision | By |
 |---|---|---|
+| 2026-10-02 | Player row: Tonal "Invite" in a trailing column; text truncates to one line ("Invite to apply" is the accessible name) | Founder |
+| 2026-10-02 | Exception to the Destructive rule: declining an offer is a neutral choice — grey Secondary trigger, purple Primary confirm | Founder |
+| 2026-10-02 | Every Danger confirmation on the phone is a bottom sheet (no centred dialogs) | Founder |
+| 2026-10-02 | Chat cards use radius 16, no new token | Founder |
+| 2026-10-02 | Shared `ui/Button.tsx` at the start of D5: 7 styles × Large 48 / Small 36, loading, 44 pt hit area | Founder |
 | 2026-10-02 | Figma variables are the source of truth for colour, spacing, radius and type; code reads them through generated tokens (PR #166) | Founder |
 | 2026-10-02 | Radius follows Figma: card 16, sheet 20, tile 8 (was 14 / 22 / 7) | Founder |
 | 2026-10-02 | Both agents may edit the Figma file; every edit is logged in CHANGELOG.md | Founder |

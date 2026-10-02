@@ -12,14 +12,14 @@ tokens but the layout is still built from one-off frames.
 | D1 · Club v2 — Profile | D1.11–D1.15 | Tokens only | — |
 | D1 · Club v2 — Network & tabs | D1.16–D1.23 | Tokens only | — |
 | D2 · Core — 30-second profile | D2.1–D2.4 | Tokens only | — |
-| D4 · Core — From yes to signed | D4.1–D4.6 | Tokens only (code shipped from these frames) | — |
+| D4 · Core — From yes to signed | D4.1–D4.6 (`390:3`, `390:249`, `390:557`, `390:647`, `390:936`, `390:980`) | Rebuilt | Archive · D4 baseline |
 | D5 · Core — Hockia suggests | — | Tokens only | — |
 | D6 · Coach v2 | — | Tokens only | — |
 | 04 · Player — Live | about 30 screens | Tokens only | — |
 
 ## Notes on the rebuilt flows
 
-- D3.1 row action reads **"Invite to apply"** (Tonal, Small). Players who
+- D3.1 row action reads **"Invite"** (Tonal, Small, trailing; founder ruling). Players who
   already applied show a neutral **Applied** tag instead.
 - D1.5 decline: soft **Decline** in the decision bar opens the sheet; the
   sheet confirms with a solid **Danger** "Decline and send".

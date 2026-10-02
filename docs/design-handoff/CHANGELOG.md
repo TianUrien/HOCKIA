@@ -3,6 +3,22 @@
 Every edit to the Figma file "New-Hockia", newest first. Format:
 `date · who · what · node ids`.
 
+## 2026-10-02 (later) · design agent
+
+- D4 · From yes to signed rebuilt with components (D4.1 `390:3`, D4.2
+  `390:249`, D4.3 `390:557`, D4.4 `390:647`, D4.5 `390:936`, D4.6 `390:980`),
+  following `lib/signing.ts` (road steps, offer card state, shipped copy,
+  gender-neutral). Baseline on "Archive · D4 baseline".
+- New components: Timeline step `480:198` (Done / Current / Upcoming /
+  Skipped), Checkbox row `480:211`, Message / Offer card `480:5154`,
+  Icon/Share `482:986`. Detail row `467:128`: Show chevron, wraps long
+  values, hugs height.
+- List item / Player `460:1973`: actions moved to a trailing column, one-line
+  truncation, Invite label "Invite" (founder ruling). D3.1 / D3.2 follow.
+- Tag `459:2050`: added Warning and Gold tones. Segmented control item
+  `470:121`: Show dot. Switch `472:185`: On = status/positive. Checkbox row
+  box radius = radius/sm.
+
 ## 2026-10-02 · design agent
 
 - Tokens: "Hockia / Color" extended to 49 colours (hover/pressed, warning,
