@@ -31,11 +31,33 @@ interface ChatWindowV2Props {
   emptyState?: ReactNode
   /** Club v2: no read receipts. */
   hideReceipts?: boolean
-  /** D4 "See the offer": open scrolled to the latest offer card (the live one — edits post a new card), briefly ringed. */
+  /** D4 "See the offer": open scrolled to an offer card, briefly ringed. */
   anchor?: 'offer'
+  /**
+   * The application whose offer to anchor (the newest card for THAT role —
+   * edits post a new card). Without it: the newest offer card in the thread.
+   */
+  anchorApplicationId?: string | null
 }
 
 const ANCHOR_HIGHLIGHT = ['ring-2', 'ring-hockia-primary', 'ring-offset-2', 'rounded-[20px]', 'transition-shadow', 'duration-700']
+/** The ring stays a fixed 2 s (QA 2 Oct saw 3 s vs 11 s: a thread update used to cancel the removal). */
+export const ANCHOR_HIGHLIGHT_MS = 2000
+
+/**
+ * The offer card "See the offer" lands on: the newest card for the given
+ * application, else (no application) the newest offer card in the thread.
+ * A given application with no card in the thread → null (never another role's offer).
+ */
+export function findOfferAnchor<M extends { id: string; metadata?: unknown }>(messages: M[], applicationId: string | null | undefined): M | null {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const m = messages[i]
+    const meta = m.metadata && typeof m.metadata === 'object' ? (m.metadata as { type?: unknown; application_id?: unknown }) : null
+    if (meta?.type !== 'opportunity_offer') continue
+    if (!applicationId || meta.application_id === applicationId) return m
+  }
+  return null
+}
 
 export default function ChatWindowV2({
   conversation,
@@ -50,6 +72,7 @@ export default function ChatWindowV2({
   emptyState,
   hideReceipts = false,
   anchor,
+  anchorApplicationId = null,
 }: ChatWindowV2Props) {
   const {
     messages,
@@ -87,6 +110,12 @@ export default function ChatWindowV2({
   const lastMessageIdRef = useRef<string | null>(null)
   // The conversation the offer anchor was already honoured for (once per open).
   const anchorDoneRef = useRef<string | null>(null)
+  // The ring's removal timer lives outside the anchor effect so a thread
+  // update (new message, read receipt) can't cancel it: fixed 2 s, always.
+  const anchorRingRef = useRef<{ node: HTMLElement; timer: number } | null>(null)
+  useEffect(() => () => {
+    if (anchorRingRef.current) window.clearTimeout(anchorRingRef.current.timer)
+  }, [])
 
   const handleBeforeLoadOlder = useCallback(() => {
     const container = scrollContainerRef.current
@@ -168,13 +197,16 @@ export default function ChatWindowV2({
     return () => observer.disconnect()
   }, [conversation.id, threadMounted, getDistanceFromBottom, scrollToBottom])
 
-  // "See the offer" (D4): after the thread's first paint, bring the latest
-  // offer card into view instead of leaving it off screen above the bottom,
-  // and ring it for a moment. Once per conversation; a thread without an
-  // offer card just opens as usual.
+  // "See the offer" (D4): after the thread's first paint, bring the offer
+  // card into view instead of leaving it off screen above the bottom, and
+  // ring it for a moment. The card is the newest one for the application
+  // the tap came from (QA 2 Oct: "See the offer" on a role used to land on
+  // the newest offer of ANY role in the thread); with no application given,
+  // the newest offer card. Once per conversation; a thread without a
+  // matching card just opens as usual.
   useEffect(() => {
     if (anchor !== 'offer' || !threadMounted || anchorDoneRef.current === conversation.id) return
-    const target = [...messages].reverse().find((m) => m.metadata?.type === 'opportunity_offer')
+    const target = findOfferAnchor(messages, anchorApplicationId)
     if (!target) return
     let tries = 0
     let timer = 0
@@ -186,14 +218,24 @@ export default function ChatWindowV2({
       }
       anchorDoneRef.current = conversation.id
       if (typeof node.scrollIntoView === 'function') node.scrollIntoView({ block: 'center' })
+      if (anchorRingRef.current) {
+        window.clearTimeout(anchorRingRef.current.timer)
+        anchorRingRef.current.node.classList.remove(...ANCHOR_HIGHLIGHT)
+      }
       node.classList.add(...ANCHOR_HIGHLIGHT)
       node.setAttribute('data-anchored', 'true')
-      timer = window.setTimeout(() => node.classList.remove(...ANCHOR_HIGHLIGHT), 2200)
+      anchorRingRef.current = {
+        node,
+        timer: window.setTimeout(() => {
+          node.classList.remove(...ANCHOR_HIGHLIGHT)
+          anchorRingRef.current = null
+        }, ANCHOR_HIGHLIGHT_MS),
+      }
     }
     // After the initial scroll-to-bottom (same render) and the card's placeholder paint.
     timer = window.setTimeout(run, 80)
     return () => window.clearTimeout(timer)
-  }, [anchor, threadMounted, messages, conversation.id])
+  }, [anchor, anchorApplicationId, threadMounted, messages, conversation.id])
 
   // Keep the newest messages visible across keyboard open/close. The
   // visual-viewport resize shrinks (or restores) the message list; if the
