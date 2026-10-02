@@ -127,6 +127,25 @@ export function useOwnApplicationStatus(applicationId: string | null, enabled: b
   return query.data ?? null
 }
 
+/**
+ * Player: was an accepted offer part of this signing? false = the club marked
+ * the signing straight from Shortlist, so the Offer step reads skipped (the
+ * club's road says "Skipped" for the same case). null while loading.
+ */
+export function useOwnOfferMade(applicationId: string | null, enabled: boolean): boolean | null {
+  const query = useQuery({
+    queryKey: [...SIGNING_KEY, 'offer-made', applicationId ?? 'none'],
+    enabled: enabled && !!applicationId,
+    staleTime: 60_000,
+    queryFn: async (): Promise<boolean> => {
+      const { data, error } = await db.from('opportunity_offers').select('id').eq('application_id', applicationId as string).eq('status', 'accepted').limit(1)
+      if (error) reportSupabaseError('useSigning.offerMade', error)
+      return ((data ?? []) as { id: string }[]).length > 0
+    },
+  })
+  return query.data ?? null
+}
+
 // ── The player's confirm / signed screens (D4.5 / D4.6) ──
 
 export interface SigningData {

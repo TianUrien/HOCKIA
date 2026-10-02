@@ -83,6 +83,8 @@ export function OpportunityDetailMobile({
   const status = hasApplied ? applicationStatusPill(applicationStatus ?? 'pending', null, vacancy.status === 'open') : null
   // Players only ever see "Not selected": one grey state in the footer, no chip.
   const notSelected = hasApplied && applicationStatus === 'rejected'
+  // Withdrawn (D4): one grey state in the footer too — never next to an "Applied" button.
+  const withdrawn = hasApplied && applicationStatus === 'withdrawn'
   const closedView = closedRoleView({ isClosed, hasApplied, isPublisher })
   const closed = closedView !== 'open'
 
@@ -294,8 +296,8 @@ export function OpportunityDetailMobile({
       {!isPublisher && !closed && (canApply || hasApplied) && (
         <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-white px-5 pb-[max(env(safe-area-inset-bottom),0.625rem)] pt-2.5 lg:hidden">
           {hasApplied && status && !notSelected && (
-            <div className="mb-2 flex items-center justify-between">
-              <span className={`rounded-full px-2 py-0.5 text-caption font-semibold ${APPLICATION_TONE_CLASS[status.tone]}`}>{status.label}</span>
+            <div className={`mb-2 flex items-center ${withdrawn ? 'justify-end' : 'justify-between'}`}>
+              {!withdrawn && <span className={`rounded-full px-2 py-0.5 text-caption font-semibold ${APPLICATION_TONE_CLASS[status.tone]}`}>{status.label}</span>}
               <button type="button" onClick={() => navigate('/opportunities/applications', { state: { from: location.pathname } })} className="text-secondary font-semibold text-hockia-primary">
                 View my applications
               </button>
@@ -308,6 +310,10 @@ export function OpportunityDetailMobile({
             {notSelected ? (
               <span className="flex h-[52px] flex-1 items-center justify-center rounded-full bg-surface-grouped text-body font-semibold text-ink-2" data-testid="not-selected-state">
                 Not selected
+              </span>
+            ) : withdrawn ? (
+              <span className="flex h-[52px] flex-1 items-center justify-center rounded-full bg-surface-grouped text-body font-semibold text-ink-2" data-testid="withdrawn-state">
+                Withdrawn
               </span>
             ) : hasApplied ? (
               <span className="flex h-[52px] flex-1 items-center justify-center gap-2 rounded-full bg-hockia-soft text-body font-semibold text-hockia-primary">

@@ -31,7 +31,11 @@ interface ChatWindowV2Props {
   emptyState?: ReactNode
   /** Club v2: no read receipts. */
   hideReceipts?: boolean
+  /** D4 "See the offer": open scrolled to the latest offer card (the live one — edits post a new card), briefly ringed. */
+  anchor?: 'offer'
 }
+
+const ANCHOR_HIGHLIGHT = ['ring-2', 'ring-hockia-primary', 'ring-offset-2', 'rounded-[20px]', 'transition-shadow', 'duration-700']
 
 export default function ChatWindowV2({
   conversation,
@@ -45,6 +49,7 @@ export default function ChatWindowV2({
   topSlot,
   emptyState,
   hideReceipts = false,
+  anchor,
 }: ChatWindowV2Props) {
   const {
     messages,
@@ -80,6 +85,8 @@ export default function ChatWindowV2({
   const [pendingNewMessagesCount, setPendingNewMessagesCount] = useState(0)
   const [distanceFromBottom, setDistanceFromBottom] = useState(0)
   const lastMessageIdRef = useRef<string | null>(null)
+  // The conversation the offer anchor was already honoured for (once per open).
+  const anchorDoneRef = useRef<string | null>(null)
 
   const handleBeforeLoadOlder = useCallback(() => {
     const container = scrollContainerRef.current
@@ -160,6 +167,33 @@ export default function ChatWindowV2({
     observer.observe(content)
     return () => observer.disconnect()
   }, [conversation.id, threadMounted, getDistanceFromBottom, scrollToBottom])
+
+  // "See the offer" (D4): after the thread's first paint, bring the latest
+  // offer card into view instead of leaving it off screen above the bottom,
+  // and ring it for a moment. Once per conversation; a thread without an
+  // offer card just opens as usual.
+  useEffect(() => {
+    if (anchor !== 'offer' || !threadMounted || anchorDoneRef.current === conversation.id) return
+    const target = [...messages].reverse().find((m) => m.metadata?.type === 'opportunity_offer')
+    if (!target) return
+    let tries = 0
+    let timer = 0
+    const run = () => {
+      const node = scrollContainerRef.current?.querySelector<HTMLElement>(`[data-message-id="${target.id}"]`)
+      if (!node) {
+        if (tries++ < 10) timer = window.setTimeout(run, 50)
+        return
+      }
+      anchorDoneRef.current = conversation.id
+      if (typeof node.scrollIntoView === 'function') node.scrollIntoView({ block: 'center' })
+      node.classList.add(...ANCHOR_HIGHLIGHT)
+      node.setAttribute('data-anchored', 'true')
+      timer = window.setTimeout(() => node.classList.remove(...ANCHOR_HIGHLIGHT), 2200)
+    }
+    // After the initial scroll-to-bottom (same render) and the card's placeholder paint.
+    timer = window.setTimeout(run, 80)
+    return () => window.clearTimeout(timer)
+  }, [anchor, threadMounted, messages, conversation.id])
 
   // Keep the newest messages visible across keyboard open/close. The
   // visual-viewport resize shrinks (or restores) the message list; if the
@@ -312,6 +346,7 @@ export default function ChatWindowV2({
               isLoadingMore={isLoadingMore}
               unreadMetadata={unreadMetadata}
               hideReceipts={hideReceipts}
+              otherParticipantName={conversation.otherParticipant?.full_name ?? null}
             />
           )}
           <NewMessagesToast
