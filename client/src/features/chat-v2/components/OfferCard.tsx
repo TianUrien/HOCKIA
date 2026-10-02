@@ -51,6 +51,8 @@ export default function OfferCard({ offerId, isMine, fallbackText }: Props) {
     status: offer.status,
     openUntil: offer.open_until,
     playerFirstName: firstNameOf(data.playerName, 'The player'),
+    // The player's reason reaches the club here ("<name> declined — <reason>", grey).
+    declineReason: isMine ? offer.decline_reason : null,
   })
   const facts: [string, string | null][] = [
     ['Start', offerStartLine(offer.start_date, offer.length)],

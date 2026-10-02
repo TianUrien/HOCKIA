@@ -6,6 +6,7 @@ import CareerEntryScreen from './CareerEntryScreen'
 import { useCareerTimeline, type CareerHistoryRow, type CareerTimelineEntry } from '@/hooks/useCareerTimeline'
 import { useCountries } from '@/hooks/useCountries'
 import { careerSpan } from '@/lib/careerCopy'
+import { SignedThroughHockiaPill } from '@/components/profile/SignedThroughHockiaPill'
 import { getImageUrl } from '@/lib/imageUrl'
 import { humanizeToken } from '@/lib/identity'
 import { cn } from '@/lib/utils'
@@ -38,6 +39,7 @@ function Entry({ entry, last, flag, onOpen }: { entry: CareerTimelineEntry; last
       </div>
       {sub && <p className="truncate text-secondary text-ink-2">{sub}</p>}
       {meta && <p className="truncate text-secondary text-ink-3">{meta}</p>}
+      {entry.signedViaHockia && <SignedThroughHockiaPill className="mt-1" />}
       {entry.highlights.length > 0 && (
         <ul className="mt-1.5 space-y-1">
           {entry.highlights.map((h) => (

@@ -84,17 +84,38 @@ export function longDay(day: string | null | undefined): string | null {
   return d ? `${d.getDate()} ${MONTH[d.getMonth()]} ${d.getFullYear()}` : null
 }
 
-/** "Oct 2" — the date under a done road step, same style as "applied Sep 17". */
-export function monthDay(iso: string | null | undefined): string | null {
+/**
+ * "2 Oct" — a timestamp as a local calendar day, day first: the ONE date
+ * format on the road and the offer card ("accepted · 2 Oct", "open until
+ * 9 Oct", "applied 17 Sep"), same shape as shortDay.
+ */
+export function shortDayOf(iso: string | null | undefined, now = new Date()): string | null {
   if (!iso) return null
   const d = new Date(iso)
-  return Number.isNaN(d.getTime()) ? null : `${MONTH[d.getMonth()]} ${d.getDate()}`
+  if (Number.isNaN(d.getTime())) return null
+  return d.getFullYear() === now.getFullYear() ? `${d.getDate()} ${MONTH[d.getMonth()]}` : `${d.getDate()} ${MONTH[d.getMonth()]} ${d.getFullYear()}`
 }
 
-/** "1 Oct 2026 · 7 months" (Start row / card). */
-export function offerStartLine(startDate: string | null | undefined, length: string | null | undefined): string | null {
-  const parts = [longDay(startDate), length?.trim() || null].filter(Boolean)
-  return parts.length ? parts.join(' · ') : null
+/**
+ * "1 Oct 2026 · 7 months" (Start row / card). No start date means the role
+ * starts straight away — the Post a role convention ("Starts immediately"),
+ * so the offer reads "Immediately · 7 months", never "Not set".
+ */
+export function offerStartLine(startDate: string | null | undefined, length: string | null | undefined): string {
+  return [longDay(startDate) ?? 'Immediately', length?.trim() || null].filter(Boolean).join(' · ')
+}
+
+/**
+ * "a" or "an" for the word that follows ("an E2E Test FC player", "a Hockey
+ * Club coach"). Short all-caps initialisms are read letter by letter.
+ */
+export function indefiniteArticle(word: string): 'a' | 'an' {
+  const w = word.trim()
+  if (!w) return 'a'
+  if (/^[A-Z0-9][A-Z0-9.]{0,2}(\s|$)/.test(w)) return /^[AEFHILMNORSX8]/.test(w) ? 'an' : 'a'
+  if (/^(uni|use|usu|eu|one|ou)/i.test(w)) return 'a'
+  if (/^(hon|heir|hour)/i.test(w)) return 'an'
+  return /^[aeiou]/i.test(w) ? 'an' : 'a'
 }
 
 /** "Housing · Flights · Insurance · Job" in the role form's order; free text kept as written. */
@@ -167,6 +188,8 @@ export interface OfferRow {
   status: OfferStatus
   sent_at: string
   responded_at: string | null
+  /** respond_offer(accept = false, reason): the player's optional words, for the club. */
+  decline_reason: string | null
 }
 
 /** Editing a live offer starts from what was sent (editing sends a new version). */
@@ -216,6 +239,8 @@ export function offerCardState(opts: {
   status: OfferStatus
   openUntil: string | null
   playerFirstName?: string
+  /** The player's reason for declining (club viewer only; the player's own card never repeats it). */
+  declineReason?: string | null
   now?: Date
 }): OfferCardState {
   const now = opts.now ?? new Date()
@@ -236,7 +261,7 @@ export function offerCardState(opts: {
     case 'accepted':
       return { muted: false, actionable: false, line: player ? 'You accepted this offer' : `${who} accepted`, deadline: null, deadlineTone: 'grey' }
     case 'declined':
-      return closed(player ? 'You declined this offer' : `${who} declined`)
+      return closed(player ? 'You declined this offer' : offerDeclinedLine(who, opts.declineReason))
     case 'superseded':
       return closed('Updated — see the newer offer below')
     case 'withdrawn':
@@ -247,6 +272,23 @@ export function offerCardState(opts: {
     default:
       return closed('This offer is closed')
   }
+}
+
+/** "Sam declined — Moving abroad next season" (club-facing; grey). */
+export function offerDeclinedLine(firstName: string, reason: string | null | undefined): string {
+  const r = reason?.trim()
+  return r ? `${firstName} declined — ${r}` : `${firstName} declined`
+}
+
+/**
+ * The grey note under the club's road after the player declined the newest
+ * offer (the application is back on Shortlisted, so the road alone wouldn't
+ * say why). Null while an offer is live or none was declined last.
+ */
+export function offerDeclinedNote(firstName: string, offer: Pick<OfferRow, 'status' | 'decline_reason'> | null | undefined): string | null {
+  if (offer?.status !== 'declined') return null
+  const r = offer.decline_reason?.trim()
+  return r ? `${firstName} declined your offer — “${r}”` : `${firstName} declined your offer.`
 }
 
 // ── Road to signing (D4.1) ──
@@ -280,7 +322,7 @@ function dayWord(iso: string | null | undefined, now: Date): string | null {
   const diff = Math.round((startOfDay(now).getTime() - startOfDay(d).getTime()) / 86_400_000)
   if (diff === 0) return 'Today'
   if (diff === 1) return 'Yesterday'
-  return monthDay(iso)
+  return shortDayOf(iso, now)
 }
 
 /**
@@ -295,12 +337,12 @@ export function roadSteps(i: RoadInput): RoadStep[] {
   const offerSent = s === 'offered'
   const signedDone = s === 'signed'
   const offerDetail = offerDone
-    ? (i.offer?.status === 'accepted' ? `${i.firstName} accepted${i.offer.responded_at ? ` · ${monthDay(i.offer.responded_at)}` : ''}` : 'Skipped')
+    ? (i.offer?.status === 'accepted' ? `${i.firstName} accepted${i.offer.responded_at ? ` · ${shortDayOf(i.offer.responded_at, now)}` : ''}` : 'Skipped')
     : offerSent && i.offer
       ? `Sent · open until ${shortDay(i.offer.open_until, now)}`
       : 'Terms you’re offering'
   const signedDetail = signedDone
-    ? `Signed through Hockia${i.signedAt ? ` · ${monthDay(i.signedAt)}` : ''}`
+    ? `Signed through Hockia${i.signedAt ? ` · ${shortDayOf(i.signedAt, now)}` : ''}`
     : s === 'signed_pending_confirmation'
       ? `Waiting for ${i.firstName} to confirm`
       : `${i.firstName} confirms it too`
@@ -316,10 +358,10 @@ export function roadSteps(i: RoadInput): RoadStep[] {
   return steps
 }
 
-/** "Shortlisted today · applied Sep 17" — the line under the name on the road (Figma 390:3). */
+/** "Shortlisted today · applied 17 Sep" — the line under the name on the road (Figma 390:3). */
 export function roadHeaderLine(shortlistedAt: string | null | undefined, appliedAt: string | null | undefined, now = new Date()): string {
   const when = dayWord(shortlistedAt, now)
-  const applied = monthDay(appliedAt)
+  const applied = shortDayOf(appliedAt, now)
   return [when ? `Shortlisted ${when === 'Today' || when === 'Yesterday' ? when.toLowerCase() : when}` : 'Shortlisted', applied ? `applied ${applied}` : null].filter(Boolean).join(' · ')
 }
 
@@ -413,7 +455,7 @@ export function hideFromClubsCopy(role: string | null | undefined): { title: str
 }
 
 export function signedTitle(clubName: string, role: string | null | undefined): string {
-  return `You’re a ${clubName} ${role === 'coach' ? 'coach' : 'player'}`
+  return `You’re ${indefiniteArticle(clubName)} ${clubName} ${role === 'coach' ? 'coach' : 'player'}`
 }
 
 /** "2026/27" — the season the signing starts in. */
@@ -430,18 +472,39 @@ export function signingShareText(clubName: string): string {
 
 // ── Player statuses (My applications: Shortlisted → Offer → Signed) ──
 
-export interface PlayerStep { label: string; done: boolean; current?: boolean }
+export interface PlayerStep { label: string; done: boolean; current?: boolean; /** No offer was part of this signing (mirrors the club's "Skipped"). */ skipped?: boolean }
 
-/** Players see the same steps on My applications, their own status only (DEV NOTE 391:23). */
-export function playerRoadSteps(status: string): PlayerStep[] | null {
+/**
+ * Players see the same steps on My applications, their own status only (DEV
+ * NOTE 391:23). `offerMade` = whether an accepted offer exists for a signing
+ * (useOwnOfferMade); false → Offer reads skipped, not done. null = unknown
+ * (still loading): Offer keeps its usual state so nothing flickers.
+ */
+export function playerRoadSteps(status: string, offerMade: boolean | null = null): PlayerStep[] | null {
   if (!isOnRoad(status)) return null
+  const signing = status === 'signed_pending_confirmation' || status === 'signed'
+  const skipped = signing && offerMade === false
   // Offer ticks once the player ACCEPTS; while it waits it's the current step.
-  const offer = status === 'accepted' || status === 'signed_pending_confirmation' || status === 'signed'
+  const offer = !skipped && (status === 'accepted' || signing)
   return [
     { label: 'Shortlisted', done: true },
-    { label: 'Offer', done: offer, current: status === 'offered' },
+    { label: 'Offer', done: offer, current: status === 'offered', skipped },
     { label: 'Signed', done: status === 'signed' },
   ]
+}
+
+// ── Server-posted step lines, read by the right viewer ──
+
+/**
+ * The server writes each step line once, for the player ("<club> marked you
+ * as signed for <role>. Confirm it on Hockia…"). The club reads its own step
+ * in club-facing words; every other line is already neutral.
+ */
+export function recruitingEventLine(event: string, content: string, viewer: { isMine: boolean; otherFirstName?: string | null }): string {
+  if (event === 'signing_marked' && viewer.isMine) {
+    return `You marked ${viewer.otherFirstName?.trim() || 'the player'} as signed. Waiting for them to confirm.`
+  }
+  return content
 }
 
 // ── Server errors → what people read ──
@@ -479,13 +542,15 @@ export function signingErrorMessage(err: unknown, fallback: string): string {
 /**
  * The club's Applicants chips predate D4: an applicant past Shortlist
  * (offered / accepted / waiting to confirm / signed) stays under Shortlisted
- * with a grey tag naming the step; a role filled by someone else lands in
- * Closed. offer_declined is only ever a history row (the server puts the
- * application straight back to shortlisted).
+ * with a grey tag naming the step; a role filled by someone else and an
+ * application the player withdrew land in Closed (re-check 2026-10-02:
+ * clubs can read withdrawn applications to their own roles). offer_declined
+ * is only ever a history row (the server puts the application straight back
+ * to shortlisted).
  */
 export function applicantChipFor(status: string): string {
   if (isOnRoad(status) || status === 'offer_declined') return 'shortlisted'
-  if (status === 'filled') return 'no_response'
+  if (status === 'filled' || status === 'withdrawn') return 'no_response'
   return status
 }
 
@@ -498,6 +563,13 @@ export function clubRoadTag(status: string): string | null {
     case 'signed': return 'Signed'
     default: return null
   }
+}
+
+/** The grey tag on a row under Closed that says why it closed (no tag = no reply). */
+export function closedApplicantTag(status: string): string | null {
+  if (status === 'withdrawn') return 'Withdrawn'
+  if (status === 'filled') return 'Role filled'
+  return null
 }
 
 // ── Player: withdraw an application ──

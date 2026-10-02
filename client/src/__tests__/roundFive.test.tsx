@@ -198,13 +198,14 @@ describe('video counts match the profile', () => {
 // ── C2. Dates ───────────────────────────────────────────────────────────────
 describe('dates: posted and applied since', () => {
   const md = (iso: string) => new Date(iso).toISOString().slice(5, 10)
-  it('"applied since" is the first application still counted, not the (re-stamped) published date', () => {
+  it('"applied since" is the first application, not the (re-stamped) published date', () => {
     expect(appliedSinceLine([{ status: 'pending', appliedAt: '2026-09-27T10:00:00Z' }], md)).toBe('1 applied since 09-27')
+    // D4 re-check (2026-10-02): a withdrawn applicant did apply, so it counts (it shows under Closed).
     expect(appliedSinceLine([
       { status: 'withdrawn', appliedAt: '2026-08-01T00:00:00Z' },
       { status: 'rejected', appliedAt: '2026-09-02T00:00:00Z' },
       { status: 'pending', appliedAt: '2026-09-20T00:00:00Z' },
-    ], md)).toBe('2 applied since 09-02')
+    ], md)).toBe('3 applied since 08-01')
     expect(appliedSinceLine([], md)).toBe('No applicants yet')
   })
   it('both sides use created_at for "posted"', () => {

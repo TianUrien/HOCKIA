@@ -18,7 +18,7 @@ const db = supabase as unknown as SupabaseClient
 
 export const SIGNING_KEY = ['signing'] as const
 
-const OFFER_COLUMNS = 'id, application_id, opportunity_id, club_id, player_id, version, start_date, length, pay, package, open_until, note, status, sent_at, responded_at'
+const OFFER_COLUMNS = 'id, application_id, opportunity_id, club_id, player_id, version, start_date, length, pay, package, open_until, note, status, sent_at, responded_at, decline_reason'
 
 // ── Club: the road on one applicant (D4.1) ──
 
@@ -122,6 +122,25 @@ export function useOwnApplicationStatus(applicationId: string | null, enabled: b
     queryFn: async (): Promise<string | null> => {
       const { data } = await supabase.from('opportunity_applications').select('status').eq('id', applicationId as string).maybeSingle()
       return (data as { status: string } | null)?.status ?? null
+    },
+  })
+  return query.data ?? null
+}
+
+/**
+ * Player: was an accepted offer part of this signing? false = the club marked
+ * the signing straight from Shortlist, so the Offer step reads skipped (the
+ * club's road says "Skipped" for the same case). null while loading.
+ */
+export function useOwnOfferMade(applicationId: string | null, enabled: boolean): boolean | null {
+  const query = useQuery({
+    queryKey: [...SIGNING_KEY, 'offer-made', applicationId ?? 'none'],
+    enabled: enabled && !!applicationId,
+    staleTime: 60_000,
+    queryFn: async (): Promise<boolean> => {
+      const { data, error } = await db.from('opportunity_offers').select('id').eq('application_id', applicationId as string).eq('status', 'accepted').limit(1)
+      if (error) reportSupabaseError('useSigning.offerMade', error)
+      return ((data ?? []) as { id: string }[]).length > 0
     },
   })
   return query.data ?? null

@@ -96,7 +96,8 @@ export default function OfferSheet({ open, firstName, roleLabel, role, current, 
         <div className="mt-3.5 overflow-hidden rounded-2xl bg-surface-grouped">
           <Row label="Role" value={roleLabel} open={false} testId="offer-row-role" />
           <Divider />
-          <Row label="Start" value={offerStartLine(draft.startDate, draft.length) ?? 'Not set'} open={field === 'start'} onToggle={() => toggle('start')} testId="offer-row-start">
+          {/* No start date on the role = starts immediately (Post a role convention), so this never reads "Not set". */}
+          <Row label="Start" value={offerStartLine(draft.startDate, draft.length)} open={field === 'start'} onToggle={() => toggle('start')} testId="offer-row-start">
             <div className="flex gap-2">
               <input type="date" value={draft.startDate ?? ''} onChange={(e) => set('startDate', e.target.value || null)} aria-label="Start date" className="h-10 min-w-0 flex-1 rounded-[10px] border border-line bg-white px-2.5 text-[15px] text-ink-1" />
               <select value={draft.length ?? ''} onChange={(e) => set('length', e.target.value || null)} aria-label="Length" className="h-10 min-w-0 flex-1 rounded-[10px] border border-line bg-white px-2 text-[15px] text-ink-1">

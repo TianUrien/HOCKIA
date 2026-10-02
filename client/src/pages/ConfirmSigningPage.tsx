@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { Check, Share } from 'lucide-react'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
 import { SettingsSwitch } from '@/components/settings/settingsUi'
+import { SignedThroughHockiaPill } from '@/components/profile/SignedThroughHockiaPill'
 import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
@@ -105,7 +106,7 @@ export default function ConfirmSigningPage() {
             <div className="min-w-0 flex-1">
               <p className="truncate text-[16px] font-semibold text-ink-1">{clubName}</p>
               <p className="truncate text-[14px] text-ink-1">{roleText} · {seasonLabel(start)}</p>
-              <span className="mt-1 inline-flex rounded-full bg-hockia-soft px-2 py-0.5 text-caption font-semibold text-hockia-primary" data-testid="signed-through-hockia">Signed through Hockia</span>
+              <SignedThroughHockiaPill className="mt-1" />
             </div>
           </div>
         </div>

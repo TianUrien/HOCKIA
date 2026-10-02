@@ -13,7 +13,7 @@ import { BottomSheet } from '@/components/ui/BottomSheet'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { useApplicationRoad, useSigningActions } from '@/hooks/useSigning'
 import { inviteRoleLabel } from '@/lib/invites'
-import { isOnRoad, roadHeaderLine, roadMainAction, roadMenu, roadSteps, roadWaitingLine, type OfferDraft, type RoadMenuItem } from '@/lib/signing'
+import { isOnRoad, offerDeclinedNote, roadHeaderLine, roadMainAction, roadMenu, roadSteps, roadWaitingLine, type OfferDraft, type RoadMenuItem } from '@/lib/signing'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { useAuthStore } from '@/lib/auth'
@@ -136,7 +136,8 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
       ])
       if (cancelled) return
       const roleGender = (role as { gender: string | null } | null)?.gender ?? null
-      const target = fitTarget(roleGender)
+      // A withdrawn application is read-only for the record: no fit for it.
+      const target = row.status === 'withdrawn' ? null : fitTarget(roleGender)
       const { data: fitData } = target
         ? await supabase.rpc('compute_club_fit', { p_owner_id: club.id, p_player_id: person.id, p_target: target, p_region: null as unknown as string, p_opportunity_id: roleId })
         : { data: null }
@@ -180,6 +181,8 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
     : []
   const roleLabel = roadData?.role ? inviteRoleLabel(roadData.role) : 'this role'
   const liveOffer = roadData?.offer?.status === 'live' ? roadData.offer : null
+  // The player declined the newest offer: their reason, grey, under the road.
+  const declinedNote = onRoad ? offerDeclinedNote(firstName, roadData?.offer) : null
   // A road step moved: the review, the Applicants list and the road all follow.
   const moved = (status: string | null) => {
     if (status) {
@@ -356,6 +359,9 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
                   onToggleTrial={review.status !== 'signed' ? () => void toggleTrial() : undefined}
                   trialBusy={signing.busy}
                 />
+                {declinedNote && (
+                  <p className="mt-2 rounded-card bg-surface-grouped px-3.5 py-2.5 text-secondary leading-[18px] text-ink-2" data-testid="road-decline-note">{declinedNote}</p>
+                )}
               </div>
             )}
 
@@ -369,10 +375,12 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
               </section>
             )}
 
-            {/* Fit — clubs only */}
-            <div className="px-5">
-              <FitCard state={review.fit?.state} rows={rows} />
-            </div>
+            {/* Fit — clubs only; not for an application the player withdrew (read-only record). */}
+            {review.status !== 'withdrawn' && (
+              <div className="px-5">
+                <FitCard state={review.fit?.state} rows={rows} />
+              </div>
+            )}
 
             {/* Facts */}
             <div className="px-5 pt-4">

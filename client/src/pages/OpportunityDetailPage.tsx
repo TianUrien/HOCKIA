@@ -342,14 +342,16 @@ export default function OpportunityDetailPage() {
     // Clubs, role mismatches, or users who have already applied - button shouldn't be shown
   }
 
-  // Message the club — guests land on the same Join sheet.
-  const handleMessageClick = () => {
+  // Message the club — guests land on the same Join sheet. `anchor: 'offer'`
+  // (D4 "See the offer") opens the thread scrolled to the latest offer card;
+  // used straight as an onClick too, so anything else (an event) is ignored.
+  const handleMessageClick = (anchor?: unknown) => {
     if (!user) {
       setWallTitle('Sign in to message')
       setShowSignInPrompt(true)
       return
     }
-    navigate(`/messages?new=${club.id}`, { state: { from: location.pathname } })
+    navigate(`/messages?new=${club.id}`, { state: { from: location.pathname, anchor: anchor === 'offer' ? 'offer' : undefined } })
   }
   const leagueForPhone = (() => {
     if (worldClub?.leagueName) return worldClub.leagueName
@@ -400,7 +402,7 @@ export default function OpportunityDetailPage() {
             onApply={handleApplyClick}
             onMessage={handleMessageClick}
             ownApplicationSlot={applicationId && applicationStatus ? (
-              <OwnApplicationRoad applicationId={applicationId} status={applicationStatus} onMessage={handleMessageClick} onChanged={setApplicationStatus} />
+              <OwnApplicationRoad applicationId={applicationId} status={applicationStatus} onMessage={handleMessageClick} onSeeOffer={() => handleMessageClick('offer')} onChanged={setApplicationStatus} />
             ) : undefined}
           />
         </div>
@@ -436,7 +438,7 @@ export default function OpportunityDetailPage() {
             isClosed={isClosed}
             onMessage={handleMessageClick}
             ownApplicationSlot={applicationId && applicationStatus ? (
-              <OwnApplicationRoad applicationId={applicationId} status={applicationStatus} onMessage={handleMessageClick} onChanged={setApplicationStatus} />
+              <OwnApplicationRoad applicationId={applicationId} status={applicationStatus} onMessage={handleMessageClick} onSeeOffer={() => handleMessageClick('offer')} onChanged={setApplicationStatus} />
             ) : undefined}
           />
         </div>

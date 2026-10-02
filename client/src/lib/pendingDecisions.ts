@@ -35,7 +35,9 @@ async function commit(decision: Decision): Promise<{ ok: boolean; withdrawn?: bo
         .eq('id', decision.applicationId)
         .select('id')
       if (error) throw error
-      // Clubs can't see withdrawn applications (RLS), so the update matches no row.
+      // A withdrawn application can't be changed: clubs can only READ
+      // withdrawn rows (D4 re-check), so the update matches no row — or the
+      // guard trigger refuses it, which the catch below recognises.
       if (!data?.length) return { ok: false, withdrawn: true }
     } else {
       const { data, error } = await supabase.functions.invoke('application-feedback', {

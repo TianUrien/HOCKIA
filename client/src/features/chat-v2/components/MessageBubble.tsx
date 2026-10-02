@@ -11,6 +11,8 @@ function dayLabel(d: Date): string {
 import { AlertCircle, Ban, Check, CheckCheck, Loader2, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import type { ChatMessage, MessageDeliveryStatus } from '@/types/chat'
 import { cn } from '@/lib/utils'
+import { firstNameOf } from '@/lib/invites'
+import { recruitingEventLine } from '@/lib/signing'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { SharedPostCard } from './SharedPostCard'
 
@@ -36,6 +38,8 @@ interface MessageBubbleProps {
   onDelete: (id: string) => Promise<boolean>
   /** Club v2 chat (DEV NOTE 355:919): no read receipts — sending / failed still show. */
   hideReceipts?: boolean
+  /** The other side's name: a server-posted step line is reworded for its viewer (lib/signing recruitingEventLine). */
+  otherParticipantName?: string | null
 }
 
 const MAX_LENGTH = 1000
@@ -79,7 +83,8 @@ export function MessageBubble({
   onDeleteFailed,
   onEditSave,
   onDelete,
-  hideReceipts = false
+  hideReceipts = false,
+  otherParticipantName = null
 }: MessageBubbleProps) {
   const timestampLabel = format(new Date(message.sent_at), 'h:mm a')
 
@@ -89,6 +94,10 @@ export function MessageBubble({
   const invite = message.metadata?.type === 'opportunity_invite' ? message.metadata : null
   const offer = message.metadata?.type === 'opportunity_offer' ? message.metadata : null
   const isRecruitingEvent = message.metadata?.type === 'application_event'
+  // The line is written for the player; the club reads its own step in its own words.
+  const eventLine = message.metadata?.type === 'application_event'
+    ? recruitingEventLine(message.metadata.event, message.content, { isMine, otherFirstName: firstNameOf(otherParticipantName, '') })
+    : message.content
   // The player's way from "<club> marked you as signed" to Confirm signing (D4.5).
   const signingPromptFor = message.metadata?.type === 'application_event' && message.metadata.event === 'signing_marked' && !isMine
     ? message.metadata.application_id ?? null
@@ -248,7 +257,7 @@ export function MessageBubble({
       ) : isRecruitingEvent ? (
         // A recruiting step the server posts ("Facundo passed on Midfielder."): a quiet centred line, not a bubble.
         <div>
-          <p className="mx-auto max-w-[85%] text-center text-caption leading-4 text-ink-3" data-testid="recruiting-event-line">{message.content}</p>
+          <p className="mx-auto max-w-[85%] text-center text-caption leading-4 text-ink-3" data-testid="recruiting-event-line">{eventLine}</p>
           {signingPromptFor && (
             <Suspense fallback={null}>
               <SigningPrompt applicationId={signingPromptFor} />

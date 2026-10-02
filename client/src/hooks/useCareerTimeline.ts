@@ -28,6 +28,8 @@ export type CareerTimelineEntry = {
   representedCountryId: number | null
   crestUrl: string | null
   clubFlag: string | null
+  /** D4: created by confirm_signing (server-set) — shows the "Signed through Hockia" pill. */
+  signedViaHockia: boolean
   /** The stored row — what the Career entry editor loads. */
   row: CareerHistoryRow
 }
@@ -80,6 +82,7 @@ export function useCareerTimeline(profileId: string | null | undefined) {
         representedCountryId: r.represented_country_id,
         crestUrl: r.world_club?.avatar_url ?? null,
         clubFlag: r.world_club?.country?.flag_emoji ?? null,
+        signedViaHockia: r.signed_via_hockia === true,
         row: stripJoin(r),
       })))
       setLoading(false)
