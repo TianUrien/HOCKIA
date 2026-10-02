@@ -29,6 +29,7 @@
     "cap:build": "npm run build && node scripts/assert-prod-bundle.mjs && cp dist/app.html dist/index.html && npx cap sync ios && npx cap sync android",
     "gen:types": "npx supabase gen types typescript --project-id \"$SUPABASE_PROJECT_ID\" > src/lib/database.types.ts",
     "audit:check": "node scripts/audit-check.mjs",
+    "tokens:build": "node scripts/build-tokens.mjs",
     "postbuild": "node scripts/prerender-landing.mjs"
   },
   "dependencies": {

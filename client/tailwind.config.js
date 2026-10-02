@@ -1,3 +1,8 @@
+// Design tokens generated from the Figma "New-Hockia" variables
+// (src/styles/tokens/figma-export.json → npm run tokens:build). Read here at
+// build time only; app code never imports tokens.js.
+import { colors as t } from './src/styles/tokens/tokens.js'
+
 /** @type {import('tailwindcss').Config} */
 export default {
   content: [
@@ -65,35 +70,46 @@ export default {
           600: '#be123c', // on rose-50: 4.28 → 5.72
         },
         // ───────────────────────────────────────────────────────────────────
-        'hockia-primary': '#6c2bd9',
+        'hockia-primary': t.brand.primary,
         'hockia-secondary': '#7c3aed',
         'hockia-accent': '#ec4899',
-        'hockia-success': '#15803d', // = Foundations status/positive (was #10b981)
+        'hockia-success': t.status.positive, // = Foundations status/positive (was #10b981)
         'hockia-warning': '#f59e0b',
-        'hockia-danger': '#dc2626', // = Foundations status/danger (was #ef4444)
+        'hockia-danger': t.status.danger, // = Foundations status/danger (was #ef4444)
         'hockia-orange': '#ff9500',
-        // Figma "New-Hockia" · 02 Foundations · collection "Hockia / Color" is
-        // the SOURCE OF TRUTH for these (founder ruling 2026-09-26):
-        //   brand/primary #6C2BD9 · brand/soft #F1EAFD · ink/primary #0F0F14 ·
-        //   ink/secondary #5B5B6B · ink/tertiary #6F6F7C · ink/quaternary #AEAEB2 ·
-        //   surface/base #FFFFFF · surface/muted #F4F4F7 · line/default #E6E6EC ·
-        //   status/positive #15803D · status/positive-soft #E8F7EE ·
-        //   status/danger #DC2626 · media/placeholder #1C1B22.
-        'hockia-soft': '#f1eafd',
+        // Figma "New-Hockia" · collection "Hockia / Color" is the SOURCE OF
+        // TRUTH for these (founder ruling 2026-09-26). Values come from the
+        // generated tokens (t.*); change them in Figma, re-export, rebuild.
+        'hockia-soft': t.brand.soft,
         // ink-3 = ink/tertiary, darkened 2026-09-26 (was #8e8e9a) so body text
         // passes AA: 4.95 on white, 4.51 on surface-muted.
         // ink-4 = ink/quaternary, NON-TEXT ONLY: placeholders, disabled icons,
         // chevrons, dividers (2.2:1 on white). Readable text uses ink-3.
-        ink: { 1: '#0f0f14', 2: '#5b5b6b', 3: '#6f6f7c', 4: '#aeaeb2' },
+        ink: {
+          1: t.ink.primary, 2: t.ink.secondary, 3: t.ink.tertiary, 4: t.ink.quaternary,
+          inverse: t.ink.inverse,
+        },
         // grouped = the grey grouped surface; aligned to surface/muted (was #f2f2f7).
-        surface: { muted: '#f4f4f7', grouped: '#f4f4f7' },
-        line: '#e6e6ec',
-        positive: { DEFAULT: '#15803d', soft: '#e8f7ee' },
+        surface: {
+          muted: t.surface.muted, grouped: t.surface.muted,
+          base: t.surface.base, subtle: t.surface.subtle,
+          'muted-pressed': t.surface['muted-pressed'], inverse: t.surface.inverse,
+        },
+        line: t.line.default,
+        positive: { DEFAULT: t.status.positive, soft: t.status['positive-soft'] },
         // Gold = TRUST (references). Never the amber warning hue: amber
         // (#B45309 / #FDF1E4) is for notices only — EU passport, "Apply by".
         // gold = text (6:1 on white) · gold-line = ring / card border / rule ·
         // gold-soft = pill background (with gold text).
-        gold: { DEFAULT: '#7a5f0b', line: '#c9a227', soft: '#fbf4dc' },
+        gold: { DEFAULT: t.accent['gold-ink'], line: t.accent.gold, soft: t.accent['gold-soft-2'] },
+        // Additive Figma namespaces (new class names only; nothing existing moves):
+        // brand-*, status-*, accent-*, social-*, focus-ring, overlay-scrim.
+        brand: { DEFAULT: t.brand.primary, ...t.brand },
+        status: t.status,
+        accent: t.accent,
+        social: t.social,
+        focus: t.focus,
+        overlay: t.overlay,
         'dark-bg': '#0a0a0a',
         'dark-surface': '#18181b',
         'dark-surface-elevated': '#27272a',
