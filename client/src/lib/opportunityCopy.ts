@@ -202,6 +202,14 @@ export function applicationStatusPill(
     case 'withdrawn': return { label: L.withdrawn, tone: 'grey' }
     case 'no_response': return { label: L.no_response, tone: 'grey' }
     case 'filled': return { label: L.filled, tone: 'grey' }
+    // D4 · the road after Shortlist (the player's own status only).
+    case 'offered': return { label: L.offered, tone: 'positive' }
+    case 'accepted': return { label: L.accepted, tone: 'positive' }
+    // The player must act: purple like every next step, never amber (amber
+    // is the offer's open-until in its last 5 days only).
+    case 'signed_pending_confirmation': return { label: L.signed_pending_confirmation, tone: 'neutral' }
+    case 'signed': return { label: L.signed, tone: 'positive' }
+    case 'offer_declined': return { label: L.shortlisted, tone: 'positive' }
     default: {
       if (!roleOpen) return { label: ROLE_CLOSED_LABEL, tone: 'grey' }
       const days = appliedAt ? differenceInCalendarDays(now, new Date(appliedAt)) : 0

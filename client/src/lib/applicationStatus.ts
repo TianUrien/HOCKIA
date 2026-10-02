@@ -16,6 +16,14 @@ export const APPLICATION_STATUS_LABELS: Record<string, string> = {
   // The club closed the role as filled (founder 2026-09-26: "Role filled",
   // grey — it's an outcome, not a verdict on the player).
   filled: 'Role filled',
+  // D4 · From yes to signed. offer_declined is a history row only (the
+  // server puts the application straight back to shortlisted), so it reads
+  // as Shortlisted if it is ever seen.
+  offered: 'Offer',
+  accepted: 'Offer accepted',
+  signed_pending_confirmation: 'Confirm signing',
+  signed: 'Signed',
+  offer_declined: 'Shortlisted',
 }
 
 /** A pending application whose role is no longer open (My applications pill,
@@ -63,6 +71,15 @@ export function playerApplicationStatusBadge(
     case 'filled':
       // Closed outcome → grey, like every other one the player can't act on.
       return { label: APPLICATION_STATUS_LABELS.filled, className: 'bg-gray-100 text-gray-600' }
+    // D4: the road after Shortlist. The offer's own "Open until" pill is the
+    // only amber (Figma D4 acceptance: amber in its last 5 days, nowhere else).
+    case 'offered':
+    case 'accepted':
+      return { label: APPLICATION_STATUS_LABELS[status], className: 'bg-emerald-100 text-emerald-800' }
+    case 'signed_pending_confirmation':
+      return { label: APPLICATION_STATUS_LABELS.signed_pending_confirmation, className: 'bg-hockia-soft text-hockia-primary' }
+    case 'signed':
+      return { label: APPLICATION_STATUS_LABELS.signed, className: 'bg-emerald-100 text-emerald-800' }
     default:
       return null
   }

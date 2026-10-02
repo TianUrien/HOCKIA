@@ -472,3 +472,52 @@ export function signingErrorMessage(err: unknown, fallback: string): string {
   const hit = PASS_THROUGH.find((p) => msg.startsWith(p))
   return hit ? `${hit.replace('\'', '’')}.` : fallback
 }
+
+// ── Club lists: where road applicants sit, and the grey tag on the row ──
+
+/**
+ * The club's Applicants chips predate D4: an applicant past Shortlist
+ * (offered / accepted / waiting to confirm / signed) stays under Shortlisted
+ * with a grey tag naming the step; a role filled by someone else lands in
+ * Closed. offer_declined is only ever a history row (the server puts the
+ * application straight back to shortlisted).
+ */
+export function applicantChipFor(status: string): string {
+  if (isOnRoad(status) || status === 'offer_declined') return 'shortlisted'
+  if (status === 'filled') return 'no_response'
+  return status
+}
+
+/** Grey tag on a club's applicant row (the club waits, so never amber). */
+export function clubRoadTag(status: string): string | null {
+  switch (status) {
+    case 'offered': return 'Offer sent'
+    case 'accepted': return 'Offer accepted'
+    case 'signed_pending_confirmation': return 'Waiting to confirm'
+    case 'signed': return 'Signed'
+    default: return null
+  }
+}
+
+// ── Player: withdraw an application ──
+
+export const WITHDRAW_TITLE = 'Withdraw your application?'
+
+/** The confirm step's body: final, and the club sees it as withdrawn. */
+export function withdrawBody(status: string | null | undefined): string {
+  const base = 'The club will see it as withdrawn. This can’t be undone.'
+  if (status === 'offered') return `Any offer waiting for you is cancelled. ${base}`
+  if (status === 'accepted' || status === 'signed_pending_confirmation') return `The signing won’t go ahead. ${base}`
+  return base
+}
+
+/** What the player reads next to the road steps (their own status only). */
+export function playerRoadHint(status: string): string | null {
+  switch (status) {
+    case 'offered': return 'The club sent you an offer. Answer it in your chat with the club.'
+    case 'accepted': return 'You accepted the offer. The club will mark the signing next.'
+    case 'signed_pending_confirmation': return 'The club marked you as signed. Confirm it to add it to your career.'
+    case 'signed': return 'Signed through Hockia. It’s on your career.'
+    default: return null
+  }
+}

@@ -3,7 +3,8 @@ import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { logger } from '@/lib/logger'
 
-const ACTIVE_STATUSES = new Set(['pending', 'shortlisted', 'maybe'])
+// D4: the road after Shortlist stays active until it is signed or closed.
+const ACTIVE_STATUSES = new Set(['pending', 'shortlisted', 'maybe', 'offered', 'accepted', 'signed_pending_confirmation'])
 
 export interface MyApplicationRow {
   id: string
