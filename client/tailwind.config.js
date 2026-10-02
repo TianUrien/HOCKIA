@@ -1,7 +1,7 @@
 // Design tokens generated from the Figma "New-Hockia" variables
 // (src/styles/tokens/figma-export.json → npm run tokens:build). Read here at
 // build time only; app code never imports tokens.js.
-import { colors as t } from './src/styles/tokens/tokens.js'
+import { colors as t, radius as r } from './src/styles/tokens/tokens.js'
 
 /** @type {import('tailwindcss').Config} */
 export default {
@@ -131,10 +131,13 @@ export default {
         micro: ['11px', { lineHeight: '14px' }],
         tab: ['10px', { lineHeight: '12px', fontWeight: '500' }],
       },
+      // Figma "Hockia / Space & Radius" wins (founder ruling 2026-10-02):
+      // tile = radius/sm 8 (was 7) · card = radius/lg 16 (was 14) ·
+      // sheet = radius/xl 20 (was 22).
       borderRadius: {
-        tile: '7px',
-        card: '14px',
-        sheet: '22px',
+        tile: `${r.sm}px`,
+        card: `${r.lg}px`,
+        sheet: `${r.xl}px`,
       },
       keyframes: {
         shimmer: {
