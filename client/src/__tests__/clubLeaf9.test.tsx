@@ -112,12 +112,12 @@ describe('club Chat application card', () => {
     expect(applicationCardTitle(app({ roleTitle: 'Midfielder' }))).toBe('Applied to Midfielder')
   })
   it('pending: days left to reply, amber at 5 or fewer', () => {
-    expect(applicationCardDetail(app(), 14, now)).toEqual({ text: 'Sep 17 · 8 days left to reply', urgent: false })
+    expect(applicationCardDetail(app(), 14, now)).toEqual({ text: '17 Sep · 8 days left to reply', urgent: false })
     expect(applicationCardDetail(app({ appliedAt: '2026-09-10T10:00:00Z' }), 14, now)).toEqual({ text: 'Sep 10 · 1 day left to reply', urgent: true })
   })
   it('closed without a reply says when', () => {
-    expect(applicationCardDetail(app({ status: 'no_response', appliedAt: '2026-09-03T10:00:00Z', updatedAt: '2026-09-18T10:00:00Z' }), 14, now)).toEqual({ text: 'Sep 3 · closed without a reply on Sep 18', urgent: false })
-    expect(applicationCardDetail(app({ status: 'shortlisted' }), 14, now).text).toBe('Sep 17 · shortlisted')
+    expect(applicationCardDetail(app({ status: 'no_response', appliedAt: '2026-09-03T10:00:00Z', updatedAt: '2026-09-18T10:00:00Z' }), 14, now)).toEqual({ text: '3 Sep · closed without a reply on 18 Sep', urgent: false })
+    expect(applicationCardDetail(app({ status: 'shortlisted' }), 14, now).text).toBe('17 Sep · shortlisted')
   })
   it('picks the pending application first, else the most recent', () => {
     expect(pickApplication([app({ id: 'old', status: 'rejected', appliedAt: '2026-08-01' }), app({ id: 'p', appliedAt: '2026-09-01' })])?.id).toBe('p')

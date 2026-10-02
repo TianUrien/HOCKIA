@@ -19,8 +19,8 @@ describe('clubLeagueLine', () => {
 })
 
 describe('openRoleLine', () => {
-  it('reads "Open role · from Sep 1 · 7 months"', () => {
-    expect(openRoleLine({ startDate: '2026-09-01T00:00:00Z', durationText: '7' })).toBe('Open role · from Sep 1 · 7 months')
+  it('reads "Open role · from 1 Sep · 7 months"', () => {
+    expect(openRoleLine({ startDate: '2026-09-01T00:00:00Z', durationText: '7' })).toBe('Open role · from 1 Sep · 7 months')
   })
   it('drops the parts it does not have', () => {
     expect(openRoleLine({ startDate: null, durationText: null })).toBe('Open role')

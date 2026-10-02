@@ -13,7 +13,7 @@ import { BottomSheet } from '@/components/ui/BottomSheet'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { useApplicationRoad, useSigningActions } from '@/hooks/useSigning'
 import { inviteRoleLabel } from '@/lib/invites'
-import { isOnRoad, offerDeclinedNote, roadHeaderLine, roadMainAction, roadMenu, roadSteps, roadWaitingLine, type OfferDraft, type RoadMenuItem } from '@/lib/signing'
+import { isOnRoad, offerDeclinedNote, roadHeaderLine, roadMainAction, roadMenu, roadSteps, roadWaitingLine, shortDayOf, type OfferDraft, type RoadMenuItem } from '@/lib/signing'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { useAuthStore } from '@/lib/auth'
@@ -77,12 +77,8 @@ type Review = {
   clubLeagueBanded: boolean
 }
 
-const MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-const monthDay = (iso: string | null) => {
-  if (!iso) return null
-  const d = new Date(iso)
-  return Number.isNaN(d.getTime()) ? null : `${MONTH[d.getMonth()]} ${d.getDate()}`
-}
+// Dates read day first app-wide ("2 Oct"), the one format the signing road uses.
+const monthDay = (iso: string | null) => shortDayOf(iso)
 
 export default function ApplicantReviewScreen({ roleId, applicationId }: Props) {
   const navigate = useNavigate()

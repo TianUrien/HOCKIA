@@ -9,6 +9,7 @@ import { useRecruitingViewKind } from '@/hooks/useRecruitingContext'
 import { useClubRoles, type ClubRole } from '@/hooks/useClubRoles'
 import { formatDurationText, genderPill, isPaid, roleBenefits, rolePostedAt, roleTitle } from '@/lib/opportunityCopy'
 import { closedBreakdown, waitingNotice } from '@/lib/clubRecruiting'
+import { shortDayOf } from '@/lib/signing'
 import { isFirstRunOpportunities } from '@/lib/clubEdit'
 import { cn } from '@/lib/utils'
 import { RoleActions } from './RoleActions'
@@ -24,12 +25,8 @@ import { RoleActions } from './RoleActions'
  */
 type Segment = 'open' | 'closed'
 
-const MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-const monthDay = (iso: string | null | undefined) => {
-  if (!iso) return null
-  const d = new Date(iso)
-  return Number.isNaN(d.getTime()) ? null : `${MONTH[d.getMonth()]} ${d.getDate()}`
-}
+// Dates read day first app-wide ("2 Oct"), the one format the signing road uses.
+const monthDay = (iso: string | null | undefined) => shortDayOf(iso)
 
 function whenLine(r: ClubRole): string {
   const from = r.start_date ? `From ${monthDay(r.start_date)}` : 'Starts immediately'

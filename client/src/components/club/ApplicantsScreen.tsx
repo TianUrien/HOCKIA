@@ -11,6 +11,7 @@ import { useCountries } from '@/hooks/useCountries'
 import { useRoleApplicants, type Applicant } from '@/hooks/useRoleApplicants'
 import { getImageUrl } from '@/lib/imageUrl'
 import { genderPill, roleTitle } from '@/lib/opportunityCopy'
+import { shortDayOf } from '@/lib/signing'
 import { clubReplyLineClass, daysLeftLabel, daysLeftToReply, isClubReplyUrgent, personRoleLine, pipelineOf, appliedSinceLine, toReviewClosedNote } from '@/lib/clubRecruiting'
 import { applicantChipFor, closedApplicantTag, clubRoadTag } from '@/lib/signing'
 import { cn } from '@/lib/utils'
@@ -32,12 +33,8 @@ import { cn } from '@/lib/utils'
  */
 type Chip = 'pending' | 'shortlisted' | 'maybe' | 'rejected' | 'no_response'
 
-const MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-const monthDay = (iso: string | null | undefined) => {
-  if (!iso) return null
-  const d = new Date(iso)
-  return Number.isNaN(d.getTime()) ? null : `${MONTH[d.getMonth()]} ${d.getDate()}`
-}
+// Dates read day first app-wide ("2 Oct"), the one format the signing road uses.
+const monthDay = (iso: string | null | undefined) => shortDayOf(iso)
 
 export default function ApplicantsScreen({ roleId }: { roleId: string }) {
   const navigate = useNavigate()

@@ -99,7 +99,7 @@ describe('closed role view', () => {
     expect(clubNoteFromFeedback(null, 'rejected')).toBeNull()
   })
   it('formats the applied date', () => {
-    expect(appliedOnLine('2026-09-03T10:00:00Z')).toBe('Applied Sep 3, 2026')
+    expect(appliedOnLine('2026-09-03T10:00:00Z')).toBe('Applied 3 Sep 2026')
     expect(appliedOnLine(null)).toBeNull()
   })
 })
@@ -158,7 +158,7 @@ describe('phone closed role page', () => {
     expect(screen.getByTestId('role-body-closed').className).toContain('grayscale')
     expect(screen.getByTestId('own-application-status').textContent).toBe('Not selected')
     await waitFor(() => expect(screen.getByTestId('club-note').textContent).toContain('We went another way.'))
-    expect(screen.getByText('Applied Sep 3, 2026')).toBeTruthy()
+    expect(screen.getByText('Applied 3 Sep 2026')).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Apply' })).toBeNull()
     expect(screen.queryByTestId('role-closed-notice')).toBeNull()
   })
