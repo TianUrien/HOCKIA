@@ -10,7 +10,7 @@ import { FitCard } from './FitCard'
 import { DeclineSheet } from './DeclineSheet'
 import { RoadToSigningCard } from './RoadToSigningCard'
 import { BottomSheet } from '@/components/ui/BottomSheet'
-import ConfirmDialog from '@/components/ConfirmDialog'
+import { ConfirmSheet } from '@/components/ui/ConfirmSheet'
 import { useApplicationRoad, useSigningActions } from '@/hooks/useSigning'
 import { inviteRoleLabel } from '@/lib/invites'
 import { isOnRoad, offerDeclinedNote, roadHeaderLine, roadMainAction, roadMenu, roadSteps, roadWaitingLine, shortDayOf, type OfferDraft, type RoadMenuItem } from '@/lib/signing'
@@ -585,8 +585,9 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
           />
         </Suspense>
       )}
-      <ConfirmDialog
-        isOpen={confirm !== null}
+      {/* Danger confirmations are sheets, like Decline (one surface per screen). */}
+      <ConfirmSheet
+        open={confirm !== null}
         onClose={() => setConfirm(null)}
         onConfirm={runConfirm}
         title={confirm === 'withdraw_offer' ? 'Withdraw this offer?' : 'Undo the signing?'}
@@ -594,7 +595,7 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
           ? `${firstName} is told the offer was withdrawn and goes back to Shortlisted.`
           : `${firstName} won’t be asked to confirm any more. You can mark the signing again later.`}
         confirmLabel={confirm === 'withdraw_offer' ? 'Withdraw offer' : 'Undo signing'}
-        variant="danger"
+        busyLabel={confirm === 'withdraw_offer' ? 'Withdrawing…' : 'Undoing…'}
         testId="road-confirm"
       />
 

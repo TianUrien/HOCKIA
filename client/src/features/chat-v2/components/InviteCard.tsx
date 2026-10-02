@@ -1,8 +1,7 @@
 import { lazy, Suspense, useState } from 'react'
-import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
-import ConfirmDialog from '@/components/ConfirmDialog'
+import { ConfirmSheet } from '@/components/ui/ConfirmSheet'
 import { supabase, type Vacancy } from '@/lib/supabase'
 import { useToastStore } from '@/lib/toast'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
@@ -159,19 +158,17 @@ export default function InviteCard({ inviteId, opportunityId, isMine, fallbackTe
         </div>
       )}
 
-      {/* Portaled: the chat bubble wrapper's `contain: paint` would clip a fixed overlay. */}
-      {createPortal(
-        <ConfirmDialog
-          isOpen={confirmPass}
-          onClose={() => setConfirmPass(false)}
-          onConfirm={async () => { await decline(invite.id) }}
-          title="Not interested in this role?"
-          message={`${club.full_name?.trim() || 'The club'} will see that you passed. You can still message them.`}
-          confirmLabel="Not interested"
-          testId="invite-pass-confirm"
-        />,
-        document.body,
-      )}
+      {/* A sheet like every other D3/D4 confirmation; BottomSheet portals itself, so the bubble's `contain: paint` can't clip it. */}
+      <ConfirmSheet
+        open={confirmPass}
+        onClose={() => setConfirmPass(false)}
+        onConfirm={async () => { await decline(invite.id) }}
+        title="Not interested in this role?"
+        message={`${club.full_name?.trim() || 'The club'} will see that you passed. You can still message them.`}
+        confirmLabel="Not interested"
+        busyLabel="Sending…"
+        testId="invite-pass-confirm"
+      />
       {applyVacancy && (
         <Suspense fallback={null}>
           <ApplyToOpportunityModal
