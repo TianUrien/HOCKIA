@@ -13,7 +13,7 @@ import { BottomSheet } from '@/components/ui/BottomSheet'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { useApplicationRoad, useSigningActions } from '@/hooks/useSigning'
 import { inviteRoleLabel } from '@/lib/invites'
-import { isOnRoad, roadHeaderLine, roadMainAction, roadMenu, roadSteps, roadWaitingLine, type OfferDraft, type RoadMenuItem } from '@/lib/signing'
+import { isOnRoad, offerDeclinedNote, roadHeaderLine, roadMainAction, roadMenu, roadSteps, roadWaitingLine, type OfferDraft, type RoadMenuItem } from '@/lib/signing'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { useAuthStore } from '@/lib/auth'
@@ -181,6 +181,8 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
     : []
   const roleLabel = roadData?.role ? inviteRoleLabel(roadData.role) : 'this role'
   const liveOffer = roadData?.offer?.status === 'live' ? roadData.offer : null
+  // The player declined the newest offer: their reason, grey, under the road.
+  const declinedNote = onRoad ? offerDeclinedNote(firstName, roadData?.offer) : null
   // A road step moved: the review, the Applicants list and the road all follow.
   const moved = (status: string | null) => {
     if (status) {
@@ -357,6 +359,9 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
                   onToggleTrial={review.status !== 'signed' ? () => void toggleTrial() : undefined}
                   trialBusy={signing.busy}
                 />
+                {declinedNote && (
+                  <p className="mt-2 rounded-card bg-surface-grouped px-3.5 py-2.5 text-secondary leading-[18px] text-ink-2" data-testid="road-decline-note">{declinedNote}</p>
+                )}
               </div>
             )}
 

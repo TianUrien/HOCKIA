@@ -18,7 +18,7 @@ const db = supabase as unknown as SupabaseClient
 
 export const SIGNING_KEY = ['signing'] as const
 
-const OFFER_COLUMNS = 'id, application_id, opportunity_id, club_id, player_id, version, start_date, length, pay, package, open_until, note, status, sent_at, responded_at'
+const OFFER_COLUMNS = 'id, application_id, opportunity_id, club_id, player_id, version, start_date, length, pay, package, open_until, note, status, sent_at, responded_at, decline_reason'
 
 // ── Club: the road on one applicant (D4.1) ──
 

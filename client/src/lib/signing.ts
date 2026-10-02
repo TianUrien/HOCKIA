@@ -167,6 +167,8 @@ export interface OfferRow {
   status: OfferStatus
   sent_at: string
   responded_at: string | null
+  /** respond_offer(accept = false, reason): the player's optional words, for the club. */
+  decline_reason: string | null
 }
 
 /** Editing a live offer starts from what was sent (editing sends a new version). */
@@ -216,6 +218,8 @@ export function offerCardState(opts: {
   status: OfferStatus
   openUntil: string | null
   playerFirstName?: string
+  /** The player's reason for declining (club viewer only; the player's own card never repeats it). */
+  declineReason?: string | null
   now?: Date
 }): OfferCardState {
   const now = opts.now ?? new Date()
@@ -236,7 +240,7 @@ export function offerCardState(opts: {
     case 'accepted':
       return { muted: false, actionable: false, line: player ? 'You accepted this offer' : `${who} accepted`, deadline: null, deadlineTone: 'grey' }
     case 'declined':
-      return closed(player ? 'You declined this offer' : `${who} declined`)
+      return closed(player ? 'You declined this offer' : offerDeclinedLine(who, opts.declineReason))
     case 'superseded':
       return closed('Updated — see the newer offer below')
     case 'withdrawn':
@@ -247,6 +251,23 @@ export function offerCardState(opts: {
     default:
       return closed('This offer is closed')
   }
+}
+
+/** "Sam declined — Moving abroad next season" (club-facing; grey). */
+export function offerDeclinedLine(firstName: string, reason: string | null | undefined): string {
+  const r = reason?.trim()
+  return r ? `${firstName} declined — ${r}` : `${firstName} declined`
+}
+
+/**
+ * The grey note under the club's road after the player declined the newest
+ * offer (the application is back on Shortlisted, so the road alone wouldn't
+ * say why). Null while an offer is live or none was declined last.
+ */
+export function offerDeclinedNote(firstName: string, offer: Pick<OfferRow, 'status' | 'decline_reason'> | null | undefined): string | null {
+  if (offer?.status !== 'declined') return null
+  const r = offer.decline_reason?.trim()
+  return r ? `${firstName} declined your offer — “${r}”` : `${firstName} declined your offer.`
 }
 
 // ── Road to signing (D4.1) ──

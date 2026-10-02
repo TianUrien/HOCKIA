@@ -9,7 +9,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { applicantChipFor, closedApplicantTag } from '@/lib/signing'
+import { applicantChipFor, closedApplicantTag, offerCardState, offerDeclinedNote } from '@/lib/signing'
 import { appliedSinceLine, pipelineOf } from '@/lib/clubRecruiting'
 import type { CareerTimelineEntry } from '@/hooks/useCareerTimeline'
 import type { Applicant } from '@/hooks/useRoleApplicants'
@@ -127,5 +127,30 @@ describe('2 · withdrawn applicants reach the club', () => {
     expect(shortlisted).toHaveLength(1)
     expect(shortlisted[0].textContent).toContain('Ana Pérez')
     expect(shortlisted[0].querySelector('[data-testid="applicant-status-tag"]')?.textContent).toBe('Offer sent')
+  })
+})
+
+describe('3 · the decline reason reaches the club', () => {
+  const NOW = new Date('2026-10-02T12:00:00Z')
+
+  it('club card: "<name> declined — <reason>", grey; without a reason just "<name> declined"', () => {
+    const withReason = offerCardState({ viewer: 'club', status: 'declined', openUntil: null, playerFirstName: 'Sam', declineReason: 'Moving abroad next season', now: NOW })
+    expect(withReason.line).toBe('Sam declined — Moving abroad next season')
+    expect(withReason.muted).toBe(true)
+    expect(withReason.deadlineTone).toBe('grey')
+    expect(offerCardState({ viewer: 'club', status: 'declined', openUntil: null, playerFirstName: 'Sam', declineReason: '  ', now: NOW }).line).toBe('Sam declined')
+  })
+
+  it('player card is unchanged and never repeats the reason', () => {
+    const s = offerCardState({ viewer: 'player', status: 'declined', openUntil: null, declineReason: 'Moving abroad', now: NOW })
+    expect(s.line).toBe('You declined this offer')
+  })
+
+  it('applicant review: a grey note under the road only after the newest offer was declined', () => {
+    const offer = { status: 'declined' as const, decline_reason: 'Moving abroad next season' }
+    expect(offerDeclinedNote('Sam', offer)).toBe('Sam declined your offer — “Moving abroad next season”')
+    expect(offerDeclinedNote('Sam', { status: 'declined', decline_reason: null })).toBe('Sam declined your offer.')
+    expect(offerDeclinedNote('Sam', { status: 'live', decline_reason: null })).toBeNull()
+    expect(offerDeclinedNote('Sam', null)).toBeNull()
   })
 })
