@@ -170,7 +170,7 @@ gateway only; their blast radius is the configured test recipients.
 |---|---|
 | Supabase function secrets (per project) | `RESEND_API_KEY`, `RESEND_WEBHOOK_SECRET`, `CF_ACCOUNT_ID`, `CF_STREAM_API_TOKEN`, `CF_STREAM_WEBHOOK_SECRET`, `CF_STREAM_KEY_ID`, `CF_STREAM_JWK`, `SENTRY_DSN`, `LLM_PROVIDER`, `CLAUDE_MODEL` and the provider API keys, `TEST_NOTIFICATION_RECIPIENTS`, `BLOCKED_NOTIFICATION_RECIPIENTS`; platform-injected `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_DB_URL` |
 | Postgres Vault (production) | Secrets used by `run_storage_cleanup()` to call the cleanup function over `pg_net` |
-| GitHub Actions secrets | `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD`, `STAGING_SUPABASE_URL`, `STAGING_SUPABASE_ANON_KEY`, `STAGING_SUPABASE_SERVICE_ROLE_KEY`, `E2E_*_EMAIL`, `E2E_*_PASSWORD` |
+| GitHub Actions secrets | `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD`, `STAGING_SUPABASE_URL`, `STAGING_SUPABASE_ANON_KEY`, `STAGING_SUPABASE_SERVICE_ROLE_KEY`, `PROD_SUPABASE_ANON_KEY` (manual uptime workflow only), `E2E_*_EMAIL`, `E2E_*_PASSWORD` |
 | Vercel environment | `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_ENVIRONMENT`, `VITE_SENTRY_DSN`, `VITE_GA_MEASUREMENT_ID`, `VITE_POSTHOG_KEY`, `VITE_POSTHOG_HOST`, `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT` |
 | Cloudflare Worker secrets | `SUPABASE_ANON_KEY`, `RESEND_API_KEY`, `ALERT_TO` |
 | Local only (gitignored) | `client/.env.local`, root `.env.local`, `~/.config/hockia/cloudflare.env` |

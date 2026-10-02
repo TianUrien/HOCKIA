@@ -15,9 +15,18 @@ jobs:
 
     env:
       SUPABASE_BASE: https://xtertgftujnebubxgqit.supabase.co/functions/v1
-      ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0ZXJ0Z2Z0dWpuZWJ1YnhncWl0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMwMzEwNTUsImV4cCI6MjA3ODYwNzA1NX0.hmJLa5nkS9EM3LIRLrrDhsnbZqqoL4RCsve84Qtk8Hw
+      # Repository secret PROD_SUPABASE_ANON_KEY (the anon key is public by
+      # design; keeping it out of the workflow file is repository hygiene).
+      ANON_KEY: ${{ secrets.PROD_SUPABASE_ANON_KEY }}
 
     steps:
+      - name: Check secret is configured
+        run: |
+          if [ -z "$ANON_KEY" ]; then
+            echo "::error::PROD_SUPABASE_ANON_KEY repository secret is not set"
+            exit 1
+          fi
+
       - name: Ping health endpoint
         id: health
         run: |
