@@ -59,7 +59,7 @@ export default function MarkSignedSheet({ open, firstName, playerAvatar, playerN
           </span>
         </button>
 
-        <button type="button" onClick={() => onConfirm(closeRole)} disabled={busy} className="mt-4 flex h-[50px] w-full items-center justify-center rounded-full bg-hockia-primary text-[16px] font-semibold text-white disabled:opacity-60" data-testid="mark-signed-confirm">
+        <button type="button" onClick={() => onConfirm(closeRole)} disabled={busy} className="mt-4 flex h-12 w-full items-center justify-center rounded-full bg-hockia-primary text-[16px] font-semibold text-white disabled:opacity-60" data-testid="mark-signed-confirm">
           {busy ? 'Saving…' : 'Mark as signed'}
         </button>
         <button type="button" onClick={onClose} className="mt-1 flex h-11 w-full items-center justify-center text-[16px] font-semibold text-ink-1">

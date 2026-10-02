@@ -109,11 +109,11 @@ export function DeclineSheet({ open, applicationId, firstName, hasName = true, o
           type="button"
           disabled={!canSend}
           onClick={() => reason && onSend(reason, note.trim())}
-          className="flex h-[50px] w-full items-center justify-center rounded-full bg-[#e5484d] text-body font-semibold text-white disabled:opacity-40"
+          className="flex h-12 w-full items-center justify-center rounded-full bg-[#e5484d] text-body font-semibold text-white disabled:opacity-40"
         >
           Decline and send
         </button>
-        <button type="button" onClick={onCancel} className="py-1 text-body font-semibold text-hockia-primary">Cancel</button>
+        <button type="button" onClick={onCancel} className="flex min-h-11 w-full items-center justify-center text-body font-semibold text-hockia-primary">Cancel</button>
       </div>
     </BottomSheet>
   )

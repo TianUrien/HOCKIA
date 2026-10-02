@@ -14,10 +14,9 @@ import type { InvitePill } from '@/lib/invites'
  * "Invite" so it fits beside the icon buttons, the accessible name is
  * "Invite to apply".
  */
-export function InviteAction({ pill, invitable, name, limitReason, onInvite, onApplied }: {
+export function InviteAction({ pill, invitable, limitReason, onInvite, onApplied }: {
   pill: InvitePill | null
   invitable: boolean
-  name: string | null
   /** Set when the daily limit is reached: Invite is disabled and says why. */
   limitReason?: string | null
   onInvite: () => void
@@ -25,7 +24,7 @@ export function InviteAction({ pill, invitable, name, limitReason, onInvite, onA
 }) {
   if (pill === 'applied') {
     return onApplied
-      ? <button type="button" onClick={onApplied} className="rounded-full bg-surface-grouped px-3 py-1.5 text-secondary font-semibold text-ink-2" data-testid="invite-pill-applied">Applied</button>
+      ? <button type="button" onClick={onApplied} className="relative rounded-full bg-surface-grouped px-3 py-1.5 text-secondary font-semibold text-ink-2 before:absolute before:-inset-2 before:content-['']" data-testid="invite-pill-applied">Applied</button>
       : <span className="inline-flex rounded-full bg-surface-grouped px-3 py-1.5 text-secondary font-semibold text-ink-2" data-testid="invite-pill-applied">Applied</span>
   }
   if (pill === 'passed') {

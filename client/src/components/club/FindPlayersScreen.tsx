@@ -175,20 +175,20 @@ export default function FindPlayersScreen() {
           const saved = writes.inList(r.id)
           const shortlistToggle = saved
             ? (
-              <button type="button" onClick={() => void writes.remove(r.id)} aria-label={`Remove ${r.full_name ?? 'player'} from the shortlist`} aria-pressed="true" className="flex h-9 w-9 items-center justify-center rounded-full bg-hockia-soft text-hockia-primary">
+              <button type="button" onClick={() => void writes.remove(r.id)} aria-label={`Remove ${r.full_name ?? 'player'} from the shortlist`} aria-pressed="true" className="relative before:absolute before:-inset-1 before:content-[''] flex h-9 w-9 items-center justify-center rounded-full bg-hockia-soft text-hockia-primary">
                 <Check className="h-[18px] w-[18px]" strokeWidth={2.4} />
               </button>
             )
             : (
-              <button type="button" onClick={() => void writes.add(r.id)} aria-label={`Shortlist ${r.full_name ?? 'player'}`} aria-pressed="false" className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-grouped text-ink-1">
+              <button type="button" onClick={() => void writes.add(r.id)} aria-label={`Shortlist ${r.full_name ?? 'player'}`} aria-pressed="false" className="relative before:absolute before:-inset-1 before:content-[''] flex h-9 w-9 items-center justify-center rounded-full bg-surface-grouped text-ink-1">
                 <Plus className="h-[18px] w-[18px]" strokeWidth={2.2} />
               </button>
             )
           const trailing = r.applicationId
-            ? <button type="button" onClick={() => openApplied(r)} className="rounded-full bg-surface-grouped px-3 py-1.5 text-secondary font-semibold text-ink-2">Applied</button>
+            ? <button type="button" onClick={() => openApplied(r)} className="relative rounded-full bg-surface-grouped px-3 py-1.5 text-secondary font-semibold text-ink-2 before:absolute before:-inset-2 before:content-['']">Applied</button>
             : (
               <span className="flex items-center gap-2">
-                <InviteAction pill={inviteStatuses.pillFor(r.id)} invitable={isInvitablePlayer(r)} name={r.full_name} limitReason={limitReason} onInvite={() => setInviteFor(r)} />
+                <InviteAction pill={inviteStatuses.pillFor(r.id)} invitable={isInvitablePlayer(r)} limitReason={limitReason} onInvite={() => setInviteFor(r)} />
                 {shortlistToggle}
               </span>
             )

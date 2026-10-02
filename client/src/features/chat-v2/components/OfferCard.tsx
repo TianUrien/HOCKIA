@@ -142,7 +142,7 @@ export default function OfferCard({ offerId, isMine, fallbackText }: Props) {
             className="mt-3 w-full resize-none rounded-[14px] border border-line px-3.5 py-3 text-row text-ink-1 outline-none placeholder:text-ink-3 focus:border-hockia-primary"
             data-testid="offer-decline-reason"
           />
-          <button type="button" onClick={() => void decline()} disabled={busy} className="mt-3 flex h-[50px] w-full items-center justify-center rounded-full bg-hockia-primary text-[16px] font-semibold text-white disabled:opacity-60" data-testid="offer-decline-confirm">
+          <button type="button" onClick={() => void decline()} disabled={busy} className="mt-3 flex h-12 w-full items-center justify-center rounded-full bg-hockia-primary text-[16px] font-semibold text-white disabled:opacity-60" data-testid="offer-decline-confirm">
             Decline offer
           </button>
           <button type="button" onClick={() => setDeclining(false)} className="mt-1 flex h-11 w-full items-center justify-center text-[16px] font-semibold text-ink-1">

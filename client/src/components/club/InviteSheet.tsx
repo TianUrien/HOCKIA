@@ -158,7 +158,7 @@ export default function InviteSheet({ open, player, activeRoleId, onClose, onSen
               )
             })}
             {!picking && !choosing && invitable.length > 1 && (
-              <button type="button" onClick={() => setPicking(true)} className="self-start py-1 text-secondary font-semibold text-hockia-primary" data-testid="invite-change-role">
+              <button type="button" onClick={() => setPicking(true)} className="-my-2 flex min-h-11 items-center self-start text-secondary font-semibold text-hockia-primary" data-testid="invite-change-role">
                 Change role
               </button>
             )}
@@ -197,7 +197,7 @@ export default function InviteSheet({ open, player, activeRoleId, onClose, onSen
           type="button"
           disabled={!canSend}
           onClick={() => void submit()}
-          className="mt-3 flex h-[50px] w-full items-center justify-center rounded-full bg-hockia-primary text-body font-semibold text-white disabled:opacity-40"
+          className="mt-3 flex h-12 w-full items-center justify-center rounded-full bg-hockia-primary text-body font-semibold text-white disabled:opacity-40"
           data-testid="invite-send"
         >
           {sending ? 'Sending…' : 'Send invite'}

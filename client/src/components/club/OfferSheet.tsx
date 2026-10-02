@@ -141,7 +141,7 @@ export default function OfferSheet({ open, firstName, roleLabel, role, current, 
           type="button"
           onClick={() => onSend(draft)}
           disabled={busy || !!dateError}
-          className="mt-3.5 flex h-[50px] w-full items-center justify-center rounded-full bg-hockia-primary text-[16px] font-semibold text-white disabled:opacity-50"
+          className="mt-3.5 flex h-12 w-full items-center justify-center rounded-full bg-hockia-primary text-[16px] font-semibold text-white disabled:opacity-50"
           data-testid="offer-send"
         >
           {busy ? 'Sending…' : current ? 'Send updated offer' : 'Send offer'}

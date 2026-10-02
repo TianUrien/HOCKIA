@@ -498,13 +498,13 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
       {p && review && decidable && (
         <div className="fixed inset-x-0 bottom-0 border-t border-line bg-white px-4 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-3" data-testid="decision-bar">
           <div className="flex gap-2">
-            <button type="button" onClick={() => setDeclining(true)} disabled={review.status === 'rejected'} className="flex h-[46px] flex-1 items-center justify-center rounded-full bg-surface-grouped text-[16px] font-semibold text-[#e5484d] disabled:opacity-40">Decline</button>
-            <button type="button" onClick={() => decide('maybe')} disabled={review.status === 'maybe'} className="flex h-[46px] flex-1 items-center justify-center rounded-full bg-surface-grouped text-[16px] font-semibold text-ink-1 disabled:opacity-40">Maybe</button>
-            <button type="button" onClick={() => decide('shortlisted')} disabled={review.status === 'shortlisted'} className="flex h-[46px] flex-1 items-center justify-center gap-1.5 rounded-full bg-hockia-primary text-[16px] font-semibold text-white disabled:opacity-40">
+            <button type="button" onClick={() => setDeclining(true)} disabled={review.status === 'rejected'} className="flex h-12 flex-1 items-center justify-center rounded-full bg-surface-grouped text-[16px] font-semibold text-[#e5484d] disabled:opacity-40">Decline</button>
+            <button type="button" onClick={() => decide('maybe')} disabled={review.status === 'maybe'} className="flex h-12 flex-1 items-center justify-center rounded-full bg-surface-grouped text-[16px] font-semibold text-ink-1 disabled:opacity-40">Maybe</button>
+            <button type="button" onClick={() => decide('shortlisted')} disabled={review.status === 'shortlisted'} className="flex h-12 flex-1 items-center justify-center gap-1.5 rounded-full bg-hockia-primary text-[16px] font-semibold text-white disabled:opacity-40">
               <Check className="h-[18px] w-[18px]" strokeWidth={2.4} /> Shortlist
             </button>
           </div>
-          <button type="button" onClick={() => void message()} className="mt-2 flex w-full items-center justify-center gap-1.5 py-1.5 text-row font-semibold text-hockia-primary">
+          <button type="button" onClick={() => void message()} className="mt-1 flex min-h-11 w-full items-center justify-center gap-1.5 text-row font-semibold text-hockia-primary">
             <MessageCircle className="h-[18px] w-[18px]" strokeWidth={1.8} /> Message {firstName}
           </button>
         </div>

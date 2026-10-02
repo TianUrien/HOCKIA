@@ -72,7 +72,7 @@ export default function ConfirmSigningPage() {
     return shell(
       <div className="mt-24 text-center" data-testid="signing-unavailable">
         <p className="text-[17px] font-semibold text-ink-1">This signing isn’t available.</p>
-        <button type="button" onClick={() => navigate('/opportunities/applications')} className="mt-3 text-row font-semibold text-hockia-primary">My applications</button>
+        <button type="button" onClick={() => navigate('/opportunities/applications')} className="mt-1 inline-flex min-h-11 items-center px-2 text-row font-semibold text-hockia-primary">My applications</button>
       </div>,
     )
   }
@@ -115,10 +115,10 @@ export default function ConfirmSigningPage() {
             </div>
           </div>
         </div>
-        <button type="button" onClick={() => void share()} className="flex h-[50px] w-full items-center justify-center gap-2 rounded-full bg-surface-grouped text-[16px] font-semibold text-ink-1" data-testid="signing-share">
+        <button type="button" onClick={() => void share()} className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-surface-grouped text-[16px] font-semibold text-ink-1" data-testid="signing-share">
           <Share className="h-[18px] w-[18px]" strokeWidth={2} aria-hidden="true" /> Share the news
         </button>
-        <button type="button" onClick={() => navigate('/dashboard/profile')} className="mt-2.5 flex h-[50px] w-full items-center justify-center rounded-full bg-hockia-primary text-[16px] font-semibold text-white">
+        <button type="button" onClick={() => navigate('/dashboard/profile')} className="mt-2.5 flex h-12 w-full items-center justify-center rounded-full bg-hockia-primary text-[16px] font-semibold text-white">
           Done
         </button>
       </div>,
@@ -132,7 +132,7 @@ export default function ConfirmSigningPage() {
       <div className="mt-24 text-center" data-testid="signing-not-waiting">
         <p className="text-[17px] font-semibold text-ink-1">{lapsed ? 'This signing request has expired.' : 'There’s no signing waiting for your confirmation.'}</p>
         <p className="mt-1 text-secondary text-ink-2">You can message the club if something isn’t right.</p>
-        <button type="button" onClick={() => navigate('/opportunities/applications')} className="mt-3 text-row font-semibold text-hockia-primary">My applications</button>
+        <button type="button" onClick={() => navigate('/opportunities/applications')} className="mt-1 inline-flex min-h-11 items-center px-2 text-row font-semibold text-hockia-primary">My applications</button>
       </div>,
     )
   }
@@ -186,7 +186,7 @@ export default function ConfirmSigningPage() {
           <SettingsSwitch checked={hide} onChange={() => setHide((v) => !v)} label={toggle.title} />
         </div>
       </div>
-      <button type="button" onClick={() => void confirm()} disabled={busy} className="mt-6 flex h-[50px] w-full items-center justify-center rounded-full bg-hockia-primary text-[16px] font-semibold text-white disabled:opacity-60" data-testid="signing-yes">
+      <button type="button" onClick={() => void confirm()} disabled={busy} className="mt-6 flex h-12 w-full items-center justify-center rounded-full bg-hockia-primary text-[16px] font-semibold text-white disabled:opacity-60" data-testid="signing-yes">
         {busy ? 'Confirming…' : 'Yes, I signed'}
       </button>
       <button type="button" onClick={() => navigate(-1)} className="mt-1 flex h-11 w-full items-center justify-center text-[16px] font-semibold text-ink-1" data-testid="signing-not-yet">

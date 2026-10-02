@@ -139,7 +139,7 @@ export default function InviteCard({ inviteId, opportunityId, isMine, fallbackTe
               {opening ? 'Opening…' : 'Apply'}
             </button>
           </div>
-          <button type="button" onClick={() => setConfirmPass(true)} disabled={busy} className="mt-2 w-full py-1.5 text-[15px] font-semibold text-ink-2 disabled:opacity-60" data-testid="invite-not-interested">
+          <button type="button" onClick={() => setConfirmPass(true)} disabled={busy} className="mt-1 flex min-h-11 w-full items-center justify-center text-[15px] font-semibold text-ink-2 disabled:opacity-60" data-testid="invite-not-interested">
             Not interested
           </button>
         </>
@@ -154,7 +154,7 @@ export default function InviteCard({ inviteId, opportunityId, isMine, fallbackTe
               {state.line}
             </span>
           )}
-          <button type="button" onClick={viewRole} className="shrink-0 text-[15px] font-semibold text-hockia-primary">View role</button>
+          <button type="button" onClick={viewRole} className="-my-1.5 inline-flex min-h-11 shrink-0 items-center text-[15px] font-semibold text-hockia-primary">View role</button>
         </div>
       )}
 
