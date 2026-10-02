@@ -46,7 +46,7 @@ async function createServiceAccountJwt(): Promise<string> {
 
   const signingInput = `${encode(header)}.${encode(payload)}`
 
-  // Google SA keys are PKCS8 (-----BEGIN PRIVATE KEY-----). Un-escape literal \n.
+  // Google SA keys are PKCS8 PEM. Un-escape literal \n.
   const pemBody = GA4_SA_PRIVATE_KEY_RAW.replace(/\\n/g, '\n')
     .replace('-----BEGIN PRIVATE KEY-----', '')
     .replace('-----END PRIVATE KEY-----', '')

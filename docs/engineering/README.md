@@ -19,7 +19,8 @@ The repository is public.
 | [security.md](security.md) | Trust boundaries, RLS and grants, SECURITY DEFINER rules, fences, secrets by name, open hardening workstreams |
 | [operations.md](operations.md) | Environments, release runbook, rollback paths, backups, monitoring, known traps |
 | [capacity.md](capacity.md) | Workload model for 1,000 registered users, what is measured today, a proposed load-test plan (not run), platform limits to verify |
-| [skills.md](skills.md) | What exists in `.claude/` today and an evaluation plan for external agent frameworks and skill packs (evaluation only) |
+| [skills.md](skills.md) | What exists in `.claude/` today, the seven copied project skills (source, commit, size, trigger, removal), the founder-run Trail of Bits plugins, and the 2026-10-02 framework evaluation record |
+| [hooks.md](hooks.md) | The two local Claude Code hooks (secret scan before commit/push, migration lint after edit): what they do, the settings block to register them, test record |
 | [decisions/](decisions/README.md) | Architecture decision records that can be verified from the repository and its history |
 
 ## Consult when...
@@ -36,7 +37,8 @@ The repository is public.
 | Writing user-facing copy or status colours | standards.md "Copy and status rules" |
 | Adding tests or debugging CI | testing.md |
 | Planning for growth or a campaign | capacity.md |
-| Considering an agent framework or skill pack | skills.md |
+| Considering an agent framework or skill pack, or refreshing a copied skill | skills.md, then decisions/0007 |
+| Setting up Claude Code hooks on a new machine | hooks.md |
 | Wondering why something is the way it is | decisions/ |
 
 ## How to keep this current
