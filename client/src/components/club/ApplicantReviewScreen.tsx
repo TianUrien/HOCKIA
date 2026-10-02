@@ -31,6 +31,7 @@ import { specialistSkillLabel } from '@/lib/specialistSkills'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import { daysLeftLabel, daysLeftToReply, decisionToast, DEFAULT_EXPIRY_DAYS, clubReplyLineClass, fitRows, fitTarget, isClubReplyUrgent, personRoleLine, type FitComponents, type FitState } from '@/lib/clubRecruiting'
 import { cn } from '@/lib/utils'
+import { flagForCountryName } from '@/lib/careerCopy'
 import { profileVideoTotal } from '@/hooks/useProfileVideoTotal'
 import { MENU_ICON_CLASS } from '@/lib/report'
 import type { Json } from '@/lib/database.types'
@@ -453,7 +454,7 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
                 </div>
                 <div className="px-5">
                   {scroll.career.slice(0, 2).map((c, i, arr) => (
-                    <CareerRow key={c.id} entry={c} last={i === arr.length - 1} flag={countryRow(c.representedCountryId)?.split(' ')[0] ?? null} />
+                    <CareerRow key={c.id} entry={c} last={i === arr.length - 1} flag={countryRow(c.representedCountryId)?.split(' ')[0] ?? null} locationFlag={flagForCountryName(countries, c.locationCountry)} />
                   ))}
                 </div>
               </>

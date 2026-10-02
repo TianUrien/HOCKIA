@@ -5,7 +5,7 @@ import { EntityAvatar } from '@/components/ui/EntityAvatar'
 import CareerEntryScreen from './CareerEntryScreen'
 import { useCareerTimeline, type CareerHistoryRow, type CareerTimelineEntry } from '@/hooks/useCareerTimeline'
 import { useCountries } from '@/hooks/useCountries'
-import { careerSpan } from '@/lib/careerCopy'
+import { careerSpan, flagForCountryName } from '@/lib/careerCopy'
 import { SignedThroughHockiaPill } from '@/components/profile/SignedThroughHockiaPill'
 import { getImageUrl } from '@/lib/imageUrl'
 import { humanizeToken } from '@/lib/identity'
@@ -23,10 +23,11 @@ interface CareerScreenProps {
   onBack: () => void
 }
 
-function Entry({ entry, last, flag, onOpen }: { entry: CareerTimelineEntry; last: boolean; flag: string | null; onOpen?: () => void }) {
+function Entry({ entry, last, flag, locationFlag = null, onOpen }: { entry: CareerTimelineEntry; last: boolean; flag: string | null; locationFlag?: string | null; onOpen?: () => void }) {
   const isRep = entry.entryType === 'national_team'
   const span = careerSpan(entry)
-  const metaFlag = entry.clubFlag ?? flag
+  // The entry's own country first; the linked world club's can disagree with the club profile (QA 2 Oct).
+  const metaFlag = locationFlag ?? entry.clubFlag ?? flag
   const metaText = [entry.locationCity?.trim() || entry.locationCountry?.trim() || null, span].filter(Boolean).join(' · ')
   const meta = [metaFlag, metaText].filter(Boolean).join(' ')
   const sub = [entry.positionRole?.trim() ? humanizeToken(entry.positionRole) : null, isRep ? 'representative team' : entry.divisionLeague?.trim() || null].filter(Boolean).join(' · ')
@@ -118,6 +119,7 @@ export default function CareerScreen({ profileId, mode, onBack }: CareerScreenPr
                   entry={e}
                   last={i === entries.length - 1}
                   flag={e.representedCountryId ? countries.find((c) => c.id === e.representedCountryId)?.flag_emoji ?? null : null}
+                  locationFlag={flagForCountryName(countries, e.locationCountry)}
                   onOpen={own ? () => setEditing(e.row) : undefined}
                 />
               ))}
