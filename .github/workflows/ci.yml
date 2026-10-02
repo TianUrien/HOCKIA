@@ -422,9 +422,12 @@ jobs:
   db-tests:
     name: DB Integration Tests
     runs-on: ubuntu-latest
-    # Only run when secrets are available (not on forks)
+    # Only run when secrets are available (not on forks). Runs on pushes to
+    # main AND staging (since 2026-10-02: staging deploys straight to the
+    # preview, so RLS/trigger regressions should surface on the push, not
+    # only on the later PR to main). E2E stays PR + main only (cost).
     needs: changes
-    if: needs.changes.outputs.code == 'true' && ((github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository))
+    if: needs.changes.outputs.code == 'true' && ((github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging')) || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository))
     # Serialize across concurrent runs (the main + staging double-push) so two runs
     # never mutate the SHARED staging-DB fixtures at once — the cause of the flaky
     # "duplicate key ... profile_friendships_pair_unique" failures. Constant group
