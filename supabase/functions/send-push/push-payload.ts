@@ -222,13 +222,16 @@ export function buildPushPayload(
       const titleParts = vacancyTitle ? vacancyTitle.split(/\s+[—–-]\s+/) : []
       const titleHead = titleParts.length >= 2 ? (titleParts[0]?.trim() || null) : null
       const position = humanPos ?? titleHead ?? 'the opportunity'
+      // Shortlisted names the role by its title (QA 2 Oct: "considered for
+      // Midfielder" named no role), falling back to the position.
+      const role = vacancyTitle?.trim() || position
       // Human, player-facing copy — MIRRORS client config.ts applicationStatusCopy.
       let title: string
       let body: string
       switch (status) {
         case 'shortlisted':
           title = `${club} shortlisted you`
-          body = `You're being considered for ${position}.`
+          body = `You're being considered for ${role}.`
           break
         case 'maybe':
           title = `${club} replied to your application`
