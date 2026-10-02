@@ -19,3 +19,7 @@ title = "HOCKIA Gitleaks Config"
     '''client/src/types/supabase\.ts''',
     '''\.env\.example''',
   ]
+
+# Extend the built-in rule set; the sections above only add allowlist entries.
+[extend]
+useDefault = true
