@@ -2096,6 +2096,9 @@ export interface EngagementOverview {
     invite_joins: number
     filled_period: number
     filled_all_time: number
+    /** D4: applications confirmed as signed by both sides (non-test). */
+    signings_period?: number
+    signings_all_time?: number
   }
   generated_at: string
 }
