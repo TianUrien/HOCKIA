@@ -67,9 +67,11 @@ const applicationStatusCopy = (notification: NotificationRecord): { title: strin
     humanizePosition(getMetadataString(notification, 'position')) ??
     titleHeadPosition(vacancyTitle) ??
     'the opportunity'
+  // The role is named by its title (QA 2 Oct: "considered for Midfielder" named no role).
+  const role = vacancyTitle?.trim() || position
   switch (status) {
     case 'shortlisted':
-      return { title: `${club} shortlisted you`, body: `You're being considered for ${position}.` }
+      return { title: `${club} shortlisted you`, body: `You're being considered for ${role}.` }
     case 'maybe':
       return { title: `${club} replied to your application`, body: `Open your application for ${position} to see the update.` }
     case 'rejected':
