@@ -5,6 +5,7 @@ import { BottomSheet } from '@/components/ui/BottomSheet'
 import { firstNameOf, inviteRoleLabel } from '@/lib/invites'
 import { DECLINE_REASON_MAX, offerCardState, offerPackageLine, offerPayLine, offerStartLine } from '@/lib/signing'
 import { offerCardKey, useOfferCard, useSigningActions, type OfferCardData } from '@/hooks/useSigning'
+import { STATUS_TONE_PILL } from '@/lib/statusTone'
 import { cn } from '@/lib/utils'
 
 /**
@@ -35,11 +36,11 @@ export default function OfferCard({ offerId, isMine, fallbackText }: Props) {
   const [reason, setReason] = useState('')
 
   if (loading) {
-    return <div className="h-[230px] w-full animate-pulse rounded-[18px] bg-surface-grouped" data-testid="offer-card-loading" />
+    return <div className="h-[230px] w-full animate-pulse rounded-card bg-surface-grouped" data-testid="offer-card-loading" />
   }
   if (!data) {
     return (
-      <div className="rounded-[18px] bg-surface-grouped px-3.5 py-2.5 text-[15px] leading-5 text-ink-1">
+      <div className="rounded-card bg-surface-grouped px-3.5 py-2.5 text-[15px] leading-5 text-ink-1">
         <p className="whitespace-pre-wrap break-words" style={{ overflowWrap: 'anywhere' }}>{fallbackText}</p>
       </div>
     )
@@ -78,7 +79,7 @@ export default function OfferCard({ offerId, isMine, fallbackText }: Props) {
 
   return (
     <div
-      className={cn('w-full rounded-[18px] border-[1.5px] bg-white p-4', state.muted ? 'border-line' : 'border-hockia-primary')}
+      className={cn('w-full rounded-card border-[1.5px] bg-white p-4', state.muted ? 'border-line' : 'border-hockia-primary')}
       data-testid="offer-card"
       data-state={offer.status}
     >
@@ -88,7 +89,7 @@ export default function OfferCard({ offerId, isMine, fallbackText }: Props) {
         </span>
         {state.deadline && (
           <span
-            className={cn('rounded-full px-2.5 py-1 text-caption font-semibold', state.deadlineTone === 'amber' ? 'bg-amber-50 text-amber-700' : 'bg-surface-grouped text-ink-2')}
+            className={cn('rounded-full px-2.5 py-1 text-caption font-semibold', STATUS_TONE_PILL[state.deadlineTone])}
             data-testid="offer-deadline"
             data-tone={state.deadlineTone}
           >
@@ -96,7 +97,7 @@ export default function OfferCard({ offerId, isMine, fallbackText }: Props) {
           </span>
         )}
       </div>
-      <h3 className={cn('pt-2 text-[18px] font-bold leading-6 tracking-[-0.2px]', dim)}>{inviteRoleLabel(role)}</h3>
+      <h3 className={cn('pt-2 text-xl font-bold leading-6 tracking-[-0.2px]', dim)}>{inviteRoleLabel(role)}</h3>
       <dl className="mt-2 flex flex-col gap-2">
         {facts.filter(([, v]) => !!v).map(([label, value]) => (
           <div key={label} className="flex gap-3 text-[14px] leading-5">
@@ -106,7 +107,7 @@ export default function OfferCard({ offerId, isMine, fallbackText }: Props) {
         ))}
       </dl>
       {offer.note && (
-        <p className={cn('mt-3 whitespace-pre-wrap break-words rounded-[14px] bg-surface-grouped px-3.5 py-3 text-[14px] leading-5', dim)} style={{ overflowWrap: 'anywhere' }} data-testid="offer-card-note">
+        <p className={cn('mt-3 whitespace-pre-wrap break-words rounded-card bg-surface-grouped px-3.5 py-3 text-[14px] leading-5', dim)} style={{ overflowWrap: 'anywhere' }} data-testid="offer-card-note">
           {offer.note}
         </p>
       )}
@@ -139,7 +140,7 @@ export default function OfferCard({ offerId, isMine, fallbackText }: Props) {
             rows={3}
             placeholder="Add a reason (optional)"
             aria-label="Reason (optional)"
-            className="mt-3 w-full resize-none rounded-[14px] border border-line px-3.5 py-3 text-row text-ink-1 outline-none placeholder:text-ink-3 focus:border-hockia-primary"
+            className="mt-3 w-full resize-none rounded-card border border-line px-3.5 py-3 text-row text-ink-1 outline-none placeholder:text-ink-3 focus:border-hockia-primary"
             data-testid="offer-decline-reason"
           />
           <button type="button" onClick={() => void decline()} disabled={busy} className="mt-3 flex h-12 w-full items-center justify-center rounded-full bg-hockia-primary text-[16px] font-semibold text-white disabled:opacity-60" data-testid="offer-decline-confirm">

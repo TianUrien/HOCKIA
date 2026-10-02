@@ -66,7 +66,7 @@ function ContactEmailSheet({ open, onClose, email, isPublic, busy, onSave }: { o
           onChange={(e) => { setValue(e.target.value); setError(null) }}
           placeholder="name@club.com"
           aria-label="Contact email"
-          className="mt-3 h-12 w-full rounded-[12px] bg-surface-grouped px-4 text-[17px] text-ink-1 placeholder:text-ink-4 focus:outline-none focus:ring-2 focus:ring-hockia-primary/30"
+          className="mt-3 h-12 w-full rounded-[12px] bg-surface-grouped px-4 text-[17px] text-ink-1 placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-hockia-primary/30"
         />
         {error && <p role="alert" className="pt-1.5 text-[13px] text-red-600">{error}</p>}
         <div className="mt-3">

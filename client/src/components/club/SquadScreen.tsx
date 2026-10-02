@@ -154,7 +154,7 @@ export default function SquadScreen({ profile, onBack, parent = 'Profile' }: Squ
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Invite someone on Hockia"
             aria-label="Invite someone on Hockia"
-            className="min-w-0 flex-1 bg-transparent text-[17px] leading-[22px] text-ink-1 outline-none placeholder:text-ink-4 focus-visible:outline-none [&::-webkit-search-cancel-button]:hidden"
+            className="min-w-0 flex-1 bg-transparent text-[17px] leading-[22px] text-ink-1 outline-none placeholder:text-ink-3 focus-visible:outline-none [&::-webkit-search-cancel-button]:hidden"
           />
           {query && (
             <button type="button" onClick={() => setQuery('')} aria-label="Clear search" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-ink-3">

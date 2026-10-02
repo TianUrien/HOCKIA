@@ -241,7 +241,7 @@ export function MessageBubble({
       ) : invite ? (
         <div className={cn('flex', isMine ? 'justify-end' : 'justify-start')}>
           <div className="w-full sm:max-w-[70%]">
-            <Suspense fallback={<div className="h-[260px] w-full animate-pulse rounded-[18px] bg-surface-grouped" />}>
+            <Suspense fallback={<div className="h-[260px] w-full animate-pulse rounded-card bg-surface-grouped" />}>
               <InviteCard inviteId={invite.invite_id} opportunityId={invite.opportunity_id} isMine={isMine} fallbackText={message.content} />
             </Suspense>
           </div>
@@ -249,7 +249,7 @@ export function MessageBubble({
       ) : offer ? (
         <div className={cn('flex', isMine ? 'justify-end' : 'justify-start')}>
           <div className="w-full sm:max-w-[70%]">
-            <Suspense fallback={<div className="h-[230px] w-full animate-pulse rounded-[18px] bg-surface-grouped" />}>
+            <Suspense fallback={<div className="h-[230px] w-full animate-pulse rounded-card bg-surface-grouped" />}>
               <OfferCard offerId={offer.offer_id} isMine={isMine} fallbackText={message.content} />
             </Suspense>
           </div>

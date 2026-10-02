@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { Check, Share } from 'lucide-react'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
-import { SettingsSwitch } from '@/components/settings/settingsUi'
+import { SettingsRow, SettingsSwitch } from '@/components/settings/settingsUi'
 import { SignedThroughHockiaPill } from '@/components/profile/SignedThroughHockiaPill'
 import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
@@ -104,7 +104,7 @@ export default function ConfirmSigningPage() {
           <span className="flex h-28 w-28 items-center justify-center rounded-full bg-positive-soft text-positive" aria-hidden="true">
             <Check className="h-12 w-12" strokeWidth={2.6} />
           </span>
-          <h1 className="mt-5 text-[28px] font-bold leading-[34px] tracking-[-0.3px] text-ink-1">{signedTitle(clubName, me?.role)}</h1>
+          <h1 className="mt-5 text-3xl font-bold tracking-[-0.3px] text-ink-1">{signedTitle(clubName, me?.role)}</h1>
           <p className="mt-2 text-[16px] leading-[23px] text-ink-2">It’s on your career now. Clubs will see where you signed and that it happened through Hockia.</p>
           <div className="mt-6 flex w-full items-center gap-3.5 rounded-2xl bg-surface-grouped px-4 py-4 text-left">
             <Crest src={club.avatar_url} name={clubName} size={52} />
@@ -165,7 +165,7 @@ export default function ConfirmSigningPage() {
     <div className="flex flex-1 flex-col" data-testid="signing-confirm">
       <div className="flex flex-1 flex-col items-center pt-10 text-center">
         <Crest src={club.avatar_url} name={clubName} size={80} />
-        <h1 className="mt-5 text-[26px] font-bold leading-8 tracking-[-0.3px] text-ink-1">{confirmSigningTitle(clubName)}</h1>
+        <h1 className="mt-5 text-3xl font-bold tracking-[-0.3px] text-ink-1">{confirmSigningTitle(clubName)}</h1>
         <p className="mt-2 text-[16px] leading-[23px] text-ink-2">Confirm it and it goes on your career, with “Signed through Hockia”.</p>
         <dl className="mt-6 w-full overflow-hidden rounded-2xl bg-surface-grouped text-left">
           {rows.filter(([, v]) => !!v).map(([k, v], i) => (
@@ -178,12 +178,13 @@ export default function ConfirmSigningPage() {
             </div>
           ))}
         </dl>
-        <div className="mt-4 flex w-full items-center gap-3 rounded-2xl border border-line px-4 py-3 text-left">
-          <div className="min-w-0 flex-1">
-            <p className="text-[15px] font-semibold leading-5 text-ink-1">{toggle.title}</p>
-            <p className="text-secondary leading-[17px] text-ink-2">{toggle.detail}</p>
-          </div>
-          <SettingsSwitch checked={hide} onChange={() => setHide((v) => !v)} label={toggle.title} />
+        {/* List item / Switch (Figma 472:186): the grouped row Settings uses, not a bespoke outlined card. */}
+        <div className="mt-4 w-full overflow-hidden rounded-card bg-surface-grouped text-left" data-testid="signing-hide-row">
+          <SettingsRow
+            title={toggle.title}
+            subtitle={toggle.detail}
+            trailing={<SettingsSwitch checked={hide} onChange={() => setHide((v) => !v)} label={toggle.title} />}
+          />
         </div>
       </div>
       <button type="button" onClick={() => void confirm()} disabled={busy} className="mt-6 flex h-12 w-full items-center justify-center rounded-full bg-hockia-primary text-[16px] font-semibold text-white disabled:opacity-60" data-testid="signing-yes">

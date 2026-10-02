@@ -221,7 +221,7 @@ export function PostCommentsSection({
             maxLength={500}
             enterKeyHint="send"
             autoCapitalize="sentences"
-            className="h-10 min-w-0 flex-1 rounded-full bg-surface-grouped px-3.5 text-row text-ink-1 placeholder:text-ink-4 focus:outline-none focus:ring-2 focus:ring-hockia-primary/40"
+            className="h-10 min-w-0 flex-1 rounded-full bg-surface-grouped px-3.5 text-row text-ink-1 placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-hockia-primary/40"
           />
           <button
             type="button"

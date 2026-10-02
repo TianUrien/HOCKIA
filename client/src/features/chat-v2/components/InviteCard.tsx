@@ -57,11 +57,11 @@ export default function InviteCard({ inviteId, opportunityId, isMine, fallbackTe
   const [opening, setOpening] = useState(false)
 
   if (loading) {
-    return <div className="h-[260px] w-full animate-pulse rounded-[18px] bg-surface-grouped" data-testid="invite-card-loading" />
+    return <div className="h-[260px] w-full animate-pulse rounded-card bg-surface-grouped" data-testid="invite-card-loading" />
   }
   if (!data) {
     return (
-      <div className="rounded-[18px] bg-surface-grouped px-3.5 py-2.5 text-[15px] leading-5 text-ink-1">
+      <div className="rounded-card bg-surface-grouped px-3.5 py-2.5 text-[15px] leading-5 text-ink-1">
         <p className="whitespace-pre-wrap break-words" style={{ overflowWrap: 'anywhere' }}>{fallbackText}</p>
       </div>
     )
@@ -109,12 +109,12 @@ export default function InviteCard({ inviteId, opportunityId, isMine, fallbackTe
 
   return (
     <div
-      className={cn('w-full rounded-[18px] border-[1.5px] bg-white p-4', state.muted ? 'border-line' : 'border-hockia-primary')}
+      className={cn('w-full rounded-card border-[1.5px] bg-white p-4', state.muted ? 'border-line' : 'border-hockia-primary')}
       data-testid="invite-card"
       data-state={invite.status}
     >
       <p className={cn('text-[14px] font-semibold leading-5', state.muted ? 'text-ink-3' : 'text-hockia-primary')}>Invitation to apply</p>
-      <h3 className={cn('pt-1 text-[19px] font-bold leading-6 tracking-[-0.2px]', state.muted ? 'text-ink-3' : 'text-ink-1')}>{inviteRoleLabel(role)}</h3>
+      <h3 className={cn('pt-1 text-xl font-bold leading-6 tracking-[-0.2px]', state.muted ? 'text-ink-3' : 'text-ink-1')}>{inviteRoleLabel(role)}</h3>
       <dl className="mt-2.5 flex flex-col gap-2">
         {facts.filter(([, v]) => !!v).map(([label, value]) => (
           <div key={label} className="flex gap-3 text-[15px] leading-5">
@@ -124,7 +124,7 @@ export default function InviteCard({ inviteId, opportunityId, isMine, fallbackTe
         ))}
       </dl>
       {invite.note && (
-        <p className={cn('mt-3 whitespace-pre-wrap break-words rounded-[14px] bg-surface-grouped px-3.5 py-3 text-[15px] leading-[21px]', state.muted ? 'text-ink-3' : 'text-ink-1')} style={{ overflowWrap: 'anywhere' }} data-testid="invite-card-note">
+        <p className={cn('mt-3 whitespace-pre-wrap break-words rounded-card bg-surface-grouped px-3.5 py-3 text-[15px] leading-[21px]', state.muted ? 'text-ink-3' : 'text-ink-1')} style={{ overflowWrap: 'anywhere' }} data-testid="invite-card-note">
           {invite.note}
         </p>
       )}

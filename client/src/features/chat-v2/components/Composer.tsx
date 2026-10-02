@@ -86,7 +86,7 @@ export function Composer({ value, sending, disabled, onChange, onSubmit, onFocus
             onFocus={onFocus}
             onKeyDown={handleKeyDown}
             onChange={event => onChange(event.target.value)}
-            className={`chat-textarea w-full resize-none rounded-[20px] bg-surface-grouped py-2.5 text-[15px] leading-5 text-ink-1 outline-none transition-colors placeholder:text-ink-4 focus-visible:outline-none focus:bg-[#ebebf0] ${showCounter ? 'pl-4 pr-14' : 'px-4'}`}
+            className={`chat-textarea w-full resize-none rounded-[20px] bg-surface-grouped py-2.5 text-[15px] leading-5 text-ink-1 outline-none transition-colors placeholder:text-ink-3 focus-visible:outline-none focus:bg-[#ebebf0] ${showCounter ? 'pl-4 pr-14' : 'px-4'}`}
           />
           {/* Counter only appears near the limit — a clean, native-feeling
               input the rest of the time instead of an always-on form field. */}

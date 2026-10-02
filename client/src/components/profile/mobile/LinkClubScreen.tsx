@@ -202,7 +202,7 @@ export default function LinkClubScreen({ profile, onCancel, onLinked, mode = 'de
               onChange={(e) => { setQuery(e.target.value); setPick(null) }}
               placeholder="Club name"
               aria-label="Club name"
-              className="min-w-0 flex-1 bg-transparent text-body text-ink-1 outline-none placeholder:text-ink-4"
+              className="min-w-0 flex-1 bg-transparent text-body text-ink-1 outline-none placeholder:text-ink-3"
             />
             {query && (
               <button type="button" onClick={() => { setQuery(''); setPick(null) }} aria-label="Clear" className="flex h-5 w-5 items-center justify-center rounded-full bg-ink-4 text-white">
