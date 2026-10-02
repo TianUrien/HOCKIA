@@ -16,7 +16,7 @@ import { resolve } from 'node:path'
  */
 
 // ── mocks ───────────────────────────────────────────────────────────────────
-const fetchMock = vi.fn(() => Promise.resolve(new Response(null, { status: 204 })))
+const fetchMock = vi.fn<(url: string, init?: RequestInit) => Promise<Response>>(() => Promise.resolve(new Response(null, { status: 204 })))
 const invokeMock = vi.fn()
 const updateEq = vi.fn()
 vi.mock('@/lib/supabase', () => ({
