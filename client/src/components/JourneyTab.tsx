@@ -25,6 +25,7 @@ import type { CareerHistory } from '@/lib/supabase'
 import { deleteStorageObject, extractStoragePath } from '@/lib/storage'
 import { usePendingStorageCleanup } from '@/hooks/usePendingStorageCleanup'
 import { logger } from '@/lib/logger'
+import { SignedThroughHockiaPill } from '@/components/profile/SignedThroughHockiaPill'
 import Button from './Button'
 import ConfirmDialog from './ConfirmDialog'
 import Skeleton from './Skeleton'
@@ -173,6 +174,11 @@ const createEmptyJourneyEntry = (userId: string): EditableJourneyEntry => ({
   display_order: 0,
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
+  // D4 server-owned columns (never sent; the save payload is explicit).
+  signed_via_hockia: false,
+  signed_at: null,
+  application_id: null,
+  is_hidden: false,
   isCurrent: false,
   startMonthDraft: '',
   startYearDraft: '',
@@ -1397,7 +1403,10 @@ export default function JourneyTab({
 
                             {/* Title & context */}
                             <div className="flex-1 min-w-0">
-                              <h3 className="font-semibold leading-snug text-gray-900">{entry.club_name}</h3>
+                              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                                <h3 className="font-semibold leading-snug text-gray-900">{entry.club_name}</h3>
+                                {entry.signed_via_hockia && <SignedThroughHockiaPill />}
+                              </div>
                               {location && (
                                 <p className="mt-0.5 text-sm leading-normal text-gray-500">{location}</p>
                               )}

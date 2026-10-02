@@ -28,8 +28,9 @@ describe('club recruiting copy', () => {
     expect(isDaysLeftUrgent(null)).toBe(false)
   })
 
-  it('builds the pipeline and ignores withdrawn', () => {
-    expect(pipelineOf(['pending', 'pending', 'shortlisted', 'rejected', 'no_response', 'maybe', 'withdrawn'])).toEqual({ toReview: 2, shortlisted: 1, maybe: 1, declined: 1, closed: 1, total: 6 })
+  it('builds the pipeline; withdrawn and filled count as closed (D4 re-check)', () => {
+    expect(pipelineOf(['pending', 'pending', 'shortlisted', 'rejected', 'no_response', 'maybe', 'withdrawn', 'filled']))
+      .toEqual({ toReview: 2, shortlisted: 1, maybe: 1, declined: 1, closed: 3, withdrawn: 1, total: 8 })
   })
 
   it('writes the waiting notice from the oldest pending application, and hides at 0', () => {

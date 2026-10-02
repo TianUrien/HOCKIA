@@ -1184,6 +1184,10 @@ export type Database = {
           user_id: string
           world_club_id: string | null
           years: string
+          signed_via_hockia: boolean
+          signed_at: string | null
+          application_id: string | null
+          is_hidden: boolean
         }
         Insert: {
           badge_label?: string | null
@@ -1208,6 +1212,10 @@ export type Database = {
           user_id: string
           world_club_id?: string | null
           years: string
+          signed_via_hockia?: boolean
+          signed_at?: string | null
+          application_id?: string | null
+          is_hidden?: boolean
         }
         Update: {
           badge_label?: string | null
@@ -1232,6 +1240,10 @@ export type Database = {
           user_id?: string
           world_club_id?: string | null
           years?: string
+          signed_via_hockia?: boolean
+          signed_at?: string | null
+          application_id?: string | null
+          is_hidden?: boolean
         }
         Relationships: [
           {

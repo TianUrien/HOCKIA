@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { X, MapPin, Calendar, Clock, Home, Car, Globe as GlobeIcon, Plane, Utensils, Briefcase, Shield, GraduationCap, Mail, Phone, CheckCircle, AlertTriangle, DollarSign, Dumbbell, Award, Share2, Flag, Users, Info, MessageCircle } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import type { Vacancy } from '../lib/supabase'
@@ -38,6 +38,8 @@ interface VacancyDetailViewProps {
   isClosed?: boolean
   /** Message the club. Shown to the applicant only (open or closed role). */
   onMessage?: () => void
+  /** D4: the applicant's own road (Confirm signing, Withdraw) on an open role. */
+  ownApplicationSlot?: ReactNode
 }
 
 const BENEFIT_CONFIG: Record<string, { icon: React.ComponentType<{ className?: string }>; label: string; iconColor: string }> = {
@@ -93,6 +95,7 @@ export default function VacancyDetailView({
   hideClubProfileButton = false,
   isClosed,
   onMessage,
+  ownApplicationSlot,
 }: VacancyDetailViewProps) {
   const navigate = useNavigate()
   const { user, profile } = useAuthStore()
@@ -554,6 +557,22 @@ export default function VacancyDetailView({
                     </p>
                   </div>
                 </div>
+              ) : hasApplied && applicationStatus === 'withdrawn' ? (
+                // Withdrawn (D4): one grey state, no "You applied" tick. Message the club still works.
+                <div className="flex-1 flex flex-col items-center justify-center gap-1.5 px-4 py-3 rounded-xl border border-line bg-surface-grouped" data-testid="own-application-withdrawn">
+                  <span className="font-semibold text-sm text-ink-2">Withdrawn</span>
+                  {onMessage && (
+                    <button
+                      type="button"
+                      onClick={onMessage}
+                      className="mt-1 inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-semibold text-gray-800 hover:bg-gray-100 transition-colors"
+                      data-testid="open-message-club"
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                      Message the club
+                    </button>
+                  )}
+                </div>
               ) : hasApplied ? (
                 // Open role, the viewer applied: the REAL status in the one set of
                 // words (applicationStatusPill — same as the timeline and My
@@ -583,6 +602,7 @@ export default function VacancyDetailView({
                       Message the club
                     </button>
                   )}
+                  {ownApplicationSlot && <div className="mt-2 w-full text-left">{ownApplicationSlot}</div>}
                 </div>
               ) : onApply && !eligibility.eligible ? (
                 // Ineligible — the opportunity stays fully readable, but

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Users, Star, HelpCircle, XCircle, Inbox, Search, X, Clock, CheckCircle2 } from 'lucide-react'
+import { ArrowLeft, Users, Star, HelpCircle, XCircle, Inbox, Search, X, Clock, CheckCircle2, Undo2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
@@ -31,14 +31,17 @@ const TIER_GROUPS: TierGroup[] = [
   { key: 'maybe', label: 'Maybe', icon: HelpCircle, iconClass: 'text-ink-2', statuses: ['maybe'] },
   { key: 'not-a-fit', label: 'Not a fit', icon: XCircle, iconClass: 'text-red-500', statuses: ['rejected'] },
   // The expiry sweep flips un-triaged applications to 'no_response'. Those
-  // rows are fetched (the publisher policy only hides 'withdrawn') and were
-  // counted in the header, but no tier rendered them — so once the sweep
-  // arms, a club would read "5 applicants" above 2 cards. They get their own
-  // tier: still the club's applicants, just past the response window.
+  // rows are fetched and were counted in the header, but no tier rendered
+  // them — so once the sweep arms, a club would read "5 applicants" above 2
+  // cards. They get their own tier: still the club's applicants, just past
+  // the response window.
   { key: 'expired', label: 'Expired (no response)', icon: Clock, iconClass: 'text-gray-400', statuses: ['no_response'] },
   // The role was filled (by someone else or this applicant): kept visible so
   // the header count matches the cards, but closed — no status changes.
   { key: 'filled', label: 'Role filled', icon: CheckCircle2, iconClass: 'text-gray-400', statuses: ['filled'], readOnly: true },
+  // D4 re-check (2026-10-02): the publisher can read applications the player
+  // withdrew. Shown for the record, never re-decided.
+  { key: 'withdrawn', label: 'Withdrawn', icon: Undo2, iconClass: 'text-gray-400', statuses: ['withdrawn'], readOnly: true },
 ]
 
 export default function ApplicantsList() {

@@ -21,6 +21,8 @@ interface MessageListProps {
     unreadCount: number
   }
   hideReceipts?: boolean
+  /** The other side's name — server-posted step lines are reworded for the viewer. */
+  otherParticipantName?: string | null
 }
 
 export function MessageList({
@@ -34,7 +36,8 @@ export function MessageList({
   deleteMessage,
   isLoadingMore,
   unreadMetadata,
-  hideReceipts = false
+  hideReceipts = false,
+  otherParticipantName = null
 }: MessageListProps) {
   const messageRefs = useRef(new Map<string, HTMLDivElement>())
 
@@ -134,6 +137,7 @@ export function MessageList({
             onEditSave={editMessage}
             onDelete={deleteMessage}
             hideReceipts={hideReceipts}
+            otherParticipantName={otherParticipantName}
           />
         </div>
       ))}

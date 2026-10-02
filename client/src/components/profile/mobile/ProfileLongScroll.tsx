@@ -18,6 +18,7 @@ import { humanizeToken, identityLine } from '@/lib/identity'
 import { categoryToDisplay } from '@/lib/hockeyCategories'
 import { RELOCATION_LABEL } from '@/lib/candidateIntent'
 import { careerSpan, isCurrentEntry } from '@/lib/careerCopy'
+import { SignedThroughHockiaPill } from '@/components/profile/SignedThroughHockiaPill'
 import { cn } from '@/lib/utils'
 import type { PlayerProfileShape } from '@/pages/PlayerDashboard'
 import type { UserPostFeedItem } from '@/types/homeFeed'
@@ -175,6 +176,7 @@ export function CareerRow({ entry, last, flag }: { entry: ScrollCareerEntry; las
         </div>
         {sub && <p className="truncate text-secondary text-ink-2">{sub}</p>}
         {meta && <p className="truncate text-secondary text-ink-3">{meta}</p>}
+        {entry.signedViaHockia && <SignedThroughHockiaPill className="mt-1" />}
       </div>
     </div>
   )

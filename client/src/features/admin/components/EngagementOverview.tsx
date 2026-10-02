@@ -209,7 +209,7 @@ export function EngagementOverview({ ccStats, days, loading }: EngagementOvervie
 
       {/* ── 4. NORTH STAR — REAL CONNECTIONS ──────────────────────────── */}
       <SectionHeading title="North Star — Real Connections" hint="the outcomes HOCKIA exists to create" />
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
         <MetricTile
           accent="purple"
           label="Players Contacted"
@@ -237,6 +237,13 @@ export function EngagementOverview({ ccStats, days, loading }: EngagementOvervie
           info={<InfoTip metric="invites" interpretation={`Clubs created ${ns?.invites_sent ?? 0} invite links in the last ${days} days; ${ns?.invite_joins ?? 0} members have joined through invite links.`} />}
           value={ns?.invites_sent ?? 0}
           sub={`${ns?.invite_joins ?? 0} joins via invites`}
+        />
+        <MetricTile
+          accent="purple"
+          label="Signings via HOCKIA"
+          info={<InfoTip metric="signings" interpretation={`${ns?.signings_period ?? 0} signings confirmed by both sides in the last ${days} days (${ns?.signings_all_time ?? 0} all-time). This is HOCKIA's north star.`} />}
+          value={ns?.signings_period ?? 0}
+          sub={`${ns?.signings_all_time ?? 0} all-time`}
         />
         <MetricTile
           accent="purple"

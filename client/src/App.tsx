@@ -103,6 +103,8 @@ const PublicUmpireProfile = lazyWithRetry(() => import('@/pages/PublicUmpireProf
 const MessagesPage = lazyWithRetry(() => import('@/pages/MessagesPage'))
 const InboxPage = lazyWithRetry(() => import('@/pages/InboxPage'))
 const MyApplicationsPage = lazyWithRetry(() => import('@/pages/MyApplicationsPage'))
+// D4.5 / D4.6: the player confirms a signing (own chunk).
+const ConfirmSigningPage = lazyWithRetry(() => import('@/pages/ConfirmSigningPage'))
 const SearchPage = lazyWithRetry(() => import('@/pages/SearchPage'))
 const DiscoverPage = lazyWithRetry(() => import('@/pages/DiscoverPage'))
 
@@ -490,6 +492,7 @@ function App() {
                 <Route path="/community/questions/:questionId" element={<ErrorBoundary fallback={<RouteErrorFallback />}><QuestionDetailPage /></ErrorBoundary>} />
                 <Route path="/opportunities" element={<ErrorBoundary fallback={<RouteErrorFallback />}><OpportunitiesEntry /></ErrorBoundary>} />
                 <Route path="/opportunities/applications" element={<ErrorBoundary fallback={<RouteErrorFallback />}><MyApplicationsPage /></ErrorBoundary>} />
+                <Route path="/applications/:applicationId/signing" element={<ErrorBoundary fallback={<RouteErrorFallback />}><ConfirmSigningPage /></ErrorBoundary>} />
                 <Route path="/opportunities/:id" element={<ErrorBoundary fallback={<RouteErrorFallback />}><OpportunityDetailPage /></ErrorBoundary>} />
                 <Route path="/messages" element={<ErrorBoundary fallback={<RouteErrorFallback />}><MessagesPage /></ErrorBoundary>} />
                 <Route path="/messages/:conversationId" element={<ErrorBoundary fallback={<RouteErrorFallback />}><MessagesPage /></ErrorBoundary>} />

@@ -11,6 +11,7 @@ import { logger } from '@/lib/logger'
 import { optimizeImage, validateImage } from '@/lib/imageOptimization'
 import { deleteStorageObject, extractStoragePath } from '@/lib/storage'
 import { cn } from '@/lib/utils'
+import { SignedThroughHockiaPill } from '@/components/profile/SignedThroughHockiaPill'
 import type { CareerHistoryRow } from '@/hooks/useCareerTimeline'
 
 /**
@@ -205,6 +206,13 @@ export default function CareerEntryScreen({ entry, initialCrestUrl = null, nextD
     <div className="min-h-screen bg-white pb-44 lg:hidden" data-testid="career-entry-screen">
       <div className="sticky top-0 z-20 bg-white pt-[env(safe-area-inset-top)]">
         <DetailNavBar parent="Career" title={entry ? 'Career entry' : 'New entry'} onBack={() => onClose(false)} />
+        {entry?.signed_via_hockia && (
+          // D4: the signing itself created this entry; club and season stay as signed (server trigger).
+          <div className="flex items-center gap-2 px-5 pb-2">
+            <SignedThroughHockiaPill />
+            <span className="text-caption text-ink-3">Club and season come from the signing.</span>
+          </div>
+        )}
         <div className="flex gap-2 overflow-x-auto px-5 pb-3 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="radiogroup" aria-label="Entry type">
           {chips.map((c) => (
             <button
