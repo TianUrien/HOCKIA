@@ -364,7 +364,7 @@ export default function VacancyDetailView({
                 </div>
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4 flex-shrink-0" />
-                  <span>{isImmediate ? 'Starts Immediately' : `Starts ${formatShortDate(vacancy.start_date)}`}</span>
+                  <span>{isImmediate ? 'Starts immediately' : `Starts ${formatShortDate(vacancy.start_date)}`}</span>
                 </div>
               </div>
               {formatDurationText(vacancy.duration_text) && (
