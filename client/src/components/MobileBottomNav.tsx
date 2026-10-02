@@ -70,7 +70,9 @@ export default function MobileBottomNav() {
       // Applicant review carries its own decision bar (Figma 04 Club 326:319).
       /^\/dashboard\/opportunities\/[^/]+\/applicants\/[^/]+$/.test(location.pathname) ||
       // Edit club profile: back / Done, no tab bar (Figma 04 Club D1.27).
-      location.pathname === '/dashboard/club/edit'
+      location.pathname === '/dashboard/club/edit' ||
+      // D4.5 Confirm signing: full screen with its own Yes / Not yet (Figma 390:936).
+      /^\/applications\/[^/]+\/signing$/.test(location.pathname)
     setIsHidden(hiddenRoutes.some((route) => location.pathname === route) || isImmersiveMessagesView || isOpportunityDetail || isModalFlow)
   }, [location.pathname, location.search])
 

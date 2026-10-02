@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { X, MapPin, Calendar, Clock, Home, Car, Globe as GlobeIcon, Plane, Utensils, Briefcase, Shield, GraduationCap, Mail, Phone, CheckCircle, AlertTriangle, DollarSign, Dumbbell, Award, Share2, Flag, Users, Info, MessageCircle } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import type { Vacancy } from '../lib/supabase'
@@ -38,6 +38,8 @@ interface VacancyDetailViewProps {
   isClosed?: boolean
   /** Message the club. Shown to the applicant only (open or closed role). */
   onMessage?: () => void
+  /** D4: the applicant's own road (Confirm signing, Withdraw) on an open role. */
+  ownApplicationSlot?: ReactNode
 }
 
 const BENEFIT_CONFIG: Record<string, { icon: React.ComponentType<{ className?: string }>; label: string; iconColor: string }> = {
@@ -93,6 +95,7 @@ export default function VacancyDetailView({
   hideClubProfileButton = false,
   isClosed,
   onMessage,
+  ownApplicationSlot,
 }: VacancyDetailViewProps) {
   const navigate = useNavigate()
   const { user, profile } = useAuthStore()
@@ -583,6 +586,7 @@ export default function VacancyDetailView({
                       Message the club
                     </button>
                   )}
+                  {ownApplicationSlot && <div className="mt-2 w-full text-left">{ownApplicationSlot}</div>}
                 </div>
               ) : onApply && !eligibility.eligible ? (
                 // Ineligible — the opportunity stays fully readable, but

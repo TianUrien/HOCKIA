@@ -228,6 +228,12 @@ export const METRIC_INFO = {
     formula: 'Invite links created in the window; joins = total members who used them.',
     why: 'Clubs importing their real-world roster is the strongest retention loop HOCKIA has — whole teams arrive together.',
   },
+  signings: {
+    title: 'Signings via HOCKIA',
+    measures: 'Players and coaches signed through HOCKIA — the club marked them signed and they confirmed it.',
+    formula: 'Applications with status “signed” (set only when the player confirms), confirmed in the window; both sides non-test.',
+    why: 'The north star: a signing both sides confirmed on HOCKIA. Everything upstream — profiles, roles, applications, invites, offers — exists to move this number.',
+  },
   filled: {
     title: 'Opportunities Filled',
     measures: 'Positions that were filled — the end of the funnel HOCKIA exists to power.',

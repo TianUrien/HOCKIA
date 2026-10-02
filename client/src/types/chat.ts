@@ -20,16 +20,26 @@ export interface OpportunityInviteMetadata {
   opportunity_id: string
 }
 
+/** D4: the offer card make_offer posts. Terms live in opportunity_offers only. Server-written only. */
+export interface OpportunityOfferMetadata {
+  type: 'opportunity_offer'
+  offer_id: string
+  version?: number
+  application_id: string
+  opportunity_id: string
+}
+
 /** A recruiting step the server posts into the thread ("Facundo passed on Midfielder."). */
 export interface ApplicationEventMetadata {
   type: 'application_event'
   event: string
   invite_id?: string
+  offer_id?: string
   application_id?: string
   opportunity_id?: string
 }
 
-export type MessageMetadata = SharedPostMetadata | OpportunityInviteMetadata | ApplicationEventMetadata
+export type MessageMetadata = SharedPostMetadata | OpportunityInviteMetadata | OpportunityOfferMetadata | ApplicationEventMetadata
 
 export interface Message {
   id: string
