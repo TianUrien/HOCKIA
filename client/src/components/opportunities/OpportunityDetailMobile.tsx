@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { Calendar, Check, ChevronRight, Clock, MessageCircle, Share } from 'lucide-react'
@@ -38,6 +38,9 @@ interface OpportunityDetailMobileProps {
   isClosed?: boolean
   onApply: () => void
   onMessage: () => void
+  /** D4: the applicant's own road (Shortlisted → Offer → Signed, Confirm
+   *  signing, Withdraw) on an OPEN role. Rendered by the page. */
+  ownApplicationSlot?: ReactNode
 }
 
 /**
@@ -54,7 +57,7 @@ interface OpportunityDetailMobileProps {
  * anyone else sees "This role is closed" with a link to open roles.
  */
 export function OpportunityDetailMobile({
-  vacancy, clubName, clubLogo, clubId, publisherRole, countryFlag, league, hasApplied, applicationStatus, canApply, isPublisher, isClosed = false, onApply, onMessage,
+  vacancy, clubName, clubLogo, clubId, publisherRole, countryFlag, league, hasApplied, applicationStatus, canApply, isPublisher, isClosed = false, onApply, onMessage, ownApplicationSlot,
 }: OpportunityDetailMobileProps) {
   const navigate = useNavigate()
   const location = useLocation()
@@ -179,6 +182,10 @@ export function OpportunityDetailMobile({
         </p>
       </div>
       </div>
+
+      {!closed && hasApplied && ownApplicationSlot && (
+        <section className="px-5 pt-2">{ownApplicationSlot}</section>
+      )}
 
       {closedView === 'applicant' && status && (
         <section className="px-5 pt-2" data-testid="own-application">

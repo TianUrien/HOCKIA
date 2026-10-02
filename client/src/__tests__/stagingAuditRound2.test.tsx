@@ -58,9 +58,9 @@ describe('"Role filled" application label', () => {
   it('has a deterministic, kind timeline message', () => {
     expect(applicationStatusFallbackMessage('filled', null)).toMatch(/filled/)
   })
-  it('leaves pending-on-a-closed-role and the signing statuses as they were', () => {
+  it('leaves pending-on-a-closed-role as it was; D4 signing statuses have their own labels', () => {
     expect(applicationStatusPill('pending', null, false).label).toBe('Role closed')
-    expect(applicationStatusLabel('offered')).toBeNull()
+    expect(applicationStatusLabel('offered')).toBe('Offer')
   })
 })
 
