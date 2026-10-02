@@ -4,6 +4,7 @@ import { useVirtualizer } from '@tanstack/react-virtual'
 import { SUPABASE_URL } from '@/lib/supabase'
 import Avatar from './Avatar'
 import { getInitials } from '@/lib/utils'
+import { recruitingPreviewLine } from '@/lib/signing'
 
 interface Conversation {
   id: string
@@ -153,7 +154,7 @@ export default function ConversationList({
                       <span className="text-gray-400">
                         {isSentByMe ? 'You' : otherParticipantLabel}:
                       </span>{' '}
-                      {truncateMessage(conversation.lastMessage.content, 40)}
+                      {truncateMessage(recruitingPreviewLine(conversation.lastMessage.content, { isMine: isSentByMe, otherFirstName: otherParticipantLabel }), 40)}
                     </p>
                   )}
                 </div>

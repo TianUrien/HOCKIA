@@ -495,15 +495,31 @@ export function playerRoadSteps(status: string, offerMade: boolean | null = null
 
 // ── Server-posted step lines, read by the right viewer ──
 
+/** The server's signing_marked line: "<club> marked you as signed for <role>. Confirm it on Hockia…". */
+const SIGNING_MARKED_LINE = /^(.+?) marked you as signed for (.+?)\. Confirm it on Hockia/
+
 /**
  * The server writes each step line once, for the player ("<club> marked you
  * as signed for <role>. Confirm it on Hockia…"). The club reads its own step
- * in club-facing words; every other line is already neutral.
+ * in club-facing words, naming the role the server line carries; every
+ * other line is already neutral.
  */
 export function recruitingEventLine(event: string, content: string, viewer: { isMine: boolean; otherFirstName?: string | null }): string {
   if (event === 'signing_marked' && viewer.isMine) {
-    return `You marked ${viewer.otherFirstName?.trim() || 'the player'} as signed. Waiting for them to confirm.`
+    const role = SIGNING_MARKED_LINE.exec(content)?.[2]?.trim()
+    return `You marked ${viewer.otherFirstName?.trim() || 'the player'} as signed${role ? ` for ${role}` : ''}. Waiting for them to confirm.`
   }
+  return content
+}
+
+/**
+ * The inbox preview line under a chat: the conversation list carries only
+ * the last message's text (no metadata), so the one player-worded step the
+ * club must not read as written is recognised by its shape and reworded with
+ * recruitingEventLine. Everything else is shown as is.
+ */
+export function recruitingPreviewLine(content: string, viewer: { isMine: boolean; otherFirstName?: string | null }): string {
+  if (viewer.isMine && SIGNING_MARKED_LINE.test(content)) return recruitingEventLine('signing_marked', content, viewer)
   return content
 }
 
