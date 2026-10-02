@@ -173,6 +173,14 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
   const onRoad = review ? isOnRoad(review.status) : false
   const road = useApplicationRoad({ applicationId, roleId, clubId: club?.id ?? null, playerId, enabled: onRoad })
   const roadData = road.data
+  // The D4 sheets are lazy chunks: fetch them as soon as the road shows so
+  // the first tap on "Make an offer" opens the sheet instead of waiting on a
+  // download with a null fallback (QA 2 Oct: the first tap did nothing).
+  useEffect(() => {
+    if (!onRoad) return
+    void import('./OfferSheet')
+    void import('./MarkSignedSheet')
+  }, [onRoad])
   const steps = review && onRoad
     ? roadSteps({ status: review.status, talked: roadData?.talked ?? false, trial: roadData?.trial ?? false, firstName, shortlistedAt: roadData?.shortlistedAt, offer: roadData?.offer, signedAt: roadData?.signedAt })
     : []
@@ -514,7 +522,7 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
             <button
               type="button"
               onClick={() => setSheet(mainAction === 'mark_signed' ? 'sign' : 'offer')}
-              disabled={mainAction === 'edit_offer' ? !liveOffer : !roadData}
+              disabled={mainAction === 'edit_offer' && !liveOffer}
               className="flex h-12 min-w-0 flex-1 items-center justify-center rounded-full bg-hockia-primary px-3 text-[16px] font-semibold text-white disabled:opacity-60"
               data-testid="road-main"
             >
