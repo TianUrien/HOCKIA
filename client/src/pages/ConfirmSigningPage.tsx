@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { Check, Share } from 'lucide-react'
 import { EntityAvatar } from '@/components/ui/EntityAvatar'
 import { SettingsSwitch } from '@/components/settings/settingsUi'
@@ -8,6 +9,8 @@ import { useAuthStore } from '@/lib/auth'
 import { useToastStore } from '@/lib/toast'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { useSigningData, useSigningActions, type SigningData } from '@/hooks/useSigning'
+import { clearProfileScrollCache } from '@/hooks/useProfileScrollData'
+import { qk } from '@/lib/queryKeys'
 import { getImageUrl } from '@/lib/imageUrl'
 import { inviteRoleLabel } from '@/lib/invites'
 import { publicProfileShareUrl } from '@/lib/profileShare'
@@ -48,6 +51,8 @@ export default function ConfirmSigningPage() {
   const { applicationId } = useParams<{ applicationId: string }>()
   const navigate = useNavigate()
   const me = useAuthStore((s) => s.profile)
+  const refreshProfile = useAuthStore((s) => s.refreshProfile)
+  const queryClient = useQueryClient()
   const addToast = useToastStore((s) => s.addToast)
   const { data, loading, refetch } = useSigningData(applicationId ?? null)
   const { confirmSigning, busy } = useSigningActions()
@@ -145,6 +150,14 @@ export default function ConfirmSigningPage() {
     if (res.ok) {
       setConfirmed(true)
       void refetch()
+      // The server added the career entry: drop every cached career read so
+      // the profile's "See all N", its preview rows and the Journey counts
+      // don't lag by one (QA 2 Oct: 8 entries, "See all 7").
+      if (me?.id) {
+        clearProfileScrollCache(me.id)
+        void queryClient.invalidateQueries({ queryKey: qk.journeyCounts(me.id) })
+        void refreshProfile?.()
+      }
     }
   }
 

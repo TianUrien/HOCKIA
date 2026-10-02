@@ -1,16 +1,13 @@
 import { formatDurationText } from '@/lib/opportunityCopy'
+import { shortDayOf } from '@/lib/signing'
 import type { ClubOpenRole } from '@/hooks/useClubProfileScrollData'
 
 /**
  * Copy rules for the phone Club profile (Figma 04 Club › Club profile —
  * own / public): the league fact row and the open-role card's second line.
  */
-const MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-function monthDay(iso: string | null | undefined): string | null {
-  if (!iso) return null
-  const d = new Date(iso)
-  return Number.isNaN(d.getTime()) ? null : `${MONTH[d.getMonth()]} ${d.getDate()}`
-}
+// Dates read day first app-wide ("2 Oct"), the one format the signing road uses.
+const monthDay = (iso: string | null | undefined) => shortDayOf(iso)
 
 /** "Leinster Division 1A · men & women" / "Premier Division · men, Serie A1 · women". */
 export function clubLeagueLine(men: string | null | undefined, women: string | null | undefined): string | null {

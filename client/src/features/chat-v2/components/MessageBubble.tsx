@@ -217,7 +217,7 @@ export function MessageBubble({
       )}
       {showTimestamp && !showDayDivider && (
         <div className="py-2 text-center text-caption text-ink-3">
-          {format(new Date(message.sent_at), 'HH:mm')}
+          {format(new Date(message.sent_at), 'h:mm a')}
         </div>
       )}
       {isUnreadMarker && (

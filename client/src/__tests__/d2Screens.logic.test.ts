@@ -64,10 +64,10 @@ describe('isAdultByDob', () => {
 describe('appliedLine', () => {
   const now = new Date(2026, 8, 26, 12)
   it('pending → date + days left to reply', () => {
-    expect(appliedLine({ status: 'pending', appliedAt: new Date(2026, 8, 20, 9).toISOString(), expiryDays: 14 }, now)).toBe('Sep 20 · 8 days left to reply')
+    expect(appliedLine({ status: 'pending', appliedAt: new Date(2026, 8, 20, 9).toISOString(), expiryDays: 14 }, now)).toBe('20 Sep · 8 days left to reply')
   })
   it('answered → date + the decision', () => {
-    expect(appliedLine({ status: 'shortlisted', appliedAt: new Date(2026, 8, 17).toISOString(), expiryDays: 14 }, now)).toBe('Sep 17 · Shortlisted')
+    expect(appliedLine({ status: 'shortlisted', appliedAt: new Date(2026, 8, 17).toISOString(), expiryDays: 14 }, now)).toBe('17 Sep · Shortlisted')
   })
 })
 

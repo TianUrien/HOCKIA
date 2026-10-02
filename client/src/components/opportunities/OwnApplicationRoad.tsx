@@ -20,8 +20,8 @@ interface Props {
   status: string
   /** Opens the conversation with the club. */
   onMessage?: () => void
-  /** "See the offer": the conversation scrolled to the latest offer card (falls back to onMessage). */
-  onSeeOffer?: () => void
+  /** "See the offer": the conversation scrolled to THIS application's newest offer card (falls back to onMessage). */
+  onSeeOffer?: (applicationId: string) => void
   onChanged: (status: string) => void
   className?: string
 }
@@ -63,7 +63,7 @@ export default function OwnApplicationRoad({ applicationId, status, onMessage, o
   const offerMade = useOwnOfferMade(applicationId, status === 'signed_pending_confirmation' || status === 'signed')
   const steps = playerRoadSteps(status, offerMade)
   const withdrawable = canWithdraw(status)
-  const seeOffer = onSeeOffer ?? onMessage
+  const seeOffer = onSeeOffer ? () => onSeeOffer(applicationId) : onMessage
   if (!steps && !withdrawable) return null
 
   const withdraw = async () => {

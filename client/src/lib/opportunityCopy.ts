@@ -75,12 +75,12 @@ export function formatDurationText(raw: string | null | undefined): string | nul
   return t
 }
 
-/** "Sep 16 · 3 months" / "Starts immediately". */
+/** "16 Sep · 3 months" / "Starts immediately" — dates read day first app-wide (lib/signing shortDayOf). */
 export function whenLine(v: Pick<Vacancy, 'start_date' | 'duration_text'>, now = new Date()): string {
   const parts: string[] = []
   if (v.start_date) {
     const d = new Date(v.start_date)
-    if (!Number.isNaN(d.getTime())) parts.push(format(d, d.getFullYear() === now.getFullYear() ? 'MMM d' : 'MMM d, yyyy'))
+    if (!Number.isNaN(d.getTime())) parts.push(format(d, d.getFullYear() === now.getFullYear() ? 'd MMM' : 'd MMM yyyy'))
   }
   const duration = formatDurationText(v.duration_text)
   if (duration) parts.push(duration)
@@ -247,11 +247,11 @@ export function clubNoteFromFeedback(aiFeedback: unknown, status: string | null 
   return fb.message.trim() || null
 }
 
-/** "Applied Sep 3, 2026" — the full date on a closed role's application block. */
+/** "Applied 3 Sep 2026" — the full date on a closed role's application block (day first, like every date). */
 export function appliedOnLine(appliedAt: string | null | undefined): string | null {
   if (!appliedAt) return null
   const d = new Date(appliedAt)
-  return Number.isNaN(d.getTime()) ? null : `Applied ${format(d, 'MMM d, yyyy')}`
+  return Number.isNaN(d.getTime()) ? null : `Applied ${format(d, 'd MMM yyyy')}`
 }
 
 export const APPLICATION_TONE_CLASS: Record<ApplicationTone, string> = {
@@ -267,7 +267,8 @@ export function appliedLine(appliedAt: string | null, now = new Date()): string 
   if (days <= 0) return 'Applied today'
   if (days < 7) return `Applied ${days}d`
   if (days < 30) return `Applied ${Math.round(days / 7)}w`
-  return `Applied ${format(new Date(appliedAt), 'MMM d')}`
+  const d = new Date(appliedAt)
+  return `Applied ${format(d, d.getFullYear() === now.getFullYear() ? 'd MMM' : 'd MMM yyyy')}`
 }
 
 /**

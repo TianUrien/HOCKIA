@@ -343,15 +343,19 @@ export default function OpportunityDetailPage() {
   }
 
   // Message the club — guests land on the same Join sheet. `anchor: 'offer'`
-  // (D4 "See the offer") opens the thread scrolled to the latest offer card;
-  // used straight as an onClick too, so anything else (an event) is ignored.
+  // (D4 "See the offer") opens the thread scrolled to THIS application's
+  // newest offer card (not another role's); used straight as an onClick too,
+  // so anything else (an event) is ignored.
   const handleMessageClick = (anchor?: unknown) => {
     if (!user) {
       setWallTitle('Sign in to message')
       setShowSignInPrompt(true)
       return
     }
-    navigate(`/messages?new=${club.id}`, { state: { from: location.pathname, anchor: anchor === 'offer' ? 'offer' : undefined } })
+    const seeOffer = anchor === 'offer'
+    navigate(`/messages?new=${club.id}`, {
+      state: { from: location.pathname, anchor: seeOffer ? 'offer' : undefined, anchorApplicationId: seeOffer ? applicationId ?? null : undefined },
+    })
   }
   const leagueForPhone = (() => {
     if (worldClub?.leagueName) return worldClub.leagueName

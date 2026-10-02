@@ -28,6 +28,7 @@ import {
 import { CommunityFiltersDrawer } from '@/components/community/CommunityFiltersDrawer'
 import {
   useCommunityFiltersState,
+  pathWithSearch,
   roleToPath,
   type SortOption,
 } from '@/components/community/communityFilters'
@@ -413,7 +414,7 @@ export default function CommunityPage() {
                 state={filtersState}
                 resultCount={isNarrowed ? filteredCount : totalCount}
                 videoCount={videoCount}
-                onSelectRole={(role) => navigate(roleToPath(role))}
+                onSelectRole={(role) => navigate(pathWithSearch(roleToPath(role), searchQuery))}
               />
 
               {/* All · Players · Coaches · Clubs · Brands · Umpires */}
@@ -501,7 +502,7 @@ export default function CommunityPage() {
                   </p>
                   <button
                     type="button"
-                    onClick={() => (tabEscapesScope ? navigate(roleToPath(scopedRole)) : setShowEveryone((v) => !v))}
+                    onClick={() => (tabEscapesScope ? navigate(pathWithSearch(roleToPath(scopedRole), searchQuery)) : setShowEveryone((v) => !v))}
                     className="flex-shrink-0 whitespace-nowrap text-xs font-semibold text-hockia-primary transition active:scale-95 hover:underline"
                   >
                     {scopeReshaping ? 'Show everyone' : `Show ${scopedRole === 'coach' ? 'coaches' : 'players'} only`}

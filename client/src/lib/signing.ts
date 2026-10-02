@@ -302,6 +302,8 @@ export interface RoadStep {
   done: boolean
   /** The next step (purple ring, bold label). Trial is optional, so never the current step. */
   current: boolean
+  /** Offer only: the signing went ahead without one (grey dash, never a tick — mirrors the player's road). */
+  skipped?: boolean
 }
 
 export interface RoadInput {
@@ -333,10 +335,13 @@ function dayWord(iso: string | null | undefined, now: Date): string | null {
 export function roadSteps(i: RoadInput): RoadStep[] {
   const now = i.now ?? new Date()
   const s = i.status
-  const offerDone = s === 'accepted' || s === 'signed_pending_confirmation' || s === 'signed'
+  const pastOffer = s === 'accepted' || s === 'signed_pending_confirmation' || s === 'signed'
+  // Marked as signed straight from Shortlisted (DEV NOTE 391:36): no accepted offer → skipped, not done.
+  const offerSkipped = pastOffer && i.offer?.status !== 'accepted'
+  const offerDone = pastOffer && !offerSkipped
   const offerSent = s === 'offered'
   const signedDone = s === 'signed'
-  const offerDetail = offerDone
+  const offerDetail = pastOffer
     ? (i.offer?.status === 'accepted' ? `${i.firstName} accepted${i.offer.responded_at ? ` · ${shortDayOf(i.offer.responded_at, now)}` : ''}` : 'Skipped')
     : offerSent && i.offer
       ? `Sent · open until ${shortDay(i.offer.open_until, now)}`
@@ -350,10 +355,10 @@ export function roadSteps(i: RoadInput): RoadStep[] {
     { key: 'shortlisted', label: 'Shortlisted', detail: dayWord(i.shortlistedAt, now) ?? 'Done', done: true, current: false },
     { key: 'talked', label: 'Talked', detail: 'When you’ve both written', done: i.talked, current: false },
     { key: 'trial', label: 'Trial or video call', detail: 'Optional', done: i.trial, current: false },
-    { key: 'offer', label: 'Offer', detail: offerDetail, done: offerDone, current: false },
+    { key: 'offer', label: 'Offer', detail: offerDetail, done: offerDone, current: false, skipped: offerSkipped },
     { key: 'signed', label: 'Signed', detail: signedDetail, done: signedDone, current: false },
   ]
-  const next = steps.find((st) => !st.done && st.key !== 'trial' && st.key !== 'shortlisted')
+  const next = steps.find((st) => !st.done && !st.skipped && st.key !== 'trial' && st.key !== 'shortlisted')
   if (next) next.current = true
   return steps
 }
@@ -495,15 +500,31 @@ export function playerRoadSteps(status: string, offerMade: boolean | null = null
 
 // ── Server-posted step lines, read by the right viewer ──
 
+/** The server's signing_marked line: "<club> marked you as signed for <role>. Confirm it on Hockia…". */
+const SIGNING_MARKED_LINE = /^(.+?) marked you as signed for (.+?)\. Confirm it on Hockia/
+
 /**
  * The server writes each step line once, for the player ("<club> marked you
  * as signed for <role>. Confirm it on Hockia…"). The club reads its own step
- * in club-facing words; every other line is already neutral.
+ * in club-facing words, naming the role the server line carries; every
+ * other line is already neutral.
  */
 export function recruitingEventLine(event: string, content: string, viewer: { isMine: boolean; otherFirstName?: string | null }): string {
   if (event === 'signing_marked' && viewer.isMine) {
-    return `You marked ${viewer.otherFirstName?.trim() || 'the player'} as signed. Waiting for them to confirm.`
+    const role = SIGNING_MARKED_LINE.exec(content)?.[2]?.trim()
+    return `You marked ${viewer.otherFirstName?.trim() || 'the player'} as signed${role ? ` for ${role}` : ''}. Waiting for them to confirm.`
   }
+  return content
+}
+
+/**
+ * The inbox preview line under a chat: the conversation list carries only
+ * the last message's text (no metadata), so the one player-worded step the
+ * club must not read as written is recognised by its shape and reworded with
+ * recruitingEventLine. Everything else is shown as is.
+ */
+export function recruitingPreviewLine(content: string, viewer: { isMine: boolean; otherFirstName?: string | null }): string {
+  if (viewer.isMine && SIGNING_MARKED_LINE.test(content)) return recruitingEventLine('signing_marked', content, viewer)
   return content
 }
 

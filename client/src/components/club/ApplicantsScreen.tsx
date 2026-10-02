@@ -11,7 +11,8 @@ import { useCountries } from '@/hooks/useCountries'
 import { useRoleApplicants, type Applicant } from '@/hooks/useRoleApplicants'
 import { getImageUrl } from '@/lib/imageUrl'
 import { genderPill, roleTitle } from '@/lib/opportunityCopy'
-import { clubReplyLineClass, daysLeftLabel, daysLeftToReply, isClubReplyUrgent, personRoleLine, pipelineOf, appliedSinceLine } from '@/lib/clubRecruiting'
+import { shortDayOf } from '@/lib/signing'
+import { clubReplyLineClass, daysLeftLabel, daysLeftToReply, isClubReplyUrgent, personRoleLine, pipelineOf, appliedSinceLine, toReviewClosedNote } from '@/lib/clubRecruiting'
 import { applicantChipFor, closedApplicantTag, clubRoadTag } from '@/lib/signing'
 import { cn } from '@/lib/utils'
 
@@ -32,12 +33,8 @@ import { cn } from '@/lib/utils'
  */
 type Chip = 'pending' | 'shortlisted' | 'maybe' | 'rejected' | 'no_response'
 
-const MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-const monthDay = (iso: string | null | undefined) => {
-  if (!iso) return null
-  const d = new Date(iso)
-  return Number.isNaN(d.getTime()) ? null : `${MONTH[d.getMonth()]} ${d.getDate()}`
-}
+// Dates read day first app-wide ("2 Oct"), the one format the signing road uses.
+const monthDay = (iso: string | null | undefined) => shortDayOf(iso)
 
 export default function ApplicantsScreen({ roleId }: { roleId: string }) {
   const navigate = useNavigate()
@@ -162,7 +159,7 @@ export default function ApplicantsScreen({ roleId }: { roleId: string }) {
           <div className="flex items-start gap-2.5 rounded-card bg-surface-grouped p-3.5">
             <Info className="mt-0.5 h-4 w-4 shrink-0 text-ink-3" strokeWidth={2} />
             <p className="text-secondary leading-[18px] text-ink-2">
-              Shortlist, Maybe or Decline. Anything you don’t answer closes after {data.expiryDays} days{p.closed > 0 ? ` — ${p.closed} ${p.closed === 1 ? 'has' : 'have'} closed on this role so far` : ''}.
+              Shortlist, Maybe or Decline. Anything you don’t answer closes after {data.expiryDays} days{toReviewClosedNote(p) ? ` — ${toReviewClosedNote(p)}` : ''}.
             </p>
           </div>
         </div>

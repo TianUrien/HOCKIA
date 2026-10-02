@@ -13,7 +13,7 @@ import { BottomSheet } from '@/components/ui/BottomSheet'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { useApplicationRoad, useSigningActions } from '@/hooks/useSigning'
 import { inviteRoleLabel } from '@/lib/invites'
-import { isOnRoad, offerDeclinedNote, roadHeaderLine, roadMainAction, roadMenu, roadSteps, roadWaitingLine, type OfferDraft, type RoadMenuItem } from '@/lib/signing'
+import { isOnRoad, offerDeclinedNote, roadHeaderLine, roadMainAction, roadMenu, roadSteps, roadWaitingLine, shortDayOf, type OfferDraft, type RoadMenuItem } from '@/lib/signing'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { useAuthStore } from '@/lib/auth'
@@ -31,6 +31,7 @@ import { specialistSkillLabel } from '@/lib/specialistSkills'
 import { trackDbEvent } from '@/lib/trackDbEvent'
 import { daysLeftLabel, daysLeftToReply, decisionToast, DEFAULT_EXPIRY_DAYS, clubReplyLineClass, fitRows, fitTarget, isClubReplyUrgent, personRoleLine, type FitComponents, type FitState } from '@/lib/clubRecruiting'
 import { cn } from '@/lib/utils'
+import { flagForCountryName } from '@/lib/careerCopy'
 import { profileVideoTotal } from '@/hooks/useProfileVideoTotal'
 import { MENU_ICON_CLASS } from '@/lib/report'
 import type { Json } from '@/lib/database.types'
@@ -77,12 +78,8 @@ type Review = {
   clubLeagueBanded: boolean
 }
 
-const MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-const monthDay = (iso: string | null) => {
-  if (!iso) return null
-  const d = new Date(iso)
-  return Number.isNaN(d.getTime()) ? null : `${MONTH[d.getMonth()]} ${d.getDate()}`
-}
+// Dates read day first app-wide ("2 Oct"), the one format the signing road uses.
+const monthDay = (iso: string | null) => shortDayOf(iso)
 
 export default function ApplicantReviewScreen({ roleId, applicationId }: Props) {
   const navigate = useNavigate()
@@ -176,6 +173,14 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
   const onRoad = review ? isOnRoad(review.status) : false
   const road = useApplicationRoad({ applicationId, roleId, clubId: club?.id ?? null, playerId, enabled: onRoad })
   const roadData = road.data
+  // The D4 sheets are lazy chunks: fetch them as soon as the road shows so
+  // the first tap on "Make an offer" opens the sheet instead of waiting on a
+  // download with a null fallback (QA 2 Oct: the first tap did nothing).
+  useEffect(() => {
+    if (!onRoad) return
+    void import('./OfferSheet')
+    void import('./MarkSignedSheet')
+  }, [onRoad])
   const steps = review && onRoad
     ? roadSteps({ status: review.status, talked: roadData?.talked ?? false, trial: roadData?.trial ?? false, firstName, shortlistedAt: roadData?.shortlistedAt, offer: roadData?.offer, signedAt: roadData?.signedAt })
     : []
@@ -457,7 +462,7 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
                 </div>
                 <div className="px-5">
                   {scroll.career.slice(0, 2).map((c, i, arr) => (
-                    <CareerRow key={c.id} entry={c} last={i === arr.length - 1} flag={countryRow(c.representedCountryId)?.split(' ')[0] ?? null} />
+                    <CareerRow key={c.id} entry={c} last={i === arr.length - 1} flag={countryRow(c.representedCountryId)?.split(' ')[0] ?? null} locationFlag={flagForCountryName(countries, c.locationCountry)} />
                   ))}
                 </div>
               </>
@@ -517,7 +522,7 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
             <button
               type="button"
               onClick={() => setSheet(mainAction === 'mark_signed' ? 'sign' : 'offer')}
-              disabled={mainAction === 'edit_offer' ? !liveOffer : !roadData}
+              disabled={mainAction === 'edit_offer' && !liveOffer}
               className="flex h-12 min-w-0 flex-1 items-center justify-center rounded-full bg-hockia-primary px-3 text-[16px] font-semibold text-white disabled:opacity-60"
               data-testid="road-main"
             >

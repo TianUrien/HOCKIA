@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { pathWithSearch, searchQueryOf } from './communityFilters'
 
 /**
  * Community role filter chips (Figma Community v2 "role filters"):
@@ -24,6 +25,9 @@ const SEGMENTS: Array<{ id: Exclude<CommunityTab, 'questions'>; label: string; p
 
 export function CommunitySegments({ activeTab }: { activeTab: CommunityTab }) {
   const navigate = useNavigate()
+  const location = useLocation()
+  // The typed search rides along: each chip is a route, but not a new search.
+  const query = searchQueryOf(location.search)
   const activeRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
@@ -46,7 +50,7 @@ export function CommunitySegments({ activeTab }: { activeTab: CommunityTab }) {
               type="button"
               role="tab"
               aria-selected={active}
-              onClick={() => navigate(s.path)}
+              onClick={() => navigate(pathWithSearch(s.path, query))}
               className={`flex h-[34px] shrink-0 items-center whitespace-nowrap rounded-full px-3.5 text-[14px] font-semibold transition-colors ${
                 active ? 'bg-ink-1 text-white' : 'bg-surface-grouped text-ink-1 active:bg-gray-200'
               }`}

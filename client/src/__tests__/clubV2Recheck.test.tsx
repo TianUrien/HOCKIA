@@ -174,7 +174,7 @@ describe('closed roles', () => {
   it('the chat card: a pending application on a closed role reads "Role closed", never a countdown', () => {
     const base = { id: 'a', opportunityId: 'o', status: 'pending', appliedAt: '2026-09-27T14:50:42Z', updatedAt: null, roleTitle: 'Midfielder R5', rolePosition: 'midfielder' }
     const now = new Date('2026-09-30T12:00:00Z')
-    expect(applicationCardDetail({ ...base, roleStatus: 'closed' }, 14, now)).toEqual({ text: 'Sep 27 · Role closed', urgent: false })
+    expect(applicationCardDetail({ ...base, roleStatus: 'closed' }, 14, now)).toEqual({ text: '27 Sep · Role closed', urgent: false })
     expect(applicationCardDetail({ ...base, roleStatus: 'open' }, 14, now).text).toMatch(/days? left to reply/)
     // The chat picks a pending application on an open role first.
     const picked = pickApplication([{ ...base, id: 'closed', roleStatus: 'closed', appliedAt: '2026-09-01T00:00:00Z' }, { ...base, id: 'open', roleStatus: 'open' }])

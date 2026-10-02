@@ -32,6 +32,20 @@ export function roleToPath(role: RoleFilter): string {
   return MEMBER_TYPES.find((m) => m.role === role)?.path ?? '/community'
 }
 
+/**
+ * A member-type path with the typed search kept as ?q= (QA 2 Oct: Players →
+ * All emptied the box, because the URL → input sync read an empty ?q=).
+ */
+export function pathWithSearch(path: string, query: string | null | undefined): string {
+  const q = query?.trim()
+  return q ? `${path}?q=${encodeURIComponent(q)}` : path
+}
+
+/** The ?q= in a location search string ("?q=ana&x=1" → "ana"). */
+export function searchQueryOf(search: string | null | undefined): string {
+  return search ? new URLSearchParams(search).get('q') ?? '' : ''
+}
+
 /** "Open to" reads the member's OWN column (founder 2026-09-20): play →
  *  open_to_play, coach → open_to_coach, recruiting → coach_recruits_for_team
  *  (coaches) / open_to_opportunities (clubs), opportunities →
