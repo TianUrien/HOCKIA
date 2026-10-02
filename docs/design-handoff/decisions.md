@@ -4,6 +4,8 @@
 
 | Date | Decision | By |
 |---|---|---|
+| 2026-10-02 | Package tiles keep the shipped colours (Insurance red, Car purple, Visa cyan…); Figma adopts them and the code moves from raw hex to tokens | Founder |
+| 2026-10-02 | Avatar sizes follow code: 32 headers, 52 rows, 56 cards and sheets, 80 page crests; organisations are rounded squares on white | Design, matches EntityAvatar |
 | 2026-10-02 | Player row: Tonal "Invite" in a trailing column; text truncates to one line ("Invite to apply" is the accessible name) | Founder |
 | 2026-10-02 | Exception to the Destructive rule: declining an offer is a neutral choice — grey Secondary trigger, purple Primary confirm | Founder |
 | 2026-10-02 | Every Danger confirmation on the phone is a bottom sheet (no centred dialogs) | Founder |

@@ -3,6 +3,21 @@
 Every edit to the Figma file "New-Hockia", newest first. Format:
 `date · who · what · node ids`.
 
+## 2026-10-02 (evening) · design agent
+
+- Avatar `460:22`: sizes now match code (32, 52, 56, 80; was 32 / 48 / 72)
+  and a new Shape property (Person = circle, Organisation = rounded square on
+  white, as EntityAvatar). List rows follow at 52. Club avatars switched to
+  Organisation: chat headers (D3.3, D4.3), Club fact rows (D1.3, D1.5,
+  D4.1, D4.2, D4.4), D1.8 preview, D4.4 sheet pair (56), D4.5 crest (80).
+- Package item `470:1660`: adopted the code set and order (BENEFIT_TILES):
+  Paid, Housing, Flights, Job, Insurance, Bonuses, Visa, Car, Equipment,
+  Meals, Education ("Other" removed); colours and icons now match the
+  shipped tiles (founder ruling). Label style Body S Medium.
+- New tokens: `accent/cyan-ink` #0e7490, `accent/indigo-ink` #4338ca,
+  `accent/red-soft` #fee2e2, `accent/teal-soft-2` #e6f6f4.
+- New lucide icons: Globe, Dumbbell, Utensils, Graduation cap, Dollar sign.
+
 ## 2026-10-02 (later) · design agent
 
 - D4 · From yes to signed rebuilt with components (D4.1 `390:3`, D4.2

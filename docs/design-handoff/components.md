@@ -25,7 +25,7 @@ corrects it in [IMPLEMENTATION_FEEDBACK.md](IMPLEMENTATION_FEEDBACK.md).
 | Callout | `460:23` | Text, Icon | One explanatory note per screen, at the end of the content | — |
 | Banner | `470:160` | Tone: Warning, Info, Positive · Title, Message, Show chevron | Tappable attention item at the top of a screen. Warning only when the viewer must act soon | — |
 | Stat | `470:167` | Emphasis · Value, Label | Pipeline counts (club only) | — |
-| Package item | `470:1660` | Type: Paid, Housing, Flights, Insurance, Job, Car, Visa, Other · Label | Fixed category colour per type | — |
+| Package item | `470:1660` | Type: Paid, Housing, Flights, Job, Insurance, Bonuses, Visa, Car, Equipment, Meals, Education · Label | Code order and colours (`lib/opportunityCopy.ts` BENEFIT_TILES) | — |
 | Package option | `472:260` | Selected | Multi-select tile in forms | — |
 | Check item | `467:127` | State: Pass, Unknown, Fail · Title, Detail | Explainable checks (fit criteria, readiness) | — |
 
@@ -53,7 +53,7 @@ corrects it in [IMPLEMENTATION_FEEDBACK.md](IMPLEMENTATION_FEEDBACK.md).
 | List item / Career | `468:133` | Team, Role, When, Achievement | Career entries | `profile/mobile/CareerScreen.tsx` |
 | Detail row | `467:128` | Label, Value, Show leading | Facts tables | — |
 | Section header | `467:135` | Title, Show action | Section headings with "See all" | — |
-| Avatar | `460:22` | Size: 32, 48, 72 · Show new dot | People and clubs | `ui/EntityAvatar.tsx` |
+| Avatar | `460:22` | Size: 32, 52, 56, 80 · Shape: Person, Organisation · Show new dot | People (circle) and clubs (rounded square on white) | `ui/EntityAvatar.tsx` |
 | Option card | `460:40` | Selected · Title, Detail | Single choice (role picker) | — |
 | Field header | `472:180` | Requirement: Must have, Nice to have, Always required, Optional, None | Form labels with the matching rule | — |
 | Video thumbnail | `468:132` | Type: Full match, Highlight | Video rails | — |
@@ -65,6 +65,6 @@ corrects it in [IMPLEMENTATION_FEEDBACK.md](IMPLEMENTATION_FEEDBACK.md).
 
 ## Icons
 
-29 icon components (`Icon/*`, section "Icons", `458:83`). In code, icons come
+34 icon components (`Icon/*`, section "Icons", `458:83`). In code, icons come
 from `lucide-react` or inline SVG only; map each Figma icon to its lucide
 equivalent rather than adding a library.
