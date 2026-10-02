@@ -97,5 +97,31 @@
       "/Users/tianurien/Desktop/Code/HOCKIA-club/client/src",
       "/Users/tianurien/Desktop/Code/HOCKIA-club/client/e2e"
     ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/scripts/hooks/pre-commit-gitleaks.sh",
+            "timeout": 60
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/scripts/hooks/post-edit-migration-lint.mjs",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
   }
 }
