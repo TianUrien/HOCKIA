@@ -40,44 +40,18 @@ For CI or staging, prefer `E2E_ALLOWED_SUPABASE_URL` (exact match) instead of a 
 
 ---
 
-## Current Test Status ✅
+## Suite size and projects
 
-| Category | Tests | Status |
-|----------|-------|--------|
-| Signup Flow | 12 | ✅ Passing |
-| Sign In Flow | 3 | ✅ Passing |
-| Public Pages | 5 | ✅ Passing |
-| Navigation | 3 | ✅ Passing |
-| Opportunities (Auth) | 14 | ✅ Passing |
-| Messages (Auth) | 7 | ✅ Passing |
-| Auth Setup | 2 | ✅ Passing |
-| **Total** | **49** | **✅ All Passing** |
-
-## Test Structure
-
-```
-e2e/
-├── .auth/                    # Authentication storage states (gitignored)
-│   ├── player.json          # Pre-authenticated player session
-│   └── club.json            # Pre-authenticated club session
-├── auth.setup.ts            # Authentication setup script
-├── fixtures.ts              # Test fixtures and page objects
-├── signup.spec.ts           # Public signup flow tests
-├── messaging.spec.ts        # Basic messaging tests (skipped, need auth)
-├── vacancies.spec.ts        # Basic vacancy tests
-├── opportunities.authenticated.spec.ts  # Authenticated opportunities tests
-└── messages.authenticated.spec.ts       # Authenticated messages tests
-```
-
-## Test Projects
-
-The Playwright config defines multiple test projects:
-
-| Project | Authentication | File Pattern |
-|---------|---------------|--------------|
-| `chromium` | None | `*.spec.ts` (excludes authenticated) |
-| `chromium-player` | Player session | `*.authenticated.spec.ts`, `*.player.spec.ts` |
-| `chromium-club` | Club session | `*.club.spec.ts` |
+The current counts (36 spec files, 24 `@smoke`-tagged tests) and the full
+Playwright project table (`setup`, `chromium`, `chromium-player`,
+`chromium-club`, `chromium-coach`, `chromium-brand`, `mobile-player`,
+`staging`) are maintained in
+[`docs/engineering/testing.md`](../../docs/engineering/testing.md); the spec
+suffix decides the project (`.player.spec.ts`, `.club.spec.ts`,
+`.coach.spec.ts`, `.brand.spec.ts`, `.authenticated.spec.ts`,
+`.staging.spec.ts`, otherwise public). `auth.setup.ts` signs the role
+accounts in and stores their sessions under `e2e/.auth/` (gitignored);
+`fixtures.ts` holds the page objects.
 
 ## Setting Up Test Users
 

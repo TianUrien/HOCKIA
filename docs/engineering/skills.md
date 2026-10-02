@@ -10,12 +10,12 @@ coding agent today and a plan to evaluate external frameworks and skill packs.
 | Item | Location | What it does |
 |---|---|---|
 | Agent working notes | `CLAUDE.md` (root) | Pre-push validation, staging-first flow, data-API grants, native-client gating, hidden-profile invariant, profiles column grants, plus the "Engineering memory" links to this directory |
-| Duplicate notes | `AGENTS.md` (root) | An older copy of the first four sections of `CLAUDE.md` for other agents; keep in sync or replace with a pointer |
+| Agent notes pointer | `AGENTS.md` (root) | A pointer to `CLAUDE.md` and this directory (since 2026-10-02) for tools that look for that file name |
 | Copilot instructions | `.github/copilot-instructions.md` | Architecture summary and code patterns for GitHub Copilot; partly stale (`supabase_setup/` as a backend source) |
 | Permissions | `.claude/settings.json` | A single `permissions.allow` list (git, gh, supabase CLI, playwright, selected MCP tools, selected WebFetch domains) and `additionalDirectories` pointing at a sibling worktree. Several entries reference machine-specific absolute paths and one-off commands and are dead weight |
 | Agents, hooks, skills, commands | `.claude/agents`, `.claude/hooks`, `.claude/skills`, `.claude/commands` | **None in the repository** |
 | Engineering memory | `docs/engineering/` | This directory |
-| Release checklist | `RELEASE_CHECKLIST.md` | Human runbook from 2026-02; partially stale (see operations.md) |
+| Release checklist | `RELEASE_CHECKLIST.md` | A pointer to operations.md section 2 (the 2026-02 checklist was folded in on 2026-10-02) |
 | Founder memory | outside the repository (the user's Claude memory directory) | Rulings, incidents and traps accumulated across sessions; the de-facto long-term memory today, not shared with the repository |
 
 Observations:
@@ -97,7 +97,6 @@ These are worth doing regardless of the evaluation outcome:
 - Curate `.claude/settings.json`: remove machine-specific paths and one-off
   commands; keep a small allowlist for git, gh, supabase CLI, npm scripts and
   the MCP tools in use.
-- Replace `AGENTS.md` with a pointer to `CLAUDE.md` and this directory.
 - Add two hooks once a hook mechanism is chosen: a pre-commit that runs
   gitleaks on staged files, and a check that a new migration has a rollback
   file and explicit grants (also useful as a CI job).

@@ -25,10 +25,11 @@ production for E2E or writes.
 
 ## 2. Release runbook (as practised)
 
-The repository has three sources: `RELEASE_CHECKLIST.md` (2026-02, partially
-stale), `docs/ENVIRONMENT_SETUP.md`, and `scripts/promote-to-production.sh`.
-The sequence below is the one actually followed in 2026-09/10 (project
-memory) and reconciles them.
+This section is the release runbook. It reconciles the former
+`RELEASE_CHECKLIST.md` (2026-02, folded in here on 2026-10-02 and now a
+pointer), `docs/ENVIRONMENT_SETUP.md`, and
+`scripts/promote-to-production.sh` with the sequence actually followed in
+2026-09/10 (project memory).
 
 ### 2.1 Before merging
 
@@ -41,6 +42,19 @@ memory) and reconciles them.
    work; QA agent loop; `[QA]` fixtures kept).
 4. If an edge function changed: it is already deployed to staging and
    exercised there.
+5. No competing PR into `main` (`gh pr list --state open --base main`), or
+   coordinate the order.
+6. Review greps over the release's new migration files (each hit must be
+   intentional):
+   - seed or fixture data: `grep -ril 'INSERT INTO.*test\|is_test_account.*true\|seed' <files>`
+   - destructive statements: `grep -Ein 'DROP TABLE|DROP COLUMN|TRUNCATE|DELETE FROM' <files>`
+   - policy changes: `grep -l 'security_invoker\|SECURITY DEFINER\|CREATE POLICY\|DROP POLICY' <files>`
+     (views must use `security_invoker = true`)
+   - staging identifiers in app code: `grep -r 'ivjkdaylalhsteyyclvl' client/src/` must be empty.
+7. Environment parity (once per quarter or when something changed): Vercel
+   production env vars present (security.md section 6), Supabase Auth
+   redirect URLs include `https://www.inhockia.com/**`, and the CSP in
+   `client/vercel.json` allows both Supabase projects.
 
 ### 2.2 Database
 
@@ -132,7 +146,14 @@ redeployed.
    promotes production automatically.
 2. Smoke on production: landing, sign-in as a test role, feed, opportunities,
    a message, a profile with media. `curl -sI https://www.inhockia.com`
-   returns 200; `/functions/v1/health` returns `healthy`.
+   returns 200; `/functions/v1/health` returns `healthy`. The full manual
+   flow, run on the staging preview before the merge and repeated in part
+   after it: landing loads without console errors; signup form validates;
+   player and club sign-in reach their dashboards; club posts a role (draft
+   then publish) and it appears in the feed; player applies with a note;
+   club sets and clears applicant tiers; a profile with highlights and
+   references renders; a message between two accounts arrives in real time;
+   the same at a 375 px viewport without overflow.
 3. Watch Supabase logs and Sentry for 15-30 minutes.
 4. Native: the SPA inside the store binaries does not change until a new build
    ships. Before any breaking server change, raise
@@ -144,7 +165,9 @@ redeployed.
 
 ### 2.5 After the release
 
-- Tag and sync branches so `origin/main..origin/staging` is empty.
+- Tag (`git tag -a v<YYYY.MM.DD> -m "Release: <summary>"`, push the tag,
+  publish a GitHub Release with the summary) and sync branches so
+  `origin/main..origin/staging` is empty.
 - Record rollback notes for any irreversible migration.
 - Update the docs changed by the release (this directory included).
 

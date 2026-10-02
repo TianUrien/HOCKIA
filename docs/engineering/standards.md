@@ -22,8 +22,7 @@ Rules the toolchain encodes:
 
 - **Never substitute `tsc --noEmit` for `npm run typecheck`.** In `client/`
   the root `tsconfig.json` has `files: []` and only references, so a plain
-  `tsc --noEmit` checks nothing. `RELEASE_CHECKLIST.md` still lists the plain
-  form; the CI form is the correct one.
+  `tsc --noEmit` checks nothing; the CI form is the correct one.
 - ESLint config (`client/eslint.config.js`): `@eslint/js` recommended,
   `typescript-eslint` recommended, `react-hooks` recommended-latest,
   `react-refresh` for Vite, and `no-empty` with empty catch blocks forbidden.
@@ -157,6 +156,7 @@ Verified in the 2026-09/10 migrations; older migrations predate some of these.
 ## 9. Documentation drift to fix
 
 These files contradict the standards above and should be updated or retired:
-`RELEASE_CHECKLIST.md` (bundle numbers, `tsc --noEmit`, "15 functions",
-"9 jobs"), `client/README.md` (React 18, Tailwind v4), `client/e2e/README.md`
-(49 tests), `supabase_setup/` (pre-migration bootstrap).
+`supabase_setup/` (pre-migration bootstrap), `client/README.md` (the stack
+line is current since 2026-10-02; the rest describes the original template).
+`RELEASE_CHECKLIST.md` and `client/e2e/README.md` were brought in line on
+2026-10-02 (pointer, and counts delegated to testing.md).

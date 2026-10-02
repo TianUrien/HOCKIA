@@ -39,8 +39,9 @@ jobs:
   security:
     name: Security Checks
     runs-on: ubuntu-latest
-    # Private repo: gitleaks-action lists the PR's commits, which needs an
-    # explicit pull-requests read grant on the job token.
+    # gitleaks-action lists the PR's commits, which needs an explicit
+    # pull-requests read grant on the job token (the repository is public;
+    # the grant is about the token's scope, not visibility).
     permissions:
       contents: read
       pull-requests: read
