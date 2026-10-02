@@ -16,6 +16,9 @@ import { SharedPostCard } from './SharedPostCard'
 
 // D3.3 invite card: its own chunk, loaded only when a thread has one.
 const InviteCard = lazy(() => import('./InviteCard'))
+// D4.3 offer card and the D4.5 "Confirm signing" link: own chunks, loaded only when a thread has one.
+const OfferCard = lazy(() => import('./OfferCard'))
+const SigningPrompt = lazy(() => import('./SigningPrompt'))
 
 interface MessageBubbleProps {
   message: ChatMessage
@@ -84,11 +87,16 @@ export function MessageBubble({
   const isSharedPost = message.metadata?.type === 'shared_post'
   // Recruiting cards (D3 invite, server-posted steps) are fixed records: never edited or deleted.
   const invite = message.metadata?.type === 'opportunity_invite' ? message.metadata : null
+  const offer = message.metadata?.type === 'opportunity_offer' ? message.metadata : null
   const isRecruitingEvent = message.metadata?.type === 'application_event'
+  // The player's way from "<club> marked you as signed" to Confirm signing (D4.5).
+  const signingPromptFor = message.metadata?.type === 'application_event' && message.metadata.event === 'signing_marked' && !isMine
+    ? message.metadata.application_id ?? null
+    : null
   const isPersisted = status !== 'sending' && status !== 'failed' && !message.id.startsWith('optimistic-')
   // Own, delivered, not-yet-deleted messages can be managed. Shared-post cards
   // can be deleted but not edited (they aren't free text).
-  const canManage = isMine && isPersisted && !isDeleted && !invite && !isRecruitingEvent
+  const canManage = isMine && isPersisted && !isDeleted && !invite && !offer && !isRecruitingEvent
   const canEdit = canManage && !isSharedPost
 
   const [showMenu, setShowMenu] = useState(false)
@@ -229,9 +237,24 @@ export function MessageBubble({
             </Suspense>
           </div>
         </div>
+      ) : offer ? (
+        <div className={cn('flex', isMine ? 'justify-end' : 'justify-start')}>
+          <div className="w-full sm:max-w-[70%]">
+            <Suspense fallback={<div className="h-[230px] w-full animate-pulse rounded-[18px] bg-surface-grouped" />}>
+              <OfferCard offerId={offer.offer_id} isMine={isMine} fallbackText={message.content} />
+            </Suspense>
+          </div>
+        </div>
       ) : isRecruitingEvent ? (
         // A recruiting step the server posts ("Facundo passed on Midfielder."): a quiet centred line, not a bubble.
-        <p className="mx-auto max-w-[85%] text-center text-caption leading-4 text-ink-3" data-testid="recruiting-event-line">{message.content}</p>
+        <div>
+          <p className="mx-auto max-w-[85%] text-center text-caption leading-4 text-ink-3" data-testid="recruiting-event-line">{message.content}</p>
+          {signingPromptFor && (
+            <Suspense fallback={null}>
+              <SigningPrompt applicationId={signingPromptFor} />
+            </Suspense>
+          )}
+        </div>
       ) : isEditing ? (
         <div className="flex justify-end">
           <div className="w-full max-w-[85%] sm:max-w-[70%]" data-testid="message-edit-editor">
