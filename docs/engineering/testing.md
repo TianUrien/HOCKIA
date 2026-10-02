@@ -91,7 +91,7 @@ branches always complete.
 | Edge Function Tests | `deno test` in `supabase/functions/_shared` (includes the webhook-auth regression guard) | always |
 | Unit Tests | `npm run test:unit:coverage`; Codecov upload is best-effort | always |
 | Build | `npm run build` with placeholder env; initial-load gzip and raw budgets; per-chunk warning; growth-vs-base warning; uploads `client/dist` for 3 days | always |
-| Migration Validation | Links to staging. On non-main refs: strict `db push --dry-run --include-all`. On `main`: every migration file must already be applied to staging (staging may be ahead) | pushes and same-repo PRs |
+| Migration Validation | `node scripts/check-migrations.mjs` (static: grants on new tables/views/functions + rollback file, migrations newer than 20260926100000). Then links to staging. On non-main refs: strict `db push --dry-run --include-all`. On `main`: every migration file must already be applied to staging (staging may be ahead) | pushes and same-repo PRs |
 | DB Integration Tests | `npm run test:db` against staging | code changes on **push to main or staging** or same-repo PRs; serialized in concurrency group `staging-db-tests` |
 | E2E Tests | Chromium install, `.env` from secrets, `npm run test:e2e:smoke`, Playwright report for 3 days | code changes on **push to main** or same-repo PRs; serialized in concurrency group `staging-e2e-tests`; needs Build |
 
@@ -136,7 +136,9 @@ Keep the `[QA]` fixtures on staging; several specs and probes depend on them.
 
 ## 7. Gaps (verified absence)
 
-- No automated check that a new migration has a rollback file or a probe.
+- No automated check that a security-relevant migration has a probe (the
+  rollback-file and grant checks exist since 2026-10-02:
+  `scripts/check-migrations.mjs`).
 - No load or performance tests (see capacity.md for the proposed plan).
 - No accessibility lint or axe run in CI (a manual WCAG pass was done in
   2026-07).

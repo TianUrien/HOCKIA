@@ -94,7 +94,10 @@ Verified in the 2026-09/10 migrations; older migrations predate some of these.
 3. **Rollback file**: every migration since 2026-09-26 ships
    `supabase/rollbacks/<version>_<name>.down.sql` restoring the previous
    function bodies, policies and grants. 598 older migrations have no rollback
-   file; forward-fix is the path for those.
+   file; forward-fix is the path for those. **Enforced** by
+   `scripts/check-migrations.mjs` (CI job "Migration Validation"): a
+   combined rollback may cover several versions by listing them in its text;
+   eight 2026-09-26/28 migrations are baseline-exempt inside the script.
 4. **Probe**: a security-relevant migration ships a
    `supabase/tests/security/<name>.probe.sql` that switches identities with
    `SET LOCAL ROLE` + `request.jwt.claims`, asserts PASS/FAIL lines, and
@@ -104,7 +107,11 @@ Verified in the 2026-09/10 migrations; older migrations predate some of these.
    new objects on 2026-10-30, and the default-privileges migration
    (`20260528110000_explicit_data_api_grants.sql`) only covers tables created
    by the `postgres` role. Treat the explicit form as mandatory for tables,
-   views, sequences and functions.
+   views, sequences and functions. **Enforced** for tables, views and
+   functions by `scripts/check-migrations.mjs`: the first migration to create
+   a name must also contain a `GRANT` or `REVOKE` naming it (a later
+   `CREATE OR REPLACE` keeps the ACL and is not flagged). Run it locally with
+   `node scripts/check-migrations.mjs` (or with file paths to lint only those).
 6. **`profiles` columns**: every `ALTER TABLE public.profiles ADD COLUMN`
    ships `GRANT SELECT (col) ON public.profiles TO authenticated` (and `anon`
    if public). See security.md.

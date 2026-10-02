@@ -363,6 +363,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Lint migrations (grants + rollback files)
+        # Static, no database: every migration newer than 20260926100000 must
+        # carry a GRANT/REVOKE for each table, view or function it is the first
+        # to create, and a supabase/rollbacks/<version>_*.down.sql. Runs before
+        # the CLI link so a plain lint failure never spends a staging login.
+        run: node scripts/check-migrations.mjs
+
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v1
         with:

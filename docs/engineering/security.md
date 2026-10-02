@@ -215,8 +215,9 @@ repository (founder plan doc + session memory).
    `search_path` pinning against the Supabase advisor output.
 2. **Service key off triggers** - move webhook authorization in trigger
    definitions away from embedding the service key.
-3. **Oct 30 GRANT template + CI lint** - a migration template with explicit
-   grants and a CI check that every new object in a migration carries them.
+3. **Oct 30 GRANT template + CI lint** - the CI lint exists since
+   2026-10-02 (`scripts/check-migrations.mjs`, tables/views/functions);
+   still open: a migration template, and sequences/types in the lint.
 4. **Edge-function auth consistency** - one shared service-role assertion on
    every webhook-style function, covered by the source-reading regression test.
 5. **`verify_jwt` consolidation** - done 2026-10-02: one source of truth in
