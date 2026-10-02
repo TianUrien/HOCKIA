@@ -423,36 +423,34 @@ verify_jwt = false
 # supabase/functions/_shared/function-config.test.ts fails CI when a function
 # folder has no entry. Add a new function here in the same commit as its folder.
 #
-# Values below match what is deployed. The entries moved from the removed
-# per-function files are marked (moved).
+# Every value below MIRRORS LIVE PRODUCTION, read from the platform on
+# 2026-10-02 (the removed per-function files had drifted from it). Rule: this
+# file always equals live; when they differ, live is changed to match the file
+# only after an explicit founder OK, never the other way round by habit.
 
-# Verified in-handler (auth.getUser + role / admin-claim checks). (moved)
-[functions.admin-actions]
-verify_jwt = false
-[functions.admin-send-campaign]
-verify_jwt = false
-[functions.admin-send-test-email]
-verify_jwt = false
-[functions.delete-account]
-verify_jwt = false
-[functions.ga4-funnel]
-verify_jwt = false
-
-# Public read, anonymous by design. (moved)
+# Public read, anonymous by design.
 [functions.health]
-verify_jwt = false
-[functions.public-opportunities]
 verify_jwt = false
 [functions.sitemap]
 verify_jwt = false
 
-# Called from the app with the user's JWT. (moved)
+# Called from the app with the user's JWT (also verified in-handler, so the
+# gateway check is a second layer, not the only one). public-opportunities
+# is called with the anon key, which passes the gateway check.
+[functions.admin-actions]
+verify_jwt = true
+[functions.admin-send-campaign]
+verify_jwt = true
+[functions.admin-send-test-email]
+verify_jwt = true
+[functions.delete-account]
+verify_jwt = true
+[functions.ga4-funnel]
+verify_jwt = true
+[functions.public-opportunities]
+verify_jwt = true
 [functions.notify-feedback-submitted]
 verify_jwt = true
-
-# User-facing functions that have always deployed with the platform default
-# (true); they also verify the caller in-handler, so the gateway check is a
-# second layer, not the only one.
 [functions.ai-opinion]
 verify_jwt = true
 [functions.application-feedback]

@@ -96,12 +96,19 @@ read the root file and refuse an unpinned function, and
 CLI also reads the root entry on `functions deploy`; passing the flag as well
 is harmless and keeps the intent visible in shell history.
 
-Off (`--no-verify-jwt`): `resend-webhook`, `video-webhook`,
-`video-playback-token`, `video-create-upload`, `video-delete`, `nl-search`,
-`application-action`, `age-gate`, `admin-actions`, `admin-send-campaign`,
-`admin-send-test-email`, `delete-account`, `ga4-funnel`, `health`,
-`public-opportunities`, `sitemap`. Everything else is on (the platform
-default those functions have always deployed with).
+Off (`--no-verify-jwt`, 10): `health`, `sitemap`, `nl-search`,
+`resend-webhook`, `video-create-upload`, `video-webhook`,
+`video-playback-token`, `application-action`, `age-gate`, `video-delete`.
+On (29): everything else, including `delete-account`, `admin-actions`,
+`admin-send-campaign`, `admin-send-test-email`, `ga4-funnel`,
+`public-opportunities` and `notify-feedback-submitted` (whose removed
+per-function files wrongly said `false`).
+
+**Rule**: `supabase/config.toml` must always mirror what is live on
+production (verified with the platform's function listing). When they
+differ, live is changed to match the file, and only after an explicit
+founder OK; never edit the file to paper over a drift you have not
+understood.
 
 **Trap**: before the consolidation a plain `supabase functions deploy`
 reset an unpinned function to the platform default, which 401'd legitimate
@@ -109,32 +116,21 @@ traffic twice (nl-search, resend-webhook). After deploying, confirm the
 setting in the dashboard (Edge Functions -> function -> Details) and with a
 request from the app.
 
-#### 2.3.1 One-off redeploy after the 2026-10-02 consolidation
+#### 2.3.1 Follow-up to the 2026-10-02 consolidation
 
-The nine functions whose setting used to live only in a per-function file
-must be redeployed once from the root entry, staging first, then production.
-Each line is one command; the flag matches the pinned value. Order: public
-read endpoints first (cheapest to verify with `curl`), then the user-facing
-ones, then the single `true` function last.
+The file was written from the live production values, so **no production
+redeploy** results from this change. The only action is a one-off
+**staging-only** redeploy to fix the single drift found (`admin-actions` was
+`false` on staging, `true` on production):
 
 ```sh
-# staging: --project-ref ivjkdaylalhsteyyclvl ; production: --project-ref xtertgftujnebubxgqit
-supabase functions deploy health                    --project-ref <ref> --no-verify-jwt
-supabase functions deploy sitemap                   --project-ref <ref> --no-verify-jwt
-supabase functions deploy public-opportunities      --project-ref <ref> --no-verify-jwt
-supabase functions deploy ga4-funnel                --project-ref <ref> --no-verify-jwt
-supabase functions deploy delete-account            --project-ref <ref> --no-verify-jwt
-supabase functions deploy admin-send-test-email     --project-ref <ref> --no-verify-jwt
-supabase functions deploy admin-send-campaign       --project-ref <ref> --no-verify-jwt
-supabase functions deploy admin-actions             --project-ref <ref> --no-verify-jwt
-supabase functions deploy notify-feedback-submitted --project-ref <ref>
+supabase functions deploy admin-actions --project-ref ivjkdaylalhsteyyclvl --use-api
 ```
 
-Verify after each environment: `curl -s <url>/functions/v1/health` returns
-`healthy` without an Authorization header; `/sitemap` and
-`/public-opportunities` answer anonymously; an admin action and a feedback
-submission work from the app. Delete this subsection once both environments
-are done.
+No flag, so the gateway check comes on. Afterwards confirm with the
+function listing that staging `admin-actions` shows `verify_jwt = true` and
+that an admin action still works on the staging preview. Delete this
+subsection once done.
 
 Shared code lives in `_shared/`; deploying one function bundles the shared
 modules it imports, so a `_shared` change needs every dependent function
