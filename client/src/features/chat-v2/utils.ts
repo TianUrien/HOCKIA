@@ -12,3 +12,21 @@ export const buildPublicProfilePath = (participant?: ConversationParticipant | n
   // Player + coach share /players/<slug> (multi-role union in PublicPlayerProfile).
   return `/players/${slug}`
 }
+
+/** "See the offer": the ring stays a fixed 2 s (QA 2 Oct saw 3 s vs 11 s — a thread update used to cancel the removal). */
+export const ANCHOR_HIGHLIGHT_MS = 2000
+
+/**
+ * The offer card "See the offer" lands on: the newest card for the given
+ * application, else (no application) the newest offer card in the thread.
+ * A given application with no card in the thread → null (never another role's offer).
+ */
+export function findOfferAnchor<M extends { id: string; metadata?: unknown }>(messages: M[], applicationId: string | null | undefined): M | null {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const m = messages[i]
+    const meta = m.metadata && typeof m.metadata === 'object' ? (m.metadata as { type?: unknown; application_id?: unknown }) : null
+    if (meta?.type !== 'opportunity_offer') continue
+    if (!applicationId || meta.application_id === applicationId) return m
+  }
+  return null
+}

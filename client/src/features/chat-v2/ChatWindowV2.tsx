@@ -4,7 +4,7 @@ import { useChat } from '@/hooks/useChat'
 import { useSafeArea } from '@/hooks/useSafeArea'
 import { useChatScrollController } from '@/hooks/useChatScrollController'
 import { ChatWindowSkeleton } from '@/components/Skeleton'
-import { buildPublicProfilePath } from './utils'
+import { buildPublicProfilePath, ANCHOR_HIGHLIGHT_MS, findOfferAnchor } from './utils'
 import { ChatHeader } from './components/ChatHeader'
 import { MessageList } from './components/MessageList'
 import { NewMessagesToast } from './components/NewMessagesToast'
@@ -41,23 +41,6 @@ interface ChatWindowV2Props {
 }
 
 const ANCHOR_HIGHLIGHT = ['ring-2', 'ring-hockia-primary', 'ring-offset-2', 'rounded-[20px]', 'transition-shadow', 'duration-700']
-/** The ring stays a fixed 2 s (QA 2 Oct saw 3 s vs 11 s: a thread update used to cancel the removal). */
-export const ANCHOR_HIGHLIGHT_MS = 2000
-
-/**
- * The offer card "See the offer" lands on: the newest card for the given
- * application, else (no application) the newest offer card in the thread.
- * A given application with no card in the thread → null (never another role's offer).
- */
-export function findOfferAnchor<M extends { id: string; metadata?: unknown }>(messages: M[], applicationId: string | null | undefined): M | null {
-  for (let i = messages.length - 1; i >= 0; i--) {
-    const m = messages[i]
-    const meta = m.metadata && typeof m.metadata === 'object' ? (m.metadata as { type?: unknown; application_id?: unknown }) : null
-    if (meta?.type !== 'opportunity_offer') continue
-    if (!applicationId || meta.application_id === applicationId) return m
-  }
-  return null
-}
 
 export default function ChatWindowV2({
   conversation,

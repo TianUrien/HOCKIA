@@ -1,6 +1,7 @@
 import { identityLine, positionLabel } from '@/lib/identity'
 import { DEFAULT_EXPIRY_DAYS, daysLeftToReply, isDaysLeftUrgent } from '@/lib/clubRecruiting'
 import { ROLE_CLOSED_LABEL } from '@/lib/applicationStatus'
+import { shortDayOf } from '@/lib/signing'
 
 /**
  * Club v2 Home, Inbox and Chat (Figma D1.18 352:1290, D1.19 353:502,
@@ -8,12 +9,8 @@ import { ROLE_CLOSED_LABEL } from '@/lib/applicationStatus'
  * player surface (founder ruling: club reminders go to clubs only).
  */
 
-const MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-function monthDay(iso: string | null | undefined): string | null {
-  if (!iso) return null
-  const d = new Date(iso)
-  return Number.isNaN(d.getTime()) ? null : `${MONTH[d.getMonth()]} ${d.getDate()}`
-}
+// Dates read day first app-wide ("2 Oct"), the one format the signing road uses.
+const monthDay = (iso: string | null | undefined) => shortDayOf(iso)
 
 // ── Home · Your week (DEV NOTE 355:910) ──────────────────────────────────
 export interface WeekStat { value: number; label: string; to?: string; accent?: boolean }

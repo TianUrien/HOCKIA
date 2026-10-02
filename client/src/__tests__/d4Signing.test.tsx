@@ -48,7 +48,8 @@ describe('D4 club road: next action per status', () => {
     const afterTalk = roadSteps({ status: 'shortlisted', talked: true, trial: false, firstName: 'Sam', now: NOW })
     expect(afterTalk.find((s) => s.current)?.key).toBe('offer')
     const signed = roadSteps({ status: 'signed', talked: true, trial: false, firstName: 'Sam', now: NOW })
-    expect(signed.every((s) => s.key === 'trial' || s.done)).toBe(true)
+    // Round 7: with no accepted offer the Offer step is skipped (grey dash), not done.
+    expect(signed.every((s) => s.key === 'trial' || s.done || s.skipped)).toBe(true)
   })
 
   it('club rows: road applicants stay under Shortlisted with a grey tag', () => {
