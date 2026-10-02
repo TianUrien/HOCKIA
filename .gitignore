@@ -49,6 +49,10 @@ DerivedData/
 coverage/
 client/coverage/
 
+# Playwright output (any level)
+test-results/
+playwright-report/
+
 # Logs
 *.log
 pnpm-debug.log*

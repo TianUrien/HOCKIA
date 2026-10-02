@@ -39,8 +39,9 @@ jobs:
   security:
     name: Security Checks
     runs-on: ubuntu-latest
-    # Private repo: gitleaks-action lists the PR's commits, which needs an
-    # explicit pull-requests read grant on the job token.
+    # gitleaks-action lists the PR's commits, which needs an explicit
+    # pull-requests read grant on the job token (the repository is public;
+    # the grant is about the token's scope, not visibility).
     permissions:
       contents: read
       pull-requests: read
@@ -121,7 +122,9 @@ jobs:
         working-directory: ./supabase/functions/_shared
         # --allow-read: webhook-auth.test.ts reads the sibling function
         # sources to assert every database-webhook function still calls
-        # assertServiceRole (the 2026-08-08 regression guard).
+        # assertServiceRole (the 2026-08-08 regression guard), and
+        # function-config.test.ts reads supabase/config.toml to assert every
+        # function folder has a pinned verify_jwt entry.
         run: deno test --allow-env --allow-read .
 
   unit-tests:
@@ -360,6 +363,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Lint migrations (grants + rollback files)
+        # Static, no database: every migration newer than 20260926100000 must
+        # carry a GRANT/REVOKE for each table, view or function it is the first
+        # to create, and a supabase/rollbacks/<version>_*.down.sql. Runs before
+        # the CLI link so a plain lint failure never spends a staging login.
+        run: node scripts/check-migrations.mjs
+
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v1
         with:
@@ -420,9 +430,12 @@ jobs:
   db-tests:
     name: DB Integration Tests
     runs-on: ubuntu-latest
-    # Only run when secrets are available (not on forks)
+    # Only run when secrets are available (not on forks). Runs on pushes to
+    # main AND staging (since 2026-10-02: staging deploys straight to the
+    # preview, so RLS/trigger regressions should surface on the push, not
+    # only on the later PR to main). E2E stays PR + main only (cost).
     needs: changes
-    if: needs.changes.outputs.code == 'true' && ((github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository))
+    if: needs.changes.outputs.code == 'true' && ((github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging')) || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository))
     # Serialize across concurrent runs (the main + staging double-push) so two runs
     # never mutate the SHARED staging-DB fixtures at once — the cause of the flaky
     # "duplicate key ... profile_friendships_pair_unique" failures. Constant group

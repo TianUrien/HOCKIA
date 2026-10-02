@@ -170,7 +170,7 @@ gateway only; their blast radius is the configured test recipients.
 |---|---|
 | Supabase function secrets (per project) | `RESEND_API_KEY`, `RESEND_WEBHOOK_SECRET`, `CF_ACCOUNT_ID`, `CF_STREAM_API_TOKEN`, `CF_STREAM_WEBHOOK_SECRET`, `CF_STREAM_KEY_ID`, `CF_STREAM_JWK`, `SENTRY_DSN`, `LLM_PROVIDER`, `CLAUDE_MODEL` and the provider API keys, `TEST_NOTIFICATION_RECIPIENTS`, `BLOCKED_NOTIFICATION_RECIPIENTS`; platform-injected `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_DB_URL` |
 | Postgres Vault (production) | Secrets used by `run_storage_cleanup()` to call the cleanup function over `pg_net` |
-| GitHub Actions secrets | `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD`, `STAGING_SUPABASE_URL`, `STAGING_SUPABASE_ANON_KEY`, `STAGING_SUPABASE_SERVICE_ROLE_KEY`, `E2E_*_EMAIL`, `E2E_*_PASSWORD` |
+| GitHub Actions secrets | `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD`, `STAGING_SUPABASE_URL`, `STAGING_SUPABASE_ANON_KEY`, `STAGING_SUPABASE_SERVICE_ROLE_KEY`, `PROD_SUPABASE_ANON_KEY` (manual uptime workflow only), `E2E_*_EMAIL`, `E2E_*_PASSWORD` |
 | Vercel environment | `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_ENVIRONMENT`, `VITE_SENTRY_DSN`, `VITE_GA_MEASUREMENT_ID`, `VITE_POSTHOG_KEY`, `VITE_POSTHOG_HOST`, `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT` |
 | Cloudflare Worker secrets | `SUPABASE_ANON_KEY`, `RESEND_API_KEY`, `ALERT_TO` |
 | Local only (gitignored) | `client/.env.local`, root `.env.local`, `~/.config/hockia/cloudflare.env` |
@@ -215,12 +215,15 @@ repository (founder plan doc + session memory).
    `search_path` pinning against the Supabase advisor output.
 2. **Service key off triggers** - move webhook authorization in trigger
    definitions away from embedding the service key.
-3. **Oct 30 GRANT template + CI lint** - a migration template with explicit
-   grants and a CI check that every new object in a migration carries them.
+3. **Oct 30 GRANT template + CI lint** - the CI lint exists since
+   2026-10-02 (`scripts/check-migrations.mjs`, tables/views/functions);
+   still open: a migration template, and sequences/types in the lint.
 4. **Edge-function auth consistency** - one shared service-role assertion on
    every webhook-style function, covered by the source-reading regression test.
-5. **`verify_jwt` consolidation** - one source of truth in
-   `supabase/config.toml` (see operations.md).
+5. **`verify_jwt` consolidation** - done 2026-10-02: one source of truth in
+   `supabase/config.toml` mirroring live production, guarded by
+   `_shared/function-config.test.ts`; the one staging drift fix is listed
+   in operations.md 2.3.1.
 6. **Staging mail isolation** - staging gets its own transactional-mail key
    and webhook.
 

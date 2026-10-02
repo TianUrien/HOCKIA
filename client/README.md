@@ -1,12 +1,12 @@
 # HOCKIA - Modern React Application
 
-A production-ready React application built with Vite, TypeScript, Tailwind CSS v4, and Supabase integration.
+A production-ready React application built with Vite, TypeScript, Tailwind CSS 3.4, and Supabase integration.
 
 ## 🚀 Tech Stack
 
-- **Framework:** React 18 with TypeScript
+- **Framework:** React 19 with TypeScript
 - **Build Tool:** Vite (with Rolldown experimental)
-- **Styling:** Tailwind CSS v4 (next) with custom HOCKIA branding
+- **Styling:** Tailwind CSS 3.4 with custom HOCKIA branding
 - **Backend:** Supabase (Authentication, Database, Storage)
 - **UI Components:** Custom glassmorphism components
 - **Icons:** Lucide React

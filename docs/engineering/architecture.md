@@ -219,9 +219,6 @@ dashboard before capacity work.
 
 ## 7. Known architectural debts (summary; details in the audit report)
 
-- `verify_jwt` has two sources of truth: `supabase/config.toml`
-  (`[functions.x]`) and per-function `config.toml` files read by the deploy
-  scripts. See operations.md.
 - `lib/requestCache.ts` survives the React Query migration in 4 importers.
 - The desktop club screens (v1) coexist with the phone-only Club v2 screens;
   the raw bundle budget carries both.

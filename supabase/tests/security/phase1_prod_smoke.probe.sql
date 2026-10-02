@@ -15,7 +15,7 @@ DECLARE
   c_conv   constant uuid := 'd41b3316-27e5-4343-a4c8-c986d09d763a';  -- club ↔ player
   v_opp uuid; v_app uuid; v_msg uuid; v_ref1 uuid; v_ref2 uuid; v_post uuid;
   v_opp2 uuid; v_app2 uuid; v_conv2 uuid; v_fgv uuid; v_opp3 uuid; v_n1 int; v_n2 int;
-  v_txt text; v_out text := ''; v_step text;
+  v_txt text; v_out text := ''; v_step text; v_err text;
 BEGIN
   -- fixtures (as the migration owner; rolled back with everything else)
   INSERT INTO opportunities (club_id, title, location_city, location_country, status, opportunity_type, gender)
@@ -142,16 +142,29 @@ BEGIN
   v_step := 'W1 club cannot change a withdrawn application';
   EXECUTE 'RESET ROLE';
   UPDATE opportunity_applications SET status = 'withdrawn' WHERE id = v_app2;
-  PERFORM set_config('request.jwt.claims', json_build_object('sub', c_club, 'role', 'authenticated')::text, true);
-  EXECUTE 'SET LOCAL ROLE authenticated';
-  -- Clubs can't see withdrawn rows (RLS), so the update matches nothing; the
-  -- guard trigger's "withdrawn application cannot be changed" is defence in depth.
-  UPDATE opportunity_applications SET status = 'shortlisted' WHERE id = v_app2;
-  GET DIAGNOSTICS v_n1 = ROW_COUNT;
+  -- Two valid outcomes. Since 20261002200000 the club CAN read withdrawn rows to
+  -- its own roles, so the UPDATE reaches the guard trigger, which refuses it
+  -- ("A withdrawn application cannot be changed"). Before that migration RLS hid
+  -- the row and the UPDATE matched nothing. Either way the row must stay withdrawn.
+  v_err := NULL; v_n1 := 0;
+  BEGIN
+    PERFORM set_config('request.jwt.claims', json_build_object('sub', c_club, 'role', 'authenticated')::text, true);
+    EXECUTE 'SET LOCAL ROLE authenticated';
+    UPDATE opportunity_applications SET status = 'shortlisted' WHERE id = v_app2;
+    GET DIAGNOSTICS v_n1 = ROW_COUNT;
+    EXECUTE 'RESET ROLE';
+  EXCEPTION WHEN others THEN
+    v_err := SQLERRM;  -- the sub-block rollback also undoes SET LOCAL ROLE
+  END;
   EXECUTE 'RESET ROLE';
+  IF v_err IS NOT NULL AND v_err NOT ILIKE '%withdrawn application cannot be changed%' THEN
+    RAISE EXCEPTION 'unexpected error: %', v_err;
+  END IF;
+  IF v_err IS NULL AND v_n1 <> 0 THEN RAISE EXCEPTION 'withdrawn application changed (% rows)', v_n1; END IF;
   SELECT status::text INTO v_txt FROM opportunity_applications WHERE id = v_app2;
-  IF v_n1 <> 0 OR v_txt <> 'withdrawn' THEN RAISE EXCEPTION 'withdrawn application changed (% rows, now %)', v_n1, v_txt; END IF;
-  v_out := v_out || E'\nOK ' || v_step;
+  IF v_txt <> 'withdrawn' THEN RAISE EXCEPTION 'withdrawn application changed (now %)', v_txt; END IF;
+  v_out := v_out || E'\nOK ' || v_step
+        || CASE WHEN v_err IS NULL THEN ' (row not visible to the club)' ELSE ' (guard trigger refused)' END;
 
   -- ── Full-match privacy (migration 20260926120000; skipped before it) ──
   EXECUTE 'RESET ROLE';

@@ -76,7 +76,7 @@ braces, not strictly required.
 
 After saving, trigger an actual accept on the env to test:
 
-1. As the player test account (`playrplayer93@gmail.com`), have a pending
+1. As the player test account (`E2E_PLAYER_EMAIL`), have a pending
    reference request waiting.
 2. As the recipient of that request, accept it via UI.
 3. Check the player's email inbox — should receive

@@ -7,7 +7,7 @@ import { test, expect } from './fixtures'
  * These tests use the authenticated player session.
  * 
  * Test accounts used:
- *   - Player: playrplayer93@gmail.com (primary actor for these tests)
+ *   - Player: the E2E_PLAYER_EMAIL account (primary actor for these tests)
  * 
  * All test content is created with is_test_content=true via database triggers,
  * ensuring it's isolated from real users.
