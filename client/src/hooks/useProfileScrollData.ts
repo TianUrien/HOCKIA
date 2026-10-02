@@ -39,6 +39,8 @@ export type ScrollCareerEntry = {
   representedLevel: string | null
   representedCountryId: number | null
   worldClub: { id: string; club_name: string; avatar_url: string | null; flag: string | null } | null
+  /** D4: created by confirm_signing (server-set) — shows the "Signed through Hockia" pill. */
+  signedViaHockia: boolean
 }
 
 export type ScrollPhoto = { id: string; url: string; caption: string | null }
@@ -152,6 +154,7 @@ export function useProfileScrollData(profileId: string | null | undefined, enabl
           representedLevel: r.represented_level,
           representedCountryId: r.represented_country_id,
           worldClub: r.world_club ? { id: r.world_club.id, club_name: r.world_club.club_name, avatar_url: r.world_club.avatar_url, flag: r.world_club.country?.flag_emoji ?? null } : null,
+          signedViaHockia: r.signed_via_hockia === true,
         })),
         photos: ((photos.data ?? []) as Array<{ id: string; photo_url: string; caption: string | null }>).map((p) => ({ id: p.id, url: p.photo_url, caption: p.caption })),
         photoCount: photoCount.count ?? 0,
