@@ -51,30 +51,37 @@ export function clubReplyLineClass(urgent: boolean): string {
 
 export type AppStatus = 'pending' | 'shortlisted' | 'maybe' | 'rejected' | 'no_response' | 'withdrawn' | string
 
-export interface Pipeline { toReview: number; shortlisted: number; maybe: number; declined: number; closed: number; total: number }
+/**
+ * closed = no reply, role filled and withdrawn by the applicant — the Closed
+ * chip. Since the D4 re-check (2026-10-02) clubs can read withdrawn
+ * applications to their own roles, so they count here and in total; they
+ * stay out of every "waiting" / live count (lib/clubInbox, useScouting).
+ */
+export interface Pipeline { toReview: number; shortlisted: number; maybe: number; declined: number; closed: number; withdrawn: number; total: number }
 
 export function pipelineOf(statuses: AppStatus[]): Pipeline {
-  const p: Pipeline = { toReview: 0, shortlisted: 0, maybe: 0, declined: 0, closed: 0, total: 0 }
+  const p: Pipeline = { toReview: 0, shortlisted: 0, maybe: 0, declined: 0, closed: 0, withdrawn: 0, total: 0 }
   for (const s of statuses) {
-    if (s === 'withdrawn') continue
     p.total += 1
     if (s === 'pending') p.toReview += 1
     else if (s === 'shortlisted') p.shortlisted += 1
     else if (s === 'maybe') p.maybe += 1
     else if (s === 'rejected') p.declined += 1
-    else if (s === 'no_response') p.closed += 1
+    else if (s === 'no_response' || s === 'filled') p.closed += 1
+    else if (s === 'withdrawn') { p.closed += 1; p.withdrawn += 1 }
   }
   return p
 }
 
 /**
  * The applicants header line: "3 applied since Sep 12" — "since" is the FIRST
- * application still counted (not withdrawn), i.e. the real applications window.
- * The role's published_at is re-stamped on every reopen and created_at can
- * predate publishing (drafts), so neither describes when applications came in.
+ * application, i.e. the real applications window (a withdrawn applicant did
+ * apply, so it counts). The role's published_at is re-stamped on every reopen
+ * and created_at can predate publishing (drafts), so neither describes when
+ * applications came in.
  */
 export function appliedSinceLine(apps: { status: AppStatus; appliedAt: string | null }[], formatDay: (iso: string) => string | null): string {
-  const counted = apps.filter((a) => a.status !== 'withdrawn')
+  const counted = apps
   if (!counted.length) return 'No applicants yet'
   const first = counted.map((a) => a.appliedAt).filter((x): x is string => Boolean(x)).sort()[0]
   const n = `${counted.length} applied`

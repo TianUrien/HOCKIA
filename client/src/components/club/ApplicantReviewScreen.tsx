@@ -136,7 +136,8 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
       ])
       if (cancelled) return
       const roleGender = (role as { gender: string | null } | null)?.gender ?? null
-      const target = fitTarget(roleGender)
+      // A withdrawn application is read-only for the record: no fit for it.
+      const target = row.status === 'withdrawn' ? null : fitTarget(roleGender)
       const { data: fitData } = target
         ? await supabase.rpc('compute_club_fit', { p_owner_id: club.id, p_player_id: person.id, p_target: target, p_region: null as unknown as string, p_opportunity_id: roleId })
         : { data: null }
@@ -369,10 +370,12 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
               </section>
             )}
 
-            {/* Fit — clubs only */}
-            <div className="px-5">
-              <FitCard state={review.fit?.state} rows={rows} />
-            </div>
+            {/* Fit — clubs only; not for an application the player withdrew (read-only record). */}
+            {review.status !== 'withdrawn' && (
+              <div className="px-5">
+                <FitCard state={review.fit?.state} rows={rows} />
+              </div>
+            )}
 
             {/* Facts */}
             <div className="px-5 pt-4">

@@ -12,6 +12,7 @@ import { useRoleApplicants, type Applicant } from '@/hooks/useRoleApplicants'
 import { getImageUrl } from '@/lib/imageUrl'
 import { genderPill, roleTitle } from '@/lib/opportunityCopy'
 import { clubReplyLineClass, daysLeftLabel, daysLeftToReply, isClubReplyUrgent, personRoleLine, pipelineOf, appliedSinceLine } from '@/lib/clubRecruiting'
+import { applicantChipFor, closedApplicantTag, clubRoadTag } from '@/lib/signing'
 import { cn } from '@/lib/utils'
 
 /**
@@ -21,7 +22,13 @@ import { cn } from '@/lib/utils'
  * application; "days left" before it closes, amber at 5 or fewer
  * (time-sensitive). The role line shows under every name. Fit chip is
  * club-only. An application that came from an invite shows the Invited tag
- * (Figma D3.4 393:452; DEV NOTE 394:111) — everything else is unchanged.
+ * (Figma D3.4 393:452; DEV NOTE 394:111).
+ *
+ * D4: applicants past Shortlist (offered / accepted / waiting to confirm /
+ * signed) stay under Shortlisted with a grey tag naming the step
+ * (applicantChipFor / clubRoadTag). Closed holds no reply, role filled and —
+ * since the re-check of 2026-10-02 — applications the player withdrew, each
+ * with a grey tag saying why; all of them read-only.
  */
 type Chip = 'pending' | 'shortlisted' | 'maybe' | 'rejected' | 'no_response'
 
@@ -42,7 +49,7 @@ export default function ApplicantsScreen({ roleId }: { roleId: string }) {
   const p = pipelineOf(data.applicants.map((a) => a.status))
 
   const list = useMemo(() => {
-    const rows = data.applicants.filter((a) => a.status === chip)
+    const rows = data.applicants.filter((a) => applicantChipFor(a.status) === chip)
     return chip === 'pending'
       ? rows.sort((a, b) => (a.appliedAt ?? '').localeCompare(b.appliedAt ?? ''))
       : rows.sort((a, b) => (b.updatedAt ?? '').localeCompare(a.updatedAt ?? ''))
@@ -59,13 +66,13 @@ export default function ApplicantsScreen({ roleId }: { roleId: string }) {
   ]
   const caption = chip === 'pending'
     ? `Oldest first · each closes ${data.expiryDays} days after it arrives`
-    : chip === 'no_response' ? `Closed without a reply after ${data.expiryDays} days` : 'Most recent decision first'
+    : chip === 'no_response' ? `Closed without a reply after ${data.expiryDays} days, filled, or withdrawn by the applicant` : 'Most recent decision first'
   const emptyCopy: Record<Chip, string> = {
     pending: 'Nobody waiting. New applicants show up here.',
     shortlisted: 'No one shortlisted yet.',
     maybe: 'No one on maybe.',
     rejected: 'No one declined.',
-    no_response: 'None closed without a reply.',
+    no_response: 'None closed yet.',
   }
   const flagFor = (id: number | null) => {
     const c = id ? countries.find((x) => x.id === id) : null
@@ -114,6 +121,8 @@ export default function ApplicantsScreen({ roleId }: { roleId: string }) {
           const right = a.status === 'pending' ? daysLeftLabel(days) : monthDay(a.updatedAt)
           const country = flagFor(a.person.nationalityCountryId)
           const avatar = a.person.avatarUrl ? getImageUrl(a.person.avatarUrl, 'avatar-md') ?? a.person.avatarUrl : null
+          // Grey, never amber: the road step past Shortlist, or why a closed row closed.
+          const tag = clubRoadTag(a.status) ?? closedApplicantTag(a.status)
           return (
             <div key={a.applicationId}>
               <button type="button" onClick={() => open(a)} className="flex w-full items-center gap-3 py-3 pl-5 pr-3.5 text-left" data-testid="applicant-row">
@@ -127,6 +136,7 @@ export default function ApplicantsScreen({ roleId }: { roleId: string }) {
                     {a.invited
                       ? <span className="shrink-0 text-caption font-semibold text-hockia-primary" data-testid="applicant-invited-tag">Invited</span>
                       : isNew && <span className="shrink-0 text-caption font-semibold text-hockia-primary">New</span>}
+                    {tag && <span className="shrink-0 rounded-full bg-surface-grouped px-2 py-0.5 text-caption font-semibold text-ink-2" data-testid="applicant-status-tag">{tag}</span>}
                   </span>
                   <span className="block truncate text-[14px] leading-[19px] text-ink-2">{personRoleLine(a.person)}</span>
                   {(a.fit?.state && a.fit.state !== 'grey') || country ? (

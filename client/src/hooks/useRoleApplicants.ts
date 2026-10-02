@@ -121,13 +121,15 @@ export function useRoleApplicants(roleId: string | null | undefined, clubId: str
       if (cancelled) return
       if (roleErr || appErr) logger.debug('[useRoleApplicants] read failed', roleErr ?? appErr)
       if (!role) { setState((s) => ({ ...s, loading: false, error: 'This role isn’t yours or no longer exists.' })); return }
-      const list = ((rows ?? []) as unknown as Row[]).filter((r) => r.applicant && r.status !== 'withdrawn')
+      // Withdrawn applications are readable since the D4 re-check (2026-10-02):
+      // they sit under Closed, read-only, with no fit computed for them.
+      const list = ((rows ?? []) as unknown as Row[]).filter((r) => r.applicant)
       const ids = list.map((r) => r.id)
       const target = fitTarget((role as Vacancy).gender)
       const [{ data: views }, fits] = await Promise.all([
         ids.length ? supabase.from('application_views').select('application_id').eq('viewer_id', clubId).in('application_id', ids) : Promise.resolve({ data: [] }),
         Promise.all(list.map(async (r) => {
-          if (r.status === 'no_response' || !target) return [r.id, null] as const
+          if (r.status === 'no_response' || r.status === 'withdrawn' || r.status === 'filled' || !target) return [r.id, null] as const
           const { data } = await supabase.rpc('compute_club_fit', { p_owner_id: clubId, p_player_id: r.applicant!.id, p_target: target, p_region: null as unknown as string, p_opportunity_id: roleId })
           const row = (data as { state: FitState; components: FitComponents }[] | null)?.[0] ?? null
           return [r.id, row ? { state: row.state, components: row.components } : null] as const

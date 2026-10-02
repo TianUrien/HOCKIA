@@ -54,7 +54,8 @@ describe('D4 club road: next action per status', () => {
   it('club rows: road applicants stay under Shortlisted with a grey tag', () => {
     expect(applicantChipFor('offered')).toBe('shortlisted')
     expect(applicantChipFor('offer_declined')).toBe('shortlisted')
-    expect(applicantChipFor('withdrawn')).toBe('withdrawn')
+    // Re-check 2026-10-02: a withdrawn application sits under Closed (read-only).
+    expect(applicantChipFor('withdrawn')).toBe('no_response')
     expect(clubRoadTag('offered')).toBe('Offer sent')
     expect(clubRoadTag('signed_pending_confirmation')).toBe('Waiting to confirm')
     expect(clubRoadTag('pending')).toBeNull()

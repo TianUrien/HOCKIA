@@ -479,13 +479,15 @@ export function signingErrorMessage(err: unknown, fallback: string): string {
 /**
  * The club's Applicants chips predate D4: an applicant past Shortlist
  * (offered / accepted / waiting to confirm / signed) stays under Shortlisted
- * with a grey tag naming the step; a role filled by someone else lands in
- * Closed. offer_declined is only ever a history row (the server puts the
- * application straight back to shortlisted).
+ * with a grey tag naming the step; a role filled by someone else and an
+ * application the player withdrew land in Closed (re-check 2026-10-02:
+ * clubs can read withdrawn applications to their own roles). offer_declined
+ * is only ever a history row (the server puts the application straight back
+ * to shortlisted).
  */
 export function applicantChipFor(status: string): string {
   if (isOnRoad(status) || status === 'offer_declined') return 'shortlisted'
-  if (status === 'filled') return 'no_response'
+  if (status === 'filled' || status === 'withdrawn') return 'no_response'
   return status
 }
 
@@ -498,6 +500,13 @@ export function clubRoadTag(status: string): string | null {
     case 'signed': return 'Signed'
     default: return null
   }
+}
+
+/** The grey tag on a row under Closed that says why it closed (no tag = no reply). */
+export function closedApplicantTag(status: string): string | null {
+  if (status === 'withdrawn') return 'Withdrawn'
+  if (status === 'filled') return 'Role filled'
+  return null
 }
 
 // ── Player: withdraw an application ──
