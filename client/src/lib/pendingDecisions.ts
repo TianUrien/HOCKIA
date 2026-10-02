@@ -1,4 +1,5 @@
-import { supabase } from '@/lib/supabase'
+import { SUPABASE_ANON_KEY, SUPABASE_URL, supabase } from '@/lib/supabase'
+import { AUTH_STORAGE_KEY } from '@/lib/authStorageKey'
 import { logger } from '@/lib/logger'
 import type { Json } from '@/lib/database.types'
 import { isWithdrawnApplicationError } from '@/lib/applicationStatus'
@@ -13,6 +14,12 @@ import { isWithdrawnApplicationError } from '@/lib/applicationStatus'
  * email, so an undo after the fact would still reach the player. Held
  * decisions commit when the window ends, and immediately if the page is
  * hidden or closed (the club switched apps), so a decision is never lost.
+ *
+ * On pagehide / beforeunload (reload, closed tab) the write goes out as a
+ * keepalive request the browser finishes after the page is gone: the
+ * supabase client's own fetch first awaits the session, and the page was
+ * gone before it got there (QA 2 Oct: a reload during Undo lost the
+ * shortlist).
  */
 
 export const UNDO_WINDOW_MS = 5000
@@ -83,12 +90,64 @@ export function heldDecision(applicationId: string): Decision | null {
   return held.get(applicationId)?.decision ?? null
 }
 
-/** Write everything still held now (page hidden / unloading). */
-export function flushDecisions(): void {
-  for (const id of [...held.keys()]) release(id)
+/** The session's access token as supabase-js persisted it — read synchronously, for the unload path. */
+function storedAccessToken(): string | null {
+  try {
+    const raw = window.localStorage.getItem(AUTH_STORAGE_KEY)
+    if (!raw) return null
+    const token = (JSON.parse(raw) as { access_token?: unknown } | null)?.access_token
+    return typeof token === 'string' && token ? token : null
+  } catch {
+    return null
+  }
+}
+
+/** The same write as commit(), as one keepalive request (PostgREST PATCH / the feedback function). */
+export function keepaliveRequest(decision: Decision, token: string): { url: string; init: RequestInit } {
+  const headers = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+  if (decision.kind === 'status') {
+    return {
+      url: `${SUPABASE_URL}/rest/v1/opportunity_applications?id=eq.${encodeURIComponent(decision.applicationId)}`,
+      init: { method: 'PATCH', keepalive: true, headers: { ...headers, Prefer: 'return=minimal' }, body: JSON.stringify({ status: decision.status, metadata: decision.metadata }) },
+    }
+  }
+  return {
+    url: `${SUPABASE_URL}/functions/v1/application-feedback`,
+    init: { method: 'POST', keepalive: true, headers, body: JSON.stringify({ mode: 'decline', application_id: decision.applicationId, reason: decision.reason, message: decision.message }) },
+  }
+}
+
+function commitOnUnload(decision: Decision): boolean {
+  const token = storedAccessToken()
+  if (!token || typeof fetch !== 'function') return false
+  try {
+    const { url, init } = keepaliveRequest(decision, token)
+    void fetch(url, init).catch((err: unknown) => logger.error('[pendingDecisions] keepalive commit failed', err))
+    return true
+  } catch (err) {
+    logger.error('[pendingDecisions] keepalive commit failed', err)
+    return false
+  }
+}
+
+/**
+ * Write everything still held now. `unloading` (pagehide / beforeunload):
+ * fire-and-forget keepalive requests, since nothing async survives the
+ * page; without a session to read, the normal write is still attempted.
+ */
+export function flushDecisions(opts: { unloading?: boolean } = {}): void {
+  for (const id of [...held.keys()]) {
+    if (!opts.unloading) { release(id); continue }
+    const h = held.get(id)
+    if (!h) continue
+    clearTimeout(h.timer)
+    held.delete(id)
+    if (!commitOnUnload(h.decision)) void commit(h.decision).then((r) => h.onDone?.(r.ok, r.withdrawn))
+  }
 }
 
 if (typeof window !== 'undefined') {
-  window.addEventListener('pagehide', flushDecisions)
+  window.addEventListener('pagehide', () => flushDecisions({ unloading: true }))
+  window.addEventListener('beforeunload', () => flushDecisions({ unloading: true }))
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushDecisions() })
 }
