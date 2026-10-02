@@ -18,6 +18,8 @@ title = "HOCKIA Gitleaks Config"
     '''client/e2e/\.data/''',
     '''client/src/types/supabase\.ts''',
     '''\.env\.example''',
+    # Firebase client config shipped inside the Android app; its key is not a secret.
+    '''client/android/app/google-services\.json''',
   ]
 
 # Extend the built-in rule set; the sections above only add allowlist entries.
