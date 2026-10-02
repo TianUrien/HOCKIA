@@ -1,6 +1,0 @@
-# Configuration for public-opportunities Edge Function
-# This function is intentionally public (no JWT verification required)
-# as it only exposes publicly available opportunity data.
-
-[function]
-verify_jwt = false

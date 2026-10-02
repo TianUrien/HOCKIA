@@ -11,7 +11,7 @@ and the test directories.
 | Unit | `client/src/__tests__/**` and co-located `*.test.ts(x)` | 225 files, about 2,300 cases | Vitest 4 + jsdom + Testing Library (`src/test/setup.ts` polyfills ResizeObserver, IntersectionObserver, matchMedia, scrollTo) | nothing external |
 | DB integration | `client/src/__tests__/db/*.test.ts` | 7 files: `rls`, `triggers`, `state-machines`, `attribution`, `club-members`, `retention`, `shortLinks` | Vitest with `vitest.db.config.ts` (serial, 30 s timeout) | staging Supabase + E2E accounts |
 | E2E | `client/e2e/*.spec.ts` | 36 spec files, 24 `@smoke`-tagged tests | Playwright 1.57, Chromium (WebKit optional with `PLAYWRIGHT_WEBKIT=1`) | staging Supabase + E2E accounts + dev server or `PLAYWRIGHT_BASE_URL` |
-| Edge function unit | `supabase/functions/_shared/*.test.ts` | 17 files, 162 `Deno.test` cases | `deno test --allow-env --allow-read .` | Deno 2 |
+| Edge function unit | `supabase/functions/_shared/*.test.ts` | 17 files, 165 `Deno.test` cases (two are structural: `webhook-auth.test.ts` reads the function sources, `function-config.test.ts` reads `supabase/config.toml`) | `deno test --allow-env --allow-read .` | Deno 2 |
 | SQL security probes | `supabase/tests/security/*.probe.sql` | 16 probes | Run by hand on staging via SQL; each rolls itself back | staging |
 
 Coverage thresholds (`vite.config.ts`): 27 % for lines, functions, branches

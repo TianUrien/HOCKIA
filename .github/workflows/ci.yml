@@ -121,7 +121,9 @@ jobs:
         working-directory: ./supabase/functions/_shared
         # --allow-read: webhook-auth.test.ts reads the sibling function
         # sources to assert every database-webhook function still calls
-        # assertServiceRole (the 2026-08-08 regression guard).
+        # assertServiceRole (the 2026-08-08 regression guard), and
+        # function-config.test.ts reads supabase/config.toml to assert every
+        # function folder has a pinned verify_jwt entry.
         run: deno test --allow-env --allow-read .
 
   unit-tests:

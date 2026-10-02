@@ -414,3 +414,87 @@ s3_secret_key = "env(S3_SECRET_KEY)"
 # link). IP rate-limited fail-closed inside the function.
 [functions.age-gate]
 verify_jwt = false
+
+# ── Single source of truth for verify_jwt (consolidated 2026-10-02) ──────────
+# Every function under supabase/functions has an entry here; the per-function
+# supabase/functions/<name>/config.toml files were removed. The deploy scripts
+# (scripts/deploy-to-staging.sh, scripts/promote-to-production.sh) read this
+# file and refuse to deploy an unpinned function, and
+# supabase/functions/_shared/function-config.test.ts fails CI when a function
+# folder has no entry. Add a new function here in the same commit as its folder.
+#
+# Values below match what is deployed. The entries moved from the removed
+# per-function files are marked (moved).
+
+# Verified in-handler (auth.getUser + role / admin-claim checks). (moved)
+[functions.admin-actions]
+verify_jwt = false
+[functions.admin-send-campaign]
+verify_jwt = false
+[functions.admin-send-test-email]
+verify_jwt = false
+[functions.delete-account]
+verify_jwt = false
+[functions.ga4-funnel]
+verify_jwt = false
+
+# Public read, anonymous by design. (moved)
+[functions.health]
+verify_jwt = false
+[functions.public-opportunities]
+verify_jwt = false
+[functions.sitemap]
+verify_jwt = false
+
+# Called from the app with the user's JWT. (moved)
+[functions.notify-feedback-submitted]
+verify_jwt = true
+
+# User-facing functions that have always deployed with the platform default
+# (true); they also verify the caller in-handler, so the gateway check is a
+# second layer, not the only one.
+[functions.ai-opinion]
+verify_jwt = true
+[functions.application-feedback]
+verify_jwt = true
+[functions.role-description-draft]
+verify_jwt = true
+
+# Database-webhook and cron callers present a service-role JWT, which passes
+# the gateway check; every one of these also calls assertServiceRole.
+[functions.admin-market-digest]
+verify_jwt = true
+[functions.notify-age-gate]
+verify_jwt = true
+[functions.notify-application]
+verify_jwt = true
+[functions.notify-application-digest]
+verify_jwt = true
+[functions.notify-application-expiry]
+verify_jwt = true
+[functions.notify-application-status]
+verify_jwt = true
+[functions.notify-friend-request]
+verify_jwt = true
+[functions.notify-message-digest]
+verify_jwt = true
+[functions.notify-onboarding-reminder]
+verify_jwt = true
+[functions.notify-profile-views]
+verify_jwt = true
+[functions.notify-reference-reminder]
+verify_jwt = true
+[functions.notify-reference-request]
+verify_jwt = true
+[functions.notify-reference-response]
+verify_jwt = true
+[functions.send-push]
+verify_jwt = true
+[functions.storage-cleanup]
+verify_jwt = true
+
+# Test-mode notifiers: gateway JWT only (see security.md "Edge functions").
+[functions.notify-test-application]
+verify_jwt = true
+[functions.notify-test-vacancy]
+verify_jwt = true

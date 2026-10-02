@@ -219,8 +219,10 @@ repository (founder plan doc + session memory).
    grants and a CI check that every new object in a migration carries them.
 4. **Edge-function auth consistency** - one shared service-role assertion on
    every webhook-style function, covered by the source-reading regression test.
-5. **`verify_jwt` consolidation** - one source of truth in
-   `supabase/config.toml` (see operations.md).
+5. **`verify_jwt` consolidation** - done 2026-10-02: one source of truth in
+   `supabase/config.toml`, guarded by `_shared/function-config.test.ts`;
+   the one-off redeploy of the nine moved functions is listed in
+   operations.md 2.3.1.
 6. **Staging mail isolation** - staging gets its own transactional-mail key
    and webhook.
 

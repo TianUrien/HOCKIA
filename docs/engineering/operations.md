@@ -73,18 +73,54 @@ supabase functions deploy <name> --project-ref xtertgftujnebubxgqit [--no-verify
 ```
 
 `--no-verify-jwt` is required for functions that verify auth in-handler or
-receive third-party calls. The pinned list is `[functions.<name>]` in
-`supabase/config.toml` (today: `resend-webhook`, `video-webhook`,
+receive third-party calls. **The single source of truth is
+`[functions.<name>] verify_jwt` in `supabase/config.toml`** (consolidated
+2026-10-02): every function folder has an entry, the per-function
+`supabase/functions/<name>/config.toml` files are gone, the deploy scripts
+read the root file and refuse an unpinned function, and
+`_shared/function-config.test.ts` fails CI when a folder has no entry. The
+CLI also reads the root entry on `functions deploy`; passing the flag as well
+is harmless and keeps the intent visible in shell history.
+
+Off (`--no-verify-jwt`): `resend-webhook`, `video-webhook`,
 `video-playback-token`, `video-create-upload`, `video-delete`, `nl-search`,
-`application-action`, `age-gate` off; `notify-vacancy`,
-`notify-opportunity-renewal` on). Several other functions carry a
-per-function `config.toml` that the deploy scripts read (`admin-actions`,
-`admin-send-campaign`, `admin-send-test-email`, `delete-account`,
-`ga4-funnel`, `health`, `public-opportunities`, `sitemap`,
-`notify-feedback-submitted`). **Trap**: a plain `supabase functions deploy`
-resets an unpinned function to the platform default, which has 401'd
-legitimate traffic twice (nl-search, resend-webhook). After deploying,
-confirm with `supabase functions list` and a request from the app.
+`application-action`, `age-gate`, `admin-actions`, `admin-send-campaign`,
+`admin-send-test-email`, `delete-account`, `ga4-funnel`, `health`,
+`public-opportunities`, `sitemap`. Everything else is on (the platform
+default those functions have always deployed with).
+
+**Trap**: before the consolidation a plain `supabase functions deploy`
+reset an unpinned function to the platform default, which 401'd legitimate
+traffic twice (nl-search, resend-webhook). After deploying, confirm the
+setting in the dashboard (Edge Functions -> function -> Details) and with a
+request from the app.
+
+#### 2.3.1 One-off redeploy after the 2026-10-02 consolidation
+
+The nine functions whose setting used to live only in a per-function file
+must be redeployed once from the root entry, staging first, then production.
+Each line is one command; the flag matches the pinned value. Order: public
+read endpoints first (cheapest to verify with `curl`), then the user-facing
+ones, then the single `true` function last.
+
+```sh
+# staging: --project-ref ivjkdaylalhsteyyclvl ; production: --project-ref xtertgftujnebubxgqit
+supabase functions deploy health                    --project-ref <ref> --no-verify-jwt
+supabase functions deploy sitemap                   --project-ref <ref> --no-verify-jwt
+supabase functions deploy public-opportunities      --project-ref <ref> --no-verify-jwt
+supabase functions deploy ga4-funnel                --project-ref <ref> --no-verify-jwt
+supabase functions deploy delete-account            --project-ref <ref> --no-verify-jwt
+supabase functions deploy admin-send-test-email     --project-ref <ref> --no-verify-jwt
+supabase functions deploy admin-send-campaign       --project-ref <ref> --no-verify-jwt
+supabase functions deploy admin-actions             --project-ref <ref> --no-verify-jwt
+supabase functions deploy notify-feedback-submitted --project-ref <ref>
+```
+
+Verify after each environment: `curl -s <url>/functions/v1/health` returns
+`healthy` without an Authorization header; `/sitemap` and
+`/public-opportunities` answer anonymously; an admin action and a feedback
+submission work from the app. Delete this subsection once both environments
+are done.
 
 Shared code lives in `_shared/`; deploying one function bundles the shared
 modules it imports, so a `_shared` change needs every dependent function
