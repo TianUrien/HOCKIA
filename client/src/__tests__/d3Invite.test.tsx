@@ -161,7 +161,14 @@ describe('row action (D3.1, DEV NOTE 394:98)', () => {
   it('Invite for an invitable player; Applied / Invited pills otherwise; nothing when not invitable', () => {
     const onInvite = vi.fn()
     const { rerender } = render(<InviteAction pill={null} invitable name="Facundo Diaz" onInvite={onInvite} />)
-    fireEvent.click(screen.getByRole('button', { name: 'Invite Facundo Diaz to apply' }))
+    const invite = screen.getByRole('button', { name: 'Invite to apply' })
+    expect(invite.textContent).toBe('Invite')
+    // Tonal, never Primary: the row action repeats, the screen keeps one Primary.
+    expect(invite.className).toContain('bg-hockia-soft')
+    expect(invite.className).toContain('text-hockia-primary')
+    expect(invite.className).not.toContain('bg-hockia-primary')
+    expect(invite.className).toContain('before:-inset-1') // 44 pt hit area on a 36 px button
+    fireEvent.click(invite)
     expect(onInvite).toHaveBeenCalled()
     rerender(<InviteAction pill="applied" invitable name="Leandro" onInvite={onInvite} />)
     expect(screen.getByTestId('invite-pill-applied').textContent).toBe('Applied')
