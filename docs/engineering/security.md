@@ -208,21 +208,21 @@ repository or in trigger definitions that are dumped into migrations.
 
 ## 9. Open hardening workstreams
 
-Named only; details are tracked outside the public repository.
+Named only; scope, findings and sequencing are tracked outside the public
+repository (founder plan doc + session memory).
 
-1. **344 anon-EXECUTE definer functions** - review which SECURITY DEFINER
-   functions still grant EXECUTE to `anon` and revoke where not needed.
-2. **Mutable search_path (23)** - pin `search_path` on the remaining
-   functions flagged by the Supabase advisor.
-3. **Service key off triggers** - move webhook authorization in trigger
+1. **Advisor hardening batch** - periodic review of function grants and
+   `search_path` pinning against the Supabase advisor output.
+2. **Service key off triggers** - move webhook authorization in trigger
    definitions away from embedding the service key.
-4. **Oct 30 GRANT template + CI lint** - a migration template with explicit
+3. **Oct 30 GRANT template + CI lint** - a migration template with explicit
    grants and a CI check that every new object in a migration carries them.
-5. **Gateway-only test notifiers** - add `assertServiceRole` to
-   `notify-test-vacancy` and `notify-test-application`.
-6. **Per-function `config.toml` drift** - consolidate `verify_jwt` into
+4. **Edge-function auth consistency** - one shared service-role assertion on
+   every webhook-style function, covered by the source-reading regression test.
+5. **`verify_jwt` consolidation** - one source of truth in
    `supabase/config.toml` (see operations.md).
-7. **Staging Resend key and webhook** - give staging its own key and webhook.
+6. **Staging mail isolation** - staging gets its own transactional-mail key
+   and webhook.
 
 ## 10. Incident history (what to learn from)
 
