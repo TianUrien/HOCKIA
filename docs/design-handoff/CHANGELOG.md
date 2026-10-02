@@ -55,3 +55,20 @@ Every edit to the Figma file "New-Hockia", newest first. Format:
 ## Earlier · code agent
 
 - `ink/quaternary` description set during the colour-token alignment (PR #127).
+
+## 2026-10-02 · code session (round 8, branch `fix/round8-design`)
+
+Code-only changes that implement the founder rulings of 2 Oct; no Figma edit.
+
+- Items 1/2 · `club/InviteAction.tsx`: the Find players / Shortlist row action is Button / Tonal, Small 36 with a 44 pt hit-slop; label "Invite", accessible name "Invite to apply". Tests `d3Invite.test.tsx` pin it.
+- Item 9 · Decline offer stays neutral (Secondary trigger + Primary confirm); no code change (exception recorded by the design session in decisions.md).
+- Items 6/11 · New `ui/ConfirmSheet.tsx` (Danger solid 48 + Cancel in a BottomSheet). Withdraw offer and Undo signing (`club/ApplicantReviewScreen.tsx`) and Not interested (`chat-v2/InviteCard.tsx`) use it; `ConfirmDialog` remains for desktop v1 only.
+- Items 3/12/13 · 44 pt hit areas on every 36 px control (row icon buttons, Change role, Not interested, View role, road Message, Confirm signing prompt, My applications, Withdraw application); Large buttons are 48 px in InviteSheet, OfferSheet, MarkSignedSheet, DeclineSheet, ConfirmSigningPage, OwnApplicationRoad, the decision bar and the offer-decline sheet.
+- Item 5 · Chat Invitation / Offer cards and their skeletons: radius 18 → `rounded-card` 16; note boxes 14 → 16.
+- Item 15 · OfferSheet inputs 10 → `rounded-tile` 8, textarea 14 → `rounded-card` 16; MarkSignedSheet checkbox 6 → 8.
+- Item 7 · Danger reds on tokens: text = `status/danger`, solid fill = `status/danger` with `danger-strong` pressed (DeclineSheet, decision bar, road menu, OwnApplicationRoad, ConfirmDialog, PostRoleScreen).
+- Item 14 · OfferCard "Open until" pill reads its colour from `STATUS_TONE_PILL` (amber only for the player who must answer).
+- Item 8 · Placeholder colour ink-4 → ink-3 at the 13 call sites.
+- Item 19 · Textarea-inside-grouped-card (InviteSheet, DeclineSheet): `focus-within` brand ring on the card.
+- Item 16 · Signing titles 28/26 → title-l 30 (`text-3xl`); Invitation / Offer card titles 19/18 → title-m 20 (`text-xl`).
+- Item 17 · Confirm signing "Stop showing me to other clubs" row = `SettingsRow` + `SettingsSwitch` in a grouped card (copy unchanged).
