@@ -30,7 +30,7 @@ describe('club recruiting copy', () => {
 
   it('builds the pipeline; withdrawn and filled count as closed (D4 re-check)', () => {
     expect(pipelineOf(['pending', 'pending', 'shortlisted', 'rejected', 'no_response', 'maybe', 'withdrawn', 'filled']))
-      .toEqual({ toReview: 2, shortlisted: 1, maybe: 1, declined: 1, closed: 3, withdrawn: 1, total: 8 })
+      .toEqual({ toReview: 2, shortlisted: 1, maybe: 1, declined: 1, closed: 3, noReply: 1, filled: 1, withdrawn: 1, total: 8 })
   })
 
   it('writes the waiting notice from the oldest pending application, and hides at 0', () => {

@@ -8,7 +8,7 @@ import { useRoleShortlist, useScoutingContext } from '@/hooks/useScouting'
 import { useRecruitingViewKind } from '@/hooks/useRecruitingContext'
 import { useClubRoles, type ClubRole } from '@/hooks/useClubRoles'
 import { formatDurationText, genderPill, isPaid, roleBenefits, rolePostedAt, roleTitle } from '@/lib/opportunityCopy'
-import { waitingNotice } from '@/lib/clubRecruiting'
+import { closedBreakdown, waitingNotice } from '@/lib/clubRecruiting'
 import { isFirstRunOpportunities } from '@/lib/clubEdit'
 import { cn } from '@/lib/utils'
 import { RoleActions } from './RoleActions'
@@ -116,10 +116,10 @@ function RoleCard({ role, expiryDays, onReview, onChanged }: { role: ClubRole; e
         {stat(p.shortlisted, 'Shortlisted')}
         {stat(p.declined, 'Declined')}
       </button>
-      {p.closed > 0 && (
-        <p className="flex items-center gap-1.5 text-caption text-ink-3">
+      {closedBreakdown(p, expiryDays) && (
+        <p className="flex items-center gap-1.5 text-caption text-ink-3" data-testid="role-closed-breakdown">
           <Info className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
-          {p.closed} more closed without a reply after {expiryDays} days
+          {closedBreakdown(p, expiryDays)}
         </p>
       )}
       <button type="button" onClick={onReview} className={cn('flex h-11 items-center justify-center rounded-full text-row font-semibold', p.toReview > 0 ? 'bg-hockia-primary text-white' : 'bg-surface-grouped text-ink-1')}>
