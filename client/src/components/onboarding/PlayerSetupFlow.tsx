@@ -8,7 +8,7 @@ import DateOfBirthPicker from '@/components/DateOfBirthPicker'
 import LocationAutocomplete, { type LocationSelection } from '@/components/LocationAutocomplete'
 import WorldClubSearch from '@/components/WorldClubSearch'
 import { PlayerLeagueField } from '@/components/profile/mobile/PlayerLeagueField'
-import { SettingsSwitch } from '@/components/settings/settingsUi'
+import { SettingsRow, SettingsSwitch } from '@/components/settings/settingsUi'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/lib/auth'
 import { useCountries } from '@/hooks/useCountries'
@@ -520,19 +520,21 @@ export default function PlayerSetupFlow({ onFinished }: PlayerSetupFlowProps) {
             )}
           </div>
 
-          <div className="rounded-card bg-surface-grouped px-4 py-3">
-            {adult ? (
-              <div className="flex items-center gap-3">
-                <div className="min-w-0 flex-1">
-                  <p className="text-body font-semibold text-ink-1">Open to play</p>
-                  <p className="text-secondary text-ink-2">{OPEN_TO_PLAY_HELPER}</p>
-                </div>
-                <SettingsSwitch checked={draft.openToPlay} onChange={() => set({ openToPlay: !draft.openToPlay })} label="Open to play" />
-              </div>
-            ) : (
+          {/* List item / Switch (Figma 472:186): the grouped row Settings and
+              Confirm signing use — muted card, SettingsRow + SettingsSwitch. */}
+          {adult ? (
+            <div className="overflow-hidden rounded-card bg-surface-muted" data-testid="open-to-play-row">
+              <SettingsRow
+                title="Open to play"
+                subtitle={OPEN_TO_PLAY_HELPER}
+                trailing={<SettingsSwitch checked={draft.openToPlay} onChange={() => set({ openToPlay: !draft.openToPlay })} label="Open to play" />}
+              />
+            </div>
+          ) : (
+            <div className="rounded-card bg-surface-muted px-4 py-3" data-testid="open-to-play-row">
               <p className="text-secondary text-ink-2">{OPEN_TO_PLAY_UNDER_18}</p>
-            )}
-          </div>
+            </div>
+          )}
 
           <FormError>{error}</FormError>
         </div>

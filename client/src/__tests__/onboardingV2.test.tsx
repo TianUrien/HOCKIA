@@ -372,6 +372,12 @@ describe('Set up (114:537 / 114:608)', () => {
     expect(screen.getByRole('button', { name: /add second/i })).toBeInTheDocument()
     expect(screen.getByRole('switch', { name: 'Open to play' })).toBeChecked()
     expect(screen.getByText('Clubs can see you and message you about roles.')).toBeInTheDocument()
+    // List item / Switch (472:186), as Confirm signing uses: muted grouped
+    // card holding the SettingsRow with the green switch.
+    const row = screen.getByTestId('open-to-play-row')
+    expect(row).toHaveClass('rounded-card', 'bg-surface-muted')
+    expect(within(row).getByRole('switch', { name: 'Open to play' })).toHaveClass('bg-positive')
+    expect(within(row).getByText('Open to play')).toHaveClass('text-body')
 
     await user.click(screen.getByRole('button', { name: 'Skip' }))
     await waitFor(() => expect(onFinished).toHaveBeenCalledTimes(1))
@@ -409,6 +415,7 @@ describe('Set up (114:537 / 114:608)', () => {
     mocks.profile.current = playerProfile(years(16))
     render(<MemoryRouter><PlayerSetupFlow onFinished={vi.fn()} /></MemoryRouter>)
     expect(screen.queryByRole('switch')).not.toBeInTheDocument()
+    expect(within(screen.getByTestId('open-to-play-row')).getByText(/18 and over/)).toBeInTheDocument()
     const line = screen.getByText(/18 and over/)
     expect(line).toHaveTextContent(/aren’t suggested/)
     expect(line.textContent).not.toMatch(/will be suggested|get suggested|can suggest/)
