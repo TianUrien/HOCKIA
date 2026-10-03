@@ -414,8 +414,10 @@ export default function NotificationsDrawer() {
         aria-labelledby="notifications-drawer-title"
         tabIndex={-1}
         className={cn(
-          'fixed inset-y-0 right-0 z-[60] flex w-full max-w-full transform bg-white shadow-2xl transition-transform duration-200 focus:outline-none sm:max-w-md lg:max-w-lg',
-          isOpen ? 'translate-x-0' : 'translate-x-full'
+          'fixed inset-y-0 right-0 z-[60] flex w-full max-w-full transform bg-white transition-transform duration-200 focus:outline-none sm:max-w-md lg:max-w-lg',
+          // The shadow only exists while open: off-screen it still spills a grey strip
+          // along the right edge of every page (seen on the logged-out screens).
+          isOpen ? 'translate-x-0 shadow-2xl' : 'pointer-events-none translate-x-full'
         )}
       >
         <div className="flex h-full w-full flex-col bg-[#f0f2f5]">
