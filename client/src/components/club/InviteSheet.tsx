@@ -158,7 +158,7 @@ export default function InviteSheet({ open, player, activeRoleId, onClose, onSen
               )
             })}
             {!picking && !choosing && invitable.length > 1 && (
-              <button type="button" onClick={() => setPicking(true)} className="self-start py-1 text-secondary font-semibold text-hockia-primary" data-testid="invite-change-role">
+              <button type="button" onClick={() => setPicking(true)} className="-my-2 flex min-h-11 items-center self-start text-secondary font-semibold text-hockia-primary" data-testid="invite-change-role">
                 Change role
               </button>
             )}
@@ -168,7 +168,7 @@ export default function InviteSheet({ open, player, activeRoleId, onClose, onSen
         {role && (
           <>
             <p className="pb-2 pt-4 text-caption font-semibold uppercase tracking-[0.4px] text-ink-2">Note</p>
-            <div className="flex flex-col gap-1.5 rounded-card bg-surface-grouped p-3.5">
+            <div className="flex flex-col gap-1.5 rounded-card bg-surface-grouped p-3.5 focus-within:ring-2 focus-within:ring-focus-ring">
               {showsDraft ? (
                 <span className="flex items-center gap-1.5 text-caption font-semibold text-ink-2" data-testid="invite-note-draft">
                   <Pencil className="h-3.5 w-3.5" strokeWidth={2} aria-hidden="true" /> Drafted from the role · tap to edit
@@ -183,7 +183,7 @@ export default function InviteSheet({ open, player, activeRoleId, onClose, onSen
                 maxLength={INVITE_NOTE_MAX}
                 aria-label={`Note to ${firstName}`}
                 placeholder={`Write a short note to ${firstName}`}
-                className="w-full resize-none bg-transparent text-[16px] leading-[22px] text-ink-1 outline-none placeholder:text-ink-4"
+                className="w-full resize-none bg-transparent text-[16px] leading-[22px] text-ink-1 outline-none placeholder:text-ink-3"
               />
             </div>
           </>
@@ -197,7 +197,7 @@ export default function InviteSheet({ open, player, activeRoleId, onClose, onSen
           type="button"
           disabled={!canSend}
           onClick={() => void submit()}
-          className="mt-3 flex h-[50px] w-full items-center justify-center rounded-full bg-hockia-primary text-body font-semibold text-white disabled:opacity-40"
+          className="mt-3 flex h-12 w-full items-center justify-center rounded-full bg-hockia-primary text-body font-semibold text-white disabled:opacity-40"
           data-testid="invite-send"
         >
           {sending ? 'Sending…' : 'Send invite'}

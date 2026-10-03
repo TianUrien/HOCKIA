@@ -130,16 +130,16 @@ export interface BenefitTile { key: string; label: string; icon: LucideIcon; til
 
 /** The nine package benefits (Figma Filters › Package), with the card tile tints. */
 export const BENEFIT_TILES: Record<string, BenefitTile> = {
-  housing: { key: 'housing', label: 'Housing', icon: Home, tileClass: 'bg-[#e5f1ff] text-[#1d4ed8]', detail: 'Provided by the club' },
-  flights: { key: 'flights', label: 'Flights', icon: Plane, tileClass: 'bg-[#e0f4f9] text-[#0e7490]', detail: 'Covered' },
-  job: { key: 'job', label: 'Job', icon: Briefcase, tileClass: 'bg-[#e8e7fd] text-[#4338ca]', detail: 'Work arranged alongside hockey' },
-  insurance: { key: 'insurance', label: 'Insurance', icon: Shield, tileClass: 'bg-[#fee2e2] text-[#b91c1c]', detail: 'Covered by the club' },
+  housing: { key: 'housing', label: 'Housing', icon: Home, tileClass: 'bg-accent-blue-soft text-accent-blue-ink', detail: 'Provided by the club' },
+  flights: { key: 'flights', label: 'Flights', icon: Plane, tileClass: 'bg-accent-cyan-soft text-accent-cyan-ink', detail: 'Covered' },
+  job: { key: 'job', label: 'Job', icon: Briefcase, tileClass: 'bg-accent-indigo-soft text-accent-indigo-ink', detail: 'Work arranged alongside hockey' },
+  insurance: { key: 'insurance', label: 'Insurance', icon: Shield, tileClass: 'bg-accent-red-soft text-status-danger-strong', detail: 'Covered by the club' },
   bonuses: { key: 'bonuses', label: 'Bonuses', icon: DollarSign, tileClass: 'bg-positive-soft text-positive', detail: 'Performance bonuses' },
-  visa: { key: 'visa', label: 'Visa', icon: Globe, tileClass: 'bg-[#e0f4f9] text-[#0e7490]', detail: 'Sponsorship arranged' },
+  visa: { key: 'visa', label: 'Visa', icon: Globe, tileClass: 'bg-accent-cyan-soft text-accent-cyan-ink', detail: 'Sponsorship arranged' },
   car: { key: 'car', label: 'Car', icon: Car, tileClass: 'bg-hockia-soft text-hockia-primary', detail: 'Provided by the club' },
-  equipment: { key: 'equipment', label: 'Equipment', icon: Dumbbell, tileClass: 'bg-[#e6f6f4] text-[#0f766e]', detail: 'Kit and stick provided' },
+  equipment: { key: 'equipment', label: 'Equipment', icon: Dumbbell, tileClass: 'bg-accent-teal-soft-2 text-accent-teal', detail: 'Kit and stick provided' },
   meals: { key: 'meals', label: 'Meals', icon: Utensils, tileClass: 'bg-hockia-soft text-hockia-primary', detail: 'Provided by the club' },
-  education: { key: 'education', label: 'Education', icon: GraduationCap, tileClass: 'bg-[#e8e7fd] text-[#4338ca]', detail: 'Study alongside hockey' },
+  education: { key: 'education', label: 'Education', icon: GraduationCap, tileClass: 'bg-accent-indigo-soft text-accent-indigo-ink', detail: 'Study alongside hockey' },
 }
 
 export const PACKAGE_FILTER_KEYS = ['paid', 'housing', 'flights', 'job', 'insurance', 'bonuses', 'visa', 'car', 'equipment'] as const
@@ -150,7 +150,7 @@ export const PACKAGE_FILTER_LABELS: Record<PackageFilterKey, string> = {
 }
 
 export const SPECIALIST_TILE = { icon: Target, tileClass: 'bg-hockia-soft text-hockia-primary' }
-export const REQUIREMENT_TILE = { icon: Info, tileClass: 'bg-[#fdf1e4] text-[#b45309]' }
+export const REQUIREMENT_TILE = { icon: Info, tileClass: 'bg-status-warning-soft text-status-warning' }
 
 /** "Paid" / "Development" / "Compensation not stated". */
 export function compensationText(v: Pick<Vacancy, 'compensation'>): string {

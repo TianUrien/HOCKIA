@@ -228,7 +228,7 @@ export default function ApplyToVacancyModal({
             placeholder="Add a message to the club (optional)"
             rows={3}
             maxLength={600}
-            className="w-full resize-none rounded-[12px] bg-surface-grouped px-3.5 py-3 text-body text-ink-1 placeholder:text-ink-4 focus:outline-none focus:ring-2 focus:ring-hockia-primary/40"
+            className="w-full resize-none rounded-[12px] bg-surface-grouped px-3.5 py-3 text-body text-ink-1 placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-hockia-primary/40"
           />
         )}
 

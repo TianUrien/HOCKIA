@@ -88,14 +88,14 @@ export default function OwnApplicationRoad({ applicationId, status, onMessage, o
           {status === 'signed_pending_confirmation' && (
             <Link
               to={`/applications/${applicationId}/signing`}
-              className="mt-3 flex h-11 w-full items-center justify-center rounded-full bg-hockia-primary text-row font-semibold text-white"
+              className="mt-3 flex h-12 w-full items-center justify-center rounded-full bg-hockia-primary text-row font-semibold text-white"
               data-testid="own-application-confirm-signing"
             >
               Confirm signing
             </Link>
           )}
           {status === 'offered' && seeOffer && (
-            <button type="button" onClick={seeOffer} className="mt-3 flex h-11 w-full items-center justify-center rounded-full bg-hockia-primary text-row font-semibold text-white" data-testid="own-application-see-offer">
+            <button type="button" onClick={seeOffer} className="mt-3 flex h-12 w-full items-center justify-center rounded-full bg-hockia-primary text-row font-semibold text-white" data-testid="own-application-see-offer">
               See the offer
             </button>
           )}
@@ -105,7 +105,7 @@ export default function OwnApplicationRoad({ applicationId, status, onMessage, o
         <button
           type="button"
           onClick={() => setConfirming(true)}
-          className={cn('text-secondary font-semibold text-ink-2 underline-offset-2 hover:underline', steps ? 'mt-3' : '')}
+          className={cn('inline-flex min-h-11 items-center text-secondary font-semibold text-ink-2 underline-offset-2 hover:underline', steps ? 'mt-1' : '-my-2')}
           data-testid="withdraw-application"
         >
           Withdraw application
@@ -115,7 +115,7 @@ export default function OwnApplicationRoad({ applicationId, status, onMessage, o
         <div className="px-5 pb-2 pt-2 text-center" data-testid="withdraw-application-confirm">
           <h2 className="text-[22px] font-bold leading-7 tracking-[-0.2px] text-ink-1">{WITHDRAW_TITLE}</h2>
           <p className="mt-2 text-[15px] leading-[21px] text-ink-2">{withdrawBody(status)}</p>
-          <button type="button" onClick={() => void withdraw()} disabled={withdrawing} className="mt-5 flex h-[50px] w-full items-center justify-center rounded-full bg-red-600 text-[16px] font-semibold text-white disabled:opacity-60" data-testid="withdraw-application-yes">
+          <button type="button" onClick={() => void withdraw()} disabled={withdrawing} className="mt-5 flex h-12 w-full items-center justify-center rounded-full bg-status-danger text-[16px] font-semibold text-white active:bg-status-danger-strong disabled:opacity-60" data-testid="withdraw-application-yes">
             {withdrawing ? 'Withdrawing…' : 'Withdraw'}
           </button>
           <button type="button" onClick={() => setConfirming(false)} className="mt-1 flex h-11 w-full items-center justify-center text-[16px] font-semibold text-ink-1">

@@ -72,7 +72,7 @@ export function RoadToSigningCard({ steps, onToggleTrial, onMessage, trialBusy }
                 </>
               )}
               {s.key === 'talked' && !s.done && (
-                <button type="button" onClick={onMessage} className="shrink-0 text-[14px] font-semibold text-hockia-primary" data-testid="road-message">Message</button>
+                <button type="button" onClick={onMessage} className="-mr-2 inline-flex min-h-11 shrink-0 items-center px-2 text-[14px] font-semibold text-hockia-primary" data-testid="road-message">Message</button>
               )}
             </li>
           )

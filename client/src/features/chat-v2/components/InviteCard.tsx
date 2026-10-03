@@ -1,8 +1,7 @@
 import { lazy, Suspense, useState } from 'react'
-import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
-import ConfirmDialog from '@/components/ConfirmDialog'
+import { ConfirmSheet } from '@/components/ui/ConfirmSheet'
 import { supabase, type Vacancy } from '@/lib/supabase'
 import { useToastStore } from '@/lib/toast'
 import { reportSupabaseError } from '@/lib/sentryHelpers'
@@ -58,11 +57,11 @@ export default function InviteCard({ inviteId, opportunityId, isMine, fallbackTe
   const [opening, setOpening] = useState(false)
 
   if (loading) {
-    return <div className="h-[260px] w-full animate-pulse rounded-[18px] bg-surface-grouped" data-testid="invite-card-loading" />
+    return <div className="h-[260px] w-full animate-pulse rounded-card bg-surface-grouped" data-testid="invite-card-loading" />
   }
   if (!data) {
     return (
-      <div className="rounded-[18px] bg-surface-grouped px-3.5 py-2.5 text-[15px] leading-5 text-ink-1">
+      <div className="rounded-card bg-surface-grouped px-3.5 py-2.5 text-[15px] leading-5 text-ink-1">
         <p className="whitespace-pre-wrap break-words" style={{ overflowWrap: 'anywhere' }}>{fallbackText}</p>
       </div>
     )
@@ -110,12 +109,12 @@ export default function InviteCard({ inviteId, opportunityId, isMine, fallbackTe
 
   return (
     <div
-      className={cn('w-full rounded-[18px] border-[1.5px] bg-white p-4', state.muted ? 'border-line' : 'border-hockia-primary')}
+      className={cn('w-full rounded-card border-[1.5px] bg-white p-4', state.muted ? 'border-line' : 'border-hockia-primary')}
       data-testid="invite-card"
       data-state={invite.status}
     >
       <p className={cn('text-[14px] font-semibold leading-5', state.muted ? 'text-ink-3' : 'text-hockia-primary')}>Invitation to apply</p>
-      <h3 className={cn('pt-1 text-[19px] font-bold leading-6 tracking-[-0.2px]', state.muted ? 'text-ink-3' : 'text-ink-1')}>{inviteRoleLabel(role)}</h3>
+      <h3 className={cn('pt-1 text-xl font-bold leading-6 tracking-[-0.2px]', state.muted ? 'text-ink-3' : 'text-ink-1')}>{inviteRoleLabel(role)}</h3>
       <dl className="mt-2.5 flex flex-col gap-2">
         {facts.filter(([, v]) => !!v).map(([label, value]) => (
           <div key={label} className="flex gap-3 text-[15px] leading-5">
@@ -125,7 +124,7 @@ export default function InviteCard({ inviteId, opportunityId, isMine, fallbackTe
         ))}
       </dl>
       {invite.note && (
-        <p className={cn('mt-3 whitespace-pre-wrap break-words rounded-[14px] bg-surface-grouped px-3.5 py-3 text-[15px] leading-[21px]', state.muted ? 'text-ink-3' : 'text-ink-1')} style={{ overflowWrap: 'anywhere' }} data-testid="invite-card-note">
+        <p className={cn('mt-3 whitespace-pre-wrap break-words rounded-card bg-surface-grouped px-3.5 py-3 text-[15px] leading-[21px]', state.muted ? 'text-ink-3' : 'text-ink-1')} style={{ overflowWrap: 'anywhere' }} data-testid="invite-card-note">
           {invite.note}
         </p>
       )}
@@ -140,7 +139,7 @@ export default function InviteCard({ inviteId, opportunityId, isMine, fallbackTe
               {opening ? 'Opening…' : 'Apply'}
             </button>
           </div>
-          <button type="button" onClick={() => setConfirmPass(true)} disabled={busy} className="mt-2 w-full py-1.5 text-[15px] font-semibold text-ink-2 disabled:opacity-60" data-testid="invite-not-interested">
+          <button type="button" onClick={() => setConfirmPass(true)} disabled={busy} className="mt-1 flex min-h-11 w-full items-center justify-center text-[15px] font-semibold text-ink-2 disabled:opacity-60" data-testid="invite-not-interested">
             Not interested
           </button>
         </>
@@ -155,23 +154,22 @@ export default function InviteCard({ inviteId, opportunityId, isMine, fallbackTe
               {state.line}
             </span>
           )}
-          <button type="button" onClick={viewRole} className="shrink-0 text-[15px] font-semibold text-hockia-primary">View role</button>
+          <button type="button" onClick={viewRole} className="-my-1.5 inline-flex min-h-11 shrink-0 items-center text-[15px] font-semibold text-hockia-primary">View role</button>
         </div>
       )}
 
-      {/* Portaled: the chat bubble wrapper's `contain: paint` would clip a fixed overlay. */}
-      {createPortal(
-        <ConfirmDialog
-          isOpen={confirmPass}
-          onClose={() => setConfirmPass(false)}
-          onConfirm={async () => { await decline(invite.id) }}
-          title="Not interested in this role?"
-          message={`${club.full_name?.trim() || 'The club'} will see that you passed. You can still message them.`}
-          confirmLabel="Not interested"
-          testId="invite-pass-confirm"
-        />,
-        document.body,
-      )}
+      {/* A sheet like every other D3/D4 confirmation; BottomSheet portals itself, so the bubble's `contain: paint` can't clip it. */}
+      <ConfirmSheet
+        open={confirmPass}
+        onClose={() => setConfirmPass(false)}
+        onConfirm={async () => { await decline(invite.id) }}
+        title="Not interested in this role?"
+        message={`${club.full_name?.trim() || 'The club'} will see that you passed. You can still message them.`}
+        confirmLabel="Not interested"
+        tone="primary"
+        busyLabel="Sending…"
+        testId="invite-pass-confirm"
+      />
       {applyVacancy && (
         <Suspense fallback={null}>
           <ApplyToOpportunityModal

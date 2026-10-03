@@ -86,7 +86,7 @@ export default function NewContextSheet({ open, kind, onClose, onSaved }: Props)
             placeholder={isPlayer ? 'Midfielder for next season' : 'Coach for next season'}
             aria-label="Name"
             maxLength={LABEL_MAX}
-            className="h-12 w-full rounded-[12px] bg-surface-grouped px-4 text-[17px] text-ink-1 placeholder:text-ink-4 focus:outline-none focus:ring-2 focus:ring-hockia-primary/30"
+            className="h-12 w-full rounded-[12px] bg-surface-grouped px-4 text-[17px] text-ink-1 placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-hockia-primary/30"
           />
         </Section>
         <Section
@@ -107,7 +107,7 @@ export default function NewContextSheet({ open, kind, onClose, onSaved }: Props)
             onChange={(e) => set('region', e.target.value.slice(0, 80))}
             placeholder="Dublin"
             aria-label="Region"
-            className="h-12 w-full rounded-[12px] bg-surface-grouped px-4 text-[17px] text-ink-1 placeholder:text-ink-4 focus:outline-none focus:ring-2 focus:ring-hockia-primary/30"
+            className="h-12 w-full rounded-[12px] bg-surface-grouped px-4 text-[17px] text-ink-1 placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-hockia-primary/30"
           />
         </Section>
       </div>

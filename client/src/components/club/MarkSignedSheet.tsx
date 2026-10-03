@@ -50,7 +50,7 @@ export default function MarkSignedSheet({ open, firstName, playerAvatar, playerN
           className="mt-4 flex w-full items-start gap-3 rounded-2xl bg-surface-grouped px-3.5 py-3 text-left"
           data-testid="close-role-toggle"
         >
-          <span className={cn('mt-0.5 flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-[6px]', closeRole ? 'bg-hockia-primary text-white' : 'border-[1.5px] border-ink-4 bg-white')} aria-hidden="true">
+          <span className={cn('mt-0.5 flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-tile', closeRole ? 'bg-hockia-primary text-white' : 'border-[1.5px] border-ink-4 bg-white')} aria-hidden="true">
             {closeRole && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
           </span>
           <span className="min-w-0 flex-1">
@@ -59,7 +59,7 @@ export default function MarkSignedSheet({ open, firstName, playerAvatar, playerN
           </span>
         </button>
 
-        <button type="button" onClick={() => onConfirm(closeRole)} disabled={busy} className="mt-4 flex h-[50px] w-full items-center justify-center rounded-full bg-hockia-primary text-[16px] font-semibold text-white disabled:opacity-60" data-testid="mark-signed-confirm">
+        <button type="button" onClick={() => onConfirm(closeRole)} disabled={busy} className="mt-4 flex h-12 w-full items-center justify-center rounded-full bg-hockia-primary text-[16px] font-semibold text-white disabled:opacity-60" data-testid="mark-signed-confirm">
           {busy ? 'Saving…' : 'Mark as signed'}
         </button>
         <button type="button" onClick={onClose} className="mt-1 flex h-11 w-full items-center justify-center text-[16px] font-semibold text-ink-1">

@@ -1278,7 +1278,7 @@ export function PostComposerModal({
                 maxLength={MAX_CONTENT_LENGTH}
                 autoCapitalize="sentences"
                 spellCheck
-                className={`w-full px-0 py-2 text-ink-1 placeholder:text-ink-4 border-0 focus:outline-none focus:ring-0 resize-none ${mode === 'transfer' ? 'text-base' : 'text-[20px] leading-[26px]'}`}
+                className={`w-full px-0 py-2 text-ink-1 placeholder:text-ink-3 border-0 focus:outline-none focus:ring-0 resize-none ${mode === 'transfer' ? 'text-base' : 'text-[20px] leading-[26px]'}`}
                 style={{ minHeight: mode === 'transfer' ? '60px' : '100px' }}
               />
               {/* Remaining count only inside the last 50 characters, lightest ink. */}

@@ -10,7 +10,7 @@ import { FitCard } from './FitCard'
 import { DeclineSheet } from './DeclineSheet'
 import { RoadToSigningCard } from './RoadToSigningCard'
 import { BottomSheet } from '@/components/ui/BottomSheet'
-import ConfirmDialog from '@/components/ConfirmDialog'
+import { ConfirmSheet } from '@/components/ui/ConfirmSheet'
 import { useApplicationRoad, useSigningActions } from '@/hooks/useSigning'
 import { inviteRoleLabel } from '@/lib/invites'
 import { isOnRoad, offerDeclinedNote, roadHeaderLine, roadMainAction, roadMenu, roadSteps, roadWaitingLine, shortDayOf, type OfferDraft, type RoadMenuItem } from '@/lib/signing'
@@ -498,13 +498,13 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
       {p && review && decidable && (
         <div className="fixed inset-x-0 bottom-0 border-t border-line bg-white px-4 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-3" data-testid="decision-bar">
           <div className="flex gap-2">
-            <button type="button" onClick={() => setDeclining(true)} disabled={review.status === 'rejected'} className="flex h-[46px] flex-1 items-center justify-center rounded-full bg-surface-grouped text-[16px] font-semibold text-[#e5484d] disabled:opacity-40">Decline</button>
-            <button type="button" onClick={() => decide('maybe')} disabled={review.status === 'maybe'} className="flex h-[46px] flex-1 items-center justify-center rounded-full bg-surface-grouped text-[16px] font-semibold text-ink-1 disabled:opacity-40">Maybe</button>
-            <button type="button" onClick={() => decide('shortlisted')} disabled={review.status === 'shortlisted'} className="flex h-[46px] flex-1 items-center justify-center gap-1.5 rounded-full bg-hockia-primary text-[16px] font-semibold text-white disabled:opacity-40">
+            <button type="button" onClick={() => setDeclining(true)} disabled={review.status === 'rejected'} className="flex h-12 flex-1 items-center justify-center rounded-full bg-surface-grouped text-[16px] font-semibold text-status-danger disabled:opacity-40">Decline</button>
+            <button type="button" onClick={() => decide('maybe')} disabled={review.status === 'maybe'} className="flex h-12 flex-1 items-center justify-center rounded-full bg-surface-grouped text-[16px] font-semibold text-ink-1 disabled:opacity-40">Maybe</button>
+            <button type="button" onClick={() => decide('shortlisted')} disabled={review.status === 'shortlisted'} className="flex h-12 flex-1 items-center justify-center gap-1.5 rounded-full bg-hockia-primary text-[16px] font-semibold text-white disabled:opacity-40">
               <Check className="h-[18px] w-[18px]" strokeWidth={2.4} /> Shortlist
             </button>
           </div>
-          <button type="button" onClick={() => void message()} className="mt-2 flex w-full items-center justify-center gap-1.5 py-1.5 text-row font-semibold text-hockia-primary">
+          <button type="button" onClick={() => void message()} className="mt-1 flex min-h-11 w-full items-center justify-center gap-1.5 text-row font-semibold text-hockia-primary">
             <MessageCircle className="h-[18px] w-[18px]" strokeWidth={1.8} /> Message {firstName}
           </button>
         </div>
@@ -546,7 +546,7 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
       <BottomSheet open={sheet === 'menu'} onClose={() => setSheet(null)} ariaLabel="More actions">
         <div className="px-3 pb-2 pt-1" data-testid="road-menu">
           {menu.map((item) => (
-            <button key={item} type="button" onClick={() => pickMenu(item)} className={cn('flex h-12 w-full items-center rounded-xl px-3 text-left text-[16px] font-medium', item === 'decline' || item === 'withdraw_offer' || item === 'undo_signing' ? 'text-[#e5484d]' : 'text-ink-1')} data-testid={`road-menu-${item}`}>
+            <button key={item} type="button" onClick={() => pickMenu(item)} className={cn('flex h-12 w-full items-center rounded-xl px-3 text-left text-[16px] font-medium', item === 'decline' || item === 'withdraw_offer' || item === 'undo_signing' ? 'text-status-danger' : 'text-ink-1')} data-testid={`road-menu-${item}`}>
               {MENU_LABEL[item]}
             </button>
           ))}
@@ -585,8 +585,9 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
           />
         </Suspense>
       )}
-      <ConfirmDialog
-        isOpen={confirm !== null}
+      {/* Danger confirmations are sheets, like Decline (one surface per screen). */}
+      <ConfirmSheet
+        open={confirm !== null}
         onClose={() => setConfirm(null)}
         onConfirm={runConfirm}
         title={confirm === 'withdraw_offer' ? 'Withdraw this offer?' : 'Undo the signing?'}
@@ -594,7 +595,7 @@ export default function ApplicantReviewScreen({ roleId, applicationId }: Props) 
           ? `${firstName} is told the offer was withdrawn and goes back to Shortlisted.`
           : `${firstName} won’t be asked to confirm any more. You can mark the signing again later.`}
         confirmLabel={confirm === 'withdraw_offer' ? 'Withdraw offer' : 'Undo signing'}
-        variant="danger"
+        busyLabel={confirm === 'withdraw_offer' ? 'Withdrawing…' : 'Undoing…'}
         testId="road-confirm"
       />
 

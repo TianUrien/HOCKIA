@@ -99,8 +99,8 @@ export default function OfferSheet({ open, firstName, roleLabel, role, current, 
           {/* No start date on the role = starts immediately (Post a role convention), so this never reads "Not set". */}
           <Row label="Start" value={offerStartLine(draft.startDate, draft.length)} open={field === 'start'} onToggle={() => toggle('start')} testId="offer-row-start">
             <div className="flex gap-2">
-              <input type="date" value={draft.startDate ?? ''} onChange={(e) => set('startDate', e.target.value || null)} aria-label="Start date" className="h-10 min-w-0 flex-1 rounded-[10px] border border-line bg-white px-2.5 text-[15px] text-ink-1" />
-              <select value={draft.length ?? ''} onChange={(e) => set('length', e.target.value || null)} aria-label="Length" className="h-10 min-w-0 flex-1 rounded-[10px] border border-line bg-white px-2 text-[15px] text-ink-1">
+              <input type="date" value={draft.startDate ?? ''} onChange={(e) => set('startDate', e.target.value || null)} aria-label="Start date" className="h-10 min-w-0 flex-1 rounded-tile border border-line bg-white px-2.5 text-[15px] text-ink-1" />
+              <select value={draft.length ?? ''} onChange={(e) => set('length', e.target.value || null)} aria-label="Length" className="h-10 min-w-0 flex-1 rounded-tile border border-line bg-white px-2 text-[15px] text-ink-1">
                 <option value="">Length</option>
                 {[...new Set([...(draft.length && !DURATION_OPTIONS.includes(draft.length) ? [draft.length] : []), ...DURATION_OPTIONS])].map((o) => <option key={o} value={o}>{o}</option>)}
               </select>
@@ -121,7 +121,7 @@ export default function OfferSheet({ open, firstName, roleLabel, role, current, 
           </Row>
           <Divider />
           <Row label="Open until" value={shortDay(draft.openUntil) ?? 'Choose a date'} open={field === 'openUntil'} onToggle={() => toggle('openUntil')} testId="offer-row-open-until">
-            <input type="date" value={draft.openUntil} min={today} max={maxDay} onChange={(e) => set('openUntil', e.target.value)} aria-label="Open until" className="h-10 w-full rounded-[10px] border border-line bg-white px-2.5 text-[15px] text-ink-1" />
+            <input type="date" value={draft.openUntil} min={today} max={maxDay} onChange={(e) => set('openUntil', e.target.value)} aria-label="Open until" className="h-10 w-full rounded-tile border border-line bg-white px-2.5 text-[15px] text-ink-1" />
           </Row>
         </div>
         {dateError && <p className="mt-2 text-secondary text-ink-2" data-testid="offer-date-error">{dateError}</p>}
@@ -132,7 +132,7 @@ export default function OfferSheet({ open, firstName, roleLabel, role, current, 
           rows={2}
           placeholder="Add a note (optional)"
           aria-label="Note (optional)"
-          className="mt-3 w-full resize-none rounded-[14px] border border-line px-3.5 py-3 text-[15px] text-ink-1 outline-none placeholder:text-ink-3 focus:border-hockia-primary"
+          className="mt-3 w-full resize-none rounded-card border border-line px-3.5 py-3 text-[15px] text-ink-1 outline-none placeholder:text-ink-3 focus:border-hockia-primary"
           data-testid="offer-note"
         />
         <p className="mt-2 text-caption leading-4 text-ink-2">An offer on Hockia sets out what you’re offering. The contract itself is between your club and the player.</p>
@@ -141,7 +141,7 @@ export default function OfferSheet({ open, firstName, roleLabel, role, current, 
           type="button"
           onClick={() => onSend(draft)}
           disabled={busy || !!dateError}
-          className="mt-3.5 flex h-[50px] w-full items-center justify-center rounded-full bg-hockia-primary text-[16px] font-semibold text-white disabled:opacity-50"
+          className="mt-3.5 flex h-12 w-full items-center justify-center rounded-full bg-hockia-primary text-[16px] font-semibold text-white disabled:opacity-50"
           data-testid="offer-send"
         >
           {busy ? 'Sending…' : current ? 'Send updated offer' : 'Send offer'}

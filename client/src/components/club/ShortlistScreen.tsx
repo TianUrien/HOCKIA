@@ -153,11 +153,10 @@ export default function ShortlistScreen() {
                     <InviteAction
                       pill={app ? 'applied' : inviteStatuses.pillFor(r.id)}
                       invitable={isInvitablePlayer(r)}
-                      name={r.full_name}
                       limitReason={limitReason}
                       onInvite={() => setInviteFor(r)}
                     />
-                    <button type="button" onClick={() => void message(r)} aria-label={`Message ${r.full_name ?? 'player'}`} className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-grouped text-ink-1">
+                    <button type="button" onClick={() => void message(r)} aria-label={`Message ${r.full_name ?? 'player'}`} className="relative before:absolute before:-inset-1 before:content-[''] flex h-9 w-9 items-center justify-center rounded-full bg-surface-grouped text-ink-1">
                       <MessageCircle className="h-[18px] w-[18px]" strokeWidth={1.8} />
                     </button>
                   </span>
