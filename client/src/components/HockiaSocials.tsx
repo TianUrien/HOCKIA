@@ -24,10 +24,11 @@ const HOCKIA_SOCIALS = [
 ] as const
 
 interface HockiaSocialsProps {
-  /** 'muted' = grey icons for light surfaces (footer); 'onDark' = white
-   *  icons for dark surfaces (landing hero); 'onBrand' = white icons in
+  /** 'muted' = grey icons for light surfaces (footer); 'ink' = ink-2 icons
+   *  with 44 pt targets on the token-based landing footer (Web A v2);
+   *  'onDark' = white icons for dark surfaces; 'onBrand' = white icons in
    *  frosted circle chips for the solid-violet CTA band (Web A design). */
-  tone?: 'muted' | 'onDark' | 'onBrand'
+  tone?: 'muted' | 'ink' | 'onDark' | 'onBrand'
   iconClassName?: string
   className?: string
 }
@@ -42,11 +43,15 @@ export default function HockiaSocials({
       ? 'flex h-10 w-10 items-center justify-center rounded-full bg-white/[0.12] text-white hover:bg-white/20'
       : tone === 'onDark'
         ? 'text-white/70 hover:text-white'
-        : 'text-gray-500 dark:text-gray-400 hover:text-hockia-primary dark:hover:text-purple-400'
+        : tone === 'ink'
+          ? 'flex h-11 w-11 items-center justify-center rounded-lg text-ink-2 hover:text-ink-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/40'
+          : 'text-gray-500 dark:text-gray-400 hover:text-hockia-primary dark:hover:text-purple-400'
+  // 'ink' targets are 44 pt boxes, so the row needs no extra gap.
+  const gap = tone === 'onBrand' ? 'gap-2' : tone === 'ink' ? 'gap-0' : 'gap-4'
 
   return (
     <div
-      className={`flex items-center ${tone === 'onBrand' ? 'gap-2' : 'gap-4'} ${className}`}
+      className={`flex items-center ${gap} ${className}`}
       aria-label="Follow HOCKIA on social media"
     >
       {HOCKIA_SOCIALS.map(({ label, href, Icon }) => (

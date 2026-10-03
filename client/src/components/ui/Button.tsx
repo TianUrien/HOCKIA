@@ -1,7 +1,7 @@
 import { forwardRef } from 'react'
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
 import { Loader2 } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { buttonClassName, type ButtonSize, type ButtonStyle } from './buttonClasses'
 
 /**
  * Shared button (Figma "Button" 459:146; decision 2026-10-02): seven styles,
@@ -12,10 +12,10 @@ import { cn } from '@/lib/utils'
  *
  * The Small size is 36 pt visually with a 44 pt hit area (pseudo-element), per
  * the documented convention. Unlike the legacy `components/Button.tsx`, this
- * one carries the Figma tokens and no gradients.
+ * one carries the Figma tokens and no gradients. The classes themselves live
+ * in `buttonClasses.ts` (shared with link-shaped CTAs).
  */
-export type ButtonStyle = 'primary' | 'tonal' | 'secondary' | 'tertiary' | 'link' | 'destructive' | 'danger'
-export type ButtonSize = 'large' | 'small'
+export type { ButtonSize, ButtonStyle } from './buttonClasses'
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonStyle
@@ -24,22 +24,6 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   /** Stretch to the container width (stacked phone actions). */
   block?: boolean
   icon?: ReactNode
-}
-
-const STYLES: Record<ButtonStyle, string> = {
-  primary: 'bg-hockia-primary text-white hover:bg-brand-primary-hover active:bg-brand-primary-pressed',
-  tonal: 'bg-hockia-soft text-hockia-primary active:bg-surface-muted-pressed',
-  secondary: 'bg-white text-ink-1 ring-1 ring-inset ring-line active:bg-surface-muted',
-  tertiary: 'bg-transparent text-ink-2 active:bg-surface-muted',
-  link: 'bg-transparent text-hockia-primary underline-offset-2 hover:underline',
-  destructive: 'bg-status-danger-soft text-status-danger active:opacity-80',
-  danger: 'bg-status-danger text-white active:opacity-90',
-}
-
-const SIZES: Record<ButtonSize, string> = {
-  large: 'h-12 px-5 text-body font-semibold rounded-[12px]',
-  // 36 pt visual, 44 pt hit area via the pseudo-element.
-  small: "relative h-9 px-3.5 text-row font-semibold rounded-[10px] before:absolute before:-inset-y-1 before:inset-x-0 before:content-['']",
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
@@ -52,13 +36,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       type={type}
       disabled={disabled || loading}
       aria-busy={loading || undefined}
-      className={cn(
-        'inline-flex shrink-0 select-none items-center justify-center gap-2 whitespace-nowrap transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-hockia-primary/40 disabled:opacity-40',
-        STYLES[variant],
-        SIZES[size],
-        block && 'w-full',
-        className,
-      )}
+      className={buttonClassName({ variant, size, block, className })}
       {...rest}
     >
       {loading ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> : icon}
